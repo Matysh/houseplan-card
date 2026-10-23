@@ -2,6 +2,7 @@ import {
   climateTempFor, humFor, isHumEntity, isTempEntity, resolvedLightSources, tempFor,
 } from './devices';
 import { deviceLqi, type DeviceSignalContext } from './device-signal';
+import { directSignalReadings, type DirectSignalReadings } from './device-signal-runtime';
 import { isRegistryEntryEnabled } from './ha-binding-status';
 import { displayIsNeutral, displayWantsValue, hassValue, valueWithUnit, type DeviceDisplayMode } from './logic';
 import type {
@@ -77,6 +78,7 @@ interface CandidateCacheEntry {
  * place before the next HA frame.
  */
 const CANDIDATE_CACHE = new WeakMap<object, CandidateCacheEntry>();
+const SIGNAL_CANDIDATE_CACHE = new WeakMap<object, DirectSignalReadings>();
 
 function candidateSignature(d: DevItem, lightDevices: readonly DevItem[]): string {
   const devicePart = (item: DevItem): string => [
@@ -354,7 +356,7 @@ export function valueBadgeCandidates(
     && cached.states === (hass?.states || null)
     && cached.entities === (hass?.entities || null)
     && cached.devices === (hass?.devices || null)
-    && cached.signature === signature) return cached.result;
+    && cached.signature === signature && SIGNAL_CANDIDATE_CACHE.get(d) === directSignalReadings(hass)) return cached.result;
   const entityIds = new Set<string>(d.entities);
   for (const ref of d.controls || []) if (!ref.startsWith('marker:')) entityIds.add(ref);
   const candidates: ValueBadgeCandidate[] = [];
@@ -393,6 +395,9 @@ export function valueBadgeCandidates(
     if (lightKeys.has(ref as `marker:${string}`)) add({ kind: 'derived_marker_state', ref: ref as `marker:${string}` });
   }
   if (!d.virtual && deviceLqi(hass, d) != null) add({ kind: 'derived_lqi' });
+  // A saved selection remains visible while its provider temporarily lacks data.
+  if (!d.virtual && (d.marker?.value_source?.kind === 'derived_lqi' || d.marker?.value_badge?.source?.kind === 'derived_lqi')) add({ kind: 'derived_lqi' });
+  SIGNAL_CANDIDATE_CACHE.set(d, directSignalReadings(hass));
   CANDIDATE_CACHE.set(d as object, {
     states: hass?.states || null,
     entities: hass?.entities || null,

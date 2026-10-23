@@ -49,9 +49,17 @@ class Transport:
         self.late_subscribe = False
         self.publish_error = None
         self.subscribe_error = None
+        # #1029 introduces an independent entry-owned passive feed. This
+        # transport's failure controls/counts describe scan jobs only; the
+        # passive feed has its own lifecycle/ACL witnesses in test_ha_zigbee_lqi.
+        self.passive_callbacks = {}
+        self.passive_status_callbacks = set()
 
     async def subscribe(self, _hass, topic, handler, *, qos, encoding):
         assert qos == 0 and encoding is None
+        if topic.endswith("/bridge/devices"):
+            self.passive_callbacks.setdefault(topic, set()).add(handler)
+            return lambda: self.passive_callbacks[topic].discard(handler)
         self.subscribes.append(topic)
         if self.subscribe_error:
             raise self.subscribe_error
@@ -80,6 +88,9 @@ class Transport:
         return lambda: self.ready_callbacks.discard(handler)
 
     def connection_status(self, _hass, handler):
+        if type(getattr(handler, "__self__", None)).__name__ == "Z2mLqiReader":
+            self.passive_status_callbacks.add(handler)
+            return lambda: self.passive_status_callbacks.discard(handler)
         self.status_callbacks.add(handler)
         return lambda: self.status_callbacks.discard(handler)
 

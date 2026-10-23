@@ -76,4 +76,3 @@ This artifact is diagnostic only: no ci-proof-registry, release evidence,
 mutation witness, gate or semantic PASS. Slow instrumented performance cases
 remain failed/incomplete diagnostics. Nightly uploads partial artifacts even
 on failure; manual runs return exit 2 when incomplete. Raw/maps remain ignored.
-

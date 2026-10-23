@@ -908,6 +908,14 @@ export function prepareGoldenFixture(scenario) {
       ...structuredClone(scenario.markerOverrides),
     ];
   }
+  if (scenario.directLqi) {
+    // #1029: the frame must depend on the public direct feed, never HA diagnostics.
+    for (const [entityId, state] of Object.entries(fixture.states || {})) {
+      delete state.attributes?.lqi;
+      delete state.attributes?.linkquality;
+      if (/(?:linkquality|_lqi)$/.test(entityId)) state.state = 'unknown';
+    }
+  }
   if (scenario.revealHiddenDevices) fixture.config.settings.filter_seeded = true;
   if (scenario.hiddenDisabledDevice) fixture.devices[scenario.hiddenDisabledDevice].disabled_by = 'user';
   if (scenario.markerAreaSnapshot) {
@@ -1063,6 +1071,7 @@ export async function prepareGoldenScenario(page, scenario) {
         if (message.type === 'houseplan/config/get') return {
           config: structuredClone(fixture.config), rev: 1,
           can_write: scenario.canWrite !== false,
+          ...(scenario.directLqi ? { zigbee_lqi_api: 1 } : {}),
           ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
             ? { integration_version: scenario.integrationVersion } : {}),
         };
@@ -1099,7 +1108,17 @@ export async function prepareGoldenScenario(page, scenario) {
         return { ok: true };
       },
       callService: async () => undefined,
-      connection: { subscribeEvents: async () => () => undefined, subscribeMessage: async () => () => undefined },
+      connection: {
+        subscribeEvents: async () => () => undefined,
+        subscribeMessage: async (callback, message) => {
+          if (scenario.directLqi && message.type === 'houseplan/zigbee_lqi/subscribe') callback({
+            kind: 'reset', session_id: 'golden-direct-lqi', revision: 1,
+            devices: Object.fromEntries(Object.entries(scenario.directLqi).map(([id, lqi]) => [id,
+              { lqi, available: true, provider: 'z2m', observed_at: 123, measurement_at: null }])),
+          });
+          return () => undefined;
+        },
+      },
       localize: () => null,
       formatEntityState: (state) => state.state,
       config: {
@@ -2694,6 +2713,14 @@ export async function prepareGoldenScenario(page, scenario) {
     await page.mouse.move(0, 0);
   }
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
+  if (scenario.directLqi) {
+    for (const [id, lqi] of Object.entries(scenario.directLqi)) {
+      const line = page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${id}"] .lqi`);
+      await line.filter({ hasText: String(lqi) }).waitFor();
+      if ((await line.textContent()).trim() !== String(lqi)) throw new Error(`direct LQI frame missing ${id}=${lqi}`);
+    }
+    result.directLqi = { values: scenario.directLqi, diagnosticStatesAbsent: true };
+  }
   return result;
 }
 

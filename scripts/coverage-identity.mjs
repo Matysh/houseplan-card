@@ -105,4 +105,3 @@ export function identifyScript(index, { url, source }) {
   if (matches.length !== 1) return { status: 'unknown', reason: 'foreign-script-bytes', url, hash };
   return { status: 'verified', file: matches[0], hash, canonical: matches[0].path };
 }
-

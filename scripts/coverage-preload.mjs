@@ -154,4 +154,3 @@ if (process.env.HP_DIAGNOSTIC_COVERAGE === '1' && process.env.HP_COVERAGE_DIR) {
     saveNode(); metadata(); session.disconnect();
   });
 }
-

@@ -1359,5 +1359,6 @@
   "svg.too_large": "SVG images exceed the 25 MB limit.",
   "svg.view_required": "Switch to View mode to export the current view.",
   "svg.cancelled": "Export cancelled: the plan or access permissions changed.",
-  "svg.not_ready": "The plan is still loading. Try downloading it when loading is complete."
+  "svg.not_ready": "The plan is still loading. Try downloading it when loading is complete.",
+  "tip.signal_last_known": "Last known value, source unavailable"
 }

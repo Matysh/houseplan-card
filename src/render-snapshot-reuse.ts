@@ -42,6 +42,7 @@ import type { RenderSnapshotHost, RenderSnapshotReuse, RenderSnapshotWindow } fr
 import type { ResolvedDevicePresentation } from './device-presentation';
 import { PresentationLightFrame } from './presentation-light-frame';
 import type { DevItem } from './types';
+import { directSignalReadings } from './device-signal-runtime';
 
 /** A recorded iteration of the states map: the device depends on every row. */
 const EVERY_ROW = '\u0000*';
@@ -96,7 +97,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
         host._serverCfg?.spaces?.map(space => [space.id,space.settings?.show_device_battery_mode])]),
     ];
     const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, frame?.topology,
-      host._reducedMotion, host._showHidden === true];
+      host._reducedMotion, host._showHidden === true, directSignalReadings(hass)];
     for (const name of Object.keys(host.hass || {}).sort()) if (name !== 'states') inputs.push(name, host.hass[name]);
     for (const [id, runtime] of host._activityRt) {
       const expires = runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS;

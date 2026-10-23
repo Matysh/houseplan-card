@@ -6,6 +6,11 @@
   integration path catches up. Exact native points remain separate; confirmed
   Dreame cleanup starts no longer show the previous current trail. Diagnostics
   distinguish live positions from integration snapshots. (#1049)
+- Read Zigbee signal directly from Zigbee2MQTT and ZHA without enabling
+  diagnostic entities. Existing device/room readings use the same values;
+  Home Assistant diagnostics remain the fallback. Custom MQTT base topics
+  can be configured with Zigbee links off. Revoked or interrupted signal feeds
+  also retire cleanly when Home Assistant asynchronously refuses unsubscribe. (#1029)
 
 - Recover the current Dreame path after transport map/frame resets instead of
   leaving a previous cleanup's trail behind the moving robot. Diagnostics now

@@ -1,4 +1,5 @@
 import { renderDeviceIssues } from './device-issues-view';
+import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
@@ -570,6 +571,7 @@ const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
 export class HouseplanCard extends LitElement {
   constructor() {
     super();
+    new DeviceSignalController(this, () => this.hass, () => { this._hassSequence++; });
     new LazyChromeTooltips(this, () => this._mode === 'view' ? `view:${this._space}`
       : `${this._editorSecondaryContextId}:${JSON.stringify(this._editorRuntime?.properties.identity)}`);
   }

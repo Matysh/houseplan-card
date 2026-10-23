@@ -13,6 +13,31 @@ The artifact has no gate/release/mutation authority. Recipe, limits, provenance,
 interpretation and the separately measured form-kit cleanup are documented in
 `docs/audits/parallel-paths-1018.md` and the issue handoff.
 
+## Direct Zigbee LQI #1029
+
+Run `node --test test/device-signal-runtime.test.mjs test/device-signal.test.mjs`
+after test compilation, and the real Linux HA subset
+`python -m pytest tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q`.
+The adapters exercise both gateway shapes (HA 2024.6 and current gateway proxy)
+with fake radios, not a real radio installation. All MQTT receive/status callbacks
+must carry HA `@callback`: an unmarked function runs registry/cache code in an
+executor despite looking correct in a direct fake callback invocation. The fake
+transport explicitly checks that public HA callback classification.
+
+`node demo/smoke_direct_zigbee_lqi.mjs` proves the public subscription without HA
+LQI states, shared full/static/preview updates, zero, derived badges, Flat/2.5D,
+kiosk and no radio commands. Its same-connection direct/HA screenshot comparison
+holds the camera/layout authority constant; replacing the connection itself
+correctly triggers a plan reload and is a different scenario. PNGs/evidence live
+under `artifacts/direct-zigbee-lqi-1029/`; no global baselines are changed.
+The 200-radio/600-marker/four-consumer HA witness checks exact subscription counts,
+coalescing and unload, with ordinary negative inputs for source/ACL/payload guards.
+Registered mutation witnesses are readiness-only during task work.
+Integrated with #1049, the initial View graph measures339368 B gzip against
+the old336203-B ceiling. Its reference moves to the measured fact; the2000-B
+band and352000-B absolute budget stay unchanged. Total JS measures3410642 B,
+with other monolith counters inside their existing bands.
+
 ## Dreame native recovery #1048
 
 The ordinary-camera saved coordinate floor/slot is compared separately from
@@ -4399,6 +4424,18 @@ Windows. The existing optical-lettering registry witness stays static checked
 only; no development mutation execution.
 
 ## Browser progress checks on task pushes (#983)
+
+For direct own-device signal (#1029), selected scenes
+`direct-zigbee-lqi-flat-dark` and `direct-zigbee-lqi-iso-dark` feed the actual
+authenticated subscription with 137 and real zero after removing HA LQI values.
+Their semantic checks require both numbers before capture. The focused
+`smoke_direct_zigbee_lqi.mjs` additionally compares direct and HA reading pixels
+in both projections on the same connection. Only the two new frames are declared
+pending; existing HA-fed frames have no intentional delta.
+HA's WebSocket unsubscribe callback is asynchronous and can reject a server
+revocation with `invalid_subscription`; direct-feed teardown contains both
+sync throws and rejected promises. The runtime unit covers release, server
+closed and late resolution after cancellation with that real callback shape.
 
 For delayed vacuum paths (#1049), `node demo/smoke_vacuum_live_tail.mjs` is the
 focused animation/pixel witness (View/kiosk, Flat/2.5D); do not debug it through

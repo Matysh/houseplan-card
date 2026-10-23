@@ -409,6 +409,16 @@ export class HpZigbeeTopologySettings extends LitElement {
     </div>`;
   }
 
+  private _topicInput(embedded: boolean): TemplateResult {
+    return html`<div class=${embedded ? 'hpf-field' : 'provider'}>
+      <span class="hpf-label hpf-labelrow"><label for="z2m-topics">${this._t('z2m_topics')}</label>${this._help('topics_help','topics_help_aria')}</span>
+      <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" class=${embedded ? 'hpf-input' : ''} rows="2" spellcheck="false"
+        ?disabled=${!this._admin || this._actionsBusy} aria-invalid=${this._invalidTopic ? 'true' : nothing}
+        .value=${this._topicText} @input=${(event: Event) => this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
+      ${this._invalidTopic ? html`<p class="warning" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
+    </div>`;
+  }
+
   protected render() {
     ensureSettingsDialogStyles(this);
     if (this.embedded) return this._renderEmbedded();
@@ -431,6 +441,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       </label>
       <div class="hint">${this._t('hint')}</div>
       ${!admin ? html`<div class="hint">${this._t('admin_only')}</div>` : nothing}
+      ${this._topicInput(false)}
       ${enabled ? html`<div class="providers">
         ${!this.savedEnabled ? html`<div class="hint">${this._t(this.prepareLoad ? 'save_and_load_help' : 'save_first')}</div>` : nothing}
         <div class="provider">
@@ -446,11 +457,6 @@ export class HpZigbeeTopologySettings extends LitElement {
         </div>
         <div class="provider">
           <div class="provider-title">${this._t('z2m')}</div>
-          <label class="hint" for="z2m-topics">${this._t('z2m_topics')}</label>
-          <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" ?disabled=${!admin || this._actionsBusy}
-            .value=${this._topicText} @input=${(event: Event) =>
-              this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
-          ${this._invalidTopic ? html`<div class="warning">${this._t('error_invalid_topic')}</div>` : nothing}
           <div class="warning">${this._t('z2m_warning')}</div>
           ${topics.map(topic => this._z2mRow(topic, mayLoad, false, diagnostics.get(`z2m:${topic}`)!))}
           ${this._incompleteDetails('z2m', diagnostics)}
@@ -486,13 +492,6 @@ export class HpZigbeeTopologySettings extends LitElement {
     const z2m = html`<section class="hpf-provider">
       <div class="hpf-sub"><h4>${this._t('z2m')}</h4></div>
       <p class="hpf-hint">${this._t('z2m_duration')}</p>
-      <div class="hpf-field">
-        <span class="hpf-label hpf-labelrow"><label for="z2m-topics">${this._t('z2m_topics')}</label>${this._help('topics_help','topics_help_aria')}</span>
-        <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" class="hpf-input" rows="2" spellcheck="false" ?disabled=${!admin || this._actionsBusy}
-          aria-invalid=${this._invalidTopic ? 'true' : nothing}
-          .value=${this._topicText} @input=${(event: Event) => this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
-        ${this._invalidTopic ? html`<p class="hpf-error" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
-      </div>
       ${this._topics().map(topic => this._z2mRow(topic, mayLoad, true, diagnostics.get(`z2m:${topic}`)!))}
       ${this._incompleteDetails('z2m', diagnostics)}
     </section>`;
@@ -502,6 +501,7 @@ export class HpZigbeeTopologySettings extends LitElement {
         <input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin || this._actionsBusy} aria-label=${this._t('toggle')}
           @change=${(event: Event) => this._emit({ ...this.value, enabled: (event.target as HTMLInputElement).checked })} />
       </label>${!admin ? html`<p class="hpf-hint">${this._t('admin_only')}</p>` : nothing}`,
+      this._topicInput(true),
       enabled ? html`
         ${!this.savedEnabled ? html`<div class="hpf-callout"><p>${this._t(this.prepareLoad ? 'save_and_load_help' : 'save_first')}</p></div>` : nothing}
         ${presence.zha === 'unknown' || presence.z2m === 'unknown' ? html`<p class="hpf-hint">${this._t('discovery_unknown')}</p>` : nothing}
