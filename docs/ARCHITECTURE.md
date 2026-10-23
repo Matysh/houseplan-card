@@ -3,6 +3,8 @@
 The config-authority browser witness (#1052) isolates late foreign-event reads
 from already-started mandatory and optional capability reads. It observes the
 transport boundary without changing the production subscription or writer.
+The read-only cold-start witness uses the same separation for optional failure
+and active-tab no-op checks, retaining exactly one mandatory layout read.
 
 Decor creation (#1047) keeps native selection authoritative for the current
 Properties target even when the previous object still exists. Field completion

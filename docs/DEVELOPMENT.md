@@ -11,6 +11,11 @@ read-only phase/stack diagnostics reproduced two reads before A and two after A.
 All authority, write-counter and accepted-B assertions remain. The existing
 `config-old-subscription-interrupts-new-paired-load` witness retains the actual
 subscription guard; only static readiness is checked during development.
+`smoke_readonly_cold_start.mjs` likewise records the initial config count after
+the complete cold frame. Exactly one layout read establishes the mandatory
+pair; neither optional subscription failures nor clicking the active tab may
+increase either count. The ordinary pre-fix diagnostic observed config 2/layout
+1 both before and after the observation window, with the same two initial stacks.
 
 ## Decor creation selection #1047
 

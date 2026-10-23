@@ -28,6 +28,8 @@ Everything computable from the tree and git; regenerate, never edit by hand
 Config-authority smoke (#1052) compares reads across the late-A boundary;
 the independent direct-LQI capability probe no longer looks like a stale-event
 reload. Mandatory paired loading and all authority assertions remain covered.
+The read-only cold-start test also compares settled read counts rather than
+mistaking an independent initial capability probe for a full-load retry.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of
