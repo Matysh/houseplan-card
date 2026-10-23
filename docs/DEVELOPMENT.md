@@ -4368,7 +4368,8 @@ ship/show/ask (#1044). It reads the complete task diff from its merge base with
 `origin/dev`, not merely the last push; range guards retain their separate
 `GREEN_BASE`. Smokes come from changed entries,
 smoke-select and declared AC; unproven source/shared harness coverage adds the
-bounded visual minimum. `ci:full` explicitly requests the full matrix.
+bounded visual minimum. `ci:full` expands coverage to the full matrix, without
+accepting global baselines: declared task deltas remain pending until beta.
 `ci:golden` requests connected scenes plus the issue's visual intent. An unknown
 render connection requires an explicit scene plan, with an actionable error;
 it never silently skips the change or expands to every Golden scene.
@@ -4406,8 +4407,8 @@ does not say that a person reviewed the image.
 
 `proof.json.browserPlan` records selected coverage, intent and actual job result.
 Compatible task proof serves S7/merge; it never proves release completeness.
-Nightly captures the full matrix and distinguishes declared pending visual drift
-from errors/unexpected changes. Its pending visual result cannot mint a reusable
+Nightly and task `ci:full` capture the full matrix and distinguish declared pending visual drift
+from errors/unexpected changes. A pending visual result cannot mint a reusable
 accepted-Golden producer or satisfy release policy. Before beta, beta-derived
 aggregates current pending intent with explicit release inputs; canonical full
 acceptance still requires complete Linux provenance, all scene checks, environment

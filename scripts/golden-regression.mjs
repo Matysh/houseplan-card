@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Full dev diagnostics may contain declared pending changes. Release proof may not.
+// Full task/dev diagnostics may contain declared pending changes. Release proof may not.
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -9,7 +9,8 @@ import { readPendingVisualIntents } from './task-visual-intent.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 
 export function pendingVisualAllowed(env = process.env) {
-  return env.REF_NAME === 'dev' && String(env.CANDIDATE_INPUT) !== 'true'
+  const development = env.REF_NAME === 'dev' || /^issue\/[1-9]\d+-/.test(env.REF_NAME || '');
+  return development && String(env.CANDIDATE_INPUT) !== 'true'
     && !/^Release:\s*\S+/m.test(env.HEAD_MESSAGE || '');
 }
 
@@ -23,7 +24,7 @@ export function judgePendingGolden(report, pending, sceneIds = GOLDEN_SCENARIOS.
   if (invalid.length) return { success: false, pendingVisual: false,
     reason: `undeclared or invalid golden changes: ${invalid.map(r => r.id).join(', ')}` };
   return { success: true, pendingVisual: report.baselineManifest?.valid !== true || results.some(r => r.status !== 'passed'),
-    reason: 'complete dev matrix; declared pending images still require beta acceptance' };
+    reason: 'complete development matrix; declared pending images still require beta acceptance' };
 }
 
 export function runGoldenRegression({ root = process.cwd(), env = process.env,
