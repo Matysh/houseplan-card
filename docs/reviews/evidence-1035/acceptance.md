@@ -118,6 +118,16 @@ The owner's standing permission for minor costly-to-remove overages sets the
 explicit runtime cap to 11732; the 50-line band and rejection predicate stay
 unchanged. The feature implementation remains in dedicated modules.
 
+Acceptance after #1033: [CI 39934872695](https://github.com/Matysh/houseplan-card/actions/runs/39934872695),
+source `628b6e0cc9f559602224e0a9392e723c107596f4`, fingerprint
+`2cf7aa4f9835f719858ea1e532b3e74a159c550e0f17137b7427bc6db17eba6c`.
+The complete matrix again reports 216 passed and exactly the same four expected
+decor differences. The four current pairs were visually reviewed; all controls
+fit and the colour dialogs are unchanged. WSL Linux reviewed acceptance changed
+exactly those four IDs, preserving 216 images, including #1033's download frame
+and both LED frames, with 190 byte-identical environment witnesses (floor 10).
+The combined-source decor smoke and the 242-second local pre-push gate passed.
+
 The first full Validate found an obsolete action-list comparison in
 `smoke_ui_polish_963_reference`: the immutable #963 prototype predates the two
 intentional #1035 actions. The comparator retains exact ordered state/text/paint

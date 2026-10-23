@@ -1,8 +1,8 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-23T08:46:30.856Z",
-  "sourceFingerprint": "2421937ca9864a50793854fb6af04bb5ce8b13acd5556dcf2b38fb869719113c",
+  "acceptedAt": "2026-10-23T09:59:53.398Z",
+  "sourceFingerprint": "2cf7aa4f9835f719858ea1e532b3e74a159c550e0f17137b7427bc6db17eba6c",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
   "acceptedOn": "linux",
@@ -10,18 +10,18 @@
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "2421937ca9864a50793854fb6af04bb5ce8b13acd5556dcf2b38fb869719113c",
+    "buildFingerprint": "2cf7aa4f9835f719858ea1e532b3e74a159c550e0f17137b7427bc6db17eba6c",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39925838271,
+      "run": 39934872695,
       "attempt": 1,
-      "sha": "69e539106bd8913e00b1a291e08b435393b11f72"
+      "sha": "628b6e0cc9f559602224e0a9392e723c107596f4"
     }
   },
   "localAttestation": null,
   "foreignCapture": null,
   "witnesses": {
-    "count": 196,
+    "count": 190,
     "floor": 10
   },
   "scenarios": {
@@ -125,7 +125,7 @@
     "tray-wide-selection-en": "565c0df898a91c14a801ac55a44719ad40b58e21a0d244071e4241857b5b77b0",
     "tray-wide-tool-ru": "b173770ddf6722ddbfeeaddf8a2ce93019c91ca4003d119d91c4d0ea0504a811",
     "tray-medium-group-en": "c16dab90ae79a20daa1f3a5c07a6e84dbefe0cec1fdbbd59d20f41bb18853502",
-    "tray-medium-selection-ru": "58ee68c2f976ab9df1a2694363283f16643fb867b5b8ad346df479f4fe158e0c",
+    "tray-medium-selection-ru": "ef41a948ebd196e07a3a8f04722a58e0a4b3f482a52546a195baaed41c8fdb03",
     "tray-narrow-palette-en": "36d7508ed9e1426e56d333eaf264ad99aac14158ff1338249ccf4c76b7716582",
     "furniture-categories-light": "94153e6c353f872a32339f9e908b7f3c58557aaf63e886db6c1274242c02ab07",
     "furniture-variants-dark": "5f7121c10724cbbff33a3bfaf1339600aeb276846e9dfdef53a1c1f85b552677",
@@ -134,7 +134,7 @@
     "furniture-plan-art-dark": "694915d0f8d73973fca24b087f57a0a66e775089b0de14285dcac23da6b5040b",
     "furniture-new-symbols-light": "57abb0f217f6aca467fef839f4624cdea63e6d0a8227ef05a874964986ea48b7",
     "furniture-corrected-art-light": "0c5335ba8d01a6f62faaf01ccbf9fb6a94a60d557b0f44f3a4343cdf7e600e25",
-    "furniture-transform-light": "5bce623f311cd762923d681c451139429bc6f94b47097006dac457489c7c5853",
+    "furniture-transform-light": "4ef2c7366ad56870880ab58f7869ae01936038c609d30021e99211cc94014ff1",
     "furniture-transform-dark": "52d151aa6030a78981a9fa5918c79b0713d190ee83545db7b7a1561d99390a01",
     "tray-narrow-tool-ru": "15449a8b70410238d8151842941464970076f9b75f6b1344db2c77e33e6ffd9f",
     "geometry-diagonal-45-opening-dark": "f8ac37642cfb445f9a977d8e2a2e9b95c230481984b457c10a5a7b1bb8e87e06",
@@ -209,8 +209,8 @@
     "toggle-entity-dialog-desktop-en": "69262447805811f6959fcd053e97ae88024758e700cfe8feaf4c5e0de07f8724",
     "toggle-entity-dialog-mobile-ru": "a8c4d4f4cdf18a25903f60c6b6f7dc3e5f47dcc60ca8730a1303d16f7b4faca0",
     "device-help-popover-light-ru": "899b41f9b31340481f12e509bc0a503c6b3a81dc1e9fceaee72ae423b603fbc0",
-    "decor-color-popover-mobile-ru": "a0d6a5e0f6ba7869a8c78ec6ea38494a42c0a5cdb073511458577240ac32183b",
-    "decor-color-popover-desktop-en": "ccce36695943a8bd4f9040127646556016e38589148712b00da0ebc04045606a",
+    "decor-color-popover-mobile-ru": "aa01f6df23e7f2baec18f4c9260a95c01738a46ca49d940aaa699359ec2a781f",
+    "decor-color-popover-desktop-en": "c5bb2ac82e6cd5ef2cdfbaa9051ea389a45bee18dafa76acb4762acd00376bcb",
     "general-color-popover-desktop-en": "1f5f5e68e833960685923af381331783ec9069054b28b74a19f50a031365b966",
     "settings-help-zoom-200-en-light": "31dc076a736498233651dd22c44cc819536a4b3436f8b7707cfb0a51f07982cc",
     "settings-help-zoom-200-ru-dark": "96d3384c5be8ca28355554a7d6ba9355238f8c21ef19b0c92ec56ba75c4d1c0f",
