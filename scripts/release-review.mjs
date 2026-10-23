@@ -22,6 +22,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import { buildReleaseMembership, issueTrailers, validateReleaseMembership } from './release-membership.mjs';
 import { readTaskCommit, taskDelivery } from './task-delivery.mjs';
 import { classify } from './process-gate.mjs';
+import { isBetaCommit, parseSourceCommitLog, renderSourceGrowth, sourceGrowthMetrics } from './source-replacement.mjs';
 
 export const RELEASE_REVIEW_DIR = 'docs/reviews';
 export const STABLE_TAG_RE = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -68,7 +69,7 @@ export function buildLineMembership({ tag, candidate, base, commits }) {
   return validateReleaseMembership(manifest, { tag, candidate });
 }
 
-export function renderBrief({ membership, files, runUrl = '' }) {
+export function renderBrief({ membership, files, runUrl = '', sourceGrowth = null }) {
   const product = productFiles(files);
   const lines = [
     `# Вход независимого ревью ${membership.tag}`,
@@ -91,6 +92,7 @@ export function renderBrief({ membership, files, runUrl = '' }) {
     `Всего файлов в диффе линии: ${files.length}.`,
     '',
   ];
+  if (sourceGrowth) lines.push(renderSourceGrowth(sourceGrowth, 'прошлый стабильный..кандидат').trim(), '');
   return lines.filter((line, index) => line !== '' || lines[index - 1] !== '').join('\n');
 }
 
@@ -115,7 +117,9 @@ export function readLine(tag, candidate) {
   const files = base
     ? git(['diff', '--name-only', base.sha, candidate]).split('\n').filter(Boolean)
     : git(['ls-tree', '-r', '--name-only', candidate]).split('\n').filter(Boolean);
-  return { base, commits, files };
+  const sourceCommits = parseSourceCommitLog(git(['log', '--no-renames', '--numstat',
+    '--format=%x1e%H%x1f%cI%x1f%B%x1f', range]));
+  return { base, commits, files, sourceGrowth: sourceGrowthMetrics(sourceCommits.filter(commit => !isBetaCommit(commit))) };
 }
 
 if (isMainModule(import.meta.url)) {
@@ -128,11 +132,11 @@ if (isMainModule(import.meta.url)) {
     } else if (command === 'prepare') {
       const candidate = value('candidate');
       const out = resolve(value('out') || '.');
-      const { base, commits, files } = readLine(tag, candidate);
+      const { base, commits, files, sourceGrowth } = readLine(tag, candidate);
       const membership = buildLineMembership({ tag, candidate, base, commits });
       mkdirSync(out, { recursive: true });
       writeFileSync(join(out, 'line-membership.json'), `${JSON.stringify(membership, null, 2)}\n`);
-      writeFileSync(join(out, 'brief.md'), renderBrief({ membership, files, runUrl: value('run-url') }));
+      writeFileSync(join(out, 'brief.md'), renderBrief({ membership, files, sourceGrowth, runUrl: value('run-url') }));
       console.log(`doc=${releaseReviewDocPath(tag)}`);
       console.log(`base=${base ? base.tag : ''}`);
       console.log(`issues=${membership.issues.map((row) => row.number).join(',')}`);

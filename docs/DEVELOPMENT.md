@@ -3571,6 +3571,14 @@ SHA is the authority; these are sandbox numbers.
 
 ## Release
 
+Source replacement accounting (#1014): `node scripts/process-metrics.mjs
+--source-range=v1.82.0..origin/dev --output=artifacts/source-growth.md
+--json=artifacts/source-growth.json` reads the exact Git range locally, without
+GitHub calls. The weekly report and independent line-review brief use the same
+source churn definition: text in `src/**`, excluding i18n and release promotions;
+decrease share and net lines are grouped by commit type. These measurements
+are advisory and do not alter release or review gates.
+
 `node demo/smoke_room_metrics_alignment.mjs` (#1039) checks live room captions
 and independently opened offline SVG downloads across projections, scales and
 roles. `HP_ROOM_ALIGNMENT_EVIDENCE_DIR` optionally keeps a private SVG/PNG pair.

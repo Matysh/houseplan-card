@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 65, issue: 33. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 69, issue: 35. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -11,6 +11,9 @@
 | #1048 | [SPEC-REVIEW-1048-r1.md](SPEC-REVIEW-1048-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1048 | [CODE-REVIEW-1048-r1.md](CODE-REVIEW-1048-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1046 | [SPEC-REVIEW-1046-r1.md](SPEC-REVIEW-1046-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | AC1/AC6 называют доказательство несуществующим и | — |
+| #1046 | [SPEC-REVIEW-1046-r2.md](SPEC-REVIEW-1046-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #1045 | [SPEC-REVIEW-1045-r1.md](SPEC-REVIEW-1045-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | не названы итоговые строки для write_conflict/write_unavailable/update_required | — |
+| #1045 | [SPEC-REVIEW-1045-r2.md](SPEC-REVIEW-1045-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1044 | [SPEC-REVIEW-1044-r1.md](SPEC-REVIEW-1044-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1044 | [CODE-REVIEW-1044-r1.md](CODE-REVIEW-1044-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — | — |
 | #1044 | [CODE-REVIEW-1044-r3.md](CODE-REVIEW-1044-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
@@ -46,6 +49,7 @@
 | #1018 | [SPEC-REVIEW-1018-r1.md](SPEC-REVIEW-1018-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1016 | [CODE-REVIEW-1016-r1.md](CODE-REVIEW-1016-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | устаревшая формулировка в docs/TESTING.md:385 | `docs/TESTING.md` `bundle-sync.mjs` `AGENTS.md` `PROCESS.md` `docs/ARCHITECTURE.md` `docs/DEVELOPMENT.md` `docs/STATUS.md` `docs/process/AUTHOR.md` |
 | #1016 | [CODE-REVIEW-1016-r2.md](CODE-REVIEW-1016-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #1014 | [CODE-REVIEW-1014-r1.md](CODE-REVIEW-1014-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1013 | [CODE-REVIEW-1013-r1.md](CODE-REVIEW-1013-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1013 | [CODE-REVIEW-1013-r2.md](CODE-REVIEW-1013-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1012 | [CODE-REVIEW-1012-r1.md](CODE-REVIEW-1012-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |

@@ -41,6 +41,11 @@ across compatible transport map/frame resets, without clearing history or
 recalibrating. Saved coordinate floor/slot and serial collector ownership
 remain separate fences. Diagnostics distinguish retained errored geometry.
 
+Source replacement (#1014): replacements remove the old path in the same
+commit, or the handoff names its location, reason and removal issue. Source
+growth above 3× deletions produces advice only; review judges the explanation.
+Weekly metrics and the stable line-review brief share Git source churn counts.
+
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
 renderer, with the dark body cut out beneath the core so the real plan shows
 through. On/unavailable paint, rim, geometry and interactions stay unchanged.
