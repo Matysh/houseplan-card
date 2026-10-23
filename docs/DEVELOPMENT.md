@@ -10,6 +10,11 @@ recovery through the actual HA recorder/collector and synthetic camera reads;
 geometry and the real diagnostics dialog in View/kiosk Flat/2.5D. These are
 synthetic offline proofs, not a deployment to the owner's HA. The focused
 pre-fix run reproduced 19 geometry failures with 4 foreign-map controls passing.
+The task adds `vacuum-retained-path-diagnostics-dark` as an explicitly new
+selected Golden scene: the retained explanation, reason, counts and accepted
+timestamp must be visible without horizontal clipping. Existing accepted
+scenes are not intentionally changed. Task capture is not baseline acceptance;
+the complete canonical Linux artifact is accepted only before a beta.
 
 ## Device contacts #1003 — local evidence
 

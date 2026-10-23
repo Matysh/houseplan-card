@@ -7,5 +7,17 @@
   "summary": {
     "ru": "Исправлено зависание старого пути Dreame между уборками; диагностика явно отмечает удержанный снимок с ошибкой.",
     "en": "Fix stale Dreame trails across cleanups and identify retained errored paths in diagnostics."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      {
+        "id": "vacuum-retained-path-diagnostics-dark",
+        "expectation": "new",
+        "reason": "New retained-native diagnostics row must visibly explain that new data was rejected while the old path remains. Existing accepted scenes are not intentionally changed."
+      }
+    ],
+    "smokes": ["smoke_vacuum_native_lifecycle.mjs"]
   }
 }

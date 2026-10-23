@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 80;
+export const GOLDEN_MATRIX_VERSION = 81;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -530,6 +530,17 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       previous: [[160, 760], [300, 650], [420, 740], [560, 600]],
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'vacuum-retained-path-diagnostics-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    dialog: 'device', deviceId: 'golden-vacuum-trail', vacuumRetained: true, language: 'en',
+    vacuumTrail: {
+      maxDeviationCm: 17.5,
+      current: denseVacuumPath([
+        [[180, 220], [360, 220], [360, 420], [520, 420]],
+        [[650, 240], [780, 240], [780, 500], [650, 620], [850, 760]],
+      ]),
+      previous: [[160, 760], [300, 650], [420, 740], [560, 600]],
+    },
+    theme: 'dark', viewport: { width: 1200, height: 1000 }, ...page },
   { id: 'room-label-parity-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     roomLabelParity: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...page },
   { id: 'room-co2-flat-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',

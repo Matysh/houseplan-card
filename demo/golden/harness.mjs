@@ -1073,7 +1073,8 @@ export async function prepareGoldenScenario(page, scenario) {
             current: {
               map_id: 'golden-trail', started: 2, ended: null, path_format: 2,
               paths: structuredClone(scenario.vacuumTrail.current),
-              quality: { source: 'native', reason: 'ok' }, final_status: 'unconfirmed',
+              quality: { source: 'native', reason: scenario.vacuumRetained ? 'coordinates_unverified' : 'ok' },
+              ...(scenario.vacuumRetained ? { received_at: 100 } : {}), final_status: 'unconfirmed',
             },
             previous: {
               map_id: 'golden-trail', started: 1, ended: 2, path_format: 2,
@@ -1986,11 +1987,28 @@ export async function prepareGoldenScenario(page, scenario) {
       card._openMarkerDialog(device);
       await card.updateComplete;
       const settings = card.renderRoot.querySelector('hp-dialog');
-      const target = scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
+      const target = scenario.vacuumRetained ? 'vacuum' : scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
       const navigation = settings?.querySelector(`[data-section-target="${target}"]`);
       if (!navigation) throw new Error(`golden device settings section missing: ${target}`);
       navigation.click();
       await card.updateComplete;
+      if (scenario.vacuumRetained) {
+        const details = settings.querySelector('.hpf-profile-diagnostics');
+        details?.querySelector('summary')?.click();
+        await card.updateComplete;
+        const info = card._vacTrailDiagnostics(device);
+        const label = 'Showing the last accepted path; new data has not been accepted';
+        const row = [...settings.querySelectorAll('.vacdiag > div')].find(item => item.textContent.includes(label));
+        const body = settings.shadowRoot?.querySelector('.content');
+        if (!body || !row || !details?.open || info.display !== 'vac.trail_display_retained'
+            || info.reason !== 'coordinates_unverified' || !(info.rendered > 0))
+          throw new Error('golden retained native diagnostics are not actually shown');
+        body.scrollTop += details.getBoundingClientRect().top - body.getBoundingClientRect().top - 12;
+        await frame();
+        const box = row.getBoundingClientRect(), view = body.getBoundingClientRect();
+        if (box.top < view.top || box.bottom > view.bottom || row.scrollWidth > row.clientWidth + 1)
+          throw new Error('golden retained native explanation is clipped or outside the capture');
+      }
       if (scenario.deviceLightControls) {
         card._setMarkerLightRole('always');
         await card.updateComplete;
