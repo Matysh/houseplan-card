@@ -39,9 +39,20 @@ export function controllerSupportsRegistry(root = process.cwd()) {
 }
 export function intentPolicy(env = process.env, version = JSON.parse(readFileSync('package.json', 'utf8')).version,
   { registrySupported = true } = {}) {
-  const release = /^Release:\s*\S+/m.test(env.HEAD_MESSAGE || '') && !/^issue\//.test(env.REF_NAME || '');
+  const refName = String(env.REF_NAME || env.GITHUB_REF_NAME || env.GITHUB_REF || '').replace(/^refs\/(?:heads|tags)\//, '');
+  const task = /^issue\//.test(refName);
+  const releaseTag = /^Release:\s*(\S+)\s*$/m.exec(env.HEAD_MESSAGE || '')?.[1];
+  const release = Boolean(releaseTag) && !task;
+  const candidate = bool(env.CANDIDATE_INPUT);
+  const stableVersion = value => /^v?\d+\.\d+\.\d+(?:\+[\w.-]+)?$/.test(value || '');
+  const tag = env.GITHUB_REF_TYPE === 'tag' || /^refs\/tags\//.test(env.GITHUB_REF || '');
+  // The development tree keeps the previous stable version until a candidate
+  // is prepared. Only release intent, not that ordinary package version, asks
+  // for fresh stable execution. Unknown/local refs retain exact-input reuse.
+  const stable = !task && (release && stableVersion(releaseTag) || tag && stableVersion(refName)
+    || stableVersion(version) && (refName === 'main' || candidate));
   const policy = registryPolicy({ fresh: bool(env.FRESH_INPUT), night: bool(env.NIGHT_INPUT),
-    stable: !version.includes('-'), candidate: bool(env.CANDIDATE_INPUT) || release && version.includes('-beta.') });
+    stable, candidate: candidate || release && version.includes('-beta.') });
   if (!registrySupported && (env.GITHUB_EVENT_NAME || env.EVENT_NAME) === 'workflow_dispatch' && !bool(env.CANDIDATE_INPUT))
     return { ...policy, allowed: false, reason: 'fresh bootstrap for the pre-registry dev controller' };
   return policy;

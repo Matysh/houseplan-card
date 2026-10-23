@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JOB_RULES } from '../scripts/ci-proof.mjs';
 import { validateJobs } from '../scripts/workflow-jobs.mjs';
+import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { posixCommand, shellPath } from './helpers/posix-shell.mjs';
 
 // #336. Воркфлоу — не текст, а контракт, и ломается он молча: висячая
 // зависимость `needs` не роняет YAML, а просто навсегда пропускает job, и
@@ -212,8 +215,15 @@ test('гейт «новый код не добавляет any» вызывае�
 
 test('golden failure retains actual evidence and cannot create a reusable success marker (#386/#981)', () => {
   const workflow = read('validate.yml'), golden = jobsOf(workflow).chunks.get('golden');
-  assert.match(golden, /npm run golden:verify/);
-  assert.match(golden, /if: failure\(\) \|\| steps\.golden\.outputs\.has_baselines == 'false'/, 'failed capture reports remain available');
+  assert.match(golden, /run: node scripts\/golden-regression\.mjs/);
+  assert.match(golden, /REF_NAME: \$\{\{ github\.ref_name \}\}/);
+  assert.match(golden, /CANDIDATE_INPUT: \$\{\{ inputs\.candidate \}\}/);
+  assert.match(golden, /HEAD_MESSAGE: \$\{\{ github\.event\.head_commit\.message \}\}/,
+    'the wrapper receives strict candidate/release context, not only the branch');
+  assert.match(golden, /pending_visual: \$\{\{ steps\.golden\.outputs\.pending_visual \}\}/,
+    'pending visual diagnostics must reach proof and registry authority checks');
+  assert.match(golden, /if: failure\(\) \|\| steps\.golden\.outputs\.has_baselines == 'false' \|\| steps\.golden\.outputs\.pending_visual == 'true'/,
+    'both failures and expected pending differences retain their complete capture evidence');
   assert.doesNotMatch(golden, /\.reuse-marker|\.fail-marker|fail_note|gate-reuse\.mjs --note/);
   assert.match(golden, /ci-registry-cli\.mjs --stamp-job=golden/);
   const proof = jobsOf(workflow).chunks.get('proof');
@@ -222,7 +232,7 @@ test('golden failure retains actual evidence and cannot create a reusable succes
   assert.match(proof, /ci-registry-cli\.mjs --publish-proof=/);
 });
 
-test('классификация опирается на завершённый прогон, а не на предыдущий пуш (#387)', () => {
+test('task classification uses the complete task diff; integration pushes use a proven range (#387/#1044)', () => {
   const workflow = read('validate.yml');
   const changes = workflow.slice(
     workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'),
@@ -231,42 +241,106 @@ test('классификация опирается на завершённый 
   // предыдущего пуша штатно отменяется следующим. Классификация читать его
   // больше не имеет права. В процессном гейте он законен: там проверяются
   // трейлеры именно отправленных коммитов, а не объём проверок.
-  // `before` остаётся ровно одной проверкой — жив он или переписан (#347).
-  // Базой диапазона он больше не служит: его прогон штатно отменяется.
   assert.equal(/base="\$BEFORE_SHA"/.test(changes), false,
     'диапазон не имеет права опираться на голову предыдущего пуша (#387)');
-  assert.match(changes, /git cat-file -e "\$BEFORE_SHA"/,
-    'защита от force-push остаётся на месте (#347)');
+  const classify = findStep(workflow, { id: 'classify' });
+  assert.doesNotMatch(classify.run, /\$BEFORE_SHA/,
+    'rewriting a previous push cannot silently expand task validation to every family');
+  assert.match(classify.run, /refs\/heads\/issue\/\*\)[\s\S]*base=\$\(git merge-base origin\/dev "\$HEAD_SHA"\)/);
+  assert.match(classify.run, /base="\$GREEN_BASE"/);
   assert.match(changes, /node scripts\/classify-base\.mjs --head=/);
   assert.match(changes, /actions: read/, 'чтение прогонов требует прав');
   // У PR диапазон задан событием, считать его нечем и незачем.
   assert.match(changes, /if: github\.event_name != 'pull_request'/);
-  // На dev/main классификации нет вовсе — там всё true; шаг там считает базу
-  // диапазона для другого потребителя (#388, #619), и это разные выходы.
-  assert.match(changes, /dev\/main: без фильтров, всё true/);
   assert.match(changes, /--name=range_base/);
-  // Пустая база означает «доказательства нет» и обязана вести к полному
-  // прогону, а не к пустому диффу, который выглядел бы как «ничего не менялось».
-  const empty = changes.slice(changes.indexOf('if [ -z "$base" ]'));
-  assert.match(empty, /node scripts\/classify-changes\.mjs --all >> "\$GITHUB_OUTPUT"/,
-    'без базы классификация обязана раскрываться в полный прогон');
+  assert.match(classify.run, /git merge-base --is-ancestor "\$base" "\$HEAD_SHA"/);
+  const empty = classify.run.slice(classify.run.indexOf('if [ -z "$base" ]'));
+  assert.match(empty, /::error::Classification needs a proven ancestor:[\s\S]*exit 1/);
+  assert.doesNotMatch(empty, /--all/, 'an unproven range fails with a remedy instead of requesting all families');
 });
 
-test('#619: Validate на main раскрывает полный набор так же, как на dev', () => {
+test('#619/#1044: dev and main retain a proven base without forcing every check family', () => {
   const workflow = read('validate.yml');
   const changes = workflow.slice(
     workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'),
   );
   const integrationRefs = /\[ "\$REF" = "refs\/heads\/dev" \] \|\| \[ "\$REF" = "refs\/heads\/main" \]/g;
-  assert.equal(changes.match(integrationRefs)?.length, 2,
-    'base и classify обязаны одинаково распознавать dev/main');
-  assert.match(changes, /dev\/main: без фильтров, всё true/);
+  assert.equal(changes.match(integrationRefs)?.length, 1,
+    'the base step recognizes both integration branches; classification uses its proven output');
+  assert.doesNotMatch(changes, /dev\/main: без фильтров, всё true/);
 
   const frontend = workflow.slice(
     workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  smoke:\n'),
   );
   assert.match(frontend, integrationRefs,
     'no-new-any на main обязан судить диапазон от доказанного предка, а не HEAD..HEAD');
+});
+
+test('#1044 classifier shell retains whole-task scope after rewritten pushes and refuses unproven ranges', (t) => {
+  if (spawnSync(posixCommand('bash'), ['--version']).status !== 0) { t.skip('bash unavailable'); return; }
+  const root = mkdtempSync(join(tmpdir(), 'hp-classify-task-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  git('init', '-q');
+  git('config', 'user.name', 'Workflow fixture');
+  git('config', 'user.email', 'workflow@example.invalid');
+  mkdirSync(join(root, 'scripts'));
+  mkdirSync(join(root, 'src'));
+  mkdirSync(join(root, 'docs'));
+  // The real shell chooses the Git range. This sink observes its classifier
+  // invocation without coupling the range test to every classifier dependency.
+  writeFileSync(join(root, 'scripts/classify-changes.mjs'), `
+    import { readFileSync, writeFileSync } from 'node:fs';
+    writeFileSync(process.env.CLASSIFY_CALL, JSON.stringify({
+      args: process.argv.slice(2), files: process.argv.includes('--all') ? [] : readFileSync(0, 'utf8').trim().split('\\n').filter(Boolean),
+    }));
+    console.log('unknown_inputs=');
+  `);
+  writeFileSync(join(root, 'src/card.ts'), 'original\n');
+  writeFileSync(join(root, 'docs/task.md'), 'original\n');
+  git('add', '.'); git('commit', '-qm', 'base');
+  const base = git('rev-parse', 'HEAD');
+  git('update-ref', 'refs/remotes/origin/dev', base);
+  writeFileSync(join(root, 'src/card.ts'), 'task implementation\n');
+  git('add', '.'); git('commit', '-qm', 'implementation');
+  const previousGreen = git('rev-parse', 'HEAD');
+  writeFileSync(join(root, 'docs/task.md'), 'task evidence\n');
+  git('add', '.'); git('commit', '-qm', 'evidence');
+  const head = git('rev-parse', 'HEAD'), step = findStep(read('validate.yml'), { id: 'classify' });
+  let sequence = 0;
+  const run = (env = {}) => {
+    const call = join(root, `call-${sequence++}.json`);
+    const result = runStep(step, undefined, { cwd: root, env: { ...process.env,
+      REF: 'refs/heads/issue/1044-task', HEAD_SHA: head, GREEN_BASE: previousGreen,
+      EVENT_NAME: 'push', FULL: 'false', BEFORE_SHA: 'f'.repeat(40), BASE_SHA: '',
+      CLASSIFY_CALL: shellPath(call), GITHUB_OUTPUT: shellPath(join(root, 'outputs')),
+      GITHUB_STEP_SUMMARY: shellPath(join(root, 'summary')), ...env,
+    } });
+    return { ...result, call: existsSync(call) ? JSON.parse(readFileSync(call, 'utf8')) : null };
+  };
+  for (const green of [previousGreen, '']) {
+    const result = run({ GREEN_BASE: green });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(result.call, { args: [], files: ['docs/task.md', 'src/card.ts'] },
+      'all task changes remain selected even when the previous push disappeared or a recent push was green');
+  }
+  for (const ref of ['refs/heads/dev', 'refs/heads/main']) {
+    const result = run({ REF: ref });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(result.call, { args: [], files: ['docs/task.md'] }, 'integration uses the proven range');
+    const unknown = run({ REF: ref, GREEN_BASE: '' });
+    assert.notEqual(unknown.status, 0);
+    assert.equal(unknown.call, null);
+    assert.match(unknown.stdout, /resolve the Git base.*full=true/);
+  }
+  git('update-ref', '-d', 'refs/remotes/origin/dev');
+  const missing = run();
+  assert.notEqual(missing.status, 0);
+  assert.equal(missing.call, null);
+  assert.match(missing.stdout, /fetch origin\/dev.*full=true/);
+  const full = run({ FULL: 'true', GREEN_BASE: '' });
+  assert.equal(full.status, 0, full.stderr);
+  assert.deepEqual(full.call, { args: ['--all'], files: [] }, 'an explicit full request retains all-family authority');
 });
 
 test('перф-смок добавляет профиль ровно при своём выходе changes (#473 AC3)', () => {
@@ -281,10 +355,9 @@ test('перф-смок добавляет профиль ровно при св
   assert.match(changes, /unknown_inputs: \$\{\{ steps\.classify\.outputs\.unknown_inputs \}\}/);
   assert.match(changes, /sed -n 's\/\^unknown_inputs=\/\/p' \/tmp\/classify\.out/);
   assert.match(changes, /Неизвестные входы \(#492\)/);
-  // Все три fallback-а «без классификации» идут через тот же скрипт с --all:
-  // новый выход не может выпасть из fallback-а.
+  // Только намеренный full раскрывается через --all; недоказанная база — отказ.
   const fallbacks = changes.split('node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"').length - 1;
-  assert.equal(fallbacks, 3, 'fallback-и классификатора раскрываются через --all');
+  assert.equal(fallbacks, 1, 'only explicit full regression expands every family');
   assert.ok(!changes.includes("printf 'frontend=true"), 'ручной список выходов в fallback-е запрещён');
 
   const start = workflow.indexOf('\n  performance_smoke:\n');
@@ -322,7 +395,7 @@ test('#548: TS/Python parity — отдельная clean-runner job без ти
     'паритет не может становиться зелёным через skip/continue-on-error');
 
   const changes = workflow.slice(workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'));
-  assert.match(changes, /geometry_parity: \$\{\{ steps\.classify\.outputs\.geometry_parity == 'true' \|\| inputs\.full \}\}/);
+  assert.match(changes, /geometry_parity: \$\{\{ steps\.classify\.outputs\.geometry_parity == 'true' \|\| steps\.heavy\.outputs\.heavy == 'true' \}\}/);
   const reuse = workflow.slice(workflow.indexOf('\n  reuse:\n'), workflow.indexOf('\n  hacs:\n'));
   assert.match(reuse, /geometry_parity_key: \$\{\{ steps\.probe\.outputs\.geometry_parity_key \}\}/);
   assert.match(reuse, /node scripts\/ci-registry-cli\.mjs/);

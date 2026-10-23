@@ -136,6 +136,26 @@ test('#982 frontend evidence requires both computed unit jobs; absent or red too
   }
 });
 
+test('#1044 task proof can omit unrelated tooling; full regression cannot', () => {
+  const fixture = proofFixture({ full: false, mutants: false });
+  fixture.proof.selection.tooling = false;
+  fixture.jobs = fixture.jobs.filter(j => j.name !== names.tooling);
+  assert.equal(evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.mergeLight }).status, 'green');
+  fixture.proof.selection.tooling = true;
+  assert.equal(evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.mergeLight }).status, 'failed');
+  const full = proofFixture({ mutants: false });
+  full.proof.selection.tooling = false;
+  assert.equal(evaluateCiProof({ ...full, policy: CI_PROOF_POLICIES.release }).status, 'failed');
+});
+
+test('#1044 complete dev diagnostics with pending visuals never authorize a release', () => {
+  const fixture = proofFixture({ mutants: false });
+  fixture.proof.request.pendingVisual = true;
+  assert.equal(evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release }).status, 'stale');
+  delete fixture.proof.request.pendingVisual;
+  assert.equal(evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release }).status, 'green');
+});
+
 test('#656 AC: newest compatible full proof decides; light proofs do not', () => {
   const redFull = proofFixture({ id: 20, conclusion: 'failure' });
   const lightGreen = proofFixture({ id: 21, full: false, backend: false, integration: false });

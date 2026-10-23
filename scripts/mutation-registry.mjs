@@ -9341,7 +9341,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'classify-unknown-input-is-unaffected',
-    guard: 'node --test --test-name-pattern="неизвестный исполняемый вход расширяет" test/classify-changes.test.mjs',
+    guard: 'node --test --test-name-pattern="#1044: неизвестный инструмент" test/classify-changes.test.mjs',
     because: 'a changed executable file no check claims must widen the run to the full set; treating '
       + '"unknown" as "unaffected" is exactly how relay tests stayed unrun (#492 §5.2)',
     patches: [{
@@ -9464,8 +9464,8 @@ const MUTANT_DEFINITIONS = [
       + 'it without a green Validate on that SHA is the false-green the audit reproduced (#492 §4)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
-      replace: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = { result: 'green', url: 'skipped' }); // mutant: no validation",
+      find: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
+      replace: "      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = { result: 'green', url: 'skipped' }); // mutant: no validation",
     }],
   },
   {
@@ -17560,8 +17560,8 @@ const MUTANT_DEFINITIONS = [
       + 'wait for that run, not for the push run that carries no mutants (#510 AC3)',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      ops.dispatchValidate(branch);\n      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
-      replace: "      ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url } = await ops.waitValidate(candidate)); // mutant: push run, no dispatch",
+      find: "      ops.dispatchValidate(branch);\n      ops.log(`Validate с мутантами на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer }));",
+      replace: "      ops.log(`Validate на кандидате ${candidate.slice(0, 8)} — ждём`);\n      ({ result, url, runId, validation } = await ops.waitValidate(candidate)); // mutant: push run, no dispatch",
     }],
   },
   {
@@ -19088,8 +19088,8 @@ const MUTANT_DEFINITIONS = [
       + 'doubles runner minutes on every show/ship merge',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: "      ({ result, url, runId } = await ops.waitValidate(candidate, { event: 'push', wait: !defer }));",
-      replace: "      ops.dispatchValidate(branch); ({ result, url, runId } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer })); // mutant: second run",
+      find: "      ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'push', wait: !defer, expectPush }));",
+      replace: "      ops.dispatchValidate(branch); ({ result, url, runId, validation } = await ops.waitValidate(candidate, { event: 'workflow_dispatch', wait: !defer })); // mutant: second run",
     }],
   },
   {
@@ -19138,10 +19138,10 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'ci-golden-label-does-not-order-golden',
-    guard: 'node --test --test-name-pattern="#954 full/golden" test/development-loop-954.test.mjs',
-    because: '#954: separating golden from full must retain explicit golden demand even without a render-risk fallback',
+    guard: 'node --test --test-name-pattern="#1044 connected scenes" test/browser-push-plan.test.mjs',
+    because: '#1044: separating task scenes from full regression must retain explicit golden demand even without a render-risk fallback',
     patches: [{
-      file: 'scripts/task-ci-plan.mjs',
+      file: 'scripts/browser-push-plan.mjs',
       find: "labels.includes('ci:golden')",
       replace: 'false',
     }],

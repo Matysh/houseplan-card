@@ -7,7 +7,7 @@ import {
   BASELINE_OVERLAY, CHECKS, CHECK_NAMES, NOT_AN_INPUT, REUSE_JOBS, checksAffectedBy, closure, coverage,
   GUARDED_DATA_ROOTS, globToRegExp, inputsOf, isBaselineOverlay, isDeclaredNotAnInput, isExecutableInput,
   isGuardedInput, manifest, referencesOf,
-  stripComments,
+  stripComments, trackedFiles,
 } from '../scripts/check-inputs.mjs';
 
 // Единый manifest входов (#492 §5). Две группы доказательств: чистая механика
@@ -284,6 +284,16 @@ test('#573: на живом дереве индекс эталонов — вх�
     assert.ok(!MANIFEST[check].has(index), `${check} не читает эталоны`);
   }
   assert.ok(MANIFEST.golden.has(index));
+});
+
+test('#1044: golden reuse includes the workflow runner and its validation dependencies', () => {
+  const added = ['scripts/golden-regression.mjs', 'scripts/task-visual-intent.mjs'];
+  // Newly authored entries are not necessarily staged in a local test run.
+  const inputs = new Set(inputsOf('golden', ROOT, { tracked: [...new Set([...trackedFiles(ROOT), ...added])] }));
+  for (const file of [...added, 'scripts/browser-selected.mjs', 'scripts/browser-plan-proof.mjs', 'demo/golden/run.mjs']) {
+    assert.ok(inputs.has(file), `${file}: changes must invalidate complete golden evidence`);
+    assert.ok(checksAffectedBy([file], ROOT, { manifest: { ...MANIFEST, golden: inputs } }).affected.has('golden'), file);
+  }
 });
 
 test('замыкание останавливается на копиях бандла (класс D)', () => {

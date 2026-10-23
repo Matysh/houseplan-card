@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { admissibleFrontendProof, artifactTree, verifyProducerTrees, restoreFrontend, frontendKey } from '../scripts/frontend-proof.mjs';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
 import { sealContinuation, authenticatedContinuation } from '../scripts/continuation-record.mjs';
-import { mergeContinuationDecision, resumeMergeContinuation, resumeDomainContinuation } from '../scripts/workflow-continuation.mjs';
+import { authenticatedMergeCompanion, mergeContinuationDecision, resumeMergeContinuation, resumeDomainContinuation } from '../scripts/workflow-continuation.mjs';
 import { prepareReleasePending } from '../scripts/workflow-pending.mjs';
 import { probeE2e } from '../scripts/e2e-gate.mjs';
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
@@ -189,9 +189,10 @@ test('#856 actual completion runner refuses cancelled/foreign/failed-source even
   assert.doesNotMatch(logged, /"POST"|"PATCH"|"DELETE"|"workflow","run"/);
 });
 
-function pending(t) {
+function pending(t, fields = {}) {
   return sealContinuation({ kind: 'merge', repo, issue: 856, branch: 'issue/856-loop', material: a,
     candidate: b, tree: c, dev: c, epoch: 'epoch-1', bodyDigest: issueBodyDigest(body), policy: 'merge-light',
+    ...fields,
     producerPath: '.github/workflows/process.yml' }, temp(t),
   { GITHUB_RUN_ID: '20', GITHUB_RUN_ATTEMPT: '1', GITHUB_SHA: a, GITHUB_REF_NAME: 'main' }, new Date('2026-10-12T00:00:00Z'));
 }
@@ -229,6 +230,78 @@ test('#856 merge continuation does not apply a stale epoch/body/head/dev or repl
   let reads = 0;
   assert.equal((await resumeMergeContinuation(p, { state: () => { const s = current(); if (reads++) s.branch = a; return s; },
     proof: () => ({ status: 'green' }), merge: () => assert.fail('racing new tip'), move: () => assert.fail('racing label'), comment: () => {} })).action, 'noop');
+});
+
+test('#1044 a required profile completion wakes only its independently identified product proof', t => {
+  const p = pending(t);
+  const now = Date.parse('2026-10-12T01:00:00Z');
+  const producer = { id: 20, run_attempt: 1, head_sha: a, head_branch: 'main', path: p.producer.path,
+    repository: { full_name: repo }, head_repository: { full_name: repo }, event: 'issues',
+    created_at: '2026-10-11T23:59:00Z', status: 'completed', conclusion: 'success' };
+  const product = { id: 30, run_attempt: 1, repository: { full_name: repo }, head_repository: { full_name: repo },
+    head_sha: b, head_branch: p.branch, event: 'push', path: '.github/workflows/validate-product.yml',
+    created_at: '2026-10-12T00:00:00Z', status: 'completed', conclusion: 'success' };
+  const companion = { ...product, id: 31, path: '.github/workflows/validate-tooling.yml' };
+  const context = { proof: { run: { id: 30, attempt: 1, workflow: 'validate-product.yml' },
+    candidate: { sha: b, tree: c }, requiredProfiles: ['product', 'tooling'] },
+    profileRuns: new Map([['tooling', { run: companion }]]) };
+  const check = (event = companion) => authenticatedMergeCompanion(p, producer, event, product, context, repo, now);
+  assert.equal(check(), true);
+  assert.equal(authenticatedContinuation(p, producer, companion, repo, now), false, 'a companion never becomes product authority');
+  for (const delta of [{ id: 32 }, { run_attempt: 2 }, { head_sha: a }, { head_branch: 'issue/999-other' },
+    { path: '.github/workflows/validate-docs.yml' }, { status: 'in_progress' }, { event: 'workflow_dispatch' },
+    { conclusion: 'failure' }, { created_at: '2026-10-11T23:00:00Z' },
+    { repository: { full_name: 'foreign/repo' } }, { head_repository: { full_name: 'fork/repo' } }])
+    assert.equal(check({ ...companion, ...delta }), false, JSON.stringify(delta));
+  assert.equal(authenticatedMergeCompanion(p, { ...producer, run_attempt: 2 }, companion, product, context, repo, now), false);
+  assert.equal(authenticatedMergeCompanion(p, producer, companion, product, { ...context, profileRuns: new Map() }, repo, now), false);
+  assert.equal(authenticatedMergeCompanion(p, producer, companion, product,
+    { ...context, proof: { ...context.proof, requiredProfiles: ['product'] } }, repo, now), false);
+  assert.equal(authenticatedMergeCompanion(p, producer, companion, product,
+    { ...context, proof: { ...context.proof, candidate: { sha: b, tree: a } } }, repo, now), false);
+  assert.equal(authenticatedMergeCompanion(p, producer, companion, product,
+    { ...context, proof: { ...context.proof, run: { ...context.proof.run, attempt: 2 } } }, repo, now), false);
+  assert.equal(authenticatedMergeCompanion(p, producer, companion, product, context, repo, now + 86400000), false);
+});
+
+test('#1044 pending companion retains the current merge request without a return or duplicate merge', async t => {
+  const p = pending(t);
+  const result = await resumeMergeContinuation(p, { state: current,
+    proof: () => ({ status: 'pending', runId: 31, note: 'tooling profile is running' }),
+    merge: () => assert.fail('pending profile cannot authorize merge'),
+    move: () => assert.fail('running profile is not a failed task'), comment: () => assert.fail('no repeated handoff') });
+  assert.equal(result.action, 'pending');
+  assert.equal(result.to, undefined);
+});
+
+test('#1044 sealed product identity resumes a push and companion started before the process', t => {
+  const validation = { id: 30, attempt: 2, path: '.github/workflows/validate-product.yml' };
+  const p = pending(t, { validation });
+  const now = Date.parse('2026-10-12T01:00:00Z');
+  const producer = { id: 20, run_attempt: 1, head_sha: a, head_branch: 'main', path: p.producer.path,
+    repository: { full_name: repo }, head_repository: { full_name: repo }, event: 'issues',
+    created_at: '2026-10-11T23:59:00Z', status: 'completed', conclusion: 'success' };
+  const product = { id: 30, run_attempt: 2, repository: { full_name: repo }, head_repository: { full_name: repo },
+    head_sha: b, head_branch: p.branch, event: 'push', path: validation.path,
+    created_at: '2026-10-11T23:55:00Z', status: 'completed', conclusion: 'success' };
+  const companion = { ...product, id: 31, run_attempt: 1, path: '.github/workflows/validate-tooling.yml' };
+  const context = { proof: { run: { id: 30, attempt: 2, workflow: 'validate-product.yml' },
+    candidate: { sha: b, tree: c }, requiredProfiles: ['product', 'tooling'] },
+    profileRuns: new Map([['tooling', { run: companion }]]) };
+  assert.equal(authenticatedContinuation(p, producer, product, repo, now), true);
+  assert.equal(authenticatedMergeCompanion(p, producer, companion, product, context, repo, now), true);
+  const legacy = { ...p }; delete legacy.validation;
+  assert.equal(authenticatedContinuation(legacy, producer, product, repo, now), false, 'unsealed old run still lacks authority');
+  for (const delta of [{ id: 32 }, { run_attempt: 3 }, { path: '.github/workflows/validate.yml' },
+    { head_branch: 'issue/999-other' }, { event: 'schedule' }, { head_sha: c },
+    { head_repository: { full_name: 'fork/repo' } }])
+    assert.equal(authenticatedContinuation(p, producer, { ...product, ...delta }, repo, now), false, JSON.stringify(delta));
+  assert.equal(authenticatedContinuation(p, producer, { ...product, id: 32, created_at: '2026-10-12T00:00:00Z' }, repo, now), false,
+    'a newer unselected run cannot replace the sealed identity');
+  assert.equal(authenticatedMergeCompanion(p, producer, { ...companion, run_attempt: 2 }, product, context, repo, now), false);
+  assert.equal(authenticatedMergeCompanion(p, producer, companion, { ...product, run_attempt: 3 }, context, repo, now), false);
+  assert.equal(authenticatedContinuation(p, { ...producer, run_attempt: 2 }, product, repo, now), false);
+  assert.equal(authenticatedContinuation(p, producer, product, repo, now + 86400000), false);
 });
 test('#856 local groups compose every unit file and preserve producer-before-consumer', t => {
   const dir = temp(t); mkdirSync(join(dir, 'test'));

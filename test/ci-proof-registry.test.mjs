@@ -83,18 +83,96 @@ test('selected browser progress cannot become a full reusable receipt', () => {
     assert.equal(verifyRegistryRecord(f.record, f.args).accepted, false);
   }
 });
+test('complete golden-only execution can publish and satisfy a reusable golden receipt', () => {
+  const f = fixture('golden');
+  f.args.proof.request = { full: false, golden: true };
+  f.args.proof.run.workflow = 'validate.yml';
+  f.args.proof.browserPlan = {
+    planned: { golden: { mode: 'full' }, smoke: { mode: 'none' } },
+    executed: { golden: { mode: 'full', result: 'success' } },
+  };
+  const needs = { golden: { outputs: { toolchain: JSON.stringify(f.args.plan.toolchain), recipe: f.args.plan.recipes.golden } } };
+  const records = producedRegistryRecords({ plans: [f.args.plan], proof: f.args.proof, needs,
+    repo: f.args.repo, workflowRevision: sha, created: f.record.created });
+  assert.equal(records.length, 1, 'full golden coverage does not require unrelated smoke/performance jobs');
+  f.args.proof.registry.produced = records;
+  assert.equal(verifyRegistryRecord(records[0], f.args).accepted, true);
+  delete f.args.proof.browserPlan;
+  assert.equal(verifyRegistryRecord(records[0], f.args).accepted, true, 'legacy complete golden-only evidence is compatible');
+  delete f.args.proof.request.golden;
+  assert.equal(verifyRegistryRecord(records[0], f.args).accepted, false, 'unrequested browser work is not full evidence');
+});
+test('browser completeness is checked per job at both publication and reuse', () => {
+  for (const job of ['smoke', 'golden']) {
+    const f = fixture(job), other = job === 'smoke' ? 'golden' : 'smoke';
+    const outputs = job === 'smoke'
+      ? Object.fromEntries([1, 2, 3].flatMap(n => [['toolchain_' + n, JSON.stringify(f.args.plan.toolchain)], ['recipe_' + n, f.args.plan.recipes[job]]]))
+      : { toolchain: JSON.stringify(f.args.plan.toolchain), recipe: f.args.plan.recipes[job] };
+    f.args.proof.run.workflow = 'validate.yml';
+    f.args.proof.browserPlan = { planned: { [job]: { mode: 'full' }, [other]: { mode: 'selected' } },
+      executed: { [job]: { mode: 'full', result: 'success' }, [other]: { mode: 'selected', result: 'success' } } };
+    const mint = () => producedRegistryRecords({ plans: [f.args.plan], proof: f.args.proof, needs: { [job]: { outputs } },
+      repo: f.args.repo, workflowRevision: sha, created: f.record.created });
+    assert.equal(mint().length, 1, job + ': unrelated partial browser coverage does not invalidate this full job');
+    assert.equal(verifyRegistryRecord(f.record, f.args).accepted, true, job);
+    for (const mode of ['selected', 'none', undefined]) {
+      f.args.proof.browserPlan.planned[job].mode = mode;
+      assert.equal(mint().length, 0, job + ': never publish ' + mode);
+      assert.equal(verifyRegistryRecord(f.record, f.args).accepted, false, job + ': never reuse ' + mode);
+    }
+    f.args.proof.browserPlan.planned[job].mode = 'full';
+    for (const execution of [{ mode: 'selected', result: 'success' }, { mode: 'full', result: 'failure' }, undefined]) {
+      f.args.proof.browserPlan.executed[job] = execution;
+      assert.equal(mint().length, 0, job + ': incomplete actual coverage cannot be published');
+      assert.equal(verifyRegistryRecord(f.record, f.args).accepted, false, job + ': incomplete actual coverage cannot be reused');
+    }
+  }
+});
+test('pending visual diagnostics cannot publish or reuse accepted golden authority', () => {
+  for (const job of ['golden', 'performance_smoke']) {
+    const f = fixture(job);
+    f.args.proof.request.pendingVisual = true;
+    f.args.proof.run.workflow = 'validate.yml';
+    const needs = { [job]: { outputs: { toolchain: JSON.stringify(f.args.plan.toolchain), recipe: f.args.plan.recipes[job] } } };
+    const records = producedRegistryRecords({ plans: [f.args.plan], proof: f.args.proof, needs,
+      repo: f.args.repo, workflowRevision: sha, created: f.record.created });
+    assert.equal(records.length, job === 'golden' ? 0 : 1);
+    assert.equal(verifyRegistryRecord(f.record, f.args).accepted, job !== 'golden');
+  }
+});
 test('night, stable and explicit fresh remain fresh; beta mode is explicit', () => {
   for (const input of [{ night: true }, { stable: true }, { fresh: true }]) assert.equal(registryPolicy(input).allowed, false);
   assert.equal(registryPolicy({ candidate: true }).mode, 'candidate');
   assert.equal(intentPolicy({ REF_NAME: 'dev', HEAD_MESSAGE: 'Release: v1.82.0-beta.6' }, '1.82.0-beta.6').mode, 'candidate');
   assert.equal(intentPolicy({ REF_NAME: 'issue/981-test', HEAD_MESSAGE: 'Release: v1.82.0-beta.6' }, '1.82.0-beta.6').mode, 'exact');
   assert.equal(intentPolicy({ CANDIDATE_INPUT: 'true' }, '1.82.0-beta.6').mode, 'candidate');
-  assert.equal(intentPolicy({}, '1.82.0').allowed, false);
+  assert.equal(intentPolicy({}, '1.82.0').allowed, true, 'the package version alone is not release intent');
   assert.equal(intentPolicy({ GITHUB_EVENT_NAME: 'workflow_dispatch' }, '1.82.0-beta.6', { registrySupported: false }).allowed, false);
   assert.equal(intentPolicy({ GITHUB_EVENT_NAME: 'workflow_dispatch', CANDIDATE_INPUT: 'true' }, '1.82.0-beta.6', { registrySupported: false }).allowed, true);
   assert.equal(intentPolicy({ GITHUB_EVENT_NAME: 'workflow_dispatch' }, '1.82.0-beta.6', { registrySupported: true }).allowed, true);
   assert.throws(() => registryPath('../frontend', H('a')));
   assert.throws(() => registryPath('frontend', '../key'));
+});
+test('ordinary task/dev validation reuses exact inputs while stable release intent remains fresh', () => {
+  for (const env of [{}, { REF_NAME: 'dev' }, { REF_NAME: 'issue/1044-checks' },
+    { GITHUB_REF: 'refs/heads/dev' }, { GITHUB_REF_NAME: 'issue/1044-checks' },
+    { REF_NAME: 'refs/heads/issue/1044-checks', HEAD_MESSAGE: 'Release: v1.82.0' },
+    { REF_NAME: 'dev', GITHUB_EVENT_NAME: 'workflow_dispatch' }]) {
+    const policy = intentPolicy(env, '1.82.0');
+    assert.equal(policy.allowed, true, JSON.stringify(env));
+    assert.equal(policy.mode, 'exact');
+    for (const field of ['FRESH_INPUT', 'NIGHT_INPUT'])
+      assert.equal(intentPolicy({ ...env, [field]: 'true' }, '1.82.0').allowed, false, field);
+  }
+  for (const env of [{ REF_NAME: 'main' }, { GITHUB_REF: 'refs/heads/main' },
+    { REF_NAME: 'dev', HEAD_MESSAGE: 'Prepare release\n\nRelease: v1.82.0' },
+    { REF_NAME: 'v1.82.0', GITHUB_REF_TYPE: 'tag' }, { GITHUB_REF: 'refs/tags/v1.82.0' },
+    { CANDIDATE_INPUT: 'true' }]) {
+    assert.equal(intentPolicy(env, '1.82.0').allowed, false, JSON.stringify(env));
+  }
+  assert.equal(intentPolicy({ REF_NAME: 'dev', HEAD_MESSAGE: 'Release: v1.82.0' }, '1.82.0-beta.6').allowed,
+    false, 'explicit stable target remains fresh even with mismatched prerelease metadata');
+  assert.equal(intentPolicy({ REF_NAME: 'dev', HEAD_MESSAGE: 'Release: v1.82.0-beta.6' }, '1.82.0-beta.6').allowed, true);
 });
 test('probe authenticates the indexed record, never treats JSON presence as PASS', async () => {
   const f = fixture();

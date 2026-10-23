@@ -12,6 +12,22 @@ export const registryPath = (job, key) => {
   return 'proofs/' + job + '/' + key + '.json';
 };
 
+/** Coverage belongs to a job: a complete golden-only run is still complete. */
+export function completeRegistryCoverage(proof, job) {
+  if (!['smoke', 'golden', 'performance_smoke'].includes(job)) return true;
+  if (job === 'golden' && proof?.request?.pendingVisual === true) return false;
+  const requested = proof?.request?.full === true || job === 'golden' && proof?.request?.golden === true;
+  if (!requested) return false;
+  // Older complete proofs predate browserPlan. When present, its actual scope
+  // must agree: a selected push must never mint or satisfy a full-job receipt.
+  if (job !== 'performance_smoke' && proof.browserPlan !== undefined) {
+    return proof.browserPlan?.planned?.[job]?.mode === 'full'
+      && proof.browserPlan?.executed?.[job]?.mode === 'full'
+      && proof.browserPlan?.executed?.[job]?.result === 'success';
+  }
+  return true;
+}
+
 /** Only direct successful execution on the exact source attempt is reusable. */
 export function verifyRegistryRecord(record, { plan, job, repo, run, jobs = [], proof, artifact,
   jobNames = [], now = Date.now(), companionsGreen = true, sourceEquivalent = false, actualWorkflowRecipe = null } = {}) {
@@ -59,7 +75,7 @@ export function verifyRegistryRecord(record, { plan, job, repo, run, jobs = [], 
   }
   if (job === 'frontend' && (!hex(record.inventory?.dist, 64) || !hex(record.inventory?.testBuild, 64)
     || !hex(record.inventory?.fingerprint, 64))) return fail('missing immutable frontend inventories');
-  if (['smoke', 'golden', 'performance_smoke'].includes(job) && proof.request?.full !== true)
+  if (!completeRegistryCoverage(proof, job))
     return fail('selected/partial browser execution');
   return { accepted: true, reason: 'immutable successful producer verified', record };
 }

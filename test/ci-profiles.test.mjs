@@ -102,6 +102,20 @@ test('#980 path filter fixtures and computed tooling tests exclude product; unkn
   }
 });
 
+test('#1044 actual tooling helper consumers start both product and tooling profiles', () => {
+  const generated = generatedProfiles();
+  const paths = JSON.parse(generated.get('scripts/ci-profile-paths.json'));
+  for (const helper of ['demo/helpers/clamped-wheel-lease.mjs', 'demo/helpers/device-battery-fixture.mjs']) {
+    assert.deepEqual(profilesForFiles([helper], paths), ['product', 'tooling'], helper);
+    for (const profile of ['product', 'tooling']) {
+      const workflow = parse(generated.get(`.github/workflows/validate-${profile}.yml`));
+      assert.equal(matchesPaths(helper, workflow.on.push.paths), true, `${profile}: ${helper}`);
+    }
+  }
+  assert.deepEqual(profilesForFiles(['src/led-backlight.ts'], paths), ['product'],
+    'tooling fixtures describing product paths do not make ordinary frontend edits tooling inputs');
+});
+
 test('#980 docs and tooling have no product producer and no compiled-test setup', () => {
   for (const profile of ['docs', 'tooling']) {
     const text = readFileSync(`.github/workflows/validate-${profile}.yml`, 'utf8');
@@ -172,4 +186,31 @@ test('#980 product proof cannot hide a missing/red tooling profile or spoof work
   companion.run.conclusion = 'failure'; assert.notEqual(evaluate({ profileRuns }).status, 'green');
   assert.notEqual(evaluate({ run: { ...run, path: '.github/workflows/evil.yml', name: 'Проверка (CI)' } }).status, 'green');
   for (const profile of ['docs', 'tooling']) assert.notEqual(evaluate({ proof: { ...proof, run: { ...proof.run, workflow: `validate-${profile}.yml` } }, run: { ...run, path: `.github/workflows/validate-${profile}.yml` } }).status, 'green');
+});
+
+test('#1044 full product proof needs tooling coverage even when the changed paths are product-only', () => {
+  const workflow = validateJobs();
+  const ids = ['preflight', 'changes', 'reuse', 'frontend', 'smoke', 'smoke_done', 'golden', 'performance_smoke'];
+  const needs = Object.fromEntries(ids.map(id => [id, { result: 'success' }]));
+  needs.changes.outputs = { frontend: 'true', tooling: 'false' };
+  needs.reuse.outputs = {};
+  const makeProof = (full, requiredProfiles) => buildCiProof({ candidateSha: SHA, candidateTree: TREE,
+    runId: 9, attempt: 1, event: 'push', needs, requestedFull: full,
+    workflow: 'validate-product.yml', requiredProfiles });
+  const jobs = ids.flatMap(id => jobInstanceNames(workflow.get(id)).map(name => ({ name, conclusion: 'success' })));
+  const run = { id: 9, run_attempt: 1, path: '.github/workflows/validate-product.yml', head_sha: SHA,
+    event: 'push', status: 'completed', conclusion: 'success' };
+  const evaluate = (proof, options = {}) => evaluateCiProof({ run, proof, jobs,
+    candidate: { sha: SHA, tree: TREE }, policy: CI_PROOF_POLICIES.mergeLight, ...options });
+  const incomplete = evaluate(makeProof(true, ['product']));
+  assert.equal(incomplete.status, 'stale');
+  assert.match(incomplete.note, /tooling coverage plan.*canonical validation/);
+  assert.equal(evaluate(makeProof(false, ['product'])).status, 'green', 'ordinary task proof does not demand unrelated tooling');
+  const companion = { run: { ...run, id: 10, path: '.github/workflows/validate-tooling.yml' }, jobs: [
+    { name: JOB_RULES.preflight[0].name, conclusion: 'success' },
+    { name: JOB_RULES.frontend.find(rule => rule.job === 'tooling').name, conclusion: 'success' }] };
+  const profileRuns = new Map([['tooling', companion]]);
+  assert.equal(evaluate(makeProof(true, ['product', 'tooling']), { profileRuns }).status, 'green');
+  companion.run.status = 'in_progress';
+  assert.equal(evaluate(makeProof(true, ['product', 'tooling']), { profileRuns }).status, 'pending');
 });

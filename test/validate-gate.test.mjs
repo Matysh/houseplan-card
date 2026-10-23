@@ -224,14 +224,61 @@ test('#696: without mutants a completed green push run on the material is proof,
 test('#954 without mutants a red push returns the task; its pending push is tracked without dispatch', async () => {
   const red = fakeOps({ snapshots: [[run({ event: 'push', databaseId: 7, conclusion: 'failure', url: 'https://run/red' })]], jobsById: { 7: OTHER_JOBS } });
   assert.equal((await validateGate({ ref: 'issue/1', sha: SHA, ops: red.ops, mutants: false })).result, 'failed');
-  // Идущий push раунд не разбудит (resume слушает dispatch) — гейт диспатчит
-  // свой лёгкий прогон и ждёт уже его.
+  // Resume binds to the exact pending push; no second producer is needed.
   const running = [run({ event: 'push', databaseId: 7, status: 'in_progress', conclusion: null })];
   const fake = fakeOps({ snapshots: [running, [...running, run({ databaseId: 8, status: 'in_progress', conclusion: null })]], jobsById: { 8: OTHER_JOBS } });
   const outcome = await validateGate({ ref: 'issue/1', sha: SHA, ops: fake.ops, mutants: false, wait: false, pollMs: 1000 });
   assert.equal(outcome.result, 'pending');
   assert.equal(outcome.runId, 7);
   assert.deepEqual(fake.dispatched, [], 'the exact pending push is the sole producer');
+});
+
+function withCompanion(fake, { running = true, foreign = false } = {}) {
+  const baseProof = fake.ops.proof;
+  let reads = 0;
+  fake.ops.proof = async row => {
+    const context = await baseProof(row);
+    context.proof.run.workflow = 'validate-product.yml';
+    context.proof.requiredProfiles = ['product', 'tooling'];
+    const pending = typeof running === 'function' ? running(++reads) : running;
+    context.profileRuns = new Map([['tooling', {
+      run: { id: 55, run_attempt: 1, path: '.github/workflows/validate-tooling.yml',
+        head_sha: foreign ? 'e'.repeat(40) : SHA, event: 'push', status: pending ? 'in_progress' : 'completed',
+        conclusion: pending ? null : 'success', html_url: 'https://run/tooling' },
+      jobs: jobsOf('preflight', 'tooling'),
+    }]]);
+    return context;
+  };
+}
+
+test('#1044 S7 waits for the exact running companion of a completed product push', async () => {
+  const product = run({ event: 'push', databaseId: 7, path: '.github/workflows/validate-product.yml' });
+  const fake = fakeOps({ snapshots: [[product]], jobsById: { 7: OTHER_JOBS } });
+  withCompanion(fake);
+  const outcome = await validateGate({ ref: 'issue/1044-task', sha: SHA, ops: fake.ops, mutants: false, wait: false });
+  assert.equal(outcome.result, 'pending');
+  assert.equal(outcome.runId, 55);
+  assert.equal(outcome.url, 'https://run/tooling');
+  assert.deepEqual(fake.dispatched, [], 'a running required profile does not justify canonical re-execution');
+});
+
+test('#1044 S7 re-evaluates product evidence once its companion finishes without another producer', async () => {
+  const product = run({ event: 'push', databaseId: 7, path: '.github/workflows/validate-product.yml' });
+  const fake = fakeOps({ snapshots: [[product]], jobsById: { 7: OTHER_JOBS } });
+  withCompanion(fake, { running: reads => reads === 1 });
+  const outcome = await validateGate({ ref: 'issue/1044-task', sha: SHA, ops: fake.ops, mutants: false, pollMs: 1000 });
+  assert.equal(outcome.result, 'green');
+  assert.equal(fake.ops.now(), 1000);
+  assert.deepEqual(fake.dispatched, []);
+});
+
+test('#1044 a companion on foreign material cannot bind a pending continuation', async () => {
+  const product = run({ event: 'push', databaseId: 7, path: '.github/workflows/validate-product.yml' });
+  const fake = fakeOps({ snapshots: [[product]], jobsById: { 7: OTHER_JOBS } });
+  withCompanion(fake, { foreign: true });
+  const outcome = await validateGate({ ref: 'issue/1044-task', sha: SHA, ops: fake.ops, mutants: false, wait: false });
+  assert.equal(outcome.result, 'failed');
+  assert.deepEqual(fake.dispatched, []);
 });
 
 test('#696: a completed run beats a newer running dispatch only without mutants', async () => {

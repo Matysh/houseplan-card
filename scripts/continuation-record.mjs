@@ -7,6 +7,11 @@ import { join } from 'node:path';
 export const continuationName = (run, attempt) => `workflow-continuation-${run}-${attempt}`;
 const sha = value => /^[a-f0-9]{40}$/.test(value || '');
 const id = value => Number.isSafeInteger(Number(value)) && Number(value) > 0;
+export const validMergeValidation = value => Boolean(value && id(value.id) && id(value.attempt)
+  && ['.github/workflows/validate.yml', '.github/workflows/validate-product.yml'].includes(value.path));
+export const pinnedMergeValidation = (p, event) => p?.kind === 'merge' && validMergeValidation(p.validation)
+  && Number(p.validation.id) === Number(event?.id) && Number(p.validation.attempt) === Number(event?.run_attempt)
+  && p.validation.path === event?.path && event?.head_branch === p.branch && ['push', 'workflow_dispatch'].includes(event?.event);
 const paths = { merge: '.github/workflows/process.yml', night: '.github/workflows/nightly.yml',
   release: ['.github/workflows/release.yml', '.github/workflows/publish-prerelease.yml'] };
 export function validContinuation(p) {
@@ -19,7 +24,8 @@ export function validContinuation(p) {
     && (p.kind !== 'merge' || id(p.issue) && /^issue\/[1-9]\d+-[\w-]+$/.test(p.branch || '')
       && p.branch.startsWith(`issue/${p.issue}-`) && sha(p.material) && sha(p.dev)
       && /^[a-f0-9]{64}$/.test(p.bodyDigest || '') && typeof p.epoch === 'string' && p.epoch.length > 0
-      && ['merge', 'merge-light'].includes(p.policy))
+      && ['merge', 'merge-light'].includes(p.policy)
+      && (p.validation === undefined || validMergeValidation(p.validation)))
     && (p.kind !== 'night' || p.branch === 'dev')
     && (p.kind !== 'release' || /^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?$/.test(p.tag || '')
       && ['release.yml', 'publish-prerelease.yml'].includes(p.workflow) && typeof p.stable === 'boolean'
@@ -51,7 +57,9 @@ export function authenticatedContinuation(p, producer, event, repo, now = Date.n
     && now >= Date.parse(p.createdAt) && now < Date.parse(p.expiresAt)
     && event?.repository?.full_name === repo && event.status === 'completed' && event.head_sha === p.candidate
     && (['validate.yml', 'validate-product.yml'].includes(ciWorkflow(event.path)) || event.path === '.github/workflows/performance.yml')
+    && (p.kind !== 'merge' || p.validation === undefined || pinnedMergeValidation(p, event))
     && (Date.parse(event.created_at) >= Date.parse(producer.created_at)
+      || pinnedMergeValidation(p, event)
       || p.kind === 'release' && p.children.some(r => Number(r.id) === Number(event.id)
         && Number(r.attempt) === Number(event.run_attempt) && r.path === event.path));
 }

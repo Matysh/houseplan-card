@@ -176,8 +176,14 @@ required checks, each with its reason; changelog and visual evidence; the
 previous verdict and the unwitnessed AC; it writes nothing). The local gate is
 `npm run gate:small` (`docs/TESTING.md` › Локальный набор перед пушем); a verified
 private receipt may reuse build/pure product units, never fresh metadata/range
-guards or CI authority (#954). Golden and full demand are independent; run the
-smokes named in the AC before `S7-code-review`. **"Verified" without a named
+guards or CI authority (#954). On every track, task checks cover the diff, AC
+and related risks; compatible push proof serves S7/merge without duplicate runs.
+`ci:golden` requests selected visual evidence; `ci:full` explicitly requests full
+coverage. Record expected frames in the issue's release-ledger `visual` field
+(docs/DEVELOPMENT.md › Browser progress checks on task pushes); task branches
+never accept global baselines. Full regression and baseline acceptance belong
+to the beta candidate; nightly pending visual drift is not release proof.
+Run the smokes named in the AC before `S7-code-review`. **"Verified" without a named
 command and its result is not evidence.** Comment formats — claim, handoff,
 verdict — are `PROCESS.md` §7.2.
 

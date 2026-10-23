@@ -251,18 +251,67 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
   };
 }
 
-test('#856 deferred candidate captures immutable context and never waits or pushes dev before proof', async () => {
+test('#1044 deferred candidate records the discovered producer without dispatching or pushing dev', async () => {
   const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
   let captured, reads = 0;
+  const validation = { id: 44, attempt: 2, path: '.github/workflows/validate-product.yml' };
   ops.waitValidate = async (_sha, options) => {
-    assert.equal(options.wait, false); reads++; return { result: 'pending', runId: null };
+    assert.equal(options.wait, false); reads++; return { result: 'pending', runId: 44, validation };
   };
   ops.defer = fields => { captured = fields; };
   const result = await mergeCandidate({ branch: 'issue/856-loop', material: 'mat', issue: 856, ops, mutants: false, defer: true });
   assert.equal(result.action, 'pending'); assert.equal(result.to, null); assert.equal(reads, 1);
   assert.equal(captured.dev, 'dev1'); assert.equal(captured.policy, 'merge-light');
-  assert.equal(ops.calls.filter(c => c[0] === 'dispatch').length, 1, 'missing push run gets one dispatch, not a sleeping discover loop');
+  assert.deepEqual(captured.validation, validation, 'seal exact product run and attempt');
+  assert.equal(ops.calls.filter(c => c[0] === 'dispatch').length, 0, 'the discovered push is the sole producer');
   assert.ok(!ops.calls.some(c => c[0] === 'push' && c[2] === 'dev'));
+});
+
+test('#1044 deferred fallback dispatches exactly once only after bounded discovery reports missing', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  let reads = 0;
+  ops.waitValidate = async (_sha, options) => {
+    assert.equal(options.wait, false);
+    return ++reads === 1 ? { result: 'missing' } : { result: 'pending', runId: 45,
+      validation: { id: 45, attempt: 1, path: '.github/workflows/validate.yml' } };
+  };
+  ops.defer = () => {};
+  const result = await mergeCandidate({ branch: 'issue/1044-task', material: 'mat', issue: 1044, ops, mutants: false, defer: true });
+  assert.equal(result.action, 'pending');
+  assert.equal(reads, 2);
+  assert.equal(ops.calls.filter(c => c[0] === 'dispatch').length, 1);
+  assert.ok(!ops.calls.some(c => c[0] === 'push' && c[2] === 'dev'));
+});
+
+test('#1044 a proven docs-only push requests immediate fallback and seals its sole canonical producer', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  const validation = { id: 45, attempt: 1, path: '.github/workflows/validate.yml' };
+  let reads = 0, captured;
+  ops.productPushExpected = (from, to) => {
+    assert.equal(from, 'mat'); assert.equal(to, 'cand-mat-on-dev1'); return false;
+  };
+  ops.waitValidate = async (_sha, options) => {
+    if (++reads === 1) {
+      assert.equal(options.event, 'push'); assert.equal(options.expectPush, false);
+      return { result: 'missing' };
+    }
+    assert.equal(options.event, 'workflow_dispatch');
+    return { result: 'pending', runId: 45, validation };
+  };
+  ops.defer = fields => { captured = fields; };
+  const result = await mergeCandidate({ branch: 'issue/1044-task', material: 'mat', issue: 1044, ops, mutants: false, defer: true });
+  assert.equal(result.action, 'pending'); assert.deepEqual(captured.validation, validation);
+  assert.equal(ops.calls.filter(c => c[0] === 'dispatch').length, 1);
+});
+
+test('#1044 an unbound pending result cannot create a continuation or dispatch another producer', async () => {
+  const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  ops.waitValidate = async () => ({ result: 'pending', runId: null });
+  ops.defer = () => assert.fail('no exact producer was discovered');
+  await assert.rejects(mergeCandidate({ branch: 'issue/1044-task', material: 'mat', issue: 1044, ops, mutants: false, defer: true }), /exact run id/);
+  ops.waitValidate = async () => ({ result: 'pending', runId: 44 });
+  await assert.rejects(mergeCandidate({ branch: 'issue/1044-task', material: 'mat', issue: 1044, ops, mutants: false, defer: true }), /exact product run\/attempt/);
+  assert.equal(ops.calls.filter(c => c[0] === 'dispatch').length, 0);
 });
 
 test('dev не двигался: push кандидата как есть, с lease на текущий dev', async () => {
@@ -514,13 +563,91 @@ function scriptedExec(snapshots) {
       if (cmd === 'gh' && args[0] === 'api' && /actions\/runs\?/.test(args[1])) {
         const s = snapshots[Math.min(calls, snapshots.length - 1)];
         calls += 1;
-        return { status: 0, stdout: JSON.stringify({ workflow_runs: s.map(r => ({ ...r, id: r.databaseId, head_sha: r.headSha, run_attempt: r.attempt, html_url: r.url, path: '.github/workflows/validate.yml' })) }), stderr: '' };
+        return { status: 0, stdout: JSON.stringify({ workflow_runs: s.map(r => ({ ...r, id: r.databaseId, head_sha: r.headSha, run_attempt: r.attempt, html_url: r.url, path: r.path || '.github/workflows/validate.yml' })) }), stderr: '' };
       }
       throw new Error(`unexpected ${cmd} ${args.join(' ')}`);
     },
     calls: () => calls,
   };
 }
+
+test('#1044 event-driven merge discovers the delayed product push before returning its exact pending ID', async () => {
+  const sha = 'c'.repeat(40);
+  const pending = { databaseId: 44, attempt: 1, status: 'queued', conclusion: null,
+    url: 'https://run/44', event: 'push', headSha: sha, path: '.github/workflows/validate-product.yml' };
+  const gh = scriptedExec([[], [], [pending]]);
+  let clock = 0;
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, mutants: false,
+    candidateTree: async () => 'd'.repeat(40), sleep: async ms => { clock += ms; }, now: () => clock });
+  const result = await ops.waitValidate(sha, { event: 'push', wait: false });
+  assert.deepEqual(result, { result: 'pending', url: pending.url, runId: 44,
+    validation: { id: 44, attempt: 1, path: pending.path } });
+  assert.equal(gh.calls(), 3);
+  assert.equal(clock, 40_000, 'only run discovery was awaited, never completion');
+});
+
+test('#1044 event-driven merge bounds discovery when no product producer exists', async () => {
+  const gh = scriptedExec([[]]);
+  let clock = 0;
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, mutants: false,
+    candidateTree: async () => 'd'.repeat(40), sleep: async ms => { clock += ms; }, now: () => clock });
+  assert.deepEqual(await ops.waitValidate('c'.repeat(40), { event: 'push', wait: false }), { result: 'missing', url: null });
+  assert.ok(clock >= 180_000 && clock <= 200_000, 'the normal bounded appearance window precedes fallback');
+});
+
+test('#1044 a known filtered push performs one discovery read without waiting three minutes', async () => {
+  const gh = scriptedExec([[]]);
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, mutants: false,
+    candidateTree: async () => 'd'.repeat(40), sleep: async () => assert.fail('no product ingress is expected') });
+  assert.deepEqual(await ops.waitValidate('c'.repeat(40), { event: 'push', wait: false, expectPush: false }),
+    { result: 'missing', url: null });
+  assert.equal(gh.calls(), 1, 'existing exact producers still get a discovery read before fallback');
+});
+
+test('#1044 push prediction reads the committed filter and fails conservatively on unknown or broad ranges', () => {
+  const paths = { product: ['**', '!docs/**'], tooling: ['scripts/**'], docs: ['docs/**'] };
+  let files = 'docs/reviews/INDEX.md\n', count = '1', broken = false;
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: (_cmd, args) => {
+    if (broken) return { status: 1, stderr: 'unknown range' };
+    return { status: 0, stdout: args[0] === 'diff' ? files : args[0] === 'rev-list' ? count : JSON.stringify(paths) };
+  } });
+  assert.equal(ops.productPushExpected('before', 'after'), false);
+  files = 'src/led-backlight.ts\n'; assert.equal(ops.productPushExpected('before', 'after'), true);
+  files = 'docs/reviews/INDEX.md\n'; count = '1001'; assert.equal(ops.productPushExpected('before', 'after'), true);
+  count = '1'; broken = true; assert.equal(ops.productPushExpected('before', 'after'), true);
+});
+
+test('#1044 task merge follows an existing canonical producer while rejecting foreign material and progress-only profiles', async () => {
+  const sha = 'c'.repeat(40);
+  const pending = { databaseId: 44, attempt: 1, status: 'in_progress', conclusion: null,
+    url: 'https://run/44', event: 'workflow_dispatch', headSha: sha, path: '.github/workflows/validate.yml' };
+  const gh = scriptedExec([[
+    { ...pending, databaseId: 50, event: 'push', headSha: 'e'.repeat(40), path: '.github/workflows/validate-product.yml' },
+    { ...pending, databaseId: 49, event: 'push', path: '.github/workflows/validate-docs.yml' },
+    { ...pending, databaseId: 48, path: '.github/workflows/foreign.yml' }, pending,
+  ]]);
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, mutants: false,
+    candidateTree: async () => 'd'.repeat(40), sleep: async () => assert.fail('producer already exists') });
+  assert.deepEqual(await ops.waitValidate(sha, { event: 'push', wait: false, expectPush: false }), { result: 'pending', url: pending.url, runId: 44,
+    validation: { id: 44, attempt: 1, path: pending.path } });
+});
+
+test('#1044 waiting on a companion seals the product identity, never the companion as product', async () => {
+  const sha = 'c'.repeat(40), tree = 'd'.repeat(40);
+  const product = { databaseId: 44, attempt: 2, status: 'completed', conclusion: 'success',
+    url: 'https://run/44', event: 'push', headSha: sha, path: '.github/workflows/validate-product.yml' };
+  const gh = scriptedExec([[product]]);
+  const context = { proof: buildCiProof({ candidateSha: sha, candidateTree: tree, runId: 44, attempt: 2,
+    event: 'push', workflow: 'validate-product.yml', requiredProfiles: ['product', 'tooling'], needs: {} }),
+    profileRuns: new Map([['tooling', { run: { id: 45, run_attempt: 1, head_sha: sha,
+      path: '.github/workflows/validate-tooling.yml', status: 'in_progress', html_url: 'https://run/45' } }]]) };
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, mutants: false,
+    candidateTree: async () => tree, proofContext: async () => context,
+    sleep: async () => assert.fail('deferred companion must not occupy the runner') });
+  const result = await ops.waitValidate(sha, { event: 'push', wait: false });
+  assert.equal(result.result, 'pending'); assert.equal(result.runId, 45);
+  assert.deepEqual(result.validation, { id: 44, attempt: 2, path: product.path });
+});
 
 test('#510 r2 M1: realOps.waitValidate ignores a cancelled dispatch and follows its replacement', async () => {
   const sha = 'c'.repeat(40);

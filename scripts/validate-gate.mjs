@@ -87,7 +87,8 @@ export async function validateGate({
 }) {
   // #954: full и golden независимы. Несовместимый завершённый proof не
   // принимается; заранее спланированный push можно дождаться без дубля.
-  const base = mutants ? CI_PROOF_POLICIES.review : CI_PROOF_POLICIES.reviewLight;
+  const base = mutants ? CI_PROOF_POLICIES.review
+    : { ...CI_PROOF_POLICIES.reviewLight, ...(!full && { task: true }) };
   const policy = full ? Object.freeze({ ...base, name: `${base.name}-full`, full: true })
     : golden ? Object.freeze({ ...base, name: `${base.name}-golden`, golden: true }) : base;
   const label = `${mutants ? 'Validate с мутантами' : 'Validate'}${full ? ' (полный набор)' : ''}`;
@@ -114,6 +115,14 @@ export async function validateGate({
         });
         if (verdict.status === 'green') return { result: 'green', url: verdict.url, note: verdict.note };
         if (verdict.status === 'failed') return { result: 'failed', url: verdict.url, note: verdict.note };
+        if (verdict.status === 'pending') {
+          // A completed product profile can still owe a running docs/tooling
+          // companion. Wait for that exact run, then re-evaluate the product
+          // proof; a second canonical producer would repeat accepted work.
+          if (!wait) return { result: 'pending', url: verdict.url, runId: verdict.runId, note: verdict.note };
+          await ops.sleep(pollMs);
+          continue;
+        }
         // cancelled, light, stale или legacy run без proof — не доказательство.
         ignored.add(run.databaseId);
         tracked = null;

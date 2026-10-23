@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { unitGroups } from './unit-groups.mjs';
 import { profilePaths } from './ci-profile-paths.mjs';
+import { toolingDependencyPaths } from './task-check-scope.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 import { executionHeader } from './ci-registry-inputs.mjs';
 
@@ -56,7 +57,8 @@ export function generatedProfiles(root = process.cwd()) {
   const canonical = readFileSync(resolve(root, '.github/workflows/validate.yml'), 'utf8').replace(/\r\n/g, '\n');
   const displayName = canonical.match(/^name:\s*(.+)$/m)?.[1];
   if (!displayName) throw Error('canonical workflow has no display name');
-  const paths = profilePaths(unitGroups(root).tooling), jobs = jobsOf(canonical);
+  const toolingTests = unitGroups(root).tooling;
+  const paths = profilePaths(toolingTests, toolingDependencyPaths(toolingTests, root)), jobs = jobsOf(canonical);
   const product = [...jobs].filter(([id]) => id !== 'tooling').map(([id, text]) => id === 'proof'
     ? text.replace(/, tooling(?=,|\])/, '').replace('          CI_EVENT:', '          CI_WORKFLOW: validate-product.yml\n          CI_EVENT:')
       .replace('          ref: ${{ github.sha }}\n', "          ref: ${{ github.sha }}\n          fetch-depth: 0\n          filter: 'blob:none'\n")
@@ -70,6 +72,7 @@ export function generatedProfiles(root = process.cwd()) {
     timeout-minutes: 2
     outputs:
       integration: \${{ steps.route.outputs.integration }}
+      tooling: 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0, filter: 'blob:none' }

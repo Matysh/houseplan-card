@@ -1,7 +1,7 @@
 import { performanceSet } from '../scripts/ci-registry-cli.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import {
   CHECK_OF_OUTPUT, CLASSIFIERS, OUTPUTS, PERF_PROFILES, classifyAll, classifyChanges, formatOutputs, mutantsRequested,
@@ -183,9 +183,12 @@ test('копия бандла — не вход ни одной проверки
   assert.deepEqual(out.unknown, []);
 });
 
-test('#492 §5.2: неизвестный исполняемый вход расширяет прогон до полного набора и называется', () => {
+test('#1044: неизвестный инструмент расширяет unit-группы, сохраняя адресные backend/parity', () => {
   const out = classify(['scripts/brand-new-gate.mjs']);
-  for (const name of OUTPUTS) assert.equal(out[name], 'true', name);
+  assert.equal(out.frontend, 'true');
+  assert.equal(out.tooling, 'true');
+  assert.equal(out.backend, 'false');
+  assert.equal(out.geometry_parity, 'false');
   assert.deepEqual(out.unknown, ['scripts/brand-new-gate.mjs']);
   // Объявленный не-вход и документация не расширяют.
   const quiet = classify([p('demo', 'stand', 'README.md'), p('demo', 'shot_sun.mjs'), p('docs', 'new-page.md')]);
@@ -324,14 +327,15 @@ test('#697: на ветке задачи трейлер Release: тяжёлый 
   assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: acceptance, refName: 'dev' }), true, 'кандидат на dev');
   assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: acceptance }), true, 'без ветки — прежнее правило');
   assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: 'true', refName: 'issue/687-x' }), true,
-    'ci:full/ci:golden — dispatch full=true на ветке задачи');
+    'явный full=true сохраняет полный прогон на ветке задачи');
   assert.equal(screenshotsGateMode({ eventName: 'push', headMessage: acceptance, refName: 'issue/687-x' }), 'warn');
-  const run = (env) => execFileSync(process.execPath, ['scripts/classify-changes.mjs', '--heavy'], {
+  const run = (env) => spawnSync(process.execPath, ['scripts/classify-changes.mjs', '--heavy'], {
     encoding: 'utf8', env: { ...process.env, ...env },
-  }).trim();
-  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: acceptance, REF_NAME: 'issue/687-x',
-    GH_TOKEN: '', GITHUB_TOKEN: '', GH_CONFIG_DIR: '/nonexistent/hp-954-no-auth' }), 'heavy=true\ngolden=true\nmutants_requested=false',
-    '#954: unavailable task demand broadens; a Release trailer alone still does not order full');
+  });
+  const unavailable = run({ EVENT_NAME: 'push', HEAD_MESSAGE: acceptance, REF_NAME: 'issue/687-x',
+    GH_TOKEN: '', GITHUB_TOKEN: '', GH_CONFIG_DIR: '/nonexistent/hp-954-no-auth' });
+  assert.notEqual(unavailable.status, 0, 'unavailable task scope fails instead of ordering unrelated full regression');
+  assert.match(unavailable.stderr, /Task check plan is unknown/);
   const workflow = readFileSync(new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8');
   assert.equal((workflow.match(/REF_NAME: \$\{\{ github\.ref_name \}\}/g) || []).length >= 2, true, 'оба вызова знают ветку');
 });
