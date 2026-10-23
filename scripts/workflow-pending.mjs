@@ -55,7 +55,8 @@ if (isMainModule(import.meta.url)) {
     } else result = await prepareReleasePending({ repo, candidate: arg('sha'), tag: arg('tag'), stable: arg('stable') === 'true', workflow: arg('workflow'), out });
     console.log(JSON.stringify(result));
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, Object.entries(result)
-      .filter(([, v]) => typeof v === 'boolean').map(([k, v]) => `${k}=${v}`).join('\n') + '\n');
+      .filter(([k, v]) => typeof v === 'boolean' || k === 'candidate' && /^[a-f0-9]{40}$/.test(v))
+      .map(([k, v]) => `${k}=${v}`).join('\n') + '\n');
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nWorkflow intent: ${JSON.stringify(result)}\n`);
   } catch (error) { console.error(String(error?.message || error)); process.exitCode = 1; }
 }

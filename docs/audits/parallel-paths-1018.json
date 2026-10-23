@@ -1,0 +1,2390 @@
+{
+  "schema": 1,
+  "candidate": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+  "scope": "Manual author inspection of historical patches and exact-SHA current source references; retain/needs-witness does not authorize future removal",
+  "entries": [
+    {
+      "sha": "2ec0a0f505a197c68f4b66a73949363c2bd915ef",
+      "introduced": "PDF local surface variables",
+      "prior": "inherited dark control surface",
+      "callers": "HpPdfDialog",
+      "decision": "retain",
+      "reason": "Theme override, not a second export path; active PDF dialog still needs its own light surface.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/pdf/hp-pdf-dialog.ts",
+          "line": 61,
+          "excerpt": "export class HpPdfDialog extends LitElement {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/pdf/hp-pdf-dialog.ts",
+          "line": 248,
+          "excerpt": "if (!customElements.get('hp-pdf-dialog')) customElements.define('hp-pdf-dialog', HpPdfDialog);"
+        }
+      ]
+    },
+    {
+      "sha": "e991004499bcd7294065a4d44e6790740ded63fa",
+      "introduced": "bounded decor action grid",
+      "prior": "unbounded flex pair",
+      "callers": "_renderDecorSecondary",
+      "decision": "retain",
+      "reason": "Old inline pair was replaced; remaining common action template is active. CSS debt belongs to #1019.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 4882,
+          "excerpt": "public _renderDecorSecondary(): EditorSecondaryModel | null {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 5013,
+          "excerpt": ": this.host._mode === 'decor' ? this._withBackdropReset(this._renderDecorSecondary())"
+        }
+      ]
+    },
+    {
+      "sha": "c667fc5c81c34f1fe09a9260354275d09a199438",
+      "introduced": "opening repair explanation and archive naming",
+      "prior": "silent repaired import summary",
+      "callers": "_renderBackupImportDialog",
+      "decision": "retain",
+      "reason": "Additional repair outcomes are distinct import states, not obsolete backup implementations.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 10363,
+          "excerpt": "private _renderBackupImportDialog(): TemplateResult {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 10364,
+          "excerpt": "return this._editorRuntimeOrThrow()._renderBackupImportDialog();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 10856,
+          "excerpt": "${dialogPresence(this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing)}"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 11452,
+          "excerpt": "${dialogPresence(this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing)}"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 9180,
+          "excerpt": "public _renderBackupImportDialog(): TemplateResult {"
+        }
+      ]
+    },
+    {
+      "sha": "875c548a07406e76b81c89aa4e1d95972cda6295",
+      "introduced": "centred frozen PDF room name",
+      "prior": "frozen width including omitted Area action",
+      "callers": "captureSvgView",
+      "decision": "retain",
+      "reason": "Live room caption and exported SVG have different contents; both are required consumers.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/pdf/pdf-export.ts",
+          "line": 11,
+          "excerpt": "import { captureSvgView, finishSvgView } from './svg-snapshot';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/pdf/pdf-export.ts",
+          "line": 107,
+          "excerpt": "const frame = captureSvgView(source, request.options);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/pdf/svg-snapshot.ts",
+          "line": 13,
+          "excerpt": "export function captureSvgView(source: SvgViewSource, options: SvgExportOptions): SVGSVGElement {"
+        }
+      ]
+    },
+    {
+      "sha": "9c25cb409f1a7ec2df310d5503ec2feb5d26d632",
+      "introduced": "keep-open settings save and accepted baseline",
+      "prior": "refresh against unsaved links",
+      "callers": "acceptGeneralBaseline",
+      "decision": "retain",
+      "reason": "Normal close-save and explicit keep-open refresh are separate user actions; old unsaved refresh was replaced.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-form-state.ts",
+          "line": 26,
+          "excerpt": "export function acceptGeneralBaseline(host: object, d: GeneralSettingsDraft, owner: object | undefined): boolean {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 141,
+          "excerpt": "import { acceptGeneralBaseline, generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 9441,
+          "excerpt": "acceptGeneralBaseline(this.host, d, owner);"
+        }
+      ]
+    },
+    {
+      "sha": "98c982d3fa92026b069bf91ebfbcadb45c1a27d2",
+      "introduced": "shared HSV range style",
+      "prior": "hue-only native range styling",
+      "callers": "hsv-range",
+      "decision": "retain",
+      "reason": "Hue/S/V remain actual picker controls; unified selectors replaced old hue track rules, no dead API established.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-color-opacity.ts",
+          "line": 312,
+          "excerpt": "input.hsv-range {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-color-opacity.ts",
+          "line": 332,
+          "excerpt": ".hsv-range::-webkit-slider-runnable-track {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-color-opacity.ts",
+          "line": 340,
+          "excerpt": ".hsv-range::-moz-range-track {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-color-opacity.ts",
+          "line": 348,
+          "excerpt": ".hsv-range::-moz-range-progress {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-color-opacity.ts",
+          "line": 354,
+          "excerpt": ".hsv-range::-webkit-slider-thumb {"
+        }
+      ]
+    },
+    {
+      "sha": "1663e9aa5170d6f1d04b17955512d4f10f9cd2bc",
+      "introduced": "effectiveRoutes diagnostic projection",
+      "prior": "raw map_routes rendering",
+      "callers": "effectiveRoutes",
+      "decision": "retain",
+      "reason": "Legacy route projection is compatibility behavior, outside #1018/#1015 sunset decisions.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/vacuum-maps-section.ts",
+          "line": 16,
+          "excerpt": "import { VacuumMapRoute, effectiveRoutes, observedMapIds, resolveRoute } from '../vacuum-routes';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/vacuum-maps-section.ts",
+          "line": 80,
+          "excerpt": "const routes: VacuumMapRoute[] = effectiveRoutes(dev.id, vacuum, dev.space, rootSource);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/vacuum-settings-section.ts",
+          "line": 16,
+          "excerpt": "import { effectiveRoutes } from '../vacuum-routes';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/vacuum-settings-section.ts",
+          "line": 95,
+          "excerpt": "${effectiveRoutes(dev.id,v,dev.space,src).map((route,index)=>html`<div><span>${index"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/vacuum-route-edit.ts",
+          "line": 14,
+          "excerpt": "Affine, VacuumMapRoute, VacuumRouteMarkerCfg, effectiveRoutes, normalizeRouteMatrix,"
+        }
+      ]
+    },
+    {
+      "sha": "182e48bf9612f0433b6ef9471eb7336e48cc3942",
+      "introduced": "native popover close/Escape ownership",
+      "prior": "unconditional owner-dialog close",
+      "callers": "_onHaHide",
+      "decision": "needs-witness",
+      "reason": "Rare HA/native nested picker guard is required; missing coverage cannot authorize its removal.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-dialog.ts",
+          "line": 608,
+          "excerpt": "private _onHaHide = (event: Event): void => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-dialog.ts",
+          "line": 820,
+          "excerpt": "@wa-hide=${this._onHaHide}"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-dialog.ts",
+          "line": 836,
+          "excerpt": "@wa-hide=${this._onHaHide}"
+        }
+      ]
+    },
+    {
+      "sha": "76d16ad8c1120b11b49523ae3fe403b4b6a9de0a",
+      "introduced": "discard prompt motion and return-focus",
+      "prior": "generic confirmation presentation",
+      "callers": "prepareDialogReturnFocus",
+      "decision": "retain",
+      "reason": "Discard and non-discard confirmation presentation intentionally differ; common confirmation remains active.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/dialog-return-focus.ts",
+          "line": 3,
+          "excerpt": "export function prepareDialogReturnFocus(opener: HTMLElement | null): void {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-confirm.ts",
+          "line": 5,
+          "excerpt": "import { prepareDialogReturnFocus } from './dialog-return-focus';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-confirm.ts",
+          "line": 40,
+          "excerpt": "prepareDialogReturnFocus(button);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-dialog.ts",
+          "line": 5,
+          "excerpt": "import { prepareDialogReturnFocus } from './dialog-return-focus';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-dialog.ts",
+          "line": 603,
+          "excerpt": "prepareDialogReturnFocus(this._opener);"
+        }
+      ]
+    },
+    {
+      "sha": "13de94b07bc9743717493cc930c9ecd3594ba2ab",
+      "introduced": "sourcePickerOverlay Escape owner",
+      "prior": "implicit binding picker opening",
+      "callers": "sourcePickerOverlay",
+      "decision": "retain",
+      "reason": "Inline picker still needs distinct open/filter/select state; the new directive owns Escape rather than replacing source selection.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 17,
+          "excerpt": "import { sourcePickerOverlay } from './source-picker-overlay';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 701,
+          "excerpt": "return html`<div class=\"hpf-picker ${open ? 'open' : ''}\" ${sourcePickerOverlay(open, onClose)}>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/source-picker-overlay.ts",
+          "line": 43,
+          "excerpt": "export const sourcePickerOverlay = directive(SourcePickerOverlay);"
+        }
+      ]
+    },
+    {
+      "sha": "ff063805a65a511b188333ec292145f74960e4a7",
+      "introduced": "alarm and maintenance issue explanation",
+      "prior": "one undifferentiated alarm badge",
+      "callers": "renderDeviceIssues",
+      "decision": "retain",
+      "reason": "Visual severity and detailed source explanations are distinct output consumers; empty unknown alarm guard stays.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-issues-view.ts",
+          "line": 7,
+          "excerpt": "export function renderDeviceIssues("
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 1,
+          "excerpt": "import { renderDeviceIssues } from './device-issues-view';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 13018,
+          "excerpt": "${renderDeviceIssues(presentation, key => this._t(key), eid => this._openMoreInfo(eid))}"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-device-preview.ts",
+          "line": 1,
+          "excerpt": "import { renderDeviceIssues } from './device-issues-view';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-device-preview.ts",
+          "line": 377,
+          "excerpt": "${renderDeviceIssues(actual, key => this._t(key), eid => this.dispatchEvent("
+        }
+      ]
+    },
+    {
+      "sha": "cd58819631b332590d2daa58c5a3fbbd10ac4d63",
+      "introduced": "prepared recovered JSON export consent",
+      "prior": "immediate recovered JSON download",
+      "callers": "preparedJson",
+      "decision": "retain",
+      "reason": "ZIP and JSON are both supported export formats; recovery consent supplements them and cannot replace either.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 23,
+          "excerpt": "preparedJson?: LegacyExport;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 100,
+          "excerpt": "this.host._backupExportDialog = { ...state, kind, planOnly: false, archive: undefined, preparedJson: undefined, error: '' };"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 162,
+          "excerpt": "const result = state.archive || state.preparedJson || await hass.callWS<ArchiveExport | LegacyExport>({"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 191,
+          "excerpt": "if (result.recovery?.total && !state.preparedJson) {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 192,
+          "excerpt": "host._backupExportDialog = { ...state, preparedJson: result, busy: false, error: '' };"
+        }
+      ]
+    },
+    {
+      "sha": "516cb64b86d7cab2b25a71514e54b7b8679256ee",
+      "introduced": "operation cancellation before preview token",
+      "prior": "token-only cancellation",
+      "callers": "flushImportCancels",
+      "decision": "needs-witness",
+      "reason": "Pending operation and already-issued token represent different server states; preserve late-response cancellation guards.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 83,
+          "excerpt": "this.cleanup = this.cleanup.then(() => this.flushImportCancels()).catch(() => undefined);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 86,
+          "excerpt": "private async flushImportCancels(): Promise<void> {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/backup-archive-client.ts",
+          "line": 122,
+          "excerpt": "if (zip) await this.flushImportCancels();"
+        }
+      ]
+    },
+    {
+      "sha": "f28088395e9489b120dff7f3c3685b980bf52973",
+      "introduced": "preview owner/connection/marker fencing",
+      "prior": "same-source-only validity",
+      "callers": "vacuumImageFitCurrent",
+      "decision": "needs-witness",
+      "reason": "Late calibration results require all owner identities; no second calibration path is proven obsolete.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/vacuum-image-fit.ts",
+          "line": 54,
+          "excerpt": "export function vacuumImageFitCurrent(runtime: HouseplanEditorRuntime): boolean {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 259,
+          "excerpt": "import { loadVacuumImageFit, vacuumImageFitCurrent } from './editors/vacuum-image-fit';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 9682,
+          "excerpt": "if (!vacuumImageFitCurrent(this)) return Promise.resolve();"
+        }
+      ]
+    },
+    {
+      "sha": "eab8f5c611985687e50ea295ebbbb1a406b640bd",
+      "introduced": "ToastPresentation active modal ownership",
+      "prior": "duplicate inline toast templates",
+      "callers": "_toastPresentation",
+      "decision": "retain",
+      "reason": "Old inline toasts were removed; host portal and modal presentation are current mutually owned targets.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 945,
+          "excerpt": "private readonly _toastPresentation = new ToastPresentation();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2721,
+          "excerpt": "this._toastPresentation.connect(this.renderRoot as ShadowRoot);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2889,
+          "excerpt": "this._toastPresentation.disconnect();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 4320,
+          "excerpt": "this._toastPresentation.refresh();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 7383,
+          "excerpt": "this._toastPresentation.show(this._toast, id);"
+        }
+      ]
+    },
+    {
+      "sha": "8e0a67f9b206d8cedc14acb7c8e1c51b4e599644",
+      "introduced": "nonshrinking alpha caption",
+      "prior": "shrinking numeric-field caption",
+      "callers": "caption",
+      "decision": "retain",
+      "reason": "One style declaration, no alternative runtime path; active alpha caption still renders.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 178,
+          "excerpt": "caption?: string | TemplateResult;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 188,
+          "excerpt": "/** An always-visible status may describe a switch without becoming its caption. */"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 209,
+          "excerpt": "icon, title, caption, help, checked, disabled = false, compact = false, onChange, id, describedBy, fieldId = id, fieldSlot,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 211,
+          "excerpt": "const captionId = id && caption ? `${id}-caption` : undefined;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 215,
+          "excerpt": "${caption && !compact ? html`<span class=\"hpf-toggle-caption\" id=${captionId ?? nothing}>${caption}</span>` : nothing}"
+        }
+      ]
+    },
+    {
+      "sha": "38985cfefc4ad8374904f1bce2f4cef2b879e014",
+      "introduced": "radar removal Undo draft restoration",
+      "prior": "one-way pending removal",
+      "callers": "restoreMarkerRadarRemoval",
+      "decision": "retain",
+      "reason": "Legacy persisted radar behavior is explicitly outside cleanup scope; Undo draft owner guards must remain.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 11,
+          "excerpt": "import { markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker-form-state';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 881,
+          "excerpt": "if (d.radarRemove) this.host._markerDialog = restoreMarkerRadarRemoval(this.host, d);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-form-state.ts",
+          "line": 26,
+          "excerpt": "export function restoreMarkerRadarRemoval(host: object, d: MarkerDialogDraft): MarkerDialogDraft {"
+        }
+      ]
+    },
+    {
+      "sha": "0e07384be08f91d883b08735858fa030496b664f",
+      "introduced": "settings-only style owner and atomic glow picker",
+      "prior": "global settings style injection and old glow assembly",
+      "callers": "ensureSettingsDialogStyles",
+      "decision": "retain",
+      "reason": "Global injection was removed. Shared colorField/colorTile onOpacity API is separately selected by dialog seed audit, not whole settings form.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 9,
+          "excerpt": "import { ensureSettingsDialogStyles } from './settings-styles';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 30,
+          "excerpt": "ensureSettingsDialogStyles(this.host);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 8,
+          "excerpt": "import { ensureSettingsDialogStyles } from './settings-styles';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 58,
+          "excerpt": "ensureSettingsDialogStyles(this.host);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/room-settings-dialog.ts",
+          "line": 14,
+          "excerpt": "import { ensureSettingsDialogStyles } from './settings-styles';"
+        }
+      ]
+    },
+    {
+      "sha": "65de7ab1d7e07446a61834ee93b898891ed36067",
+      "introduced": "whole-pixel contact stroke and block SVG",
+      "prior": "independent SVG user-unit width",
+      "callers": "device-contact-ink",
+      "decision": "retain",
+      "reason": "CSS fallback supports engines without round(); deleting it requires browser compatibility evidence, not zero coverage.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact-render.ts",
+          "line": 133,
+          "excerpt": "const ink = element?.querySelector<HTMLElement>('.device-contact-ink');"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact-render.ts",
+          "line": 195,
+          "excerpt": "probe.querySelector('.device-contact-ink')?.replaceChildren();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact.styles.ts",
+          "line": 5,
+          "excerpt": ".device-contact-ink { position: absolute; inset: 0; pointer-events: none; z-index: 0; }"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact.styles.ts",
+          "line": 7,
+          "excerpt": ".device-contact-ink > svg { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-face.ts",
+          "line": 123,
+          "excerpt": "${options.surface !== 'preview' ? html`<span class=\"device-contact-ink\" aria-hidden=\"true\"></span>` : nothing}"
+        }
+      ]
+    },
+    {
+      "sha": "c1cf713798cf37e9d2fda6318b55fb4f56eaa7c6",
+      "introduced": "geometry-aware initial Plan tool",
+      "prior": "always draw on entry",
+      "callers": "planEntryTool",
+      "decision": "retain",
+      "reason": "Explicit draw sessions and ordinary geometry-aware entry are different intents; default branch is still necessary for empty plans.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 24,
+          "excerpt": "import { planEntryTool } from './plan-entry-tool';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1322,
+          "excerpt": "? planEntryTool(space, this.host._serverCfg?.spaces.find(s => s.id === space.id)?.openings)"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/plan-entry-tool.ts",
+          "line": 7,
+          "excerpt": "export function planEntryTool("
+        }
+      ]
+    },
+    {
+      "sha": "f75620bc26944c0c49e55c24a02a1c2a2098390d",
+      "introduced": "latest support draft token after confirmation",
+      "prior": "pre-await support snapshot",
+      "callers": "_closeSupportDialog",
+      "decision": "needs-witness",
+      "reason": "Late preview completion and draft replacement are separate async states; preserve cleanup/current-draft fence.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 3007,
+          "excerpt": "if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 8428,
+          "excerpt": "public async _closeSupportDialog(): Promise<void> {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 8698,
+          "excerpt": "@hp-close=${() => void this._closeSupportDialog()}>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 8827,
+          "excerpt": "<button type=\"button\" class=\"btn ghost\" data-hp=\"dialog-cancel\" @click=${() => void this._closeSupportDialog()}>"
+        }
+      ]
+    },
+    {
+      "sha": "d2c91d1cdaed38ca23551ade80856511ce360cc6",
+      "introduced": "consent-pinned support version",
+      "prior": "live capability version after consent",
+      "callers": "supportConsentVersion",
+      "decision": "retain",
+      "reason": "Default capability negotiation remains needed before consent; accepted version must not broaden later.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 266,
+          "excerpt": "supportConsentVersion,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 8501,
+          "excerpt": "const requestedVersion = supportConsentVersion(current.packageVersion, this.host._haSupportPackageVersions);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 8682,
+          "excerpt": "const packageVersion = supportConsentVersion(state.packageVersion, this.host._haSupportPackageVersions);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/support-feedback.ts",
+          "line": 17,
+          "excerpt": "export function supportConsentVersion(consented: 1 | 2 | null, versions: unknown): 1 | 2 {"
+        }
+      ]
+    },
+    {
+      "sha": "72a691e647c5b6eb6e9a548d372ce2398412593a",
+      "introduced": "wall-only contact cache fingerprint",
+      "prior": "whole-floor including decor key",
+      "callers": "wallFingerprint",
+      "decision": "retain",
+      "reason": "General floor key serves other geometry consumers; wall-specific projection intentionally excludes decor only for contacts.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact-card.ts",
+          "line": 60,
+          "excerpt": "const wallFingerprint = (records: unknown): string => contentFingerprint("
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact-card.ts",
+          "line": 69,
+          "excerpt": "if (!keyOf) { keyOf = floorGeometryKeyReader(host, wallFingerprint); wallKeys.set(host, keyOf); }"
+        }
+      ]
+    },
+    {
+      "sha": "b08a7a7bb92ee9121bab0cad32e0c0386e81255c",
+      "introduced": "control-link copy refusal message",
+      "prior": "generic copy error message",
+      "callers": "linksFailed",
+      "decision": "retain",
+      "reason": "Generic error fallback serves non-link failures; specialized message does not replace it.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-copy-editor.ts",
+          "line": 176,
+          "excerpt": "const linksFailed = detail.code?.startsWith('marker_control_')"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-copy-editor.ts",
+          "line": 180,
+          "excerpt": ": linksFailed ? 'device.copy_links_failed'"
+        }
+      ]
+    },
+    {
+      "sha": "432145d956ee861a52da820f7e5ac642ab13d437",
+      "introduced": "selected wall outline cache",
+      "prior": "hover-only wall thickness outline",
+      "callers": "wallThicknessSelection",
+      "decision": "retain",
+      "reason": "Hover and selected wall are different visual states; cache ownership prevents wrong-floor outline.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 15,
+          "excerpt": "import { wallThicknessSelection } from './wall-thickness-selection';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 5575,
+          "excerpt": "shape: ReturnType<typeof wallThicknessSelection> } | null = null;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 5579,
+          "excerpt": "let selected: ReturnType<typeof wallThicknessSelection> = null;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 5586,
+          "excerpt": "shape: wallThicknessSelection(space, this.wallThickSpace, d, this.host._spaceWalls,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-thickness-selection.ts",
+          "line": 13,
+          "excerpt": "export function wallThicknessSelection("
+        }
+      ]
+    },
+    {
+      "sha": "ccd0e6a50534bacb6b331819b4c9ce581b70dda3",
+      "introduced": "LayoutWriteReload reconcile fence",
+      "prior": "uncoordinated parallel layout/config read",
+      "callers": "_layoutIO",
+      "decision": "needs-witness",
+      "reason": "Read/write race reconciliation is a safety path; normal and raced results are both current.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact-write.ts",
+          "line": 11,
+          "excerpt": "_deviceContacts?:DeviceContactRenderer;_adoption:ConfigAdoption;_layoutIO:LayoutWriteReload;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact-write.ts",
+          "line": 42,
+          "excerpt": "const current=host._layoutIO.guard(),revision=host._cfgRev,layoutRevision=host._layoutRev;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-contact-write.ts",
+          "line": 85,
+          "excerpt": "const current=host._layoutIO.guard(),owns=host._layoutIO.guard(true),finish=host._layoutIO.begin();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 585,
+          "excerpt": "this._layoutIO.retire(); this._devicePositionBusy = false;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 906,
+          "excerpt": "private readonly _layoutIO = new LayoutWriteReload(pending => this._configWriteGuard(pending));"
+        }
+      ]
+    },
+    {
+      "sha": "7829978ce77170cdf87afaa15bee2f320e2a4cd5",
+      "introduced": "scene surface gesture ownership",
+      "prior": "camera handling dialog input gestures",
+      "callers": "sceneGestureFromPath",
+      "decision": "retain",
+      "reason": "Scene gestures remain necessary outside owned surfaces; new boundary rejects inputs, not duplicate gesture implementation.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/canvas-surface-gestures.ts",
+          "line": 8,
+          "excerpt": "export function sceneGestureFromPath(path: readonly unknown[]): boolean {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 15,
+          "excerpt": "import { sceneGestureFromPath } from './canvas-surface-gestures';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 6798,
+          "excerpt": "if (!sceneGestureFromPath(ev.composedPath())) return;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 6909,
+          "excerpt": "if (!sceneGestureFromPath(ev.composedPath())) return;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 6993,
+          "excerpt": "if (!this._pointers.has(ev.pointerId) && !sceneGestureFromPath(ev.composedPath())) return;"
+        }
+      ]
+    },
+    {
+      "sha": "d1c11cab66896507a4c54d700514f32c62d7dd16",
+      "introduced": "backdrop cancellation cursor retirement",
+      "prior": "stale retained grabbing class",
+      "callers": "backdropActive",
+      "decision": "needs-witness",
+      "reason": "Pointer cancellation/lost capture cleanup is required even if ordinary smoke never interrupts it.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 3713,
+          "excerpt": "const backdropActive = this.backdropGesture.active;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 3734,
+          "excerpt": "if (backdropActive) this.host._stageEl?.classList.remove('bdgrabbing');"
+        }
+      ]
+    },
+    {
+      "sha": "3386f9c02ad9eba0bd40cf79881b3765382a5fa4",
+      "introduced": "canonical linked-source graph order",
+      "prior": "saved-control-order flatMap",
+      "callers": "lightFrame.linked",
+      "decision": "retain",
+      "reason": "Old flatMap was replaced. Linked and physical source projection remain separate current source groups.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-presentation.ts",
+          "line": 376,
+          "excerpt": "? lightFrame.linked(markerRefs)"
+        }
+      ]
+    },
+    {
+      "sha": "b48da057ba4e860cae1a17ce1c5a43f06d4aff29",
+      "introduced": "established summary preference address",
+      "prior": "synthetic slash fallback",
+      "callers": "summaryPreferenceKey",
+      "decision": "retain",
+      "reason": "Address compatibility was restored; no alternate summary renderer was introduced.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/summary-panel-identity.ts",
+          "line": 18,
+          "excerpt": "export function summaryPreferenceKey(host: SummaryPreferenceHost): string | null {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/summary-panel-runtime-loaded.ts",
+          "line": 26,
+          "excerpt": "import { stableSummaryPlacementSlot, summaryPreferenceKey } from './summary-panel-identity';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/summary-panel-runtime-loaded.ts",
+          "line": 396,
+          "excerpt": "return summaryPreferenceKey(this.host);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/view-runtimes.ts",
+          "line": 15,
+          "excerpt": "import { summaryPreferenceKey, type SummaryPreferenceHost } from './summary-panel-identity';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/view-runtimes.ts",
+          "line": 37,
+          "excerpt": "const key = summaryPreferenceKey(host);"
+        }
+      ]
+    },
+    {
+      "sha": "45b24911779e1d06e476264af202ea3500f71ac4",
+      "introduced": "ViewRuntimes lifecycle and bounded retries",
+      "prior": "card-local live import and summary slot ownership",
+      "callers": "_viewRuntimes",
+      "decision": "retain",
+      "reason": "Old card-local ensureLiveRuntime and SummaryRuntimeSlot ownership were removed. SummaryRuntimeLoader now extends shared ViewRuntimeCode and is composed through ViewRuntimeBoundary; cold/warm code cache and failure/retry guards serve distinct required states.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 778,
+          "excerpt": "const [ready] = await Promise.all([this._editorRuntimeLoader.ensure(), this._viewRuntimes.live.ensure()]);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2313,
+          "excerpt": "private readonly _viewRuntimes = new ViewRuntimes(this as unknown as ViewRuntimeHost);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2725,
+          "excerpt": "this._viewRuntimes.connect();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2848,
+          "excerpt": "if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._viewRuntimes.disconnect();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 4273,
+          "excerpt": "this._viewRuntimes.reconcile();"
+        }
+      ]
+    },
+    {
+      "sha": "7cdf0d768b8eeb6f55f2aeb4f2c74e559f13a28b",
+      "introduced": "inline-flex painted Area icon",
+      "prior": "baseline inline icon",
+      "callers": "rlarea",
+      "decision": "retain",
+      "reason": "Single alignment correction, no parallel code path.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 12377,
+          "excerpt": "? html`<button type=\"button\" class=\"rlgo rlarea\" data-hp=\"room-area-link\""
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/styles/plan.styles.ts",
+          "line": 696,
+          "excerpt": ".stage.mode-view .rlarea {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/styles/plan.styles.ts",
+          "line": 700,
+          "excerpt": ".rlarea {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/styles/plan.styles.ts",
+          "line": 718,
+          "excerpt": ".rlarea > ha-icon { display: inline-flex; }"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/styles/plan.styles.ts",
+          "line": 719,
+          "excerpt": ".rlarea:focus-visible, .rlfit:focus-visible {"
+        }
+      ]
+    },
+    {
+      "sha": "06681e625bf507d668f987e8e05e4fbaee4fd926",
+      "introduced": "stable room name anchor beside touch target",
+      "prior": "centred native button row",
+      "callers": "margin-inline-end",
+      "decision": "retain",
+      "reason": "View touch target and passive Plan icon have different widths; shared caption remains current.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/styles/plan.styles.ts",
+          "line": 709,
+          "excerpt": "margin-inline-end: calc(0.85em - 44px);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/styles/settings-dialogs.styles.ts",
+          "line": 239,
+          "excerpt": "hp-dialog.ui-dialog.rules-dialog .row[slot=footer] > button:first-child{margin-inline-end:auto;}"
+        }
+      ]
+    },
+    {
+      "sha": "6fc79f456c7c5716947fafdb6e4f606bd234098b",
+      "introduced": "current access/kiosk presentation recovery",
+      "prior": "stale cached icon/camera recovery",
+      "callers": "isLightGroupDevice",
+      "decision": "retain",
+      "reason": "Group device detection and ordinary entity icon fallback serve distinct binding types; recovery safety is not removable debt.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/devices.ts",
+          "line": 836,
+          "excerpt": "export function isLightGroupDevice(hass: IconRegistryView, id: string, entityIds: readonly string[]): boolean {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/devices.ts",
+          "line": 895,
+          "excerpt": "if (isLightGroupDevice(hass, ref, status.allEntityIds)) return LIGHT_GROUP_ICON;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/devices.ts",
+          "line": 1211,
+          "excerpt": "let icon = isLightGroupDevice(fullHass, dev.id, bindingStatus.allEntityIds)"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/devices.ts",
+          "line": 1281,
+          "excerpt": "? (isLightGroupDevice(fullHass, ref, bindingStatus.allEntityIds) ? LIGHT_GROUP_ICON"
+        }
+      ]
+    },
+    {
+      "sha": "88c7ddc71fd5f8c25029bc175b4cc82a1584036c",
+      "introduced": "DeviceDragRetirement bounded pointer journal",
+      "prior": "late interrupted drag tail",
+      "callers": "DeviceDragRetirement",
+      "decision": "needs-witness",
+      "reason": "Interrupted and accepted writes differ; retain retirement journal until terminal-event witnesses justify any simplification.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-drag-retirement.ts",
+          "line": 2,
+          "excerpt": "export class DeviceDragRetirement {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 16,
+          "excerpt": "import { DeviceDragRetirement } from './device-drag-retirement';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2583,
+          "excerpt": "private readonly _deviceDragRetirement = new DeviceDragRetirement();"
+        }
+      ]
+    },
+    {
+      "sha": "ca326111ab0f3ed815cd8a24d21375a2fb36aa02",
+      "introduced": "permission-aware actionable Optimize",
+      "prior": "unexplained cleanup summary",
+      "callers": "currentPositions",
+      "decision": "retain",
+      "reason": "Current/archived positions and actionable repair are different data classes; no old optimizer equivalent is proven unused.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/align-grid.ts",
+          "line": 92,
+          "excerpt": "currentPositions: number;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/align-grid.ts",
+          "line": 94,
+          "excerpt": "currentPositionsMoved: number;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/align-grid.ts",
+          "line": 159,
+          "excerpt": "let currentPositions = 0, archivedPositions = 0;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/align-grid.ts",
+          "line": 160,
+          "excerpt": "let currentPositionsMoved = 0, archivedPositionsMoved = 0;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/align-grid.ts",
+          "line": 364,
+          "excerpt": "else { currentPositions++; if (d > EPS) currentPositionsMoved++; }"
+        }
+      ]
+    },
+    {
+      "sha": "c50b6e3674185481325c4fdfb490b8cc0eeebad6",
+      "introduced": "HA authority claim across row confirmation",
+      "prior": "mode/row-only confirmation validity",
+      "callers": "_configWriteContext.current",
+      "decision": "needs-witness",
+      "reason": "HA authority may change while confirmation is open; preserve negative authorization fence.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/decor-order-editor.ts",
+          "line": 42,
+          "excerpt": "&& this.host._configWriteContext.current(target.context, this.host.hass)"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-copy-editor.ts",
+          "line": 37,
+          "excerpt": "&& this.host._configWriteContext.current(m.context, this.host.hass);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-copy-editor.ts",
+          "line": 101,
+          "excerpt": "const authority = () => h.isConnected && h._configWriteContext.current(m.context, h.hass);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/properties/editor.ts",
+          "line": 411,
+          "excerpt": "&& host._configWriteContext.current(authority, host.hass) && contentFingerprint(host._serverCfg) === attempt.attemptedFingerprint);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/properties/editor.ts",
+          "line": 412,
+          "excerpt": "if (!host._configWriteContext.current(authority, host.hass) || !this.allowed || !this.target(identity)) return failure('external_change');"
+        }
+      ]
+    },
+    {
+      "sha": "dfd2972c4be6654afbd3b4c2432754201d64a984",
+      "introduced": "exact information-row toggle intent",
+      "prior": "marker-group toggle applied to a row",
+      "callers": "resolveInfoRowToggleIntent",
+      "decision": "retain",
+      "reason": "Row and whole-marker actions intentionally target different sets; both currently serve UI affordances.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-toggle.ts",
+          "line": 485,
+          "excerpt": "export function resolveInfoRowToggleIntent("
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 125,
+          "excerpt": "resolveInfoRowToggleIntent, resolveToggleIntent, sameToggleOperationTargets,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 12973,
+          "excerpt": "const initial = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 12982,
+          "excerpt": "const intent = resolveInfoRowToggleIntent(this._planHass, this._fullRegistryHass, eid);"
+        }
+      ]
+    },
+    {
+      "sha": "a384abc793923fafd8577cdcb82d1686aff91e15",
+      "introduced": "ViewHoldGesture interruption owner",
+      "prior": "unowned hold timer terminal lifecycle",
+      "callers": "_viewHold",
+      "decision": "needs-witness",
+      "reason": "Current hold/click interruption guards are required rare states; historical merge-marker artifact is not present in current source and is not a live path.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 1513,
+          "excerpt": "this._viewHold.cancel();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2446,
+          "excerpt": "this._viewHold.cancel(event.pointerId);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2585,
+          "excerpt": "private readonly _viewHold = new ViewHoldGesture();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2913,
+          "excerpt": "this._viewHold.cancel();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 5150,
+          "excerpt": "this._viewHold.cancel();"
+        }
+      ]
+    },
+    {
+      "sha": "75509ae251c54908342053e899008088871c27d1",
+      "introduced": "identity-bound confirmation acceptance",
+      "prior": "accepting whichever intent is current",
+      "callers": "_acceptTapConfirm",
+      "decision": "needs-witness",
+      "reason": "Stale DOM cannot accept a newer request; preserve exact-object guard.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 5983,
+          "excerpt": "private _acceptTapConfirm(confirmation: { exec(): void } | null): void {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 11487,
+          "excerpt": "<button class=\"btn on\" data-hp=\"dialog-confirm\" @click=${this._acceptTapConfirm.bind(this, this._tapConfirm)}>"
+        }
+      ]
+    },
+    {
+      "sha": "39c9af93a67ef2eccf604ec60aeb4c9d2c90550f",
+      "introduced": "KioskCarousel state owner and floor context",
+      "prior": "inline timer condition",
+      "callers": "KioskCarousel",
+      "decision": "retain",
+      "reason": "Inline cycle decision was replaced; explicit floor navigation remains a separate consumer and cannot be removed.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 89,
+          "excerpt": "import { KioskCarousel } from './kiosk-carousel';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 2454,
+          "excerpt": "private readonly _kioskCarousel = new KioskCarousel({"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/kiosk-carousel.ts",
+          "line": 4,
+          "excerpt": "export interface KioskCarouselState {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/kiosk-carousel.ts",
+          "line": 12,
+          "excerpt": "export interface KioskCarouselClock {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/kiosk-carousel.ts",
+          "line": 19,
+          "excerpt": "export interface KioskCarouselPort {"
+        }
+      ]
+    },
+    {
+      "sha": "21b32a054cc18bbe5046fc6e3dacf2125e9e8cbd",
+      "introduced": "capacity guard restoring retry cursor",
+      "prior": "unbounded displaced command restoration",
+      "callers": "_undo.length + this._redo.length",
+      "decision": "needs-witness",
+      "reason": "Full-history refusal boundary is a rare correctness guard, not a duplicate stack.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/command-stack.ts",
+          "line": 59,
+          "excerpt": "&& this._undo.length + this._redo.length >= this._limit) return;"
+        }
+      ]
+    },
+    {
+      "sha": "6de0689b9e64abb568a363ef8bd18f8b120d13e0",
+      "introduced": "advance physical batch baseline on accepted send",
+      "prior": "refusing against older accepted baseline",
+      "callers": "nextBaseline",
+      "decision": "needs-witness",
+      "reason": "Concurrent pending writes need advancing baseline; retain until dedicated async ordering witnesses.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1763,
+          "excerpt": "const nextBaseline = pending?.before === accepted.before && pending.fingerprint !== accepted.fingerprint"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1765,
+          "excerpt": "if (nextBaseline && pending) {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1767,
+          "excerpt": "if (markerIds.length) nextBaseline.roomReferences = captureMarkerRoomReferences(candidate.markers || [], markerIds);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1770,
+          "excerpt": "this.host._pendingPhysicalWrites.set(spaceId, { ...pending, before: nextBaseline });"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1772,
+          "excerpt": "this.physicalWriteHistory.accept(accepted.before, strictCommands[index], nextBaseline || undefined);"
+        }
+      ]
+    },
+    {
+      "sha": "efffcd9069bf87e9c2453725486d8f1bab9f9530",
+      "introduced": "presentation-aware physical rollback journal",
+      "prior": "discarding historical background carriers",
+      "callers": "recordPresentation",
+      "decision": "needs-witness",
+      "reason": "Geometry and presentation commands are not equivalent; physical refusal must preserve presentation history.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1838,
+          "excerpt": "if (pending) this.physicalWriteHistory.recordPresentation(pending.before, command);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/physical-write-history.ts",
+          "line": 36,
+          "excerpt": "public recordPresentation(baseline: SpaceGeometryState, command: NamedCommand<SpaceGeometryState>): void {"
+        }
+      ]
+    },
+    {
+      "sha": "f222ea2d28f62e1c64f60f6e030eb641900bca6b",
+      "introduced": "identity-anchored retry cursor position",
+      "prior": "losing accepted cursor after refusal",
+      "callers": "restorePosition",
+      "decision": "needs-witness",
+      "reason": "Restore cursor and ordinary Undo/Redo serve different server outcomes; epoch/anchor guards remain necessary.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/command-stack.ts",
+          "line": 54,
+          "excerpt": "public restorePosition(command: NamedCommand<T>, position: CommandPosition<T>): void {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/properties/editor.ts",
+          "line": 472,
+          "excerpt": "const restoreCursor = () => { if (position) host._devicePositionHistory.restorePosition(command, position); };"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/physical-write-history.ts",
+          "line": 59,
+          "excerpt": "if (entry.position && !disposable.has(entry.command)) stack.restorePosition(entry.command, entry.position);"
+        }
+      ]
+    },
+    {
+      "sha": "d17969f266a8eb91ff78e82c0ef9bc8f5099e360",
+      "introduced": "PhysicalWriteHistory scoped refused batches",
+      "prior": "whole geometry rollback/history loss",
+      "callers": "physicalRollbackState",
+      "decision": "needs-witness",
+      "reason": "Selective refused writes and ordinary accepted geometry history require different operations; do not remove either from lack of coverage.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 57,
+          "excerpt": "import { PhysicalWriteHistory, physicalHistoryChanged, physicalRollbackState } from './physical-write-history';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1675,
+          "excerpt": "physicalRollbackState(live, pending.before)) || restored;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/physical-write-history.ts",
+          "line": 14,
+          "excerpt": "export function physicalRollbackState(live: SpaceGeometryState, baseline: SpaceGeometryState): SpaceGeometryState {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/physical-write-history.ts",
+          "line": 69,
+          "excerpt": "command[direction] = physicalRollbackState(command[direction], baseline);"
+        }
+      ]
+    },
+    {
+      "sha": "51ced875cd2bbd53cdfdd32e32819d4aa0727cfc",
+      "introduced": "accepted config snapshot authority",
+      "prior": "mutable draft mistaken for server-confirmed state",
+      "callers": "acceptedCache",
+      "decision": "retain",
+      "reason": "Accepted baseline and live mutable draft are deliberately distinct; neither can replace the other.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/config-adoption.ts",
+          "line": 99,
+          "excerpt": "private acceptedCache: CachedStructuralSnapshot | null = null;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/config-adoption.ts",
+          "line": 163,
+          "excerpt": "if (next) this.rememberAccepted(next, layResp !== undefined ? layResp?.layout ?? {} : this.acceptedCache?.layout ?? this.layout,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/config-adoption.ts",
+          "line": 164,
+          "excerpt": "layResp === undefined ? this.acceptedCache?.layout_rev ?? this.layoutRev : this.layoutRev);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/config-adoption.ts",
+          "line": 182,
+          "excerpt": "if (this.acceptedCache) {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/config-adoption.ts",
+          "line": 183,
+          "excerpt": "this.acceptedCache.layout = structuredClone(layResp.layout ?? merged);"
+        }
+      ]
+    },
+    {
+      "sha": "72a1053c656e87b62160f8893f73a191ce6587c9",
+      "introduced": "optimizer dependency injection preserving raw retry exports",
+      "prior": "static dialog import into editor runtime",
+      "callers": "OptimizePlansDialogOptions",
+      "decision": "retain",
+      "reason": "Static edge was removed. Injection preserves same optimizer behavior and named exports; no second optimizer implementation.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/optimize-plans-dialog.ts",
+          "line": 132,
+          "excerpt": "export interface OptimizePlansDialogOptions {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/optimize-plans-dialog.ts",
+          "line": 154,
+          "excerpt": "private readonly options: OptimizePlansDialogOptions,"
+        }
+      ]
+    },
+    {
+      "sha": "04b08663412a7d9c5547fd50bc27a39cbd65da8a",
+      "introduced": "bounded registry recheck and unverified explanation",
+      "prior": "unexplained unmatched position count",
+      "callers": "reloadHaRegistriesBounded",
+      "decision": "needs-witness",
+      "reason": "Unavailable and complete registries have distinct diagnostic states; preserve bounded retry, no inferred orphan deletion.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/optimize-plans-dialog.ts",
+          "line": 23,
+          "excerpt": "reloadHaRegistriesBounded, unverifiedDiagnostics, unverifiedGroup, unverifiedName,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/optimize-plans-dialog.ts",
+          "line": 302,
+          "excerpt": "const complete = await reloadHaRegistriesBounded(this.port.hass(), this.registryRetryMs);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/optimize-unverified.ts",
+          "line": 80,
+          "excerpt": "export function reloadHaRegistriesBounded(hass: unknown, timeoutMs: number): Promise<boolean> {"
+        }
+      ]
+    },
+    {
+      "sha": "b9134437c113ae0076c77ff620ffef7b9c7816f5",
+      "introduced": "writer/kiosk/admin boundary",
+      "prior": "conflated HA admin and plan-write permission",
+      "callers": "deviceEditorAllowed",
+      "decision": "retain",
+      "reason": "House Plan editing and HA Area administration are different authorities, both required.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-copy-editor.ts",
+          "line": 5,
+          "excerpt": "import { deviceEditorAllowed } from './device-editor-access';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-copy-editor.ts",
+          "line": 33,
+          "excerpt": "return h.isConnected && h._mode === 'devices' && h._norm && h._loadOk && !!h._serverCfg && deviceEditorAllowed(h._canEdit, h._kiosk);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-editor-access.ts",
+          "line": 2,
+          "excerpt": "export function deviceEditorAllowed(writer: boolean, kiosk: boolean): boolean {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 282,
+          "excerpt": "import { deviceEditorAllowed, roomAreaAffordance } from './device-editor-access';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 627,
+          "excerpt": "&& deviceEditorAllowed(this._canEdit, this._kiosk) && !this._otherDialogsBlocked"
+        }
+      ]
+    },
+    {
+      "sha": "30c2fbb860baa4506a921e1c3f4badb95582afb1",
+      "introduced": "quota rejection tracking preserving real endpoints",
+      "prior": "undifferentiated empty vacuum path",
+      "callers": "vacuumPathLimited",
+      "decision": "needs-witness",
+      "reason": "Limited and empty-but-valid paths must remain distinguishable; quota guards cannot be removed after zero coverage.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/vacuum-path-geometry.ts",
+          "line": 15,
+          "excerpt": "export function vacuumPathLimited(value: unknown): boolean {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/vacuum-trail-material.ts",
+          "line": 2,
+          "excerpt": "import { ownVacuumPathInput, vacuumPathLimited, type VacuumPathGeometryCache } from './vacuum-path-geometry';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/vacuum-trail-material.ts",
+          "line": 48,
+          "excerpt": "const limited = vacuumPathLimited(fragments) || server?.quality?.reason === 'limited';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/vacuum-trail-material.ts",
+          "line": 57,
+          "excerpt": "const limited = [telemetry?.path, server?.points, local].some(vacuumPathLimited);"
+        }
+      ]
+    },
+    {
+      "sha": "f26017d26f5cc7f1cd074c482fb41491f42e2c1b",
+      "introduced": "server-confirmed node history cursor",
+      "prior": "optimistic cursor before queued own write",
+      "callers": "confirmUndo",
+      "decision": "needs-witness",
+      "reason": "Ordinary command history and accepted remote node writes are distinct; queue/adoption guards require retained witnesses.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/command-stack.ts",
+          "line": 104,
+          "excerpt": "public confirmUndo(command: NamedCommand<T>): boolean {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/geometry-history-step.ts",
+          "line": 28,
+          "excerpt": "confirmUndo(command: NamedCommand<T>): boolean;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/geometry-history-step.ts",
+          "line": 51,
+          "excerpt": "if (!(undo ? stack.confirmUndo(command) : stack.confirmRedo(command))) stack.removeWhere(mine);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-node-history.ts",
+          "line": 15,
+          "excerpt": "confirmUndo(command: NamedCommand<T>): boolean;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-node-history.ts",
+          "line": 70,
+          "excerpt": "if (!(undo ? stack.confirmUndo(command) : stack.confirmRedo(command))) stack.removeWhere(item => item === command);"
+        }
+      ]
+    },
+    {
+      "sha": "8ec263cfff5929d6ac8442f9a03e0b76ababeeed",
+      "introduced": "intentional room-device discovery acknowledgement",
+      "prior": "all discovered devices treated as unsolicited",
+      "callers": "roomDeviceDiscovery",
+      "decision": "retain",
+      "reason": "Intentional creation and external discovery still require different inbox outcomes.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 586,
+          "excerpt": "this._editorRuntime?.roomDeviceDiscovery.clear();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 5123,
+          "excerpt": "this._editorRuntime?.roomDeviceDiscovery.capture(createdRooms, previousDevices, this._devices, this._serverCfg);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 5204,
+          "excerpt": "const expected = this._editorRuntime?.roomDeviceDiscovery.pendingIds(this._serverCfg);"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 890,
+          "excerpt": "public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 1737,
+          "excerpt": "const discoveryWrite = this.roomDeviceDiscovery?.prepare(candidate);"
+        }
+      ]
+    },
+    {
+      "sha": "4e6d4fcdea9af7cbffdf2e843f2b5c8397e0af28",
+      "introduced": "geometry cleanup consent boundary",
+      "prior": "silent deletion during save preparation",
+      "callers": "isGeometryCleanupRefusal",
+      "decision": "needs-witness",
+      "reason": "Refusal and accepted write are distinct actions; fallback generic errors remain for unrelated failures.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/config-adoption.ts",
+          "line": 348,
+          "excerpt": "export const isGeometryCleanupRefusal = (error: unknown): boolean =>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-inbox-batch.ts",
+          "line": 14,
+          "excerpt": "import { isGeometryCleanupRefusal } from './config-adoption';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/device-inbox-batch.ts",
+          "line": 152,
+          "excerpt": "if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/room-save.ts",
+          "line": 3,
+          "excerpt": "import { isGeometryCleanupRefusal, supersedeDeferredWrite } from '../config-adoption';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/room-save.ts",
+          "line": 71,
+          "excerpt": "if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');"
+        }
+      ]
+    },
+    {
+      "sha": "ca42ff2465307ade46f8246f4ed6402703f0e34e",
+      "introduced": "accepted-face carrier-scoped promotion",
+      "prior": "promoting unrelated partition debt",
+      "callers": "selectWallFacePromotionIds",
+      "decision": "retain",
+      "reason": "General partition reconciliation still serves other editing operations; accepted-face scoping is narrower by design.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 337,
+          "excerpt": "import { classifyWallFaceCandidates, selectWallFacePromotionIds } from './wall-face-room-split';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 6709,
+          "excerpt": "partitionIds: selectWallFacePromotionIds(acceptedRings, model.partitions, epsilon),"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-face-room-split.ts",
+          "line": 161,
+          "excerpt": "export function selectWallFacePromotionIds("
+        }
+      ]
+    },
+    {
+      "sha": "7c2eb277637b464b2be9d63d012684c3611affab",
+      "introduced": "WallFaceRoomClassification",
+      "prior": "ad hoc cut/repair decisions",
+      "callers": "classifyWallFaceCandidates",
+      "decision": "retain",
+      "reason": "Old inline decision block was replaced; candidate classifier and explicit room creation are separate stages.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 337,
+          "excerpt": "import { classifyWallFaceCandidates, selectWallFacePromotionIds } from './wall-face-room-split';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 2717,
+          "excerpt": "return classifyWallFaceCandidates(faces, rooms, this.host._gridPitch * 0.0002)"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-face-room-split.ts",
+          "line": 138,
+          "excerpt": "export function classifyWallFaceCandidates<T extends WallGraphFace>("
+        }
+      ]
+    },
+    {
+      "sha": "c689297625978a0144a2530096c69c0c397ce530",
+      "introduced": "formSections/actionHelp/disclosure composition",
+      "prior": "per-form inline separators and action wrappers",
+      "callers": "formSections",
+      "decision": "retain",
+      "reason": "Migrated wrappers were removed. Shared composition still has many live dialog consumers; the unrelated leftover onOpacity branch is traced separately to #948/#945/#946.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 91,
+          "excerpt": "export function formSections(sections: readonly FormSectionContent[], { dividers = true }: { dividers?: boolean } = {}): TemplateResult {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 171,
+          "excerpt": "return html`<div class=\"hpf-grid ${narrow ? 'hpf-grid-narrow' : ''}${stacked ? ' hpf-grid-stacked' : ''}\">${stacked ? formSections(children) : children}</div>`;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 6,
+          "excerpt": "formCard, helpLabel, selectControl, subsection, textLink, toggleRow, unitInput, formSections,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 105,
+          "excerpt": "body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 143,
+          "excerpt": "body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 181,
+          "excerpt": "body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 188,
+          "excerpt": "{ id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 238,
+          "excerpt": "body: formSections(["
+        }
+      ]
+    },
+    {
+      "sha": "554071aea5b3f17c9202af89c611bcb6ab5b242e",
+      "introduced": "optional section dividers",
+      "prior": "mandatory divider per form section",
+      "callers": "formSections",
+      "decision": "retain",
+      "reason": "Plain and divided sections are active presentation variants; deleting either changes current forms.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 91,
+          "excerpt": "export function formSections(sections: readonly FormSectionContent[], { dividers = true }: { dividers?: boolean } = {}): TemplateResult {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 171,
+          "excerpt": "return html`<div class=\"hpf-grid ${narrow ? 'hpf-grid-narrow' : ''}${stacked ? ' hpf-grid-stacked' : ''}\">${stacked ? formSections(children) : children}</div>`;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 6,
+          "excerpt": "formCard, helpLabel, selectControl, subsection, textLink, toggleRow, unitInput, formSections,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 105,
+          "excerpt": "body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 143,
+          "excerpt": "body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 181,
+          "excerpt": "body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 188,
+          "excerpt": "{ id: 'sun', title: st('gs.section_light'), body: html`${formCard({ id: 'sun', title: st('gs.section_light'), body: formSections(["
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 238,
+          "excerpt": "body: formSections(["
+        }
+      ]
+    },
+    {
+      "sha": "f04d05e3479ab8f7a9b31f66b79d2471c24dffc1",
+      "introduced": "consistent room/marker section composition",
+      "prior": "remaining local field wrappers",
+      "callers": "renderMarkerDialog",
+      "decision": "retain",
+      "reason": "Local wrappers were migrated; marker-specific fields remain different behavior, not equivalent composition helpers.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 57,
+          "excerpt": "export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 11419,
+          "excerpt": "? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 13207,
+          "excerpt": "private _renderMarkerDialog(): TemplateResult {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-card.ts",
+          "line": 13208,
+          "excerpt": "return this._editorRuntimeOrThrow()._renderMarkerDialog();"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 27,
+          "excerpt": "import { renderMarkerDialog } from './editors/marker-dialog';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/houseplan-editor-runtime.ts",
+          "line": 11699,
+          "excerpt": "public _renderMarkerDialog(): TemplateResult { return renderMarkerDialog.call(this); }"
+        }
+      ]
+    },
+    {
+      "sha": "54d208a32982dda6d068262a27f39b30f1d40288",
+      "introduced": "shared composition spacing adjustment",
+      "prior": "earlier shared spacing declarations",
+      "callers": "dialogCompositionCss",
+      "decision": "retain",
+      "reason": "Selector replacement, no second JS execution path; outstanding CSS overlap is owned by #1019.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 18,
+          "excerpt": "import { dialogCompositionCss } from '../styles/dialog-composition.styles';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 30,
+          "excerpt": "+ formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }) + dialogCompositionCss;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/styles/dialog-composition.styles.ts",
+          "line": 7,
+          "excerpt": "export const dialogCompositionCss = css`"
+        }
+      ]
+    },
+    {
+      "sha": "8c1d2755d2a244b38926caf01b5a2af9deb9fc96",
+      "introduced": "stable Lit child slot per source section",
+      "prior": "repeat over filtered sections",
+      "callers": "formSectionEntries",
+      "decision": "retain",
+      "reason": "Old repeat import/render path was removed in the patch. Sparse stable source positions preserve focus when conditional sections disappear.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 82,
+          "excerpt": "export function formSectionEntries(sections: readonly FormSectionContent[]): { content: FormSectionContent; index: number }[] {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 95,
+          "excerpt": "for (const entry of formSectionEntries(sections)) content[entry.index] = html`<div class=\"hpf-section\">${entry.content}</div>`;"
+        }
+      ]
+    },
+    {
+      "sha": "6d3cdb755cd5cb7bef931cd959065b0c8576c0b5",
+      "introduced": "topology refresh explanatory composition",
+      "prior": "misplaced topology information row",
+      "callers": "prepareLoad",
+      "decision": "retain",
+      "reason": "Current refresh preparation/save remains required; composition did not replace topology loading or its safeguards.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 242,
+          "excerpt": ".prepareLoad=${async () => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-zigbee-topology-settings.ts",
+          "line": 35,
+          "excerpt": "prepareLoad: { attribute: false },"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-zigbee-topology-settings.ts",
+          "line": 48,
+          "excerpt": "prepareLoad?: () => Promise<boolean>;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-zigbee-topology-settings.ts",
+          "line": 194,
+          "excerpt": "&& (this.savedEnabled || (!!this.prepareLoad && this.canPrepareLoad && !this._invalidTopic));"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-zigbee-topology-settings.ts",
+          "line": 364,
+          "excerpt": "prepare: this.savedEnabled ? undefined : this.prepareLoad,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-zigbee-topology-settings.ts",
+          "line": 390,
+          "excerpt": "<button data-hp=\"action\" data-action=\"zigbee-refresh-z2m\" class=${`${embedded ? 'btn ghost' : ''} ${!this.savedEnabled && this.prepareLoad ? 'save-and-load' : ''}`}"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-zigbee-topology-settings.ts",
+          "line": 392,
+          "excerpt": "@click=${() => this._refreshZ2m(topic)}><ha-icon icon=\"mdi:refresh\"></ha-icon>${this._t(!this.savedEnabled && this.prepareLoad ? 'save_and_update' : 'z2m_update')}</button>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/hp-zigbee-topology-settings.ts",
+          "line": 435,
+          "excerpt": "${!this.savedEnabled ? html`<div class=\"hint\">${this._t(this.prepareLoad ? 'save_and_load_help' : 'save_first')}</div>` : nothing}"
+        }
+      ]
+    },
+    {
+      "sha": "a249d62dce89f3ecf45f6a6d23f1ee3d52b1474c",
+      "introduced": "proved local boolean boundary splice",
+      "prior": "original full polyclip boolean operation",
+      "callers": "incremental.reuse",
+      "decision": "retain",
+      "reason": "The fast path returns null when proof/shape/capacity fails. WallBooleanBaseline.apply still calls clipping[operation]; that original operation is a required correctness fallback, including original validation/failure behavior.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-boolean-baseline.ts",
+          "line": 36,
+          "excerpt": "const reused = !record && reusable ? this.incremental.reuse(operation, operands, operandKeys) : null;"
+        }
+      ]
+    },
+    {
+      "sha": "45c33ee60b65bc1ddf5c4b9dc723a9563aeb5391",
+      "introduced": "frozen Select baseline, shell union and quad coverage fast paths",
+      "prior": "uncached node geometry and sequential union",
+      "callers": "unionWallShellGeometry",
+      "decision": "retain",
+      "reason": "Select baseline caching is scoped to exact authority/revision/space. Non-provable shell/quad geometry still needs general sequential boolean reconstruction; no equivalence beyond the guarded subset is proven.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-shell-union.ts",
+          "line": 74,
+          "excerpt": "export function unionWallShellGeometry(body: Multi, shell: Multi, coordScale: number,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-thickness.ts",
+          "line": 14,
+          "excerpt": "import { unionWallShellGeometry } from './wall-shell-union';"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/wall-thickness.ts",
+          "line": 3853,
+          "excerpt": "const merged = unionWallShellGeometry(body, exterior.shell, coordScale);"
+        }
+      ]
+    },
+    {
+      "sha": "4ab7ecb4a2fce7b19654d4d433df137109893adc",
+      "introduced": "owner-aware raised/floor isometric overlays",
+      "prior": "scene-coordinate overlay placement during zoom",
+      "callers": "resolveIsoOverlayPlacement",
+      "decision": "retain",
+      "reason": "Raised device/label/lock and floor vacuum/glow/decor planes differ. Scene builder calls shared owner and placement functions; generic projection remains needed for floor overlays and arbitrary callers.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/iso-overlays.ts",
+          "line": 183,
+          "excerpt": "export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): IsoOverlayPlacement {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/iso-scene-render.ts",
+          "line": 29,
+          "excerpt": "resolveIsoOverlayOwner, resolveIsoOverlayPlacement,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/iso-scene-render.ts",
+          "line": 811,
+          "excerpt": "const placement = resolveIsoOverlayPlacement({"
+        }
+      ]
+    },
+    {
+      "sha": "93051edfc2aa359fcba815f8678d0fdcc4a2def7",
+      "introduced": "stairs box/decor editing contract",
+      "prior": "stairs-specific resize/move composition",
+      "callers": "snapStairToStairs",
+      "decision": "retain",
+      "reason": "Box editing delegates shape creation to stairs-box.defaultStair and move alignment to stairs-editor.snapStairToStairs. Both have current product callers; preserve stairs model normalization/snap behavior.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/stairs-editor-model.ts",
+          "line": 75,
+          "excerpt": "export function snapStairToStairs("
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/stairs-editor.ts",
+          "line": 16,
+          "excerpt": "convertStairKind, normalizeStairAngle, snapStairToStairs, stairTargetState,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/stairs-editor.ts",
+          "line": 186,
+          "excerpt": "const [cx, cy] = snapStairToStairs("
+        }
+      ]
+    },
+    {
+      "sha": "585cd958c5f6af2b16659d79771d99a82e70dabe",
+      "introduced": "atomic hp-color-opacity values and read-only alpha caption",
+      "prior": "onOpacity options, separate numeric input branches in colorField/colorTile",
+      "callers": "onOpacity",
+      "decision": "remove-first-subsystem",
+      "reason": "Migration explicitly deprecated the separate opacity API. Current src callers pass atomic picker events and no onOpacity option. Remove definitions/handlers/input only after #1051 S8 and a fresh caller scan; preserve percentage display, reset, disabled and picker semantics.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 330,
+          "excerpt": "onOpacity?: (opacity: number) => void;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 344,
+          "excerpt": "picker, hex, valueLabel, opacity, opacityLabel, onOpacity, resetLabel, onReset, disabled = false,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 350,
+          "excerpt": "${pct === null ? nothing : onOpacity ? html`<span class=\"hpf-opacity\">${opacityLabel ?? ''}"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 355,
+          "excerpt": "if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 372,
+          "excerpt": "onOpacity?: (opacity: number) => void;"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 385,
+          "excerpt": "export function colorTile({ label, heading, hex, opacity, opacityLabel, picker, onOpacity }: ColorTileOptions): TemplateResult {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 394,
+          "excerpt": "${onOpacity ? html`<span class=\"hpf-unit\"><input data-hp=\"field\" data-field=\"colour-opacity\" type=\"number\" inputmode=\"numeric\" min=\"0\" max=\"100\" step=\"1\""
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/form-kit.ts",
+          "line": 398,
+          "excerpt": "if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));"
+        }
+      ]
+    },
+    {
+      "sha": "acd2e6685f8e511d8ccbe3a1064d03a983d39a84",
+      "introduced": "atomic space border/room/fill picker updates",
+      "prior": "space form onOpacity options",
+      "callers": "hp-color-opacity-change",
+      "decision": "remove-first-subsystem",
+      "reason": "Historical patch removes the space onOpacity callers while retaining atomic color+opacity updates. Current space form uses the atomic event; shared dormant API is the selected cleanup, not the current picker.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/decor-image-editor.ts",
+          "line": 481,
+          "excerpt": "@hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/decor-image-editor.ts",
+          "line": 568,
+          "excerpt": "@hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 82,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 171,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => set({ bgColor: e.detail.color })}></hp-color-opacity>`,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 194,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 483,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 666,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/properties/surface.ts",
+          "line": 100,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail))}"
+        }
+      ]
+    },
+    {
+      "sha": "f50bc224cf38da52e81bdba29c284b7955268a2f",
+      "introduced": "compact room atomic fill picker",
+      "prior": "room custom-fill separate onOpacity option",
+      "callers": "hp-color-opacity-change",
+      "decision": "remove-first-subsystem",
+      "reason": "Historical patch removes room onOpacity caller and keeps atomic color+opacity callback. Remove only dormant shared API, preserving room draft/Save/reset ownership.",
+      "anchors": [
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/decor-image-editor.ts",
+          "line": 481,
+          "excerpt": "@hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/decor-image-editor.ts",
+          "line": 568,
+          "excerpt": "@hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 82,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 171,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => set({ bgColor: e.detail.color })}></hp-color-opacity>`,"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/general-settings-dialog.ts",
+          "line": 194,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 483,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/marker-dialog.ts",
+          "line": 666,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {"
+        },
+        {
+          "sha": "e0b0a28f82b3bb3a78630d4f4f3e52faca6e6059",
+          "path": "src/editors/properties/surface.ts",
+          "line": 100,
+          "excerpt": "@hp-color-opacity-change=${(e: CustomEvent) => port.edit(field, JSON.stringify(e.detail))}"
+        }
+      ]
+    }
+  ]
+}
+

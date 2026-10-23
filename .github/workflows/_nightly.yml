@@ -24,6 +24,8 @@ jobs:
     name: "Запустить полный Validate; сохранить pending без ожидания runner"
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    outputs:
+      candidate: ${{ steps.intent.outputs.candidate }}
     steps:
       - name: "Сдвиг старта ночи против расписания"
         if: (inputs.source_event_name || github.event_name) == 'schedule'
@@ -50,6 +52,7 @@ jobs:
         with:
           node-version: 22
       - name: "Закрепить SHA и поставить Validate(dev, full=true) в очередь — не PASS"
+        id: intent
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -61,3 +64,39 @@ jobs:
           path: ${{ runner.temp }}/workflow-pending
           if-no-files-found: error
           retention-days: 1
+
+  diagnostic-coverage:
+    name: "Diagnostic coverage artifact (no product/release verdict)"
+    needs: dispatch
+    if: needs.dispatch.outputs.candidate != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    # Artifact completeness is visible in this job/report, and cannot fail the
+    # existing full-Validate/ship continuation owned by the dispatch intent.
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.dispatch.outputs.candidate }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Full inventory diagnostic, pinned to nightly intent
+        env:
+          CANDIDATE: ${{ needs.dispatch.outputs.candidate }}
+        run: node scripts/coverage-diagnostic.mjs --sha="$CANDIDATE"
+      - name: Preserve partial diagnostic even on failure
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: diagnostic-coverage-${{ needs.dispatch.outputs.candidate }}-${{ github.run_attempt }}
+          path: artifacts/diagnostic-coverage
+          if-no-files-found: warn
+          retention-days: 7

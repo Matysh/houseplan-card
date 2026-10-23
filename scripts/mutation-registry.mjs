@@ -8364,11 +8364,11 @@ const MUTANT_DEFINITIONS = [
       + 'entry aborts before any code runs and the card dies silently (#353 К3)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '      cardEntry.code = cardEntry.code.replace(\n'
-        + '        cardPattern,\n'
+      find: '      replaceChunkSource(cardEntry, cardPattern,\n'
         + '        `${recordEntryUrl}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(cardContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-card.js: the implementation chunk is unavailable\",e)}',\n"
+        + '        { coverage, bundle },\n'
         + '      );',
       replace: '      void cardEntry; // mutant: cached card facade keeps its static re-export',
     }],
@@ -8381,12 +8381,12 @@ const MUTANT_DEFINITIONS = [
       + 'before either a card or panel fallback can render (#486 AC4)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '      panelEntry.code = panelEntry.code.replace(\n'
-        + '        panelPattern,\n'
+      find: '      replaceChunkSource(panelEntry, panelPattern,\n'
         + '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '\n"
         + "          + 'chunk is unavailable\",e)}',\n"
+        + '        { coverage, bundle },\n'
         + '      );',
       replace: '      void panelEntry; // mutant: cached panel keeps its static shared-chunk import',
     }],

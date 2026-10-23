@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1018,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Audit historical parallel paths and collect SHA-pinned diagnostic unit/smoke/Golden source coverage without gate/release authority; remove only the proved unused shared form-kit onOpacity path in its separate product commit, preserving existing atomic picker behavior."
+}

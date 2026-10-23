@@ -25,6 +25,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Parallel paths (#1018): historical insertion ratios identify audit candidates,
+not deletion permission. Manual semantic/caller decisions are pinned separately;
+the complete computed unit/smoke/Golden diagnostic preserves actual source/map
+identity and marks missing/failed collection unknown. Its nightly artifact is
+isolated from ordinary proof and release verdicts. The first product cleanup
+is restricted to unused form-kit onOpacity after #1051 S8.
+
 Continuous vacuum tails (#1049) supplement unchanged native snapshots with a
 bounded shared observed-position window. A witnessed pinned Dreame task start
 withholds cached old current geometry; service docking does not rotate jobs.

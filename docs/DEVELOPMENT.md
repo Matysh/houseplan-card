@@ -1,5 +1,18 @@
 # Development and deployment
 
+## Parallel path diagnostic (#1018)
+
+`npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;
+manual source/caller decisions and exact-SHA anchors live in
+`docs/audits/parallel-paths-1018.json`. `npm run coverage:diagnostic -- --sha=<SHA>`
+runs the complete computed unit/smoke/Golden inventory, keeps raw sources/maps
+and coverage under ignored artifacts, and reports incomplete/unknown honestly.
+It requires a clean exact checkout. Normal build bytes/manifest are independently
+compared and restored; the nightly read-only job uses its immutable intent SHA.
+The artifact has no gate/release/mutation authority. Recipe, limits, provenance,
+interpretation and the separately measured form-kit cleanup are documented in
+`docs/audits/parallel-paths-1018.md` and the issue handoff.
+
 ## Dreame native recovery #1048
 
 The ordinary-camera saved coordinate floor/slot is compared separately from
