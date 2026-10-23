@@ -20,10 +20,13 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5072 · pure backend 585 · HA-harness backend 486 · browser smokes 414 (`npm run inventory`) |
+| Tests | Node unit 5081 · pure backend 585 · HA-harness backend 486 · browser smokes 414 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
+renderer. On/unavailable paint, outline, geometry and interactions stay unchanged.
 
 Service checks (#1040) separate main's delivery acknowledgement from execution
 on dev. Immutable bounded receipts and native-token once-only claims preserve

@@ -143,12 +143,13 @@ for (const dark of [false, true]) for (const iso of [false, true]) {
   }, dark);
   await evaluate(iso => window.__hpTest.setVolumetricView(iso), iso);
   let onGeometry;
-  for (const state of ['on', 'off']) {
+  for (const state of ['on', 'off', 'unavailable', 'on']) {
     await setState('light.ceiling', state, { rgb_color: [128, 213, 255] });
     await page.waitForTimeout(600);
     const actual = await painted();
     const label = `#790: ${dark ? 'dark' : 'light'}, ${iso ? '2.5D' : 'Flat'}, ${state}`;
-    check(`${label}: core colour`, actual.core, state === 'on' ? '#80d5ff' : '#FFFFFF');
+    if (state !== 'unavailable') check(`${label}: core colour`, actual.core, state === 'on' ? '#80d5ff' : '#FFFFFF');
+    check(`${label}: #1043 inner opacity`, Number(actual.coreOpacity), state === 'off' ? 0.7 : 1);
     if (state === 'on') onGeometry = actual.geometry;
     else check(`${label}: geometry stays unchanged`, actual.geometry, onGeometry);
     if (captureDir) {
@@ -412,10 +413,12 @@ const matrix = await evaluate(async () => {
   }
   await wait(300);
   const out = {};
+  const opacity = {};
   for (const [key, el] of Object.entries(cards)) {
     const sr = el.shadowRoot;
     const g = sr.querySelector('[data-led-strip]');
     const core = g?.querySelector('.led-core');
+    opacity[key] = core ? Number(getComputedStyle(core).strokeOpacity) : null;
     const box = core?.getBoundingClientRect();
     if (box) {
       const target = sr.elementFromPoint?.(box.x + box.width / 2, box.y + box.height / 2);
@@ -428,6 +431,7 @@ const matrix = await evaluate(async () => {
       badge: !!sr.querySelector('[data-led-badge="d_light1"] .value-badge'),
     };
   }
+  window.__ledStaticOpacity1043 = opacity;
   host.remove();
   return out;
 });
@@ -439,6 +443,10 @@ check('static live_states:false + light_pools:true — neutral, no field, passiv
   JSON.stringify({ state: 'off', core: '#FFFFFF', field: false, passive: true, badge: true }));
 check('static live_states:true + light_pools:true — source colour and the field, passive', JSON.stringify(matrix['pools=true,live=true']),
   JSON.stringify({ state: 'on', core: '#80d5ff', field: true, passive: true, badge: true }));
+check('#1043: static off fill is 70% opaque, live on fill stays opaque',
+  await evaluate(() => window.__ledStaticOpacity1043),
+  { 'pools=false,live=false': 0.7, 'pools=false,live=true': 1,
+    'pools=true,live=false': 0.7, 'pools=true,live=true': 1 });
 check('a click on any static stripe toggles nothing', await evaluate(() => window.__card.hass.states['light.ceiling'].state), 'on');
 
 // #789 AC2: real transition events, not merely the declared CSS duration.

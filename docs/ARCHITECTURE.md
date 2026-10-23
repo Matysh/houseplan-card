@@ -1902,6 +1902,10 @@ bundle. Product code and nightly-only mutation execution policy are unchanged.
 
 ## LED strips: lazy boundaries (#780)
 
+The shared stripe renderer sets only the off core's stroke opacity to 0.7
+(#1043); the outline and on/unavailable appearance are unchanged on live,
+static and exported plans. No persisted setting or resolution input is added.
+
 The #863 smoke helper coordinates HA delivery and contemporaneous quality
 observations in the browser after a native wheel. It changes no product timer
 or renderer. The paired daycycle report is a separate test-only oracle over raw

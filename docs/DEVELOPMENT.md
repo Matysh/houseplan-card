@@ -2708,6 +2708,11 @@ archive. The wizard cannot recover an archive automatically.
 
 ## Tests
 
+Off LED fill (#1043): `smoke_led_strip_tube` compares actual tube pixels with
+an independent 70%-opaque inner-band reference, retaining the on-state oracle.
+`smoke_led_strip_glow` checks off/on/unavailable/on opacity through public HA
+updates in both themes and projections, as well as the static-card combinations.
+
 Presentation seams (#907): `test/config-write-context.test.mjs` checks the known
 RU/EN context mapping while preserving unauthorized/unknown fallbacks;
 `test/space-reference-repair.test.mjs` covers own/inherited prototype-key names,

@@ -1405,7 +1405,8 @@ Binding creates no new Home Assistant device: the same marker, light
 settings, tap actions and badge — drawn at the middle of the strip's length.
 When the device is on, the core inside its outline uses the selected light colour, with or without
 Glow. Glow adds a soft band of colour with a 30 cm radius by default (or the
-device's own radius). An off strip stays white. Light
+device's own radius). An off strip has a white inner fill with 30% transparency;
+its outline stays opaque. Light
 does not pass through walls or closed doors. In View the whole strip is one
 tap target, like an icon. Every finished shape change and every switch of the
 representation is one **Undo/Redo** step.

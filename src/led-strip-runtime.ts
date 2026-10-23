@@ -332,6 +332,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
           stroke-linecap="round" stroke-linejoin="round"
           stroke-dasharray=${unavailable ? `${t * 2} ${t * 1.5}` : nothing}></path>
         <path class="led-core" d="${d}" fill="none" stroke="${core}" stroke-width="${t / 2}"
+          stroke-opacity="${view.state === 'off' ? 0.7 : 1}"
           stroke-linecap="round" stroke-linejoin="round"
           stroke-dasharray=${unavailable ? `${t * 2} ${t * 1.5}` : nothing}></path>
         <path class="led-focus" d="${d}" stroke-width="${t * 1.6}" stroke-linecap="round"

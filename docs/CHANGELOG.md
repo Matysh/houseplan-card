@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Make the inner fill of switched-off LED strips 30% transparent; lit strips
+  and their outlines keep their previous appearance. (#1043)
+
 - Centre room names over their readings in downloaded SVG files after omitting
   the Home Assistant Area link. Live captions with the link keep their existing
   alignment and actions. (#1039)

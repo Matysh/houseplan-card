@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1043,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Reduces the white inner fill of switched-off LED strips to 70% opacity. The fully opaque off fill exists in stable v1.82.0; on/unavailable appearance and outline are preserved."
+}

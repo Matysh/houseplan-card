@@ -99,7 +99,7 @@ for (const scenario of scenarios) {
         await page.waitForFunction(state => window.__card.shadowRoot
           .querySelector('[data-led-strip="tube"]')?.dataset.state === state, state);
 
-        const actual = await page.evaluate(async ({ expectedCorners, outlineWidth, coreWidth }) => {
+        const actual = await page.evaluate(async ({ expectedCorners, outlineWidth, coreWidth, state }) => {
           const group = window.__card.shadowRoot.querySelector('[data-led-strip="tube"]');
           const outline = group.querySelector('.led-outline'), core = group.querySelector('.led-core');
           const d = outline.getAttribute('d');
@@ -119,7 +119,8 @@ for (const scenario of scenarios) {
             const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
             return context.getImageData(0, 0, canvas.width, canvas.height).data;
           };
-          const expectedMarkup = `<path d="${expectedD}" fill="none" stroke="#383838" stroke-width="${outlineWidth}" stroke-linecap="round" stroke-linejoin="round"/><path d="${expectedD}" fill="none" stroke="#FFFFFF" stroke-width="${coreWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
+          // #1043: the inner white band is 30% transparent only while off.
+          const expectedMarkup = `<path d="${expectedD}" fill="none" stroke="#383838" stroke-width="${outlineWidth}" stroke-linecap="round" stroke-linejoin="round"/><path d="${expectedD}" fill="none" stroke="#FFFFFF" stroke-opacity="${state === 'off' ? 0.7 : 1}" stroke-width="${coreWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
           const [painted, reference] = await Promise.all([
             raster(new XMLSerializer().serializeToString(outline) + new XMLSerializer().serializeToString(core)),
             raster(expectedMarkup),
@@ -133,7 +134,7 @@ for (const scenario of scenarios) {
             coreD: core.getAttribute('d'), badPixels,
             openingPresent: !!window.__card.shadowRoot.querySelector('[data-hp="opening"][data-id="tube-door"][data-kind="door"]'),
             saved: window.__card._serverCfg.spaces[0].led_strips[0].points };
-        }, { expectedCorners, outlineWidth, coreWidth });
+        }, { expectedCorners, outlineWidth, coreWidth, state });
 
         const label = `${scenario.name}, start=${start}, reverse=${reversed}, ${mode}, ${state}`;
         check(`${label}: four closed visible corners`, actual.closed && actual.corners.length === 4);
