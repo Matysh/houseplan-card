@@ -171,6 +171,38 @@ for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100
       checkAll({'size-cold-same-layout':isDeepStrictEqual(cold.layout,saved.layout),
         'size-cold-same-geometry':JSON.stringify(cold.markers)===JSON.stringify(saved.markers),
         'size-cold-no-write':cold.writes===saved.writes});
+      // A finite masonry barrier leaves room for the current column, not a
+      // larger one. Drive the actual size control, never replace the solver.
+      const barrierY=Math.max(...cold.markers.map(m=>m.y+m.box.bottom))+20;
+      await page.evaluate(async y=>{
+        await window.__hpTest.setServerConfig(cfg=>{
+          cfg.spaces[0].partitions=[{id:'tight-row',a:[.1,y/1000],b:[.9,y/1000],cm:5}];return cfg;
+        });
+      },barrierY);await settle();
+      const tightBefore=await state();
+      check('tight-initially-connected',tightBefore.members.length,2);
+      const saveSize=async value=>{
+        await page.evaluate(()=>window.__hpTest.openMarkerDialog('lg_sensor.row_a'));
+        await dialog.locator('[data-section-target="appearance"]').click();
+        await dialog.locator('#marker-size').fill(value);await dialog.locator('#marker-size').dispatchEvent('change');
+        await dialog.locator('[data-hp="dialog-confirm"]').click();
+        await page.waitForFunction(()=>!window.__card._markerDialog);await page.evaluate(()=>window.__hpTest.waitForWrites());await settle();
+      };
+      await saveSize('3');const released=await state();
+      const masonrySafe=await page.evaluate(()=>{
+        const scene=window.__card._deviceContacts.scene;
+        const vertices=scene.masonry.flat(2),ys=vertices.map(p=>p[1]);
+        const top=Math.min(...ys),bottom=Math.max(...ys);
+        return [...scene.shapes.values()].every(s=>{
+          const m=s.marker,b=m.box;
+          return m.y+b.bottom<=top+.01||m.y+b.top>=bottom-.01;
+        });
+      });
+      checkAll({'tight-size-is-accepted':released.markers[0].diameter>tightBefore.markers[0].diameter*2,
+        'tight-releases-contact':released.members.length===1,'tight-no-masonry-overlap':masonrySafe});
+      await saveSize('1.2');const restored=await state();
+      checkAll({'tight-shrink-restores-contact':restored.members.length===2,
+        'tight-shrink-restores-points':JSON.stringify(restored.markers)===JSON.stringify(tightBefore.markers)});
     }
     if(name==='mobile'){
       const target=await page.evaluate(()=>{const n=window.__card.renderRoot.querySelector('[data-id="lg_sensor.row_b"]'),r=n.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};});
