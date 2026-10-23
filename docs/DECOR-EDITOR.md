@@ -54,6 +54,12 @@ architecture at35% opacity here, and regain their normal opacity on leaving.
 The editor always opens on **Select**. If the space has an image, the Plan
 backdrop tool appears next to Select but is never armed implicitly.
 
+Each successful creation replaces the previous single selection, including the
+wide Properties owner and its matching frame (#1047). Drawing tools stay armed;
+an unfinished/invalid draft creates nothing. Properties finishes its existing
+field before allowing a new drawing gesture and never redirects that draft.
+Compact drawing retains the native ID; Select exposes its normal transform frame.
+
 Decor shapes are inert under a drawing tool — a new line must be able to start
 exactly on the end of an old one (owner, 2026-08-04). The **Text tool has one
 exception**, asked for by the owner on the same day:

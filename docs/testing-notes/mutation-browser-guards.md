@@ -41,11 +41,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 81 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 89 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 82 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 91 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 241 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **479 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **482 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -111,6 +111,11 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+- `decor-created-text-frame-unmeasured-1047`
+
+The new label's Properties frame depends on its mounted SVG text measurement
+while Text remains armed; a native Select-only measurement leaves no frame.
 
 - `contact-virtual-dash-lost-1003`
 
@@ -271,6 +276,13 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+- `decor-creation-retains-properties-owner-1047`
+- `decor-properties-escape-steals-draft-1047`
+
+These #1047 witnesses draw A/B/C through real mouse gestures and check the
+Properties owner, frame geometry, subsequent field write and Escape before
+pointer release. Direct calls to selection/commit would bypass the regression.
 
 - `decor-right-button-arms-transform-1035`
 

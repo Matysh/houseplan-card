@@ -77,6 +77,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'decor-created-text-frame-unmeasured-1047',
+    guard: 'node demo/smoke_decor_creation_selection.mjs',
+    because: '#1047 AC2: a newly saved label must have its own measured Properties frame even while Text stays armed; the real DOM measurement cannot depend on Select-only handles. Nightly execution only.',
+    patches: [{ file: 'src/live-editor.ts',
+      find: "const shape = host._dtSel ?? (selectedTextId ? { id: selectedTextId, kind: 'text' } : null);",
+      replace: "const shape = host._dtSel ?? (selectedTextId ? null : null);" }],
+  },
+  {
+    id: 'decor-creation-retains-properties-owner-1047',
+    guard: 'node demo/smoke_decor_creation_selection.mjs',
+    because: '#1047 AC1/AC2: real sequential creation must move the Properties identity and painted outline to B/C; immediately editing X must change only the newest object. Nightly execution only.',
+    patches: [{ file: 'src/editors/properties/editor.ts',
+      find: "if (host._mode !== 'decor' && this.identity) return;",
+      replace: 'if (this.identity) return;' }],
+  },
+  {
+    id: 'decor-properties-escape-steals-draft-1047',
+    guard: 'node demo/smoke_decor_creation_selection.mjs',
+    because: '#1047 AC3: Escape during a real drawing gesture must cancel the draft before mouse release, rather than clearing the Properties target and allowing a new object to commit. Nightly execution only.',
+    patches: [{ file: 'src/editors/properties/editor.ts',
+      find: 'if (this.host._decorDraft) return false;',
+      replace: 'if (false && this.host._decorDraft) return false;' }],
+  },
+  {
     id: 'svg-caption-retains-area-action-gap-1039',
     guard: 'node demo/smoke_room_metrics_alignment.mjs',
     because: '#1039: only an independently opened real SVG download exposes the frozen name-row width after the HA Area action is stripped; live linked captions must retain their existing composite centre.',

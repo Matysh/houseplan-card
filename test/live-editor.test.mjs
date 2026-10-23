@@ -8,7 +8,19 @@ import {
   routeHouseplanEditorUpdate,
   whenHouseplanEditorSettled,
   physicalOpeningIds,
+  measureHouseplanDecorText,
 } from '../test-build/live-editor.js';
+
+test('#1047 text measurement follows Properties while a drawing tool keeps native handles inactive',()=>{
+  let selectedTextId='new',queries=[],updates=0;
+  const host={_dtSel:null,_dtBox:null,_editorRuntime:{properties:{get selectedTextId(){return selectedTextId;}}},
+    requestUpdate(){updates++;},renderRoot:{querySelector(selector){queries.push(selector);return {getBBox:()=>({x:10,y:20,width:60,height:15})};}}};
+  measureHouseplanDecorText(host);
+  assert.deepEqual(host._dtBox,{id:'new',x:10,y:20,w:60,h:15});assert.equal(updates,1);
+  assert.deepEqual(queries,['text.dtext[data-id="new"]']);
+  selectedTextId=null;measureHouseplanDecorText(host);
+  assert.equal(host._dtBox,null);assert.equal(updates,2);
+});
 
 test('#861 physical opening projection is exact-host only and shared by live paint/suppression', () => {
   const openings = [

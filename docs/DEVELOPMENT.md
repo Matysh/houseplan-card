@@ -1,5 +1,16 @@
 # Development and deployment
 
+## Decor creation selection #1047
+
+`smoke_decor_creation_selection.mjs` draws repeated A/B/C lines, rectangles and
+ovals with real mouse gestures, then checks native/Properties identity, frame
+coordinates and a property write that leaves earlier objects unchanged. It also
+exercises text, furniture and stored-image placement, dirty/invalid fields,
+cancelled/too-small drafts, width changes and deletion history. The pre-fix run
+reproduced 28 failures, including old-object writes; it was an ordinary baseline
+run, not mutation execution. Registered witnesses are static-readiness only
+during development; their execution remains nightly.
+
 ## Dreame native recovery #1048
 
 The ordinary-camera saved coordinate floor/slot is compared separately from

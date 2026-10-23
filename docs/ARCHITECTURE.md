@@ -1,5 +1,12 @@
 # House Plan architecture
 
+Decor creation (#1047) keeps native selection authoritative for the current
+Properties target even when the previous object still exists. Field completion
+continues to fence selection changes; other editors retain their explicit owner.
+Text measurement can use the wide Properties text owner while its drawing tool
+remains active. Only the measured box of that exact text may paint its frame.
+Properties yields Escape to an active native decor draft before clearing selection.
+
 Default-branch service events (#1040) use the eight mirrored ingress recipes
 from `scripts/service-workflows.mjs`. `_service-event.yml` has a main sender
 with Actions-dispatch permission and a separate dev receiver with native-token

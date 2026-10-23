@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['syncNative', 'selectedTextId', 'measureHouseplanDecorText'],
+    smokes: ['smoke_decor_creation_selection.mjs', 'smoke_properties_panel.mjs'],
+    because: '#1047: real creation gestures compare the newest native ID, Properties owner, painted frame and subsequent property write; existing Properties smoke protects field completion, width transitions and the other editors.',
+  },
+  {
     files: ['src/pdf/svg-snapshot.ts'],
     smokes: ['smoke_room_metrics_alignment.mjs'],
     because: '#1039: compare text/readings centres in real offline SVG downloads after chrome removal, while preserving live captions with an Area action; computed source styles alone cannot prove the exported layout.',

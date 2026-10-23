@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1047,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already contains the Properties syncNative early return that leaves the first decor owner selected after B/C creation. Restore the documented last-created selection and its text frame without changing drawing tools, storage or writer boundaries.",
+  "summary": {
+    "ru": "После создания фигуры свойства и рамка относятся к новому объекту; Esc отменяет незавершённое рисование.",
+    "en": "Newly created decor owns Properties and its selection frame; Escape cancels unfinished drawing."
+  }
+}

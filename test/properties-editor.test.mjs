@@ -50,6 +50,40 @@ function harness(kind='rect') {
   return {host,state,editor,adoption,context,set,config:structuredClone(config)};
 }
 
+test('#1047 native decor selection follows a new object, preserving a dirty field until completion',async()=>{
+  const h=harness();
+  Object.defineProperty(h.host,'_decorList',{get:()=>h.host._curSpaceCfg.decor});
+  h.host._curSpaceCfg.decor.push({id:'new',kind:'rect',x:.4,y:.4,w:.1,h:.1,color:'#123456'});
+  assert.equal(h.editor.fields.edit('w','invalid'),true);
+  h.host._decorSel='new';h.editor.syncNative();
+  assert.equal(h.editor.identity.objectId,'shape');
+  assert.equal(await h.editor.fields.finish(),false);
+  h.editor.syncNative();assert.equal(h.editor.identity.objectId,'shape');
+  assert.equal(h.state.writes.length,0);
+  h.editor.fields.invalidate();h.editor.syncNative();
+  assert.equal(h.editor.identity.objectId,'new');assert.equal(h.host._decorSel,'new');
+  assert.equal(await h.set('w','240'),true);
+  assert.equal(h.host._curSpaceCfg.decor[0].w,.3);
+  assert.equal(h.host._curSpaceCfg.decor[1].w,.2);
+});
+
+test('#1047 Properties yields Escape to the active native drawing gesture',()=>{
+  const h=harness();h.host._decorDraft={kind:'rect',a:[10,10],b:[50,50],pid:1};
+  let prevented=false;
+  assert.equal(h.editor.escape({key:'Escape',preventDefault(){prevented=true;}}),false);
+  assert.equal(prevented,false);assert.equal(h.editor.identity.objectId,'shape');
+});
+
+test('#1047 only the current wide text owner supplies a Properties text measurement',()=>{
+  const h=harness();
+  Object.defineProperty(h.host,'_decorList',{get:()=>h.host._curSpaceCfg.decor});
+  h.host._curSpaceCfg.decor.push({id:'label',kind:'text',x:.4,y:.4,text:'New label',color:'#123456'});
+  assert.equal(h.editor.selectedTextId,null);
+  h.host._decorSel='label';h.editor.syncNative();assert.equal(h.editor.selectedTextId,'label');
+  h.editor.width=850;assert.equal(h.editor.selectedTextId,null);
+  h.editor.width=1200;h.host._space='other';assert.equal(h.editor.selectedTextId,null);
+});
+
 test('#931 runtime preparer refusal restores the entire local candidate, with no writer/history/default-style residue',async()=>{
   const h=harness();h.state.prepareError=true;
   assert.equal(await h.set('stroke',JSON.stringify({color:'#123456',opacity:.5})),false);

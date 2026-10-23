@@ -105,6 +105,10 @@ export class PropertiesEditor {
     return value && this.allowed && value.spaceId === this.host._space && value.editor === this.host._mode
       && this.target(value) ? value : null;
   }
+  get selectedTextId(): string | null {
+    const target = this.wide && this.identity ? this.target() : null;
+    return target?.kind === 'decor' && target.value.kind === 'text' ? target.value.id : null;
+  }
   private target(identity = this.selected): PropertiesTarget | null {
     const space = this.host._curSpaceCfg as PropertiesSpace | undefined;
     return identity && space ? resolvePropertiesTarget(identity, space, this.host._devices, this.host._markers) : null;
@@ -207,8 +211,12 @@ export class PropertiesEditor {
   }
   /** Newly created native objects get the same selection owner as direct picking. */
   syncNative(): void {
-    if (!this.wide || this.identity || this.fields.draft) return;
+    if (!this.wide || this.fields.draft) return;
     const host = this.host;
+    // Decor creation retains the drawing tool and replaces its native ID even
+    // while the previous Properties target remains valid. Other editors keep
+    // their explicit target until their existing selection path replaces it.
+    if (host._mode !== 'decor' && this.identity) return;
     if (host._mode === 'decor' && host._decorSel) {
       const shape = host._decorList.find(item => item.id === host._decorSel);
       if (shape) this.select(shape.kind, shape.id);
@@ -247,6 +255,7 @@ export class PropertiesEditor {
   }
   escape(event: KeyboardEvent): boolean {
     if (!this.wide || !this.identity || this.host._editorSecondaryDialogBlocked) return false;
+    if (this.host._decorDraft) return false;
     if (event.key !== 'Escape') return false;
     event.preventDefault(); this.clear(); return true;
   }
@@ -553,7 +562,7 @@ export class PropertiesEditor {
     const rawPoint = device ? this.host._livePos(device) : null;
     const devicePoint=device&&rawPoint?this.host._deviceContacts?.position(device.id,rawPoint)??rawPoint:null;
     return renderPropertiesSelection(target, { unitPerPx: this.runtime._cssPxToRender(1), cellCm: this.host._cellCm,
-      textBox: this.host._dtBox, reference,
+      textBox: this.host._dtBox?.id === this.selectedTextId ? this.host._dtBox : null, reference,
       device: device && devicePoint ? {x:devicePoint.x,y:devicePoint.y,
         radius:effectiveDeviceBaseSize(size>8?2.5:size)/100*iconUnit(this.host._spaceModel()!)*this.host._devicePresentation(device).scale/2} : null,
     });
