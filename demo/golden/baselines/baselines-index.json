@@ -1,27 +1,29 @@
 {
   "schema": 3,
   "matrixVersion": 80,
-  "acceptedAt": "2026-10-22T22:17:43.907Z",
-  "sourceFingerprint": "c315c0d05d86f46cb4d67c38fc08b071e17f1567df69bb62c16ccd980e70e2af",
+  "acceptedAt": "2026-10-23T07:53:58.579Z",
+  "sourceFingerprint": "e21a61bbb81ebe8f05c20427728b42b53dbe46bcbf4a483b8d4c89d8f23c8717",
   "chromium": "151.0.7922.34",
   "capturedOn": "linux",
-  "acceptedOn": "linux",
+  "acceptedOn": "win32",
   "capture": {
     "platform": "linux",
     "arch": "x64",
     "chromium": "151.0.7922.34",
-    "buildFingerprint": "c315c0d05d86f46cb4d67c38fc08b071e17f1567df69bb62c16ccd980e70e2af",
+    "buildFingerprint": "e21a61bbb81ebe8f05c20427728b42b53dbe46bcbf4a483b8d4c89d8f23c8717",
     "ci": {
       "repository": "Matysh/houseplan-card",
-      "run": 39862827523,
+      "run": 39919670818,
       "attempt": 1,
-      "sha": "f353a93d1bd29118e9b232513e784d216b0ba141"
+      "sha": "d66bc06f7349be122366b038cf8130058ee88a6b"
     }
   },
   "localAttestation": null,
-  "foreignCapture": null,
+  "foreignCapture": {
+    "reason": "Acceptance on Windows only: copy reviewed original Linux CI PNG bytes from run 39919670818; no Windows capture is accepted. 195 unchanged byte-identical witnesses verify the capture environment."
+  },
   "witnesses": {
-    "count": 189,
+    "count": 193,
     "floor": 10
   },
   "scenarios": {
@@ -233,13 +235,13 @@
     "card-editor-invalid-default-floor-dark-ru": "01828da5c582231b16495ad17c98a84b1038813fe82a843c5cb466781a0ce214",
     "device-contacts-designer-light": "8ee81419ae69236156c2936b2bba3bbfafd3dfd29e4e6605b3bf86a801a53d58",
     "device-contacts-designer-dark": "a9f0ecf372f99c2e66a915a1c18bb3c5dca4bf79e4087003aea82dd21a98c77c",
-    "led-strip-design-reference-off-light": "307807ecb62c7ceff5cd1bf335bd7f61ae7fb9bb212e52ba2e065a39d8913bcb",
+    "led-strip-design-reference-off-light": "deba32520b77694a8c0a093c722b866cb0b49980f1bbd2eca8c7a65474502123",
     "led-strip-design-reference-on-light": "a79c6fe973104021570afdb41912e831d133a361898d5c900d7813dab6cdac32",
     "lighting-led-strip-glow-dark": "ec774c9b6f1c2875aea3369a2001b35ea1cca3a2072acc2b2462aaf196209952",
     "led-strip-long-zigzag-glow-light": "5d8807d727699717b3bbdd4e944e237cc1f847fa0e62de8b50ace272e6980479",
     "led-strip-endcaps-zoom-light": "eee962aa7b98348121a0941f703babde8ddbb3acb21f9803f981ef40b630dcb5",
     "led-strip-rectangle-door-zoom-light": "b6a33929ebb1f52cc0c47a368c1f92f3b755e5ffa8d08f0ee0e5e2c5bb6638e4",
-    "led-strip-off-light": "9bb4ec52651679d6366530049c9903973d8cc0dfce6f3e666b7f8251a500d83c",
+    "led-strip-off-light": "0c5e62adcf40432e128731b0ee0807fa8fe749916042feb383622920a5c04fab",
     "iso-led-strip-dark": "46400e005a4d44ebcbebc5c42f2f412d9d935d2b96b0630b09707bde459978f8",
     "device-issues-maintenance-plan": "3601dda11482ea19c740854050d5fb454a75f11fb825dfd2c75f0c42b221393a",
     "device-issues-maintenance-card": "39090eaa410c8aba66b024d1369eaf7b5b5f2f5c0231015d4118dd26c3add7c8",
