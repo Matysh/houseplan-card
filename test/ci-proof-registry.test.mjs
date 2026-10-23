@@ -8,7 +8,7 @@ import { REGISTRY_SCHEMA, REGISTRY_TTL_MS, verifyRegistryRecord, registryPath, r
 import { fetchRegistry, probeRegistry, publishRegistry } from '../scripts/ci-proof-registry.mjs';
 import { producedRegistryRecords } from '../scripts/ci-registry-records.mjs';
 import { intentPolicy } from '../scripts/ci-registry-cli.mjs';
-import { buildCiProof, evaluateCiProof, JOB_RULES, resolveJobRules } from '../scripts/ci-proof.mjs';
+import { buildCiProof, evaluateCiProof, CI_PROOF_POLICIES, JOB_RULES, resolveJobRules } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 
 const H = c => c.repeat(64), sha = 'a'.repeat(40), now = Date.parse('2026-10-21T03:00:00Z');
@@ -280,4 +280,54 @@ test('unchanged pre-registry dev reader accepts the fresh additive v1 migration 
   assert.equal(evaluateCiProof({ run, proof, jobs }).status, 'green');
   jobs.splice(jobs.findIndex(j => j.name === JOB_RULES.product_guards[0].name), 1);
   assert.equal(evaluateCiProof({ run, proof, jobs }).status, 'failed', 'new reader still requires fresh guards');
+});
+
+test('#1044 frozen v1 decoder accepts task wire metadata without full or golden authority', () => {
+  // Frozen browser-plan-proof decoder from the trusted 7b00292ec controller
+  // that rejected run 39944889389. No Git history or network is needed here.
+  function legacyBrowserPlanExecution(plan, needs) {
+    if (!plan) return null;
+    if (plan.schema !== 1 || !['push', 'full'].includes(plan.scope)) throw Error('invalid browser coverage plan');
+    const executed = {}, skipped = {};
+    for (const kind of ['smoke', 'golden']) {
+      if (!plan[kind] || !['none', 'selected', 'full'].includes(plan[kind].mode) || !Array.isArray(plan[kind].ids)
+        || plan[kind].mode === 'selected' && !plan[kind].ids.length) throw Error(`invalid ${kind} coverage`);
+      const selected = plan[kind].mode === 'selected';
+      const job = selected ? needs?.browser_selected : needs?.[kind];
+      if (plan[kind].mode === 'none') skipped[kind] = plan[kind].reason;
+      else if (!selected && needs?.reuse?.outputs?.[kind] === 'true') skipped[kind] = 'complete compatible producer proof reused';
+      else executed[kind] = { mode: plan[kind].mode, ids: plan[kind].ids,
+        result: job?.result || 'missing', reason: plan[kind].reason };
+    }
+    return { planned: plan, executed, skipped };
+  }
+  const workflow = validateJobs(), needs = {};
+  for (const id of workflow.keys()) needs[id] = { result: 'success', outputs: {} };
+  const plan = { schema: 1, scope: 'task',
+    smoke: { mode: 'none', ids: [], reason: 'no related browser smoke' },
+    golden: { mode: 'none', ids: [], reason: 'no golden demand' } };
+  const produce = browserPlan => {
+    needs.changes.outputs = { frontend: 'true', tooling: 'true', browser_plan: JSON.stringify(browserPlan) };
+    return buildCiProof({ candidateSha: sha, candidateTree: 'c'.repeat(40), runId: 1234, attempt: 2,
+      event: 'workflow_dispatch', needs });
+  };
+  const jobs = [...workflow.values()].flatMap(j => jobInstanceNames(j).map(name => ({ name, status: 'completed', conclusion: 'success' })));
+  const context = { run: { ...fixture().args.run, event: 'workflow_dispatch' }, jobs,
+    proof: produce(plan), policy: CI_PROOF_POLICIES.reviewLight };
+  const before = structuredClone(context); before.proof.browserPlan.planned.scope = 'task';
+  delete before.proof.browserPlan.planned.coverageScope;
+  assert.throws(() => legacyBrowserPlanExecution(before.proof.browserPlan.planned, needs), /invalid browser coverage plan/,
+    'reproduce the live rejected format');
+  assert.equal(context.proof.browserPlan.planned.scope, 'push');
+  assert.equal(context.proof.browserPlan.planned.coverageScope, 'task');
+  assert.deepEqual(legacyBrowserPlanExecution(context.proof.browserPlan.planned, needs), context.proof.browserPlan);
+  assert.equal(evaluateCiProof(context).status, 'green');
+  const selected = { ...context, proof: produce({ ...plan,
+    golden: { mode: 'selected', ids: ['geometry-view-dark-fit'], reason: 'task visual coverage' } }) };
+  assert.deepEqual(legacyBrowserPlanExecution(selected.proof.browserPlan.planned, needs), selected.proof.browserPlan);
+  assert.equal(selected.proof.request.full, false);
+  assert.equal(selected.proof.request.golden, undefined, 'legacy readers never receive a claimed complete golden request');
+  assert.equal(evaluateCiProof({ ...selected, policy: { ...CI_PROOF_POLICIES.reviewLight, task: true, golden: true } }).status, 'green');
+  assert.equal(evaluateCiProof({ ...selected, policy: { ...CI_PROOF_POLICIES.reviewLight, golden: true } }).status, 'stale');
+  assert.equal(evaluateCiProof({ ...selected, policy: CI_PROOF_POLICIES.release }).status, 'stale');
 });
