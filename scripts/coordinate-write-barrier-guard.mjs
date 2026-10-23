@@ -49,7 +49,7 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   );
   // #879 adds lifecycle metadata AFTER staging the canonical geometry.
   // Inventory this exact wrapper without accepting a new unregistered transport.
-  const roomWrites = occurrences(frontend, '._sendConfigCandidate(discoveryWrite?.config || candidate)');
+  const roomWrites = occurrences(frontend, '._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout)');
   const ordinaryWrites = occurrences(frontend, '._sendConfigCandidate(candidate)');
   if (ordinaryWrites.length + roomWrites.length !== 2
       || occurrences(frontend, '._sendConfigCandidate(').length !== 2) {
@@ -57,7 +57,14 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   }
   for (const index of roomWrites) requireWindow(errors, frontend, index,
     /this\._adoption\.stageConfigCandidate\(candidate\);\s*const discoveryWrite = this\.roomDeviceDiscovery\?\.prepare\(candidate\);/,
-    'frontend room discovery config', 300);
+    'frontend room discovery config', 650);
+
+  const contacts = readFileSync(resolve(root, 'src/device-contact-write.ts'), 'utf8');
+  const groupWrites = occurrences(contacts, "type:'houseplan/layout/set'");
+  if (groupWrites.length !== 1) errors.push(`frontend contact writer inventory: ${groupWrites.length}`);
+  for (const index of groupWrites) requireWindow(errors, contacts, index,
+    /const changes=\[state,[\s\S]*canonicalizePosition\(c\.placement\)[\s\S]*layout=applyDevicePlacement\(layout,c\.deviceId,c\.placement\);[\s\S]*expected_rev:snapshot\.rev,[\s\S]*expected_config_rev:configRevision/,
+    'frontend contact layout/set', 2400);
 
   const positionWrites = occurrences(frontend, "type: 'houseplan/layout/update'");
   // #902: debounced label/position saves now reuse the marker point transport.

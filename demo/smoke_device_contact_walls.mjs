@@ -1,4 +1,4 @@
-// #866: native wall capture/release matrix, upright content and actual guide text.
+// #866/#1003: native wall capture/release, upright content and unlabelled guide.
 import { launch, check, checkAll, finish } from './serve.mjs';
 import { mkdirSync,writeFileSync } from 'node:fs';
 const {page,browser}=await launch({width:1600,height:1100},1,[],{hasTouch:true});
@@ -76,14 +76,16 @@ for(const item of cases){
     const c=window.__card,root=c.renderRoot;
     const labels=[...root.querySelectorAll('[data-device-snap="wall"]')].filter(n=>n.closest('.hp-editor-only-layer')?.style.opacity!=='0');
     return{p:structuredClone(c._layout['wall-mover']),hint:c._deviceDrag?.contact?.hint?.kind||null,
-      labels:labels.map(n=>n.textContent.trim()),angle:root.querySelector('[data-id="wall-mover"] .device-core ha-icon')?.style.transform,
+      labels:labels.map(n=>({text:n.textContent.trim(),line:['x1','y1','x2','y2'].map(k=>Number(n.querySelector('line')?.getAttribute(k)))})),
+      angle:root.querySelector('[data-id="wall-mover"] .device-core ha-icon')?.style.transform,
       writes:window.__wallWrites.length};
   });
   await move(5.5);const entered=await state();await move(8.5);const held=await state();await move(9.5);const released=await state();
   await move(5.5);await page.mouse.up();await settle();const dropped=await state();
   const exact=p=>Math.hypot(p.x*1000-target.expected.x,p.y*1000-target.expected.y)<.001;
   const result={...item,actualZoom:target.zoom,captured:entered.hint==='wall'&&exact(entered.p),held:held.hint==='wall'&&exact(held.p),
-    released:released.hint===null,guide:entered.labels.length===1&&entered.labels[0]===(item.lang==='ru'?'К стене':'Snap to wall'),
+    released:released.hint===null,guide:entered.labels.length===1&&entered.labels[0].text===''
+      &&entered.labels[0].line.every(Number.isFinite)&&Math.hypot(entered.labels[0].line[2]-entered.labels[0].line[0],entered.labels[0].line[3]-entered.labels[0].line[1])>0,
     upright:entered.angle==='rotate(37deg)',oneWrite:dropped.writes===target.writes+1,exactDrop:exact(dropped.p),noGuideAfterDrop:!dropped.labels.length};
   checkAll(Object.fromEntries(Object.entries(result).filter(([key])=>!['zoom','actualZoom','angle','side','badge','lang'].includes(key))),{});
   results.push(result);writeFileSync(`${dir}/matrix.json`,JSON.stringify(results,null,2));

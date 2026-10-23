@@ -1,9 +1,11 @@
 // #1003: mounted production renderer, synthetic data only. No product patches.
 import {launch,check,checkAll,finish} from './serve.mjs';
-import {mkdirSync,writeFileSync} from 'node:fs';
+import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {isDeepStrictEqual} from 'node:util';
 const dir=process.env.HP_CONTACT_ARTIFACTS||'artifacts/1003/reflow';
 mkdirSync(dir,{recursive:true});
+const lateFont=readFileSync(new URL('../src/pdf/pdf-font.generated.ts',import.meta.url),'utf8')
+  .match(/PDF_FONT_BASE64 = "([^"]+)"/)[1];
 for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100,2],['mobile',390,844,3]]){
   const {page,browser}=await launch({width,height},dpr,[],{hasTouch:true});
   try{
@@ -79,7 +81,20 @@ for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100
       'sensor.row_a':{...c.hass.states['sensor.row_a'],state:'123.1'}}};});
     await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-id="lg_sensor.row_a"] .value-badge')?.textContent.includes('123.1'));
     await settle();
-    const long=await state();
+    if(name==='desktop'){
+      await page.evaluate(()=>{const c=window.__card;c.style.fontFamily='HouseplanContactLate, monospace';c.requestUpdate();});
+      await settle();const fallback=await state();
+      await page.evaluate(async base64=>{
+        const font=new FontFace('HouseplanContactLate',`url(data:font/ttf;base64,${base64})`);
+        document.fonts.add(font);await document.fonts.load('20px HouseplanContactLate');await document.fonts.ready;
+      },lateFont);await settle();const loaded=await state();
+      checkAll({'late-font-remeasures':loaded.work.measurements>fallback.work.measurements,
+        'late-font-keeps-common-edge':loaded.members.length===2&&loaded.step<.01,
+        'late-font-no-write':loaded.writes===fallback.writes});
+      await page.evaluate(()=>{const c=window.__card;c.style.fontFamily='';c.hass={...c.hass,themes:{...c.hass.themes,darkMode:true}};});
+      await settle();
+    }
+    const cameraBase=await state();
     let wheelStep=0;
     const stage=await page.locator('houseplan-card').locator('.stage').boundingBox();
     await page.mouse.move(stage.x+stage.width/2,stage.y+stage.height/2);
@@ -87,9 +102,9 @@ for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100
       while(wheelStep!==targetStep){const direction=Math.sign(targetStep-wheelStep);await page.mouse.wheel(0,-direction*100);wheelStep+=direction;await settle();}
       const zoom=+(1.15**targetStep).toFixed(3);
       await settle();const after=await state();
-      checkAll({[`${name}:${zoom}:same-ink`]:after.path===long.path,
-        [`${name}:${zoom}:no-measure`]:after.work.measurements===long.work.measurements,
-        [`${name}:${zoom}:no-rebuild`]:after.work.rebuilds===long.work.rebuilds});
+      checkAll({[`${name}:${zoom}:same-ink`]:after.path===cameraBase.path,
+        [`${name}:${zoom}:no-measure`]:after.work.measurements===cameraBase.work.measurements,
+        [`${name}:${zoom}:no-rebuild`]:after.work.rebuilds===cameraBase.work.rebuilds});
     }
     await page.locator('houseplan-card').locator('[data-hp="zoom-fit"]').click();await settle();
     await page.screenshot({path:`${dir}/${name}.png`,fullPage:true});

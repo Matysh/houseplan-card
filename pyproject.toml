@@ -39,6 +39,7 @@ module = [
     "custom_components.houseplan.const",
     "custom_components.houseplan.projection",
     "custom_components.houseplan.coordinate_canonicalization",
+    "custom_components.houseplan.contact_basis",
     "custom_components.houseplan.frontend_asset_manifest",
     "custom_components.houseplan.junction_limits",
     "custom_components.houseplan.plans",

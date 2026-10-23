@@ -20790,6 +20790,13 @@ const discardConfirmMotionGuardCases = [
 ];
 const contact1003GuardCases=[
   {
+    id:'contact-late-font-invalidation-lost-1003',guard:'node demo/smoke_device_contact_reflow.mjs',
+    because:'#1003 AC9: a real FontFace loads after the fallback face was measured; only the mounted FontFaceSet event and subsequent DOM geometry prove cache invalidation without a HA write.',
+    patches:[{file:'src/device-contact-render.ts',
+      find:"      doc?.fonts?.addEventListener('loadingdone',this.fontsChanged);",
+      replace:"      // No font readiness subscription."}],
+  },
+  {
     id:'contact-virtual-dash-lost-1003',guard:'node demo/smoke_device_contacts.mjs',
     because:'#1003 AC3: only mounted production SVG/CSS proves a virtual group paints dashed rather than merely deriving virtual membership.',
     patches:[{file:'src/device-contact-render.ts',find:"stroke-dasharray=${virtual?'4 3':'none'}",replace:"stroke-dasharray=${virtual?'none':'none'}"}],

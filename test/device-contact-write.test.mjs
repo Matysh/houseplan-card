@@ -38,6 +38,23 @@ test('#1003 affected position conflict refuses the whole group before sending',a
   await assert.rejects(persistContactPlacements(f.host,change),e=>e.code==='conflict');
   assert.equal(f.calls.length,1);assert.equal(f.host._sentPos.size,0);
 });
+
+test('#1003 the group transport canonicalises only edited positions, not foreign data',async()=>{
+  const f=fixture();
+  const foreign={...initial.foreign,x:.100000000000001};
+  f.setSaved({...initial,foreign});
+  const input={...change,placement:{x:80/240+1e-12,y:.30000000000001,s:'floor'}};
+  await persistContactPlacements(f.host,input);
+  assert.equal(f.saved().a.x,80/240);assert.equal(f.saved().a.y,.3);
+  assert.deepEqual(f.saved().foreign,foreign);
+  assert.notEqual(input.placement.x,f.saved().a.x,'input is not mutated');
+});
+test('#1003 a config revision arriving during the fresh layout read refuses before sending',async()=>{
+  const f=fixture(),transport=f.host.hass.callWS;
+  f.host.hass.callWS=async m=>{const answer=await transport(m);if(m.type==='houseplan/layout/get')f.host._cfgRev++;return answer;};
+  await assert.rejects(persistContactPlacements(f.host,change),e=>e.code==='conflict');
+  assert.equal(f.calls.length,1);assert.deepEqual(f.saved(),initial);
+});
 test('#1003 late context and CAS refusal never promote attempted positions',async()=>{
   for(const mode of ['retired','conflict']){
     const f=fixture(),transport=f.host.hass.callWS;

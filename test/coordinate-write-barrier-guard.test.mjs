@@ -20,7 +20,7 @@ test('the canonical config writer cannot drop its expected revision (#340)', () 
   try {
     mkdirSync(resolve(fixtureRoot, 'src'), { recursive: true });
     mkdirSync(resolve(fixtureRoot, 'custom_components/houseplan'), { recursive: true });
-    for (const name of ['houseplan-card.ts', 'houseplan-editor-runtime.ts', 'plan-optimize-write.ts', 'device-copy-editor.ts']) {
+    for (const name of ['houseplan-card.ts', 'houseplan-editor-runtime.ts', 'plan-optimize-write.ts', 'device-copy-editor.ts', 'device-contact-write.ts']) {
       writeFileSync(
         resolve(fixtureRoot, 'src', name),
         readFileSync(resolve(repoRoot, 'src', name), 'utf8'),
@@ -45,6 +45,14 @@ test('the canonical config writer cannot drop its expected revision (#340)', () 
       checkCoordinateWriteBarriers(fixtureRoot)
         .includes('frontend config/set bypasses the canonical boundary'),
     );
+    writeFileSync(cardPath, productionCard);
+    const contactPath = resolve(fixtureRoot, 'src/device-contact-write.ts');
+    const contacts = readFileSync(contactPath, 'utf8');
+    const withoutCanonicalization = contacts.replace('canonicalizePosition(c.placement)', 'c.placement');
+    assert.notEqual(withoutCanonicalization, contacts);
+    writeFileSync(contactPath, withoutCanonicalization);
+    assert.ok(checkCoordinateWriteBarriers(fixtureRoot)
+      .includes('frontend contact layout/set bypasses the canonical boundary'));
   } finally {
     rmSync(fixtureRoot, { recursive: true, force: true });
   }

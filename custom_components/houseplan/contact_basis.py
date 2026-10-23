@@ -4,17 +4,17 @@ from __future__ import annotations
 import copy
 import json
 import math
-from typing import Any
+from typing import Any, TypeGuard
 
 import voluptuous as vol
 
 
-def _number(value: Any, limit: float) -> bool:
+def _number(value: Any, limit: float) -> TypeGuard[int | float]:
     return (isinstance(value, (int, float)) and not isinstance(value, bool)
             and math.isfinite(value) and abs(value) <= limit)
 
 
-def valid_contact_basis(value: Any) -> bool:
+def valid_contact_basis(value: Any) -> TypeGuard[dict[str, Any]]:
     """Known v1 only; an unknown future block remains opaque/inert."""
     if not isinstance(value, dict) or type(value.get("v")) is not int or value["v"] != 1:
         return False

@@ -76,7 +76,11 @@ export function prepareContactMove(value:object,drag:{id:string;spaceId:string;b
 /** Existing layout/set CAS over a fresh complete read, never the active-floor
  * projection. A conflicting read cannot overwrite another client's positions. */
 export async function persistContactPlacements(value:object,state:DevicePositionState):Promise<void> {
-  const host=value as ContactWriter,changes=[state,...state.related??[]];
+  const host=value as ContactWriter;
+  // Canonicalise only the named edits, never the fresh snapshot's foreign floors.
+  const changes=[state,...state.related??[]].map(c=>({...c,
+    placement:c.placement===null?null:canonicalizePosition(c.placement)}));
+  const configRevision=host._cfgRev;
   const current=host._layoutIO.guard(),owns=host._layoutIO.guard(true),finish=host._layoutIO.begin();
   const sent=new Map<string,DeviceLayout[string]|null>();
   try {
@@ -90,6 +94,7 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     const expected=new Map(changes.map(c=>[c.deviceId,devicePlacement(accepted,c.deviceId)]));
     const snapshot=record(await host.hass.callWS({type:'houseplan/layout/get'}));
     if(!current()||typeof snapshot?.rev!=='number'||!record(snapshot.layout))throw new Error('invalid complete layout snapshot');
+    if(host._cfgRev!==configRevision)throw Object.assign(new Error('device configuration changed elsewhere'),{code:'conflict'});
     let layout=structuredClone(snapshot.layout) as DeviceLayout;
     for(const c of changes) {
       if(!sameDevicePlacement(devicePlacement(layout,c.deviceId),expected.get(c.deviceId)??null))
@@ -100,7 +105,7 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     let response:Record<string,unknown>|null;
     try {
       response=record(await host.hass.callWS({type:'houseplan/layout/set',layout,expected_rev:snapshot.rev,
-        expected_config_rev:host._cfgRev}));
+        expected_config_rev:configRevision}));
     } catch(error) {
       // A transport failure is not proof that the server rejected the write.
       // Reconcile only our named placements; never replay the full snapshot.
