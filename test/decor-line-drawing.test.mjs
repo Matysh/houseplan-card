@@ -82,3 +82,67 @@ test('authority loss and page interruption retire the chain and a delayed click'
   f.state.authority=true;f.click(10,10);f.events.dispatchEvent(new Event('pagehide'));
   assert.equal(f.drawing.active,false);assert.equal(f.state.preview,null);
 });
+
+test('canvas-edge preview, stored endpoint and continuation agree through production snapping and commit', async () => {
+  globalThis.window ??= { customCards: [] };
+  const { HouseplanCard } = await import('../test-build/houseplan-card.js');
+  const { HouseplanEditorRuntime } = await import('../test-build/houseplan-editor-runtime.js');
+  const { CommandStack } = await import('../test-build/command-stack.js');
+  const { NORM_W, SANE_LIMIT, GRID_PITCH } = await import('../test-build/space-geometry.js');
+  const height = Object.getOwnPropertyDescriptor(HouseplanCard.prototype, '_decorH');
+  const list = Object.getOwnPropertyDescriptor(HouseplanCard.prototype, '_decorList');
+  const limit = SANE_LIMIT, pitch = GRID_PITCH;
+  const cases = [
+    [[limit-3*pitch, limit-7*pitch], [limit+30*pitch, limit+20*pitch], true],
+    [[-limit+3*pitch, -limit+7*pitch], [-limit-30*pitch, -limit-20*pitch], true],
+    [[limit-7*pitch, -limit+3*pitch], [limit+20*pitch, -limit-30*pitch], true],
+    [[-limit+7*pitch, limit-3*pitch], [-limit-20*pitch, limit+30*pitch], true],
+    [[limit-3*pitch, 0], [limit+30*pitch, 0], false],
+    [[0, -limit+3*pitch], [0, -limit-30*pitch], false],
+  ];
+  for (const [start, end, shift] of cases) {
+    const space = { id:'floor', rooms:[], decor:[] };
+    let saves = 0;
+    const host = {
+      _space:'floor', _serverCfg:{spaces:[space]}, _curSpaceCfg:space,
+      _gridPitch:pitch, _stageEl:{clientWidth:1600,clientHeight:700},
+      _viewOr:()=>({w:1600}), _baseVb:()=>[0,0,1600,700],
+      _spaceModel:()=>({rooms:[]}), _cfgEpoch:0, _decorSnapCache:null,
+      _decorStyle:{color:'#123456',opacity:1,widthCm:5,fill:false,fillColor:'#123456',fillOpacity:.25},
+      _geometryHistory:new CommandStack(50), _pendingPhysicalWrites:new Map(),
+      _saveConfigDebounced:()=>{saves++;}, _t:key=>key, requestUpdate(){},
+    };
+    Object.defineProperties(host, {_decorH:height, _decorList:list});
+    assert.equal(host._decorH,NORM_W,'a non-square viewport still uses square Decor coordinates');
+    const runtime = Object.create(HouseplanEditorRuntime.prototype); runtime.host = host;
+    const drawing = new DecorLineDrawing({
+      context:()=> 'floor', current:()=>()=>true, blocked:()=>false,
+      point:e=>[e.clientX,e.clientY], snap:(p,type)=>runtime._decorSnap(p,type), pitch:()=>pitch,
+      preview:(a,b)=>{host._decorDraft=a?{kind:'line',a:[...a],b:[...b],pid:-1}:null;},
+      commit:(a,b,before,after)=>{
+        host._decorDraft={kind:'line',a,b,pid:-1};runtime._decorCommitDraft({before,after});
+      },
+      queue:run=>run(),cancelQueue(){},events:new EventTarget(),
+    });
+    runtime.decorLine=drawing;
+    const event = p=>({clientX:p[0],clientY:p[1],pointerId:1,button:0,pointerType:'mouse',shiftKey:shift});
+    const click = p=>{const e=event(p);drawing.pointerDown(e);drawing.pointerUp(e);drawing.click(e,false);};
+    click(start); drawing.pointerMove(event(end));
+    const preview=structuredClone(host._decorDraft);
+    click(end);
+    assert.equal(space.decor.length,1);assert.equal(saves,1);assert.equal(host._geometryHistory.size,1);
+    const shape=space.decor[0], persisted=[shape.x2*NORM_W,shape.y2*host._decorH];
+    const close=(a,b)=>a.every((n,i)=>Math.abs(n-b[i])<1e-8);
+    assert.ok(close(persisted,preview.b));assert.ok(close(drawing.snapshot.anchor,persisted));
+    assert.ok(persisted.every(n=>Number.isFinite(n)&&Math.abs(n)<=limit+1e-8));
+    if(shift) assert.ok(Math.abs(Math.abs(persisted[0]-preview.a[0])-Math.abs(persisted[1]-preview.a[1]))<1e-8);
+    click(end);assert.equal(space.decor.length,1,'a repeat clipped to the same boundary is too short');
+    assert.equal(saves,1);assert.equal(host._geometryHistory.size,1);
+    drawing.reset();click([NaN,Infinity]);
+    assert.equal(drawing.active,false,'a malformed screen coordinate cannot supply a clean click');
+    assert.deepEqual(runtime._decorSnap([NaN,Infinity]),[0,0],'the production snap also bounds malformed render input');
+    drawing.reset();click([2*limit,-2*limit]);
+    assert.deepEqual(drawing.snapshot.anchor,[limit,-limit],'an off-canvas first click cannot seed an unbounded anchor');
+    drawing.reset();
+  }
+});

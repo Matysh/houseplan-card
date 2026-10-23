@@ -98,6 +98,12 @@ touch delivery, external config reload and View inertness. Its data/history,
 native/Properties ID and painted SVG frame are the oracles. Ordinary negative
 input is permitted; registered guard witnesses are checked statically only.
 `test/decor-line-drawing.test.mjs` covers the pure endpoint/session contract;
+its boundary case also executes the production `_decorSnap`, draft commit and
+common-history recording. A non-square viewport still has `_decorH = NORM_W`;
+all magnet candidates pass through bounded `_snap`, so normalization cannot
+clip one Shift axis after the preview. The finite endpoint and half-grid
+checks match the synchronous draft writer, with no await between them; only
+then does the existing asynchronous config writer own persistence/refusal.
 `test/node-history-runtime.test.mjs` covers a foreign server-command Undo/Redo
 retiring the Line owner before its asynchronous write;
 existing decor/order smokes retain non-Line coverage. No full regression or
