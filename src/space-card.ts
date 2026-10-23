@@ -710,9 +710,10 @@ class HouseplanSpaceCard extends LitElement {
   };
 
   protected updated(changed: PropertyValues): void {
+    const wasReflowed=this._deviceContacts?.reflowed;
     if (this._deviceContactFrame && this._deviceContacts?.sync(this.renderRoot, {
       ...this._deviceContactFrame,invalidate:()=>this.requestUpdate(),
-    })) this.requestUpdate();
+    }) && (wasReflowed||this._deviceContacts.reflowed)) this.requestUpdate();
     const stage = this.renderRoot.querySelector<HTMLElement>('.hp-static-stage') || undefined;
     if (stage !== this._observedStage) {
       this._stageObserver?.disconnect();

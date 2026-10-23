@@ -283,7 +283,9 @@ No values, HA bindings, shell angle or displayed live positions are stored.
 
 Reads never migrate a document. Malformed/stale/future blocks remain inert and
 lossless; changed known-v1 writes validate finite bounds/shape/identity and a 2 KiB
-block limit. Full/space JSON/ZIP retain the extension. Copy-space remaps `at.s`
+block limit. Each relative box coordinate is at most 64 core diameters, so a
+finite but corrupt tiny-core/huge-face block cannot exhaust the spatial index.
+Full/space JSON/ZIP retain the extension. Copy-space remaps `at.s`
 only for a valid matching basis. Optimize uses the reference face when proving a
 contact, not the possibly changed live value; removed wall hosts get no exemption.
 Old frontends may drop constraints on an explicit point edit and cannot reproduce

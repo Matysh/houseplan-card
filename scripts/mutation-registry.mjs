@@ -20790,6 +20790,12 @@ const discardConfirmMotionGuardCases = [
 ];
 const contact1003GuardCases=[
   {
+    id:'contact-contour-only-forces-axis-frame-1003',guard:'node demo/smoke_device_contact_editor_frame.mjs',
+    because:'#1003 AC14/AC15: only the mounted room-resize live/axis layer lifecycle exposes a spurious contact-only rerender duplicating measured edges and leaders.',
+    patches:[{file:'src/device-contact-card.ts',find:'    if(wasReflowed||renderer.reflowed)host.requestUpdate();',
+      replace:'    host.requestUpdate();'}],
+  },
+  {
     id:'contact-late-font-invalidation-lost-1003',guard:'node demo/smoke_device_contact_reflow.mjs',
     because:'#1003 AC9: a real FontFace loads after the fallback face was measured; only the mounted FontFaceSet event and subsequent DOM geometry prove cache invalidation without a HA write.',
     patches:[{file:'src/device-contact-render.ts',

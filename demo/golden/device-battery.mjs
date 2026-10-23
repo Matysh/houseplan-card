@@ -103,7 +103,7 @@ export function makeBatteryBoardFixture(kind) {
 /** Calibrate the public icon-size option once; never force a face's CSS size. */
 export async function prepareBatteryBoard(page, scenario) {
   return page.evaluate(async ({ samples, scenario, colors, icons }) => {
-    const card = window.__goldenCard;
+    let card = window.__goldenCard;
     const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     const marker = (id) => card.renderRoot.querySelector(`[data-hp="device"][data-id="${CSS.escape(id)}"]`);
     const reference = samples[0];
@@ -116,6 +116,19 @@ export async function prepareBatteryBoard(page, scenario) {
     });
     await card.updateComplete;
     await frame();
+    // #1003: the calibration is not a user resizing an existing contact group.
+    // The deliberately oversized first pass can recognise loose legacy rows.
+    // Judge the board on a cold production card at the calibrated public option,
+    // not on transient reference contacts captured by that measuring pass.
+    const previous=card,replacement=document.createElement('houseplan-card');
+    replacement.className=previous.className;replacement.style.cssText=previous.style.cssText;
+    replacement.setConfig({...previous._config});
+    previous.replaceWith(replacement);replacement.hass=previous.hass;
+    card=replacement;window.__goldenCard=card;
+    for(let i=0;i<180&&(!card._loadOk||card._booting||card._devices.length!==samples.length);i++)await frame();
+    if(!card._loadOk||card._booting||card._devices.length!==samples.length)
+      throw new Error('battery golden calibrated cold card did not load');
+    await card.updateComplete;await frame();
     const stage = card.renderRoot.querySelector('.stage').getBoundingClientRect();
     const near = (actual, expected, detail) => {
       if (!Number.isFinite(actual) || Math.abs(actual - expected) > 0.5)

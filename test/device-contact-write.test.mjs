@@ -85,6 +85,16 @@ test('#1003 future bases remain opaque during explicit movement; history compari
   assert.equal(result.after.related.length,1);assert.equal(result.after.related[0].placement.contact_basis.v,1);
   assert.ok(sameDevicePlacement({x:1,y:2,contact_basis:{v:9,a:1}},{x:1,y:2,contact_basis:{a:1,v:9}}));
 });
+
+test('#1003 terminal basis identity is exactly the canonical placement without a units round trip',()=>{
+  const f=fixture(),marker={id:'a',x:.284425*1000,y:.2708333333333333*1000,diameter:40,
+    box:{left:-25.375,right:25.375,top:-25.375,bottom:25.375}};
+  f.host._deviceContacts={scene:new DeviceContactScene([marker],[])};
+  const state=prepareContactMove(f.host,{id:'a',spaceId:'floor',before:initial.a},
+    {x:.284425,y:.2708333333333333,s:'floor'}).after;
+  assert.deepEqual(state.placement.contact_basis.at,
+    {x:state.placement.x,y:state.placement.y,s:'floor'});
+});
 test('#1003 metric-only Save materialises only its legacy component and checks server capability',async()=>{
   const f=fixture(),marker=(id,x)=>({id,x,y:200,diameter:40,box:{left:-25.375,right:25.375,top:-25.375,bottom:25.375}});
   const scene=new DeviceContactScene([marker('a',200),marker('b',245),marker('foreign',800)],[],[],true);

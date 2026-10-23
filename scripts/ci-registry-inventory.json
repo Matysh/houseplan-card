@@ -1537,6 +1537,7 @@
       "demo/smoke_device_battery_zigbee.mjs",
       "demo/smoke_device_contact_corners.mjs",
       "demo/smoke_device_contact_designer.mjs",
+      "demo/smoke_device_contact_editor_frame.mjs",
       "demo/smoke_device_contact_reflow.mjs",
       "demo/smoke_device_contact_walls.mjs",
       "demo/smoke_device_contact_work.mjs",

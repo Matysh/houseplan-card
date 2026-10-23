@@ -86,7 +86,8 @@ test('#1003 AC5/AC12 durable basis reproduces live layout in a cold renderer and
   assert.equal(contactBasisMarker(wide,{...entries.get('a'),x:.201},'floor'),null);
   assert.equal(contactBasisMarker(wide,entries.get('a'),'other-floor'),null);
   for(const bad of [null,{},NaN,{v:2},{...makeContactBasis(a,'floor'),diameter:Infinity},
-    {...makeContactBasis(a,'floor'),box:[0,0,0,0]}])assert.equal(readContactBasis(bad),null);
+    {...makeContactBasis(a,'floor'),box:[0,0,0,0]},
+    {...makeContactBasis(a,'floor'),diameter:1e-12,box:[-5000,-5000,5000,5000]}])assert.equal(readContactBasis(bad),null);
 });
 
 test('#1003 AC6 wall anchor follows its real face while a changed value moves neighbours',()=>{

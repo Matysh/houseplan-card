@@ -3,14 +3,15 @@
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 
 requirePinnedBrowser();
-for (const order of ['ack-before-pair', 'pair-before-ack', 'settled-ack']) {
+for (const kind of ['point','contact']) for (const order of ['ack-before-pair', 'pair-before-ack', 'settled-ack']) {
   const { page, browser } = await launch({ width: 1000, height: 820 });
   try {
-    await page.evaluate(async () => {
+    await page.evaluate(async kind => {
       const hp = window.__hpTest;
       await hp.waitForWrites();
-      await hp.setLayout(layout => ({ ...layout, d_light1: { s: 'f1', x: .3, y: .3 } }));
-    });
+      await hp.setLayout(layout => ({ ...layout, d_light1: { s: 'f1', x: .3, y: .3 },
+        ...(kind==='point'?{d_temp:{s:'f1',x:.8,y:.8}}:{}) }));
+    },kind);
     const card = page.locator('houseplan-card');
     await card.locator('[data-hp="mode-tab"][data-mode="devices"]').click();
     await page.evaluate(() => window.__hpTest.settled());
@@ -21,8 +22,9 @@ for (const order of ['ack-before-pair', 'pair-before-ack', 'settled-ack']) {
       const writeGate = new Promise(resolve => { proof.releaseWrite = resolve; });
       const pairGate = new Promise(resolve => { proof.releasePair = resolve; });
       c.hass = { ...c.hass, callWS: async message => {
-        if (message.type === 'houseplan/layout/update') {
+        if (['houseplan/layout/update','houseplan/layout/set'].includes(message.type)) {
           const row = { message: structuredClone(message), accepted: false };
+          row.message.pos ??= structuredClone(message.layout?.d_light1);
           proof.writes.push(row);
           if (proof.writes.length === 1) await writeGate;
           const response = await original(message);
@@ -44,6 +46,8 @@ for (const order of ['ack-before-pair', 'pair-before-ack', 'settled-ack']) {
     await page.mouse.move(x, y); await page.mouse.down();
     await page.mouse.move(x + 75, y + 35, { steps: 5 }); await page.mouse.up();
     await page.waitForFunction(() => window.__ack902.writes.length === 1);
+    check(`${kind}:${order}: expected native transport`,await page.evaluate(() => window.__ack902.writes[0].message.type),
+      kind==='point'?'houseplan/layout/update':'houseplan/layout/set');
     check(`${order}: released real drag is pending without history`, await page.evaluate(() =>
       !window.__ack902.writes[0].accepted && !window.__card._devicePositionHistory.canUndo));
 

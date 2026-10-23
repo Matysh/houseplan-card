@@ -26,6 +26,7 @@ def valid_contact_basis(value: Any) -> TypeGuard[dict[str, Any]]:
         and ("legacy" not in value or isinstance(value["legacy"], bool))
         and isinstance(box, list) and len(box) == 4 and all(_number(v, 5000) for v in box)
         and box[0] < box[2] and box[1] < box[3]
+        and max(abs(v) for v in box) <= diameter * 64
     )
 
 

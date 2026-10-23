@@ -107,6 +107,29 @@ for(const [name,width,height,dpr] of [['desktop',1400,1000,1],['tablet',900,1100
         [`${name}:${zoom}:no-rebuild`]:after.work.rebuilds===cameraBase.work.rebuilds});
     }
     await page.locator('houseplan-card').locator('[data-hp="zoom-fit"]').click();await settle();
+    if(name==='mobile'){
+      await page.waitForFunction(()=>!window.__card._cameraTransition.active);
+      const input=await page.context().newCDPSession(page);
+      const pinch=await page.evaluate(()=>{const c=window.__card,r=c.renderRoot.querySelector('.stage').getBoundingClientRect();
+        return{x:r.left+r.width/2,y:r.top+70,ratio:.83/c._zoom};});
+      const touches=d=>[{id:11,x:pinch.x-d/2,y:pinch.y},{id:12,x:pinch.x+d/2,y:pinch.y}];
+      const pre=await state();
+      await input.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:touches(80)});
+      for(let i=1;i<=8;i++)await input.send('Input.dispatchTouchEvent',{
+        type:'touchMove',touchPoints:touches(80*(1+(pinch.ratio-1)*i/8))});
+      await input.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await settle();
+      const post=await state(),zoom=await page.evaluate(()=>window.__card._zoom);
+      if(Math.abs(zoom-.83)>=.001)console.log('mobile native pinch diagnostic',{pinch,zoom});
+      checkAll({'mobile-native-pinch-exact-083':Math.abs(zoom-.83)<.001,
+        'mobile-native-pinch-keeps-ink':post.path===pre.path&&post.step<.01,
+        'mobile-native-pinch-no-write':post.writes===pre.writes});
+      await page.setViewportSize({width:844,height:390});await settle();
+      const landscape=await state();
+      checkAll({'mobile-landscape-keeps-common-edge':landscape.members.length===2&&landscape.step<.01,
+        'mobile-landscape-no-write':landscape.writes===pre.writes});
+      await page.setViewportSize({width,height});await settle();
+      await input.detach();
+    }
     await page.screenshot({path:`${dir}/${name}.png`,fullPage:true});
     writeFileSync(`${dir}/${name}.json`,JSON.stringify({before,after:await state(),viewport:{width,height,dpr}},null,2));
     if(name==='desktop'){

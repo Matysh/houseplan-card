@@ -43,6 +43,7 @@ export class DeviceContactRenderer {
     candidate.contains = (p) => contact.contains((p.x-x)/width,(p.y-y)/height);
   };
   public scene: DeviceContactScene | null = null;
+  public reflowed = false;
   public readonly work = { measurements: 0, measurementBatches: 0, rebuilds: 0, paints: 0 };
   private readonly metrics = new Map<string, ContactRect>();
   private elements = new Map<string, MeasuredMarker>();
@@ -80,6 +81,7 @@ export class DeviceContactRenderer {
   }
 
   public clear(): void {
+    this.reflowed=false;
     this.retireElements(); this.layout.clear(); this.authored.clear();
     this.fontDocument?.fonts?.removeEventListener('loadingdone',this.fontsChanged);
     this.fontDocument=null;this.invalidate=undefined;
@@ -144,6 +146,7 @@ export class DeviceContactRenderer {
     this.authored=new Map(measured.map(m=>[m.id,m]));
     const walls=frame.walls || floor?.walls || [],masonry=frame.masonry || floor?.masonry || [];
     const effective=this.layout.resolve(measured,walls,masonry,bases,frame.key);
+    this.reflowed=effective.some((m,i)=>m.x!==measured[i].x||m.y!==measured[i].y);
     const previous = this.scene;
     const sameGeometry = previous && this.floorKey === frame.key && measured.length === previous.shapes.size
       && effective.every((m) => {

@@ -54,10 +54,15 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
   const size = host._config?.icon_size ?? 2.5;
   const base = effectiveDeviceBaseSize(size > 8 ? 2.5 : size) / 100 * iconUnit(space)
     * (host._mode === 'view' ? host._kioskScale.icon : 1);
+  const wasReflowed=renderer.reflowed;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
     space:space.id,layout:host._layout,invalidate:()=>host.requestUpdate(),
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => ({
       id: d.id, ...host._pos(d,false), virtual:d.virtual===true||d.bindingKind==='virtual', diameter: base * host._devicePresentation(d).scale,
     })) });
-  if (changed) {host._invalidateDeviceHitGeometry();host.requestUpdate();}
+  if (changed) {
+    host._invalidateDeviceHitGeometry();
+    // Painting a contour alone must not interrupt another editor's live layer.
+    if(wasReflowed||renderer.reflowed)host.requestUpdate();
+  }
 }

@@ -33,6 +33,7 @@ def test_new_valid_basis_and_read_are_lossless():
     {"diameter": 0}, {"diameter": True}, {"diameter": float("nan")}, {"diameter": 10001},
     {"v": True}, {"at": {"x": 0.3, "y": 0.3, "s": "floor"}},
     {"box": [0, 0, 0, 1]}, {"box": [0, 0, float("inf"), 1]}, {"box": [0, 0, 1]},
+    {"diameter": 1e-12, "box": [-5000, -5000, 5000, 5000]},
 ])
 def test_changed_invalid_v1_is_rejected(patch):
     value = entry()

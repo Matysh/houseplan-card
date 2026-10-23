@@ -98,7 +98,7 @@ for (const dpr of [1, 2]) {
       await settle();
       // Theme changes can refresh face metrics once; zoom itself must not.
       Object.assign(initial, await snapshot());
-      for (const zoom of [1/3, .5, .73, 1, 2, 4, 1]) {
+      for (const zoom of [1/3, .5, .73, .83, 1, 2, 4, 1]) {
         const p = await page.evaluate(zoom => {
           const c = window.__card, root = c.renderRoot, r = root.querySelector('.stage').getBoundingClientRect();
           // Pinch starts on empty plan, including in the best-effort editor:

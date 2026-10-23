@@ -21,7 +21,9 @@ export function readContactBasis(value: unknown): ContactBasis | null {
       || value.legacy!==undefined&&typeof value.legacy!=='boolean'
       || !Array.isArray(value.box)||value.box.length!==4||!value.box.every(bounded)) return null;
   const [left,top,right,bottom]=value.box as number[];
-  if(right<=left||bottom<=top) return null;
+  const diameter=value.diameter;
+  // A corrupt tiny core with an enormous face must not explode spatial buckets.
+  if(right<=left||bottom<=top||value.box.some(v=>Math.abs(v)>diameter*64)) return null;
   return {v:1,at:{x:value.at.x,y:value.at.y,s:value.at.s},diameter:value.diameter,box:[left,top,right,bottom],
     ...(value.legacy===true?{legacy:true}:{})};
 }

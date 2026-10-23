@@ -60,7 +60,8 @@ export function prepareContactMove(value:object,drag:{id:string;spaceId:string;b
   for(const id of [...ids].sort()) {
     const shape=scene.shapes.get(id);if(!shape)continue;
     const position=canonicalizePosition({x:shape.marker.x/1000,y:shape.marker.y/1000,s:drag.spaceId});
-    const basis=makeContactBasis({...shape.marker,x:position.x*1000,y:position.y*1000},drag.spaceId);
+    const basis={...makeContactBasis(shape.marker,drag.spaceId),
+      at:{x:position.x,y:position.y,s:drag.spaceId}};
     const existing=host._layout[id]?.contact_basis;
     const opaque=record(existing)?.v!==1&&existing!==undefined;
     const placement:DevicePlacement={...position,contact_basis:opaque?structuredClone(existing):basis};

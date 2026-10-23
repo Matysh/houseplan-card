@@ -132,7 +132,10 @@ const res = await page.evaluate(async () => {
   // Конец направляющей считается от точки жеста: `pt[1] ± 1.5 шага`. Живая
   // точка и замороженный снимок здесь заведомо разные — это и есть проверка,
   // что направляющую нарисовали от маркера, а не от его прошлого места.
-  const frozen = c._pos(c._devices.find((d) => d.id === dragged.id));
+  // #1003's normal _pos is intentionally the effective live contact point.
+  // Ask explicitly for the retained render snapshot to keep this negative
+  // control distinct from the current gesture, not disable the stale oracle.
+  const frozen = c._pos(c._devices.find((d) => d.id === dragged.id),false);
   const over = g * 1.5;
   const endFrom = (point) => point.y + Math.sign(point.y - anchorPos.y) * over;
   const guideLine = sr().querySelector('.alignline');

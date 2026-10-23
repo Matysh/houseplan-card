@@ -96,7 +96,7 @@ try {
     const c = window.__card, oldWS = c.hass.callWS.bind(c.hass), oldService = c.hass.callService.bind(c.hass);
     window.__guideWrites = []; window.__guideServices = []; window.__guideDelay = false;
     c.hass = { ...c.hass, callWS: async message => {
-      if (message.type === 'houseplan/layout/update') {
+      if (['houseplan/layout/update','houseplan/layout/set'].includes(message.type)) {
         window.__guideWrites.push(structuredClone(message));
         if (window.__guideDelay) await new Promise(resolve => { window.__guideAccept = resolve; });
       }
@@ -116,6 +116,18 @@ try {
         const layer = n.closest('.hp-editor-only-layer'); return !layer || layer.style.opacity !== '0';
       }).length };
   });
+  const terminalPreview=()=>page.evaluate(()=>{
+    const c=window.__card,m=c._deviceContacts.scene.shapes.get('d_lamp').marker;
+    return {position:structuredClone(c._layout.d_lamp),diameter:m.diameter/1000,
+      box:[m.box.left,m.box.top,m.box.right,m.box.bottom].map(v=>v/1000)};
+  });
+  const expectedTerminal=preview=>{
+    const expected=canonicalizePosition(preview.position);
+    delete expected.contact_basis;
+    // Explicit #1003 terminals retain the measured face, not an old basis.
+    return {...expected,contact_basis:{v:1,at:{x:expected.x,y:expected.y,s:expected.s},
+      diameter:preview.diameter,box:preview.box}};
+  };
   // Retiring a previously painted live frame is different from cancelling a
   // still-queued first move. Exercise both; no private product handler runs.
   const paintedBefore = await observation();
@@ -229,14 +241,14 @@ try {
     await page.mouse.move(fresh.x + fresh.width / 2, fresh.y + fresh.height / 2); await page.mouse.down();
     await page.mouse.move(fresh.x + fresh.width / 2 + 48, fresh.y + fresh.height / 2 + 30, { steps: 4 });
     await page.waitForTimeout(60);
-    const preview = await page.evaluate(() => structuredClone(window.__card._layout.d_lamp));
+    const preview = await terminalPreview();
     await page.mouse.up();
     await page.waitForFunction(() => !window.__card._devicePositionBusy);
     const accepted = await observation();
     check(`${lifecycle}: first new deliberate drag writes one command and one exact snapped preview`,
       [accepted.writes - before.writes, accepted.history - before.history], [1, 1]);
-    assert.deepEqual(accepted.layout.d_lamp, canonicalizePosition(preview),
-      'the existing storage write barrier removes only representation tails');
+    assert.deepEqual(accepted.layout.d_lamp, expectedTerminal(preview),
+      'storage canonicalises only representation tails and records the actual terminal face');
   }
   for (const path of ['editor', 'space', 'disconnect']) {
     const before = await observation(), box = await marker('d_lamp').boundingBox();
@@ -321,7 +333,7 @@ try {
   await page.mouse.down();
   await page.mouse.move(pendingBox.x + pendingBox.width / 2 + 38, pendingBox.y + pendingBox.height / 2 + 25, { steps: 4 });
   await page.waitForTimeout(60);
-  const pendingPreview = await page.evaluate(() => structuredClone(window.__card._layout.d_lamp));
+  const pendingPreview = await terminalPreview();
   await page.mouse.up();
   await page.waitForFunction(() => typeof window.__guideAccept === 'function');
   await page.evaluate(() => { window.dispatchEvent(new PageTransitionEvent('pagehide')); });
@@ -329,7 +341,7 @@ try {
   await page.evaluate(() => { window.__guideDelay = false; window.__guideAccept(); });
   await page.waitForFunction(() => !window.__card._devicePositionBusy);
   const afterPending = await observation();
-  assert.deepEqual(afterPending.layout.d_lamp, canonicalizePosition(pendingPreview),
+  assert.deepEqual(afterPending.layout.d_lamp, expectedTerminal(pendingPreview),
     'pagehide after release retains the canonically accepted placement');
   check('pagehide after release retains exactly one accepted command/write',
     [afterPending.writes - beforePending.writes, afterPending.history - beforePending.history], [1, 1]);
