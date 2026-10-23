@@ -413,13 +413,18 @@ jobs:
       # документы по-прежнему судятся в рабочей копии — снимок только исполняет.
       - name: Скрипты конвейера — из dev (#765)
         id: tools
+        env:
+          STAGE: ${{ needs.guard.outputs.stage }}
         run: |
           set -euo pipefail
           git fetch -q origin dev
           sha=$(git rev-parse origin/dev)
           tools="$RUNNER_TEMP/dev-tools"
           rm -rf "$tools" && mkdir -p "$tools"
-          git archive "$sha" scripts .github/workflows/validate.yml | tar -x -C "$tools"
+          git archive "$sha" scripts .github/workflows/validate.yml package.json package-lock.json | tar -x -C "$tools"
+          if [ "$STAGE" = code ]; then
+            (cd "$tools" && env -u NODE_OPTIONS -u NODE_PATH npm ci --ignore-scripts --no-audit --no-fund --userconfig=/dev/null)
+          fi
           { echo "dir=$tools"; echo "sha=$sha"; } >> "$GITHUB_OUTPUT"
           echo "скрипты конвейера: dev ${sha:0:12}"
 
@@ -569,7 +574,7 @@ jobs:
           # stdout по строке. Помощник — из снимка dev (#765), а не из ветки:
           # ветка, отставшая от dev, его ещё не несёт.
           code=0
-          files=$(node "$TOOLS/scripts/rebase-generated.mjs" --onto=origin/dev) || code=$?
+          files=$(node "$TOOLS/scripts/rebase-generated.mjs" --onto=origin/dev --issue="$NUM") || code=$?
           # Код 3 — отказ с перечнем (ребейз отменён); любой другой ненулевой —
           # сбой самого помощника, конфликтом ветки он не выдаётся.
           if [ "$code" -ne 0 ] && [ "$code" -ne 3 ]; then
@@ -1661,12 +1666,18 @@ jobs:
       - name: Скрипты конвейера — из dev (#749)
         id: tools
         if: always() && needs.prepare.result == 'success' && needs.prepare.outputs.proceed == 'true'
+        env:
+          STAGE: ${{ needs.guard.outputs.stage }}
         run: |
           set -euo pipefail
           tools="$RUNNER_TEMP/dev-tools"
           rm -rf "$tools" && mkdir -p "$tools"
           git fetch -q origin dev
-          git archive origin/dev scripts .github/workflows/validate.yml | tar -x -C "$tools"
+          sha=$(git rev-parse origin/dev)
+          git archive "$sha" scripts .github/workflows/validate.yml package.json package-lock.json | tar -x -C "$tools"
+          if [ "$STAGE" = code ]; then
+            (cd "$tools" && env -u NODE_OPTIONS -u NODE_PATH npm ci --ignore-scripts --no-audit --no-fund --userconfig=/dev/null)
+          fi
           echo "dir=$tools" >> "$GITHUB_OUTPUT"
 
       - name: Получить результат модели

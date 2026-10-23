@@ -363,12 +363,25 @@ test('красный Validate на кандидате — S6, без push в dev
 
 test('patch-id изменился при ребейзе — S7-code-review, без Validate и без push в dev', async () => {
   const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat', patchIds: { 'dev0..mat': 'p1', 'dev1..cand-mat-on-dev1': 'p2' } });
+  ops.refreshCi = () => assert.fail('changed reviewed workflow/code must never be erased by generation before patch-id comparison');
   const r = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
   assert.equal(r.action, 'rereview');
   assert.equal(r.to, 'S7-code-review');
   assert.ok(!ops.calls.some((c) => c[0] === 'index'), 'unreviewed rebased code must not run its generator');
   assert.ok(!ops.calls.some((c) => c[0] === 'validate'));
   assert.ok(!ops.calls.some((c) => c[0] === 'push' && c[2] === 'dev'));
+});
+
+test('#1044 canonical CI refresh follows patch equality and precedes final-SHA Validate', async () => {
+  const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
+  let comparisons = 0;
+  ops.patchId = () => { comparisons++; return 'same'; };
+  ops.refreshCi = tip => { assert.equal(comparisons, 2); return `ci-${tip}`; };
+  const result = await mergeCandidate({ branch: 'issue/1-x', material: 'mat', issue: 1, ops });
+  assert.equal(result.merged, true);
+  assert.equal(result.candidate, 'ci-cand-mat-on-dev1');
+  assert.ok(ops.calls.some(call => call[0] === 'validate' && call[1] === result.candidate));
+  assert.ok(ops.calls.some(call => call[0] === 'push' && call[2] === 'dev' && call[1] === result.candidate));
 });
 
 test('#811 AC5: a matching rebased patch generates the index before publishing and validating that exact SHA', async () => {
@@ -534,7 +547,7 @@ test('на настоящем git: чистый ребейз с равным pat
     // These pre-ledger fixtures isolate rebase/index proof; #838 tests below
     // exercise release accounting against an actual git repository separately.
     ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
-    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'refreshCi', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/7-double', material, issue: 7, ops });
     assert.equal(r.action, 'push', JSON.stringify(calls));
@@ -755,7 +768,7 @@ test('#516 AC1: dev moved only by review documents and the branch carries its ow
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
     ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
-    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'refreshCi', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
     assert.equal(r.action, 'push', JSON.stringify(calls));
@@ -832,7 +845,7 @@ test('#643 AC1: dev сдвинулся документами ревью дру�
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
     ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
-    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'refreshCi', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
     assert.equal(r.action, 'push', JSON.stringify(calls));
@@ -922,7 +935,7 @@ test('#657 r1 H1 на настоящем git: fast-forward несёт свежи
     ops.log = () => {};
     const inWork = (fn) => (...args) => { const cwd = process.cwd(); process.chdir(work); try { return fn(...args); } finally { process.chdir(cwd); } };
     ops.checkReleaseEntry = () => {}; ops.recordReleaseMilestone = () => {};
-    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'freshIndex']) ops[name] = inWork(ops[name]);
+    for (const name of ['fetch', 'revParse', 'mergeBase', 'diffNames', 'patchId', 'rebaseOnto', 'refreshCi', 'freshIndex']) ops[name] = inWork(ops[name]);
 
     const r = await mergeCandidate({ branch: 'issue/9-fix', material, issue: 9, ops });
     assert.equal(r.action, 'fast-forward', JSON.stringify(calls));

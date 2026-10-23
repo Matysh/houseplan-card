@@ -30,10 +30,11 @@
 // GIT_COMMITTER_*) либо из `gitPrefix` (`-c user.name=…`) при вызове из кода.
 
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, lstatSync, readFileSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isMainModule } from './spawn-portable.mjs';
+import { relativeDependencies } from './relative-dependencies.mjs';
 import { BROWSER_GUARD_INVENTORY } from './mutation-browser-policy.mjs';
 import {
   refreshBrowserInventory, resolveBrowserInventoryConflict, validateBrowserInventory,
@@ -55,6 +56,95 @@ export const REVIEWS_INDEX_SCRIPT = fileURLToPath(new URL('./reviews-index.mjs',
 export const MAX_STOPS = 500;
 /** Код выхода CLI «ребейз отменён, вот конфликты». */
 export const EXIT_CONFLICT = 3;
+
+// #1044: these derived files depend on the combined tree, including ledgers
+// and newly imported tooling inputs. Never execute a generator from the task.
+export const CI_GENERATED_PATHS = Object.freeze([
+  'scripts/ci-profile-paths.json', '.github/workflows/validate-product.yml',
+  '.github/workflows/validate-tooling.yml', '.github/workflows/validate-docs.yml',
+  'scripts/ci-registry-inventory.json',
+]);
+const CI_GENERATORS = ['ci-profiles.mjs', 'ci-registry-inventory.mjs'];
+const TOOLS_ROOT = fileURLToPath(new URL('../', import.meta.url));
+const normalized = text => text.replace(/\r\n/g, '\n');
+
+function regularPath(root, path) {
+  const parts = path.split('/');
+  for (let i = 1; i <= parts.length; i++) {
+    const stat = lstatSync(resolve(root, ...parts.slice(0, i)));
+    if (stat.isSymbolicLink() || (i === parts.length ? !stat.isFile() : !stat.isDirectory()))
+      throw Error(`CI refresh requires a regular file and parents: ${path}`);
+  }
+}
+
+function compatibleCiGenerators(cwd) {
+  const seen = new Set();
+  const visit = file => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    const path = relative(TOOLS_ROOT, file).replaceAll('\\', '/');
+    if (!path.startsWith('scripts/') || path.includes('../')) throw Error(`CI generator outside trusted scripts: ${path}`);
+    regularPath(cwd, path);
+    const text = readFileSync(file, 'utf8');
+    if (normalized(readFileSync(resolve(cwd, path), 'utf8')) !== normalized(text))
+      throw Error(`CI generator differs from trusted tools; refresh/review it explicitly: ${path}`);
+    for (const spec of relativeDependencies(text)) visit(resolve(dirname(file), spec));
+  };
+  for (const name of CI_GENERATORS) visit(resolve(TOOLS_ROOT, 'scripts', name));
+  const readJson = (root, path) => { regularPath(root, path); return JSON.parse(readFileSync(resolve(root, path), 'utf8')); };
+  const runtime = value => Object.fromEntries(['type', 'dependencies', 'devDependencies', 'optionalDependencies',
+    'peerDependencies', 'overrides', 'workspaces', 'packageManager', 'engines'].map(key => [key, value[key]]));
+  const lock = value => { delete value.version; if (value.packages?.['']) delete value.packages[''].version; return value; };
+  for (const [path, select] of [['package.json', runtime], ['package-lock.json', lock]]) {
+    if (JSON.stringify(select(readJson(cwd, path))) !== JSON.stringify(select(readJson(TOOLS_ROOT, path))))
+      throw Error(`CI runtime differs from trusted tools; refresh/review it explicitly: ${path}`);
+  }
+}
+
+/** Only canonical, compatible trusted code may refresh this fixed output set. */
+export function refreshCiGenerated({ cwd = process.cwd(), env = process.env, gitPrefix = [],
+  git = makeGit({ cwd, env, gitPrefix }), issue = '' } = {}) {
+  const tracked = git(['ls-files', '--stage', '-z', '--', ...CI_GENERATED_PATHS], { trim: false }).stdout;
+  if (!tracked) return { changed: false }; // Older/minimal repositories have no CI indices.
+  if (git(['status', '--porcelain', '--untracked-files=all']).stdout
+      || git(['ls-files', '--others', '--ignored', '--exclude-standard', '--', 'test']).stdout)
+    throw Error('CI refresh requires a clean tree without untracked input files');
+  const entries = tracked.split('\0').filter(Boolean);
+  if (entries.length !== CI_GENERATED_PATHS.length || entries.some(entry => !/^100(?:644|755) [a-f0-9]+ 0\t/.test(entry)))
+    throw Error('CI refresh requires all tracked regular generated outputs');
+  for (const path of CI_GENERATED_PATHS) regularPath(cwd, path);
+  compatibleCiGenerators(cwd);
+  const before = git(['rev-parse', 'HEAD']).stdout;
+  try {
+    const childEnv = { ...env }; delete childEnv.NODE_OPTIONS; delete childEnv.NODE_PATH;
+    for (const name of CI_GENERATORS) {
+      const result = spawnSync(process.execPath, [resolve(TOOLS_ROOT, 'scripts', name), '--write'], {
+        cwd, env: childEnv, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      if (result.error || result.status !== 0)
+        throw Error(`${name}: ${result.error?.message || result.stderr || result.stdout}`);
+    }
+    if (git(['rev-parse', 'HEAD']).stdout !== before) {
+      const error = Error('CI refresh candidate moved during generation');
+      error.code = 'CI_CANDIDATE_MOVED';
+      throw error;
+    }
+    if (git(['ls-files', '--others', '--exclude-standard']).stdout) throw Error('CI generator created unexpected untracked paths');
+    const changed = git(['diff', '--name-only']).stdout.split('\n').filter(Boolean);
+    if (changed.some(path => !CI_GENERATED_PATHS.includes(path))) throw Error('CI generator changed an unexpected tracked path');
+    if (!changed.length) return { changed: false };
+    const number = String(issue || /^issue\/(\d+)(?:-|$)/.exec(git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout)?.[1] || '');
+    if (!/^[1-9]\d*$/.test(number)) throw Error('CI refresh requires the task issue for generated commit trailers');
+    git(['add', '--', ...CI_GENERATED_PATHS]);
+    git(['commit', '-m', `chore(ci): refresh derived inputs after rebase\n\nIssue: #${number}\nUser-Visible: no\n`, '--', ...CI_GENERATED_PATHS]);
+    return { changed: true };
+  } catch (error) {
+    if (git(['rev-parse', 'HEAD']).stdout === before)
+      git(['restore', '--source=' + before, '--staged', '--worktree', '--', ...CI_GENERATED_PATHS]);
+    else error.code = 'CI_CANDIDATE_MOVED';
+    throw error;
+  }
+}
 
 const uniquePaths = (paths) => [...new Set(paths.map((p) => String(p).trim()).filter(Boolean))].sort();
 
@@ -127,7 +217,7 @@ export function rebaseRegenerating({
   onto, cwd = process.cwd(), env = process.env, gitPrefix = [],
   git = makeGit({ cwd, env, gitPrefix }),
   rebuildIndex = rebuildIndexWith({ cwd, env }),
-  extra = null, log = () => {}, maxStops = MAX_STOPS,
+  extra = null, log = () => {}, maxStops = MAX_STOPS, refreshCi = true, issue = '',
 }) {
   if (!onto) throw new Error('rebaseRegenerating: не задано, на что ребейзить (onto)');
   const resolved = [];
@@ -195,9 +285,11 @@ export function rebaseRegenerating({
     const inventory = refreshBrowserInventory({ git, cwd });
     if (!inventory.ok) return inventoryFailure(inventory.error);
     if (inventory.changed) resolved.push(`${BROWSER_GUARD_INVENTORY} ← пересчёт чисел`);
+    if (refreshCi && refreshCiGenerated({ git, cwd, env, issue }).changed)
+      resolved.push('CI indices ← canonical regeneration');
     return { ok: true, stops, resolved };
   } catch (error) {
-    restore();
+    if (error.code !== 'CI_CANDIDATE_MOVED') restore();
     throw error;
   }
 }
@@ -209,7 +301,8 @@ if (isMainModule(import.meta.url)) { // #496: переносимо для Window
     process.exit(2);
   }
   try {
-    const result = rebaseRegenerating({ onto, log: (line) => console.error(line) });
+    const issue = process.argv.find((a) => a.startsWith('--issue='))?.slice('--issue='.length) || '';
+    const result = rebaseRegenerating({ onto, issue, log: (line) => console.error(line) });
     if (result.ok) {
       console.error(`ребейз на ${onto} завершён; остановок решено: ${result.stops}${result.resolved.length ? ` (${result.resolved.join('; ')})` : ''}`);
       process.exit(0);

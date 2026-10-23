@@ -12,7 +12,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -117,7 +117,7 @@ test('#749 AC2: снимок — один на job, из origin/dev, с validate
   assert.ok(firstUser > at, 'до первого шага, который зовёт скрипт');
   assert.match(snapshot.code, /^set -euo pipefail$/m, 'сбой git archive не проходит молча через | tar');
   assert.match(snapshot.code, /^git fetch -q origin dev$/m);
-  assert.match(snapshot.code, /^git archive origin\/dev scripts \.github\/workflows\/validate\.yml \| tar -x -C "\$tools"$/m,
+  assert.match(snapshot.code, /^git archive "\$sha" scripts \.github\/workflows\/validate\.yml package\.json package-lock\.json \| tar -x -C "\$tools"$/m,
     'снимок из origin/dev; validate.yml читает workflow-jobs.mjs по пути от себя');
   assert.match(snapshot.code, /^echo "dir=\$tools" >> "\$GITHUB_OUTPUT"$/m);
   const archives = steps.flatMap((step) => [...step.code.matchAll(/git archive/g)].map(() => step.name));
@@ -158,6 +158,10 @@ test('#749 AC2: снимок самодостаточен — шаг как ес
   });
   mkdirSync(join(work, '.github', 'workflows'), { recursive: true });
   cpSync(join(ROOT, '.github', 'workflows', 'validate.yml'), join(work, '.github', 'workflows', 'validate.yml'));
+  writeFileSync(join(work, 'package.json'), JSON.stringify({ name: 'trusted-tools', version: '1.0.0',
+    scripts: { preinstall: 'node -e "require(\'fs\').writeFileSync(\'lifecycle-ran\',\'bad\')"' } }));
+  writeFileSync(join(work, 'package-lock.json'), JSON.stringify({ name: 'trusted-tools', version: '1.0.0',
+    lockfileVersion: 3, packages: { '': { name: 'trusted-tools', version: '1.0.0' } } }));
   git(work, 'add', '-A');
   git(work, 'commit', '-q', '-m', 'dev');
   git(work, 'push', '-q', 'origin', 'dev');
@@ -167,12 +171,13 @@ test('#749 AC2: снимок самодостаточен — шаг как ес
   // #766: shell шага — по правилам раннера (без `shell:` — `bash -e {0}`).
   const step = findStep(readFileSync(WORKFLOW, 'utf8'), `      - name: ${TOOLS_STEP}\n`, '_process.yml');
   const r = runStep(step, snapshot.run, {
-    cwd: work, encoding: 'utf8', env: { ...GIT_ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output },
+    cwd: work, encoding: 'utf8', env: { ...GIT_ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, STAGE: 'code' },
   });
   assert.equal(r.status, 0, r.stderr);
   const dir = readFileSync(output, 'utf8').match(/^dir=(.+)$/m)?.[1];
   assert.ok(dir, 'шаг назвал каталог снимка');
   assert.ok(!dir.startsWith(work), 'снимок — вне рабочей копии');
+  assert.equal(existsSync(join(dir, 'lifecycle-ran')), false, 'trusted dependency installation never executes lifecycle scripts');
   assert.ok(existsSync(join(dir, '.github', 'workflows', 'validate.yml')), 'validate.yml в снимке');
   const { resolveJobRules } = await import(pathToFileURL(join(dir, 'scripts', 'ci-proof.mjs')).href);
   assert.doesNotThrow(() => resolveJobRules(), 'контракт имён job читается из validate.yml снимка (#622)');

@@ -15283,7 +15283,7 @@ const MUTANT_DEFINITIONS = [
       + 'the caller\'s tree is left mid-rebase and the next step works on a detached half-result',
     patches: [{
       file: 'scripts/rebase-generated.mjs',
-      find: '  } catch (error) {\n    restore();\n    throw error;\n',
+      find: "  } catch (error) {\n    if (error.code !== 'CI_CANDIDATE_MOVED') restore();\n    throw error;\n",
       replace: '  } catch (error) {\n    // mutant: no restore on failure\n    throw error;\n',
     }],
   },
@@ -15305,7 +15305,7 @@ const MUTANT_DEFINITIONS = [
       + 'must merge through Validate; a plain rebase sends it back to S6 on every move of dev',
     patches: [{
       file: 'scripts/merge-candidate.mjs',
-      find: '      const r = rebaseRegenerating({ onto, gitPrefix: CONVEYOR_IDENTITY });',
+      find: '      const r = rebaseRegenerating({ onto, gitPrefix: CONVEYOR_IDENTITY, refreshCi: false });',
       replace: "      const r = spawnSync('git', [...CONVEYOR_IDENTITY, 'rebase', onto]).status === 0 ? { ok: true } : (spawnSync('git', ['rebase', '--abort']), { ok: false, conflicts: [] }); // mutant: plain rebase",
     }],
   },

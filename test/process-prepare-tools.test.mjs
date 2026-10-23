@@ -126,7 +126,7 @@ test('#765 AC1: снимок — один на заход, SHA dev закреп�
   assert.match(snapshot.code, /^set -euo pipefail$/m, 'сбой git archive не проходит молча через | tar');
   assert.match(snapshot.code, /^git fetch -q origin dev$/m);
   assert.match(snapshot.code, /^sha=\$\(git rev-parse origin\/dev\)$/m, 'SHA закрепляется один раз');
-  assert.match(snapshot.code, /^git archive "\$sha" scripts \.github\/workflows\/validate\.yml \| tar -x -C "\$tools"$/m,
+  assert.match(snapshot.code, /^git archive "\$sha" scripts \.github\/workflows\/validate\.yml package\.json package-lock\.json \| tar -x -C "\$tools"$/m,
     'архив закреплённого SHA, а не движущейся origin/dev; validate.yml читает ci-proof.mjs по пути от себя');
   assert.match(snapshot.code, /^\{ echo "dir=\$tools"; echo "sha=\$sha"; \} >> "\$GITHUB_OUTPUT"$/m);
   const head = jobBlock(workflow(), 'prepare');
@@ -188,6 +188,8 @@ function fixture(t) {
   });
   mkdirSync(join(work, '.github', 'workflows'), { recursive: true });
   cpSync(join(ROOT, '.github', 'workflows', 'validate.yml'), join(work, '.github', 'workflows', 'validate.yml'));
+  writeFileSync(join(work, 'package.json'), '{"name":"trusted-tools","version":"1.0.0"}\n');
+  writeFileSync(join(work, 'package-lock.json'), '{"name":"trusted-tools","version":"1.0.0","lockfileVersion":3,"packages":{}}\n');
   git(work, 'add', '-A');
   git(work, 'commit', '-q', '-m', 'dev');
   git(work, 'push', '-q', 'origin', 'dev');
@@ -203,7 +205,7 @@ function fixture(t) {
   writeFileSync(join(root, 'body.md'), BODY);
   writeFileSync(join(bin, 'gh'), `#!/usr/bin/env bash\ncat '${join(root, 'body.md')}'\n`);
   chmodSync(join(bin, 'gh'), 0o755);
-  const env = { ...GIT_ENV, RUNNER_TEMP: temp, PATH: `${bin}:${process.env.PATH}` };
+  const env = { ...GIT_ENV, RUNNER_TEMP: temp, STAGE: 'spec', PATH: `${bin}:${process.env.PATH}` };
   // Шаг (из stepsOf) — тело как есть, shell — по правилам раннера (#766).
   const run = (step, extra) => {
     const output = join(temp, `output-${Math.random().toString(36).slice(2)}`);
@@ -219,6 +221,16 @@ function fixture(t) {
 }
 
 const outputOf = (out, key) => out.match(new RegExp(`^${key}=(.*)$`, 'm'))?.[1];
+
+test('#1044 both rebase consumers install only pinned trusted dependencies, never spec dependencies', () => {
+  for (const [job, name] of [['prepare', TOOLS_STEP], ['integrate', 'Скрипты конвейера — из dev (#749)']]) {
+    const step = named(stepsOf(jobBlock(workflow(), job)), name);
+    assert.ok(step.env.includes('STAGE: ${{ needs.guard.outputs.stage }}'));
+    assert.match(step.code, /sha=\$\(git rev-parse origin\/dev\)/);
+    assert.match(step.code, /git archive "\$sha" scripts \.github\/workflows\/validate\.yml package\.json package-lock\.json/);
+    assert.match(step.code, /if \[ "\$STAGE" = code \]; then\n\s+\(cd "\$tools" && env -u NODE_OPTIONS -u NODE_PATH npm ci --ignore-scripts --no-audit --no-fund --userconfig=\/dev\/null\)\nfi/);
+  }
+});
 
 test('#1044 review check guidance consumes the validated proof and never creates a spec test gate', t => {
   const text = workflow();

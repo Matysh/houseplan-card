@@ -29,7 +29,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import {
   CI_PROOF_POLICIES, evaluateCiProof, githubCandidateTree, loadGithubProofContext,
 } from './ci-proof.mjs';
-import { rebaseRegenerating } from './rebase-generated.mjs';
+import { rebaseRegenerating, refreshCiGenerated } from './rebase-generated.mjs';
 // Личность конвейера — одна на ребейз и на коммит индекса (#643).
 import { CONVEYOR_IDENTITY } from './reviews-index.mjs';
 import { commitCandidateReviewsIndex } from './candidate-reviews-index.mjs';
@@ -406,11 +406,16 @@ export function realOps({
       // только в генерируемом INDEX.md — это решается пересборкой индекса, а
       // не возвратом зелёной задачи в S6. Любой другой конфликт — отказ, как
       // был; ребейз при отказе уже отменён помощником.
-      const r = rebaseRegenerating({ onto, gitPrefix: CONVEYOR_IDENTITY });
+      const r = rebaseRegenerating({ onto, gitPrefix: CONVEYOR_IDENTITY, refreshCi: false });
       if (!r.ok) {
         console.log(`ребейз на ${onto} отменён: ${r.conflicts.join(', ') || r.reason}`);
         return null;
       }
+      return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
+    },
+    refreshCi: (tip) => {
+      must(git('checkout', '-q', '-B', 'merge-into-dev', tip), 'checkout');
+      refreshCiGenerated({ gitPrefix: CONVEYOR_IDENTITY, issue });
       return must(git('rev-parse', 'HEAD'), 'rev-parse HEAD');
     },
     // #657 (1б) r1 H1: документ ревью ветки задачи больше не несёт индекс —
@@ -599,7 +604,12 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
     // #811: the candidate's generator is code, not merely data. Run it only
     // while the green verdict still applies; a changed diff first needs a
     // new review. The index commit is included in the exact Validate SHA.
-    if (patchIdEqual) candidate = ops.freshIndex(candidate);
+    if (patchIdEqual) {
+      // Compare the complete reviewed patch before canonical derived changes.
+      // No generated workflow is excluded from that authority check.
+      if (ops.refreshCi) candidate = ops.refreshCi(candidate);
+      candidate = ops.freshIndex(candidate);
+    }
     const expectPush = mutants ? true : ops.productPushExpected?.(tip, candidate) !== false;
     // кандидат публикуется в ветку в любом случае: он и есть то, что должно
     // ехать в dev, и Validate стартует именно от этого push

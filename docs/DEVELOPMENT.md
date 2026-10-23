@@ -4449,6 +4449,10 @@ the immutable ci-proof artifact and actual completed source attempt/jobs.
 After changing imports/test ownership, run `node scripts/ci-profiles.mjs --write`
 and `node scripts/ci-registry-inventory.mjs --write`. The committed inventory is
 computed with TypeScript during authoring/fresh guards; lookup needs no npm ci.
+After a clean rebase the controller refreshes these derived outputs using its
+trusted generators and pinned dependencies, only when their code/runtime match
+the material. Generator-policy changes require an explicit author refresh;
+the final merge candidate still needs Validate on its exact SHA (#1044).
 Frontend job runs build/types/pure units only when no compatible source exists.
 Bundle distribution and product guards always assemble/verify the exact current
 bytes, run FS/Git/process units, range, budget/unused and backend manifest checks.

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { REVIEWS_INDEX_PATH, UPSTREAM_WINS, planStop, rebaseRegenerating } from '../scripts/rebase-generated.mjs';
+import { CI_GENERATED_PATHS, REVIEWS_INDEX_PATH, UPSTREAM_WINS, makeGit, planStop, rebaseRegenerating } from '../scripts/rebase-generated.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
 import { importClosure } from './helpers/import-closure.mjs';
 import { PATCH_ID_EXCLUDES } from '../scripts/merge-candidate.mjs';
@@ -46,6 +46,106 @@ const commitAll = (work, msg) => { git(work, 'add', '-A'); git(work, 'commit', '
  * `shared` — вдобавок оба doc-коммита правят один и тот же обычный файл.
  */
 const SCRIPTS = fileURLToPath(new URL('../scripts/', import.meta.url));
+
+function ciScenario1044(t) {
+  const root = mkdtempSync(join(tmpdir(), 'hp-rebase-ci-1044-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const put = (path, text) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), text); };
+  git(root, 'init', '-q', '-b', 'dev');
+  for (const entry of ['ci-profiles.mjs', 'ci-registry-inventory.mjs']) {
+    for (const file of importClosure(join(SCRIPTS, entry))) put('scripts/' + file.slice(SCRIPTS.length), readFileSync(file));
+  }
+  for (const path of ['package.json', 'package-lock.json', '.github/workflows/validate.yml'])
+    put(path, readFileSync(new URL('../' + path, import.meta.url)));
+  put('scripts/golden-regression.mjs', "import { readdirSync } from 'node:fs'; readdirSync('docs/release-ledger');\n");
+  put('scripts/tooling-fixture.mjs', 'export const tool = true;\n');
+  put('test/tooling-fixture.test.mjs', "import '../scripts/tooling-fixture.mjs'; import { readFileSync } from 'node:fs'; readFileSync('src/base.ts');\n");
+  put('src/base.ts', 'export const base = 1;\n');
+  put('docs/release-ledger/old.json', '{}\n');
+  for (const path of CI_GENERATED_PATHS) put(path, '{}\n');
+  commitAll(root, 'fixture base');
+  const generate = () => {
+    for (const name of ['ci-profiles.mjs', 'ci-registry-inventory.mjs']) execFileSync(process.execPath, [join(SCRIPTS, name), '--write'], { cwd: root, env: ENV });
+  };
+  generate(); commitAll(root, 'initial derived inputs');
+  git(root, 'checkout', '-q', '-b', 'issue/1044-fixture');
+  put('task.txt', 'task\n'); commitAll(root, 'task');
+  const before = git(root, 'rev-parse', 'HEAD');
+  git(root, 'checkout', '-q', 'dev');
+  put('docs/release-ledger/new.json', '{"issue":1035}\n');
+  put('src/new-tooling-input.ts', 'export const next = 1;\n');
+  put('test/tooling-fixture.test.mjs', "import '../scripts/tooling-fixture.mjs'; import { readFileSync } from 'node:fs'; readFileSync('src/base.ts'); readFileSync('src/new-tooling-input.ts');\n");
+  commitAll(root, 'concurrent ledger and tooling input');
+  git(root, 'checkout', '-q', 'issue/1044-fixture');
+  return { root, before, put, generate };
+}
+
+test('#1044 clean rebase refreshes ledger closure and tooling triggers with trusted generators', t => {
+  const { root, generate } = ciScenario1044(t);
+  // Routine version/scripts metadata does not change the installed runtime.
+  for (const path of ['package.json', 'package-lock.json']) {
+    const value = JSON.parse(readFileSync(join(root, path), 'utf8'));
+    value.version = '99.0.0-beta.1'; if (value.packages?.['']) value.packages[''].version = value.version;
+    if (path === 'package.json') { value.description = 'metadata'; value.scripts.evil = 'never execute'; }
+    writeFileSync(join(root, path), JSON.stringify(value));
+  }
+  commitAll(root, 'release metadata');
+  const result = rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV });
+  assert.equal(result.ok, true);
+  assert.equal(result.stops, 0);
+  assert.ok(JSON.parse(readFileSync(join(root, 'scripts/ci-registry-inventory.json'))).jobs.golden.includes('docs/release-ledger/new.json'));
+  assert.ok(JSON.parse(readFileSync(join(root, 'scripts/ci-profile-paths.json'))).tooling.includes('src/new-tooling-input.ts'));
+  assert.match(git(root, 'show', '-s', '--format=%B'), /Issue: #1044\nUser-Visible: no/);
+  assert.ok(git(root, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n').every(path => CI_GENERATED_PATHS.includes(path)));
+  generate(); assert.equal(git(root, 'status', '--porcelain'), '', 'canonical generators agree with refreshed committed tree');
+  const head = git(root, 'rev-parse', 'HEAD');
+  rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV });
+  assert.equal(git(root, 'rev-parse', 'HEAD'), head, 'repeat is a no-op');
+});
+
+for (const mismatch of ['generator', 'dependency', 'generator failure', 'commit failure', 'untracked']) test(`#1044 ${mismatch} refuses refresh and restores the original task`, t => {
+  const { root, put } = ciScenario1044(t);
+  if (mismatch === 'generator') put('scripts/ci-profiles.mjs', "throw Error('candidate generator must never execute');\n");
+  if (mismatch === 'dependency') {
+    const value = JSON.parse(readFileSync(join(root, 'package.json'))); value.devDependencies.typescript = '0.0.0'; put('package.json', JSON.stringify(value));
+  }
+  // The first generator already writes profiles before the second encounters
+  // this invalid data-only protocol edge. Rollback must restore those writes.
+  if (mismatch === 'generator failure') put('scripts/ci-proof.mjs', "import './missing-protocol.mjs';\n");
+  if (!['untracked', 'commit failure'].includes(mismatch)) commitAll(root, 'candidate policy');
+  const before = git(root, 'rev-parse', 'HEAD');
+  if (mismatch === 'untracked') put('test/local.test.mjs', 'local experiment\n');
+  const actualGit = makeGit({ cwd: root, env: ENV });
+  const runner = (args, options) => {
+    if (mismatch === 'commit failure' && args[0] === 'commit') throw Error('generated commit refused');
+    return actualGit(args, options);
+  };
+  runner.cwd = root;
+  assert.throws(() => rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV, git: runner }),
+    /differs from trusted|unresolved registry protocol import|untracked input|generated commit refused/);
+  assert.equal(git(root, 'rev-parse', 'HEAD'), before);
+  assert.equal(git(root, 'status', '--porcelain', '--untracked-files=no'), '');
+  if (mismatch === 'untracked') assert.equal(readFileSync(join(root, 'test/local.test.mjs'), 'utf8'), 'local experiment\n');
+});
+
+for (const failAfterMove of [false, true]) test(`#1044 a concurrent HEAD move survives both rollback layers${failAfterMove ? ' with another failure' : ''}`, t => {
+  const { root } = ciScenario1044(t);
+  const actualGit = makeGit({ cwd: root, env: ENV });
+  let reads = 0, foreign;
+  const runner = (args, options) => {
+    if (!foreign && (failAfterMove ? args[0] === 'diff' && args[1] === '--name-only'
+      : args[0] === 'rev-parse' && args[1] === 'HEAD' && ++reads === 3)) {
+      git(root, 'commit', '--allow-empty', '-qm', 'independent concurrent commit');
+      foreign = git(root, 'rev-parse', 'HEAD');
+      if (failAfterMove) throw Error('an operation also failed after HEAD moved');
+    }
+    return actualGit(args, options);
+  };
+  runner.cwd = root;
+  assert.throws(() => rebaseRegenerating({ onto: 'dev', cwd: root, env: ENV, git: runner }), { code: 'CI_CANDIDATE_MOVED' });
+  assert.ok(foreign);
+  assert.equal(git(root, 'rev-parse', 'HEAD'), foreign, 'outer restore cannot reset an independently moved candidate');
+});
 
 function scenario({ shared = false, tools = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'hp-rebase-gen-'));
@@ -350,7 +450,7 @@ test('#643 process.yml: шаг «Привести ветку к dev» ребей
   // #765: помощник — из снимка dev подготовки, не из отставшей ветки.
   assert.match(step, /TOOLS: \$\{\{ steps\.tools\.outputs\.dir \}\}/, 'помощник — из снимка dev, не из отставшей ветки');
   assert.doesNotMatch(step, /git archive/, 'своего извлечения нет — один снимок на заход');
-  assert.match(step, /files=\$\(node "\$TOOLS\/scripts\/rebase-generated\.mjs" --onto=origin\/dev\) \|\| code=\$\?/);
+  assert.match(step, /files=\$\(node "\$TOOLS\/scripts\/rebase-generated\.mjs" --onto=origin\/dev --issue="\$NUM"\) \|\| code=\$\?/);
   assert.match(step, /if \[ "\$code" -ne 0 \] && \[ "\$code" -ne 3 \]; then/, 'сбой помощника — не конфликт');
   assert.match(step, /echo 'conflict=true'\n\s+echo 'conflicts<<EOF_FILES'/, 'выход conflict/conflicts на месте');
   // Порядок: ребейз → push с lease → ожидание ссылки. Индекс в ветке задачи
@@ -389,7 +489,7 @@ function runStepRebase(work) {
     execFileSync('tar', ['-x', '-C', tools], { input: archive });
     const script = `${body.slice(from, to)}\necho REBASED\n`;
     const r = runStep(findStep(WORKFLOW, REBASE_STEP, '_process.yml'), script, {
-      cwd: work, encoding: 'utf8', env: { ...ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, BRANCH: 'issue/9-fix', TOOLS: tools },
+      cwd: work, encoding: 'utf8', env: { ...ENV, RUNNER_TEMP: temp, GITHUB_OUTPUT: output, BRANCH: 'issue/9-fix', NUM: '9', TOOLS: tools },
     });
     return { status: r.status, stdout: r.stdout, stderr: r.stderr, output: readFileSync(output, 'utf8') };
   } finally {

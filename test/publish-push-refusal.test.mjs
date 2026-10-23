@@ -759,7 +759,8 @@ test('#723 AC3: в run обоих шагов нет многострочного
   }
   // Шаг _process.yml берёт разбор из снимка dev (#749): ветка задачи, отставшая от dev, его может не нести.
   assert.doesNotMatch(REVIEW_DOC_STEP().script, /git archive/, 'своего извлечения у шага нет — снимок job');
-  assert.match(TOOLS_STEP().script, /git archive origin\/dev scripts \.github\/workflows\/validate\.yml \| tar -x -C "\$tools"/);
+  assert.match(TOOLS_STEP().script, /sha=\$\(git rev-parse origin\/dev\)/);
+  assert.match(TOOLS_STEP().script, /git archive "\$sha" scripts \.github\/workflows\/validate\.yml package\.json package-lock\.json \| tar -x -C "\$tools"/);
   // Блок run не обрезан: последняя строка каждого шага на месте.
   assert.match(RELEASE_STEP().script, /echo "::error::документ ревью не опубликован в dev за три попытки"\nexit 1\n*$/);
   assert.match(REVIEW_DOC_STEP().script, /echo "документ опубликован в \$target: \$doc"\n*$/);

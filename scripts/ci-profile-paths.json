@@ -78,6 +78,7 @@
     "package-lock.json",
     "package.json",
     "scripts/**",
+    "src/device-contact-write.ts",
     "src/device-copy-editor.ts",
     "src/glow-scene.ts",
     "src/houseplan-card.ts",
