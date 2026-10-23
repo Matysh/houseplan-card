@@ -40,6 +40,11 @@ export const SMOKE_LINKS = [
     because: '#1047: real creation gestures compare the newest native ID, Properties owner, painted frame and subsequent property write; existing Properties smoke protects field completion, width transitions and the other editors.',
   },
   {
+    files: ['src/editors/decor/line-drawing.ts'],
+    smokes: ['smoke_decor_line_click.mjs'],
+    because: '#1046: real stage pointer/click and keyboard delivery must preserve one persisted segment per clean click, exact Shift preview, active history anchor and safety across navigation/field/context cancellation.',
+  },
+  {
     files: ['src/pdf/svg-snapshot.ts'],
     smokes: ['smoke_room_metrics_alignment.mjs'],
     because: '#1039: compare text/readings centres in real offline SVG downloads after chrome removal, while preserving live captions with an Area action; computed source styles alone cannot prove the exported layout.',

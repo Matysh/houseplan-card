@@ -78,6 +78,11 @@ Properties actions and one context-menu command owner. Right-click selects its
 object and order commands preserve selection. Copies are independent instances;
 image copies share the existing asset. History and transfer use existing paths.
 
+Decor Line (#1046) accepts successive clean clicks like Walls, with exact
+Shift 45° preview/commit and one ordinary history step per independent segment.
+Its temporary anchor follows active-chain Undo/Redo and ends on Esc or context
+replacement. Navigation/cancel tails never draw; saved decor has no new fields.
+
 Print download (#1036) combines unchanged PDF with a static SVG of the current
 View. SVG starts with devices off and transparent background, offers the shared
 custom colour picker, embeds local resources and rejects stale completions.

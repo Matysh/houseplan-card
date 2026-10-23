@@ -21,6 +21,10 @@
   identify an errored last-accepted path explicitly. No history reset or
   recalibration is needed. (#1048)
 
+- Draw decorative lines with successive clicks like walls: Shift aligns exact
+  45° directions, Esc ends the chain, and Undo/Redo follows each accepted segment.
+  Dragging and pinch navigation do not create lines. (#1046)
+
 ## v1.83.0-beta.1 — 2026-10-23
 
 - Print-dialog format and background selectors retain readable contrast in the

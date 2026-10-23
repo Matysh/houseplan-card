@@ -90,6 +90,23 @@ timestamp must be visible without horizontal clipping. Existing accepted
 scenes are not intentionally changed. Task capture is not baseline acceptance;
 the complete canonical Linux artifact is accepted only before a beta.
 
+## Decor click-Line #1046
+
+`demo/smoke_decor_line_click.mjs` exercises real clicks, stationary Shift,
+active/completed Undo/Redo, invalid Properties, navigation/cancel tails, clean
+touch delivery, external config reload and View inertness. Its data/history,
+native/Properties ID and painted SVG frame are the oracles. Ordinary negative
+input is permitted; registered guard witnesses are checked statically only.
+`test/decor-line-drawing.test.mjs` covers the pure endpoint/session contract;
+existing decor/order smokes retain non-Line coverage. No full regression or
+baseline acceptance is part of this task; no backend or migration is needed.
+
+Pinned Node 22.23.3 measures raw dist accounting `bundleBytes` 3404383 →
+3409801 (+5418 B) for the new lazy controller and routing; the same commit
+records this baseline. Host references rise by 24 within the existing band;
+delegates/port members/private counts stay fixed. Gzip and absolute View walls
+remain enforced without changing their bands. This records feature cost.
+
 ## Device contacts #1003 — local evidence
 
 The task's pinned Windows Node 22.23.3 source build measured initial View

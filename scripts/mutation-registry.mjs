@@ -20973,7 +20973,25 @@ const vacuumLive1049Cases = [
     patches:[{file:'src/vacuum-live-tail.ts',find:'VAC_LIVE_POINTS = 512',replace:'VAC_LIVE_POINTS = 100000'}]},
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases].map((mutant) => ({
+const decorLine1046Cases = [
+  { id:'decor-line-synthetic-click-accepted-1046', guard:'node --test test/decor-line-drawing.test.mjs',
+    because:'#1046 AC4: a click without its own clean pointer pair cannot author a segment.',
+    patches:[{file:'src/editors/decor/line-drawing.ts',find:'if (!ready || suppressed || !this.sync() || this.port.blocked()',
+      replace:'if (suppressed || !this.sync() || this.port.blocked()'}] },
+  { id:'decor-line-shift-ray-bypassed-1046', guard:'node --test test/decor-line-drawing.test.mjs',
+    because:'#1046 AC2: an incompatible positional magnet cannot skew an exact Shift ray.',
+    patches:[{file:'src/editors/decor/line-drawing.ts',find:'if (!shift) return magnet;',replace:'if (true) return magnet;'}] },
+  { id:'decor-line-foreign-context-retained-1046', guard:'node --test test/decor-line-drawing.test.mjs',
+    because:'#1046 AC3: a session anchor cannot survive a change of space/tool context.',
+    patches:[{file:'src/editors/decor/line-drawing.ts',find:'!context || this.owner && context !== this.owner || this.authority',
+      replace:'!context || this.authority'}] },
+  { id:'decor-line-active-history-anchor-lost-1046', guard:'node demo/smoke_decor_line_click.mjs',
+    because:'#1046 AC5: real keyboard Undo/Redo crosses card gesture routing, Lit repaint and the common geometry writer; pure session restoration cannot prove that integration.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:'if (outcome === true && command) this.decorLine.restore(',
+      replace:'if (outcome === true && command && !lineToken) this.decorLine.restore('}] },
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(
