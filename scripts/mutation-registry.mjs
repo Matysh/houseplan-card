@@ -11255,6 +11255,72 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'opening-repair-overlap-guard-off-1033',
+    guard: 'node scripts/backend-test-guard.mjs issue_1033 tests_backend/test_wall_segment_model.py',
+    because: '#1033 К6: an opening moved onto a taken wall interval (heal, migration or '
+      + 're-host) fails the schema overlap check on every later write; the shared fixture must turn red.',
+    patches: [{
+      file: 'custom_components/houseplan/wall_segment_model.py',
+      find: '            if segment is current or wall_interval_free(space, opening, segment, centre, half)\n',
+      replace: '            if True\n',
+    }],
+  },
+  {
+    id: 'opening-repair-overlap-guard-off-ts-1033',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-segment-model.test.mjs',
+    because: '#1033 К6: the TS writer mirror must refuse the same taken interval as Python, '
+      + 'or a card write wedges the plan the import just repaired.',
+    patches: [{
+      file: 'src/wall-segment-model.ts',
+      find: '      segment.id === currentId || wallIntervalFree(openings, opening, segment)\n',
+      replace: '      true\n',
+    }],
+  },
+  {
+    id: 'opening-repair-skipped-1033',
+    guard: 'node scripts/backend-test-guard.mjs issue1033',
+    because: '#1033 AC4/AC5: a file with an opening off its wall must import repaired and '
+      + 'reported, not be refused as invalid_config.',
+    patches: [{
+      file: 'custom_components/houseplan/opening_repair.py',
+      find: '        if fault:\n            broken.append(index)\n',
+      replace: '        if False:\n            broken.append(index)\n',
+    }],
+  },
+  {
+    id: 'opening-repair-no-confirmation-1033',
+    guard: 'node scripts/backend-test-guard.mjs issue1033',
+    because: '#1033 К4: keeping an opening off its wall is a change the server must make '
+      + 'the person confirm; the UI checkbox alone is no guarantee.',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '    return _document_opening_repairs(document)["detached"] > 0\n',
+      replace: '    return False\n',
+    }],
+  },
+  {
+    id: 'backdrop-decor-whitelist-1033',
+    guard: 'node scripts/backend-test-guard.mjs issue1033 tests_backend/test_ha_backup_archive.py',
+    because: '#1033 К2: an accepted SVG backdrop with labels must travel in the full ZIP; '
+      + 'the decor whitelist dropped it as invalid (F125).',
+    patches: [{
+      file: 'custom_components/houseplan/backup_archive.py',
+      find: '    if ref.kind == "plan":\n        return raw, plan_image_ext(raw, path.name, ref.limit)\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'backdrop-signature-unchecked-1033',
+    guard: 'node scripts/backend-test-guard.mjs issue1033 tests_backend/test_ha_backup_archive.py',
+    because: '#1033 К2/AC3: a backdrop must still be what its name says; without the '
+      + 'signature check JPEG bytes travel as PNG.',
+    patches: [{
+      file: 'custom_components/houseplan/backup_archive.py',
+      find: '    elif not _PLAN_SIGNATURES[ext](raw):\n',
+      replace: '    elif False:\n',
+    }],
+  },
+  {
     id: 'backup-import-ignores-writer',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/backup-import-intent.test.mjs',
     because: '#875: the executed access matrix refuses lost/missing writer permission without requiring an active space.',

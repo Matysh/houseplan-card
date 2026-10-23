@@ -36,6 +36,16 @@ const result = await page.evaluate(async () => {
   await card.updateComplete;
   const planOnlyResetForFull = card._backupExportDialog?.planOnly === false
     && !root().querySelector('.backupplanonly');
+  // #1033 AC1: the export button names no format, for a full ZIP and a space JSON.
+  const exportConfirm = () => root().querySelector('hp-dialog[data-kind="backup"] [data-hp="dialog-confirm"]')
+    ?.textContent.trim();
+  const downloadLabel = { full: exportConfirm() };
+  root().querySelector('input[name="backup-kind"][value="space"]')?.click();
+  await card.updateComplete;
+  downloadLabel.space = exportConfirm();
+  downloadLabel.key = card._t('backup.download');
+  root().querySelector('input[name="backup-kind"][value="full"]')?.click();
+  await card.updateComplete;
 
   let sentExport = null;
   card.hass = {
@@ -113,8 +123,61 @@ const result = await page.evaluate(async () => {
     warnsWithoutDiscarding: root().querySelector('.backupwarn')?.textContent
       .includes(card._t('backup.preserved_unresolved_hint')) === true,
   };
+  // #1033 AC11: repaired openings are reported, and keeping them off walls is confirmed.
+  const OPENINGS_CONFIRM = 'Openings that do not fit their walls will be kept off walls.';
+  const openingPreview = (repairs, content = []) => ({
+    filename: 'houseplan-full.json', size: 4096, token: 'openings',
+    preview: {
+      kind: 'full', source: 'same', created_at: '2026-10-23T00:00:00Z',
+      counts: { spaces: 1, rooms: 1, markers: 0, layout: 0, openings: 3 },
+      confirmation_required: !!repairs.detached || content.length > 0,
+      content, opening_repairs: repairs,
+    },
+    expectedConfigRev: 1, expectedLayoutRev: 2, duplicatePolicy: 'skip',
+    confirmMissing: false, busy: false, error: '',
+  });
+  const dialogText = () => root().querySelector('hp-dialog[data-kind="backup"]')?.textContent || '';
+  card._backupImportDialog = openingPreview({
+    rehosted: 1, detached: 2, legacy_detached: 0,
+    examples: [
+      { space_id: 'f1', space_title: 'Ground', opening_id: 'd1', type: 'door', result: 'detached' },
+      { space_id: 'f1', space_title: 'Ground', opening_id: 'w1', type: 'window', result: 'detached' },
+      { space_id: 'f1', space_title: 'Ground', opening_id: 'p1', type: 'passage', result: 'rehosted' },
+    ],
+  });
+  await card.updateComplete;
+  const openingsApply = () => root().querySelector('hp-dialog[data-kind="backup"] [data-hp="dialog-confirm"]');
+  const summary = root().querySelector('[data-hp="action"][data-action="backup-openings-details"]');
+  const openingsReport = {
+    rehosted: dialogText().includes('Openings put back onto their wall: 1.'),
+    detached: [...root().querySelectorAll('.backupwarn')]
+      .some((node) => node.textContent.includes('Openings kept off walls: 2. They stay where they were')),
+    details: summary?.textContent.trim() === 'Show openings',
+    examples: [...(summary?.parentElement?.querySelectorAll('span') || [])].map((node) => node.textContent.trim()),
+    confirmText: root().querySelector('.backupconfirm span')?.textContent.trim()
+      === OPENINGS_CONFIRM,
+    disabledUntilConfirmed: openingsApply()?.disabled === true,
+  };
+  const confirmBox = root().querySelector('[data-field="backup-confirm-missing"]');
+  confirmBox?.click();
+  await card.updateComplete;
+  openingsReport.enabledAfterConfirm = openingsApply()?.disabled === false;
+  openingsReport.noHorizontalOverflow = root().querySelector('hp-dialog').scrollWidth
+    <= root().querySelector('hp-dialog').clientWidth;
+  card._backupImportDialog = openingPreview(
+    { rehosted: 0, detached: 1, legacy_detached: 0, examples: [] },
+    [{ url: '/api/houseplan/content/plans/_/floor.svg', state: 'detach_required' }],
+  );
+  await card.updateComplete;
+  openingsReport.joinedConfirmText = root().querySelector('.backupconfirm span')?.textContent.trim()
+    === `${card._t('backup.confirm_detach')} ${OPENINGS_CONFIRM}`;
+  card._backupImportDialog = openingPreview({ rehosted: 0, detached: 0, legacy_detached: 0, examples: [] });
+  await card.updateComplete;
+  openingsReport.silentWhenNothingRepaired = !dialogText().includes('Show openings')
+    && !root().querySelector('[data-action="backup-openings-details"]')
+    && !root().querySelector('.backupconfirm');
   return {
-    group, actions, keyboardImport, exportRadios, exportWarning,
+    group, actions, keyboardImport, exportRadios, exportWarning, downloadLabel, openingsReport,
     planOnlyHiddenForFull, planOnlySpace, planOnlyResetForFull, planOnlyRequest,
     importSafe, planOnlyPreview,
   };
@@ -129,6 +192,13 @@ checkAll(result, {
   planOnlyHiddenForFull: true,
   planOnlySpace: { visible: true, checked: true, labelled: true },
   planOnlyResetForFull: true,
+  downloadLabel: { full: 'Download', space: 'Download', key: 'Download' },
+  openingsReport: {
+    rehosted: true, detached: true, details: true,
+    examples: ['Ground — Door (d1)', 'Ground — Window (w1)', 'Ground — Open passage (p1)'],
+    confirmText: true, disabledUntilConfirmed: true, enabledAfterConfirm: true,
+    noHorizontalOverflow: true, joinedConfirmText: true, silentWhenNothingRepaired: true,
+  },
   planOnlyRequest: { kind: 'space', planOnly: true, space: 'f1' },
   importSafe: { danger: true, disabledUntilConfirmed: true, noHorizontalOverflow: true },
   planOnlyPreview: {

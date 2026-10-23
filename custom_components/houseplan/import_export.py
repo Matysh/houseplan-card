@@ -36,6 +36,11 @@ from .const import (
     VERSION,
 )
 from .led_strips import led_strip_link_report, plan_only_strips, unbind_strips
+from .opening_repair import (
+    MAX_REPAIR_EXAMPLES,
+    merge_repair_reports,
+    repair_imported_openings,
+)
 from .portable_recovery import prepare_portable_markers
 from .room_appearance import normalize_room_appearance
 from .store import HouseplanData
@@ -689,7 +694,11 @@ def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return out
 
 
-def parse_document(raw: bytes) -> dict[str, Any]:
+def parse_document(
+    raw: bytes, *, opening_repairs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Parse and validate one export; ``opening_repairs`` is a report this
+    server already made for the same document (a ZIP is parsed twice)."""
     if len(raw) > MAX_EXPORT_BYTES:
         raise ImportFailure("too_large", "Import is larger than 8 MiB")
     try:
@@ -736,6 +745,11 @@ def parse_document(raw: bytes) -> dict[str, Any]:
             led_strip_link_report(config_candidate)["unbound"]
             if isinstance(config_candidate, dict) else 0
         )
+        # #1033: an opening its host no longer holds is repaired, not a
+        # reason to refuse the whole plan. Counted here, never trusted.
+        repairs = merge_repair_reports(
+            opening_repairs, repair_imported_openings(config_candidate, model),
+        )
         config = _appearance_config(config_candidate)
         config.pop("model_version", None)
     except (vol.Invalid, TypeError, ValueError) as err:
@@ -778,6 +792,7 @@ def parse_document(raw: bytes) -> dict[str, Any]:
     document["transfer"].pop("recovery", None)
     # Computed here, never trusted from the file.
     document["transfer"].pop("unbound_led_strips", None)
+    document["transfer"]["opening_repairs"] = repairs
     if unbound_led_strips:
         document["transfer"]["unbound_led_strips"] = unbound_led_strips
     if plan_only:
@@ -1891,6 +1906,7 @@ def _materialize_import_candidate(
             current_config, _ = commit_wall_segment_model(current_config)
     except WallSegmentMigrationError as err:
         raise ImportFailure(err.code, str(err)) from err
+    repairs = _opening_repair_details(prepared, imported_config, incoming_model)
     if prepared["kind"] == "space":
         config, layout, details = build_space_merge(
             prepared, current_config, current_layout, duplicate_policy,
@@ -1945,8 +1961,43 @@ def _materialize_import_candidate(
         raise ImportFailure("invalid_layout", str(err)) from err
     details = _json_copy(details)
     details["migration"] = migration
+    details["opening_repairs"] = repairs
     details["counts"] = _counts(config, layout)
     return config, layout, details
+
+
+def _document_opening_repairs(document: dict[str, Any]) -> dict[str, Any]:
+    transfer = document.get("transfer") if isinstance(document.get("transfer"), dict) else {}
+    return merge_repair_reports(transfer.get("opening_repairs"))
+
+
+def _openings_need_confirmation(document: dict[str, Any]) -> bool:
+    """#1033: an opening taken off its wall is a change the person confirms."""
+    return _document_opening_repairs(document)["detached"] > 0
+
+
+def _opening_repair_details(
+    document: dict[str, Any], migrated: dict[str, Any], incoming_model: int,
+) -> dict[str, Any]:
+    """The preview report: the parse-time repairs plus, for a model older than
+    the wall-segment model, what the initial migration left unhosted."""
+    repairs = _document_opening_repairs(document)
+    repairs["legacy_detached"] = 0
+    if incoming_model < 8:
+        for space in migrated.get("spaces") or []:
+            for opening in space.get("openings") or []:
+                if opening.get("host") is not None:
+                    continue
+                repairs["legacy_detached"] += 1
+                if len(repairs["examples"]) < MAX_REPAIR_EXAMPLES:
+                    repairs["examples"].append({
+                        "space_id": str(space.get("id", ""))[:64],
+                        "space_title": str(space.get("title") or space.get("id") or "")[:160],
+                        "opening_id": str(opening.get("id", ""))[:64],
+                        "type": str(opening.get("type", ""))[:16],
+                        "result": "detached",
+                    })
+    return repairs
 
 
 def _candidate_digest(candidate: dict[str, Any]) -> str:
@@ -1978,8 +2029,9 @@ def create_preview(
     config_root: Path,
     registry_snapshot: dict[str, set[str]] | None = None,
     portable_content: frozenset[tuple[str, ...]] = frozenset(),
+    opening_repairs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    document = parse_document(raw)
+    document = parse_document(raw, opening_repairs=opening_repairs)
     same_source = document.get("source_fingerprint") == source_fingerprint(runtime.instance_id)
     incoming_config = document["payload"]["config"]
     incoming_layout = document["payload"]["layout"]
@@ -1993,7 +2045,11 @@ def create_preview(
         validate_opening_passages(incoming_config, validate_all=True)
     except OpeningPassageError as err:
         raise ImportFailure(err.code, str(err)) from err
-    content, confirmation = _content_state(document, same_source, config_root, portable_content)
+    content, content_confirmation = _content_state(
+        document, same_source, config_root, portable_content,
+    )
+    openings_confirmation = _openings_need_confirmation(document)
+    confirmation = content_confirmation or openings_confirmation
     target_config, target_layout, details = _materialize_import_candidate(
         document, current_config, current_layout,
         duplicate_policy=duplicate_policy,
@@ -2051,7 +2107,8 @@ def create_preview(
         "confirmation_required": confirmation,
         "warnings": (["foreign_source"] if not same_source else [])
             + (["instance_bookkeeping_dropped"] if not same_source and document["kind"] == "full" else [])
-            + (["content_detach_required"] if confirmation else [])
+            + (["content_detach_required"] if content_confirmation else [])
+            + (["openings_detached"] if openings_confirmation else [])
             + (["full_replaces_current"] if document["kind"] == "full" else []),
         **details,
     }
@@ -2104,7 +2161,9 @@ def revalidate_candidate(
             frozenset(tuple(row) for row in candidate.get("portable_content") or []),
         )
         candidate["content"] = content
-        candidate["confirmation_required"] = confirmation
+        candidate["confirmation_required"] = (
+            confirmation or _openings_need_confirmation(document)
+        )
     unchanged = (
         duplicate_policy == candidate.get("duplicate_policy")
         and int(current_config_data.get("rev", 0)) == candidate.get("config_rev")

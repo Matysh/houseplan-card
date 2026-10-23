@@ -56,6 +56,42 @@ def test_issue_845_shared_identity_and_schema(case):
     assert source == case["input"]
 
 
+_OVERLAP_GUARD_1033 = json.loads((
+    Path(__file__).parents[1] / "test/fixtures/1033-opening-overlap-guard.json"
+).read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("case", _OVERLAP_GUARD_1033, ids=lambda c: c["name"])
+def test_issue_1033_unhosted_opening_never_takes_an_occupied_wall_interval(case):
+    """A heal, migration or re-host onto a taken interval would wedge every later write."""
+    source = copy.deepcopy(case["input"])
+    actual, _ = commit_wall_segment_model(source)
+    space = actual["spaces"][0]
+    segments = {segment["id"]: segment for segment in space["wall_segments"]}
+    hosts = {}
+    for opening in space["openings"]:
+        host = opening.get("host")
+        hosts[opening["id"]] = host and {
+            "a": segments[host["id"]]["a"], "b": segments[host["id"]]["b"], "t": host["t"],
+        }
+    assert hosts == case["expect"]
+    assert CONFIG_SCHEMA(copy.deepcopy(actual)) == actual
+    assert commit_wall_segment_model(actual)[0] == actual
+    assert source == case["input"]
+
+
+def test_issue_1033_a_v10_write_that_lost_a_host_refuses_a_taken_interval():
+    """Re-hosting onto the only carrier would overlap: refuse like no carrier."""
+    occupied = next(c for c in _OVERLAP_GUARD_1033
+                    if c["name"].startswith("self-heal: an unhosted opening on an occupied"))
+    source = copy.deepcopy(occupied["input"])
+    lost = next(o for o in source["spaces"][0]["openings"] if o["id"] == "op2")
+    lost["host"] = {"kind": "wall", "id": "wall-gone", "t": 0.5}
+    with pytest.raises(WallSegmentMigrationError) as refused:
+        commit_wall_segment_model(source)
+    assert refused.value.reason == "opening-host"
+
+
 def test_backend_migration_matches_shared_frontend_parity_fixture() -> None:
     fixture = json.loads((
         Path(__file__).parents[1] / "test" / "fixtures" / "282-wall-identity-parity.json"

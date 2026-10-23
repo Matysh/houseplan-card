@@ -607,6 +607,20 @@ const assignLineage = (
   }
 };
 
+/** #316: an in-place carrier — body, centre on it, same angle, room to fit. */
+const wallCarrierEligible = (segment: WallSegmentEntry, opening: OpeningCfg): boolean => {
+  const centre = [Number(opening.x), Number(opening.y)];
+  if (!centre.every(Number.isFinite) || !(Number(segment.cm) > 0)) return false;
+  const t = projectT(centre, segment.a, segment.b);
+  const span = lengthOf(segment.a, segment.b);
+  const half = Number(opening.length) / 2;
+  return t >= -EPS && t <= 1 + EPS
+    && distanceToSegment(centre, segment.a, segment.b) <= GRID_STEP_N * 0.02
+    && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
+    && Number.isFinite(half) && half >= 0
+    && t * span - half >= -EPS && t * span + half <= span + EPS;
+};
+
 /** Resolve one contour-opening owner using the same fail-closed rule as the
  * structural writer. UI gestures use this before entering the v9 barrier, so
  * the live candidate never contains a stale/missing host during a valid move. */
@@ -616,17 +630,7 @@ export const resolveRoomOpeningHost = (
   if (opening.host?.kind === 'partition') return null;
   const centre = [Number(opening.x), Number(opening.y)];
   if (!centre.every(Number.isFinite)) return null;
-  const eligible = (segment: WallSegmentEntry): boolean => {
-    if (!(Number(segment.cm) > 0)) return false;
-    const t = projectT(centre, segment.a, segment.b);
-    const span = lengthOf(segment.a, segment.b);
-    const half = Number(opening.length) / 2;
-    return t >= -EPS && t <= 1 + EPS
-      && distanceToSegment(centre, segment.a, segment.b) <= GRID_STEP_N * 0.02
-      && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
-      && Number.isFinite(half) && half >= 0
-      && t * span - half >= -EPS && t * span + half <= span + EPS;
-  };
+  const eligible = (segment: WallSegmentEntry): boolean => wallCarrierEligible(segment, opening);
   const current = opening.host?.kind === 'wall'
     ? segments.find((segment) => segment.id === opening.host!.id)
     : null;
@@ -644,20 +648,11 @@ export const resolveRoomOpeningHost = (
  * unhosted (§3.3) instead of blocking the migration. */
 const migrateRoomOpeningHost = (
   opening: OpeningCfg, segments: readonly WallSegmentEntry[],
+  accept: (segment: WallSegmentEntry) => boolean = () => true,
 ): WallOpeningHost | null => {
   const centre = [Number(opening.x), Number(opening.y)];
   if (!centre.every(Number.isFinite)) return null;
-  const half = Number(opening.length) / 2;
-  const eligible = segments.filter((segment) => {
-    if (!(Number(segment.cm) > 0)) return false;
-    const t = projectT(centre, segment.a, segment.b);
-    const span = lengthOf(segment.a, segment.b);
-    return t >= -EPS && t <= 1 + EPS
-      && distanceToSegment(centre, segment.a, segment.b) <= GRID_STEP_N * 0.02
-      && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
-      && Number.isFinite(half) && half >= 0
-      && t * span - half >= -EPS && t * span + half <= span + EPS;
-  });
+  const eligible = segments.filter((segment) => wallCarrierEligible(segment, opening)).filter(accept);
   // §3.2 tie-break: current host → distance → thicker cm → smaller id.
   const pick = (candidates: readonly WallSegmentEntry[]): WallSegmentEntry | null => {
     if (!candidates.length) return null;
@@ -683,22 +678,58 @@ const migrateRoomOpeningHost = (
   };
 };
 
+/** #1033: no opening that stays on `carrier` overlaps this one there. An
+ * opening counts when it is hosted on the carrier and still qualifies for it;
+ * one whose host no longer holds it is leaving and frees its interval. */
+const wallIntervalFree = (
+  openings: readonly OpeningCfg[], opening: OpeningCfg, carrier: WallSegmentEntry,
+): boolean => {
+  const centre = [Number(opening.x), Number(opening.y)];
+  const half = Number(opening.length) / 2;
+  const span = lengthOf(carrier.a, carrier.b);
+  const along = Math.max(0, Math.min(1, projectT(centre, carrier.a, carrier.b))) * span;
+  for (const other of openings) {
+    const host = other?.host;
+    if (other === opening || host?.kind !== 'wall' || host.id !== carrier.id) continue;
+    if (!wallCarrierEligible(carrier, other)) continue;
+    const otherAlong = Number(host.t) * span;
+    const otherHalf = Number(other.length) / 2;
+    if (!Number.isFinite(otherAlong) || !Number.isFinite(otherHalf)) continue;
+    if (Math.max(along - half, otherAlong - otherHalf)
+      < Math.min(along + half, otherAlong + otherHalf) - 1e-9) return false;
+  }
+  return true;
+};
+
 const hostRoomOpenings = (
   space: any, segments: readonly WallSegmentEntry[], initialMigration: boolean,
 ): void => {
   const openings: OpeningCfg[] = Array.isArray(space.openings) ? space.openings : [];
   for (const opening of openings) {
     if (opening.host?.kind === 'partition') continue;
+    // #1033: an opening never moves onto a wall interval that another
+    // opening staying on that wall occupies — not by a self-heal, not by the
+    // initial migration, not by re-hosting a lost carrier. That would fail the
+    // backend overlap check and wedge every later write; staying unhosted (or
+    // the fail-closed refusal below) does not.
+    const currentId = opening.host?.kind === 'wall' ? opening.host.id : null;
+    const accept = (segment: WallSegmentEntry): boolean => (
+      segment.id === currentId || wallIntervalFree(openings, opening, segment)
+    );
+    const acceptHost = (host: WallOpeningHost | null): WallOpeningHost | null => {
+      const segment = host ? segments.find((item) => item.id === host.id) : undefined;
+      return host && segment && accept(segment) ? host : null;
+    };
     // #316 §3.3: an unhosted opening is a valid degraded v9 state — inert in
     // the physics, rendered by its own x/y. A later write keeps it and may
     // self-heal it when a unique carrier appears; it never blocks the write.
     if (!opening.host && !initialMigration) {
-      const healed = resolveRoomOpeningHost(opening, segments);
+      const healed = acceptHost(resolveRoomOpeningHost(opening, segments));
       if (healed) opening.host = healed;
       continue;
     }
-    const host = resolveRoomOpeningHost(opening, segments)
-      ?? (initialMigration ? migrateRoomOpeningHost(opening, segments) : null);
+    const host = acceptHost(resolveRoomOpeningHost(opening, segments))
+      ?? (initialMigration ? migrateRoomOpeningHost(opening, segments, accept) : null);
     if (host) { opening.host = host; continue; }
     // #316 §3.4: the initial migration never throws over an opening; a
     // post-v9 write that LOST a carrier keeps the fail-closed refusal.

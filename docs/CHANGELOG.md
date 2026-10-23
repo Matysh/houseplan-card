@@ -4,6 +4,14 @@
 
 - Make the inner fill of switched-off LED strips 30% transparent to the plan
   background; lit strips and the opaque rim keep their previous appearance. (#1043)
+- Name the backup export button **Download**: it saves a ZIP or JSON depending
+  on the backup. Full ZIP backups keep SVG backgrounds with room labels and
+  large raster backgrounds instead of leaving them out as invalid. A plan with
+  a door or window off its wall now imports with a repair instead of being
+  refused: an opening next to a free wall is put back onto it, the rest stay in
+  place without a wall after confirmation. An opening without a wall is never
+  placed over another opening. Older versions refuse a ZIP whose SVG background
+  they would not have packed themselves. (#1033)
 
 - Centre room names over their readings in downloaded SVG files after omitting
   the Home Assistant Area link. Live captions with the link keep their existing

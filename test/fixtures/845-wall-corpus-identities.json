@@ -3,6 +3,10 @@
   "baseline": "a7ee8e44f23e0f2b1e5b77cb73987bfb3116ba64",
   "inventory": [
     {
+      "file": "test/fixtures/1033-opening-overlap-guard.json",
+      "configs": 5
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -248,6 +252,217 @@
     }
   ],
   "documents": [
+    {
+      "label": "test/fixtures/1033-opening-overlap-guard.json/cases/0/input",
+      "fingerprint": "9fabae7fae66c3bccc4d3c5fac13ea61d1cbe2d5aaa2a981daa1c1d1090c8c16",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-g7ueqx5mtqkpvwluriu6",
+            "wall-zqcuhlssu4rcqg2pj2xw",
+            "wall-xl7ltrzicwvkrm6jr7zj",
+            "wall-o6xlvr5ikruiyr2oms45"
+          ],
+          "rooms": [
+            {
+              "id": "rb",
+              "walls": [
+                "wall-zqcuhlssu4rcqg2pj2xw",
+                "wall-o6xlvr5ikruiyr2oms45",
+                "wall-xl7ltrzicwvkrm6jr7zj",
+                "wall-g7ueqx5mtqkpvwluriu6"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "op1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zqcuhlssu4rcqg2pj2xw"
+              }
+            },
+            {
+              "id": "op2",
+              "host": null
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1033-opening-overlap-guard.json/cases/1/input",
+      "fingerprint": "2ebc8e525864d3d8bec9fbac5a320fb1fadc7caf4374238eccc1c1fd8534e00c",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-g7ueqx5mtqkpvwluriu6",
+            "wall-zqcuhlssu4rcqg2pj2xw",
+            "wall-xl7ltrzicwvkrm6jr7zj",
+            "wall-o6xlvr5ikruiyr2oms45"
+          ],
+          "rooms": [
+            {
+              "id": "rb",
+              "walls": [
+                "wall-zqcuhlssu4rcqg2pj2xw",
+                "wall-o6xlvr5ikruiyr2oms45",
+                "wall-xl7ltrzicwvkrm6jr7zj",
+                "wall-g7ueqx5mtqkpvwluriu6"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "op1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zqcuhlssu4rcqg2pj2xw"
+              }
+            },
+            {
+              "id": "op2",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zqcuhlssu4rcqg2pj2xw"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1033-opening-overlap-guard.json/cases/2/input",
+      "fingerprint": "2c82da63310e5c469ae5e7ccf7f84fdcb32e1ffd6155aa8df7f223908e61aa70",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-g7ueqx5mtqkpvwluriu6",
+            "wall-zqcuhlssu4rcqg2pj2xw",
+            "wall-xl7ltrzicwvkrm6jr7zj",
+            "wall-o6xlvr5ikruiyr2oms45"
+          ],
+          "rooms": [
+            {
+              "id": "rb",
+              "walls": [
+                "wall-zqcuhlssu4rcqg2pj2xw",
+                "wall-o6xlvr5ikruiyr2oms45",
+                "wall-xl7ltrzicwvkrm6jr7zj",
+                "wall-g7ueqx5mtqkpvwluriu6"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "op2",
+              "host": null
+            },
+            {
+              "id": "op1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zqcuhlssu4rcqg2pj2xw"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1033-opening-overlap-guard.json/cases/3/input",
+      "fingerprint": "81f75130b0fee8cd7128e776dce5d139539a966e2bc73544ac892ad5876d0b15",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-g7ueqx5mtqkpvwluriu6",
+            "wall-zqcuhlssu4rcqg2pj2xw",
+            "wall-xl7ltrzicwvkrm6jr7zj",
+            "wall-o6xlvr5ikruiyr2oms45"
+          ],
+          "rooms": [
+            {
+              "id": "rb",
+              "walls": [
+                "wall-zqcuhlssu4rcqg2pj2xw",
+                "wall-o6xlvr5ikruiyr2oms45",
+                "wall-xl7ltrzicwvkrm6jr7zj",
+                "wall-g7ueqx5mtqkpvwluriu6"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "op1",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zqcuhlssu4rcqg2pj2xw"
+              }
+            },
+            {
+              "id": "op3",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zqcuhlssu4rcqg2pj2xw"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1033-opening-overlap-guard.json/cases/4/input",
+      "fingerprint": "d07b9f727bbdf178ae1ca5be09c22559cc6228e191026839e91e74dc34f46a26",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-g7ueqx5mtqkpvwluriu6",
+            "wall-zqcuhlssu4rcqg2pj2xw",
+            "wall-xl7ltrzicwvkrm6jr7zj",
+            "wall-o6xlvr5ikruiyr2oms45"
+          ],
+          "rooms": [
+            {
+              "id": "rb",
+              "walls": [
+                "wall-zqcuhlssu4rcqg2pj2xw",
+                "wall-o6xlvr5ikruiyr2oms45",
+                "wall-xl7ltrzicwvkrm6jr7zj",
+                "wall-g7ueqx5mtqkpvwluriu6"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "op2",
+              "host": {
+                "kind": "wall",
+                "id": "wall-zqcuhlssu4rcqg2pj2xw"
+              }
+            },
+            {
+              "id": "op1",
+              "host": null
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
     {
       "label": "test/fixtures/197-junction-patch.json",
       "fingerprint": "fdf624253287cb664e10d7a60493e7d23e4f4bcee50ec2f33446d3fb16f57f0b",

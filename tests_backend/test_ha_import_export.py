@@ -3434,3 +3434,214 @@ def test_issue_780_plan_only_export_keeps_geometry_without_device_links(tmp_path
     forged["payload"]["config"]["spaces"][0]["led_strips"][0]["marker"] = "lamp"
     parsed = parse_document(json.dumps(forged).encode())
     assert parsed["payload"]["config"]["spaces"][0]["led_strips"][0]["marker"] is None
+
+
+# --- #1033: openings whose host no longer holds them are repaired, not refused.
+
+def _opening_house_document(tmp_path: Path, kind: str = "full") -> dict:
+    from tests_backend.test_opening_repair import _door, _house, _partition_door
+
+    config = _house(
+        _door("d1", 0.3, lock="lock.front"), _door("w1", 0.5, 0.06), _partition_door(),
+    )
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path,
+    )
+    return document
+
+
+def _doc_opening(document: dict, opening_id: str, space: int = 0) -> dict:
+    return next(o for o in document["payload"]["config"]["spaces"][space]["openings"]
+                if o["id"] == opening_id)
+
+
+def _break_far(document: dict) -> str:
+    _doc_opening(document, "d1")["y"] = 0.3
+    return "d1"
+
+
+def _break_overlap(document: dict) -> str:
+    window = _doc_opening(document, "w1")
+    window["x"], window["host"]["t"] = 0.32, 0.3
+    return "w1"
+
+
+def _break_fit(document: dict) -> str:
+    _doc_opening(document, "d1")["length"] = 0.5
+    return "d1"
+
+
+def _break_partition(document: dict) -> str:
+    _doc_opening(document, "pd")["length"] = 0.3
+    return "pd"
+
+
+def _break_gone_host(document: dict) -> str:
+    _doc_opening(document, "d1")["host"]["id"] = "wall-gone"
+    return "d1"
+
+
+def _break_near(document: dict) -> str:
+    _doc_opening(document, "d1")["y"] = 0.2 + (1 / 240) * 0.01
+    return "d1"
+
+
+def _preview(tmp_path: Path, document: dict, current: dict | None = None):
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current or _config(), "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )
+    return runtime, response, get_candidate(runtime, response["token"], "alice")
+
+
+def test_issue1033_full_import_keeps_a_door_off_its_wall_after_confirmation(tmp_path: Path) -> None:
+    document = _opening_house_document(tmp_path)
+    _break_far(document)
+    door = copy.deepcopy(_doc_opening(document, "d1"))
+    with pytest.raises(vol.Invalid, match="must match its host"):
+        from custom_components.houseplan.validation import CONFIG_SCHEMA
+        CONFIG_SCHEMA({**copy.deepcopy(document["payload"]["config"]), "model_version": 10})
+    _runtime, response, candidate = _preview(tmp_path, document)
+    preview = response["preview"]
+    assert preview["opening_repairs"] == {
+        "rehosted": 0, "detached": 1, "legacy_detached": 0,
+        "examples": [{"space_id": "ground", "space_title": "Ground", "opening_id": "d1",
+                      "type": "door", "result": "detached"}],
+    }
+    assert preview["confirmation_required"] is True
+    assert "openings_detached" in preview["warnings"]
+    assert "content_detach_required" not in preview["warnings"]
+    with pytest.raises(ImportFailure) as refused:
+        prepare_apply(candidate, {}, {}, confirm_missing_content=False)
+    assert refused.value.code == "content_confirmation_required"
+    config, _layout, details = prepare_apply(candidate, {}, {}, confirm_missing_content=True)
+    imported = next(o for o in config["spaces"][0]["openings"] if o["id"] == "d1")
+    assert imported == {key: value for key, value in door.items() if key != "host"}
+    assert details["opening_repairs"]["detached"] == 1
+    # A recheck of the same preview keeps the confirmation it needs.
+    again = revalidate_candidate(
+        candidate, {"config": _config(), "rev": 1}, {"layout": {}, "rev": 1},
+        duplicate_policy="skip", config_root=tmp_path,
+    )
+    assert again["preview"]["confirmation_required"] is True
+    assert again["preview"]["opening_repairs"]["detached"] == 1
+
+
+def test_issue1033_a_door_just_off_its_wall_is_put_back_without_confirmation(tmp_path: Path) -> None:
+    from custom_components.houseplan.validation import CONFIG_SCHEMA
+
+    document = _opening_house_document(tmp_path)
+    host_id = _doc_opening(document, "d1")["host"]["id"]
+    _break_near(document)
+    _runtime, response, candidate = _preview(tmp_path, document)
+    preview = response["preview"]
+    assert (preview["opening_repairs"]["rehosted"], preview["opening_repairs"]["detached"]) == (1, 0)
+    assert preview["confirmation_required"] is False
+    assert "openings_detached" not in preview["warnings"]
+    config, _layout, _details = prepare_apply(candidate, {}, {}, confirm_missing_content=False)
+    door = next(o for o in config["spaces"][0]["openings"] if o["id"] == "d1")
+    assert door["host"]["id"] == host_id and door["y"] == 0.2
+    assert CONFIG_SCHEMA(copy.deepcopy(config)) == config
+
+
+@pytest.mark.parametrize("breaks,result", [
+    (_break_far, "detached"), (_break_overlap, "detached"), (_break_fit, "detached"),
+    (_break_partition, "detached"), (_break_gone_host, "rehosted"),
+])
+def test_issue1033_repair_touches_nothing_but_the_broken_opening(tmp_path: Path, breaks, result) -> None:
+    from custom_components.houseplan.validation import CONFIG_SCHEMA
+
+    reference_document = _opening_house_document(tmp_path)
+    document = copy.deepcopy(reference_document)
+    broken = breaks(document)
+    _, response, candidate = _preview(tmp_path, document)
+    repairs = response["preview"]["opening_repairs"]
+    assert repairs[result] == 1 and repairs["rehosted" if result == "detached" else "detached"] == 0
+    assert repairs["examples"][0]["opening_id"] == broken
+    config, _layout, _details = prepare_apply(candidate, {}, {}, confirm_missing_content=True)
+    assert CONFIG_SCHEMA(copy.deepcopy(config)) == config
+    # The same file without the broken opening imports to the same plan.
+    space = reference_document["payload"]["config"]["spaces"][0]
+    space["openings"] = [o for o in space["openings"] if o["id"] != broken]
+    _, _, reference = _preview(tmp_path, reference_document)
+    expected, _layout, _details = prepare_apply(reference, {}, {}, confirm_missing_content=True)
+    actual_space, expected_space = config["spaces"][0], expected["spaces"][0]
+    for key in set(actual_space) | set(expected_space):
+        if key != "openings":
+            assert actual_space.get(key) == expected_space.get(key), key
+    assert [o for o in actual_space["openings"] if o["id"] != broken] == expected_space["openings"]
+    assert {k: v for k, v in config.items() if k != "spaces"} == \
+        {k: v for k, v in expected.items() if k != "spaces"}
+
+
+def test_issue1033_space_import_repairs_only_the_incoming_space(tmp_path: Path) -> None:
+    current = _config()
+    document = _opening_house_document(tmp_path, "space")
+    _break_far(document)
+    _, response, candidate = _preview(tmp_path, document, current)
+    assert response["preview"]["opening_repairs"]["detached"] == 1
+    assert response["preview"]["confirmation_required"] is True
+    config, _layout, _details = prepare_apply(candidate, {}, {}, confirm_missing_content=True)
+    _, _, unbroken = _preview(tmp_path, _opening_house_document(tmp_path, "space"), current)
+    expected, _layout, _details = prepare_apply(unbroken, {}, {}, confirm_missing_content=True)
+    assert len(config["spaces"]) == 2
+    assert config["spaces"][0] == expected["spaces"][0]  # the current space is untouched
+    incoming = {o.get("lock") or o["type"]: o for o in config["spaces"][1]["openings"]}
+    assert "host" not in incoming["lock.front"]
+    assert incoming["lock.front"]["y"] == 0.3
+    file_openings = {o.get("lock") or o["type"]: o for o in document["payload"]["config"]["spaces"][0]["openings"]}
+    for key, opening in incoming.items():
+        if key == "lock.front":
+            continue
+        source = file_openings[key]
+        assert {k: opening[k] for k in ("x", "y", "angle", "length", "type")} == \
+            {k: source[k] for k in ("x", "y", "angle", "length", "type")}
+        assert opening["host"]["t"] == source["host"]["t"]
+
+
+def test_issue1033_older_model_reports_what_its_migration_left_unhosted(tmp_path: Path) -> None:
+    document = _document(tmp_path, "full")
+    document["payload"]["config"]["spaces"][0]["openings"] = [
+        {"id": "on-wall", "type": "door", "x": 0.5, "y": 0, "angle": 0, "length": 0.09},
+        {"id": "orphan", "type": "window", "x": 0.5, "y": 0.4, "angle": 0, "length": 0.05},
+    ]
+    _downgrade_document_to_v7(document)
+    _, response, candidate = _preview(tmp_path, document)
+    repairs = response["preview"]["opening_repairs"]
+    assert repairs == {
+        "rehosted": 0, "detached": 0, "legacy_detached": 1,
+        "examples": [{"space_id": "ground", "space_title": "Ground", "opening_id": "orphan",
+                      "type": "window", "result": "detached"}],
+    }
+    assert response["preview"]["confirmation_required"] is False
+    config, _layout, _details = prepare_apply(candidate, {}, {}, confirm_missing_content=False)
+    openings = {o["id"]: o for o in config["spaces"][0]["openings"]}
+    assert "host" in openings["on-wall"] and "host" not in openings["orphan"]
+
+
+def test_issue1033_other_invalid_geometry_is_still_refused(tmp_path: Path) -> None:
+    document = _opening_house_document(tmp_path)
+    _break_far(document)
+    document["payload"]["config"]["spaces"][0]["decor"] = [
+        {"id": "flat", "kind": "rect", "x": 0.1, "y": 0.1, "w": 0, "h": 0.1},
+    ]
+    with pytest.raises(ImportFailure) as refused:
+        _preview(tmp_path, document)
+    assert refused.value.code == "invalid_config"
+
+
+def test_issue1033_a_forged_repair_report_in_the_file_is_ignored(tmp_path: Path) -> None:
+    document = _opening_house_document(tmp_path)
+    document.setdefault("transfer", {})["opening_repairs"] = {"rehosted": 0, "detached": 0, "examples": []}
+    _break_far(document)
+    _, response, _candidate = _preview(tmp_path, document)
+    assert response["preview"]["opening_repairs"]["detached"] == 1
+    clean = _opening_house_document(tmp_path)
+    clean.setdefault("transfer", {})["opening_repairs"] = {"rehosted": 0, "detached": 5, "examples": []}
+    _, response, _candidate = _preview(tmp_path, clean)
+    assert response["preview"]["opening_repairs"]["detached"] == 0
+    assert response["preview"]["confirmation_required"] is False

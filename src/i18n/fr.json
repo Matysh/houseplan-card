@@ -1222,7 +1222,7 @@
   "backup.plan_only_hint": "Conserver les pièces, murs, ouvertures, décorations et positions des étiquettes de pièces sans les appareils ni les associations Home Assistant.",
   "backup.plan_only_preview": "Ce fichier contient uniquement le plan",
   "backup.privacy_warning": "L’archive conserve les noms, identifiants Home Assistant et coordonnées exactes. Les plans internes et pièces jointes sont référencés, pas intégrés ; les états d’exécution et trajets d’aspirateur ne sont pas inclus.",
-  "backup.download": "Télécharger le JSON",
+  "backup.download": "Télécharger",
   "backup.export_done": "Sauvegarde téléchargée",
   "backup.reading": "Vérification de la sauvegarde…",
   "backup.revalidated": "Le plan a changé depuis cet aperçu. Le résumé a été actualisé ; vérifiez-le et confirmez de nouveau.",

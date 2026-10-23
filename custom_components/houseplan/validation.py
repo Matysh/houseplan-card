@@ -1805,6 +1805,69 @@ WALL_OPENING_HOST_SCHEMA = vol.Schema(
 OPENING_HOST_SCHEMA = vol.Any(PARTITION_OPENING_HOST_SCHEMA, WALL_OPENING_HOST_SCHEMA)
 
 
+def _reserve_host_interval(
+    opening: dict, span: float, along: float, occupied: list[tuple[float, float]],
+    *, fit: str, overlap: str,
+) -> str | None:
+    length = float(opening["length"])
+    if length > span or along - length / 2 < -1e-9 or along + length / 2 > span + 1e-9:
+        return fit
+    lo, hi = along - length / 2, along + length / 2
+    if any(max(lo, old_lo) < min(hi, old_hi) - 1e-9 for old_lo, old_hi in occupied):
+        return overlap
+    occupied.append((lo, hi))
+    return None
+
+
+def partition_opening_host_fault(
+    opening: dict, partition: dict | None, occupied: list[tuple[float, float]],
+) -> str | None:
+    """The schema's partition-host checks as one predicate (#1033).
+
+    Returns the schema message of the first failed check. On success the
+    opening's interval is reserved in ``occupied``. The import repair asks the
+    same question as the schema, so a repaired file cannot fail it again.
+    """
+    if partition is None:
+        return "partition opening host must exist in the same space"
+    ax, ay = partition["a"]
+    bx, by = partition["b"]
+    span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+    return _reserve_host_interval(
+        opening, span, float(opening["host"]["t"]) * span, occupied,
+        fit="partition opening must fit inside its host",
+        overlap="partition openings must not overlap",
+    )
+
+
+def wall_opening_host_fault(
+    opening: dict, segment: dict | None, occupied: list[tuple[float, float]],
+) -> str | None:
+    """The v8+ wall-host checks as one predicate (#1033); see above."""
+    if segment is None:
+        return "wall opening host must exist in the same space"
+    if float(segment["cm"]) <= 0:
+        return "opening host must have positive thickness"
+    t = float(opening["host"]["t"])
+    x = float(segment["a"][0]) + (float(segment["b"][0]) - float(segment["a"][0])) * t
+    y = float(segment["a"][1]) + (float(segment["b"][1]) - float(segment["a"][1])) * t
+    if abs(x - float(opening["x"])) > 2e-8 or abs(y - float(opening["y"])) > 2e-8:
+        return "wall opening geometry must match its host"
+    expected_angle = math.degrees(math.atan2(
+        float(segment["b"][1]) - float(segment["a"][1]),
+        float(segment["b"][0]) - float(segment["a"][0]),
+    ))
+    if _angle_delta_mod_180(float(opening["angle"]), expected_angle) > 8:
+        return "wall opening angle must match its host"
+    span = ((segment["b"][0] - segment["a"][0]) ** 2
+            + (segment["b"][1] - segment["a"][1]) ** 2) ** 0.5
+    return _reserve_host_interval(
+        opening, span, t * span, occupied,
+        fit="wall opening must fit inside its host",
+        overlap="wall openings must not overlap",
+    )
+
+
 def _space_geometry_invariants(value: dict) -> dict:
     """All stored geometry shares ids; draft segments also have a space cap."""
     seen: set[str] = set()
@@ -1839,21 +1902,11 @@ def _space_geometry_invariants(value: dict) -> dict:
             continue
         if host["kind"] != "partition":
             continue
-        partition = partitions.get(host["id"])
-        if partition is None:
-            raise vol.Invalid("partition opening host must exist in the same space")
-        ax, ay = partition["a"]
-        bx, by = partition["b"]
-        span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
-        length = float(opening["length"])
-        along = float(host["t"]) * span
-        if length > span or along - length / 2 < -1e-9 or along + length / 2 > span + 1e-9:
-            raise vol.Invalid("partition opening must fit inside its host")
-        lo, hi = along - length / 2, along + length / 2
-        occupied = hosted_intervals.setdefault(host["id"], [])
-        if any(max(lo, old_lo) < min(hi, old_hi) - 1e-9 for old_lo, old_hi in occupied):
-            raise vol.Invalid("partition openings must not overlap")
-        occupied.append((lo, hi))
+        fault = partition_opening_host_fault(
+            opening, partitions.get(host["id"]), hosted_intervals.setdefault(host["id"], []),
+        )
+        if fault:
+            raise vol.Invalid(fault)
     return value
 
 
@@ -2189,34 +2242,12 @@ def _config_wall_segment_invariants(value: dict) -> dict:
                 if float(partitions[host["id"]]["cm"]) <= 0:
                     raise vol.Invalid("opening host must have positive thickness")
                 continue
-            segment = by_id.get(host["id"])
-            if segment is None:
-                raise vol.Invalid("wall opening host must exist in the same space")
-            if float(segment["cm"]) <= 0:
-                raise vol.Invalid("opening host must have positive thickness")
-            t = float(host["t"])
-            x = float(segment["a"][0]) + (float(segment["b"][0]) - float(segment["a"][0])) * t
-            y = float(segment["a"][1]) + (float(segment["b"][1]) - float(segment["a"][1])) * t
-            if abs(x - float(opening["x"])) > 2e-8 or abs(y - float(opening["y"])) > 2e-8:
-                raise vol.Invalid("wall opening geometry must match its host")
-            expected_angle = math.degrees(math.atan2(
-                float(segment["b"][1]) - float(segment["a"][1]),
-                float(segment["b"][0]) - float(segment["a"][0]),
-            ))
-            if _angle_delta_mod_180(float(opening["angle"]), expected_angle) > 8:
-                raise vol.Invalid("wall opening angle must match its host")
-            span = ((segment["b"][0] - segment["a"][0]) ** 2
-                    + (segment["b"][1] - segment["a"][1]) ** 2) ** 0.5
-            along = t * span
-            length = float(opening["length"])
-            if length > span or along - length / 2 < -1e-9 or along + length / 2 > span + 1e-9:
-                raise vol.Invalid("wall opening must fit inside its host")
-            lo, hi = along - length / 2, along + length / 2
-            occupied = wall_opening_intervals.setdefault(host["id"], [])
-            if any(max(lo, old_lo) < min(hi, old_hi) - 1e-9
-                   for old_lo, old_hi in occupied):
-                raise vol.Invalid("wall openings must not overlap")
-            occupied.append((lo, hi))
+            fault = wall_opening_host_fault(
+                opening, by_id.get(host["id"]),
+                wall_opening_intervals.setdefault(host["id"], []),
+            )
+            if fault:
+                raise vol.Invalid(fault)
     return value
 
 

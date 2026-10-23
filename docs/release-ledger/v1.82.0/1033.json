@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1033,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 labels the ZIP backup download «Download JSON», leaves accepted SVG backgrounds with labels and large raster backgrounds out of full ZIP backups, and refuses a whole plan over one opening off its wall. Rename the button, apply the background upload rule to backdrops in the archive, and repair such openings on import with a report and confirmation; the self-heal no longer places an unhosted opening over another one."
+}

@@ -309,7 +309,10 @@ class BackupService:
             response = await self.run(session, partial(create_preview, self.runtime,
                 json_bytes(document, MAX_EXPORT_BYTES), owner_id=owner, duplicate_policy="skip",
                 current_config_data=cd, current_layout_data=ld, config_root=self.root,
-                registry_snapshot=registry, portable_content=included))
+                registry_snapshot=registry, portable_content=included,
+                # #1033: the archive's own parse already repaired the openings;
+                # its report is this server's, not the file's.
+                opening_repairs=payload.document["transfer"].get("opening_repairs")))
             session.preview_token = response["token"]
             self.reserve_bytes(session, 0)  # A cancelled worker's late result is not a new preview.
             candidate = self.runtime.import_previews[session.preview_token]

@@ -1222,7 +1222,7 @@
   "backup.plan_only_hint": "Räume, Wände, Öffnungen, Dekor und Raumbezeichnungspositionen ohne Geräte oder Home Assistant-Bindungen beibehalten.",
   "backup.plan_only_preview": "Diese Datei enthält nur den Plan.",
   "backup.privacy_warning": "Das Archiv enthält Namen, Home Assistant-Kennungen und genaue Koordinaten. Interne Pläne und Anhänge werden referenziert, nicht eingebettet; Laufzeitzustände und Staubsaugerspuren sind nicht enthalten.",
-  "backup.download": "JSON herunterladen",
+  "backup.download": "Herunterladen",
   "backup.export_done": "Backup heruntergeladen",
   "backup.reading": "Überprüfe das Backup…",
   "backup.revalidated": "Der Plan wurde nach dieser Vorschau geändert. Die Zusammenfassung wurde aktualisiert; überprüfen Sie sie und bestätigen Sie erneut.",

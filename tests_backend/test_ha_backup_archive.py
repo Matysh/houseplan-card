@@ -901,3 +901,204 @@ def test_valid_zip_with_invalid_saved_snapshot_is_rejected(tmp_path, topics):
     with pytest.raises(ImportFailure):
         read_archive(hostile, private)
     assert list(private.iterdir()) == []
+
+
+# --- #1033: backdrops travel under the backdrop upload rule, not the decor whitelist.
+
+LABELLED_SVG = (
+    b'<?xml version="1.0" encoding="UTF-8"?>\n'
+    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50">'
+    b'<style>text{font:4px sans-serif}</style><rect width="100" height="50" fill="#fff"/>'
+    b'<text x="10" y="10">Kitchen<tspan dx="2">2</tspan></text>'
+    b'<image href="data:image/png;base64,iVBORw0KGgo=" width="1" height="1"/></svg>'
+)
+DOCTYPE_SVG = (
+    b'<?xml version="1.0"?>\n<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" '
+    b'"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
+    b'<?xml-stylesheet type="text/css" href="plan.css"?>'
+    b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><text>Hall</text></svg>'
+)
+BARE_SVG = b'<svg width="10" height="10"><text>No namespace</text></svg>'
+
+
+def _png(width: int, height: int) -> bytes:
+    image = io.BytesIO()
+    Image.new("RGB", (width, height), "#ffffff").save(image, format="PNG")
+    return image.getvalue()
+
+
+def _jpeg() -> bytes:
+    image = io.BytesIO()
+    Image.new("RGB", (8, 8), "#ffffff").save(image, format="JPEG")
+    return image.getvalue()
+
+
+def plan_document(root: Path, files: dict[str, bytes], decor: bytes | None = None):
+    spaces = []
+    for index, (name, raw) in enumerate(files.items()):
+        path = root / "houseplan/plans" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(raw)
+        spaces.append({"id": f"s{index}", "title": f"Floor {index}", "view_box": [0, 0, 1, 1],
+                       "rooms": [], "plan_aspect": 1,
+                       "plan_url": f"/api/houseplan/content/plans/_/{name}"})
+    if decor is not None:
+        aid = hashlib.sha256(decor).hexdigest()
+        (root / "houseplan/assets").mkdir(parents=True, exist_ok=True)
+        (root / f"houseplan/assets/{aid}.svg").write_bytes(decor)
+        (root / f"houseplan/assets/{aid}.json").write_text(json.dumps({"mime": "image/svg+xml"}))
+        spaces[0]["decor"] = [{"id": "art", "kind": "image", "asset_id": aid,
+                               "x": .2, "y": .3, "w": .25, "h": .35}]
+    document, _ = create_export(SimpleNamespace(instance_id="source"),
+        {"config": {"spaces": spaces, "markers": [], "settings": {}}}, {"layout": {}},
+        kind="full", space_id=None, card_version="review", config_root=root)
+    return document
+
+
+def _packed(manifest: dict, archive: Path) -> dict[str, bytes]:
+    with zipfile.ZipFile(archive) as opened:
+        entries = {info.filename: opened.read(info) for info in opened.infolist()}
+    return {row["ref"]["owner_id"]: entries[row["blob"]] for row in manifest["images"] if "blob" in row}
+
+
+def test_issue1033_labelled_svg_and_large_raster_backdrops_travel_byte_for_byte(tmp_path: Path):
+    huge = _png(20000, 10)
+    files = {"labels.svg": LABELLED_SVG, "doctype.svg": DOCTYPE_SVG, "bare.svg": BARE_SVG,
+             "wide.png": huge, "photo.jpeg": _jpeg()}
+    document = plan_document(tmp_path / "source", files)
+    archive = tmp_path / "plans.zip"
+    manifest = build_archive(archive, document, tmp_path / "source", {})
+    assert manifest["complete"] is True, manifest["images"]
+    assert list(_packed(manifest, archive).values()) == list(files.values())
+    assert sorted(Path(name).suffix for name in manifest["blobs"]) == [".jpg", ".png", ".svg", ".svg", ".svg"]
+    target = tmp_path / "target"
+    target.mkdir()
+    restored = read_archive(archive, target)
+    assert sorted(p.read_bytes() for p in restored.blobs.values()) == sorted(files.values())
+
+
+@pytest.mark.parametrize("name,raw", [
+    ("subset.svg", b'<!DOCTYPE svg [<!ENTITY lol "lol">]><svg xmlns="http://www.w3.org/2000/svg">&lol;</svg>'),
+    ("empty-subset.svg", b'<!DOCTYPE svg []><svg xmlns="http://www.w3.org/2000/svg"/>'),
+    ("external.svg", b'<!DOCTYPE svg [<!ENTITY x SYSTEM "file:///etc/passwd">]><svg>&x;</svg>'),
+    ("html.svg", b'<html><svg xmlns="http://www.w3.org/2000/svg"/></html>'),
+    ("foreign.svg", b'<svg xmlns="http://example.com/not-svg"/>'),
+    ("broken.svg", b'<svg xmlns="http://www.w3.org/2000/svg">'),
+    ("jpeg-bytes.png", b"\xff\xd8\xff\xe0" + b"0" * 32),
+    ("png-bytes.webp", b"\x89PNG\r\n\x1a\n" + b"0" * 32),
+    ("empty.jpg", b""),
+])
+def test_issue1033_a_backdrop_that_is_not_what_its_name_says_stays_out(tmp_path: Path, name, raw):
+    document = plan_document(tmp_path / "source", {name: raw})
+    manifest = build_archive(tmp_path / "plans.zip", document, tmp_path / "source", {})
+    assert manifest["complete"] is False
+    assert [row.get("reason") for row in manifest["images"]] == ["invalid"]
+    assert manifest["blobs"] == {}
+
+
+def test_issue1033_decor_pictures_keep_the_decor_whitelist(tmp_path: Path):
+    document = plan_document(tmp_path / "source", {"labels.svg": LABELLED_SVG}, decor=LABELLED_SVG)
+    manifest = build_archive(tmp_path / "plans.zip", document, tmp_path / "source", {})
+    reasons = {row["ref"]["kind"]: row.get("reason") for row in manifest["images"]}
+    assert reasons == {"plan": None, "decor_asset": "invalid"}
+
+
+def _swap_blob(good: Path, bad: Path, raw: bytes, ext: str) -> None:
+    with zipfile.ZipFile(good) as archive:
+        entries = {info.filename: archive.read(info) for info in archive.infolist()}
+    manifest = json.loads(entries.pop("manifest.json"))
+    [old] = list(manifest["blobs"])
+    new = f"images/{hashlib.sha256(raw).hexdigest()}{ext}"
+    entries.pop(old)
+    entries[new] = raw
+    manifest["blobs"] = {new: {"entry": new, "bytes": len(raw),
+                               "sha256": hashlib.sha256(raw).hexdigest()}}
+    for row in manifest["images"]:
+        row["blob"] = new
+    entries["manifest.json"] = json.dumps(manifest).encode()
+    with zipfile.ZipFile(bad, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, value in entries.items():
+            archive.writestr(name, value)
+
+
+@pytest.mark.parametrize("raw,ext,accepted", [
+    (LABELLED_SVG, ".svg", True),
+    (DOCTYPE_SVG, ".svg", True),
+    (b'<!DOCTYPE svg [<!ENTITY a "b">]><svg xmlns="http://www.w3.org/2000/svg">&a;</svg>', ".svg", False),
+    (b"<html/>", ".svg", False),
+    (b"\xff\xd8\xff\xe0" + b"0" * 32, ".png", False),
+])
+def test_issue1033_restore_holds_a_backdrop_only_blob_to_the_backdrop_rule(tmp_path: Path, raw, ext, accepted):
+    document = plan_document(tmp_path / "source", {"plan.png": _png(4, 4)})
+    good = tmp_path / "good.zip"
+    assert build_archive(good, document, tmp_path / "source", {})["complete"] is True
+    bad = tmp_path / "swapped.zip"
+    _swap_blob(good, bad, raw, ext)
+    target = tmp_path / "target"
+    target.mkdir()
+    if accepted:
+        assert [p.read_bytes() for p in read_archive(bad, target).blobs.values()] == [raw]
+    else:
+        with pytest.raises(ImportFailure) as refused:
+            read_archive(bad, target)
+        assert refused.value.code == "zip_invalid"
+
+
+async def _upload(hass, tmp_path, document, *, before=None):
+    entry, runtime = await setup(hass)
+    archive = tmp_path / "source.zip"
+    build_archive(archive, document, tmp_path / "source", {})
+    before = before or {"spaces": [{"id": "old", "title": "Previous", "view_box": [0, 0, 1, 1], "rooms": []}],
+                        "markers": [], "settings": {}}
+    async with runtime.write_lock:
+        await async_save_config_state(runtime, before, 1)
+        await runtime.store.async_save({"layout": {}, "rev": 1})
+    service = get_backup_service(hass, runtime)
+    response = await service.upload("backup-owner", Content(archive.read_bytes()), archive.stat().st_size)
+    return runtime, response, before
+
+
+async def test_issue1033_a_labelled_backdrop_is_restored_byte_for_byte(hass, tmp_path):
+    document = plan_document(tmp_path / "source", {"labels.svg": LABELLED_SVG})
+    rt, response, _ = await _upload(hass, tmp_path, document)
+    assert response["preview"]["archive"]["complete"] is True
+    assert [row["state"] for row in response["preview"]["content"]] == ["available"]
+    assert response["preview"]["confirmation_required"] is False
+    result = await apply(hass, response)
+    assert result.error is None, result.error
+    plans = list(Path(hass.config.path("houseplan/plans")).glob("*.svg"))
+    assert [p.read_bytes() for p in plans] == [LABELLED_SVG]
+    stored = (await rt.config_store.async_load())["config"]["spaces"][0]["plan_url"]
+    assert stored.endswith(plans[0].name)
+
+
+async def test_issue1033_zip_with_a_door_off_its_wall_imports_after_confirmation_and_undoes(hass, tmp_path):
+    from tests_backend.test_opening_repair import _door, _house
+
+    config = _house(_door("d1", 0.3, lock="lock.front"), _door("w1", 0.5, 0.06))
+    document, _ = create_export(SimpleNamespace(instance_id="source"), {"config": config},
+        {"layout": {}}, kind="full", space_id=None, card_version="review",
+        config_root=tmp_path / "source")
+    door = next(o for o in document["payload"]["config"]["spaces"][0]["openings"] if o["id"] == "d1")
+    door["y"] = 0.3
+    rt, response, before = await _upload(hass, tmp_path, document)
+    repairs = response["preview"]["opening_repairs"]
+    assert (repairs["rehosted"], repairs["detached"], repairs["legacy_detached"]) == (0, 1, 0)
+    assert repairs["examples"][0]["opening_id"] == "d1"
+    assert response["preview"]["archive"]["complete"] is True
+    assert response["preview"]["confirmation_required"] is True
+    refused = await apply(hass, response)
+    assert refused.error[0] == "content_confirmation_required", refused.error
+    result = await apply(hass, response, confirm=True)
+    assert result.error is None, result.error
+    current = (await rt.config_store.async_load())["config"]
+    imported = next(o for o in current["spaces"][0]["openings"] if o["id"] == "d1")
+    assert imported == {key: value for key, value in door.items() if key != "host"}
+    undo = Connection()
+    await wsapi.ws_plan_optimize_undo.__wrapped__(hass, undo, {
+        "id": 3, "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": result.result["config_rev"],
+        "expected_layout_rev": result.result["layout_rev"],
+    })
+    assert undo.error is None, undo.error
+    assert (await rt.config_store.async_load())["config"]["spaces"] == before["spaces"]

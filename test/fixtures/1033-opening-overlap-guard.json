@@ -1,0 +1,664 @@
+{
+  "issue": 1033,
+  "about": "An opening never moves onto a wall interval that another opening staying on that wall occupies: not by a self-heal, the initial migration or re-hosting a lost carrier. Shared by test/wall-segment-model.test.mjs and tests_backend/test_wall_segment_model.py. The refusal of a v10 write that lost its host onto a taken interval is derived in each test from the occupied self-heal case.",
+  "cases": [
+    {
+      "name": "initial migration: a later opening on an occupied interval stays unhosted",
+      "input": {
+        "model_version": 8,
+        "spaces": [
+          {
+            "id": "floor",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              0.7
+            ],
+            "rooms": [
+              {
+                "id": "rb",
+                "name": "Room",
+                "poly": [
+                  [
+                    0.2,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.5
+                  ],
+                  [
+                    0.2,
+                    0.5
+                  ]
+                ]
+              }
+            ],
+            "walls": [
+              {
+                "key": "0.400000,0.200000@0.0000",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ],
+                "cm": 15
+              }
+            ],
+            "openings": [
+              {
+                "id": "op1",
+                "type": "door",
+                "x": 0.4,
+                "y": 0.2,
+                "angle": 0,
+                "length": 0.09
+              },
+              {
+                "id": "op2",
+                "type": "door",
+                "x": 0.42,
+                "y": 0.2,
+                "angle": 0,
+                "length": 0.09
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expect": {
+        "op1": {
+          "a": [
+            0.2,
+            0.2
+          ],
+          "b": [
+            0.6,
+            0.2
+          ],
+          "t": 0.5
+        },
+        "op2": null
+      }
+    },
+    {
+      "name": "initial migration: abutting openings are both hosted",
+      "input": {
+        "model_version": 8,
+        "spaces": [
+          {
+            "id": "floor",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              0.7
+            ],
+            "rooms": [
+              {
+                "id": "rb",
+                "name": "Room",
+                "poly": [
+                  [
+                    0.2,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.5
+                  ],
+                  [
+                    0.2,
+                    0.5
+                  ]
+                ]
+              }
+            ],
+            "walls": [
+              {
+                "key": "0.400000,0.200000@0.0000",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ],
+                "cm": 15
+              }
+            ],
+            "openings": [
+              {
+                "id": "op1",
+                "type": "door",
+                "x": 0.3,
+                "y": 0.2,
+                "angle": 0,
+                "length": 0.1
+              },
+              {
+                "id": "op2",
+                "type": "door",
+                "x": 0.4,
+                "y": 0.2,
+                "angle": 0,
+                "length": 0.1
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expect": {
+        "op1": {
+          "a": [
+            0.2,
+            0.2
+          ],
+          "b": [
+            0.6,
+            0.2
+          ],
+          "t": 0.25
+        },
+        "op2": {
+          "a": [
+            0.2,
+            0.2
+          ],
+          "b": [
+            0.6,
+            0.2
+          ],
+          "t": 0.5
+        }
+      }
+    },
+    {
+      "name": "self-heal: an unhosted opening on an occupied interval stays unhosted",
+      "input": {
+        "model_version": 10,
+        "spaces": [
+          {
+            "id": "floor",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              0.7
+            ],
+            "rooms": [
+              {
+                "id": "rb",
+                "name": "Room",
+                "poly": [
+                  [
+                    0.2,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.5
+                  ],
+                  [
+                    0.2,
+                    0.5
+                  ]
+                ],
+                "wall_ids": [
+                  "wall-zqcuhlssu4rcqg2pj2xw",
+                  "wall-o6xlvr5ikruiyr2oms45",
+                  "wall-xl7ltrzicwvkrm6jr7zj",
+                  "wall-g7ueqx5mtqkpvwluriu6"
+                ]
+              }
+            ],
+            "walls": [
+              {
+                "key": "0.400000,0.200000@0.0000",
+                "cm": 15.0,
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ]
+              }
+            ],
+            "openings": [
+              {
+                "id": "op2",
+                "type": "door",
+                "x": 0.42,
+                "y": 0.2,
+                "angle": 0,
+                "length": 0.09
+              },
+              {
+                "id": "op1",
+                "type": "door",
+                "x": 0.4,
+                "y": 0.2,
+                "angle": 0.0,
+                "length": 0.09,
+                "host": {
+                  "kind": "wall",
+                  "id": "wall-zqcuhlssu4rcqg2pj2xw",
+                  "t": 0.5
+                }
+              }
+            ],
+            "wall_segments": [
+              {
+                "id": "wall-g7ueqx5mtqkpvwluriu6",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.2,
+                  0.5
+                ],
+                "cm": 0.0
+              },
+              {
+                "id": "wall-zqcuhlssu4rcqg2pj2xw",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ],
+                "cm": 15.0
+              },
+              {
+                "id": "wall-xl7ltrzicwvkrm6jr7zj",
+                "a": [
+                  0.2,
+                  0.5
+                ],
+                "b": [
+                  0.6,
+                  0.5
+                ],
+                "cm": 0.0
+              },
+              {
+                "id": "wall-o6xlvr5ikruiyr2oms45",
+                "a": [
+                  0.6,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.5
+                ],
+                "cm": 0.0
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expect": {
+        "op1": {
+          "a": [
+            0.2,
+            0.2
+          ],
+          "b": [
+            0.6,
+            0.2
+          ],
+          "t": 0.5
+        },
+        "op2": null
+      }
+    },
+    {
+      "name": "self-heal: an unhosted opening on a free interval is hosted",
+      "input": {
+        "model_version": 10,
+        "spaces": [
+          {
+            "id": "floor",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              0.7
+            ],
+            "rooms": [
+              {
+                "id": "rb",
+                "name": "Room",
+                "poly": [
+                  [
+                    0.2,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.5
+                  ],
+                  [
+                    0.2,
+                    0.5
+                  ]
+                ],
+                "wall_ids": [
+                  "wall-zqcuhlssu4rcqg2pj2xw",
+                  "wall-o6xlvr5ikruiyr2oms45",
+                  "wall-xl7ltrzicwvkrm6jr7zj",
+                  "wall-g7ueqx5mtqkpvwluriu6"
+                ]
+              }
+            ],
+            "walls": [
+              {
+                "key": "0.400000,0.200000@0.0000",
+                "cm": 15.0,
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ]
+              }
+            ],
+            "openings": [
+              {
+                "id": "op1",
+                "type": "door",
+                "x": 0.4,
+                "y": 0.2,
+                "angle": 0.0,
+                "length": 0.09,
+                "host": {
+                  "kind": "wall",
+                  "id": "wall-zqcuhlssu4rcqg2pj2xw",
+                  "t": 0.5
+                }
+              },
+              {
+                "id": "op3",
+                "type": "door",
+                "x": 0.55,
+                "y": 0.2,
+                "angle": 0,
+                "length": 0.05
+              }
+            ],
+            "wall_segments": [
+              {
+                "id": "wall-g7ueqx5mtqkpvwluriu6",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.2,
+                  0.5
+                ],
+                "cm": 0.0
+              },
+              {
+                "id": "wall-zqcuhlssu4rcqg2pj2xw",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ],
+                "cm": 15.0
+              },
+              {
+                "id": "wall-xl7ltrzicwvkrm6jr7zj",
+                "a": [
+                  0.2,
+                  0.5
+                ],
+                "b": [
+                  0.6,
+                  0.5
+                ],
+                "cm": 0.0
+              },
+              {
+                "id": "wall-o6xlvr5ikruiyr2oms45",
+                "a": [
+                  0.6,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.5
+                ],
+                "cm": 0.0
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expect": {
+        "op1": {
+          "a": [
+            0.2,
+            0.2
+          ],
+          "b": [
+            0.6,
+            0.2
+          ],
+          "t": 0.5
+        },
+        "op3": {
+          "a": [
+            0.2,
+            0.2
+          ],
+          "b": [
+            0.6,
+            0.2
+          ],
+          "t": 0.875
+        }
+      }
+    },
+    {
+      "name": "initial migration: an opening its wall no longer holds frees the interval",
+      "input": {
+        "model_version": 9,
+        "spaces": [
+          {
+            "id": "floor",
+            "title": "Floor",
+            "cell_cm": 5,
+            "view_box": [
+              0,
+              0,
+              1,
+              0.7
+            ],
+            "rooms": [
+              {
+                "id": "rb",
+                "name": "Room",
+                "poly": [
+                  [
+                    0.2,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.2
+                  ],
+                  [
+                    0.6,
+                    0.5
+                  ],
+                  [
+                    0.2,
+                    0.5
+                  ]
+                ],
+                "wall_ids": [
+                  "wall-zqcuhlssu4rcqg2pj2xw",
+                  "wall-o6xlvr5ikruiyr2oms45",
+                  "wall-xl7ltrzicwvkrm6jr7zj",
+                  "wall-g7ueqx5mtqkpvwluriu6"
+                ]
+              }
+            ],
+            "walls": [
+              {
+                "key": "0.400000,0.200000@0.0000",
+                "cm": 15.0,
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ]
+              }
+            ],
+            "openings": [
+              {
+                "id": "op2",
+                "type": "door",
+                "x": 0.4,
+                "y": 0.2,
+                "angle": 0,
+                "length": 0.09
+              },
+              {
+                "id": "op1",
+                "type": "door",
+                "x": 0.4,
+                "y": 0.2,
+                "angle": 90,
+                "length": 0.09,
+                "host": {
+                  "kind": "wall",
+                  "id": "wall-zqcuhlssu4rcqg2pj2xw",
+                  "t": 0.5
+                }
+              }
+            ],
+            "wall_segments": [
+              {
+                "id": "wall-g7ueqx5mtqkpvwluriu6",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.2,
+                  0.5
+                ],
+                "cm": 0.0
+              },
+              {
+                "id": "wall-zqcuhlssu4rcqg2pj2xw",
+                "a": [
+                  0.2,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.2
+                ],
+                "cm": 15.0
+              },
+              {
+                "id": "wall-xl7ltrzicwvkrm6jr7zj",
+                "a": [
+                  0.2,
+                  0.5
+                ],
+                "b": [
+                  0.6,
+                  0.5
+                ],
+                "cm": 0.0
+              },
+              {
+                "id": "wall-o6xlvr5ikruiyr2oms45",
+                "a": [
+                  0.6,
+                  0.2
+                ],
+                "b": [
+                  0.6,
+                  0.5
+                ],
+                "cm": 0.0
+              }
+            ]
+          }
+        ],
+        "markers": [],
+        "settings": {}
+      },
+      "expect": {
+        "op2": {
+          "a": [
+            0.2,
+            0.2
+          ],
+          "b": [
+            0.6,
+            0.2
+          ],
+          "t": 0.5
+        },
+        "op1": null
+      }
+    }
+  ]
+}

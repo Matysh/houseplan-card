@@ -681,6 +681,77 @@ def _angle_matches(a: list[float], b: list[float], angle: float) -> bool:
     return difference <= 8
 
 
+def opening_frame(opening: dict[str, Any]) -> tuple[list[float], float, float] | None:
+    """Centre, angle and half-length of one opening, or None when unreadable."""
+    try:
+        return ([float(opening["x"]), float(opening["y"])],
+                float(opening["angle"]), float(opening["length"]) / 2)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def wall_carrier_eligible(
+    segment: dict[str, Any], centre: list[float], angle: float, half: float,
+) -> bool:
+    """#316: an in-place carrier — body, centre on it, same angle, room to fit."""
+    if float(segment.get("cm", 0)) <= 0:
+        return False
+    t = _project_t(centre, segment["a"], segment["b"])
+    span = _length(segment["a"], segment["b"])
+    return (-EPS <= t <= 1 + EPS
+            and _distance_to_segment(centre, segment["a"], segment["b"])
+            <= GRID_STEP_N * 0.02
+            and _angle_matches(segment["a"], segment["b"], angle)
+            and half >= 0 and t * span - half >= -EPS
+            and t * span + half <= span + EPS)
+
+
+def pick_wall_carrier(
+    pool: list[dict[str, Any]], current: dict[str, Any] | None, centre: list[float],
+) -> dict[str, Any] | None:
+    """#316 §3.2 tie-break: current host, distance, thicker body, smaller id."""
+    if not pool:
+        return None
+    if current is not None and any(item is current for item in pool):
+        return current
+    return sorted(pool, key=lambda candidate: (
+        _distance_to_segment(centre, candidate["a"], candidate["b"]),
+        -float(candidate.get("cm", 0)),
+        str(candidate.get("id", "")),
+    ))[0]
+
+
+def wall_interval_free(
+    space: dict[str, Any], opening: dict[str, Any], carrier: dict[str, Any],
+    centre: list[float], half: float,
+) -> bool:
+    """#1033: no opening that stays on ``carrier`` overlaps this one there.
+
+    An opening counts when it is hosted on the carrier and still qualifies for
+    it, so it keeps that host in this write; one whose host no longer holds it
+    is leaving and frees its interval.
+    """
+    span = _length(carrier["a"], carrier["b"])
+    along = wall_host_t(carrier, centre) * span
+    for other in space.get("openings") or []:
+        host = other.get("host") if isinstance(other, dict) else None
+        if (other is opening or not isinstance(host, dict) or host.get("kind") != "wall"
+                or host.get("id") != carrier["id"]):
+            continue
+        frame = opening_frame(other)
+        if frame is None or not wall_carrier_eligible(carrier, *frame):
+            continue
+        try:
+            other_along = float(host["t"]) * span
+            other_half = float(other["length"]) / 2
+        except (KeyError, TypeError, ValueError):
+            continue
+        if (max(along - half, other_along - other_half)
+                < min(along + half, other_along + other_half) - 1e-9):
+            return False
+    return True
+
+
 def _host_openings(
     space: dict[str, Any], segments: list[dict[str, Any]], initial_migration: bool,
 ) -> None:
@@ -688,49 +759,32 @@ def _host_openings(
         host = opening.get("host")
         if isinstance(host, dict) and host.get("kind") == "partition":
             continue
-        try:
-            centre = [float(opening["x"]), float(opening["y"])]
-            angle, half = float(opening["angle"]), float(opening["length"]) / 2
-        except (KeyError, TypeError, ValueError):
+        frame = opening_frame(opening)
+        if frame is None:
             if initial_migration:
                 # #316 §3.4: the initial migration never throws over an opening.
                 opening.pop("host", None)
                 continue
-            raise WallSegmentMigrationError("opening-host", str(opening.get("id", ""))) from None
-
-        # #42 B023: loop variables are bound as defaults (see covered_by).
-        def eligible(
-            segment: dict[str, Any], *,
-            centre: list[float] = centre, angle: float = angle, half: float = half,
-        ) -> bool:
-            if float(segment.get("cm", 0)) <= 0:
-                return False
-            t = _project_t(centre, segment["a"], segment["b"])
-            span = _length(segment["a"], segment["b"])
-            return (-EPS <= t <= 1 + EPS
-                    and _distance_to_segment(centre, segment["a"], segment["b"])
-                    <= GRID_STEP_N * 0.02
-                    and _angle_matches(segment["a"], segment["b"], angle)
-                    and half >= 0 and t * span - half >= -EPS
-                    and t * span + half <= span + EPS)
-
-        def materialize(
-            carrier: dict[str, Any], *,
-            opening: dict[str, Any] = opening, centre: list[float] = centre,
-        ) -> None:
-            opening["host"] = {
-                "kind": "wall", "id": carrier["id"],
-                "t": max(0.0, min(1.0, _project_t(centre, carrier["a"], carrier["b"]))),
-            }
-
+            raise WallSegmentMigrationError("opening-host", str(opening.get("id", "")))
+        centre, angle, half = frame
         current = None
         if isinstance(host, dict) and host.get("kind") == "wall":
             current = next((segment for segment in segments if segment["id"] == host.get("id")), None)
-        candidates = [current] if current is not None and eligible(current) else [
-            segment for segment in segments if eligible(segment)
+        eligible = [segment for segment in segments
+                    if wall_carrier_eligible(segment, centre, angle, half)]
+        candidates = [current] if current is not None and any(
+            segment is current for segment in eligible) else eligible
+        # #1033: an opening never moves onto a wall interval that another
+        # opening staying on that wall occupies — not by a self-heal, not by
+        # the initial migration, not by re-hosting a lost carrier. That would
+        # fail the schema's overlap check and wedge every later write; staying
+        # unhosted (or the fail-closed refusal below) does not.
+        acceptable = [
+            segment for segment in eligible
+            if segment is current or wall_interval_free(space, opening, segment, centre, half)
         ]
-        if len(candidates) == 1:
-            materialize(candidates[0])
+        if len(candidates) == 1 and any(segment is candidates[0] for segment in acceptable):
+            _materialize_wall_host(opening, candidates[0], centre)
             continue
         # #316 §3.3: an unhosted opening is a valid degraded v9 state. A later
         # write keeps it, may self-heal it, and never fails over it.
@@ -738,31 +792,27 @@ def _host_openings(
             continue
         if not initial_migration:
             raise WallSegmentMigrationError("opening-host", str(opening.get("id", "")))
-
-        def pick(
-            pool: list[dict[str, Any]], *,
-            current: dict[str, Any] | None = current, centre: list[float] = centre,
-        ) -> dict[str, Any] | None:
-            if not pool:
-                return None
-            if current is not None and any(item is current for item in pool):
-                return current
-            return sorted(pool, key=lambda candidate: (
-                _distance_to_segment(centre, candidate["a"], candidate["b"]),
-                -float(candidate.get("cm", 0)),
-                str(candidate.get("id", "")),
-            ))[0]
-
         # #316 §3.2 tie-break. No distant fallback pool (CODE-REVIEW-316-r1
         # H1): a host away from the opening's own x/y would violate the
         # geometry-match invariant of CONFIG_SCHEMA and wedge the write on the
         # schema layer; without an in-place carrier the opening goes straight
         # to the unhosted degraded state.
-        carrier = pick([segment for segment in segments if eligible(segment)])
+        carrier = pick_wall_carrier(acceptable, current, centre)
         if carrier is not None:
-            materialize(carrier)
+            _materialize_wall_host(opening, carrier, centre)
         else:
             opening.pop("host", None)
+
+
+def wall_host_t(carrier: dict[str, Any], centre: list[float]) -> float:
+    """The host parameter a carrier gives an opening centred at ``centre``."""
+    return max(0.0, min(1.0, _project_t(centre, carrier["a"], carrier["b"])))
+
+
+def _materialize_wall_host(
+    opening: dict[str, Any], carrier: dict[str, Any], centre: list[float],
+) -> None:
+    opening["host"] = {"kind": "wall", "id": carrier["id"], "t": wall_host_t(carrier, centre)}
 
 
 def _migrate_room_drafts_to_partitions(space: dict[str, Any]) -> tuple[int, int]:

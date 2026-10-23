@@ -579,6 +579,37 @@ test('a far same-angle wall is NOT a degraded carrier — the opening migrates u
   assert.equal(JSON.stringify(again), JSON.stringify(out));
 });
 
+const overlapGuard1033 = JSON.parse(readFileSync(
+  new URL('./fixtures/1033-opening-overlap-guard.json', import.meta.url), 'utf8',
+)).cases;
+
+for (const c of overlapGuard1033) {
+  test(`#1033 ${c.name}`, () => {
+    // A heal, migration or re-host onto a taken interval would fail the backend
+    // overlap check and wedge every later write; the Python mirror reads the same file.
+    const frozen = structuredClone(c.input);
+    const config = commitWallSegmentModel(c.input).config;
+    const space = config.spaces[0];
+    const segments = new Map(space.wall_segments.map((segment) => [segment.id, segment]));
+    const hosts = Object.fromEntries(space.openings.map((opening) => {
+      const host = opening.host;
+      const segment = host && segments.get(host.id);
+      return [opening.id, host ? { a: segment.a, b: segment.b, t: host.t } : null];
+    }));
+    assert.deepEqual(hosts, c.expect);
+    assert.deepEqual(commitWallSegmentModel(structuredClone(config)).config, config);
+    assert.deepEqual(c.input, frozen);
+  });
+}
+
+test('#1033 a v10 write that lost a host refuses a taken interval like no carrier', () => {
+  const occupied = overlapGuard1033.find((c) => c.name.startsWith('self-heal: an unhosted opening on an occupied'));
+  const config = structuredClone(occupied.input);
+  config.spaces[0].openings.find((o) => o.id === 'op2').host = { kind: 'wall', id: 'wall-gone', t: 0.5 };
+  assert.throws(() => commitWallSegmentModel(config),
+    (error) => error instanceof WallSegmentModelError && error.reason === 'opening-host');
+});
+
 test('a post-v9 write that LOST its carrier keeps the fail-closed refusal (#316 AC5)', () => {
   const migrated = commitWallSegmentModel(spanDoorConfig()).config;
   const broken = structuredClone(migrated);

@@ -44,5 +44,6 @@ module = [
     "custom_components.houseplan.plans",
     "custom_components.houseplan.led_strips",
     "custom_components.houseplan.marker_copy",
+    "custom_components.houseplan.opening_repair",
 ]
 strict = true

@@ -2673,13 +2673,26 @@ House Plan never guesses a room/floor or silently runs the geometry optimizer.
 Export performs the same checks on a copy without changing the working plan.
 When repairs are needed, review the report and choose **Download repaired
 backup**. This downloads the prepared snapshot, not newly read live data. Source
-files are not rewritten. Unsafe/corrupt archives, invalid types and conflicting
-geometry are still refused without changing the accepted plan.
+files are not rewritten. Unsafe/corrupt archives, invalid types and impossible
+sizes (zero or negative) are still refused without changing the accepted plan.
+
+A door, window, gate or open passage that no longer fits its wall or partition is
+repaired instead of refusing the whole file — it may be the only copy of the
+plan. An opening next to a free wall is put back onto it (it moves by at most
+1/50 of a grid step). Otherwise it stays where it was without a wall: it is
+drawn in place, cuts no wall, and you can move it onto a wall in the plan
+editor. The import preview counts both and lists the openings under **Show
+openings**; keeping openings off walls needs the confirmation box. Of two
+overlapping openings the one earlier in the file keeps its wall. House Plan
+never puts an opening without a wall over another opening on the same wall.
 
 For Home Assistant administrators, **Full backup** creates a ZIP containing
 the complete model, used background images, custom-image decor, graphical
 device attachments and the saved Zigbee link snapshot. Images are copied, not
-just linked; PDFs and text attachments are not packed. ZIP export, restore and
+just linked; PDFs and text attachments are not packed. Backgrounds travel as
+they are, under the same rule as uploading a background: an SVG with room
+labels and styles or a very large raster image is included, as long as the
+file is what its name says. ZIP export, restore and
 its Undo require administrator permission. Ordinary editors keep full JSON;
 **Current space** and **Plan only** remain JSON for everyone.
 
@@ -2715,7 +2728,7 @@ screen. This entry requires editing permission and is unavailable in House
 Plan kiosk mode. It does not import a complete Home Assistant backup.
 
 **Global settings → Backup and transfer** exports either the complete House
-Plan model or the current space. Import first shows a server-side preview with
+Plan model or the current space; confirm with **Download**. Import first shows a server-side preview with
 type, versions, object counts, source and content-link state; nothing is written
 until confirmation.
 

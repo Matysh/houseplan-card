@@ -9194,6 +9194,19 @@ public _renderBackupImportDialog(): TemplateResult {
       ['bounded_lineages', Number(report.boundedLineages) || 0],
     ];
     const reportRows = allReportRows.filter(([, value]) => value > 0);
+    // #1033: openings whose host no longer held them were repaired, not refused.
+    const repairs = p?.opening_repairs || {};
+    const rehostedOpenings = Number(repairs.rehosted) || 0;
+    const detachedOpenings = Number(repairs.detached) || 0;
+    const keptOffWalls = detachedOpenings + (Number(repairs.legacy_detached) || 0);
+    const repairExamples: Array<Record<string, string>> = Array.isArray(repairs.examples) ? repairs.examples : [];
+    const zipIncomplete = !!(p?.archive && !p.archive.complete);
+    const contentConfirm = zipIncomplete || ((p?.content || []) as ContentItem[])
+      .some((item) => item.state === 'detach_required' || item.state === 'missing_preserved');
+    const contentConfirmText = zipIncomplete ? this._toolsT('backup.zip_confirm_incomplete')
+      : this.host._t(missingDecor.length ? 'backup.confirm_missing_images' : 'backup.confirm_detach');
+    const confirmText = detachedOpenings && !contentConfirm ? this._toolsT('backup.confirm_openings')
+      : detachedOpenings ? `${contentConfirmText} ${this._toolsT('backup.confirm_openings')}` : contentConfirmText;
     return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => this._closeBackupImport()}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
@@ -9242,6 +9255,19 @@ public _renderBackupImportDialog(): TemplateResult {
           ${droppedLinks ? html`<div class="backupwarn">${this.host._t('backup.dropped_marker_links', {
             n: String(droppedLinks),
           })}</div>` : nothing}
+          ${rehostedOpenings ? html`<div class="rhint">${this._toolsT('backup.openings_rehosted', {
+            n: String(rehostedOpenings),
+          })}</div>` : nothing}
+          ${keptOffWalls ? html`<div class="backupwarn">${this._toolsT('backup.openings_detached', {
+            n: String(keptOffWalls),
+          })}</div>` : nothing}
+          ${repairExamples.length ? html`<details class="backupdetails">
+            <summary data-hp="action" data-action="backup-openings-details">${this._toolsT('backup.openings_details')}</summary>
+            <div>${repairExamples.map((item) => html`<span>${item.space_title || item.space_id} — ${this.host._t(
+              item.type === 'window' ? 'opening.window' : item.type === 'passage' ? 'opening.passage'
+                : item.type === 'gate' ? 'opening.gate' : 'opening.door',
+            )} (${item.opening_id})</span>`)}</div>
+          </details>` : nothing}
           ${this.host._ledNote(p)}
           ${draftMigration.room_drafts || draftMigration.room_draft_segments ? html`
             <div class="rhint">${this.host._t('backup.room_drafts_migrated', {
@@ -9293,8 +9319,7 @@ public _renderBackupImportDialog(): TemplateResult {
           ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
             <input data-hp="field" data-field="backup-confirm-missing" type="checkbox" .checked=${d.confirmMissing}
               @change=${(e: Event) => (this.host._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
-            <span>${p.archive && !p.archive.complete ? this._toolsT('backup.zip_confirm_incomplete') : this.host._t(missingDecor.length
-              ? 'backup.confirm_missing_images' : 'backup.confirm_detach')}</span>
+            <span>${confirmText}</span>
           </label>` : nothing}
         ` : nothing}
       </div>

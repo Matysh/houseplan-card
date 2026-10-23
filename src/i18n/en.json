@@ -1222,7 +1222,7 @@
   "backup.plan_only_hint": "Keep rooms, walls, openings, decor and room-label positions without devices or Home Assistant bindings.",
   "backup.plan_only_preview": "This file contains the plan only",
   "backup.privacy_warning": "The archive keeps names, Home Assistant identifiers and exact coordinates. Internal plans and attachments are referenced, not embedded; runtime states and vacuum trails are not included.",
-  "backup.download": "Download JSON",
+  "backup.download": "Download",
   "backup.export_done": "Backup downloaded",
   "backup.reading": "Checking the backup…",
   "backup.revalidated": "The plan changed after this preview. The summary was refreshed; review it and confirm again.",
