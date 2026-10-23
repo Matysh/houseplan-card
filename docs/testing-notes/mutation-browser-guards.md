@@ -44,8 +44,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 82 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 93 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 243 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **486 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 244 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **487 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -524,6 +524,12 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 ### Custom-element and HA browser lifecycle
 
 - `direct-signal-detached-host-acquires-1053`
+- `decor-line-first-properties-panel-stale-1046`
+
+The #1046 continuation needs real Lit panel inputs after the first creation;
+native identity and a live SVG frame can agree while the panel stays empty.
+Registered for nightly execution, not executed during development.
+
 - `decor-line-active-history-anchor-lost-1046`
 
 The mounted #1046 witness checks actual keyboard routing, common-stack writes,

@@ -24,7 +24,8 @@
 - Draw decorative lines with successive clicks like walls: Shift aligns exact
   45° directions, Esc ends the chain, and Undo/Redo follows each accepted segment.
   Dragging and pinch navigation do not create lines. Undo/Redo of other edits
-  ends the unfinished chain. (#1046)
+  ends the unfinished chain. Properties immediately shows the newest line while
+  the tool stays armed. (#1046)
 
 ## v1.83.0-beta.1 — 2026-10-23
 

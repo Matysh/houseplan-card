@@ -892,6 +892,8 @@ export class HouseplanEditorRuntime {
     commit: (a, b, before, after) => {
       this.host._decorDraft = { kind: 'line', a, b, pid: -1 };
       this._decorCommitDraft({ before, after });
+      // Select while the draft is terminal, before the continuing live preview.
+      this.properties.syncNative();
     },
     queue: run => this._queuePointerMove('decor-line', run),
     cancelQueue: () => this._cancelPointerMove('decor-line'), events: window,

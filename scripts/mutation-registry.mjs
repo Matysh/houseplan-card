@@ -20974,6 +20974,10 @@ const vacuumLive1049Cases = [
 ];
 
 const decorLine1046Cases = [
+  { id:'decor-line-first-properties-panel-stale-1046', guard:'node demo/smoke_decor_creation_selection.mjs',
+    because:'#1046 AC1: continuing the Line preview must not retain an empty or previous Properties panel after accepted creation; real immediate field editing crosses the Lit/live-frame boundary.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:'      // Select while the draft is terminal, before the continuing live preview.\n      this.properties.syncNative();',
+      replace:'      // Select while the draft is terminal, before the continuing live preview.'}] },
   { id:'decor-line-server-history-retains-anchor-1046', guard:'node --test test/node-history-runtime.test.mjs',
     because:'#1046 AC5: a foreign server node command must retire the active Line owner before its asynchronous history write.',
     patches:[{file:'src/houseplan-editor-runtime.ts',find:"private _runNodeHistory(direction: 'undo' | 'redo'): void {\n    this.decorLine.reset();",

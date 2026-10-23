@@ -796,7 +796,6 @@
       "test/daycycle-layers.test.mjs",
       "test/decor-assets.test.mjs",
       "test/decor-geometry.test.mjs",
-      "test/decor-line-drawing.test.mjs",
       "test/decor-order.test.mjs",
       "test/decor-style-persist.test.mjs",
       "test/device-battery-geometry.test.mjs",

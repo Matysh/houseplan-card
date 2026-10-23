@@ -108,12 +108,22 @@ then does the existing asynchronous config writer own persistence/refusal.
 retiring the Line owner before its asynchronous write;
 existing decor/order smokes retain non-Line coverage. No full regression or
 baseline acceptance is part of this task; no backend or migration is needed.
+The #1047 creation-selection smoke uses two clean clicks only for Line and
+keeps its immediate frame/field-write checks. It first reproduced an empty
+Properties field after the first segment: the continuing preview retained the
+lightweight frame before the newly selected owner reached the panel. The Line
+commit now synchronizes that owner while its draft is terminal, then resumes
+the preview. No Escape or programmatic selection masks that integration case.
 
-Pinned Node 22.23.3 measures raw dist accounting `bundleBytes` 3404383 →
-3409801 (+5418 B) for the new lazy controller and routing; the same commit
-records this baseline. Host references rise by 24 within the existing band;
-delegates/port members/private counts stay fixed. Gzip and absolute View walls
-remain enforced without changing their bands. This records feature cost.
+After rebasing onto accepted dev `b2df0e83f` (#1029/#1047), a fresh pinned
+Node 22.23.3 build measures raw `bundleBytes` 3410642 → 3416488 (+5846 B).
+Host references measured from that dev's source are 6048 → 6070 (+22); the
+published reference was still 6038, so the combined 32-reference growth is
+recorded at 6070. Only those two measured baselines change; their 2000-B and
+25-reference bands and the other monolith dimensions stay fixed. Initial View
+is 339445 B gzip (reference 339368 +2000) and lazy editor 340592 B (339040
++2000), both within their existing bands and the absolute View wall. These
+are actual combined-build facts, not a sum or maximum of branch baselines.
 
 ## Device contacts #1003 — local evidence
 
