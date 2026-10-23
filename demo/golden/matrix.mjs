@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 82;
+export const GOLDEN_MATRIX_VERSION = 83;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -281,6 +281,13 @@ const LED_STRIPS_OFF = Object.fromEntries(['light.demo_led_strip', 'light.demo_l
 
 export const GOLDEN_SCENARIOS = Object.freeze([
   ...STAGE6_ACCEPTANCE_SCENARIOS,
+  ...['flat', 'iso'].map(projection => ({
+    id: `direct-zigbee-lqi-${projection}-dark`, fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', projection,
+    directLqi: { 'golden-left-linkquality': 137, 'golden-right-linkquality': 0 },
+    fillMode: 'lqi', glowEnabled: false,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage,
+  })),
   // #663 AC3/AC10/AC12: both stair geometries, both rise directions and
   // small/large footprints across themes, flat/2.5D and interaction states.
   { id: 'stairs-flat-normal-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',

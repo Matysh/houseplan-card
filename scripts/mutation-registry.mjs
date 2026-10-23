@@ -16239,8 +16239,8 @@ const MUTANT_DEFINITIONS = [
     because: '#673: the five approved Stage 6 frames must be in the canonical matrix, not only the diagnostic exporter',
     patches: [{
       file: 'demo/golden/matrix.mjs',
-      find: '  ...STAGE6_ACCEPTANCE_SCENARIOS,\n  // #663 AC3/AC10/AC12:',
-      replace: '  // mutant: Stage 6 acceptance remains diagnostic-only\n  // #663 AC3/AC10/AC12:',
+      find: '  ...STAGE6_ACCEPTANCE_SCENARIOS,\n',
+      replace: '  // mutant: Stage 6 acceptance remains diagnostic-only\n',
     }],
   },
   {

@@ -4404,6 +4404,14 @@ only; no development mutation execution.
 
 ## Browser progress checks on task pushes (#983)
 
+For direct own-device signal (#1029), selected scenes
+`direct-zigbee-lqi-flat-dark` and `direct-zigbee-lqi-iso-dark` feed the actual
+authenticated subscription with 137 and real zero after removing HA LQI values.
+Their semantic checks require both numbers before capture. The focused
+`smoke_direct_zigbee_lqi.mjs` additionally compares direct and HA reading pixels
+in both projections on the same connection. Only the two new frames are declared
+pending; existing HA-fed frames have no intentional delta.
+
 For delayed vacuum paths (#1049), `node demo/smoke_vacuum_live_tail.mjs` is the
 focused animation/pixel witness (View/kiosk, Flat/2.5D); do not debug it through
 the whole smoke suite. Its new selected Golden scenes are
