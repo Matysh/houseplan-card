@@ -27,7 +27,8 @@ try {
         settings: { fill_mode: 'none', glow_enabled: false, show_borders: true, show_names: false },
         rooms: [{ id: 'room943', name: 'Room', poly: [[.1, .1], [.9, .1], [.9, .9], [.1, .9]] }] }],
       settings: { ...cfg.settings, filter_seeded: true, bg_mode: 'static', bg_color: '#c8d0dc',
-        volumetric_view: false, sun_rays: false, fill_colors: { ...cfg.settings?.fill_colors } } }));
+        volumetric_view: false, sun_rays: false, border_color: { c: '#55606c', a: .8 },
+        fill_colors: { ...cfg.settings?.fill_colors, wall_fill: { c: '#ffffff', a: 1 } } } }));
   });
   await waitForKioskViewport(page);
 
@@ -176,7 +177,12 @@ try {
   assert.deepEqual(saved.settings.fill_colors.light_on, before.settings.fill_colors.light_on);
   assert.equal(saved.settings.glow_radius_cm, 450);
   assert.equal(saved.settings.bg_color, before.settings.bg_color);
-  assert.deepEqual(saved.spaces, before.spaces);
+  // #1037 freezes the effective legacy colours when General is explicitly
+  // saved. Keep the complete strict comparison, with only those two expected
+  // appearance fields from the explicit fixture above materialized.
+  assert.deepEqual(saved.spaces, before.spaces.map(space => ({ ...space, settings: {
+    ...space.settings, name_color: { c: '#55606c', a: .8 }, wall_fill: { c: '#ffffff', a: 1 },
+  } })));
   assert.equal(await page.evaluate(() => window.__dimming943Wire.filter(m => m.type === 'houseplan/config/set').length), 1,
     'only explicit Save writes the config');
   await openSettings();

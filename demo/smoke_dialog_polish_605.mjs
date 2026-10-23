@@ -77,26 +77,32 @@ for (const theme of ['light', 'dark']) {
       // #615 AC3 (b): colour plates stay solid at any alpha. Without this the
       // tile mode could leak to every flat-swatch (mutant M-615-plate).
       const plates = [...dialog.querySelectorAll('.hpf-colorfield hp-color-opacity')];
-      const platesFlat = plates.length >= 2 && plates.every((picker) => picker.flatSwatch && !picker.coverSwatch);
-      const wallPicker = dialog.querySelector('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-colorfield hp-color-opacity');
-      await changeAlpha(wallPicker,40);
-      const plateSolid=wallPicker.opacity===.4
-        && getComputedStyle(wallPicker.renderRoot.querySelector('.swatch')).opacity==='1'
-        && getComputedStyle(wallPicker.renderRoot.querySelector('.trigger')).backgroundImage==='none';
+      // #1037 moved appearance colours to spaces; the general form retains
+      // the independent light colour plate in Sun, identified by its public hook.
+      const glowPicker = dialog.querySelector('[data-field="gs-glow-color"]');
+      const backgroundPicker = dialog.querySelector('[data-field="gs-bg-color"]');
+      const platesFlat = plates.length === 2 && plates.includes(glowPicker) && plates.includes(backgroundPicker)
+        && plates.every((picker) => picker.flatSwatch && !picker.coverSwatch);
+      const legacyWallFill=JSON.stringify(c._settingsDialog.colors.wall_fill);
+      await changeAlpha(glowPicker,40);
+      const plateSolid=glowPicker.opacity===.4
+        && getComputedStyle(glowPicker.renderRoot.querySelector('.swatch')).opacity==='1'
+        && getComputedStyle(glowPicker.renderRoot.querySelector('.trigger')).backgroundImage==='none'
+        && JSON.stringify(c._settingsDialog.colors.wall_fill)===legacyWallFill;
       // #931: solid colour is independent of compact Properties layout. Native
       // form plates keep their 40px trigger and inline label/hex at every width.
-      dialog.querySelector('[data-section-target="plan"]').click(); await c.updateComplete;
-      const visiblePlates = [...dialog.querySelectorAll('[data-card="plan"] .hpf-colorfield hp-color-opacity')];
+      dialog.querySelector('[data-section-target="sun"]').click(); await c.updateComplete;
+      const visiblePlates = [...dialog.querySelectorAll('[data-card="sun"] .hpf-colorfield hp-color-opacity')];
       const plateBoxes = visiblePlates.map((plate) => {
         const trigger = plate.renderRoot.querySelector('.trigger').getBoundingClientRect();
         return { display: getComputedStyle(plate).display, width: trigger.width, height: trigger.height };
       });
       // A flex item blockifies inline-flex to flex in getComputedStyle.
-      const plateLayout = plateBoxes.length >= 2 && plateBoxes.every((box) => box.display === 'flex'
+      const plateLayout = plateBoxes.length === 1 && plateBoxes.every((box) => box.display === 'flex'
         && Math.abs(box.width - 40) <= 1 && Math.abs(box.height - 40) <= 1);
       dialog.querySelector('[data-section-target="fills"]').click(); await c.updateComplete;
       const hex = [...dialog.querySelectorAll('.hpf-hex')];
-      const upperHex = hex.length >= 11 && hex.every((node) => node.textContent === node.textContent.toUpperCase());
+      const upperHex = hex.length === 10 && hex.every((node) => node.textContent === node.textContent.toUpperCase());
       const picker = tiles[0].querySelector('hp-color-opacity');
       picker.renderRoot.querySelector('.trigger').click();
       await picker.updateComplete;
@@ -104,8 +110,8 @@ for (const theme of ['light', 'dark']) {
       picker.renderRoot.querySelector('.trigger').click();
       await picker.updateComplete;
 
-      const wall=dialog.querySelector('[data-card="plan"] .hpf-colorrow');
-      const resetsDraftOnly=!wall.querySelector('button.hpf-link');
+      const movedOutOfGeneral=!dialog.querySelector('[data-card="plan"] .hpf-colorrow .hpf-colorfield');
+      const resetsDraftOnly=!glowPicker.closest('.hpf-colorrow').querySelector('button.hpf-link')&&movedOutOfGeneral;
       dialog.querySelector('[data-section-target="data"]').click(); await c.updateComplete;
       const data = dialog.querySelector('[data-card="data"]');
       const actions = [...data.querySelectorAll('.hpf-actions .btn')];

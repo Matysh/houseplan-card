@@ -46,7 +46,8 @@ const out = await page.evaluate(async () => {
     && !!topo.shadowRoot.querySelector('.hpf-toggle input[type="checkbox"]')
     && !!topo.shadowRoot.querySelector('.hpf-toggle hp-help[instant]');
   o.colorTilesCount = qa('.hpf-colortile').length === 8; // 8 заливок; свет вынесен в отдельную плашку
-  o.wallFillIsAPlate = !!q('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-colorfield');
+  o.appearancePlatesMovedToSpaces = !q('.hpf-card[data-card="plan"] .hpf-colorrow .hpf-colorfield')
+    && JSON.stringify(qa('.hpf-card[data-card="plan"] .hpf-colorfield hp-color-opacity').map(p=>p.dataset.field)) === JSON.stringify(['gs-bg-color']);
   q('[data-section-target="sun"]').click(); await upd();
   o.compassIs148 = (() => { const b = q('.hpf-north-dial')?.getBoundingClientRect(); return !!b && Math.round(b.width) === 148 && Math.round(b.height) === 148; })();
   q('[data-section-target="display"]').click(); await upd();
@@ -74,8 +75,10 @@ const out = await page.evaluate(async () => {
     && c._settingsDialog.colors.light_on.c === d0.colors.light_on.c
     && c._settingsDialog.colors.light_off.a === d0.colors.light_off.a;
   o.tileHexPrinted = lightsOnTile.querySelector('.hpf-hex').textContent === d0.colors.light_on.c.toUpperCase();
-  q('.hpf-card[data-card="plan"] hp-color-opacity').dispatchEvent(new CustomEvent('hp-color-opacity-change', {detail:{color:d0.colors.wall_fill.c,opacity:.4},bubbles:true,composed:true})); await upd();
-  o.wallFillOpacityWritesOwnKey = Math.abs(c._settingsDialog.colors.wall_fill.a - 0.4) < 1e-9;
+  q('[data-field="gs-glow-color"]').dispatchEvent(new CustomEvent('hp-color-opacity-change', {detail:{color:d0.colors.glow_light.c,opacity:.4},bubbles:true,composed:true})); await upd();
+  o.glowPlateOpacityWritesOwnKey = Math.abs(c._settingsDialog.colors.glow_light.a - 0.4) < 1e-9
+    && c._settingsDialog.colors.glow_light.c === d0.colors.glow_light.c;
+  o.movedWallFillDraftPreserved = JSON.stringify(c._settingsDialog.colors.wall_fill) === JSON.stringify(d0.colors.wall_fill);
   input(q('#gs-glow-radius'), '4.5'); await upd();
   o.glowRadiusWrites = c._settingsDialog.glowRadius === 4.5;
   input(q('#gs-glow-radius'), ''); await upd();

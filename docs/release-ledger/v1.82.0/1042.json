@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1042,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Align three stale browser witnesses with the accepted #1037 relocation and materialization of appearance colours. Preserve opacity, sibling isolation, draft/save and retired-dimming assertions; no product changes.",
+  "summary": {
+    "ru": "Обновить смоки после переноса цветов оформления в настройки пространства.",
+    "en": "Update browser witnesses after moving appearance colours into space settings."
+  }
+}
