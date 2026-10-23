@@ -136,6 +136,10 @@ function sandbox(root) {
   // #749: снимок скриптов integrate берёт из dev и validate.yml (его читает workflow-jobs.mjs).
   mkdirSync(join(work, '.github', 'workflows'), { recursive: true });
   copyFileSync(join(WORKFLOWS, 'validate.yml'), join(work, '.github', 'workflows', 'validate.yml'));
+  // Real snapshot preparation needs a committed, self-contained trusted lock.
+  writeFileSync(join(work, 'package.json'), '{"name":"trusted-tools","version":"1.0.0"}\n');
+  writeFileSync(join(work, 'package-lock.json'), JSON.stringify({ name: 'trusted-tools', version: '1.0.0',
+    lockfileVersion: 3, packages: { '': { name: 'trusted-tools', version: '1.0.0' } } }));
   mkdirSync(join(work, 'docs', 'reviews'), { recursive: true });
   writeFileSync(join(work, 'docs', 'reviews', 'CODE-REVIEW-1-r1.md'), '# CODE-REVIEW-1-r1\nВердикт: **зелёный** · High: 0 · Medium: 0\n');
   writeFileSync(join(work, 'docs', 'reviews', 'INDEX.md'), buildIndex(join(work, 'docs', 'reviews')));
@@ -317,8 +321,8 @@ function taskBranch(box) {
  * #749: шаг снимка как есть — на рабочей копии dev, как после checkout в
  * integrate. Возвращает каталог из его выхода `dir`: его шаги получают env TOOLS.
  */
-function devTools(box) {
-  const r = box.run(TOOLS_STEP(), {});
+function devTools(box, stage = 'code') {
+  const r = box.run(TOOLS_STEP(), { STAGE: stage });
   assert.equal(r.status, 0, `снимок скриптов dev: ${r.stderr}${r.stdout}`);
   const dir = readFileSync(join(box.temp, 'output'), 'utf8').match(/^dir=(.+)$/m)?.[1];
   assert.ok(dir && existsSync(join(dir, 'scripts')), 'снимок назвал каталог со scripts/');
@@ -331,7 +335,7 @@ function runReviewDoc(box, out = '{"verdict":"green","high":0}', extra = {}) {
   writeFileSync(source, (extra.STAGE === 'spec' ? '# SPEC-REVIEW-9-r1' : '# Код-ревью #9, раунд 1')
     + '\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n' + (extra.REVIEW_SOURCE_TAIL ?? ''));
   return box.run(REVIEW_DOC_STEP(), {
-    BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source, TOOLS: extra.TOOLS ?? devTools(box),
+    BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source, TOOLS: extra.TOOLS ?? devTools(box, extra.STAGE ?? 'code'),
     MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
     MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: out, ...extra,
     REPO: 'o/r', FINDINGS_POLICY_SNAPSHOT: extra.FINDINGS_POLICY_SNAPSHOT ?? JSON.stringify(findingsPolicy('',

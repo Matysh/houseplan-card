@@ -858,7 +858,7 @@ function parseOutput(text) {
 }
 
 /** Песочница: bare origin с dev (scripts/ и src/), ветка задачи, подменённый gh. */
-function trackSandbox(t, { change, base = () => {} }) {
+function trackSandbox(t, { change, base = () => {}, stage = 'code' }) {
   const root = mkdtempSync(join(tmpdir(), 'hp-707-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = (cwd, ...args) => {
@@ -885,6 +885,10 @@ function trackSandbox(t, { change, base = () => {} }) {
   // #749: снимок скриптов integrate берёт из dev и validate.yml.
   mkdirSync(join(work, '.github', 'workflows'), { recursive: true });
   writeFileSync(join(work, '.github', 'workflows', 'validate.yml'), readFileSync(join(dirname(WORKFLOW), 'validate.yml')));
+  // The pinned tools snapshot installs its own dependencies on code stages.
+  writeFileSync(join(work, 'package.json'), '{"name":"trusted-tools","version":"1.0.0"}\n');
+  writeFileSync(join(work, 'package-lock.json'), JSON.stringify({ name: 'trusted-tools', version: '1.0.0',
+    lockfileVersion: 3, packages: { '': { name: 'trusted-tools', version: '1.0.0' } } }));
   mkdirSync(join(work, 'src', 'styles'), { recursive: true });
   writeFileSync(join(work, 'src', 'pointer-modality.ts'), 'export const a = 1;\nexport const b = 2;\n');
   writeFileSync(join(work, 'src', 'styles', 'plan.styles.ts'), 'export const css = `\n  .x { color: red; }\n`;\n');
@@ -942,7 +946,7 @@ function trackSandbox(t, { change, base = () => {} }) {
     },
     /** #749/#765: шаг снимка job как есть; его каталог дальше идёт шагам как TOOLS. */
     snapshot(step = TOOLS_STEP) {
-      const r = this.run(runnable(readFileSync(WORKFLOW, 'utf8'), step), {});
+      const r = this.run(runnable(readFileSync(WORKFLOW, 'utf8'), step), { STAGE: stage });
       assert.equal(r.status, 0, `снимок скриптов dev: ${r.stderr}`);
       assert.ok(r.output.dir && existsSync(join(r.output.dir, 'scripts', 'process-track.mjs')), 'снимок несёт скрипт трека');
       tools = r.output.dir;
