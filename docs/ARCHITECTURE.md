@@ -15,6 +15,16 @@ SVG caption alignment (#1039) is a detached presentation correction after the
 HA Area affordance is filtered out. The remaining name centres in the frozen
 row width; live room-label CSS, geometry, actions and layout storage are untouched.
 
+Decor order (#1035) uses the existing `spaces[].decor` array, not a second
+z-index. Pure reorder/copy helpers retain no-op identity and deep-copy instance
+values while keeping image asset references. The lazy `DecorOrderEditor` owns
+the shared commands and menu lifecycle; Properties and secondary actions call
+the same lane through field completion, current writer/space/revision and
+gesture fences. Context hit testing reads actual SVG geometry in reverse paint
+order only on a right-click, including under pointer-inert drawing tools.
+Commands use the current geometry history/config writer; View has no menu
+listener or commands. No asset/file API, backend change or schema migration.
+
 Print export (#1036) keeps the PDF scene/writer independent from a lazy SVG View
 snapshot. The card supplies a read-only stage/context fence, not export geometry.
 The exporter freezes computed styles and flattened icon shadows synchronously,

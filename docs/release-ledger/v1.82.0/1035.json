@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1035,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "New editor commands let administrators reorder, copy and remove decor through a context menu and paired sidebar actions; stable v1.82.0 has no explicit ordering surface.",
+  "summary": {
+    "ru": "Управление порядком декора и контекстное меню с удалением и созданием независимой копии рядом с оригиналом.",
+    "en": "Decor ordering and a context menu for deletion and creating an independent copy beside its source."
+  }
+}

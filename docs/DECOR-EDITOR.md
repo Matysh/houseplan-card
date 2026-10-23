@@ -378,7 +378,33 @@ off-grid remainder and deliberately bypasses decor and wall magnets, so it can
 fine-tune furniture away from a wall. Each keydown is one named Undo step;
 controls, dialogs and live pointer gestures keep their own Arrow behaviour.
 
+### 6.1. Decor order and context actions (#1035)
+
+The stored `decor` array is bottom-to-top paint order, also used by native SVG
+selection. Bring to front moves one entry to the end; Send to back moves it to
+the start. Sibling order and object values stay intact. Commands never cross
+the decor layer (§3.3), and an already-extreme object is a no-op without a save
+or history entry. PDF retains primitive order; static space cards retain the
+relative order of their supported decor images.
+
+The selected object's Properties footer has the two order buttons in one row
+immediately above Delete, like the reflection pair. Narrow editors retain the
+commands in the existing secondary actions. Right-click selects the invoked
+object and shows its properties, then opens exactly Bring to front, Send to
+back, Delete, Create a copy. Order and dismissal preserve that selection.
+Escape/outside click dismiss without editing; a dismissing canvas press cannot
+draw or drag. Mode/space/write authority/revision changes retire callbacks.
+
+Copy adds a separately identified, selected entry at the top, shifted one grid
+cell beside the source; blocked directions reverse. Occupied candidate anchors
+are skipped, and impossible placement or the object limit reports a refusal.
+Values are deep-copied, including compatible unknown fields. Images keep the
+same `asset_id`: no new file/catalog item, upload or resource deletion. Order,
+copy and delete use one named transaction each in the existing history/writer.
+No new schema or migration, View actions, sorting during render or touch gesture.
+
 ## 7. Custom image lifecycle
+
 
 The **Image** tool opens one shared catalog. Upload accepts decoded PNG, JPEG
 and WebP or a strict, canonical SVG; each canonical file is limited to 2 MiB.

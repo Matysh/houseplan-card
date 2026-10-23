@@ -170,6 +170,18 @@ test('PDF scene includes architecture and respects names/dimensions switches', (
     'door leaf/arc is represented by vector lines');
 });
 
+test('#1035 PDF emits decor in stored order after bringing an object forward', async () => {
+  const { reorderDecor } = await import('../test-build/editors/decor/order.js');
+  const decor = ['A', 'B', 'C'].map((text,i)=>({id:text,kind:'text',text,x:.3+i*.1,y:.4,size_cm:25}));
+  const raw = {id:'order',title:'Order',view_box:[0,0,1,1],cell_cm:5,rooms:[],decor};
+  const options={dimensions:false,roomNames:false,decor:true,backdrop:false};
+  const labels=items=>buildRawPage({...raw,decor:items},options).commands
+    .filter(command=>command.kind==='text'&&['A','B','C'].includes(command.text)).map(command=>command.text);
+  assert.deepEqual(labels(decor),['A','B','C']);
+  assert.deepEqual(labels(reorderDecor(decor,'A','front')),['B','C','A']);
+  assert.deepEqual(labels(reorderDecor(decor,'C','back')),['C','A','B']);
+});
+
 test('#663 PDF renders both stair symbols and uses stair-adjusted clean area', () => {
   const withStairs = structuredClone(rawSpace);
   withStairs.stairs = [

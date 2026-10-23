@@ -6890,6 +6890,7 @@ export class HouseplanCard extends LitElement {
 
   private _stagePointerDown(ev: PointerEvent): void {
     if (!sceneGestureFromPath(ev.composedPath())) return;
+    if (this._mode === 'decor' && ev.button === 2) return;
     this._bootSoftCancel();
     const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view'
       ? roomFitOwnerFromPath(ev.composedPath()) : null;
@@ -11026,6 +11027,7 @@ export class HouseplanCard extends LitElement {
           style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
+          @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e) : nothing}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
           @pointerleave=${(e: PointerEvent) => this._stagePointerLeave(e)}
@@ -11361,6 +11363,7 @@ export class HouseplanCard extends LitElement {
 
         ${this._editorRuntime?.properties.render()}
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
+        ${this._editorRuntime?.decorOrder.render()}
         ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing)}
         ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}
         ${dialogPresence(this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing)}

@@ -558,6 +558,9 @@ export class PropertiesEditor {
   }
   private async action(key: string): Promise<void> {
     const target = this.target(); if (!target) return;
+    if (target.kind === 'decor' && (key === 'decor-front' || key === 'decor-back')) {
+      this.runtime.decorOrder.command(target.value.id, key === 'decor-front' ? 'front' : 'back'); return;
+    }
     if (key === 'settings') {
       const device = target.kind === 'device' ? target.value : target.kind === 'led' ? target.device : undefined;
       if (device) this.runtime._openMarkerDialog(device); return;

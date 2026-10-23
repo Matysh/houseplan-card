@@ -97,6 +97,7 @@ export const propertiesStyles = unsafeCSS(css`
   .hp-prop-foot { flex: 0 0 auto; min-height: 122px; padding: 15px 23px; border-top: 1px solid var(--prop-line); background: var(--prop-bg); }
   .hp-prop-actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; margin-bottom: 13px; }
   .hp-prop-actions.solo { grid-template-columns: 1fr; }
+  .hp-prop-action-wrap.wide { grid-column: 1 / -1; }
   .hp-prop-action-wrap { position: relative; min-width: 0; }
   .hp-prop-action { width: 100%; min-height: 36px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--prop-border); border-radius: 5px; color: var(--prop-ro); background: var(--prop-bg); padding: 3px 6px; font-size: 12px; line-height: 1.25; }
   .hp-prop-action .hp-prop-icon { width: 16px; height: 16px; }

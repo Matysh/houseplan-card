@@ -1,4 +1,12 @@
 {
+  "decor.bring_front": "Bring to front",
+  "decor.send_back": "Send to back",
+  "decor.copy": "Create a copy",
+  "decor.copy_no_space": "There is no room beside this object for a copy.",
+  "decor.copy_limit": "The decor object limit has been reached.",
+  "history.decor_front": "Bring decor to front",
+  "history.decor_back": "Send decor to back",
+  "history.decor_copy": "Create decor copy",
   "backup.recovery.import_title": "The plan will be restored with repairs",
   "backup.recovery.import_hint": "Rooms and devices are kept. Features with missing destinations are turned off; set them up again after import.",
   "backup.recovery.export_title": "The backup is ready with repairs",

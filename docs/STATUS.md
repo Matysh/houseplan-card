@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.82.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.82.0-beta.6` |
-| Tests | Node unit 5081 · pure backend 585 · HA-harness backend 486 · browser smokes 414 (`npm run inventory`) |
+| Tests | Node unit 5078 · pure backend 585 · HA-harness backend 487 · browser smokes 414 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -39,6 +39,11 @@ not a promotion of unreleased product changes or a release.
 SVG captions (#1039) centre the remaining name over its readings after removing
 the HA Area action. Live captions with that action retain their existing layout.
 The browser witness measures both live geometry and offline SVG downloads.
+
+Decor ordering (#1035) is scoped to the current space's array, with paired
+Properties actions and one context-menu command owner. Right-click selects its
+object and order commands preserve selection. Copies are independent instances;
+image copies share the existing asset. History and transfer use existing paths.
 
 Print download (#1036) combines unchanged PDF with a static SVG of the current
 View. SVG starts with devices off and transparent background, offers the shared

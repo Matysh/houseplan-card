@@ -42,10 +42,10 @@ that transition events alone prove disposal.
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 80 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 88 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 89 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 56 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 236 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **471 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 237 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **473 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -270,6 +270,11 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 
 ### Pointer geometry and trusted interaction
 
+- `decor-right-button-arms-transform-1035`
+
+This #1035 witness needs a trusted right-click and the real transform lifecycle:
+the event must open a menu without arming a move or erase transaction.
+
 - `device-issue-opens-wrong-source-972`
 
 - `editor-tooltip-arms-after-touch-focus-963`
@@ -491,6 +496,12 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `decor-menu-accepts-stale-revision-1035`
+
+This #1035 witness needs an actual detached Lit menu callback and delivered
+server revision to prove the card cannot write through retired UI. It is
+registered for nightly execution and was not executed during development.
 
 - `svg-stale-context-downloads-1036`
 - `svg-device-choice-ignored-1036`

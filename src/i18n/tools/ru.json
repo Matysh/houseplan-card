@@ -1,4 +1,12 @@
 {
+  "decor.bring_front": "На передний план",
+  "decor.send_back": "На задний план",
+  "decor.copy": "Создать копию",
+  "decor.copy_no_space": "Рядом с объектом нет места для копии.",
+  "decor.copy_limit": "Достигнут предел количества объектов декора.",
+  "history.decor_front": "На передний план",
+  "history.decor_back": "На задний план",
+  "history.decor_copy": "Создание копии декора",
   "backup.recovery.import_title": "План будет восстановлен с исправлениями",
   "backup.recovery.import_hint": "Комнаты и устройства сохранятся. Функции с потерянной привязкой выключены — настройте их заново после импорта.",
   "backup.recovery.export_title": "Копия подготовлена с исправлениями",

@@ -2070,6 +2070,25 @@ colour makes it the next default without recolouring other objects. Outline and
 text sizes are physical centimetres/inches, so zoom changes their on-screen
 width consistently rather than changing the saved line weight.
 
+### Decor order and context menu
+
+Select a decor object. The properties sidebar shows **Bring to front** and
+**Send to back** in one row immediately above **Delete**. They move the object
+above or below the other decor in the current space; the other plan layers
+keep their existing positions.
+
+Right-click selects the invoked object, shows its properties and opens four
+commands: **Bring to front**, **Send to back**, **Delete**, **Create a copy**.
+Order commands retain that selection. Escape or an outside click dismisses
+the menu without changing the plan.
+
+A copy appears beside its source and becomes selected, with independent
+properties. Custom images create another representation of the same uploaded
+file, without uploading or adding a catalog entry. Ordering, copying and
+deletion use the existing Undo/Redo history. Saved order survives reload and
+plan transfer. If nearby placement or the object limit prevents copying, the
+command explains why and leaves no partial copy.
+
 ### Double-click in Select
 
 | Object | Properties opened |

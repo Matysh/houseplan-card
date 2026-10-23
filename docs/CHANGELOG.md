@@ -16,6 +16,11 @@
 - Centre room names over their readings in downloaded SVG files after omitting
   the Home Assistant Area link. Live captions with the link keep their existing
   alignment and actions. (#1039)
+- Add Bring to front / Send to back above Delete in the Background properties
+  panel, plus a four-action decor context menu. Right-click selects its object;
+  order commands retain that selection. Copies appear beside their source and
+  share the uploaded image file while keeping independent properties. All
+  commands use the existing saved order and Undo/Redo. (#1035)
 
 - Download an architectural PDF or an SVG of the current View from one print
   dialog. SVG keeps the displayed projection, colours and optional devices,

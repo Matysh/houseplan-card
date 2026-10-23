@@ -17,6 +17,7 @@ import { PhysicalBodyGestureRuntime, type PhysicalBodyGesturePort } from './phys
 import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame-gesture';
 import { displayVersion } from './card-version';
 import { positionInboxMenu } from './device-inbox-menu';
+import { DecorOrderEditor } from './decor-order-editor';
 import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { deviceEditorAllowed } from './device-editor-access';
@@ -873,6 +874,7 @@ export class HouseplanEditorRuntime {
     if (device) this.properties.selectDevice(device);
   });
   public readonly properties = new PropertiesEditor(this);
+  public readonly decorOrder = new DecorOrderEditor(this);
   public readonly physicalGesture: PhysicalBodyGestureRuntime;
   public readonly backdropGesture: BackdropFrameGestureRuntime;
   private _gestureBoundary = false;
@@ -882,7 +884,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); }
+  public invalidateEditorNavigation(): void { this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -3860,6 +3862,7 @@ public _decorCommitDraft(): void {
 
 public _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
     if (this.host._mode !== 'decor') return;
+    if (ev.button > 0) return;
     // Under any other tool the shape is not a target at all: the press has to
     // reach the stage, where the drawing tool starts a new figure (or the
     // backdrop tool grabs the picture). Swallowing it here was the bug — the
@@ -4924,6 +4927,12 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
             const current = this.host._dtSel;
             if (current) this._openDecorProperties(current);
           })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
+          <div style="display:flex;gap:8px">
+            ${(['front', 'back'] as const).map(direction => html`<button class="btn ghost" data-hp="action" data-action=${`decor-${direction}`}
+              ?disabled=${(direction === 'front' ? this.host._decorList[this.host._decorList.length - 1] : this.host._decorList[0])?.id === selected.id}
+              @click=${() => this._runEditorContext(contextId, () => this.decorOrder.command(selected.id, direction))}>
+              ${this.decorOrder.label(direction)}</button>`)}
+          </div>
           <button data-hp="action" data-action="decor-delete" class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
             <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
           </button>`,

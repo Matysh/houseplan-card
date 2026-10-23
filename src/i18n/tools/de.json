@@ -1,4 +1,12 @@
 {
+  "decor.bring_front": "In den Vordergrund",
+  "decor.send_back": "In den Hintergrund",
+  "decor.copy": "Kopie erstellen",
+  "decor.copy_no_space": "Neben diesem Objekt ist kein Platz für eine Kopie.",
+  "decor.copy_limit": "Die maximale Anzahl an Dekorobjekten ist erreicht.",
+  "history.decor_front": "Dekor in den Vordergrund",
+  "history.decor_back": "Dekor in den Hintergrund",
+  "history.decor_copy": "Dekorkopie erstellen",
   "backup.recovery.import_title": "Der Plan wird mit Korrekturen wiederhergestellt",
   "backup.recovery.import_hint": "Räume und Geräte bleiben erhalten. Funktionen mit fehlender Zuordnung sind ausgeschaltet. Richten Sie sie nach dem Import erneut ein.",
   "backup.recovery.export_title": "Die Sicherung wurde mit Korrekturen vorbereitet",

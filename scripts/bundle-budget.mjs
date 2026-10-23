@@ -808,7 +808,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // #1036: sharing the existing select/form-kit and colour picker with Print
 // changes Rollup's shared leaves. Measured lazy editor331681 B (+2390 B,0.73%);
 // the SVG runtime remains outside initial View/editor. Keep the2000-B band.
-export const LAZY_EDITOR_GZIP_CEILING = 331_681;
+// #1035: paired order actions, the context-menu owner and editor-only translations
+// measure 334438 B gzip. Owner permits small limit increases instead of costly
+// reductions; keep the 2000 B band, absolute budgets and all predicates intact.
+export const LAZY_EDITOR_GZIP_CEILING = 334_400;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

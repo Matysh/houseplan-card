@@ -305,6 +305,41 @@ def _missing_decor_export(
     return document, shape
 
 
+@pytest.mark.parametrize(("kind", "plan_only"), [("full", False), ("space", False), ("space", True)])
+def test_issue_1035_decor_order_and_shared_image_survive_transfer(tmp_path: Path, kind: str, plan_only: bool) -> None:
+    config, image = _config_with_decor_image("a" * 64)
+    decor = [
+        {"id": "label", "kind": "text", "x": .2, "y": .3, "text": "Order", "size_cm": 25},
+        image,
+        {**image, "id": "copy", "x": .4, "opacity": .8},
+        {"id": "line", "kind": "line", "x1": .1, "y1": .2, "x2": .4, "y2": .5},
+    ]
+    config["spaces"][0]["decor"] = decor
+    config["markers"] = []
+    document, _ = create_export(
+        SimpleNamespace(instance_id="source"), {"config": config, "rev": 1}, {"layout": {}, "rev": 1},
+        kind=kind, space_id="ground" if kind == "space" else None, plan_only=plan_only, card_version="test", config_root=tmp_path / "source",
+    )
+    exported = document["payload"]["config"]["spaces"][0]["decor"]
+    assert exported == decor
+    runtime = SimpleNamespace(instance_id="target", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path / "target",
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    imported, _, _ = prepare_apply(candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=True)
+    actual = imported["spaces"][0]["decor"]
+    # Import allocates fresh IDs; content and relative order must remain intact.
+    assert [{k: v for k, v in row.items() if k != "id"} for row in actual] == [
+        {k: v for k, v in row.items() if k != "id"} for row in decor
+    ]
+    images = [row for row in actual if row["kind"] == "image"]
+    assert images[0]["asset_id"] == images[1]["asset_id"] == image["asset_id"]
+    assert len({row["id"] for row in actual}) == len(actual)
+
+
 @pytest.mark.parametrize(
     ("kind", "plan_only"),
     [("full", False), ("space", False), ("space", True)],

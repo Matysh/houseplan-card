@@ -4,6 +4,7 @@ import { t, langOf, type I18nKey } from '../../i18n';
 const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cancel:'btn.cancel',
   fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
 const en = {
+  bring_front: 'Bring to front', send_back: 'Send to back', already_front: 'Already at the front', already_back: 'Already at the back',
   title: 'Properties',  empty: 'Nothing selected', empty_hint: 'Select an object on the plan to edit its properties.',
   position: 'Position', geometry: 'Geometry', appearance: 'Appearance',
   point_a_x: 'Point A · X', point_a_y: 'Point A · Y', point_b_x: 'Point B · X', point_b_y: 'Point B · Y',
@@ -50,6 +51,7 @@ const en = {
 };
 type Key = keyof typeof en;
 const ru: Record<Key, string> = {
+  bring_front: 'На передний план', send_back: 'На задний план', already_front: 'Уже на переднем плане', already_back: 'Уже на заднем плане',
   title: 'Свойства',  empty: 'Ничего не выбрано', empty_hint: 'Выберите объект на плане, чтобы изменить его свойства.',
   position: 'Положение', geometry: 'Геометрия', appearance: 'Оформление',
   point_a_x: 'Точка A · X', point_a_y: 'Точка A · Y', point_b_x: 'Точка B · X', point_b_y: 'Точка B · Y',

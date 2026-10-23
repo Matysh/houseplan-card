@@ -22,6 +22,7 @@ export interface PropertiesGroup {
 }
 export interface PropertiesAction {
   key: string; label: PropertiesString; icon: string; disabled?: PropertiesString;
+  wide?: boolean;
 }
 export interface PropertiesSurface {
   title: string; meta: string; groups: PropertiesGroup[]; actions: PropertiesAction[];
@@ -54,6 +55,7 @@ const paths: Record<string, string> = {
   plus: 'M12 4v16M4 12h16', temperature: 'M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0ZM12 8v10',
   text: 'M4 5V3h16v2M12 3v18M8 21h8', door: 'M5 21V3h14v18M8 21V6l8-2v17ZM13 13h.1',
   flip_h: 'M12 2v20M3 6v12l6-6Zm18 0v12l-6-6Z', flip_v: 'M2 12h20M6 3h12l-6 6Zm0 18h12l-6-6Z',
+  front: 'M3 3h12v12H3ZM9 15v6h12V9h-6', back: 'M9 9h12v12H9ZM3 15V3h12v6',
 };
 export function propertiesIcon(kind: string): TemplateResult {
   return svg`<svg class="hp-prop-icon" viewBox="0 0 24 24" aria-hidden="true"><path d=${paths[kind] ?? paths.geometry}></path>
@@ -146,7 +148,7 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
       </section>`)}
     </div>
     <footer class="hp-prop-foot"><div class="hp-prop-actions ${model.actions.length === 1 ? 'solo' : ''}">
-      ${model.actions.map(action => html`<div class="hp-prop-action-wrap"><button data-hp="action" data-action=${`properties-${action.key}`} type="button" class="hp-prop-action ${action.key}"
+      ${model.actions.map(action => html`<div class="hp-prop-action-wrap ${action.wide ? 'wide' : ''}"><button data-hp="action" data-action=${`properties-${action.key}`} type="button" class="hp-prop-action ${action.key}"
           aria-disabled=${String(!!action.disabled)} data-hp-tooltip=${action.disabled ? t(action.disabled) : nothing}
           @click=${() => { if (!action.disabled) port.action(action.key); }}>
           ${propertiesIcon(action.icon)}<span>${t(action.label)}</span></button></div>`)}

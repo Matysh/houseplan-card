@@ -217,6 +217,13 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
         if (shape.kind === 'line') appearance[3] = { key: 'line_style', label: 'line_style', value: shape.line_style ?? 'solid', control: 'select', options: ['solid', 'dashed'].map(value => ({ value, label: t(value as PropertiesString) })) };
         if (shape.kind === 'furniture') { featureTitle = 'furniture'; reflection(shape); }
       }
+      const atFront = space.decor?.[space.decor.length - 1]?.id === shape.id, atBack = space.decor?.[0]?.id === shape.id;
+      actions = [
+        ...actions.filter(item => item.key !== 'delete').map(item => ({ ...item, wide: true })),
+        action('decor-front', 'bring_front', 'front', atFront ? 'already_front' : undefined),
+        action('decor-back', 'send_back', 'back', atBack ? 'already_back' : undefined),
+        { ...action('delete', 'delete', 'delete'), wide: true },
+      ];
     }
     if (title === t('empty') && kind) title = t(kind);
   }

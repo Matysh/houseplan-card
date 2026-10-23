@@ -1,4 +1,12 @@
 {
+  "decor.bring_front": "Mettre au premier plan",
+  "decor.send_back": "Mettre à l’arrière-plan",
+  "decor.copy": "Créer une copie",
+  "decor.copy_no_space": "Il n’y a pas de place à côté de cet objet pour une copie.",
+  "decor.copy_limit": "Le nombre maximal d’objets de décor est atteint.",
+  "history.decor_front": "Décor au premier plan",
+  "history.decor_back": "Décor à l’arrière-plan",
+  "history.decor_copy": "Créer une copie du décor",
   "backup.recovery.import_title": "Le plan sera restauré avec des corrections",
   "backup.recovery.import_hint": "Les pièces et les appareils sont conservés. Les fonctions sans destination sont désactivées ; reconfigurez-les après l’importation.",
   "backup.recovery.export_title": "La sauvegarde est prête avec des corrections",
