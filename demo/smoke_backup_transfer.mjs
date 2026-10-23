@@ -137,7 +137,7 @@ const result = await page.evaluate(async () => {
     confirmMissing: false, busy: false, error: '',
   });
   const dialogText = () => root().querySelector('hp-dialog[data-kind="backup"]')?.textContent || '';
-  card._backupImportDialog = openingPreview({
+  card._backupImportDialog = openingPreview({ // private-ok: #1033 a server preview with opening_repairs; the demo has no HA import backend (same seam as the previews above)
     rehosted: 1, detached: 2, legacy_detached: 0,
     examples: [
       { space_id: 'f1', space_title: 'Ground', opening_id: 'd1', type: 'door', result: 'detached' },
@@ -164,14 +164,14 @@ const result = await page.evaluate(async () => {
   openingsReport.enabledAfterConfirm = openingsApply()?.disabled === false;
   openingsReport.noHorizontalOverflow = root().querySelector('hp-dialog').scrollWidth
     <= root().querySelector('hp-dialog').clientWidth;
-  card._backupImportDialog = openingPreview(
+  card._backupImportDialog = openingPreview( // private-ok: #1033 a server preview with opening_repairs; the demo has no HA import backend (same seam as the previews above)
     { rehosted: 0, detached: 1, legacy_detached: 0, examples: [] },
     [{ url: '/api/houseplan/content/plans/_/floor.svg', state: 'detach_required' }],
   );
   await card.updateComplete;
   openingsReport.joinedConfirmText = root().querySelector('.backupconfirm span')?.textContent.trim()
     === `${card._t('backup.confirm_detach')} ${OPENINGS_CONFIRM}`;
-  card._backupImportDialog = openingPreview({ rehosted: 0, detached: 0, legacy_detached: 0, examples: [] });
+  card._backupImportDialog = openingPreview({ rehosted: 0, detached: 0, legacy_detached: 0, examples: [] }); // private-ok: #1033 a server preview with opening_repairs; the demo has no HA import backend (same seam as the previews above)
   await card.updateComplete;
   openingsReport.silentWhenNothingRepaired = !dialogText().includes('Show openings')
     && !root().querySelector('[data-action="backup-openings-details"]')
