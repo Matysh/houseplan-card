@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 696,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "The current-cycle delivery publishes the pre-beta ship-review report and review index for v1.83.0-beta.1. It records independent review of #1043 with High 0, Medium 0 and Low 0, without adding runtime behavior or changing that task's implementation. This review infrastructure is excluded from the stable user changelog and milestone."
+}
