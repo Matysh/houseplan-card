@@ -3,5 +3,5 @@
   "issue": 1044,
   "baseStable": "v1.82.0",
   "category": "infra",
-  "rationale": "Apply targeted task checks to ship/show/ask and keep complete regression at the beta boundary. Correct stable-release intent, reuse complete individual gates and wait for existing producers instead of duplicating them. Product behavior and release acceptance provenance are unchanged."
+  "rationale": "Apply targeted task checks to ship/show/ask and keep complete regression at the beta boundary. Correct stable-release intent, reuse complete individual gates and wait for existing producers instead of duplicating them. Pre-release fixture repairs retain actual release-pointer coordinates in the bounds witness and root the warm-marker remount action through the existing CDP handle helper, preserving every assertion without retries. Product behavior and release acceptance provenance are unchanged."
 }

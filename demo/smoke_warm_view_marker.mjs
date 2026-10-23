@@ -1,11 +1,13 @@
 // #894 AC2: an actual View-created draft and a new element with no editor runtime.
 import { launchColdView, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 requirePinnedBrowser('894 warm View marker renderer ownership');
 const out = {};
 for (const mode of ['success', 'close', 'permission', 'identity', 'disconnect', 'failure', 'newer']) {
   const { page, browser } = await launchColdView({ width: 1100, height: 900 });
   try {
-    const id = await page.evaluate(async () => {
+    const id = await page.evaluate(async mode => {
+      window.__894Mode = mode;
       const c = window.__card, original = c.hass;
       window.__894Writer = true; window.__894WarmWrites = [];
       const hass = { ...original, callWS: async message => {
@@ -24,12 +26,15 @@ for (const mode of ['success', 'close', 'permission', 'identity', 'disconnect', 
       const d = c._devices.find(d => d.id === 'd_temp');
       window.__894Device = d.id;
       return d.id;
-    });
+    }, mode);
     const device = page.locator(`#host houseplan-card [data-hp="device"][data-id="${id}"]`);
     await device.hover(); await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up();
     await page.locator('#host houseplan-card .infofooter button').filter({ hasText: 'Edit' }).click();
     await page.locator('#host houseplan-card hp-dialog[data-kind="marker"] #marker-name').fill('Unsaved 894 draft');
-    await page.evaluate(async mode => {
+    // Keep this remount action rooted across CDP's pending await (#967/#987).
+    // The existing helper preserves failures and enforces a bounded deadline.
+    await evaluateRetainedAction(page, async () => {
+      const mode = window.__894Mode;
       const old = window.__card, parent = old.parentNode, config = old._config;
       await window.__hpTest.settled(); await window.__hpTest.waitForWrites();
       old.remove();
@@ -44,7 +49,7 @@ for (const mode of ['success', 'close', 'permission', 'identity', 'disconnect', 
         return load(attempt);
       };
       window.__card = next; next.hass = window.__894Hass; parent.appendChild(next);
-    }, mode);
+    }, `894 ${mode} remount`);
     await page.locator('#host houseplan-card hp-dialog[data-kind="marker-restore"]').waitFor();
     out[`${mode}:loading-is-visible-not-hidden-marker`] = await page.evaluate(() => {
       const c = window.__card; return !c._markerDialog && !c.renderRoot.querySelector('hp-dialog[data-kind="marker"]')

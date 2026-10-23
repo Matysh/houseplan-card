@@ -49,15 +49,22 @@ const out = await page.evaluate(async () => {
     while (c._devicePositionBusy) await new Promise((resolve) => setTimeout(resolve, 5));
     await c.updateComplete;
   };
+  const finishDeviceDrag = (move, device, pointerId) => {
+    c._pointerMove(move, device);
+    // #1003 revalidates the released pointer. A real release retains the last
+    // screen coordinates; an omitted clientX/Y fabricates a jump back to 0,0.
+    c._pointerUp(new PointerEvent('pointerup', { pointerId,
+      clientX: move.clientX, clientY: move.clientY,
+      altKey: move.altKey, shiftKey: move.shiftKey }), device);
+  };
 
   // ---- (a) a DEVICE MARKER goes to 2.5 / 2.2 ---------------------------
   c._setMode('devices'); await c.updateComplete;
   const dev = c._devices.find((d) => !d.virtual);
   const p0 = c._pos(dev);
   beginDeviceDrag(dev, p0, 11);
-  c._pointerMove(mk(2.5 * NORM_W - p0.x, 2.2 * NORM_W - p0.y, 400, 400,
-    { pointerId: 11 }), dev);
-  c._pointerUp(new PointerEvent('pointerup', { pointerId: 11 }), dev);
+  finishDeviceDrag(mk(2.5 * NORM_W - p0.x, 2.2 * NORM_W - p0.y, 400, 400,
+    { pointerId: 11 }), dev, 11);
   await awaitDeviceWrite();
   const saved = c._layout[dev.id];
   o.markerLeftTheOldCanvas = near(saved.x, 2.5) && near(saved.y, 2.2);
@@ -119,8 +126,7 @@ const out = await page.evaluate(async () => {
   const dev2 = c._devices.find((d) => d.id !== dev.id && !d.virtual);
   const q0 = c._pos(dev2);
   beginDeviceDrag(dev2, q0, 12);
-  c._pointerMove(mk(9e9, 9e9, 400, 400, { pointerId: 12 }), dev2);
-  c._pointerUp(new PointerEvent('pointerup', { pointerId: 12 }), dev2);
+  finishDeviceDrag(mk(9e9, 9e9, 400, 400, { pointerId: 12 }), dev2, 12);
   await awaitDeviceWrite();
   o.garbageStillClamped = c._layout[dev2.id].x === 5000 && c._layout[dev2.id].y === 5000;
 
