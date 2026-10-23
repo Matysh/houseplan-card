@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1040,
+  "baseStable": "v1.81.0",
+  "category": "infra",
+  "rationale": "Main-only activation of the reviewed service-check routing repair on top of published v1.82.0. This keeps its historical release catalogue complete without changing product code, published notes, version or user-visible release contents. The dev delivery is separately classified against v1.82.0.",
+  "summary": {
+    "ru": "Активировать разделение служебных проверок main и dev без изменения опубликованного продукта.",
+    "en": "Activate isolated main/dev service checks without changing the published product."
+  }
+}
