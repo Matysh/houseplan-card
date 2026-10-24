@@ -577,7 +577,8 @@ export class HouseplanCard extends LitElement {
   }
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     if (name === 'hass') {
-      if (this._configWriteContext.observe(this.hass)) {
+      const authorityChanged = this._configWriteContext.observe(this.hass);
+      if (authorityChanged) {
         this._haVacuumDockRestartApi = null;
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._liveSyncConnection = null;
@@ -596,6 +597,9 @@ export class HouseplanCard extends LitElement {
       if (this._read.observe(configReloadContext(this))) {
         this._loading = false; if (waiting) this._read.defer();
       }
+      // A foreign HA retires the accepted document even while detached. Keep
+      // its new read intent independently of Lit/visual snapshot deduplication.
+      if (authorityChanged) this._read.defer();
     }
     if (name === 'hass' && this.hass && this._liveRt) {
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
@@ -2802,6 +2806,7 @@ export class HouseplanCard extends LitElement {
     // Transient navigation/resume fields are intentionally not reactive. A
     // same-element reconnect keeps Lit's previous DOM, so explicitly repaint
     // after clearing those fields in disconnectedCallback.
+    if (this._read.pending) void this._loadFromServer();
     this.requestUpdate();
   }
 
@@ -2823,7 +2828,11 @@ export class HouseplanCard extends LitElement {
     // A same-element reconnect is a new lifecycle even when HA reuses the
     // Connection object and the route/user strings happen to match (#543).
     this._configReloadAuthority.invalidateLifecycle();
-    this._read.invalidate(); this._loading = false;
+    // Retire transport claims, but retain an interrupted load's demand (#1054).
+    const interruptedRead = this._read.pending || this._read.busy;
+    this._read.invalidate();
+    if (interruptedRead) this._read.defer();
+    this._loading = false;
     this._layoutIO.retire(); this._devicePositionBusy = false;
     this._liveRt?.dispose();
     this._radarLive.stop();

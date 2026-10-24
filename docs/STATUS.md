@@ -20,10 +20,15 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5202 · pure backend 626 · HA-harness backend 527 · browser smokes 428 (`npm run inventory`) |
+| Tests | Node unit 5202 · pure backend 626 · HA-harness backend 527 · browser smokes 429 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Detached HA replacement (#1054) preserves the full-card current read intent
+after retiring the accepted document. Reattach consumes that intent without
+another HA tick; existing same-context short returns keep their no-reload path.
+An interrupted reattach retains demand after retiring its old transport claim.
 
 Selected task browser checks (#1055) retain their complete computed plan under
 a finite job budget sized from the observed #1051 run. Individual invocation

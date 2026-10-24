@@ -6,6 +6,10 @@
   without moving them, preserve supported openings and undo the whole edit in
   one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale
   menus cannot send a late delete. (#1045)
+- Restore the full plan after Home Assistant changes while its card is detached,
+  including another removal while loading, without waiting for another HA
+  update or page event. Loaded, idle short returns in the same HA context
+  retain their existing frame without reloading. (#1054)
 - Unify editor action trays, furniture properties, context menus, disclosures
   and text links with the shared UI kit. Decor colours support inline HEX and
   opacity preview with one Undo step; device selection stays blue after hover,
