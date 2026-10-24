@@ -33,6 +33,14 @@ candidate and were visually inspected without accepting baselines. The actual
 Windows build measures View339869/editor344587 gzip and raw3437705 bytes;
 all current limits pass unchanged. The 113 related pure tests also pass.
 
+Eight related native commands cover controls, icon paint/interaction, manual
+state sources, LED Glow, same-tick freshness, cover morphs, editor landmarks
+and LED topology. Seven pass first time; icon-design passes its affected rerun
+after aligning the obsolete View selection expectation with accepted #1051.
+The real wide-editor blue selection and the inert View class are both checked;
+the fixed 780px demo host must be resized for the wide-editor route. Original
+failures and the exact recipe/log hashes remain in the compact receipt.
+
 ## Parallel path diagnostic (#1018)
 
 `npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;
