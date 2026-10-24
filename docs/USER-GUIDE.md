@@ -2049,6 +2049,15 @@ saved setting.
 
 ## 14. Background editor
 
+Ctrl+click toggles current-space decor objects, Ctrl+A selects all decor and
+Ctrl+M selects furniture. Each selected object has its own contour; drag any
+selected member to move the whole set. Empty click or idle Escape clears the
+selection; Escape during a drag restores the whole set. Matching object kinds
+share independent colour/opacity fields in the wide Properties panel; images
+have opacity only. A mixed channel shows different values until explicitly
+edited, preserving the opposite channel of every object. Other fields and
+individual actions stay disabled. One group edit is one existing Undo step.
+
 The authoritative technical interaction contract is
 [DECOR-EDITOR.md](DECOR-EDITOR.md).
 

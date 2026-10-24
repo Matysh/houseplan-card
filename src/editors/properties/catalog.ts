@@ -3,6 +3,8 @@ import { planRect } from '../../space-geometry';
 import type { DevItem, LedStripModel, Marker, OpeningCfg, PartitionCfg, RoomCfg, WallColumnCfg, WallSegmentEntry } from '../../types';
 import type { DecorShape } from '../decor/types';
 import { decorStyleOf } from '../decor/geometry';
+import { decorSelectionMembers, homogeneousDecorKind } from '../decor/selection';
+import { decorGroupColorState } from '../decor/group-edit';
 import { stairVisualStyle, type Stair, type StairVisualStyle } from '../../stairs';
 import type { PropertiesIdentity } from './controller';
 import type { PropertiesField, PropertiesGroup, PropertiesSurface, PropertiesAction } from './surface';
@@ -26,6 +28,7 @@ export type PropertiesTarget =
   | { kind: 'device'; value: DevItem; marker?: Marker }
   | { kind: 'led'; value: LedStripModel; device?: DevItem }
   | { kind: 'decor'; value: DecorShape }
+  | { kind: 'decor-group'; value: DecorShape[] }
   | { kind: 'backdrop'; value: PropertiesSpace };
 
 /** Stable IDs resolve against current state, never the rendered DevItem snapshot. */
@@ -56,6 +59,10 @@ export function resolvePropertiesTarget(
     if (identity.kind === 'stair') { const value = space.stairs?.find(x => x.id === id); return value ? { kind: 'stair', value } : null; }
   }
   if (identity.editor === 'decor') {
+    if (identity.kind === 'decor-group') {
+      const value = decorSelectionMembers(space.decor ?? [], identity.objectIds ?? []);
+      return value && value.length > 1 ? { kind: 'decor-group', value } : null;
+    }
     const value = space.decor?.find(x => x.id === id && x.kind === identity.kind);
     return value ? { kind: 'decor', value } : null;
   }
@@ -188,6 +195,33 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
       appearance[2] = number('opacity', 'opacity', (target.value.plan_opacity ?? 1) * 100, '%', { min: 0, max: 100 });
       positionHint = 'backdrop_hint'; featureHint = 'reset_hint'; features.push({ key: 'reset', label: 'reset_backdrop', value: '', control: 'action', action: 'reset', icon: 'reset', wide: true });
       actions = [action('delete', 'delete', 'delete', 'backdrop_delete_reason')];
+    } else if (target.kind === 'decor-group') {
+      const members = target.value, sameKind = homogeneousDecorKind(members);
+      title = t('selection_count', { count: members.length });
+      positionHint = geometryHint = 'group_single_only';
+      const single = (field: PropertiesField): PropertiesField => ({ ...field, value: null, mode: 'disabled', reason: 'group_single_only' });
+      position = position.map(single); geometry = geometry.map(single);
+      if (sameKind === 'line') geometry[0] = single(disabled('length', 'length'));
+      if (sameKind === 'text') geometry[3] = single(disabled('size_cm', 'font'));
+      appearance = appearance.map(field => ({ ...single(field), reason: sameKind ? 'group_single_only' : 'group_incompatible' }));
+      if (sameKind && sameKind !== 'image') appearance[2] = single(disabled('width_cm', 'stroke_width'));
+      for (const channel of ['stroke', 'fill'] as const) {
+        const state = decorGroupColorState(members, channel, cellCm);
+        if (!state) continue;
+        const index = channel === 'stroke' ? 0 : 1;
+        appearance[index] = { key: channel, label: state.alphaOnly ? 'opacity' : sameKind === 'text' ? 'text_color' : channel,
+          value: state, control: 'group-color' };
+      }
+      featureTitle = sameKind ?? undefined;
+      if (sameKind === 'rect' || sameKind === 'ellipse') features.push(single({ key: 'fill_enabled', label: 'fill', value: null, control: 'toggle' }));
+      if (sameKind === 'text') features.push(single({ key: 'text', label: 'text', value: null, control: 'text', wide: true }));
+      if (sameKind === 'furniture' || sameKind === 'image') {
+        reflection({}); features.splice(0, features.length, ...features.map(single));
+      }
+      if (sameKind === 'image') features.push(single({key:'ratio',label:'keep_ratio',value:null,control:'toggle',icon:'link',section:'proportions',wide:true}));
+      actions = [action('decor-front', 'bring_front', 'front', 'group_single_only'),
+        action('decor-back', 'send_back', 'back', 'group_single_only'), action('delete', 'delete', 'delete', 'group_single_only')];
+      if (sameKind === 'image') actions.unshift(action('replace', 'replace', 'image', 'group_single_only'));
     } else if (target.kind === 'decor') {
       const shape = target.value, box = decorPropertiesBox(shape, context.textBox(shape)); kind = shape.kind;
       position = [numericPos('x', box.x), numericPos('y', box.y)];
@@ -239,7 +273,7 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
   const meta = !target ? '' : target.kind === 'partition' ? t('wall_meta', {space:space.title})
     : target.kind === 'contour' ? owners.length ? t('contour_named_meta', {room: owners.join(' — '), space:space.title}) : t('contour_meta', {space:space.title})
     : target.kind === 'opening' && context.openingRooms?.length ? `${space.title} · ${context.openingRooms.join(' — ')}`
-    : target.kind === 'decor' && ['rect','ellipse','line'].includes(target.value.kind) ? t('decor_meta', {space:space.title})
+    : target.kind === 'decor-group' || target.kind === 'decor' && ['rect','ellipse','line'].includes(target.value.kind) ? t('decor_meta', {space:space.title})
     : `${kind ? t(kind) + ' · ' : ''}${space.title}`;
   return { title, meta, groups, actions };
 }

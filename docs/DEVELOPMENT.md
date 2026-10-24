@@ -1,5 +1,21 @@
 # Development and deployment
 
+## Decor multi-selection (#1038)
+
+The approved SPEC r2 and owner variant B add only volatile decor IDs and
+individual contours to the existing editor. Group move and style pass through
+the current config writer/history. `test/decor-group-edit.test.mjs` proves full
+record preservation, all-or-none bounds and the 1000-object quota; Properties
+editor/controller tests execute accepted/refused/held authority paths. The
+ordinary native witness is `node demo/smoke_decor_multiselect.mjs`, using actual
+painted DOM hits, mouse/keyboard, field controls and persisted harness responses.
+Colour-only/alpha-only input causes are distinct; empty raw alpha is invalid,
+while numeric zero is real. The shared picker retains this draft across width
+changes without introducing another popup or write owner.
+Target Golden scenes document the intentional new group presentation; task
+branches do not accept baselines. Measurements and exact-source run results
+belong to the issue handoff; no mutant execution is part of this task.
+
 ## Parallel path diagnostic (#1018)
 
 `npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;

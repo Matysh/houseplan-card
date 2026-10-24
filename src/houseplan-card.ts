@@ -979,6 +979,7 @@ export class HouseplanCard extends LitElement {
   private _decorMove: {
     id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean;
     before: SpaceGeometryState | null;
+    selection?: import('./editors/decor/group-press').DecorSelectionPress;
   } | null = null;
   private _decorSel: string | null = null;
   /** Pending eraser-tool confirmation. Delete/Backspace remains the direct
@@ -3061,9 +3062,15 @@ export class HouseplanCard extends LitElement {
     const latinLetter = /^[a-z]$/.test(key);
     const isZ = key === 'z' || (!latinLetter && e.code === 'KeyZ');
     const isY = key === 'y' || (!latinLetter && e.code === 'KeyY');
+    const selectAll = key === 'a' || (!latinLetter && e.code === 'KeyA');
+    const selectFurniture = key === 'm' || (!latinLetter && e.code === 'KeyM');
     const redo = mod && ((isZ && e.shiftKey) || isY);
     const undo = mod && isZ && !e.shiftKey;
     if (this._mode === 'decor') {
+      if (mod && !e.altKey && !e.shiftKey && (selectAll || selectFurniture) && !inField
+        && !inEditorSecondary && !this._editorSecondaryDialogBlocked && !this._editorRuntime?.properties.colorPickerOpen && this._canEdit && !this._kiosk) {
+        e.preventDefault(); this._editorRuntime?._selectDecorShortcut(selectFurniture); return;
+      }
       if ((undo || redo) && inField) return;
       if (redo) { e.preventDefault(); this._redoGeometry(); return; }
       if (undo) {
@@ -3076,7 +3083,7 @@ export class HouseplanCard extends LitElement {
         this._undoGeometry();
         return;
       }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel &&
+      if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel && (this._editorRuntime?.properties.decorSelectionCount ?? 0) <= 1 &&
           !inField && !inEditorSecondary) {
         e.preventDefault();
         this._decorDeleteSel();
@@ -3087,7 +3094,7 @@ export class HouseplanCard extends LitElement {
           : e.key === 'ArrowUp' ? [0, -this._gridPitch]
             : e.key === 'ArrowDown' ? [0, this._gridPitch]
               : null;
-      if (arrow && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel
+      if (arrow && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel && (this._editorRuntime?.properties.decorSelectionCount ?? 0) <= 1
           && this._decorList.some((shape) => shape.id === this._decorSel)
           && !this._decorDraft && !this._decorMove && !this._dtDrag && !this._editorRuntime?.backdropGesture.active
           && !inField && !inEditorSecondary && !this._editorSecondaryDialogBlocked) {
@@ -7490,6 +7497,7 @@ export class HouseplanCard extends LitElement {
           && !!(pointer.target as Element | null)?.closest?.('.stage'),
       });
       if (this._touchContacts.size >= 2) { if (this._editorRuntime?._cancelRoomGearForMultitouch()) this._roomGearTouchNavigation = true;
+        if (this._decorMove?.selection) this._cancelDecorGesture();
         this._deviceHits.clearPointers();
         this._clearRoomFocus(true);
         this._clearTransientHover();
@@ -8606,7 +8614,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _renderDecorLayer(
-    onlyId?: string | null,
+    onlyId?: string | readonly string[] | null,
     planView = this._viewOr(this._baseVb()),
   ): TemplateResult {
     const W = NORM_W, H = this._decorH;
@@ -8624,7 +8632,8 @@ export class HouseplanCard extends LitElement {
     const furnitureScreenScale = furniturePlanScreenScale(
       stage?.clientWidth, stage?.clientHeight, planView.w, planView.h,
     );
-    const shapes = this._decorList.filter((sh) => onlyId === undefined || sh.id === onlyId).map((sh) => {
+    const onlyIds = Array.isArray(onlyId) ? new Set(onlyId) : null;
+    const shapes = this._decorList.filter((sh) => onlyIds ? onlyIds.has(sh.id) : onlyId === undefined || sh.id === onlyId).map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
       const strokeWidth = this._decorWidthUnits(sh);
@@ -8674,7 +8683,7 @@ export class HouseplanCard extends LitElement {
             transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></ellipse>` : nothing}`;
       }
       if (sh.kind === 'image') {
-        const projection = projectDecorImage(sh, W, H);
+        const projection = projectDecorImage({ ...sh, opacity: style.opacity }, W, H);
         if (!projection) return nothing;
         const [x, y, w, h, opacity, transform] = projection;
         const asset = this._decorAssets.get(sh.asset_id);

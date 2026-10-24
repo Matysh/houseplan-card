@@ -1,5 +1,15 @@
 # House Plan architecture
 
+Decor multi-selection (#1038) lives in the existing lazy `PropertiesEditor` as
+volatile paint-ordered IDs. `_decorSel` projects only a singleton. Pure decor
+selection/group-edit helpers resolve all members, one rigid delta and independent
+touched style channels; no group model or writer endpoint is persisted.
+The existing move pointer owner, command lane, config-adoption optimistic attempt,
+serialized Save and geometry history provide one accepted command. Handoff receipts
+are owner-specific so a retired queued operation cannot unlock a newer authority.
+Individual contours reuse Properties paint and the existing live-editor/text
+measurement hook; all moving selected shapes share its live presentation.
+
 The config-authority browser witness (#1052) isolates late foreign-event reads
 from already-started mandatory and optional capability reads. It observes the
 transport boundary without changing the production subscription or writer.

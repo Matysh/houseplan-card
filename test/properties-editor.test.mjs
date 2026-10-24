@@ -5,6 +5,8 @@ import { ConfigWriteContext } from '../test-build/config-write-context.js';
 import { createConfigAdoption } from '../test-build/config-adoption.js';
 import { CommandStack } from '../test-build/command-stack.js';
 import { applyDevicePlacement } from '../test-build/device-position-history.js';
+import { translateDecorSelection, decorGroupColorState } from '../test-build/editors/decor/group-edit.js';
+import { groupColorDraft, editGroupColor } from '../test-build/editors/properties/group-color-draft.js';
 
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
 function harness(kind='rect') {
@@ -132,4 +134,84 @@ test('#931 point writer preserves the untouched legacy coordinate, scale and flo
   const h=harness('device');assert.equal(await h.set('x','600'),true);
   assert.deepEqual(h.host._layout.light,{x:.5,y:.222222222,k:1.7,s:'floor'});
   assert.equal(h.host._devicePositionHistory.size,1);assert.equal(h.state.writes.length,0);
+});
+
+function groupHarness() {
+  const h=harness();
+  Object.defineProperty(h.host,'_decorList',{get:()=>h.host._curSpaceCfg.decor});
+  h.host._decorTool='select';
+  h.host._curSpaceCfg.decor.push({id:'second',kind:'rect',x:.6,y:.4,w:.2,h:.1,color:'#123456',opacity:.3,fill:false,future:{keep:[true]}});
+  h.adoption.adoptResponses({config:structuredClone(h.host._serverCfg),rev:2},undefined,()=>{},()=>{});
+  h.editor.retireSelection();
+  assert.equal(h.editor.selectDecorIds(['shape','second']),true);
+  return h;
+}
+function previewGroup(h,dx=.1,dy=.05) {
+  const before={spaceId:'floor',decor:structuredClone(h.host._decorList)};
+  const press={ids:['shape','second'],authority:h.context.claim(),adoption:h.adoption.adoptionEpoch};
+  const result=translateDecorSelection(h.host._decorList,press.ids,dx,dy);
+  assert.equal(result.ok,true);h.host._curSpaceCfg.decor=result.decor;
+  const current=()=>h.host.isConnected&&h.host._mode==='decor'&&h.host._canEdit
+    &&h.context.current(press.authority,h.host.hass)&&h.adoption.adoptionEpoch===press.adoption;
+  return {before,press,current};
+}
+const settleGroup=async h=>{await h.editor.lane.settled();await Promise.resolve();};
+
+test('#1038 complete group move and independent group field each use one accepted write/history command',async()=>{
+  const h=groupHarness(), initial=structuredClone(h.host._serverCfg), gesture=previewGroup(h);
+  const expected=structuredClone(h.host._serverCfg);
+  h.editor.finishDecorGroupMove(gesture.before,gesture.press,gesture.current);
+  await settleGroup(h);
+  assert.deepEqual(h.state.writes,[expected]);assert.equal(h.state.records.length,1);
+  assert.deepEqual(h.state.records[0].before,gesture.before);
+  assert.equal(h.host._decorSel,null);assert.deepEqual(h.editor.decorSelectionIds,['shape','second']);
+  const state=decorGroupColorState(h.host._decorList,'stroke',5);
+  const raw=editGroupColor(groupColorDraft(state),'opacity','25');
+  assert.equal(await h.set('stroke',raw),true);
+  assert.equal(h.state.writes.length,2);assert.equal(h.state.records.length,2);
+  assert.deepEqual(h.host._decorList.map(x=>x.color),initial.spaces[0].decor.map(x=>x.color));
+  assert.deepEqual(h.host._decorList.map(x=>x.opacity),[.25,.25]);
+  assert.deepEqual(h.host._decorList[1].future,{keep:[true]});
+});
+
+test('#1038 preparer, rejected prior queue and refused transport each restore the entire visible group with no accepted history',async()=>{
+  for(const reason of ['prepare','queue','transport']){
+    const h=groupHarness(),initial=structuredClone(h.host._serverCfg),gesture=previewGroup(h);
+    if(reason==='prepare')h.state.prepareError=true;
+    if(reason==='queue')h.host._writeChain=Promise.reject(Error('prior refused'));
+    if(reason==='transport')h.state.saveError=Error('refused');
+    h.editor.finishDecorGroupMove(gesture.before,gesture.press,gesture.current);await settleGroup(h);
+    assert.deepEqual(h.host._serverCfg,initial,reason);assert.equal(h.state.records.length,0,reason);
+    assert.equal(h.state.writes.length,reason==='transport'?1:0,reason);
+    assert.deepEqual(h.editor.decorSelectionIds,['shape','second']);
+  }
+});
+
+test('#1038 retired held group cannot send, roll back a foreign body or release a newer authority handoff',async()=>{
+  const h=groupHarness(),oldQueue=deferred();h.host._writeChain=oldQueue.promise;
+  const old=previewGroup(h);h.editor.finishDecorGroupMove(old.before,old.press,old.current);
+  h.host.hass={...h.host.hass,connection:{},user:{id:'new-owner'}};h.context.observe(h.host.hass);
+  const foreign=structuredClone(h.host._serverCfg);foreign.settings={foreign:'preserve'};
+  foreign.spaces[0].decor[0].x=2;
+  h.adoption.adoptResponses({config:foreign,rev:30},undefined,()=>{},()=>{});
+  h.editor.retireSelection();assert.equal(h.editor.selectDecorIds(['shape','second']),true);
+  const newQueue=deferred();h.host._writeChain=newQueue.promise;
+  const fresh=previewGroup(h,.2,.1),candidate=structuredClone(h.host._serverCfg);
+  h.editor.finishDecorGroupMove(fresh.before,fresh.press,fresh.current);
+  oldQueue.reject(Error('retired prior queue'));await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(h.host._serverCfg,candidate);assert.equal(h.state.writes.length,0);
+  assert.equal(h.editor.selectDecorIds(['shape']),false,'old finally must not release the newer held handoff');
+  newQueue.resolve();await settleGroup(h);
+  assert.deepEqual(h.state.writes,[candidate]);assert.equal(h.state.records.length,1);
+  assert.deepEqual(h.host._serverCfg.settings,{foreign:'preserve'});
+  assert.equal(h.editor.selectDecorIds(['shape']),true);
+});
+
+test('#1038 retirement while waiting never writes and rolls back only the unchanged owned preview',async()=>{
+  for(const retire of [h=>{h.host._canEdit=false;},h=>{h.host.isConnected=false;},h=>{h.host._mode='view';}]){
+    const h=groupHarness(),initial=structuredClone(h.host._serverCfg),queue=deferred();h.host._writeChain=queue.promise;
+    const gesture=previewGroup(h);h.editor.finishDecorGroupMove(gesture.before,gesture.press,gesture.current);
+    retire(h);queue.resolve();await settleGroup(h);
+    assert.deepEqual(h.host._serverCfg,initial);assert.equal(h.state.writes.length,0);assert.equal(h.state.records.length,0);
+  }
 });

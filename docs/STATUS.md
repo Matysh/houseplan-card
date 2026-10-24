@@ -140,6 +140,12 @@ Shift 45° preview/commit and one ordinary history step per independent segment.
 Its temporary anchor follows active-chain Undo/Redo and ends on Esc or context
 replacement. Navigation/cancel tails never draw; saved decor has no new fields.
 
+Decor multi-selection (#1038) uses the accepted individual-contour variant B.
+Current-space decor IDs remain volatile; one rigid move or common style edit
+uses one accepted existing Save/history command. Same-kind touched colour/alpha
+channels preserve opposite per-object values; images remain opacity-only and
+no group context actions, stored groups or new asset/API paths are introduced.
+
 Print download (#1036) combines unchanged PDF with a static SVG of the current
 View. SVG starts with devices off and transparent background, offers the shared
 custom colour picker, embeds local resources and rejects stale completions.

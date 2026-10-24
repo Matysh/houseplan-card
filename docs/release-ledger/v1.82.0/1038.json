@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "issue": 1038,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds the owner-requested multiple decor selection, rigid group move and same-kind common style fields beyond the stable singleton editor, while reusing its storage and command history.",
+  "summary": {
+    "ru": "Несколько объектов декора: совместное перемещение, индивидуальные контуры и общие цветовые свойства.",
+    "en": "Multiple decor selection with rigid move, individual outlines and common colour properties."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      {"id":"decor-multiselect-light","expectation":"new","reason":"Owner variant B: individual contours and same-kind independently mixed colour/alpha fields in existing Properties, light theme."},
+      {"id":"decor-multiselect-dark","expectation":"new","reason":"The same approved group selection, disabled individual actions and shared field presentation in the dark theme."}
+    ],
+    "smokes": ["smoke_decor_multiselect.mjs"]
+  }
+}

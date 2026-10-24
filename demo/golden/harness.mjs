@@ -8,6 +8,7 @@ export { resetGoldenStability } from './static-stability.mjs';
 import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
   prepareBatteryZigbeeOverlap, batteryZigbeeProbe, batteryZigbeeClip } from './device-battery.mjs';
 import { makeZigbeeLedFixture, prepareZigbeeLed } from './zigbee-led.mjs';
+import { addDecorMultiselectFixture, prepareDecorMultiselect } from './decor-multiselect.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -193,6 +194,7 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
+  if (scenario.decorMultiselect) addDecorMultiselectFixture(fixture,scenario);
   if (scenario.uiKit1051) {
     fixture.config.spaces.push({id:scenario.space,title:'UI kit',cell_cm:5,view_box:[0,0,1,1],
       rooms:[{id:'ui-room',name:'Room',poly:[[.1,.1],[.9,.1],[.9,.9],[.1,.9]]}],
@@ -2742,6 +2744,7 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   if (scenario.zigbeeLed) result.zigbeeLed = await prepareZigbeeLed(page);
+  if (scenario.decorMultiselect) result.decorMultiselect = await prepareDecorMultiselect(page);
   if (scenario.directLqi) {
     for (const [id, lqi] of Object.entries(scenario.directLqi)) {
       const line = page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${id}"] .lqi`);

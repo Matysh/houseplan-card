@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Select multiple Background objects with Ctrl+click, all decor with Ctrl+A,
+  or furniture with Ctrl+M. Individual outlines show the selection; drag any
+  member to move it together in one Undo step. Matching object types share
+  independent colour/opacity fields, including opacity-only images. (#1038)
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)
