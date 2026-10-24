@@ -114,6 +114,10 @@ Properties field after the first segment: the continuing preview retained the
 lightweight frame before the newly selected owner reached the panel. The Line
 commit now synchronizes that owner while its draft is terminal, then resumes
 the preview. No Escape or programmatic selection masks that integration case.
+The #883 history-refusal smoke likewise creates its Background Line with two
+real clicks. The old drag setup reproduced eight cascading failures because no
+decor/history step existed; its original refusal, neighbour-order, cursor and
+server-write assertions remain unchanged after adapting that one gesture.
 
 After rebasing onto accepted dev `845c20c3e` (#1029/#1047/#1052/#1053), fresh
 pinned Node 22.23.3 builds measure raw `bundleBytes` 3411158 → 3416670 (+5512 B).
