@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Restore the full plan after Home Assistant changes while its card is detached,
+  without waiting for another HA update or page event. Short returns in the
+  same HA context still retain their existing frame without reloading. (#1054)
 - Keep a continuous observed live tail behind a moving vacuum while the
   integration path catches up. Exact native points remain separate; confirmed
   Dreame cleanup starts no longer show the previous current trail. Diagnostics

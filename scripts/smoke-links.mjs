@@ -35,6 +35,12 @@ export const SMOKE_LINKS = [
     because: '#1053: public full/space lifecycle and actual direct-reading DOM must retain one shared feed, reject late detached HA assignment and reconnect. Generic recovery separately preserves exact mandatory transports and held canonical authority; its metadata distinction is observable only at the transport boundary.',
   },
   {
+    files: ['src/houseplan-card.ts', 'src/card-read-lifecycle.ts'],
+    smokes: ['smoke_detached_authority.mjs', 'smoke_view_recovery.mjs'],
+    because: '#1054: public remove/hass/append must preserve the current mandatory read intent after foreign authority retirement, including a reused HA object and coalesced ABA; existing recovery protects same-context no-reload and stale read fencing.',
+
+  },
+  {
     symbols: ['syncNative', 'selectedTextId', 'measureHouseplanDecorText'],
     smokes: ['smoke_decor_creation_selection.mjs', 'smoke_properties_panel.mjs'],
     because: '#1047: real creation gestures compare the newest native ID, Properties owner, painted frame and subsequent property write; existing Properties smoke protects field completion, width transitions and the other editors.',

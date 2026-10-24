@@ -1551,6 +1551,10 @@ still recognised in stored config but no longer served
   Context is observed per HA assignment before Lit coalesces A→B→A; transport
   restart waits for the current usable authority, including a temporary HA gap.
   Static attach revalidates the server; a full long return without HA defers.
+  A foreign HA assigned while detached also retains a current read intent
+  after retiring the accepted document (#1054). Reconnect consumes that intent
+  through the same loader; same-context short returns have none. Visual HA
+  deduplication, including a reused object or coalesced ABA, cannot erase it.
   The shared continuity controller owns one bounded paint attempt. A timeout
   retains matching staged data without marking a complete frame or self-retry;
   external readiness/update can recover. Canonical: `WARM-REMOUNT.md` §5.1.
