@@ -3,7 +3,7 @@ export async function prepareDeviceOfflineBoard(page) {
   return page.evaluate(async () => {
     const card = window.__goldenCard, root = card.renderRoot;
     const near = (actual, expected) => Number.isFinite(actual) && Math.abs(actual - expected) < .005;
-    const face = id => root.querySelector(`.dev[data-id="offline-${id}"]`);
+    const face = id => root.querySelector(`.dev[data-id="offline-${id}"],.dev[data-led-badge="offline-${id}"]`);
     const opacity = node => node ? Number(getComputedStyle(node).opacity) : NaN;
     const effective = (node, marker) => {
       let value = 1;
@@ -53,6 +53,10 @@ export async function prepareDeviceOfflineBoard(page) {
       const led = root.querySelector(`.led-strip[data-marker="offline-led-${state}"]`);
       const core = led?.querySelector('.led-core'), outline = led?.querySelector('.led-outline');
       if (led?.dataset.state !== 'off' || !core?.getAttribute('d') || !outline?.getAttribute('d')
+        || getComputedStyle(core).stroke !== 'rgb(255, 255, 255)'
+        || getComputedStyle(outline).stroke !== 'rgb(56, 56, 56)'
+        || !near(Number(getComputedStyle(core).strokeOpacity), .7)
+        || !led.querySelector('.led-body')?.getAttribute('mask')?.startsWith('url(#hp-led-off-')
         || !['none', '0px'].includes(getComputedStyle(core).strokeDasharray)
         || !['none', '0px'].includes(getComputedStyle(outline).strokeDasharray))
         throw new Error(`offline board fabricates an LED unavailable state: ${state}`);

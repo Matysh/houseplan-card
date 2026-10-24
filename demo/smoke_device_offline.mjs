@@ -53,6 +53,11 @@ try {
   out.allLedFixturesAreActualSvg = Object.values(leds).every(led => led?.core?.d && led?.outline?.d && led?.hit?.d);
   out.ledUnknownAndUnavailableUseOrdinaryOffInk = JSON.stringify(ledInk(leds.off)) === JSON.stringify(ledInk(leds.unavailable))
     && JSON.stringify(ledInk(leds.off)) === JSON.stringify(ledInk(leds.unknown));
+  out.ordinaryOffLedUsesApprovedWhiteCutout = leds.off?.core?.stroke === 'rgb(255, 255, 255)'
+    && leds.off?.outline?.stroke === 'rgb(56, 56, 56)' && closeTo(Number(leds.off?.core?.strokeOpacity), .7)
+    && leds.off?.core?.dash === 'none' && leds.off?.outline?.dash === 'none'
+    && leds.off?.bodyMask?.startsWith('url(#hp-led-off-')
+    && closeTo(parseFloat(leds.off?.outline?.width), parseFloat(leds.off?.core?.width) * 2);
   out.ledNeverInventsUnavailablePaint = Object.values(leds).every(led => led?.state === 'off'
     && !led.classes.includes('unavailable') && ['none', '0px'].includes(led.core.dash));
   out.ledWithoutBadgeHasNoOfflineIcon = await page.evaluate(() => !window.__card.renderRoot

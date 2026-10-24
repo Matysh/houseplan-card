@@ -85,7 +85,8 @@ export async function readDeviceOfflineLeds(page) {
         dash: style.strokeDasharray, filter: style.filter };
     };
     return [key, { state: root.dataset.state, classes: root.getAttribute('class'),
-      core: path('.led-core'), outline: path('.led-outline'), hit: path('.led-hit') }];
+      core: path('.led-core'), outline: path('.led-outline'), hit: path('.led-hit'),
+      bodyMask: root.querySelector('.led-body')?.getAttribute('mask') }];
   })));
 }
 
@@ -99,7 +100,8 @@ export async function readDeviceOfflinePaint(page, ids, surface = 'full') {
     if (!root) throw new Error(`offline fixture surface missing: ${surface}`);
     const result = {};
     for (const id of ids) {
-      const marker = surface === 'preview' ? root.querySelector('.dev') : root.querySelector(`.dev[data-id="${id}"]`);
+      const marker = surface === 'preview' ? root.querySelector('.dev')
+        : root.querySelector(`.dev[data-id="${id}"],.dev[data-led-badge="${id}"]`);
       if (!marker) { result[id] = null; continue; }
       const paint = node => {
         if (!node) return null;
