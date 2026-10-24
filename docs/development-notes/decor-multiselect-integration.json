@@ -15,8 +15,8 @@
     "equivalence": "issue-1008-color-picker-polish/artifacts/ui-1025/actual-S8-accepted-equivalence.json"
   },
   "combinedBuild": {
-    "source": "760b809cc03721857ca0ab9536e4fff3c928a4de",
-    "fingerprint": "6dcd3e74d26b1066fc82ea3932519f733fd7890d578c8be0b631d2c1acb4bfc1",
+    "source": "4e43712a4c48abb1f73aee0ef54f9d9d07fdc91c",
+    "fingerprint": "06f7c271357a3d5986dd5dec5de06f2eb425abe4ea20cf4a9ecfe403689c50b9",
     "node": "22.23.3",
     "rollup": "4.62.2",
     "platform": "win32",
@@ -291,6 +291,20 @@
       "caught": "unknown (nightly only)"
     },
     "status": "Local targeted proof; next mandatory normal hook, exact CI and independent CODE are still required.",
-    "fingerprint": "06f7c271357a3d5986dd5dec5de06f2eb425abe4ea20cf4a9ecfe403689c50b9"
+    "fingerprint": "06f7c271357a3d5986dd5dec5de06f2eb425abe4ea20cf4a9ecfe403689c50b9",
+    "requiredProducer": {
+      "source": "4e43712a4c48abb1f73aee0ef54f9d9d07fdc91c",
+      "smokes": 40,
+      "golden": 5,
+      "result": "PASS",
+      "platform": "WSL Ubuntu-24.04",
+      "node": "22.23.3",
+      "playwright": "1.62.0",
+      "chromium": "151.0.7922.34",
+      "revision": 1234,
+      "goldenPixels": "All five PNG hashes exactly match the previously viewed declared scenes; no baseline acceptance.",
+      "followup": "A separate refined Text-scale run adds a positive live-copy precondition to the unchanged geometry/ID assertions; the other 39 smoke recipes and all five captures are unchanged.",
+      "followupResult": "PASS: two actual live Text copies observed before the zero duplicate-ID assertion; all prior counters and persistence assertions retained."
+    }
   }
 }

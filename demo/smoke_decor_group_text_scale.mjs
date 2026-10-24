@@ -138,6 +138,8 @@ try{
     await settle();
     check('group.text_scale.changed_text_remeasured',await page.evaluate(()=>window.__1038TextWork.selectedBox),1);
     await drag('scale-left',.03,.02,false);
+    await page.evaluate(()=>window.__card._editorRuntime._whenLiveEditorSettled());
+    check('group.text_scale.live_copy_positive',await card.locator('.hp-live-decor text.dtext').count(),2);
     check('group.text_scale.live_copy_has_no_duplicate_id',await card.locator('.hp-live-decor text.dtext[id]').count(),0);
     await page.mouse.up();await settle();
     const textAfter=await state(),work=await page.evaluate(()=>({...window.__1038TextWork}));
