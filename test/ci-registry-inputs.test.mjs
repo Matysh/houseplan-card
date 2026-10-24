@@ -1,11 +1,13 @@
 import test from 'node:test';
 import { fixtureVersions as versions } from './helpers/ci-registry-version-fixture.mjs';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { registryInputs, registryReader, REGISTRY_JOBS, maskJsonScalars, versionNormalizer, jobRecipe, registryProtocolFiles } from '../scripts/ci-registry-inputs.mjs';
+import { pathToFileURL } from 'node:url';
+import { deflateSync } from 'node:zlib';
+import { registryInputs, registryReader, REGISTRY_JOBS, maskJsonScalars, versionNormalizer, jobRecipe, registryProtocolFiles, registryRemaining } from '../scripts/ci-registry-inputs.mjs';
 import { profilePaths } from '../scripts/ci-profile-paths.mjs';
 import { registryInventory } from '../scripts/ci-registry-inventory.mjs';
 import { generatedProfiles } from '../scripts/ci-profiles.mjs';
@@ -284,4 +286,109 @@ test('#1060 registry API uses exact local Git policy rather than dirty files or 
   await assert.rejects(() => source({ run: 123, attempt: 1, sha,
     job: 'frontend', workflow: '.github/workflows/validate.yml' }), /source immutable proof absent/);
   assert.equal(calls.some(path => path.startsWith('contents/')), false);
+});
+
+function partialRepository(t) {
+  const source = repository(t), root = join(temporary(t), 'partial');
+  const tests = Array.from({ length: 24 }, (_, index) => `test/cold-${index}.test.mjs`);
+  for (const [index, path] of tests.entries()) put(source, path,
+    `import '../demo/helpers/cold-helper.mjs';\nexport const caseId = ${index};\n`);
+  put(source, 'demo/helpers/cold-helper.mjs', "import './cold-leaf.mjs';\nexport const helper = true;\n");
+  put(source, 'demo/helpers/cold-leaf.mjs', 'export const leaf = true;\n');
+  put(source, 'demo/golden/baselines/unrelated.png', Buffer.alloc(1024, 17));
+  put(source, 'scripts/ci-profile-paths.json', JSON.stringify(profilePaths(tests,
+    [...tests, 'demo/helpers/cold-helper.mjs', 'demo/helpers/cold-leaf.mjs'])));
+  commit(source, 'cold tooling closure');
+  git(source, ['config', 'uploadpack.allowFilter', 'true']);
+  git(source, ['config', 'uploadpack.allowAnySHA1InWant', 'true']);
+  git(source, ['clone', '--no-local', '--no-checkout', '--filter=blob:none', '--depth=1', pathToFileURL(source).href, root]);
+  git(root, ['sparse-checkout', 'set', '--no-cone', '/scripts/', '/.github/workflows/', '/package.json',
+    '/package-lock.json', '/.python-version', '/.nvmrc', '/pyproject.toml']);
+  git(root, ['checkout', '--detach', 'HEAD']);
+  assert.equal(git(root, ['config', 'remote.origin.promisor']), 'true');
+  assert.equal(git(root, ['config', 'remote.origin.partialclonefilter']), 'blob:none');
+  const localObjects = () => new Set(execFileSync('git', ['-C', root, 'cat-file', '--batch-all-objects',
+    '--batch-check=%(objectname)'], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, GIT_NO_LAZY_FETCH: '1',
+      GIT_ALLOW_PROTOCOL: '' } }).trim().split('\n'));
+  const firstOid = git(source, ['rev-parse', 'HEAD:' + tests[0]]);
+  assert.equal(localObjects().has(firstOid), false, 'fixture must really omit the promised test blob');
+  assert.equal(existsSync(join(root, tests[0])), false, 'sparse checkout must omit the test');
+  return { source, root, tests, localObjects };
+}
+async function traceGit(root, action) {
+  const path = join(root, 'git-trace.json'), before = process.env.GIT_TRACE2_EVENT;
+  process.env.GIT_TRACE2_EVENT = path;
+  try { await action(); }
+  finally { if (before === undefined) delete process.env.GIT_TRACE2_EVENT; else process.env.GIT_TRACE2_EVENT = before; }
+  return readFileSync(path, 'utf8').trim().split('\n').map(line => JSON.parse(line))
+    .filter(event => event.event === 'start' && event.argv.includes('fetch'));
+}
+
+test('#1062 actual sparse partial clone hydrates one immutable batch per dependency frontier', async t => {
+  const { source, root, tests, localObjects } = partialRepository(t);
+  const fetches = await traceGit(root, async () => {
+    const reader = registryReader(root), candidate = { entries: snapshotEntries(reader.rows), read: reader.read,
+      readMany: reader.readMany, domains: JSON.parse(reader.text('scripts/ci-profile-paths.json')),
+      inventory: JSON.parse(reader.text('scripts/ci-registry-inventory.json')) };
+    await validateSnapshotPolicy(candidate);
+    await validateSnapshotPolicy(candidate);
+    assert.equal(reader.text(tests[0]), readFileSync(join(source, tests[0]), 'utf8'));
+    assert.deepEqual(identity(root, 'exact', { reader }).keys, identity(source).keys);
+  });
+  assert.equal(fetches.length, 3, '24 tests + helper + leaf are three batches, never 26 lazy fetches');
+  assert.ok(fetches.every(event => event.argv.includes('--stdin') && event.argv.includes('--no-write-fetch-head')));
+  const baselineOid = git(source, ['rev-parse', 'HEAD:demo/golden/baselines/unrelated.png']);
+  assert.equal(localObjects().has(baselineOid), false, 'unrelated image bytes remain unhydrated');
+});
+
+test('#1062 offline partial clone refuses missing blobs after one bounded explicit fetch', async t => {
+  const { root, tests, localObjects } = partialRepository(t);
+  git(root, ['remote', 'set-url', 'origin', pathToFileURL(join(root, 'absent-origin')).href]);
+  const reader = registryReader(root), before = localObjects().size;
+  const fetches = await traceGit(root, () => {
+    assert.throws(() => reader.readMany(tests));
+    assert.throws(() => reader.readMany(['test/not-in-the-immutable-tree.mjs']), /missing\/symbolic input/);
+  });
+  assert.equal(fetches.length, 1, 'no hidden fetch per missing blob');
+  assert.equal(localObjects().size, before);
+});
+
+test('#1062 immutable reader refuses unsafe modes, wrong blob bytes and an exhausted shared deadline', t => {
+  const root = repository(t), path = 'test/unsafe.mjs';
+  put(root, path, 'export const original = true;\n'); commit(root, 'unsafe fixture input');
+  const oid = git(root, ['rev-parse', 'HEAD:' + path]);
+  git(root, ['update-index', '--cacheinfo', `120000,${oid},${path}`]);
+  git(root, ['commit', '-m', 'symbolic input mode']);
+  assert.throws(() => registryReader(root).read(path), /missing\/symbolic input/);
+  git(root, ['update-index', '--cacheinfo', `100644,${oid},${path}`]);
+  git(root, ['commit', '-m', 'restore regular input mode']);
+  const reader = registryReader(root), wrong = Buffer.from('counterfeit bytes\n');
+  const objectFile = join(root, '.git', 'objects', oid.slice(0, 2), oid.slice(2));
+  chmodSync(objectFile, 0o600);
+  writeFileSync(objectFile, deflateSync(Buffer.concat([Buffer.from(`blob ${wrong.length}\0`), wrong])));
+  assert.throws(() => reader.read(path), /bytes differ from immutable Git OID/);
+  assert.throws(() => registryReader(root, 'HEAD', { deadline: Date.now() - 1 }), /deadline exceeded/);
+  assert.throws(() => registryRemaining(NaN), /deadline exceeded/);
+});
+
+test('#1062 stalled explicit hydration is stopped by the remaining deadline', async t => {
+  const { root, tests } = partialRepository(t);
+  const script = join(root, 'slow-upload-pack.mjs'), pidPath = join(root, 'slow-upload-pack.pid');
+  writeFileSync(script, `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(pidPath)}, String(process.pid));\nsetTimeout(() => {}, 5000);\n`);
+  const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
+  git(root, ['config', 'remote.origin.uploadpack', `${quote(process.execPath)} ${quote(script)}`]);
+  const reader = registryReader(root, 'HEAD', { deadline: Date.now() + 800 });
+  const started = Date.now();
+  try {
+    assert.throws(() => reader.readMany(tests), error => error.code === 'ETIMEDOUT');
+    assert.ok(Date.now() - started < 2500, 'synchronous Git must not outlive the probe budget');
+    assert.throws(() => reader.read(tests[0]), /deadline exceeded/);
+  } finally {
+    // The transport fixture is a grandchild of Git. Clean its explicit PID on
+    // Windows too; the timing assertion above already measured the real return.
+    if (existsSync(pidPath)) {
+      try { process.kill(Number(readFileSync(pidPath, 'utf8')), 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
 });

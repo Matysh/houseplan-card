@@ -5058,7 +5058,7 @@ accepting global baselines: declared task deltas remain pending until beta.
 render connection requires an explicit scene plan, with an actionable error;
 it never silently skips the change or expands to every Golden scene.
 
-Read-only replays in `test/fixtures/smoke-select/historical-plans.json` pin the
+Read-only replays in `test/data/smoke-selection-history.json` pin the
 original material, base, corpus and registered links: #1051 selects 41 smokes
 instead of 223, #1046 34 instead of 168, and #1047 17 instead of 75. These are
 selection counts, not measured execution time or repeated browser runs.
@@ -5205,10 +5205,12 @@ accepted dev has the new reader, the trusted controller uses a compatible fresh
 fallback rather than accepting unsupported receipt semantics.
 
 Lookup's own checkout is sparse: ordinary file identity uses immutable Git blob
-content IDs plus modes, independent of commit ancestry. Only trust/config files
-and beta scalar mirrors need their bytes; bundles and baseline images are not
-downloaded for lookup. Network authentication has an eight-second
-lookup deadline and unavailable/slow sources fall back to fresh jobs. Actual
+content IDs plus modes, independent of commit ancestry. Trust/config files,
+tooling dependency closure and beta scalar mirrors require bytes; bundles and
+baseline images are not downloaded for lookup. Missing immutable blobs are
+fetched in batches with implicit per-object lazy fetch disabled (#1062). Git I/O
+and network authentication share a bounded lookup deadline; unavailable/slow
+sources fall back to fresh jobs. Actual
 Node flags/options, locale and timezone are part of the recorded environment;
 local reuse never substitutes CI image values. The proof publisher alone has
 contents:write and skips fork PR index writes.
