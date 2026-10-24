@@ -155,7 +155,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       step: field.step === undefined ? 'any' : field.step / (port.imperial && field.unit === 'cm' ? 2.54 : 1), ariaLabel: label,
       readonly, invalid: !!draft?.error, disabled: pending,
       onInput: raw => port.edit(field, raw) });
-  return html`${field.section ? html`<div class="hp-prop-feature-label">${t(field.section)}</div>` : nothing}<div class="hp-prop-field ${field.mode ?? ''} ${field.control === 'text' || field.wide ? 'wide' : ''}" data-property=${field.key}
+  return html`${field.section ? html`<div class="hp-prop-feature-label">${t(field.section)}</div>` : nothing}<div class="hp-prop-field ${field.mode ?? ''} ${field.control === 'text' || field.wide ? 'wide' : ''} ${field.control === 'group-color' ? 'hp-prop-group-color' : ''}" data-property=${field.key}
       @keydown=${keydown} @focusout=${blur} @focusin=${() => port.enterField(field.key)} title=${field.reason ? t(field.reason) : nothing}>
     ${field.control === 'text' || field.control === 'toggle' || field.control === 'action' ? nothing : html`<label for=${id}>${label}${readonly ? propertiesIcon('lock') : nothing}</label>`}
     ${control}

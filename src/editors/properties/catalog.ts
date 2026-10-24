@@ -210,7 +210,7 @@ export function propertiesCatalog(target: PropertiesTarget | null, context: Prop
         if (!state) continue;
         const index = channel === 'stroke' ? 0 : 1;
         appearance[index] = { key: channel, label: state.alphaOnly ? 'opacity' : sameKind === 'text' ? 'text_color' : channel,
-          value: state, control: 'group-color' };
+          value: state, control: 'group-color', wide: true };
       }
       featureTitle = sameKind ?? undefined;
       if (sameKind === 'rect' || sameKind === 'ellipse') features.push(single({ key: 'fill_enabled', label: 'fill', value: null, control: 'toggle' }));

@@ -144,6 +144,13 @@ try{
     check(`group.matrix.${kind}.fill_matrix`,await panel.locator('[data-property="fill"] hp-color-opacity').count(),kind==='rect'||kind==='ellipse'?1:0);
     check(`group.matrix.${kind}.actions_disabled`,await panel.locator('.hp-prop-action').evaluateAll(els=>els.every(el=>el.getAttribute('aria-disabled')==='true')));
     const start=await state();
+    check(`group.matrix.${kind}.mixed_labels_readable`,await panel.locator('[data-property="stroke"] .hpf-colorfield input').evaluateAll(inputs=>{
+      const canvas=document.createElement('canvas'),context=canvas.getContext('2d');
+      return inputs.filter(input=>!input.value).every(input=>{
+        const style=getComputedStyle(input);context.font=style.font;
+        return input.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)>=context.measureText(input.placeholder).width;
+      });
+    }));
     if(kind!=='image'){
       check(`group.matrix.${kind}.mixed_hex_empty`,await hex().inputValue(),'');
       await hex().fill('#ABCDEF');await hex().press('Enter');await settle();

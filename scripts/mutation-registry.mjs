@@ -21128,6 +21128,9 @@ const decorLine1046Cases = [
 ];
 
 const decorGroup1038Cases = [
+  {id:'decor-group-mixed-labels-truncated-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC4: both independent mixed-value inputs must fit the actual full phrase in the existing Properties panel; only computed browser font/column width reveals clipping.',
+    patches:[{file:'src/editors/properties/catalog.ts',find:"value: state, control: 'group-color', wide: true",replace:"value: state, control: 'group-color', wide: false"}]},
   {id:'decor-group-invalid-popup-dismissed-by-navigation-1038',guard:'node demo/smoke_decor_multiselect.mjs',
     because:'#1038 AC4/6: document-capture outside pointer delivery must not discard an invalid mounted group picker before the real canvas selection owner sees it.',
     patches:[{file:'src/hp-color-opacity.ts',find:'      if (this.reportTouched && !this.prepareCompletion()) {',replace:'      if (false && this.reportTouched && !this.prepareCompletion()) {'}]},

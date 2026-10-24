@@ -126,7 +126,7 @@ test('#1038 group kind matrix retains disabled individual fields and exposes onl
     const second={...first,id:'second',color:'#0000ff',opacity:.8,text:'Other',symbol:'armchair',asset_id:'second-asset'};
     const m=model({kind:'decor-group',value:[first,second]}),f=fields(m);
     assert.equal(m.title,'Selected: 2');assert.equal(f.x.mode,'disabled');assert.equal(f.y.mode,'disabled');
-    assert.equal(f.angle.mode,'disabled');assert.equal(f.stroke.control,'group-color');
+    assert.equal(f.angle.mode,'disabled');assert.equal(f.stroke.control,'group-color');assert.equal(f.stroke.wide,true);
     assert.equal(f.stroke.value.mixedOpacity,true);assert.equal(f.stroke.value.alphaOnly,kind==='image');
     assert.equal(f.fill.control==='group-color',kind==='rect'||kind==='ellipse');
     assert.ok(m.actions.every(action=>action.disabled==='group_single_only'));

@@ -9,7 +9,7 @@
   can be explicitly rebuilt after another client advances the revision. A
   retained invalid field also blocks group input on a compact desktop. Invalid
   group picker input stays visible and blocks outside navigation until corrected
-  or cancelled. (#1038)
+  or cancelled. Group colour rows leave room for both full mixed-value labels. (#1038)
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)
