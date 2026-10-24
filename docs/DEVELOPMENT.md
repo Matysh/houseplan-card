@@ -31,7 +31,7 @@ controls; the combined accepted-#1018 candidate passes all 44 native checks.
 Both new pinned-WSL Golden captures have the same PNG hashes as the earlier
 candidate and were visually inspected without accepting baselines. The actual
 Windows build measures View339869/editor344587 gzip and raw3437705 bytes;
-all current limits pass unchanged. The 113 related pure tests also pass.
+all limits at that material pass unchanged. The 113 related pure tests also pass.
 
 Eight related native commands cover controls, icon paint/interaction, manual
 state sources, LED Glow, same-tick freshness, cover morphs, editor landmarks
@@ -40,6 +40,13 @@ after aligning the obsolete View selection expectation with accepted #1051.
 The real wide-editor blue selection and the inert View class are both checked;
 the fixed 780px demo host must be resized for the wide-editor route. Original
 failures and the exact recipe/log hashes remain in the compact receipt.
+
+After accepted #1019 (`e8c618924`), candidate `900800baf` again passes all
+44 native checks and both pinned-WSL captures, with identical PNG hashes.
+The merged source census has444 files/431 sheets/1142 class consumers and no
+diagnostics or unresolved producers. Actual Windows View339613/editor343989
+gzip and raw3432482 bytes pass the unchanged limits. Matrix87 contains both
+the accepted Rules scene and this issue's two new boards; no baseline is accepted.
 
 ## Dialog CSS ownership #1019
 

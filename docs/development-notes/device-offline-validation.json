@@ -431,5 +431,54 @@
       }
     },
     "resolution": "The old synthetic View .sel probe expected the pre-#1051 amber ring. Its accepted replacement is inert in View and blue-core selection in the actual >=960px Properties editor. The demo host defaults to780px (dialog route); an ordinary1100px fixture host exercises real wide-editor native selection. Product A and the original failed logs are unchanged."
+  },
+  "postCssIntegration": {
+    "acceptedDev": "e8c618924cfa2845dcf1073f65404cd093efed10",
+    "metrics": {
+      "schema": 1,
+      "sourceSha": "900800baf3eacb3587bab68eabf25023053311b8",
+      "toolchain": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "rollup": "4.62.2"
+      },
+      "fingerprint": "69430d5a24d70a8aa9d82b6c9c2953f5e76d1ffbfd5a5aed167d1af6c36541ee",
+      "manifestSha256": "1b3f0eb977b711ede0474499b19331520fcb242ee27ec2c1e1c2333306649129",
+      "rawDistBytes": 3432482,
+      "initialViewGzipBytes": 339613,
+      "lazyEditorGzipBytes": 343989
+    },
+    "native": {
+      "command": "node demo/smoke_device_offline.mjs",
+      "logSha256": "dc36355842cf30b2ccfff3bea3f23576f70eb106b147767f77d2d147c7bb761b",
+      "checks": 44,
+      "checksEqualPrevious": true
+    },
+    "golden": [
+      {
+        "id": "device-offline-light",
+        "actualSha256": "d01992bc64af015fb820d8c0e7bc0c781566329859732eaf0ce6b9859cde49a5",
+        "matrixVersion": 87,
+        "status": "missing-baseline",
+        "baselineAccepted": false
+      },
+      {
+        "id": "device-offline-dark",
+        "actualSha256": "5cea404a6df77bcaae0fc741053e7ab65ca8c75b7b2aa6efcecae470454a1b9a",
+        "matrixVersion": 87,
+        "status": "missing-baseline",
+        "baselineAccepted": false
+      }
+    ],
+    "sourceConflictCount": 0,
+    "documentationConflicts": "Both DEVELOPMENT and STATUS sections retained; derived counts regenerated.",
+    "cssCensus": {
+      "files": 444,
+      "emittedSheets": 431,
+      "classConsumers": 1142,
+      "diagnostics": 0,
+      "unresolvedProducers": 0
+    },
+    "limitsChanged": false
   }
 }
