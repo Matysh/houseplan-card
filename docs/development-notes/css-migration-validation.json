@@ -1,0 +1,426 @@
+{
+  "schema": 1,
+  "issue": 1019,
+  "scope": "CSS cleanup before/after, not release or full regression proof",
+  "acceptedBefore": "98e7d8d09ce44742ce6bdd290b487960c76b4b71",
+  "candidateProduct": "b3f4adb54f13dcf57d3afb99cbafb4c6a850dd3e",
+  "laterChanges": "Subsequent commits change only tooling/docs. The one new Rules Golden is a new regression frame, not an intended product delta.",
+  "native": {
+    "command": "node scripts/dev/css-migration-capture.mjs --root=<built-checkout> --out=<output> [--compare=<before-output>]",
+    "recipeSha256": "cb9de59367e67861581b84e277f0d57fc09f633a3a2744a8100f4f36d306b4a9",
+    "beforeFingerprint": "991ea1157cc47b7352443ff250c1d08155b7f5690dd4b365b3b4ef4e89adc9ff",
+    "afterFingerprint": "1305422ac8788fc9ad31ae84daee60abdcf728d9f64482a6c7607dab5163a3a3",
+    "node": "v22.23.3",
+    "playwright": "1.62.0",
+    "chromium": "151.0.7922.34",
+    "revision": "1234",
+    "platform": "WSL Ubuntu 24.04",
+    "offlineHaFrontend": "20260729.7",
+    "matrix": {
+      "themes": [
+        "light",
+        "dark",
+        "custom"
+      ],
+      "widths": [
+        1280,
+        600,
+        390
+      ]
+    },
+    "states": 117,
+    "computedAndGeometry": "equal for every captured element",
+    "png": "byte-identical for every state",
+    "manifestSha256": "c8c0496c15c75b482e11b7dbe114b0740e844b704e1c0860a4378aa7ec8e4882",
+    "stateIds": [
+      "light-1280-rules-valid",
+      "light-1280-rules-invalid",
+      "light-1280-rules-delete-hover",
+      "light-1280-rules-focus",
+      "light-1280-inbox-on_plan",
+      "light-1280-inbox-available",
+      "light-1280-inbox-discovery",
+      "light-1280-inbox-hidden",
+      "light-1280-inbox-readd",
+      "light-1280-inbox-empty",
+      "light-1280-radar-active",
+      "light-1280-radar-coordinate-focus",
+      "light-1280-radar-wizard",
+      "light-600-rules-valid",
+      "light-600-rules-invalid",
+      "light-600-rules-delete-hover",
+      "light-600-rules-focus",
+      "light-600-inbox-on_plan",
+      "light-600-inbox-available",
+      "light-600-inbox-discovery",
+      "light-600-inbox-hidden",
+      "light-600-inbox-readd",
+      "light-600-inbox-empty",
+      "light-600-radar-active",
+      "light-600-radar-coordinate-focus",
+      "light-600-radar-wizard",
+      "light-390-rules-valid",
+      "light-390-rules-invalid",
+      "light-390-rules-delete-hover",
+      "light-390-rules-focus",
+      "light-390-inbox-on_plan",
+      "light-390-inbox-available",
+      "light-390-inbox-discovery",
+      "light-390-inbox-hidden",
+      "light-390-inbox-readd",
+      "light-390-inbox-empty",
+      "light-390-radar-active",
+      "light-390-radar-coordinate-focus",
+      "light-390-radar-wizard",
+      "dark-1280-rules-valid",
+      "dark-1280-rules-invalid",
+      "dark-1280-rules-delete-hover",
+      "dark-1280-rules-focus",
+      "dark-1280-inbox-on_plan",
+      "dark-1280-inbox-available",
+      "dark-1280-inbox-discovery",
+      "dark-1280-inbox-hidden",
+      "dark-1280-inbox-readd",
+      "dark-1280-inbox-empty",
+      "dark-1280-radar-active",
+      "dark-1280-radar-coordinate-focus",
+      "dark-1280-radar-wizard",
+      "dark-600-rules-valid",
+      "dark-600-rules-invalid",
+      "dark-600-rules-delete-hover",
+      "dark-600-rules-focus",
+      "dark-600-inbox-on_plan",
+      "dark-600-inbox-available",
+      "dark-600-inbox-discovery",
+      "dark-600-inbox-hidden",
+      "dark-600-inbox-readd",
+      "dark-600-inbox-empty",
+      "dark-600-radar-active",
+      "dark-600-radar-coordinate-focus",
+      "dark-600-radar-wizard",
+      "dark-390-rules-valid",
+      "dark-390-rules-invalid",
+      "dark-390-rules-delete-hover",
+      "dark-390-rules-focus",
+      "dark-390-inbox-on_plan",
+      "dark-390-inbox-available",
+      "dark-390-inbox-discovery",
+      "dark-390-inbox-hidden",
+      "dark-390-inbox-readd",
+      "dark-390-inbox-empty",
+      "dark-390-radar-active",
+      "dark-390-radar-coordinate-focus",
+      "dark-390-radar-wizard",
+      "custom-1280-rules-valid",
+      "custom-1280-rules-invalid",
+      "custom-1280-rules-delete-hover",
+      "custom-1280-rules-focus",
+      "custom-1280-inbox-on_plan",
+      "custom-1280-inbox-available",
+      "custom-1280-inbox-discovery",
+      "custom-1280-inbox-hidden",
+      "custom-1280-inbox-readd",
+      "custom-1280-inbox-empty",
+      "custom-1280-radar-active",
+      "custom-1280-radar-coordinate-focus",
+      "custom-1280-radar-wizard",
+      "custom-600-rules-valid",
+      "custom-600-rules-invalid",
+      "custom-600-rules-delete-hover",
+      "custom-600-rules-focus",
+      "custom-600-inbox-on_plan",
+      "custom-600-inbox-available",
+      "custom-600-inbox-discovery",
+      "custom-600-inbox-hidden",
+      "custom-600-inbox-readd",
+      "custom-600-inbox-empty",
+      "custom-600-radar-active",
+      "custom-600-radar-coordinate-focus",
+      "custom-600-radar-wizard",
+      "custom-390-rules-valid",
+      "custom-390-rules-invalid",
+      "custom-390-rules-delete-hover",
+      "custom-390-rules-focus",
+      "custom-390-inbox-on_plan",
+      "custom-390-inbox-available",
+      "custom-390-inbox-discovery",
+      "custom-390-inbox-hidden",
+      "custom-390-inbox-readd",
+      "custom-390-inbox-empty",
+      "custom-390-radar-active",
+      "custom-390-radar-coordinate-focus",
+      "custom-390-radar-wizard"
+    ]
+  },
+  "canonical": [
+    {
+      "id": "support-desktop-empty-light-en",
+      "actualSha256": "6e2b1e9f10c305ac3df212cc0cba0329316c7fa7c853decd98d4d53831cadf54",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "support-desktop-preview-dark-en",
+      "actualSha256": "02c76cdb839fb94d4189f960a4656c84d1545276faa580fa63ffee962b2c6abf",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "support-phone-validation-light-ru",
+      "actualSha256": "d7ca0018b723188818c931a541fab642572750a95cdab4d13cbe78d9ebad59c7",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "support-phone-success-dark-en",
+      "actualSha256": "6465d8fcaa1217f780c184c3c62f26b0c3cb31490cdb69fff0174d7188e2f12f",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "support-relay-error-light-en",
+      "actualSha256": "90653ec56fbb89bfb5eec22043d4eead35280c84b9194d80dd1104cf6a0d6103",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "support-tablet-preview-dark-ru",
+      "actualSha256": "1f19e04b73cf6f48850d191f719b63e6309a4d20cd725a8e4af864a83f23db4f",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "device-inbox-desktop-en-light",
+      "actualSha256": "2ee80b7bb3bd8ba1bfa03b7aca7987e1f350d3ac295bbe1aa4a0db96d5d150ca",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "device-inbox-desktop-ru-dark",
+      "actualSha256": "451a810633cc3c9a188e990d2945ce7d46c9b34f48ca3da876bdc7435db31c8d",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "device-inbox-narrow-ru-dark",
+      "actualSha256": "5f52992455452fa3ad35703f59956239c438d874d06f6674126e6e3fccf8815d",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "passed",
+      "differingPixels": 0
+    },
+    {
+      "id": "geometry-devices-editor-dark",
+      "actualSha256": "4c411c3c8cdd6eb27273e06a5e559f6531719ab61e62a276a97256bf1ca06d2b",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "different",
+      "differingPixels": 1875
+    },
+    {
+      "id": "geometry-decor-editor-dark",
+      "actualSha256": "db526026e7c204d8bd6ca97fe37dd07d3a36c8fce62cb30d3a5fe6f0b1425a74",
+      "beforeAfter": "byte-identical",
+      "globalBaselineStatus": "different",
+      "differingPixels": 1263
+    }
+  ],
+  "limitations": [
+    "Nine existing scenes also match their global baseline; two toolbar scenes already differ on accepted dev and retain exactly the same before/after bytes.",
+    "No global baseline accepted, no existing-scene pixel delta declared, no production budget changed.",
+    "Native comparisons use an official offline HA fixture, not a live HA installation.",
+    "Raw PNG/receipt artifacts remain in ignored artifacts/1019-before and artifacts/1019-after; this record is a compact reproducibility index."
+  ],
+  "executableAnnotations": {
+    "before": "ba5ccbaa5b60bdc3cabcfa8c8cdc8bdb7b60606e",
+    "comparison": "TypeScript transpileModule ES2022/ESNext with removeComments; emitted JavaScript equal",
+    "modules": [
+      {
+        "file": "src/editors/properties/surface.ts",
+        "executableEqual": true,
+        "sha256": "784afd436351c095c2d1d7b038fe8e7fac51bfe75f114cec4f4572e2a047220e"
+      },
+      {
+        "file": "src/houseplan-card.ts",
+        "executableEqual": true,
+        "sha256": "f1da0bb56c4967d09348bedc1cdb2ad7f01c65f9553ffc7cc24460c5d535f573"
+      },
+      {
+        "file": "src/hp-device-preview.ts",
+        "executableEqual": true,
+        "sha256": "500f1f3f1fa189cf930e181876dd4f1fc07b1839711806b11383f3d9ce123c8a"
+      },
+      {
+        "file": "src/space-render.ts",
+        "executableEqual": true,
+        "sha256": "a1fd9cf7dddb0a848b7c6eb04ab4059aa13202819a1114575237a4bf71f3d03e"
+      },
+      {
+        "file": "src/iso-tiles.ts",
+        "executableEqual": true,
+        "sha256": "7d853a82d87517c221598a2c2e89b6b2dc3e0fb06abc0a7c409f959f175484b4"
+      },
+      {
+        "file": "src/iso-scene-render.ts",
+        "executableEqual": true,
+        "sha256": "99e081955e0798778a20df4032d93d7276cf814d84ec86b8faa459820cb0d063"
+      },
+      {
+        "file": "src/radar-setup.ts",
+        "executableEqual": true,
+        "sha256": "09b65988c8edd0777f8ef2a42d849ba5c336ccd6c599022a3c0d5c39fab66900"
+      }
+    ]
+  },
+  "productionMeasurement": {
+    "before": {
+      "sourceSha": "f591799af9c00fa5f2b7a94f87adcd8577f991d0",
+      "fingerprint": "08ebc3a3c7d934843b5eb1148b6a152f0248111144a5681d07c78d2898b4347d",
+      "manifestSha256": "87c989b010fb35fe9e1de5feba154da9349258038ba2eb0482f29697faaa2e1e",
+      "rawDistBytes": 3438014,
+      "initialViewGzipBytes": 339667,
+      "lazyEditorGzipBytes": 344798
+    },
+    "after": {
+      "schema": 1,
+      "sourceSha": "a90772af8fb3d5fd56c29d3867b647648a13d589",
+      "toolchain": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "rollup": "4.62.2"
+      },
+      "fingerprint": "d28b40f4729d0a2cb810ff78d6d1cd33c4ac1ba1f63650d0e4ce2bcd4be8f5c2",
+      "manifestSha256": "8a818e382966e321a3c9b9f778538179ba25d7ce77a493bd7eabe45460519fbd",
+      "rawDistBytes": 3432796,
+      "initialViewGzipBytes": 339407,
+      "lazyEditorGzipBytes": 344203
+    },
+    "ownMeasuredDelta": {
+      "rawDistBytes": -5218,
+      "initialViewGzipBytes": -260,
+      "lazyEditorGzipBytes": -595
+    },
+    "limits": "No bundle budget/reference/band changed",
+    "sourceParity": "Accepted a71 differs from measured before f591 only in review documentation; final src is identical to the 117-state candidate b3. Later capture-recipe B changes affect fingerprints, not product CSS/TS."
+  },
+  "functional": {
+    "initial": {
+      "node": "v22.23.3",
+      "commands": [
+        {
+          "kind": "smoke",
+          "id": "smoke_support_diagnostics.mjs",
+          "status": "passed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_radar_setup.mjs",
+          "status": "passed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_radar_legacy_removal_947.mjs",
+          "status": "passed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_device_inbox.mjs",
+          "status": "passed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_device_inbox_batch.mjs",
+          "status": "passed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_ui_polish_976.mjs",
+          "status": "passed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_editor_styles_lazy.mjs",
+          "status": "failed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_ui_1051.mjs",
+          "status": "passed"
+        },
+        {
+          "kind": "smoke",
+          "id": "smoke_ui_1051_native.mjs",
+          "status": "passed"
+        }
+      ],
+      "started": "2026-10-24T07:32:14.541Z",
+      "ended": "2026-10-24T07:33:58.936Z"
+    },
+    "correction": "The old lazy inventory expected a defeated local Support label rule. It now requires the actual separately adopted common-kit rule and its absence from cold roots; all first-frame/ownership assertions remain.",
+    "affectedRerun": [
+      {
+        "kind": "smoke",
+        "id": "smoke_editor_styles_lazy.mjs",
+        "status": "passed"
+      },
+      {
+        "kind": "golden",
+        "id": "css-migration-rules-invalid-dark",
+        "status": "passed",
+        "evidence": {
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "d28b40f4729d0a2cb810ff78d6d1cd33c4ac1ba1f63650d0e4ce2bcd4be8f5c2",
+            "ci": null
+          },
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "d28b40f4729d0a2cb810ff78d6d1cd33c4ac1ba1f63650d0e4ce2bcd4be8f5c2",
+          "matrixVersion": 86,
+          "actualSha256": "9b995698d8d7b44f11775431c1bd13533fbb55c892840912d58a6942a9c81534",
+          "baselineStatus": "missing-baseline",
+          "intent": [
+            {
+              "id": "css-migration-rules-invalid-dark",
+              "expectation": "new",
+              "reason": "New regression frame of the existing unchanged Rules dialog with an invalid pattern. Product appearance has no intended delta; 117 native states and eleven existing frames are independently compared before/after. Existing baselines are not accepted or granted pixel deltas.",
+              "issue": 1019
+            }
+          ]
+        }
+      }
+    ],
+    "invocations": [
+      {
+        "args": [
+          "demo/smoke_editor_styles_lazy.mjs"
+        ],
+        "begin": "2026-10-24T07:42:08.706Z",
+        "end": "2026-10-24T07:42:36.100Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null
+      },
+      {
+        "args": [
+          "demo/golden/run.mjs",
+          "--mode=capture",
+          "--scenario=css-migration-rules-invalid-dark"
+        ],
+        "begin": "2026-10-24T07:42:36.104Z",
+        "end": "2026-10-24T07:42:41.646Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null
+      }
+    ],
+    "scope": "Eight focused checks passed before the B correction; the affected ninth and the new Golden passed afterward. Final product src is byte-identical across these runs. The complete computed task CI plan is 36 smokes plus one new Golden and is not claimed as locally executed."
+  }
+}

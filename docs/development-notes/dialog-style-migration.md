@@ -138,3 +138,34 @@ surfaces (`renderIsoWalls`), and the local mount/reference/pending wizard glyphs
 (`RadarSetupController.render`). Each list is finite and attached to its named
 producer; changed prefixes/owners, unused annotations and wildcards fail the
 check. Renderer comments add no runtime classifier or configuration field.
+
+## Executed comparison and protective checks
+
+The compact [visual record](css-migration-validation.json) identifies the
+immutable source, capture recipe, environment, all 117 native states and eleven
+canonical frame pairs. Native Rules, Inbox and Radar states cover three themes
+and widths 1280/600/390, including invalid/focus/hover, discovery/empty and wizard
+states. Computed properties, geometry and PNG bytes agree for every pair.
+Nine canonical frames also match their global baselines; the two editor-toolbar
+frames retain the same pending drift already present on accepted dev. Those
+facts do not authorize accepting a baseline or changing an existing frame.
+
+The new canonical `css-migration-rules-invalid-dark` is an additional regression
+frame of the existing dialog, with public open/input and actual invalid-field,
+action and overflow checks. Its ledger expectation is `new`; no existing scene
+gets an expected pixel delta. Task CI separately selects 36 related smokes and
+this one new frame, rather than a full regression matrix.
+
+| Protective result | Executed evidence / ordinary red input |
+| --- | --- |
+| A CSS definition needs an actual producer | `node --test test/css-orphans.test.mjs`: synthetic orphan class and keyframes make the real CLI exit 1 with file/line/name; queries, arbitrary strings and comments do not rescue them. |
+| Dynamic exceptions stay finite and attached to their owner | The same tests reject wrong owner/prefix, unused/misplaced annotations, wildcard/duplicate values and opaque fragments; finite true/unknown producers retain positive controls. |
+| Lexical syntax cannot silently create a false consumer | URL punctuation, escaped/Unicode selectors, strings/comments and animation timing grammar have positive/negative fixtures. Encoded literal HTML class names fail explicitly until supported; constant-false branches do not count. |
+| The scanner actually blocks the mandatory gate | The CLI fixture runs `parallelSteps`/`summarize` with its real failing exit and asserts a failed mandatory step. The repository scan has zero diagnostics and zero unresolved producers. |
+| Cold View and first editor frames keep their style ownership | `smoke_editor_styles_lazy.mjs` retains first-frame, cold-root, canonical-slot, warm-remount and foreign-build assertions. Its former local Support-label inventory now checks the actual separately adopted common-kit selector, including its absence from cold roots. Existing registered witness `editor-styles-adoption-dropped-from-runtime` was not executed; no mutant execution is claimed. |
+| Cascade and paint survive cleanup | The paired native/canonical record above is executed evidence. The source table explains specificity and adoption order; the shared parser and normalized style inventory alone do not prove visual equivalence. |
+
+Seven producer annotations are independently checked against immutable
+`ba5ccbaa5b60bdc3cabcfa8c8cdc8bdb7b60606e`: TypeScript transpilation with
+comments removed emits identical JavaScript for every annotated module. This
+supports reuse of the existing runtime contract; it is not a browser test.
