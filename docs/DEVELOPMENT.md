@@ -39,7 +39,7 @@ nightly execution alone supplies caught outcomes.
 The two existing registry anchors follow the writer's extended signatures;
 their original foreign-authority and room-discovery guards remain intact.
 
-The final combined Windows Node22.23.3/Rollup4.62.2 build on accepted
+The earlier published `610f9d264` Windows Node22.23.3/Rollup4.62.2 build on accepted
 `e8c618924cfa2845dcf1073f65404cd093efed10` measures 3,442,107 raw bytes,
 339,505 B initial View gzip and 347,075 B lazy editor gzip. The accepted
 #1019 integration receipt records 3,431,714 / 339,415 / 343,989 B respectively:
@@ -53,12 +53,40 @@ eight thin host integration lines, three beyond the old band. The owner's
 standing measured-cost permission records only the exact 13,272 fact in the
 core test, preserving its band and the other core cap; no cosmetic product
 rewrite is used to change the count.
-The fresh e8 local subset passes the new native keyboard smoke and existing
+The earlier e8 local subset passed the new native keyboard smoke and existing
 Decor, partition-opening, free/connected-wall, contact, layout-ACK, canvas-gesture,
 lazy-editor and config-authority smokes. Two existing selected Golden scenes
 (`device-contacts-designer-light`, `geometry-diagonal-45-opening-dark`) pass
 through the canonical selected runner without visual intent or baseline writes.
-This named subset is separate from the complete task selection executed by CI.
+This named subset is separate from the full task plan requested from CI.
+
+The first published CI attempt (`40084326899`, selected job `120844476069`)
+hit the documented 40-minute job cap after 246 of 256 selected smokes:
+244 passed, two legacy selection-paint oracles failed and ten did not execute.
+The two failing invocation intervals total about 6.5 seconds; they do not
+explain the measured job capacity failure. No CODE cycle was consumed.
+The old marker-shadow oracle also failed ordinarily on accepted `4dd` while
+its seven other controls passed. Accepted #1051 UI-028 paints the selected
+Devices core blue and sets selection-ring width to zero. The repaired witness
+uses a real wide Devices click, checks that blue core and unchanged shell,
+and still rejects box-shadow transitions/animations. Its existing one-pixel
+resize and hover protections remain. The icon-paint repair comes from accepted
+#1026; no product change is used to satisfy either legacy assertion.
+
+After the ordinary accepted #1056/#1058 merge (`40508a478`), the own product
+patch remains identical (`673893a7d0be9cf4538522eaa9a26cb7fd26ac29`). Fresh
+Windows production bytes at `b09fcea31` measure 3,443,023 raw / 339,771 View
+gzip / 347,064 editor gzip B. The measured accepted #1056 baseline is
+3,432,625 / 339,665 / 343,953 B; its build inputs are identical to accepted
+`40508a478`, with only CI/docs/inventory changes outside the fingerprint corpus.
+The actual additions are 10,398 / 106 / 3,111 B. All existing references,
+bands and ceilings remain unchanged by this integration.
+Fresh pinned Linux native checks pass the nudge, marker-shadow, icon-design
+and full mounted-authority scenarios; both existing canonical selected Golden
+scenes pass with zero differing pixels. These are intermediate local receipts,
+not a claim that the final full CI plan completed. The exact source, wire-plan
+history, toolchain separation, hashes and build-input equivalence are in the
+[integration record](development-notes/editor-nudge-integration.json).
 
 | AC | Ordinary witness | Observable failure |
 |---|---|---|

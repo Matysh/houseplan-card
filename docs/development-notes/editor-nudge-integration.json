@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "issue": 1025,
+  "scope": "Intermediate fresh ordinary proof after accepted #1056/#1058 integration; final delivery also waits for accepted #1059 CI reader.",
+  "acceptedDev": "40508a478ee7ab9a56c909fd05fdfe9fbf163aa2",
+  "measuredCombined": "b09fcea31fb31e3a82eeb0391f7641d25ceab8af",
+  "originalProductPatch": {
+    "base": "4dd092a031080afee33f00fb0c724f5972b7dcb8",
+    "source": "9d00d40ba9e23100ffe6e4c96c40bd2c27a93a5c",
+    "patchIdBefore": "673893a7d0be9cf4538522eaa9a26cb7fd26ac29",
+    "patchIdAfter": "673893a7d0be9cf4538522eaa9a26cb7fd26ac29",
+    "identical": true
+  },
+  "merge": {
+    "productConflicts": 0,
+    "resolved": [
+      "docs/DEVELOPMENT.md",
+      "docs/STATUS.md",
+      "docs/testing-notes/mutation-browser-guards.md",
+      "scripts/smoke-links.mjs"
+    ],
+    "resolution": "Both prose/IDs/links preserved; canonical browser counts, snapshot and registry inventory regenerated."
+  },
+  "previousPartialCI": {
+    "run": 40084326899,
+    "job": 120844476069,
+    "conclusion": "cancelled",
+    "annotation": "The job has exceeded the maximum execution time of 40m0s",
+    "plannedSmokes": 256,
+    "completed": 246,
+    "passed": 244,
+    "failed": 2,
+    "notExecuted": 10,
+    "goldenDemand": 0,
+    "failedOracles": [
+      "icon_design/selectionDecoratesCoreNotShell",
+      "marker_shadow_transitions/selectionRingAppearsInOneFrame+selectionRingDoesNotAnimate"
+    ],
+    "boundary": "The two failed invocation intervals total about 6.5 s; they did not cause the measured 40 min capacity failure. No CODE cycle consumed."
+  },
+  "legacyOracles": {
+    "approvedSource": "Accepted #1051 UI-028 selection paint: src/styles/devices.styles.ts blue core and zero selection-ring width.",
+    "ordinaryBefore": "Accepted 4dd: old marker-shadow oracle 2 RED, seven other controls PASS. Accepted #1026 supplies the repaired actual icon-selection oracle.",
+    "repair": "Marker shadow now uses a real wide Devices click and checks the blue core, unchanged shell width and absence of box-shadow transitions/animations; existing resize and hover protections remain."
+  },
+  "freshChecks": {
+    "native": [
+      {
+        "path": "demo/smoke_editor_nudge.mjs",
+        "started": "2026-10-24T12:02:17.9390593Z",
+        "exitCode": 0,
+        "name": "nudge",
+        "log": "artifacts/ui-1025/final-405-nudge.log",
+        "finished": "2026-10-24T12:02:28.8612956Z",
+        "logSha256": "fbd79535e829a2eca153cee2cd14b36c61f9c7541ed1663fc78760607f2b4ce3"
+      },
+      {
+        "path": "demo/smoke_marker_shadow_transitions.mjs",
+        "started": "2026-10-24T12:02:28.9037925Z",
+        "exitCode": 0,
+        "name": "shadow",
+        "log": "artifacts/ui-1025/final-405-shadow.log",
+        "finished": "2026-10-24T12:02:32.748982Z",
+        "logSha256": "16418c54d1f4aa76baf3b0854ada10c78811c34318d0c7c419ccd5d20e7655c6"
+      },
+      {
+        "name": "icon-native",
+        "finished": "2026-10-24T12:03:43.9131308Z",
+        "exitCode": 0,
+        "log": "artifacts/ui-1025/final-405-icon-native.log",
+        "started": "2026-10-24T12:03:38.2883136Z",
+        "path": "demo/smoke_device_icon_design.mjs",
+        "logSha256": "493d4139224cef8a8774ee74a0df2698af24603a749bf03a01197d827d960b16"
+      },
+      {
+        "name": "mounted-authority",
+        "finished": "2026-10-24T12:04:02.9075272Z",
+        "exitCode": 0,
+        "log": "artifacts/ui-1025/final-405-mounted-authority.log",
+        "started": "2026-10-24T12:03:43.9420461Z",
+        "path": "demo/smoke_mounted_authority.mjs",
+        "logSha256": "75ddd9b085f14acd0a33eaf5932e2883a647a86150f2806b41349c73675e9628"
+      }
+    ],
+    "golden": {
+      "report": "artifacts/ui-1025/golden-final-405-b09f-report.json",
+      "sha256": "7398bc3464238d8bcbda58af80caab90faefe64411672fde2d38b00a48afbc3c",
+      "results": [
+        {
+          "kind": "golden",
+          "id": "device-contacts-designer-light",
+          "status": "passed",
+          "evidence": {
+            "capture": {
+              "platform": "linux",
+              "arch": "x64",
+              "chromium": "151.0.7922.34",
+              "buildFingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+              "ci": null
+            },
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+            "matrixVersion": 87,
+            "actualSha256": "0c42f812913a2b8278ac15a4c829717713e36d6667d16006ded7b7c6480a9f86",
+            "baselineStatus": "passed",
+            "intent": [],
+            "differingPixels": 0,
+            "diffRatio": 0
+          }
+        },
+        {
+          "kind": "golden",
+          "id": "geometry-diagonal-45-opening-dark",
+          "status": "passed",
+          "evidence": {
+            "capture": {
+              "platform": "linux",
+              "arch": "x64",
+              "chromium": "151.0.7922.34",
+              "buildFingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+              "ci": null
+            },
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+            "matrixVersion": 87,
+            "actualSha256": "f8ac37642cfb445f9a977d8e2a2e9b95c230481984b457c10a5a7b1bb8e87e06",
+            "baselineStatus": "passed",
+            "intent": [],
+            "differingPixels": 0,
+            "diffRatio": 0
+          }
+        }
+      ]
+    },
+    "invocationRefusal": {
+      "file": "demo/smoke_icon_design.mjs",
+      "reason": "Wrong command filename; MODULE_NOT_FOUND before collection. Correct smoke_device_icon_design.mjs then passed without repeating green cases."
+    }
+  },
+  "environment": {
+    "build": {
+      "node": "v22.23.3",
+      "platform": "win32",
+      "rollup": "4.62.2"
+    },
+    "native": "Linux Node22.23.3/Playwright1.62.0/Chromium headless shell151.0.7922.34 rev1234; production bytes built on Windows. No live-HA claim."
+  },
+  "productionSizes": {
+    "baseline": {
+      "source": "57a39b442e93052799f900309ec7d7e300e77d84",
+      "acceptedSource": "40508a478ee7ab9a56c909fd05fdfe9fbf163aa2",
+      "authority": "docs/development-notes/mounted-authority-integration.json",
+      "fingerprint": "fcec36e884ce8dbca36f494bb34b0110dbeb23d12af317dbf8ade81ebe11a0c9",
+      "manifestSha256": "18d56e13218b4f2b26912dbce283348bcfc031dc32ac4102788fb1b93187c035",
+      "rawDistBytes": 3432625,
+      "initialViewGzipBytes": 339665,
+      "lazyEditorGzipBytes": 343953,
+      "inputEquivalence": "Every changed path is outside the canonical source-fingerprint corpus.",
+      "changedPathsOutsideBuildInputs": [
+        ".github/workflows/validate-product.yml",
+        ".github/workflows/validate.yml",
+        "docs/DEVELOPMENT.md",
+        "docs/STATUS.md",
+        "docs/development-notes/mounted-authority-integration.json",
+        "docs/release-ledger/v1.82.0/1058.json",
+        "docs/reviews/CODE-REVIEW-1056-r1.md",
+        "docs/reviews/CODE-REVIEW-1058-r1.md",
+        "docs/reviews/CODE-REVIEW-1058-r2.md",
+        "docs/reviews/INDEX.md",
+        "scripts/ci-registry-inventory.json"
+      ]
+    },
+    "combined": {
+      "source": "b09fcea31fb31e3a82eeb0391f7641d25ceab8af",
+      "fingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+      "manifestSha256": "3366616c41d66ff6120917dc3c962bcc32d5499a7039bbbd29affe116ae4de8b",
+      "rawDistBytes": 3443023,
+      "initialViewGzipBytes": 339771,
+      "lazyEditorGzipBytes": 347064
+    },
+    "delta": {
+      "raw": 10398,
+      "viewGzip": 106,
+      "editorGzip": 3111
+    },
+    "budget": "All existing references, bands and ceilings unchanged by this integration; ordinary current measurement has zero violations."
+  },
+  "exclusions": "No full local task matrix, mutation execution, baseline acceptance or final S8 claim. Earlier e8/4dd and first published610 receipts remain historical."
+}
