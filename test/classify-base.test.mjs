@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  MAX_CANDIDATES, baseSummary, greenShas, judgedShas, pickBase, pickRangeBase,
+  MAX_CANDIDATES, MAX_BASE_PROOFS, baseSummary, greenShas, judgedShas, pickBase, pickRangeBase, integrationBases,
 } from '../scripts/classify-base.mjs';
+import { buildCiProof, JOB_RULES } from '../scripts/ci-proof.mjs';
+import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
+import { importClosure } from './helpers/import-closure.mjs';
 
 const SCRIPT = fileURLToPath(new URL('../scripts/classify-base.mjs', import.meta.url));
 
@@ -236,4 +239,136 @@ test('заголовок summary называет задачу потребит�
     baseSummary({ base: 'e', reason: 'merge-base', proven: false, skipped: 0 }, head)[0],
     /#387/,
   );
+});
+
+const TREE = 'a'.repeat(40), OLDER = 'b'.repeat(40), PREVIOUS = 'c'.repeat(40), HEAD = 'd'.repeat(40);
+function profileFixture(sha = PREVIOUS, id = 20) {
+  const run = { id, run_attempt: 2, head_sha: sha, status: 'completed', conclusion: 'success', event: 'push',
+    path: '.github/workflows/validate-product.yml', repository: { full_name: 'x/y' }, head_repository: { full_name: 'x/y' } };
+  const needs = { preflight: { result: 'success' }, changes: { result: 'success', outputs: { frontend: 'true' } },
+    reuse: { result: 'success', outputs: {} }, frontend: { result: 'success' } };
+  const workflow = validateJobs();
+  const proof = buildCiProof({ candidateSha: sha, candidateTree: TREE, runId: id, attempt: 2, event: 'push', needs,
+    workflow: 'validate-product.yml', requiredProfiles: ['product', 'tooling', 'docs'] });
+  const jobs = ['preflight', 'changes', 'reuse', 'frontend'].flatMap(name => jobInstanceNames(workflow.get(name))
+    .map(name => ({ name, conclusion: 'success' })));
+  const profileRuns = new Map(['docs', 'tooling'].map((profile, index) => [profile, {
+    run: { ...run, id: id + index + 1, path: `.github/workflows/validate-${profile}.yml` },
+    proof: { schema: proof.schema, candidate: proof.candidate,
+      run: { ...proof.run, id: id + index + 1, workflow: `validate-${profile}.yml` }, checks: { preflight: proof.checks.preflight } },
+    jobs: [{ name: JOB_RULES.preflight[0].name, conclusion: 'success' },
+      ...(profile === 'tooling' ? [{ name: JOB_RULES.frontend[1].name, conclusion: 'success' }] : [])],
+  }]));
+  return { run, context: { proof, jobs, profileRuns } };
+}
+const chooseIntegration = (fixtures, options = {}) => integrationBases({
+  head: HEAD, candidates: [PREVIOUS, OLDER], fallback: PREVIOUS, repo: 'x/y',
+  payload: { workflow_runs: fixtures.map(f => f.run) },
+  ops: { candidateTree: async () => TREE, proof: async run => fixtures.find(f => f.run.id === run.id).context },
+  ...options,
+});
+
+test('#1060 sequential accepted split merges advance the green base using complete immutable proof', async () => {
+  const previous = profileFixture(), older = profileFixture(OLDER, 10); let reads = 0;
+  const { base, range } = await chooseIntegration([previous, older], { ops: {
+    candidateTree: async sha => { assert.equal(sha, PREVIOUS); return TREE; },
+    proof: async run => { reads++; assert.equal(run.id, 20); return previous.context; },
+  } });
+  assert.equal(base.base, PREVIOUS); assert.equal(base.proven, true);
+  assert.equal(range.base, PREVIOUS); assert.equal(reads, 1, 'older accepted neighbours need no repeated artifact reads');
+  const promoted = await chooseIntegration([profileFixture(HEAD)], { candidates: [PREVIOUS, OLDER] });
+  assert.equal(promoted.base.base, HEAD); assert.equal(promoted.base.reason, 'head-proven');
+});
+
+test('#1060 split status cannot replace missing, red, foreign or partial proof and companions', async t => {
+  const changes = {
+    'missing artifact': f => { f.context.proof = null; },
+    'foreign proof SHA': f => { f.context.proof.candidate.sha = HEAD; },
+    'foreign tree': f => { f.context.proof.candidate.tree = HEAD; },
+    'foreign attempt': f => { f.context.proof.run.attempt = 1; },
+    'unexecuted frontend': f => { f.context.jobs.pop(); },
+    'missing companion': f => { f.context.profileRuns.delete('tooling'); },
+    'running companion': f => { f.context.profileRuns.get('tooling').run.status = 'in_progress'; },
+    'red companion': f => { f.context.profileRuns.get('tooling').run.conclusion = 'failure'; },
+    'cancelled companion': f => { f.context.profileRuns.get('tooling').run.conclusion = 'cancelled'; },
+    'foreign companion SHA': f => { f.context.profileRuns.get('docs').run.head_sha = HEAD; },
+    'foreign companion repo': f => { f.context.profileRuns.get('docs').run.head_repository = { full_name: 'fork/foreign' }; },
+    'missing companion job': f => { f.context.profileRuns.get('tooling').jobs.pop(); },
+    'missing companion artifact': f => { delete f.context.profileRuns.get('tooling').proof; },
+    'foreign companion artifact': f => { f.context.profileRuns.get('tooling').proof.run.attempt = 9; },
+    'foreign producer': f => { f.run.head_repository = { full_name: 'fork/foreign' }; },
+    'foreign workflow': f => { f.run.path = '.github/workflows/evil.yml'; },
+    'red product': f => { f.run.conclusion = 'failure'; },
+    'cancelled product': f => { f.run.conclusion = 'cancelled'; },
+    'running product': f => { f.run.status = 'in_progress'; },
+  };
+  for (const [name, change] of Object.entries(changes)) await t.test(name, async () => {
+    const candidate = profileFixture(); change(candidate);
+    const result = await chooseIntegration([candidate]);
+    assert.equal(result.base.proven, false); assert.equal(result.base.base, '', 'caller must classify all families');
+  });
+});
+
+test('#1060 latest red product cannot hide behind an earlier green run on the same SHA', async () => {
+  const valid = profileFixture(), newer = profileFixture(PREVIOUS, 30), older = profileFixture(OLDER, 10);
+  newer.run.conclusion = 'failure';
+  const result = await chooseIntegration([valid, newer, older]);
+  assert.equal(result.base.base, OLDER);
+});
+
+test('#1060 judged failed canonical is a range base, never successful product coverage', async () => {
+  const failed = profileFixture(); failed.run.path = '.github/workflows/validate.yml'; failed.run.conclusion = 'failure';
+  const result = await chooseIntegration([failed, profileFixture(OLDER, 10)]);
+  assert.equal(result.range.base, PREVIOUS); assert.equal(result.range.proven, true);
+  assert.equal(result.base.base, OLDER); assert.equal(result.base.proven, true);
+  const unavailable = await chooseIntegration([profileFixture()], { ops: {
+    candidateTree: async () => TREE, proof: async () => { throw Error('artifact unavailable'); },
+  } });
+  assert.equal(unavailable.base.base, ''); assert.equal(unavailable.base.proven, false);
+});
+
+test('#1060 unavailable long-history proofs have bounded discovery and never optimistic coverage', async () => {
+  const fixtures = Array.from({ length: 20 }, (_, i) => profileFixture((i + 20).toString(16).padStart(40, '0'), i + 100));
+  let calls = 0;
+  const result = await chooseIntegration(fixtures, { candidates: fixtures.map(f => f.run.head_sha), ops: {
+    candidateTree: async () => TREE, proof: async () => { calls++; throw Error('unavailable'); },
+  } });
+  assert.equal(calls, MAX_BASE_PROOFS); assert.equal(result.base.base, ''); assert.equal(result.base.proven, false);
+  let aborted = 0;
+  const slow = await chooseIntegration(fixtures, { candidates: fixtures.map(f => f.run.head_sha), maxProofs: 2, proofMs: 5,
+    ops: { candidateTree: async () => TREE, proof: (_run, { signal }) => new Promise(() => {
+      signal.addEventListener('abort', () => { aborted++; });
+    }) } });
+  assert.equal(aborted, 2); assert.equal(slow.base.base, ''); assert.equal(slow.base.proven, false);
+  let elapsed = 0, timedCalls = 0;
+  const expired = await chooseIntegration(fixtures, { candidates: fixtures.map(f => f.run.head_sha), totalMs: 30,
+    ops: { candidateTree: async () => TREE, now: () => elapsed, proof: async () => {
+      timedCalls++; elapsed = 31; throw Error('slow unavailable source');
+    } } });
+  assert.equal(timedCalls, 1); assert.equal(expired.base.proven, false, 'one exhausted shared deadline ends discovery');
+});
+
+test('#1060 cold integration CLI emits separate unproven green and judged range outputs without npm', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-integration-base-'));
+  const git = (...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' }).trim();
+  try {
+    git('init', '-q', '-b', 'dev'); git('config', 'user.email', 'test@example.com'); git('config', 'user.name', 'test');
+    writeFileSync(join(dir, 'file.txt'), 'before'); git('add', '.'); git('commit', '-qm', 'before');
+    const before = git('rev-parse', 'HEAD');
+    writeFileSync(join(dir, 'file.txt'), 'after'); git('add', '.'); git('commit', '-qm', 'after');
+    const head = git('rev-parse', 'HEAD'), out = join(dir, 'output'), runs = join(dir, 'runs.json');
+    const root = dirname(dirname(SCRIPT));
+    for (const source of importClosure(SCRIPT)) {
+      const target = join(dir, relative(root, source)); mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, readFileSync(source));
+    }
+    writeFileSync(runs, JSON.stringify({ workflow_runs: [{ id: 1, head_sha: before,
+      path: '.github/workflows/validate.yml', status: 'completed', conclusion: 'failure', event: 'push' }] }));
+    const result = spawnSync(process.execPath, [join(dir, 'scripts/classify-base.mjs'), '--mode=integration', '--repo=x/y', `--head=${head}`,
+      `--fallback=${before}`, `--runs=${runs}`], { cwd: dir, encoding: 'utf8',
+      env: { ...process.env, GITHUB_OUTPUT: out, GITHUB_STEP_SUMMARY: join(dir, 'summary') } });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(readFileSync(out, 'utf8'), /^base=\nbase_proven=false\n/);
+    assert.match(readFileSync(out, 'utf8'), new RegExp(`range_base=${before}\\nrange_base_proven=true`));
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });

@@ -1129,6 +1129,14 @@ export const SMOKE_LINKS = [
       + 'no smoke names the helpers',
   },
   {
+    // #1060: these #234 acceptance witnesses must not depend on the frequency
+    // of a field also used as generic setup by unrelated drawing smokes.
+    symbols: ['_wallChainSegmentCms', 'chainSegmentCms', 'wallChainSegments', '_closingWallCm'],
+    smokes: ['smoke_wall_chain_thickness.mjs', 'smoke_wall_junctions.mjs'],
+    because: '#234: chain thickness compares the live segment vector with persisted walls; '
+      + 'junctions exercises mixed-depth chain joins. Both directly assert the segment-thickness contract.',
+  },
+  {
     // #234: единый резолвер толщины отрезка цепочки. Смок перехода между
     // толщинами не называет ни `chainSegmentCms`, ни `_wallChainSegmentCms` — он
     // рисует стены инструментом и проверяет, что кладка на стыке толщин

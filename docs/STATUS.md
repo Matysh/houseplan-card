@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5291 · pure backend 637 · HA-harness backend 539 · browser smokes 438 (`npm run inventory`) |
+| Tests | Node unit 5333 · pure backend 637 · HA-harness backend 539 · browser smokes 438 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -31,6 +31,15 @@ Hide/owner retirement and the existing confirmed new-task proof revoke late
 replies. The first public passport is Dreame/Tasshack 2.0.2; current/previous
 native metadata may prove coordinates but never supplies fake cleanup history.
 There is no archive, Store migration, preview writer or robot command.
+
+CI task scope (#1060) shares one bounded required smoke selection across local
+gate, packet and CI; weak lexical matches remain deferred diagnostics. Immutable
+registry equivalence includes computed tooling dependencies. Direct successful
+tooling/selected-browser receipts preserve exact inputs, intent, recipe and
+runtime without granting full coverage. S7/merge await push/companion discovery;
+dev classification advances through verified split proof independently of the
+judged range. Full beta/night/release obligations and fresh range/packaging
+guards remain in force.
 
 Editor arrows (#1025) translate selected independent walls, same-host openings
 and movable device anchors through the existing physical/config/layout writers

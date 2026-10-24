@@ -2167,7 +2167,10 @@ Device settings (#947) reuse shared settings sections/controls. Hardware-only `r
 
 Task-push browser evidence (#983) has an explicit selected scope independent
 of the complete CI-matrix receipt. Its plan follows a proven diff boundary,
-source/capture inputs and declared scene links; unknown links broaden. A
+source/capture inputs and declared scene links. All task tracks share the same
+bounded selector (#1060): explicit links survive, weak lexical candidates are
+deferred, and an oversized inferred union retains the visual minimum plus
+authoritative checks. The complete matrix belongs to night/beta validation. A
 selected worker cannot emit a reusable full receipt or satisfy full review/
 release policy, and its actual job outcome must match proof metadata.
 
@@ -2200,6 +2203,16 @@ assembly and one real bundle smoke remain fresh. Night/stable deny reuse.
 The v1 proof extension is additive: trusted old controllers can consume fresh
 migration evidence, while new controllers also require actual fresh bundle/
 product guards and independently authenticate every inherited source.
+
+Scoped tooling/selected-browser receipts (#1060) use the same index with distinct
+job addresses and `houseplan-task-check/v1` records. Their conservative identity
+covers all non-documentation inputs, exact selected IDs/visual intent, actual
+runtime and job recipe. A direct successful source attempt and its immutable
+artifact must authenticate the record; a reused result cannot produce another
+source. Current Git/range/process/packaging checks remain fresh. A selected
+receipt never proves full-matrix coverage, and a controller without the scoped
+validator forces fresh execution. Integration classification uses verified
+green coverage separately from the judged range used by process guards.
 
 Python-producing jobs (#1032) install the exact patch selected by the reuse
 bootstrap, not an independently resolved minor from their runner cache. The

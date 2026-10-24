@@ -6,6 +6,7 @@ import { readCiProofArtifact } from './ci-proof.mjs';
 import { registryPath, verifyRegistryRecord } from './ci-registry-verify.mjs';
 import { jobInstanceNames, validateJobs } from './workflow-jobs.mjs';
 import { snapshotEntries, sourceEquivalenceCommon, sourceEquivalenceJob } from './ci-registry-equivalence.mjs';
+import { registryReader } from './ci-registry-inputs.mjs';
 
 const git = (root, args, options = {}) => execFileSync('git', ['-C', root, ...args],
   { maxBuffer: 8 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'], ...options }).toString('utf8').trim();
@@ -28,7 +29,7 @@ const namesOf = job => {
 const headers = token => ({ Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token,
   'User-Agent': 'houseplan-ci-registry', 'X-GitHub-Api-Version': '2022-11-28' });
 export function registryApi({ repo, token, candidateSha = null, candidateSnapshot = null, mode = 'exact',
-  fetchImpl = fetch, signal = null, apiBase = process.env.GITHUB_API_URL || 'https://api.github.com' }) {
+  fetchImpl = fetch, signal = null, apiBase = process.env.GITHUB_API_URL || 'https://api.github.com', root = process.cwd() }) {
   const pending = new Map();
   const readSignal = () => signal ? AbortSignal.any([signal, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000);
   const request = path => {
@@ -60,12 +61,22 @@ export function registryApi({ repo, token, candidateSha = null, candidateSnapsho
     })());
     return snapshots.get(sha);
   };
+  let candidatePromise;
   const candidate = async () => {
     if (candidateSnapshot) return candidateSnapshot;
-    const current = await snapshot(candidateSha);
-    if (!current.inventory) [current.inventory, current.domains] = await Promise.all(
-      ['scripts/ci-registry-inventory.json', 'scripts/ci-profile-paths.json'].map(async path => JSON.parse((await current.read(path)).toString('utf8'))));
-    return current;
+    if (!candidatePromise) candidatePromise = (async () => {
+      if (!/^[a-f0-9]{40}$/.test(candidateSha || '')) throw Error('missing exact candidate Git SHA');
+      // Review/CI already has the material's Git objects. Read those immutable
+      // blobs, never the working tree or candidate code, for the policy walk.
+      let reader;
+      try { reader = registryReader(root, candidateSha); } catch { /* remote, bounded fallback below */ }
+      const current = reader ? { entries: snapshotEntries(reader.rows), read: reader.read, readMany: reader.readMany }
+        : { ...await snapshot(candidateSha), policyReadBudget: 32 };
+      [current.inventory, current.domains] = await Promise.all(
+        ['scripts/ci-registry-inventory.json', 'scripts/ci-profile-paths.json'].map(async path => JSON.parse((await current.read(path)).toString('utf8'))));
+      return current;
+    })();
+    return candidatePromise;
   };
   const equivalence = async record => {
     const [current, previous] = await Promise.all([candidate(), snapshot(record.sha)]);

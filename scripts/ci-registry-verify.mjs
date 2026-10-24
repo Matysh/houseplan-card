@@ -8,7 +8,7 @@ export const sameRecord = (a, b) => JSON.stringify(stable(a)) === JSON.stringify
 export const recordDigest = record => createHash('sha256').update(JSON.stringify(stable(record))).digest('hex');
 const hex = (s, size) => typeof s === 'string' && new RegExp('^[a-f0-9]{' + size + '}$').test(s);
 export const registryPath = (job, key) => {
-  if (!/^(?:frontend|backend|geometry_parity|smoke|golden|performance_smoke)$/.test(job) || !hex(key, 64)) throw Error('invalid registry address');
+  if (!/^(?:frontend|backend|geometry_parity|smoke|golden|performance_smoke|tooling|browser_selected)$/.test(job) || !hex(key, 64)) throw Error('invalid registry address');
   return 'proofs/' + job + '/' + key + '.json';
 };
 

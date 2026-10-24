@@ -12,7 +12,8 @@ import { generatedProfiles } from '../scripts/ci-profiles.mjs';
 import { producerRecipe } from '../scripts/ci-registry-cli.mjs';
 import { verifyRegistryBuild, restoreRegistryBuild, runCandidateCommand } from '../scripts/ci-registry-build.mjs';
 import { artifactTree } from '../scripts/artifact-inventory.mjs';
-import { sourceEquivalenceCommon, sourceEquivalenceJob } from '../scripts/ci-registry-equivalence.mjs';
+import { sourceEquivalenceCommon, sourceEquivalenceJob, snapshotEntries, validateSnapshotPolicy } from '../scripts/ci-registry-equivalence.mjs';
+import { registryApi } from '../scripts/ci-proof-registry.mjs';
 
 const git = (root, args) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
 const environment = { node: '22.23.3', platform: 'linux', arch: 'x64', python: '3.14.5', pins: '1'.repeat(64) };
@@ -211,4 +212,76 @@ test('actual Git beta equivalence accepts only synchronized scalar version diffe
   commit(root, 'non-version change under a version mirror path');
   candidate = identity(root, 'candidate')._snapshot;
   await assert.rejects(() => sourceEquivalenceCommon(candidate, previous, 'candidate'), /non-version candidate bytes/);
+});
+
+test('#1060 actual generated Git policy authenticates reuse and rejects counterfeit dependency/exclusion lists', async () => {
+  // Use the real committed generated policy and its immutable Git code, not
+  // profilePaths([]) or a copy of the validator's expected synthetic table.
+  const reader = registryReader(resolve('.'));
+  const domains = JSON.parse(reader.text('scripts/ci-profile-paths.json'));
+  const snapshot = () => ({ entries: snapshotEntries(reader.rows), read: reader.read, readMany: reader.readMany,
+    inventory: JSON.parse(reader.text('scripts/ci-registry-inventory.json')), domains: structuredClone(domains) });
+  const candidate = snapshot(), previous = snapshot();
+  const helper = 'demo/helpers/clamped-wheel-lease.mjs';
+  assert.ok(domains.tooling.includes(helper), 'real generated dependency must exercise the #1044 extension');
+  const common = await sourceEquivalenceCommon(candidate, previous, 'exact');
+  assert.equal((await sourceEquivalenceJob(candidate, previous,
+    { job: 'frontend', workflow: '.github/workflows/validate.yml' }, common)).sourceEquivalent, true);
+
+  const unrelated = reader.tracked.find(path => path.startsWith('src/') && !domains.tooling.includes(path));
+  assert.ok(unrelated);
+  const productTest = reader.tracked.find(path => /^test\/[^/]+\.test\.mjs$/.test(path) && !domains.product.includes('!' + path));
+  assert.ok(productTest);
+  for (const change of [
+    table => { table.tooling.push(unrelated); },
+    table => { table.tooling = table.tooling.filter(path => path !== helper); },
+    table => { table.product.push('!' + helper); },
+    table => { table.docs.push('src/**'); },
+    table => { table.product.push('!' + productTest); if (!table.tooling.includes(productTest)) table.tooling.push(productTest); },
+  ]) {
+    const forged = snapshot(); change(forged.domains);
+    await assert.rejects(() => validateSnapshotPolicy(forged), /computed policy differs from immutable Git input/);
+  }
+  const symbolic = snapshot();
+  symbolic.entries.set(helper, { ...symbolic.entries.get(helper), mode: '120000' });
+  await assert.rejects(() => validateSnapshotPolicy(symbolic), /missing\/unsafe source Git input/);
+});
+
+test('#1060 immutable dependency reads are memoized and reject a remote frontier before an API storm', async () => {
+  const reader = registryReader(resolve('.'));
+  let reads = 0;
+  const candidate = { entries: snapshotEntries(reader.rows), read: path => { reads++; return reader.read(path); },
+    readMany: paths => { reads += paths.length; return reader.readMany(paths); },
+    inventory: JSON.parse(reader.text('scripts/ci-registry-inventory.json')),
+    domains: JSON.parse(reader.text('scripts/ci-profile-paths.json')) };
+  await Promise.all([validateSnapshotPolicy(candidate), validateSnapshotPolicy(candidate)]);
+  assert.ok(reads > 32, 'real policy has a substantial closure');
+  const firstReads = reads;
+  await validateSnapshotPolicy(candidate);
+  assert.equal(reads, firstReads + 2, 'only immutable parsed metadata is rechecked; dependency walk is memoized');
+  const remote = { ...candidate, policyReadBudget: 32, read: path => {
+    assert.ok(['scripts/ci-profile-paths.json', 'scripts/ci-registry-inventory.json'].includes(path));
+    return reader.read(path);
+  } };
+  await assert.rejects(() => validateSnapshotPolicy(remote), /immutable read budget/);
+});
+
+test('#1060 registry API uses exact local Git policy rather than dirty files or remote per-file policy reads', async t => {
+  const root = repository(t), sha = git(root, ['rev-parse', 'HEAD']), reader = registryReader(root, sha);
+  put(root, 'scripts/ci-profile-paths.json', '{"product":["!**"]}');
+  const calls = [], run = { id: 123, run_attempt: 1, status: 'completed', conclusion: 'success' };
+  const source = registryApi({ repo: 'Matysh/houseplan-card', token: 'fixture', root, candidateSha: sha,
+    fetchImpl: async url => {
+      const path = String(url).split('/repos/Matysh/houseplan-card/')[1]; calls.push(path);
+      const body = path.startsWith('git/trees/') ? { tree: reader.rows.map(row => ({ ...row, type: 'blob', sha: row.oid })) }
+        : path.endsWith('/jobs?per_page=100') ? { jobs: [] }
+          : path.endsWith('/artifacts?per_page=100') ? { artifacts: [] } : run;
+      if (path.startsWith('contents/')) throw Error('policy must come from local immutable Git objects');
+      return { ok: true, json: async () => body };
+    } });
+  // Reach the later independent artifact refusal: policy/equivalence passed,
+  // but neither a cache hit nor local blobs can replace an actual CI artifact.
+  await assert.rejects(() => source({ run: 123, attempt: 1, sha,
+    job: 'frontend', workflow: '.github/workflows/validate.yml' }), /source immutable proof absent/);
+  assert.equal(calls.some(path => path.startsWith('contents/')), false);
 });

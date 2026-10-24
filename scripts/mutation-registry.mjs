@@ -10088,8 +10088,8 @@ const MUTANT_DEFINITIONS = [
       + 'smoke_room_fill_transitions; the generic visual minimum does not assert this contract',
     patches: [{
       file: 'scripts/smoke-select.mjs',
-      find: '  const registered = registeredSmokes(parsed.symbols, parsed.executable)',
-      replace: '  const registered = registeredSmokes(parsed.symbols)',
+      find: '  registry = registeredSmokes(parsed.symbols, parsed.executable) } = {}) {',
+      replace: '  registry = registeredSmokes(parsed.symbols) } = {}) {',
     }],
   },
   {
@@ -10434,8 +10434,8 @@ const MUTANT_DEFINITIONS = [
       + 'direct and registered smokes',
     patches: [{
       file: 'scripts/gate-small.mjs',
-      find: '  const names = [...(selection.direct || []), ...(selection.registered || []), ...(selection.visualMinimum || [])]',
-      replace: '  const names = [...(selection.direct || []), ...(selection.registered || [])]',
+      find: '  return requiredSmokeIds(selection);',
+      replace: '  return requiredSmokeIds(selection && { ...selection, visualMinimum: [] });',
     }],
   },
   // #711: значок не двигается от состояния устройства.

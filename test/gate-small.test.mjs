@@ -47,7 +47,7 @@ test('smokesToRun берёт прямые и зарегистрированны�
     direct: [{ smoke: 'smoke_b.mjs', strong: true }, { smoke: 'smoke_a.mjs', strong: false }],
     registered: [{ smoke: 'smoke_b.mjs' }, { smoke: 'smoke_c.mjs' }],
     broad: [{ smoke: 'smoke_everything.mjs' }],
-  }), ['smoke_a.mjs', 'smoke_b.mjs', 'smoke_c.mjs']);
+    }), ['smoke_b.mjs', 'smoke_c.mjs']);
   assert.deepEqual(smokesToRun(null), []);
   assert.deepEqual(parseArgs(['--smokes', '--jobs=3']), { base: 'origin/dev', smokes: true, jobs: 3 });
   assert.deepEqual(parseArgs(['--jobs=abc']).jobs, 2);
