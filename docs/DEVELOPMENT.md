@@ -87,6 +87,10 @@ scenes pass with zero differing pixels. These are intermediate local receipts,
 not a claim that the final full CI plan completed. The exact source, wire-plan
 history, toolchain separation, hashes and build-input equivalence are in the
 [integration record](development-notes/editor-nudge-integration.json).
+The final accepted #1059 reader merge (`c6dd76de4`) changes only CI proof,
+tests and documentation outside the build-input corpus. Product and build
+fingerprint remain identical, so the local native/Golden receipts stay current;
+the mandatory normal hook validates the exact final published combined tree.
 
 | AC | Ordinary witness | Observable failure |
 |---|---|---|
@@ -5001,6 +5005,15 @@ The shared display name preserves the existing `workflow_run` trigger in main;
 stays in `validate.yml`. Non-product proofs cannot satisfy product policy.
 A product proof names the profiles required by the complete candidate range;
 missing/pending companions request canonical validation, red companions fail.
+After a rebase, the push-event range may start a surplus product workflow while
+the candidate range requests only known companion profiles (#1059). A nonempty,
+unique docs/tooling-only plan makes that otherwise complete product proof stale,
+never accepted. Its own failed/missing execution still fails; malformed plans
+and foreign identities gain no authority. The existing validate gate requests
+canonical `validate.yml` on the exact material with `full=false/mutants=false`
+for an ordinary light task and accepts only its completed applicable proof.
+`ci-profiles.test.mjs` and `validate-gate.test.mjs` cover this input, the actual
+dispatch contract and red/pending/missing/incomplete/foreign canonical outcomes.
 Only canonical completed runs advance the old range/classification induction;
 a narrower push profile cannot erase an unjudged ancestor. Night and release
 continue to request full policy. The proof schema stays `houseplan-ci-proof/v1`.

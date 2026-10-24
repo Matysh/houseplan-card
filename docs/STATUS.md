@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5274 · pure backend 627 · HA-harness backend 527 · browser smokes 434 (`npm run inventory`) |
+| Tests | Node unit 5277 · pure backend 627 · HA-harness backend 527 · browser smokes 434 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -1086,6 +1086,10 @@ Path profiles (#980) separate product, tooling and docs push/PR entry points.
 Filters follow computed test ownership and unknown inputs remain conservative.
 Consumers check registered workflow paths and complete product evidence;
 canonical full dispatch remains available to S7, night and release.
+A surplus product workflow with a valid companion-only candidate plan (#1059)
+cannot grant acceptance: after its own execution checks it requires canonical
+validation. Invalid plans and failed/incomplete execution remain fail closed;
+the existing exact-material dispatch retains the requested light policy.
 
 CI proof inheritance (#981) uses the portable orphan ci-proofs index, immutable
 source attempts and actual job outcomes. Frontend is reusable; filesystem/range

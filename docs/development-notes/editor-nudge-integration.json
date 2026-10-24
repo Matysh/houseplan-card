@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "issue": 1025,
-  "scope": "Intermediate fresh ordinary proof after accepted #1056/#1058 integration; final delivery also waits for accepted #1059 CI reader.",
+  "scope": "Fresh ordinary local proof after accepted #1056/#1058, carried forward after final accepted #1059 through exact source/build-input identity. Complete task CI remains a separate obligation.",
   "acceptedDev": "40508a478ee7ab9a56c909fd05fdfe9fbf163aa2",
   "measuredCombined": "b09fcea31fb31e3a82eeb0391f7641d25ceab8af",
   "originalProductPatch": {
@@ -185,5 +185,24 @@
     },
     "budget": "All existing references, bands and ceilings unchanged by this integration; ordinary current measurement has zero violations."
   },
-  "exclusions": "No full local task matrix, mutation execution, baseline acceptance or final S8 claim. Earlier e8/4dd and first published610 receipts remain historical."
+  "exclusions": "No full local task matrix, mutation execution, baseline acceptance or final S8 claim. Earlier e8/4dd and first published610 receipts remain historical; current local proof does not claim completed full task CI.",
+  "finalAcceptedIntegration": {
+    "acceptedDev": "c6dd76de4e42a354f8d8213829d4fecb73e0d395",
+    "previousAcceptedDev": "40508a478ee7ab9a56c909fd05fdfe9fbf163aa2",
+    "productChanges": 0,
+    "buildInputChanges": 0,
+    "changedPathsOutsideBuildInputs": [
+      "docs/DEVELOPMENT.md",
+      "docs/STATUS.md",
+      "docs/release-ledger/v1.82.0/1059.json",
+      "docs/reviews/CODE-REVIEW-1059-r1.md",
+      "docs/reviews/INDEX.md",
+      "scripts/ci-proof.mjs",
+      "scripts/ci-registry-inventory.json",
+      "test/ci-profiles.test.mjs",
+      "test/validate-gate.test.mjs"
+    ],
+    "fingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+    "localProofBoundary": "The four native and two Golden receipts remain b09f local executions, with identical actual product/build inputs after the final CI-reader merge. Mandatory normal hook will independently execute the complete gate on the exact final published SHA."
+  }
 }
