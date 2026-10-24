@@ -2,13 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { patchImports } from '../scripts/fix-test-build.mjs';
 import { lineOffsets, positionAt } from '../scripts/coverage-maps.mjs';
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { editMappedSource } from '../scripts/coverage-maps.mjs';
+import { editMappedSource, coverageTypeScriptOptions } from '../scripts/coverage-maps.mjs';
+import { rollup } from 'rollup';
+import typescript from '@rollup/plugin-typescript';
 import { indexGeneratedFiles, digestBytes, probePythonRuntime, pythonRuntimeProbes } from '../scripts/coverage-identity.mjs';
 import { buildCoverageReport, diagnosticCompleteness } from '../scripts/coverage-report.mjs';
 import { historicalCandidates } from '../scripts/parallel-path-audit.mjs';
@@ -52,6 +54,45 @@ test('computed scope is the entire existing product unit, smoke and golden inven
   assert.equal(inventory.smokeTimeout.milliseconds, canonicalSeconds * 1000);
   assert.ok(inventory.cases.filter(c => c.family === 'smoke').every(c => c.timeoutMs === canonicalSeconds * 1000));
 });
+test('real TS nested output resolves to exact candidate source bytes; an escaping producer map is incomplete', async t => {
+  const root = fixture(t), text = 'export function sentinel(n:number){return n+123456};';
+  mkdirSync(resolve(root, 'src/nested'), { recursive: true }); mkdirSync(resolve(root, 'dist/houseplan-assets'), { recursive: true });
+  writeFileSync(resolve(root, 'src/main.ts'), 'export {sentinel} from "./nested/lazy";');
+  writeFileSync(resolve(root, 'src/nested/lazy.ts'), text);
+  writeFileSync(resolve(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: {
+    target: 'es2021', module: 'esnext', moduleResolution: 'bundler' }, include: ['src/**/*.ts'] }));
+  for (const corrected of [false, true]) {
+    const bundle = await rollup({ input: resolve(root, 'src/main.ts'), plugins: [typescript({ filterRoot: root,
+      tsconfig: resolve(root, 'tsconfig.json'), compilerOptions: { outDir: resolve(root, 'dist/.ts'),
+        sourceMap: true, inlineSources: true, ...(corrected ? coverageTypeScriptOptions(root) : {}) } })] });
+    try {
+      const { output } = await bundle.generate({ dir: resolve(root, 'dist'),
+        entryFileNames: 'houseplan-assets/[name].js', sourcemap: 'hidden' });
+      const chunk = output.find(item => item.type === 'chunk'), path = `dist/${chunk.fileName}`;
+      writeFileSync(resolve(root, path), chunk.code); writeFileSync(resolve(root, `${path}.map`), chunk.map.toString());
+      const manifest = JSON.stringify({ files: [{ path: chunk.fileName, sha256: digestBytes(chunk.code) }] });
+      const index = indexGeneratedFiles({ root, paths: [path], identity: {}, manifest });
+      if (!corrected) {
+        assert.equal(index.valid, false);
+        assert.ok(index.issues.some(issue => issue.reason === 'source-outside-candidate'));
+      } else {
+        assert.equal(index.valid, true);
+        assert.deepEqual(index.files[0].sources.map(source => [source.path, source.product, source.contentHash]),
+          [['src/nested/lazy.ts', true, digestBytes(text)]]);
+        const at = positionAt(chunk.code.indexOf('123456'), lineOffsets(chunk.code));
+        const found = originalPositionFor(new TraceMap(chunk.map), { line: at.line + 1, column: at.column });
+        assert.equal(found.column, text.indexOf('123456'));
+        const captured = resolve(root, 'snapshot'), savedMap = JSON.parse(chunk.map.toString());
+        savedMap.sources = savedMap.sources.map(source => resolve(dirname(resolve(root, path)), source));
+        mkdirSync(dirname(resolve(captured, path)), { recursive: true });
+        writeFileSync(resolve(captured, path), chunk.code); writeFileSync(resolve(captured, `${path}.map`), JSON.stringify(savedMap));
+        const saved = indexGeneratedFiles({ root, buildRoot: captured, paths: [path], identity: {}, manifest });
+        assert.equal(saved.valid, true); assert.equal(saved.files[0].jsHash, index.files[0].jsHash);
+        assert.equal(saved.files[0].sources[0].path, 'src/nested/lazy.ts');
+      }
+    } finally { await bundle.close(); }
+  }
+});
 test('mapped V8 merger preserves family columns, actual retry identity, native branches and unknown incomplete zeros', t => {
   const root = fixture(t), artifactDir = resolve(root, 'artifacts'), text = 'export function yes(flag){return flag ? 1 : 2;}\n';
   for (const dir of ['src', 'test-build', 'artifacts/cases/0']) mkdirSync(resolve(root, dir), { recursive: true });
@@ -73,6 +114,12 @@ test('mapped V8 merger preserves family columns, actual retry identity, native b
   assert.ok(report.observedScripts.some(s => s.status === 'verified' && s.family === 'smoke'));
   assert.equal(report.invocations[0].pages.length, 1);
   assert.equal(report.nativeMappedRanges.find(r => r.kind === 'branch').smoke.status, 'zero-observed');
+  const derived = resolve(root, 'derived'); mkdirSync(resolve(derived, 'build/test-build'), { recursive: true });
+  for (const name of ['probe.js', 'probe.js.map']) writeFileSync(resolve(derived, 'build/test-build', name),
+    readFileSync(resolve(artifactDir, 'build/test-build', name)));
+  const replay = buildCoverageReport({ root, artifactDir: derived, rawRoot: artifactDir, inventory, invocations: invocation(), index });
+  assert.deepEqual(replay.nativeMappedRanges, report.nativeMappedRanges);
+  assert.deepEqual(replay.functions, report.functions);
   const missing = { ...inventory, cases: [...inventory.cases, { id: 'missing' }] };
   const partial = buildCoverageReport({ root, artifactDir, inventory: missing, invocations: invocation(), index });
   assert.equal(partial.completeness.complete, false);

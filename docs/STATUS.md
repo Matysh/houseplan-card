@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5200 · pure backend 625 · HA-harness backend 526 · browser smokes 423 (`npm run inventory`) |
+| Tests | Node unit 5201 · pure backend 625 · HA-harness backend 526 · browser smokes 423 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -37,6 +37,9 @@ Diagnostic smoke timeouts follow the canonical product runner; a restarted
 collection repeats the complete inventory on a new clean SHA.
 Expected toolchain pins, bounded Python version probes and actual process
 observations have distinct authority; no runtime pin is inferred from a manifest.
+An actual nested-output TS fixture exposed the compiler map's relative source
+base error; diagnostic TS now uses an explicit sourceRoot and the index rejects
+escaping source paths. Historical samples need a separate Git-verified projection.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of

@@ -67,12 +67,12 @@ export function materialIdentity(root = process.cwd()) {
     recipeFiles, recipeHash: digestBytes(JSON.stringify(recipeFiles)) };
 }
 
-export function indexGeneratedFiles({ root = process.cwd(), paths, artifactDir, identity = materialIdentity(root), manifest } = {}) {
+export function indexGeneratedFiles({ root = process.cwd(), buildRoot = root, paths, artifactDir, identity = materialIdentity(root), manifest } = {}) {
   const issues = [], files = [], manifestHash = manifest ? digestBytes(manifest) : null;
   const product = manifest ? JSON.parse(manifest).files : [];
   const allowed = new Map(product.map(file => [`dist/${file.path}`, file]));
   for (const rel of [...new Set(paths)].sort()) {
-    const path = inside(root, rel), mapPath = `${path}.map`;
+    const path = inside(buildRoot, rel), mapPath = `${path}.map`;
     if (!existsSync(path) || !existsSync(mapPath)) { issues.push({ path: rel, reason: 'missing-js-or-map' }); continue; }
     const js = readFileSync(path), rawMap = readFileSync(mapPath);
     let map;
@@ -107,6 +107,9 @@ export function indexGeneratedFiles({ root = process.cwd(), paths, artifactDir, 
       catch { issues.push({ path: rel, source, reason: 'invalid-source-url' }); continue; }
       const sourceRel = slash(relative(root, absolute));
       if (!sourceRel.startsWith('src/')) {
+        if (sourceRel.startsWith('../') || isAbsolute(sourceRel)) {
+          issues.push({ path: rel, source, reason: 'source-outside-candidate', resolved: sourceRel });
+        }
         sources.push({ index: n, source, path: sourceRel, product: false, contentHash: typeof content === 'string' ? digestBytes(content) : null });
         continue;
       }
@@ -117,7 +120,7 @@ export function indexGeneratedFiles({ root = process.cwd(), paths, artifactDir, 
     }
     const generatedOnly = !map.sources.length;
     if (artifactDir) for (const source of [path, mapPath]) {
-      const target = inside(artifactDir, `build/${slash(relative(root, source))}`);
+      const target = inside(artifactDir, `build/${slash(relative(buildRoot, source))}`);
       mkdirSync(dirname(target), { recursive: true }); copyFileSync(source, target);
     }
     files.push({ path: rel, jsHash, jsBytes: js.length, mapHash, mapBytes: rawMap.length, sources, generatedOnly });

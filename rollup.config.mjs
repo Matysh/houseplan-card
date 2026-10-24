@@ -4,7 +4,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import { sourceFingerprint } from './scripts/source-fingerprint.mjs';
 import { cssTemplateMinifier } from './scripts/css-template-minifier.mjs';
-import { coverageMapsEnabled, diagnosticMapAssetsPlugin } from './scripts/coverage-maps.mjs';
+import { coverageMapsEnabled, coverageTypeScriptOptions, diagnosticMapAssetsPlugin } from './scripts/coverage-maps.mjs';
 import {
   buildFingerprintPlugin,
   bundleManifestPlugin,
@@ -57,7 +57,7 @@ export default {
     resolve(),
     json(),
     typescript({ compilerOptions: { outDir: 'dist/.ts',
-      ...(DIAGNOSTIC_COVERAGE ? { sourceMap: true, inlineSources: true } : {}) } }),
+      ...(DIAGNOSTIC_COVERAGE ? coverageTypeScriptOptions() : {}) } }),
     terser({ format: { comments: false } }),
     editorRuntimeRetryUrlPlugin(),
     entryFallbackPlugin(),

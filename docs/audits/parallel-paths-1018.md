@@ -89,3 +89,18 @@ This artifact is diagnostic only: no ci-proof-registry, release evidence,
 mutation witness, gate or semantic PASS. Slow instrumented performance cases
 remain failed/incomplete diagnostics. Nightly uploads partial artifacts even
 on failure; manual runs return exit 2 when incomplete. Raw/maps remain ignored.
+
+The historical a34f run completed all 980 attempts, but its original dist maps
+escaped to ../src because the TS plugin interpreted outDir-relative sources
+against the original module. Its 498 valid maps proved structure/bounds only;
+the original browser-to-src mapping is insufficient. The real nested Rollup/TS
+fixture is red on that producer and green with explicit compiler sourceRoot.
+The current index rejects an escaping source instead of silently treating it
+as a dependency. The one-time `scripts/coverage-reproject-1018.mjs` supports
+only that frozen recipe. It checks every captured JS/map and raw receipt, reads
+the exact a34f Git blobs, checks every current AST byte, and repairs a source
+binding only when its declared path relation and exact tracked path/content
+agree. Only sources/sourceRoot metadata changes; mappings, offsets, names and
+source contents remain equal. A fresh derived index/report names both the
+capture SHA and the committed projector recipe. It executes no scenarios and
+does not overwrite the original run or turn its failures/unknowns into PASS.

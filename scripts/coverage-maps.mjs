@@ -1,9 +1,15 @@
 // #1018: diagnostic maps follow the final bytes. Inserted text has no source.
 import { GenMapping, addSegment, setSourceContent, toEncodedMap } from '@jridgewell/gen-mapping';
 import { TraceMap, decodedMappings, originalPositionFor } from '@jridgewell/trace-mapping';
+import { resolve } from 'node:path';
 
 export const coverageMapsEnabled = () => process.env.HP_DIAGNOSTIC_COVERAGE === '1';
 export const hashMapRecipe = 'houseplan-coverage-maps/v1';
+// The TS plugin loads emitted maps against the original TS module, rather than
+// its outDir/.ts location. An explicit root avoids that extra relative parent.
+export const coverageTypeScriptOptions = (root = process.cwd()) => ({
+  sourceMap: true, inlineSources: true, sourceRoot: resolve(root, 'src'),
+});
 export function lineOffsets(code) {
   const starts = [0];
   for (let n = 0; n < code.length; n++) if (code[n] === '\n') starts.push(n + 1);

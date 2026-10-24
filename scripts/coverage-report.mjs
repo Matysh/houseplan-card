@@ -21,7 +21,7 @@ export function diagnosticCompleteness(inventory, invocations, index) {
 
 /** Preserve native V8 function/block semantics; source-map points are witnesses,
  * not guessed TS execution. Unmapped/generated spans stay unknown. */
-export function buildCoverageReport({ root = process.cwd(), artifactDir, inventory, invocations, index }) {
+export function buildCoverageReport({ root = process.cwd(), artifactDir, rawRoot = artifactDir, inventory, invocations, index }) {
   const rows = new Map(), issues = [], actualScripts = [], cache = new Map(), observedScripts = new Map(), staleSources = new Set();
   for (const file of index.files) for (const source of file.sources.filter(source => source.product)) {
     const path = resolve(root, source.path);
@@ -81,7 +81,7 @@ export function buildCoverageReport({ root = process.cwd(), artifactDir, invento
   for (const invocation of invocations) {
     if (!invocation.directory) continue;
     invocation.pages = []; invocation.browsers = [];
-    const dir = resolve(artifactDir, invocation.directory), files = walkFiles(dir);
+    const dir = resolve(rawRoot, invocation.directory), files = walkFiles(dir);
     const sources = new Map();
     for (const path of files.filter(p => /node-sources-.*\.json(?:\.gz)?$/.test(p))) {
       const parsed = read(path); sources.set(`${parsed.pid}-${parsed.threadId}`, parsed.sources || {});
