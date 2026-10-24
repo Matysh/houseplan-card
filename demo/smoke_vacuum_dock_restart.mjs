@@ -73,7 +73,7 @@ try {
  const toggle=dialog.locator('#marker-vacuum-dock-restart');await toggle.waitFor({state:'visible'});
  out.label_explains_fallback=await toggle.getAttribute('aria-label')==='New path after docking when no integration path is available';
  out.default_off=!(await toggle.isChecked())&&!(await toggle.isDisabled());
- out.placement=await toggle.evaluate(input=>{const section=input.closest('.hpf-section'),colour=section.previousElementSibling;return !!colour?.querySelector('.vacuum-trail-color')&&!!colour.previousElementSibling?.querySelector('[data-help="vacuum-trail"]')&&!!section.nextElementSibling?.querySelector('.vacbtns');});
+ out.placement=await toggle.evaluate(input=>{const section=input.closest('.hpf-section'),history=section.previousElementSibling,colour=history?.previousElementSibling;return !!history?.querySelector('[data-hp="vacuum-history"]')&&!!colour?.querySelector('.vacuum-trail-color')&&!!colour.previousElementSibling?.querySelector('[data-help="vacuum-trail"]')&&!!section.nextElementSibling?.querySelector('.vacbtns');});
  await page.evaluate(()=>{window.__vac940.hold=true;});
  const before=await page.evaluate(()=>window.__vac940.sent.length);
  await toggle.focus();await page.keyboard.press('Space');

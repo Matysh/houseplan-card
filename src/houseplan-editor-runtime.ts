@@ -526,6 +526,7 @@ export interface HouseplanEditorHostPort {
   _canEdit: boolean;
   _haWallNodeMoveApi: number | null;
   _haVacuumDockRestartApi: number | null;
+  _haVacuumHistoryApi: number | null;
   _canOptimizeUndo: boolean;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _cancelDevicePressFeedback: () => void;
@@ -824,6 +825,7 @@ export interface HouseplanEditorHostPort {
   _vacSrvTrails: import('./vacuum-trail-material').VacuumServerBook;
   _vacTrailFormat: number;
   _vacGeometryCache: import('./vacuum-path-geometry').VacuumPathGeometryCache;
+  readonly _vacHistory: import('./vacuum-history').VacuumHistory;
   _vacTrailDiagnostics: (device: DevItem) => import('./vacuum-trail-diagnostics').VacuumTrailDiagnostic;
   _view: { x: number; y: number; w: number; h: number; } | null;
   _viewportGestureDirty: boolean;

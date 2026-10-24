@@ -1,5 +1,48 @@
 # Development and deployment
 
+## Local vacuum history preview (#999)
+
+`vacuum_history_websocket.py` reads only the public registered Dreame camera;
+`vacuum_history.py` owns the closed catalog/history/map-witness values. The
+shared `vacuum_camera_read.py` lease retains the physical operation after a
+logical timeout. Existing live collection keeps its own parser, acceptance,
+retry and final-read policy. The existing confirmed task proof only rotates a
+weakly held transient history epoch, never a new archive or Store field.
+Completed physical results are released even after caller timeout; background
+provider errors are consumed through a bounded sanitized result. A queued read
+rechecks saved authority before starting the provider. Request-scoped catalog
+watches use the existing recorder state callback: position/token updates remain
+valid, while a catalog change or unavailable interval retires even an ABA reply.
+No separate subscription or polling is introduced.
+
+The frontend separates selected, requested and painted records. It derives
+route/calibration from the accepted configuration snapshot, uses the existing
+geometry cache/render quota, and preserves a pending Show across ordinary close
+or a different dropdown selection. A restored select sets the selected option
+when its dialog DOM is recreated; setting only its value before options mount
+loses the visible choice. Source replacement and late finally callbacks cannot
+inherit the next intent. Settings strings remain lazy; View owns only banner
+copy and local overlay state. No writer/service enters this flow.
+
+The synthetic fixtures in `test/fixtures/vacuum-history/` were produced by the
+unchanged pinned metadata/selector/serializer ASTs, with source hashes recorded
+in each file; `produce.py --source <pinned vendor component>` reproduces the
+two-record fixture. Authenticated selection of index 2 proves its distinct path
+and interrupted status, with no Store writes. This covers the public DTO, not
+cloud download/vendor decoding or an installed robot. `test_vacuum_history.py`,
+real HA endpoint tests, `vacuum-history.test.mjs`, the four named
+`smoke_vacuum_history*.mjs` scenarios and four dedicated Golden scenes cover
+separate ordinary inputs. Capture new Golden frames in the task;
+acceptance remains the pre-beta Linux artifact operation. Final source receipts,
+all required risks, measurements and normal hook must be current before S7.
+
+The local UI-030 comparison uses its accepted section markup/layout CSS with
+the same synthetic records, current shared kit, theme, viewport and state. All
+12 initial/selected/shown × dark/light × wide/narrow pairs have equal dimensions
+and zero differing pixels. This is a section comparison, not a claim that an
+old private whole-plan screenshot equals the current product. Private reference
+files remain local; task Golden frames contain only synthetic data.
+
 ## Mounted HA authority #1056
 
 `demo/smoke_mounted_authority.mjs` uses public HA assignments on an already

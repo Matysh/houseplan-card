@@ -641,6 +641,19 @@ export const devicesStyles = css`
     }
     .vactrail g.hybrid { opacity: var(--hp-vacuum-trail-opacity); }
     .vactrail g.hybrid .core { stroke-opacity: 1; }
+    .vacuum-history-banner {
+      position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:8;
+      display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);box-sizing:border-box;
+      padding:8px 12px;border:1px solid var(--divider-color);border-radius:10px;
+      background:var(--card-background-color);color:var(--primary-text-color);font-size:13px;box-shadow:0 4px 18px #0003;
+    }
+    .vacuum-history-banner > ha-icon {--mdc-icon-size:20px;flex:none;color:var(--primary-color);}
+    .vacuum-history-banner > span {min-width:0;overflow-wrap:anywhere;}
+    .vacuum-history-banner > button {
+      font:inherit;color:var(--primary-color);border:0;border-radius:6px;padding:6px 8px;
+      background:transparent;cursor:pointer;transition:background 160ms;
+    }
+    .vacuum-history-banner > button:hover {background:color-mix(in srgb,var(--primary-color) 12%,transparent);}
     .devicepreview-empty {
       min-height: 82px;
       margin: 4px 0 14px;

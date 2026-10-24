@@ -1,0 +1,71 @@
+{
+  "pin": "f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585",
+  "sourceSha256": {
+    "999-upstream-camera.py": "ce5380afc12ba280121b0b328ef638299d836006711921289bccb20215af3aca",
+    "999-upstream-map.py": "dc41757cce1695f438654e857c264ae36827ce6943988d4036182b81a67b1d78",
+    "999-upstream-types.py": "a0ac52438ae0af08e47cdbcb64818ffe103f9fa6b0990447ec77dc52848d4571",
+    "999-upstream-const.py": "f9b6399c7c0184f444915dabbcb761f27a67667cb3e3c504d27a79c412b9d533",
+    "999-upstream-device.py": "f0b90260f074078b0a38cecdc98f2d806ea397f759179c3f757b975b19d7659c"
+  },
+  "metadata": {
+    "1: 10/24 03:00 - Idle (Completed)": "/api/camera_history_map_proxy/camera.synthetic_history?token=synthetic&index=1&v=1792800000"
+  },
+  "payload": {
+    "active_areas": [],
+    "active_cruise_points": [],
+    "active_points": [],
+    "change_mop": false,
+    "cleaned_area": 0,
+    "cleaning_time": 0,
+    "cleanset": false,
+    "completed": true,
+    "data": {},
+    "dirty": false,
+    "frame_id": 4,
+    "history_map": true,
+    "map_id": 77,
+    "map_index": 1,
+    "no_go": [],
+    "no_mop": [],
+    "path": [
+      [
+        1,
+        0,
+        0,
+        1000,
+        0,
+        1000,
+        1000
+      ]
+    ],
+    "robot_status": 0,
+    "saved_map": false,
+    "saved_map_id": 36,
+    "second_cleaning": false,
+    "sequence": false,
+    "size": [
+      0,
+      0,
+      0,
+      0,
+      2,
+      2,
+      50,
+      null,
+      [
+        0,
+        0,
+        0,
+        0
+      ],
+      null
+    ],
+    "station_status": 0,
+    "task_cruise_points": false,
+    "version": 2,
+    "virtual_walls": [],
+    "wifi_map": false,
+    "zone_cleaning": false
+  },
+  "scope": "Original metadata/selector/serializer with synthetic collaborators; no cloud/decoder/render preprocessing."
+}

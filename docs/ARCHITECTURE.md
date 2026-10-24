@@ -1,5 +1,21 @@
 # House Plan architecture
 
+Historical vacuum preview (#999) has one memory-only `VacuumHistory` owner per
+card. Selection, pending Show and immutable shown material are separate; closing
+the settings popup does not retire Show. The lazy settings section uses the
+shared select/actions, while the eager View banner and existing trail renderer
+consume the same local owner. Preview never replaces `_vacSrvTrails`, changes
+configuration, pauses collection or adds a camera/RAF/writer.
+
+The writer-only history WebSocket bridge resolves the saved marker and unique
+registry-proven Dreame robot/camera. Public catalog machine fields and numeric
+history geometry pass separate closed decoders. Exact current/previous native
+coordinate metadata is only a map witness, never historical content. The
+existing camera physical lease is factored into `vacuum_camera_read.py` and
+shared with live collection; timeouts retain unfinished physical operations.
+Only the existing confirmed task boundary rotates a transient history epoch,
+delivered additively with trails. Store schema and recording policy stay intact.
+
 Own availability (#1026) is one three-state fact from `DevItem.entities`, resolved
 before source selection and reused by source eligibility and presentation policy.
 It never expands the roster through controls, values or physical siblings.

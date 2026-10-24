@@ -2401,6 +2401,29 @@ changes until **Apply**; manual fitting and Cancel remain available.
   plan setting applies after HA accepts it; unsupported backends show disabled
   update/restart guidance. Always retains the separate previous run.
 
+### Preview a past cleanup
+
+In the device's **Vacuum** settings, **Cleaning history preview** lets you
+choose a real past cleanup and press **Show**. Picking another row alone does
+not change the displayed path. A filled Show button and **On plan** date identify
+the cleanup actually shown. **Hide from plan**, or **Hide** in the plan banner,
+returns the latest live path. Saving settings is unnecessary; no command is
+sent to the robot and other screens are unaffected.
+
+Closing the dialog keeps the preview, including a Show still loading. There
+is no automatic timer. Reloading the page, changing space or robot, a confirmed
+new cleanup, or losing the source/calibration/editing permission ends it.
+History is available in View and the Devices editor to House Plan writers
+outside kiosk; Plan and Background do not add a history surface.
+
+The first supported contract is Dreame Vacuum/Tasshack 2.0.2's public history.
+The integration must expose real records and numeric historical paths, and
+House Plan must be able to verify their original map against saved calibration.
+Missing calibration, another floor, interrupted or empty paths and unsupported
+integrations have distinct guidance. Dates follow HA timezone; seconds and a
+UTC offset distinguish colliding times. House Plan creates no long-term archive
+and does not turn current or previous live samples into historical cleanups.
+
 Deleting the marker erases its server trail immediately; adding it again starts
 from scratch. See [VACUUM.md](VACUUM.md) for the source and calibration contract.
 

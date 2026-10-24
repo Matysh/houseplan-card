@@ -12,6 +12,7 @@ from homeassistant.helpers import entity_registry as er
 from custom_components.houseplan import vacuum_path_collector as collector_module
 from custom_components.houseplan.trails import TrailBook, TrailRecorder
 from custom_components.houseplan.vacuum_paths import dreame_snapshot, public_trails
+from custom_components.houseplan.vacuum_history import history_epoch
 
 
 @pytest.fixture(autouse=True)
@@ -75,6 +76,7 @@ async def test_proven_start_clears_cached_native_and_store_preserves_consumed_pr
     book.on_snapshot("m", old_value, 2, "route", "floor", old["_generation"], True)
     book.end_run("m", 3)
     rec = TrailRecorder(hass, SimpleNamespace(config_store=Config()))
+    history_before = history_epoch(rec, "m")
     await rec.store.async_save(book.data)
     calls, replies = [], []
 
@@ -94,6 +96,7 @@ async def test_proven_start_clears_cached_native_and_store_preserves_consumed_pr
     replies[0].set_result(payload())
     await settle(lambda: rec.collector.leases[("camera.live1049", "vacuum.robot1049")].task is None)
     assert rec.book.data["m"]["_task_activity"]["armed"] is True
+    assert history_epoch(rec, "m") == history_before, "ordinary native reads do not end a history preview"
     # Start a final old-generation read, then start a real new task while it waits.
     tick(10)
     rec.collector._start(rec.collector.leases[("camera.live1049", "vacuum.robot1049")])
@@ -101,6 +104,7 @@ async def test_proven_start_clears_cached_native_and_store_preserves_consumed_pr
     await asyncio.sleep(.01)  # the cached State predates the observed new-task event
     hass.states.async_set("vacuum.robot1049", "cleaning", activity(True))
     await settle(lambda: rec.book.data["m"]["current"]["_generation"] != old["_generation"])
+    assert history_epoch(rec, "m") != history_before, "the existing confirmed new-task proof retires history"
     current = rec.book.data["m"]["current"]
     assert current["_live_tail"]["paths"] == [], "cached dock position belongs to the previous epoch"
     generation = current["_generation"]

@@ -276,6 +276,7 @@ def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
     from .radar_websocket import async_register as async_register_radar
     from .vacuum_ecovacs_websocket import async_register as async_register_ecovacs
+    from .vacuum_history_websocket import async_register as async_register_history
     from .zigbee_lqi_websocket import async_register as async_register_zigbee_lqi
     from .zigbee_websocket import async_register as async_register_zigbee
 
@@ -283,6 +284,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_trail_get)
     websocket_api.async_register_command(hass, ws_trail_delete)
     async_register_ecovacs(hass)
+    async_register_history(hass)
     websocket_api.async_register_command(hass, ws_layout_set)
     websocket_api.async_register_command(hass, ws_geometry_repair)
     websocket_api.async_register_command(hass, ws_layout_update)
@@ -1750,6 +1752,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "support_package_versions": list(PACKAGE_VERSIONS),
             "wall_node_move_api": 1,
             "vacuum_dock_restart_api": 1,
+            "vacuum_history_api": 1,
             "device_contact_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
@@ -2964,10 +2967,13 @@ def _public_trails(value: Any) -> Any:
 @websocket_api.async_response
 async def ws_trail_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict) -> None:
     """Current + previous runs and raw coordinates, without source entity ids."""
+    from .vacuum_history import history_epochs
+
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
     connection.send_result(
         msg["id"], {"trail_format": 2, "live_tail_format": 1, "trails": _public_trails(rec.book.data) if rec else {},
-                    "vacuum_source_format": 1, "vacuum_sources": rec.ecovacs.public() if rec else {}}
+                    "vacuum_source_format": 1, "vacuum_sources": rec.ecovacs.public() if rec else {},
+                    "vacuum_history_epochs": history_epochs(rec) if rec else None}
     )
 
 

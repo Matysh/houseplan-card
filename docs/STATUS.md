@@ -20,10 +20,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5262 · pure backend 627 · HA-harness backend 527 · browser smokes 433 (`npm run inventory`) |
+| Tests | Node unit 5273 · pure backend 637 · HA-harness backend 538 · browser smokes 437 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Historical vacuum preview (#999) is local to one card's memory. Its accepted
+default keeps a selected/pending cleanup across ordinary dialog close, while
+Hide/owner retirement and the existing confirmed new-task proof revoke late
+replies. The first public passport is Dreame/Tasshack 2.0.2; current/previous
+native metadata may prove coordinates but never supplies fake cleanup history.
+There is no archive, Store migration, preview writer or robot command.
 
 - #1056 restores the mounted full card after connection/user replacement inside
   the same HA object through the existing coalesced intake and read owner. The

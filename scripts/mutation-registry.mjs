@@ -21222,7 +21222,26 @@ const decorLine1046Cases = [
       replace:'      e.preventDefault(); return;'}] },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases].map((mutant) => ({
+const vacuumHistory999Cases = [
+  {id:'vacuum-history-catalog-aba-admitted-999',
+    guard:'node scripts/backend-test-guard.mjs public_source_ticks tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC5/AC7: normal position/token updates may continue a read, but an observed changed-and-restored catalog must not revive its old authority.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'and not watch.retired and now["state"] is watch.state',replace:'and now["state"] is watch.state'}]},
+  {id:'vacuum-history-retired-show-adopted-999',guard:'node demo/smoke_vacuum_history.mjs',
+    because:'#999 AC5: a completed older Show must not resurrect after Hide or publish/unlock a newer intent across the real dialog and Lit renderer.',
+    patches:[{file:'src/vacuum-history.ts',find:'this.requested===intent&&this.synchronize()',replace:'this.synchronize()'}]},
+  {id:'vacuum-history-live-payload-admitted-999',
+    guard:'node scripts/backend-test-guard.mjs partial_or_wrong_passport tests_backend/test_vacuum_history.py',
+    because:'#999 AC3/AC7: current or incomplete payloads cannot be relabelled as a selected genuine historical cleanup.',
+    patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'or data.get("history_map") is not True or type(data.get("completed")) is not bool',
+      replace:'or type(data.get("completed")) is not bool'}]},
+  {id:'vacuum-history-stale-catalog-accepted-999',
+    guard:'node scripts/backend-test-guard.mjs record_index_shift_before_get tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC3/AC5: a stale catalog revision cannot silently inherit a shifted history index.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'if revision != msg["revision"] or record is None:',replace:'if record is None:'}]},
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

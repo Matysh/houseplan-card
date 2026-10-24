@@ -10,6 +10,7 @@ import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
 import { makeZigbeeLedFixture, prepareZigbeeLed } from './zigbee-led.mjs';
 import { makeDeviceOfflineFixture } from '../fixtures/device-offline.mjs';
 import { prepareDeviceOfflineBoard } from './device-offline.mjs';
+import { makeVacuumHistoryFixture, prepareVacuumHistoryGolden } from './vacuum-history.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -61,7 +62,8 @@ const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
     fixture.states['binary_sensor.appliance_aquastop_occurred'].state = 'on';
   }
   return fixture;
-})() : scenario.deviceContacts ? makeDeviceContactsFixture()
+})() : scenario.vacuumHistory ? makeVacuumHistoryFixture(scenario.vacuumHistory)
+  : scenario.deviceContacts ? makeDeviceContactsFixture()
   : scenario.offlineBoard ? makeDeviceOfflineFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
@@ -1085,12 +1087,18 @@ export async function prepareGoldenScenario(page, scenario) {
         if (message.type === 'houseplan/config/get') return {
           config: structuredClone(fixture.config), rev: 1,
           can_write: scenario.canWrite !== false,
+          ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
           ...(scenario.directLqi ? { zigbee_lqi_api: 1 } : {}),
           ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
             ? { integration_version: scenario.integrationVersion } : {}),
         };
         if (message.type === 'houseplan/layout/get')
           return { layout: structuredClone(fixture.layout || {}), rev: 1 };
+        if (scenario.vacuumHistory&&message.type==='houseplan/vacuum/history/list')return fixture.historyCatalog;
+        if (scenario.vacuumHistory&&message.type==='houseplan/vacuum/history/get')return {
+          ...fixture.historyMaterial,...fixture.historyCatalog.records.find(row=>row.id===message.record_id)};
+        if (scenario.vacuumHistory&&message.type==='houseplan/trail/get')return {trail_format:2,trails:fixture.historyTrails,
+          vacuum_history_epochs:{default:fixture.historyCatalog.epoch,markers:{}}};
         if (message.type === 'houseplan/trail/get') return scenario.vacuumTrail ? {
           trail_format: 2,
           trails: { 'golden-vacuum-trail': {
@@ -1137,6 +1145,7 @@ export async function prepareGoldenScenario(page, scenario) {
       formatEntityState: (state) => state.state,
       config: {
         unit_system: { length: 'km' },
+        ...(scenario.vacuumHistory?{time_zone:scenario.vacuumHistory==='dst'?'Europe/Berlin':'Europe/Moscow'}:{}),
         ...(scenario.moon ? { latitude: scenario.moon.latitude, longitude: scenario.moon.longitude } : {}),
       },
     });
@@ -2767,6 +2776,7 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   if (scenario.zigbeeLed) result.zigbeeLed = await prepareZigbeeLed(page);
+  if (scenario.vacuumHistory) result.vacuumHistory = await prepareVacuumHistoryGolden(page,scenario);
   if (scenario.directLqi) {
     for (const [id, lqi] of Object.entries(scenario.directLqi)) {
       const line = page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${id}"] .lqi`);
@@ -2783,7 +2793,7 @@ export async function goldenClip(page, capture) {
   if (capture === 'battery-zigbee-overlap') return batteryZigbeeClip(await batteryZigbeeProbe(page), page.viewportSize());
   return page.evaluate((captureKind) => {
     const card = window.__goldenCard;
-    const selector=captureKind==='ui-1051-color'?'.hp-properties':captureKind==='ui-1051-menu'?'.hpf-context-menu'
+    const selector=captureKind==='vacuum-history'?'.vacuum-history':captureKind==='ui-1051-color'?'.hp-properties':captureKind==='ui-1051-menu'?'.hpf-context-menu'
       :captureKind==='ui-1051-device'?'.dev[data-id="ui1051-lamp"]':'.stage';
     const target = card?.renderRoot?.querySelector(selector);
     if (!target) throw new Error('golden stage capture target missing');

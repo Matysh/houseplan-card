@@ -110,6 +110,12 @@ the file — and if a future version wants to reclaim that space, it asks.
   reassign or disable source entities. Ordinary radar setup has no implicit
   provisioning side effect.
 - History, graphs, statistics → recorder/history cards. We show now, not then.
+  The owner's UI-030 approval on 2026-10-23 and lifecycle decision on
+  2026-10-24 for [#999](https://github.com/Matysh/houseplan-card/issues/999)
+  permit a narrow spatial exception: a writer may explicitly preview one real
+  historical vacuum cleanup path on their current screen. It uses the supported
+  provider's existing records and saved map calibration, with no persistent
+  archive, retention change, HA history dashboard or robot commands.
   A narrow exception approved for
   [#485](https://github.com/Matysh/houseplan-card/issues/485), with defaults
   confirmed on 2026-09-08, permits local spatial radar setup/occupancy analysis:

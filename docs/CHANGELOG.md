@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preview a selected past Dreame cleanup path on this screen without saving
+  settings or controlling the robot. Hide restores the latest live path. (#999)
 - Restore the full card's current plan when Home Assistant changes its
   connection or user inside the same `hass` object, without another HA tick. (#1056)
 - Separate a device being off from losing Home Assistant availability. Confirmed

@@ -10,6 +10,8 @@ from typing import Any
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_call_later
 
+from .vacuum_camera_read import PhysicalRead as _PhysicalRead
+from .vacuum_camera_read import read_camera
 from .vacuum_paths import (
     PathRejected,
     PathSnapshot,
@@ -58,13 +60,6 @@ class _Lease:
     attribute_token: tuple[int, int | None] | None = None
     attempt: int = 0
     channel_valid: bool | None = None
-
-
-@dataclass(slots=True)
-class _PhysicalRead:
-    task: asyncio.Task[Any] | None = None
-    started: float = float("-inf")
-    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
 
 class PathCollector:
@@ -264,35 +259,20 @@ class PathCollector:
                     attribute_snapshot, attribute_path, context.map_id,
                 )
                 return replace(value, read_started_ms=started_ms)
-            physical = self.physical.setdefault(context.source, _PhysicalRead())
-            async with physical.lock:
-                # If an owner was cancelled externally, drain its physical
-                # operation as well. A new context never consumes that value.
-                if physical.task is not None:
-                    try:
-                        await asyncio.shield(physical.task)
-                    except Exception:
-                        pass
-                delay = physical.started + MIN_READ_S - self.clock()
-                if delay > 0:
-                    await asyncio.sleep(delay)
-                if self.closed or lease.retired or not lease.context.available \
-                        or lease.context.platform != "dreame_vacuum" \
-                        or lease.context.identity != context.identity \
-                        or (not lease.context.moving and lease.stop_at is not None
-                            and self.clock() > lease.stop_at + FINAL_DEADLINE_S):
-                    raise PathRejected("retired")
-                async def physical_read() -> Any:
-                    return await self.read_camera(context.source)
-                physical.started = self.clock()
-                started_ms = time.time() * 1000
-                physical.task = self.hass.async_create_background_task(physical_read(), "houseplan vacuum camera read")
-                owned = physical.task
-                try:
-                    payload = await asyncio.shield(owned)
-                finally:
-                    if owned.done() and physical.task is owned:
-                        physical.task = None
+            def current() -> bool:
+                return not self.closed and not lease.retired and lease.context.available \
+                    and lease.context.platform == "dreame_vacuum" \
+                    and lease.context.identity == context.identity \
+                    and not (not lease.context.moving and lease.stop_at is not None
+                             and self.clock() > lease.stop_at + FINAL_DEADLINE_S)
+
+            async def physical_read() -> Any:
+                return await self.read_camera(context.source)
+
+            payload, started_ms = await read_camera(
+                self.hass, self.physical, context.source, physical_read,
+                current, self.clock, MIN_READ_S,
+            )
             value = await self.hass.async_add_executor_job(dreame_snapshot, payload)
             return replace(value, read_started_ms=started_ms)
 

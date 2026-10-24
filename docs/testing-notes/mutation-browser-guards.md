@@ -45,10 +45,15 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 91 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 97 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 253 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **509 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 254 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **510 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
+
+#999 adds `vacuum-history-retired-show-adopted-999` to custom-element and HA
+browser lifecycle. The named ordinary UI smoke observes Show/Hide, ordinary
+dialog close, painted history and old-finally ownership across the actual Lit
+card. Static readiness does not claim a development-time mutant execution.
 
 #991 adds `state-source-picker-escape-does-not-close-991` to custom-element and
 HA browser lifecycle: the real mounted picker must consume trusted Escape,
@@ -564,6 +569,8 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `vacuum-history-retired-show-adopted-999`
 
 - `form-kit-inline-opacity-input-dropped-1018`
 

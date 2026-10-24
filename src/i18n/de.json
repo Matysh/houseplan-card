@@ -1360,5 +1360,9 @@
   "svg.view_required": "Wechseln Sie zum Exportieren in den Ansichtsmodus.",
   "svg.cancelled": "Export abgebrochen: Plan oder Zugriffsrechte wurden geändert.",
   "svg.not_ready": "Der Plan wird noch geladen. Laden Sie ihn nach Abschluss erneut herunter.",
-  "tip.signal_last_known": "Letzter bekannter Wert, Quelle nicht verfügbar"
+  "tip.signal_last_known": "Letzter bekannter Wert, Quelle nicht verfügbar",
+  "vac.history_banner": "Reinigungsverlauf · {date}",
+  "vac.history_hide": "Ausblenden",
+  "vac.history_limited": "Begrenzte Anzeige",
+  "vac.history_interrupted": "Reinigung unterbrochen"
 }
