@@ -55,7 +55,11 @@ const CAPS = {
   // Owner permits small expensive-to-remove increases. Contact geometry,
   // reflow and the paired writer remain in separate modules; only host
   // adoption/history seams live here. Record the fact, retain CORE_BAND50.
-  'src/houseplan-card.ts': 13219,
+  // #1025: accepted e8 has 13264 lines; 8 host integration lines yield 13272.
+  // This is 3 lines beyond the existing 13219+50 band. The owner permits the
+  // exact observed cost: keyboard dispatch/focus and existing writer/ACK seams;
+  // topology/queue/CAS logic stays in separate lazy modules. Keep CORE_BAND 50.
+  'src/houseplan-card.ts': 13272,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.

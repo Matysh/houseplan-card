@@ -47,6 +47,12 @@ the actual additions are 10,393 / 90 / 3,086 B, without summing branch deltas.
 Under the owner's measured-growth permission, only the raw reference and lazy
 editor ceiling take the new exact facts. Existing bands, absolute budgets,
 initial/lazy boundaries and other coupling references remain unchanged.
+The complete hook also measures 13,272 card lines against the old 13,219 cap
+and unchanged 50-line band. Accepted e8 already has 13,264 lines; this task adds
+eight thin host integration lines, three beyond the old band. The owner's
+standing measured-cost permission records only the exact 13,272 fact in the
+core test, preserving its band and the other core cap; no cosmetic product
+rewrite is used to change the count.
 The fresh e8 local subset passes the new native keyboard smoke and existing
 Decor, partition-opening, free/connected-wall, contact, layout-ACK, canvas-gesture,
 lazy-editor and config-authority smokes. Two existing selected Golden scenes
