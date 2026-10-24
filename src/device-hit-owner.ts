@@ -279,7 +279,7 @@ export class DeviceHitController {
   private index: DeviceHitIndex | null = null;
   private readonly pointers = new DevicePointerOwnerLatch();
   private hoverId: string | null = null;
-  private hoverElement: HTMLElement | null = null;
+  private hoverElement: Element | null = null;
 
   public invalidate(): void {
     this.index = null;
@@ -385,8 +385,8 @@ export class DeviceHitController {
     this.hoverElement?.removeAttribute('data-hp-device-hover');
     this.hoverId = id;
     this.hoverElement = id
-      ? [...root.querySelectorAll<HTMLElement>('.devlayer > .dev[data-hp="device"][data-id]')]
-        .find((item) => item.dataset.id === id) || null
+      ? [...root.querySelectorAll('.devlayer > .dev[data-hp="device"][data-id], .led-hit[data-hp="device"][data-id]')]
+        .find((item) => item.getAttribute('data-id') === id) || null
       : null;
     this.hoverElement?.setAttribute('data-hp-device-hover', '');
   }

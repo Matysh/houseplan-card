@@ -16,6 +16,40 @@ or permission to accept a baseline. Production-size comparisons use matching
 Node/Rollup and actual builds on both sides; do not infer combined sizes by
 adding task deltas.
 
+## LED Zigbee endpoints (#1004)
+
+`node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input
+and native mouse hover. It covers all three icon/LED pairings, opposite-end
+hover, nearest overlapping hit floors, a wall-inset analytic point, fixed-screen
+halo/arrow clearance in Flat/2.5D and themes, badge independence, off-core paint
+ownership, representation retirement and existing access/input cleanup. Native
+CDP touch/cancel and pen input target the real SVG hit path; public kiosk
+entry clears its paint, and a bounded steady-hover RAF observation plus idle
+cleanup checks guard against a repeating overlay layout loop. Its
+wide-tube oracle compares ordinary hover on/off pixels inside the halo ring;
+it does not patch a product guard or style. The initial accepted-dev run is
+red on missing LED routes. The earlier auxiliary hidden-halo measurement is
+excluded from ordinary-input and caught claims. Existing topology hover/tooltip and LED tube,
+draw/bind smokes retain the other owners. The new endpoint unit suite checks
+camera projection, singular/invalid input and screen-distance clearance.
+Two selected new Golden scenes render real open/closed LED routes; capture
+keeps missing-baseline status and never accepts PNGs. Registry declarations
+only receive static readiness during development.
+
+Matched Windows Node22.23.3/Rollup4.62.2 builds of accepted `1bf87673` and the
+combined `1f6f3dc2e` source measure raw dist3432791→3437873 B (+5082 B).
+The lazy topology overlay itself grows18874→23565 B raw /6275→7617 B gzip for
+current SVG projection, inert real-shape paint and bounded masks; the initial
+View graph is339621→339611 B gzip, editor344832→344715 B gzip. These incidental
+gzip decreases are not a performance improvement claim. There is no replaced
+LED renderer/cache to remove: the ordinary body still owns lighting/hit/focus,
+and the overlay borrows only participating top strokes while active.
+The owner's explicit small-size-growth allowance in the bulk instruction
+overrides the stricter no-increase wording in #1004's SPEC for raw bundleBytes
+only. Its reference moves to the measured3437873 B fact. This does increase
+that reference; the2000-B bands, absolute View/performance budgets and all
+other references/metrics remain unchanged. The issue records the same rationale.
+
 ## Config authority smoke #1052
 
 `node demo/smoke_config_authority.mjs` records B's config/layout read counts
@@ -1262,6 +1296,16 @@ quota exhaustion and RU/EN output independently of sampled/native quality.
 `tests_backend/test_trail_recorder.py` covers source/event order, refresh,
 unavailable and ambiguous maps, and strict orphan-to-route generations;
 `test_ha_vacuum_paths.py` exercises real Store teardown/restart and late callbacks.
+
+The recorder's temporary HA loader (#1057) delegates canonical package isolation
+to `tests_backend/pure_imports.py::load_pure`. Both successful loading and an
+exception after dependency imports restore the original HA, alias and canonical
+module identities; `test_trail_recorder_imports.py` observes those identities
+without writing to the import machine. Run `node scripts/trail-resume-test-guard.mjs` and
+`node scripts/backend-test-guard.mjs issue_495_dropped_route_runs_reach_the_store tests_backend/test_trail_recorder.py`
+with `PYTHON` pointing to an HA-enabled interpreter. A combined pytest invocation
+of recorder, recorder imports, trails and `test_ha_setup.py` checks coexistence with the real
+integration. These ordinary guards retain their existing selection and assertions.
 
 After a fresh `npm run bundle:sync`, run
 `node demo/smoke_vacuum_route_recovery.mjs`,

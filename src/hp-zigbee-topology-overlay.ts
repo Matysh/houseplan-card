@@ -7,6 +7,7 @@ import {
   TOPOLOGY_STALE_MS, type ZigbeeParentTarget,
 } from './zigbee-topology';
 import { zigbeeArrowGeometry, type ZigbeePixelPoint } from './zigbee-topology-geometry';
+import { readZigbeeLedEndpoint, zigbeeEndpointClearance, type ZigbeeEndpoint } from './zigbee-topology-endpoint';
 import {
   subscribeZigbeeTopology, zigbeeTopologyRuntimeSnapshot,
   zigbeeTopologyUserIdentity,
@@ -21,7 +22,7 @@ export const ZIGBEE_OVERLAY_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 const EMPTY_RUNTIME: ZigbeeTopologyRuntimeSnapshot = { revision: 0, topologies: [], states: {} };
 const ENDPOINT_ATTRIBUTE = 'data-hp-zigbee-topology-endpoint';
-type MarkerPosition = ZigbeePixelPoint & { width: number; height: number };
+type MarkerPosition = ZigbeeEndpoint;
 
 export class HpZigbeeTopologyOverlay extends LitElement {
   static readonly buildFingerprint = ZIGBEE_OVERLAY_FINGERPRINT;
@@ -53,6 +54,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _owner?: object;
   private _userIdentity = '';
   private _parent?: HTMLElement;
+  private _eventRoot?: HTMLElement;
   private _hoverGateObserver?: MutationObserver;
   private _markerObserver?: MutationObserver;
   private _layoutFrame = 0;
@@ -61,7 +63,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _originMarkerId = '';
   private _desiredEndpointIds = new Set<string>();
   private _endpointSetDirty = false;
-  private _endpointElements = new Set<HTMLElement>();
+  private _endpointElements = new Set<Element>();
+  private _geometryKey = '';
   private _mappedMemo?: ZigbeeMappingMemo;
 
   static styles = css`
@@ -73,6 +76,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     :host { position: absolute; inset: 0; z-index: auto; display: block; pointer-events: none; }
     svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 7; }
     svg.over-battery { z-index: 9; }
+    svg.led-participants { z-index: 8; }
+    .led-participants path { pointer-events: none; }
     line { vector-effect: non-scaling-stroke; stroke-linecap: round; }
     .route-arrow { vector-effect: non-scaling-stroke; }
     svg, line, polygon, .halo, .remote, .parent-bubble, .route-status { pointer-events: none; }
@@ -83,6 +88,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       box-sizing: border-box; border: 2px solid rgba(120, 190, 220, .82); border-radius: 50%;
       box-shadow: 0 0 0 4px rgba(120, 190, 220, .16);
     }
+    .halo[data-hp="zigbee-topology-led-anchor"] { z-index: 8; }
     .remote, .parent-bubble, .route-status {
       z-index: 9;
       position: absolute; transform: translate(12px, calc(-100% - 12px));
@@ -99,6 +105,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       line { stroke: Highlight !important; }
       .route-arrow { fill: Highlight !important; stroke: CanvasText !important; }
       .halo { border-color: Highlight; box-shadow: none; }
+      .led-participants .led-highlight { stroke: Highlight; }
       .remote, .parent-bubble, .route-status { color: CanvasText; background: Canvas; border-color: CanvasText; }
     }
   `;
@@ -200,6 +207,12 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         this.requestUpdate();
         return;
       }
+      // The SVG and HTML cameras can have different budgeted anchors. Read
+      // current LED paint, not a stale icon or a second model/frame cache.
+      if (this._currentGeometryKey(width, height) !== this._geometryKey) {
+        this.requestUpdate();
+        return;
+      }
       this._clipRouteCopies();
       this._fitParentCaptions();
       this.onLayout?.();
@@ -218,7 +231,11 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const right = Math.min(window.innerWidth, stage.right) - 8;
     const top = Math.max(0, stage.top) + 8;
     const bottom = Math.min(window.innerHeight, stage.bottom) - 8;
-    const marker = this._marker(this._originMarkerId)?.getBoundingClientRect();
+    const endpoint = this._position(this._originMarkerId, this._renderSize.width, this._renderSize.height);
+    const marker = endpoint?.led
+      ? [...this.renderRoot.querySelectorAll<HTMLElement>('[data-hp="zigbee-topology-led-anchor"]')]
+        .find(node => node.dataset.id === this._originMarkerId)?.getBoundingClientRect()
+      : this._marker(this._originMarkerId)?.getBoundingClientRect();
     const blockers: TipRect[] = [...this.renderRoot.querySelectorAll<HTMLElement>('.remote,.route-status')]
       .map((node) => node.getBoundingClientRect());
     if (marker) blockers.push(marker);
@@ -260,7 +277,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         `line[data-parent-index="${caption.dataset.parentIndex}"]`,
       )) { part.setAttribute('x2', String(point.x)); part.setAttribute('y2', String(point.y)); }
       const arrow = zigbeeArrowGeometry(origin, point,
-        marker ? Math.max(marker.width, marker.height) * .61 + 3 : 0, 0, 'toward-neighbor');
+        endpoint ? this._markerClearance(endpoint, point) : 0, 0, 'toward-neighbor');
       for (const polygon of this.renderRoot.querySelectorAll<SVGPolygonElement>(
         `polygon[data-parent-index="${caption.dataset.parentIndex}"]`,
       )) polygon.setAttribute('points', arrow ? this._points(arrow.points) : '');
@@ -327,17 +344,19 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     if (!parent || parent === this._parent) return;
     this._disconnectParent();
     this._parent = parent;
-    parent.addEventListener('pointerover', this._pointerOver);
-    parent.addEventListener('pointerout', this._pointerOut);
-    parent.addEventListener('pointerdown', this._pointerDown, true);
+    this._eventRoot = parent.closest<HTMLElement>('.stage') || parent;
+    this._eventRoot.addEventListener('pointerover', this._pointerOver);
+    this._eventRoot.addEventListener('pointerout', this._pointerOut);
+    this._eventRoot.addEventListener('pointerdown', this._pointerDown, true);
     if (typeof MutationObserver !== 'undefined') {
       this._markerObserver = new MutationObserver((records) => {
-        if (records.some((record) => record.type === 'childList')) this._syncEndpointOwnership();
-        if (records.some((record) => record.attributeName === 'data-hp-device-hover')) this._adoptPointerHover();
+        const childrenChanged = records.some((record) => record.type === 'childList');
+        if (childrenChanged) this._syncEndpointOwnership();
+        if (childrenChanged || records.some((record) => record.attributeName === 'data-hp-device-hover')) this._adoptPointerHover();
         this._scheduleLayout();
       });
-      this._markerObserver.observe(parent, { childList: true, attributes: true, subtree: true,
-        attributeFilter: ['style', 'data-hp-device-hover'] });
+      this._markerObserver.observe(this._eventRoot, { childList: true, attributes: true, subtree: true,
+        attributeFilter: ['style', 'data-hp-device-hover', 'd', 'transform', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-dasharray'] });
     }
     this._syncEndpointOwnership();
     this._adoptPointerHover();
@@ -346,7 +365,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _adoptPointerHover(): void {
     const host = (this.getRootNode() as ShadowRoot).host;
     const id = host?.hasAttribute('data-pointer-hover')
-      ? this._parent?.querySelector<HTMLElement>('[data-hp-device-hover]')?.dataset.id || '' : '';
+      ? this._eventRoot?.querySelector<HTMLElement | SVGElement>('[data-hp-device-hover]')?.dataset.id || '' : '';
     if (id === this._hovered) return;
     if (!id) { this._clear(); return; }
     this._hovered = id;
@@ -354,18 +373,19 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   }
 
   private _disconnectParent(): void {
-    this._parent?.removeEventListener('pointerover', this._pointerOver);
-    this._parent?.removeEventListener('pointerout', this._pointerOut);
-    this._parent?.removeEventListener('pointerdown', this._pointerDown, true);
+    this._eventRoot?.removeEventListener('pointerover', this._pointerOver);
+    this._eventRoot?.removeEventListener('pointerout', this._pointerOut);
+    this._eventRoot?.removeEventListener('pointerdown', this._pointerDown, true);
     this._markerObserver?.disconnect();
     this._markerObserver = undefined;
     this._clearEndpointOwnership();
     this._parent = undefined;
+    this._eventRoot = undefined;
   }
 
-  private _deviceFromEvent(event: Event): HTMLElement | null {
+  private _deviceFromEvent(event: Event): HTMLElement | SVGElement | null {
     for (const value of event.composedPath()) {
-      if (value instanceof HTMLElement && value.dataset.hp === 'device') return value;
+      if ((value instanceof HTMLElement || value instanceof SVGElement) && value.dataset.hp === 'device') return value;
     }
     return null;
   }
@@ -377,7 +397,10 @@ export class HpZigbeeTopologyOverlay extends LitElement {
 
   private _pointerOver = (event: PointerEvent): void => {
     if (!this._mouseAllowed(event)) { this._clear(); return; }
-    const device = this._deviceFromEvent(event);
+    // The existing hit owner has already selected the nearest physical LED
+    // under this native pointer; DOM paint order is not another hit resolver.
+    const device = this._eventRoot?.querySelector<HTMLElement | SVGElement>('[data-hp-device-hover]')
+      || this._deviceFromEvent(event);
     const id = device?.dataset.id || '';
     if (id && id !== this._hovered) { this._hovered = id; this.requestUpdate(); }
   };
@@ -386,7 +409,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const from = this._deviceFromEvent(event);
     if (!from || from.dataset.id !== this._hovered) return;
     const related = event.relatedTarget instanceof Element
-      ? event.relatedTarget.closest<HTMLElement>('[data-hp="device"]') : null;
+      ? event.relatedTarget.closest<HTMLElement | SVGElement>('[data-hp="device"]') : null;
     if (related?.dataset.id === this._hovered) return;
     this._clear();
   };
@@ -414,29 +437,35 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._endpointSetDirty = true;
   }
 
-  private _marker(id: string): HTMLElement | null {
-    return [...(this._parent?.querySelectorAll<HTMLElement>('.dev[data-hp="device"][data-id]') || [])]
+  private _marker(id: string): HTMLElement | SVGPathElement | null {
+    return [...(this._eventRoot?.querySelectorAll<HTMLElement | SVGPathElement>(
+      '.dev[data-hp="device"][data-id], .led-hit[data-hp="device"][data-id]') || [])]
       .find((item) => item.dataset.id === id) || null;
   }
 
   private _clearEndpointOwnership(): void {
     for (const marker of this._endpointElements) marker.removeAttribute(ENDPOINT_ATTRIBUTE);
-    for (const marker of this._parent?.querySelectorAll<HTMLElement>(`[${ENDPOINT_ATTRIBUTE}]`) || []) {
+    for (const marker of this._eventRoot?.querySelectorAll(`[${ENDPOINT_ATTRIBUTE}]`) || []) {
       marker.removeAttribute(ENDPOINT_ATTRIBUTE);
     }
     this._endpointElements.clear();
   }
 
   private _syncEndpointOwnership(): void {
-    const next = new Set<HTMLElement>();
+    const next = new Set<Element>();
     for (const id of this._desiredEndpointIds) {
       const marker = this._marker(id);
       if (marker) next.add(marker);
+      if (marker instanceof SVGPathElement) {
+        const badge = [...(this._parent?.querySelectorAll<HTMLElement>('[data-led-badge]') || [])]
+          .find(node => node.dataset.ledBadge === id);
+        if (badge) next.add(badge);
+      }
     }
     for (const marker of this._endpointElements) {
       if (!next.has(marker)) marker.removeAttribute(ENDPOINT_ATTRIBUTE);
     }
-    for (const marker of this._parent?.querySelectorAll<HTMLElement>(`[${ENDPOINT_ATTRIBUTE}]`) || []) {
+    for (const marker of this._eventRoot?.querySelectorAll(`[${ENDPOINT_ATTRIBUTE}]`) || []) {
       if (!next.has(marker)) marker.removeAttribute(ENDPOINT_ATTRIBUTE);
     }
     for (const marker of next) {
@@ -451,6 +480,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _position(id: string, width: number, height: number): MarkerPosition | null {
     const marker = this._marker(id);
     if (!marker) return null;
+    if (marker instanceof SVGPathElement) return readZigbeeLedEndpoint(marker, this);
     const x = Number.parseFloat(marker.style.left);
     const y = Number.parseFloat(marker.style.top);
     const rect = marker.getBoundingClientRect();
@@ -473,8 +503,37 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       : topologyT(langOf(this.hass), 'route_device_not_on_plan');
   }
 
-  private _markerClearance(position: MarkerPosition): number {
-    return Math.max(position.width, position.height) * 0.61 + 3;
+  private _markerClearance(position: MarkerPosition, toward?: ZigbeePixelPoint): number {
+    return zigbeeEndpointClearance(position, toward);
+  }
+
+  private _currentGeometryKey(width: number, height: number): string {
+    return JSON.stringify([...this._desiredEndpointIds].map(id => [id, this._position(id, width, height)]));
+  }
+
+  private _ledParticipant(id: string, position: MarkerPosition, index: number) {
+    const paint = position.led!;
+    const ring = `hp-zigbee-led-ring-${index}`, hollow = `hp-zigbee-led-off-${index}`;
+    const path = (stroke: string, width: number) => svg`<path d=${paint.d} stroke=${stroke} stroke-width=${width}></path>`;
+    return svg`<g data-hp="zigbee-topology-led-participant" data-id=${id} transform=${paint.transform}
+      fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <defs>
+        <mask id=${ring} maskUnits="userSpaceOnUse" x=${paint.bounds.x} y=${paint.bounds.y}
+          width=${paint.bounds.width} height=${paint.bounds.height}>
+          ${path('white', paint.thickness * 1.7)}${path('black', paint.thickness)}
+        </mask>
+        ${paint.hollow ? svg`<mask id=${hollow} maskUnits="userSpaceOnUse" x=${paint.bounds.x} y=${paint.bounds.y}
+          width=${paint.bounds.width} height=${paint.bounds.height}>
+          ${path('white', paint.thickness)}${path('black', paint.thickness / 2)}
+        </mask>` : nothing}
+      </defs>
+      <path class="led-highlight" d=${paint.d} stroke="rgba(120,190,220,.82)" stroke-width=${paint.thickness * 1.7}
+        mask="url(#${ring})"></path>
+      <path d=${paint.d} stroke=${paint.outline} stroke-width=${paint.thickness}
+        stroke-dasharray=${paint.dash ?? nothing} mask=${paint.hollow ? `url(#${hollow})` : nothing}></path>
+      <path d=${paint.d} stroke=${paint.core} stroke-width=${paint.thickness / 2}
+        stroke-opacity=${paint.opacity} stroke-dasharray=${paint.dash ?? nothing}></path>
+    </g>`;
   }
 
   private _points(points: readonly ZigbeePixelPoint[]): string {
@@ -506,6 +565,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const width = this.clientWidth || this._parent?.clientWidth || 1;
     const height = this.clientHeight || this._parent?.clientHeight || 1;
     this._renderSize = { width, height };
+    this._geometryKey = this._currentGeometryKey(width, height);
     // #627: the ru/de/fr topology strings are a lazy chunk. Request it once on
     // mount — before the first hover can paint a label — and draw nothing
     // until it settled (ready or bounded English fallback).
@@ -537,7 +597,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._originMarkerId = originRemote ? this._hovered : hover.originMarkerId || this._hovered;
     const origin = this._position(this._originMarkerId, width, height);
     if (!origin) {
-      this._setDesiredEndpointIds([]);
+      this._clear();
       return nothing;
     }
     const lines = hover.lines.map((line) => ({
@@ -545,7 +605,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
       point: this._position(line.neighborMarkerId, width, height),
     })).filter((line) => !!line.point).map((line) => {
       const arrow = line.routeDirection ? zigbeeArrowGeometry(
-        origin, line.point!, this._markerClearance(origin), this._markerClearance(line.point!),
+        origin, line.point!, this._markerClearance(origin, line.point!), this._markerClearance(line.point!, origin),
         line.routeDirection,
       ) : null;
       return { ...line, arrow };
@@ -559,7 +619,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         y: Math.max(14, Math.min(height - 14, origin.y + offset)),
       };
       return { target, point, arrow: zigbeeArrowGeometry(
-        origin, point, this._markerClearance(origin), 0, 'toward-neighbor',
+        origin, point, this._markerClearance(origin, point), 0, 'toward-neighbor',
       ) };
     });
     const involved = selected.filter((item) => item.hoverNodes.get(this._hovered)
@@ -582,6 +642,9 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         this._originMarkerId,
         ...lines.map((line) => line.neighborMarkerId),
       ] : []);
+    this._geometryKey = this._currentGeometryKey(width, height);
+    const leds = [...this._desiredEndpointIds].map(id => ({ id, point: this._position(id, width, height) }))
+      .filter((item): item is { id: string; point: MarkerPosition } => !!item.point?.led);
     const routes = (copy: boolean) => [
       ...lines.map((line) => this._route(origin, line.point!, line.lqi, line.routeDirection, line.arrow,
         false, undefined, copy)),
@@ -596,7 +659,11 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         <clipPath id="hp-zigbee-route-clip"></clipPath>
         <g clip-path="url(#hp-zigbee-route-clip)">${routes(true)}</g>
       </svg>` : nothing}
-      ${lines.map((line) => html`<div class="halo" data-hp="zigbee-topology-neighbor"
+      ${leds.length ? svg`<svg class="led-participants" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
+        aria-hidden="true">${leds.map(({ id, point }, index) => this._ledParticipant(id, point, index))}</svg>` : nothing}
+      ${leds.map(({ id, point }) => html`<div class="halo" data-hp="zigbee-topology-led-anchor" data-id=${id}
+        style="left:${point.x}px;top:${point.y}px;width:${point.width}px;height:${point.height}px;transform:translate(-50%,-50%) scale(${1 / point.led!.scaleX},${1 / point.led!.scaleY})"></div>`)}
+      ${lines.filter(line => !line.point!.led).map((line) => html`<div class="halo" data-hp="zigbee-topology-neighbor"
         data-id=${line.neighborMarkerId} style="left:${line.point!.x}px;top:${line.point!.y}px;width:${line.point!.width * 1.22}px;height:${line.point!.height * 1.22}px"></div>`)}
       ${bubbles.map((bubble, index) => html`<div class="parent-bubble ${placeLeft ? 'left' : 'right'}"
         data-parent-index=${index} data-hp="zigbee-topology-parent-bubble" data-kind=${bubble.target.kind}

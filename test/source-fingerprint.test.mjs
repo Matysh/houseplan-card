@@ -244,6 +244,7 @@ test('в корпусе настоящего репозитория все се�
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
     'demo/golden/scene-repaint.mjs',
     'demo/golden/static-stability.mjs',
+    'demo/golden/zigbee-led.mjs',
   ]);
   assert.ok(corpus.includes('scripts/source-fingerprint.mjs'), 'сам отпечаток остаётся входом сборки');
   assert.ok(corpus.some((file) => file.startsWith('src/')), 'корпус без src был бы пуст по смыслу');
