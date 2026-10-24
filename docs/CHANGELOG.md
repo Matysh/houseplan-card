@@ -2,20 +2,37 @@
 
 ## Unreleased
 
+- Unify editor action trays, furniture properties, context menus, disclosures
+  and text links with the shared UI kit. Decor colours support inline HEX and
+  opacity preview with one Undo step; device selection stays blue after hover,
+  and Plan Select shows a pointer only on selectable walls. Opening an LED
+  context menu cannot leave a canvas pan active after the pointer is released.
+  Inline opacity values remain fully readable while editing. (#1051)
+
 - Keep a continuous observed live tail behind a moving vacuum while the
   integration path catches up. Exact native points remain separate; confirmed
   Dreame cleanup starts no longer show the previous current trail. Diagnostics
   distinguish live positions from integration snapshots. (#1049)
+- Background editor Properties follow the latest newly drawn object, so immediate
+  changes affect that object. New text receives its matching selection frame;
+  Escape cancels an unfinished drawing without creating another object. (#1047)
 - Read Zigbee signal directly from Zigbee2MQTT and ZHA without enabling
   diagnostic entities. Existing device/room readings use the same values;
   Home Assistant diagnostics remain the fallback. Custom MQTT base topics
   can be configured with Zigbee links off. Revoked or interrupted signal feeds
-  also retire cleanly when Home Assistant asynchronously refuses unsubscribe. (#1029)
+  also retire cleanly when Home Assistant asynchronously refuses unsubscribe.
+  Closed cards stop reading signal data and reconnect to their shared feed cleanly. (#1029, #1053)
 
 - Recover the current Dreame path after transport map/frame resets instead of
   leaving a previous cleanup's trail behind the moving robot. Diagnostics now
   identify an errored last-accepted path explicitly. No history reset or
   recalibration is needed. (#1048)
+
+- Draw decorative lines with successive clicks like walls: Shift aligns exact
+  45° directions, Esc ends the chain, and Undo/Redo follows each accepted segment.
+  Dragging and pinch navigation do not create lines. Undo/Redo of other edits
+  ends the unfinished chain. Properties immediately shows the newest line while
+  the tool stays armed. (#1046)
 
 ## v1.83.0-beta.1 — 2026-10-23
 

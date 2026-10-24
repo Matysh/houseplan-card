@@ -65,6 +65,8 @@ function installHelpers() {
     for (const rule of sheet.cssRules) {
       if (rule.selectorText === '.radarcoordinates') return 'editor-dialogs';
       if (rule.selectorText === '.editor-secondary-host') return 'editor-tray';
+      if (rule.selectorText === '.hpf-context-menu') return 'editor-menu';
+      if (rule.selectorText === '.hp-properties') return 'editor-properties';
     }
     return 'other';
   };
@@ -204,9 +206,10 @@ function installHelpers() {
 /** #805: follow the named eager dialogs sheet, including preceding #956 sheets. */
 const dialogSlot = cardStyles.flat(Infinity).indexOf(dialogsStyles) + 1;
 if (!dialogSlot) throw Error('The eager dialogs cascade anchor is missing');
-const canonical = (kinds, litSheets) => kinds.filter((kind) => kind === 'editor-dialogs').length === 1
-  && kinds.filter((kind) => kind === 'editor-tray').length === 1
-  && kinds.indexOf('editor-dialogs') === dialogSlot && kinds.indexOf('editor-tray') === litSheets + 1;
+const canonical = (kinds, litSheets) => ['editor-dialogs','editor-menu','editor-tray','editor-properties']
+  .every(kind => kinds.filter(value => value === kind).length === 1)
+  && kinds.indexOf('editor-dialogs') === dialogSlot && kinds.indexOf('editor-menu') === dialogSlot + 1
+  && kinds.indexOf('editor-tray') === litSheets + 2 && kinds.indexOf('editor-properties') === litSheets + 3;
 
 /** Ordinary orphaned action fixture: no product/guard patch, only a weak owner. */
 function weakActionOwner() {
@@ -305,7 +308,7 @@ try {
   const settings = await frameOf(page);
   console.log(`first frame, settings: @${settings.phase}`);
   out.settingsFirstFrameStyled = settings.rendered && settings.value === 'none'
-    && JSON.stringify(settings.kinds) === JSON.stringify(['editor-dialogs', 'editor-tray'])
+    && JSON.stringify(settings.kinds) === JSON.stringify(['editor-dialogs', 'editor-menu', 'editor-tray', 'editor-properties'])
     || `display=${settings.value} (${settings.phase}), editor sheets ${settings.kinds.join('+') || 'none'}`;
   const afterLoad = await page.evaluate(async () => {
     const card = window.__card;
@@ -391,7 +394,7 @@ try {
       .filter((sheet) => window.__hp805.kindOf(sheet) !== 'other');
     const a = sheetsOf(window.__card);
     const b = sheetsOf(document.querySelector('#hp-805-second'));
-    return frame.value === 'absolute' && a.length === 2 && b.length === 2 && a[0] === b[0] && a[1] === b[1]
+    return frame.value === 'absolute' && a.length === 4 && b.length === 4 && a.every((sheet, i) => sheet === b[i])
       || `position=${frame.value} (${frame.phase}), sheets ${a.length}/${b.length}`;
   }, secondFrame);
 
@@ -415,7 +418,7 @@ try {
     window.__hp805.watch(card, 'hp-dialog .backupupload input', 'display');
   });
   const revived = await frameOf(page);
-  out.warmRemountRevivedDialogStyled = revived.value === 'none' && revived.kinds.length === 2
+  out.warmRemountRevivedDialogStyled = revived.value === 'none' && revived.kinds.length === 4
     && await page.evaluate(() => !!window.__card._editorRuntime)
     || `display=${revived.value} (${revived.phase}), editor sheets ${revived.kinds.join('+') || 'none'}`;
   await close(desktop);
@@ -562,7 +565,7 @@ try {
       const result = results[i];
       out[`${family.name}: ${check.selector} styled in its first frame`] = result.rendered
         && (check.expected === undefined || result.value === check.expected)
-        && result.kinds.length === 2
+        && result.kinds.length === 4
         || `${check.property}=${result.value} (${result.phase}), editor sheets ${result.kinds.join('+') || 'none'}`;
     });
     const lit = await session.page.evaluate(() => window.__hp805.litSheets(window.__card));
@@ -630,8 +633,8 @@ try {
   const reattached = await frameOf(detached.page);
   const reattachedKinds = await detached.page.evaluate(() => [...window.__card.renderRoot.adoptedStyleSheets]
     .map(window.__hp805.kindOf));
-  out.disconnectDuringImportAdoptsOnce = detachedKinds.filter((kind) => kind !== 'other').length === 2
-    && reattached.value === 'absolute' && reattachedKinds.filter((kind) => kind !== 'other').length === 2
+  out.disconnectDuringImportAdoptsOnce = detachedKinds.filter((kind) => kind !== 'other').length === 4
+    && reattached.value === 'absolute' && reattachedKinds.filter((kind) => kind !== 'other').length === 4
     || `detached ${detachedKinds}, position=${reattached.value} (${reattached.phase}), after ${reattachedKinds}`;
   await close(detached);
 
@@ -652,7 +655,7 @@ try {
       .map(window.__hp805.kindOf).filter((kind) => kind !== 'other')),
   };
   out.retryAfterFailedAttemptAdoptsOnce = attempts === 2 && retried.result.value === 'absolute'
-    && JSON.stringify(retried.kinds) === JSON.stringify(['editor-dialogs', 'editor-tray']) || `${attempts} attempts, ${retried.kinds}`;
+    && JSON.stringify(retried.kinds) === JSON.stringify(['editor-dialogs', 'editor-menu', 'editor-tray', 'editor-properties']) || `${attempts} attempts, ${retried.kinds}`;
   await close(retry);
 
   // ---- AC5 (v): a module of another build adopts nothing; the View keeps working

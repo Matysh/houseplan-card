@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1052,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repair stale fixed request-count oracles in config-authority and read-only cold-start smokes after the independent direct-LQI capability probe added by #1029. Establish the mandatory pair and preserve read counts across late A events or the cold-start optional-failure window; product code, transport guards, writer behaviour, fixture APIs and timeouts do not change."
+}

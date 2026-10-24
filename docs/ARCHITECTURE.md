@@ -1,5 +1,38 @@
 # House Plan architecture
 
+The config-authority browser witness (#1052) isolates late foreign-event reads
+from already-started mandatory and optional capability reads. It observes the
+transport boundary without changing the production subscription or writer.
+The read-only cold-start witness uses the same separation for optional failure
+and active-tab no-op checks, retaining exactly one mandatory layout read.
+
+Approved editor UI #1051 shares `EditorContextMenu` presentation across device
+(including LED), decor and catalog actions. Callers retain command authority,
+revision, navigation and object identity; `retire()` makes retained exit paint
+inert before caller state disappears. Catalog has one `CatalogContextMenu`
+owner, not independent native-details menus. Styles arrive with the lazy editor.
+The replaced menu markup, inline paint and old catalog positioning are removed.
+The LED editor's existing select-hit listener takes the context-menu press
+before scene pan; the menu adds no camera or command authority.
+Inline Properties colour controls own their opacity wrapper's grid layout;
+the generic form-kit flex layout remains for non-inline consumers.
+
+`disclosure()` owns native details through `disclosureMotion`: one 220 ms
+retargetable content animation, local composed-ancestor scrolling and immediate
+reduced-motion completion. Its content stays mounted through closing without
+retaining interaction. Provider reason groups use the same primitive.
+Decor Properties keeps raw inline HEX/opacity strings and the last valid pair
+in the existing field session. Rendering resolves an owned preview without
+changing config; completion crosses the existing guarded writer/history once.
+Plan hover and contour selection share the same winning hit resolver.
+
+Decor creation (#1047) keeps native selection authoritative for the current
+Properties target even when the previous object still exists. Field completion
+continues to fence selection changes; other editors retain their explicit owner.
+Text measurement can use the wide Properties text owner while its drawing tool
+remains active. Only the measured box of that exact text may paint its frame.
+Properties yields Escape to an active native decor draft before clearing selection.
+
 Direct LQI (#1029) is a separate entry-owned volatile coordinator with passive
 exact-topic MQTT subscriptions and one 30-second cached-memory ZHA read cycle.
 The ZHA adapter supports the HA 2024.6 gateway and current gateway proxy without
@@ -11,6 +44,12 @@ No inventory, credentials or topology crosses the read-only feed. The shared
 frontend connection/user subscription supplies `device-signal.ts`, frozen
 presentations, room aggregates, preview and value candidates. Existing HA
 diagnostics remain the fallback; optional providers cannot prevent plan loading.
+The frontend controller acquires only between Lit hostConnected/hostDisconnected
+(#1053), with internal identity release separate from the real lifecycle fence.
+Its config/get fields:['model_version'] probe reads capability metadata outside
+the single model-tag body field (which it ignores); old projection
+refusals retain HA fallback without repeated full-document requests. Generic
+recovery holds only mandatory canonical replies, never this metadata response.
 
 Default-branch service events (#1040) use the eight mirrored ingress recipes
 from `scripts/service-workflows.mjs`. `_service-event.yml` has a main sender
@@ -36,6 +75,15 @@ gesture fences. Context hit testing reads actual SVG geometry in reverse paint
 order only on a right-click, including under pointer-inert drawing tools.
 Commands use the current geometry history/config writer; View has no menu
 listener or commands. No asset/file API, backend change or schema migration.
+
+Decor Line (#1046) is a lazy-editor `DecorLineDrawing` session. Clean stage
+pointer pairs authorise one native click; navigation/cancel tails have no such
+token. Preview and commit use the same endpoint calculation, with exact Shift
+rays and compatible decor magnets. Accepted segments use the existing geometry
+writer and common command stack; only command snapshots carry a session token
+and anchor. History restores it only while the same chain was active, and
+authoritative adoption/context teardown clears it. No config schema or View
+dependency changes; Shift listeners exist only for an unfinished chain.
 
 Print export (#1036) keeps the PDF scene/writer independent from a lazy SVG View
 snapshot. The card supplies a read-only stage/context fence, not export geometry.

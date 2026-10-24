@@ -16,6 +16,103 @@ Measured raw V8 retention required a bounded 4-GiB compressed artifact budget;
 the collector/job/upload limits are 105/135/15 minutes. Interrupted runs begin
 in incomplete state, and generated smoke captures under demo/out stay ignored.
 
+## Config authority smoke #1052
+
+`node demo/smoke_config_authority.mjs` records B's config/layout read counts
+before releasing the held A write. Both mandatory reads must have started;
+late A completion and its public config event must leave those counts unchanged.
+The direct-LQI capability probe is an independent initial config read, so a fixed
+total of one was an invalid oracle after #1029. The ordinary pre-fix run and
+read-only phase/stack diagnostics reproduced two reads before A and two after A.
+All authority, write-counter and accepted-B assertions remain. The existing
+`config-old-subscription-interrupts-new-paired-load` witness retains the actual
+subscription guard; only static readiness is checked during development.
+`smoke_readonly_cold_start.mjs` likewise records the initial config count after
+the complete cold frame. Exactly one layout read establishes the mandatory
+pair; neither optional subscription failures nor clicking the active tab may
+increase either count. The ordinary pre-fix diagnostic observed config 2/layout
+1 both before and after the observation window, with the same two initial stacks.
+
+## Approved editor kit #1051
+
+The broader selected-browser run also retains the existing furniture signed
+size/flip/zero/save assertions through its stable field/action hooks, the
+UI-025 wall-fill-before-custom order and all four lazy editor sheet slots.
+The style witness checks first-frame adoption, exact cascade order, sharing
+between roots and absence of changes to View for all four sheets.
+The ordinary Linux Device Copy sequence also proves that the LED context
+press leaves no scene pan for a subsequent mouse move with no buttons held.
+Its emitted LED select listener owns button 2 before the canvas; primary
+selection/drag and the existing Copy command remain unchanged. Accepted
+845c20c3e passed while the initial common-menu implementation failed this
+viewport invariant; no forced click, camera reset or timing relaxation is used.
+The native vacuum source picker also checks shared marker paint, its 44 px
+button, keyboard open/close, immediate inert content, retained focus and no
+configuration write. Its former local summary/marker rules are removed;
+the common disclosure is the only owner and the private picker margin remains.
+Inline opacity also checks the actual 0/50/100 text width and selected paint:
+the generic form-kit flex rule must not outrank the inline grid owner. The
+outer control stays 150.5 by 36 px while the numeric input keeps its 28 px slot.
+
+Run `node demo/smoke_ui_1051.mjs` for inline colour preview/validation,
+Enter/blur/Escape, atomic Undo, contour hit/miss at two zooms, menu input
+retirement/rapid reopen and Devices/View selection boundaries. Run
+`node demo/smoke_ui_1051_native.mjs` for official offline HA 20260930.4,
+furniture first-frame geometry, narrow layout, tooltip, converter link,
+disclosure motion and space appearance DOM order. The HA fixture forbids
+production hosts/WebSockets and verifies its pinned frontend bytes.
+Both smokes put synthetic current frames under `artifacts/browser-selected/ui-1051*`,
+so the existing selected-browser CI artifact preserves them alongside Golden actual/diff.
+
+`test/properties-color-draft.test.mjs` covers partial/invalid values, 0/100,
+optional hash/3/6-digit HEX, unchanged picker precision and retired field owners.
+Keep command tests `smoke_device_copy`, `smoke_decor_order`,
+`smoke_device_inbox_batch`, `smoke_properties_panel` and the shared dialog gallery.
+The #1005 provider smoke retains all data/session/permission/no-extra-I/O checks;
+its former 12 px native marker is superseded by approved UI-023. #963's
+whole-empty-Plan pointer is superseded by UI-028 default/matched-hit feedback.
+Menu tests count live command owners while UI-031 permits a retained inert fade;
+the new smoke separately clicks retained DOM and checks that nothing is written.
+The decor-order pixel oracle waits for terminal removal of retained dialog/menu
+paint before sampling; its exact RGB checks remain unchanged. Menu hover/disabled
+ink and keyboard order cover light/dark/custom tokens; selected device glyphs
+cover both explicit HA theme states. Ordinary `smoke_zigbee_enable_refresh`
+retains its language/theme/reload matrix and all save/authority guards.
+The native furniture shell covers light/dark/custom palettes at820/390px;
+the menu additionally checks390px placement, outside retirement and reduced
+motion removal. The device keyboard probe reaches an unselected marker with
+trusted Tab, then selects it with Space before checking persistent paint.
+
+Golden `ui-1051-{color,menu,device}-{light,dark}` scenes crop their actual
+surface. `tray-medium-selection-ru` intentionally changes for UI-019. Task
+visual intent declares these previews; accepting baselines belongs to the beta
+gate. Private UI Lab plans, adapters and screenshots stay outside commits.
+The accepted source is the 2026-10-23 UI cycle on public base
+`cd9c8961eb906a5c1492dedf2e245191de01cba5`, UI-019–028/031; UI-029/030 remain
+in #998/#999. Prefer owned Lit lifecycle over prototype observers/DOM moves.
+
+CSS producers for subsequent cleanup: `hpf-context-menu` is emitted by
+`EditorContextMenu`, in the card ShadowRoot; `data-layout=actions` by
+`EditorSecondaryModel.layout`; `hpf-inline-{hex,opacity,alpha}` by
+`colorField.inputs` in the card Properties surface; `hpf-disclosure` and
+`data-expanded` by `disclosure`/`disclosureMotion` in each consumer ShadowRoot.
+`hpf-disclosure-inner` owns padding/gap inside the zero-height animated wrapper;
+the vacuum diagnostics 8 px variant targets that inner wrapper.
+The existing form-kit builder still owns variable prefix families. No enum
+generates context-menu class names. `decor-properties-dialog` is furniture-only;
+`data-plan-select-hit` is ephemeral stage feedback from the shared contour hit.
+
+## Decor creation selection #1047
+
+`smoke_decor_creation_selection.mjs` draws repeated A/B/C lines, rectangles and
+ovals with real mouse gestures, then checks native/Properties identity, frame
+coordinates and a property write that leaves earlier objects unchanged. It also
+exercises text, furniture and stored-image placement, dirty/invalid fields,
+cancelled/too-small drafts, width changes and deletion history. The pre-fix run
+reproduced 28 failures, including old-object writes; it was an ordinary baseline
+run, not mutation execution. Registered witnesses are static-readiness only
+during development; their execution remains nightly.
+
 ## Direct Zigbee LQI #1029
 
 Run `node --test test/device-signal-runtime.test.mjs test/device-signal.test.mjs`
@@ -36,6 +133,27 @@ under `artifacts/direct-zigbee-lqi-1029/`; no global baselines are changed.
 The 200-radio/600-marker/four-consumer HA witness checks exact subscription counts,
 coalescing and unload, with ordinary negative inputs for source/ACL/payload guards.
 Registered mutation witnesses are readiness-only during task work.
+
+The #1053 lifecycle proof uses `node demo/smoke_direct_signal_lifecycle.mjs`:
+public remove/append and HA assignment exercise both real Lit card hosts, a
+mounted neighbour, final-consumer release, same-context reconnect without a HA
+tick, old callbacks and a separate detached new-connection boundary. The
+controller tests use the actual connected/update/disconnected ordering.
+Before the fix, two ordinary unit cases failed: construction acquired a feed,
+and capability discovery requested the full config. No product substitution or
+mutation execution was used. `fields:[]` is explicitly full config in this API;
+the final probe uses `fields:['model_version']` and ignores that small body.
+Targeted `test_projection.py` plus the real HA `issue_1053` websocket test prove
+the narrow response, unchanged storage and capability/revision outside it.
+
+`node demo/smoke_view_recovery.mjs` distinguishes that exact optional request
+from mandatory config/layout pairs and held canonical replies. All original
+pair, no-HA, detach, A/B/ABA, timeout and accepted-config assertions remain.
+An additional combined new-HA-while-detached / full-card return case also fails
+on unchanged accepted b2df0e83: authority stays null with no pending read after
+short and actual 20-second returns; ordinary pageshow restores it. This is a
+separate mandatory-authority boundary tracked by #1054, not claimed by the
+same-context LQI proof.
 Integrated with #1049, the initial View graph measures339368 B gzip against
 the old336203-B ceiling. Its reference moves to the measured fact; the2000-B
 band and352000-B absolute budget stay unchanged. Total JS measures3410642 B,
@@ -56,6 +174,47 @@ selected Golden scene: the retained explanation, reason, counts and accepted
 timestamp must be visible without horizontal clipping. Existing accepted
 scenes are not intentionally changed. Task capture is not baseline acceptance;
 the complete canonical Linux artifact is accepted only before a beta.
+
+## Decor click-Line #1046
+
+`demo/smoke_decor_line_click.mjs` exercises real clicks, stationary Shift,
+active/completed Undo/Redo, invalid Properties, navigation/cancel tails, clean
+touch delivery, external config reload and View inertness. Its data/history,
+native/Properties ID and painted SVG frame are the oracles. Ordinary negative
+input is permitted; registered guard witnesses are checked statically only.
+`test/decor-line-drawing.test.mjs` covers the pure endpoint/session contract;
+its boundary case also executes the production `_decorSnap`, draft commit and
+common-history recording. A non-square viewport still has `_decorH = NORM_W`;
+all magnet candidates pass through bounded `_snap`, so normalization cannot
+clip one Shift axis after the preview. The finite endpoint and half-grid
+checks match the synchronous draft writer, with no await between them; only
+then does the existing asynchronous config writer own persistence/refusal.
+`test/node-history-runtime.test.mjs` covers a foreign server-command Undo/Redo
+retiring the Line owner before its asynchronous write;
+existing decor/order smokes retain non-Line coverage. No full regression or
+baseline acceptance is part of this task; no backend or migration is needed.
+The #1047 creation-selection smoke uses two clean clicks only for Line and
+keeps its immediate frame/field-write checks. It first reproduced an empty
+Properties field after the first segment: the continuing preview retained the
+lightweight frame before the newly selected owner reached the panel. The Line
+commit now synchronizes that owner while its draft is terminal, then resumes
+the preview. No Escape or programmatic selection masks that integration case.
+The #883 history-refusal smoke likewise creates its Background Line with two
+real clicks. The old drag setup reproduced eight cascading failures because no
+decor/history step existed; its original refusal, neighbour-order, cursor and
+server-write assertions remain unchanged after adapting that one gesture.
+
+After integrating accepted dev `c2d49829b` (#1055), the final pinned Node
+22.23.3 build again measures raw `bundleBytes` 3416670. Its product and build
+inputs are identical to accepted `845c20c3e` (#1029/#1047/#1052/#1053), whose
+fresh baseline build measured 3411158: the actual combined delta is +5512 B.
+Host references measured from that dev's source are 6048 → 6070 (+22); the
+published reference was still 6038, so the combined 32-reference growth is
+recorded at 6070. Only those two measured baselines change; their 2000-B and
+25-reference bands and the other monolith dimensions stay fixed. Initial View
+is 339508 B gzip (reference 339368 +2000) and lazy editor 340612 B (339040
++2000), both within their existing bands and the absolute View wall. These
+are actual combined-build facts, not a sum or maximum of branch baselines.
 
 ## Device contacts #1003 — local evidence
 
@@ -4427,6 +4586,14 @@ Windows. The existing optical-lettering registry witness stays static checked
 only; no development mutation execution.
 
 ## Browser progress checks on task pushes (#983)
+
+The selected worker has its own finite job budget (#1055). In #1051, 176 of
+218 selected smokes consumed 1486 seconds before any of its seven Golden scenes;
+the old 25-minute job ended without a complete result. Correct passing cases
+included 145-second contact and 92-second kiosk checks. The job budget accounts
+for that inventory; it does not change the worker's 180-second per-invocation
+limit, selected IDs, semantic assertions, Golden intent or product performance
+thresholds. A timed-out partial run never counts as a green task proof.
 
 For direct own-device signal (#1029), selected scenes
 `direct-zigbee-lqi-flat-dark` and `direct-zigbee-lqi-iso-dark` feed the actual

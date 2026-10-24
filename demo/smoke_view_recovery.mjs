@@ -5,6 +5,8 @@ import { launchColdView, checkAll, finish } from './serve.mjs';
 const reports = {};
 const remount = await launchColdView();
 reports.remount = await remount.page.evaluate(async () => {
+  const metadata = message => message.type === 'houseplan/config/get'
+    && Array.isArray(message.fields) && message.fields.length === 1 && message.fields[0] === 'model_version';
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const until = async (test, ms = 4000) => {
     const end = performance.now() + ms;
@@ -18,7 +20,8 @@ reports.remount = await remount.page.evaluate(async () => {
   const original = window.__mkHass();
   const calls = [];
   el.hass = { ...original, callWS: (message) => {
-    calls.push(message.type); return original.callWS(message);
+    if (!metadata(message)) calls.push(message.type);
+    return original.callWS(message);
   }, callService: (...args) => { calls.push('service'); return original.callService(...args); } };
   host.append(el);
   const rooms = () => el.renderRoot.querySelectorAll('.room').length;
@@ -58,12 +61,17 @@ await remount.browser.close();
 
 const late = await launchColdView();
 reports.lateHass = await late.page.evaluate(async () => {
+  const metadata = message => message.type === 'houseplan/config/get'
+    && Array.isArray(message.fields) && message.fields.length === 1 && message.fields[0] === 'model_version';
   const card = window.__card;
   const parent = card.parentElement;
   const original = card.hass;
   const calls = [];
+  const requests = [];
   const ready = { ...original, callWS: (message) => {
-    calls.push(message.type); return original.callWS(message);
+    requests.push(message);
+    if (!metadata(message)) calls.push(message.type);
+    return original.callWS(message);
   } };
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const frame = () => new Promise(requestAnimationFrame);
@@ -75,11 +83,11 @@ reports.lateHass = await late.page.evaluate(async () => {
   };
   await card.updateComplete;
   card.hass = ready; await card.updateComplete;
-  await settled(); calls.length = 0;
+  await settled(); calls.length = 0; requests.length = 0;
   card.remove(); parent.append(card);
   for (let i = 0; i < 6; i++) await frame();
   const shortNoRead = !calls.some((type) => /houseplan\/(config|layout)\/get/.test(type));
-  calls.length = 0;
+  calls.length = 0; requests.length = 0;
   card.remove(); card.hass = undefined;
   // Only the wall clock ages the placement tombstone; product TTL is unchanged.
   const now = Date.now;
@@ -88,17 +96,18 @@ reports.lateHass = await late.page.evaluate(async () => {
   Date.now = now;
   await sleep(80);
   const before = calls.filter((type) => /houseplan\/(config|layout)\/get/.test(type)).length;
+  const beforeMetadata = requests.filter(metadata).length;
   card.hass = ready;
   await card.updateComplete;
   await settled();
   const out = {
     shortReturnDoesNotReload: shortNoRead,
-    noRequestBeforeHass: before === 0,
+    noRequestBeforeHass: before === 0 && beforeMetadata === 0,
     delayedResumeReadsOnePair: calls.filter((type) => type === 'houseplan/config/get').length === 1
       && calls.filter((type) => type === 'houseplan/layout/get').length === 1,
     delayedResumeKeepsPlan: card.renderRoot.querySelectorAll('.room').length === 4,
   };
-  calls.length = 0;
+  calls.length = 0; requests.length = 0;
   card.remove(); card.hass = undefined;
   Date.now = () => now() + 20_000;
   parent.append(card); card.hass = ready; Date.now = now;
@@ -106,20 +115,21 @@ reports.lateHass = await late.page.evaluate(async () => {
   await settled();
   out.hassBeforeFirstLitUpdateCoalesces = calls.filter((type) => type === 'houseplan/config/get').length === 1
     && calls.filter((type) => type === 'houseplan/layout/get').length === 1;
-  calls.length = 0;
+  calls.length = 0; requests.length = 0;
   card.remove(); card.hass = undefined;
   Date.now = () => now() + 20_000;
   parent.append(card); Date.now = now;
   card.remove(); card.hass = ready;
   await sleep(80);
-  out.detachBeforeLateHassCancelsIntent = !calls.some((type) => /houseplan\/(config|layout)\/get/.test(type));
+  out.detachBeforeLateHassCancelsIntent = !requests.some(message => /houseplan\/(config|layout)\/get/.test(message.type));
   parent.append(card);
   const cold = document.createElement('houseplan-card');
   cold.setConfig({ type: 'custom:houseplan-card', title: 'Distinct cold placement', floor: 'f1' });
   parent.append(cold); await cold.updateComplete;
   const coldCalls = [];
   cold.hass = { ...ready, callWS: (message) => {
-    coldCalls.push(message.type); return ready.callWS(message);
+    if (!metadata(message)) coldCalls.push(message.type);
+    return ready.callWS(message);
   } };
   await cold.updateComplete;
   for (let i = 0; i < 20; i++) await frame();
@@ -218,6 +228,8 @@ await timeout.browser.close();
 
 const races = await launchColdView();
 reports.races = await races.page.evaluate(async () => {
+  const metadata = message => message.type === 'houseplan/config/get'
+    && Array.isArray(message.fields) && message.fields.length === 1 && message.fields[0] === 'model_version';
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const frame = () => new Promise(requestAnimationFrame);
   const until = async (test, ms = 4000) => {
@@ -240,15 +252,16 @@ reports.races = await races.page.evaluate(async () => {
   const originalCallWS = original.callWS;
   original.callWS = async message => {
     const response = await originalCallWS(message);
-    return message.type === 'houseplan/config/get' ? { ...response, config: structuredClone(seed) } : response;
+    return message.type === 'houseplan/config/get' && !metadata(message)
+      ? { ...response, config: structuredClone(seed) } : response;
   };
   const held = [];
   const calls = [];
   const connection = () => ({ ...original.connection });
   const oldAuthority = { ...original, connection: connection(), callWS: async (message) => {
-    calls.push(message.type);
+    if (!metadata(message)) calls.push(message.type);
     const response = await original.callWS(message);
-    if (message.type !== 'houseplan/config/get') return response;
+    if (message.type !== 'houseplan/config/get' || metadata(message)) return response;
     const obsolete = structuredClone(response);
     obsolete.rev += 100;
     obsolete.config.spaces[0].rooms[0].name = 'Obsolete response';
@@ -260,12 +273,12 @@ reports.races = await races.page.evaluate(async () => {
   let holdLatest = true;
   const latestReads = [];
   const latest = { ...original, connection: connection(), callWS: async (message) => {
-    calls.push(message.type);
+    if (!metadata(message)) calls.push(message.type);
     const response = await original.callWS(message);
-    if (message.type === 'houseplan/config/get' && holdLatest)
+    if (message.type === 'houseplan/config/get' && !metadata(message) && holdLatest)
       await new Promise(resolve => latestReads.push(resolve));
-    else if (message.type === 'houseplan/config/get') await sleep(50);
-    return message.type === 'houseplan/config/get' ? { ...response, can_write: false } : response;
+    else if (message.type === 'houseplan/config/get' && !metadata(message)) await sleep(50);
+    return message.type === 'houseplan/config/get' && !metadata(message) ? { ...response, can_write: false } : response;
   } };
   card.hass = latest; el.hass = latest;
   await card.updateComplete; await el.updateComplete;
@@ -303,7 +316,7 @@ reports.races = await races.page.evaluate(async () => {
   const pending = [];
   const detachedAuthority = { ...latest, connection: connection(), callWS: async (message) => {
     const response = await latest.callWS(message);
-    if (message.type !== 'houseplan/config/get') return response;
+    if (message.type !== 'houseplan/config/get' || metadata(message)) return response;
     const obsolete = structuredClone(response);
     obsolete.rev += 200; obsolete.config.spaces[0].rooms[0].name = 'Detached response';
     return new Promise((resolve) => pending.push(() => resolve(obsolete)));
@@ -327,7 +340,7 @@ reports.races = await races.page.evaluate(async () => {
   let holdNavigation = false;
   const navigatingAuthority = { ...latest, connection: connection(), callWS: async (message) => {
     const response = await latest.callWS(message);
-    if (message.type !== 'houseplan/config/get' || !holdNavigation) return response;
+    if (message.type !== 'houseplan/config/get' || metadata(message) || !holdNavigation) return response;
     const obsolete = structuredClone(response);
     obsolete.rev += 300; obsolete.config.spaces[0].rooms[0].name = 'Navigated response';
     return new Promise((resolve) => navigation.push(() => resolve(obsolete)));
@@ -360,7 +373,7 @@ reports.races = await races.page.evaluate(async () => {
   const aba = [];
   const authorityA = { ...latest, connection: connection(), callWS: async (message) => {
     const response = await latest.callWS(message);
-    if (message.type !== 'houseplan/config/get') return response;
+    if (message.type !== 'houseplan/config/get' || metadata(message)) return response;
     const obsolete = structuredClone(response);
     obsolete.rev += 400; obsolete.config.spaces[0].rooms[0].name = 'ABA response';
     return new Promise((resolve) => aba.push(() => resolve(obsolete)));

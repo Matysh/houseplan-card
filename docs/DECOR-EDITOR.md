@@ -43,7 +43,7 @@ architecture at35% opacity here, and regain their normal opacity on leaving.
 |---|---|---|---|
 | Select | Select/move any decor object; corner handles resize; upper handle rotates | common selection frame and standard move/resize/rotate cursors | double click opens geometry, angle, contour/fill colour and opacity; text also exposes its content |
 | Plan backdrop | Move the image by its body; resize/rotate by the frame (§3.2) | size badge; 5° rotation step | double click opens width, height and angle |
-| Line | Drag between two grid points | length, angle, magnetic alignment guides | endpoint handles; length, angle, stroke colour/opacity/thickness; Solid or Dashed style |
+| Line | Click the start, then successive endpoints; `Shift` selects an exact 45° direction; `Esc` ends the chain | unsaved preview, length, angle, magnetic alignment guides | endpoint handles; length, angle, stroke colour/opacity/thickness; Solid or Dashed style |
 | Rectangle | Drag a diagonal; `Shift` makes a square | width × height and area | size, angle, contour, optional independent fill colour/opacity |
 | Oval | Drag its bounding box; `Shift` makes a circle | `R` for a circle, `Rx × Ry` for an oval | bounding size, angle, contour and optional fill |
 | Text | Click to open the text form (§5) | the saved label is selected immediately | content with inline HA variables, colour/opacity, physical size and angle |
@@ -53,6 +53,22 @@ architecture at35% opacity here, and regain their normal opacity on leaving.
 
 The editor always opens on **Select**. If the space has an image, the Plan
 backdrop tool appears next to Select but is never armed implicitly.
+
+Each successful creation replaces the previous single selection, including the
+wide Properties owner and its matching frame (#1047). Drawing tools stay armed;
+an unfinished/invalid draft creates nothing. Properties finishes its existing
+field before allowing a new drawing gesture and never redirects that draft.
+Compact drawing retains the native ID; Select exposes its normal transform frame.
+
+Line uses the Walls click-chain interaction (#1046). Each accepted endpoint
+saves one independent line and becomes the next anchor. The first click,
+hover, repeated/too-short point and Esc do not save. Pan, pinch, second contact,
+pointer cancellation and compatibility clicks cannot add an endpoint; the next
+clean contact works again. Shift preview and commit share `snapSegment45`;
+incompatible magnets cannot pull an exact ray off its direction. Shift changes
+also refresh a stationary preview. Finishing retains Line and accepted objects.
+Tool/mode/space/authority changes, external config adoption and disconnect retire
+the session. Its anchor is never stored in config or transferred to View.
 
 Decor shapes are inert under a drawing tool — a new line must be able to start
 exactly on the end of an old one (owner, 2026-08-04). The **Text tool has one
@@ -366,7 +382,10 @@ new line or figure exactly on top of an existing object. Select and Erase are
 the general tools that target existing decor; the Text tool's exception is in
 §2. The backdrop body belongs only to the Plan backdrop tool.
 
-`Ctrl/Cmd+Z` first cancels an unfinished draft or live gesture, then walks the
+For an active Line chain, `Ctrl/Cmd+Z` and Redo walk its accepted commands and
+restore the corresponding session anchor. After Esc they change stored lines
+without reviving the chain; another command or an external revision ends it.
+For other tools, `Ctrl/Cmd+Z` first cancels an unfinished draft or live gesture, then walks the
 shared history. `Ctrl+Shift+Z` and `Ctrl+Y` obey the same transaction boundary:
 the first invocation cancels a live gesture, the next redoes. Native text-field
 history wins while focus is inside an input.

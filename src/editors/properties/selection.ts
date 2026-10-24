@@ -9,12 +9,11 @@ export interface PropertiesSelectionContext {
   unitPerPx: number; cellCm: number;
   textBox: { x: number; y: number; w: number; h: number } | null;
   reference: OpeningDimension | null;
-  device: { x: number; y: number; radius: number } | null;
 }
 
 /** Screen-fixed paint only. The existing native handles keep owning every gesture. */
 export function renderPropertiesSelection(target: PropertiesTarget | null, context: PropertiesSelectionContext): TemplateResult | typeof nothing {
-  if (!target) return nothing;
+  if (!target || target.kind === 'device') return nothing;
   const px = context.unitPerPx, half = 4 * px;
   const handle = (x: number, y: number) => svg`<rect x=${x-half} y=${y-half} width=${half*2} height=${half*2} fill="white"></rect>`;
   const tag = (x: number,y: number,text: string) => svg`<g><rect x=${x} y=${y} width=${(text.length*7+22)*px} height=${26*px} rx=${4*px} fill="white" stroke="#9dcfd7" stroke-width="1"></rect>
@@ -54,10 +53,6 @@ export function renderPropertiesSelection(target: PropertiesTarget | null, conte
       ${[box.x,box.x+box.w].flatMap(x=>[box.y,box.y+box.h].map(y=>handle(x,y)))}
       <path d="M${cx} ${box.y}v${-24*px}"></path><circle cx=${cx} cy=${box.y-24*px} r=${4*px} fill="white"></circle>
       ${pivot(cx,cy)}</g>`;
-  } else if (target.kind === 'device' && context.device) {
-    const {x,y,radius}=context.device, r=radius+10*px;
-    content=svg`<circle cx=${x} cy=${y} r=${r} fill="#078a9e12" stroke-width="2"></circle>
-      ${handle(x+r,y)}`;
   } else if (target.kind === 'led') {
     content = svg`<polyline points=${target.value.points.map(p=>`${p[0]*NORM_W},${p[1]*NORM_W}`).join(' ')}></polyline>
       ${target.value.points.map(p=>handle(p[0]*NORM_W,p[1]*NORM_W))}`;

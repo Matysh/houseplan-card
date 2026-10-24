@@ -39,6 +39,8 @@ export class HpColorOpacity extends LitElement {
   /** Optional action label for a swatch with its readout outside the control. */
   public triggerLabel = '';
   public nativeTooltip = true;
+  public chromeTooltip = false;
+  public readout = '';
   public pointerHover = false;
   public opacityLabel = 'Opacity';
   public color = '#607d8b';
@@ -111,6 +113,8 @@ export class HpColorOpacity extends LitElement {
     label: { type: String },
     triggerLabel: { type: String, attribute: 'trigger-label' },
     nativeTooltip: { type: Boolean, attribute: 'native-tooltip' },
+    chromeTooltip: { type: Boolean, attribute: 'chrome-tooltip' },
+    readout: { type: String },
     pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
     opacityLabel: { type: String, attribute: 'opacity-label' },
     color: { type: String },
@@ -144,10 +148,13 @@ export class HpColorOpacity extends LitElement {
       min-width: 0;
     }
     .label {
-      font-size: 12px;
-      color: var(--secondary-text-color, #9aa4ad);
+      font-size: var(--hp-color-label-size,12px);
+      color: var(--hp-color-label-color,var(--secondary-text-color, #9aa4ad));
+      font-weight:var(--hp-color-label-weight,inherit);
+      line-height:var(--hp-color-label-line-height,inherit);
       white-space: nowrap;
     }
+    .readout { font:inherit; color:var(--hp-color-readout-color,var(--primary-text-color)); line-height:var(--hp-color-readout-line-height,inherit); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
     .trigger {
       width: 40px;
       height: 40px;
@@ -980,11 +987,13 @@ export class HpColorOpacity extends LitElement {
       ${this.label && !this.hideLabel ? html`<span class="label">${this.label}</span>` : nothing}
       <button data-hp="field" data-field="colour-open" class=${solid ? 'trigger solid' : 'trigger'} type="button" .disabled=${this.disabled}
         aria-label=${this.triggerLabel || title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
-        title=${this.nativeTooltip ? title : nothing} @click=${this._toggle}>
+        data-hp-tooltip=${this.chromeTooltip ? title : nothing}
+        title=${this.nativeTooltip && !this.chromeTooltip ? title : nothing} @click=${this._toggle}>
         <span class="swatch" style=${this.allowNoFill && this.noFill
           ? 'background:linear-gradient(135deg,transparent 45%,currentColor 46%,currentColor 53%,transparent 54%)'
           : `background:${color};opacity:${solid ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
       </button>
+      ${this.readout ? html`<span class="readout" aria-live="polite">${this.readout}</span>` : nothing}
       ${this._open && !this.disabled && this._supportsPopover() ? this._pickerTemplate(true) : nothing}
     `;
   }

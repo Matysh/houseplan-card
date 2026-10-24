@@ -16,6 +16,8 @@ import { toolsT, type ToolsI18nKey } from './i18n/tools';
 import { CANVAS_LIMIT, NORM_W, clampCanvasN } from './space-geometry';
 import type { DecorShape } from './editors/decor/types';
 import { decorCmToUnits } from './editors/decor/geometry';
+import { ensureSettingsDialogStyles } from './editors/settings-styles';
+import { toggleRow } from './editors/form-kit';
 
 interface DecorImageEditorHooks<Snapshot> {
   decorSnap: (raw: number[], pointerType?: string) => number[];
@@ -43,8 +45,8 @@ export class DecorImageEditor<Snapshot> {
   ) {}
 
   /** #780: furniture names live in the lazy `tools` dictionary. */
-  private _tool(key: ToolsI18nKey): string {
-    return toolsT(langOf(this.host.hass, this.host._config?.language), key);
+  private _tool(key: ToolsI18nKey, vars?: Record<string, string | number>): string {
+    return toolsT(langOf(this.host.hass, this.host._config?.language), key, vars);
   }
 
   public place(raw: number[], pointerType = 'mouse'): void {
@@ -411,6 +413,9 @@ export class DecorImageEditor<Snapshot> {
 
   public renderShapeDialog(): TemplateResult {
     const dialog = this.host._decorShapeDialog!;
+    const kit = dialog.kind === 'furniture';
+    if (kit) ensureSettingsDialogStyles(this.host);
+    const inputClass = kit ? 'namein hpf-input' : 'namein';
     const canFill = dialog.kind === 'rect' || dialog.kind === 'ellipse';
     const kindLabel = this.host._t(`decor.${dialog.kind}` as I18nKey);
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
@@ -428,13 +433,14 @@ export class DecorImageEditor<Snapshot> {
       ? this.host._decorAssetCatalog.find((asset) => asset.asset_id === dialog.assetId)
         || this.host._decorAssets.get(dialog.assetId || '')
       : null;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor"
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" class=${kit ? 'ui-dialog decor-properties-dialog' : nothing}
+      ?form-shell=${kit} ?settings-layout=${kit} ?compact=${kit} .wide=${kit}
       .title=${this.host._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
       dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>
-        <div class="body">
+        <div class=${kit ? 'body hpf-form' : 'body'}>
           ${dialog.kind === 'furniture' ? html`
             <label>${this._tool('furn.symbol')}</label>
-            <select data-hp="field" data-field="decor-symbol" class="namein"
+            <hp-settings-select><select data-hp="field" data-field="decor-symbol" class=${inputClass} aria-label=${this._tool('furn.symbol')}
               @change=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, symbol: (event.target as HTMLSelectElement).value,
               })}>
@@ -449,9 +455,9 @@ export class DecorImageEditor<Snapshot> {
                   ${this._tool(`furn.sym_${symbol.id}` as ToolsI18nKey)}
                 </option>`)}
               </optgroup>`)}
-            </select>` : dialog.kind === 'image' ? html`
+            </select></hp-settings-select>` : dialog.kind === 'image' ? html`
             <label>${this.host._t('decor.image_asset')}</label>
-            <select data-hp="field" data-field="decor-asset" class="namein" .value=${dialog.assetId || ''}
+            <select data-hp="field" data-field="decor-asset" class=${inputClass} .value=${dialog.assetId || ''}
               @change=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, assetId: (event.target as HTMLSelectElement).value,
               })}>
@@ -470,18 +476,19 @@ export class DecorImageEditor<Snapshot> {
             </label>` : nothing}
           ${dialog.kind === 'image' ? html`
             <label>${this.host._t('space.opacity')}</label>
-            <input data-hp="field" data-field="decor-opacity" class="namein" type="range" min="0" max="1" step="0.01"
+            <input data-hp="field" data-field="decor-opacity" class=${inputClass} type="range" min="0" max="1" step="0.01"
               .value=${String(dialog.opacity)}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, opacity: Number((event.target as HTMLInputElement).value),
-              })} />` : html`<hp-color-opacity data-hp="field" data-field="decor-color" .label=${this.host._t('decor.color')}
+              })} />` : html`<hp-color-opacity data-hp="field" data-field="decor-color" .label=${kit ? this._tool('decor.color_caption') : this.host._t('decor.color')}
+            .nativeTooltip=${!kit} .readout=${kit ? `${dialog.color.toUpperCase()} · ${this._tool('decor.transparency_summary', { n: Math.round((1 - dialog.opacity) * 100) })}` : ''}
             .color=${dialog.color} .opacity=${dialog.opacity}
             .opacityLabel=${this.host._t('space.opacity')}
             .pickerLabels=${this.host._colorPickerLabels}
             @hp-color-opacity-change=${(event: CustomEvent<{ color: string; opacity: number }>) =>
               (this.host._decorShapeDialog = { ...dialog, ...event.detail })}></hp-color-opacity>`}
           ${dialog.kind !== 'image' ? html`<label>${this.host._t('decor.width')}</label>
-          <div class="colorrow"><input data-hp="field" data-field="decor-stroke-width" class="namein" type="number"
+          <div class="colorrow"><input data-hp="field" data-field="decor-stroke-width" class=${inputClass} type="number"
             min=${this.host._decorSmallField(0.1)} max=${this.host._decorSmallField(100)} step="0.1"
             .value=${String(this.host._decorSmallField(dialog.widthCm))}
             @input=${(event: Event) => (this.host._decorShapeDialog = {
@@ -507,7 +514,7 @@ export class DecorImageEditor<Snapshot> {
                 <span>${this.host._t('decor.line_style_dashed')}</span></label>
             </div>
             <label>${this.host._t('decor.length')}</label>
-            <div class="colorrow"><input data-hp="field" data-field="decor-length" class="namein" type="number" min="0.01" step="0.01"
+            <div class="colorrow"><input data-hp="field" data-field="decor-length" class=${inputClass} type="number" min="0.01" step="0.01"
               .value=${String(this.host._decorLargeField(dialog.lengthCm || 0))}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog,
@@ -516,35 +523,37 @@ export class DecorImageEditor<Snapshot> {
               <span class="opl">${unit}</span></div>`
             : dialog.kind === 'furniture' || dialog.kind === 'image' ? html`
             <label>${this.host._t('decor.size')}</label>
-            <div class="colorrow"><input data-hp="field" data-field="decor-width" class="namein" type="number" step="any"
+            <div class="colorrow"><input data-hp="field" data-field="decor-width" class=${inputClass} type="number" step="any"
               aria-invalid=${furnitureWcm === null ? 'true' : 'false'}
               .value=${dialog.sizeWField || ''}
               @input=${(event: Event) => this.furnitureSizeInput(
                 'w', (event.target as HTMLInputElement).value,
               )} />
-              <span>×</span><input data-hp="field" data-field="decor-height" class="namein" type="number" step="any"
+              <span>×</span><input data-hp="field" data-field="decor-height" class=${inputClass} type="number" step="any"
               aria-invalid=${furnitureHcm === null ? 'true' : 'false'}
               .value=${dialog.sizeHField || ''}
               @input=${(event: Event) => this.furnitureSizeInput(
                 'h', (event.target as HTMLInputElement).value,
               )} />
               <span class="opl">${unit}</span></div>
-            <label class="dfill"><input data-hp="field" data-field="decor-flip-horizontal" type="checkbox" .checked=${!!dialog.flipH}
+            ${kit ? toggleRow({id:'decor-flip-horizontal',title:this.host._t('decor.flip_h'),checked:!!dialog.flipH,
+              onChange:value => this.furnitureFlip('w',value)}) : html`<label class="dfill"><input data-hp="field" data-field="decor-flip-horizontal" type="checkbox" .checked=${!!dialog.flipH}
               @change=${(event: Event) => this.furnitureFlip(
                 'w', (event.target as HTMLInputElement).checked,
-              )} />${this.host._t('decor.flip_h')}</label>
-            <label class="dfill"><input data-hp="field" data-field="decor-flip-vertical" type="checkbox" .checked=${!!dialog.flipV}
+              )} />${this.host._t('decor.flip_h')}</label>`}
+            ${kit ? toggleRow({id:'decor-flip-vertical',title:this.host._t('decor.flip_v'),checked:!!dialog.flipV,
+              onChange:value => this.furnitureFlip('h',value)}) : html`<label class="dfill"><input data-hp="field" data-field="decor-flip-vertical" type="checkbox" .checked=${!!dialog.flipV}
               @change=${(event: Event) => this.furnitureFlip(
                 'h', (event.target as HTMLInputElement).checked,
-              )} />${this.host._t('decor.flip_v')}</label>` : html`
+              )} />${this.host._t('decor.flip_v')}</label>`}` : html`
             <label>${this.host._t('decor.size')}</label>
-            <div class="colorrow"><input data-hp="field" data-field="decor-size-width" class="namein" type="number" min="0.01" step="0.01"
+            <div class="colorrow"><input data-hp="field" data-field="decor-size-width" class=${inputClass} type="number" min="0.01" step="0.01"
               .value=${String(this.host._decorLargeField(dialog.sizeWCm || 0))}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog,
                 sizeWCm: this.host._decorLargeCm(Number((event.target as HTMLInputElement).value)),
               })} />
-              <span>×</span><input data-hp="field" data-field="decor-size-height" class="namein" type="number" min="0.01" step="0.01"
+              <span>×</span><input data-hp="field" data-field="decor-size-height" class=${inputClass} type="number" min="0.01" step="0.01"
               .value=${String(this.host._decorLargeField(dialog.sizeHCm || 0))}
               @input=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog,
@@ -552,7 +561,7 @@ export class DecorImageEditor<Snapshot> {
               })} />
               <span class="opl">${unit}</span></div>`}
           <label>${this.host._t('decor.angle')}</label>
-          <input data-hp="field" data-field="decor-angle" class="namein" type="number" min="-180" max="180" step="1"
+          <input data-hp="field" data-field="decor-angle" class=${inputClass} type="number" min="-180" max="180" step="1"
             .value=${dialog.angle}
             @input=${(event: Event) => (this.host._decorShapeDialog = {
               ...dialog, angle: (event.target as HTMLInputElement).value,
@@ -574,7 +583,7 @@ export class DecorImageEditor<Snapshot> {
           <span class="spacer"></span>
           <button class="btn ghost" data-hp="dialog-cancel"
             @click=${() => (this.host._decorShapeDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn primary" data-hp="dialog-confirm" ?disabled=${invalidFurnitureSize}
+          <button class=${kit ? 'btn on' : 'btn primary'} data-hp="dialog-confirm" ?disabled=${invalidFurnitureSize}
             @click=${this.hooks.saveShape}>${this.host._t('btn.save')}</button>
         </div>
     </hp-dialog>`;

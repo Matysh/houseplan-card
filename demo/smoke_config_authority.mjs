@@ -84,7 +84,7 @@ const out = await page.evaluate(async () => {
   await pause();
   const configB = copy(server); configB.spaces[0].title = 'Authority B';
   let releaseB; const waitB = new Promise((resolve) => { releaseB = resolve; });
-  let bWrites = 0, bConfigReads = 0;
+  let bWrites = 0, bConfigReads = 0, bLayoutReads = 0;
   o.oldSubscriptionInstalledBeforeSwitch = typeof c._unsubCfg === 'function';
   // #890 AC6: B has its own event bus, not a copy of A's subscribeEvents.
   // The already installed A subscription still receives the explicit late
@@ -92,12 +92,16 @@ const out = await page.evaluate(async () => {
   const foreignConnection = () => ({ ...c.hass.connection, subscribeEvents: async () => () => {} });
   c.hass = { ...c.hass, connection: foreignConnection(), callWS: async (message) => {
     if (message.type === 'houseplan/config/get') { bConfigReads++; await waitB; return { config: copy(configB), rev: 3, can_write: true }; }
-    if (message.type === 'houseplan/layout/get') { await waitB; return { layout: {}, rev: 2 }; }
+    if (message.type === 'houseplan/layout/get') { bLayoutReads++; await waitB; return { layout: {}, rev: 2 }; }
     if (message.type === 'houseplan/config/set') { bWrites++; return { rev: 4 }; }
     return base(message);
   } };
   await pause();
   o.foreignContextDropsAuthority = !c._loadOk && !c._canEdit && c._cfgRev === 0;
+  // #1052: a new connection also probes direct-LQI capability. Count changes
+  // caused by late A, not the unrelated reads already started in B.
+  const bReadsBeforeLateA = bConfigReads, bLayoutsBeforeLateA = bLayoutReads;
+  o.bMandatoryPairStartsBeforeOldReply = bReadsBeforeLateA > 0 && bLayoutsBeforeLateA === 1;
   releaseA(); const staleCode = await pendingA;
   // Production delivers config_updated when A's save commits. The old fixture
   // does not emit for config/set; deliver the same real server event explicitly
@@ -105,7 +109,8 @@ const out = await page.evaluate(async () => {
   // which emitted once during base(message): both late A events must be fenced.
   const lateARevision = window.__pushServerConfig(copy(server));
   await pause();
-  o.lateAEventDoesNotStartConfigOnlyReadInB = lateARevision > 3 && bConfigReads === 1;
+  o.lateAEventDoesNotStartConfigOnlyReadInB = lateARevision > 3
+    && bConfigReads === bReadsBeforeLateA && bLayoutReads === bLayoutsBeforeLateA;
   o.oldReplyIsFenced = staleCode === 'context-changed' && c._cfgRev === 0 && bWrites === 0;
   releaseB();
   for (let i = 0; i < 100 && !c._loadOk; i++) await pause();

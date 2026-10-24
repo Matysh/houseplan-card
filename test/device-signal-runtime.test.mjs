@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { subscribeDirectSignal, directSignalReadings, normalizeDirectSignalReadings } from '../test-build/device-signal-runtime.js';
+import { DeviceSignalController, subscribeDirectSignal, directSignalReadings, normalizeDirectSignalReadings } from '../test-build/device-signal-runtime.js';
 import { createDeviceSignalContext, deviceLqi } from '../test-build/device-signal.js';
 import { areaLqi } from '../test-build/devices.js';
 import { resolveDevicePresentation } from '../test-build/device-presentation.js';
@@ -13,9 +13,10 @@ const reading = (lqi, available = true, provider = 'z2m') => ({ lqi, provider, a
 const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 function fixture(capability = 1) {
   const callbacks = [], events = new Map(), removed = [];
+  const messages = [];
   let commands = 0, subscriptions = 0;
   const hass = { user: { id: 'a', is_admin: false }, states: {}, entities: {}, devices: {},
-    callWS: async () => { commands++; return { zigbee_lqi_api: capability }; },
+    callWS: async message => { commands++; messages.push(message); return { zigbee_lqi_api: capability }; },
     connection: {
       subscribeMessage: async (callback, command) => {
         assert.equal(command.type, 'houseplan/zigbee_lqi/subscribe');
@@ -26,8 +27,78 @@ function fixture(capability = 1) {
     } };
   const send = (devices, revision = 0, session_id = 's', index = callbacks.length - 1) =>
     callbacks[index]({ kind: 'reset', devices, revision, session_id });
-  return { hass, callbacks, events, removed, send, counts: () => ({ commands, subscriptions }) };
+  return { hass, callbacks, events, removed, messages, send, counts: () => ({ commands, subscriptions }) };
 }
+
+function controller(hass) {
+  let current = hass, updates = 0, changes = 0, registered;
+  const host = { addController: value => { registered = value; }, requestUpdate: () => { updates++; } };
+  const signal = new DeviceSignalController(host, () => current, () => { changes++; });
+  assert.equal(registered, signal);
+  return { signal, assign: value => { current = value; }, notices: () => ({ updates, changes }) };
+}
+
+test('#1053 detached Lit controllers refuse queued updates and reconnect only their own shared consumer', async () => {
+  const f = fixture(), full = controller(f.hass), space = controller(f.hass);
+  full.signal.hostUpdate(); await settle();
+  assert.deepEqual(f.counts(), { commands: 0, subscriptions: 0 }, 'construction is not a connected host');
+  full.signal.hostConnected(); full.signal.hostUpdate();
+  space.signal.hostConnected(); space.signal.hostUpdate(); await settle();
+  assert.deepEqual(f.counts(), { commands: 1, subscriptions: 1 });
+  f.send({ device: reading(137) });
+  assert.deepEqual(full.notices(), { changes: 1, updates: 1 });
+  full.signal.hostDisconnected(); full.signal.hostUpdate(); await settle();
+  assert.deepEqual(f.removed, [], 'mounted neighbour retains the shared feed');
+  f.send({ device: reading(180) }, 1);
+  assert.deepEqual(full.notices(), { changes: 1, updates: 1 }, 'detached host cannot repaint');
+  assert.deepEqual(space.notices(), { changes: 2, updates: 2 });
+  const late = fixture();
+  full.assign(late.hass); full.signal.hostUpdate(); await settle();
+  assert.deepEqual(late.counts(), { commands: 0, subscriptions: 0 }, 'late HA assignment has no detached authority');
+  full.signal.hostConnected(); await settle();
+  assert.deepEqual(late.counts(), { commands: 1, subscriptions: 1 });
+  full.signal.hostDisconnected(); space.signal.hostDisconnected();
+  assert.deepEqual(f.removed, [0]); assert.deepEqual(late.removed, [0]);
+  space.signal.hostUpdate(); await settle();
+  assert.deepEqual(f.counts(), { commands: 1, subscriptions: 1 });
+  space.signal.hostConnected(); await settle();
+  assert.deepEqual(f.counts(), { commands: 2, subscriptions: 2 }, 'same-element reconnect acquires again without a HA tick');
+  f.send({ device: reading(255) }, 8, 's', 0);
+  assert.deepEqual(directSignalReadings(f.hass), {}, 'old callback stays retired after reconnect');
+  f.send({ device: reading(0) }, 0, 'reconnected');
+  assert.equal(directSignalReadings(f.hass).device.lqi, 0);
+  space.signal.hostDisconnected(); assert.equal(f.events.size, 0);
+});
+
+test('#1053 capability acquisition requests only metadata and ignores any config body', async () => {
+  const f = fixture();
+  const read = f.hass.callWS;
+  f.hass.callWS = async message => ({ ...await read(message), config: {
+    model_version: 6, zigbeeLqi: { device: reading(255) }, zigbee_lqi_api: 1,
+  } });
+  const stop = subscribeDirectSignal(f.hass, () => {}); await settle();
+  assert.deepEqual(f.messages, [{ type: 'houseplan/config/get', fields: ['model_version'] }]);
+  assert.deepEqual(directSignalReadings(f.hass), {}, 'a capability is not a signal reading');
+  stop();
+  for (const response of [{ config: { zigbee_lqi_api: 1 } }, null, [], { zigbee_lqi_api: '1' }]) {
+    const invalid = fixture(); let requests = 0;
+    invalid.hass.callWS = async () => { requests++; return response; };
+    const off = subscribeDirectSignal(invalid.hass, () => {}); await settle();
+    assert.equal(invalid.counts().subscriptions, 0);
+    const second = subscribeDirectSignal(invalid.hass, () => {}); await settle();
+    assert.equal(requests, 1, 'invalid or old metadata does not retry per consumer');
+    off(); second();
+  }
+  for (const code of ['unknown_command', 'unauthorized', 'invalid_format']) {
+    const old = fixture(); let requests = 0;
+    old.hass.callWS = async () => { requests++; throw { code }; };
+    const off = subscribeDirectSignal(old.hass, () => {}); await settle();
+    const second = subscribeDirectSignal(old.hass, () => {}); await settle();
+    await new Promise(resolve => setTimeout(resolve, 1100));
+    assert.equal(requests, 1, `${code} is terminal for this connected session`);
+    assert.equal(old.counts().subscriptions, 0); off(); second();
+  }
+});
 
 test('#1029 AC10/14/15 shared feed is ordered, user-fenced and released after its final consumer', async () => {
   const f = fixture(), notices = [];

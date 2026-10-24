@@ -387,6 +387,10 @@ or saved positions; full and static cards share these rules.
   Runtime revision invalidates frozen presentations and value candidates even
   without a `hass.states` tick; a saved `derived_lqi` remains selectable during
   temporary loss. No diagnostic entities are created or enabled.
+  Full/space hosts own their shared feed only while connected (#1053): a late
+  detached HA assignment cannot read metadata or subscribe, and removing one
+  consumer leaves a mounted neighbour live. Reconnect uses metadata-only
+  capability discovery and never adopts that reply as a plan or signal reading.
 - Face geometry: the saved coordinate is the icon-core centre; Text is
   shell-centred and a Double shell extends around the anchored core. The
   101.5/80 shell/core ratio (`--device-shell-size`), shared centre, Light/Dark

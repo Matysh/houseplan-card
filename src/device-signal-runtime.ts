@@ -17,7 +17,7 @@ interface SignalConnection {
 export interface SignalRuntimeHass {
   connection?: SignalConnection;
   user?: { id?: string; is_admin?: boolean; is_active?: boolean };
-  callWS?: (message: { type: string }) => Promise<unknown>;
+  callWS?: (message: { type: string; fields?: string[] }) => Promise<unknown>;
   /** An immutable function-free render snapshot carries its exact reading set. */
   zigbeeLqi?: DirectSignalReadings;
 }
@@ -86,7 +86,9 @@ function start(cache: Cache, hass: SignalRuntimeHass): void {
     cache.timer = setTimeout(() => { cache.timer = undefined; start(cache, hass); }, Math.min(30_000, 1000 * 2 ** Math.min(cache.retries++, 5)));
   };
   cache.pending = (async () => {
-    const response = record(await hass.callWS!({ type: 'houseplan/config/get' }));
+    // [] means a full document on this API; request only its small model tag.
+    // Capability metadata is outside the projection. No config body is adopted.
+    const response = record(await hass.callWS!({ type: 'houseplan/config/get', fields: ['model_version'] }));
     if (!active()) return;
     if (response?.zigbee_lqi_api !== 1) { cache.unsupported = true; return; }
     const remove = await hass.connection!.subscribeMessage!((message) => {
@@ -114,7 +116,7 @@ function start(cache: Cache, hass: SignalRuntimeHass): void {
   })().catch((error: unknown) => {
     if (!active()) return;
     const code = record(error)?.code;
-    if (code === 'unknown_command' || code === 'unauthorized') cache.unsupported = true;
+    if (code === 'unknown_command' || code === 'unauthorized' || code === 'invalid_format') cache.unsupported = true;
     else retry();
   }).finally(() => { if (active()) cache.pending = undefined; });
 }
@@ -146,18 +148,23 @@ export function subscribeDirectSignal(hass: SignalRuntimeHass, changed: () => vo
 
 /** Lit owns acquisition/release for both cards, including a same-node reconnect. */
 export class DeviceSignalController implements ReactiveController {
+  private connected = false;
   private connection?: SignalConnection;
   private identity = '';
   private remove?: () => void;
   constructor(private host: ReactiveControllerHost, private hass: () => SignalRuntimeHass | undefined, private changed: () => void) {
     host.addController(this);
   }
+  hostConnected(): void { this.connected = true; this.hostUpdate(); }
   hostUpdate(): void {
+    // Lit may finish a queued update after detach, including a new HA assignment.
+    if (!this.connected) return;
     const hass = this.hass();
     const identity = hass ? identityOf(hass) : '';
     if (hass?.connection === this.connection && identity === this.identity) return;
-    this.hostDisconnected(); this.connection = hass?.connection; this.identity = identity;
+    this.release(); this.connection = hass?.connection; this.identity = identity;
     if (hass?.connection) this.remove = subscribeDirectSignal(hass, () => { this.changed(); this.host.requestUpdate(); });
   }
-  hostDisconnected(): void { this.remove?.(); this.remove = undefined; this.connection = undefined; this.identity = ''; }
+  private release(): void { this.remove?.(); this.remove = undefined; this.connection = undefined; this.identity = ''; }
+  hostDisconnected(): void { this.connected = false; this.release(); }
 }

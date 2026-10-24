@@ -3,8 +3,6 @@ import { dialogPresence } from '../../dialog-presence';
 import { langOf } from '../../i18n';
 import { cmToField, setWallThickness, thicknessCmAt } from '../../wall-thickness';
 import { GRID_PITCH, GRID_STEP_N, NORM_W } from '../../canvas-constants';
-import { iconUnit } from '../../space-geometry';
-import { effectiveDeviceBaseSize } from '../../device-marker-geometry';
 import { supersedeDeferredWrite } from '../../config-adoption';
 import { devicePlacement, deviceVisualFields, applyDeviceVisualFields, type DeviceVisualState } from '../../device-position-history';
 import type { DeviceEditorHistoryState } from '../../device-position-history';
@@ -27,6 +25,8 @@ import { openingPropertiesCore, selectOpeningReference, refreshOpeningReference,
 import { patchPropertiesTarget, propertiesColor } from './patch';
 import { renderPropertiesSelection } from './selection';
 import { PropertiesSectionMotion } from './section-motion';
+import { parsePropertiesColor, propertiesColorDraft } from './color-draft';
+import type { DecorShape, DecorStyle } from '../decor/types';
 import type { DevItem, Marker, ServerConfig } from '../../types';
 import type { HouseplanEditorRuntime } from '../../houseplan-editor-runtime';
 
@@ -59,6 +59,7 @@ export class PropertiesEditor {
     } else if (node) this.setSelection(null);
   };
   private width = 0;
+  private planHover: { clientX: number; clientY: number } | null = null;
   private suspendedColor: {draft: NonNullable<PropertiesFieldController['draft']>; value: ColorHexDraft} | null = null;
   private handoff = false;
   private ratioLocked = true;
@@ -105,6 +106,10 @@ export class PropertiesEditor {
     return value && this.allowed && value.spaceId === this.host._space && value.editor === this.host._mode
       && this.target(value) ? value : null;
   }
+  get selectedTextId(): string | null {
+    const target = this.wide && this.identity ? this.target() : null;
+    return target?.kind === 'decor' && target.value.kind === 'text' ? target.value.id : null;
+  }
   private target(identity = this.selected): PropertiesTarget | null {
     const space = this.host._curSpaceCfg as PropertiesSpace | undefined;
     return identity && space ? resolvePropertiesTarget(identity, space, this.host._devices, this.host._markers) : null;
@@ -140,6 +145,7 @@ export class PropertiesEditor {
     update();
   }
   dispose(): void {
+    this.clearPlanHover();
     this.motionEpoch++; this.sectionMotion.dispose();
     this.observer?.disconnect(); this.observed?.removeEventListener('pointerdown', this.pointerGuard, true);
     this.observer = null; this.observed = null; this.dimensionCache = null;
@@ -150,7 +156,8 @@ export class PropertiesEditor {
     if (!this.wide) return;
     void this.host.updateComplete.then(() => {
       const root = [...this.host.renderRoot.querySelectorAll<HTMLElement>('[data-property]')].find(el => el.dataset.property === field);
-      root?.querySelector<HTMLElement>('input,textarea,select,button,hp-color-opacity')?.focus({ preventScroll: true });
+      (root?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        ?? root?.querySelector<HTMLElement>('input,textarea,select,button,hp-color-opacity'))?.focus({ preventScroll: true });
     });
   }
   private nativeSelection(identity: PropertiesIdentity | null): void {
@@ -187,7 +194,7 @@ export class PropertiesEditor {
     this.setSelection(identity); return true;
   }
   selectDevice(device: DevItem): boolean { return this.select('device', device.id, bindingOf(device)); }
-  selectPlanPoint(point: number[]): void {
+  private planHit(point: number[]): string | null {
     const space = this.host._spaceModel();
     const distance = (a: number[], b: number[]): number => {
       const dx = b[0] - a[0], dy = b[1] - a[1], den = dx * dx + dy * dy;
@@ -197,7 +204,25 @@ export class PropertiesEditor {
     const hit = space?.wall_segments.map(wall => ({ wall, d: distance(wall.a, wall.b) }))
       .filter(({ wall, d }) => d <= wall.cm / this.host._cellCm * GRID_PITCH / 2 + this.runtime._cssPxToRender(6))
       .sort((a, b) => a.d - b.d || a.wall.id.localeCompare(b.wall.id))[0];
-    if (hit) this.select('contour', hit.wall.id); else this.clear();
+    return hit?.wall.id ?? null;
+  }
+  selectPlanPoint(point: number[]): void {
+    const id = this.planHit(point);
+    if (id) this.select('contour', id); else this.clear();
+  }
+  hoverPlan(event: { clientX: number; clientY: number }): void {
+    this.planHover = { clientX: event.clientX, clientY: event.clientY };
+    this.paintPlanHover();
+  }
+  clearPlanHover(): void {
+    this.planHover = null;
+    this.host.renderRoot.querySelector('.stage')?.removeAttribute('data-plan-select-hit');
+  }
+  private paintPlanHover(): void {
+    const stage = this.host.renderRoot.querySelector<HTMLElement>('.stage');
+    const hit = this.planHover && this.wide && this.host._mode === 'plan' && this.host._tool === 'select'
+      && !this.host._editorSecondaryDialogBlocked && !!this.planHit(this.runtime._svgPoint(this.planHover as MouseEvent));
+    stage?.toggleAttribute('data-plan-select-hit', !!hit);
   }
   backgroundClick(event: MouseEvent): void {
     if (!this.wide || this.host._suppressClick || this.host._mode !== 'devices') return;
@@ -207,8 +232,12 @@ export class PropertiesEditor {
   }
   /** Newly created native objects get the same selection owner as direct picking. */
   syncNative(): void {
-    if (!this.wide || this.identity || this.fields.draft) return;
+    if (!this.wide || this.fields.draft) return;
     const host = this.host;
+    // Decor creation retains the drawing tool and replaces its native ID even
+    // while the previous Properties target remains valid. Other editors keep
+    // their explicit target until their existing selection path replaces it.
+    if (host._mode !== 'decor' && this.identity) return;
     if (host._mode === 'decor' && host._decorSel) {
       const shape = host._decorList.find(item => item.id === host._decorSel);
       if (shape) this.select(shape.kind, shape.id);
@@ -247,6 +276,7 @@ export class PropertiesEditor {
   }
   escape(event: KeyboardEvent): boolean {
     if (!this.wide || !this.identity || this.host._editorSecondaryDialogBlocked) return false;
+    if (this.host._decorDraft) return false;
     if (event.key !== 'Escape') return false;
     event.preventDefault(); this.clear(); return true;
   }
@@ -320,10 +350,7 @@ export class PropertiesEditor {
   private parse(key: string, raw: string): PropertiesParse {
     const identity = this.identity, field = identity && this.field(identity, key);
     if (!field || field.mode) return { ok: false, error: { key: 'geometry_error' } };
-    if (field.control === 'color') {
-      try { const value: unknown = JSON.parse(raw); if (propertiesColor(value)) return { ok: true, value: { ...value, color: normalizeHexColor(value.color)! } }; } catch { /* reject */ }
-      return { ok: false, error: { key: 'invalid_number' } };
-    }
+    if (field.control === 'color') return parsePropertiesColor(raw);
     if (field.control === 'text') return raw.trim() && raw.length <= 200
       ? { ok: true, value: raw.replace(/\r\n?/g, '\n') } : { ok: false, error: { key: 'text_limit' } };
     if (field.control === 'toggle' || key === 'flip_v' && field.control === 'choices') return raw === 'true' || raw === 'false'
@@ -354,7 +381,24 @@ export class PropertiesEditor {
       }
       return;
     }
-    if (this.fields.edit(field.key, raw) && finish) void this.fields.finish();
+    if (this.fields.edit(field.key, raw)) {
+      const draft = this.fields.draft;
+      if (field.control === 'color' && draft && draft.error?.key !== 'external_change') {
+        const result = parsePropertiesColor(raw); draft.error = result.ok ? null : result.error;
+      }
+      if (finish) void this.fields.finish();
+    }
+  }
+
+  /** A field preview paints only its owned object; it never mutates configuration. */
+  previewDecorStyle(shape: DecorShape | null | undefined, style: DecorStyle): DecorStyle {
+    const draft = this.fields.previewDraft;
+    if (!shape || draft?.identity.editor !== 'decor' || draft.identity.objectId !== shape.id) return style;
+    const color = propertiesColorDraft(draft.raw);
+    if (!color?.inline) return style;
+    return draft.field === 'stroke' ? { ...style, color: color.value.color, opacity: color.value.opacity }
+      : draft.field === 'fill' ? { ...style, fillColor: color.value.color, fillOpacity: color.value.opacity,
+        fill: color.value.noFill !== true } : style;
   }
 
   private async commit(identity: PropertiesIdentity, field: string, value: unknown, _before: unknown, current: () => boolean): Promise<PropertiesCommit> {
@@ -501,6 +545,7 @@ export class PropertiesEditor {
     this.observe();
     const motionEpoch = ++this.motionEpoch;
     void this.host.updateComplete.then(() => {
+      this.paintPlanHover();
       if (motionEpoch === this.motionEpoch) this.sectionMotion.update(this.wide
         ? this.host.renderRoot.querySelector<HTMLElement>('.hp-properties') : null);
     });
@@ -515,7 +560,7 @@ export class PropertiesEditor {
       && this.host._configWriteContext.current(authority, this.host.hass)
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
-      t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode, controller: this.fields, pickerLabels: this.host._colorPickerLabels,
+      t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode, inlineColors: this.target(owner)?.kind === 'decor', controller: this.fields, pickerLabels: this.host._colorPickerLabels,
       action: key => { if (current()) void this.fields.finishThen(() => this.action(key)); },
       edit: (field, raw, finish) => { if (current()) this.edit(field, raw, finish); },
       number: (field, value) => field.unit === 'cm' ? cmToField(value, this.host._imperial) : String(Number(value.toFixed(4))),
@@ -548,14 +593,8 @@ export class PropertiesEditor {
     if (target?.kind === 'column' && drag?.kind === 'column' && drag.id === target.value.id && drag.moved)
       target = { ...target, value: { ...target.value, center: target.value.center.map((n,i)=>n+drag.delta[i]/NORM_W) } };
     const reference = this.reference(target);
-    const device = target?.kind === 'device' ? target.value : null;
-    const size = this.host._config?.icon_size ?? 2.5;
-    const rawPoint = device ? this.host._livePos(device) : null;
-    const devicePoint=device&&rawPoint?this.host._deviceContacts?.position(device.id,rawPoint)??rawPoint:null;
     return renderPropertiesSelection(target, { unitPerPx: this.runtime._cssPxToRender(1), cellCm: this.host._cellCm,
-      textBox: this.host._dtBox, reference,
-      device: device && devicePoint ? {x:devicePoint.x,y:devicePoint.y,
-        radius:effectiveDeviceBaseSize(size>8?2.5:size)/100*iconUnit(this.host._spaceModel()!)*this.host._devicePresentation(device).scale/2} : null,
+      textBox: this.host._dtBox?.id === this.selectedTextId ? this.host._dtBox : null, reference,
     });
   }
   private async action(key: string): Promise<void> {

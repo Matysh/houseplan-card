@@ -654,7 +654,10 @@ export class LedStripEditor {
         data-hp=${strip.marker ? 'led-device-select' : nothing} data-id=${strip.marker || nothing}
         d="${geometry(strip)}" fill="none" stroke="transparent" stroke-width="${(2 * HIT_PX) / per}"
         stroke-linecap="round" stroke-linejoin="round" pointer-events="stroke" style="cursor:pointer"
-        @click=${(e: MouseEvent) => {
+        @pointerdown=${(e: PointerEvent) => {
+          // The context-menu press belongs to the LED, never to scene pan.
+          if (e.button === 2) e.stopPropagation();
+        }} @click=${(e: MouseEvent) => {
           e.stopPropagation();
           if (!this.host._suppressClick && this.rt.properties?.select('led', strip.id, strip.marker ?? '') !== false) this.select(strip.id);
         }} @contextmenu=${(e: MouseEvent) => {

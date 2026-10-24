@@ -116,6 +116,24 @@ async def save(entry, config, revision=2):
     await until(lambda: entry.runtime_data.zigbee_lqi._refresh_task is None)
 
 
+async def test_issue_1053_projected_probe_keeps_capability_outside_config(hass, transport, hass_ws_client):
+    entry, _, _, _, _ = await setup(hass)
+    client = await hass_ws_client(hass)
+    before = await entry.runtime_data.config_store.async_load()
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    full = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/config/get", "fields": ["model_version"]})
+    reply = await client.receive_json()
+    assert reply["success"], reply
+    projected = reply["result"]
+    assert projected["config"] == {key: value for key, value in full["config"].items() if key == "model_version"}
+    assert set(projected["config"]) <= {"model_version"}
+    assert projected["zigbee_lqi_api"] == full["zigbee_lqi_api"] == 1
+    assert projected["rev"] == full["rev"] == 1
+    assert projected["can_write"] == full["can_write"]
+    assert await entry.runtime_data.config_store.async_load() == before
+
+
 def inventory(ieee=1, name="floor/room/sensor"):
     return [{"ieee_address": f"0x{ieee:016x}", "friendly_name": name}]
 

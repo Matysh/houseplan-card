@@ -180,7 +180,7 @@ test('issue 212 removes the global touch latch and gates every shared hover sele
   );
   assert.match(
     styles,
-    /:host\(\[data-pointer-hover\]\)\s+\.dev:not\(\.unavail\)\[data-hp-device-hover\]\s*\{/,
+    /:host\(\[data-pointer-hover\]\)\s+\.dev:not\(\.unavail\)\[data-hp-device-hover\]\s*,\s*\.stage\.mode-devices \.dev\.sel:not\(\.unavail\):not\(\.alarm\):not\(\.ghost\)\s*\{/,
     'semantic device hover paint must remain gated by the current pointer modality',
   );
 

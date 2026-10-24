@@ -1,4 +1,6 @@
 {
+  "decor.color_caption": "Farbe:",
+  "decor.transparency_summary": "Transparenz {n}%",
   "decor.bring_front": "In den Vordergrund",
   "decor.send_back": "In den Hintergrund",
   "decor.copy": "Kopie erstellen",

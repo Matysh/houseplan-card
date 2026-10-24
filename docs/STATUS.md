@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5202 · pure backend 625 · HA-harness backend 526 · browser smokes 423 (`npm run inventory`) |
+| Tests | Node unit 5219 · pure backend 626 · HA-harness backend 527 · browser smokes 428 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -50,16 +50,40 @@ is disabled, and a bounded reader verifies the compressed review map on queries.
 Unindexed URLs in known product namespaces are unknown foreign material, even
 when their stale hashed filenames differ from every current manifest entry.
 
+Selected task browser checks (#1055) retain their complete computed plan under
+a finite job budget sized from the observed #1051 run. Individual invocation
+limits, semantic assertions and full-matrix/release proof boundaries are separate.
+
+Config-authority smoke (#1052) compares reads across the late-A boundary;
+the independent direct-LQI capability probe no longer looks like a stale-event
+reload. Mandatory paired loading and all authority assertions remain covered.
+The read-only cold-start test also compares settled read counts rather than
+mistaking an independent initial capability probe for a full-load retry.
+
+Approved editor UI (#1051, UI-019–028/031) uses one lazy context-menu presentation
+with immediate input retirement and one common disclosure motion owner. Decor
+inline colour is a field-session preview followed by the existing atomic
+writer/history; it creates no config schema or independent command path.
+The LED context press stays with its existing editor hit target before scene pan.
+Inline opacity owns its numeric grid slot so the complete value stays visible.
+UI-029/030 remain in their separate issues. Private UI Lab material stays local.
+
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of
 admin-only topology and never persists live readings. Existing HA readings
 remain the fallback; all existing LQI surfaces share one resolver.
+The #1053 lifecycle fence prevents detached full/space cards from acquiring
+reads or feeds; connected neighbours retain their shared signal. Capability
+discovery reads metadata only, independently of mandatory config recovery.
 
 Continuous vacuum tails (#1049) supplement unchanged native snapshots with a
 bounded shared observed-position window. A witnessed pinned Dreame task start
 withholds cached old current geometry; service docking does not rotate jobs.
 Native raw counts/finality and provisional diagnostics remain separate. The
 new capability is additive; no config/model/Store-version migration or new poll.
+
+Decor creation (#1047) transfers Properties and its frame to the latest object,
+retains field-completion guards and yields Escape to unfinished drawing.
 
 Dreame native recovery (#1048) accepts the current ordinary-camera full path
 across compatible transport map/frame resets, without clearing history or
@@ -90,6 +114,11 @@ Decor ordering (#1035) is scoped to the current space's array, with paired
 Properties actions and one context-menu command owner. Right-click selects its
 object and order commands preserve selection. Copies are independent instances;
 image copies share the existing asset. History and transfer use existing paths.
+
+Decor Line (#1046) accepts successive clean clicks like Walls, with exact
+Shift 45° preview/commit and one ordinary history step per independent segment.
+Its temporary anchor follows active-chain Undo/Redo and ends on Esc or context
+replacement. Navigation/cancel tails never draw; saved decor has no new fields.
 
 Print download (#1036) combines unchanged PDF with a static SVG of the current
 View. SVG starts with devices off and transparent background, offers the shared

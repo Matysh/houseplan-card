@@ -16,8 +16,9 @@ import { wallThicknessSelection } from './wall-thickness-selection';
 import { PhysicalBodyGestureRuntime, type PhysicalBodyGesturePort } from './physical-body-gesture';
 import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame-gesture';
 import { displayVersion } from './card-version';
-import { positionInboxMenu } from './device-inbox-menu';
+import { CatalogContextMenu } from './catalog-context-menu';
 import { DecorOrderEditor } from './decor-order-editor';
+import { DecorLineDrawing, type DecorLineSession } from './editors/decor/line-drawing';
 import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { deviceEditorAllowed } from './device-editor-access';
@@ -876,6 +877,28 @@ export class HouseplanEditorRuntime {
   });
   public readonly properties = new PropertiesEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
+  private readonly catalogMenu = new CatalogContextMenu(this);
+  public readonly decorLine = new DecorLineDrawing({
+    context: () => this.host.isConnected && this.host._mode === 'decor' && this.host._decorTool === 'line'
+      && this.host._canEdit && !this.host._kiosk && this.host._curSpaceCfg && this.host.hass?.connection?.connected !== false
+      ? `${this.host._space}|${this.host._decorH}|${this.host._gridPitch}|${this.host._adoption.adoptionEpoch}` : null,
+    blocked: () => this.host._editorSecondaryDialogBlocked,
+    current: () => this.host._configWriteGuard(),
+    point: event => this._svgPoint(event), snap: (point, type) => this._decorSnap(point, type),
+    pitch: () => this.host._gridPitch,
+    preview: (a, b) => {
+      if (a && b) this.host._decorDraft = { kind: 'line', a: [...a], b: [...b], pid: -1 };
+      else if (this.host._decorDraft?.kind === 'line' && this.host._decorDraft.pid === -1) this.host._decorDraft = null;
+    },
+    commit: (a, b, before, after) => {
+      this.host._decorDraft = { kind: 'line', a, b, pid: -1 };
+      this._decorCommitDraft({ before, after });
+      // Select while the draft is terminal, before the continuing live preview.
+      this.properties.syncNative();
+    },
+    queue: run => this._queuePointerMove('decor-line', run),
+    cancelQueue: () => this._cancelPointerMove('decor-line'), events: window,
+  });
   public readonly physicalGesture: PhysicalBodyGestureRuntime;
   public readonly backdropGesture: BackdropFrameGestureRuntime;
   private _gestureBoundary = false;
@@ -885,7 +908,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); }
+  public invalidateEditorNavigation(): void { this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -1078,11 +1101,12 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
     return live;
   }
 public _commitLiveEditor(deviceId?: string): void {
+  this.decorLine.sync();
   commitHouseplanEditor(this.host, deviceId);
   this.properties.syncNative();
   if (this.host.isConnected) this.nodeMove?.paint();
 }
-public _disposeLiveEditor(): void { this.properties.dispose(); this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { this.decorLine.reset(); this.properties.dispose(); this.optimizationUndo.retire(); this.wallDialogGesture.dispose(); this.invalidateEditorNavigation(); this._nodeMoveEpoch++; this.nodeMove?.dispose(); this._radarSetup.reset(); this.roomGear.reset(); disposeHouseplanEditor(this.host); }
 public _visualCommand<T>(command: () => Promise<T>): Promise<T> { return this.properties.command(command); }
 public _cancelRadarSetup(): void { this._radarSetup.interrupt(); }
 public async _whenLiveEditorSettled(): Promise<void> {
@@ -1816,10 +1840,12 @@ public _geometrySnapshot(spaceId = this.host._space): SpaceGeometryState | null 
     return this._geometrySnapshotFromConfig(this.host._serverCfg, spaceId);
   }
 
-public _recordGeometry(name: string, before: SpaceGeometryState | null): void {
+public _recordGeometry(name: string, before: SpaceGeometryState | null, decorLineSession?: DecorLineSession): void {
     if (!before) return;
     const after = this._geometrySnapshot(before.spaceId);
     if (!after || JSON.stringify(before) === JSON.stringify(after)) return;
+    if (!decorLineSession) this.decorLine.reset();
+    if (decorLineSession) after.decorLineSession = decorLineSession;
     if (before.wallChainSeedIds) {
       after.wallChainSeedIds = [...this.host._activeWallChainPartitionIds];
     }
@@ -2194,6 +2220,7 @@ public _commitPhysicalGeometry(
   }
 
 public _clearGeometryGesture(preserveWallChainRedo = false): void {
+    this.decorLine.reset();
     this.chainExit.invalidate();
     // Reload/rollback may discard a room-face proposal without its Save path.
     // Close only that creation form, never an ordinary room-settings dialog.
@@ -2233,6 +2260,7 @@ public _clearGeometryGesture(preserveWallChainRedo = false): void {
   }
 
 public _stagePointerCancel(ev: PointerEvent): void {
+    this.decorLine.cancel(ev);
     this.host._kioskHold.cancel();
     if (this.host._swipeStart?.id === ev.pointerId) this.host._swipeStart = null;
     if (this.host._furnTouchPending?.pid === ev.pointerId) {
@@ -2356,6 +2384,7 @@ public _showGeometrySpace(spaceId: string, preserveWallChainRedo = false): void 
   }
 
 private _runNodeHistory(direction: 'undo' | 'redo'): void {
+    this.decorLine.reset();
     // An unfinished Draw/Split draft owns the first press; a node step never lands on it.
     if (this.host._path.length || this.host._splitSel?.pts?.length) { this._clearGeometryGesture(); return; }
     if (this.nodeMove) { this.nodeMove.history(direction); return; }
@@ -2369,7 +2398,7 @@ private _historyGestureFirst(): boolean {
     const host = this.host;
     if (this.nodeMove?.busy || this.nodeMove?.cancel()) return true;
     if (this.physicalGesture.drag || this.physicalGesture.rotation) this.physicalGesture.cancel();
-    else if (host._decorDraft) { host._decorDraft = null; host.requestUpdate(); }
+    else if (host._decorDraft && !this.decorLine.active) { host._decorDraft = null; host.requestUpdate(); }
     else if (host._decorMove || host._dtDrag || this.backdropGesture.active) this._cancelDecorGesture();
     else if (host._resize.dragging) this._rszCancelDrag();
     else return false;
@@ -2383,6 +2412,7 @@ private _historyGestureFirst(): boolean {
  */
 public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
     const host = this.host;
+    const lineToken = this.decorLine.snapshot?.token;
     const command = direction === 'undo' ? host._geometryHistory.peekUndo() : host._geometryHistory.peekRedo();
     const position = command && host._geometryHistory.positionOf(command);
     const outcome = runOrdinaryHistory({
@@ -2395,6 +2425,8 @@ public _stepGeometryHistory(direction: 'undo' | 'redo'): HistoryApply | null {
     if (outcome === true && pending && command && position && physicalHistoryChanged(command.before, command.after))
       this.physicalWriteHistory.record(pending.before, command, position);
     if (historyUnfit(outcome) && host._activeWallChainId) this._clearGeometryGesture();
+    if (outcome === true && command) this.decorLine.restore(
+      (direction === 'undo' ? command.before : command.after).decorLineSession, lineToken);
     host.requestUpdate();
     return outcome;
   }
@@ -2487,6 +2519,9 @@ public _canAppendWallPoint(): boolean {
 
 public _markupClick(ev: MouseEvent): void {
     if (this.host._vacFit) return; // the fit overlay owns all pointer input
+    if (this.host._mode === 'decor' && this.host._decorTool === 'line') {
+      this.decorLine.click(ev, this.host._suppressClick); return;
+    }
     this.host._ledEditor?.backgroundClick(ev);
     this.properties.backgroundClick(ev);
     if (!this.host._markup) return;
@@ -3753,7 +3788,8 @@ public _decorPointerDown(ev: PointerEvent): boolean {
       ? ((ev.target as HTMLElement).closest?.('.dshape') as SVGElement | null)
       : null;
     if (onShape) return true; // the shape's own handler deals with it
-    if (t === 'line' || t === 'rect' || t === 'ellipse') {
+    if (t === 'line') { this.decorLine.pointerDown(ev); return false; }
+    if (t === 'rect' || t === 'ellipse') {
       ev.preventDefault();
       const p = this._decorSnap(this._svgPoint(ev), ev.pointerType);
       this.host._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
@@ -3832,7 +3868,7 @@ public _decorPointerDown(ev: PointerEvent): boolean {
     return false; // pan is allowed
   }
 
-public _decorCommitDraft(): void {
+public _decorCommitDraft(line?: { before: DecorLineSession; after: DecorLineSession }): void {
     const d = this.host._decorDraft;
     this.host._decorDraft = null;
     if (!d) return;
@@ -3841,6 +3877,7 @@ public _decorCommitDraft(): void {
     const W = NORM_W, H = this.host._decorH;
     const st = this.host._decorStyle;
     const before = this._geometrySnapshot();
+    if (before && line) before.decorLineSession = line.before;
     const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     // creation had no canvas guard at all while the MOVE did — a draft could be
     // born outside the range the mover then refused to leave. One limit, both
@@ -3858,7 +3895,7 @@ public _decorCommitDraft(): void {
     const sp = this.host._curSpaceCfg;
     sp.decor = [...this.host._decorList, shape];
     this.host._decorSel = id;
-    this._recordGeometry(this.host._t('history.decor_add'), before);
+    this._recordGeometry(this.host._t('history.decor_add'), before, line?.after);
     this._saveConfig();
     this.host.requestUpdate();
   }
@@ -4925,18 +4962,17 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         kind: 'selection',
         ariaLabel: this.host._t('editor.context_actions', { object: label }),
         visibleLabel: label,
+        layout: 'actions',
         content: html`
           <div class="decor-selection-actions">
-          <button data-hp="action" data-action="decor-properties" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
-            const current = this.host._dtSel;
-            if (current) this._openDecorProperties(current);
-          })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
-          <div class="decor-order-pair">
             ${(['front', 'back'] as const).map(direction => html`<button class="btn ghost" data-hp="action" data-action=${`decor-${direction}`}
               ?disabled=${(direction === 'front' ? this.host._decorList[this.host._decorList.length - 1] : this.host._decorList[0])?.id === selected.id}
               @click=${() => this._runEditorContext(contextId, () => this.decorOrder.command(selected.id, direction))}>
               ${this.decorOrder.label(direction)}</button>`)}
-          </div>
+          <button data-hp="action" data-action="decor-properties" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+            const current = this.host._dtSel;
+            if (current) this._openDecorProperties(current);
+          })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
           <button data-hp="action" data-action="decor-delete" class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
             <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
           </button></div>`,
@@ -5017,6 +5053,7 @@ public _renderEditorSecondary(): TemplateResult | typeof nothing {
 
 public _activateDecorTool(t: DecorTool): void {
     void this.properties.invoke(() => {
+            this.decorLine.reset();
             if ((t === 'furniture' || t === 'image') && this.host._decorTool === t) {
               this._clearFurniturePreview();
               this.host._furnPalette = null;
@@ -5098,7 +5135,7 @@ public _renderDecorBar(): TemplateResult {
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
         </button>`,
       )}
-      <hp-color-opacity class="decor-default-color" data-hp="field" data-field="decor-color"
+      <hp-color-opacity class="decor-default-color" data-hp="field" data-field="decor-color" chrome-tooltip
         .label=${this.host._t('decor.color')}
         .color=${this.host._decorStyle.color}
         .opacity=${this.host._decorStyle.opacity}
@@ -6323,6 +6360,7 @@ public _splitClick(raw: number[]): void {
 
 public _markupMove(ev: MouseEvent): void {
     if (!this.host._markup) return;
+    if (this.host._tool === 'select') { this.properties.hoverPlan(ev); return; }
     if (this.host._tool === 'column') {
       this.host._cursorPt = this._snap(this._svgPoint(ev));
       return;
@@ -11114,6 +11152,7 @@ public _renderDeviceInbox(): TemplateResult {
       rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew, dialog.spaceFilter,
     );
     const visible = filtered.slice(0, dialog.limit);
+    this.catalogMenu.sync(visible);
     const batch = inboxBatchView(dialog, filtered); // #618 B1: On plan / Hidden only
     if (!dialog.busy && dialog.selected?.length && batch.chosen.length !== dialog.selected.length) {
       dialog = { ...dialog, selected: batch.chosen.map((row) => row.key) };
@@ -11130,7 +11169,7 @@ public _renderDeviceInbox(): TemplateResult {
     return html`<hp-dialog class="device-inbox-dialog ui-dialog" form-shell settings-layout .hass=${this.host.hass}
       data-kind="device-inbox"
       .title=${this.host._t('device_inbox.title')} icon="mdi:devices" wide
-      @hp-close=${() => (this.host._deviceInbox = null)}>
+      @hp-close=${() => { this.catalogMenu.dispose(); this.host._deviceInbox = null; }}>
       <div class="device-inbox" ?inert=${!!dialog.busy}>
         <div class="device-inbox-head">
           <input data-hp="field" data-field="device-catalog-search" class="device-inbox-search" type="search" autofocus
@@ -11236,27 +11275,14 @@ public _renderDeviceInbox(): TemplateResult {
                 ${primary}
                 ${row.canEdit || row.canHide || row.category === 'available'
                     || row.category === 'hidden' || this.host._bindingHasHaPage(row.binding) ? html`
-                  <details class="device-inbox-menu" @toggle=${positionInboxMenu}>
-                    <summary data-hp="action" data-action="device-catalog-menu" data-value=${row.key} class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
+                  <div class="device-inbox-menu">
+                    <button type="button" data-hp="action" data-action="device-catalog-menu" data-value=${row.key} class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
+                      aria-haspopup="menu" aria-expanded=${String(this.catalogMenu.isOpen(row.key))} @click=${(event: MouseEvent) => this.catalogMenu.open(event, row)}
                       title=${this.host._t('device_inbox.more_actions')}>
                       <ha-icon icon="mdi:dots-vertical"></ha-icon>
-                    </summary>
-                    <div class="device-inbox-menu-items">
-                      ${row.canEdit && !(row.category === 'on_plan' && !row.canFind)
-                        ? html`<button data-hp="action" data-action="device-catalog-edit" data-value=${row.key} type="button" class="btn ghost" @click=${() => this._openInboxMarker(row)}>
-                            ${this.host._t('device_inbox.edit')}</button>` : nothing}
-                      ${row.canHide ? html`<button data-hp="action" data-action="device-catalog-hide" data-value=${row.key} type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide')}</button>` : nothing}
-                      ${row.category === 'available' ? html`<button data-hp="action" data-action="device-catalog-disable" data-value=${row.key} type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide_available')}</button>` : nothing}
-                      ${row.category === 'hidden' ? html`<button data-hp="action" data-action="device-catalog-find" data-value=${row.key} type="button" class="btn ghost"
-                        title=${row.canFind ? '' : this.host._t('device_inbox.find_hidden_hint')}
-                        ?disabled=${!row.canFind} @click=${() => this._findInboxDevice(row)}>
-                        <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find')}</button>` : nothing}
-                      ${this.host._bindingHasHaPage(row.binding) ? html`<button data-hp="action" data-action="device-catalog-open-ha" data-value=${row.key} type="button" class="btn ghost"
-                        @click=${() => this.host._openBindingInHa(row.binding)}>${this.host._t('btn.open_in_ha')}</button>` : nothing}
-                    </div>
-                  </details>` : nothing}
+                    </button>
+                    ${this.catalogMenu.render(row.key)}
+                  </div>` : nothing}
               </div>
             </article>`;
           }) : html`<div class="device-inbox-empty">${this.host._t(emptyKey)}</div>`}
@@ -11267,7 +11293,7 @@ public _renderDeviceInbox(): TemplateResult {
         </button>` : nothing}
       </div>
       <div slot="footer" class="row">
-        <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._deviceInbox = null)}>
+        <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => { this.catalogMenu.dispose(); this.host._deviceInbox = null; }}>
           ${this.host._t('btn.close')}</button>
       </div>
     </hp-dialog>`;

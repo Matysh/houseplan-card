@@ -29,7 +29,7 @@ interface LiveEditorHost {
   _tool: string;
   _deviceDrag: { id: string } | null;
   _editorRuntime?: {
-    readonly properties?: { selection(): unknown };
+    readonly properties?: { selection(): unknown; readonly selectedTextId?: string | null };
     readonly physicalGesture?: { readonly active: boolean; readonly drag: { kind: string; id: string; moved: boolean } | null };
     readonly backdropGesture?: { readonly active: boolean; renderFrame(view: unknown): unknown };
   } | null;
@@ -422,7 +422,8 @@ export function whenHouseplanEditorSettled(value: object): Promise<void> {
 /** Only text needs a DOM measurement; every box-like item owns its config box. */
 export function measureHouseplanDecorText(value: object): void {
   const host = value as LiveEditorHost;
-  const shape = host._dtSel;
+  const selectedTextId = host._editorRuntime?.properties?.selectedTextId;
+  const shape = host._dtSel ?? (selectedTextId ? { id: selectedTextId, kind: 'text' } : null);
   if (!shape) {
     if (host._dtBox) { host._dtBox = null; host.requestUpdate(); }
     return;

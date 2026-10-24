@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "issue": 1051,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already has decor/furniture editors, Properties colours, device faces and dialog forms. Apply the accepted UI kit to these existing workflows, preserve their writers/history, and correct selection/cursor feedback; this is an improvement to stable surfaces rather than an entirely new subsystem.",
+  "summary": {
+    "ru": "Единые панели и меню редакторов, свойства мебели и прямой ввод цвета с предпросмотром; понятное выделение устройств и курсор плана.",
+    "en": "Consistent editor trays and menus, furniture properties and inline colour preview, with clearer device selection and Plan cursor feedback."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      {"id":"ui-1051-color-light","expectation":"new","reason":"Approved UI-021 inline HEX/opacity field in the existing Properties panel, light theme."},
+      {"id":"ui-1051-color-dark","expectation":"new","reason":"Approved UI-021 inline HEX/opacity field in the existing Properties panel, dark theme."},
+      {"id":"ui-1051-menu-light","expectation":"new","reason":"Approved UI-031 square shared context menu with ordered commands and disabled text, light theme."},
+      {"id":"ui-1051-menu-dark","expectation":"new","reason":"Approved UI-031 square shared context menu with ordered commands and disabled text, dark theme."},
+      {"id":"ui-1051-device-light","expectation":"new","reason":"Approved UI-026 persistent selected device face without the former selection ring/frame, light theme."},
+      {"id":"ui-1051-device-dark","expectation":"new","reason":"Approved UI-026 persistent selected device face without the former selection ring/frame, dark theme."},
+      {"id":"tray-medium-selection-ru","expectation":"change","reason":"Approved UI-019 352px selected-decor tray, title and 2x2 shared action buttons."}
+    ],
+    "smokes": ["smoke_ui_1051.mjs","smoke_ui_1051_native.mjs"]
+  }
+}

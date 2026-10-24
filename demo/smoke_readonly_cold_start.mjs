@@ -50,7 +50,7 @@ const result = await page.evaluate(async (rawFixture) => {
 
   const base = window.__mkHass();
   const makeHass = (subscriptionMode = 'partial') => {
-    const calls = { configGets: 0, configSets: 0, events: {}, unsubscribed: [] };
+    const calls = { configGets: 0, configSets: 0, layoutGets: 0, events: {}, unsubscribed: [] };
     const connection = {
       subscribeEvents: async (callback, event) => {
         calls.events[event] = (calls.events[event] || 0) + 1;
@@ -83,6 +83,7 @@ const result = await page.evaluate(async (rawFixture) => {
           throw error;
         }
         if (message.type === 'houseplan/layout/get') {
+          calls.layoutGets += 1;
           return { layout: structuredClone(fixture.layout), rev: 131 };
         }
         if (message.type === 'houseplan/trail/get') return { trails: {} };
@@ -144,6 +145,8 @@ const result = await page.evaluate(async (rawFixture) => {
   };
 
   const cold = await mount('Readonly cold start');
+  const initialConfigReads = cold.calls.configGets;
+  out.coldStartsOneMandatoryPair = initialConfigReads > 0 && cold.calls.layoutGets === 1;
   out.coldSelectsExactSpace = cold.card._space === 'home'
     && cold.snapshot.exactSpace === 'home' && cold.snapshot.activeSpace === 'home';
   out.coldRendersAllSpatialLayers = complete(cold.snapshot);
@@ -159,7 +162,10 @@ const result = await page.evaluate(async (rawFixture) => {
   await cold.card.updateComplete;
   out.activeTabClickIsNoop = JSON.stringify(layerSnapshot(cold.card)) === JSON.stringify(beforeClick);
   await sleep(700);
-  out.optionalFailureNoFullRetry = cold.calls.configGets === 1;
+  // #1052: direct-LQI capability is an independent initial config read.
+  // Neither failed subscriptions nor the active-tab click may add another read.
+  out.optionalFailureNoFullRetry = cold.calls.configGets === initialConfigReads
+    && cold.calls.layoutGets === 1;
 
   const readonlyToasts = [];
   cold.card._showToast = (message) => { readonlyToasts.push(message); };

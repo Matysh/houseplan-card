@@ -57,7 +57,7 @@ await page.exposeFunction('__incompleteRpc', async message => {
 const root = page.locator('#host > houseplan-card');
 const dialog = () => root.locator('hp-dialog[data-kind="settings"]');
 const settings = () => dialog().locator('hp-zigbee-topology-settings');
-const details = provider => settings().locator(`[data-incomplete-provider="${provider}"]`);
+const details = provider => settings().locator(`#zigbee-incomplete-${provider}`);
 const text = provider => details(provider).locator('.incomplete-text');
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const deliver = event => page.evaluate(event => {
@@ -70,7 +70,7 @@ const readZha = async (phase = 'ready') => {
   await settle();
 };
 const modelText = () => page.evaluate(() => window.__card.shadowRoot.querySelector('hp-zigbee-topology-settings')
-  ?.shadowRoot.querySelector('[data-incomplete-provider]')?.textContent || '');
+  ?.shadowRoot.querySelector('[id^="zigbee-incomplete-"]')?.textContent || '');
 
 try {
   await page.evaluate(async ({ topics, first, second }) => {
@@ -112,7 +112,7 @@ try {
   await root.locator('[data-hp="settings"]').click();
   await settingsSection(dialog(), 'zigbee');
   await page.waitForFunction(() => window.__incompleteStats.active === 1);
-  out.noReasonsBeforeDataAndNoAutomaticRead = await settings().locator('[data-incomplete-provider]').count() === 0
+  out.noReasonsBeforeDataAndNoAutomaticRead = await settings().locator('[id^="zigbee-incomplete-"]').count() === 0
     && server.reads === 0 && server.scans === 0;
   evidence.idleTypography = await settings().locator('.hpf-provider').first().locator('[role="status"]').evaluate(el => {
     const s = getComputedStyle(el); return { font: s.fontFamily, size: s.fontSize, height: s.lineHeight, color: s.color };
@@ -126,9 +126,9 @@ try {
     && await details('z2m').locator('summary').innerText() === 'Почему данные неполные'
     && !await details('zha').evaluate(el => el.open) && !await details('z2m').evaluate(el => el.open);
   out.providerFootersFollowAllControls = await settings().evaluate((el, lastTopic) => {
-    const r = el.shadowRoot, zha = r.querySelector('[data-incomplete-provider="zha"]'), mqtt = r.querySelector('[data-incomplete-provider="z2m"]');
+    const r = el.shadowRoot, zha = r.querySelector('#zigbee-incomplete-zha'), mqtt = r.querySelector('#zigbee-incomplete-z2m');
     return zha.parentElement.lastElementChild === zha && mqtt.parentElement.lastElementChild === mqtt
-      && mqtt.previousElementSibling.dataset.topic === lastTopic && r.querySelectorAll('[data-incomplete-provider]').length === 2;
+      && mqtt.previousElementSibling.dataset.topic === lastTopic && r.querySelectorAll('[id^="zigbee-incomplete-"]').length === 2;
   }, topics[1]);
   const radioCalls = { reads: server.reads, scans: server.scans, cancels: server.cancels };
   await details('zha').locator('summary').click();
@@ -152,14 +152,15 @@ try {
     }, { '--card-background-color': paper, '--primary-text-color': foreground, '--secondary-text-color': muted });
     await settle();
     evidence[`${theme}Typography`] = await details('zha').evaluate(el => {
-      const summary = getComputedStyle(el.querySelector('summary')), body = getComputedStyle(el.querySelector('div'));
-      const reference = getComputedStyle(el.parentElement.querySelector('[role="status"]'));
-      return { same: ['fontFamily', 'fontSize', 'lineHeight', 'color'].every(key => summary[key] === reference[key] && body[key] === reference[key]),
-        computed: Object.fromEntries(['fontFamily','fontSize','lineHeight','color'].map(key=>[key,{summary:summary[key],body:body[key],reference:reference[key]}])),
-        nativeMarker: summary.display === 'list-item' && summary.listStyleType === 'disclosure-open', size: summary.fontSize };
+      const heading = el.querySelector('summary'), summary = getComputedStyle(heading), triangle = getComputedStyle(heading,'::before');
+      const reference = getComputedStyle(el);
+      return { same: ['fontFamily', 'fontSize'].every(key => summary[key] === reference[key]) && summary.lineHeight === '22px',
+        commonTriangle: summary.display === 'flex' && summary.listStyleType === 'none'
+          && triangle.width === '8px' && triangle.height === '10px' && summary.gap === '10px', size: summary.fontSize };
     });
-    out[`${theme}StatusTypographyAndNativeTriangle`] = evidence[`${theme}Typography`].same
-      && evidence[`${theme}Typography`].size === '12px' && evidence[`${theme}Typography`].nativeMarker;
+    // Approved UI-023 intentionally supersedes #1005's small native marker.
+    out[`${theme}CommonDisclosureTypographyAndTriangle`] = evidence[`${theme}Typography`].same
+      && evidence[`${theme}Typography`].commonTriangle;
     for (const width of [1200, 390]) {
       await page.setViewportSize({ width, height: 900 });
       out[`${theme}${width}LongTextWraps`] = await text('z2m').evaluate(el => {

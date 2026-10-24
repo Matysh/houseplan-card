@@ -30,6 +30,32 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/device-signal-runtime.ts'],
+    smokes: ['smoke_direct_signal_lifecycle.mjs', 'smoke_direct_zigbee_lqi.mjs', 'smoke_view_recovery.mjs'],
+    because: '#1053: public full/space lifecycle and actual direct-reading DOM must retain one shared feed, reject late detached HA assignment and reconnect. Generic recovery separately preserves exact mandatory transports and held canonical authority; its metadata distinction is observable only at the transport boundary.',
+  },
+  {
+    files: ['src/editor-context-menu.ts','src/editor-context-menu.styles.ts','src/catalog-context-menu.ts','src/editors/properties/color-draft.ts',
+      'src/editor-secondary.styles.ts','src/editors/properties/surface.ts','src/editors/properties/selection.ts'],
+    smokes: ['smoke_ui_1051.mjs','smoke_ui_1051_native.mjs','smoke_properties_panel.mjs','smoke_decor_order.mjs','smoke_device_copy.mjs','smoke_ui_polish_976.mjs'],
+    because: '#1051: real selected surfaces exercise atomic inline colour preview/commit/Undo, hit cursor and common menu input retirement; existing command smokes retain persisted command and stale-authority coverage.',
+  },
+  {
+    files: ['src/editors/disclosure-motion.ts','src/styles/dialog-composition.styles.ts','src/styles/form-kit.styles.ts'],
+    smokes: ['smoke_zigbee_incomplete_reasons.mjs','smoke_dialog_ui_kit.mjs','smoke_ui_polish_976.mjs'],
+    because: '#1051: common disclosure keyboard/retarget/reduced motion and typography, link hover and dialog body bounds require mounted computed style and real scroll ownership.',
+  },
+  {
+    symbols: ['syncNative', 'selectedTextId', 'measureHouseplanDecorText'],
+    smokes: ['smoke_decor_creation_selection.mjs', 'smoke_properties_panel.mjs'],
+    because: '#1047: real creation gestures compare the newest native ID, Properties owner, painted frame and subsequent property write; existing Properties smoke protects field completion, width transitions and the other editors.',
+  },
+  {
+    files: ['src/editors/decor/line-drawing.ts'],
+    smokes: ['smoke_decor_line_click.mjs'],
+    because: '#1046: real stage pointer/click and keyboard delivery must preserve one persisted segment per clean click, exact Shift preview, active history anchor and safety across navigation/field/context cancellation.',
+  },
+  {
     files: ['src/pdf/svg-snapshot.ts'],
     smokes: ['smoke_room_metrics_alignment.mjs'],
     because: '#1039: compare text/readings centres in real offline SVG downloads after chrome removal, while preserving live captions with an Area action; computed source styles alone cannot prove the exported layout.',

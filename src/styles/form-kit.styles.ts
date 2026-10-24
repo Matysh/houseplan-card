@@ -400,7 +400,10 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colorrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; min-height: 56px; }
   .${p}-colorrow > .${p}-colorfield { justify-self: end; }
   .${p}-colorrow > .${p}-labelrow { min-height: 0; }
-  .${p}-link { padding: 5px 0; border: 0; background: none; color: var(${tokens.accent}); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; }
+  .${p}-link:not(.btn) { padding: 5px 0; border: 0 none transparent; background: transparent; box-shadow:none; color: var(${tokens.accent}); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; transition:color 150ms ease; }
+  :is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn)):not(:disabled) { color:var(${tokens.accent}); background:transparent; border-color:transparent; box-shadow:none; filter:none; cursor:pointer; transition:color 150ms ease; }
+  :is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn)):not(:disabled):is(:hover,:focus-visible) { color:var(--primary-text-color); background:transparent; border-color:transparent; box-shadow:none; filter:none; }
+  @media(prefers-reduced-motion:reduce) { :is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn)) { transition:none; } }
   .${p}-link:disabled { opacity: .5; cursor: default; }
   .${p}-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .${p}-inline > .${p}-labelrow { flex: 1 1 auto; }

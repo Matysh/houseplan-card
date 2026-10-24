@@ -339,14 +339,14 @@ function renderAppearance(port: SpaceFormPort, d: SpaceDialogState, id: (n: stri
       name:id('zero-wall-style'),value:d.zeroWallStyle,ariaLabel:st('space.virtual_walls'),
       options:[{value:'dashed',label:st('space.virtual_dashed')},{value:'solid',label:st('space.virtual_solid')}],
       onChange:v => set(port,{...d,zeroWallStyle:v})})}),
-          color('border'),
           color('name'),
+          color('border'),
+          color('wall-fill'),
           field({label:t('space.fill_label'),help:port.help('space.fill_mode.help'),control:selectControl({
       name:id('fill-mode'),value:d.fillMode === 'none' ? 'custom' : d.fillMode,ariaLabel:t('space.fill_label'),
       options:SPACE_FILL_UI_MODES.map(value => ({value,label:st(`space.fill_${value}`)})),
       onChange:v => set(port,{...d,fillMode:v})})}),
           d.fillMode === 'custom' || d.fillMode === 'none' ? color('fill') : nothing,
-          color('wall-fill'),
           d.fillMode === 'temp' ? html`<div class="hpf-field">
       <span class="hpf-label hpf-labelrow">${st('space.temp_range')}${shelp('space.comfort.help')}</span>
       <div class="hpf-temperature-range">${temperature('min')}${temperature('max')}</div>
