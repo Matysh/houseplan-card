@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 1053,
+  "baseStable": "v1.82.0",
+  "category": "line-fix",
+  "introducedBy": 1029,
+  "rationale": "Fences the new direct LQI controller to mounted full/space hosts and reads its capability through the existing metadata projection. The direct feed was introduced by #1029 after stable v1.82.0; persisted config, HA fallback and the visible signal presentation stay compatible."
+}

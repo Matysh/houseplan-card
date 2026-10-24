@@ -18,6 +18,12 @@ No inventory, credentials or topology crosses the read-only feed. The shared
 frontend connection/user subscription supplies `device-signal.ts`, frozen
 presentations, room aggregates, preview and value candidates. Existing HA
 diagnostics remain the fallback; optional providers cannot prevent plan loading.
+The frontend controller acquires only between Lit hostConnected/hostDisconnected
+(#1053), with internal identity release separate from the real lifecycle fence.
+Its config/get fields:['model_version'] probe reads capability metadata outside
+the single model-tag body field (which it ignores); old projection
+refusals retain HA fallback without repeated full-document requests. Generic
+recovery holds only mandatory canonical replies, never this metadata response.
 
 Default-branch service events (#1040) use the eight mirrored ingress recipes
 from `scripts/service-workflows.mjs`. `_service-event.yml` has a main sender

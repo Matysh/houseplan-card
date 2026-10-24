@@ -29,6 +29,9 @@ Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of
 admin-only topology and never persists live readings. Existing HA readings
 remain the fallback; all existing LQI surfaces share one resolver.
+The #1053 lifecycle fence prevents detached full/space cards from acquiring
+reads or feeds; connected neighbours retain their shared signal. Capability
+discovery reads metadata only, independently of mandatory config recovery.
 
 Continuous vacuum tails (#1049) supplement unchanged native snapshots with a
 bounded shared observed-position window. A witnessed pinned Dreame task start

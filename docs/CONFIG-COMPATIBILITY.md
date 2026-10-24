@@ -490,6 +490,13 @@ New clients with older backends use the HA state/attribute fallback without
 issuing an unsupported subscription. Old clients continue using HA data.
 Connection/user changes discard the client projection, integration unload clears
 the server cache, and snapshot session/revision prevent stale callback reuse.
+The optional capability probe uses existing `config/get fields:['model_version']`
+(#1053): the small model-tag body is ignored, capability/revision stay outside
+the projection. `fields:[]` means a full document, so it is not used here.
+There is no config adoption or schema change. Missing capability,
+unknown command, unauthorized or invalid-format projection refusal retains HA
+fallback without a retry loop. Detached full/space cards cannot reacquire it;
+same-element reconnect rejoins the shared connection/user feed.
 
 `settings.zigbee_topology` is an optional global object. Only exact
 `enabled: true` activates the admin-only full-card View layer; absence,

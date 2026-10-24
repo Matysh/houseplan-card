@@ -95,6 +95,11 @@ def test_fields_narrow_top_level_keys():
     assert set(projected) == {"markers", "settings"}
 
 
+def test_issue_1053_capability_probe_model_tag_projection_is_small():
+    assert project_config(CONFIG, fields=["model_version"]) == {"model_version": 6}
+    assert project_config(CONFIG, fields=[]) is CONFIG
+
+
 def test_fields_and_marker_fields_combine():
     projected = project_config(CONFIG, fields=["markers"], marker_fields=["space"])
     assert projected == {"markers": [{"id": "m1", "space": "f1"}, {"id": "m2", "space": "f2"}]}

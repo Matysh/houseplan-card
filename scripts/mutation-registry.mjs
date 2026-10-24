@@ -77,6 +77,28 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'direct-signal-detached-host-acquires-1053',
+    guard: 'node demo/smoke_direct_signal_lifecycle.mjs',
+    because: '#1053 AC1: real full/space Lit elements may finish queued updates after remove(); public late HA assignment must acquire no config/layout/capability/feed while a mounted neighbour keeps its shared live reading. Nightly execution only.',
+    patches: [{ file: 'src/device-signal-runtime.ts',
+      find: '    if (!this.connected) return;', replace: '    if (false && !this.connected) return;' }],
+  },
+  {
+    id: 'direct-signal-full-config-probe-1053',
+    guard: 'node --test test/device-signal-runtime.test.mjs',
+    because: '#1053 AC2: capability discovery is metadata-only; a complete document request must not masquerade as another authoritative plan load. Nightly execution only.',
+    patches: [{ file: 'src/device-signal-runtime.ts',
+      find: "hass.callWS!({ type: 'houseplan/config/get', fields: ['model_version'] })",
+      replace: "hass.callWS!({ type: 'houseplan/config/get' })" }],
+  },
+  {
+    id: 'direct-signal-old-projection-retries-1053',
+    guard: 'node --test test/device-signal-runtime.test.mjs',
+    because: '#1053 AC2: a backend refusing the optional projection stays on HA fallback without a retry loop. Nightly execution only.',
+    patches: [{ file: 'src/device-signal-runtime.ts',
+      find: " || code === 'invalid_format'", replace: '' }],
+  },
+  {
     id: 'decor-created-text-frame-unmeasured-1047',
     guard: 'node demo/smoke_decor_creation_selection.mjs',
     because: '#1047 AC2: a newly saved label must have its own measured Properties frame even while Text stays armed; the real DOM measurement cannot depend on Select-only handles. Nightly execution only.',

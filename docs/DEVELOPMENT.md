@@ -31,6 +31,27 @@ under `artifacts/direct-zigbee-lqi-1029/`; no global baselines are changed.
 The 200-radio/600-marker/four-consumer HA witness checks exact subscription counts,
 coalescing and unload, with ordinary negative inputs for source/ACL/payload guards.
 Registered mutation witnesses are readiness-only during task work.
+
+The #1053 lifecycle proof uses `node demo/smoke_direct_signal_lifecycle.mjs`:
+public remove/append and HA assignment exercise both real Lit card hosts, a
+mounted neighbour, final-consumer release, same-context reconnect without a HA
+tick, old callbacks and a separate detached new-connection boundary. The
+controller tests use the actual connected/update/disconnected ordering.
+Before the fix, two ordinary unit cases failed: construction acquired a feed,
+and capability discovery requested the full config. No product substitution or
+mutation execution was used. `fields:[]` is explicitly full config in this API;
+the final probe uses `fields:['model_version']` and ignores that small body.
+Targeted `test_projection.py` plus the real HA `issue_1053` websocket test prove
+the narrow response, unchanged storage and capability/revision outside it.
+
+`node demo/smoke_view_recovery.mjs` distinguishes that exact optional request
+from mandatory config/layout pairs and held canonical replies. All original
+pair, no-HA, detach, A/B/ABA, timeout and accepted-config assertions remain.
+An additional combined new-HA-while-detached / full-card return case also fails
+on unchanged accepted b2df0e83: authority stays null with no pending read after
+short and actual 20-second returns; ordinary pageshow restores it. This is a
+separate mandatory-authority boundary tracked by #1054, not claimed by the
+same-context LQI proof.
 Integrated with #1049, the initial View graph measures339368 B gzip against
 the old336203-B ceiling. Its reference moves to the measured fact; the2000-B
 band and352000-B absolute budget stay unchanged. Total JS measures3410642 B,
