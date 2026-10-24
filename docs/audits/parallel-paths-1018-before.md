@@ -47,7 +47,7 @@ report names the old capture SHA and the new projector SHA separately, and
 executes no invocations. No data is relabelled as a fresh capture.
 The derived map contains 51,357 native ranges, 10,664 TS functions and 436 src
 files, with the same 30,242 actual script observations. The earlier linear
-projector f356 and ordered projector1ff both completed. Every non-identity field
+projector f356 and ordered projector 1ff both completed. Every non-identity field
 of those two full reports is exactly equal; the search-parity receipt records
 each hash. The final ab586 projection retains exactly the same positive ranges,
 functions, files, actual scripts and invocation results, and deliberately corrects
@@ -60,16 +60,16 @@ actual script bytes, 495 foreign script bytes, 325 uncheckpointed navigations,
 17 incomplete page payloads, six failed cases and one timeout. Positive witnesses
 can inform discussion. Missing ranges and failed cases are unknown; the safe-zero
 candidate list is disabled, including after source-path reprojection.
-The final ab586 recipe reports **1337** reasons: all previous1298 plus39
+The final ab586 recipe reports **1337** reasons: all previous 1298 plus 39
 `unindexed-product-script` observations. These are foreign hashed chunks loaded
 by `smoke_ui_polish_963_reference` as a deliberate old UI reference. The former
 indexer called a URL external when its filename missed the candidate index;
 known product namespaces now remain unknown even when the hash-bearing name
-differs. Those39 scripts were never included in positive current-source coverage.
+differs. Those 39 scripts were never included in positive current-source coverage.
 The ordinary vendor fixture stays external and a matching actual candidate hash
 stays verified. No new invocation, threshold/oracle change or full rerun occurred.
-The previous1ff report/summary/map receipts remain in `-foreign-delta.json` and
-Git snapshot71a4df726; the original a34f capture remains immutable.
+The previous 1ff report/summary/map receipts remain in `-foreign-delta.json` and
+Git snapshot 71a4df726; the original a34f capture remains immutable.
 
 The first subsystem has positive smoke and Golden witnesses for colorField and
 colorTile. These witnesses show the current forms actually ran; unknown legacy

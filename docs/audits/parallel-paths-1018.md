@@ -106,5 +106,5 @@ capture SHA and the committed projector recipe. It executes no scenarios and
 does not overwrite the original run or turn its failures/unknowns into PASS.
 The [full before capture and projection](parallel-paths-1018-before.md) records
 all 980 actual outcomes, the seven unsuccessful cases, 1337 unknown reasons
-(1298 prior reasons plus39 explicitly foreign-reference scripts),
+(1298 prior reasons plus 39 explicitly foreign-reference scripts),
 exact runtime/byte receipts and bounded commands for the saved positive map.
