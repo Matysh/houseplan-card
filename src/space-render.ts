@@ -662,6 +662,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             value: presentation.lqiText,
           }) : '',
     ]);
+    /* css-uses {"owner":"renderSpaceStatic","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2"],"reason":"The static face consumes the same finite presentationClasses vocabulary as the full card"} */
     return html`<div class="dev ${deviceThemeClass(planHass)} ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}
       role="img" aria-label=${deviceAriaLabel}

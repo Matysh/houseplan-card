@@ -16,6 +16,17 @@ or permission to accept a baseline. Production-size comparisons use matching
 Node/Rollup and actual builds on both sides; do not infer combined sizes by
 adding task deltas.
 
+For native HA comparisons use `node scripts/dev/css-migration-capture.mjs
+--root=<built-checkout> --out=<artifact-directory>`, then the same command for
+the candidate with `--compare=<before-directory>`. It uses the shared deterministic
+Chromium arguments, attests the launched browser, checks the loaded fingerprint
+and compares computed paint, geometry and exact PNG bytes. The offline HA
+fixture's optional `repoRoot` and `browserArgs` keep both runs on the same
+capture recipe; defaults for existing smokes are unchanged. Fresh documents
+isolate viewport/theme cases. `--themes=light --widths=1280,600` bounds a
+diagnostic run; it does not represent the full default matrix. Artifacts remain
+local and do not replace canonical Golden evidence or baseline acceptance.
+
 ## LED Zigbee endpoints (#1004)
 
 `node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input

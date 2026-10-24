@@ -82,11 +82,6 @@ export const editorDialogsStyles = css`
     }
     .habindingbanner > span { flex: 1; min-width: 0; }
     .habindingbanner > ha-icon { color: var(--warning-color, #ff9800); flex: 0 0 auto; }
-    .habindingbanner.limited {
-      border-color: var(--secondary-text-color, #9aa0aa);
-      background: color-mix(in srgb, var(--secondary-text-color, #9aa0aa) 10%, transparent);
-    }
-    .habindingbanner.limited > ha-icon { color: var(--secondary-text-color, #9aa0aa); }
     .srcrow {
       display: flex;
       align-items: center;

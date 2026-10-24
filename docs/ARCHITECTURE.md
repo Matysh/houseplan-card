@@ -635,6 +635,8 @@ names common owners and retained subject properties (#1019). Removed legacy
 paint was already defeated in the actual shared root; genuine obsolete classes
 are recorded separately with their retired producers. Composition order and
 ShadowRoot boundaries remain part of the cascade contract.
+Finite `css-uses` comments belong to actual render statements whose string
+vocabularies cannot be resolved statically; executable renderer code is unchanged.
 
 Dialog composition extends the existing form kit (#1007), documented in
 [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). Explicit sections own separators and outer

@@ -29,6 +29,8 @@ Dialog CSS ownership cleanup (#1019) records all eleven consumers, removes
 confirmed obsolete selectors and leaves shared paint with its existing kit.
 Subject geometry, validation/hover exceptions and View confirmations retain
 their actual owners. No configuration, runtime API or visual contract changes.
+Finite producer annotations name the existing presentation, Properties,
+opening-surface and Radar glyph vocabularies; they add no runtime state.
 
 LED topology endpoints (#1004) share the current physical-radio mapping and
 nearest SVG hit owner. Half-length visible-path anchors, fixed-screen halos

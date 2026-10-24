@@ -255,7 +255,6 @@ export const planStyles = css`
     .iso-walls-svg,
     .iso-overlays-svg,
     .iso-underlay,
-    .iso-shadows,
     .iso-walls,
     .iso-openings {
       pointer-events: none;
@@ -1155,9 +1154,6 @@ export const planStyles = css`
     .opening-dimension-tick {
       stroke-width: 2;
     }
-    .stage.edit .room {
-      pointer-events: none;
-    }
     .stage.markup {
       cursor: crosshair;
     }
@@ -1573,8 +1569,7 @@ export const planStyles = css`
       pointer-events: none;
     }
     .physical-chrome { pointer-events: none; }
-    .physical-chrome .frame,
-    .physical-chrome .stem {
+    .physical-chrome .frame {
       fill: none;
       stroke: #ffc14d;
       stroke-width: 2;
@@ -1591,7 +1586,6 @@ export const planStyles = css`
     .drawwall.invalid input { border-color: var(--error-color, #db4437); }
     .drawwall .rangehint { margin-inline-start: 4px; font-size: 0.78em; opacity: 0.72; }
     .drawwall.invalid .rangehint { color: var(--error-color, #db4437); opacity: 1; }
-    .stage.markup.tool-partition,
     .stage.markup.tool-column { cursor: crosshair; }
     /* room resize tool (docs/RESIZE.md) */
     /* wall handle: invisible finger-sized hit circle (HP-1550-04 hit priority

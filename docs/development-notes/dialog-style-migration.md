@@ -113,6 +113,11 @@ spells them as `.${p}-suffix`, with `CARD_DIALOG_FORM_KIT` emitting `hpf`.
 | `hpf-templegend` | `5f93e1b23` retired the Room temperature legend | REMOVE its flex/typography rule; current comfort fields and range-end labels remain. |
 | `hpf-actionrow` | `bf6602bbd` added the extras rule; no product markup/helper ever emits this exact class | REMOVE the unused generic row; actual `hpf-actions` and `hpf-action-help` are distinct live consumers. |
 | `hpf-iconclear` | `0b5db4c2a` replaced the old separate Device icon-reset button | REMOVE the unused button rule; the current icon picker/control owns its reset. |
+| `.habindingbanner.limited` and its icon descendant | `bf6602bbd` removed the old unverified-registry banner variant | REMOVE both exact rules. KEEP the current ordinary `.habindingbanner` for orphan/jamb warnings; `ha-binding-status` data value `limited` is not a DOM class producer. |
+| `.iso-shadows` selector branch | `5cae93501` retired the old `<g class="iso-shadows">` renderer | REMOVE only this branch of pointer-events:none. KEEP `.iso-shadows-svg` and all other current layer classes. |
+| `.stage.edit .room` | `c6826af74` removed `_edit` and the stage `edit` class; current modes are explicitly named | REMOVE the unreachable old room rule. This does not change current Plan/Devices/Decor selection policy. |
+| `.physical-chrome .stem` selector branch | `164d70cb2` renamed the actual column rotation line to `dtstem` | REMOVE only the old branch; retain `.physical-chrome .frame` paint and the current rotation stem's existing owner. |
+| `.stage.markup.tool-partition` selector branch | `normalizeMarkupTool` runs `normalizeUnifiedWallTool`, which converts legacy `partition` to `draw` before current stage rendering | REMOVE this old branch; KEEP `.tool-column` and current unified wall-tool classes. No persisted token migration changes. |
 
 The historical `test/fixtures/form-kit-card-dialog*.css` files are retained.
 Their byte-comparison test projects out only these nine named retired rules;
@@ -124,3 +129,12 @@ schema documented by `scripts/css-source.mjs`. They name the actual producer,
 exact emitted values and a reason. Query-only references, import paths, comments,
 CSS selectors, IDs and arbitrary string constants are not consumers. The scanner
 is a development check; it makes no claim about cascade or visual equivalence.
+
+The annotations live at seven actual render statements: Properties catalog
+groups/actions (`renderPropertiesSurface`), the three presentation faces
+(`HouseplanCard._renderDevice`, `HpDevicePreview.render`, `renderSpaceStatic`),
+the two-call-site shadow twin (`renderIsoTileShadow`), door/window opening
+surfaces (`renderIsoWalls`), and the local mount/reference/pending wizard glyphs
+(`RadarSetupController.render`). Each list is finite and attached to its named
+producer; changed prefixes/owners, unused annotations and wildcards fail the
+check. Renderer comments add no runtime classifier or configuration field.
