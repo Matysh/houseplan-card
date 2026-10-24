@@ -1,4 +1,6 @@
 {
+  "decor.color_caption": "Цвет:",
+  "decor.transparency_summary": "прозрачность {n}%",
   "decor.bring_front": "На передний план",
   "decor.send_back": "На задний план",
   "decor.copy": "Создать копию",

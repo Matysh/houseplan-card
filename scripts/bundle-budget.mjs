@@ -820,7 +820,13 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 // #1003 after merging #1035: actual integrated editor339023 B, +4585 B
 // against dev's measured334438 B. Account for the owner-approved contact
 // reference/reflow/writer cost; keep the same band and absolute budgets.
-export const LAZY_EDITOR_GZIP_CEILING = 339_040;
+// #1051: shared menu/disclosure lifecycles and atomic inline colour fields,
+// furniture/dialog kit and editor-only translations measure 344832 B gzip on
+// accepted 0e59b41b3: +4220 B (1.24%) over its measured 340612 B (#1046).
+// These are actual combined builds, not sums of branch measurements. The owner
+// permits this measured growth (issue #1051, comment 6377420988); preserve
+// the 2000-B band, initial-View split and all absolute predicates.
+export const LAZY_EDITOR_GZIP_CEILING = 343_500;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

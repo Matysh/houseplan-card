@@ -6,6 +6,13 @@
   including another removal while loading, without waiting for another HA
   update or page event. Loaded, idle short returns in the same HA context
   retain their existing frame without reloading. (#1054)
+- Unify editor action trays, furniture properties, context menus, disclosures
+  and text links with the shared UI kit. Decor colours support inline HEX and
+  opacity preview with one Undo step; device selection stays blue after hover,
+  and Plan Select shows a pointer only on selectable walls. Opening an LED
+  context menu cannot leave a canvas pan active after the pointer is released.
+  Inline opacity values remain fully readable while editing. (#1051)
+
 - Keep a continuous observed live tail behind a moving vacuum while the
   integration path catches up. Exact native points remain separate; confirmed
   Dreame cleanup starts no longer show the previous current trail. Diagnostics

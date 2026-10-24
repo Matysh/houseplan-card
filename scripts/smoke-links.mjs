@@ -38,7 +38,17 @@ export const SMOKE_LINKS = [
     files: ['src/houseplan-card.ts', 'src/card-read-lifecycle.ts'],
     smokes: ['smoke_detached_authority.mjs', 'smoke_view_recovery.mjs'],
     because: '#1054: public remove/hass/append must preserve the current mandatory read intent after foreign authority retirement, including a reused HA object and coalesced ABA; existing recovery protects same-context no-reload and stale read fencing.',
-
+  },
+  {
+    files: ['src/editor-context-menu.ts','src/editor-context-menu.styles.ts','src/catalog-context-menu.ts','src/editors/properties/color-draft.ts',
+      'src/editor-secondary.styles.ts','src/editors/properties/surface.ts','src/editors/properties/selection.ts'],
+    smokes: ['smoke_ui_1051.mjs','smoke_ui_1051_native.mjs','smoke_properties_panel.mjs','smoke_decor_order.mjs','smoke_device_copy.mjs','smoke_ui_polish_976.mjs'],
+    because: '#1051: real selected surfaces exercise atomic inline colour preview/commit/Undo, hit cursor and common menu input retirement; existing command smokes retain persisted command and stale-authority coverage.',
+  },
+  {
+    files: ['src/editors/disclosure-motion.ts','src/styles/dialog-composition.styles.ts','src/styles/form-kit.styles.ts'],
+    smokes: ['smoke_zigbee_incomplete_reasons.mjs','smoke_dialog_ui_kit.mjs','smoke_ui_polish_976.mjs'],
+    because: '#1051: common disclosure keyboard/retarget/reduced motion and typography, link hover and dialog body bounds require mounted computed style and real scroll ownership.',
   },
   {
     symbols: ['syncNative', 'selectedTextId', 'measureHouseplanDecorText'],

@@ -35,7 +35,7 @@ export const vacuumSettingsCss = `
 .vacuum-profile .vacroute-sources .rhint{margin:0;line-height:1.5;}
 .vacuum-profile .vacsource-list{display:grid;gap:8px;}
 .vacuum-profile .vacsource-list > button{width:100%;text-align:left;padding:12px;}
-.vacuum-profile .hpf-profile-diagnostics > .hpf-disclosure-content{padding-top:8px;}
+.vacuum-profile .hpf-profile-diagnostics > .hpf-disclosure-content > .hpf-disclosure-inner{padding-top:8px;}
 .vacuum-profile .hpf-profile-diagnostics .vacdiag{display:grid;gap:0;padding:0;margin:0;}
 .vacuum-profile .hpf-profile-diagnostics .vacdiag > div{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;padding:6px 0;border-bottom:1px solid var(--divider-color);align-items:start;}
 .vacuum-profile .hpf-profile-diagnostics .vacdiag > div > b{text-align:right;overflow-wrap:anywhere;font-weight:400;}

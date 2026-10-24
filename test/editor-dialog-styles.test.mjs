@@ -178,8 +178,9 @@ const loadAdoption = async () => {
   const { editorDialogsStyles } = await import('../test-build/styles/editor-dialogs.styles.js');
   const { editorSecondaryStyles } = await import('../test-build/editor-secondary.styles.js');
   const { propertiesStyles } = await import('../test-build/editors/properties/styles.js');
+  const { editorContextMenuStyles } = await import('../test-build/editor-context-menu.styles.js');
   const flat = (group) => (Array.isArray(group) ? group.flatMap(flat) : [group]);
-  return { ...styles, ...adoption, editorDialogsStyles, editorSecondaryStyles, propertiesStyles, cardList: flat(styles.cardStyles) };
+  return { ...styles, ...adoption, editorDialogsStyles, editorSecondaryStyles, propertiesStyles, editorContextMenuStyles, cardList: flat(styles.cardStyles) };
 };
 
 const fakeDocument = () => {
@@ -198,7 +199,7 @@ const fakeDocument = () => {
 };
 
 test('#805 AC3 adoption: canonical cascade slots, once per root, one sheet object per document', async () => {
-  const { adoptEditorStyles, cardList, dialogsStyles, editorDialogsStyles, editorSecondaryStyles, propertiesStyles } = await loadAdoption();
+  const { adoptEditorStyles, cardList, dialogsStyles, editorDialogsStyles, editorSecondaryStyles, propertiesStyles, editorContextMenuStyles } = await loadAdoption();
   const litSheets = cardList.map((result) => result.styleSheet);
   assert.ok(litSheets.every((sheet) => sheet instanceof FakeSheet), 'Lit must adopt sheets in this world');
   const late = new FakeSheet(); // form kit (#594) / summary panel (#437) adopt after Lit
@@ -212,11 +213,12 @@ test('#805 AC3 adoption: canonical cascade slots, once per root, one sheet objec
   // [base, plan, devices, chrome, dialogs (eager), editorDialogs, isoTiles…, editorSecondary, late]
   assert.deepEqual(list.slice(0, dialogsAt + 1), litSheets.slice(0, dialogsAt + 1));
   assert.equal(list[dialogsAt + 1].text, editorDialogsStyles.cssText, 'moved rules right after the eager dialogs sheet');
-  assert.deepEqual(list.slice(dialogsAt + 2, litSheets.length + 1), litSheets.slice(dialogsAt + 1));
-  assert.equal(list[litSheets.length + 1].text, editorSecondaryStyles.cssText, 'tray sheet right after cardStyles');
-  assert.equal(list[litSheets.length + 2].text, propertiesStyles.cssText, 'properties after tray, before later sheets');
+  assert.equal(list[dialogsAt + 2].text, editorContextMenuStyles.cssText, 'UI-031 menu follows existing dialog paint');
+  assert.deepEqual(list.slice(dialogsAt + 3, litSheets.length + 2), litSheets.slice(dialogsAt + 1));
+  assert.equal(list[litSheets.length + 2].text, editorSecondaryStyles.cssText, 'tray sheet right after cardStyles');
+  assert.equal(list[litSheets.length + 3].text, propertiesStyles.cssText, 'properties after tray, before later sheets');
   assert.equal(list.at(-1), late, 'sheets adopted later stay later');
-  assert.equal(list.length, litSheets.length + 4);
+  assert.equal(list.length, litSheets.length + 5);
 
   // Idempotent per root: a second create() (a retry, a reopened dialog) adds nothing.
   const before = [...list];
@@ -226,9 +228,9 @@ test('#805 AC3 adoption: canonical cascade slots, once per root, one sheet objec
   // A second card on the page: its own root gets the sheets, the objects are shared.
   const second = { ownerDocument: doc, adoptedStyleSheets: [...litSheets] };
   adoptEditorStyles({ renderRoot: second });
-  assert.equal(second.adoptedStyleSheets.length, litSheets.length + 3);
+  assert.equal(second.adoptedStyleSheets.length, litSheets.length + 4);
   assert.equal(second.adoptedStyleSheets[dialogsAt + 1], list[dialogsAt + 1]);
-  assert.equal(second.adoptedStyleSheets.at(-1), list[litSheets.length + 2]);
+  assert.equal(second.adoptedStyleSheets.at(-1), list[litSheets.length + 3]);
 
   // Another document builds its own sheet objects (NotAllowedError otherwise, #594).
   const foreign = { ownerDocument: fakeDocument(), adoptedStyleSheets: [...litSheets] };
@@ -238,7 +240,7 @@ test('#805 AC3 adoption: canonical cascade slots, once per root, one sheet objec
 });
 
 test('#805 AC3 adoption without adoptedStyleSheets: <style> nodes in the same relative order', async () => {
-  const { adoptEditorStyles, cardList, dialogsStyles, editorDialogsStyles, editorSecondaryStyles, propertiesStyles } = await loadAdoption();
+  const { adoptEditorStyles, cardList, dialogsStyles, editorDialogsStyles, editorSecondaryStyles, propertiesStyles, editorContextMenuStyles } = await loadAdoption();
   const doc = fakeDocument();
   const root = { ownerDocument: doc, children: [] };
   root.append = (node) => { node.parent = root; root.children.push(node); };
@@ -262,6 +264,7 @@ test('#805 AC3 adoption without adoptedStyleSheets: <style> nodes in the same re
     'template',
     ...cardTexts.slice(0, dialogsAt + 1),
     editorDialogsStyles.cssText,
+    editorContextMenuStyles.cssText,
     ...cardTexts.slice(dialogsAt + 1),
     editorSecondaryStyles.cssText,
     propertiesStyles.cssText,

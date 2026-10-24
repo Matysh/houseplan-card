@@ -77,6 +77,21 @@ export const propertiesStyles = unsafeCSS(css`
   .hp-properties .hpf-colorfield hp-color-opacity { width: 15px; height: 15px; flex: 0 0 15px; }
   .hp-properties .hpf-colorfield .hpf-hex { font-size: 12px; font-family: inherit; padding: 0; color: var(--prop-value); }
   .hp-properties .hpf-colorfield .hpf-opacity { font-size: 11px; color: var(--prop-muted); margin-left: auto; }
+  .hp-properties .hpf-colorfield:has(.hpf-inline-hex) { display:grid; grid-template-columns:24px minmax(56px,1fr) 28px 8px; gap:2px; padding-inline:4px; cursor:default; }
+  .hp-properties .hpf-colorfield > .hpf-opacity.hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }
+  .hp-properties .hpf-colorfield .hpf-inline-hex,
+  .hp-properties .hpf-colorfield .hpf-inline-opacity .hpf-unit > input {
+    box-sizing:border-box; min-width:0; width:100%; height:28px; margin:0; padding:3px 2px;
+    border:0; border-radius:4px; background:transparent; color:var(--primary-text-color);
+    font:inherit; font-size:12px; line-height:20px; font-variant-numeric:tabular-nums; cursor:text; outline:0;
+  }
+  .hp-properties .hpf-colorfield .hpf-inline-alpha { text-align:right; appearance:textfield; }
+  .hp-properties .hpf-colorfield .hpf-inline-alpha::-webkit-inner-spin-button { appearance:none; }
+  .hp-properties .hpf-inline-opacity .hpf-unit > span { margin:0; font-size:12px; color:var(--secondary-text-color); }
+  .hp-properties .hpf-colorfield:has(.hpf-inline-hex):focus-within { border-color:var(--primary-color); }
+  .hp-properties .hpf-colorfield .hpf-inline-hex:hover,
+  .hp-properties .hpf-colorfield .hpf-inline-alpha:hover { background:color-mix(in srgb,var(--primary-color) 8%,transparent); }
+  .hp-properties .hpf-colorfield input[aria-invalid=true] { box-shadow:inset 0 -2px var(--error-color); }
   .hp-prop-swatch { width: 15px; height: 15px; border: 1px solid var(--prop-line); border-radius: 3px; }
   .hp-prop-swatch-empty { background: linear-gradient(135deg,transparent 45%,var(--prop-line) 46%,var(--prop-line) 53%,transparent 54%); flex: 0 0 15px; }
   .hp-prop-text { display:block; height: 66px; width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid var(--prop-border); border-radius: 5px; background: var(--prop-input); color: var(--prop-value); font-size: 14px; line-height: 1.5; resize: vertical; overflow-wrap: anywhere; }
@@ -123,7 +138,6 @@ export const propertiesStyles = unsafeCSS(css`
   ha-card[data-hp-properties-wide] .bdframe .bdbox,
   ha-card[data-hp-properties-wide] .bdframe .dtstem,
   ha-card[data-hp-properties-wide] .bdframe .bdknob { opacity: 0; }
-  ha-card[data-hp-properties-wide] .stage.mode-devices .dev.sel { --device-ring-color: #078a9e; }
   ha-card[data-hp-properties-wide] .physical-hit.selected { fill:rgb(7 138 158 / .16); }
   ha-card[data-hp-properties-wide] .hp-stair.selected .hp-stair-outline { stroke:#078a9e; }
   ha-card[data-hp-properties-wide] .hp-stair-frame { --hp-accent:#078a9e; }

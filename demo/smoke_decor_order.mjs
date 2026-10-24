@@ -6,7 +6,8 @@ requirePinnedBrowser();
 const { page, browser } = await launch({ width: 1500, height: 1000 });
 const card = page.locator('houseplan-card');
 const panel = card.locator('[data-hp="properties-panel"]');
-const menu = card.locator('[data-hp="decor-context-menu"]');
+// #1051 UI-031 permits retained inert exit paint; command ownership is immediate.
+const menu = card.locator('[data-hp="decor-context-menu"]:not([inert])');
 const state = () => page.evaluate(() => ({
   ids: window.__card._decorList.map(s => s.id),
   decor: structuredClone(window.__card._decorList),
@@ -30,6 +31,8 @@ const point = (id, x = .5, y = .5) => card.locator(`.decorlayer [data-id="${id}"
 }, [x,y]);
 const open = async (id, x, y) => { const p = await point(id,x,y); await page.mouse.click(p.x,p.y,{button:'right'}); await menu.waitFor(); };
 const colorAt = async (id,x,y) => {
+  // Pixel order is terminal paint. Dialog/menu exit input retirement is proved separately.
+  await page.waitForFunction(()=>!window.__card.renderRoot.querySelector('hp-dialog[inert],[role=menu][inert]'));
   const p=await point(id,x,y);
   const shot=await page.screenshot({clip:{x:Math.floor(p.x),y:Math.floor(p.y),width:1,height:1}});
   return page.evaluate(async base64=>{
@@ -73,7 +76,9 @@ try {
     await window.__hpTest.setMode('decor');
   });
   await panel.waitFor();
+  await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._cameraTransition.active);
   await card.locator('[data-hp="zoom-fit"]').click();
+  await page.waitForFunction(()=>!window.__card._cameraTransition.active);
 
   // All kinds use the existing panel; compare actual rectangles of both controls.
   for (const id of ['red','line','ellipse','text','furniture','image']) {
@@ -104,7 +109,7 @@ try {
   check('order.right_selects_invoked_object',(await state()).selected,'red');
   check('order.right_shows_invoked_properties',await panel.locator('.hp-prop-title').innerText(),'Прямоугольник');
   check('order.menu_four',(await menu.locator('[role="menuitem"]').allTextContents()).map(s=>s.trim()),[
-    'На передний план','На задний план','Удалить','Создать копию']);
+    'На передний план','На задний план','Создать копию','Удалить']);
   check('order.right_does_not_start_gesture',await page.evaluate(()=>!window.__card._decorMove&&!window.__card._decorDraft));
   await menu.locator('[data-action="decor-back"]').click(); await settle();
   check('order.menu_target_not_previous_selection',(await state()).ids,original.ids);
@@ -214,7 +219,7 @@ try {
   check('order.english_front',await panel.locator('[data-action="properties-decor-front"]').innerText(),'Bring to front');
   check('order.english_back',await panel.locator('[data-action="properties-decor-back"]').innerText(),'Send to back');
   await open('blue',.8,.8);
-  check('order.english_menu',(await menu.locator('button').allTextContents()).map(s=>s.trim()),['Bring to front','Send to back','Delete','Create a copy']);
+  check('order.english_menu',(await menu.locator('button').allTextContents()).map(s=>s.trim()),['Bring to front','Send to back','Create a copy','Delete']);
   await page.keyboard.press('Escape');
 
   // External configuration updates and leaving the editor revoke open menus.
@@ -269,7 +274,7 @@ try {
   await page.keyboard.press('Escape');
   await select('blue');
   await page.waitForFunction(()=>window.__card._decorSel==='blue');
-  check('order.narrow_actions_exist',await card.locator('[data-action="decor-front"]').count(),1);
+  check('order.narrow_actions_exist',await card.locator('.editor-secondary [data-action="decor-front"]').count(),1);
   check('order.narrow_all_actions_visible',await card.locator('.editor-secondary').evaluate(el=>{
     const panel=el.getBoundingClientRect();
     return ['decor-properties','decor-front','decor-back','decor-delete'].every(action=>{

@@ -585,7 +585,8 @@ const res = await page.evaluate(async () => {
     '.body select.namein option:checked',
   )?.value === stored.symbol;
   const sizeInputs = [...sr().querySelectorAll('hp-dialog input[type="number"][step="any"]')];
-  const flipInputs = [...sr().querySelectorAll('hp-dialog .dfill input[type="checkbox"]')];
+  const flipSelector = 'hp-dialog input[type="checkbox"][data-field^="decor-flip-"]';
+  const flipInputs = [...sr().querySelectorAll(flipSelector)];
   out.furniturePropertiesExposeSignedSizesAndTwoFlips = sizeInputs.length === 2 && flipInputs.length === 2;
   if (sizeInputs[0]) {
     sizeInputs[0].value = String(-Math.abs(Number(sizeInputs[0].value)));
@@ -593,8 +594,8 @@ const res = await page.evaluate(async () => {
     await c.updateComplete;
   }
   out.negativeWidthSynchronisesHorizontalCheckbox = !!c._decorShapeDialog?.flipH
-    && !!sr().querySelectorAll('hp-dialog .dfill input[type="checkbox"]')[0]?.checked;
-  const currentFlipInputs = [...sr().querySelectorAll('hp-dialog .dfill input[type="checkbox"]')];
+    && !!sr().querySelectorAll(flipSelector)[0]?.checked;
+  const currentFlipInputs = [...sr().querySelectorAll(flipSelector)];
   if (currentFlipInputs[1]) {
     currentFlipInputs[1].checked = true;
     currentFlipInputs[1].dispatchEvent(new Event('change', { bubbles: true, composed: true }));
@@ -608,7 +609,7 @@ const res = await page.evaluate(async () => {
     currentSizes[0].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
     await c.updateComplete;
   }
-  out.zeroSizeBlocksSave = sr().querySelector('hp-dialog button.btn.primary')?.disabled === true
+  out.zeroSizeBlocksSave = sr().querySelector('hp-dialog [data-hp="dialog-confirm"]')?.disabled === true
     && sr().querySelector('hp-dialog input[type="number"][step="any"]')?.getAttribute('aria-invalid') === 'true';
   c._decorShapeDialog = {
     ...c._decorShapeDialog,
