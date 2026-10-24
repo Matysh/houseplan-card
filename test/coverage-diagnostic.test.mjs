@@ -20,12 +20,43 @@ import { unitGroups } from '../scripts/unit-groups.mjs';
 import { readdirSync } from 'node:fs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import YAML from 'yaml';
+import { readCoverageAudit } from '../scripts/coverage-audit-read.mjs';
+import { gzipSync } from 'node:zlib';
 
 const fixture = t => {
   const dir = mkdtempSync(resolve(tmpdir(), 'hp-diagnostic-'));
   t.after(() => { assert.ok(dir.startsWith(resolve(tmpdir(), 'hp-diagnostic-'))); rmSync(dir, { recursive: true, force: true }); });
   return dir;
 };
+test('frozen audit reader verifies both representations and bounds decoded/output queries', t => {
+  const root = fixture(t), prefix = resolve(root, 'docs/audits/parallel-paths-1018-before');
+  mkdirSync(resolve(root, 'docs/audits'), { recursive: true });
+  const map = { identity: { sha: 'before', projection: { projectorSha: 'projector' } }, completeness: { complete: false },
+    strings: ['src/probe.ts', 'probe', 'function', 'smoke:probe', 'hash'],
+    functions: [[0, 1, 0, 1, 1, 'unknown', 'observed', 'unknown']],
+    ranges: [[0, 1, 0, 1, 20, 2, 1, null, 1, null, [0]]], witnesses: [[3, 4, 0, 20, true]] };
+  const plain = Buffer.from(JSON.stringify(map)), compressed = gzipSync(plain);
+  writeFileSync(`${prefix}-map.json.gz`, compressed);
+  const metadata = { identity: { sha: 'before', projection: { projectorSha: 'projector' } }, complete: false, safeZeroEnabled: false,
+    counts: { functions: 1 }, compressed: { bytes: compressed.length, sha256: digestBytes(compressed) }, plain: { bytes: plain.length, sha256: digestBytes(plain) } };
+  writeFileSync(`${prefix}-map-meta.json`, JSON.stringify(metadata));
+  writeFileSync(`${prefix}.json`, JSON.stringify({ outcomes: { failed: 1 }, completeness: { reasonCounts: { failed: 1 } } }));
+  const query = readCoverageAudit({ root, file: 'src/probe.ts', fn: 'probe', limit: 1 });
+  assert.equal(query.complete, false); assert.equal(query.safeZeroEnabled, false);
+  assert.equal(query.functions[0].smoke, 'observed'); assert.equal(query.nativeRanges[0].unit.status, 'unknown');
+  assert.equal(query.nativeRanges[0].witnessReferences[0].owner, 'smoke:probe');
+  assert.equal(readCoverageAudit({ root, file: 'src/probe.ts', line: 1 }).matchingFunctions, 1);
+  assert.equal(readCoverageAudit({ root, file: 'src/probe.ts', line: 2 }).matchingFunctions, 0);
+  assert.throws(() => readCoverageAudit({ root, file: 'src/probe.ts', line: 0 }), /positive line/);
+  assert.throws(() => readCoverageAudit({ root, file: 'src/probe.ts', limit: 31 }), /1\.\.30/);
+  writeFileSync(`${prefix}-map.json.gz`, Buffer.concat([compressed, Buffer.from('changed')]));
+  assert.throws(() => readCoverageAudit({ root, file: 'src/probe.ts' }), /identity mismatch/);
+  writeFileSync(`${prefix}-map.json.gz`, compressed);
+  metadata.plain.sha256 = '0'.repeat(64); writeFileSync(`${prefix}-map-meta.json`, JSON.stringify(metadata));
+  assert.throws(() => readCoverageAudit({ root, file: 'src/probe.ts' }), /Plain audit identity mismatch/);
+  metadata.plain.bytes = 33 * 1024 ** 2; writeFileSync(`${prefix}-map-meta.json`, JSON.stringify(metadata));
+  assert.throws(() => readCoverageAudit({ root, file: 'src/probe.ts' }), /decode budget/);
+});
 test('Python metadata distinguishes override/default resolution, actual version probes and unknown children', () => {
   const absent = 'houseplan-deliberately-missing-python-1018';
   assert.equal(probePythonRuntime(absent).status, 'unknown');

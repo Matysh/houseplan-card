@@ -1,0 +1,134 @@
+{
+  "schema": "houseplan-diagnostic-compact-map/v1",
+  "authority": "diagnostic-only",
+  "semanticApproval": false,
+  "identity": {
+    "sha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+    "tree": "90e729e5cfedff570b778606a17a7fb3f25c31b3",
+    "sourceFingerprint": "59a03f9b510078c091af02b839ec97920d60da7528c558a1ac8e961613702920",
+    "node": "22.23.3",
+    "mapRecipe": "houseplan-coverage-maps/v1",
+    "platform": "linux",
+    "arch": "x64",
+    "executable": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+    "nodePath": "/home/sergey/.cache/houseplan-1018-runtime/node_modules",
+    "rollupVersion": "4.62.2",
+    "recipeFiles": {
+      "scripts/coverage-diagnostic.mjs": "8caf5045d08dd609a79e26971d023ceb887bb376869266e6b56a9f7b8ec806f1",
+      "scripts/coverage-inventory.mjs": "e97e14166ee945d93ba891c7901bbe80b7f9e0ade03d95ea9c95e41ea3fe9240",
+      "scripts/coverage-identity.mjs": "ff0bc2b5f897e57ac40bfe09f623dd9b199214bad9707b943dc32811e8b3ed86",
+      "scripts/coverage-maps.mjs": "513446589017fefbe57ebdd2b6d2c8154dfd981ecd46b19bdb7f8d94acae74d0",
+      "scripts/coverage-preload.mjs": "7da07714758bf66d713cbe8b9dd13ca5deb3188c3e4cf5051ce6c763cc9ee61a",
+      "scripts/coverage-report.mjs": "3226d2d37123ca864e30be2dade81251b1fa77fd8155f7550386723f456835ce",
+      "scripts/parallel-path-audit.mjs": "71bcaf0a27ffaeb3eb83d39d1a4300e798585aee84b1c844933a9d722df2a8c2",
+      "scripts/bundle-manifest.mjs": "8cce8944ae23c9db3af6f62d7a1b7dcd45aa8149cad0c44ef59df7dce1bfc905",
+      "scripts/css-template-minifier.mjs": "e58f34a92bf5e571cbcbbbf546117869fe9b81d57b885a17f2af0323cc882ed2",
+      "scripts/fix-test-build.mjs": "009bcfa2195960ad34ba064cbd29dde90035b17058ebfeda40495a2febf29ea0",
+      "rollup.config.mjs": "98fce3d129c4c8eae75631ac4ebfc71b9d9a782d37bb08c7457187b3136fbdbf",
+      "tsconfig.json": "6b024bb2726db7baa5b43653c489496cb15a600c5a97180ec48a935f178ba9ec",
+      "tsconfig.test.json": "2b30670589ef76610267d26ff9dbb5711795fea376d840f5e71759612d2c864a",
+      "package-lock.json": "390fffe876490f60c335178ae48ee5d10333849d5263af02168d34c80f20ecd2"
+    },
+    "recipeHash": "55cb5c5097631e0f13be18e5b0018e96c1b22af7c91ff103e0472e76faa77f92",
+    "projection": {
+      "authority": "diagnostic-only",
+      "freshCapture": false,
+      "beforeSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+      "projectorSha": "1ff39b03faf67849356872b4a2ef0f975389bd21",
+      "recipeFiles": {
+        "scripts/coverage-reproject-1018.mjs": "2d748dfe79248bfba9da8cb7115659dcce142c291831b04e0b25c791a396f75b",
+        "scripts/coverage-identity.mjs": "4a52034563571e769ae86cff2693e2b6039393139aadf0a94350820f9bda16e3",
+        "scripts/coverage-report.mjs": "c30eb37173acc1f0c7ffd4357a505af0e32766af1c23a088baf5cf286928510e"
+      },
+      "recipeHash": "7267097bc1f2c515045f48691e81fc97ac037c7d3eaafd6a8c2006dd41626719",
+      "frozenGitSources": 460,
+      "repairedSourceBindings": 432,
+      "originalIndexSha256": "943cde6bfab958407fb9dab40bb36204dd7c883c91588be3638e52b6a75b8709",
+      "originalReportSha256": "fdb2f2816581d12569be22e98cb0cc9826cd898357050690aa93b2ba58d72334",
+      "rawReceiptListSha256": "ea26481aa65018f9dcaca1b60d206e033ea00449995b7df6d374c0d803d92c3a",
+      "verifiedRawFiles": 5247,
+      "verifiedRawBytes": 1269833236,
+      "interpretation": "A separate Git-verified source-path reprojection of immutable a34f JS/native samples/maps. No new invocation, map-position edit, threshold change or successful-completeness claim."
+    }
+  },
+  "complete": false,
+  "safeZeroEnabled": false,
+  "counts": {
+    "files": 436,
+    "functions": 10664,
+    "nativeRanges": 51357,
+    "witnessRecords": 384069,
+    "actualScriptObservations": 30242
+  },
+  "compression": "gzip",
+  "plain": {
+    "sha256": "83620e6dad7868891f7e11c0dca1d9d3381b78f69c3c4257f85719dc619cab0a",
+    "bytes": 17578330
+  },
+  "compressed": {
+    "sha256": "d65564f8dc944d9ecee7741562cb4f9f0f4468458c97efcc0b2a6bf4a78e1836",
+    "bytes": 2992244
+  },
+  "columns": {
+    "files": [
+      "pathId",
+      "functions",
+      "mappedBranches",
+      "unit",
+      "smoke",
+      "golden",
+      "mappedScriptsLoaded"
+    ],
+    "functions": [
+      "pathId",
+      "line",
+      "column",
+      "endLine",
+      "nameId",
+      "unit",
+      "smoke",
+      "golden"
+    ],
+    "ranges": [
+      "pathId",
+      "line",
+      "column",
+      "endLine",
+      "endColumn",
+      "kindId",
+      "nameId",
+      "unit",
+      "smoke",
+      "golden",
+      "witnessIds"
+    ],
+    "witnesses": [
+      "ownerId",
+      "jsHashId",
+      "startOffset",
+      "endOffset",
+      "blockCoverage"
+    ],
+    "actualScripts": [
+      "ownerId",
+      "family",
+      "urlId",
+      "pathId",
+      "jsHashId"
+    ]
+  },
+  "nativeFamilyEncoding": "null=unknown; positive number=observed max count; 0=zero-observed (forbidden unless complete successful provenance)",
+  "derivedFrom": {
+    "path": "report.json",
+    "sha256": "030e5b8e21610f79488c8ad46f2b2cabfec641511536675687dba7945c05e94d",
+    "loss": "Repeated strings and witness records interned; exact source URLs kept for actual scripts. Raw recorder payloads and per-page lifecycle remain in the separately hashed full report."
+  },
+  "packaging": {
+    "algorithm": "gzip",
+    "level": 9,
+    "headerMtimeSeconds": 0,
+    "node": "22.23.3",
+    "platform": "win32",
+    "repeatedRepackByteIdentity": true
+  }
+}

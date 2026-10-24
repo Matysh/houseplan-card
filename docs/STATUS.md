@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5201 · pure backend 625 · HA-harness backend 526 · browser smokes 423 (`npm run inventory`) |
+| Tests | Node unit 5202 · pure backend 625 · HA-harness backend 526 · browser smokes 423 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -42,6 +42,10 @@ base error; diagnostic TS now uses an explicit sourceRoot and the index rejects
 escaping source paths. Historical samples need a separate Git-verified projection.
 Native range lookup uses ordered generated offsets instead of repeatedly
 scanning a whole minified chunk; half-open and empty-range semantics are preserved.
+The full a34f before inventory executed 980 cases (973 completed, six failed,
+one timeout); its Git-verified derived map has 51,357 native ranges and preserves
+1298 unknown reasons. The original and derived recipes remain distinct, safe-zero
+is disabled, and a bounded reader verifies the compressed review map on queries.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of

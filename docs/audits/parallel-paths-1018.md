@@ -104,3 +104,6 @@ agree. Only sources/sourceRoot metadata changes; mappings, offsets, names and
 source contents remain equal. A fresh derived index/report names both the
 capture SHA and the committed projector recipe. It executes no scenarios and
 does not overwrite the original run or turn its failures/unknowns into PASS.
+The [full before capture and projection](parallel-paths-1018-before.md) records
+all 980 actual outcomes, the seven unsuccessful cases, 1298 unknown reasons,
+exact runtime/byte receipts and bounded commands for the saved positive map.
