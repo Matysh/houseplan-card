@@ -25,6 +25,25 @@ incorrect B expectation of lossless plan-only privacy data; production remains
 unchanged. The native scenario mounts a fresh public card on the saved pair,
 then checks complete quota-sized records and empty volatile selection/history.
 
+Matched Windows Node 22.23.3 / Rollup 4.62.2 builds on accepted `4dd092a031`
+measure View 339613 -> 339782 B gzip, lazy editor 343989 -> 349715 B gzip,
+raw output 3432482 -> 3453991 B and host references 6090 -> 6173. The accepted
+facts come from `device-offline-validation.json` / `postCssIntegration`; the
+new build is `850d1ed5d`, fingerprint `f0b7ca357dbd…`, with product inputs
+unchanged by the later native-only follow-up. The small extra editor weight
+is the selection/rigid group/individual-contour helpers and the existing
+Properties command/mixed-field adapters. View gains only 169 B and still has
+no eager import of the editor. Splitting another command or picker owner to
+avoid that 5726-B lazy cost would add disproportionate complexity.
+The [measured-growth record](https://github.com/Matysh/houseplan-card/issues/1038#issuecomment-6383329349)
+quotes the owner's standing permission: «сильно на размеры не заморачивайся,
+если незначительное превышение, устранять которое очень дорого — разрешаю
+поднять лимиты». The measured lazy reference becomes 349715 B; raw reference
+becomes 3453991 B and host-reference baseline 6173. Published raw 3437873 B
+was a reference, not the accepted build's actual size. No ratchet band,
+initial-View ceiling, absolute byte guard or runtime latency limit changes.
+This accounts for the implementation cost; it claims no speed improvement.
+
 ## Own offline presentation (#1026)
 
 `device-own-availability.ts` reads only the canonical active own roster. One

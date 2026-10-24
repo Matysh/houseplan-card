@@ -826,7 +826,13 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 // These are actual combined builds, not sums of branch measurements. The owner
 // permits this measured growth (issue #1051, comment 6377420988); preserve
 // the 2000-B band, initial-View split and all absolute predicates.
-export const LAZY_EDITOR_GZIP_CEILING = 343_500;
+// #1038: matched Windows builds on accepted 4dd092a031 measure editor
+// 343989 -> 349715 B (+5726 B, 1.66%) for volatile multi-selection, atomic
+// group commands/individual contours and independent mixed colour drafts.
+// Owner standing permission and exact measurements: issuecomment-6383329349.
+// Record only the measured reference; preserve the 2000-B band, initial View
+// split, every absolute guard and runtime latency predicate.
+export const LAZY_EDITOR_GZIP_CEILING = 349_715;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
