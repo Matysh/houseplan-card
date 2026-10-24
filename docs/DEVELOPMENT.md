@@ -15,6 +15,10 @@ interpretation and the separately measured form-kit cleanup are documented in
 Measured raw V8 retention required a bounded 4-GiB compressed artifact budget;
 the collector/job/upload limits are 105/135/15 minutes. Interrupted runs begin
 in incomplete state, and generated smoke captures under demo/out stay ignored.
+The frozen-a34f projector is a one-off manual repair requiring the ignored raw
+capture, not an entry of Validate or the current nightly collector. Its explicit
+manual-input registration leaves the shared index/report/map engine under the
+ordinary frontend unit inputs.
 
 The first product cleanup removes only the unused top-level ColorField/ColorTile
 onOpacity options and numeric fallbacks, plus five dead colortile-meta/unit CSS
