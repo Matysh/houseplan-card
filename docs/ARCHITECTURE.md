@@ -1553,8 +1553,10 @@ still recognised in stored config but no longer served
   Static attach revalidates the server; a full long return without HA defers.
   A foreign HA assigned while detached also retains a current read intent
   after retiring the accepted document (#1054). Reconnect consumes that intent
-  through the same loader; same-context short returns have none. Visual HA
+  through the same loader; loaded, idle same-context short returns have none. Visual HA
   deduplication, including a reused object or coalesced ABA, cannot erase it.
+  If another detach interrupts that read, it retires the old transport claim
+  while preserving demand in the same lifecycle owner for the next attach.
   The shared continuity controller owns one bounded paint attempt. A timeout
   retains matching staged data without marking a complete frame or self-retry;
   external readiness/update can recover. Canonical: `WARM-REMOUNT.md` §5.1.

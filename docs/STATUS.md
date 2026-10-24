@@ -28,6 +28,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 Detached HA replacement (#1054) preserves the full-card current read intent
 after retiring the accepted document. Reattach consumes that intent without
 another HA tick; existing same-context short returns keep their no-reload path.
+An interrupted reattach retains demand after retiring its old transport claim.
 
 Config-authority smoke (#1052) compares reads across the late-A boundary;
 the independent direct-LQI capability probe no longer looks like a stale-event

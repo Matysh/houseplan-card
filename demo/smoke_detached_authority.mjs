@@ -4,7 +4,7 @@ import { installBatteryFixture } from './helpers/device-battery-fixture.mjs';
 
 requirePinnedBrowser('detached authority');
 const reports = {};
-for (const scenario of ['short', 'long', 'same-object', 'ABA']) {
+for (const scenario of ['short', 'long', 'same-object', 'ABA', 'held-return']) {
   const { page, browser } = await launchColdView({ width: 1200, height: 900 });
   try {
     await installBatteryFixture(page);
@@ -32,6 +32,8 @@ for (const scenario of ['short', 'long', 'same-object', 'ABA']) {
         const config = structuredClone(seed);
         config.spaces = config.spaces.map(space => space.id === 'f1' ? { ...space, title: `Authority ${name}` } : space);
         const messages = { full: [], space: [] };
+        let holdReads = scenario === 'held-return' && name === 'B';
+        const held = [];
         const connection = { ...original.connection, subscribeMessage: async (callback, message) => {
           if (message.type !== 'houseplan/zigbee_lqi/subscribe') return original.connection.subscribeMessage(callback, message);
           callback({ kind: 'reset', session_id: name, revision: 0,
@@ -41,6 +43,11 @@ for (const scenario of ['short', 'long', 'same-object', 'ABA']) {
         const hass = role => ({ ...original, connection, states, user: { ...original.user, id: `user-${name}` },
           callWS: async message => {
             messages[role].push(structuredClone(message));
+            const fullRead = message.type === 'houseplan/config/get'
+              && !(message.fields?.length === 1 && message.fields[0] === 'model_version');
+            if (role === 'full' && holdReads && (fullRead || message.type === 'houseplan/layout/get')) {
+              await new Promise(resolve => held.push(resolve));
+            }
             if (message.type === 'houseplan/config/get') {
               // The actual backend projection contract: [] is FULL, not metadata.
               const selected = Array.isArray(message.fields) && message.fields.length
@@ -52,7 +59,10 @@ for (const scenario of ['short', 'long', 'same-object', 'ABA']) {
           },
           callService: (...args) => { messages[role].push({ type: 'service', args }); return original.callService(...args); },
         });
-        return { config, messages, hass };
+        return { config, messages, hass, held, release: () => {
+          holdReads = false;
+          for (const resolve of held.splice(0)) resolve();
+        } };
       };
       const a = authority('A', 137), b = authority('B', 83);
       const initial = a.hass('full');
@@ -89,10 +99,19 @@ for (const scenario of ['short', 'long', 'same-object', 'ABA']) {
         if (scenario === 'long') Date.now = () => now() + 20_000;
         parent.append(card);
       } finally { Date.now = now; }
+      if (scenario === 'held-return') {
+        out.firstForeignPairIsHeld = await until(() => b.held.length === 2);
+        await card.updateComplete;
+        card.remove(); parent.append(card);
+        out.interruptedForeignPairRestartsWithoutHassTick = await until(() => fullReads(b) === 2 && layoutReads(b) === 2);
+        b.release();
+      }
       out.fullAuthorityReturnsWithoutAnotherHassTick = await until(() => canonical(card, target)
         && card._loadOk && !card._read.busy);
       await card.updateComplete;
-      out.oneCurrentMandatoryPair = fullReads(target) === 1 && layoutReads(target) === 1;
+      // The held case has one retired pair and one current pair, never a duplicate current read.
+      const expectedPairs = scenario === 'held-return' ? 2 : 1;
+      out.oneCurrentMandatoryPair = fullReads(target) === expectedPairs && layoutReads(target) === expectedPairs;
       out.currentPlanAndDeviceLayersReturn = card.renderRoot.querySelectorAll('.room').length === 4
         && !!card.renderRoot.querySelector('[data-hp="device"][data-id="d_temp"]');
       out.currentLiveSignalReturns = signal(card) === (target === a ? '137' : '83');

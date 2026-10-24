@@ -2357,6 +2357,9 @@ No private state is written to simulate a successful load or controller timeout.
 For detached HA replacement (#1054), also run
 `node demo/smoke_detached_authority.mjs`: real full/space hosts and an enabled
 signal feed exercise short/aged returns, a reused HA object and coalesced ABA.
+The held-return case also removes the card while the new mandatory pair is
+pending, drains Lit, and reattaches without another HA assignment. One retired
+pair and one current pair are expected; the late old response cannot own a tail.
 The current config/layout pair, plan/device layers, signal, read-only permission
 and cold View boundary must recover without another HA tick; a loaded
 same-context short return still makes no read. Its projection fixture follows

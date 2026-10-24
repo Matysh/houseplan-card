@@ -2827,7 +2827,11 @@ export class HouseplanCard extends LitElement {
     // A same-element reconnect is a new lifecycle even when HA reuses the
     // Connection object and the route/user strings happen to match (#543).
     this._configReloadAuthority.invalidateLifecycle();
-    this._read.invalidate(); this._loading = false;
+    // Retire transport claims, but retain an interrupted load's demand (#1054).
+    const interruptedRead = this._read.pending || this._read.busy;
+    this._read.invalidate();
+    if (interruptedRead) this._read.defer();
+    this._loading = false;
     this._layoutIO.retire(); this._devicePositionBusy = false;
     this._liveRt?.dispose();
     this._radarLive.stop();
