@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Safely delete an intermediate wall node in Plan/Select: join its two neighbours
+  without moving them, preserve supported openings and undo the whole edit in
+  one step. Unsafe nodes explain why deletion is unavailable. (#1045)
 - Keep a continuous observed live tail behind a moving vacuum while the
   integration path catches up. Exact native points remain separate; confirmed
   Dreame cleanup starts no longer show the previous current trail. Diagnostics

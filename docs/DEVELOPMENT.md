@@ -28,6 +28,23 @@ reproduced 28 failures, including old-object writes; it was an ordinary baseline
 run, not mutation execution. Registered witnesses are static-readiness only
 during development; their execution remains nightly.
 
+## Wall-node deletion #1045
+
+`test/wall-node-delete.test.mjs` and `tests_backend/test_wall_node_delete.py`
+exercise ordinary two-section, corner/shared-owner, attribute, crossing/contact,
+opening and inverse inputs. Mutating a returned nested future attribute cannot
+change the before snapshot. `wall_node_delete_parity.py`, invoked by the existing
+wall-node CI parity entry, compares complete TS/Python candidates and exact
+browser-baseline Undo/Redo; missing compiled inputs fail closed.
+`test/node-delete-history.test.mjs` drives the real serialized writer and common
+CommandStack: data/cursor change only after acceptance, every refused inverse
+keeps both. Existing Move tests remain mandatory for the shared path.
+The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authenticated
+groups, concurrent CAS, stores, metadata projection and integration reload; it
+never replaces the product planner. Run it with the current supported HA harness.
+Targeted proofs supplement gate:small; full regression and mutation execution
+remain in their existing CI/nightly contours.
+
 ## Direct Zigbee LQI #1029
 
 Run `node --test test/device-signal-runtime.test.mjs test/device-signal.test.mjs`

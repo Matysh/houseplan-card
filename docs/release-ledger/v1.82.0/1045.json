@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1045,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds a user-visible Plan/Select command and independently proved backend transaction to delete a safe intermediate wall node, with common Undo/Redo and no storage-schema change.",
+  "summary": {
+    "ru": "Безопасное удаление промежуточного узла стены через контекстное меню с общей историей.",
+    "en": "Safe intermediate wall-node deletion through the context menu with common history."
+  }
+}

@@ -2,7 +2,7 @@
  * #843: the expected revision is read after this tab's own write queue. */
 import type { ConfigAdoption } from './config-adoption';
 import type { ServerConfig } from './types';
-import type { NodeMoveHistory } from './wall-node-editor';
+import type { NodeCommandHistory } from './wall-node-editor';
 import { contentFingerprint } from './visual-continuity';
 
 export interface WallNodeWriteHost {
@@ -62,7 +62,7 @@ async function settleOwnQueue(host: WallNodeWriteHost): Promise<void> {
 }
 
 export async function writeWallNode(
-  host: WallNodeWriteHost, history: NodeMoveHistory, basis: NodeWriteBasis,
+  host: WallNodeWriteHost, history: NodeCommandHistory, basis: NodeWriteBasis,
 ): Promise<ServerConfig> {
   // Nothing is sent and nothing reloaded when the own queue fails: the local
   // edit and the history stay as they are.
@@ -75,7 +75,7 @@ export async function writeWallNode(
     if (!nodeBasisHolds(host, basis)) throw new Error('stale-node-snapshot');
     const revision = host._cfgRev, identity = live();
     const response = await host.hass.callWS<{ config: ServerConfig; rev: number }>({
-      type: 'houseplan/wall/node_move', space_id: history.beforeSpace.id,
+      type: history.kind === 'delete' ? 'houseplan/wall/node_delete' : 'houseplan/wall/node_move', space_id: history.beforeSpace.id,
       expected_rev: revision, intent: history.intent, direction: history.direction,
       ...(history.direction === 'undo' ? { before_space: history.beforeSpace } : {}),
     });

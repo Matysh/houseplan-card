@@ -15,6 +15,31 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 
 ## 1. Model
 
+### Select node deletion (#1045)
+
+A deletion joins two endpoint sections of one physical kind, retaining the
+lexically first existing ID and its orientation. Structural ray valence must
+be exactly two; owner multiplicity and opening cuts do not add rays. A whole
+passing carrier is never split to invent a deletable node. A/C stay exact;
+all affected room rings and wall IDs lose B together. Every persisted carrier
+attribute except ID/endpoints must agree, including future JSON fields.
+Returned nested attributes do not alias the frozen source.
+
+The new chord cannot erase an intervening structural neighbour or create a
+crossing, overlap or contact; original contacts at fixed A/C remain legal.
+Affected rings stay simple, nonzero and consistently wound; new forbidden
+room overlap and production physical/junction violations refuse the edit.
+Collinear hosted openings retain every physical field, with only proved host
+ID/t changes and strict jambs. Angled/unhosted ambiguity refuses the whole
+transaction. No foreign object or file cleanup belongs to this operation.
+
+TS/Python kernels share ordinary positive/negative vectors and full-document
+parity. The server independently proves forward/Undo delta under the existing
+ACL/CAS/write lock, schema, opening and junction validators. Deletion uses the
+same serialized writer and 50-command history as node movement. Its refused
+inverse preserves both the command and cursor; existing Move refusal semantics
+remain operation-specific.
+
 ### Select node movement (#803)
 
 The node graph is derived once per gesture from structural segments, including

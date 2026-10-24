@@ -524,6 +524,7 @@ export interface HouseplanEditorHostPort {
   readonly _loadOk: boolean;
   _canEdit: boolean;
   _haWallNodeMoveApi: number | null;
+  _haWallNodeDeleteApi: number | null;
   _haVacuumDockRestartApi: number | null;
   _canOptimizeUndo: boolean;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;

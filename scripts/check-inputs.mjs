@@ -393,10 +393,10 @@ export const CHECKS = {
     // #548: узкий clean-runner guard реальных TS/Python зеркал П1–П4.
     // Полный frontend artifact и HA harness ему не нужны; каждый фактический
     // вход перечислен здесь и участвует одновременно в selection и reuse key.
-    entries: ['tests_backend/junction_parity.py', 'tests_backend/wall_node_parity.py',
+    entries: ['tests_backend/junction_parity.py', 'tests_backend/wall_node_parity.py', 'tests_backend/wall_node_delete_parity.py',
       'test/helpers/wall-node-parity-runner.mjs', 'test/helpers/wall-identity-corpus.mjs',
-      'src/junction-limits.ts', 'src/wall-node-move.ts', 'src/wall-segment-model.ts',
-      'custom_components/houseplan/junction_limits.py', 'custom_components/houseplan/wall_node_move.py',
+      'src/junction-limits.ts', 'src/wall-node-move.ts', 'src/wall-node-delete.ts', 'src/wall-segment-model.ts',
+      'custom_components/houseplan/junction_limits.py', 'custom_components/houseplan/wall_node_move.py', 'custom_components/houseplan/wall_node_delete.py',
       'scripts/fix-test-build.mjs'],
     roots: ['tests_backend/pure_imports.py', 'custom_components/houseplan/wall_segment_model.py',
       'test/fixtures/**/*.json', 'demo/fixtures/*.mjs', 'demo/srv/demo.html',

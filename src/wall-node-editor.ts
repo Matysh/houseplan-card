@@ -12,9 +12,12 @@ import type { NodePreviewScene } from './wall-node-preview';
 import type { NodeWriteBasis } from './wall-node-write';
 import { nodeDragRefusalKey } from './wall-node-refusal';
 import { VISUAL_MITRE_LIMIT } from './wall-thickness';
+import type { NodeDeleteIntent } from './wall-node-delete';
 
 /** `floor`: the target floor fingerprint this direction expects before it is sent (#843). */
-export interface NodeMoveHistory { beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
+export interface NodeMoveHistory { kind?: 'move'; beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
+export interface NodeDeleteHistory { kind: 'delete'; beforeSpace: NodeMoveSpace; intent: NodeDeleteIntent; direction: 'apply' | 'undo'; floor?: string }
+export type NodeCommandHistory = NodeMoveHistory | NodeDeleteHistory;
 export interface NodeEditorContext { enabled: boolean; space: string; revision: number; api: boolean }
 export interface WallNodeEditorPort {
   context(): NodeEditorContext;

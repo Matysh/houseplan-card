@@ -8,13 +8,13 @@ import type { OpenSpanEntry } from './open-spans';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import type { Stair } from './stairs';
 import type { OpeningCfg, PartitionCfg, WallColumnCfg } from './types';
-import type { NodeMoveHistory } from './wall-node-editor';
+import type { NodeCommandHistory } from './wall-node-editor';
 import type { WallEntry } from './wall-thickness';
 
 /** Everything whose topology or wall association changes in the plan editor. */
 export interface SpaceGeometryState {
   /** #843: a server-applied node command; never restored as local state. */
-  nodeMove?: NodeMoveHistory;
+  nodeMove?: NodeCommandHistory;
   spaceId: string;
   rooms: any[];
   openings?: OpeningCfg[];

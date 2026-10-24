@@ -56,6 +56,15 @@ order only on a right-click, including under pointer-inert drawing tools.
 Commands use the current geometry history/config writer; View has no menu
 listener or commands. No asset/file API, backend change or schema migration.
 
+Wall-node deletion (#1045) is a lazy structural operation with pure TS/Python
+proof kernels. The narrow endpoint derives the two-section delta and independent
+opening lineage under the existing config lock/atomic writer. The client sends
+point intent rather than candidate geometry and adopts only the accepted result.
+Its discriminated node command joins the existing serialized writer and common
+50-command history. Refused Delete inverse commands keep their cursor/identity;
+Move keeps its existing refusal policy. Capability is transport-only, with no
+new View import, polling, persisted selection or model change.
+
 Print export (#1036) keeps the PDF scene/writer independent from a lazy SVG View
 snapshot. The card supplies a read-only stage/context fence, not export geometry.
 The exporter freezes computed styles and flattened icon shadows synchronously,

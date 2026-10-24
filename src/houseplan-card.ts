@@ -2156,6 +2156,7 @@ export class HouseplanCard extends LitElement {
   private _haSummaryPanelApi: number | null = null;
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
+  private _haWallNodeDeleteApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;

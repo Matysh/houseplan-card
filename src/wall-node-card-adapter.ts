@@ -2,7 +2,7 @@
 import { NORM_W } from './canvas-constants';
 import { langOf, type I18nKey } from './i18n';
 import { toolsT, type ToolsI18nKey } from './i18n/tools';
-import { WallNodeEditor, type NodeMoveHistory } from './wall-node-editor';
+import { WallNodeEditor, type NodeCommandHistory } from './wall-node-editor';
 import { nodeAdoptionEpoch, nodeBasisHolds, nodeFloorFingerprint, nodeWriteBasis, writeWallNode,
   type NodeWriteBasis, type WallNodeWriteHost } from './wall-node-write';
 import { runNodeHistory, type NodeHistoryStack } from './wall-node-history';
@@ -20,6 +20,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _mode: string; readonly _tool: string;
   readonly _space: string; readonly _canEdit: boolean; readonly _kiosk: boolean;
   readonly _haWallNodeMoveApi: number | null;
+  readonly _haWallNodeDeleteApi: number | null;
   readonly _stageEl: HTMLElement | null;
   readonly _config: { language?: string | null } | undefined;
   readonly renderRoot: HTMLElement | DocumentFragment;
@@ -34,7 +35,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   readonly _fillColors: { wall_fill: { c: string; a: number } };
   _openingAmt(opening: OpeningCfg): number;
 }
-export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory }>(
+export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHistory }>(
   host: NodeCardHost<TState>, callbacks: {
     point(event: PointerEvent): number[];
     snapshot(space: NodeMoveSpace): TState | null;
@@ -62,11 +63,11 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
         || baselineGeometry.revision !== result.revision || baselineGeometry.space !== result.space))) retire();
     return result;
   };
-  const text = (key: string, params?: Record<string, string>): string => key.startsWith('node_move_')
+  const text = (key: string, params?: Record<string, string>): string => key.startsWith('node_move_') || key.startsWith('node_delete')
     ? toolsT(language(), key as ToolsI18nKey, params || { reason: host._t('toast.geometry_unsafe') })
     : host._t(key as I18nKey, params);
   const toast = (message: string, id?: string): void => host._showToast(message, id);
-  const write = (history: NodeMoveHistory, basis: NodeWriteBasis | null): Promise<ServerConfig> => {
+  const write = (history: NodeCommandHistory, basis: NodeWriteBasis | null): Promise<ServerConfig> => {
     retire(); return writeWallNode(host, history, basis ?? nodeWriteBasis(host, history.beforeSpace.id));
   };
   const editor = new WallNodeEditor({
@@ -139,7 +140,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeMoveHistory
       host._geometryHistory.push({ name: toolsT(language(), 'node_move_history'), before, after });
     },
     history: direction => runNodeHistory<TState>({
-      enabled: () => ['plan', 'decor'].includes(host._mode) && writer(), api,
+      enabled: () => ['plan', 'decor'].includes(host._mode) && writer(),
+      api: history => history.kind === 'delete' ? host._haWallNodeDeleteApi === 1 : api(),
       epoch: () => nodeAdoptionEpoch(host), stack: () => host._geometryHistory,
       canShow: callbacks.canShow, show: callbacks.show, write, text, toast,
     }, direction),

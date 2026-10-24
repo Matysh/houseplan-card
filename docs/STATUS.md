@@ -58,6 +58,11 @@ commit, or the handoff names its location, reason and removal issue. Source
 growth above 3× deletions produces advice only; review judges the explanation.
 Weekly metrics and the stable line-review brief share Git source churn counts.
 
+Wall-node deletion (#1045) joins two safely compatible endpoint sections,
+preserving fixed neighbours, room ownership and physical openings. It uses a
+narrow independently proved server transaction and the existing common history;
+refused inverse operations retain the command and cursor. Storage is unchanged.
+
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
 renderer, with the dark body cut out beneath the core so the real plan shows
 through. On/unavailable paint, rim, geometry and interactions stay unchanged.

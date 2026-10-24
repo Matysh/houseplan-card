@@ -154,6 +154,7 @@ from .virtual_lights import (
     async_virtual_light_snapshot,
 )
 from .wall_node_move import NodeMoveError, node_move_candidate, node_move_host_baseline
+from .wall_node_delete import NodeDeleteError, node_delete_candidate, node_delete_host_baseline
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
@@ -292,6 +293,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_marker_copy)
     websocket_api.async_register_command(hass, ws_wall_node_move)
+    websocket_api.async_register_command(hass, ws_wall_node_delete)
     websocket_api.async_register_command(hass, ws_plan_optimize)
     websocket_api.async_register_command(hass, ws_plan_optimize_undo)
     websocket_api.async_register_command(hass, ws_space_delete)
@@ -1749,6 +1751,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "support_api": SUPPORT_API_VERSION,
             "support_package_versions": list(PACKAGE_VERSIONS),
             "wall_node_move_api": 1,
+            "wall_node_delete_api": 1,
             "vacuum_dock_restart_api": 1,
             "device_contact_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
@@ -2193,6 +2196,85 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
             _LOGGER.exception("House Plan: node operation processing failed")
             connection.send_error(msg["id"], "node_move_backend_unavailable",
                                   "Node operation could not be processed; try again")
+            return
+        if candidate == previous:
+            connection.send_result(msg["id"], {"ok": True, "rev": rev, "config": candidate})
+            return
+        if len(json.dumps(candidate, separators=(",", ":"))) > MAX_CONFIG_BYTES:
+            connection.send_error(msg["id"], "too_large", "Result exceeds the configuration limit")
+            return
+        new_rev = rev + 1
+        await async_save_config_state(rt, candidate, new_rev, previous_rev=rev)
+        rt.junction_baseline = (new_rev, counts)
+        try:
+            await _discard_optimizer_snapshot(rt)
+        except Exception:  # noqa: BLE001 - durable write already accepted
+            _LOGGER.exception("House Plan: discarding stale optimization backup failed")
+    hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
+    connection.send_result(msg["id"], {"ok": True, "rev": new_rev, "config": candidate})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/wall/node_delete",
+        vol.Required("space_id"): str,
+        vol.Required("expected_rev"): int,
+        vol.Required("intent"): dict,
+        vol.Optional("direction", default="apply"): vol.In(["apply", "undo"]),
+        vol.Optional("before_space"): dict,
+    }
+)
+@websocket_api.async_response
+async def ws_wall_node_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Delete only the proved two-section node under the existing atomic writer."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Not allowed to edit the plan")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    if len(json.dumps(msg, separators=(",", ":"))) > MAX_CONFIG_BYTES:
+        connection.send_error(msg["id"], "too_large", "Node operation exceeds the configuration limit")
+        return
+    async with rt.write_lock:
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data = resolved.config_data
+        rev = int(data.get("rev", 0))
+        if msg["expected_rev"] != rev:
+            connection.send_error(msg["id"], "conflict", "Plan revision changed; reopen the menu before deleting a node")
+            return
+        previous = data.get("config", {})
+
+        def _validate_delete_cpu():
+            candidate = node_delete_candidate(previous, msg["space_id"], msg["intent"],
+                                              msg["direction"], msg.get("before_space"))
+            validate_wall_model_transition(candidate, previous)
+            candidate = CONFIG_SCHEMA(candidate)
+            validate_opening_passages(candidate, previous)
+            # Original carrier IDs authorize the local rehost; candidate IDs
+            # do not grant themselves authority. Ordinary strict jambs remain.
+            baseline = node_delete_host_baseline(previous, candidate, msg["space_id"],
+                msg["intent"], msg["direction"], msg.get("before_space"))
+            validate_partition_opening_hosts(candidate, baseline)
+            counts = validate_junction_limits(candidate, previous)
+            return candidate, counts
+
+        try:
+            candidate, counts = await hass.async_add_executor_job(_validate_delete_cpu)
+        except (NodeDeleteError, JunctionLimitError, WallModelClientOutdatedError,
+                OpeningPassageError, PartitionOpeningHostError,
+                PartitionOpeningJambMarginError) as err:
+            connection.send_error(msg["id"], err.code, str(err))
+            return
+        except vol.Invalid:
+            connection.send_error(msg["id"], NodeDeleteError().code, "Invalid node deletion")
+            return
+        except Exception:  # noqa: BLE001 - processing failure does not authorize a write
+            _LOGGER.exception("House Plan: node deletion processing failed")
+            connection.send_error(msg["id"], "node_delete_backend_unavailable",
+                                  "Node deletion could not be processed; try again")
             return
         if candidate == previous:
             connection.send_result(msg["id"], {"ok": True, "rev": rev, "config": candidate})
