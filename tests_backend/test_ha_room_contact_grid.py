@@ -33,7 +33,7 @@ async def _setup(hass: HomeAssistant):
     return entry, runtime
 
 
-@pytest.mark.parametrize("case", ROOM_CASES, ids=["first-face", "second-face", "sequential-faces"])
+@pytest.mark.parametrize("case", ROOM_CASES, ids=["first-face", "second-face", "sequential-faces", "on-grid-control"])
 async def test_issue_1061_runtime_room_candidates_are_server_accepted(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, case: dict,
 ) -> None:

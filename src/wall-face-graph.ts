@@ -492,6 +492,8 @@ export function buildWallFaceGraph(
   const safeEpsilon = Number.isFinite(epsilon) && epsilon > 0 ? epsilon : DEFAULT_EPSILON;
   const vertices = new Map<string, SourceVertex[]>();
   const atoms = atomize(input, safeEpsilon, vertices);
+  const sourcePoints = new Map<string, [number, number] | null>();
+  for (const [key, candidates] of vertices) sourcePoints.set(key, sourceVertex(candidates));
   const points = new Map<string, [number, number]>();
   const adjacency = new Map<string, Set<string>>();
   const atomsByKey = new Map(atoms.map((atom) => [atom.key, atom]));
@@ -551,7 +553,7 @@ export function buildWallFaceGraph(
       }
       if (!closed || new Set(vertexKeys).size < 3
           || new Set(vertexKeys).size !== vertexKeys.length) continue;
-      const exact = vertexKeys.map(key => sourceVertex(vertices.get(key) || []));
+      const exact = vertexKeys.map(key => sourcePoints.get(key) ?? null);
       if (exact.some(point => point === null)) continue;
       const ring = exact as [number, number][];
       const area = signedArea(ring);

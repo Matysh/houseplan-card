@@ -5389,4 +5389,9 @@ refusals. Neither fixture replaces the server validator or the ordinary writer.
 Current partial proof, final native, planner scope, actual build sizes and final
 normal hook/CI are recorded with their own source identities in the handoff;
 this section does not predict a final PASS. No grid/epsilon/counter/absolute
-budget is relaxed, and no mutant is executed.
+budget is relaxed, and no mutant is executed. Exact source representatives are
+resolved once per topology vertex, not repeatedly for every incident face.
+Across independently executed fixture recipes, newly allocated random wall IDs
+are compared through a bijection that remains shared across every state; each
+run separately proves exact retained IDs and exact Undo/Redo identities. The
+production ID allocator is never substituted to make a fixture deterministic.

@@ -31,8 +31,9 @@
 export const SMOKE_LINKS = [
   {
     files: ['src/wall-face-graph.ts'],
-    smokes: ['smoke_room_contact_grid.mjs'],
-    because: '#1061: public Walls clicks and the room form prove inherited off-grid coordinates, separate/sequential room persistence, one history/write, Undo/Redo/reload and atomic Cancel/stale refusal; the smoke never calls the graph helper.',
+    smokes: ['smoke_room_contact_grid.mjs','smoke_wall_face_lineage.mjs',
+      'smoke_wall_face_room_split.mjs','smoke_wall_face_overlap.mjs','smoke_room_autoclose.mjs'],
+    because: '#1061 AC1/2/8: public Walls clicks and the room form prove inherited source fidelity and atomic persistence. Existing lineage/room-split/overlap/autoclose witnesses exercise the same writable rings through carrier promotion, hosted openings, shared cuts and an active chain without naming the graph helper.',
   },
   {
     files: ['src/decor-text-element.ts', 'src/editors/decor/group-selection.ts'],

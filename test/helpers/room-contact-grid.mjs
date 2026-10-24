@@ -3,17 +3,17 @@ import {wallKey} from '../../test-build/wall-thickness.js';
 import {normalizeRoomAppearance} from '../../test-build/room-appearance.js';
 
 export const inheritedY=0.312345678;
-export function roomSource(){
+export function roomSource(height=inheritedY){
   const config=commitWallSegmentModel({model_version:10,settings:{},
     markers:[{id:'unrelated',binding:'virtual',is_light:true}],spaces:[{
     id:'floor',title:'Synthetic',view_box:[0,0,1,1],cell_cm:5,rooms:[{id:'old',name:'Old',area:null,
-      poly:[[0,0],[0.25,0],[0.25,inheritedY],[0,inheritedY]]}],
+      poly:[[0,0],[0.25,0],[0.25,height],[0,height]]}],
     walls:[{key:wallKey([0,0],[0.25,0],1/240),a:[0,0],b:[0.25,0],cm:20}],
     partitions:[
       {id:'north',a:[0.25,0],b:[0.75,0],cm:20},
-      {id:'south',a:[0.25,inheritedY],b:[0.75,inheritedY],cm:20},
-      {id:'middle',a:[0.5,0],b:[0.5,inheritedY],cm:20},
-      {id:'east',a:[0.75,0],b:[0.75,inheritedY],cm:20},
+      {id:'south',a:[0.25,height],b:[0.75,height],cm:20},
+      {id:'middle',a:[0.5,0],b:[0.5,height],cm:20},
+      {id:'east',a:[0.75,0],b:[0.75,height],cm:20},
     ],
   },{id:'remote',title:'Other floor',view_box:[0,0,1,1],cell_cm:5,rooms:[],
     partitions:[{id:'remote-wall',a:[0.1,0.1],b:[0.2,0.1],cm:20}]}]}).config;

@@ -51,10 +51,10 @@
                 "retain": true
               },
               "wall_ids": [
-                "wall-bb105a3e-527a-44ff-a8e3-5d314027fe2d",
-                "wall-dd92abe2-a36b-459d-811e-87be3a4c148d",
-                "wall-244fd58a-1575-4bfe-a7b4-f404e18aac22",
-                "wall-a299d1fe-8e15-4133-a9af-a276dbac17c5"
+                "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
+                "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
+                "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
+                "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9"
               ]
             }
           ],
@@ -124,7 +124,7 @@
           ],
           "wall_segments": [
             {
-              "id": "wall-a299d1fe-8e15-4133-a9af-a276dbac17c5",
+              "id": "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9",
               "a": [
                 0,
                 0
@@ -139,7 +139,7 @@
               }
             },
             {
-              "id": "wall-bb105a3e-527a-44ff-a8e3-5d314027fe2d",
+              "id": "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
               "a": [
                 0,
                 0
@@ -151,7 +151,7 @@
               "cm": 20
             },
             {
-              "id": "wall-244fd58a-1575-4bfe-a7b4-f404e18aac22",
+              "id": "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
               "a": [
                 0,
                 0.312345678
@@ -163,7 +163,7 @@
               "cm": 0
             },
             {
-              "id": "wall-dd92abe2-a36b-459d-811e-87be3a4c148d",
+              "id": "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
               "a": [
                 0.25,
                 0
@@ -185,7 +185,7 @@
               "length": 0.05,
               "host": {
                 "kind": "wall",
-                "id": "wall-bb105a3e-527a-44ff-a8e3-5d314027fe2d",
+                "id": "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
                 "t": 0.5
               },
               "future_opening": {
@@ -292,10 +292,10 @@
                   "retain": true
                 },
                 "wall_ids": [
-                  "wall-bb105a3e-527a-44ff-a8e3-5d314027fe2d",
-                  "wall-dd92abe2-a36b-459d-811e-87be3a4c148d",
-                  "wall-244fd58a-1575-4bfe-a7b4-f404e18aac22",
-                  "wall-a299d1fe-8e15-4133-a9af-a276dbac17c5"
+                  "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
+                  "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
+                  "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
+                  "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9"
                 ]
               },
               {
@@ -321,10 +321,10 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-dd92abe2-a36b-459d-811e-87be3a4c148d",
-                  "wall-1df6a993-b877-42b1-8228-c69d9aec3d2e",
-                  "wall-4e8300dd-6bd2-4100-8a56-90d2336232e7",
-                  "wall-6d824412-793e-4bfc-b298-ee61a416f64f"
+                  "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
+                  "wall-6c26cdbd-6a79-418f-a903-59c1989a71f7",
+                  "wall-5811ece0-d858-4f70-9843-aaef785f5ed8",
+                  "wall-529c317f-33a0-4e85-b0f0-608b446ed974"
                 ]
               }
             ],
@@ -394,7 +394,7 @@
             ],
             "wall_segments": [
               {
-                "id": "wall-a299d1fe-8e15-4133-a9af-a276dbac17c5",
+                "id": "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9",
                 "a": [
                   0,
                   0
@@ -409,7 +409,7 @@
                 }
               },
               {
-                "id": "wall-bb105a3e-527a-44ff-a8e3-5d314027fe2d",
+                "id": "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
                 "a": [
                   0,
                   0
@@ -421,7 +421,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-244fd58a-1575-4bfe-a7b4-f404e18aac22",
+                "id": "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
                 "a": [
                   0,
                   0.312345678
@@ -433,7 +433,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-dd92abe2-a36b-459d-811e-87be3a4c148d",
+                "id": "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
                 "a": [
                   0.25,
                   0
@@ -445,7 +445,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-1df6a993-b877-42b1-8228-c69d9aec3d2e",
+                "id": "wall-6c26cdbd-6a79-418f-a903-59c1989a71f7",
                 "a": [
                   0.25,
                   0
@@ -457,7 +457,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-6d824412-793e-4bfc-b298-ee61a416f64f",
+                "id": "wall-529c317f-33a0-4e85-b0f0-608b446ed974",
                 "a": [
                   0.25,
                   0.312345678
@@ -469,7 +469,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-4e8300dd-6bd2-4100-8a56-90d2336232e7",
+                "id": "wall-5811ece0-d858-4f70-9843-aaef785f5ed8",
                 "a": [
                   0.5,
                   0
@@ -491,7 +491,7 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-bb105a3e-527a-44ff-a8e3-5d314027fe2d",
+                  "id": "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
                   "t": 0.5
                 },
                 "future_opening": {
@@ -603,10 +603,10 @@
                 "retain": true
               },
               "wall_ids": [
-                "wall-8428608f-c73e-44e7-9949-b33e8635bc87",
-                "wall-0a2f2544-d0f9-4009-b0e7-ff8876f18d62",
-                "wall-35adbe57-b32b-4c9c-ae3f-41c97fc8b127",
-                "wall-156a900f-7e2a-4d5e-b2d4-d8f219ba6352"
+                "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
+                "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b",
+                "wall-400455fc-75b2-4918-9441-ea1c54319132",
+                "wall-c645ffbf-6345-4fee-8bf1-4378d9428311"
               ]
             }
           ],
@@ -676,7 +676,7 @@
           ],
           "wall_segments": [
             {
-              "id": "wall-156a900f-7e2a-4d5e-b2d4-d8f219ba6352",
+              "id": "wall-c645ffbf-6345-4fee-8bf1-4378d9428311",
               "a": [
                 0,
                 0
@@ -691,7 +691,7 @@
               }
             },
             {
-              "id": "wall-8428608f-c73e-44e7-9949-b33e8635bc87",
+              "id": "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
               "a": [
                 0,
                 0
@@ -703,7 +703,7 @@
               "cm": 20
             },
             {
-              "id": "wall-35adbe57-b32b-4c9c-ae3f-41c97fc8b127",
+              "id": "wall-400455fc-75b2-4918-9441-ea1c54319132",
               "a": [
                 0,
                 0.312345678
@@ -715,7 +715,7 @@
               "cm": 0
             },
             {
-              "id": "wall-0a2f2544-d0f9-4009-b0e7-ff8876f18d62",
+              "id": "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b",
               "a": [
                 0.25,
                 0
@@ -737,7 +737,7 @@
               "length": 0.05,
               "host": {
                 "kind": "wall",
-                "id": "wall-8428608f-c73e-44e7-9949-b33e8635bc87",
+                "id": "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
                 "t": 0.5
               },
               "future_opening": {
@@ -844,10 +844,10 @@
                   "retain": true
                 },
                 "wall_ids": [
-                  "wall-8428608f-c73e-44e7-9949-b33e8635bc87",
-                  "wall-0a2f2544-d0f9-4009-b0e7-ff8876f18d62",
-                  "wall-35adbe57-b32b-4c9c-ae3f-41c97fc8b127",
-                  "wall-156a900f-7e2a-4d5e-b2d4-d8f219ba6352"
+                  "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
+                  "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b",
+                  "wall-400455fc-75b2-4918-9441-ea1c54319132",
+                  "wall-c645ffbf-6345-4fee-8bf1-4378d9428311"
                 ]
               },
               {
@@ -873,10 +873,10 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-00f7c86e-c4ad-4d3a-b925-b0815feb98cf",
-                  "wall-0675eca5-7a2d-4c5f-ac1c-be7ebe8569e5",
-                  "wall-f435b045-9393-4c1d-8f02-ea60b59bd2d5",
-                  "wall-39eb6b2a-be64-4f84-8d1b-1b2419a0e99d"
+                  "wall-2f3d4613-d04f-4e99-a90f-2f09c443f6bb",
+                  "wall-cb8e9bc9-14de-479c-af86-688552fa2bc4",
+                  "wall-ab682b24-6388-4f54-bb0a-37b5e96e4ff4",
+                  "wall-bd230e7e-d671-4c0d-8928-46d0d3f346ed"
                 ]
               }
             ],
@@ -946,7 +946,7 @@
             ],
             "wall_segments": [
               {
-                "id": "wall-156a900f-7e2a-4d5e-b2d4-d8f219ba6352",
+                "id": "wall-c645ffbf-6345-4fee-8bf1-4378d9428311",
                 "a": [
                   0,
                   0
@@ -961,7 +961,7 @@
                 }
               },
               {
-                "id": "wall-8428608f-c73e-44e7-9949-b33e8635bc87",
+                "id": "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
                 "a": [
                   0,
                   0
@@ -973,7 +973,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-35adbe57-b32b-4c9c-ae3f-41c97fc8b127",
+                "id": "wall-400455fc-75b2-4918-9441-ea1c54319132",
                 "a": [
                   0,
                   0.312345678
@@ -985,7 +985,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-0a2f2544-d0f9-4009-b0e7-ff8876f18d62",
+                "id": "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b",
                 "a": [
                   0.25,
                   0
@@ -997,7 +997,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-00f7c86e-c4ad-4d3a-b925-b0815feb98cf",
+                "id": "wall-2f3d4613-d04f-4e99-a90f-2f09c443f6bb",
                 "a": [
                   0.5,
                   0
@@ -1009,7 +1009,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-0675eca5-7a2d-4c5f-ac1c-be7ebe8569e5",
+                "id": "wall-cb8e9bc9-14de-479c-af86-688552fa2bc4",
                 "a": [
                   0.5,
                   0
@@ -1021,7 +1021,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-39eb6b2a-be64-4f84-8d1b-1b2419a0e99d",
+                "id": "wall-bd230e7e-d671-4c0d-8928-46d0d3f346ed",
                 "a": [
                   0.5,
                   0.312345678
@@ -1033,7 +1033,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-f435b045-9393-4c1d-8f02-ea60b59bd2d5",
+                "id": "wall-ab682b24-6388-4f54-bb0a-37b5e96e4ff4",
                 "a": [
                   0.75,
                   0
@@ -1055,7 +1055,7 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-8428608f-c73e-44e7-9949-b33e8635bc87",
+                  "id": "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
                   "t": 0.5
                 },
                 "future_opening": {
@@ -1168,10 +1168,10 @@
                 "retain": true
               },
               "wall_ids": [
-                "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
-                "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
-                "wall-7940fba9-ca38-4ed3-9874-c98013355413",
-                "wall-fb2c3147-69e9-4415-82d3-5bb632a8f4df"
+                "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+                "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+                "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2"
               ]
             }
           ],
@@ -1241,7 +1241,7 @@
           ],
           "wall_segments": [
             {
-              "id": "wall-fb2c3147-69e9-4415-82d3-5bb632a8f4df",
+              "id": "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2",
               "a": [
                 0,
                 0
@@ -1256,7 +1256,7 @@
               }
             },
             {
-              "id": "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
+              "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
               "a": [
                 0,
                 0
@@ -1268,7 +1268,7 @@
               "cm": 20
             },
             {
-              "id": "wall-7940fba9-ca38-4ed3-9874-c98013355413",
+              "id": "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
               "a": [
                 0,
                 0.312345678
@@ -1280,7 +1280,7 @@
               "cm": 0
             },
             {
-              "id": "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
+              "id": "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
               "a": [
                 0.25,
                 0
@@ -1302,7 +1302,7 @@
               "length": 0.05,
               "host": {
                 "kind": "wall",
-                "id": "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
+                "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
                 "t": 0.5
               },
               "future_opening": {
@@ -1409,10 +1409,10 @@
                   "retain": true
                 },
                 "wall_ids": [
-                  "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
-                  "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
-                  "wall-7940fba9-ca38-4ed3-9874-c98013355413",
-                  "wall-fb2c3147-69e9-4415-82d3-5bb632a8f4df"
+                  "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+                  "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                  "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+                  "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2"
                 ]
               },
               {
@@ -1438,10 +1438,10 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
-                  "wall-08497f7d-7951-4c1b-bd18-947a7575674c",
-                  "wall-5bfe01b3-3ce2-4764-a10f-1bc028e3e37b",
-                  "wall-474efd54-c786-4023-b9d8-c5fcd00dcd73"
+                  "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                  "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
+                  "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
+                  "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7"
                 ]
               }
             ],
@@ -1511,7 +1511,7 @@
             ],
             "wall_segments": [
               {
-                "id": "wall-fb2c3147-69e9-4415-82d3-5bb632a8f4df",
+                "id": "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2",
                 "a": [
                   0,
                   0
@@ -1526,7 +1526,7 @@
                 }
               },
               {
-                "id": "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
+                "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
                 "a": [
                   0,
                   0
@@ -1538,7 +1538,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-7940fba9-ca38-4ed3-9874-c98013355413",
+                "id": "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
                 "a": [
                   0,
                   0.312345678
@@ -1550,7 +1550,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
+                "id": "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
                 "a": [
                   0.25,
                   0
@@ -1562,7 +1562,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-08497f7d-7951-4c1b-bd18-947a7575674c",
+                "id": "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
                 "a": [
                   0.25,
                   0
@@ -1574,7 +1574,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-474efd54-c786-4023-b9d8-c5fcd00dcd73",
+                "id": "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7",
                 "a": [
                   0.25,
                   0.312345678
@@ -1586,7 +1586,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-5bfe01b3-3ce2-4764-a10f-1bc028e3e37b",
+                "id": "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
                 "a": [
                   0.5,
                   0
@@ -1608,7 +1608,7 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
+                  "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
                   "t": 0.5
                 },
                 "future_opening": {
@@ -1714,10 +1714,10 @@
                   "retain": true
                 },
                 "wall_ids": [
-                  "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
-                  "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
-                  "wall-7940fba9-ca38-4ed3-9874-c98013355413",
-                  "wall-fb2c3147-69e9-4415-82d3-5bb632a8f4df"
+                  "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+                  "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                  "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+                  "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2"
                 ]
               },
               {
@@ -1743,10 +1743,10 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
-                  "wall-08497f7d-7951-4c1b-bd18-947a7575674c",
-                  "wall-5bfe01b3-3ce2-4764-a10f-1bc028e3e37b",
-                  "wall-474efd54-c786-4023-b9d8-c5fcd00dcd73"
+                  "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                  "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
+                  "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
+                  "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7"
                 ]
               },
               {
@@ -1772,10 +1772,10 @@
                   ]
                 ],
                 "wall_ids": [
-                  "wall-5bfe01b3-3ce2-4764-a10f-1bc028e3e37b",
-                  "wall-45d45a26-cb59-4619-8562-790bab561a98",
-                  "wall-a188885e-e758-40e6-bb24-c82cea4661c7",
-                  "wall-659e6d9a-259d-4868-a6c6-744ecab57626"
+                  "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
+                  "wall-93a2fb88-0b56-45a6-a6d1-0de6ce1c3e85",
+                  "wall-a485cd08-8290-4fb3-abd9-62071ee41d22",
+                  "wall-d45b238f-f7e8-47a4-a40d-0dc0a8c53541"
                 ]
               }
             ],
@@ -1845,7 +1845,7 @@
             ],
             "wall_segments": [
               {
-                "id": "wall-fb2c3147-69e9-4415-82d3-5bb632a8f4df",
+                "id": "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2",
                 "a": [
                   0,
                   0
@@ -1860,7 +1860,7 @@
                 }
               },
               {
-                "id": "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
+                "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
                 "a": [
                   0,
                   0
@@ -1872,7 +1872,7 @@
                 "cm": 20
               },
               {
-                "id": "wall-7940fba9-ca38-4ed3-9874-c98013355413",
+                "id": "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
                 "a": [
                   0,
                   0.312345678
@@ -1884,7 +1884,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-d6f76660-1ef1-40e3-ab06-2a36cb90f27e",
+                "id": "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
                 "a": [
                   0.25,
                   0
@@ -1896,7 +1896,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-08497f7d-7951-4c1b-bd18-947a7575674c",
+                "id": "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
                 "a": [
                   0.25,
                   0
@@ -1908,7 +1908,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-474efd54-c786-4023-b9d8-c5fcd00dcd73",
+                "id": "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7",
                 "a": [
                   0.25,
                   0.312345678
@@ -1920,7 +1920,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-5bfe01b3-3ce2-4764-a10f-1bc028e3e37b",
+                "id": "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
                 "a": [
                   0.5,
                   0
@@ -1932,7 +1932,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-45d45a26-cb59-4619-8562-790bab561a98",
+                "id": "wall-93a2fb88-0b56-45a6-a6d1-0de6ce1c3e85",
                 "a": [
                   0.5,
                   0
@@ -1944,7 +1944,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-659e6d9a-259d-4868-a6c6-744ecab57626",
+                "id": "wall-d45b238f-f7e8-47a4-a40d-0dc0a8c53541",
                 "a": [
                   0.5,
                   0.312345678
@@ -1956,7 +1956,7 @@
                 "cm": 0
               },
               {
-                "id": "wall-a188885e-e758-40e6-bb24-c82cea4661c7",
+                "id": "wall-a485cd08-8290-4fb3-abd9-62071ee41d22",
                 "a": [
                   0.75,
                   0
@@ -1978,7 +1978,559 @@
                 "length": 0.05,
                 "host": {
                   "kind": "wall",
-                  "id": "wall-f71f8cd9-30b1-4e9a-9d34-234002cb9c60",
+                  "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+                  "t": 0.5
+                },
+                "future_opening": {
+                  "retain": true
+                }
+              }
+            ],
+            "settings": {
+              "name_color": {
+                "c": "#55606c",
+                "a": 0.8
+              },
+              "wall_fill": {
+                "c": "#ffffff",
+                "a": 1
+              }
+            }
+          },
+          {
+            "id": "remote",
+            "title": "Other floor",
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "cell_cm": 5,
+            "rooms": [],
+            "partitions": [
+              {
+                "id": "remote-wall",
+                "a": [
+                  0.1,
+                  0.1
+                ],
+                "b": [
+                  0.2,
+                  0.1
+                ],
+                "cm": 20
+              }
+            ],
+            "wall_segments": [],
+            "settings": {
+              "name_color": {
+                "c": "#55606c",
+                "a": 0.8
+              },
+              "wall_fill": {
+                "c": "#ffffff",
+                "a": 1
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "clicks": [
+      0.375
+    ],
+    "source": {
+      "model_version": 10,
+      "settings": {},
+      "markers": [
+        {
+          "id": "unrelated",
+          "binding": "virtual",
+          "is_light": true
+        }
+      ],
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [
+            {
+              "id": "old",
+              "name": "Old",
+              "area": null,
+              "poly": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  0.25,
+                  0
+                ],
+                [
+                  0.25,
+                  0.3125
+                ],
+                [
+                  0,
+                  0.3125
+                ]
+              ],
+              "future_room": {
+                "retain": true
+              },
+              "wall_ids": [
+                "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+                "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+                "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+                "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d"
+              ]
+            }
+          ],
+          "walls": [
+            {
+              "key": "0.125000,0.000000@0.0000",
+              "cm": 20,
+              "a": [
+                0,
+                0
+              ],
+              "b": [
+                0.25,
+                0
+              ]
+            }
+          ],
+          "partitions": [
+            {
+              "id": "north",
+              "a": [
+                0.25,
+                0
+              ],
+              "b": [
+                0.75,
+                0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "south",
+              "a": [
+                0.25,
+                0.3125
+              ],
+              "b": [
+                0.75,
+                0.3125
+              ],
+              "cm": 20
+            },
+            {
+              "id": "middle",
+              "a": [
+                0.5,
+                0
+              ],
+              "b": [
+                0.5,
+                0.3125
+              ],
+              "cm": 20
+            },
+            {
+              "id": "east",
+              "a": [
+                0.75,
+                0
+              ],
+              "b": [
+                0.75,
+                0.3125
+              ],
+              "cm": 20
+            }
+          ],
+          "wall_segments": [
+            {
+              "id": "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d",
+              "a": [
+                0,
+                0
+              ],
+              "b": [
+                0,
+                0.3125
+              ],
+              "cm": 0,
+              "future_wall": {
+                "retain": true
+              }
+            },
+            {
+              "id": "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+              "a": [
+                0,
+                0
+              ],
+              "b": [
+                0.25,
+                0
+              ],
+              "cm": 20
+            },
+            {
+              "id": "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+              "a": [
+                0,
+                0.3125
+              ],
+              "b": [
+                0.25,
+                0.3125
+              ],
+              "cm": 0
+            },
+            {
+              "id": "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+              "a": [
+                0.25,
+                0
+              ],
+              "b": [
+                0.25,
+                0.3125
+              ],
+              "cm": 0
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "type": "window",
+              "x": 0.125,
+              "y": 0,
+              "angle": 0,
+              "length": 0.05,
+              "host": {
+                "kind": "wall",
+                "id": "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+                "t": 0.5
+              },
+              "future_opening": {
+                "retain": true
+              }
+            }
+          ],
+          "settings": {
+            "name_color": {
+              "c": "#55606c",
+              "a": 0.8
+            },
+            "wall_fill": {
+              "c": "#ffffff",
+              "a": 1
+            }
+          }
+        },
+        {
+          "id": "remote",
+          "title": "Other floor",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "remote-wall",
+              "a": [
+                0.1,
+                0.1
+              ],
+              "b": [
+                0.2,
+                0.1
+              ],
+              "cm": 20
+            }
+          ],
+          "wall_segments": [],
+          "settings": {
+            "name_color": {
+              "c": "#55606c",
+              "a": 0.8
+            },
+            "wall_fill": {
+              "c": "#ffffff",
+              "a": 1
+            }
+          }
+        }
+      ]
+    },
+    "candidates": [
+      {
+        "model_version": 10,
+        "settings": {},
+        "markers": [
+          {
+            "id": "unrelated",
+            "binding": "virtual",
+            "is_light": true
+          }
+        ],
+        "spaces": [
+          {
+            "id": "floor",
+            "title": "Synthetic",
+            "view_box": [
+              0,
+              0,
+              1,
+              1
+            ],
+            "cell_cm": 5,
+            "rooms": [
+              {
+                "id": "old",
+                "name": "Old",
+                "area": null,
+                "poly": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0.25,
+                    0
+                  ],
+                  [
+                    0.25,
+                    0.3125
+                  ],
+                  [
+                    0,
+                    0.3125
+                  ]
+                ],
+                "future_room": {
+                  "retain": true
+                },
+                "wall_ids": [
+                  "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+                  "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+                  "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+                  "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d"
+                ]
+              },
+              {
+                "id": "new0",
+                "name": "New",
+                "area": null,
+                "poly": [
+                  [
+                    0.25,
+                    0.3125
+                  ],
+                  [
+                    0.25,
+                    0
+                  ],
+                  [
+                    0.5,
+                    0
+                  ],
+                  [
+                    0.5,
+                    0.3125
+                  ]
+                ],
+                "wall_ids": [
+                  "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+                  "wall-f95435eb-8087-4dfe-a687-27771877665d",
+                  "wall-c1364653-dd43-425c-a776-7e8eec169ceb",
+                  "wall-3a602a2c-bd3b-4cde-9f5c-b8184663e804"
+                ]
+              }
+            ],
+            "walls": [
+              {
+                "key": "0.125000,0.000000@0.0000",
+                "cm": 20,
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0.25,
+                  0
+                ]
+              }
+            ],
+            "partitions": [
+              {
+                "id": "north",
+                "a": [
+                  0.25,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "south",
+                "a": [
+                  0.25,
+                  0.3125
+                ],
+                "b": [
+                  0.75,
+                  0.3125
+                ],
+                "cm": 20
+              },
+              {
+                "id": "middle",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0.3125
+                ],
+                "cm": 20
+              },
+              {
+                "id": "east",
+                "a": [
+                  0.75,
+                  0
+                ],
+                "b": [
+                  0.75,
+                  0.3125
+                ],
+                "cm": 20
+              }
+            ],
+            "wall_segments": [
+              {
+                "id": "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0,
+                  0.3125
+                ],
+                "cm": 0,
+                "future_wall": {
+                  "retain": true
+                }
+              },
+              {
+                "id": "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+                "a": [
+                  0,
+                  0
+                ],
+                "b": [
+                  0.25,
+                  0
+                ],
+                "cm": 20
+              },
+              {
+                "id": "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+                "a": [
+                  0,
+                  0.3125
+                ],
+                "b": [
+                  0.25,
+                  0.3125
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+                "a": [
+                  0.25,
+                  0
+                ],
+                "b": [
+                  0.25,
+                  0.3125
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-f95435eb-8087-4dfe-a687-27771877665d",
+                "a": [
+                  0.25,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-3a602a2c-bd3b-4cde-9f5c-b8184663e804",
+                "a": [
+                  0.25,
+                  0.3125
+                ],
+                "b": [
+                  0.5,
+                  0.3125
+                ],
+                "cm": 0
+              },
+              {
+                "id": "wall-c1364653-dd43-425c-a776-7e8eec169ceb",
+                "a": [
+                  0.5,
+                  0
+                ],
+                "b": [
+                  0.5,
+                  0.3125
+                ],
+                "cm": 0
+              }
+            ],
+            "openings": [
+              {
+                "id": "old-window",
+                "type": "window",
+                "x": 0.125,
+                "y": 0,
+                "angle": 0,
+                "length": 0.05,
+                "host": {
+                  "kind": "wall",
+                  "id": "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
                   "t": 0.5
                 },
                 "future_opening": {

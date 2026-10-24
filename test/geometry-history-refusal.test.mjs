@@ -165,8 +165,8 @@ test('#1061 existing off-grid faces cross the actual commit/write/history owners
   const { roomSource, graphSources, inheritedY, stableRoomReceiptIds } = await import('./helpers/room-contact-grid.mjs');
   const { buildWallFaceGraph, findWallFaceAtPoint } = await import('../test-build/wall-face-graph.js');
   const receipts = [];
-  for (const clicks of [[.375], [.625], [.375, .625]]) {
-  const s = setup({ floors: ['floor'], configInput: roomSource() });
+  for (const [clicks,height] of [[[.375],inheritedY], [[.625],inheritedY], [[.375,.625],inheritedY], [[.375],.3125]]) {
+  const s = setup({ floors: ['floor'], configInput: roomSource(height) });
   const source = clone(s.server.config), candidates = [];
   const oldRoom = clone(s.spaceOf('floor').rooms[0]);
   for (const [i, x] of clicks.entries()) {
@@ -186,7 +186,7 @@ test('#1061 existing off-grid faces cross the actual commit/write/history owners
     for(const old of source.spaces[0].wall_segments)
       assert.deepEqual(s.spaceOf('floor').wall_segments.find(wall=>wall.id===old.id),old);
     assert.equal(s.server.config.spaces[0].rooms.length, i + 2);
-    assert.ok(s.server.config.spaces[0].rooms.at(-1).poly.some(point => point[1] === inheritedY));
+    assert.ok(s.server.config.spaces[0].rooms.at(-1).poly.some(point => point[1] === height));
     candidates.push(clone(s.server.config));
   }
   assert.equal(s.geometryHistory.size, clicks.length);

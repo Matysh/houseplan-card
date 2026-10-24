@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "issue": 1061,
+  "preparationOnly": true,
+  "acceptedIncluded": "af23dada6097584b17007169443719eee377fb31",
+  "predecessor": "a8c24d3b26f768603eb1198570bff06358f6ab7e",
+  "sourceSha256": {
+    "src/wall-face-graph.ts": "c03d14fe6bd6a82fa588742ff1c64693c0d0afd15581d2efc845e1d691686196",
+    "custom_components/houseplan/validation.py": "699919a742815b007ebac29f45696be038617985e6a760957a627e84d143454f"
+  },
+  "originalBefore": {
+    "source": "76ea8af52b9b6bcbade0b9d4ed62fad4c14618a0",
+    "roomMaterialization": {
+      "failed": 2,
+      "mechanism": "inherited off-grid scalar count1 becomes2"
+    },
+    "realHaOptimize": {
+      "failed": 2,
+      "code": "invalid_partition_opening_host",
+      "reason": "optimize delta unproved",
+      "cases": [
+        "without-openings",
+        "hosted-opening"
+      ],
+      "producer": "actual TypeScript optimizePlans"
+    },
+    "fixtureErrorsSeparate": [
+      "first HA source omitted required view_box"
+    ]
+  },
+  "currentLightProof": {
+    "typescriptCompile": "passed",
+    "pure": {
+      "passed": 104,
+      "files": [
+        "test/geometry-history-refusal.test.mjs",
+        "test/room-contact-grid.test.mjs",
+        "test/wall-face-graph.test.mjs",
+        "test/wall-face-lineage.test.mjs",
+        "test/wall-face-room-split.test.mjs",
+        "test/wall-face-repair.test.mjs"
+      ]
+    },
+    "haAndBackend": {
+      "passed": 37,
+      "seconds": 7.47,
+      "ruff": "passed",
+      "runtime": "WSL Ubuntu-24.04 / Python3.14.7 / HA2026.8.3",
+      "files": [
+        "tests_backend/test_ha_room_contact_grid.py",
+        "tests_backend/test_room_contact_grid.py",
+        "tests_backend/test_ha_websocket.py::test_issue_892_optimize_cleanup_acl_pair_and_undo"
+      ],
+      "covers": [
+        "separate/sequential/on-grid runtime candidates accepted via authenticated config/set",
+        "stores/reload, retained wall/room IDs, opening/future fields, remote floor and device positions",
+        "exact TS Align with/without opening, paired persistence, reload and one-deep Undo",
+        "ordinary config/set host-drop refusal, unproved trim/narrower/unknown attributes/host/jamb/CAS refusal",
+        "existing authenticated ACL and atomic pair/Undo controls"
+      ]
+    },
+    "identityRecipe": "Unchanged IDs and exact Redo identities are checked within each run. Independent UUID allocations use one bijection across all source/candidate states, not a substituted production allocator."
+  },
+  "earlierProof": {
+    "initialNative": {
+      "sourceHead": "62442fed4b12831fd2023ab296926abc6a49c9ab",
+      "scenarios": 5,
+      "checks": 33,
+      "status": "passed",
+      "runtime": "Linux Node22.23.3 / Playwright1.62.0 / Chromium151 revision1234",
+      "scope": "simpler synthetic source before later unknown-field/remote-floor/on-grid/View/Shift additions; not the final native stamp"
+    },
+    "validationFile": {
+      "passed": 246,
+      "skipped": 1,
+      "skipReason": "existing private #280 fixture not present",
+      "receipt": "artifacts/1061-validation-neighbors-lint.log"
+    },
+    "preservedBFailures": [
+      "ambiguous generic Cancel locator matched footer and close button; fixed to actual footer",
+      "early negative HA oracle expected host/jamb code before schema refusal; corrected to exact real stage",
+      "fixture UUIDs differ across independent allocations; coupled via bijection, exact within-run identities retained",
+      "expanded raw seed lacked ordinary read-normalized appearance; input now uses existing normalizeRoomAppearance"
+    ]
+  },
+  "staticReadiness": {
+    "definitions": 1889,
+    "uniqueSourceReads": 1027,
+    "browserGuards": 523,
+    "mutantsExecuted": 0,
+    "caught": "unknown",
+    "newUnitWitnesses": [
+      "room-face-persists-topology-rounding-1061",
+      "room-face-conflicting-source-is-moved-1061",
+      "optimize-arbitrary-carrier-trim-is-align-1061",
+      "optimize-unknown-carrier-uses-align-1061"
+    ]
+  },
+  "finalPending": {
+    "wholeAcceptedBase": "after #1050 then #999 actualS8, ordered delivery",
+    "gates": [
+      "fresh final local/task-packet/CI plan",
+      "all mandatory/explicit smokes including expanded native",
+      "actual combined production build and size/budget checks",
+      "fresh normal hook/push/provenance",
+      "independent CODE and actualS8"
+    ],
+    "holds": [
+      "no final combined build/native/hook or task push before the ordered predecessors",
+      "no reattribution of these preparation receipts to a future source SHA"
+    ]
+  },
+  "localReceiptSha256": {
+    "artifacts/1061-room-unit-before.log": "4f25fe8b6fe036f835599a12d4410f2ad4350b23d9ca9000187158b0e03c7ad3",
+    "artifacts/1061-align-ha-before.log": "e7b9932903ad733e3bc3759754bea38681e8f0bbbbd6d9cc84d25087a7921e16",
+    "artifacts/1061-post1045-pure.log": "91443f9f0ee40da85c67db015afcb0eab498c673a0c500f957b32074b8ca3fa6",
+    "artifacts/1061-post1045-ha-light.log": "57a1b312d41b643011afb9a029c95f73b1138db3dc69e11ac7412b6b7fa9d7cd",
+    "artifacts/1061-native-after.log": "f68d8c042d11854c68b6fc6daa1fb254bc3914629589aaa8e643d012f552bf92",
+    "artifacts/1061-post1045-readiness.log": "24f9f020c2229fa1ac436affdf0ee00734832b163d6a2c872ae3e5ef70e2032a",
+    "artifacts/1061-post1045-process.log": "427009715145031daaefcac2e6499181795bfca427e3db4943d1482283671ab9"
+  }
+}
