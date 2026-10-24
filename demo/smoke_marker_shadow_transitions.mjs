@@ -14,6 +14,14 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1100, height: 820 });
+// The demo host defaults to 780px; exercise actual wide Properties selection.
+await page.evaluate(async () => {
+  document.getElementById('host').style.width = '1100px';
+  await window.__hpTest.setMode('devices');
+  await window.__hpTest.settled();
+});
+await page.waitForFunction(() => !window.__card._modeTransitionBusy
+  && window.__card._editorRuntime?.properties.wide);
 
 // Слушатель ставится один раз и живёт до конца прогона.
 await page.evaluate(() => {
@@ -36,8 +44,6 @@ const out = await page.evaluate(async () => {
   const root = card.shadowRoot || card.renderRoot;
   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
   const settle = async () => { await card.updateComplete; await frame(); await frame(); };
-  card._setMode('devices');
-  await settle();
   const markers = [...root.querySelectorAll('[data-hp="device"]')];
   result.enoughMarkers = markers.length >= 8;
   result.everyMarkerHasShell = markers.every((marker) => !!marker.querySelector('.device-shell-frame'));
@@ -57,27 +63,40 @@ const out = await page.evaluate(async () => {
   result.shadowTransitionsOnResize = afterResize.filter((e) => e.property === 'box-shadow').length;
   result.resizeStartsNothingOnMarkers = afterResize.filter((e) => e.onMarker).length;
 
-  // AC3: кольцо выделения появляется сразу и без перехода.
-  const target = markers[0];
-  const core = target.querySelector('.device-core');
-  const ringWidth = () => {
-    const shadow = getComputedStyle(core).boxShadow;
-    const px = [...shadow.matchAll(/(-?\d+(?:\.\d+)?)px/g)].map((m) => Math.abs(Number(m[1])));
-    return Math.max(0, ...px);
-  };
-  const before = ringWidth();
-  card._selId = target.dataset.id;
-  card.requestUpdate();
-  await card.updateComplete;
-  await frame();
-  result.selectionRingAppearsInOneFrame = ringWidth() > before;
-  result.selectionRingDoesNotAnimate = (core.getAnimations?.() || []).length === 0;
-  card._selId = null;
-  card.requestUpdate();
-  await settle();
   window.__starts.length = 0;
   return result;
 });
+
+// #1051 replaces the selected ring with a blue Devices core. Keep the #524
+// cause guard: selection must never animate cqw-sized box-shadow. The accepted
+// background-colour transition is a separate paint, so zero ANY animations is
+// no longer the contract. Use the same native wide selection as icon-design.
+const selected = page.locator('[data-hp="device"][data-id="d_tv"]');
+const shellBefore = await selected.evaluate(node =>
+  getComputedStyle(node.querySelector('.device-shell-frame')).borderColor);
+await selected.click();
+await page.mouse.move(1, 1);
+await page.evaluate(async () => {
+  await window.__hpTest.settled();
+  const node = window.__card.renderRoot.querySelector('[data-hp="device"][data-id="d_tv"]');
+  await Promise.allSettled(node.getAnimations({ subtree: true })
+    .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
+    .map(animation => animation.finished));
+});
+const selection = await selected.evaluate(node => ({
+  selected: node.classList.contains('sel'),
+  core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
+  shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
+  shadowTransitions: window.__starts.filter(entry => entry.property === 'box-shadow' && entry.onMarker).length,
+  shadowAnimations: node.getAnimations({ subtree: true })
+    .filter(animation => animation.transitionProperty === 'box-shadow').length,
+}));
+out.selectionUsesBlueCoreAndOrdinaryShell = selection.selected
+  && selection.core === 'rgb(12, 130, 240)' && selection.shell === shellBefore;
+out.selectionStartsNoShadowTransition = selection.shadowTransitions === 0;
+out.selectedCoreHasNoShadowAnimation = selection.shadowAnimations === 0;
+if (!out.selectionUsesBlueCoreAndOrdinaryShell) console.error({ selection, shellBefore });
+await page.evaluate(() => { window.__starts.length = 0; });
 
 // AC2: наведение настоящей мышью — отклик остался, анимируется рамка.
 const box = await page.evaluate(() => {

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1025,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Stable v1.82.0 supports arrow-key movement only for Decor (#447); Plan walls/openings and Devices have no keyboard translation. This adds a new user capability for those editors: precise one-cell wall, opening and device movement with per-step Undo. Reusing existing physical and CAS writers does not make the new input behavior a fix to a capability already present in stable.",
+  "summary": {
+    "ru": "Сдвиг свободной стены, проёма и устройства стрелками на клетку с сохранением смещения и отдельной отменой каждого шага.",
+    "en": "Move free walls, openings and devices one grid cell with arrow keys, preserving their offset and individual Undo steps."
+  }
+}

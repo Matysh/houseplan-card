@@ -49,7 +49,8 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   );
   // #879 adds lifecycle metadata AFTER staging the canonical geometry.
   // Inventory this exact wrapper without accepting a new unregistered transport.
-  const roomWrites = occurrences(frontend, '._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout)');
+  // #1025 adds the existing caller's optional late-ACK fence, not a transport.
+  const roomWrites = occurrences(frontend, '._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent)');
   const ordinaryWrites = occurrences(frontend, '._sendConfigCandidate(candidate)');
   if (ordinaryWrites.length + roomWrites.length !== 2
       || occurrences(frontend, '._sendConfigCandidate(').length !== 2) {

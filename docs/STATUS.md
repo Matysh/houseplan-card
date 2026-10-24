@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5273 · pure backend 637 · HA-harness backend 538 · browser smokes 437 (`npm run inventory`) |
+| Tests | Node unit 5288 · pure backend 637 · HA-harness backend 538 · browser smokes 438 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -31,6 +31,12 @@ Hide/owner retirement and the existing confirmed new-task proof revoke late
 replies. The first public passport is Dreame/Tasshack 2.0.2; current/previous
 native metadata may prove coordinates but never supplies fake cleanup history.
 There is no archive, Store migration, preview writer or robot command.
+
+Editor arrows (#1025) translate selected independent walls, same-host openings
+and movable device anchors through the existing physical/config/layout writers
+and histories. Connected walls and invalid full steps remain no-op; opening
+direction follows the agreed dominant screen axis, including Left/Right at 45°.
+The shared dispatcher keeps controls, dialogs and active gestures authoritative.
 
 - #1056 restores the mounted full card after connection/user replacement inside
   the same HA object through the existing coalesced intake and read owner. The
