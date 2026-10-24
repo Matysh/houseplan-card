@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/wall-face-graph.ts'],
+    smokes: ['smoke_room_contact_grid.mjs'],
+    because: '#1061: public Walls clicks and the room form prove inherited off-grid coordinates, separate/sequential room persistence, one history/write, Undo/Redo/reload and atomic Cancel/stale refusal; the smoke never calls the graph helper.',
+  },
+  {
     files: ['src/decor-text-element.ts', 'src/editors/decor/group-selection.ts'],
     smokes: ['smoke_decor_group_text_scale.mjs'],
     because: '#1038 CODE r1: instrumented native DOM reads on 1000 real Text nodes prove that two selected labels never enumerate or measure the unrelated labels during HA updates and drag; the smoke does not call the measurement helper.',

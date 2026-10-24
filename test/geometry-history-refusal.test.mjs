@@ -162,7 +162,7 @@ const redone = name => `history.redone{"name":"${name}"}`;
 const removed = (direction, name, reason) => `history.removed_${direction}{"name":"${name}","reason":"history.reason_${reason}"}`;
 
 test('#1061 existing off-grid faces cross the actual commit/write/history owners separately and sequentially', async () => {
-  const { roomSource, graphSources, inheritedY } = await import('./helpers/room-contact-grid.mjs');
+  const { roomSource, graphSources, inheritedY, stableRoomReceiptIds } = await import('./helpers/room-contact-grid.mjs');
   const { buildWallFaceGraph, findWallFaceAtPoint } = await import('../test-build/wall-face-graph.js');
   const receipts = [];
   for (const clicks of [[.375], [.625], [.375, .625]]) {
@@ -180,6 +180,11 @@ test('#1061 existing off-grid faces cross the actual commit/write/history owners
     assert.equal(s.runtime._commitPhysicalGeometry('Room', before), true);
     assert.deepEqual(await s.writes(), { armed: true, sets: i + 1 });
     assert.deepEqual(s.spaceOf('floor').rooms[0], oldRoom);
+    assert.deepEqual(s.spaceOf('floor').openings,source.spaces[0].openings);
+    assert.deepEqual(s.server.config.spaces[1],source.spaces[1]);
+    assert.deepEqual(s.server.config.markers,source.markers);
+    for(const old of source.spaces[0].wall_segments)
+      assert.deepEqual(s.spaceOf('floor').wall_segments.find(wall=>wall.id===old.id),old);
     assert.equal(s.server.config.spaces[0].rooms.length, i + 2);
     assert.ok(s.server.config.spaces[0].rooms.at(-1).poly.some(point => point[1] === inheritedY));
     candidates.push(clone(s.server.config));
@@ -189,13 +194,28 @@ test('#1061 existing off-grid faces cross the actual commit/write/history owners
   assert.equal(s.server.config.spaces[0].rooms.length, clicks.length);
   s.runtime._redoGeometry(); await s.writes();
   assert.equal(s.server.config.spaces[0].rooms.length, clicks.length + 1);
+  assert.deepEqual(s.server.config,candidates.at(-1),'Redo restores the exact allocated identities');
   assert.equal(s.toasts.includes('toast.geometry_unsafe'), false);
   receipts.push({ clicks, source, candidates });
   }
+  const { readFileSync, writeFileSync } = await import('node:fs');
   if (process.env.HP_1061_ROOM_RECEIPT) {
-    const { writeFileSync } = await import('node:fs');
     writeFileSync(process.env.HP_1061_ROOM_RECEIPT, JSON.stringify(receipts, null, 2) + '\n');
-  }
+  } else assert.deepEqual(stableRoomReceiptIds(receipts),stableRoomReceiptIds(JSON.parse(
+    readFileSync(new URL('./fixtures/1061-room-candidates.json', import.meta.url), 'utf8'))));
+});
+
+test('#1061 a genuinely new derived off-grid scalar still refuses atomically', async () => {
+  const { roomSource, inheritedY } = await import('./helpers/room-contact-grid.mjs');
+  const s = setup({ floors: ['floor'], configInput: roomSource() });
+  const before = s.runtime._geometrySnapshot('floor'), original = clone(s.host._serverCfg);
+  s.spaceOf('floor').rooms.push({ id: 'new', name: 'New', area: null,
+    poly: [[.25, 0], [.5, 0], [.5, inheritedY / 2], [.25, inheritedY]] });
+  assert.equal(s.runtime._commitPhysicalGeometry('Room', before), false);
+  assert.deepEqual(s.host._serverCfg, original);
+  assert.deepEqual(await s.writes(), { armed: false, sets: 0 });
+  assert.equal(s.geometryHistory.size, 0);
+  assert.ok(s.toasts.includes('toast.geometry_unsafe'));
 });
 
 test('#891 AC2 strict pre-send refusal removes only owned physical commands and rebases independent Background snapshots', async () => {

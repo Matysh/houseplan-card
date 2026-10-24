@@ -21300,7 +21300,41 @@ const decorGroup1038Cases = [
       replace:"const touchedOpacity = Object.prototype.hasOwnProperty.call(patch, 'opacity') || Object.prototype.hasOwnProperty.call(patch, 'color');"}]},
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...decorGroup1038Cases].map((mutant) => ({
+const roomContact1061Cases = [
+  {
+    id: 'room-face-persists-topology-rounding-1061',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/room-contact-grid.test.mjs',
+    because: '#1061: an existing authored off-grid scalar must survive graph/materialization without a second derived scalar; the pure fixture observes full canonical candidates.',
+    patches: [{file:'src/wall-face-graph.ts',
+      find:'      const ring = exact as [number, number][];',
+      replace:'      const ring = vertexKeys.map(key => points.get(key)!) as [number, number][];'}],
+  },
+  {
+    id: 'room-face-conflicting-source-is-moved-1061',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/room-contact-grid.test.mjs',
+    because: '#1061: topology-close incompatible source endpoints cannot authorize a moved persisted representative; ordinary conflicting-source input must refuse deterministically.',
+    patches: [{file:'src/wall-face-graph.ts',
+      find:'  return ordered.every(item => item.point.every((value, axis) =>\n    Math.abs(value - point[axis]) <= roundoff)) ? [...point] : null;',
+      replace:'  return [...point];'}],
+  },
+  {
+    id: 'optimize-arbitrary-carrier-trim-is-align-1061',
+    guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
+    because: '#1061: a same-ID carrier still needs independent full removal proof unless its endpoints match the exact canonical Align result; ordinary short-cut/narrower/future inputs refuse.',
+    patches: [{file:'custom_components/houseplan/validation.py',
+      find:'    if _exact_partition_align(old_partition, current):',replace:'    if True:'}],
+  },
+  {
+    id: 'optimize-unknown-carrier-uses-align-1061',
+    guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
+    because: '#1061: unknown carrier semantics are not proved by the known Align/storage formula, even when retained identically in before and after.',
+    patches: [{file:'custom_components/houseplan/validation.py',
+      find:'    if set(before) != _OPTIMIZE_PARTITION_KEYS or set(after) != _OPTIMIZE_PARTITION_KEYS:',
+      replace:'    if False:'}],
+  },
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...decorGroup1038Cases,...roomContact1061Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

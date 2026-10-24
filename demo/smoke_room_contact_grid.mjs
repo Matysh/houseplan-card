@@ -41,7 +41,7 @@ for(const [name,clicks,action]of [
       await page.mouse.click(target.x,target.y);
       const dialog=page.locator('hp-dialog[data-kind="room"]');
       await dialog.waitFor({state:'visible'});
-      if(action==='cancel')await dialog.locator('[data-hp="dialog-cancel"]').click();
+      if(action==='cancel')await dialog.locator('.dialog-action-commit [data-hp="dialog-cancel"]').click();
       else{
         await dialog.locator('#room-name').fill(`Synthetic ${x}`);
         if(action==='stale')await page.evaluate(()=>{

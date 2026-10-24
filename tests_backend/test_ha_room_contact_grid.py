@@ -39,7 +39,8 @@ async def test_issue_1061_runtime_room_candidates_are_server_accepted(
 ) -> None:
     entry, runtime = await _setup(hass)
     await runtime.config_store.async_save({"config": copy.deepcopy(case["source"]), "rev": 7})
-    await runtime.store.async_save({"layout": {}, "rev": 4})
+    original_layout = {"unrelated": {"s": "remote", "x": 0.875, "y": 0.5}}
+    await runtime.store.async_save({"layout": original_layout, "rev": 4})
     client = await hass_ws_client(hass)
     old_room = case["source"]["spaces"][0]["rooms"][0]
     for index, candidate in enumerate(case["candidates"]):
@@ -53,10 +54,14 @@ async def test_issue_1061_runtime_room_candidates_are_server_accepted(
         space = stored["config"]["spaces"][0]
         assert space["rooms"][0]["poly"] == old_room["poly"]
         assert space["rooms"][0]["wall_ids"] == old_room["wall_ids"]
+        assert space["rooms"][0]["future_room"] == old_room["future_room"]
+        assert space["openings"] == case["source"]["spaces"][0]["openings"]
+        assert stored["config"]["spaces"][1] == candidate["spaces"][1]
+        assert stored["config"]["markers"] == candidate["markers"]
         assert len(space["rooms"]) == index + 2
         for field in ("partitions", "wall_segments", "walls"):
             assert space.get(field) == candidate["spaces"][0].get(field)
-        assert (await runtime.store.async_load())["layout"] == {}
+        assert (await runtime.store.async_load())["layout"] == original_layout
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
     reloaded = get_data(hass)

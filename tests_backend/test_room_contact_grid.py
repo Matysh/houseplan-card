@@ -70,3 +70,8 @@ def test_javascript_negative_half_tie_and_storage_formula_are_exact():
     assert not v._exact_partition_align(before, {**after, "a": [-2 / 240, 0.25]})
     assert not v._exact_partition_align(before, {**after, "cm": 20})
     assert not v._exact_partition_align({**before, "b": before["a"]}, {**after, "b": after["a"]})
+    for field in ("id", "cm", "a", "b"):
+        incomplete = {key: value for key, value in before.items() if key != field}
+        assert not v._exact_partition_align(incomplete, after)
+    for cm in (True, -1, float("nan"), float("inf")):
+        assert not v._exact_partition_align({**before, "cm": cm}, {**after, "cm": cm})

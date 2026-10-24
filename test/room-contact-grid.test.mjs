@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {buildWallFaceGraph,findWallFaceAtPoint} from '../test-build/wall-face-graph.js';
 import {commitWallSegmentModel,wallModelOffGridValueCount} from '../test-build/wall-segment-model.js';
 import {inheritedY,roomSource,graphSources} from './helpers/room-contact-grid.mjs';
+import fs from 'node:fs';
+import {optimizePlans} from '../test-build/plan-optimizer.js';
 
 for(const x of [0.375,0.625])test(`#1061 existing face ${x} keeps the inherited scalar through materialization`,()=>{
   const before=roomSource(),space=before.spaces[0];
@@ -53,4 +55,15 @@ test('#1061 T/overlap cuts keep the exact incident endpoint rather than topology
   assert.equal(graph.faces.length,3);
   for(const face of graph.faces)for(const point of face.ring)
     assert.ok(point[1]===0||point[1]===inheritedY*1000);
+});
+
+test('#1061 HA Align fixtures are exact current optimizer outputs and a second Optimize is a no-op',()=>{
+  const cases=JSON.parse(fs.readFileSync(new URL('./fixtures/1061-align-carrier.json',import.meta.url),'utf8'));
+  for(const item of cases){
+    const result=optimizePlans(item.source,item.layout);
+    assert.equal(result.changed,true);
+    assert.deepEqual(result.config,item.candidate);
+    assert.deepEqual(result.layout,item.candidateLayout);
+    assert.equal(optimizePlans(result.config,result.layout).changed,false);
+  }
 });

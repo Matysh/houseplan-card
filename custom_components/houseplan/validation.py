@@ -460,7 +460,12 @@ def _exact_partition_align(before: dict, after: dict) -> bool:
     Unknown semantics, changed identity/thickness and collapsed axes cannot use
     this exception; their structural loss still needs the original full proof.
     """
-    if not (_known_optimize_partition(before) and _known_optimize_partition(after)):
+    if set(before) != _OPTIMIZE_PARTITION_KEYS or set(after) != _OPTIMIZE_PARTITION_KEYS:
+        return False
+    if not isinstance(before["id"], str) or not before["id"]:
+        return False
+    cm = before["cm"]
+    if isinstance(cm, bool) or not isinstance(cm, (int, float)) or not math.isfinite(cm) or cm < 0:
         return False
     if ({key: value for key, value in before.items() if key not in {"a", "b"}}
             != {key: value for key, value in after.items() if key not in {"a", "b"}}):
