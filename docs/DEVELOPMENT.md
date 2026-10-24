@@ -80,6 +80,19 @@ disproportionate complexity. The same owner permission records only the exact
 11834 core reference, preserving the 50-line band, the card cap and every byte,
 ABI and latency predicate. No cosmetic product deletion is used to alter it.
 
+The first selected CI on `0bcf61de0` completed all 237 smokes (236 passed,
+one failed) and both declared Golden scenes passed with the same image hashes.
+Only the old furniture-polish recipe's two Escape/listener checks failed: it
+assigned the tool privately, bypassing the existing `Properties.toolChanged`
+retirement of the previously placed singleton. A separate unchanged-source
+public-input witness passed real toolbar/category/item clicks, native placement,
+rearm and Escape, including balanced keyboard listeners (4 adds / 4 removes).
+The B-only repair uses the real tool adapter and one public Escape delivery;
+both original oracles remain. The multi-selection native scenario now also
+checks this lifecycle. Both complete ordinary smokes pass with unchanged product,
+fingerprint and timeout limits; no assertion was relaxed. The failed CI is retained as a red
+receipt; fresh CI and independent CODE remain separate requirements.
+
 ## Editor keyboard translation (#1025)
 
 `test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command

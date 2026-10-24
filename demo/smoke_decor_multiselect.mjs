@@ -333,6 +333,38 @@ try{
   check('group.cold_load_no_volatile_selection',(await state()).ids,[]);
   check('group.cold_load_no_history',(await state()).history,0);
   check('group.cold_load_no_write',(await state()).writes,quotaBefore.writes+1);
+
+  // Public tool transitions retire the last singleton before rearming. A
+  // private _decorTool assignment would leave a stale Properties selection
+  // that consumes Escape; keep native input and the listener lifecycle here.
+  await seed([]);
+  await page.evaluate(()=>{
+    window.__1038FurnitureListeners={adds:0,removes:0};
+    const add=window.addEventListener.bind(window),remove=window.removeEventListener.bind(window);
+    window.__1038RestoreFurnitureListeners=()=>{window.addEventListener=add;window.removeEventListener=remove;};
+    window.addEventListener=(type,...rest)=>{if(type==='keydown'||type==='keyup')window.__1038FurnitureListeners.adds++;return add(type,...rest);};
+    window.removeEventListener=(type,...rest)=>{if(type==='keydown'||type==='keyup')window.__1038FurnitureListeners.removes++;return remove(type,...rest);};
+  });
+  const armFurniture=async()=>{
+    await page.evaluate(()=>window.__hpTest.setTool('furniture'));
+    const category=card.locator('[data-hp="furniture-category"][data-id="sofa"]');
+    if(await category.count())await category.click();
+    await card.locator('[data-hp="furniture-item"][data-id="sofa"]').click();await settle();
+  };
+  try{
+    const placement=await point(.55,.5);await armFurniture();
+    await page.mouse.click(placement.x,placement.y);await settle();
+    check('group.furniture_escape.placed_singleton',(await state()).decor.length,1);
+    check('group.furniture_escape.placed_selection',(await state()).ids.length,1);
+    await armFurniture();await page.mouse.move(placement.x+80,placement.y+50);await settle();
+    await card.locator('[data-hp="zoom-fit"]').focus();
+    check('group.furniture_escape.rearm_retires_selection',(await state()).ids,[]);
+    check('group.furniture_escape.rearm_armed',await page.evaluate(()=>!!window.__card._furnPalette),true);
+    await page.keyboard.press('Escape');await settle();
+    check('group.furniture_escape.palette_closed',await page.evaluate(()=>!window.__card._furnPalette&&window.__card._decorTool==='select'),true);
+    check('group.furniture_escape.listeners_retired',await page.evaluate(()=>window.__1038FurnitureListeners),{adds:4,removes:4});
+    check('group.furniture_escape.no_extra_object',(await state()).decor.length,1);
+  }finally{await page.evaluate(()=>window.__1038RestoreFurnitureListeners());}
 }finally{
   console.log('group.empty_point_receipts',JSON.stringify(await page.evaluate(()=>window.__1038EmptyReceipts??[])));
   await finish(browser);

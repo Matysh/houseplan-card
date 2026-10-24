@@ -97,6 +97,18 @@
     "policy": "Refresh only the measured references; retain existing bands and absolute predicates."
   },
   "ordinaryProof": {
+    "ciPreparationRepair": {
+      "source": "0bcf61de0dfd64fc95fe1fbdd62457ad0d97835f",
+      "run": 40119689035,
+      "browserJob": 120948804987,
+      "smokes": { "passed": 236, "failed": 1, "total": 237 },
+      "declaredGolden": { "passed": 2, "failed": 0 },
+      "failure": "Only legacy smoke_furniture_polish.mjs failed: escapeClosesPalette and escapeDetachesListeners. Its private tool reassignment bypassed Properties.toolChanged and retained the previous singleton selection.",
+      "unchangedPublicWitness": "Actual toolbar/category/item clicks, native placement and native rearm/Escape PASS on unchanged 0bcf: rearm IDs empty, tool returns to select, palette closed, keyboard listener adds/removes 4/4.",
+      "repair": "Use the existing public __hpTest.setTool adapter for both arms and one window Escape delivery; retain both original oracles. Add the native rearm/Escape/listener checks to smoke_decor_multiselect.",
+      "after": "Both complete ordinary smokes PASS; no product or capture-input changes, no oracle/timeout weakening.",
+      "review": "Technical S6 return 6388235525 / process 40123016420; model SKIPPED and cycle not consumed. Fresh CI and independent CODE still required."
+    },
     "ordinaryHookRepair": {
       "initialSource": "bfe5ea3dc08472dffdf00013942eb3b611254d2a",
       "initialGateSeconds": 204,
