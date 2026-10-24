@@ -288,5 +288,188 @@
     "Unloaded configuration removes the actual marker. The native witness proves quarantine and zero lazy/UI/service effects; no fabricated click or toast is claimed.",
     "Public rebinding triggers the existing area-provenance writer before the settings intent. The ordinary no-intent control and complete payload remain equal; old import release and fresh settings input add no write.",
     "Full regression, global Golden acceptance and mutants were not run locally. Final combined-base guards, normal hook and independent CODE remain required."
-  ]
+  ],
+  "finalIntegration": {
+    "acceptedDev": "af23dada6097584b17007169443719eee377fb31",
+    "productExecutionSource": "a49220f15bc90ddae2b7c85618866676893e7f67",
+    "fingerprint": "81e9ef92a99b193063588917cf872136f2a08d745306a90b37d3a9fbb21612b0",
+    "manifestSha256": "18541b390f9a2ea231595ad66f9bfb904e6eb99b373f3fd09732b517a06fe599",
+    "merge": {
+      "conflicts": "Five B/C documentation/registration conflicts; no product conflict.",
+      "productPatchBefore": "37b0a20dbee0c04e1e9fcea221fb385a09134f49",
+      "productPatchAfter": "37b0a20dbee0c04e1e9fcea221fb385a09134f49",
+      "preserved": "Accepted keyboard nudge, group Properties receipt/authority/retirement and node-edit lifecycle; current-target resolver is re-evaluated after deferred Properties without fallback to a retired device."
+    },
+    "build": {
+      "environment": "Windows Node22.23.3 / Rollup4.62.2",
+      "command": "npm run bundle:sync",
+      "result": "PASS"
+    },
+    "native": {
+      "command": "node demo/smoke_device_settings_action.mjs",
+      "environment": "Linux Node22.23.3 / Playwright1.62.0 / Chromium headless-shell151.0.7922.34 rev1234",
+      "passed": 113,
+      "failed": 0,
+      "source": "a49220f15bc90ddae2b7c85618866676893e7f67",
+      "receipt": "artifacts/bulk-s8/1050-final-native-a492.json",
+      "receiptSha256": "751a2e65f0e722f94282348141b9951f8fe3c611cc43e40ffa72f5661d4f1b1f"
+    },
+    "requiredScope": {
+      "policyIssue": 1060,
+      "smokes": [
+        "smoke_area_relocation_safety.mjs",
+        "smoke_config_authority.mjs",
+        "smoke_config_reload_race.mjs",
+        "smoke_controls.mjs",
+        "smoke_detached_authority.mjs",
+        "smoke_device_copy.mjs",
+        "smoke_device_hit_capsules.mjs",
+        "smoke_device_icon_design.mjs",
+        "smoke_device_position_history.mjs",
+        "smoke_device_settings_action.mjs",
+        "smoke_editor_gestures.mjs",
+        "smoke_info_card_confirm.mjs",
+        "smoke_info_card_context.mjs",
+        "smoke_isometric_contract.mjs",
+        "smoke_isometric_live_touch.mjs",
+        "smoke_linked_virtual_light.mjs",
+        "smoke_live_pan_coverage.mjs",
+        "smoke_mounted_authority.mjs",
+        "smoke_optimize_cleanup.mjs",
+        "smoke_orphan_space_references.mjs",
+        "smoke_post_write_adoption.mjs",
+        "smoke_space_delete_with_devices.mjs",
+        "smoke_summary_panel.mjs",
+        "smoke_tap_ctx.mjs",
+        "smoke_version_recovery.mjs",
+        "smoke_view_recovery.mjs"
+      ],
+      "golden": [],
+      "deferred": "Weak/broad inferred work remains deferred whole to beta/night; explicit required checks are retained.",
+      "firstRun": {
+        "source": "a49220f15bc90ddae2b7c85618866676893e7f67",
+        "passed": 24,
+        "failed": 2,
+        "receipt": "artifacts/bulk-s8/1050-final-required-a492.json"
+      },
+      "legacyRepairs": [
+        {
+          "smoke": "smoke_editor_gestures.mjs",
+          "before": {
+            "passed": 16,
+            "failed": 2
+          },
+          "after": {
+            "passed": 18,
+            "failed": 0
+          },
+          "retained": "Pinch/compatibility/terminal/hold/pan/draw guards; noActivation additionally refuses marker dialogs. Current View mouse/keyboard context must open the same settings target, consume the event and call no HA more-info/service."
+        },
+        {
+          "smoke": "smoke_isometric_contract.mjs",
+          "before": {
+            "passed": 46,
+            "failed": 1
+          },
+          "after": {
+            "passed": 47,
+            "failed": 0
+          },
+          "retained": "Raised target ownership, independent Enter info card, area navigation, opening-lock info and all projection/cache/fallback/geometry checks."
+        }
+      ],
+      "affectedReceipt": "artifacts/bulk-s8/1050-final-affected-a492.json",
+      "affectedResults": [
+        {
+          "id": "smoke_editor_gestures.mjs",
+          "command": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+          "args": [
+            "demo/smoke_editor_gestures.mjs"
+          ],
+          "recipeSha256": "40ad364c77f7dfad4360a978a25b661679be918db153cd9e88046612ad29ef7a",
+          "exit": 0,
+          "error": null,
+          "seconds": 4.939,
+          "log": "artifacts/bulk-s8/1050-final-affected-smoke_editor_gestures.log"
+        },
+        {
+          "id": "smoke_isometric_contract.mjs",
+          "command": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+          "args": [
+            "demo/smoke_isometric_contract.mjs"
+          ],
+          "recipeSha256": "93ab8ac4f141913e0d29b24b4c0f922d4eb30d1c6ea10b9ee2538dcda057a351",
+          "exit": 0,
+          "error": null,
+          "seconds": 4.912,
+          "log": "artifacts/bulk-s8/1050-final-affected-smoke_isometric_contract.log"
+        },
+        {
+          "id": "backend-settings-transfer",
+          "command": "/home/sergey/.cache/houseplan-editors-1045-venv/bin/python",
+          "args": [
+            "-m",
+            "pytest",
+            "tests_backend/test_ha_import_export.py::test_issue1050_settings_action_survives_export_parse_and_apply",
+            "tests_backend/test_validation.py::test_every_tap_action_the_editor_offers_is_accepted",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "recipeSha256": null,
+          "exit": 0,
+          "error": null,
+          "seconds": 2.936,
+          "log": "artifacts/bulk-s8/1050-final-affected-backend-settings-transfer.log"
+        }
+      ],
+      "proofBoundary": "24 unchanged recipes passed the original complete 26-command scope; only the two changed legacy recipes were rerun. The original 24/26 RED report is retained, not relabelled as a fresh 26/26 run. Product/build inputs are unchanged; exact-current hook/CI remain separate."
+    },
+    "units": {
+      "focused": 141,
+      "isometricSourceContract": 14,
+      "failed": 0
+    },
+    "backend": {
+      "command": "python -m pytest tests_backend/test_ha_import_export.py::test_issue1050_settings_action_survives_export_parse_and_apply tests_backend/test_validation.py::test_every_tap_action_the_editor_offers_is_accepted -q -p no:cacheprovider",
+      "passed": 3,
+      "failed": 0,
+      "environment": "Read-only diagnostic WSL Python3.14.7 / HA2026.8.3; CI repository pins are unchanged."
+    },
+    "metrics": {
+      "acceptedSource": "96cea9546fbf24ebe25c47d2b735fd8bf8ef3e6a",
+      "acceptedProof": "docs/development-notes/wall-node-delete-integration.json; source96cea to acceptedaf23 changes only CODE/INDEX, no build input.",
+      "environment": "Matched Windows Node22.23.3 / Rollup4.62.2",
+      "accepted": {
+        "initialViewGzip": 340624,
+        "lazyEditorGzip": 353367,
+        "selectOnlyGzip": 21458,
+        "bundleBytes": 3481506,
+        "hostRefs": 6225
+      },
+      "current": {
+        "initialViewGzip": 341095,
+        "lazyEditorGzip": 353394,
+        "selectOnlyGzip": 21455,
+        "bundleBytes": 3483369,
+        "hostRefs": 6225
+      },
+      "delta": {
+        "initialViewGzip": 471,
+        "lazyEditorGzip": 27,
+        "selectOnlyGzip": -3,
+        "bundleBytes": 1863,
+        "hostRefs": 0
+      },
+      "budgets": "PASS; no reference, band, absolute, ABI or latency limit was changed."
+    },
+    "staticReadiness": {
+      "id": "view-settings-retired-intent-accepted",
+      "definitions": 1,
+      "uniqueSourceReads": 3,
+      "execution": 0,
+      "caught": "unknown; nightly only"
+    },
+    "limits": "These exact-source local receipts supplement mandatory normal pre-push and independent CODE/automatic integration; no full regression, mutant execution, Golden acceptance or release was performed."
+  }
 }

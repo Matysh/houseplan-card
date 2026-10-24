@@ -180,7 +180,8 @@ Object.assign(out, await page.evaluate(async () => {
     return event.defaultPrevented;
   };
   const noActivation = () => actionCalls === 0 && moreInfoCalls === 0
-    && serviceCalls === 0 && c._infoCard === null && c._tapConfirm === null;
+    && serviceCalls === 0 && c._infoCard === null && c._tapConfirm === null
+    && c._markerDialog === null;
 
   // The missed #563 order: stage first, marker second. Capture has already
   // made the sequence multi-touch before the marker's pointerdown handler runs.
@@ -270,9 +271,15 @@ Object.assign(out, await page.evaluate(async () => {
   // A real right click has its own mouse pointerdown, which is positive intent
   // and must not inherit the completed touch sequence's contextmenu barrier.
   pointer('pointerdown', 91, marker, 300, 'mouse');
-  compatibilityContextMenu('mouse', 91);
+  const mouseContextPrevented = compatibilityContextMenu('mouse', 91);
   pointer('pointerup', 91, marker, 300, 'mouse');
-  const mouseContextMenuStillWorks = moreInfoCalls === 1;
+  await c.updateComplete;
+  // #1050: View context opens this marker's existing settings, never HA more-info.
+  const mouseContextMenuStillWorks = mouseContextPrevented
+    && c._markerDialog?.devId === marker.dataset.id && c._mode === 'view'
+    && moreInfoCalls === 0 && serviceCalls === 0 && actionCalls === 1;
+  c.renderRoot.querySelector('hp-dialog[data-kind="marker"] [data-hp="dialog-cancel"]')?.click();
+  await c.updateComplete;
 
   // Shift+F10 has no pointerdown. Its keydown is equivalent positive evidence
   // once all old contacts have ended, but never while a pinch is still active.
@@ -283,10 +290,16 @@ Object.assign(out, await page.evaluate(async () => {
   marker.dispatchEvent(new KeyboardEvent('keydown', {
     bubbles: true, composed: true, cancelable: true, key: 'F10', shiftKey: true,
   }));
-  marker.dispatchEvent(new MouseEvent('contextmenu', {
+  const keyboardContext = new MouseEvent('contextmenu', {
     bubbles: true, composed: true, cancelable: true, button: 0,
-  }));
-  const keyboardContextMenuStillWorks = moreInfoCalls === 2;
+  });
+  marker.dispatchEvent(keyboardContext);
+  await c.updateComplete;
+  const keyboardContextMenuStillWorks = keyboardContext.defaultPrevented
+    && c._markerDialog?.devId === marker.dataset.id && c._mode === 'view'
+    && moreInfoCalls === 0 && serviceCalls === 0 && actionCalls === 1;
+  c.renderRoot.querySelector('hp-dialog[data-kind="marker"] [data-hp="dialog-cancel"]')?.click();
+  await c.updateComplete;
 
   c._clickDevice = originalClickDevice;
   c._openMoreInfo = originalOpenMoreInfo;

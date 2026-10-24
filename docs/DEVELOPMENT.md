@@ -50,6 +50,23 @@ combined material. The 141 focused Node tests and three diagnostic backend
 validation/full-space transfer checks pass. Registered async-intent protection
 has static readiness only; no mutant was executed.
 
+The final whole accepted merge includes #1025/#1038/#1045 and CI scope/reuse
+#1060/#1062 at `af23dada609`. Its own product patch remains identical; accepted
+keyboard nudge, group receipt/authority and node lifecycle are preserved. A fresh
+Windows build measures View 341095 B, editor 353394 B, Select-only 21455 B and
+raw 3483369 B, with 6225 host references. Against the actual accepted #1045
+receipt the deltas are +471 / +27 / -3 / +1863 B and zero references. All byte,
+band, core and ABI limits remain unchanged. The pinned Linux native scenario
+passes 113 checks, focused units 141 and diagnostic backend transfer/enum 3.
+The current required scope is 26 smokes, without Golden demand. Its initial
+24/26 result is retained: two old context-action oracles still expected HA
+more-info. Narrow B repairs require the same marker's settings dialog instead,
+with event consumption/no more-info, public Cancel between entries, and all
+pinch, geometry, keyboard info-card, area and lock controls retained. Only those
+two recipes were rerun (18/18 and 47/47); their 14 source-contract units also
+pass. This is not relabelled as another complete run. Exact receipts and
+boundaries are in the validation JSON; final hook/CI/CODE are separate.
+
 ## Decor multi-selection (#1038)
 
 The approved SPEC r2 and owner variant B add only volatile decor IDs and
