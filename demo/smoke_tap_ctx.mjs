@@ -27,7 +27,7 @@ const res = await page.evaluate(async () => {
   c._ctxDevice(ev, dev);
   out.ctxSettings = c._markerDialog?.devId === dev.id && moreInfo === null;
   out.ctxPrevented = ev.defaultPrevented;
-  c._markerDialog = null; await c.updateComplete;
+  sr().querySelector('#marker-dialog [data-hp="dialog-cancel"]')?.click(); await c.updateComplete;
   // 3) Devices opens its copy menu, without opening HA more-info.
   c._setMode('devices'); await c.updateComplete;
   moreInfo = null;
@@ -42,7 +42,7 @@ const res = await page.evaluate(async () => {
   if (virt) {
     c._ctxDevice(new MouseEvent('contextmenu', { cancelable: true }), virt);
     out.virtSettings = c._markerDialog?.devId === virt.id && moreInfo === null;
-    c._markerDialog = null; await c.updateComplete;
+    sr().querySelector('#marker-dialog [data-hp="dialog-cancel"]')?.click(); await c.updateComplete;
   } else out.virtSettings = 'no-virt';
   // 5) card-wide tap_action игнорируется: без явного действия клик = инфо
   c._config = { ...c._config, tap_action: 'toggle' };
