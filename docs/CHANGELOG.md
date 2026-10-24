@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Preview a selected past Dreame cleanup path on this screen without saving
-  settings or controlling the robot. Hide restores the latest live path. (#999)
+  settings or controlling the robot. Hide restores the latest live path; a new
+  cleanup ends preview even when its catalog arrives before live updates. (#999)
 - Arrow keys move a selected free wall, opening or device by one grid cell,
   preserving its offset. Connected walls stay fixed; angled openings follow
   their host's dominant screen axis. Each accepted step supports Undo/Redo. (#1025)

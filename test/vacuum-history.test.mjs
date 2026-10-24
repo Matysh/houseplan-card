@@ -50,6 +50,26 @@ test('#999 inactive cold View does not scan the device roster for a missing sele
  assert.equal(owner.markerId,device.id);assert.ok(scans>0);
 });
 
+test('#999 a fresh catalog learns a new cleanup before its trail event and retires the old preview',async()=>{
+ const {host,owner}=await loaded();await owner.show();paint(owner);assert.equal(owner.visible,true);
+ const nextEpoch='d'.repeat(32);
+ host.hass.callWS=async message=>message.type.endsWith('/list')?{...listing,epoch:nextEpoch}:
+  {...response(message.record_id),epoch:nextEpoch};
+ await owner.load();
+ assert.equal(owner.shown,null);assert.equal(owner.visible,false);assert.equal(owner.catalog.epoch,nextEpoch);
+ assert.equal(owner.reason,'retired');
+ assert.equal(owner.selected,A);assert.equal(owner.canShow,true);
+ await owner.show();paint(owner);assert.equal(owner.visible,true);assert.equal(owner.shown.epoch,nextEpoch);
+});
+
+test('#999 the first newer trail epoch fences an older initial catalog still awaiting',async()=>{
+ const {host,owner}=prepared();let resolve;
+ host.hass.callWS=()=>new Promise(done=>{resolve=done;});
+ const pending=owner.load();owner.adoptEpochs({vacuum_history_epochs:{default:'d'.repeat(32),markers:{}}});
+ resolve(listing);await pending;
+ assert.equal(owner.catalog,null);assert.equal(owner.shown,null);assert.equal(owner.reason,'stale');
+});
+
 test('#999 catalogue is bounded, typed and keyed by identity, with genuine minute/DST labels',()=>{
  const catalog=historyCatalog(listing);assert.deepEqual(catalog.records.map(r=>r.id),[B,A]);
  assert.deepEqual([...historyLabels(rows,'Europe/Moscow').values()],['24.10.2026 · 03:00:10','24.10.2026 · 03:00:40']);

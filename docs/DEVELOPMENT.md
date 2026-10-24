@@ -26,6 +26,10 @@ copy and local overlay state. No writer/service enters this flow.
 Before any actual device selection, a cold View history owner does not scan
 the device roster on ordinary renders; an ordinary consumer test counts that
 read and retains the positive accepted-selection case.
+An authoritative catalog can learn a new cleanup before the trail event: it
+ends the old preview and admits the new epoch, preserving the selected row for
+a separate Show. The epoch observed at request start also fences an older
+initial catalog when a newer trail signal arrived during its await.
 
 The synthetic fixtures in `test/fixtures/vacuum-history/` were produced by the
 unchanged pinned metadata/selector/serializer ASTs, with source hashes recorded

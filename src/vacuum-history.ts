@@ -146,7 +146,8 @@ export class VacuumHistory {
   }
   async load():Promise<void> {
     if(!this.synchronize()||this.loadingList||!this.context)return;
-    const generation=++this.listGeneration,context=this.context;
+    const generation=++this.listGeneration,context=this.context,epochAtStart=this.observedEpoch;
+    const endedAtStart=this.reason==='retired';
     this.loaded=true;this.loadingList=true;this.reason=null;this.host.requestUpdate();
     const current=()=>generation===this.listGeneration&&this.synchronize()&&this.context?.key===context.key
       &&this.host._configWriteContext.current(context.claim,this.host.hass);
@@ -155,14 +156,20 @@ export class VacuumHistory {
       if(!current())return;
       const catalog=historyCatalog(raw);
       if(!catalog)throw {code:'unsupported'};
-      if(this.observedEpoch&&this.observedEpoch!==catalog.epoch)throw {code:'stale'};
+      const learnedEpoch=!!this.observedEpoch&&this.observedEpoch!==catalog.epoch;
+      if(learnedEpoch){
+        this.hide('retired');
+        // A newer trail epoch observed during this read fences its old reply.
+        // Otherwise this fresh catalog is itself proof of a new cleanup.
+        if(this.observedEpoch!==epochAtStart)throw {code:'stale'};
+      }
       this.observedEpoch=catalog.epoch;this.catalog=catalog;
       const pending=this.requested;
       const retired=!!pending&&(pending.catalog.epoch!==catalog.epoch||pending.catalog.revision!==catalog.revision
         ||!catalog.records.some(row=>row.id===pending.record.id&&row.timestamp===pending.record.timestamp));
       if(retired){this.requested=null;this.loadingShow=false;}
       if(this.shown&&!catalog.records.some(r=>r.id===this.shown!.id))this.hide('stale');
-      else this.reason=!catalog.records.length?'empty':retired?'stale':catalog.limited?'limited':null;
+      else this.reason=!catalog.records.length?'empty':retired?'stale':learnedEpoch||endedAtStart?'retired':catalog.limited?'limited':null;
     }catch(error){if(current())this.reason=errorReason(error);}
     finally {if(generation===this.listGeneration){this.loadingList=false;this.host.requestUpdate();}}
   }

@@ -1237,7 +1237,7 @@ const MUTANT_DEFINITIONS = [
     id: 'wall-dialog-back-inside-camera-layer',
     guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
     because: '#900 AC4 depends on measured intermediate DOM rectangles during live camera CSS projection, before the terminal viewBox clears that projection.',
-    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}', replace: '          ${dialogPresence(this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing)}\n          </div>' }],
+    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}\n          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}', replace: '          ${dialogPresence(this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing)}\n          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}' }],
   },
   {
     id: 'layout-full-read-ignores-overlapping-own-write',
@@ -1415,8 +1415,8 @@ const MUTANT_DEFINITIONS = [
     guard: compiledNodeSmoke('smoke_editor_guides_lifecycle'),
     because: '#893 AC3: actual queued native input and previously painted frames cross the shared mounted lifecycle delivery; retired tails must produce no layout/history/service/DOM effects.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "    if (signal.kind === 'hidden') {\n      this._abandonViewInput();\n      this._cancelDeviceDrag();",
-      replace: "    if (signal.kind === 'hidden') {\n      this._abandonViewInput();\n      // mutant: unfinished device preview survives background" }],
+      find: "    if (signal.kind === 'hidden') {\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      this._cancelDeviceDrag();",
+      replace: "    if (signal.kind === 'hidden') {\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      // mutant: unfinished device preview survives background" }],
   },
   {
     id: 'space-device-drag-survives-navigation',
@@ -21247,6 +21247,10 @@ const decorLine1046Cases = [
 ];
 
 const vacuumHistory999Cases = [
+  {id:'vacuum-history-new-catalog-keeps-old-preview-999',
+    guard:'node --test --test-name-pattern="fresh catalog learns" test/vacuum-history.test.mjs',
+    because:'#999 AC5: a fresh catalog may be the first confirmed new-cleanup signal; it must retire old shown material before accepting the new epoch.',
+    patches:[{file:'src/vacuum-history.ts',find:"if(learnedEpoch){\n        this.hide('retired');",replace:'if(learnedEpoch){'}]},
   {id:'vacuum-history-catalog-aba-admitted-999',
     guard:'node scripts/backend-test-guard.mjs public_source_ticks tests_backend/test_ha_vacuum_history.py',
     because:'#999 AC5/AC7: normal position/token updates may continue a read, but an observed changed-and-restored catalog must not revive its old authority.',

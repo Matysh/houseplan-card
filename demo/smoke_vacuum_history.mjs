@@ -68,7 +68,14 @@ try{
   await page.evaluate(on=>window.__hpTest.setVolumetricView(on),iso);await page.evaluate(()=>window.__hpTest.settled());
   frames=await geometry();out[`projection_${iso?'iso':'flat'}_same_geometry`]=frames[0].history===pathA&&frames[0].tips===0;
  }
- await page.evaluate(async()=>{const w=window.__history999;w.epoch='d'.repeat(32);await w.publish();});
+ await page.evaluate(()=>{window.__history999.epoch='d'.repeat(32);});
+ ui=await openVacuumHistory(page);
+ out.catalog_before_trail_retires_preview=!(await geometry())[0].history&&await ui.hide.isDisabled()
+  &&(await ui.history.locator('[data-hp=vacuum-history-reason]').textContent()).includes('Preview ended');
+ await ui.show.click();await waitHistory(ids.a);
+ out.new_show_after_catalog_epoch=await page.evaluate(()=>window.__card._vacHistory.shown.epoch==='d'.repeat(32));
+ await ui.dialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await page.evaluate(async()=>{const w=window.__history999;w.epoch='e'.repeat(32);await w.publish();});
  out.confirmed_cleanup_retires_preview=!(await geometry())[0].history&&!(await geometry())[0].banner;
  out.no_history_writes_or_services=await page.evaluate(()=>window.__history999.writes.length===0&&window.__history999.services.length===0);
  out.live_book_never_replaced=await page.evaluate(()=>window.__history999.cards.every(card=>card._vacSrvTrails.e_vacuum_history999.current.revision==='live-new'));
