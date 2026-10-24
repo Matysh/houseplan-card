@@ -45,6 +45,31 @@ Tests: `device-own-availability`, the existing presentation/policy/visual and LE
 units; native/Golden evidence is recorded in the issue handoff. No config or
 archive migration is needed.
 
+The semantic source inventory remains separate from that universal own fact:
+
+| Actual classifier branch | Existing work/activity meaning retained |
+| --- | --- |
+| Critical binary classes, siren, triggered alarm panel | Alarm/service classification and critical priority come from `device-issues` |
+| Binary motion/vibration/sound | Witnessed rising event |
+| Binary occupancy/presence | Continuous presence while on |
+| Binary door/window/garage_door/opening | Open status and rising edge |
+| Binary moving, running/power, remaining binary classes | Transition, running, or neutral respectively |
+| Cover | Neutral body; exact icon morph and opening/closing transition |
+| Lock and valve | Existing open/locked state and terminal transition |
+| Climate | Action attribute, then enabled HVAC mode fallback |
+| Light/switch/fan/humidifier | On means working; ordinary off remains available |
+| Media player | All real power/transport states stay neutral; off is available |
+| Vacuum | Cleaning/returning activity, otherwise neutral |
+| Script, automation, button/event | Script execution; automation enablement neutral; witnessed button/event change |
+| Other domains/custom operation sensors | Existing work-action/state fallback, otherwise neutral |
+| Composite Power role | Power off suppresses ordinary work without fabricating source loss; unavailable power still gates ordinary samples |
+| Controls/manual state/value/badge/virtual sources | Existing source authority and sample-quality gates; none enlarges the own roster |
+
+The domain matrix test exercises off/idle/standby/paused/unknown/unavailable in
+all explicit domain families and the custom-domain fallback through the real
+presentation resolver. Existing domain, alarm, source and activity units cover
+their positive work and transition branches.
+
 ## Manual ordinary state source (#977)
 
 `marker-state-source.ts` resolves optional `marker.state_source` independently

@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5232 · pure backend 627 · HA-harness backend 527 · browser smokes 432 (`npm run inventory`) |
+| Tests | Node unit 5233 · pure backend 627 · HA-harness backend 527 · browser smokes 432 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -30,6 +30,7 @@ unknown data. Only glyph/value and badge contents fade on confirmed offline;
 shell, contact ink and diagnostics retain their paint. LED uses ordinary inactive
 geometry and fades badge text only. Source-quality and lifecycle/activity gates
 remain separate; no persisted data or writer changes.
+
 Parallel paths (#1018): historical insertion ratios identify audit candidates,
 not deletion permission. Manual semantic/caller decisions are pinned separately;
 the complete computed unit/smoke/Golden diagnostic preserves actual source/map

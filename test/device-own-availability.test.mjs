@@ -107,6 +107,24 @@ test('#1026 off and selected-source loss are distinct from own offline in the re
   }
 });
 
+test('#1026 every semantic domain keeps ordinary inactive states separate from own offline',()=>{
+  const domains=['binary_sensor','cover','lock','valve','climate','light','switch','fan','humidifier',
+    'media_player','vacuum','script','automation','button','event','siren','alarm_control_panel','sensor',
+    'select','number','vendor_domain'];
+  for(const domain of domains){
+    const id=`${domain}.own`,d=device([id]);
+    for(const state of ['off','idle','standby','paused','unknown','unavailable']){
+      const r=resolveDevicePresentation(hass({[id]:row(id,state)}),d,options);
+      const offline=state==='unavailable';
+      assert.equal(r.ownAvailability,offline?'unavailable':state==='unknown'?'unknown':'available',`${id}:${state}`);
+      assert.equal(r.offline,offline,`${id}:${state}`);
+      assert.equal(r.classes.includes('unavail'),offline,`${id}:${state}`);
+      assert.equal(r.visual.status,'neutral',`${id}:${state} must not invent work or alarms`);
+      assert.equal(r.pulse.kind,'none',`${id}:${state}`);
+    }
+  }
+});
+
 test('#1026 static/live/lifecycle gates suppress offline paint while an ordinary live device retains it',()=>{
   const h=hass({'media_player.own':row('media_player.own','unavailable')}),d=device();
   assert.equal(resolveDevicePresentation(h,d,options).offline,true);

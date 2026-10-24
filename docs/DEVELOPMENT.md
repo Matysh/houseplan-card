@@ -23,6 +23,16 @@ adapters omitted the resolved offline flag. The old 2.5D offline table entry is
 removed, and both passive badge adapters forward that same resolved flag.
 The focused ownership/snapshot run passes 16 tests, including diagnostic-only
 ticks, disabled/claimed registry evidence and unchanged unrelated presentations.
+
+The compact executed receipt is
+[`device-offline-validation.json`](development-notes/device-offline-validation.json):
+accepted a71 BEFORE has eight expected symptom failures and six positive
+controls; the combined accepted-#1018 candidate passes all 44 native checks.
+Both new pinned-WSL Golden captures have the same PNG hashes as the earlier
+candidate and were visually inspected without accepting baselines. The actual
+Windows build measures View339869/editor344587 gzip and raw3437705 bytes;
+all current limits pass unchanged. The 113 related pure tests also pass.
+
 ## Parallel path diagnostic (#1018)
 
 `npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;
