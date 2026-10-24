@@ -115,13 +115,13 @@ lightweight frame before the newly selected owner reached the panel. The Line
 commit now synchronizes that owner while its draft is terminal, then resumes
 the preview. No Escape or programmatic selection masks that integration case.
 
-After rebasing onto accepted dev `b2df0e83f` (#1029/#1047), a fresh pinned
-Node 22.23.3 build measures raw `bundleBytes` 3410642 → 3416488 (+5846 B).
+After rebasing onto accepted dev `845c20c3e` (#1029/#1047/#1052/#1053), fresh
+pinned Node 22.23.3 builds measure raw `bundleBytes` 3411158 → 3416670 (+5512 B).
 Host references measured from that dev's source are 6048 → 6070 (+22); the
 published reference was still 6038, so the combined 32-reference growth is
 recorded at 6070. Only those two measured baselines change; their 2000-B and
 25-reference bands and the other monolith dimensions stay fixed. Initial View
-is 339445 B gzip (reference 339368 +2000) and lazy editor 340592 B (339040
+is 339508 B gzip (reference 339368 +2000) and lazy editor 340612 B (339040
 +2000), both within their existing bands and the absolute View wall. These
 are actual combined-build facts, not a sum or maximum of branch baselines.
 
