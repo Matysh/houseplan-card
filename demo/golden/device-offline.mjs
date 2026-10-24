@@ -16,7 +16,8 @@ export async function prepareDeviceOfflineBoard(page) {
     const records = [];
     for (const [id, offline] of [['icon', false], ['down', true], ['text', true],
       ['unknown', false], ['missing', false], ['source', false], ['double', true],
-      ['static', false], ['controller', false], ['exact', true], ['alarm', true], ['legacy', false]]) {
+      ['static', false], ['controller', false], ['exact', true], ['alarm', true], ['legacy', false],
+      ['whole', false], ['alarm-whole', false]]) {
       const marker = face(id), core = marker?.querySelector('.device-core');
       const glyph = core?.querySelector('ha-icon,.valtext');
       if (!marker || !core || !glyph) throw new Error(`offline board missing real face: ${id}`);

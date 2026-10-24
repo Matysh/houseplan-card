@@ -62,12 +62,14 @@ export function makeDeviceOfflineFixture(space = 'golden-offline') {
   entity('sensor.offline_exact_linkquality', '175', { unit_of_measurement: 'lqi' },
     { device_id: 'offline-exact-device', entity_category: 'diagnostic' });
   marker('offline-exact', 'switch.offline_exact', .18, .72, { value_badge: badge() });
+  marker('offline-whole', 'device:offline-exact-device', .34, .245);
   device('offline-alarm-device');
   entity('switch.offline_alarm_power', 'unavailable', {}, { device_id: 'offline-alarm-device' });
   entity('binary_sensor.offline_alarm_moisture', 'on', { device_class: 'moisture' },
     { device_id: 'offline-alarm-device' });
-  marker('offline-alarm', 'switch.offline_alarm_power', .34, .72, { display: 'icon_ripple',
+  marker('offline-alarm', 'switch.offline_alarm_power', .40, .72, { display: 'icon_ripple',
     state_source: { entity_id: 'binary_sensor.offline_alarm_moisture' } });
+  marker('offline-alarm-whole', 'device:offline-alarm-device', .70, .245, { display: 'icon_ripple' });
   device('offline-legacy-device');
   entity('sensor.offline_legacy_humidity', '45', { device_class: 'humidity', unit_of_measurement: '%' },
     { device_id: 'offline-legacy-device' });

@@ -13,7 +13,7 @@ const offline = face => /(?:^|\s)unavail(?:\s|$)/.test(face?.classes ?? '');
 const badge = face => face?.badges[0];
 const ids = ['offline-icon', 'offline-down', 'offline-text', 'offline-unknown', 'offline-missing',
   'offline-source', 'offline-double', 'offline-static', 'offline-controller', 'offline-exact',
-  'offline-alarm', 'offline-legacy',
+  'offline-alarm', 'offline-legacy', 'offline-whole', 'offline-alarm-whole',
   'offline-led-unavailable', 'offline-led-unknown'];
 const shape = face => [face?.core, face?.frame, face?.contact, badge(face)?.paint]
   .map(node => node?.rect?.slice(2));
@@ -48,6 +48,8 @@ try {
   out.liveOwnControllerIgnoresOfflineForeignTarget = !offline(f['offline-controller'])
     && opaque(f['offline-controller']?.glyph);
   out.exactEntityIgnoresHealthyOwnSiblings = offline(f['offline-exact']) && dim(f['offline-exact']?.glyph);
+  out.samePhysicalWholeRosterUsesItsPositiveDiagnostic = !offline(f['offline-whole'])
+    && opaque(f['offline-whole']?.glyph) && f['offline-whole']?.own?.includes('sensor.offline_exact_battery');
   out.offlineKeepsBatteryIndependent = opaque(f['offline-exact']?.battery);
   out.confirmedAlarmCoexistsWithOwnOffline = offline(f['offline-alarm'])
     && /(?:^|\s)alarm(?:\s|$)/.test(f['offline-alarm']?.classes ?? '')
