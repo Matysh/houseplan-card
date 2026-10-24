@@ -20,9 +20,10 @@ Witness repair #1012 preserves the two historical IDs. After #976, compact
 catalogue Help is deliberately 22px; `settings-help-size-leaks-into-catalogue-948`
 now additionally measures the public unscoped 32px target that still depends on
 the default. After #1007, `zigbee-incomplete-heading-enlarged-1005` needs a local
-override strong enough to beat the shared compact-disclosure cascade. The same
-mounted typography guard still requires 12px in both themes. No browser guard
-is added/removed; local static/ordinary success is not nightly caught evidence.
+override strong enough to beat the shared disclosure cascade. Approved UI-023
+in #1051 supersedes the former 12px compact marker with inherited common text
+and the 8×10 triangle in both themes. These historical IDs are preserved;
+local static/ordinary success is not nightly caught evidence.
 
 `led-unbound-in-view` moved to `test/led-strip-runtime.test.mjs` in #791: its guard
 requires a non-null marker absent from runtime devices, whereas the browser's
@@ -41,11 +42,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 82 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 91 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 83 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 92 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 242 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **483 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 243 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **486 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -111,6 +112,11 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+- `ui-selected-device-loses-blue-1051`
+
+The selected face is observed after mouse departure and keyboard focus in both
+HA themes, with a separate View fence; this requires mounted CSS paint.
 
 - `decor-created-text-frame-unmeasured-1047`
 
@@ -276,6 +282,11 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+- `ui-plan-pointer-misses-hit-1051`
+
+Trusted pointer motion crosses hit/miss contour geometry at two zooms; a pure
+controller unit cannot prove the mounted cursor.
 
 - `decor-creation-retains-properties-owner-1047`
 - `decor-properties-escape-steals-draft-1047`
@@ -517,6 +528,11 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 ### Custom-element and HA browser lifecycle
 
 - `direct-signal-detached-host-acquires-1053`
+
+- `ui-menu-close-retains-input-1051`
+
+The real menu retires native inert input before its fade completes and retained
+DOM is clicked. A pure owner unit cannot prove native inert or rapid reopen.
 
 - `decor-menu-accepts-stale-revision-1035`
 
@@ -985,3 +1001,6 @@ authoritative HA config replacement and Lit/adoption rollback. The pure units
 separately exercise the candidate and identity predicates; they cannot prove
 that the mounted UI passes the newly filtered exact targets, retains selection
 after a refused write and never merges neighbours with binding `virtual`.
+
+The #1051 witnesses are registered for nightly execution; task verification runs the
+ordinary browser guards and static readiness, without executing mutants.

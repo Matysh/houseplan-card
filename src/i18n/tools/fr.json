@@ -1,4 +1,6 @@
 {
+  "decor.color_caption": "Couleur :",
+  "decor.transparency_summary": "transparence {n}%",
   "decor.bring_front": "Mettre au premier plan",
   "decor.send_back": "Mettre à l’arrière-plan",
   "decor.copy": "Créer une copie",

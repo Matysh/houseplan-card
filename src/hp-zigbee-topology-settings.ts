@@ -111,7 +111,6 @@ export class HpZigbeeTopologySettings extends LitElement {
     .scan-row { border-top:1px solid var(--hpf-line,var(--divider-color)); padding-top:18px; margin-top:18px; }
     .scan-row .status,.scan-row .hint { grid-column:1/-1; }
     .incomplete { min-width:0; overflow-wrap:anywhere; }
-    :host .incomplete > summary { color:var(--secondary-text-color,#9aa0aa); }
     .incomplete-text { white-space:pre-wrap; padding-bottom:7px; }
   `];
 
@@ -313,10 +312,9 @@ export class HpZigbeeTopologySettings extends LitElement {
       ...model.reasons.map(reason => this._reasonLine(reason)),
       ...(model.refreshError ? [this._t('incomplete_refresh_error', { error: this._errorText(model.refreshError) })] : []),
     ].join('\n')).join('\n\n');
-    return html`<details class="hpf-disclosure hpf-disclosure-compact incomplete" data-incomplete-provider=${provider}>
-      <summary data-hp="action" data-action="zigbee-incomplete-reasons" class="status">${this._t('incomplete_title')}</summary>
-      <div class="status incomplete-text">${text}</div>
-    </details>`;
+    return disclosure({ id: `zigbee-incomplete-${provider}`, className: 'incomplete',
+      action: 'zigbee-incomplete-reasons', title: this._t('incomplete_title'),
+      content: html`<div class="incomplete-text">${text}</div>` });
   }
 
   private _status(key: string, diagnostics: ZigbeeTopologyDiagnostics): string {

@@ -8310,7 +8310,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private _decorResolvedStyle(shape?: DecorShape | null): DecorStyle {
-    return decorStyleOf(shape, this._cellCm, this._gridPitch, DEFAULT_DECOR_STYLE);
+    const style = decorStyleOf(shape, this._cellCm, this._gridPitch, DEFAULT_DECOR_STYLE);
+    return this._editorRuntime?.properties.previewDecorStyle(shape, style) ?? style;
   }
 
   private _decorWidthUnits(shape?: DecorShape | null): number {
@@ -11066,7 +11067,7 @@ export class HouseplanCard extends LitElement {
           @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e) : nothing}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
           @pointermove=${(e: PointerEvent) => this._stagePointerMove(e)}
-          @pointerleave=${(e: PointerEvent) => this._stagePointerLeave(e)}
+          @pointerleave=${(e: PointerEvent) => { this._editorRuntime?.properties.clearPlanHover(); this._stagePointerLeave(e); }}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @lostpointercapture=${(e: PointerEvent) => {
             if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);

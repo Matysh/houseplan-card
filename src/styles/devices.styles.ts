@@ -388,13 +388,16 @@ export const devicesStyles = css`
     }
     /* Interaction wins ordinary state colours. Alarm keeps priority through
        the more-specific rule below. Unavailable has no visual hover. */
-    :host([data-pointer-hover]) .dev:not(.unavail)[data-hp-device-hover] {
+    :host([data-pointer-hover]) .dev:not(.unavail)[data-hp-device-hover],
+    .stage.mode-devices .dev.sel:not(.unavail):not(.alarm):not(.ghost) {
       --device-face-bg: #0C82F0;
       --device-face-fg: light-dark(#fff, #252525);
       --device-shell-stroke: var(--device-shell-base-stroke);
     }
-    :host([data-pointer-hover]) .dev.theme-light:not(.unavail)[data-hp-device-hover] { --device-face-fg: #fff; }
-    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail)[data-hp-device-hover] { --device-face-fg: #252525; }
+    :host([data-pointer-hover]) .dev.theme-light:not(.unavail)[data-hp-device-hover],
+    .stage.mode-devices .dev.sel.theme-light:not(.unavail):not(.alarm):not(.ghost) { --device-face-fg: #fff; }
+    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail)[data-hp-device-hover],
+    .stage.mode-devices .dev.sel.theme-dark:not(.unavail):not(.alarm):not(.ghost) { --device-face-fg: #252525; }
     :host([data-pointer-hover]) .dev[data-hp-device-hover],
     .dev:focus-visible { z-index: 5; }
     /* #813: the 2.5D View lays every marker on z-index 2 with a (0,4,0)
@@ -476,15 +479,12 @@ export const devicesStyles = css`
       border: 1px solid currentColor;
     }
     .dev .habadge ha-icon { width: 72%; height: 72%; }
-    .dev.sel {
-      --device-ring-color: #F0A00C;
-      --device-ring-width: calc(var(--dev-size) * 0.0375);
-    }
     .dev:focus-visible {
       --device-ring-color: #0C82F0;
       --device-ring-width: calc(var(--dev-size) * 0.0375);
     }
-    .dev:not(.on):not(.open):not(.alarm):not(.lock-locked):not(.lock-unlocked):not(.unavail):focus-visible {
+    .stage.mode-devices .dev.sel { --device-ring-width: 0px; }
+    .dev:not(.on):not(.open):not(.alarm):not(.lock-locked):not(.lock-unlocked):not(.unavail):focus-visible:not(.mode-devices .sel) {
       --device-face-fg: #0C82F0;
     }
     /* Alert stays above focus, selection, hover and ordinary semantic paint. */

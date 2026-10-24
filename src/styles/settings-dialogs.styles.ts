@@ -112,8 +112,7 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-danger .btn:not(:ho
 .hpf-background-rules .hpf-hint{margin:0 0 7px;}
 .hpf-settings-pane [data-card=data] .hpf-actions{gap:10px;}
 .hpf-settings-pane [data-card=data] .hpf-actions .btn{font-size:12px;padding-inline:10px;}
-.hpf-converter .hpf-link{display:inline-block;font-size:12px;padding:0;margin-bottom:7px;transition:color 150ms ease,background 150ms ease;}
-.hpf-converter .hpf-link:hover{color:var(--primary-text-color);background:var(--hpf-tint);}
+.hpf-converter .hpf-link{display:inline-block;font-size:12px;padding:0;margin-bottom:7px;}
 .hpf-north-control{display:grid;grid-template-columns:148px minmax(0,1fr);align-items:center;gap:18px;}
 .hpf-north-dial{width:148px;height:148px;min-width:0;border:0;padding:0;border-radius:50%;background:transparent;color:var(--primary-text-color);cursor:pointer;touch-action:none;}
 .hpf-north-dial svg{width:100%;height:100%;font-size:10px;}
@@ -179,14 +178,29 @@ hp-dialog[settings-layout]{--hp-dialog-close-transition:none;--hp-dialog-close-h
 .hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn{transition:none!important;animation:none!important;}
 }`.cssText}
 ${settingsActionsCss('hp-dialog.ui-dialog .btn')}
-${settingsInteractiveCss('hp-dialog.ui-dialog *:is(.aboutlink,summary,.device-inbox-tabs button,.device-inbox-chips .chip button)')}
+${settingsInteractiveCss('hp-dialog.ui-dialog *:is(summary:not(.hpf-disclosure > summary),.device-inbox-tabs button,.device-inbox-chips .chip button)')}
 ${css`
 hp-dialog.ui-dialog[compact]{--hp-dialog-wide-width:560px;}
+hp-dialog.ui-dialog.decor-properties-dialog{--hp-dialog-icon-size:28px;}
 hp-dialog.ui-dialog.rules-dialog{--hp-dialog-wide-width:860px;}
 hp-dialog.ui-dialog.device-inbox-dialog{--hp-dialog-wide-width:920px;}
 hp-dialog.ui-dialog *:is(.body,.device-inbox){box-sizing:border-box;min-width:0;max-height:none;overflow:visible;padding:20px;background:var(--hpf-surface);font-size:13px;line-height:1.5;}
 hp-dialog.ui-dialog .row[slot=footer]{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0;padding:12px 16px;border:0;background:var(--hpf-surface);}
 hp-dialog.ui-dialog .row[slot=footer] .spacer{flex:1;}
+hp-dialog.decor-properties-dialog .body.hpf-form{display:flex;flex-direction:column;gap:0;padding:20px;background:var(--hpf-surface);font-size:13px;line-height:normal;--hpf-control-surface:var(--hpf-surface);}
+hp-dialog.decor-properties-dialog .body > label:not(.dfill):not(.hpf-toggle){margin:18px 0 8px;color:var(--primary-text-color);font-size:13px;font-weight:600;line-height:20px;}
+hp-dialog.decor-properties-dialog .body.hpf-form > label:first-child{margin-top:0;}
+hp-dialog.decor-properties-dialog .hpf-input{height:44px;padding:10px 12px;font-size:14px;}
+hp-dialog.decor-properties-dialog .colorrow{display:flex;align-items:center;gap:8px;}
+hp-dialog.decor-properties-dialog .colorrow > input{flex:1;width:0;}
+hp-dialog.decor-properties-dialog .colorrow > span{flex:none;color:var(--secondary-text-color);}
+hp-dialog.decor-properties-dialog hp-settings-select{font-size:14px;}
+hp-dialog.decor-properties-dialog hp-color-opacity{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0 0;min-height:44px;font-size:13px;color:var(--primary-text-color);--hp-color-label-size:13px;--hp-color-label-color:var(--primary-text-color);--hp-color-label-weight:600;--hp-color-label-line-height:20px;--hp-color-readout-color:var(--secondary-text-color);--hp-color-readout-line-height:20px;}
+hp-dialog.decor-properties-dialog .hpf-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0;margin:12px 0 0;}
+hp-dialog.decor-properties-dialog .body.hpf-form .hpf-toggle > input{width:44px;height:44px;}
+hp-dialog.decor-properties-dialog .hpf-toggle-title{font-size:13px;font-weight:400;}
+hp-dialog.decor-properties-dialog .row[slot=footer]{justify-content:flex-end;gap:8px;border-top:1px solid var(--hpf-line,var(--divider-color));}
+hp-dialog.decor-properties-dialog .row[slot=footer] .spacer{display:none;}
 hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw){box-sizing:border-box;min-width:0;min-height:44px;padding:10px 12px;border:1px solid var(--hpf-line);border-radius:7px;background:var(--hpf-surface);color:var(--primary-text-color);font:inherit;font-size:13px;line-height:22px;outline:none;box-shadow:none;cursor:text;transition:border-color 160ms ease,box-shadow 160ms ease;}
 hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw):hover{border-color:var(--hpf-accent);}
 hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw):focus{outline:none;border-color:var(--hpf-accent);box-shadow:inset 0 0 0 1px var(--hpf-accent);}
@@ -202,7 +216,6 @@ hp-dialog.ui-dialog .device-inbox-tabs button[aria-selected=true]{border-color:v
 hp-dialog.ui-dialog .device-inbox-discovery{padding:12px;border-radius:7px;}
 hp-dialog.ui-dialog .device-inbox-discovery > summary{padding:8px;margin:-4px;border:1px solid transparent;border-radius:7px;}
 hp-dialog.ui-dialog .device-inbox-chips .chip button{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:0 0 28px;padding:0;border:1px solid transparent;border-radius:50%;}
-hp-dialog.ui-dialog .device-inbox-menu-items{padding:6px;border-color:var(--hpf-line);border-radius:7px;background:var(--hpf-surface);max-width:calc(100vw - 56px);}
 hp-dialog.ui-dialog .rhint{margin:0 0 18px;padding:8px 10px;border-inline-start:3px solid var(--info-color,var(--hpf-accent));background:color-mix(in srgb,var(--info-color,var(--hpf-accent)) 10%,var(--hpf-surface));font-size:12px;line-height:1.5;}
 hp-dialog.ui-dialog .rtest{gap:10px;margin-bottom:18px;flex-wrap:wrap;}
 hp-dialog.ui-dialog .rtest .namein{flex:1 1 280px;}

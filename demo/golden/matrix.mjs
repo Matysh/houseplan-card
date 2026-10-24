@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 83;
+export const GOLDEN_MATRIX_VERSION = 84;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -794,6 +794,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'tray-medium-selection-ru', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     editorTray: 'decor-selection', language: 'ru', theme: 'dark',
     viewport: { width: 760, height: 820 }, ...page },
+  ...['color','menu','device'].flatMap(uiKit1051 => ['light','dark'].map(theme=>({
+    id:`ui-1051-${uiKit1051}-${theme}`,fixture:'visual',space:'golden-ui-1051',
+    mode:uiKit1051==='device'?'devices':'decor',uiKit1051,language:'ru',theme,
+    viewport:{width:1180,height:900},capture:`ui-1051-${uiKit1051}`,threshold:page.threshold,
+  }))),
   { id: 'tray-narrow-palette-en', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     editorTray: 'furniture-palette', furniturePalette: 'categories', language: 'en', theme: 'dark',
     viewport: { width: 390, height: 760 }, ...page },

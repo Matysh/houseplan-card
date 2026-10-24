@@ -134,6 +134,8 @@ test('#597 собранный лист панели совпадает с зам
  * native keyboard/localization matrix; the panel sheet remains unchanged.
  * #995 restores the HA icon field's two themed paint tokens. Only those
  * declared dialog-fixture values change; the panel remains byte-identical.
+ * #1051 UI-024 changes only dialog text-link hover to colour-only. The frozen
+ * panel stays byte-identical; button links retain their action paint.
  */
 test('#597/#600 лист диалогов карточки совпадает с объявленным', () => {
   assert.equal(formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }), FROZEN_CARD_KIT_CSS);

@@ -30,17 +30,18 @@ export const dialogCompositionCss = css`
 .hpf-disclosure { min-width:0; }
 .hpf-disclosure > summary {
   box-sizing:border-box; width:fit-content; max-width:100%; min-height:44px;
-  cursor:pointer; overflow-wrap:anywhere;
-  transition:var(--hpf-disclosure-transition,color 160ms ease);
+  cursor:pointer; overflow-wrap:anywhere; display:flex; align-items:center; gap:10px;
+  list-style:none; transition:color 160ms ease;
 }
+.hpf-disclosure > summary::-webkit-details-marker { display:none; }
+.hpf-disclosure > summary::marker { content:''; }
+.hpf-disclosure > summary::before { content:''; display:block; flex:0 0 8px; width:8px; height:10px; background:currentColor; clip-path:polygon(0 0,0 100%,100% 50%); transform:rotate(0deg); transition:transform 220ms cubic-bezier(.2,0,.2,1); }
+.hpf-disclosure[data-expanded=true] > summary::before { transform:rotate(90deg); }
 .hpf-disclosure > summary:not(.btn) { padding:10px 0; color:var(--hpf-accent,var(--primary-color)); font:inherit; line-height:22px; }
 .hpf-disclosure > summary:not(.btn):is(:hover,:focus-visible) { color:var(--primary-text-color); }
 .hpf-disclosure > summary:not(.btn):focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:2px; border-radius:3px; }
-.hpf-disclosure-compact { --hpf-disclosure-transition:background 160ms ease; }
-.hpf-disclosure.hpf-disclosure-compact > summary { font-size:12px; line-height:1.45; color:var(--secondary-text-color); }
-.hpf-disclosure.hpf-disclosure-compact > summary:is(:hover,:focus-visible) { background:var(--hpf-tint); }
-.hpf-disclosure-content { display:grid; gap:var(--hpf-group-space,12px); min-width:0; padding-block:var(--hpf-group-space,12px) 0; }
-.hpf-disclosure[open] > .hpf-disclosure-content { animation:hpf-disclosure-enter 160ms ease; }
+.hpf-disclosure-content { box-sizing:border-box; min-width:0; min-height:0; }
+.hpf-disclosure-inner { display:grid; gap:var(--hpf-group-space,12px); min-width:0; padding-block:var(--hpf-group-space,12px) 0; }
 .hpf-disclosure-with-help { display:grid; grid-template-columns:minmax(0,max-content) auto; align-items:center; column-gap:var(--hpf-help-gap,4px); min-width:0; }
 .hpf-disclosure-with-help > details { display:contents; }
 .hpf-disclosure-with-help > details::details-content { display:contents; }
@@ -48,9 +49,7 @@ export const dialogCompositionCss = css`
 .hpf-disclosure-with-help > hp-help { grid-area:1/2; justify-self:start; }
 .hpf-disclosure-with-help .hpf-disclosure-content { grid-column:1/-1; }
 .hpf-disclosure-with-help > details:not([open]) > .hpf-disclosure-content { display:none; }
-@keyframes hpf-disclosure-enter { from { opacity:0; transform:translateY(-3px); } to { opacity:1; transform:none; } }
 @media(prefers-reduced-motion:reduce) {
-  .hpf-disclosure > summary { transition:none; }
-  .hpf-disclosure[open] > .hpf-disclosure-content { animation:none; }
+  .hpf-disclosure > summary,.hpf-disclosure > summary::before { transition:none; }
 }
 `.cssText;

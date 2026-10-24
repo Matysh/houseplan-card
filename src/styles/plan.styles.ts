@@ -26,7 +26,8 @@ export const planStyles = css`
     .stage.mode-decor {
       background: #ffffff;
     }
-    .stage.mode-plan.markup.tool-select { cursor: pointer; }
+    .stage.mode-plan.markup.tool-select { cursor: default; }
+    .stage.mode-plan.markup.tool-select[data-plan-select-hit] { cursor: pointer; }
     .stage {
       position: relative;
       width: 100%;
@@ -963,9 +964,6 @@ export const planStyles = css`
     .stage.mode-decor.dtool-select .decorlayer .dshape.dfurniturehit {
       pointer-events: stroke;
       cursor: move;
-    }
-    .decorlayer .dsel {
-      filter: drop-shadow(0 0 3px var(--hp-accent));
     }
     .decorlayer .ddraft {
       stroke-dasharray:

@@ -109,9 +109,10 @@ try {
   await page.setViewportSize({ width:390, height:600 });
   await page.locator('[data-tool="device-inbox"]').click();
   const lastMenu = shell('device-inbox').locator('.device-inbox-menu').last();
-  await lastMenu.locator('summary').scrollIntoViewIfNeeded();
-  await lastMenu.locator('summary').click();
-  await expect.poll(() => lastMenu.locator('.device-inbox-menu-items button').evaluateAll(elements => elements.every(element => {
+  await lastMenu.locator('[data-action=device-catalog-menu]').scrollIntoViewIfNeeded();
+  await lastMenu.locator('[data-action=device-catalog-menu]').click();
+  await expect(lastMenu.locator('.hpf-context-menu')).toBeVisible();
+  await expect.poll(() => lastMenu.locator('.hpf-context-menu button').evaluateAll(elements => elements.length > 0 && elements.every(element => {
     const r = element.getBoundingClientRect();
     return element.getRootNode().elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('button') === element;
   }))).toBe(true);

@@ -590,7 +590,6 @@ export const editorDialogsStyles = css`
       font-size: var(--fs-m);
       padding: var(--sp-1) 0;
     }
-    :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
     .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
     /* #836: the dev build SHA is a link inside the version line. */
     .aboutver .aboutlink { display: inline; font-size: inherit; padding: 0; }
@@ -878,23 +877,6 @@ export const editorDialogsStyles = css`
     }
     .device-inbox-actions .btn { min-height: 36px; padding: 7px 10px; }
     .device-inbox-menu { position: relative; }
-    .device-inbox-menu summary { list-style: none; cursor: pointer; }
-    .device-inbox-menu summary::-webkit-details-marker { display: none; }
-    .device-inbox-menu-items {
-      position: absolute;
-      z-index: 2;
-      inset-inline-end: 0;
-      top: calc(100% + var(--sp-1));
-      display: grid;
-      gap: var(--sp-1);
-      min-width: 180px;
-      padding: var(--sp-2);
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-m);
-      background: var(--hp-panel, var(--card-background-color, #fff));
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
-    }
-    .device-inbox-menu-items .btn { justify-content: flex-start; width: 100%; }
     .device-inbox-empty { color: var(--hp-muted); text-align: center; padding: var(--sp-8); }
     .device-inbox-more { align-self: center; }
     @media (max-width: 680px) {

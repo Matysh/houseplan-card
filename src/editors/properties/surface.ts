@@ -5,6 +5,7 @@ import { unitInput, colorField } from '../form-kit';
 import type { ColorPickerLabels, HpColorOpacity } from '../../hp-color-opacity';
 import type { PropertiesFieldController } from './controller';
 import type { PropertiesString } from './strings';
+import { propertiesColorDraft, editPropertiesColor } from './color-draft';
 
 export interface PropertiesField {
   key: string; label: PropertiesString;
@@ -29,7 +30,7 @@ export interface PropertiesSurface {
 }
 export interface PropertiesSurfacePort {
   t(key: PropertiesString, vars?: Record<string, string | number>): string;
-  imperial: boolean; dark?: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
+  imperial: boolean; dark?: boolean; inlineColors: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
   action(key: string): void;
   edit(field: PropertiesField, raw: string, finish?: boolean): void;
   number(field: PropertiesField, value: number): string;
@@ -83,16 +84,22 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
   };
   const blur = (event: FocusEvent) => {
     const control = event.currentTarget as HTMLElement;
-    if (!port.mayFinish() || control.contains(event.relatedTarget as Node | null) || field.control === 'color') return;
+    if (!port.mayFinish() || control.contains(event.relatedTarget as Node | null)
+      || field.control === 'color' && (!port.inlineColors || control.querySelector<HpColorOpacity>('hp-color-opacity')?.pickerOpen)) return;
     void controller.finish();
   };
   const value = draft?.raw ?? (typeof field.value === 'number' ? port.number(field, field.value) : String(field.value ?? ''));
   let control: TemplateResult;
   if (field.control === 'color') {
-    const color = draft ? JSON.parse(draft.raw) as { color: string; opacity: number; noFill?: boolean }
-      : field.value as { color: string; opacity: number; noFill?: boolean } | null;
+    const state = propertiesColorDraft(draft?.raw ?? JSON.stringify(field.value));
+    const color = state?.value;
     control = disabled || !color ? html`<div class="hp-prop-control hp-prop-color"><span class="hp-prop-swatch hp-prop-swatch-empty"></span><span>—</span></div>`
       : colorField({ hex: color.color.toUpperCase(), valueLabel: color.noFill ? t('no_fill') : undefined, opacity: color.opacity,
+        opacityLabel: t('opacity'), disabled: pending,
+        inputs: port.inlineColors && state ? { name: field.key, hex: state.hex, opacity: state.opacity,
+          hexLabel: `${label}: ${port.pickerLabels.hex}`, hexInvalid: state.hexInvalid, opacityInvalid: state.opacityInvalid,
+          onHex: raw => port.edit(field, editPropertiesColor(state, 'hex', raw)),
+          onOpacity: raw => port.edit(field, editPropertiesColor(state, 'opacity', raw)) } : undefined,
         picker: html`<hp-color-opacity data-hp="field" data-field=${`properties-${field.key}`} ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})} .label=${label} .color=${color.color} .opacity=${color.opacity}
           .allowNoFill=${color.noFill !== undefined} .noFill=${color.noFill ?? false} .noFillLabel=${t('no_fill')}
           .pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch compact-swatch
