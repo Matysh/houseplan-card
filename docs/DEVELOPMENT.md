@@ -16,6 +16,15 @@ Target Golden scenes document the intentional new group presentation; task
 branches do not accept baselines. Measurements and exact-source run results
 belong to the issue handoff; no mutant execution is part of this task.
 
+`test_ha_decor_group_transfer.py` runs the actual backend full/space JSON,
+plan-only and portable ZIP paths for literal six-kind post-group records.
+Full/space/ZIP retain compatible future attributes; plan-only deliberately
+keeps #167's existing closed privacy projection (unknown keys omitted and live
+Text references frozen to a dash). The first ordinary transfer run exposed an
+incorrect B expectation of lossless plan-only privacy data; production remains
+unchanged. The native scenario mounts a fresh public card on the saved pair,
+then checks complete quota-sized records and empty volatile selection/history.
+
 ## Own offline presentation (#1026)
 
 `device-own-availability.ts` reads only the canonical active own roster. One

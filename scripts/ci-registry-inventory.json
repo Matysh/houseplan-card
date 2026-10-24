@@ -1157,6 +1157,7 @@
       "tests_backend/test_ha_backup_archive.py",
       "tests_backend/test_ha_build_identity.py",
       "tests_backend/test_ha_config_flow.py",
+      "tests_backend/test_ha_decor_group_transfer.py",
       "tests_backend/test_ha_device_contacts.py",
       "tests_backend/test_ha_diagnostics.py",
       "tests_backend/test_ha_easy_floorplan_convert.py",

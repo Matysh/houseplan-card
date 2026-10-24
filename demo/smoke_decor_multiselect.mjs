@@ -256,6 +256,19 @@ try{
   check('group.no_new_api_writes',await page.evaluate(()=>window.__1038Calls.filter(type=>/(?:set|update|delete|copy|upload|import)$/.test(type)).every(type=>type==='houseplan/config/set')));
   check('group.no_asset_requests',await page.evaluate(()=>window.__1038Calls.every(type=>!/(?:asset.*(?:set|delete|copy|upload)|files\/(?:upload|delete))/.test(type))));
   check('group.initial_selection_did_not_mutate_records',selection.decor,records());
+  // A new public host loads the stored pair; no optimistic editor objects or
+  // volatile selection are copied to it (the same reload boundary as HA).
+  await page.evaluate(()=>{
+    const old=window.__card,next=document.createElement('houseplan-card');
+    next.setConfig({type:'custom:houseplan-card',floor:'group'});
+    next.hass=old.hass;old.replaceWith(next);window.__card=next;
+  });
+  await page.waitForFunction(()=>window.__card._loadOk&&window.__card._decorList.length===1000);
+  await page.evaluate(()=>window.__hpTest.setMode('decor'));await settle();
+  check('group.cold_load_complete_saved_records',normalized((await state()).decor),normalized(quotaSaved));
+  check('group.cold_load_no_volatile_selection',(await state()).ids,[]);
+  check('group.cold_load_no_history',(await state()).history,0);
+  check('group.cold_load_no_write',(await state()).writes,quotaBefore.writes+1);
 }finally{
   console.log('group.empty_point_receipts',JSON.stringify(await page.evaluate(()=>window.__1038EmptyReceipts??[])));
   await finish(browser);
