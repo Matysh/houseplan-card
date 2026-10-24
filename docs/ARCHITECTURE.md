@@ -680,8 +680,9 @@ shared by two surfaces; `plan` stage ink, `devices` markers, `chrome`
 toolbars/tabs/menus, `dialogs` dialogs/forms/pickers. `form-kit.styles.ts`
 (#594), `editor-secondary.styles.ts` and the summary-panel sheets live outside
 that aggregator. `test/styles-split.test.mjs` pins composition, no cross-file
-duplicate selectors and `@media` wrappers; `scripts/dev/styles-diff.mjs` proves
-a move refactor-only. Public selectors: `STYLING-HOOKS.md`. CSS only the
+duplicate selectors and `@media` wrappers; `scripts/dev/styles-diff.mjs` compares
+the normalized rule multiset, not cascade or visual equivalence. Public selectors:
+`STYLING-HOOKS.md`. CSS only the
 editor renders is not in the first frame (#805): `editor-dialogs.styles.ts` (the
 editor-only rules of `dialogs`) and `editor-secondary.styles.ts` (the tray) are
 adopted by the lazy editor runtime's constructor (`editor-style-adoption.ts`) into

@@ -7,7 +7,13 @@
   "visual": {
     "schema": 1,
     "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
-    "golden": [],
+    "golden": [
+      {
+        "id": "css-migration-rules-invalid-dark",
+        "expectation": "new",
+        "reason": "New regression frame of the existing unchanged Rules dialog with an invalid pattern. Product appearance has no intended delta; 117 native states and eleven existing frames are independently compared before/after. Existing baselines are not accepted or granted pixel deltas."
+      }
+    ],
     "smokes": [
       "smoke_support_diagnostics.mjs",
       "smoke_radar_setup.mjs",

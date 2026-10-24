@@ -330,7 +330,8 @@ try {
   });
   const editorSet = new Set(afterLoad.editor);
   out.editorSheetsCarryTheMovedRules = editorSet.has('.radarcoordinates') && editorSet.has('.device-inbox-row')
-    && editorSet.has('.supportform > label:not(.srcrow)') && editorSet.has('.editor-secondary-host');
+    // #1019 retired the defeated local label rule; the lazy common kit owns it.
+    && editorSet.has('hp-dialog.ui-dialog .supportform > label:not(.srcrow)') && editorSet.has('.editor-secondary-host');
   out.coldRootsMatchNoMovedSelector = [cold.card, cold.kiosk, cold.space]
     .every((inventory) => inventory.selectors.every((selector) => !editorSet.has(selector)));
   // The cold root holds the card's static styles and nothing editor-only: its rule count is theirs.
