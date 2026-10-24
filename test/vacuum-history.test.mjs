@@ -39,6 +39,17 @@ function prepared(){
 async function loaded(){const p=prepared();await p.owner.load();p.owner.selected=A;return p;}
 function paint(owner){if(owner.shown)owner.paint(owner.shown,true,false);}
 
+test('#999 inactive cold View does not scan the device roster for a missing selection',()=>{
+ const {host,device}=prepared();let scans=0;
+ host._devices=new Proxy(host._devices,{get(target,key,receiver){
+  if(key==='find')scans++;return Reflect.get(target,key,receiver);
+ }});
+ const owner=new VacuumHistory(host);owner.hostUpdate();
+ assert.equal(scans,0);assert.equal(owner.markerId,null);
+ host._infoCard=device;owner.hostUpdate();
+ assert.equal(owner.markerId,device.id);assert.ok(scans>0);
+});
+
 test('#999 catalogue is bounded, typed and keyed by identity, with genuine minute/DST labels',()=>{
  const catalog=historyCatalog(listing);assert.deepEqual(catalog.records.map(r=>r.id),[B,A]);
  assert.deepEqual([...historyLabels(rows,'Europe/Moscow').values()],['24.10.2026 · 03:00:10','24.10.2026 · 03:00:40']);

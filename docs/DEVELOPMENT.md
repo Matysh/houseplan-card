@@ -23,6 +23,9 @@ when its dialog DOM is recreated; setting only its value before options mount
 loses the visible choice. Source replacement and late finally callbacks cannot
 inherit the next intent. Settings strings remain lazy; View owns only banner
 copy and local overlay state. No writer/service enters this flow.
+Before any actual device selection, a cold View history owner does not scan
+the device roster on ordinary renders; an ordinary consumer test counts that
+read and retains the positive accepted-selection case.
 
 The synthetic fixtures in `test/fixtures/vacuum-history/` were produced by the
 unchanged pinned metadata/selector/serializer ASTs, with source hashes recorded

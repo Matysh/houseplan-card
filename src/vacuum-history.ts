@@ -46,8 +46,9 @@ export class VacuumHistory {
   constructor(private readonly host:VacuumHistoryHost){host.addController(this);}
   hostDisconnected():void {this.suspend();}
   hostUpdate():void {
-    const next=this.host._devices.find(d=>d.id===(this.host._markerDialog?.devId??this.host._infoCard?.id
-      ??(this.host._mode==='devices'?this.host._selId:null)));
+    const id=this.host._markerDialog?.devId??this.host._infoCard?.id
+      ??(this.host._mode==='devices'?this.host._selId:null);
+    const next=id?this.host._devices.find(d=>d.id===id):null;
     if(next&&this.host._vacEntity(next))this.select(next);
     if(!this.host._markerDialog)this.openDialog=null;
     this.synchronize();
