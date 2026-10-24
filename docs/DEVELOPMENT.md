@@ -239,6 +239,12 @@ The CI quality follow-up adds the missing fixed error's lazy translations:
 relative to the earlier 07030954 build this is +4 B View, +69 B editor, +4 B
 Select-only and +531 raw bytes; hostRefs is unchanged. Its hard Select cap
 follows the final measured 21455 B exactly, with no additional allowance.
+After the accepted #1018 cleanup (dev `9ca630ada`), a fresh combined build
+measures View 340266 B, editor 345114 B, Select-only 21456 B gzip and 3453839
+raw bytes; hostRefs remains 6117. The one-byte Select cap adjustment to the
+actual 21456 B uses the same explicit permission above and adds no reserve.
+The raw baseline records the lower measured total; existing bands, ABI and
+latency limits are unchanged. No task measurements are added or maximized.
 The separate core line overage was removed by seven redundant blank separators
 and one shorter comment: 13277→13269 lines, with byte-identical uncommented
 TypeScript output. Its existing 13219 cap and 50-line band stay unchanged.
