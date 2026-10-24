@@ -44,9 +44,9 @@ that transition events alone prove disposal.
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 91 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 98 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 254 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **511 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Responsive DOM layout | 59 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Custom-element and HA browser lifecycle | 261 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **520 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -500,6 +500,17 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 
 ### Responsive DOM layout
 
+- `decor-group-text-outline-width-discarded-1038`
+- `decor-group-text-measure-scans-unselected-1038`
+
+The #1038 witness compares the contour with positive, actual SVG Text client
+geometry after the existing live-editor measurement hook. A template or a pure
+box helper cannot establish mounted font metrics and rotation in Chromium.
+The separate scale witness mounts 1000 Text records with two selected labels,
+counts unrelated ID/style/BBox reads across public HA delivery and actual drag,
+and retains positive selected measurements, warm-cache reuse, live-text refresh,
+individual contours, one accepted write and literal whole-group movement.
+
 - `svg-caption-retains-area-action-gap-1039`
 
 - `decor-order-pair-clips-delete-1035`
@@ -577,6 +588,24 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 ### Custom-element and HA browser lifecycle
 
 - `vacuum-history-retired-show-adopted-999`
+- `decor-group-image-alpha-preview-omitted-1038`
+- `decor-group-active-line-shortcut-steals-anchor-1038`
+- `decor-group-live-paint-only-leader-1038`
+- `decor-group-picker-button-shortcut-escapes-1038`
+- `decor-group-empty-popup-alpha-becomes-zero-1038`
+- `decor-group-invalid-popup-dismissed-by-navigation-1038`
+- `decor-group-mixed-labels-truncated-1038`
+
+The #1038 witnesses observe the existing mounted pointer/Line owner, all-member
+live SVG ink, a focused popup confirm button and raw empty-vs-zero number input.
+Resolved image fixtures also check the actual SVG opacity before Save and after
+Escape; persisted records alone cannot prove that transient image paint bridge.
+Document-capture outside navigation must retain invalid HEX before canvas input.
+Pure group kernels and field units cannot prove native event routing, custom
+element draft ownership or the live/settled presentation handoff. Mixed labels
+also require actual column and font measurements rather than a template string.
+These witnesses are
+registered for nightly execution; development runs ordinary input only.
 
 - `form-kit-inline-opacity-input-dropped-1018`
 

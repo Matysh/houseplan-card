@@ -118,3 +118,29 @@ test('#931 decor family matrix, local image ratio and transformed backdrop centr
   assert.equal(fields(backdrop).x.value,1320); assert.equal(fields(backdrop).opacity.value,0);
   assert.equal(backdrop.actions[0].disabled,'backdrop_delete_reason');
 });
+
+test('#1038 group kind matrix retains disabled individual fields and exposes only compatible compound channels',()=>{
+  const common={id:'first',x:.1,y:.2,w:.3,h:.2,color:'#ff0000',opacity:.2};
+  for(const kind of ['rect','ellipse','line','text','furniture','image']){
+    const first={...common,kind,x1:.1,y1:.2,x2:.4,y2:.2,text:'First',symbol:'sofa',asset_id:'first-asset'};
+    const second={...first,id:'second',color:'#0000ff',opacity:.8,text:'Other',symbol:'armchair',asset_id:'second-asset'};
+    const m=model({kind:'decor-group',value:[first,second]}),f=fields(m);
+    assert.equal(m.title,'Selected: 2');assert.equal(f.x.mode,'disabled');assert.equal(f.y.mode,'disabled');
+    assert.equal(f.angle.mode,'disabled');assert.equal(f.stroke.control,'group-color');assert.equal(f.stroke.wide,true);
+    assert.equal(f.stroke.value.mixedOpacity,true);assert.equal(f.stroke.value.alphaOnly,kind==='image');
+    assert.equal(f.fill.control==='group-color',kind==='rect'||kind==='ellipse');
+    assert.ok(m.actions.every(action=>action.disabled==='group_single_only'));
+    if(kind==='line')assert.equal(f.length.mode,'disabled');
+    if(kind==='text'){assert.equal(f.size_cm.mode,'disabled');assert.equal(f.text.mode,'disabled');}
+    if(kind==='image'){assert.equal(f.ratio.mode,'disabled');assert.equal(f.flip_h.mode,'disabled');}
+    if(kind==='furniture')assert.equal(f.flip_v.mode,'disabled');
+    if(kind==='rect'||kind==='ellipse')assert.equal(f.fill_enabled.mode,'disabled');
+  }
+  const mixed=model({kind:'decor-group',value:[{...common,kind:'rect'},{...common,id:'other',kind:'ellipse'}]});
+  assert.ok(mixed.groups.flatMap(group=>group.fields).every(field=>field.mode==='disabled'));
+  const local={...space,decor:[{...common,kind:'rect'},{...common,id:'second',kind:'rect'}]};
+  const identity={spaceId:'one',editor:'decor',kind:'decor-group',objectId:'selection',objectIds:['second','first']};
+  assert.deepEqual(resolvePropertiesTarget(identity,local,[],[]).value.map(x=>x.id),['first','second']);
+  assert.equal(resolvePropertiesTarget({...identity,objectIds:['first','missing']},local,[],[]),null);
+  assert.equal(resolvePropertiesTarget({...identity,objectIds:['first','first']},local,[],[]),null);
+});

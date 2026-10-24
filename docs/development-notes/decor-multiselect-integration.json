@@ -1,0 +1,316 @@
+{
+  "schema": 1,
+  "issue": 1038,
+  "scope": "Matched local integration evidence; mandatory push gates and CI are recorded in the issue handoff.",
+  "acceptedBase": {
+    "source": "3efc9b0b4e43dc3a0b23f5eb4be22a6f8ba0dcc9",
+    "reviewed": "0d718483b8814b664fdadfc1a6e54e39e220543d",
+    "changedSinceReviewed": [
+      "docs/reviews/CODE-REVIEW-1025-r2.md",
+      "docs/reviews/INDEX.md"
+    ],
+    "productAndBuildInputChanges": [],
+    "fingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+    "primaryMeasurement": "issue-1008-color-picker-polish/artifacts/ui-1025/measure-r1-ledger-0d-after-hook.json",
+    "equivalence": "issue-1008-color-picker-polish/artifacts/ui-1025/actual-S8-accepted-equivalence.json"
+  },
+  "combinedBuild": {
+    "source": "4e43712a4c48abb1f73aee0ef54f9d9d07fdc91c",
+    "fingerprint": "06f7c271357a3d5986dd5dec5de06f2eb425abe4ea20cf4a9ecfe403689c50b9",
+    "node": "22.23.3",
+    "rollup": "4.62.2",
+    "platform": "win32",
+    "bundleSync": "PASS",
+    "acceptedBaseIsAncestor": true
+  },
+  "measurements": {
+    "before": {
+      "initialViewGzipBytes": 339771,
+      "lazyEditorGzipBytes": 347064,
+      "bundleBytes": 3443023,
+      "hostRefs": 6115
+    },
+    "after": {
+      "initialViewGzipBytes": 339980,
+      "lazyEditorGzipBytes": 352807,
+      "selectOnlyGzipBytes": 18287,
+      "bundleBytes": 3464603,
+      "hostRefs": 6198
+    },
+    "ownDelta": {
+      "initialViewGzipBytes": 209,
+      "lazyEditorGzipBytes": 5743,
+      "bundleBytes": 21580,
+      "hostRefs": 83
+    },
+    "method": "Measured complete matching Windows builds, never sums or maxima of branch JSON.",
+    "coupling": {
+      "delegates": 145,
+      "portMembers": 369,
+      "hostRefs": 6198,
+      "portPrivates": 102,
+      "harnessPrivates": 101,
+      "bundleBytes": 3464603
+    },
+    "unusedViolations": []
+  },
+  "referenceRefresh": {
+    "coreRuntimeLines": {
+      "published": 11735,
+      "acceptedActual": 11767,
+      "measured": 11834,
+      "ownDelta": 67,
+      "band": 50
+    },
+    "lazyEditor": {
+      "published": 347075,
+      "measured": 352827
+    },
+    "hostRefs": {
+      "published": 6090,
+      "measured": 6198
+    },
+    "bundleBytes": {
+      "published": 3442107,
+      "measured": 3464516
+    },
+    "unchanged": {
+      "initialViewCeiling": 339368,
+      "absoluteViewBudget": 352000,
+      "lazyGraphBand": 2000,
+      "hostRefsBand": 25,
+      "bundleBytesBand": 2000,
+      "delegatesBaseline": 145,
+      "portMembersBaseline": 368,
+      "portPrivatesBaseline": 102,
+      "harnessPrivatesBaseline": 101,
+      "selectOnlyBudget": "unchanged",
+      "namedExportABI": "unchanged",
+      "latencyLimits": "unchanged"
+    }
+  },
+  "cost": {
+    "reason": "Volatile selection, one rigid group delta, measured individual contours and touched-channel adapters in the existing Properties command lane. No new library, eager editor import, writer or history stack.",
+    "permissionQuote": "сильно на размеры не заморачивайся, если незначительное превышение, устранять которое очень дорого — разрешаю поднять лимиты",
+    "earlierMeasuredRecord": "https://github.com/Matysh/houseplan-card/issues/1038#issuecomment-6383329349",
+    "finalMeasuredRecord": "https://github.com/Matysh/houseplan-card/issues/1038#issuecomment-6387520046",
+    "policy": "Refresh only the measured references; retain existing bands and absolute predicates."
+  },
+  "ordinaryProof": {
+    "boundedReaderFixtureRepair": {
+      "hookMaterial": "32a085a69d22d9e97876d0cbe49abaf4bebd4442",
+      "hookSeconds": 247,
+      "hookFailure": "Only inherited task-check-reuse.test.mjs:61/82 failed; product/build/budget/unused and all other tooling checks passed. The original assertion printed accepted=false without its refusal reason.",
+      "isolatedOriginal": "36/36 PASS in 1.7s with no source changes.",
+      "controlledAgeWitness": "Real immutable Git readers older than the unchanged 8s budget refuse with task Git equivalence: registry probe deadline exceeded; fresh readers on the identical before.sha/after.sha immediately accept. This is a controlled lifetime witness, not a fabricated reason from the original hook log.",
+      "repair": "Only the positive test fixture recreates each per-lookup reader immediately before verification on the exact original committed SHA. The accepted=true oracle, real Git identity and negative policy cases remain; its diagnostic now includes the returned reason.",
+      "productionPolicyChanged": false,
+      "productionDeadlineSeconds": 8,
+      "targetedAfter": {
+        "passed": 57,
+        "failed": 0,
+        "skipped": 0
+      },
+      "freshValidation": "Targeted fixture/policy results and the mandatory hook retry are recorded in the final handoff; the previous RED is not a passed gate."
+    },
+    "acceptedCiPolicyIntegration": {
+      "acceptedDev": "16b5fd77dad41a333b57b1c0ade94d89bce741d4",
+      "merge": "102dd06dd",
+      "return": "6389245419 / process 40130506967; historical flatten-rebase conflict, model SKIPPED, no CODE cycle consumed",
+      "previousMaterial": "00066d3bb22ca229145d084d66b050a066eb2ecb",
+      "completedCanonical": {
+        "run": 40127211133,
+        "smokesPassed": 237,
+        "smokesFailed": 0,
+        "declaredGoldenPassed": 2
+      },
+      "productChanged": false,
+      "captureFingerprint": "6dcd3e74d26b1066fc82ea3932519f733fd7890d578c8be0b631d2c1acb4bfc1",
+      "generatorPolicy": "Explicitly regenerated and checked profiles and registry inventory using accepted #1060; the inventory adds this task's ledger to the declared inputs.",
+      "scope": "Use the new canonical required scope: explicit changed/AC/ledger checks, registered and proven narrow links plus the bounded visual minimum. Weak/overflow lexical regression is deferred intact to beta/night, not silently truncated.",
+      "freshProof": "Current range/process/packaging guards, required task scope and normal hook are reported separately in the new handoff; previous CI success is not substituted for a new exact-SHA verdict."
+    },
+    "currentTaskScope": {
+      "requiredProducer": "5006a2137: 39/39 ordinary smokes and 2/2 new group Golden PASS; one direct local execution per unchanged input.",
+      "acceptedRegistryIo": "c861d6150e3dbb01e03d2d65d7d825544eb3872b included by clean merge 0f34b08e7. Only CI Git-I/O/tests/docs changed; product, capture corpus and the browser executions remain unchanged.",
+      "footerVisualScope": {
+        "material": "0f34b08e7; same 6dcd3e74d26b1066fc82ea3932519f733fd7890d578c8be0b631d2c1acb4bfc1 runtime",
+        "geometryScene": "geometry-decor-editor-dark, 1180x900 page, Nothing selected: actual/baseline/diff viewed. New Ctrl+A / Ctrl+M footer replaces Enter / Esc.",
+        "actualSha256": "df8eed05fbf5fa660e499376263fb75573d84a2f216486662a7e471badef9c83",
+        "differingPixels": {
+          "total": 2741,
+          "footer": 1478,
+          "priorHeaderFocusRegion": 1263,
+          "other": 0
+        },
+        "ownership": "Only the footer is this task's CHANGE. The coordinator independently observed the header focus-ring drift before #1038; it is not assigned to this task, masked, thresholded away or fixed here.",
+        "pendingColourScenes": [
+          {
+            "id": "ui-1051-color-light",
+            "expectation": "new",
+            "actualSha256": "6146cd04ebaf7dae14b398781dbaeacd1b34fe5ad2c431eed962cd9d7858c39a"
+          },
+          {
+            "id": "ui-1051-color-dark",
+            "expectation": "new",
+            "actualSha256": "e6236486af84cd7cc986689a31ce9a30505d3bf0a7059d5fe227425dea150014"
+          }
+        ],
+        "pendingPolicy": "Both colour-panel captures were viewed and remain missing-baseline NEW as already declared by #1051 on this index; their additional Ctrl+A / Ctrl+M footer is explicit. No NEW+CHANGE conflict, old-ledger edit or union-guard relaxation.",
+        "baselineAccepted": false
+      }
+    },
+    "ciPreparationRepair": {
+      "source": "0bcf61de0dfd64fc95fe1fbdd62457ad0d97835f",
+      "run": 40119689035,
+      "browserJob": 120948804987,
+      "smokes": {
+        "passed": 236,
+        "failed": 1,
+        "total": 237
+      },
+      "declaredGolden": {
+        "passed": 2,
+        "failed": 0
+      },
+      "failure": "Only legacy smoke_furniture_polish.mjs failed: escapeClosesPalette and escapeDetachesListeners. Its private tool reassignment bypassed Properties.toolChanged and retained the previous singleton selection.",
+      "unchangedPublicWitness": "Actual toolbar/category/item clicks, native placement and native rearm/Escape PASS on unchanged 0bcf: rearm IDs empty, tool returns to select, palette closed, keyboard listener adds/removes 4/4.",
+      "repair": "Use the existing public __hpTest.setTool adapter for both arms and one window Escape delivery; retain both original oracles. Add the native rearm/Escape/listener checks to smoke_decor_multiselect.",
+      "after": "Both complete ordinary smokes PASS; no product or capture-input changes, no oracle/timeout weakening.",
+      "review": "Technical S6 return 6388235525 / process 40123016420; model SKIPPED and cycle not consumed. Fresh CI and independent CODE still required."
+    },
+    "ordinaryHookRepair": {
+      "initialSource": "bfe5ea3dc08472dffdf00013942eb3b611254d2a",
+      "initialGateSeconds": 204,
+      "initialProductFailures": 51,
+      "initialToolingFailures": 1,
+      "productCodeChanged": false,
+      "fixtureAuthority": "Existing real ConfigWriteContext, one per history setup; stable public connection/user, original server/CAS/Undo oracles and faithful current/owns guard.",
+      "sourceOracles": "Keep the full opt-in touched/default-false picker detail and completion guard, and both live decor rendering plus align guides.",
+      "guide": "Matching EN/RU H2-H4 structure with a separate multiple-decor subsection.",
+      "targetedAfterRepair": {
+        "passed": 83,
+        "failed": 0
+      },
+      "coreCost": "The existing pointer/selection/history owner retains 67 integration lines above accepted 3ef; pure geometry/contours already live in leaf modules. Another gesture owner solely to remove 49 lines beyond the old reference+band is disproportionate. Adopt the exact 11834 reference under the quoted permission, retaining band 50 and the card cap."
+    },
+    "native": {
+      "group": "PASS",
+      "keyboardNudge": "PASS",
+      "groupIncludes": [
+        "real SVG Text extent and positive dimensions",
+        "resolved image alpha preview before Save and rollback after Escape",
+        "independent stroke/fill/alpha",
+        "held/context retirement and one accepted history command",
+        "1000-record cold reload"
+      ]
+    },
+    "targetedUnits": {
+      "tests": 61,
+      "passed": 61,
+      "failed": 0
+    },
+    "backendTransfer": {
+      "passed": 4,
+      "failed": 0,
+      "ruff": "PASS",
+      "python": "3.14.7",
+      "homeAssistant": "2026.8.3",
+      "authority": "Local diagnostic runtime; not a CI stamp.",
+      "planOnly": "Retains the existing #167 closed privacy projection; full/space/ZIP preserve compatible unknown attributes."
+    },
+    "golden": {
+      "matrixVersion": 88,
+      "node": "22.23.3",
+      "playwright": "1.62.0",
+      "chromium": "151.0.7922.34",
+      "revision": 1234,
+      "platform": "WSL Ubuntu-24.04",
+      "scenes": [
+        {
+          "id": "decor-multiselect-light",
+          "runtime": "PASS",
+          "comparison": "missing-baseline",
+          "sha256": "cff4ea7d1eca5994d5b3f1f21bd10ee2d0e92c5444db117e653732461daa6ec3"
+        },
+        {
+          "id": "decor-multiselect-dark",
+          "runtime": "PASS",
+          "comparison": "missing-baseline",
+          "sha256": "afa6d3e07ee24f588bcee703ef3d086bc83494e2960375ad24fe88eb08c05be2"
+        }
+      ],
+      "inspection": "Both actual PNGs viewed: full independent mixed labels, individual contours, count 2 and disabled individual fields; identical pixels to the earlier viewed layout checkpoint.",
+      "baselineAccepted": false
+    },
+    "staticReadiness": {
+      "result": "PASS",
+      "definitions": 1868,
+      "uniqueSourceReads": 1016,
+      "browserGuards": 518,
+      "existingWarnings": 5,
+      "execution": 0,
+      "caught": "unknown (nightly only)"
+    }
+  },
+  "codeR1": {
+    "verdict": "YELLOW",
+    "comment": 6389982013,
+    "medium": "Group Text measurement enumerated all mounted labels for a small selection.",
+    "resolution": "Settled Text nodes alone have literal DOM IDs; group measurement uses the ShadowRoot ID index for selected labels only, without selectors or an independent registry. Live copies have no ID.",
+    "ordinaryBefore": {
+      "source": "db575ab129f2f3d79c7bbf45b174baceb3a732ef",
+      "texts": 1000,
+      "selected": 2,
+      "unselectedIdReadsAfterSixHaUpdates": 5988,
+      "unselectedIdReadsIncludingNativeDrag": 8982,
+      "failures": 2
+    },
+    "ordinaryAfter": {
+      "unselectedIdReads": 0,
+      "unselectedStyleReads": 0,
+      "unselectedBBoxReads": 0,
+      "indexedLookups": 22,
+      "selectedStyleReads": 22,
+      "changedTextBBoxReads": 1,
+      "warmBBoxReads": 0,
+      "liveCopiesWithId": 0,
+      "oneAcceptedWrite": true,
+      "literalWholeGroupMove": true
+    },
+    "unitTests": {
+      "result": "PASS",
+      "cases": 34
+    },
+    "couplingNote": "Canonical collectMetrics measures portMembers=369; committed reference remains 368 within the unchanged band. The previous handoff reported the actual measurement, not the reference.",
+    "staticReadiness": {
+      "definitions": 1869,
+      "uniqueSourceReads": 1017,
+      "browserGuards": 519,
+      "execution": 0,
+      "caught": "unknown (nightly only)"
+    },
+    "status": "Local targeted proof; next mandatory normal hook, exact CI and independent CODE are still required.",
+    "fingerprint": "06f7c271357a3d5986dd5dec5de06f2eb425abe4ea20cf4a9ecfe403689c50b9",
+    "requiredProducer": {
+      "source": "4e43712a4c48abb1f73aee0ef54f9d9d07fdc91c",
+      "smokes": 40,
+      "golden": 5,
+      "result": "PASS",
+      "platform": "WSL Ubuntu-24.04",
+      "node": "22.23.3",
+      "playwright": "1.62.0",
+      "chromium": "151.0.7922.34",
+      "revision": 1234,
+      "goldenPixels": "All five PNG hashes exactly match the previously viewed declared scenes; no baseline acceptance.",
+      "followup": "A separate refined Text-scale run adds a positive live-copy precondition to the unchanged geometry/ID assertions; the other 39 smoke recipes and all five captures are unchanged.",
+      "followupResult": "PASS: two actual live Text copies observed before the zero duplicate-ID assertion; all prior counters and persistence assertions retained."
+    },
+    "metadataRepair": {
+      "normalHook": "RED: 247 seconds, exactly one tooling assertion ci-registry-inputs.test.mjs:140; A/build/product/budget/unused passed, push rejected.",
+      "cause": "New Text leaf and smoke were absent from the generated immutable CI inventory.",
+      "resolution": "Canonical ci-profiles --write, ci-registry-inventory --write and status-snapshot --write after all new files were tracked; all three corresponding checks PASS.",
+      "targeted": "ci-registry-inputs suite 21/21 PASS; no product/producer inputs changed."
+    }
+  }
+}

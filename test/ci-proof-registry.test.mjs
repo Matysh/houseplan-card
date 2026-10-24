@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os';
 import { join, dirname, resolve, sep } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { REGISTRY_SCHEMA, REGISTRY_TTL_MS, verifyRegistryRecord, registryPath, registryPolicy } from '../scripts/ci-registry-verify.mjs';
-import { fetchRegistry, probeRegistry, publishRegistry } from '../scripts/ci-proof-registry.mjs';
+import { fetchRegistry, probeRegistry, publishRegistry, registryApi } from '../scripts/ci-proof-registry.mjs';
 import { producedRegistryRecords } from '../scripts/ci-registry-records.mjs';
-import { intentPolicy } from '../scripts/ci-registry-cli.mjs';
+import { intentPolicy, withinRegistryDeadline } from '../scripts/ci-registry-cli.mjs';
 import { buildCiProof, evaluateCiProof, CI_PROOF_POLICIES, JOB_RULES, resolveJobRules } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
 
@@ -184,6 +184,55 @@ test('probe authenticates the indexed record, never treats JSON presence as PASS
   assert.equal((await probeRegistry({ ...common, source: async () => { throw Error('offline'); } })).results.frontend.accepted, false);
   assert.equal((await probeRegistry({ ...common, allowed: false })).results.frontend.accepted, false);
   assert.equal((await probeRegistry({ ...common, store: { tip: sha, read: () => null } })).results.frontend.accepted, false);
+  const unavailable = await probeRegistry({ ...common, store: { tip: sha, read: () => { throw Error('index read timed out'); } } });
+  assert.equal(unavailable.results.frontend.accepted, false);
+  assert.match(unavailable.results.frontend.reason, /index read timed out/);
+});
+
+test('#1062 total lookup deadline covers sync index lazy reads and never accepts their late result', async () => {
+  const started = Date.now(), deadline = started + 200, calls = [];
+  await assert.rejects(() => withinRegistryDeadline(deadline, () => {
+    const store = fetchRegistry('.', { deadline, gitOp: (_root, args, options) => {
+      calls.push(args[0]);
+      assert.ok(options.timeout > 0 && options.timeout <= 200, 'one remaining budget for every index subprocess');
+      if (args[0] === 'fetch') return '';
+      if (args[0] === 'rev-parse') return sha;
+      // A real synchronous child blocks the JS timer, as cat-file/show did in
+      // run 40127934852. Only its OS subprocess timeout can stop this wait.
+      return execFileSync(process.execPath, ['-e', 'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,5000)'], options);
+    } });
+    assert.equal(store.read('frontend', H('a')), null);
+    return { accepted: true };
+  }), /deadline exceeded/);
+  assert.deepEqual(calls, ['fetch', 'rev-parse', 'show']);
+  assert.ok(Date.now() - started < 2000, 'the 5s blocked child must not consume the CI job timeout');
+});
+
+test('#1062 expired index budget starts no Git work; unavailable fetch is a fresh miss', () => {
+  let calls = 0;
+  const store = fetchRegistry('.', { deadline: Date.now() - 1, gitOp: () => { calls++; throw Error('must not run'); } });
+  assert.equal(store.tip, null); assert.equal(store.read('frontend', H('a')), null); assert.equal(calls, 0);
+  const offline = fetchRegistry('.', { gitOp: () => { throw Error('offline'); } });
+  assert.equal(offline.tip, null); assert.equal(offline.read('frontend', H('a')), null);
+});
+
+test('#1062 total lookup deadline rejects hung async work and aborts remaining requests', async () => {
+  let observed;
+  await assert.rejects(() => withinRegistryDeadline(Date.now() + 30, signal => {
+    observed = signal; return new Promise(() => {});
+  }), /deadline exceeded/);
+  assert.equal(observed.aborted, true);
+  let started = false;
+  await assert.rejects(() => withinRegistryDeadline(Date.now() - 1, () => { started = true; }), /deadline exceeded/);
+  assert.equal(started, false);
+});
+
+test('#1062 source API refuses expired budgets before network or candidate Git fallback', async () => {
+  let requests = 0;
+  const source = registryApi({ repo: 'Matysh/houseplan-card', token: 'fixture', candidateSha: sha,
+    deadline: Date.now() - 1, fetchImpl: async () => { requests++; throw Error('must not request'); } });
+  await assert.rejects(() => source(fixture().record), /deadline exceeded/);
+  assert.equal(requests, 0);
 });
 function temporary(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-registry-proof-'));

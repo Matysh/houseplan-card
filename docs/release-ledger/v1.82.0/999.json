@@ -12,18 +12,42 @@
     "schema": 1,
     "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
     "golden": [
-      {"id": "vacuum-history-shown-dark", "expectation": "new", "reason": "UI-030 controls, local hint and actual shown-record label using the shared kit in the dark theme."},
-      {"id": "vacuum-history-shown-light", "expectation": "new", "reason": "The same accepted UI states with live Home Assistant light-theme colours."},
-      {"id": "vacuum-history-seconds-narrow", "expectation": "new", "reason": "Narrow shared dropdown distinguishes all same-minute records with their real seconds."},
-      {"id": "vacuum-history-dst-light", "expectation": "new", "reason": "Repeated wall times across DST use genuine UTC offsets, without fictitious record numbers."}
+      {
+        "id": "vacuum-history-shown-dark",
+        "expectation": "new",
+        "reason": "UI-030 controls, local hint and actual shown-record label using the shared kit in the dark theme."
+      },
+      {
+        "id": "vacuum-history-shown-light",
+        "expectation": "new",
+        "reason": "The same accepted UI states with live Home Assistant light-theme colours."
+      },
+      {
+        "id": "vacuum-history-seconds-narrow",
+        "expectation": "new",
+        "reason": "Narrow shared dropdown distinguishes all same-minute records with their real seconds."
+      },
+      {
+        "id": "vacuum-history-dst-light",
+        "expectation": "new",
+        "reason": "Repeated wall times across DST use genuine UTC offsets, without fictitious record numbers."
+      }
     ],
     "smokes": [
-      "smoke_vacuum_history.mjs", "smoke_vacuum_history_context.mjs",
-      "smoke_vacuum_history_geometry.mjs", "smoke_vacuum_history_touch.mjs",
-      "smoke_vacuum_dock_restart.mjs", "smoke_vacuum_route_recovery.mjs",
-      "smoke_vacuum_path_fidelity.mjs", "smoke_vacuum_live_tail.mjs",
-      "smoke_vacuum_native_lifecycle.mjs", "smoke_editor_nudge.mjs",
-      "smoke_canvas_surface_gestures.mjs", "smoke_editor_guides_lifecycle.mjs"
+      "smoke_vacuum_history.mjs",
+      "smoke_vacuum_history_context.mjs",
+      "smoke_vacuum_history_geometry.mjs",
+      "smoke_vacuum_history_touch.mjs",
+      "smoke_vacuum_dock_restart.mjs",
+      "smoke_vacuum_route_recovery.mjs",
+      "smoke_vacuum_path_fidelity.mjs",
+      "smoke_vacuum_live_tail.mjs",
+      "smoke_vacuum_native_lifecycle.mjs",
+      "smoke_editor_nudge.mjs",
+      "smoke_canvas_surface_gestures.mjs",
+      "smoke_editor_guides_lifecycle.mjs",
+      "smoke_decor_multiselect.mjs",
+      "smoke_decor_group_text_scale.mjs"
     ]
   }
 }

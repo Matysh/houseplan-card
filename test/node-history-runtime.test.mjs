@@ -18,6 +18,7 @@ after(() => {
 });
 const { HouseplanEditorRuntime } = await import('../test-build/houseplan-editor-runtime.js');
 const { createConfigAdoption, adoptStructuralResponses } = await import('../test-build/config-adoption.js');
+const { ConfigWriteContext } = await import('../test-build/config-write-context.js');
 const { CommandStack } = await import('../test-build/command-stack.js');
 const { enqueueSerializedWrite } = await import('../test-build/serialized-write-queue.js');
 const { canonicalizeConfigGeometry } = await import('../test-build/coordinate-canonicalization.js');
@@ -79,6 +80,7 @@ function setup({ floors = ['f', 'g'], damaged = false } = {}) {
 
   const toasts = [], shell = [], confirms = [];
   const adoption = createConfigAdoption(() => {});
+  const context = new ConfigWriteContext();
   const geometryHistory = new CommandStack(50), devicePositionHistory = new CommandStack(50);
   const devicePosition = { name: 'Move lamp', before: { deviceId: 'lamp' }, after: { deviceId: 'lamp' } };
   devicePositionHistory.push(devicePosition);
@@ -106,9 +108,15 @@ function setup({ floors = ['f', 'g'], damaged = false } = {}) {
   const host = {
     get _serverCfg() { return adoption.config; }, set _serverCfg(next) { adoption.stageLocalConfig(next); },
     get _cfgRev() { return adoption.configRev; }, _adoption: adoption,
+    _configWriteContext: context,
+    _configWriteGuard(pendingOnly = false) {
+      const claim = context.claim();
+      return () => pendingOnly ? context.owns(claim) : context.current(claim, host.hass);
+    },
     _space: floors[0], _mode: 'plan', _tool: 'select', _canEdit: true, _kiosk: false, isConnected: true,
     _haWallNodeMoveApi: 1, _stageEl: stage, renderRoot: undefined, _config: { language: 'en' },
-    updateComplete: new Promise(() => {}), hass: { callWS },
+    // Held transport wrappers below keep this same connection/user authority.
+    updateComplete: new Promise(() => {}), hass: { callWS, connection: {}, user: { id: 'node-history-fixture-writer' } },
     _fillColors: { wall_fill: { c: '#aaa', a: 1 } }, _openingAmt: () => 0,
     _baseVb: () => [0, 0, 1000, 1000], _viewOr: () => ({ w: 1000 }),
     _cancelCameraTransition() {}, _t: (key, params) => (params ? `${key}${JSON.stringify(params)}` : key),
@@ -142,6 +150,7 @@ function setup({ floors = ['f', 'g'], damaged = false } = {}) {
     _seedDecorStyle() {}, _adoptConfigCapabilities() {},
   };
   adoption.adoptResponses({ config: clone(server.config), rev: server.rev }, undefined, () => {}, () => {});
+  context.observe(host.hass);
   // Editor styles have no document here: construct before the shell has a root.
   const runtime = new HouseplanEditorRuntime(host);
   host.renderRoot = root; host.updateComplete = Promise.resolve(true);

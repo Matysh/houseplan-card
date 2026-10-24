@@ -21,6 +21,7 @@ after(() => {
 });
 const { HouseplanEditorRuntime } = await import('../test-build/houseplan-editor-runtime.js');
 const { createConfigAdoption, adoptStructuralResponses } = await import('../test-build/config-adoption.js');
+const { ConfigWriteContext } = await import('../test-build/config-write-context.js');
 const { CommandStack } = await import('../test-build/command-stack.js');
 const { canonicalizeConfigGeometry } = await import('../test-build/coordinate-canonicalization.js');
 const { virtualLightSnapshot } = await import('../test-build/virtual-light-state.js');
@@ -44,6 +45,7 @@ function setup({ floors = ['f', 'g'] } = {}) {
   const server = { config: clone(config), rev: 3, sets: 0 };
   const toasts = [], shell = [];
   const adoption = createConfigAdoption(() => {});
+  const context = new ConfigWriteContext();
   const geometryHistory = new CommandStack(50), devicePositionHistory = new CommandStack(50);
   devicePositionHistory.push({ name: 'Move lamp', before: { deviceId: 'lamp' }, after: { deviceId: 'lamp' } });
   const deferred = () => { deferred.armed = true; };
@@ -63,6 +65,14 @@ function setup({ floors = ['f', 'g'] } = {}) {
   const host = {
     get _serverCfg() { return adoption.config; }, set _serverCfg(next) { adoption.stageLocalConfig(next); },
     get _cfgRev() { return adoption.configRev; }, _adoption: adoption,
+    _configWriteContext: context,
+    _configWriteGuard(pendingOnly = false) {
+      const claim = context.claim();
+      return () => pendingOnly ? context.owns(claim) : context.current(claim, host.hass);
+    },
+    // Geometry writes below retain their existing config/server boundary.
+    hass: { connection: {}, user: { id: 'history-fixture-writer' }, states: {},
+      async callWS(message) { throw new Error(`Unexpected direct history fixture WS: ${message.type}`); } },
     _space: floors[0], _mode: 'plan', _tool: 'draw', _canEdit: true, _kiosk: false, isConnected: true,
     _loadOk: true, _haWallNodeMoveApi: 1, _stageEl: null, renderRoot: undefined, _config: { language: 'en' },
     updateComplete: new Promise(() => {}),
@@ -102,6 +112,7 @@ function setup({ floors = ['f', 'g'] } = {}) {
     _seedDecorStyle() {}, _adoptConfigCapabilities() {},
   };
   adoption.adoptResponses({ config: clone(server.config), rev: server.rev }, undefined, () => {}, () => {});
+  context.observe(host.hass);
   const runtime = new HouseplanEditorRuntime(host);
   host._editorRuntime = runtime;
   host.renderRoot = root; host.updateComplete = Promise.resolve(true);

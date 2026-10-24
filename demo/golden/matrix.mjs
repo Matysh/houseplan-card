@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 88;
+export const GOLDEN_MATRIX_VERSION = 89;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -537,12 +537,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       previous: [[160, 760], [300, 650], [420, 740], [560, 600]],
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
-  ...['dark','light'].map(theme=>({id:`vacuum-history-shown-${theme}`,vacuumHistory:'shown',
+  ...['dark','light'].map(theme=>({id:`vacuum-history-shown-${theme}`,fixture:'visual',vacuumHistory:'shown',
     space:'golden-history-space',mode:'devices',language:'ru',theme,viewport:{width:1440,height:1000},
     ...stage,capture:'vacuum-history'})),
-  {id:'vacuum-history-seconds-narrow',vacuumHistory:'seconds',space:'golden-history-space',mode:'devices',language:'en',
+  {id:'vacuum-history-seconds-narrow',fixture:'visual',vacuumHistory:'seconds',space:'golden-history-space',mode:'devices',language:'en',
     theme:'dark',viewport:{width:390,height:844},...page},
-  {id:'vacuum-history-dst-light',vacuumHistory:'dst',space:'golden-history-space',mode:'devices',language:'en',
+  {id:'vacuum-history-dst-light',fixture:'visual',vacuumHistory:'dst',space:'golden-history-space',mode:'devices',language:'en',
     theme:'light',viewport:{width:1000,height:900},...page},
   ...[false, true].map(pending => ({
     id: pending ? 'vacuum-live-tail-pending-dialog-dark' : 'vacuum-live-tail-turn-dark',
@@ -804,6 +804,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'tray-medium-selection-ru', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     editorTray: 'decor-selection', language: 'ru', theme: 'dark',
     viewport: { width: 760, height: 820 }, ...page },
+  ...['light','dark'].map(theme=>({
+    id:`decor-multiselect-${theme}`,fixture:'visual',space:'golden-decor-multiselect',
+    mode:'decor',decorMultiselect:true,language:'ru',theme,
+    viewport:{width:1440,height:1000},...page,
+  })),
   ...['color','menu','device'].flatMap(uiKit1051 => ['light','dark'].map(theme=>({
     id:`ui-1051-${uiKit1051}-${theme}`,fixture:'visual',space:'golden-ui-1051',
     mode:uiKit1051==='device'?'devices':'decor',uiKit1051,language:'ru',theme,

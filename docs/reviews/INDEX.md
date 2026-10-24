@@ -1,10 +1,11 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 97, issue: 50. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 100, issue: 51. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.83.0-beta.1 | [SHIP-REVIEW-v1.83.0-beta.1.md](SHIP-REVIEW-v1.83.0-beta.1.md) | пакетное ревью ship · — | 🟢 зелёный | 0 | 0 | — | — |
+| #1062 | [CODE-REVIEW-1062-r1.md](CODE-REVIEW-1062-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1060 | [CODE-REVIEW-1060-r1.md](CODE-REVIEW-1060-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | неверный путь фикстуры в документации | `docs/DEVELOPMENT.md` `test/fixtures/smoke-select/historical-plans.json` `test/data/smoke-selection-history.json` `scripts/ci-profile-paths.json` `test/smoke-select.test.mjs` `test/browser-push-plan.test.mjs` |
 | #1059 | [CODE-REVIEW-1059-r1.md](CODE-REVIEW-1059-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1058 | [CODE-REVIEW-1058-r1.md](CODE-REVIEW-1058-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
@@ -40,6 +41,8 @@
 | #1039 | [CODE-REVIEW-1039-r1.md](CODE-REVIEW-1039-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1038 | [SPEC-REVIEW-1038-r1.md](SPEC-REVIEW-1038-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | не определено поведение Ctrl+A/Ctrl+M при активном жесте/черновике | `smoke_decor_multiselect.mjs` |
 | #1038 | [SPEC-REVIEW-1038-r2.md](SPEC-REVIEW-1038-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #1038 | [CODE-REVIEW-1038-r1.md](CODE-REVIEW-1038-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | измерение текстового контура группы не O(N выбранных) и не покрыто perf-свидетелем на м…; scripts/monolith-baseline.json (не менялся в части portMembers: 368 до и после #1038) р… | `src/editors/decor/group-selection.ts` `src/editors/properties/editor.ts` `src/live-editor.ts` `src/houseplan-card.ts` `demo/smoke_decor_multiselect.mjs` `scripts/mutation-registry.mjs` `scripts/monolith-baseline.json` |
+| #1038 | [CODE-REVIEW-1038-r2.md](CODE-REVIEW-1038-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1037 | [SPEC-REVIEW-1037-r1.md](SPEC-REVIEW-1037-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | не называет затронутый DOM/test-identity контракт docs/STYLING-HOOKS.md | `docs/STYLING-HOOKS.md` `demo/smoke_e2e_hooks.mjs` `docs/reviews/CODE-REVIEW-1011-r3.md` `space-form.ts` `general-settings-dialog.ts` `room-settings-dialog.ts` `STYLING-HOOKS.md` `AGENTS.md` |
 | #1037 | [SPEC-REVIEW-1037-r2.md](SPEC-REVIEW-1037-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | удаление gs-wall-fill не адресует механизм retiredHooks и «compatible transition», на к… | `docs/STYLING-HOOKS.md` `docs/data-hp-contract.json` `data-hp-contract.json` |
 | #1037 | [SPEC-REVIEW-1037-r3.md](SPEC-REVIEW-1037-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
