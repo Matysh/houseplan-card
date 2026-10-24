@@ -1195,6 +1195,7 @@
       "tests_backend/test_support_package_v2.py",
       "tests_backend/test_support_wire_schema.py",
       "tests_backend/test_trail_recorder.py",
+      "tests_backend/test_trail_recorder_imports.py",
       "tests_backend/test_trails.py",
       "tests_backend/test_vacuum_ecovacs.py",
       "tests_backend/test_vacuum_live_tail.py",
