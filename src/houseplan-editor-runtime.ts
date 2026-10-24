@@ -7304,11 +7304,12 @@ public _deviceInboxTabKey = (event: KeyboardEvent): void => {
     event.preventDefault();
   };
 
-public _openMarkerDialog(d?: DevItem): void {
+public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {
+    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }
     if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;
     if (!this.properties.beforeIntent(() => {
-      const current = d ? this.host._devices.find(item => item.id === d.id) : undefined;
-      if (!d || current) this._openMarkerDialog(current);
+      const current = currentTarget ? currentTarget() : d ? this.host._devices.find(item => item.id === d.id) : undefined;
+      if (!d || current) this._openMarkerDialog(current || undefined, currentTarget);
     }, true)) return;
     if (d && !this.properties.selectDevice(d)) return;
     // A global-camera snapshot belongs to one explicit expansion only; never

@@ -1,5 +1,28 @@
 # Development and deployment
 
+## Device settings from View (#1050)
+
+The persisted `settings` tap action and View context menu reuse the existing
+marker dialog, editor loader and Properties transaction owner. They require a
+loaded House Plan configuration, edit permission and a non-kiosk card before
+requesting that loader. A denied entry shows the localized permission hint and
+does not fall through to information, HA more-info, confirmation or services.
+
+The existing marker request also fences the asynchronous View entry. It retains
+the current config authority, adoption/layout generations, card options and
+navigation intent; after import and after a deferred Properties intent, it
+resolves a fresh visible device on the same floor with the same binding. Ordinary
+HA state changes do not replace that stable target identity. Add/Inbox and the
+preexisting editor entry retain their own scope and permission checks.
+
+The immutable ordinary BEFORE on accepted `4dd092a` has five feature failures
+and nine positive controls: no settings option, settings tap opens information,
+and View right click still opens HA more-info. The existing information-card
+Edit path is the positive control. Raw recipe and receipts are linked in #1050;
+native AFTER and held-import proofs are recorded before handoff. Pure tests
+exercise target replacement/refusal and the real deferred runtime entry; backend
+tests export, parse and apply the literal action through full and space transfer.
+
 ## Own offline presentation (#1026)
 
 `device-own-availability.ts` reads only the canonical active own roster. One

@@ -1478,7 +1478,7 @@ their existing separate confirmation and save boundaries.
 | Name | Plan label and House Plan card title |
 | Binding | Virtual device or an HA picker with search and **Show entities**; Save stays disabled until a required binding is chosen |
 | Room | Automatic HA area or an explicit room, including one with no HA area |
-| Tap action | House Plan card, HA more-info, Toggle, Run or **Do nothing**, with the exact target/result shown below |
+| Tap action | House Plan card, HA more-info, Device settings, Toggle, Run or **Do nothing**, with the exact target/result shown below |
 | Controls other light sources | **Actions and links**: named chips for other placed `light.*`/`switch.*` markers or forced sources; the marker's own entities are not listed |
 | Is a light source | **Auto / Always / Never**; Auto shows its resolved result, Always may choose a leading entity, Never disables only the marker's own source |
 | Glow colour and brightness | From source, fixed colour, or fixed colour and brightness; manual brightness is 1–100% |
@@ -1604,7 +1604,7 @@ layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy
 |---|---|---|
 | Short click/tap | Configured action | Select in Properties on wide cards (≥960 px); open marker settings on narrow cards |
 | Hold 600 ms | House Plan device card | No device control |
-| Right click | Native HA more-info for the primary entity | “Copy device” menu |
+| Right click | Device settings for a writer outside kiosk; otherwise a permission hint | “Copy device” menu |
 
 A cancelled press, a release beside the marker or window focus loss neither
 opens a card later nor switches the device. After returning from the background,
@@ -1646,6 +1646,7 @@ and a created copy can be removed with the existing delete command.
 |---|---|---|
 | Device card | House Plan card with entities, model, description, links and files | No state change |
 | HA more-info | Native dialog for the exact primary entity | No state change |
+| Device settings | Existing House Plan settings for this device, without leaving View | Requires House Plan edit permission outside kiosk; no tap confirmation or device command |
 | Toggle state | Toggles the exact binding, supported device function or configured light-source group | Locks, alarm panels and protective garage/door/gate targets are no-op; confirmation is optional |
 | Run | Runs an automation, script or scene | Explicit target; confirmation is optional |
 | Do nothing | Short click/tap, Enter and Space are ignored | No dialog, command, confirmation, toast or press feedback |
@@ -1662,7 +1663,15 @@ A light defaults to Toggle; other devices default to the House Plan card. An
 unsupported Toggle remains a visible no-op and is never changed into another
 action behind the user's back. **Do nothing** is an explicit saved choice, not
 the default: it keeps the marker's normal appearance, hover, long-press House
-Plan card and right-click HA more-info while disabling only short activation.
+Plan card and the independent right-click settings entry while disabling only
+short activation. Right click opens settings regardless of the saved tap action.
+
+**Device settings** also works by a short tap, Enter or Space. View keeps the
+same plan and space; closing the dialog returns there. Users without House Plan
+edit permission and everyone in kiosk see a permission hint; no settings,
+information card or HA more-info opens. HA admin status alone does not replace
+House Plan edit permission. The explicit **HA more-info** action and long-press
+device card remain available as before. Settings on touch remain best effort.
 
 If every explicitly configured `controls` target is unavailable, missing or
 disabled in HA, a short tap sends no service call and the standard local House

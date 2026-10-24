@@ -1,5 +1,17 @@
 # House Plan architecture
 
+## Device settings from View (#1050)
+
+`_clickDevice` and View `_ctxDevice` share the existing `_openMarkerDialog`
+request owner; keyboard and LED hits retain their current dispatch. The local
+`settings` action branches before service eligibility/confirmation/feedback.
+The marker request reuses loaded writer/kiosk authority, ConfigWriteContext,
+adoption/layout revisions, card options and existing navigation counters.
+After lazy loading it resolves a fresh visible marker with the captured stable
+binding key. The same resolver passes through the runtime's Properties
+`beforeIntent` retry, before selection, New acknowledgement or draft creation.
+No second loader, poller, read claim, writer or async controller is added.
+
 Own availability (#1026) is one three-state fact from `DevItem.entities`, resolved
 before source selection and reused by source eligibility and presentation policy.
 It never expands the roster through controls, values or physical siblings.

@@ -108,6 +108,12 @@ wait before the next single tap or long press. A later real mouse pointerdown or
 keyboard context-menu key is likewise fresh intent and preserves the desktop
 context-menu contract.
 
+The optional Device settings short-tap action and View right click (#1050)
+open the same existing dialog only for a House Plan writer outside kiosk.
+Touch long press remains informational; pinch/cancel compatibility tails never
+become a settings entry. Opening settings does not enable stage editor tools,
+and editing within the dialog retains the existing desktop-first guarantee.
+
 The summary panel, both halves of its control, and its simple settings form are
 supported View surfaces: each control has a 44 × 44 px or larger target, panel
 scrolling owns its touch gesture instead of zooming the plan, and the settings

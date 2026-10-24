@@ -88,7 +88,7 @@ import {
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { KioskHoldGesture } from './kiosk-hold';
 import { KioskCarousel } from './kiosk-carousel';
-import { acceptTapConfirmation, currentMarkerActionDevice, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
+import { acceptTapConfirmation, currentMarkerActionDevice, currentMarkerSettingsDevice, markerSettingsTargetKey, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
 import { ViewHoldGesture } from './view-hold';
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
@@ -5819,16 +5819,14 @@ export class HouseplanCard extends LitElement {
   private _hideDeviceFocusTip(deviceId: string): void { this._liveRt?.deviceBlur(deviceId); }
   private _clearPointerHover(): void { this._liveRt ? this._liveRt.pointerLeave() : this._clearTransientHover(); }
 
-  /** Right click in VIEW mode always opens HA's more-info (owner's decision). */
+  /** View settings and Devices context menus keep the same screen-space hit owner. */
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
     d = this._deviceForPointerEvent(ev as PointerEvent, d);
     if (this._mode === 'devices') { this._editorRuntime?.deviceCopy.open(ev, d); return; }
     if (this._mode !== 'view') return;
     ev.preventDefault();
     ev.stopPropagation();
-    if (!this._deviceBindingActive(d)) return;
-    if (d.primary) this._openMoreInfo(d.primary);
-    else this._infoCard = d;
+    this._openMarkerDialog(d, true);
   }
 
   private _clickDevice(ev: Event, d: DevItem): void {
@@ -5868,6 +5866,7 @@ export class HouseplanCard extends LitElement {
     // An explicit no-op still owns the click: propagation was stopped and the
     // current marker was resolved, but no capability, feedback or UI path runs.
     if (action === 'none') return;
+    if (action === 'settings') { this._openMarkerDialog(actionDevice, true); return; }
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
     // native browser prompts, so it works and looks right on a wall tablet.
@@ -9553,18 +9552,38 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._findInboxDevice(row);
   }
 
-  private _openMarkerDialog(d?: DevItem): void {
+  private _openMarkerDialog(d?: DevItem, viewSettings = false): void {
     this._warmMarker.cancel();
     const request = ++this._markerDialogRequest;
-    if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;
+    if (!deviceEditorAllowed(this._canEdit, this._kiosk) || viewSettings && !this._loadOk) {
+      if (viewSettings) this._showToast(this._t('toast.device_settings_unavailable'), 'toast.device_settings_unavailable');
+      return;
+    }
+    if (viewSettings) { this._interruptViewGesture(); this._closeInfoCard(); }
+    const modeRequest = this._editorModeRequest, navigation = this._editorRuntime?.navigationIntent;
+    const cardConfig = this._config;
+    const epoch = this._adoption.adoptionEpoch, layoutRev = this._layoutRev, authorityCurrent = this._configWriteGuard();
+    const context = { spaceId: this._space, id: d?.id ?? '' }, bindingKey = d ? markerSettingsTargetKey(d) : '';
+    const current = (): DevItem | null => request === this._markerDialogRequest && this.isConnected
+      && this._mode === 'view' && modeRequest === this._editorModeRequest
+      && (navigation === undefined || navigation === this._editorRuntime?.navigationIntent)
+      && this._loadOk && authorityCurrent() && deviceEditorAllowed(this._canEdit, this._kiosk)
+      && cardConfig === this._config
+      && epoch === this._adoption.adoptionEpoch && layoutRev === this._layoutRev && !this._otherDialogsBlocked
+      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey) : null;
+    const open = (): void => {
+      if (viewSettings) { const target = current(); if (target) this._editorRuntime?._openMarkerDialog(target, current); }
+      else this._editorRuntime?._openMarkerDialog(d);
+    };
+    if (viewSettings && !current()) return;
     if (!this._editorRuntime) {
       void this._ensureEditorRuntime().then((ready) => {
         if (ready && request === this._markerDialogRequest && this.isConnected
-            && deviceEditorAllowed(this._canEdit, this._kiosk)) this._editorRuntime?._openMarkerDialog(d);
+            && deviceEditorAllowed(this._canEdit, this._kiosk)) open();
       });
       return;
     }
-    return this._editorRuntime._openMarkerDialog(d);
+    open();
   }
 
   /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */

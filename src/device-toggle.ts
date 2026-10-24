@@ -465,7 +465,7 @@ export function projectedTapAction(
   defaultDomain: string | null | undefined,
 ): DeviceTapAction {
   if (persisted === 'cover' || persisted === 'toggle') return 'toggle';
-  if (persisted === 'more-info' || persisted === 'run'
+  if (persisted === 'more-info' || persisted === 'settings' || persisted === 'run'
     || persisted === 'info' || persisted === 'none') return persisted;
   // Only actual absence activates the light default. An unknown persisted
   // token is invalid data, not an absent choice: fail closed to the local card

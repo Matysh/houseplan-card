@@ -166,6 +166,33 @@ def _config_with_decor_image(asset_id: str) -> tuple[dict, dict]:
     return config, shape
 
 
+@pytest.mark.parametrize("kind", ["full", "space"])
+def test_issue1050_settings_action_survives_export_parse_and_apply(tmp_path: Path, kind: str) -> None:
+    config = _config()
+    config["markers"][0].update({
+        "tap_action": "settings", "tap_target": "script.kept", "tap_confirm": True,
+        "description": "Preserved settings target", "future": {"kept": [1, 2]},
+    })
+    before = copy.deepcopy(config)
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["markers"] == config["markers"]
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    current["markers"] = []
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5},
+        config_root=tmp_path)
+    imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), current, {},
+        confirm_missing_content=True)
+    [marker] = imported["markers"]
+    for key in ("tap_action", "tap_target", "tap_confirm", "description", "future"):
+        assert marker[key] == config["markers"][0][key]
+    assert config == before
+
+
 @pytest.mark.parametrize("alpha", [0, 1])
 def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration(tmp_path: Path, alpha: float) -> None:
     config = _config()

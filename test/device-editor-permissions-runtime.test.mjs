@@ -23,3 +23,23 @@ test('#844 the real runtime refuses a forbidden entry before acknowledgement or 
     assert.deepEqual(notices, []);
   }
 });
+
+test('#1050 actual dialog owner rechecks a retired current-target resolver after deferred Properties',()=>{
+  const acknowledgements=[],selected=[];
+  const initial={id:'current',name:'old'},fresh={id:'current',name:'fresh'};
+  let current=initial,retry;
+  const host={_canEdit:true,_kiosk:false,_norm:false,_markerDialog:null,
+    _vacAllCamerasFor:'retained',_vacAllCameraCache:'retained',
+    _ackNewDevice:id=>acknowledgements.push(id),_showToast:()=>{},_t:key=>key};
+  const runtime=Object.create(HouseplanEditorRuntime.prototype);runtime.host=host;
+  runtime.properties={beforeIntent:callback=>{retry=callback;return false;},selectDevice:d=>{selected.push(d);return true;}};
+  runtime._openMarkerDialog(initial,()=>current);
+  assert.equal(typeof retry,'function');
+  assert.deepEqual(acknowledgements,[]);
+  current=null;retry();
+  assert.deepEqual(selected,[]);assert.deepEqual(acknowledgements,[]);
+  assert.equal(host._vacAllCamerasFor,'retained');assert.equal(host._markerDialog,null);
+  current=fresh;runtime.properties.beforeIntent=()=>true;
+  runtime._openMarkerDialog(initial,()=>current);
+  assert.deepEqual(selected,[fresh]);assert.deepEqual(acknowledgements,['current']);
+});

@@ -4,7 +4,7 @@ const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
-  // 1) Единый селектор содержит ровно пять актуальных действий;
+  // 1) Единый селектор содержит ровно шесть актуальных действий;
   // legacy cover и пустая авто-опция в UI не возвращаются.
   c._setMode('devices'); await c.updateComplete;
   // v1.39.0: у ЛАМП дефолт 'toggle', поэтому для проверки дефолта 'info'
@@ -13,20 +13,21 @@ const res = await page.evaluate(async () => {
   c._openMarkerDialog(dev); await c.updateComplete;
   const sel = sr().querySelector('#marker-tap-action');
   const values = sel ? [...sel.options].map((o) => o.value) : [];
-  out.fiveCurrentOptions = JSON.stringify(values) === JSON.stringify([
-    'info', 'more-info', 'toggle', 'run', 'none',
+  out.sixCurrentOptions = JSON.stringify(values) === JSON.stringify([
+    'info', 'more-info', 'settings', 'toggle', 'run', 'none',
   ]);
   out.noLegacyOptions = !values.includes('') && !values.includes('cover');
   out.defaultInfo = sel && sel.value === 'info';
   c._markerDialog = null; await c.updateComplete;
-  // 2) правый клик в Просмотре открывает more-info
+  // 2) #1050: правый клик в Просмотре открывает настройки House Plan.
   c._setMode('view'); await c.updateComplete;
   let moreInfo = null;
   c._openMoreInfo = (eid) => { moreInfo = eid; };
   const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
   c._ctxDevice(ev, dev);
-  out.ctxMoreInfo = moreInfo === dev.primary;
+  out.ctxSettings = c._markerDialog?.devId === dev.id && moreInfo === null;
   out.ctxPrevented = ev.defaultPrevented;
+  c._markerDialog = null; await c.updateComplete;
   // 3) Devices opens its copy menu, without opening HA more-info.
   c._setMode('devices'); await c.updateComplete;
   moreInfo = null;
@@ -35,14 +36,14 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.editorCopyMenu = moreInfo === null && ev2.defaultPrevented
     && !!sr().querySelector('[data-hp="device-copy"]');
-  // 4) виртуальное без primary → инфо-карточка
+  // 4) Виртуальное без primary открывает тот же редактор без HA more-info.
   c._setMode('view'); await c.updateComplete;
   const virt = c._devices.find((d) => d.virtual && !d.primary) || null;
   if (virt) {
     c._ctxDevice(new MouseEvent('contextmenu', { cancelable: true }), virt);
-    out.virtInfo = c._infoCard === virt;
-    c._infoCard = null;
-  } else out.virtInfo = 'no-virt';
+    out.virtSettings = c._markerDialog?.devId === virt.id && moreInfo === null;
+    c._markerDialog = null; await c.updateComplete;
+  } else out.virtSettings = 'no-virt';
   // 5) card-wide tap_action игнорируется: без явного действия клик = инфо
   c._config = { ...c._config, tap_action: 'toggle' };
   const calls = [];

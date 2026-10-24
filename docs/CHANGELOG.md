@@ -7,6 +7,9 @@
   retain their appearance in Flat and 2.5D. LED strips keep their ordinary inactive shape and
   dim only badge text when present. Unknown/missing readings do not prove offline. (#1026)
 
+- Open a device's House Plan settings directly from View with the new Device
+  settings tap action or a right click. Both entries require edit permission
+  outside kiosk and keep the current device and Home Assistant context. (#1050)
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)

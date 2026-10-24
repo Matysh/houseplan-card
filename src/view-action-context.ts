@@ -33,6 +33,19 @@ export function currentMarkerActionDevice(
   return devices.find((item) => item.id === context.id && item.space === context.spaceId) ?? null;
 }
 
+/** A marker's stable binding identity excludes volatile HA state and presentation. */
+export function markerSettingsTargetKey(device: DevItem): string {
+  return JSON.stringify([device.id, device.space, device.bindingKind,
+    device.bindingRef, device.marker?.binding]);
+}
+
+export function currentMarkerSettingsDevice(
+  devices: readonly DevItem[], activeSpace: string, context: ViewActionContext, bindingKey: string,
+): DevItem | null {
+  const current = currentMarkerActionDevice(devices, activeSpace, context);
+  return current && !current.hidden && markerSettingsTargetKey(current) === bindingKey ? current : null;
+}
+
 /** State ticks may change direction, but a replaced binding/card row set may not act. */
 export function infoCardRowContextKey(
   device: DevItem, rows: readonly { eid: string; kind: string }[],

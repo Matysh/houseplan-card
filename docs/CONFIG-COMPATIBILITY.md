@@ -1004,6 +1004,16 @@ migration: the new field exists only in the portable envelope.
 
 ## Legacy device tap action
 
+The current `settings` tap action opens the existing House Plan device editor
+only for a loaded writer outside kiosk (#1050). It is another literal in the
+existing marker field, without a Store/model/archive version or migration.
+Opening settings and saving another field preserve the original action,
+`tap_target` and `tap_confirm`; generic transfer and device copying retain the
+literal. An older frontend projects this unknown token to Info, never to Toggle
+or Run. An older strict backend can reject a Save containing it; the existing
+atomic rollback keeps the accepted document and draft. Back up before downgrade
+and do not silently mass-rewrite saved actions.
+
 The canonical marker token `tap_action: none` is an explicit saved no-op. It is
 different from an absent, `null` or empty action: those values retain the
 domain default (Toggle for a primary `light.*`, Device card otherwise). The
