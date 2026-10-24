@@ -42,7 +42,6 @@ const reference = {
     active: svgState('Light', 'Icon Active.svg'),
     lock: svgState('Light', 'Lock.svg'),
     unlock: svgState('Light', 'Unlock.svg'),
-    unavailable: svgState('Light', 'Unavailable.svg'),
     alert: svgState('Light', 'Alert Value.svg'),
   },
   dark: {
@@ -51,7 +50,6 @@ const reference = {
     active: svgState('Dark', 'Icon Active.svg'),
     lock: svgState('Dark', 'Lock.svg'),
     unlock: svgState('Dark', 'Unlock.svg'),
-    unavailable: svgState('Dark', 'Unavailable.svg'),
     alert: svgState('Dark', 'Alert Value.svg'),
   },
 };
@@ -148,6 +146,9 @@ const beforeUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
   shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
   opacity: getComputedStyle(node).opacity,
+  glyphOpacity: getComputedStyle(node.querySelector('.device-core > ha-icon')).opacity,
+  coreOpacity: getComputedStyle(node.querySelector('.device-core')).opacity,
+  shellOpacity: getComputedStyle(node.querySelector('.device-shell-frame')).opacity,
 }));
 await page.hover(selector('d_kettle'));
 // The production core/shell hover transition is 150 ms. Sampling in the same
@@ -158,6 +159,9 @@ const afterUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
   shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
   opacity: getComputedStyle(node).opacity,
+  glyphOpacity: getComputedStyle(node.querySelector('.device-core > ha-icon')).opacity,
+  coreOpacity: getComputedStyle(node.querySelector('.device-core')).opacity,
+  shellOpacity: getComputedStyle(node.querySelector('.device-shell-frame')).opacity,
 }));
 
 await page.hover(selector('d_tv'));
@@ -322,6 +326,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       shellWidth: parseFloat(shell.borderTopWidth),
       shellStyle: shell.borderStyle,
       opacity: getComputedStyle(lockNode).opacity,
+      glyphOpacity: getComputedStyle(lockNode.querySelector('.device-core > ha-icon')).opacity,
     };
   };
   const stateMatrix = Object.fromEntries(['light', 'dark'].map((theme) => [theme, {
@@ -545,6 +550,10 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
         && stateMatrix[theme][state].shell === reference[theme][state].shell
         && Math.abs(stateMatrix[theme][state].shellWidth
           - Math.max(1, Math.floor(reference[theme][state].shellWidth * 50.4))) <= 0.5)),
+    ownOfflineRetainsOrdinaryThemePaint: ['light', 'dark'].every(theme =>
+      ['core', 'glyph', 'shell', 'shellWidth', 'opacity'].every(key =>
+        stateMatrix[theme].unavailable[key] === stateMatrix[theme].default[key])
+      && stateMatrix[theme].unavailable.glyphOpacity === '0.35'),
     openingLockPaletteMatches: ['light', 'dark'].every((theme) =>
       ['lock', 'unlock'].every((state) =>
         openingLockMatrix[theme][state].core === reference[theme][state].core
@@ -628,7 +637,9 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       && lqiSamples.some((sample) => sample.value > 41 && sample.value < 179
         && sample.actual !== 'rgb(240, 160, 12)'),
     unavailableHasNoHoverOrMotion: JSON.stringify(beforeUnavailable) === JSON.stringify(afterUnavailable)
-      && beforeUnavailable.opacity === '0.35' && !unavailable.querySelector('.device-pulse'),
+      && beforeUnavailable.opacity === '1' && beforeUnavailable.glyphOpacity === '0.35'
+      && beforeUnavailable.coreOpacity === '1' && beforeUnavailable.shellOpacity === '1'
+      && !unavailable.querySelector('.device-pulse'),
     valueCapsuleOwnsHoverAndActionAtEveryPosition: capsulePositions.length === 4
       && capsulePositions.every(({ hover, actionAccepted }) => hover.hovered
         && hover.core === 'rgb(12, 130, 240)'
