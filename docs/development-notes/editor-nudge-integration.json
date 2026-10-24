@@ -301,5 +301,52 @@
       "lazyEditorGzipBytes": 347064
     },
     "proofBoundary": "Fresh cover and nudge native execute on the combined source. The previous four native/two Golden b09f receipts remain historical local executions with identical product/build inputs. The fresh mandatory normal hook checks the final published source; full task plan remains a CI requirement, not a local-pass claim."
+  },
+  "codeR1Followup": {
+    "reviewedSource": "4470fa350c04b79d73cdeb4fb20d53e2443d72c7",
+    "reviewDocumentCommit": "e494ec5c0",
+    "reviewDocument": "docs/reviews/CODE-REVIEW-1025-r1.md",
+    "reviewComment": "https://github.com/Matysh/houseplan-card/issues/1025#issuecomment-6386604185",
+    "verdict": "yellow",
+    "high": 0,
+    "medium": 1,
+    "blockingCycles": "1/4, unchanged",
+    "finding": "The new Plan/Devices arrow-key capability is major relative to stable v1.82.0, not stable-fix merely because it reuses existing editors/writers.",
+    "correction": {
+      "paths": [
+        "docs/release-ledger/v1.82.0/1025.json",
+        "docs/development-notes/editor-nudge-integration.json"
+      ],
+      "categoryBefore": "stable-fix",
+      "categoryAfter": "major",
+      "stableEvidence": "git show v1.82.0:src/houseplan-card.ts: only the Decor _onKey branch translates selection with arrows (#447). Plan walls/openings and Devices keyboard movement are new.",
+      "productAndTestChanges": 0,
+      "bodyOrAcChanges": 0
+    },
+    "completeCiReceipts": [
+      {
+        "run": 40103694507,
+        "kind": "push product",
+        "smokesPassed": 257,
+        "smokesFailed": 0
+      },
+      {
+        "run": 40107116512,
+        "kind": "canonical Validate including tooling",
+        "smokesPassed": 257,
+        "smokesFailed": 0
+      }
+    ],
+    "reviewerGeometryProof": {
+      "source": "4470fa350c04b79d73cdeb4fb20d53e2443d72c7",
+      "actor": "Independent CODE r1 reviewer; not an author execution claim",
+      "command": "node scripts/model-invariants.mjs --config /tmp/nudge-invariants-config.json",
+      "cases": [
+        "translated free wall",
+        "translated 45-degree opening"
+      ],
+      "result": "Invariants passed; recorded in the immutable CODE r1 document. C-only release classification does not change this geometry input."
+    },
+    "nextProofBoundary": "A/B/build inputs remain identical to reviewed4470. Targeted release ledger/notes tests and the mandatory fresh normal hook verify the C-only follow-up; prior full task CI remains a separate exact-source receipt until the pipeline accepts current material."
   }
 }
