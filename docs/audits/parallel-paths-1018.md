@@ -1,6 +1,6 @@
 # Parallel paths and diagnostic coverage (#1018)
 
-The issue body is the accepted specification. The frozen manual author audit
+The issue body is the accepted specification. The manual author audit
 is `parallel-paths-1018.json`: each entry records the historical change, prior
 path, current references, decision/reason and source anchors at its explicit
 candidate SHA. Generate the current history table without inferring semantics:
@@ -8,6 +8,13 @@ candidate SHA. Generate the current history table without inferring semantics:
 ```sh
 node scripts/parallel-path-audit.mjs --sha=<40-character-SHA> --base=v1.80.1 --stable=v1.81.0,v1.82.0
 ```
+
+The [complete named disposition](parallel-paths-1018-disposition.md) is pinned
+to accepted `845c20c3eaef7da16120b8c3d507b2a551698b47`: 70 candidates,
+67 KEEP and three historical REMOVE records for the one onOpacity subsystem.
+All 19 earlier needs-witness entries now name concrete existing witnesses and
+distinct current consumers/states; their saved execution outcomes retain the
+separate a34f capture SHA. The final post-#1051 delta must be checked before S7.
 
 The main list is every fix/refactor with non-i18n text src additions > 0 and
 additions ≥ 3 × deletions in that range. It separates the two stable cycles
