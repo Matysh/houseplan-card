@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1046,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Replaces stable drag-to-create decorative Line interaction with the owner-requested Walls-style click chain, exact Shift rays and active-chain Undo/Redo. Existing stored line geometry is unchanged.",
+  "summary": {
+    "ru": "Линии декора последовательными кликами, Shift с шагом 45° и история каждого отрезка.",
+    "en": "Decorative lines by successive clicks, exact 45° Shift and per-segment history."
+  }
+}

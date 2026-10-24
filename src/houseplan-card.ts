@@ -3040,6 +3040,9 @@ export class HouseplanCard extends LitElement {
     // Delete/Backspace there must never fall through to the selected object.
     const inEditorSecondary = eventPath.some((node: any) =>
       node?.classList?.contains?.('editor-secondary') || node?.classList?.contains?.('hp-properties'));
+    if (!inField && e.key === 'Escape' && this._editorRuntime?.decorLine.active) {
+      e.preventDefault(); this._editorRuntime.decorLine.reset(); return;
+    }
     if (!inField && this._editorRuntime?.properties.escape(e)) return;
     const mod = e.ctrlKey || e.metaKey;
     const key = e.key.toLowerCase();
@@ -3057,7 +3060,7 @@ export class HouseplanCard extends LitElement {
       if (redo) { e.preventDefault(); this._redoGeometry(); return; }
       if (undo) {
         e.preventDefault();
-        if (this._decorDraft) { this._decorDraft = null; return; }
+        if (this._decorDraft && !this._editorRuntime?.decorLine.active) { this._decorDraft = null; return; }
         if (this._decorMove || this._dtDrag || this._editorRuntime?.backdropGesture.active) {
           this._cancelDecorGesture();
           return;
@@ -6994,6 +6997,7 @@ export class HouseplanCard extends LitElement {
 
   private _stagePointerMove(ev: PointerEvent): void {
     if (!this._pointers.has(ev.pointerId) && !sceneGestureFromPath(ev.composedPath())) return;
+    this._editorRuntime?.decorLine.pointerMove(ev);
     if (this._editorRuntime?.stairs.pointerMove(ev)) return;
     if (this._editorRuntime?.physicalGesture.rotation?.pid === ev.pointerId) {
       this._editorRuntime?.physicalGesture.rotateMove(ev);
@@ -7124,6 +7128,7 @@ export class HouseplanCard extends LitElement {
 
   private _stagePointerUp(ev: PointerEvent): void {
     this._viewHold.cancel(ev.pointerId);
+    this._editorRuntime?.decorLine.pointerUp(ev);
     this._deviceHits.release(ev.pointerId);
     this._flushHa();
     this._editorRuntime?._cancelPointerMove('markup-hover');
@@ -11071,6 +11076,7 @@ export class HouseplanCard extends LitElement {
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @lostpointercapture=${(e: PointerEvent) => {
             if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);
+            if (this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${renderDayCycleEnvironment(dayCycle, dayCycleWeight, moonLayer(this, this._sunGlobal(), dayCycle))}

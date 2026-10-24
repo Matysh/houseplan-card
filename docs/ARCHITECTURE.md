@@ -65,6 +65,15 @@ Its discriminated node command joins the existing serialized writer and common
 Move keeps its existing refusal policy. Capability is transport-only, with no
 new View import, polling, persisted selection or model change.
 
+Decor Line (#1046) is a lazy-editor `DecorLineDrawing` session. Clean stage
+pointer pairs authorise one native click; navigation/cancel tails have no such
+token. Preview and commit use the same endpoint calculation, with exact Shift
+rays and compatible decor magnets. Accepted segments use the existing geometry
+writer and common command stack; only command snapshots carry a session token
+and anchor. History restores it only while the same chain was active, and
+authoritative adoption/context teardown clears it. No config schema or View
+dependency changes; Shift listeners exist only for an unfinished chain.
+
 Print export (#1036) keeps the PDF scene/writer independent from a lazy SVG View
 snapshot. The card supplies a read-only stage/context fence, not export geometry.
 The exporter freezes computed styles and flattened icon shadows synchronously,

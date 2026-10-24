@@ -154,9 +154,7 @@ check('AC1 unpinned: the Redo retry applies exactly it', [(await toasts()).at(-1
 
 // ---- AC2: an unfit step leaves alone; the neighbours of another editor and the same name apply next
 await editor('decor', 'line');
-const from = await screen([0.2, 0.6]), to = await screen([0.5, 0.6]);
-await page.mouse.move(from.x, from.y); await page.mouse.down();
-await page.mouse.move(to.x, to.y, { steps: 6 }); await page.mouse.up(); await saved();
+await click([0.2, 0.6]); await click([0.5, 0.6]); await saved();
 await editor('plan', 'draw');
 await drawWall([0.3, 0.5], [0.7, 0.5]);
 const three = await state(), withThird = walls('f1'), w3 = without(withThird, w1);

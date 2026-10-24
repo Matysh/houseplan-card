@@ -91,7 +91,11 @@ const res = await page.evaluate(async () => {
     return target;
   };
   c._decorTool = 'line'; c._decorDraft = null; await c.updateComplete;
-  dispatchToolPress(capsulePoint, 362);
+  const capsuleTarget=dispatchToolPress(capsulePoint, 362);
+  capsuleTarget?.dispatchEvent(new PointerEvent('pointerup', { bubbles:true,composed:true,pointerId:362,
+    pointerType:'mouse',button:0,clientX:capsulePoint.x,clientY:capsulePoint.y }));
+  capsuleTarget?.dispatchEvent(new MouseEvent('click', { bubbles:true,composed:true,
+    clientX:capsulePoint.x,clientY:capsulePoint.y }));
   await c.updateComplete;
   out.lineStartsThroughDeviceCapsule = c._decorDraft?.kind === 'line';
   c._decorDraft = null;
@@ -354,6 +358,9 @@ const res = await page.evaluate(async () => {
   // фигура вообще перестаёт быть мишенью для указателя
   out.shapeInertUnderLineTool = getComputedStyle(probe()).pointerEvents === 'none';
   press(probe(), g * 18, g * 30, 41);
+  const lineStart=toScreen(g*18,g*30);
+  stageEl().dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerId:41,button:0,...lineStart}));
+  stageEl().dispatchEvent(new MouseEvent('click',{bubbles:true,composed:true,...lineStart}));
   await c.updateComplete;
   out.lineToolStartsDraft = !!c._decorDraft && c._decorDraft.kind === 'line';
   // ...и именно из этой точки (снап к концу старой линии)

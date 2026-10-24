@@ -4,6 +4,7 @@
  */
 import type { CommandStack } from './command-stack';
 import type { DecorShape } from './editors/decor/types';
+import type { DecorLineSession } from './editors/decor/line-drawing';
 import type { OpenSpanEntry } from './open-spans';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 import type { Stair } from './stairs';
@@ -32,6 +33,8 @@ export interface SpaceGeometryState {
   };
   /** Session-only: current-writer normalisation scope for wall-chain history. */
   wallChainSeedIds?: string[];
+  /** Session-only cursor for accepted click-Line segments (#1046). */
+  decorLineSession?: DecorLineSession;
   /** Session-only: exact room fields touched by Delete/Merge room. */
   roomReferences?: MarkerRoomReferenceSnapshot[];
 }
