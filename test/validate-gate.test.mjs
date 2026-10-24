@@ -281,6 +281,43 @@ test('#1044 a companion on foreign material cannot bind a pending continuation',
   assert.deepEqual(fake.dispatched, []);
 });
 
+test('#1059 surplus product proof dispatches the exact light canonical request and accepts only its completed proof', async t => {
+  for (const state of ['green', 'failed', 'pending', 'missing', 'missing-proof', 'incomplete', 'foreign']) await t.test(state, async () => {
+    const ref = 'issue/1059-product-proof-canonical-fallback';
+    const product = run({ event: 'push', databaseId: 7, path: '.github/workflows/validate-product.yml', url: 'https://run/product' });
+    const canonical = run({ databaseId: 8, path: '.github/workflows/validate.yml', url: 'https://run/canonical',
+      ...(state === 'failed' && { conclusion: 'failure' }),
+      ...(state === 'pending' && { status: 'in_progress', conclusion: null }),
+      ...(state === 'foreign' && { headSha: 'c'.repeat(40) }) });
+    const fake = fakeOps({ snapshots: [[product]], jobsById: { 7: OTHER_JOBS, 8: OTHER_JOBS } });
+    let dispatched = false;
+    const requests = [];
+    fake.ops.candidateTree = async sha => { assert.equal(sha, SHA); return TREE; };
+    fake.ops.listRuns = async sha => { assert.equal(sha, SHA);
+      return dispatched && state !== 'missing' ? [canonical, product] : [product]; };
+    fake.ops.dispatch = async (branch, options) => { requests.push({ branch, ...options }); dispatched = true; };
+    const baseProof = fake.ops.proof;
+    fake.ops.proof = async row => {
+      const context = await baseProof(row);
+      if (row.databaseId === 7) {
+        context.proof.run.workflow = 'validate-product.yml';
+        context.proof.profile = 'product';
+        context.proof.requiredProfiles = ['tooling', 'docs'];
+      } else if (state === 'missing-proof') context.proof = null;
+      else if (state === 'incomplete') context.jobs = context.jobs.filter(job => job.name !== OTHER_JOBS[0].name);
+      return context;
+    };
+    const outcome = await validateGate({ ref, sha: SHA, ops: fake.ops, mutants: false, full: false,
+      wait: false, pollMs: 2, appearMs: 1, totalMs: 20 });
+    assert.deepEqual(requests, [{ branch: ref, mutants: false, full: false }], 'exactly one canonical request on the pinned ref');
+    const expected = { green: 'green', failed: 'failed', pending: 'pending', missing: 'missing',
+      'missing-proof': 'missing', incomplete: 'failed', foreign: 'missing' };
+    assert.equal(outcome.result, expected[state]);
+    if (['green', 'failed', 'pending', 'incomplete'].includes(state)) assert.equal(outcome.url, canonical.url);
+    if (state === 'pending') assert.equal(outcome.runId, canonical.databaseId);
+  });
+});
+
 test('#696: a completed run beats a newer running dispatch only without mutants', async () => {
   const done = run({ event: 'push', databaseId: 7, url: 'https://run/push' });
   const running = run({ databaseId: 9, status: 'in_progress', conclusion: null });

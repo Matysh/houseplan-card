@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1059,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Classifies a complete surplus product CI proof with a valid companion-only candidate plan as stale so the existing exact-material canonical validation runs. It grants no acceptance, schema, permission or budget changes and changes no product behavior.",
+  "summary": {
+    "ru": "Непригодный лишний product proof запрашивает каноническую проверку вместо технического возврата автора.",
+    "en": "An inapplicable surplus product proof requests canonical validation instead of returning the author."
+  }
+}
