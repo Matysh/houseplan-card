@@ -4849,6 +4849,19 @@ for that inventory; it does not change the worker's 180-second per-invocation
 limit, selected IDs, semantic assertions, Golden intent or product performance
 thresholds. A timed-out partial run never counts as a green task proof.
 
+The larger #1025 selected plan exposed the next measured boundary (#1058):
+run `40084326899`, job `120844476069`, was cancelled by the explicit
+`40m0s` job timeout after completing 246 of 256 smokes (244 PASS, two FAIL,
+ten not executed; no Golden scenes). The completed interval was 2358.432 s;
+the two failures used only about 6.5 s and remain separate task failures.
+The selected job now has 50 minutes: extrapolating that completed interval to
+256 checks gives about 41 minutes, with finite headroom for setup and ordinary
+runner variation. This changes only the aggregate selected-job timeout in the
+canonical workflow and its generated product profile. Per-invocation limits,
+selected/full routing, assertions, Golden acceptance and product budgets retain
+their existing contracts. Consumers must still obtain their own complete green
+plan; this infrastructure change does not turn the partial run into proof.
+
 For direct own-device signal (#1029), selected scenes
 `direct-zigbee-lqi-flat-dark` and `direct-zigbee-lqi-iso-dark` feed the actual
 authenticated subscription with 137 and real zero after removing HA LQI values.
@@ -4935,6 +4948,15 @@ The shared display name preserves the existing `workflow_run` trigger in main;
 stays in `validate.yml`. Non-product proofs cannot satisfy product policy.
 A product proof names the profiles required by the complete candidate range;
 missing/pending companions request canonical validation, red companions fail.
+After a rebase, the push-event range may start a surplus product workflow while
+the candidate range requests only known companion profiles (#1059). A nonempty,
+unique docs/tooling-only plan makes that otherwise complete product proof stale,
+never accepted. Its own failed/missing execution still fails; malformed plans
+and foreign identities gain no authority. The existing validate gate requests
+canonical `validate.yml` on the exact material with `full=false/mutants=false`
+for an ordinary light task and accepts only its completed applicable proof.
+`ci-profiles.test.mjs` and `validate-gate.test.mjs` cover this input, the actual
+dispatch contract and red/pending/missing/incomplete/foreign canonical outcomes.
 Only canonical completed runs advance the old range/classification induction;
 a narrower push profile cannot erase an unjudged ancestor. Night and release
 continue to request full policy. The proof schema stays `houseplan-ci-proof/v1`.

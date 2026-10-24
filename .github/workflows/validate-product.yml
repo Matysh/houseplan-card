@@ -1192,8 +1192,8 @@ jobs:
     needs: [changes, bundle]
     if: always() && needs.changes.result == 'success' && needs.bundle.result == 'success' && needs.changes.outputs.browser_subset == 'true'
     runs-on: ubuntu-24.04
-    # #1055: 176/218 smokes used 1486 s before Golden; retain the complete task plan.
-    timeout-minutes: 40
+    # #1058: 246/256 smokes used 2358 s; 40 min cancelled the remaining task plan.
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
