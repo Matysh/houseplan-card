@@ -5,6 +5,7 @@ import { runNodeHistory } from '../test-build/wall-node-history.js';
 import { nodeFloorFingerprint, writeWallNode } from '../test-build/wall-node-write.js';
 import { applyNodeDelete } from '../test-build/wall-node-delete.js';
 import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { ConfigWriteContext } from '../test-build/config-write-context.js';
 
 const clone = value => structuredClone(value);
 function setup() {
@@ -94,4 +95,54 @@ test('#1045 capability and writer refusal keep a Delete history command and send
   assert.deepEqual(s.toasts, ['node_delete_update_required']);
   await runNodeHistory({ ...s.port, enabled: () => false }, 'undo');
   assert.deepEqual(s.messages, []); assert.equal(s.stack.peekUndo(), s.command);
+});
+
+test('#1045 a retired Delete intent cannot overtake an own queue or change data/history', async () => {
+  for (const pending of [false, true]) {
+    const s = setup(); let release, live = true;
+    if (pending) s.host._writeChain = new Promise(resolve => { release = resolve; });
+    else live = false;
+    const basis = { epoch: 0, space: 'f', floor: nodeFloorFingerprint(s.host._serverCfg.spaces[0]) };
+    const writing = writeWallNode(s.host, s.command.before.nodeMove, basis, { send: () => live, accept: () => true });
+    const refusal = assert.rejects(writing, /stale-node-snapshot/);
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    assert.deepEqual(s.messages, []); live = false; release?.(); await refusal;
+    assert.deepEqual(s.messages, []); assert.deepEqual(s.staged, []);
+    assert.deepEqual(s.host._serverCfg, s.after); assert.equal(s.stack.peekUndo(), s.command);
+  }
+});
+
+test('#1045 a reply from a replaced HA cannot enter config or reload the new authority', async () => {
+  const s = setup(), context = new ConfigWriteContext(); let release, reloads = 0;
+  s.host.hass = { ...s.host.hass, connection: { connected: true }, user: { id: 'writer' } };
+  context.observe(s.host.hass); const claim = context.claim();
+  const authority = () => context.current(claim, s.host.hass) && s.host.hass.connection.connected;
+  s.server.gate = new Promise(resolve => { release = resolve; });
+  s.host._reloadRejectedPhysicalWrite = async () => { reloads++; };
+  const basis = { epoch: 0, space: 'f', floor: nodeFloorFingerprint(s.host._serverCfg.spaces[0]) };
+  const writing = writeWallNode(s.host, s.command.before.nodeMove, basis, { send: authority, accept: authority });
+  const refusal = assert.rejects(writing, /stale-node-snapshot/);
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  assert.equal(s.messages.length, 1);
+  s.host.hass = { ...s.host.hass, connection: { connected: true } }; context.observe(s.host.hass);
+  release(); await refusal;
+  assert.deepEqual(s.staged, []); assert.deepEqual(s.host._serverCfg, s.after);
+  assert.equal(s.stack.peekUndo(), s.command); assert.equal(reloads, 0);
+});
+
+test('#1045 closing the sent intent keeps an accepted reply on the same HA connection', async () => {
+  const s = setup(), context = new ConfigWriteContext(); let release, menuCurrent = true;
+  s.host.hass = { ...s.host.hass, connection: { connected: true }, user: { id: 'writer' } };
+  context.observe(s.host.hass); const claim = context.claim();
+  const authority = () => context.current(claim, s.host.hass) && s.host.hass.connection.connected;
+  s.server.gate = new Promise(resolve => { release = resolve; });
+  const basis = { epoch: 0, space: 'f', floor: nodeFloorFingerprint(s.host._serverCfg.spaces[0]) };
+  const writing = writeWallNode(s.host, s.command.before.nodeMove, basis,
+    { send: () => authority() && menuCurrent, accept: authority });
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+  assert.equal(s.messages.length, 1); menuCurrent = false;
+  s.host.hass = { ...s.host.hass }; context.observe(s.host.hass);
+  release(); await writing;
+  assert.deepEqual(s.host._serverCfg, s.before); assert.equal(s.staged.length, 1);
+  assert.equal(s.host._cfgRev, 3);
 });

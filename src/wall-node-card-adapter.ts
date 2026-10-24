@@ -34,6 +34,7 @@ interface NodeCardHost<TState> extends WallNodeWriteHost {
   _geometryHistory: NodeHistoryStack<TState> & { push(command: { name: string; before: TState; after: TState }): void };
   readonly _fillColors: { wall_fill: { c: string; a: number } };
   _openingAmt(opening: OpeningCfg): number;
+  _configWriteGuard(): () => boolean;
 }
 export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHistory }>(
   host: NodeCardHost<TState>, callbacks: {
@@ -67,8 +68,16 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     ? toolsT(language(), key as ToolsI18nKey, params || { reason: host._t('toast.geometry_unsafe') })
     : host._t(key as I18nKey, params);
   const toast = (message: string, id?: string): void => host._showToast(message, id);
-  const write = (history: NodeCommandHistory, basis: NodeWriteBasis | null): Promise<ServerConfig> => {
-    retire(); return writeWallNode(host, history, basis ?? nodeWriteBasis(host, history.beforeSpace.id));
+  const write = (history: NodeCommandHistory, basis: NodeWriteBasis | null,
+    current: () => boolean = () => true): Promise<ServerConfig> => {
+    retire();
+    const claim = history.kind === 'delete' ? host._configWriteGuard() : null;
+    const authority = () => host.isConnected && host.hass.connection?.connected !== false && !!claim?.();
+    return writeWallNode(host, history, basis ?? nodeWriteBasis(host, history.beforeSpace.id), claim ? {
+      send: () => authority() && writer() && ['plan', 'decor'].includes(host._mode)
+        && host._haWallNodeDeleteApi === 1 && current(),
+      accept: authority,
+    } : null);
   };
   const editor = new WallNodeEditor({
     document: host.renderRoot.ownerDocument,

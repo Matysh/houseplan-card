@@ -39,11 +39,16 @@ browser-baseline Undo/Redo; missing compiled inputs fail closed.
 `test/node-delete-history.test.mjs` drives the real serialized writer and common
 CommandStack: data/cursor change only after acceptance, every refused inverse
 keeps both. Existing Move tests remain mandatory for the shared path.
+Delete also fences its pending queue entry by the original authority and intent;
+retiring it while an own write waits sends no late node request. A response from
+a replaced HA authority cannot be adopted or trigger a reload into the new one.
+Closing an already sent menu intent does not discard a valid accepted reply from
+the same authority. The pre-existing Move writer uses its unchanged default path.
 The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authenticated
 groups, concurrent CAS, stores, metadata projection and integration reload; it
 never replaces the product planner. Run it with the current supported HA harness.
 Ordinary rotated inputs extend parity to 160 scenarios, including finite contacts
-that neither old carrier touched. Seven registered kernel/writer/history guards
+that neither old carrier touched. Ten registered kernel/writer/history/capability guards
 have static readiness only; execution and caught evidence remain nightly.
 The existing `node-history-requires-select` witness keeps its identity/oracle;
 only its adapter anchor follows the new operation-specific capability callback.
