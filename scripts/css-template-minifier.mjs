@@ -6,6 +6,7 @@
  * combinators.  Interpolated templates fail closed because rewriting across a
  * JavaScript expression would make the build depend on runtime values.
  */
+import { coverageMapsEnabled, editMappedSource } from './coverage-maps.mjs';
 const isWhitespace = (char) => /[\t\n\f\r ]/.test(char);
 const TIGHT_BEFORE = new Set(['{', '}', ':', ';', ',', '>', ')']);
 const TIGHT_AFTER = new Set(['{', '}', ':', ';', ',', '>', '(']);
@@ -62,7 +63,7 @@ export function minifyCssText(source, label = '<css>') {
 
 const CSS_TAG = /(^|[^\w$.])css\s*`/;
 
-export function minifyStaticCssTemplates(code, id = '<module>') {
+export function minifyStaticCssTemplates(code, id = '<module>', onEdit = () => {}) {
   let cursor = 0;
   let output = '';
   let changed = false;
@@ -91,7 +92,9 @@ export function minifyStaticCssTemplates(code, id = '<module>') {
     if (end >= code.length) throw new Error(`${id}:${start}: unclosed css template`);
     const css = code.slice(start + tagLength, end);
     output += code.slice(cursor, start);
-    output += `css\`${minifyCssText(css, `${id}:${start}`)}\``;
+    const text = `css\`${minifyCssText(css, `${id}:${start}`)}\``;
+    output += text;
+    onEdit({ start, end: end + 1, text });
     cursor = end + 1;
     changed = true;
   }
@@ -99,13 +102,14 @@ export function minifyStaticCssTemplates(code, id = '<module>') {
   return output + code.slice(cursor);
 }
 
-export function cssTemplateMinifier() {
+export function cssTemplateMinifier({ coverage = coverageMapsEnabled() } = {}) {
   return {
     name: 'houseplan-css-template-minifier',
     transform(code, id) {
       if (!id.endsWith('.ts') || !CSS_TAG.test(code)) return null;
-      const transformed = minifyStaticCssTemplates(code, id);
-      return transformed == null ? null : { code: transformed, map: null };
+      const edits = [];
+      const transformed = minifyStaticCssTemplates(code, id, edit => edits.push(edit));
+      return transformed == null ? null : coverage ? editMappedSource(code, edits, { id }) : { code: transformed, map: null };
     },
   };
 }

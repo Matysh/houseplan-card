@@ -370,12 +370,6 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colortile > .${p}-colortile-swatch > hp-color-opacity { position: absolute; inset: 0; }
   .${p}-colortile-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
   .${p}-colortile-meta .${p}-hex { font-size: .8125rem; }
-  .${p}-colortile-meta .${p}-unit { height: 32px; }
-  .${p}-colortile-meta .${p}-unit > input { width: 3.6em; min-width: 3.6em; padding: 4px 4px 4px 7px; font-size: .8125rem; }
-  .${p}-colortile-meta .${p}-unit > input[type='number'] { appearance: textfield; }
-  .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-inner-spin-button,
-  .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .${p}-colortile-meta .${p}-unit > span { padding: 0 7px 0 0; font-size: .8125rem; }
   .${p}${css`-colorfield {
     display: flex;
     flex-wrap: wrap;

@@ -3,6 +3,7 @@ import { existsSync, lstatSync, readFileSync, readdirSync, rmSync } from 'node:f
 import { createRequire } from 'node:module';
 import { dirname, posix, relative, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { coverageMapsEnabled, editMappedSource, replacementEdits, replaceChunkSource, hashMapRecipe } from './coverage-maps.mjs';
 
 const BUILD_FINGERPRINT_TOKEN = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
@@ -262,12 +263,13 @@ export function bundleManifestPlugin(fingerprint) {
 }
 
 /** Embed one immutable build id in both sides of the lazy handshake. */
-export function buildFingerprintPlugin(fingerprint) {
+export function buildFingerprintPlugin(fingerprint, { coverage = coverageMapsEnabled() } = {}) {
   return {
     name: 'houseplan-build-fingerprint',
     transform(code, id) {
       if (!id.replaceAll('\\', '/').includes('/src/')
           || !code.includes(BUILD_FINGERPRINT_TOKEN)) return null;
+      if (coverage) return editMappedSource(code, replacementEdits(code, BUILD_FINGERPRINT_TOKEN, fingerprint, true).edits, { id });
       return {
         code: code.replaceAll(BUILD_FINGERPRINT_TOKEN, fingerprint),
         map: null,
@@ -281,7 +283,7 @@ export function buildFingerprintPlugin(fingerprint) {
  * Rollup owns that filename, so the URL is injected only after chunk naming;
  * the first import remains a normal Rollup edge for graph accounting.
  */
-export function editorRuntimeRetryUrlPlugin() {
+export function editorRuntimeRetryUrlPlugin({ coverage = coverageMapsEnabled() } = {}) {
   return {
     name: 'houseplan-editor-retry-url',
     generateBundle(_options, bundle) {
@@ -348,74 +350,74 @@ export function editorRuntimeRetryUrlPlugin() {
           let asset = posix.relative(posix.dirname(chunk.fileName), editor.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           editorReplacements += chunk.code.split(EDITOR_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(EDITOR_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, EDITOR_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(ONBOARDING_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), onboarding.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           onboardingReplacements += chunk.code.split(ONBOARDING_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(ONBOARDING_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, ONBOARDING_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(ISO_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), isometric.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           isometricReplacements += chunk.code.split(ISO_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(ISO_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, ISO_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(DE_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), german.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           germanReplacements += chunk.code.split(DE_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(DE_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, DE_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(FR_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), french.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           frenchReplacements += chunk.code.split(FR_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(FR_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, FR_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(FURNITURE_ART_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), furnitureArt.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           furnitureArtReplacements += chunk.code.split(FURNITURE_ART_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(FURNITURE_ART_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, FURNITURE_ART_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(PDF_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), pdf.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           pdfReplacements += chunk.code.split(PDF_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(PDF_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, PDF_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(MOON_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), moon.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           moonReplacements += chunk.code.split(MOON_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(MOON_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, MOON_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(LED_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), led.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           ledReplacements += chunk.code.split(LED_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(LED_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, LED_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(LED_EDITOR_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), ledEditor.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           ledEditorReplacements += chunk.code.split(LED_EDITOR_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(LED_EDITOR_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, LED_EDITOR_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         if (chunk.code.includes(LED_FIELD_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), ledField.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           ledFieldReplacements += chunk.code.split(LED_FIELD_RETRY_ASSET_TOKEN).length - 1;
-          chunk.code = chunk.code.replaceAll(LED_FIELD_RETRY_ASSET_TOKEN, asset);
+          replaceChunkSource(chunk, LED_FIELD_RETRY_ASSET_TOKEN, asset, { all: true, coverage, bundle });
         }
         for (const entry of namespaceLocales) {
           if (!chunk.code.includes(entry.token)) continue;
           let asset = posix.relative(posix.dirname(chunk.fileName), entry.chunk.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
           entry.replacements += chunk.code.split(entry.token).length - 1;
-          chunk.code = chunk.code.replaceAll(entry.token, asset);
+          replaceChunkSource(chunk, entry.token, asset, { all: true, coverage, bundle });
         }
       }
       if (editorReplacements !== 1 || onboardingReplacements !== 1 || isometricReplacements !== 1
@@ -445,7 +447,7 @@ export function editorRuntimeRetryUrlPlugin() {
         const owner = owners[0];
         let asset = posix.relative(posix.dirname(owner.fileName), target.fileName);
         if (!asset.startsWith('.')) asset = `./${asset}`;
-        owner.code = owner.code.replaceAll(entry.token, asset);
+        replaceChunkSource(owner, entry.token, asset, { all: true, coverage, bundle });
       }
     },
   };
@@ -476,17 +478,17 @@ export function editorRuntimeRetryUrlPlugin() {
  */
 export const ENTRY_URL_SEAM = '__HOUSEPLAN_ENTRY_URL__';
 
-export function entryFallbackPlugin() {
+export function entryFallbackPlugin({ coverage = coverageMapsEnabled() } = {}) {
   // #803: manual chunking can add eager side-effect edges to either facade.
   // They must settle before the implementation, as static imports did, but
   // inside the same catch boundary so a missing extra chunk cannot bypass it.
-  const hoistSideEffectAssets = (entry, implementation) => {
+  const hoistSideEffectAssets = (entry, implementation, bundle) => {
     const pattern = /\bimport(["'])(\.\/houseplan-assets\/[^"']+\.js)\1;?/g;
     const assets = [...new Set([...entry.code.matchAll(pattern)]
       .map((match) => match[2]).filter((asset) => asset !== implementation))];
-    entry.code = entry.code.replace(pattern, (match, _quote, asset) => (
+    replaceChunkSource(entry, pattern, (match, _quote, asset) => (
       asset === implementation ? match : ''
-    ));
+    ), { coverage, bundle });
     return assets;
   };
   const awaitAssets = (assets) => assets.map((asset) => `await import("${asset}");`).join('');
@@ -523,12 +525,12 @@ export function entryFallbackPlugin() {
         );
       }
       const cardAsset = cardMatches[0][2];
-      const cardSideEffects = hoistSideEffectAssets(cardEntry, cardAsset);
-      cardEntry.code = cardEntry.code.replace(
-        cardPattern,
+      const cardSideEffects = hoistSideEffectAssets(cardEntry, cardAsset, bundle);
+      replaceChunkSource(cardEntry, cardPattern,
         `${recordEntryUrl}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(cardContract)}`
           + 'console.error("[houseplan] stale houseplan-card.js: the implementation chunk is unavailable",e)}',
+        { coverage, bundle },
       );
 
       // Rollup folds the small panel shell into its stable entry and points its
@@ -556,13 +558,13 @@ export function entryFallbackPlugin() {
           `${panelContract.fileName} card import count is ${panelMatches.length}, expected 1`,
         );
       }
-      const panelSideEffects = hoistSideEffectAssets(panelEntry, cardAsset);
-      panelEntry.code = panelEntry.code.replace(
-        panelPattern,
+      const panelSideEffects = hoistSideEffectAssets(panelEntry, cardAsset, bundle);
+      replaceChunkSource(panelEntry, panelPattern,
         `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(panelContract)}`
           + 'console.error("[houseplan] stale houseplan-panel.js: the card implementation '
           + 'chunk is unavailable",e)}',
+        { coverage, bundle },
       );
       panelEntry.imports = [cardAsset, ...panelSideEffects].map((asset) => asset.replace(/^\.\//, ''));
     },
@@ -610,6 +612,11 @@ export function cleanBundleOutputPlugin(outputRoot = 'dist') {
           throw new Error(`previous bundle path escapes output root: ${file.path}`);
         }
         managed.add(path);
+        const mapPath = `${path}.map`;
+        if (existsSync(mapPath) && !lstatSync(mapPath).isSymbolicLink()) {
+          const map = JSON.parse(readFileSync(mapPath, 'utf8'));
+          if (map.x_houseplan_coverage_recipe === hashMapRecipe) managed.add(mapPath);
+        }
       }
       // Crossing old tracked-dist history can overwrite/remove the manifest
       // without removing ignored chunks. Recover only our flat hashed output

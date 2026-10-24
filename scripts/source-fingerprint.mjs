@@ -20,6 +20,7 @@ const BUILD_INPUTS = [
   'scripts/source-fingerprint.mjs',
   'scripts/css-template-minifier.mjs',
   'scripts/bundle-manifest.mjs',
+  'scripts/coverage-maps.mjs',
 ];
 
 /**

@@ -1,0 +1,650 @@
+{
+  "authority": "diagnostic-only",
+  "captureSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+  "expectedPins": {
+    "node": "22",
+    "python": "3.14",
+    "homeassistant": "2026.8.3",
+    "pytestHomeAssistant": "0.13.357",
+    "playwright": "1.62.0",
+    "chromium": {
+      "revision": "1234",
+      "version": "151.0.7922.34"
+    },
+    "chromiumHeadlessShell": {
+      "revision": "1234",
+      "version": "151.0.7922.34"
+    }
+  },
+  "pythonEntry": {
+    "status": "unknown",
+    "reason": "The pinned capture recipe did not probe Python."
+  },
+  "browser": {
+    "recordedBrowsers": 864,
+    "confirmed": 864,
+    "unknownOrInvalid": [],
+    "versions": [
+      "151.0.7922.34"
+    ],
+    "selectedExecutables": [
+      "/home/sergey/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell"
+    ]
+  },
+  "pythonEnvironmentObservation": {
+    "authority": "diagnostic-only",
+    "sha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+    "observedAt": "2026-10-23T23:33:04.126Z",
+    "liveCollectorPid": 16532,
+    "pythonEnvironment": null,
+    "selectedByInspectedLinuxBridgeCode": "python3",
+    "expectedPin": "3.14",
+    "probeStatus": 0,
+    "probe": {
+      "executable": "/usr/bin/python3",
+      "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "versionInfo": [
+        3,
+        12,
+        3,
+        "final",
+        0
+      ]
+    },
+    "perInvocationObservation": false,
+    "interpretation": "Read-only resolution probe under the live collector environment. Confirms available selected default at this time, not retroactive execution/version attestation of every Python bridge. Entry pins are expected versions, not runtime confirmation."
+  },
+  "pythonProcessObservations": {
+    "authority": "diagnostic-only",
+    "sha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+    "observer": "read-only Linux proc sidecar; separate from pinned collector recipe",
+    "started": 1792798448908,
+    "observations": [
+      {
+        "observedAt": "2026-10-23T23:36:33.607Z",
+        "pid": 60535,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:36.876Z",
+        "pid": 60667,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:38.123Z",
+        "pid": 60682,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:38.873Z",
+        "pid": 60691,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:39.536Z",
+        "pid": 60695,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:40.958Z",
+        "pid": 60711,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:41.807Z",
+        "pid": 60720,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:45.277Z",
+        "pid": 60829,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:46.528Z",
+        "pid": 60841,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:47.290Z",
+        "pid": 60850,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:47.951Z",
+        "pid": 60854,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:48.710Z",
+        "pid": 60855,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:36:50.247Z",
+        "pid": 60868,
+        "case": "smoke:demo/smoke_room_opening_host.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/partition-host-oracle.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:44:58.441Z",
+        "pid": 68590,
+        "case": "smoke:demo/smoke_support_diagnostics.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/support-v2-fixture.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:44:59.107Z",
+        "pid": 68611,
+        "case": "smoke:demo/smoke_support_diagnostics.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/support-v2-fixture.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:44:59.202Z",
+        "pid": 68612,
+        "case": "smoke:demo/smoke_support_diagnostics.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/support-v2-fixture.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:44:59.390Z",
+        "pid": 68613,
+        "case": "smoke:demo/smoke_support_diagnostics.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/support-v2-fixture.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:44:59.487Z",
+        "pid": 68614,
+        "case": "smoke:demo/smoke_support_diagnostics.mjs",
+        "command": [
+          "python3",
+          "/mnt/c/Users/Sergey/Documents/Houseplan/issue-1006-moon-phase-direction/demo/helpers/support-v2-fixture.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      },
+      {
+        "observedAt": "2026-10-23T23:47:12.632Z",
+        "pid": 71543,
+        "case": "smoke:demo/smoke_vacuum_route_recovery.mjs",
+        "command": [
+          "python3",
+          "demo/helpers/vacuum-route-recovery.py"
+        ],
+        "executable": "/usr/bin/python3.12",
+        "pythonEnvironment": null,
+        "runtimeProbeOfObservedExecutable": {
+          "status": 0,
+          "result": {
+            "executable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ]
+          },
+          "binarySha256": "e50d468e8b0adfb05733f5b87b3cff34829c4a8c1aea50c865aa8bdfe4bb150f"
+        }
+      }
+    ],
+    "interpretation": "Only actually observed Python processes are confirmed. Absence of an observation is unknown; this is not an exhaustive spawn log or a product/gate verdict."
+  },
+  "infiniteCanvas": {
+    "case": "smoke:demo/smoke_infinite_canvas.mjs",
+    "runtimeStatus": "unknown",
+    "reason": "Executed before the sidecar; uses literal python3 independently of PYTHON. stdout reports voluptuous absent, backend schema check skipped."
+  },
+  "metadataDeltaBuild": {
+    "authority": "diagnostic-only",
+    "identity": {
+      "sha": "f356d5df45683fbfec0d4e941cf8c5054b4dc412",
+      "tree": "48cc8c088cbbc195b5a6b4007d2338795c7f116b",
+      "sourceFingerprint": "5b99399acc121e4eca5c79213373cef51b884108433c2c88a4f6e4cadf149717",
+      "node": "22.23.3",
+      "mapRecipe": "houseplan-coverage-maps/v1",
+      "platform": "linux",
+      "arch": "x64",
+      "executable": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+      "nodePath": "/home/sergey/.cache/houseplan-1018-runtime/node_modules",
+      "rollupVersion": "4.62.2",
+      "pythonRuntimes": {
+        "pythonEnvironment": null,
+        "selections": {
+          "platformBridge": "python3",
+          "supportBridge": "python3",
+          "infiniteCanvas": "python3"
+        },
+        "probes": [
+          {
+            "status": "probed",
+            "command": "python3",
+            "executable": "/usr/bin/python3",
+            "realExecutable": "/usr/bin/python3.12",
+            "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+            "versionInfo": [
+              3,
+              12,
+              3,
+              "final",
+              0
+            ],
+            "invocationAttestation": false
+          }
+        ],
+        "scope": "Expected pins are separate. These are bounded command-resolution/version probes, not observed bridge invocations; an unobserved child runtime remains unknown."
+      },
+      "recipeFiles": {
+        "scripts/coverage-diagnostic.mjs": "22f328df2e3b5e5b8d595638cdc996a2c1af6ac2cf5d6e5de1956c4d83e2ee0e",
+        "scripts/coverage-inventory.mjs": "e97e14166ee945d93ba891c7901bbe80b7f9e0ade03d95ea9c95e41ea3fe9240",
+        "scripts/coverage-identity.mjs": "4a52034563571e769ae86cff2693e2b6039393139aadf0a94350820f9bda16e3",
+        "scripts/coverage-maps.mjs": "e41e329b223ce2972e059abb0fe9fcbf0e9d9a173b6853a86e1e0b683ffb5ce0",
+        "scripts/coverage-preload.mjs": "7da07714758bf66d713cbe8b9dd13ca5deb3188c3e4cf5051ce6c763cc9ee61a",
+        "scripts/coverage-report.mjs": "44f066062ffb5fcb5e6e9f2838a3dc462a2d545458b94a10af4196811664dc10",
+        "scripts/parallel-path-audit.mjs": "71bcaf0a27ffaeb3eb83d39d1a4300e798585aee84b1c844933a9d722df2a8c2",
+        "scripts/bundle-manifest.mjs": "8cce8944ae23c9db3af6f62d7a1b7dcd45aa8149cad0c44ef59df7dce1bfc905",
+        "scripts/css-template-minifier.mjs": "e58f34a92bf5e571cbcbbbf546117869fe9b81d57b885a17f2af0323cc882ed2",
+        "scripts/fix-test-build.mjs": "009bcfa2195960ad34ba064cbd29dde90035b17058ebfeda40495a2febf29ea0",
+        "rollup.config.mjs": "0dd535bcb679ee5c0d5ad37cbd769b1a5da85c1f67cd9dc50d91824f2301eb27",
+        "tsconfig.json": "6b024bb2726db7baa5b43653c489496cb15a600c5a97180ec48a935f178ba9ec",
+        "tsconfig.test.json": "2b30670589ef76610267d26ff9dbb5711795fea376d840f5e71759612d2c864a",
+        "package-lock.json": "390fffe876490f60c335178ae48ee5d10333849d5263af02168d34c80f20ecd2"
+      },
+      "recipeHash": "c64d34cdec42aa84080e388f1d876e81c39f3089766031257ef106112370ec14"
+    },
+    "manifestSha256": "56e6ba6c4ef3660bed711b4815e14d227db064d8a1fdb9682465c18010b79732",
+    "jsFiles": 63,
+    "normalDiagnosticByteIdentity": true,
+    "normalRestored": true,
+    "indexValid": true,
+    "mappedFiles": 63,
+    "withProductSources": 61,
+    "productSourceBindings": 432,
+    "verificationNote": "The first wrapper asserted form-kit belonged to the editor-runtime file; actual Rollup ownership is shared backdrop-pick. That extra file-location assertion failed after the strict index/normal-diagnostic identity passed. Finally restored normal build. This receipt verifies all actual captured diagnostic JS bytes equal restored normal JS and manifest, and checks form-kit ownership across the real graph, without rerunning builds."
+  },
+  "receipts": [
+    {
+      "path": "artifacts/coverage-before-1018-a34f-WSL/python-environment-observation.json",
+      "sha256": "3bb4d97a4e718058a1cf946e0cd301197d6eaa6b4ca972c6768e76d6ec6b32a7",
+      "bytes": 794
+    },
+    {
+      "path": "artifacts/coverage-before-1018-a34f-WSL/python-process-observations.json",
+      "sha256": "f89f19e0c043e08099218929e4683db37d8e33437d80b340f1d94ca179220e6d",
+      "bytes": 15836
+    },
+    {
+      "path": "artifacts/coverage-before-1018-a34f-WSL/original-failure-comparison.json",
+      "sha256": "d2a04588e203012727323ecf09109783c604e50e72cde46605f6f5475a018a10",
+      "bytes": 2174
+    }
+  ],
+  "interpretation": "Expected versions, bounded probes, actually observed PIDs and unknown children are distinct evidence. The post-capture recipe/build delta is not a new full run or a retrospective per-spawn attestation."
+}

@@ -228,12 +228,6 @@
   .hpf-colortile > .hpf-colortile-swatch > hp-color-opacity { position: absolute; inset: 0; }
   .hpf-colortile-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
   .hpf-colortile-meta .hpf-hex { font-size: .8125rem; }
-  .hpf-colortile-meta .hpf-unit { height: 32px; }
-  .hpf-colortile-meta .hpf-unit > input { width: 3.6em; min-width: 3.6em; padding: 4px 4px 4px 7px; font-size: .8125rem; }
-  .hpf-colortile-meta .hpf-unit > input[type='number'] { appearance: textfield; }
-  .hpf-colortile-meta .hpf-unit > input[type='number']::-webkit-inner-spin-button,
-  .hpf-colortile-meta .hpf-unit > input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .hpf-colortile-meta .hpf-unit > span { padding: 0 7px 0 0; font-size: .8125rem; }
   .hpf-colorfield {
     display: flex;
     flex-wrap: wrap;
