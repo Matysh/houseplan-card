@@ -101,6 +101,14 @@ const MUTANT_DEFINITIONS = [
     patches: [{file:'src/houseplan-card.ts',find:'    (ev.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });',replace:'    void ev.currentTarget;'}],
   },
   {
+    id: 'form-kit-inline-opacity-input-dropped-1018',
+    guard: 'node demo/smoke_ui_1051.mjs',
+    because: '#1018 AC7: removing the unused top-level callback must preserve the new nested raw alpha input. Mounted Properties preview, picker synchronization and exactly one atomic commit/Undo must observe the typed 75/100 values; source text alone cannot prove the event reaches the current field session. Static readiness during development; execution only nightly.',
+    patches: [{ file: 'src/editors/form-kit.ts',
+      find: '@input=${(e: Event) => inputs.onOpacity((e.target as HTMLInputElement).value)}',
+      replace: '@input=${(_e: Event) => {}}' }],
+  },
+  {
     id: 'ui-inline-opacity-loses-grid-slot-1051',
     guard: 'node demo/smoke_ui_1051.mjs',
     because: '#1051 AC2/7: actual 0/50/100 input paint must fit the intended inline grid slot. The common form-kit cascade can leave the opacity wrapper flex and clip digits despite an unchanged outer control box; only mounted browser layout reveals this. Nightly execution only.',
@@ -8547,11 +8555,11 @@ const MUTANT_DEFINITIONS = [
       + 'entry aborts before any code runs and the card dies silently (#353 К3)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '      cardEntry.code = cardEntry.code.replace(\n'
-        + '        cardPattern,\n'
+      find: '      replaceChunkSource(cardEntry, cardPattern,\n'
         + '        `${recordEntryUrl}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(cardContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-card.js: the implementation chunk is unavailable\",e)}',\n"
+        + '        { coverage, bundle },\n'
         + '      );',
       replace: '      void cardEntry; // mutant: cached card facade keeps its static re-export',
     }],
@@ -8564,12 +8572,12 @@ const MUTANT_DEFINITIONS = [
       + 'before either a card or panel fallback can render (#486 AC4)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '      panelEntry.code = panelEntry.code.replace(\n'
-        + '        panelPattern,\n'
+      find: '      replaceChunkSource(panelEntry, panelPattern,\n'
         + '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '\n"
         + "          + 'chunk is unavailable\",e)}',\n"
+        + '        { coverage, bundle },\n'
         + '      );',
       replace: '      void panelEntry; // mutant: cached panel keeps its static shared-chunk import',
     }],

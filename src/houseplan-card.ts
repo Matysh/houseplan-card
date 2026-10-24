@@ -12076,6 +12076,7 @@ export class HouseplanCard extends LitElement {
             value: presentation.lqiText,
           }) : '',
     ]);
+    /* css-uses {"owner":"HouseplanCard._renderDevice","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2"],"reason":"presentationClasses emits this finite semantic state vocabulary"} */
     return html`<div
       ${''/* docs/STYLING-HOOKS.md §3: the styling contract. `nothing` on an
              attribute binding REMOVES the attribute, so a virtual marker has
@@ -12128,7 +12129,6 @@ export class HouseplanCard extends LitElement {
       ${this._vacRouteBadge(d)}
     </div>`;
   }
-
   /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
   private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
     const presentation = this._devicePresentation(d, false);

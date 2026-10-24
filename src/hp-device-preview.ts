@@ -343,6 +343,7 @@ class HpDevicePreview extends LitElement {
         : '',
     ].filter(Boolean).join('. ');
 
+    /* css-uses {"owner":"HpDevicePreview.render","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2","pulse-short","pulse-continuous"],"reason":"presentationClasses vocabulary plus the two explicit withDemoPulse preview classes"} */
     return html`<section class="devicepreview">
       <div class="previewhead">
         <strong>${this._t('marker.preview.title')}</strong>

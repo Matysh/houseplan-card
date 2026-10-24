@@ -193,14 +193,6 @@ const chromeCoreStyles = unsafeCSS(css`
       .head > .zoomctl, .head > .modes > .editor-close-slot { flex: none; }
       .header-menu-wrap { display: inline-flex; }
     }
-    .decorbar .dcolor {
-      width: 30px; height: 26px; padding: 0; border: none; background: none; cursor: pointer;
-    }
-    .decorbar .dwidth {
-      font-family: inherit; font-size: var(--fs-s); border-radius: var(--rad-s);
-      background: var(--hp-bg2, transparent); color: var(--hp-txt); border: 1px solid var(--hp-muted);
-      padding: var(--sp-2) var(--sp-3);
-    }
     .decorbar .bdhint {
       font-size: var(--fs-s);
       color: var(--hp-muted);
@@ -431,9 +423,6 @@ const chromeCoreStyles = unsafeCSS(css`
     .editbar .warn {
       color: #ffc14d;
     }
-    .editbar .sname {
-      font-weight: 600;
-    }
     .editbar input {
       width: 74px;
       background: transparent;
@@ -466,55 +455,6 @@ const chromeCoreStyles = unsafeCSS(css`
     .editbar .drawwall .opl {
       color: var(--hp-muted);
       font-size: var(--fs-s);
-    }
-    .menuwrap {
-      position: fixed;
-      inset: 0;
-      z-index: 80;
-    }
-    .menu {
-      position: fixed;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-accent);
-      border-radius: var(--rad-l);
-      box-shadow: var(--shadow-2);
-      min-width: 210px;
-      max-width: 300px;
-      overflow: hidden;
-      transform: translate(0, 8px);
-    }
-    .menu .hd {
-      padding: var(--sp-4) var(--sp-5);
-      font-weight: 600;
-      font-size: var(--fs-m);
-      border-bottom: 1px solid var(--hp-line);
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-    }
-    .menu .hd ha-icon,
-    .menu .it.all ha-icon {
-      color: var(--hp-accent);
-      --mdc-icon-size: 16px;
-    }
-    .menu .it {
-      padding: var(--sp-4) var(--sp-5);
-      font-size: var(--fs-m);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-    }
-    .menu .it ha-icon {
-      --mdc-icon-size: 16px;
-      color: var(--hp-muted);
-    }
-    :host([data-pointer-hover]) .menu .it:hover {
-      background: rgba(127, 127, 127, 0.15);
-    }
-    .menu .it.all {
-      color: var(--hp-accent);
-      font-weight: 600;
     }
     .tip {
       position: fixed;

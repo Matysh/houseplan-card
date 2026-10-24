@@ -570,3 +570,7 @@ Toast identity follows the actual key through direct/helper translations,
 conditional keys, single-key junction/Resize labels and toast ports. No translated-text reverse lookup is used.
 `test/toast-identity-source.test.mjs` checks senders and forwarding adapters;
 the inbox and history smokes observe ids after real operations/refusals.
+
+The [dialog CSS migration record](development-notes/dialog-style-migration.md)
+lists all eleven shared-style consumers, retained subject rules and exact
+properties whose owner is now the common dialog kit (#1019).

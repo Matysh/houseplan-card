@@ -52,6 +52,11 @@ export const SMOKE_LINKS = [
     because: '#1054: public remove/hass/append must preserve the current mandatory read intent after foreign authority retirement, including a reused HA object and coalesced ABA; existing recovery protects same-context no-reload and stale read fencing.',
   },
   {
+    files: ['src/editors/form-kit.ts','src/styles/form-kit.styles.ts'],
+    smokes: ['smoke_ui_1051.mjs'],
+    because: '#1018: the real Properties consumer retains nested raw HEX/alpha input, invalid draft, Escape, atomic save and Undo after removing the unrelated top-level legacy opacity callback.',
+  },
+  {
     files: ['src/editor-context-menu.ts','src/editor-context-menu.styles.ts','src/catalog-context-menu.ts','src/editors/properties/color-draft.ts',
       'src/editor-secondary.styles.ts','src/editors/properties/surface.ts','src/editors/properties/selection.ts'],
     smokes: ['smoke_ui_1051.mjs','smoke_ui_1051_native.mjs','smoke_properties_panel.mjs','smoke_decor_order.mjs','smoke_device_copy.mjs','smoke_ui_polish_976.mjs'],

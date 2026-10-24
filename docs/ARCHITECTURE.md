@@ -643,6 +643,14 @@ clicks (`detail=0`); it cannot immobilise header/toolbar controls after a drag.
 
 ## Styles (#266)
 
+The [eleven-consumer migration record](development-notes/dialog-style-migration.md)
+names common owners and retained subject properties (#1019). Removed legacy
+paint was already defeated in the actual shared root; genuine obsolete classes
+are recorded separately with their retired producers. Composition order and
+ShadowRoot boundaries remain part of the cascade contract.
+Finite `css-uses` comments belong to actual render statements whose string
+vocabularies cannot be resolved statically; executable renderer code is unchanged.
+
 Dialog composition extends the existing form kit (#1007), documented in
 [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). Explicit sections own separators and outer
 spacing; fields own only their internal layout. Actions and independent Help
@@ -685,8 +693,9 @@ shared by two surfaces; `plan` stage ink, `devices` markers, `chrome`
 toolbars/tabs/menus, `dialogs` dialogs/forms/pickers. `form-kit.styles.ts`
 (#594), `editor-secondary.styles.ts` and the summary-panel sheets live outside
 that aggregator. `test/styles-split.test.mjs` pins composition, no cross-file
-duplicate selectors and `@media` wrappers; `scripts/dev/styles-diff.mjs` proves
-a move refactor-only. Public selectors: `STYLING-HOOKS.md`. CSS only the
+duplicate selectors and `@media` wrappers; `scripts/dev/styles-diff.mjs` compares
+the normalized rule multiset, not cascade or visual equivalence. Public selectors:
+`STYLING-HOOKS.md`. CSS only the
 editor renders is not in the first frame (#805): `editor-dialogs.styles.ts` (the
 editor-only rules of `dialogs`) and `editor-secondary.styles.ts` (the tray) are
 adopted by the lazy editor runtime's constructor (`editor-style-adoption.ts`) into

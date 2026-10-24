@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 87, issue: 46. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 89, issue: 46. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -61,7 +61,9 @@
 | #1025 | [SPEC-REVIEW-1025-r1.md](SPEC-REVIEW-1025-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1021 | [CODE-REVIEW-1021-r1.md](CODE-REVIEW-1021-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1019 | [SPEC-REVIEW-1019-r1.md](SPEC-REVIEW-1019-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | аудит в теле issue ошибочно числит живой селектор мёртвым | `plan.styles.ts` `src/houseplan-card.ts` |
+| #1019 | [CODE-REVIEW-1019-r1.md](CODE-REVIEW-1019-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1018 | [SPEC-REVIEW-1018-r1.md](SPEC-REVIEW-1018-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1018 | [CODE-REVIEW-1018-r1.md](CODE-REVIEW-1018-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1016 | [CODE-REVIEW-1016-r1.md](CODE-REVIEW-1016-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | устаревшая формулировка в docs/TESTING.md:385 | `docs/TESTING.md` `bundle-sync.mjs` `AGENTS.md` `PROCESS.md` `docs/ARCHITECTURE.md` `docs/DEVELOPMENT.md` `docs/STATUS.md` `docs/process/AUTHOR.md` |
 | #1016 | [CODE-REVIEW-1016-r2.md](CODE-REVIEW-1016-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1014 | [CODE-REVIEW-1014-r1.md](CODE-REVIEW-1014-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |

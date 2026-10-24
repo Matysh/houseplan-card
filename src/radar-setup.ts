@@ -454,6 +454,7 @@ export class RadarSetupController {
       && ['reference_1', 'reference_2', 'check_reference'].includes(state.phase);
     const trailGroups = [...new Set(state.trail.map((entry) => entry.slot))]
       .map((slot) => state.trail.filter((entry) => entry.slot === slot));
+    /* css-uses {"owner":"RadarSetupController.render","kind":"class","values":["mount","reference","pending"],"reason":"The local markers array emits only the mount, saved reference and pending reference glyphs"} */
     return html`<div class="radarsetup" role="group" aria-label=${this.host.t('radar.configure')}>
       <div class="radarsetup-head">
         <strong>${this.instruction(state)}</strong>

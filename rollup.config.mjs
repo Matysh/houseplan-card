@@ -4,6 +4,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import { sourceFingerprint } from './scripts/source-fingerprint.mjs';
 import { cssTemplateMinifier } from './scripts/css-template-minifier.mjs';
+import { coverageMapsEnabled, coverageTypeScriptOptions, diagnosticMapAssetsPlugin } from './scripts/coverage-maps.mjs';
 import {
   buildFingerprintPlugin,
   bundleManifestPlugin,
@@ -13,6 +14,7 @@ import {
 } from './scripts/bundle-manifest.mjs';
 
 const SOURCE_FINGERPRINT = sourceFingerprint();
+const DIAGNOSTIC_COVERAGE = coverageMapsEnabled();
 
 export default {
   input: {
@@ -42,7 +44,7 @@ export default {
         '/src/device-contact-collision.ts', '/src/device-inbox-i18n.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
     },
     format: 'es',
-    sourcemap: false,
+    sourcemap: DIAGNOSTIC_COVERAGE ? 'hidden' : false,
     // Tooling reads this before recording screenshots/performance. A committed
     // demo bundle built from older sources must fail closed, never produce a
     // plausible-looking but invalid baseline.
@@ -54,10 +56,12 @@ export default {
     cssTemplateMinifier(),
     resolve(),
     json(),
-    typescript({ compilerOptions: { outDir: 'dist/.ts' } }),
+    typescript({ compilerOptions: { outDir: 'dist/.ts',
+      ...(DIAGNOSTIC_COVERAGE ? coverageTypeScriptOptions() : {}) } }),
     terser({ format: { comments: false } }),
     editorRuntimeRetryUrlPlugin(),
     entryFallbackPlugin(),
+    ...(DIAGNOSTIC_COVERAGE ? [diagnosticMapAssetsPlugin()] : []),
     bundleManifestPlugin(SOURCE_FINGERPRINT),
   ],
 };

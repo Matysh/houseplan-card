@@ -17,6 +17,9 @@
 // собранный бандл, поэтому краснеет на правке, а не после сборки.
 
 import ts from 'typescript';
+import { classesOf, parseRules, splitSelectors } from '../../scripts/css-lex.mjs';
+import { cssOfSource } from '../../scripts/css-source.mjs';
+export { classesOf, parseRules, splitSelectors, cssOfSource };
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -170,27 +173,9 @@ export function ownershipIndex({ root = REPO_ROOT, extraView = [] } = {}) {
   };
 }
 
-/** Классы составного селектора: `.a.b:not(.c) > .d` → a, b, c, d. */
-export const classesOf = (selector) => [...selector.matchAll(/\.([A-Za-z_-][A-Za-z0-9_-]*)/g)].map((m) => m[1]);
-
 /** Класс, по которому селектор принадлежит только редактору. */
 export const editorOnlyClass = (index, cls) =>
   !index.view.has(cls) && !index.other.has(cls) && index.editor.has(cls);
-
-/** Селекторный список, разрезанный по запятым верхнего уровня. */
-export function splitSelectors(header) {
-  const parts = [];
-  let depth = 0;
-  let from = 0;
-  for (let k = 0; k < header.length; k++) {
-    const ch = header[k];
-    if (ch === '(' || ch === '[') depth++;
-    else if (ch === ')' || ch === ']') depth--;
-    else if (ch === ',' && depth === 0) { parts.push(header.slice(from, k)); from = k + 1; }
-  }
-  parts.push(header.slice(from));
-  return parts.map((part) => part.replace(/\s+/g, ' ').trim()).filter(Boolean);
-}
 
 /** Класс есть хоть в одном исходнике; иначе он динамический или мёртвый. */
 export const knownClass = (index, cls) => index.view.has(cls) || index.other.has(cls) || index.editor.has(cls);
@@ -224,54 +209,6 @@ export function editorOnlyRules(index, rules) {
     }
   }
   return rules.filter((rule) => own.has(rule));
-}
-
-/**
- * Правила CSS-текста с областью at-правил. `start`/`end` — смещения в `text`
- * (вместе с вложенным at-правилом — смещения самого правила внутри него).
- */
-export function parseRules(text) {
-  const clean = text.replace(/\/\*[\s\S]*?\*\//g, (comment) => ' '.repeat(comment.length));
-  const rules = [];
-  const walk = (from, to, scope) => {
-    let i = from;
-    while (i < to) {
-      while (i < to && /\s/.test(clean[i])) i++;
-      if (i >= to) break;
-      const open = clean.indexOf('{', i);
-      if (open === -1 || open >= to) break;
-      let depth = 1;
-      let j = open + 1;
-      while (j < to && depth > 0) {
-        if (clean[j] === '{') depth++;
-        else if (clean[j] === '}') depth--;
-        j++;
-      }
-      const header = clean.slice(i, open).replace(/\s+/g, ' ').trim();
-      if (header.startsWith('@')) {
-        walk(open + 1, j - 1, [...scope, header]);
-      } else {
-        rules.push({
-          scope,
-          header,
-          selectors: splitSelectors(header),
-          declarations: clean.slice(open + 1, j - 1).split(';').map((d) => d.replace(/\s+/g, ' ').trim()).filter(Boolean),
-          start: i,
-          end: j,
-        });
-      }
-      i = j;
-    }
-  };
-  walk(0, clean.length, []);
-  return rules;
-}
-
-/** Текст всех css`` шаблонов исходника (без интерполяций). */
-export function cssOfSource(source) {
-  const chunks = [...source.matchAll(/css`([\s\S]*?)`/g)].map((m) => m[1]);
-  if (chunks.some((chunk) => chunk.includes('${'))) throw new Error('interpolation in css``');
-  return chunks.join('\n');
 }
 
 export const readRepo = (path, root = REPO_ROOT) => readFileSync(resolve(root, path), 'utf8');

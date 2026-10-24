@@ -54,6 +54,96 @@ their original foreign-authority and room-discovery guards remain intact.
 | AC11 | existing Decor, physical/opening/contact/gesture smokes and relevant Golden | old pointer/history/paint contracts regress |
 | AC12 | build/budgets, lazy-editor and lifecycle checks | startup/editor boundary, listener count or current budget regresses |
 
+## Dialog CSS ownership #1019
+
+The [migration record](development-notes/dialog-style-migration.md) covers all
+eleven consumers of the dialog kit. Keep subject geometry and winning local
+validation/hover paint; a similar common declaration is insufficient evidence
+for deletion. Historical form-kit fixture files remain unchanged: the byte
+comparison projects out nine explicitly retired rules and checks every other
+byte, while the actual summary-panel comparison stays unmodified.
+
+Build and sync each tree before browser comparisons. Existing selected Support
+and Inbox Golden captures retain their canonical baselines. A difference already
+present on the unchanged accepted tree is a baseline fact, not a new task intent
+or permission to accept a baseline. Production-size comparisons use matching
+Node/Rollup and actual builds on both sides; do not infer combined sizes by
+adding task deltas.
+
+For native HA comparisons use `node scripts/dev/css-migration-capture.mjs
+--root=<built-checkout> --out=<artifact-directory>`, then the same command for
+the candidate with `--compare=<before-directory>`. It uses the shared deterministic
+Chromium arguments, attests the launched browser, checks the loaded fingerprint
+and compares computed paint, geometry and exact PNG bytes. The offline HA
+fixture's optional `repoRoot` and `browserArgs` keep both runs on the same
+capture recipe; defaults for existing smokes are unchanged. Fresh documents
+isolate viewport/theme cases. `--themes=light --widths=1280,600` bounds a
+diagnostic run; it does not represent the full default matrix. Artifacts remain
+local and do not replace canonical Golden evidence or baseline acceptance.
+
+`node scripts/css-orphans.mjs` is part of `gate:small`. It reads product TS
+through the TypeScript AST and the shared `scripts/css-lex.mjs` lexer. Actual
+class attributes, DOM class assignments and reachable helper returns are
+consumers; arbitrary strings, queries, import paths and negative `:not` tokens
+are not positive DOM requirements. Named animation uses include reachable CSS
+variables and distinguish animation names from shorthand timing grammar.
+
+For irreducible finite production, put the exact JSON comment immediately
+before the actual render/assignment statement, with its closest named owner:
+
+```ts
+/* css-uses {"owner":"Example.render","kind":"class","values":["state-a","state-b"],"reason":"Finite values from the model's state union"} */
+```
+
+The only keys are `owner`, `kind` (`class` or `keyframes`), `values` and `reason`.
+The checker rejects misplaced/unused annotations, mismatched owners or emitted
+prefixes, duplicate values and wildcards. Do not turn a query-only reference into
+a consumer. Unknown CSS recipes or unsupported native CSS nesting fail explicitly
+instead of silently omitting definitions. The legacy #805 graph-ownership token
+index stays separate from this stricter consumer index; it answers a different
+question. Both ownership and `styles-diff` now share the lexical parser.
+
+## Parallel path diagnostic (#1018)
+
+`npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;
+manual source/caller decisions and exact-SHA anchors live in
+`docs/audits/parallel-paths-1018.json`. `npm run coverage:diagnostic -- --sha=<SHA>`
+runs the complete computed unit/smoke/Golden inventory, keeps raw sources/maps
+and coverage under ignored artifacts, and reports incomplete/unknown honestly.
+It requires a clean exact checkout. Normal build bytes/manifest are independently
+compared and restored; the nightly read-only job uses its immutable intent SHA.
+The artifact has no gate/release/mutation authority. Recipe, limits, provenance,
+interpretation and the separately measured form-kit cleanup are documented in
+`docs/audits/parallel-paths-1018.md` and the issue handoff.
+Measured raw V8 retention required a bounded 4-GiB compressed artifact budget;
+the collector/job/upload limits are 105/135/15 minutes. Interrupted runs begin
+in incomplete state, and generated smoke captures under demo/out stay ignored.
+The frozen-a34f projector is a one-off manual repair requiring the ignored raw
+capture, not an entry of Validate or the current nightly collector. Its explicit
+manual-input registration leaves the shared index/report/map engine under the
+ordinary frontend unit inputs.
+Actual Node preload/flush remains a no-browser tooling unit. Its real Chromium
+page/navigation/retry/close checks run as the registered selected browser smoke
+`demo/smoke_coverage_recorder.mjs`; tooling CI needs no browser installation.
+
+The first product cleanup removes only the unused top-level ColorField/ColorTile
+onOpacity options and numeric fallbacks, plus five dead colortile-meta/unit CSS
+blocks (six selector branches). Ten current literal FormKit calls pass no such
+callback. The separate inputs.onHex/onOpacity(raw) route introduced by #1051
+remains a real numeric inline field; its raw invalid draft, atomic save and
+Escape/Undo are covered by the existing smoke_ui_1051 alongside the three named
+General/Space/Room smokes. The frozen CSS fixtures lose only those same six
+retired selector branches; all general unit/opacity and ColorField input styles
+remain. Source and actual production-editor graph sizes are measured separately
+from the historical a34f diagnostic, which is not rerun or relabelled as current.
+
+Matched clean WSL Node22.23.3/Rollup4.62.2 builds fda4894b5→f8ce07b3b reduce the
+two source files72889→71354B/1299→1280lines and the actual16-file production
+editor graph1186151→1185074raw/344783→344566gzip. The small tracked
+`docs/audits/parallel-paths-1018-first-cleanup.json` keeps both source/build
+identities, current literal callers and normal semantic outcomes. The later
+accepted-#1004 merge and final ordinary checks are separate materials.
+
 ## LED Zigbee endpoints (#1004)
 
 `node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input

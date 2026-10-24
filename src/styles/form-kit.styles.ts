@@ -370,12 +370,6 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colortile > .${p}-colortile-swatch > hp-color-opacity { position: absolute; inset: 0; }
   .${p}-colortile-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
   .${p}-colortile-meta .${p}-hex { font-size: .8125rem; }
-  .${p}-colortile-meta .${p}-unit { height: 32px; }
-  .${p}-colortile-meta .${p}-unit > input { width: 3.6em; min-width: 3.6em; padding: 4px 4px 4px 7px; font-size: .8125rem; }
-  .${p}-colortile-meta .${p}-unit > input[type='number'] { appearance: textfield; }
-  .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-inner-spin-button,
-  .${p}-colortile-meta .${p}-unit > input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .${p}-colortile-meta .${p}-unit > span { padding: 0 7px 0 0; font-size: .8125rem; }
   .${p}${css`-colorfield {
     display: flex;
     flex-wrap: wrap;
@@ -413,7 +407,6 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-radios label { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; font-size: .875rem; cursor: pointer; white-space: nowrap; }
   .${p}-radios input { width: 16px; height: 16px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-radios label:has(input:checked) { color: var(${tokens.accent}); }
-  .${p}-signal-visibility .${p}-radios label { min-height: 44px; min-width: 44px; }
   .${p}${css`-callout {
     display: flex;
     gap: 8px;
@@ -436,11 +429,6 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-range > .${p}-unit > input { width: 100%; min-width: 0; padding-right: 3px; }
   .${p}-range-ends { display: grid; grid-template-columns: minmax(0, 1fr) 84px; gap: 15px; margin-top: -4px; font-size: .875rem; line-height: 1.2; color: var(${tokens.muted}); }
   .${p}-range-ends-track { display: flex; grid-column: 1; align-items: center; justify-content: space-between; min-width: 0; }
-  .${p}-headline { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .${p}-north { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 7px 16px; align-items: center; }
-  .${p}-north > .${p}-labelrow { grid-area: 1 / 1; min-height: 32px; }
-  .${p}-north > .${p}-select, .${p}-north > .${p}-unit, .${p}-north > .${p}-input { grid-area: 2 / 1; }
-  .${p}-north > .${p}-north-n { grid-area: 1 / 2; text-align: center; font-size: .875rem; line-height: 28px; color: var(${tokens.muted}); }
   .${p}-compass { grid-area: 2 / 2; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 50%; background: var(${tokens.canvas}); color: var(${tokens.accent}); }
   .${p}-compass svg { width: 24px; height: 24px; transform-origin: 50% 50%; transform-box: view-box; }
   .${p}-compass.${p}-unset { color: var(${tokens.muted}); }
@@ -474,7 +462,6 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-cand:hover { background: var(${tokens.surface}); }
   .${p}-cand.sel { background: var(${tokens.tint}); color: var(${tokens.accent}); }
   .${p}-cand:focus-visible { outline: 2px solid var(${tokens.accent}); outline-offset: -2px; }
-  .${p}-templegend { display: flex; justify-content: space-between; margin-top: -6px; font-size: .8125rem; color: var(${tokens.muted}); }
   .${p}-block { display: grid; gap: 15px; }
   .${p}-block.${p}-disabled > :not(.${p}-sub):not(.${p}-callout) { opacity: .45; }
   .${p}-block.${p}-disabled .${p}-seg label, .${p}-block.${p}-disabled .${p}-colorfield, .${p}-block.${p}-disabled .${p}-range { pointer-events: none; }
@@ -494,13 +481,11 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8125rem; }
   .${p}-hint > .${p}-link { padding: 0; }
   .${p}-hint ha-icon { --mdc-icon-size: 16px; display: inline-flex; vertical-align: -3px; }
-  .${p}-actionrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .${p}-note { display: flex; align-items: flex-start; gap: 6px; }
   .${p}-note > ha-icon { --mdc-icon-size: 16px; flex: 0 0 auto; margin-top: 2px; }
   .${p}-note-warning { color: var(--warning-color, #b87940); }
   .${p}-hint-line { display: block; }
   .${p}-chip-warning { border-color: var(--warning-color, #b87940); color: var(--warning-color, #b87940); }
-  .${p}-iconclear { flex: 0 0 auto; min-width: 44px; min-height: 44px; padding: 0; }
   ${form} textarea.${p}-input { min-height: 96px; resize: vertical; line-height: 1.5; }
   .${p}-preview { display: flex; justify-content: center; }
   @media (max-width: 480px) {
