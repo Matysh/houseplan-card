@@ -20,10 +20,15 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5202 · pure backend 626 · HA-harness backend 527 · browser smokes 429 (`npm run inventory`) |
+| Tests | Node unit 5202 · pure backend 627 · HA-harness backend 527 · browser smokes 429 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Recorder test loading (#1057) reuses the shared pure-import namespace isolation
+inside its temporary HA stubs. Canonical absolute imports cannot execute the
+real integration initializer under fake HA; success and import failure restore
+the original module identities, including an already loaded real HA harness.
 
 Detached HA replacement (#1054) preserves the full-card current read intent
 after retiring the accepted document. Reattach consumes that intent without

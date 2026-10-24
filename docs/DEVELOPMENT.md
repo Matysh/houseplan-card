@@ -1304,6 +1304,16 @@ quota exhaustion and RU/EN output independently of sampled/native quality.
 unavailable and ambiguous maps, and strict orphan-to-route generations;
 `test_ha_vacuum_paths.py` exercises real Store teardown/restart and late callbacks.
 
+The recorder's temporary HA loader (#1057) delegates canonical package isolation
+to `tests_backend/pure_imports.py::load_pure`. Both successful loading and an
+exception after dependency imports restore the original HA, alias and canonical
+module identities; `test_trail_recorder_imports.py` observes those identities
+without writing to the import machine. Run `node scripts/trail-resume-test-guard.mjs` and
+`node scripts/backend-test-guard.mjs issue_495_dropped_route_runs_reach_the_store tests_backend/test_trail_recorder.py`
+with `PYTHON` pointing to an HA-enabled interpreter. A combined pytest invocation
+of recorder, recorder imports, trails and `test_ha_setup.py` checks coexistence with the real
+integration. These ordinary guards retain their existing selection and assertions.
+
 After a fresh `npm run bundle:sync`, run
 `node demo/smoke_vacuum_route_recovery.mjs`,
 `node demo/smoke_vacuum_path_fidelity.mjs` and
