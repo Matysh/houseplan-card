@@ -79,10 +79,10 @@ check('menu-inside-viewport', await card.locator('[data-hp="device-context-menu"
   const r = el.getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;
 }), true);
 await page.keyboard.press('Escape');
-check('escape-closes-without-creating', await card.locator('[data-hp="device-context-menu"]').count(), 0);
+check('escape-closes-without-creating', await card.locator('[data-hp="device-context-menu"]:not([inert])').count(), 0);
 check('escape-restores-device-focus', await card.locator('[data-hp="device"][data-id="v_source"]').evaluate(el => el.getRootNode().activeElement === el), true);
 await open('v_source'); await card.locator('[data-hp="zoom-fit"]').click();
-check('outside-closes-menu', await card.locator('[data-hp="device-context-menu"]').count(), 0);
+check('outside-closes-menu', await card.locator('[data-hp="device-context-menu"]:not([inert])').count(), 0);
 await copy('v_source');
 const first = await snapshot(), newMarker = first.cfg.markers.find(m => !before.cfg.markers.some(old => old.id === m.id));
 if (!newMarker) throw new Error(`copy command created nothing: ${JSON.stringify({writes:first.writes,toast:first.toast,cr:first.cr,lr:first.lr})}`);
@@ -110,6 +110,15 @@ checkAll({ ledGeometryUnchanged:JSON.stringify(ledBefore.cfg.spaces)===JSON.stri
   ledOriginalStillStrip:await card.locator('.led-select-hit[data-id="v_led"]').count()===1,
   ledCopyNearVisibleAnchor:Math.hypot(ledAfter.layout[ledCopy.id].x-.4,ledAfter.layout[ledCopy.id].y-.65)<.2 });
 
+// A Linux context-menu sequence may finish without a scene pointerup. The
+// completed LED command must leave no pan owner for a later buttons=0 move.
+const viewportAfterLed = await page.evaluate(() => JSON.stringify(window.__card._view));
+const sourceBox = await card.locator('[data-hp="device"][data-id="v_source"]').boundingBox();
+await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
+if (!check('led-context-menu-retires-scene-pan', await page.evaluate(() => JSON.stringify(window.__card._view)), viewportAfterLed)) {
+  await finish(browser); process.exit(1); // A later target is no longer visible after this failed invariant.
+}
+
 // Stale menu, current permission and a real rejected transport all preserve the pair.
 await open('v_source');
 await page.evaluate(async()=>{await window.__hpTest.setServerConfig(cfg=>({...cfg,settings:{...cfg.settings,copy_fixture:1}}));});
@@ -131,7 +140,7 @@ const heldBefore=await snapshot();await open('v_source');
 await card.locator('[data-hp="device-copy"]').click();
 await page.waitForFunction(()=>typeof window.__copyRelease==='function');
 await card.locator('[data-hp="device"][data-id="v_source"]').click({button:'right'});
-check('pending-copy-cannot-open-second-command',await card.locator('[data-hp="device-copy"]').count(),0);
+check('pending-copy-cannot-open-second-command',await card.locator('.hpf-context-menu:not([inert]) [data-hp="device-copy"]').count(),0);
 await page.evaluate(()=>window.__copyRelease());await settled();
 check('pending-copy-one-write',(await snapshot()).writes,heldBefore.writes+1);
 
@@ -142,7 +151,7 @@ checkAll({ lostReplyOneWrite:lostAfter.writes===lostBefore.writes+1, lostReplyOn
 
 await open('v_source'); await page.evaluate(()=>window.__hpTest.setMode('view'));
 await settled();
-check('mode-change-closes-menu',await card.locator('[data-hp="device-context-menu"]').count(),0);
+check('mode-change-closes-menu',await card.locator('[data-hp="device-context-menu"]:not([inert])').count(),0);
 const viewBefore=(await snapshot()).writes;
 await card.locator('[data-hp="device"][data-id="v_source"]').click({button:'right'});
 check('view-keeps-more-info-not-copy-menu',await card.locator('[data-hp="device-copy"]').count(),0);

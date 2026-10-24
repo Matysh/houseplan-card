@@ -193,6 +193,15 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
+  if (scenario.uiKit1051) {
+    fixture.config.spaces.push({id:scenario.space,title:'UI kit',cell_cm:5,view_box:[0,0,1,1],
+      rooms:[{id:'ui-room',name:'Room',poly:[[.1,.1],[.9,.1],[.9,.9],[.1,.9]]}],
+      decor:[{id:'ui-rect',kind:'rect',x:.25,y:.35,w:.25,h:.15,color:'#718B82',opacity:.75,
+        fill:true,fill_color:'#C4D5CF',fill_opacity:.65,width_cm:2}],
+    });
+    fixture.config.markers.push({id:'ui1051-lamp',binding:'virtual',space:scenario.space,name:'Reading lamp',icon:'mdi:lightbulb'});
+    fixture.layout['ui1051-lamp']={s:scenario.space,x:.6,y:.6};
+  }
   if (scenario.emptyPlan) {
     fixture.config.spaces = [];
     fixture.config.markers = [];
@@ -2546,6 +2555,23 @@ export async function prepareGoldenScenario(page, scenario) {
     // Camera motion is intentionally visible in production, but reviewed
     // goldens own the settled UI. Never capture a timing-dependent RAF frame.
     await settleCamera(card);
+    if (scenario.uiKit1051) {
+      if (scenario.uiKit1051 === 'device') {
+        const device=card._devices.find(item=>item.id==='ui1051-lamp');
+        if (!device) throw Error('UI-1051 device fixture missing');
+        card._editorRuntime.properties.selectDevice(device);
+      } else card._editorRuntime.properties.select('rect','ui-rect');
+      await card.updateComplete; await frame();
+      if (scenario.uiKit1051 === 'menu') {
+        const node=card.renderRoot.querySelector('.decorlayer [data-id="ui-rect"]');
+        const rect=node.getBoundingClientRect();
+        card._editorRuntime.decorOrder.open(new MouseEvent('contextmenu',{clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2}));
+        await card.updateComplete; await frame();
+      }
+      const target=card.renderRoot.querySelector(scenario.uiKit1051==='color'?'.hp-properties'
+        :scenario.uiKit1051==='menu'?'.hpf-context-menu':'.dev[data-id="ui1051-lamp"].sel');
+      if (!target) throw Error(`UI-1051 focused surface missing: ${scenario.id}`);
+    }
     return {
       space: card._space,
       mode: card._mode,
@@ -2732,7 +2758,9 @@ export async function goldenClip(page, capture) {
   if (capture === 'battery-zigbee-overlap') return batteryZigbeeClip(await batteryZigbeeProbe(page), page.viewportSize());
   return page.evaluate((captureKind) => {
     const card = window.__goldenCard;
-    const target = card?.renderRoot?.querySelector('.stage');
+    const selector=captureKind==='ui-1051-color'?'.hp-properties':captureKind==='ui-1051-menu'?'.hpf-context-menu'
+      :captureKind==='ui-1051-device'?'.dev[data-id="ui1051-lamp"]':'.stage';
+    const target = card?.renderRoot?.querySelector(selector);
     if (!target) throw new Error('golden stage capture target missing');
     const rect = target.getBoundingClientRect();
     if (captureKind === 'sun-window') {
@@ -2746,7 +2774,7 @@ export async function goldenClip(page, capture) {
         height: Math.max(1, Math.ceil(rect.height * 0.25)),
       };
     }
-    const pad = 2;
+    const pad = captureKind==='ui-1051-device'?20:captureKind==='ui-1051-menu'?12:2;
     const x = Math.max(0, Math.floor(rect.left - pad));
     const y = Math.max(0, Math.floor(rect.top - pad));
     const right = Math.min(window.innerWidth, Math.ceil(rect.right + pad));

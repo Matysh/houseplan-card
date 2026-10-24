@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5202 · pure backend 626 · HA-harness backend 527 · browser smokes 427 (`npm run inventory`) |
+| Tests | Node unit 5206 · pure backend 626 · HA-harness backend 527 · browser smokes 429 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -39,6 +39,14 @@ the independent direct-LQI capability probe no longer looks like a stale-event
 reload. Mandatory paired loading and all authority assertions remain covered.
 The read-only cold-start test also compares settled read counts rather than
 mistaking an independent initial capability probe for a full-load retry.
+
+Approved editor UI (#1051, UI-019–028/031) uses one lazy context-menu presentation
+with immediate input retirement and one common disclosure motion owner. Decor
+inline colour is a field-session preview followed by the existing atomic
+writer/history; it creates no config schema or independent command path.
+The LED context press stays with its existing editor hit target before scene pan.
+Inline opacity owns its numeric grid slot so the complete value stays visible.
+UI-029/030 remain in their separate issues. Private UI Lab material stays local.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of

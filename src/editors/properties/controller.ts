@@ -100,6 +100,13 @@ export class PropertiesFieldController {
       && propertiesIdentityKey(draft.identity) === propertiesIdentityKey(this.port.identity());
   }
 
+  /** Render-only previews cannot borrow an obsolete object or authority. */
+  get previewDraft(): PropertiesDraft | null {
+    const draft = this.draft;
+    return draft && this.owns(draft) && draft.error?.key !== 'external_change'
+      && (draft.pending || samePropertiesValue(draft.before, this.port.read(draft.identity, draft.field))) ? draft : null;
+  }
+
   edit(field: string, raw: string): boolean {
     const identity = this.port.identity();
     if (!identity || (this.draft && (this.draft.pending || this.draft.field !== field))) return false;

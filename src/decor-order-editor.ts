@@ -1,9 +1,8 @@
 /** Background-only commands and menu. No asset/file operation belongs here. */
-import { html, nothing, type TemplateResult } from 'lit';
-import { ref } from 'lit/directives/ref.js';
+import { nothing, type TemplateResult } from 'lit';
+import { EditorContextMenu, menuPoint } from './editor-context-menu';
 import type { HouseplanEditorRuntime } from './houseplan-editor-runtime';
 import { copyDecor, reorderDecor, type DecorOrder } from './editors/decor/order';
-import { floatingViewport, placeFloatingSurface } from './floating-surface';
 import { propertiesT } from './editors/properties/strings';
 import { langOf } from './i18n';
 import { toolsT, type ToolsI18nKey } from './i18n/tools';
@@ -14,7 +13,7 @@ interface Menu extends Target { x: number; y: number }
 
 export class DecorOrderEditor {
   private menu: Menu | null = null;
-  private element: HTMLElement | null = null;
+  private readonly presentation = new EditorContextMenu(() => this.host.requestUpdate());
   constructor(private readonly runtime: HouseplanEditorRuntime) {}
   private get host() { return this.runtime.host; }
   private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host.hass, this.host._config?.language), key); }
@@ -75,21 +74,13 @@ export class DecorOrderEditor {
   }
   close(): void {
     if (!this.menu) return;
-    this.menu = null; this.element = null;
-    window.removeEventListener('pointerdown', this.outside, true);
-    window.removeEventListener('keydown', this.key, true);
+    this.presentation.retire(); this.menu = null;
     this.host.requestUpdate();
   }
   private outside = (event: PointerEvent): void => {
-    if (this.element && event.composedPath().includes(this.element)) return;
-    this.close();
     if (event.composedPath().some(node => node instanceof Element && node.classList.contains('stage'))) {
       event.preventDefault(); event.stopImmediatePropagation();
     }
-  };
-  private key = (event: KeyboardEvent): void => {
-    if (event.key !== 'Escape') return;
-    event.preventDefault(); event.stopImmediatePropagation(); this.close();
   };
   /** Read the actual SVG geometry in reverse paint order, even under a drawing tool. */
   private pick(event: MouseEvent): string | null {
@@ -119,36 +110,24 @@ export class DecorOrderEditor {
       if (!this.runtime.properties.select(shape.kind, id)) return;
       this.host._decorSel = id;
       this.menu = { ...this.target(id), x: event.clientX, y: event.clientY };
-      window.addEventListener('pointerdown', this.outside, true);
-      window.addEventListener('keydown', this.key, true);
       this.host.requestUpdate();
     };
     if (this.runtime.properties.beforeIntent(show)) show();
   }
   render(): TemplateResult | typeof nothing {
-    const menu = this.menu; if (!menu) return nothing;
-    if (!this.current(menu, true)) { this.close(); return nothing; }
+    let menu = this.menu;
+    if (menu && !this.current(menu, true)) { this.close(); menu = null; }
+    const owner = menu;
+    if (!owner) return this.presentation.render(null);
     const items = this.host._decorList;
-    const disabled = (command: Command) => command === 'front' ? items[items.length - 1]?.id === menu.id
-      : command === 'back' ? items[0]?.id === menu.id : false;
-    const viewport = floatingViewport(window);
-    return html`<div class="device-inbox-menu-items" data-hp="decor-context-menu" role="menu"
-      style="position:fixed;z-index:10000;inset-inline-end:auto;left:${menu.x}px;top:${menu.y}px;max-width:${Math.max(0, viewport.width - 16)}px;max-height:${Math.max(0, viewport.height - 16)}px;min-width:0;overflow:auto"
-      @pointerdown=${(e: Event) => e.stopPropagation()} @click=${(e: Event) => e.stopPropagation()}
-      @contextmenu=${(e: Event) => e.preventDefault()} ${ref(element => {
-        if (!(element instanceof HTMLElement)) return;
-        this.element = element;
-        void this.host.updateComplete.then(() => {
-          if (this.menu !== menu || !element.isConnected) return;
-          const anchor = { left: menu.x, right: menu.x, top: menu.y, bottom: menu.y, width: 0, height: 0 };
-          const position = placeFloatingSurface(anchor, element.getBoundingClientRect(), floatingViewport(window), 0);
-          element.style.left = `${position.left}px`; element.style.top = `${position.top}px`;
-        });
-      })}>
-      ${(['front', 'back', 'delete', 'copy'] as const).map(command => html`<button type="button" role="menuitem"
-        class="btn ghost" data-hp="action" data-action=${`decor-${command}`} ?disabled=${disabled(command)}
-        @click=${() => { const valid = this.current(menu, true); this.close(); if (valid) this.command(menu.id, command, menu); }}>
-        ${this.label(command)}</button>`)}
-    </div>`;
+    const disabled = (command: Command) => command === 'front' ? items[items.length - 1]?.id === owner.id
+      : command === 'back' ? items[0]?.id === owner.id : false;
+    return this.presentation.render({ token: owner, hp: 'decor-context-menu', anchor: menuPoint(owner.x, owner.y),
+      returnFocus: this.host.renderRoot.querySelector('[data-hp="editor-close"]'),
+      current: () => this.menu === owner && this.current(owner, true), close: () => this.close(), outside: this.outside,
+      items: (['front', 'back', 'copy', 'delete'] as const).map(command => ({ key: command, label: this.label(command),
+        action: `decor-${command}`, disabled: disabled(command), invoke: () => {
+          this.close(); this.command(owner.id, command, owner);
+        } })) });
   }
 }

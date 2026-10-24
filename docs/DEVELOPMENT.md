@@ -37,6 +37,75 @@ pair; neither optional subscription failures nor clicking the active tab may
 increase either count. The ordinary pre-fix diagnostic observed config 2/layout
 1 both before and after the observation window, with the same two initial stacks.
 
+## Approved editor kit #1051
+
+The broader selected-browser run also retains the existing furniture signed
+size/flip/zero/save assertions through its stable field/action hooks, the
+UI-025 wall-fill-before-custom order and all four lazy editor sheet slots.
+The style witness checks first-frame adoption, exact cascade order, sharing
+between roots and absence of changes to View for all four sheets.
+The ordinary Linux Device Copy sequence also proves that the LED context
+press leaves no scene pan for a subsequent mouse move with no buttons held.
+Its emitted LED select listener owns button 2 before the canvas; primary
+selection/drag and the existing Copy command remain unchanged. Accepted
+845c20c3e passed while the initial common-menu implementation failed this
+viewport invariant; no forced click, camera reset or timing relaxation is used.
+The native vacuum source picker also checks shared marker paint, its 44 px
+button, keyboard open/close, immediate inert content, retained focus and no
+configuration write. Its former local summary/marker rules are removed;
+the common disclosure is the only owner and the private picker margin remains.
+Inline opacity also checks the actual 0/50/100 text width and selected paint:
+the generic form-kit flex rule must not outrank the inline grid owner. The
+outer control stays 150.5 by 36 px while the numeric input keeps its 28 px slot.
+
+Run `node demo/smoke_ui_1051.mjs` for inline colour preview/validation,
+Enter/blur/Escape, atomic Undo, contour hit/miss at two zooms, menu input
+retirement/rapid reopen and Devices/View selection boundaries. Run
+`node demo/smoke_ui_1051_native.mjs` for official offline HA 20260930.4,
+furniture first-frame geometry, narrow layout, tooltip, converter link,
+disclosure motion and space appearance DOM order. The HA fixture forbids
+production hosts/WebSockets and verifies its pinned frontend bytes.
+Both smokes put synthetic current frames under `artifacts/browser-selected/ui-1051*`,
+so the existing selected-browser CI artifact preserves them alongside Golden actual/diff.
+
+`test/properties-color-draft.test.mjs` covers partial/invalid values, 0/100,
+optional hash/3/6-digit HEX, unchanged picker precision and retired field owners.
+Keep command tests `smoke_device_copy`, `smoke_decor_order`,
+`smoke_device_inbox_batch`, `smoke_properties_panel` and the shared dialog gallery.
+The #1005 provider smoke retains all data/session/permission/no-extra-I/O checks;
+its former 12 px native marker is superseded by approved UI-023. #963's
+whole-empty-Plan pointer is superseded by UI-028 default/matched-hit feedback.
+Menu tests count live command owners while UI-031 permits a retained inert fade;
+the new smoke separately clicks retained DOM and checks that nothing is written.
+The decor-order pixel oracle waits for terminal removal of retained dialog/menu
+paint before sampling; its exact RGB checks remain unchanged. Menu hover/disabled
+ink and keyboard order cover light/dark/custom tokens; selected device glyphs
+cover both explicit HA theme states. Ordinary `smoke_zigbee_enable_refresh`
+retains its language/theme/reload matrix and all save/authority guards.
+The native furniture shell covers light/dark/custom palettes at820/390px;
+the menu additionally checks390px placement, outside retirement and reduced
+motion removal. The device keyboard probe reaches an unselected marker with
+trusted Tab, then selects it with Space before checking persistent paint.
+
+Golden `ui-1051-{color,menu,device}-{light,dark}` scenes crop their actual
+surface. `tray-medium-selection-ru` intentionally changes for UI-019. Task
+visual intent declares these previews; accepting baselines belongs to the beta
+gate. Private UI Lab plans, adapters and screenshots stay outside commits.
+The accepted source is the 2026-10-23 UI cycle on public base
+`cd9c8961eb906a5c1492dedf2e245191de01cba5`, UI-019–028/031; UI-029/030 remain
+in #998/#999. Prefer owned Lit lifecycle over prototype observers/DOM moves.
+
+CSS producers for subsequent cleanup: `hpf-context-menu` is emitted by
+`EditorContextMenu`, in the card ShadowRoot; `data-layout=actions` by
+`EditorSecondaryModel.layout`; `hpf-inline-{hex,opacity,alpha}` by
+`colorField.inputs` in the card Properties surface; `hpf-disclosure` and
+`data-expanded` by `disclosure`/`disclosureMotion` in each consumer ShadowRoot.
+`hpf-disclosure-inner` owns padding/gap inside the zero-height animated wrapper;
+the vacuum diagnostics 8 px variant targets that inner wrapper.
+The existing form-kit builder still owns variable prefix families. No enum
+generates context-menu class names. `decor-properties-dialog` is furniture-only;
+`data-plan-select-hit` is ephemeral stage feedback from the shared contour hit.
+
 ## Decor creation selection #1047
 
 `smoke_decor_creation_selection.mjs` draws repeated A/B/C lines, rectangles and

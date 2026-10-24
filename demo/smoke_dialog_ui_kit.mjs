@@ -49,7 +49,10 @@ try {
  await page.keyboard.press('Escape');await pickerHelp.click();
  out.helpClickDoesNotOpen=!(await picker.evaluate(e=>e.open));await page.keyboard.press('Escape');
  await summary.click();out.disclosureOpens=await picker.evaluate(e=>e.open)&&await gallery.locator('[data-kit=pick]').isVisible();
- await summary.focus();await page.keyboard.press('Enter');out.keyboardCloses=!(await picker.evaluate(e=>e.open));
+ await summary.focus();await page.keyboard.press('Enter');
+ out.keyboardCloseImmediatelyInert=await picker.evaluate(e=>e.dataset.expanded==='false'&&e.querySelector('.hpf-disclosure-content').inert);
+ await picker.evaluate(e=>Promise.allSettled(e.querySelector('.hpf-disclosure-content').getAnimations().map(a=>a.finished)));
+ out.keyboardCloses=!(await picker.evaluate(e=>e.open));
  const action=gallery.locator('[data-kit=action]'),actionHelp=gallery.locator('.hpf-action-help hp-help .trigger');
  out.pickerTriggerKeepsActionInsets=await summary.evaluate((e,paint)=>{const s=getComputedStyle(e);return s.paddingLeft===paint.left&&s.paddingRight===paint.right&&s.borderRadius===paint.radius;},await action.evaluate(e=>{const s=getComputedStyle(e);return {left:s.paddingLeft,right:s.paddingRight,radius:s.borderRadius};}));
  await actionHelp.click();out.actionHelpDoesNotAct=await gallery.evaluate(e=>e.actionCount===0);await page.keyboard.press('Escape');

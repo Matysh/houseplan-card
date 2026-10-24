@@ -16,6 +16,7 @@ import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../st
 import { colorTileInk } from './color-tile-ink';
 import { sourcePickerOverlay } from './source-picker-overlay';
 import { dialogCompositionCss } from '../styles/dialog-composition.styles';
+import { disclosureMotion } from './disclosure-motion';
 
 /**
  * Лист набора живёт в ленивом редакторском графе, а не в `cardStyles` (#594 AC8).
@@ -111,13 +112,13 @@ export interface DisclosureOptions {
   help?: TemplateResult | typeof nothing;
   /** A picker trigger may use the existing action paint; information does not. */
   triggerClass?: string;
+  action?: string;
 }
 
 /** Informational disclosure, distinct from an action button. */
-export function disclosure({ title, content, id, className = '', open = false, onToggle, help, triggerClass = '' }: DisclosureOptions): TemplateResult {
-  const details = html`<details class="hpf-disclosure ${className}" id=${id ?? nothing} ?open=${open}
-    @toggle=${(event: Event) => onToggle?.((event.currentTarget as HTMLDetailsElement).open)}>
-    <summary class=${triggerClass}>${title}</summary><div class="hpf-disclosure-content">${content}</div>
+export function disclosure({ title, content, id, className = '', open, onToggle, help, triggerClass = '', action }: DisclosureOptions): TemplateResult {
+  const details = html`<details class="hpf-disclosure ${className}" id=${id ?? nothing} ${disclosureMotion(open, onToggle)}>
+    <summary class=${triggerClass} data-hp=${action ? 'action' : nothing} data-action=${action ?? nothing}>${title}</summary><div class="hpf-disclosure-content"><div class="hpf-disclosure-inner">${content}</div></div>
   </details>`;
   return help && help !== nothing
     ? html`<div class="hpf-disclosure-with-help">${details}${help}</div>` : details;
@@ -328,6 +329,11 @@ export interface ColorFieldOptions {
   opacity?: number;
   opacityLabel?: string;
   onOpacity?: (opacity: number) => void;
+  inputs?: {
+    name: string; hex: string; opacity: string; hexLabel: string;
+    hexInvalid: boolean; opacityInvalid: boolean;
+    onHex(raw: string): void; onOpacity(raw: string): void;
+  };
   /** Текстовая ссылка «Сбросить»; `undefined` — без сброса. */
   resetLabel?: string;
   onReset?: () => void;
@@ -341,18 +347,24 @@ export interface ColorFieldOptions {
  * не будет: `nativeColors() === 0` — контракт со свидетелем.
  */
 export function colorField({
-  picker, hex, valueLabel, opacity, opacityLabel, onOpacity, resetLabel, onReset, disabled = false,
+  picker, hex, valueLabel, opacity, opacityLabel, onOpacity, inputs, resetLabel, onReset, disabled = false,
 }: ColorFieldOptions): TemplateResult {
   const pct = opacity === undefined ? null : Math.round(Math.min(1, Math.max(0, opacity)) * 100);
   return html`<div class="hpf-colorfield">
     ${picker}
-    <code class="hpf-hex">${valueLabel ?? hex.toUpperCase()}</code>
-    ${pct === null ? nothing : onOpacity ? html`<span class="hpf-opacity">${opacityLabel ?? ''}
-      <span class="hpf-unit"><input data-hp="field" data-field="colour-opacity" type="number" inputmode="numeric" min="0" max="100" step="1"
-        .value=${String(pct)} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
+    ${inputs ? html`<input class="hpf-inline-hex" data-hp="field" data-field=${`${inputs.name}-hex`} id=${`hp-property-${inputs.name}-hex`} type="text" spellcheck="false" autocomplete="off" maxlength="7"
+      .value=${inputs.hex} ?disabled=${disabled} aria-label=${inputs.hexLabel} aria-invalid=${String(inputs.hexInvalid)}
+      @input=${(event: Event) => inputs.onHex((event.target as HTMLInputElement).value)} />`
+      : html`<code class="hpf-hex">${valueLabel ?? hex.toUpperCase()}</code>`}
+    ${pct === null ? nothing : onOpacity || inputs ? html`<span class="hpf-opacity ${inputs ? 'hpf-inline-opacity' : ''}">${inputs ? nothing : opacityLabel ?? ''}
+      <span class="hpf-unit"><input data-hp="field" data-field=${inputs ? `${inputs.name}-opacity` : 'colour-opacity'} type="number" inputmode="numeric" min="0" max="100" step="1"
+        class=${inputs ? 'hpf-inline-alpha' : nothing} .value=${inputs?.opacity ?? String(pct)} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
+        aria-invalid=${inputs ? String(inputs.opacityInvalid) : nothing}
         @input=${(e: Event) => {
-          const n = Number((e.target as HTMLInputElement).value);
-          if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));
+          const raw = (e.target as HTMLInputElement).value;
+          if (inputs) { inputs.onOpacity(raw); return; }
+          const n = Number(raw);
+          if (Number.isFinite(n)) onOpacity?.(Math.min(1, Math.max(0, n / 100)));
         }} /><span>%</span></span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel ?? nothing}>${pct}%</span>`}
     ${resetLabel && onReset ? html`<button data-hp="action" data-action="colour-reset" class="hpf-link" type="button" ?disabled=${disabled} @click=${onReset}>${resetLabel}</button>` : nothing}
   </div>`;

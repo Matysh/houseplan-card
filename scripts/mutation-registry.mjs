@@ -77,6 +77,22 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'ui-inline-opacity-loses-grid-slot-1051',
+    guard: 'node demo/smoke_ui_1051.mjs',
+    because: '#1051 AC2/7: actual 0/50/100 input paint must fit the intended inline grid slot. The common form-kit cascade can leave the opacity wrapper flex and clip digits despite an unchanged outer control box; only mounted browser layout reveals this. Nightly execution only.',
+    patches: [{ file: 'src/editors/properties/styles.ts',
+      find: '  .hp-properties .hpf-colorfield > .hpf-opacity.hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }',
+      replace: '  .hp-properties .hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }' }],
+  },
+  {
+    id: 'ui-led-menu-keeps-scene-pan-1051',
+    guard: 'node demo/smoke_device_copy.mjs',
+    because: '#1051 AC6: a trusted Linux SVG LED context press must not seed a scene pan that survives the menu and moves the viewport on a later buttons=0 motion. The ordinary emitted listener and viewport oracle require a real browser; nightly execution only.',
+    patches: [{ file: 'src/led-strip-editor.ts',
+      find: '          if (e.button === 2) e.stopPropagation();',
+      replace: '          if (false && e.button === 2) e.stopPropagation();' }],
+  },
+  {
     id: 'direct-signal-detached-host-acquires-1053',
     guard: 'node demo/smoke_direct_signal_lifecycle.mjs',
     because: '#1053 AC1: real full/space Lit elements may finish queued updates after remove(); public late HA assignment must acquire no config/layout/capability/feed while a mounted neighbour keeps its shared live reading. Nightly execution only.',
@@ -97,6 +113,35 @@ const MUTANT_DEFINITIONS = [
     because: '#1053 AC2: a backend refusing the optional projection stays on HA fallback without a retry loop. Nightly execution only.',
     patches: [{ file: 'src/device-signal-runtime.ts',
       find: " || code === 'invalid_format'", replace: '' }],
+  },
+  {
+    id: 'ui-menu-close-retains-input-1051',
+    guard: 'node demo/smoke_ui_1051.mjs',
+    because: '#1051 AC6: real closing paint must become inert before its 140ms fade, and a retained menu callback must write nothing. Browser semantics and rapid reopen are the oracle; nightly execution only.',
+    patches: [{file:'src/editor-context-menu.ts',find:'this.element.inert = true;',replace:'this.element.inert = false;'}],
+  },
+  {
+    id: 'ui-selected-device-loses-blue-1051',
+    guard: 'node demo/smoke_ui_1051.mjs',
+    because: '#1051 AC5: persistent selected paint must survive mouse departure and keyboard focus while View stays unchanged; computed mounted device face is required. Nightly execution only.',
+    patches: [{file:'src/styles/devices.styles.ts',
+      find:'.stage.mode-devices .dev.sel:not(.unavail):not(.alarm):not(.ghost) {',
+      replace:'.stage.mode-devices .dev.sel[data-no-selection]:not(.unavail):not(.alarm):not(.ghost) {'}],
+  },
+  {
+    id: 'ui-plan-pointer-misses-hit-1051',
+    guard: 'node demo/smoke_ui_1051.mjs',
+    because: '#1051 AC5: trusted mouse movement must distinguish empty canvas and the existing contour resolver at two zooms. This is input/render feedback, not a textual selector check. Nightly execution only.',
+    patches: [{file:'src/styles/plan.styles.ts',find:'.stage.mode-plan.markup.tool-select[data-plan-select-hit]',
+      replace:'.stage.mode-plan.markup.tool-select:not([data-plan-select-hit])'}],
+  },
+  {
+    id: 'ui-colour-preview-borrows-owner-1051',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/properties-color-draft.test.mjs',
+    because: '#1051 AC2/8: replacing user authority or the selected floor immediately removes render-only colour preview; ordinary controller negative inputs exercise the public draft API.',
+    patches: [{file:'src/editors/properties/controller.ts',
+      find:"return draft && this.owns(draft) && draft.error?.key !== 'external_change'",
+      replace:"return draft && draft.error?.key !== 'external_change'"}],
   },
   {
     id: 'decor-created-text-frame-unmeasured-1047',
@@ -174,8 +219,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_decor_order.mjs',
     because: '#1035 AC1: actual button boxes must remain inside the narrow secondary surface; document scrollWidth alone cannot detect its internal clipping. Chromium owns responsive sizing. Nightly execution only.',
     patches: [{ file: 'src/editor-secondary.styles.ts',
-      find: 'grid-template-columns: repeat(2, minmax(0, 1fr));',
-      replace: 'grid-template-columns: repeat(2, 180px);',
+      find: 'grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;',
+      replace: 'grid-template-columns:repeat(2,180px); gap:8px;',
     }],
   },
   {
@@ -330,8 +375,8 @@ const MUTANT_DEFINITIONS = [
     because: '#1007 AC3: a visually adjacent Help must not remain a descendant of the summary; trusted pointer hover and computed ancestor paint require Chromium.',
     patches: [{
       file: 'src/editors/form-kit.ts',
-      find: '<summary class=${triggerClass}>${title}</summary>',
-      replace: '<summary class=${triggerClass}>${title}${help ?? nothing}</summary>',
+      find: '<summary class=${triggerClass} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}</summary>',
+      replace: '<summary class=${triggerClass} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}${help ?? nothing}</summary>',
     }, {
       file: 'src/editors/form-kit.ts',
       find: '<div class="hpf-disclosure-with-help">${details}${help}</div>',
@@ -367,17 +412,16 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
     because: '#1005 AC1: native details must initially hide the technical text and open through trusted mouse/keyboard; this requires mounted Chromium details behaviour.',
     patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
-      find: '<details class="hpf-disclosure hpf-disclosure-compact incomplete" data-incomplete-provider=${provider}>',
-      replace: '<details open class="hpf-disclosure hpf-disclosure-compact incomplete" data-incomplete-provider=${provider}>' }],
+      find: "className: 'incomplete',",
+      replace: "className: 'incomplete', open: true," }],
   },
   {
     id: 'zigbee-incomplete-heading-enlarged-1005',
     guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
-    because: '#1005 AC1/#1012: source-footer summary must keep computed 12px status typography in both themes. '
-      + 'The local override must outrank the accepted #1007 shared compact disclosure rule; the old lower-specificity patch was masked by that cascade.',
+    because: '#1051 UI-023 supersedes compact status typography: source-footer summary must use the same common disclosure triangle and text as manual ZHA in both themes.',
     patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
-      find: ':host .incomplete > summary { color:var(--secondary-text-color,#9aa0aa); }',
-      replace: ':host .incomplete.hpf-disclosure.hpf-disclosure-compact > summary { color:var(--secondary-text-color,#9aa0aa); font-size:14px; }' }],
+      find: '    :host { display: block; color: inherit; font: inherit; }',
+      replace: '    :host { display: block; color: inherit; font: inherit; } :host .incomplete > summary { font-size:19px; }' }],
   },
   {
     id: 'zigbee-incomplete-mixes-provider-groups-1005',
@@ -11779,8 +11823,8 @@ const MUTANT_DEFINITIONS = [
       + 'which makes an offline device look live',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '.dev:not(.unavail)[data-hp-device-hover] {',
-      replace: '.dev.unavail[data-hp-device-hover] {',
+      find: '.dev:not(.unavail)[data-hp-device-hover],',
+      replace: '.dev.unavail[data-hp-device-hover],',
     }],
   },
   {
@@ -12167,8 +12211,8 @@ const MUTANT_DEFINITIONS = [
       + 'has already been cleared',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '    :host([data-pointer-hover]) .dev:not(.unavail)[data-hp-device-hover] {',
-      replace: '    .dev:not(.unavail)[data-hp-device-hover] {',
+      find: '    :host([data-pointer-hover]) .dev:not(.unavail)[data-hp-device-hover],',
+      replace: '    .dev:not(.unavail)[data-hp-device-hover],',
     }],
   },
   {

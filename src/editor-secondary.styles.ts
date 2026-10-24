@@ -1,4 +1,5 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+import { settingsActionsCss } from './styles/settings-action.styles';
 
 /** Styles owned by the contextual editor surface.
  *
@@ -6,7 +7,7 @@ import { css } from 'lit';
  * global stylesheet again. Selectors intentionally target the existing light
  * DOM: extracting the styles must not alter layout or smoke-test hooks.
  */
-export const editorSecondaryStyles = css`
+const editorSecondaryBase = css`
   :host {
     --hp-editor-tray-bg-fallback: color-mix(in srgb, var(--card-background-color, var(--hp-bg)) 94%, var(--hp-line));
     --hp-editor-tray-bg: color-mix(in srgb, var(--card-background-color, var(--hp-bg)) 86%, transparent);
@@ -85,20 +86,18 @@ export const editorSecondaryStyles = css`
     color: var(--hp-muted);
     font-size: var(--fs-s);
   }
-  .editor-secondary-content > .decor-selection-actions {
-    display: grid;
-    gap: var(--sp-3);
-    flex: 0 1 300px;
-    width: 300px;
-    min-width: 0;
-    max-width: 100%;
+  .editor-secondary[data-layout=actions] {
+    --hpf-line:var(--divider-color,var(--hp-line));
+    --hpf-surface:var(--card-background-color,var(--hp-bg));
+    display:grid; align-items:stretch; gap:12px; width:352px; max-width:100%;
+    box-sizing:border-box; padding:16px;
   }
-  .editor-secondary .decor-selection-actions .decor-order-pair {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-3);
+  .editor-secondary[data-layout=actions] .editor-context-label {
+    display:block; max-width:none; padding:0; border:0; color:var(--primary-text-color);
+    font-size:16px; font-weight:600; line-height:24px;
   }
-  .editor-secondary .decor-selection-actions .btn { min-width: 0; white-space: normal; }
+  .editor-secondary[data-layout=actions] .editor-secondary-content { display:block; overflow:visible; width:100%; }
+  .editor-secondary-content > .decor-selection-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; min-width:0; }
   .editor-secondary.kind-palette {
     width: min(760px, 100%);
     align-items: stretch;
@@ -192,3 +191,6 @@ export const editorSecondaryStyles = css`
     .editor-group-launcher .group-chevron { transition: none; }
   }
 `;
+
+export const editorSecondaryStyles = unsafeCSS(editorSecondaryBase.cssText
+  + settingsActionsCss('.editor-secondary .decor-selection-actions .btn'));

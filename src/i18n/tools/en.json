@@ -1,4 +1,6 @@
 {
+  "decor.color_caption": "Color:",
+  "decor.transparency_summary": "transparency {n}%",
   "decor.bring_front": "Bring to front",
   "decor.send_back": "Send to back",
   "decor.copy": "Create a copy",
