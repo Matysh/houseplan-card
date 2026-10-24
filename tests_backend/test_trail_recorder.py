@@ -5,7 +5,15 @@ snapshot of sys.modules that is restored immediately afterwards. Injecting
 fake `homeassistant` modules globally poisons the real HA harness running in
 the same pytest session (it did, once).
 """
-import sys, types, pathlib, importlib.util, json
+import importlib.machinery
+import json
+import pathlib
+import sys
+import types
+
+import pytest
+
+from pure_imports import load_pure
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
@@ -43,13 +51,9 @@ def _load_trails():
         sys.modules["houseplan"] = pkg
         c = types.ModuleType("houseplan.const"); c.DOMAIN = "houseplan"
         sys.modules["houseplan.const"] = c
-        spec = importlib.util.spec_from_file_location(
-            "houseplan.trails", str(ROOT / "custom_components" / "houseplan" / "trails.py")
-        )
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules["houseplan.trails"] = mod
-        spec.loader.exec_module(mod)
-        return mod
+        # Dependencies also use canonical absolute imports. The shared loader
+        # isolates those packages before fake HA can reach the real __init__.
+        return load_pure("houseplan.trails", ROOT / "custom_components" / "houseplan" / "trails.py")
     finally:
         for name in list(sys.modules):
             if name == "homeassistant" or name.startswith(("homeassistant.", "houseplan")):
@@ -58,6 +62,33 @@ def _load_trails():
 
 
 trails = _load_trails()
+
+
+@pytest.mark.parametrize("fail_import", [False, True])
+def test_issue1057_loader_restores_module_identity_after_success_or_import_failure(monkeypatch, fail_import):
+    def watched(name):
+        return name in ("homeassistant", "custom_components") or name.startswith(
+            ("homeassistant.", "houseplan", "custom_components.")
+        )
+
+    before = {name: module for name, module in sys.modules.items() if watched(name)}
+    if fail_import:
+        original_exec = importlib.machinery.SourceFileLoader.exec_module
+
+        def failing_exec(loader, module):
+            original_exec(loader, module)
+            if module.__name__ == "houseplan.trails":
+                raise RuntimeError("ordinary import failure after trail dependencies loaded")
+
+        monkeypatch.setattr(importlib.machinery.SourceFileLoader, "exec_module", failing_exec)
+        with pytest.raises(RuntimeError, match="ordinary import failure"):
+            _load_trails()
+    else:
+        _load_trails()
+
+    after = {name: module for name, module in sys.modules.items() if watched(name)}
+    assert after.keys() == before.keys(), "temporary HA/alias/canonical imports must not leak"
+    assert all(after[name] is module for name, module in before.items()), "real modules must keep identity"
 
 
 class S:
