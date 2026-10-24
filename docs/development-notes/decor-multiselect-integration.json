@@ -305,6 +305,12 @@
       "goldenPixels": "All five PNG hashes exactly match the previously viewed declared scenes; no baseline acceptance.",
       "followup": "A separate refined Text-scale run adds a positive live-copy precondition to the unchanged geometry/ID assertions; the other 39 smoke recipes and all five captures are unchanged.",
       "followupResult": "PASS: two actual live Text copies observed before the zero duplicate-ID assertion; all prior counters and persistence assertions retained."
+    },
+    "metadataRepair": {
+      "normalHook": "RED: 247 seconds, exactly one tooling assertion ci-registry-inputs.test.mjs:140; A/build/product/budget/unused passed, push rejected.",
+      "cause": "New Text leaf and smoke were absent from the generated immutable CI inventory.",
+      "resolution": "Canonical ci-profiles --write, ci-registry-inventory --write and status-snapshot --write after all new files were tracked; all three corresponding checks PASS.",
+      "targeted": "ci-registry-inputs suite 21/21 PASS; no product/producer inputs changed."
     }
   }
 }
