@@ -10,6 +10,9 @@ held replies must retain one current read owner. Rendering snapshots keep
 their intake in `willUpdate`, while ordinary skipped state updates retain the
 existing operational fast path. Do not reset the broad diagnostics invalidation
 method to retire HA identity, or add an independent loader/timer.
+The [ordinary validation record](development-notes/mounted-authority-validation.json)
+pins the original 54-check RED, 69-check AFTER, the shared-counter diagnostic,
+seven selected neighbours, runtime and measured production sizes separately.
 
 ## Dialog CSS ownership #1019
 

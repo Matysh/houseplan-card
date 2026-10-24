@@ -35,7 +35,8 @@ for (const scenario of ['connection', 'user', 'new-object', 'ABA', 'held-old', '
               // Real projection semantics: [] is full config, never metadata.
               const selected = Array.isArray(message.fields) && message.fields.length
                 ? Object.fromEntries(Object.entries(config).filter(([key]) => message.fields.includes(key))) : config;
-              return { config: structuredClone(selected), rev: 1, can_write: false, zigbee_lqi_api: 0 };
+              return { config: structuredClone(selected), rev: 1,
+                can_write: scenario === 'held-old' && name === 'B', zigbee_lqi_api: 0 };
             }
             if (message.type === 'houseplan/layout/get') return { ...structuredClone(layout), rev: 1 };
             return original.callWS(message);
@@ -58,6 +59,8 @@ for (const scenario of ['connection', 'user', 'new-object', 'ABA', 'held-old', '
       const settle = async () => { await card.updateComplete;
         for (let i = 0; i < 3; i++) await new Promise(requestAnimationFrame); };
       const out = {};
+      const intakeCount = () => card._continuity.trace.filter(event => event.event === 'hass-snapshot').length;
+      let intakeObservation = null;
       if (scenario === 'missing-initial') {
         const host = document.createElement('div'); host.style.width = '800px'; document.body.append(host);
         card = document.createElement('houseplan-card');
@@ -72,9 +75,9 @@ for (const scenario of ['connection', 'user', 'new-object', 'ABA', 'held-old', '
         card.hass = a.hass;
         out.initialLoaded = await until(() => ready('A'));
         await settle(); a.calls.length = 0;
-        // This fixture advertises no direct-feed API, so no signal envelope
-        // contributes to this existing operational intake sequence.
-        const intakeBefore = card._hassSequence;
+        // _hassSequence also includes signal-cache retirement notifications.
+        // The existing redacted trace marks operational intake specifically.
+        const intakeBefore = intakeCount(), sequenceBefore = card._hassSequence;
         const reused = a.hass;
         const savedA = { ...a.hass };
         if (scenario === 'same-context') {
@@ -84,7 +87,7 @@ for (const scenario of ['connection', 'user', 'new-object', 'ABA', 'held-old', '
           await settle();
           out.sameContextKeepsPlan = ready('A');
           out.sameContextNoRead = counts(a).config === 0 && counts(a).layout === 0;
-          out.onlyNewStateSnapshotIntakes = card._hassSequence === intakeBefore + 1;
+          out.onlyNewStateSnapshotIntakes = intakeCount() === intakeBefore + 1;
         } else if (scenario === 'ABA') {
           Object.assign(reused, b.hass); card.hass = reused;
           Object.assign(reused, savedA); card.hass = reused;
@@ -92,7 +95,7 @@ for (const scenario of ['connection', 'user', 'new-object', 'ABA', 'held-old', '
           await settle();
           out.ABAOneCurrentPair = counts(a).config === 1 && counts(a).layout === 1;
           out.ABANoIntermediateRead = counts(b).config === 0 && counts(b).layout === 0;
-          out.ABAOneFinalIntake = card._hassSequence === intakeBefore + 1;
+          out.ABAOneFinalIntake = intakeCount() === intakeBefore + 1;
         } else {
           if (scenario.startsWith('held-')) b.hold();
           if (scenario === 'new-object') card.hass = b.hass;
@@ -117,14 +120,16 @@ for (const scenario of ['connection', 'user', 'new-object', 'ABA', 'held-old', '
             await settle();
           }
           out.oneCurrentMandatoryPair = counts(b).config === 1 && counts(b).layout === 1;
-          out.currentOperationalIntakeOnce = card._hassSequence === intakeBefore + (scenario === 'held-old' ? 2 : 1);
+          out.currentOperationalIntakeOnce = intakeCount() === intakeBefore + (scenario === 'held-old' ? 2 : 1);
         }
+        intakeObservation = { sequenceDelta: card._hassSequence - sequenceBefore, traceDelta: intakeCount() - intakeBefore };
       }
+      out.intakeTraceNotTruncated = card._continuity.trace.length < 80;
       out.staysMounted = card.isConnected;
       out.noWrites = owners.every(owner => owner.calls.every(message =>
         message.type !== 'service' && !/(set|update|delete)$/.test(message.type)));
       out.noEditorLoad = !performance.getEntriesByType('resource').some(entry => /houseplan-editor-runtime-/.test(entry.name));
-      return { checks: out, counts: owners.map(counts), observedTitle: title(),
+      return { checks: out, counts: owners.map(counts), intakeObservation, observedTitle: title(),
         rooms: card.renderRoot.querySelectorAll('.room').length,
         requests: owners.map(owner => owner.calls.map(({ type, fields }) => ({ type, ...(fields ? { fields } : {}) }))) };
     }, scenario);
