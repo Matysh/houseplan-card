@@ -97,6 +97,18 @@
     "policy": "Refresh only the measured references; retain existing bands and absolute predicates."
   },
   "ordinaryProof": {
+    "boundedReaderFixtureRepair": {
+      "hookMaterial": "32a085a69d22d9e97876d0cbe49abaf4bebd4442",
+      "hookSeconds": 247,
+      "hookFailure": "Only inherited task-check-reuse.test.mjs:61/82 failed; product/build/budget/unused and all other tooling checks passed. The original assertion printed accepted=false without its refusal reason.",
+      "isolatedOriginal": "36/36 PASS in 1.7s with no source changes.",
+      "controlledAgeWitness": "Real immutable Git readers older than the unchanged 8s budget refuse with task Git equivalence: registry probe deadline exceeded; fresh readers on the identical before.sha/after.sha immediately accept. This is a controlled lifetime witness, not a fabricated reason from the original hook log.",
+      "repair": "Only the positive test fixture recreates each per-lookup reader immediately before verification on the exact original committed SHA. The accepted=true oracle, real Git identity and negative policy cases remain; its diagnostic now includes the returned reason.",
+      "productionPolicyChanged": false,
+      "productionDeadlineSeconds": 8,
+      "targetedAfter": { "passed": 57, "failed": 0, "skipped": 0 },
+      "freshValidation": "Targeted fixture/policy results and the mandatory hook retry are recorded in the final handoff; the previous RED is not a passed gate."
+    },
     "acceptedCiPolicyIntegration": {
       "acceptedDev": "16b5fd77dad41a333b57b1c0ade94d89bce741d4",
       "merge": "102dd06dd",

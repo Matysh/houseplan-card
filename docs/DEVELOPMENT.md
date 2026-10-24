@@ -119,6 +119,19 @@ under #1051 on this baseline index, so #1038 keeps NEW rather than introducing
 a conflicting CHANGE. All three additional captures are viewed; baseline
 acceptance and unrelated visual changes remain outside this task.
 
+The mandatory hook on `32a085a69` passed product/build/budget/unused checks but
+failed one inherited scoped-reuse positive fixture after 11.1 seconds. That
+fixture retained an eight-second bounded Git reader across unrelated setup.
+Its unchanged isolated file passed 36/36; a controlled real-reader age witness
+reported the expected deadline refusal, while fresh readers of the identical
+committed before/after SHA accepted. Each positive verification now opens its
+own per-lookup reader immediately before use, retaining the original real Git
+inputs and `accepted === true` oracle and printing the actual refusal reason on
+failure. Production deadlines, equivalence policy and negative cases are not
+changed. The failed hook remains a red receipt; its retry is mandatory.
+The scoped-reuse and immutable Git-input files pass all 57 positive/negative
+checks after this fixture-only repair, with no skipped case.
+
 ## Editor keyboard translation (#1025)
 
 `test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command

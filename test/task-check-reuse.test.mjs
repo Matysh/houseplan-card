@@ -74,12 +74,17 @@ test('scoped receipts reuse direct tooling and selected evidence after documenta
   for (const [index, job] of ['tooling', 'browser_selected'].entries()) {
     assert.deepEqual(await taskCheckPlan(root, { job, browserPlan, environment }), plans[index]);
     const { claim, context } = await fixture(job);
-    context.candidateSnapshot = after; context.sourceSnapshot = before;
     claim.record.sha = before.sha; claim.record.workflow_revision = before.sha;
     context.run.head_sha = before.sha; context.latestRun.head_sha = before.sha;
     context.artifact.workflow_run.head_sha = before.sha; context.proof.candidate.sha = before.sha;
     context.proof.candidate.tree = before.tree;
-    assert.equal((await verifyTaskCheckClaim(claim, context)).accepted, true);
+    // Each verification is a new bounded lookup. Keep the exact immutable
+    // commits, but do not age their readers through unrelated Git fixture
+    // preparation or the preceding job's verification under suite load.
+    context.candidateSnapshot = taskCheckSnapshot(root, after.sha);
+    context.sourceSnapshot = taskCheckSnapshot(root, before.sha);
+    const verified = await verifyTaskCheckClaim(claim, context);
+    assert.equal(verified.accepted, true, verified.reason);
   }
 });
 
