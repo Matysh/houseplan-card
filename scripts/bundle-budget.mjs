@@ -821,9 +821,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 // against dev's measured334438 B. Account for the owner-approved contact
 // reference/reflow/writer cost; keep the same band and absolute budgets.
 // #1051: shared menu/disclosure lifecycles and atomic inline colour fields,
-// furniture/dialog kit and editor-only translations measure 343432 B gzip on
-// accepted c2d49829b: +4075 B (1.20%) over the measured 339357 B at 845c20c3e
-// (identical product/build inputs in accepted c2d49829b). The owner
+// furniture/dialog kit and editor-only translations measure 344808 B gzip on
+// accepted 0e59b41b3: +4196 B (1.23%) over its measured 340612 B (#1046).
+// These are actual combined builds, not sums of branch measurements. The owner
 // permits this measured growth (issue #1051, comment 6377420988); preserve
 // the 2000-B band, initial-View split and all absolute predicates.
 export const LAZY_EDITOR_GZIP_CEILING = 343_500;

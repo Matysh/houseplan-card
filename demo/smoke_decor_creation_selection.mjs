@@ -31,6 +31,9 @@ const uncoveredPoint = () => card.evaluate(c => {
 });
 const drag = async (a = [.2,.3], b = [.4,.4]) => {
   const from = await point(...a), to = await point(...b);
+  if ((await state()).tool === 'line') {
+    await page.mouse.click(from.x,from.y); await page.mouse.click(to.x,to.y); await settle(); return;
+  }
   await page.mouse.move(from.x,from.y); await page.mouse.down();
   await page.mouse.move(to.x,to.y,{steps:8}); await page.mouse.up(); await settle();
 };

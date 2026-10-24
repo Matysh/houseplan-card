@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5194 · pure backend 626 · HA-harness backend 527 · browser smokes 427 (`npm run inventory`) |
+| Tests | Node unit 5202 · pure backend 626 · HA-harness backend 527 · browser smokes 428 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -88,6 +88,11 @@ Decor ordering (#1035) is scoped to the current space's array, with paired
 Properties actions and one context-menu command owner. Right-click selects its
 object and order commands preserve selection. Copies are independent instances;
 image copies share the existing asset. History and transfer use existing paths.
+
+Decor Line (#1046) accepts successive clean clicks like Walls, with exact
+Shift 45° preview/commit and one ordinary history step per independent segment.
+Its temporary anchor follows active-chain Undo/Redo and ends on Esc or context
+replacement. Navigation/cancel tails never draw; saved decor has no new fields.
 
 Print download (#1036) combines unchanged PDF with a static SVG of the current
 View. SVG starts with devices off and transparent background, offers the shared

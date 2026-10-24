@@ -74,6 +74,15 @@ order only on a right-click, including under pointer-inert drawing tools.
 Commands use the current geometry history/config writer; View has no menu
 listener or commands. No asset/file API, backend change or schema migration.
 
+Decor Line (#1046) is a lazy-editor `DecorLineDrawing` session. Clean stage
+pointer pairs authorise one native click; navigation/cancel tails have no such
+token. Preview and commit use the same endpoint calculation, with exact Shift
+rays and compatible decor magnets. Accepted segments use the existing geometry
+writer and common command stack; only command snapshots carry a session token
+and anchor. History restores it only while the same chain was active, and
+authoritative adoption/context teardown clears it. No config schema or View
+dependency changes; Shift listeners exist only for an unfinished chain.
+
 Print export (#1036) keeps the PDF scene/writer independent from a lazy SVG View
 snapshot. The card supplies a read-only stage/context fence, not export geometry.
 The exporter freezes computed styles and flattened icon shadows synchronously,
