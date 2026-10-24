@@ -74,6 +74,9 @@ Wall-node deletion (#1045) joins two safely compatible endpoint sections,
 preserving fixed neighbours, room ownership and physical openings. It uses a
 narrow independently proved server transaction and the existing common history;
 refused inverse operations retain the command and cursor. Storage is unchanged.
+The existing node owner uses the common context menu; pending Properties and
+retained exit paint carry no late write authority after cancellation. Touch
+compatibility tails stay inert and the next deliberate mouse press re-arms.
 
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
 renderer, with the dark body cut out beneath the core so the real plan shows

@@ -909,7 +909,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); }
+  public invalidateEditorNavigation(): void { this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -1079,6 +1079,13 @@ export class HouseplanEditorRuntime {
           this._junctionLimitsIntroduced(config, baseline, id, geometry, undefined, baselineGeometry),
         canShow: id => this.host._canCommitSpace(id),
         show: id => this._showGeometrySpace(id),
+        delete: {
+          beforeIntent: retry => this.properties.beforeIntent(retry), navigation: () => this.navigationIntent,
+          blocked: () => !this.host._loadOk || !this.host._norm || this.host._modeTransitionBusy
+            || this.host._editorSecondaryDialogBlocked || !!(this.host._panStart || this.host._drag || this.host._rlResize
+              || this.host._decorMove || this.host._dtDrag || this.host._path.length || this.host._resize.dragging
+              || this.physicalGesture.active || this.backdropGesture.active),
+        },
       });
       this.host.requestUpdate();
     }).catch(() => { this.host._showToast(this.host._t('toast.geometry_unsafe'), 'toast.geometry_unsafe'); })

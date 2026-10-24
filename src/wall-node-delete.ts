@@ -1,8 +1,7 @@
 /** #1045: one local structural deletion, independent of render fragments and writers. */
 import { GRID_STEP_N } from './canvas-constants';
 import { compareCodePoints } from './codepoint-order';
-import { polygonArea, roomsOverlap } from './logic';
-import { polyIsSimple } from './resize';
+import { polygonArea, roomsOverlap, polyIsSimple } from './logic';
 import { sameNodePoint, structuralNodeWalls, structuralWallNodes,
   type NodeMoveSpace, type NodePoint, type NodeWall } from './wall-node-move';
 import { wallKey } from './wall-thickness';

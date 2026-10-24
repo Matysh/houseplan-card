@@ -84,6 +84,11 @@ Its discriminated node command joins the existing serialized writer and common
 50-command history. Refused Delete inverse commands keep their cursor/identity;
 Move keeps its existing refusal policy. Capability is transport-only, with no
 new View import, polling, persisted selection or model change.
+The existing node editor owns the cancellable opening/action intent and uses
+the accepted shared context-menu presentation. Pending Properties completion
+cannot outlive outside/navigation/authority retirement; normal chosen-action
+close does not revoke an already accepted response. The pure polygon helper is
+shared with Resize rather than imported through the editor runtime facade.
 
 Decor Line (#1046) is a lazy-editor `DecorLineDrawing` session. Clean stage
 pointer pairs authorise one native click; navigation/cancel tails have no such

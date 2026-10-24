@@ -7453,8 +7453,19 @@ export class HouseplanCard extends LitElement {
   private _guardTouchGesture(ev: Event): void {
     if (ev.type === 'keydown') this._deviceDragRetirement.key((ev as KeyboardEvent).key);
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
+    const rightMouseDown = ev.type === 'pointerdown' && (ev as PointerEvent).pointerType === 'mouse'
+      && (ev as PointerEvent).button === 2;
+    // A node consumes this down before pan, but it is still fresh physical
+    // evidence that retires the previous touch compatibility tail.
+    if (rightMouseDown) this._touchClickGuard.pointerDown((ev as PointerEvent).pointerId, 'mouse');
+    // A compatibility contextmenu after a pinch belongs to the existing touch
+    // barrier before any node-menu activation can claim it.
+    if (ev.type === 'contextmenu') {
+      this._touchClickGuard.handleActivation(ev, this._suppressClick);
+      if (ev.defaultPrevented) return;
+    }
     if (this._editorRuntime?.nodeMove?.guardEvent(ev)) return;
-    if (this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
+    if (ev.type === 'contextmenu' || this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
     if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') {
@@ -7467,7 +7478,7 @@ export class HouseplanCard extends LitElement {
       // #813: a hold whose pointer lost its capture is no longer a hold.
       if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();
     } else if (ev.type === 'pointerdown') this._planTaps.clearNonPlan(pointer);
-    if (ev.type === 'pointerdown') this._touchClickGuard.pointerDown(
+    if (ev.type === 'pointerdown' && !rightMouseDown) this._touchClickGuard.pointerDown(
       pointer.pointerId, pointer.pointerType,
     );
     const wasMultitouch = ev.type === 'pointerup' || ev.type === 'pointercancel'
@@ -11408,6 +11419,7 @@ export class HouseplanCard extends LitElement {
         ${this._editorRuntime?.properties.render()}
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
         ${this._editorRuntime?.decorOrder.render()}
+        ${this._editorRuntime?.nodeMove?.renderMenu()}
         ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing)}
         ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}
         ${dialogPresence(this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing)}

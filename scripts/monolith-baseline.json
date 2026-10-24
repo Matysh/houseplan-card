@@ -1,8 +1,8 @@
 {
   "delegates": 145,
   "portMembers": 368,
-  "hostRefs": 6090,
+  "hostRefs": 6117,
   "portPrivates": 102,
   "harnessPrivates": 101,
-  "bundleBytes": 3432791
+  "bundleBytes": 3449157
 }

@@ -4,7 +4,8 @@
 
 - Safely delete an intermediate wall node in Plan/Select: join its two neighbours
   without moving them, preserve supported openings and undo the whole edit in
-  one step. Unsafe nodes explain why deletion is unavailable. (#1045)
+  one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale
+  menus cannot send a late delete. (#1045)
 - Unify editor action trays, furniture properties, context menus, disclosures
   and text links with the shared UI kit. Decor colours support inline HEX and
   opacity preview with one Undo step; device selection stays blue after hover,

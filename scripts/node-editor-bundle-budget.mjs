@@ -10,6 +10,8 @@ assert.equal(loaded.has(root.path), false, 'node controller is not eager in View
 const byPath = new Map(manifest.files.map(f => [f.path, f])), seen = new Set();
 const visit = path => { if (seen.has(path)) return; seen.add(path); for (const child of byPath.get(path).imports) visit(child); };
 visit(root.path);
+assert.equal([...seen].some(path => /\/houseplan-editor-runtime-[^/]+\.js$/.test(path)), false,
+  'Select-only leaves must not import the editor runtime facade');
 const extra = [...seen].filter(path => !loaded.has(path));
 // #834: the cache implementation belongs to the Select-only graph, not the
 // shared wrappers used by View. These retained runtime counters identify the
@@ -23,6 +25,7 @@ const gzip = extra.reduce((sum, path) => sum + byPath.get(path).gzipBytes, 0);
 // clipping. The owner permits an explicit ceiling increase, not byte golfing.
 // This is still a hard Select-only cap; View/editor ceilings remain unchanged.
 // #898, owner decision 2026-10-14: less than 10 % headroom -> +10 %, 18432 -> 20276 B.
-const budget = 20_276;
+// #1045: approved small byte increase to the measured Delete graph, no headroom.
+const budget = 21_453;
 assert.ok(gzip <= budget, `${gzip} B gzip exceeds the Select-only ${budget} B budget`);
 console.log(`Select-only node graph: ${gzip} B gzip, budget ${budget}; existing bundle ceilings unchanged`);

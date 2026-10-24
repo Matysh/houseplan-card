@@ -122,10 +122,35 @@ The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authent
 groups, concurrent CAS, stores, metadata projection and integration reload; it
 never replaces the product planner. Run it with the current supported HA harness.
 Ordinary rotated inputs extend parity to 160 scenarios, including finite contacts
-that neither old carrier touched. Ten registered kernel/writer/history/capability guards
+that neither old carrier touched. Sixteen registered kernel/writer/history/menu/capability guards
 have static readiness only; execution and caught evidence remain nightly.
 The existing `node-history-requires-select` witness keeps its identity/oracle;
 only its adapter anchor follows the new operation-specific capability callback.
+The node editor owns one `WallNodeDeleteMenu` intent, with the accepted shared
+`EditorContextMenu` presentation. An opening waiting for Properties can follow
+its own Save; outside/Esc/foreign authority retires the callback. The selected
+action survives normal menu retirement, rechecks the exact source before WS,
+and records one common command only after acceptance. The shared geometry
+validator `polyIsSimple` lives in `logic.ts` and is re-exported by Resize, so
+the Select chunk never imports the editor runtime facade; the named-export ABI
+gate remains unchanged. Contextmenu checks the existing touch barrier first;
+a fresh right mouse down reaches that same owner before the node consumes pan.
+The native scene has an untouched room envelope for actual floor bounds and a
+wide host for real Properties. Its visible SVG span is checked separately from
+the physical input line's round non-scaling caps.
+
+Measured on the combined accepted #1051/#1046 source: initial View 340206 B gzip
+(+585 from #1051), lazy editor 345289 B (+457), Select-only 21453 B.
+The Select-only hard byte cap changes from 20276 to exactly 21453 B (+1177),
+for the independently proved Delete kernel, cancellable menu and its writer
+integration; it adds no reserve. This uses the owner's explicit permission:
+«сильно на размеры не заморачивайся, если незначительное превышение, устранять
+которое очень дорого — разрешаю поднять лимиты». Further removal would require
+disproportionate restructuring of the bounded proof/controller graph; the heavy
+editor facade is independently forbidden from that graph. `hostRefs` increases
+6090→6117 and total raw bundle bytes 3432791→3449157 for the new capability,
+current-context ports and Delete code. Only those measured baselines grow;
+bands, View/editor ceilings, named exports and latency limits remain unchanged.
 Targeted proofs supplement gate:small; full regression and mutation execution
 remain in their existing CI/nightly contours.
 

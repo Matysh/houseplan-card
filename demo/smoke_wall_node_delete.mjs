@@ -10,7 +10,11 @@ import { applyNodeMove, prepareNodeMove, structuralWallNodes } from '../test-bui
 requirePinnedBrowser();
 const clone = value => structuredClone(value);
 const initial = commitWallSegmentModel({ spaces: [
-  { id: 'delete-floor', title: 'Delete nodes', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [],
+  { id: 'delete-floor', title: 'Delete nodes', cell_cm: 5, view_box: [0, 0, 1, 1],
+    // The ordinary camera derives floor bounds from rooms; this untouched
+    // envelope keeps every tested partition/node inside the native viewport.
+    rooms: [{ id: 'envelope', name: 'Untouched room', area: null,
+      poly: [[.05, .05], [.95, .05], [.95, .95], [.05, .95]] }],
     partitions: [
       { id: 'a', a: [.15, .3], b: [.4, .3], cm: 0, future: { label: 'keep', flags: [true, 1] } },
       { id: 'b', a: [.4, .3], b: [.75, .3], cm: 0, future: { flags: [true, 1], label: 'keep' } },
@@ -40,6 +44,8 @@ const projected = message => {
   return message.fields?.length ? Object.fromEntries(Object.entries(config).filter(([key]) => message.fields.includes(key))) : config;
 };
 const { page, browser } = await launch({ width: 1500, height: 1000 });
+// Exercise the real wide Properties surface; demo's default host is 780px.
+await page.addStyleTag({ content: '#host{width:100%;padding:0;margin:0}' });
 await page.exposeFunction('nodeDeleteWire', async message => {
   requests.push(clone(message));
   if (message.type === 'houseplan/config/get') return { config: projected(message), rev: revision,
@@ -108,7 +114,12 @@ const screen = p => page.evaluate(p => {
   q.x = p[0] * 1000; q.y = p[1] * 1000;
   const out = q.matrixTransform(svg.getScreenCTM()); return { x: out.x, y: out.y };
 }, p);
-const rightClick = async p => { const q = await screen(p); await page.mouse.click(q.x, q.y, { button: 'right' }); };
+const rightClick = async p => {
+  const q = await screen(p), viewport = page.viewportSize();
+  assert.ok(q.x >= 0 && q.x < viewport.width && q.y >= 0 && q.y < viewport.height,
+    `native node target ${p} is inside the viewport: ${JSON.stringify(q)}`);
+  await page.mouse.click(q.x, q.y, { button: 'right' });
+};
 const open = async p => { await rightClick(p); await action().waitFor(); };
 const settled = () => page.evaluate(() => window.__hpTest.settled());
 const state = () => page.evaluate(() => ({ config: structuredClone(window.__card._serverCfg), rev: window.__card._cfgRev,
@@ -152,8 +163,19 @@ try {
   check('delete.straight.painted_opening_stays_literal', doorAfter && ['x', 'y', 'width', 'height'].every(key => Math.abs(doorAfter[key] - doorBefore[key]) < .5));
   check('delete.straight.no_old_wall_fragment', await card.locator('[data-hp="partition"][data-id="b"]').count(), 0);
   const retainedWall = await card.locator('[data-hp="partition"][data-id="a"]').first().boundingBox();
+  const hitStroke = await card.locator('[data-hp="partition"][data-id="a"]').first()
+    .evaluate(node => parseFloat(getComputedStyle(node).strokeWidth));
   const endpointA = await screen([.15, .3]), endpointC = await screen([.75, .3]);
-  check('delete.straight.painted_A_C_span', retainedWall && Math.abs(retainedWall.width - Math.abs(endpointC.x - endpointA.x)) < 1);
+  // The input line has round 24px non-scaling caps, included in its client box.
+  check('delete.straight.A_C_hit_span', retainedWall
+    && Math.abs(retainedWall.width - Math.abs(endpointC.x - endpointA.x) - hitStroke) < 1
+    && Math.abs(retainedWall.x + hitStroke / 2 - endpointA.x) < 1);
+  const paintedSpan = await card.locator('.zero-walls .zero-wall').evaluateAll(nodes => nodes
+    .filter(node => Number(node.getAttribute('y1')) === 300 && Number(node.getAttribute('y2')) === 300)
+    .map(node => ({ ends: ['x1', 'y1', 'x2', 'y2'].map(key => Number(node.getAttribute(key))),
+      visible: getComputedStyle(node).stroke !== 'none' && parseFloat(getComputedStyle(node).strokeWidth) > 0
+        && Number(getComputedStyle(node).opacity) > 0 })));
+  check('delete.straight.painted_A_C_span_without_B_fragment', paintedSpan, [{ ends: [150, 300, 750, 300], visible: true }]);
   await page.keyboard.press('Control+z'); await settled();
   check('delete.undo.exact_entire_config', server, original);
   check('delete.undo.restores_B', (await handles()).some(p => p[0] === 400 && p[1] === 300));
@@ -163,6 +185,24 @@ try {
   await boot();
   check('delete.reload.exact_accepted_geometry', (await state()).config, canonicalExpected);
   check('delete.reload.no_transient_menu', await menu.count(), 0);
+
+  // Public DOM compatibility input, with no product-state writes: a stale
+  // MouseEvent contextmenu (no pointerType) after two contacts stays inert.
+  const touchBaseline = await state(), touchWriteCount = writes.length, touchPoint = await screen([.5, .7]);
+  const compatibilityPrevented = await page.evaluate(p => {
+    const svg = window.__card.renderRoot.querySelector('svg.plan-svg');
+    for (const [type, id] of [['pointerdown', 81], ['pointerdown', 82], ['pointerup', 82], ['pointerup', 81]]) {
+      svg.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', isPrimary: id === 81,
+        clientX: p.x, clientY: p.y, bubbles: true, composed: true, cancelable: true }));
+    }
+    const event = new MouseEvent('contextmenu', { clientX: p.x, clientY: p.y, button: 2,
+      bubbles: true, composed: true, cancelable: true });
+    svg.dispatchEvent(event); return event.defaultPrevented;
+  }, touchPoint);
+  await settled();
+  check('delete.touch_compatibility_contextmenu.blocked', compatibilityPrevented);
+  check('delete.touch_compatibility_contextmenu.no_menu_write_or_history',
+    [await menu.count(), writes.length, (await state()).history], [0, touchWriteCount, touchBaseline.history]);
 
   // Disabled degree and old-backend paths use the actual menu, never a private command call.
   const disabledBefore = await state(), countBefore = writes.length;
