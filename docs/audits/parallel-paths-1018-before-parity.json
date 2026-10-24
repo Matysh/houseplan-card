@@ -1,0 +1,44 @@
+{
+  "authority": "diagnostic-only",
+  "captureSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+  "baselineProjector": "f356d5df45683fbfec0d4e941cf8c5054b4dc412",
+  "orderedProjector": "1ff39b03faf67849356872b4a2ef0f975389bd21",
+  "baselineReportSha256": "74b0023901b16fd0e2fa3c662508077ef41d3362c7eb14c918b0822d31a915e0",
+  "orderedReportSha256": "030e5b8e21610f79488c8ad46f2b2cabfec641511536675687dba7945c05e94d",
+  "allNonIdentityFieldsExactlyEqual": true,
+  "fields": {
+    "schema": "701f192592da768f8aad9f32a020bf68660cce7f0cc5a1b84499bea5de37bcc9",
+    "authority": "d8e3bbf10645ecb42e1bae2008e2511e246969c8404d4198513d7940989253df",
+    "semanticApproval": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "inventoryDigest": "9323b626efcfad8e47573dce808c053456803079cdb78bbce6c6a67b4b599797",
+    "completeness": "6495f49526302565b0c531193f26c3f9f2ffca80519a8dbca4030fc4a371c700",
+    "actualScripts": "183ff4234d1fa05ac7e931d02f05618ef03b136d2ab1b1e82b1e6188346b882f",
+    "observedScripts": "f93206e30174a3bd6366a830a844e9447e3bde4e74a6bcdf349c397881947ef1",
+    "functions": "979f7ca74c334fd83659675cf9b42561b640a2d5ffad086753747043b9108649",
+    "nativeMappedRanges": "d3c73d7299bb6890f9e8f6ab34e9ffa389e8f9bddc00ba4381392a07864a8610",
+    "invocations": "d4d3ff40984cd4141b05074bcf956ada4c62806ea903335ce11a531169e40b47",
+    "files": "561b12a9a5fde588a580ec6cb9807422080e5da7edd554fdad3c1184f5b73b00",
+    "interpretation": "1f6baa51dc893ee2bf9b5fd23213e2bc8f3ccdcd9a03924699fccd5d87396add"
+  },
+  "counts": {
+    "nativeRanges": 51357,
+    "functions": 10664,
+    "files": 436,
+    "actualScripts": 30242,
+    "reasons": 1298
+  },
+  "families": {
+    "unit": {
+      "observedFunctions": 5774,
+      "observedNativeRanges": 6230
+    },
+    "smoke": {
+      "observedFunctions": 9307,
+      "observedNativeRanges": 34013
+    },
+    "golden": {
+      "observedFunctions": 4952,
+      "observedNativeRanges": 13175
+    }
+  }
+}

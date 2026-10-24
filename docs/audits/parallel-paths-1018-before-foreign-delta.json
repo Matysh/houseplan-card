@@ -1,0 +1,38 @@
+{
+  "authority": "diagnostic-only",
+  "captureSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+  "previousProjector": "1ff39b03faf67849356872b4a2ef0f975389bd21",
+  "projector": "ab58626cfe6cdd4297c4a0a958a623abb6c221b2",
+  "previousReasons": 1298,
+  "reasons": 1337,
+  "addedUnknown": 39,
+  "owner": "smoke:demo/smoke_ui_polish_963_reference.mjs",
+  "stableFields": {
+    "schema": "701f192592da768f8aad9f32a020bf68660cce7f0cc5a1b84499bea5de37bcc9",
+    "authority": "d8e3bbf10645ecb42e1bae2008e2511e246969c8404d4198513d7940989253df",
+    "semanticApproval": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+    "inventoryDigest": "9323b626efcfad8e47573dce808c053456803079cdb78bbce6c6a67b4b599797",
+    "actualScripts": "183ff4234d1fa05ac7e931d02f05618ef03b136d2ab1b1e82b1e6188346b882f",
+    "functions": "979f7ca74c334fd83659675cf9b42561b640a2d5ffad086753747043b9108649",
+    "nativeMappedRanges": "d3c73d7299bb6890f9e8f6ab34e9ffa389e8f9bddc00ba4381392a07864a8610",
+    "invocations": "d4d3ff40984cd4141b05074bcf956ada4c62806ea903335ce11a531169e40b47",
+    "files": "561b12a9a5fde588a580ec6cb9807422080e5da7edd554fdad3c1184f5b73b00",
+    "interpretation": "1f6baa51dc893ee2bf9b5fd23213e2bc8f3ccdcd9a03924699fccd5d87396add"
+  },
+  "observedScriptChange": "Exactly39 external/not-candidate identities became unknown/unindexed; all other identity fields and observations unchanged.",
+  "priorMap": {
+    "compressed": {
+      "sha256": "d65564f8dc944d9ecee7741562cb4f9f0f4468458c97efcc0b2a6bf4a78e1836",
+      "bytes": 2992244
+    },
+    "plain": {
+      "sha256": "83620e6dad7868891f7e11c0dca1d9d3381b78f69c3c4257f85719dc619cab0a",
+      "bytes": 17578330
+    },
+    "metadataCommit": "71a4df726dbe68b3cdaca4f4ec3f8462bd5761f8"
+  },
+  "previousReportSha256": "030e5b8e21610f79488c8ad46f2b2cabfec641511536675687dba7945c05e94d",
+  "reportSha256": "7888a764256172c5b5343d89e971e7a92c3baecb1c944ec3fafedd992a67e5d8",
+  "previousSummarySha256": "20d2f707231d2e5bfe768d36354b19e6ddbcc0582e03a0aa2b1680fa0937bd69",
+  "interpretation": "Known foreign UI reference scripts remain outside positive current-source coverage. No new invocation, oracle/threshold change or full rerun. Original a34f/1ff receipts remain historical."
+}

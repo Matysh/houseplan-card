@@ -328,7 +328,6 @@ export interface ColorFieldOptions {
   /** Прозрачность 0–1; `undefined` — поле без прозрачности. */
   opacity?: number;
   opacityLabel?: string;
-  onOpacity?: (opacity: number) => void;
   inputs?: {
     name: string; hex: string; opacity: string; hexLabel: string;
     hexInvalid: boolean; opacityInvalid: boolean;
@@ -347,7 +346,7 @@ export interface ColorFieldOptions {
  * не будет: `nativeColors() === 0` — контракт со свидетелем.
  */
 export function colorField({
-  picker, hex, valueLabel, opacity, opacityLabel, onOpacity, inputs, resetLabel, onReset, disabled = false,
+  picker, hex, valueLabel, opacity, opacityLabel, inputs, resetLabel, onReset, disabled = false,
 }: ColorFieldOptions): TemplateResult {
   const pct = opacity === undefined ? null : Math.round(Math.min(1, Math.max(0, opacity)) * 100);
   return html`<div class="hpf-colorfield">
@@ -356,16 +355,11 @@ export function colorField({
       .value=${inputs.hex} ?disabled=${disabled} aria-label=${inputs.hexLabel} aria-invalid=${String(inputs.hexInvalid)}
       @input=${(event: Event) => inputs.onHex((event.target as HTMLInputElement).value)} />`
       : html`<code class="hpf-hex">${valueLabel ?? hex.toUpperCase()}</code>`}
-    ${pct === null ? nothing : onOpacity || inputs ? html`<span class="hpf-opacity ${inputs ? 'hpf-inline-opacity' : ''}">${inputs ? nothing : opacityLabel ?? ''}
-      <span class="hpf-unit"><input data-hp="field" data-field=${inputs ? `${inputs.name}-opacity` : 'colour-opacity'} type="number" inputmode="numeric" min="0" max="100" step="1"
-        class=${inputs ? 'hpf-inline-alpha' : nothing} .value=${inputs?.opacity ?? String(pct)} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
-        aria-invalid=${inputs ? String(inputs.opacityInvalid) : nothing}
-        @input=${(e: Event) => {
-          const raw = (e.target as HTMLInputElement).value;
-          if (inputs) { inputs.onOpacity(raw); return; }
-          const n = Number(raw);
-          if (Number.isFinite(n)) onOpacity?.(Math.min(1, Math.max(0, n / 100)));
-        }} /><span>%</span></span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel ?? nothing}>${pct}%</span>`}
+    ${pct === null ? nothing : inputs ? html`<span class="hpf-opacity hpf-inline-opacity">
+      <span class="hpf-unit"><input data-hp="field" data-field=${`${inputs.name}-opacity`} type="number" inputmode="numeric" min="0" max="100" step="1"
+        class="hpf-inline-alpha" .value=${inputs.opacity} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
+        aria-invalid=${String(inputs.opacityInvalid)}
+        @input=${(e: Event) => inputs.onOpacity((e.target as HTMLInputElement).value)} /><span>%</span></span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel ?? nothing}>${pct}%</span>`}
     ${resetLabel && onReset ? html`<button data-hp="action" data-action="colour-reset" class="hpf-link" type="button" ?disabled=${disabled} @click=${onReset}>${resetLabel}</button>` : nothing}
   </div>`;
 }
@@ -380,8 +374,6 @@ export interface ColorTileOptions {
   opacityLabel: string;
   /** Готовый `hp-color-opacity` (Q5): свотч открывает существующую панель. */
   picker: TemplateResult;
-  /** @deprecated Opacity is edited by the atomic picker; retained during form migration. */
-  onOpacity?: (opacity: number) => void;
 }
 
 export { isLightHex } from './color-tile-ink';
@@ -394,7 +386,7 @@ export { isLightHex } from './color-tile-ink';
  * поверх неё с непрозрачностью α, поэтому у обёртки своего фона нет. Подпись
  * выбирается по видимому цвету (`colorTileInk`), а не по одному `hex`.
  */
-export function colorTile({ label, heading, hex, opacity, opacityLabel, picker, onOpacity }: ColorTileOptions): TemplateResult {
+export function colorTile({ label, heading, hex, opacity, opacityLabel, picker }: ColorTileOptions): TemplateResult {
   const pct = Math.round(Math.min(1, Math.max(0, opacity)) * 100);
   return html`<div class="hpf-colortile ${heading ? 'hpf-colortile-labelled' : ''}">
     ${heading ? html`<div class="hpf-colortile-heading">${heading}</div>` : nothing}
@@ -403,12 +395,7 @@ export function colorTile({ label, heading, hex, opacity, opacityLabel, picker, 
     </div>
     <div class="hpf-colortile-meta">
       <code class="hpf-hex">${hex.toUpperCase()}</code>
-      ${onOpacity ? html`<span class="hpf-unit"><input data-hp="field" data-field="colour-opacity" type="number" inputmode="numeric" min="0" max="100" step="1"
-        .value=${String(pct)} aria-label=${opacityLabel}
-        @input=${(e: Event) => {
-          const n = Number((e.target as HTMLInputElement).value);
-          if (Number.isFinite(n)) onOpacity(Math.min(1, Math.max(0, n / 100)));
-        }} /><span>%</span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel}>${pct}%</span>`}
+      <span class="hpf-opacity" aria-label=${opacityLabel}>${pct}%</span>
     </div>
   </div>`;
 }
