@@ -34,13 +34,13 @@
       "authority": "diagnostic-only",
       "freshCapture": false,
       "beforeSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
-      "projectorSha": "1ff39b03faf67849356872b4a2ef0f975389bd21",
+      "projectorSha": "ab58626cfe6cdd4297c4a0a958a623abb6c221b2",
       "recipeFiles": {
         "scripts/coverage-reproject-1018.mjs": "2d748dfe79248bfba9da8cb7115659dcce142c291831b04e0b25c791a396f75b",
-        "scripts/coverage-identity.mjs": "4a52034563571e769ae86cff2693e2b6039393139aadf0a94350820f9bda16e3",
+        "scripts/coverage-identity.mjs": "16015950d8dcafe54093a3bae9023b2f98bd1df814410ead9a1233e5a4f9ec25",
         "scripts/coverage-report.mjs": "c30eb37173acc1f0c7ffd4357a505af0e32766af1c23a088baf5cf286928510e"
       },
-      "recipeHash": "7267097bc1f2c515045f48691e81fc97ac037c7d3eaafd6a8c2006dd41626719",
+      "recipeHash": "9d8e639fe0fcdfc737fb0d5a0d551ef051bd83871fabe57609e8a01c0ededd64",
       "frozenGitSources": 460,
       "repairedSourceBindings": 432,
       "originalIndexSha256": "943cde6bfab958407fb9dab40bb36204dd7c883c91588be3638e52b6a75b8709",
@@ -62,12 +62,12 @@
   },
   "compression": "gzip",
   "plain": {
-    "sha256": "83620e6dad7868891f7e11c0dca1d9d3381b78f69c3c4257f85719dc619cab0a",
-    "bytes": 17578330
+    "sha256": "eab2761d494af97373dd309cc8fc2b0f124091442264e9bb1eda89d6bc46c288",
+    "bytes": 17588789
   },
   "compressed": {
-    "sha256": "d65564f8dc944d9ecee7741562cb4f9f0f4468458c97efcc0b2a6bf4a78e1836",
-    "bytes": 2992244
+    "sha256": "74bfda5a87fce8b52ffd5e0887df65d1083db2f6d051f86eced8e5507a8f2525",
+    "bytes": 2995031
   },
   "columns": {
     "files": [
@@ -120,7 +120,7 @@
   "nativeFamilyEncoding": "null=unknown; positive number=observed max count; 0=zero-observed (forbidden unless complete successful provenance)",
   "derivedFrom": {
     "path": "report.json",
-    "sha256": "030e5b8e21610f79488c8ad46f2b2cabfec641511536675687dba7945c05e94d",
+    "sha256": "7888a764256172c5b5343d89e971e7a92c3baecb1c944ec3fafedd992a67e5d8",
     "loss": "Repeated strings and witness records interned; exact source URLs kept for actual scripts. Raw recorder payloads and per-page lifecycle remain in the separately hashed full report."
   },
   "packaging": {
@@ -130,5 +130,16 @@
     "node": "22.23.3",
     "platform": "win32",
     "repeatedRepackByteIdentity": true
+  },
+  "priorMap": {
+    "compressed": {
+      "sha256": "d65564f8dc944d9ecee7741562cb4f9f0f4468458c97efcc0b2a6bf4a78e1836",
+      "bytes": 2992244
+    },
+    "plain": {
+      "sha256": "83620e6dad7868891f7e11c0dca1d9d3381b78f69c3c4257f85719dc619cab0a",
+      "bytes": 17578330
+    },
+    "metadataCommit": "71a4df726dbe68b3cdaca4f4ec3f8462bd5761f8"
   }
 }

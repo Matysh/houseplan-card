@@ -34,13 +34,13 @@
       "authority": "diagnostic-only",
       "freshCapture": false,
       "beforeSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
-      "projectorSha": "1ff39b03faf67849356872b4a2ef0f975389bd21",
+      "projectorSha": "ab58626cfe6cdd4297c4a0a958a623abb6c221b2",
       "recipeFiles": {
         "scripts/coverage-reproject-1018.mjs": "2d748dfe79248bfba9da8cb7115659dcce142c291831b04e0b25c791a396f75b",
-        "scripts/coverage-identity.mjs": "4a52034563571e769ae86cff2693e2b6039393139aadf0a94350820f9bda16e3",
+        "scripts/coverage-identity.mjs": "16015950d8dcafe54093a3bae9023b2f98bd1df814410ead9a1233e5a4f9ec25",
         "scripts/coverage-report.mjs": "c30eb37173acc1f0c7ffd4357a505af0e32766af1c23a088baf5cf286928510e"
       },
-      "recipeHash": "7267097bc1f2c515045f48691e81fc97ac037c7d3eaafd6a8c2006dd41626719",
+      "recipeHash": "9d8e639fe0fcdfc737fb0d5a0d551ef051bd83871fabe57609e8a01c0ededd64",
       "frozenGitSources": 460,
       "repairedSourceBindings": 432,
       "originalIndexSha256": "943cde6bfab958407fb9dab40bb36204dd7c883c91588be3638e52b6a75b8709",
@@ -97,6 +97,7 @@
     "reasonCounts": {
       "missing-actual-script-bytes": 388,
       "foreign-script-bytes": 495,
+      "unindexed-product-script": 39,
       "recorder-not-finalized": 29,
       "uncheckpointed-navigation": 325,
       "failed": 6,
@@ -10869,6 +10870,80 @@
     "authority": "diagnostic-only",
     "freshCapture": false,
     "beforeSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
+    "projectorSha": "ab58626cfe6cdd4297c4a0a958a623abb6c221b2",
+    "recipeFiles": {
+      "scripts/coverage-reproject-1018.mjs": "2d748dfe79248bfba9da8cb7115659dcce142c291831b04e0b25c791a396f75b",
+      "scripts/coverage-identity.mjs": "16015950d8dcafe54093a3bae9023b2f98bd1df814410ead9a1233e5a4f9ec25",
+      "scripts/coverage-report.mjs": "c30eb37173acc1f0c7ffd4357a505af0e32766af1c23a088baf5cf286928510e"
+    },
+    "recipeHash": "9d8e639fe0fcdfc737fb0d5a0d551ef051bd83871fabe57609e8a01c0ededd64",
+    "frozenGitSources": 460,
+    "repairedSourceBindings": 432,
+    "originalIndexSha256": "943cde6bfab958407fb9dab40bb36204dd7c883c91588be3638e52b6a75b8709",
+    "originalReportSha256": "fdb2f2816581d12569be22e98cb0cc9826cd898357050690aa93b2ba58d72334",
+    "rawReceiptListSha256": "ea26481aa65018f9dcaca1b60d206e033ea00449995b7df6d374c0d803d92c3a",
+    "verifiedRawFiles": 5247,
+    "verifiedRawBytes": 1269833236,
+    "interpretation": "A separate Git-verified source-path reprojection of immutable a34f JS/native samples/maps. No new invocation, map-position edit, threshold change or successful-completeness claim.",
+    "index": {
+      "sha256": "cdf0723c15774241a57c9f1509548d020d5a46a68f25641857daa7415a752181",
+      "bytes": 471024
+    },
+    "report": {
+      "sha256": "7888a764256172c5b5343d89e971e7a92c3baecb1c944ec3fafedd992a67e5d8",
+      "bytes": 195709520
+    },
+    "projection": {
+      "sha256": "7fd74d6b27f444115085689211065b76fd6eb1786d63a3f371fc1366f2ddaac0",
+      "bytes": 541309
+    },
+    "run": {
+      "sha256": "8408a13bc1eb7560b73fd8a08af71d3307e8c0ecb8ca0c2be7c52caaac73a682",
+      "bytes": 50075009
+    },
+    "foreignDelta": {
+      "sha256": "9efd9e73f4e801baa1a823688ce0326beb71a5836b5906b570facf81201330e4",
+      "bytes": 2239
+    }
+  },
+  "supportingFiles": {
+    "projection": "parallel-paths-1018-before-projection.json",
+    "runtime": "parallel-paths-1018-before-runtime.json",
+    "positiveMap": "parallel-paths-1018-before-map.json.gz",
+    "mapMetadata": "parallel-paths-1018-before-map-meta.json",
+    "parity": "parallel-paths-1018-before-parity.json",
+    "foreignDelta": "parallel-paths-1018-before-foreign-delta.json"
+  },
+  "originalReceipts": {
+    "inventory.json": {
+      "sha256": "b878390df5f92a0f322791548fcd7924be9ddb8e9300ad74f3a5946d2b8e2b73",
+      "bytes": 542866
+    },
+    "run.json": {
+      "sha256": "2f49c3fc43106cbaddb35ad5472d08df622abd7bf36db4382504c967484e0009",
+      "bytes": 50059474
+    },
+    "report.json": {
+      "sha256": "fdb2f2816581d12569be22e98cb0cc9826cd898357050690aa93b2ba58d72334",
+      "bytes": 84406663
+    },
+    "build-index.json": {
+      "sha256": "943cde6bfab958407fb9dab40bb36204dd7c883c91588be3638e52b6a75b8709",
+      "bytes": 407293
+    },
+    "history.json": {
+      "sha256": "288804830835c15400bb4c33f60848761568f794414b83ca9b1d727cf9d27739",
+      "bytes": 333232
+    },
+    "normal-product-manifest.json": {
+      "sha256": "b7b4c5f031c855114795daaab6c41040a23bf605a2082badcac8b64085c797cd",
+      "bytes": 35888
+    }
+  },
+  "priorDerivedProjection": {
+    "authority": "diagnostic-only",
+    "freshCapture": false,
+    "beforeSha": "a34f5806c5dbbfbe72fc6909915e35c0a67f47de",
     "projectorSha": "1ff39b03faf67849356872b4a2ef0f975389bd21",
     "recipeFiles": {
       "scripts/coverage-reproject-1018.mjs": "2d748dfe79248bfba9da8cb7115659dcce142c291831b04e0b25c791a396f75b",
@@ -10903,39 +10978,8 @@
     "parity": {
       "sha256": "f275b21b630209faa4359776ff8353dd14176f70e10f28f588d029ea67d0e21e",
       "bytes": 1961
-    }
-  },
-  "supportingFiles": {
-    "projection": "parallel-paths-1018-before-projection.json",
-    "runtime": "parallel-paths-1018-before-runtime.json",
-    "positiveMap": "parallel-paths-1018-before-map.json.gz",
-    "mapMetadata": "parallel-paths-1018-before-map-meta.json",
-    "parity": "parallel-paths-1018-before-parity.json"
-  },
-  "originalReceipts": {
-    "inventory.json": {
-      "sha256": "b878390df5f92a0f322791548fcd7924be9ddb8e9300ad74f3a5946d2b8e2b73",
-      "bytes": 542866
     },
-    "run.json": {
-      "sha256": "2f49c3fc43106cbaddb35ad5472d08df622abd7bf36db4382504c967484e0009",
-      "bytes": 50059474
-    },
-    "report.json": {
-      "sha256": "fdb2f2816581d12569be22e98cb0cc9826cd898357050690aa93b2ba58d72334",
-      "bytes": 84406663
-    },
-    "build-index.json": {
-      "sha256": "943cde6bfab958407fb9dab40bb36204dd7c883c91588be3638e52b6a75b8709",
-      "bytes": 407293
-    },
-    "history.json": {
-      "sha256": "288804830835c15400bb4c33f60848761568f794414b83ca9b1d727cf9d27739",
-      "bytes": 333232
-    },
-    "normal-product-manifest.json": {
-      "sha256": "b7b4c5f031c855114795daaab6c41040a23bf605a2082badcac8b64085c797cd",
-      "bytes": 35888
-    }
+    "reasons": 1298,
+    "snapshotCommit": "71a4df726dbe68b3cdaca4f4ec3f8462bd5761f8"
   }
 }

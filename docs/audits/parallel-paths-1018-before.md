@@ -37,7 +37,7 @@ historical original report is preserved and its browser-to-src mapping is not
 claimed sufficient.
 
 A separate projection under projector commit
-`1ff39b03faf67849356872b4a2ef0f975389bd21` checks every raw gzip and captured
+`ab58626cfe6cdd4297c4a0a958a623abb6c221b2` checks every raw gzip and captured
 JS/map hash, checks all 460 exact a34f Git src blobs against current AST bytes,
 and proves 432 repaired dist source bindings by declared-path relation AND exact
 tracked path/blob/content. Its other 435 compiled bindings remain verified.
@@ -47,10 +47,12 @@ report names the old capture SHA and the new projector SHA separately, and
 executes no invocations. No data is relabelled as a fresh capture.
 The derived map contains 51,357 native ranges, 10,664 TS functions and 436 src
 files, with the same 30,242 actual script observations. The earlier linear
-projector at f356 also completed. Every non-identity field of both full reports
-is exactly equal, including all native ranges/functions/files/observations,
-invocations and incompleteness reasons; the parity receipt records each hash.
-Only the explicit projector SHA/recipe differs.
+projector f356 and ordered projector1ff both completed. Every non-identity field
+of those two full reports is exactly equal; the search-parity receipt records
+each hash. The final ab586 projection retains exactly the same positive ranges,
+functions, files, actual scripts and invocation results, and deliberately corrects
+39 foreign-reference identities as described below. Its delta receipt distinguishes
+that semantic classification correction from the earlier search-only optimization.
 
 Coverage remains incomplete. The original report has 1298 reasons: 388 missing
 actual script bytes, 495 foreign script bytes, 325 uncheckpointed navigations,
@@ -58,6 +60,16 @@ actual script bytes, 495 foreign script bytes, 325 uncheckpointed navigations,
 17 incomplete page payloads, six failed cases and one timeout. Positive witnesses
 can inform discussion. Missing ranges and failed cases are unknown; the safe-zero
 candidate list is disabled, including after source-path reprojection.
+The final ab586 recipe reports **1337** reasons: all previous1298 plus39
+`unindexed-product-script` observations. These are foreign hashed chunks loaded
+by `smoke_ui_polish_963_reference` as a deliberate old UI reference. The former
+indexer called a URL external when its filename missed the candidate index;
+known product namespaces now remain unknown even when the hash-bearing name
+differs. Those39 scripts were never included in positive current-source coverage.
+The ordinary vendor fixture stays external and a matching actual candidate hash
+stays verified. No new invocation, threshold/oracle change or full rerun occurred.
+The previous1ff report/summary/map receipts remain in `-foreign-delta.json` and
+Git snapshot71a4df726; the original a34f capture remains immutable.
 
 The first subsystem has positive smoke and Golden witnesses for colorField and
 colorTile. These witnesses show the current forms actually ran; unknown legacy
@@ -70,7 +82,7 @@ expected/probed/observed/unknown evidence) and `-parity.json` (full search-resul
 equivalence). `-map.json.gz` losslessly retains every source function/native
 range, every retained witness reference and actual script observation in a
 compact interned JSON schema. `-map-meta.json` gives the column schema, material
-identity and both representation hashes: 17,578,330 plain bytes, 2,992,244 gzip
+identity and both representation hashes: 17,588,789 plain bytes, 2,995,031 gzip
 bytes, with 384,069 interned witness records. Packaging uses Node 22.23.3 zlib
 gzip level 9 with the deterministic zero timestamp header. The full raw report
 and this derived projection have distinct receipts; neither is current-source CI.

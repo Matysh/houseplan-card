@@ -44,7 +44,8 @@ Native range lookup uses ordered generated offsets instead of repeatedly
 scanning a whole minified chunk; half-open and empty-range semantics are preserved.
 The full a34f before inventory executed 980 cases (973 completed, six failed,
 one timeout); its Git-verified derived map has 51,357 native ranges and preserves
-1298 unknown reasons. The original and derived recipes remain distinct, safe-zero
+1337 unknown reasons (1298 earlier reasons plus39 foreign reference scripts).
+The original and derived recipes remain distinct, safe-zero
 is disabled, and a bounded reader verifies the compressed review map on queries.
 Unindexed URLs in known product namespaces are unknown foreign material, even
 when their stale hashed filenames differ from every current manifest entry.
