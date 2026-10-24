@@ -4,8 +4,16 @@ import json
 
 import pytest
 
-from custom_components.houseplan.vacuum_history import history_catalog, history_route, history_snapshot
-from custom_components.houseplan.vacuum_paths import DREAME_SCHEMA, PathRejected, dreame_snapshot
+from custom_components.houseplan.vacuum_history import (
+    history_catalog,
+    history_route,
+    history_snapshot,
+)
+from custom_components.houseplan.vacuum_paths import (
+    DREAME_SCHEMA,
+    PathRejected,
+    dreame_snapshot,
+)
 
 
 def metadata(rows=((1, 1792800000),)):
@@ -140,3 +148,26 @@ def test_history_transport_map_id_alone_does_not_prove_the_saved_floor():
     # the historical side must still carry its explicit saved floor witness.
     book["current"]["_native_identity"] = ["dreame", "[36,null,1]"]
     assert history_route(history_snapshot(payload())[0], [ROUTE], book, {"f1"}) == ROUTE
+
+
+def test_metadata_encode_allocation_is_bounded_before_building_oversized_json():
+    import tracemalloc
+
+    # One shared public URL costs only 16 KiB in the incoming mapping. Encoding
+    # its repeated values must not allocate tens of MiB merely to reject 64 KiB.
+    url = next(iter(metadata().values())) + "&token=" + "x" * 16000
+    oversized = {f"record-{index}": url for index in range(1000)}
+    tracemalloc.start()
+    try:
+        with pytest.raises(PathRejected, match="limited"):
+            history_catalog(oversized, "camera.map", "vacuum.robot")
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    assert peak < 2 * 1024 * 1024, f"metadata rejection allocated {peak} bytes"
+
+
+@pytest.mark.parametrize("label", ["ю" * 40000, "\u0001" * 12000])
+def test_metadata_character_preflight_retains_exact_encoded_byte_limit(label):
+    with pytest.raises(PathRejected, match="limited"):
+        history_catalog({label: next(iter(metadata().values()))}, "camera.map", "vacuum.robot")

@@ -14,6 +14,10 @@ rechecks saved authority before starting the provider. Request-scoped catalog
 watches use the existing recorder state callback: position/token updates remain
 valid, while a catalog change or unavailable interval retires even an ABA reply.
 No separate subscription or polling is introduced.
+The 64-KiB catalog limit is checked before JSON encoding with a string-character
+lower bound, then against exact encoded bytes. Repeated provider strings cannot
+inflate a rejected catalog into tens of MiB of temporary serialized data; Unicode
+and escaped labels still obey the exact byte limit.
 
 The frontend separates selected, requested and painted records. It derives
 route/calibration from the accepted configuration snapshot, uses the existing

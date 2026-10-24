@@ -21247,6 +21247,10 @@ const decorLine1046Cases = [
 ];
 
 const vacuumHistory999Cases = [
+  {id:'vacuum-history-catalog-allocation-unbounded-999',
+    guard:'node scripts/backend-test-guard.mjs metadata_encode_allocation tests_backend/test_vacuum_history.py',
+    because:'#999 AC7: metadata rejected at 64 KiB must be bounded before encoding repeated strings into a much larger transient JSON value.',
+    patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'if characters > HISTORY_METADATA_BYTES:',replace:'if False and characters > HISTORY_METADATA_BYTES:'}]},
   {id:'vacuum-history-new-catalog-keeps-old-preview-999',
     guard:'node --test --test-name-pattern="fresh catalog learns" test/vacuum-history.test.mjs',
     because:'#999 AC5: a fresh catalog may be the first confirmed new-cleanup signal; it must retire old shown material before accepting the new epoch.',

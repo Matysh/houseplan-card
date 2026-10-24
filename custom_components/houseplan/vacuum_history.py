@@ -121,6 +121,16 @@ def history_catalog(metadata: Any, source: str, vacuum: str) -> tuple[list[Histo
         raise PathRejected("limited")
     if not isinstance(metadata, dict):
         metadata = dict(metadata)
+    # Bound the input before JSON encoding: repeated long strings can otherwise
+    # allocate tens of MiB merely to reject the 64-KiB catalog. Character count
+    # plus quotes is a lower bound; the exact encoded-byte check remains below.
+    characters = 2
+    for label, url in metadata.items():
+        if not isinstance(label, str) or not isinstance(url, str):
+            raise PathRejected("unsupported")
+        characters += len(label) + len(url) + 4
+        if characters > HISTORY_METADATA_BYTES:
+            raise PathRejected("limited")
     try:
         size = len(json.dumps(metadata, ensure_ascii=False).encode())
     except (TypeError, ValueError, RecursionError) as err:
@@ -130,8 +140,6 @@ def history_catalog(metadata: Any, source: str, vacuum: str) -> tuple[list[Histo
     records = []
     timestamps, indices = set(), set()
     for url in metadata.values():
-        if not isinstance(url, str) or len(url) > HISTORY_METADATA_BYTES:
-            raise PathRejected("unsupported")
         try:
             parsed = urlsplit(url)
             query = parse_qs(parsed.query, max_num_fields=16, strict_parsing=True)
