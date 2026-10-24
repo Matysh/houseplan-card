@@ -45,6 +45,15 @@ test('negation, double negation, alternatives and relational selector tokens', (
   assert.deepEqual(classesOf('[href="a.b"] .x /* .comment */'), ['x']);
 });
 
+test('unquoted data URL braces stay inside the declaration rather than opening/closing CSS blocks', () => {
+  for (const value of ['data:image/svg+xml,<svg>{</svg>', 'data:text/plain,}', 'data:text/plain,[']) {
+    const text = '.live{background:url(' + value + ');color:red}', rules = parseCss(text);
+    assert.equal(rules.length, 1); assert.equal(rules[0].header, '.live');
+    assert.deepEqual(rules[0].declarations, ['background:url(' + value + ')', 'color:red']);
+    assert.equal(rules[0].end, text.length);
+  }
+});
+
 test('AST CSS extraction ignores comments and ordinary strings', () => {
   assert.equal(cssOfSource('// css' + template('.fake{}') + '\nconst x=' + JSON.stringify('css' + template('.fake{}'))
     + ';const y=css' + template('.real{content:"a; b"}') + ';'), '.real{content:"a; b"}');

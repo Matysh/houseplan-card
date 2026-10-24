@@ -70,10 +70,10 @@ export function splitCssFragments(text, separator) {
   for (const t of cssTokens(text)) {
     if (t.kind === '(') round++;
     else if (t.kind === ')') round--;
-    else if (t.kind === '[') square++;
-    else if (t.kind === ']') square--;
-    else if (t.kind === '{') curly++;
-    else if (t.kind === '}') curly--;
+    else if (!round && t.kind === '[') square++;
+    else if (!round && t.kind === ']') square--;
+    else if (!round && !square && t.kind === '{') curly++;
+    else if (!round && !square && t.kind === '}') curly--;
     else if (t.kind === separator && round === 0 && square === 0 && curly === 0) {
       parts.push(text.slice(from, t.start)); from = t.end;
     }
@@ -108,10 +108,15 @@ export function parseCss(text) {
         if (tokens[begin].kind !== '@') throw Error(`Unsupported CSS statement at offset ${tokens[begin].start}`);
         i++; continue;
       }
-      const open = i; let depth = 1;
+      const open = i; let depth = 1, bodyRound = 0, bodySquare = 0;
       for (i++; i < last && depth; i++) {
-        if (tokens[i].kind === '{') depth++;
-        else if (tokens[i].kind === '}') depth--;
+        const kind = tokens[i].kind;
+        if (kind === '(') bodyRound++;
+        else if (kind === ')') bodyRound--;
+        else if (!bodyRound && kind === '[') bodySquare++;
+        else if (!bodyRound && kind === ']') bodySquare--;
+        else if (!bodyRound && !bodySquare && kind === '{') depth++;
+        else if (!bodyRound && !bodySquare && kind === '}') depth--;
       }
       if (depth) throw Error(`Unclosed CSS block at offset ${tokens[open].start}`);
       const close = i - 1;
@@ -131,8 +136,8 @@ export function parseCss(text) {
           const token = tokens[part];
           if (token.kind === '(') round++;
           else if (token.kind === ')') round--;
-          else if (token.kind === '[') square++;
-          else if (token.kind === ']') square--;
+          else if (!round && token.kind === '[') square++;
+          else if (!round && token.kind === ']') square--;
           else if (!round && !square && token.kind === '{') {
             if (!customDepth && !/^\s*--[-\w]+\s*:/.test(text.slice(declarationStart, token.start)))
               throw Error(`Unsupported CSS nesting at offset ${token.start}; nested selectors cannot be treated as declarations`);
