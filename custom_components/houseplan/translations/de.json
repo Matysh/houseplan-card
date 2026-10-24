@@ -1,0 +1,69 @@
+{
+  "config": {
+    "step": {
+      "previous_data": {
+        "title": "Frühere Installation gefunden",
+        "description": "Frühere Daten gefunden: Bereiche — {spaces}, Dateien — {files}, zuletzt geändert — {modified}. {warning}\n\nEin Neuanfang verschiebt alle früheren Daten in ein dauerhaftes Archiv. Vor der Bestätigung des nächsten Formulars werden keine Daten geändert.",
+        "menu_options": {
+          "restore": "Frühere Pläne wiederherstellen",
+          "start_fresh": "Neu beginnen"
+        }
+      },
+      "user": {
+        "title": "House Plan",
+        "data": {
+          "admin_only": "Nur Administratoren dürfen den Grundriss bearbeiten"
+        }
+      }
+    },
+    "create_entry": {
+      "panel_ready": "Öffnen Sie House Plan über die Seitenleiste, wenn der Eintrag verfügbar ist. Für die Bearbeitung wird ein Desktop-Browser empfohlen. Fehlt der Eintrag, verwenden Sie die House-Plan-Dashboard-Karte und prüfen Sie die Systeminformationen."
+    },
+    "error": {
+      "previous_data_unreadable": "Die frühere Konfiguration konnte nicht gelesen werden."
+    },
+    "abort": {
+      "single_instance_allowed": "Bereits konfiguriert – es ist nur eine Instanz zulässig.",
+      "already_in_progress": "Eine andere House-Plan-Einrichtung läuft bereits.",
+      "previous_data_error": "Frühere Daten konnten nicht geprüft werden. Prüfen Sie Dateiberechtigungen und das Home-Assistant-Protokoll; es wurden keine Daten geändert.",
+      "archive_failed": "Frühere Daten konnten nicht archiviert werden. Es wurde kein Eintrag erstellt. Archivpfad und Hinweise zur Wiederherstellung stehen im Home-Assistant-Protokoll."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "admin_only": "Nur Administratoren dürfen den Grundriss bearbeiten"
+        }
+      }
+    }
+  },
+  "issues": {
+    "broken_plan": {
+      "title": "Grundrissbild fehlt",
+      "description": "Die Plandatei `{file}` für den Bereich `{space}` wurde in `config/houseplan/plans/` nicht gefunden. In den Bereichseinstellungen der House-Plan-Karte den Plan erneut hochladen."
+    },
+    "frontend_reload_notice": {
+      "title": "House Plan ist bereit",
+      "description": "Öffnen Sie House Plan über die Seitenleiste. Laden Sie die Seite nach einem Update vollständig neu, um die aktuelle Benutzeroberfläche zu verwenden (`Ctrl+F5` unter Windows/Linux oder `Cmd+Shift+R` unter macOS). Die Dashboard-Karte bleibt verfügbar; wenn Sie deren Ressource im Speichermodus manuell verwalten, öffnen Sie Einstellungen → Dashboards → Ressourcen. Fehlt der Seitenleisteneintrag, prüfen Sie House Plan in den Systeminformationen."
+    }
+  },
+  "system_health": {
+    "info": {
+      "card_file": "Datei der House-Plan-Karte",
+      "static_path": "Statischer Frontend-Pfad",
+      "resource_status": "Status der Ressourcenregistrierung",
+      "resource_loader": "Lademethode der Frontend-Ressource",
+      "resource_url": "URL der Frontend-Ressource",
+      "resource_retry": "Wiederholung der Ressourcenregistrierung",
+      "resource_error": "Fehler der Frontend-Registrierung",
+      "first_reload_notice": "Erster Hinweis zum Neuladen",
+      "panel_file": "Datei des House-Plan-Panels",
+      "panel_static_path": "Statischer Frontend-Pfad des Panels",
+      "panel_status": "Status der Panel-Registrierung",
+      "panel_url": "URL des House-Plan-Panels",
+      "panel_module_url": "Modul-URL des Panels",
+      "panel_error": "Fehler der Panel-Registrierung"
+    }
+  }
+}
