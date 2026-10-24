@@ -152,6 +152,37 @@ try {
   await space.locator('[data-hp=dialog-confirm]').click();await space.waitFor({state:'detached'});await page.evaluate(()=>window.__hpTest.waitForWrites());
   await card.locator('[data-hp=space-settings][data-id=polish]').click();await settingsSection(space,'appearance');
   out.room_save_reopen=await fill.inputValue()==='temp'&&await space.locator('[data-field=space-temp-min]').inputValue()==='16'&&await space.locator('[data-field=space-temp-max]').inputValue()==='28';
-  await close(space);await fixture.assertClean();out.completed=true;checkAll(out);
+  await close(space);
+  // The real vacuum source picker is also a button-shaped shared disclosure.
+  await page.evaluate(async()=>{
+    const c=window.__card;
+    window.__addRegistryEntity('vacuum.ui_1051',null,'idle');
+    const hass=window.__mkHass();c.hass={...c.hass,states:hass.states,entities:hass.entities};
+    await window.__hpTest.setServerConfig(cfg=>({...cfg,markers:[...cfg.markers,
+      {id:'ui-vacuum',binding:'entity:vacuum.ui_1051',space:'polish',vacuum:{}}]}));
+    await window.__hpTest.setLayout(layout=>({...layout,'ui-vacuum':{s:'polish',x:.8,y:.7}}));
+  });
+  await mode('devices');await page.evaluate(()=>window.__hpTest.openMarkerDialog('ui-vacuum'));
+  const vacuum=card.locator('hp-dialog[data-kind=marker]');await settingsSection(vacuum,'vacuum');
+  const picker=vacuum.locator('details.vacpicker'),trigger=picker.locator(':scope > summary');
+  const pickerPaint=await trigger.evaluate(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();
+    return {display:s.display,width:r.width,height:r.height,list:s.listStyleType,cursor:s.cursor,
+      markerContent:getComputedStyle(el,'::marker').content,triangle:getComputedStyle(el,'::before').clipPath};});
+  console.log('native vacuum picker paint',pickerPaint);
+  out.vacuum_picker_shared_marker=await picker.evaluate(el=>el.classList.contains('hpf-disclosure'))
+    &&pickerPaint.list==='none'&&pickerPaint.markerContent==='""'&&pickerPaint.triangle!=='none';
+  out.vacuum_picker_button_geometry=pickerPaint.height===44&&pickerPaint.width>0
+    &&await trigger.evaluate(el=>el.getBoundingClientRect().width<=el.closest('.hpf-settings-pane').getBoundingClientRect().width);
+  const vacuumBefore=await page.evaluate(()=>JSON.stringify(window.__card._serverCfg));
+  await trigger.focus();await page.keyboard.press('Enter');
+  out.vacuum_picker_keyboard_open=await picker.evaluate(el=>el.open&&el.dataset.expanded==='true');
+  await picker.evaluate(el=>Promise.allSettled(el.querySelector('.hpf-disclosure-content').getAnimations().map(a=>a.finished)));
+  await trigger.screenshot({path:'artifacts/browser-selected/ui-1051-native/vacuum-picker.png'});
+  await page.keyboard.press('Enter');
+  out.vacuum_picker_close_inert=await picker.evaluate(el=>el.dataset.expanded==='false'&&el.querySelector('.hpf-disclosure-content').inert);
+  await picker.evaluate(el=>Promise.allSettled(el.querySelector('.hpf-disclosure-content').getAnimations().map(a=>a.finished)));
+  out.vacuum_picker_close_focus=await trigger.evaluate(el=>!el.parentElement.open&&el.getRootNode().activeElement===el);
+  out.vacuum_picker_no_write=await page.evaluate(before=>JSON.stringify(window.__card._serverCfg)===before,vacuumBefore);
+  await close(vacuum);await fixture.assertClean();out.completed=true;checkAll(out);
 } catch(error){await page.screenshot({path:'artifacts/browser-selected/ui-1051-native/failure.png'});throw error;}
 finally{await fixture.close();await finish(browser,out);}

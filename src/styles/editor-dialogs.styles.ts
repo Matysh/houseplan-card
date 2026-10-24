@@ -233,8 +233,6 @@ export const editorDialogsStyles = css`
     .vacpicker { margin: var(--sp-3) 0; }
     .vacsource-warning { display: grid; gap: 8px; }
     .vacsource-warning .btn { justify-self: start; }
-    .vacpicker > summary { display: inline-flex; width: auto; list-style: none; cursor: pointer; }
-    .vacpicker > summary::-webkit-details-marker { display: none; }
     .vacsource-list { display: grid; gap: 6px; margin-top: 8px; }
     .vacsource-list details { padding: 6px 0 0; }
     .vacsource-list details > summary { cursor: pointer; font-weight: 600; }

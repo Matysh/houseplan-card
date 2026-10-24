@@ -30,6 +30,10 @@ Its emitted LED select listener owns button 2 before the canvas; primary
 selection/drag and the existing Copy command remain unchanged. Accepted
 845c20c3e passed while the initial common-menu implementation failed this
 viewport invariant; no forced click, camera reset or timing relaxation is used.
+The native vacuum source picker also checks shared marker paint, its 44 px
+button, keyboard open/close, immediate inert content, retained focus and no
+configuration write. Its former local summary/marker rules are removed;
+the common disclosure is the only owner and the private picker margin remains.
 
 Run `node demo/smoke_ui_1051.mjs` for inline colour preview/validation,
 Enter/blur/Escape, atomic Undo, contour hit/miss at two zooms, menu input
