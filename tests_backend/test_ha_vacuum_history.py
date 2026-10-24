@@ -220,6 +220,33 @@ async def test_record_index_shift_before_get_and_foreign_id_do_not_read_camera(h
     assert result["error"]["code"] == "stale" and not camera.calls
 
 
+async def test_real_household_user_losing_write_role_retires_held_history(hass, hass_ws_client, monkeypatch):
+    _, rt, rec, camera, _ = await prepared(hass, hass_ws_client)
+    user = await hass.auth.async_create_user("History household writer", group_ids=[GROUP_ID_USER])
+    token = await hass.auth.async_create_refresh_token(user, client_id="http://houseplan.test")
+    client = await hass_ws_client(hass, access_token=hass.auth.async_create_access_token(token))
+    listing = await catalog(client)
+    before = [copy.deepcopy(await store.async_load()) for store in (rt.config_store, rt.store, rec.store)]
+
+    async def forbidden(*_):
+        pytest.fail("a retired history read must not write House Plan stores")
+
+    for store in (rt.config_store, rt.store, rec.store):
+        monkeypatch.setattr(store, "async_save", forbidden)
+    future = camera.pending = asyncio.get_running_loop().create_future()
+    pending = asyncio.create_task(geometry(client, listing))
+    await settle(lambda: len(camera.calls) == 1)
+    await hass.auth.async_update_user(user, group_ids=[GROUP_ID_READ_ONLY])
+    assert [group.id for group in user.groups] == [GROUP_ID_READ_ONLY]
+    future.set_result(None)
+    answer = await pending
+    assert not answer["success"] and answer["error"]["code"] == "stale", answer
+    assert "paths" not in json.dumps(answer) and not rec._closed
+    assert [await store.async_load() for store in (rt.config_store, rt.store, rec.store)] == before
+    denied = await request(client, "list")
+    assert denied["error"]["code"] == "unauthorized" and len(camera.calls) == 1
+
+
 async def test_timeout_retains_physical_lease_and_next_read_drains_it(hass, hass_ws_client, monkeypatch):
     from custom_components.houseplan import vacuum_history_websocket as bridge
     monkeypatch.setattr(bridge, "TIMEOUT_S", .02)

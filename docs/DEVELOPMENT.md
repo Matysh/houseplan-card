@@ -45,6 +45,9 @@ the same synthetic records, current shared kit, theme, viewport and state. All
 and zero differing pixels. This is a section comparison, not a claim that an
 old private whole-plan screenshot equals the current product. Private reference
 files remain local; task Golden frames contain only synthetic data.
+The HA endpoint suite also changes a real household user's group to read-only
+while geometry is held: the same recorder survives, the old reply has no paths,
+the next catalog request is unauthorized and House Plan stores remain unchanged.
 
 ## Editor keyboard translation (#1025)
 
