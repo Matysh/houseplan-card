@@ -129,7 +129,13 @@ try{
       await hex().fill('#ABCDEF');await hex().press('Enter');await settle();
       const after=await saved();check(`group.matrix.${kind}.color_only`,after.map(x=>x.color),['#abcdef','#abcdef']);
       check(`group.matrix.${kind}.opposite_alpha_kept`,after.map(x=>x.opacity),[first.opacity,.8]);
-    }else check('group.image.no_hex',await panel.locator('[data-property="stroke"] [data-field="stroke-hex"]').count(),0);
+    }else{
+      check('group.image.no_hex',await panel.locator('[data-property="stroke"] [data-field="stroke-hex"]').count(),0);
+      const imagePicker=panel.locator('[data-property="stroke"] hp-color-opacity');
+      await imagePicker.locator('.trigger').click();
+      check('group.image.popup_alpha_only',await imagePicker.locator('.sv-field,.preview,[data-field="colour-hex"],[data-field="colour-none"]').count(),0);
+      await page.keyboard.press('Escape');await settle();
+    }
     await alpha().fill('35');await alpha().press('Enter');await settle();
     const after=await saved();check(`group.matrix.${kind}.alpha_only`,after.map(x=>x.opacity),[.35,.35]);
     check(`group.matrix.${kind}.alpha_keeps_color`,after.map(x=>x.color),kind==='image'?[undefined,undefined]:['#abcdef','#abcdef']);
@@ -163,6 +169,16 @@ try{
   await page.keyboard.press('Control+a');await page.keyboard.press('Control+m');
   check('group.shortcut.picker_button_keeps_set',(await state()).ids,['a','b']);
   await page.keyboard.press('Escape');await settle();
+  // Exercise the supported browser-without-Popover path, not a product flag.
+  await page.evaluate(()=>{
+    window.__1038Popover=Object.getOwnPropertyDescriptor(HTMLElement.prototype,'showPopover');
+    Object.defineProperty(HTMLElement.prototype,'showPopover',{configurable:true,value:undefined});
+  });
+  await picker.locator('.trigger').click();const fallback=page.locator('[data-hp-overlay="color-opacity"]');
+  await fallback.locator('.confirm').focus();await page.keyboard.press('Control+a');await page.keyboard.press('Control+m');
+  check('group.shortcut.fallback_picker_button_keeps_set',(await state()).ids,['a','b']);
+  await page.keyboard.press('Escape');await settle();
+  await page.evaluate(()=>Object.defineProperty(HTMLElement.prototype,'showPopover',window.__1038Popover));
 
   await seed(records());await select(['rect','ellipse']);const selection=await state();
   await card.locator('[data-hp="tool"][data-tool="shapes"]').click();await card.locator('[data-hp="tool"][data-tool="line"]').click();
