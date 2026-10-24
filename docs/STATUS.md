@@ -25,6 +25,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Dialog CSS ownership cleanup (#1019) records all eleven consumers, removes
+confirmed obsolete selectors and leaves shared paint with its existing kit.
+Subject geometry, validation/hover exceptions and View confirmations retain
+their actual owners. No configuration, runtime API or visual contract changes.
+
 Detached HA replacement (#1054) preserves the full-card current read intent
 after retiring the accepted document. Reattach consumes that intent without
 another HA tick; existing same-context short returns keep their no-reload path.

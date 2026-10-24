@@ -1,5 +1,21 @@
 # Development and deployment
 
+## Dialog CSS ownership #1019
+
+The [migration record](development-notes/dialog-style-migration.md) covers all
+eleven consumers of the dialog kit. Keep subject geometry and winning local
+validation/hover paint; a similar common declaration is insufficient evidence
+for deletion. Historical form-kit fixture files remain unchanged: the byte
+comparison projects out nine explicitly retired rules and checks every other
+byte, while the actual summary-panel comparison stays unmodified.
+
+Build and sync each tree before browser comparisons. Existing selected Support
+and Inbox Golden captures retain their canonical baselines. A difference already
+present on the unchanged accepted tree is a baseline fact, not a new task intent
+or permission to accept a baseline. Production-size comparisons use matching
+Node/Rollup and actual builds on both sides; do not infer combined sizes by
+adding task deltas.
+
 ## Config authority smoke #1052
 
 `node demo/smoke_config_authority.mjs` records B's config/layout read counts

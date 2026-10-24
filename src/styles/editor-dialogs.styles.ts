@@ -112,10 +112,6 @@ export const editorDialogsStyles = css`
     .srcrow > span:first-of-type { white-space: nowrap; }
     .colorrow .opl { color: var(--hp-muted); font-size: var(--fs-s); }
     .markerlightgroup {
-      min-width: 0;
-      margin: var(--sp-5) 0 0;
-      padding: var(--sp-4);
-      border: 1px solid var(--hp-line);
       border-radius: var(--rad-m);
     }
     .markerlightgroup legend {
@@ -123,28 +119,21 @@ export const editorDialogsStyles = css`
       align-items: center;
       flex-wrap: wrap;
       gap: var(--sp-1);
-      padding: 0 var(--sp-2);
       color: var(--hp-txt);
       font-weight: 600;
     }
     .markerlightgroup[disabled] > :not(legend) { opacity: .62; }
     .radargroup {
-      display: grid;
       gap: var(--sp-2);
     }
     .radaradditional { display: grid; gap: var(--sp-3); }
-    .radaradditional > .markerlightgroup { margin-top: 0; }
     .radargroup > p { margin: 0; }
     .radarcoordinates {
       align-items: flex-end;
-      flex-wrap: wrap;
     }
     .radarcoordinates > label {
       display: grid;
-      flex: 1 1 92px;
       gap: var(--sp-1);
-      min-width: 0;
-      margin: 0;
     }
     hp-dialog .body .radarcoordinates .tempin {
       box-sizing: border-box;
@@ -167,7 +156,7 @@ export const editorDialogsStyles = css`
       border-radius: var(--rad-m);
       background: color-mix(in srgb, var(--secondary-background-color) 88%, transparent);
     }
-    .radarsetup-head { display: flex; align-items: center; gap: 8px; }
+    .radarsetup-head { display: flex; gap: 8px; }
     .radarsetup-head strong { flex: 1; }
     .radarsetup > svg {
       width: min(100%, 460px);
@@ -456,26 +445,18 @@ export const editorDialogsStyles = css`
     .rtest {
       display: flex;
       align-items: center;
-      gap: var(--sp-4);
-      margin-bottom: var(--sp-4);
     }
-    .rtest .namein { flex: 1; }
     .rtest ha-icon { color: var(--hp-accent); }
     .rtesticon { font-size: var(--fs-s); color: var(--hp-muted); }
     .rrow {
-      display: flex;
       align-items: center;
-      gap: var(--sp-3);
-      margin: var(--sp-1) 0;
     }
     .rrow .rpat { flex: 2; }
     .rrow .ricon { flex: 1.4; }
     .rrow .rpat.bad { border-color: #ff7a5c; }
-    .rrow .rprev { --mdc-icon-size: 18px; color: var(--hp-txt); min-width: 18px; }
+    .rrow .rprev { color: var(--hp-txt); min-width: 18px; }
     .rrow .ract {
       --mdc-icon-size: 16px;
-      color: var(--hp-muted);
-      cursor: pointer;
     }
     :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
     :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
@@ -573,85 +554,40 @@ export const editorDialogsStyles = css`
       white-space: normal;
       overflow-wrap: anywhere;
     }
-    .aboutver {
-      font-size: var(--fs-s);
-      color: var(--hp-muted);
-      margin: var(--sp-2) 0 var(--sp-3);
-    }
+    /* Support's common paint belongs to settings-dialogs; keep subject layout here. */
     .aboutlink {
       display: flex;
       align-items: center;
-      gap: var(--sp-3);
       width: fit-content;
-      color: var(--hp-accent);
-      text-decoration: none;
-      font-size: var(--fs-m);
-      padding: var(--sp-1) 0;
     }
     .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
     /* #836: the dev build SHA is a link inside the version line. */
-    .aboutver .aboutlink { display: inline; font-size: inherit; padding: 0; }
-    /* #805: no gap here — the eager hp-dialog .body rule (same weight, later in
-       the old single sheet) always set it; this sheet now comes after it. */
-    hp-dialog .supportbody {
-      min-width: 0;
-      overflow-x: hidden;
-    }
+    .aboutver .aboutlink { display: inline; }
     .supportsection {
       display: grid;
       min-width: 0;
-      gap: var(--sp-2);
-    }
-    .supportsection + .supportsection {
-      padding-top: var(--sp-4);
-      border-top: 1px solid var(--hp-line);
     }
     .supportsection h3 {
-      margin: 0;
       color: var(--hp-txt);
-      font-size: var(--fs-m);
     }
     .supportlinks, .supportactions {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: var(--sp-2) var(--sp-4);
       min-width: 0;
-    }
-    .supportform > label:not(.srcrow) {
-      margin-top: var(--sp-2);
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
     }
     .supportmessage, .supportraw {
       width: 100%;
-      min-width: 0;
-      box-sizing: border-box;
       resize: vertical;
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
-      padding: var(--sp-3);
-      color: var(--hp-txt);
-      background: color-mix(in srgb, var(--card-background-color, var(--hp-bg)) 92%, var(--hp-txt));
-      font: inherit;
-    }
-    .supportmessage {
-      min-height: 120px;
-      background: var(--hp-bg);
     }
     .supportraw {
-      min-height: 220px;
       margin-top: var(--sp-2);
       resize: none;
       white-space: pre;
       overflow: auto;
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 12px;
     }
     .supportattach {
       min-width: 0;
-      align-items: flex-start;
-      margin: var(--sp-2) 0 0 !important;
     }
     .supportattach > span:first-of-type {
       min-width: 0;
@@ -663,26 +599,15 @@ export const editorDialogsStyles = css`
       align-items: flex-start;
       gap: var(--sp-2);
       min-width: 0;
-      margin: 0;
-      padding: var(--sp-3);
-      border-radius: var(--rad-s);
-      background: color-mix(in srgb, var(--hp-accent) 14%, transparent);
       overflow-wrap: anywhere;
-      font-size: var(--fs-s);
-      line-height: 1.45;
     }
     .supportwarning ha-icon, .supportstatus ha-icon, .supportupdate ha-icon {
       flex: none;
-      color: var(--hp-accent);
-      --mdc-icon-size: 20px;
     }
     .supportpreview, .supportmanual, .supporterror, .supportsuccess {
       display: grid;
       min-width: 0;
-      gap: var(--sp-2);
-      padding: var(--sp-3);
       border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
     }
     .supportsummary { font-weight: 600; overflow-wrap: anywhere; }
     .supporthash {
@@ -694,8 +619,8 @@ export const editorDialogsStyles = css`
     }
     .supporthash code { overflow-wrap: anywhere; color: var(--hp-txt); }
     .supportpreview details { min-width: 0; }
-    .supportpreview summary { cursor: pointer; color: var(--hp-accent); }
-    .supportprivacy { margin: 0 !important; line-height: 1.45; }
+    .supportpreview summary { color: var(--hp-accent); }
+    .supportprivacy { margin: 0 !important; }
     .supporterror {
       background: color-mix(in srgb, var(--error-color, #db4437) 12%, transparent);
       border-color: color-mix(in srgb, var(--error-color, #db4437) 45%, var(--hp-line));
@@ -703,13 +628,6 @@ export const editorDialogsStyles = css`
     .supportsuccess {
       background: color-mix(in srgb, var(--success-color, #43a047) 12%, transparent);
       border-color: color-mix(in srgb, var(--success-color, #43a047) 45%, var(--hp-line));
-    }
-    .supportfooter { flex-wrap: wrap; }
-    /* #805: no padding-inline for .supportbody/.supportfooter at 520 px — the
-       eager hp-dialog .body and hp-dialog .row padding (same weight, later in the
-       old single sheet) always won, and the accepted narrow frame keeps it. */
-    @media (max-width: 520px) {
-      .supportactions .btn, .supportactions .aboutlink { max-width: 100%; }
     }
     hp-dialog .body .namein,
     hp-dialog .body .areasel {
@@ -719,11 +637,7 @@ export const editorDialogsStyles = css`
     .device-inbox {
       display: flex;
       flex-direction: column;
-      gap: var(--sp-4);
-      padding: var(--sp-5) var(--sp-6);
-      min-width: 0;
     }
-    .device-inbox-dialog { --hp-dialog-wide-width: 920px; }
     .device-inbox-head {
       display: grid;
       grid-template-columns: minmax(180px, 1fr) auto;
@@ -732,21 +646,11 @@ export const editorDialogsStyles = css`
     }
     .device-inbox-search {
       width: 100%;
-      min-width: 0;
-      box-sizing: border-box;
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-m);
-      background: transparent;
-      color: var(--hp-txt);
-      font: inherit;
-      padding: 11px 14px;
     }
     .device-inbox-tabs {
       display: flex;
-      gap: var(--sp-2);
       overflow-x: auto;
       scrollbar-width: thin;
-      padding-bottom: var(--sp-1);
     }
     .device-inbox-tabs button {
       flex: 0 0 auto;
@@ -754,11 +658,10 @@ export const editorDialogsStyles = css`
     .device-inbox-tabs button span { color: var(--hp-muted); margin-inline-start: 4px; }
     /* #44: discovery-filters section on the Available tab */
     .device-inbox-discovery {
-      margin: 8px 0; padding: 8px 10px;
+      margin: 8px 0;
       border: 1px solid var(--divider-color, #e0e0e0);
-      border-radius: 8px;
     }
-    .device-inbox-discovery summary { cursor: pointer; font-weight: 600; }
+    .device-inbox-discovery summary { font-weight: 600; }
     .device-inbox-discovery .srcrow { display: flex; gap: 6px; align-items: center; margin: 8px 0; }
     .device-inbox-excluded { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .device-inbox-excluded > span { font-weight: 500; }
@@ -769,14 +672,11 @@ export const editorDialogsStyles = css`
       background: var(--secondary-background-color, #f0f0f0); font-size: 12px;
     }
     .device-inbox-chips .chip button {
-      border: none; background: none; cursor: pointer; padding: 0 2px;
+      background: none;
       color: var(--secondary-text-color, #666);
     }
     .device-inbox-excluded input[type="text"] {
-      flex: 1 1 140px; min-width: 120px; padding: 4px 6px;
-      border: 1px solid var(--divider-color, #e0e0e0); border-radius: 6px;
-      background: var(--card-background-color, #fff);
-      color: var(--primary-text-color, #212121);
+      flex: 1 1 140px;
     }
     .device-inbox-preview { margin: 8px 0 4px; font-size: 13px; opacity: 0.85; }
     .device-inbox-filters {
@@ -788,7 +688,6 @@ export const editorDialogsStyles = css`
     .device-inbox-filters label {
       display: inline-flex;
       align-items: center;
-      gap: var(--sp-2);
       cursor: pointer;
     }
     .device-inbox-space-filter { min-width: 0; max-width: 100%; flex-wrap: wrap; }
@@ -826,7 +725,6 @@ export const editorDialogsStyles = css`
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: var(--sp-2);
       min-width: 0;
     }
     .device-inbox-selected { color: var(--hp-muted); }
@@ -835,11 +733,9 @@ export const editorDialogsStyles = css`
       display: grid;
       grid-template-columns: 42px minmax(180px, 1fr) minmax(180px, auto);
       align-items: center;
-      gap: var(--sp-4);
       min-width: 0;
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-m);
-      padding: var(--sp-4);
+      border-width: 1px;
+      border-style: solid;
       background: color-mix(in srgb, var(--hp-txt) 3%, transparent);
     }
     .device-inbox-row.has-select {
@@ -871,14 +767,11 @@ export const editorDialogsStyles = css`
       justify-content: flex-end;
       align-items: center;
       flex-wrap: wrap;
-      gap: var(--sp-2);
     }
-    .device-inbox-actions .btn { min-height: 36px; padding: 7px 10px; }
     .device-inbox-menu { position: relative; }
     .device-inbox-empty { color: var(--hp-muted); text-align: center; padding: var(--sp-8); }
     .device-inbox-more { align-self: center; }
     @media (max-width: 680px) {
-      .device-inbox { padding: var(--sp-4); }
       .device-inbox-head { grid-template-columns: minmax(0, 1fr); }
       .device-inbox-head .btn { justify-self: stretch; }
       .device-inbox-tabs {

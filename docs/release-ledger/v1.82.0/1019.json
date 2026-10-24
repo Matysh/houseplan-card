@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "issue": 1019,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Retire confirmed obsolete CSS and declarations already defeated by the accepted shared dialog kit; document all eleven consumers and add a development-only CSS consumer check. The net user-visible behavior remains unchanged. No previous-stable feature or config/runtime API is added, and task branches do not accept visual baselines.",
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [],
+    "smokes": [
+      "smoke_support_diagnostics.mjs",
+      "smoke_radar_setup.mjs",
+      "smoke_radar_legacy_removal_947.mjs",
+      "smoke_device_inbox.mjs",
+      "smoke_device_inbox_batch.mjs",
+      "smoke_ui_polish_976.mjs",
+      "smoke_editor_styles_lazy.mjs",
+      "smoke_ui_1051.mjs",
+      "smoke_ui_1051_native.mjs"
+    ]
+  }
+}

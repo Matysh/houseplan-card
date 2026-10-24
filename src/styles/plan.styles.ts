@@ -680,15 +680,6 @@ export const planStyles = css`
     }
     :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
     .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
-    .rlgear {
-      --mdc-icon-size: 0.9em;
-      display: inline-flex;
-      margin-right: 0.2em;
-      opacity: 0.6;
-      cursor: pointer;
-      pointer-events: auto;
-    }
-    :host([data-pointer-hover]) .rlgear:hover { opacity: 1; }
     .rlgo {
       --mdc-icon-size: 0.85em;
       display: inline-flex;

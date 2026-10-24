@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { parseRules } from './helpers/editor-style-ownership.mjs';
 
 import {
   CARD_DIALOG_FORM_KIT, SUMMARY_PANEL_FORM_KIT, formKitCss,
@@ -36,6 +37,30 @@ const FROZEN_CARD_KIT_CSS = readFileSync(
 const FROZEN_CARD_KIT_WITH_SWITCH_CSS = readFileSync(
   new URL('./fixtures/form-kit-card-dialog-with-switch.css', import.meta.url), 'utf8',
 );
+
+// #1019 retires nine rules whose markup was removed by the approved forms.
+// Keep the historical fixtures intact and compare EVERY other byte. This is a
+// bounded deletion contract, not permission to regenerate an expected sheet.
+const RETIRED_DIALOG_RULES = new Set([
+  '.hpf-signal-visibility .hpf-radios label',
+  '.hpf-headline', '.hpf-north', '.hpf-north > .hpf-labelrow',
+  '.hpf-north > .hpf-select, .hpf-north > .hpf-unit, .hpf-north > .hpf-input',
+  '.hpf-north > .hpf-north-n', '.hpf-templegend', '.hpf-actionrow', '.hpf-iconclear',
+]);
+function withoutRetiredDialogRules(text) {
+  const retired = parseRules(text).filter(rule => RETIRED_DIALOG_RULES.has(rule.header));
+  assert.equal(retired.length, RETIRED_DIALOG_RULES.size, 'historical retirement contract changed');
+  for (const rule of retired.reverse()) {
+    assert.deepEqual(rule.scope, [], 'retired rules were ordinary top-level extras');
+    const start = text.lastIndexOf('\n', rule.start) + 1;
+    const newline = text.indexOf('\n', rule.end);
+    const end = newline < 0 ? text.length : newline + 1;
+    assert.equal(text.slice(start, rule.start).trim(), '');
+    assert.equal(text.slice(rule.end, end).trim(), '');
+    text = text.slice(0, start) + text.slice(end);
+  }
+  return text;
+}
 
 const PANEL_FRAGMENTS = {
   'карточка-группа': `  .summary-general,
@@ -136,10 +161,12 @@ test('#597 собранный лист панели совпадает с зам
  * declared dialog-fixture values change; the panel remains byte-identical.
  * #1051 UI-024 changes only dialog text-link hover to colour-only. The frozen
  * panel stays byte-identical; button links retain their action paint.
+ * #1019 removes only the nine named extras above; the historical fixtures and
+ * every retained byte remain the comparison authority.
  */
 test('#597/#600 лист диалогов карточки совпадает с объявленным', () => {
-  assert.equal(formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }), FROZEN_CARD_KIT_CSS);
-  assert.equal(formKitCss(CARD_DIALOG_FORM_KIT), FROZEN_CARD_KIT_WITH_SWITCH_CSS);
+  assert.equal(formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }), withoutRetiredDialogRules(FROZEN_CARD_KIT_CSS));
+  assert.equal(formKitCss(CARD_DIALOG_FORM_KIT), withoutRetiredDialogRules(FROZEN_CARD_KIT_WITH_SWITCH_CSS));
 });
 
 test('#594 имена параметризованы, а не зашиты', () => {
