@@ -105,6 +105,7 @@ try{
   await empty();check('group.empty_click_clear',(await state()).ids,[]);
   await shortcut('a');check('group.ctrl_a_all',(await state()).ids,records().map(x=>x.id));
   check('group.text_contour_measured',await card.locator('.hp-prop-group-contour[data-decor-selection="text"] rect').count(),1);
+  check('group.mixed_kind.no_style_writer',await panel.locator('hp-color-opacity').count(),0);
   await shortcut('m');check('group.ctrl_m_only_furniture',(await state()).ids,['furniture']);
   check('group.selection_only_no_writes',(await state()).writes,base.writes);
   check('group.selection_only_no_history',(await state()).history,base.history);
@@ -193,6 +194,20 @@ try{
     check(`group.matrix.${kind}.one_command_per_field`,(await state()).history,start.history+(kind==='image'?1:2));
   }
 
+  const fills=[{...rect('a',.18,.32),fill:false,fill_color:'#112233',fill_opacity:.2},
+    {...rect('b',.58,.32,'#0000ff',.8),fill:true,fill_color:'#445566',fill_opacity:.8}];
+  for(const channel of ['hex','opacity']){
+    await seed(fills);await select(['a','b']);const start=await state();
+    const input=panel.locator(`[data-property="fill"] [data-field="fill-${channel}"]`);
+    await input.fill(channel==='hex'?'#ABCDEF':'35');await input.press('Enter');await settle();
+    const result=await saved();
+    check(`group.fill.${channel}.colors`,result.map(x=>x.fill_color),channel==='hex'?['#abcdef','#abcdef']:['#112233','#445566']);
+    check(`group.fill.${channel}.alpha`,result.map(x=>x.fill_opacity),channel==='hex'?[.2,.8]:[.35,.35]);
+    check(`group.fill.${channel}.flags_preserved`,result.map(x=>x.fill),[false,true]);
+    check(`group.fill.${channel}.stroke_untouched`,result.map(x=>[x.color,x.opacity]),fills.map(x=>[x.color,x.opacity]));
+    check(`group.fill.${channel}.one_write`,(await state()).writes,start.writes+1);
+    check(`group.fill.${channel}.one_history`,(await state()).history,start.history+1);
+  }
   await seed([rect('a',.18,.32),rect('b',.58,.32,'#0000ff',.8)]);await select(['a','b']);
   const picker=panel.locator('[data-property="stroke"] hp-color-opacity');
   const untouched=await state();await picker.locator('.trigger').click();
@@ -206,6 +221,7 @@ try{
   check('group.picker.empty_alpha_no_write',(await state()).writes,untouched.writes);
   await number.fill('0');await picker.locator('.confirm').click();await settle();
   check('group.picker.real_zero_saved',(await saved()).map(x=>x.opacity),[0,0]);
+  check('group.picker.alpha_preserves_mixed_colors',(await saved()).map(x=>x.color),['#ff0000','#0000ff']);
   await picker.locator('.trigger').click();const popupHex=picker.locator('[data-field="colour-hex"]');
   await popupHex.fill('INVALID');await picker.locator('.confirm').click();
   check('group.picker.invalid_hex_stays_visible',await popupHex.inputValue(),'INVALID');
