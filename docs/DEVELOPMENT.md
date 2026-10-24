@@ -180,20 +180,24 @@ wide host for real Properties. Its visible SVG span is checked separately from
 the physical input line's round non-scaling caps.
 
 Measured on the combined accepted #1051/#1046/#1054/#1004 source: initial View
-340258 B gzip (+591 from the actual #1004 build, 339667), lazy editor
-345273 B (+475 from 344798), Select-only 21451 B. These are real complete builds,
+340262 B gzip (+595 from the actual #1004 build, 339667), lazy editor
+345342 B (+544 from 344798), Select-only 21455 B. These are real complete builds,
 not summed branch measurements. The Select-only hard byte cap changes from 20276
-to exactly 21451 B (+1175), for the independently proved Delete kernel,
+to exactly 21455 B (+1179), for the independently proved Delete kernel,
 cancellable menu and its writer integration; it adds no reserve. This uses the
 owner's explicit permission: «сильно на размеры не заморачивайся, если
 незначительное превышение, устранять которое очень дорого — разрешаю поднять
 лимиты». Further removal would require disproportionate restructuring of the
 bounded proof/controller graph; the heavy editor facade is independently
 forbidden from that graph. Actual hostRefs increases 6090→6117 and total raw
-bundle bytes 3438014→3454385 for the new capability, current-context ports and
+bundle bytes 3438014→3454916 for the new capability, current-context ports and
 Delete code (#1004's published JSON raw baseline was 3437873; its measured
 3438014 build is the comparison source). Only those measured baselines grow;
 bands, View/editor ceilings, named exports and latency limits remain unchanged.
+The CI quality follow-up adds the missing fixed error's lazy translations:
+relative to the earlier 07030954 build this is +4 B View, +69 B editor, +4 B
+Select-only and +531 raw bytes; hostRefs is unchanged. Its hard Select cap
+follows the final measured 21455 B exactly, with no additional allowance.
 The separate core line overage was removed by seven redundant blank separators
 and one shorter comment: 13277→13269 lines, with byte-identical uncommented
 TypeScript output. Its existing 13219 cap and 50-line band stay unchanged.
