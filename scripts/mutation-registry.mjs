@@ -172,8 +172,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_decor_creation_selection.mjs',
     because: '#1047 AC3: Escape during a real drawing gesture must cancel the draft before mouse release, rather than clearing the Properties target and allowing a new object to commit. Nightly execution only.',
     patches: [{ file: 'src/editors/properties/editor.ts',
-      find: 'if (this.host._decorDraft) return false;',
-      replace: 'if (false && this.host._decorDraft) return false;' }],
+      find: 'if (this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;',
+      replace: 'if (this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;' }],
   },
   {
     id: 'zigbee-lqi-ambiguous-instance-refused-1029',
@@ -14787,8 +14787,8 @@ const MUTANT_DEFINITIONS = [
       + 'in its own layer the corner snap has nothing to show (#521 AC3)',
     patches: [{
       file: 'src/live-editor.ts',
-      find: '      ${host._renderDecorLayer(activeId)}\n      ${host._renderAlignGuides()}',
-      replace: '      ${host._renderDecorLayer(activeId)}',
+      find: '      ${host._renderDecorLayer(host._decorMove?.selection?.ids ?? activeId)}\n      ${host._renderAlignGuides()}',
+      replace: '      ${host._renderDecorLayer(host._decorMove?.selection?.ids ?? activeId)}',
     }],
   },
   {
@@ -20787,7 +20787,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_properties_panel.mjs',
     because: '#931 AC5/AC13: only Chromium owns the mounted picker, responsive unmount and its internal invalid HEX input; pure controller tests cannot observe their handoff.',
     patches: [{file:'src/hp-color-opacity.ts',
-      find:'return this._open ? {raw:this._hexDraft,needsValidInput:this._hexNeedsValidInput} : this.resumedHex;',
+      find:'return this._open ? {raw:this._hexDraft,needsValidInput:this._hexNeedsValidInput,\n      ...(this.reportTouched ? { touched: { ...this.touched }, opacityDraft: { raw: this.opacityRaw, invalid: this.opacityInvalid } } : {})} : this.resumedHex;',
       replace:'return null;'}],
   },
   {
@@ -20800,7 +20800,9 @@ const MUTANT_DEFINITIONS = [
     id: 'properties-swatch-restores-conflicting-cover',
     guard: 'node demo/smoke_properties_panel.mjs',
     because: '#931 r1 AC2: only computed custom-element paint reveals a cover-swatch overriding the solid plate and leaking checkerboard/alpha through the properties swatch.',
-    patches: [{file:'src/editors/properties/surface.ts',find:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch',replace:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch cover-swatch'}],
+    patches: [{file:'src/editors/properties/surface.ts',
+      find:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch compact-swatch\n          @hp-color-opacity-open=${() => port.edit(field, JSON.stringify(color))}',
+      replace:'.pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch compact-swatch cover-swatch\n          @hp-color-opacity-open=${() => port.edit(field, JSON.stringify(color))}'}],
   },
   {
     id: 'properties-decor-dialog-skips-draft-gate',
@@ -21125,7 +21127,37 @@ const decorLine1046Cases = [
       replace:'      e.preventDefault(); return;'}] },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases].map((mutant) => ({
+const decorGroup1038Cases = [
+  {id:'decor-group-active-line-shortcut-steals-anchor-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC5: real Ctrl+A/M during an active two-click Line preserves the exact anchor, draft, selection and next clean segment.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:'    if (this.decorLine.active || host._decorDraft || host._decorMove || host._dtDrag || this.backdropGesture.active',
+      replace:'    if (host._decorMove || host._dtDrag || this.backdropGesture.active'}]},
+  {id:'decor-group-live-paint-only-leader-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC2/3: persisted geometry alone cannot prove every selected member moves in the live SVG while the pointer remains down.',
+    patches:[{file:'src/live-editor.ts',find:'${host._renderDecorLayer(host._decorMove?.selection?.ids ?? activeId)}',
+      replace:'${host._renderDecorLayer(activeId)}'}]},
+  {id:'decor-group-picker-button-shortcut-escapes-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC5: a focused confirm button is not an input; an open shared picker must retain selection-shortcut ownership.',
+    patches:[{file:'src/houseplan-card.ts',find:' && !this._editorRuntime?.properties.colorPickerOpen && this._canEdit',replace:' && this._canEdit'}]},
+  {id:'decor-group-empty-popup-alpha-becomes-zero-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC4: empty mixed numeric input remains invalid and cannot publish a zero-alpha group command; actual typed zero remains valid.',
+    patches:[{file:'src/hp-color-opacity.ts',find:'this.opacityInvalid = !raw.trim() || !Number.isFinite(value) || value < 0 || value > 100;',
+      replace:'this.opacityInvalid = !Number.isFinite(value) || value < 0 || value > 100;'}]},
+  {id:'decor-group-retired-finally-releases-new-owner-1038',guard:'node --test test/properties-editor.test.mjs',
+    because:'#1038 AC6: rejected old queue cannot release a newer authority handoff or admit a second selection while its move is held.',
+    patches:[{file:'src/editors/properties/editor.ts',find:'}).finally(() => { if (this.handoff === receipt) this.handoff = null; host.requestUpdate(); });',
+      replace:'}).finally(() => { this.handoff = null; host.requestUpdate(); });'}]},
+  {id:'decor-group-rejected-queue-keeps-preview-1038',guard:'node --test test/properties-editor.test.mjs',
+    because:'#1038 AC6: ordinary rejected preceding queue restores the entire visible begin snapshot before any group transport or history exists.',
+    patches:[{file:'src/editors/properties/editor.ts',find:'        if (host._configWriteContext.owns(press.authority) && host._adoption.adoptionEpoch === press.adoption)',
+      replace:'        if (false && host._configWriteContext.owns(press.authority) && host._adoption.adoptionEpoch === press.adoption)'}]},
+  {id:'decor-group-untouched-alpha-materialized-1038',guard:'node --test test/decor-group-edit.test.mjs',
+    because:'#1038 AC4: colour-only group edits preserve every different opacity and optional absence.',
+    patches:[{file:'src/editors/decor/group-edit.ts',find:"const touchedOpacity = Object.prototype.hasOwnProperty.call(patch, 'opacity');",
+      replace:"const touchedOpacity = Object.prototype.hasOwnProperty.call(patch, 'opacity') || Object.prototype.hasOwnProperty.call(patch, 'color');"}]},
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...decorGroup1038Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

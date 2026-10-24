@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/editors/decor/group-edit.ts', 'src/editors/decor/group-selection.ts',
+      'src/editors/properties/group-color-draft.ts'],
+    smokes: ['smoke_decor_multiselect.mjs'],
+    because: '#1038: native painted hits and keyboard/field controls prove common rigid move, all-member live ink, individual outlines, same-kind mixed channels, image alpha-only and context-safe shortcuts across the existing writer/history boundary.',
+  },
+  {
     files: ['src/zigbee-topology-endpoint.ts', 'src/hp-zigbee-topology-overlay.ts',
       'src/device-hit-owner.ts', 'src/led-strip-runtime.ts'],
     smokes: ['smoke_zigbee_led_topology.mjs'],

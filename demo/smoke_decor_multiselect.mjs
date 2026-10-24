@@ -29,7 +29,7 @@ const seed=async decor=>{
       {id:'group',title:'Group',cell_cm:5,view_box:[0,0,1,1],rooms:[],wall_segments:[],decor},
       {id:'other',title:'Other',cell_cm:5,view_box:[0,0,1,1],rooms:[],decor:[{id:'foreign',kind:'text',x:.3,y:.3,text:'Other floor'}]},
     ],markers:[]}));
-    if(window.__card._space!=='group')window.__card._commitSpace('group');
+    if(window.__card._space!=='group')window.__card.renderRoot.querySelector('[data-hp="space-tab"][data-id="group"]').click();
     await window.__hpTest.setMode('decor');await window.__hpTest.setTool('select');
   },decor);
   await card.locator('[data-hp="zoom-fit"]').click();await settle();
@@ -63,9 +63,10 @@ const hex=()=>panel.locator('[data-property="stroke"] [data-hp="field"][data-fie
 try{
   await page.addStyleTag({content:'#host{width:100%;padding:0;margin:0}'});
   await page.evaluate(()=>{
-    const c=window.__card,call=c.hass.callWS.bind(c.hass);window.__1038Writes=[];
+    const c=window.__card,call=c.hass.callWS.bind(c.hass);window.__1038Writes=[];window.__1038Calls=[];
     window.__addRegistryEntity('sensor.group_temperature','kitchen','22.4','demo',{}, {unit_of_measurement:'°C'});
     c.hass={...c.hass,callWS:async message=>{
+      window.__1038Calls.push(message.type);
       if(message.type==='houseplan/config/set')window.__1038Writes.push(structuredClone(message));
       return call(message);
     }};
@@ -89,13 +90,19 @@ try{
 
   await empty();await shortcut('a');
   const before=await state(),beforeSaved=await saved();
-  await drag('ellipse');const moved=await state(),afterSaved=await saved();
+  await drag('ellipse',.07,.04,false);
+  await page.evaluate(()=>window.__card._editorRuntime._whenLiveEditorSettled());
+  check('group.drag_live_paints_every_member',await card.locator('.hp-live-decor [data-hp="decor"]').evaluateAll(els=>[...new Set(els.map(el=>el.dataset.id))]),before.ids);
+  await page.mouse.up();await settle();const moved=await state(),afterSaved=await saved();
   const dx=afterSaved[1].x-beforeSaved[1].x,dy=afterSaved[1].y-beforeSaved[1].y;
   check('group.drag_one_real_delta',Math.abs(dx)>.005&&Math.abs(dy)>.005);
   check('group.drag_all_ids_retained',moved.ids,before.ids);
   check('group.drag_one_write',moved.writes,before.writes+1);check('group.drag_one_history',moved.history,before.history+1);
   const expected=beforeSaved.map(s=>s.kind==='line'?{...s,x1:s.x1+dx,y1:s.y1+dy,x2:s.x2+dx,y2:s.y2+dy}:{...s,x:s.x+dx,y:s.y+dy});
-  check('group.drag_complete_records',afterSaved,expected);
+  const coordinates=new Set(['x','y','x1','y1','x2','y2']);
+  const normalized=items=>items.map(item=>Object.fromEntries(Object.entries(item).map(([key,value])=>
+    [key,coordinates.has(key)&&typeof value==='number'?Number(value.toFixed(11)):value])));
+  check('group.drag_complete_records',normalized(afterSaved),normalized(expected));
   await shortcut('z');check('group.shared_undo_complete',await saved(),beforeSaved);
   await page.keyboard.press('Control+Shift+z');await settle();check('group.shared_redo_complete',await saved(),afterSaved);
   const cancelBefore=await state();await drag('rect',.04,.03,false);await page.keyboard.press('Escape');await page.mouse.up();await settle();
@@ -149,13 +156,26 @@ try{
   check('group.picker.alpha_cannot_launder_invalid_hex',(await state()).writes,invalidBefore.writes);
   await page.keyboard.press('Escape');await settle();check('group.picker.cancel_restores_full_baseline',(await state()).decor,invalidBefore.decor);
 
+  await seed([rect('a',.18,.32),rect('b',.58,.32),rect('unselected',.4,.62)]);await select(['a','b']);
+  await hex().focus();await page.keyboard.press('Control+a');await page.keyboard.press('Control+m');
+  check('group.shortcut.focused_input_keeps_set',(await state()).ids,['a','b']);
+  await picker.locator('.trigger').click();await picker.locator('.confirm').focus();
+  await page.keyboard.press('Control+a');await page.keyboard.press('Control+m');
+  check('group.shortcut.picker_button_keeps_set',(await state()).ids,['a','b']);
+  await page.keyboard.press('Escape');await settle();
+
   await seed(records());await select(['rect','ellipse']);const selection=await state();
   await card.locator('[data-hp="tool"][data-tool="shapes"]').click();await card.locator('[data-hp="tool"][data-tool="line"]').click();
   const anchor=await point(.22,.72);await page.mouse.click(anchor.x,anchor.y);
-  const chain=await page.evaluate(()=>({active:window.__card._editorRuntime.decorLine.active,decor:structuredClone(window.__card._decorList),tool:window.__card._decorTool}));
+  const chainState=()=>page.evaluate(()=>({active:window.__card._editorRuntime.decorLine.active,anchor:window.__card._editorRuntime.decorLine.snapshot,
+    draft:structuredClone(window.__card._decorDraft),ids:[...window.__card._editorRuntime.properties.decorSelectionIds],
+    history:window.__card._geometryHistory.size,decor:structuredClone(window.__card._decorList),tool:window.__card._decorTool}));
+  const chain=await chainState();
   await shortcut('a');await shortcut('m');
-  check('group.shortcut.active_line_preserved',await page.evaluate(()=>({active:window.__card._editorRuntime.decorLine.active,decor:structuredClone(window.__card._decorList),tool:window.__card._decorTool})),chain);
-  await page.keyboard.press('Escape');await page.evaluate(()=>window.__hpTest.setTool('select'));await empty();await shortcut('a');
+  check('group.shortcut.active_line_preserved',await chainState(),chain);
+  const end=await point(.36,.72);await page.mouse.click(end.x,end.y);await settle();
+  check('group.shortcut.active_line_continues',(await state()).decor.length,chain.decor.length+1);
+  await page.keyboard.press('Escape');await seed(records());await empty();await shortcut('a');
   await page.setViewportSize({width:850,height:1100});await settle();
   check('group.compact.no_second_properties',await panel.count(),0);check('group.compact.individual_contours',await card.locator('.hp-prop-group-contour').count(),records().length);
   await empty();await shortcut('m');check('group.compact.shortcuts_work',(await state()).ids,['furniture']);
@@ -163,8 +183,18 @@ try{
   await empty();await shortcut('a');
   await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>({...cfg,settings:{...cfg.settings,external1038:true}})));
   check('group.external_revision_retires_selection',(await state()).ids,[]);
+  const many=Array.from({length:1000},(_,i)=>({...rect(`quota-${i}`,.12+(i%40)*.017,.15+Math.floor(i/40)*.022,i%2?'#ff0000':'#0000ff',(i%10)/10),w:.012,h:.012}));
+  await seed(many);await empty();await shortcut('a');
+  check('group.quota.all_1000_ids',(await state()).ids,many.map(x=>x.id));
+  check('group.quota.all_1000_contours',await card.locator('.hp-prop-group-contour').count(),1000);
+  const quotaBefore=await state();await alpha().fill('50');await alpha().press('Enter');await settle();
+  const quotaSaved=await saved();
+  check('group.quota.one_write',(await state()).writes,quotaBefore.writes+1);
+  check('group.quota.one_history',(await state()).history,quotaBefore.history+1);
+  check('group.quota.complete_records',quotaSaved,many.map(item=>({...item,opacity:.5})));
   check('group.no_services',await page.evaluate(()=>window.__serviceCalls.length),0);
   check('group.no_persistent_group_keys',(await saved()).every(item=>!Object.hasOwn(item,'group')&&!Object.hasOwn(item,'selected')));
-  check('group.no_new_api_writes',await page.evaluate(()=>window.__1038Writes.every(message=>message.type==='houseplan/config/set')));
+  check('group.no_new_api_writes',await page.evaluate(()=>window.__1038Calls.filter(type=>/(?:set|update|delete|copy|upload|import)$/.test(type)).every(type=>type==='houseplan/config/set')));
+  check('group.no_asset_requests',await page.evaluate(()=>window.__1038Calls.every(type=>!/(?:asset.*(?:set|delete|copy|upload)|files\/(?:upload|delete))/.test(type))));
   check('group.initial_selection_did_not_mutate_records',selection.decor,records());
 }finally{await finish(browser);}
