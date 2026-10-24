@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "issue": 1038,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds the owner-requested multiple decor selection, rigid group move and same-kind common style fields beyond the stable singleton editor, while reusing its storage and command history.",
+  "summary": {
+    "ru": "Несколько объектов декора: совместное перемещение, индивидуальные контуры и общие цветовые свойства.",
+    "en": "Multiple decor selection with rigid move, individual outlines and common colour properties."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      {"id":"decor-multiselect-light","expectation":"new","reason":"Owner variant B: individual contours and same-kind independently mixed colour/alpha fields in existing Properties, light theme."},
+      {"id":"decor-multiselect-dark","expectation":"new","reason":"The same approved group selection, disabled individual actions and shared field presentation in the dark theme."},
+      {"id":"geometry-decor-editor-dark","expectation":"change","reason":"AC5: the existing no-selection Background editor Properties footer advertises Ctrl+A / Ctrl+M (Select all decor / furniture) instead of singleton Enter / Esc hints. Only this footer change belongs to #1038; the independently observed pre-existing header focus-ring drift is outside this intent."},
+      {"id":"ui-1051-color-light","expectation":"new","reason":"This #1051 colour-panel scene remains pending NEW on the current baseline index. #1038 adds only its accepted AC5 Ctrl+A / Ctrl+M footer hints; the rest of the pending design stays governed by #1051. No baseline acceptance."},
+      {"id":"ui-1051-color-dark","expectation":"new","reason":"Dark counterpart of the same pending NEW #1051 colour-panel scene, with the accepted AC5 footer hints from #1038. Keep the original NEW expectation; no baseline acceptance or unrelated visual delta is authorized."}
+    ],
+    "smokes": ["smoke_decor_multiselect.mjs", "smoke_decor_group_text_scale.mjs"]
+  }
+}

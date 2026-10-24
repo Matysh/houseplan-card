@@ -14,7 +14,8 @@ import { reuseKey } from './gate-reuse.mjs';
 import { jobInstanceNames, staticNamePrefix, validateJobs } from './workflow-jobs.mjs';
 import { producerEnvironments } from './ci-job-environment.mjs';
 import { browserPlanExecution, isTaskBrowserPlan } from './browser-plan-proof.mjs';
-import { verifyRegistryRecord } from './ci-registry-verify.mjs';
+import { verifyRegistryRecord, sameRecord } from './ci-registry-verify.mjs';
+import { taskCheckRecordError, taskCheckPlanFields, normalizeTaskCheckScope } from './task-check-reuse.mjs';
 import { registryInputs } from './ci-registry-inputs.mjs';
 import { producedRegistryRecords } from './ci-registry-records.mjs';
 
@@ -273,6 +274,48 @@ const reuseClaim = (outputs, id) => ({
   ...(outputs?.[`${id}_record`] ? { registry: registryRecord(outputs[`${id}_record`]) } : {}),
 });
 
+export function taskChecksFromNeeds(needs) {
+  return Object.fromEntries(['tooling', 'browser_selected'].flatMap(id => {
+    const value = needs?.[id]?.outputs?.task_check;
+    if (!value) return [];
+    const claim = JSON.parse(value);
+    if (!['executed', 'reused'].includes(claim?.mode) || claim.record?.job !== id)
+      throw Error('invalid scoped task check: ' + id);
+    return [[id, claim]];
+  }));
+}
+
+function taskCheckProblem(proof, jobs, contexts, policy) {
+  if (proof.taskChecks && (typeof proof.taskChecks !== 'object' || Array.isArray(proof.taskChecks)))
+    return 'invalid scoped task receipt map';
+  for (const [id, claim] of Object.entries(proof.taskChecks || {})) {
+    const name = id === 'tooling' ? JOB_RULES.frontend.find(r => r.job === id).name
+      : id === 'browser_selected' ? UNCONSUMED_JOBS.browser_selected : null;
+    if (!name || taskCheckRecordError(claim?.record) || claim.record.job !== id
+      || !['executed', 'reused'].includes(claim.mode)
+      || !sameRecord(taskCheckPlanFields(claim.record), claim.plan)
+      || !executedCheckIsGreen([{ names: [name] }], jobs)) return id + ': invalid scoped task receipt';
+    if (id === 'browser_selected') {
+      try {
+        if (!sameRecord(normalizeTaskCheckScope(id, proof.browserPlan?.planned), claim.record.scope))
+          return id + ': receipt differs from planned browser coverage';
+      } catch { return id + ': invalid planned browser coverage'; }
+    }
+    if (claim.mode === 'executed') {
+      if (claim.record.sha !== proof.candidate?.sha || claim.record.run !== proof.run?.id
+        || claim.record.attempt !== proof.run?.attempt
+        || claim.record.workflow !== '.github/workflows/' + proof.run?.workflow) return id + ': foreign direct task receipt';
+    } else {
+      if (policy?.fresh || policy?.full || asBool(proof.request?.full) || asBool(proof.request?.fresh))
+        return id + ': fresh/full policy forbids scoped reuse';
+      const verified = contexts?.get(id);
+      if (!verified?.accepted || !sameRecord(verified.record, claim.record))
+        return id + ': scoped source was not independently verified';
+    }
+  }
+  return null;
+}
+
 /** Build the immutable JSON uploaded by the final Validate job. */
 export function buildCiProof({
   candidateSha, candidateTree, runId, attempt, event, needs,
@@ -358,6 +401,7 @@ export function buildCiProof({
     executedChecks: requiredChecks.filter((id) => checks[id]?.mode === 'executed'),
     reusedChecks: requiredChecks.filter((id) => checks[id]?.mode === 'reused'),
     checks,
+    taskChecks: taskChecksFromNeeds(needs),
     ...(registry?.plan ? { registry: { schema: 1, plan: registry.plan, produced: [] } } : {}),
     ...(changes.browser_plan ? { browserPlan: browserPlanExecution(JSON.parse(changes.browser_plan), needs) } : {}),
     ...(evidence ? { evidence } : {}),
@@ -383,7 +427,7 @@ function executedCheckIsGreen(rules, jobs) {
  */
 export function evaluateCiProof({
   run, proof, jobs = [], reuseRuns = new Map(), candidate = {}, policy, expected = null, reviewedRun = undefined,
-  workflowJobs = undefined, profileRuns = new Map(), registryRepo = null,
+  workflowJobs = undefined, profileRuns = new Map(), registryRepo = null, taskCheckContexts = new Map(),
 }) {
   const result = (status, note) => ({ status, note, url: runUrlOf(run) });
   if (!run) return result('missing', 'Validate run is missing');
@@ -434,7 +478,8 @@ export function evaluateCiProof({
       return result('stale', 'full product proof has no tooling coverage plan; canonical validation required');
     for (const required of canonicalRequired ? [] : proof.requiredProfiles.filter(p => p !== 'product')) {
       const companion = profileRuns.get(required);
-      if (!companion) return result('stale', `${required} profile for the event is missing; canonical validation required`);
+      if (!companion) return { ...result('stale', `${required} profile for the event is missing; canonical validation required`),
+        reason: 'missing-companion' };
       if (runShaOf(companion.run) !== identity.sha || CI_WORKFLOWS[ciWorkflow(companion.run)] !== required)
         return result('failed', `${required}: foreign companion identity`);
       if (companion.run.status !== 'completed') return { ...result('pending', `${required} profile is still running`),
@@ -442,6 +487,18 @@ export function evaluateCiProof({
       const names = [JOB_RULES.preflight[0].name, ...(required === 'tooling' ? [JOB_RULES.frontend.find(r => r.job === 'tooling').name] : [])];
       if (companion.run.conclusion !== 'success' || !executedCheckIsGreen(names.map(name => ({ names: [name] })), companion.jobs))
         return result('failed', `${required}: companion checks absent or not green`);
+      if (required === 'tooling') {
+        const source = companion.proof;
+        if (!source || source.schema !== CI_PROOF_SCHEMA || source.candidate?.sha !== identity.sha
+          || source.candidate?.tree !== proof.candidate.tree || source.run?.id !== runIdOf(companion.run)
+          || source.run?.attempt !== runAttemptOf(companion.run) || source.run?.event !== companion.run.event
+          || ciWorkflow(source.run?.workflow) !== ciWorkflow(companion.run)
+          || source.checks?.preflight?.mode !== 'executed' || source.checks.preflight.result !== 'success')
+          return result('failed', 'tooling: immutable companion proof is missing or foreign');
+      }
+      const taskProblem = taskCheckProblem(companion.proof || {}, companion.jobs, companion.taskCheckContexts,
+        { ...policy, full: policy?.full || asBool(proof.request?.full), fresh: policy?.fresh || asBool(proof.request?.fresh) });
+      if (taskProblem) return result('failed', taskProblem);
     }
   }
   // #573: потребитель, у которого есть checkout кандидата (release), сверяет
@@ -480,6 +537,8 @@ export function evaluateCiProof({
   }
   if (run.conclusion !== 'success')
     return result('failed', `Validate run ${runIdOf(run)} concluded ${run.conclusion || 'without success'}`);
+  const taskProblem = taskCheckProblem(proof, jobs, taskCheckContexts, policy);
+  if (taskProblem) return result('failed', taskProblem);
   // Additive v1 extension: old controllers can judge a fresh migration run.
   // New controllers independently require these always-fresh jobs even though
   // they are outside the legacy required/executed/reused ID lists.
@@ -495,13 +554,20 @@ export function evaluateCiProof({
     try {
       const plan = proof.browserPlan.planned;
       browserPlanExecution(plan, {});
-      for (const kind of ['smoke', 'golden']) if (plan[kind].mode === 'selected'
-        && (proof.browserPlan.executed?.[kind]?.result !== 'success'
-          || proof.browserPlan.executed[kind].mode !== 'selected'
-          || !Array.isArray(proof.browserPlan.executed[kind].ids)
-          || !sameSet(proof.browserPlan.executed[kind].ids, plan[kind].ids)
-          || !executedCheckIsGreen([{ names: [UNCONSUMED_JOBS.browser_selected] }], jobs)))
-        return result('failed', `${kind}: selected push execution is missing or not green`);
+      for (const kind of ['smoke', 'golden']) if (plan[kind].mode === 'selected') {
+        const reused = proof.browserPlan.reused?.[kind], execution = reused || proof.browserPlan.executed?.[kind];
+        if (execution?.result !== 'success' || execution.mode !== 'selected' || !Array.isArray(execution.ids)
+          || !sameSet(execution.ids, plan[kind].ids)
+          || !executedCheckIsGreen([{ names: [UNCONSUMED_JOBS.browser_selected] }], jobs))
+          return result('failed', `${kind}: selected push execution is missing or not green`);
+        if (reused && (proof.browserPlan.executed?.[kind] || proof.taskChecks?.browser_selected?.mode !== 'reused'
+          || !taskCheckContexts.get('browser_selected')?.accepted
+          || reused.sourceRun !== proof.taskChecks.browser_selected.record.run
+          || reused.sourceAttempt !== proof.taskChecks.browser_selected.record.attempt))
+          return result('failed', `${kind}: selected reuse has no verified scoped source`);
+        if (!reused && proof.taskChecks?.browser_selected?.mode === 'reused')
+          return result('failed', `${kind}: reused scope cannot claim fresh execution`);
+      }
     } catch { return result('failed', 'invalid browser coverage metadata'); }
   }
   let rules;
@@ -654,6 +720,11 @@ export async function loadGithubProofContext({
       if (!['docs', 'tooling'].includes(required)) continue;
       const companion = rows.find(row => CI_WORKFLOWS[ciWorkflow(row)] === required);
       if (companion) {
+        if (required === 'tooling') {
+          const context = await loadGithubProofContext({ repo, run: companion, token, fetchImpl, apiBase });
+          profileRuns.set(required, { run: companion, ...context });
+          continue;
+        }
         const body = await githubJson(`${apiBase}/repos/${repo}/actions/runs/${runIdOf(companion)}/jobs?per_page=100`, token, fetchImpl);
         profileRuns.set(required, { run: companion, jobs: body.jobs || [] });
       }
@@ -705,7 +776,14 @@ export async function loadGithubProofContext({
       reviewedRun = null;
     }
   }
-  return { proof, jobs, reuseRuns, profileRuns, registryRepo: repo, ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
+  let taskCheckContexts = new Map();
+  if (Object.values(proof?.taskChecks || {}).some(claim => claim?.mode === 'reused')) {
+    const { loadTaskCheckContexts } = await import('./task-check-source.mjs');
+    taskCheckContexts = await loadTaskCheckContexts({ proof, repo, token,
+      candidateSha: runShaOf(run), fetchImpl, apiBase });
+  }
+  return { proof, jobs, reuseRuns, profileRuns, taskCheckContexts, registryRepo: repo,
+    ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
 }
 
 if (isMainModule(import.meta.url)) {

@@ -1,18 +1,21 @@
 import test from 'node:test';
 import { fixtureVersions as versions } from './helpers/ci-registry-version-fixture.mjs';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { registryInputs, registryReader, REGISTRY_JOBS, maskJsonScalars, versionNormalizer, jobRecipe, registryProtocolFiles } from '../scripts/ci-registry-inputs.mjs';
+import { pathToFileURL } from 'node:url';
+import { deflateSync } from 'node:zlib';
+import { registryInputs, registryReader, REGISTRY_JOBS, maskJsonScalars, versionNormalizer, jobRecipe, registryProtocolFiles, registryRemaining } from '../scripts/ci-registry-inputs.mjs';
 import { profilePaths } from '../scripts/ci-profile-paths.mjs';
 import { registryInventory } from '../scripts/ci-registry-inventory.mjs';
 import { generatedProfiles } from '../scripts/ci-profiles.mjs';
 import { producerRecipe } from '../scripts/ci-registry-cli.mjs';
 import { verifyRegistryBuild, restoreRegistryBuild, runCandidateCommand } from '../scripts/ci-registry-build.mjs';
 import { artifactTree } from '../scripts/artifact-inventory.mjs';
-import { sourceEquivalenceCommon, sourceEquivalenceJob } from '../scripts/ci-registry-equivalence.mjs';
+import { sourceEquivalenceCommon, sourceEquivalenceJob, snapshotEntries, validateSnapshotPolicy } from '../scripts/ci-registry-equivalence.mjs';
+import { registryApi } from '../scripts/ci-proof-registry.mjs';
 
 const git = (root, args) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
 const environment = { node: '22.23.3', platform: 'linux', arch: 'x64', python: '3.14.5', pins: '1'.repeat(64) };
@@ -211,4 +214,181 @@ test('actual Git beta equivalence accepts only synchronized scalar version diffe
   commit(root, 'non-version change under a version mirror path');
   candidate = identity(root, 'candidate')._snapshot;
   await assert.rejects(() => sourceEquivalenceCommon(candidate, previous, 'candidate'), /non-version candidate bytes/);
+});
+
+test('#1060 actual generated Git policy authenticates reuse and rejects counterfeit dependency/exclusion lists', async () => {
+  // Use the real committed generated policy and its immutable Git code, not
+  // profilePaths([]) or a copy of the validator's expected synthetic table.
+  const reader = registryReader(resolve('.'));
+  const domains = JSON.parse(reader.text('scripts/ci-profile-paths.json'));
+  const snapshot = () => ({ entries: snapshotEntries(reader.rows), read: reader.read, readMany: reader.readMany,
+    inventory: JSON.parse(reader.text('scripts/ci-registry-inventory.json')), domains: structuredClone(domains) });
+  const candidate = snapshot(), previous = snapshot();
+  const helper = 'demo/helpers/clamped-wheel-lease.mjs';
+  assert.ok(domains.tooling.includes(helper), 'real generated dependency must exercise the #1044 extension');
+  const common = await sourceEquivalenceCommon(candidate, previous, 'exact');
+  assert.equal((await sourceEquivalenceJob(candidate, previous,
+    { job: 'frontend', workflow: '.github/workflows/validate.yml' }, common)).sourceEquivalent, true);
+
+  const unrelated = reader.tracked.find(path => path.startsWith('src/') && !domains.tooling.includes(path));
+  assert.ok(unrelated);
+  const productTest = reader.tracked.find(path => /^test\/[^/]+\.test\.mjs$/.test(path) && !domains.product.includes('!' + path));
+  assert.ok(productTest);
+  for (const change of [
+    table => { table.tooling.push(unrelated); },
+    table => { table.tooling = table.tooling.filter(path => path !== helper); },
+    table => { table.product.push('!' + helper); },
+    table => { table.docs.push('src/**'); },
+    table => { table.product.push('!' + productTest); if (!table.tooling.includes(productTest)) table.tooling.push(productTest); },
+  ]) {
+    const forged = snapshot(); change(forged.domains);
+    await assert.rejects(() => validateSnapshotPolicy(forged), /computed policy differs from immutable Git input/);
+  }
+  const symbolic = snapshot();
+  symbolic.entries.set(helper, { ...symbolic.entries.get(helper), mode: '120000' });
+  await assert.rejects(() => validateSnapshotPolicy(symbolic), /missing\/unsafe source Git input/);
+});
+
+test('#1060 immutable dependency reads are memoized and reject a remote frontier before an API storm', async () => {
+  const reader = registryReader(resolve('.'));
+  let reads = 0;
+  const candidate = { entries: snapshotEntries(reader.rows), read: path => { reads++; return reader.read(path); },
+    readMany: paths => { reads += paths.length; return reader.readMany(paths); },
+    inventory: JSON.parse(reader.text('scripts/ci-registry-inventory.json')),
+    domains: JSON.parse(reader.text('scripts/ci-profile-paths.json')) };
+  await Promise.all([validateSnapshotPolicy(candidate), validateSnapshotPolicy(candidate)]);
+  assert.ok(reads > 32, 'real policy has a substantial closure');
+  const firstReads = reads;
+  await validateSnapshotPolicy(candidate);
+  assert.equal(reads, firstReads + 2, 'only immutable parsed metadata is rechecked; dependency walk is memoized');
+  const remote = { ...candidate, policyReadBudget: 32, read: path => {
+    assert.ok(['scripts/ci-profile-paths.json', 'scripts/ci-registry-inventory.json'].includes(path));
+    return reader.read(path);
+  } };
+  await assert.rejects(() => validateSnapshotPolicy(remote), /immutable read budget/);
+});
+
+test('#1060 registry API uses exact local Git policy rather than dirty files or remote per-file policy reads', async t => {
+  const root = repository(t), sha = git(root, ['rev-parse', 'HEAD']), reader = registryReader(root, sha);
+  put(root, 'scripts/ci-profile-paths.json', '{"product":["!**"]}');
+  const calls = [], run = { id: 123, run_attempt: 1, status: 'completed', conclusion: 'success' };
+  const source = registryApi({ repo: 'Matysh/houseplan-card', token: 'fixture', root, candidateSha: sha,
+    fetchImpl: async url => {
+      const path = String(url).split('/repos/Matysh/houseplan-card/')[1]; calls.push(path);
+      const body = path.startsWith('git/trees/') ? { tree: reader.rows.map(row => ({ ...row, type: 'blob', sha: row.oid })) }
+        : path.endsWith('/jobs?per_page=100') ? { jobs: [] }
+          : path.endsWith('/artifacts?per_page=100') ? { artifacts: [] } : run;
+      if (path.startsWith('contents/')) throw Error('policy must come from local immutable Git objects');
+      return { ok: true, json: async () => body };
+    } });
+  // Reach the later independent artifact refusal: policy/equivalence passed,
+  // but neither a cache hit nor local blobs can replace an actual CI artifact.
+  await assert.rejects(() => source({ run: 123, attempt: 1, sha,
+    job: 'frontend', workflow: '.github/workflows/validate.yml' }), /source immutable proof absent/);
+  assert.equal(calls.some(path => path.startsWith('contents/')), false);
+});
+
+function partialRepository(t) {
+  const source = repository(t), root = join(temporary(t), 'partial');
+  const tests = Array.from({ length: 24 }, (_, index) => `test/cold-${index}.test.mjs`);
+  for (const [index, path] of tests.entries()) put(source, path,
+    `import '../demo/helpers/cold-helper.mjs';\nexport const caseId = ${index};\n`);
+  put(source, 'demo/helpers/cold-helper.mjs', "import './cold-leaf.mjs';\nexport const helper = true;\n");
+  put(source, 'demo/helpers/cold-leaf.mjs', 'export const leaf = true;\n');
+  put(source, 'demo/golden/baselines/unrelated.png', Buffer.alloc(1024, 17));
+  put(source, 'scripts/ci-profile-paths.json', JSON.stringify(profilePaths(tests,
+    [...tests, 'demo/helpers/cold-helper.mjs', 'demo/helpers/cold-leaf.mjs'])));
+  commit(source, 'cold tooling closure');
+  git(source, ['config', 'uploadpack.allowFilter', 'true']);
+  git(source, ['config', 'uploadpack.allowAnySHA1InWant', 'true']);
+  git(source, ['clone', '--no-local', '--no-checkout', '--filter=blob:none', '--depth=1', pathToFileURL(source).href, root]);
+  git(root, ['sparse-checkout', 'set', '--no-cone', '/scripts/', '/.github/workflows/', '/package.json',
+    '/package-lock.json', '/.python-version', '/.nvmrc', '/pyproject.toml']);
+  git(root, ['checkout', '--detach', 'HEAD']);
+  assert.equal(git(root, ['config', 'remote.origin.promisor']), 'true');
+  assert.equal(git(root, ['config', 'remote.origin.partialclonefilter']), 'blob:none');
+  const localObjects = () => new Set(execFileSync('git', ['-C', root, 'cat-file', '--batch-all-objects',
+    '--batch-check=%(objectname)'], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, GIT_NO_LAZY_FETCH: '1',
+      GIT_ALLOW_PROTOCOL: '' } }).trim().split('\n'));
+  const firstOid = git(source, ['rev-parse', 'HEAD:' + tests[0]]);
+  assert.equal(localObjects().has(firstOid), false, 'fixture must really omit the promised test blob');
+  assert.equal(existsSync(join(root, tests[0])), false, 'sparse checkout must omit the test');
+  return { source, root, tests, localObjects };
+}
+async function traceGit(root, action) {
+  const path = join(root, 'git-trace.json'), before = process.env.GIT_TRACE2_EVENT;
+  process.env.GIT_TRACE2_EVENT = path;
+  try { await action(); }
+  finally { if (before === undefined) delete process.env.GIT_TRACE2_EVENT; else process.env.GIT_TRACE2_EVENT = before; }
+  return readFileSync(path, 'utf8').trim().split('\n').map(line => JSON.parse(line))
+    .filter(event => event.event === 'start' && event.argv.includes('fetch'));
+}
+
+test('#1062 actual sparse partial clone hydrates one immutable batch per dependency frontier', async t => {
+  const { source, root, tests, localObjects } = partialRepository(t);
+  const fetches = await traceGit(root, async () => {
+    const reader = registryReader(root), candidate = { entries: snapshotEntries(reader.rows), read: reader.read,
+      readMany: reader.readMany, domains: JSON.parse(reader.text('scripts/ci-profile-paths.json')),
+      inventory: JSON.parse(reader.text('scripts/ci-registry-inventory.json')) };
+    await validateSnapshotPolicy(candidate);
+    await validateSnapshotPolicy(candidate);
+    assert.equal(reader.text(tests[0]), readFileSync(join(source, tests[0]), 'utf8'));
+    assert.deepEqual(identity(root, 'exact', { reader }).keys, identity(source).keys);
+  });
+  assert.equal(fetches.length, 3, '24 tests + helper + leaf are three batches, never 26 lazy fetches');
+  assert.ok(fetches.every(event => event.argv.includes('--stdin') && event.argv.includes('--no-write-fetch-head')));
+  const baselineOid = git(source, ['rev-parse', 'HEAD:demo/golden/baselines/unrelated.png']);
+  assert.equal(localObjects().has(baselineOid), false, 'unrelated image bytes remain unhydrated');
+});
+
+test('#1062 offline partial clone refuses missing blobs after one bounded explicit fetch', async t => {
+  const { root, tests, localObjects } = partialRepository(t);
+  git(root, ['remote', 'set-url', 'origin', pathToFileURL(join(root, 'absent-origin')).href]);
+  const reader = registryReader(root), before = localObjects().size;
+  const fetches = await traceGit(root, () => {
+    assert.throws(() => reader.readMany(tests));
+    assert.throws(() => reader.readMany(['test/not-in-the-immutable-tree.mjs']), /missing\/symbolic input/);
+  });
+  assert.equal(fetches.length, 1, 'no hidden fetch per missing blob');
+  assert.equal(localObjects().size, before);
+});
+
+test('#1062 immutable reader refuses unsafe modes, wrong blob bytes and an exhausted shared deadline', t => {
+  const root = repository(t), path = 'test/unsafe.mjs';
+  put(root, path, 'export const original = true;\n'); commit(root, 'unsafe fixture input');
+  const oid = git(root, ['rev-parse', 'HEAD:' + path]);
+  git(root, ['update-index', '--cacheinfo', `120000,${oid},${path}`]);
+  git(root, ['commit', '-m', 'symbolic input mode']);
+  assert.throws(() => registryReader(root).read(path), /missing\/symbolic input/);
+  git(root, ['update-index', '--cacheinfo', `100644,${oid},${path}`]);
+  git(root, ['commit', '-m', 'restore regular input mode']);
+  const reader = registryReader(root), wrong = Buffer.from('counterfeit bytes\n');
+  const objectFile = join(root, '.git', 'objects', oid.slice(0, 2), oid.slice(2));
+  chmodSync(objectFile, 0o600);
+  writeFileSync(objectFile, deflateSync(Buffer.concat([Buffer.from(`blob ${wrong.length}\0`), wrong])));
+  assert.throws(() => reader.read(path), /bytes differ from immutable Git OID/);
+  assert.throws(() => registryReader(root, 'HEAD', { deadline: Date.now() - 1 }), /deadline exceeded/);
+  assert.throws(() => registryRemaining(NaN), /deadline exceeded/);
+});
+
+test('#1062 stalled explicit hydration is stopped by the remaining deadline', async t => {
+  const { root, tests } = partialRepository(t);
+  const script = join(root, 'slow-upload-pack.mjs'), pidPath = join(root, 'slow-upload-pack.pid');
+  writeFileSync(script, `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(pidPath)}, String(process.pid));\nsetTimeout(() => {}, 5000);\n`);
+  const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
+  git(root, ['config', 'remote.origin.uploadpack', `${quote(process.execPath)} ${quote(script)}`]);
+  const reader = registryReader(root, 'HEAD', { deadline: Date.now() + 800 });
+  const started = Date.now();
+  try {
+    assert.throws(() => reader.readMany(tests), error => error.code === 'ETIMEDOUT');
+    assert.ok(Date.now() - started < 2500, 'synchronous Git must not outlive the probe budget');
+    assert.throws(() => reader.read(tests[0]), /deadline exceeded/);
+  } finally {
+    // The transport fixture is a grandchild of Git. Clean its explicit PID on
+    // Windows too; the timing assertion above already measured the real return.
+    if (existsSync(pidPath)) {
+      try { process.kill(Number(readFileSync(pidPath, 'utf8')), 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
 });

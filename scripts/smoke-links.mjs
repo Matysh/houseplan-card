@@ -30,6 +30,17 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/decor-text-element.ts', 'src/editors/decor/group-selection.ts'],
+    smokes: ['smoke_decor_group_text_scale.mjs'],
+    because: '#1038 CODE r1: instrumented native DOM reads on 1000 real Text nodes prove that two selected labels never enumerate or measure the unrelated labels during HA updates and drag; the smoke does not call the measurement helper.',
+  },
+  {
+    files: ['src/editors/decor/group-edit.ts', 'src/editors/decor/group-selection.ts',
+      'src/editors/properties/group-color-draft.ts'],
+    smokes: ['smoke_decor_multiselect.mjs'],
+    because: '#1038: native painted hits and keyboard/field controls prove common rigid move, all-member live ink, individual outlines, same-kind mixed channels, image alpha-only and context-safe shortcuts across the existing writer/history boundary.',
+  },
+  {
     files: ['src/editors/keyboard-nudge.ts','src/editors/plan-nudge.ts','src/device-contact-write.ts'],
     symbols: ['_onKey'],
     smokes: ['smoke_editor_nudge.mjs'],
@@ -1134,6 +1145,14 @@ export const SMOKE_LINKS = [
       + 'the View and plan-editor layers — one `path.hp-stair-tread` whose `M` subpaths count the '
       + 'physical treads, the outline and hit polygons, navigation and the editor gestures on them; '
       + 'no smoke names the helpers',
+  },
+  {
+    // #1060: these #234 acceptance witnesses must not depend on the frequency
+    // of a field also used as generic setup by unrelated drawing smokes.
+    symbols: ['_wallChainSegmentCms', 'chainSegmentCms', 'wallChainSegments', '_closingWallCm'],
+    smokes: ['smoke_wall_chain_thickness.mjs', 'smoke_wall_junctions.mjs'],
+    because: '#234: chain thickness compares the live segment vector with persisted walls; '
+      + 'junctions exercises mixed-depth chain joins. Both directly assert the segment-thickness contract.',
   },
   {
     // #234: единый резолвер толщины отрезка цепочки. Смок перехода между

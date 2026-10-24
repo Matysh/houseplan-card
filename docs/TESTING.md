@@ -877,4 +877,4 @@ See `demo/performance/README.md` for commands and the budget-review contract.
 - [ ] README screenshots/GIF still match the current UI (synthetic home only)
 
 
-Реестр и проверки источника: [контракт #981](DEVELOPMENT.md#cross-branch-ci-proof-registry-981).
+Task scope, проверяемый reuse tooling/browser и раздельные green/range базы (#1060): [контракт CI](DEVELOPMENT.md#path-profiles-for-push-and-pr-980), [реестр](DEVELOPMENT.md#cross-branch-ci-proof-registry-981). Слабый lexical match — диагностика; явные AC/intents не обрезаются.

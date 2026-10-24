@@ -7,7 +7,9 @@ export function browserPlanExecution(plan, needs) {
   if (plan.schema !== 1 || !['push', 'task', 'full'].includes(plan.scope)) throw Error('invalid browser coverage plan');
   if (plan.coverageScope !== undefined && (plan.coverageScope !== 'task' || !['push', 'task'].includes(plan.scope)))
     throw Error('invalid browser coverage scope');
-  const executed = {}, skipped = {};
+  const executed = {}, skipped = {}, reused = {};
+  const selectedClaim = needs?.browser_selected?.outputs?.task_check
+    ? JSON.parse(needs.browser_selected.outputs.task_check) : null;
   for (const kind of ['smoke', 'golden']) {
     if (!plan[kind] || !['none', 'selected', 'full'].includes(plan[kind].mode) || !Array.isArray(plan[kind].ids)
       || new Set(plan[kind].ids).size !== plan[kind].ids.length
@@ -27,6 +29,10 @@ export function browserPlanExecution(plan, needs) {
     const selected = plan[kind].mode === 'selected';
     const job = selected ? needs?.browser_selected : needs?.[kind];
     if (plan[kind].mode === 'none') skipped[kind] = plan[kind].reason;
+    else if (selected && selectedClaim?.mode === 'reused') reused[kind] = {
+      mode: 'selected', ids: plan[kind].ids, result: job?.result || 'missing',
+      sourceRun: selectedClaim.record?.run, sourceAttempt: selectedClaim.record?.attempt,
+    };
     else if (!selected && needs?.reuse?.outputs?.[kind] === 'true') skipped[kind] = 'complete compatible producer proof reused';
     else executed[kind] = { mode: plan[kind].mode, ids: plan[kind].ids,
       result: job?.result || 'missing', reason: plan[kind].reason };
@@ -36,6 +42,6 @@ export function browserPlanExecution(plan, needs) {
   // the additive marker preserves task semantics for current readers. Neither
   // scope grants a complete-matrix receipt or changes request.full/golden.
   const planned = plan.scope === 'task' ? { ...plan, scope: 'push', coverageScope: 'task' } : plan;
-  return { planned, executed, skipped };
+  return { planned, executed, skipped, ...(Object.keys(reused).length ? { reused } : {}) };
 }
 

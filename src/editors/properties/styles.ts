@@ -92,6 +92,8 @@ export const propertiesStyles = unsafeCSS(css`
   .hp-properties .hpf-colorfield .hpf-inline-hex:hover,
   .hp-properties .hpf-colorfield .hpf-inline-alpha:hover { background:color-mix(in srgb,var(--primary-color) 8%,transparent); }
   .hp-properties .hpf-colorfield input[aria-invalid=true] { box-shadow:inset 0 -2px var(--error-color); }
+  .hp-properties .hp-prop-group-color .hpf-colorfield { display:grid; grid-template-columns:24px minmax(100px,1fr) minmax(100px,1fr) 8px; gap:2px; padding-inline:4px; }
+  .hp-properties .hp-prop-group-color .hpf-colorfield:not(:has(.hpf-inline-hex)) { grid-template-columns:24px minmax(100px,1fr) 8px; }
   .hp-prop-swatch { width: 15px; height: 15px; border: 1px solid var(--prop-line); border-radius: 3px; }
   .hp-prop-swatch-empty { background: linear-gradient(135deg,transparent 45%,var(--prop-line) 46%,var(--prop-line) 53%,transparent 54%); flex: 0 0 15px; }
   .hp-prop-text { display:block; height: 66px; width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid var(--prop-border); border-radius: 5px; background: var(--prop-input); color: var(--prop-value); font-size: 14px; line-height: 1.5; resize: vertical; overflow-wrap: anywhere; }

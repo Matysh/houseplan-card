@@ -19,6 +19,9 @@ import { displayVersion } from './card-version';
 import { CatalogContextMenu } from './catalog-context-menu';
 import { DecorOrderEditor } from './decor-order-editor';
 import { DecorLineDrawing, type DecorLineSession } from './editors/decor/line-drawing';
+import type { DecorSelectionPress } from './editors/decor/group-press';
+import { allDecorSelectionIds, toggleDecorSelectionId } from './editors/decor/selection';
+import { translateDecorSelection } from './editors/decor/group-edit';
 import { entryBuildLabel } from './build-identity';
 import { finishWarmModeAdoption, resumeWarmMode, type WarmModeHost } from './warm-mode-adoption';
 import { deviceEditorAllowed } from './device-editor-access';
@@ -566,7 +569,7 @@ export interface HouseplanEditorHostPort {
   _decorLargeCm: (value: number) => number;
   _decorLargeField: (cm: number) => number;
   _decorList: DecorShape[];
-  _decorMove: { id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean; before: SpaceGeometryState | null; } | null;
+  _decorMove: { id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean; before: SpaceGeometryState | null; selection?: DecorSelectionPress } | null;
   _decorResolvedStyle: (shape?: DecorShape | null) => DecorStyle;
   _decorSel: string | null;
   _decorShapeDialog: { id: string; kind: "line" | "rect" | "ellipse" | "furniture" | "image"; color: string; opacity: number; widthCm: number; lineStyle?: "solid" | "dashed"; fill?: boolean; fillColor?: string; fillOpacity?: number; lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string; symbol?: string; assetId?: string; sizeWField?: string; sizeHField?: string; flipH?: boolean; flipV?: boolean; } | null;
@@ -912,7 +915,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this.keyboardNudge.retire(); this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -3692,10 +3695,11 @@ public _partitionOpeningCuts(
     return geometryPartitionOpeningCuts(openings, accept);
   }
 
-public _decorSnapGeometry(excludeId?: string): SnapGeometry {
+public _decorSnapGeometry(excludeId?: string | readonly string[]): SnapGeometry {
     const space = this.host._spaceModel();
     if (!space) return { points: [], segments: [] };
-    const cacheKey = excludeId || '';
+    const excluded = new Set(typeof excludeId === 'string' ? [excludeId] : excludeId);
+    const cacheKey = typeof excludeId === 'string' ? excludeId : JSON.stringify(excludeId ?? []);
     const cached = this.host._decorSnapCache;
     if (cached && cached.epoch === this.host._cfgEpoch && cached.space === this.host._space
         && cached.height === this.host._decorH && cached.exclude === cacheKey) {
@@ -3703,7 +3707,7 @@ public _decorSnapGeometry(excludeId?: string): SnapGeometry {
     }
     const parts: SnapGeometry[] = [];
     for (const shape of this.host._decorList) {
-      if (shape.id === excludeId) continue;
+      if (excluded.has(shape.id)) continue;
       if (shape.kind === 'line') {
         const a = [shape.x1 * NORM_W, shape.y1 * this.host._decorH];
         const b = [shape.x2 * NORM_W, shape.y2 * this.host._decorH];
@@ -3737,7 +3741,7 @@ public _decorSnapGeometry(excludeId?: string): SnapGeometry {
     return geometry;
   }
 
-public _decorSnap(raw: number[], pointerType = 'mouse', excludeId?: string): number[] {
+public _decorSnap(raw: number[], pointerType = 'mouse', excludeId?: string | readonly string[]): number[] {
     const stage = this.host._stageEl;
     const view = this.host._viewOr(this.host._baseVb());
     const px = pointerType === 'touch' || pointerType === 'pen' ? 14 : 8;
@@ -3763,7 +3767,9 @@ public _cancelDecorGesture(): void {
     cancelHouseplanPointerMove(this.host, 'decor-transform');
     cancelHouseplanPointerMove(this.host, 'decor-move');
     cancelHouseplanPointerMove(this.host, 'backdrop');
-    const before = this.host._decorMove?.before || this.host._dtDrag?.before || this.backdropGesture.before;
+    const selection = this.host._decorMove?.selection;
+    const validContext = !selection || this._decorSelectionPressCurrent(selection);
+    const before = validContext ? this.host._decorMove?.before || this.host._dtDrag?.before || this.backdropGesture.before : null;
     const sp = before && this.host._serverCfg?.spaces.find((space) => space.id === before.spaceId);
     if (before && sp) {
       const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -3861,7 +3867,7 @@ public _decorPointerDown(ev: PointerEvent): boolean {
     // do not cover the whole logical label box, so clearing here made a click
     // between letters appear to erase only the selection outline.
     if (t === 'select') {
-      if (this.properties.wide) this.properties.clear(); else this.host._decorSel = null;
+      this.properties.clear(); this.host._decorSel = null;
     }
     // …and under its own tool the picture is grabbable by its body
     // (docs/DECOR-EDITOR.md §3.2). Only INSIDE the image rect: press beside the
@@ -3938,21 +3944,27 @@ public _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
     if (t !== 'select' && t !== 'erase') return;
     ev.stopPropagation();
     ev.preventDefault();
-    if (t === 'select' && !this.properties.select(shape.kind, shape.id)) return;
+    const ids = this.properties.decorSelectionIds;
+    const retain = t === 'select' && (ev.ctrlKey || ev.metaKey || ids.length > 1 && ids.includes(shape.id));
+    if (t === 'select' && (retain ? !this.properties.beforeDecorGroupPress() : !this.properties.select(shape.kind, shape.id))) return;
     if (t === 'erase') {
       this.host._decorEraseConfirm = { id: shape.id, kind: shape.kind };
       return;
     }
-    this.host._decorSel = shape.id;
+    if (!retain) this.host._decorSel = shape.id;
     this.host._decorMove = {
       id: shape.id, start: this._svgPoint(ev), orig: JSON.parse(JSON.stringify(shape)),
       pid: ev.pointerId, moved: false, before: this._geometrySnapshot(),
+      ...(retain ? { selection: { ids: [...ids], items: structuredClone(this.host._decorList),
+        screen: [ev.clientX, ev.clientY] as const, toggle: ev.ctrlKey || ev.metaKey, displaced: false, valid: true,
+        authority: this.host._configWriteContext.claim(), adoption: this.host._adoption.adoptionEpoch, space: this.host._space } } : {}),
     };
     capturePointer(ev);
   }
 
 public _decorMoveUpdate(ev: PointerEvent): void {
     const m = this.host._decorMove; if (!m) return;
+    if (m.selection) { this._decorGroupMove(ev); return; }
     if (m.orig?.kind === 'furniture') { this._furnMoveUpdate(ev); return; }
     const p = this._svgPoint(ev);
     const o0: any = m.orig;
@@ -3992,8 +4004,63 @@ public _decorMoveUpdate(ev: PointerEvent): void {
   }
 public _dmUp(): void {
     flushHouseplanPointerMove(this.host, 'decor-move'); const move = this.host._decorMove;
-    if (move?.moved) { this._recordGeometry(this.host._t('history.decor_move'), move.before); this._saveConfig(); }
+    const selection = move?.selection;
+    if (move && selection && this._decorSelectionPressCurrent(selection) && !selection.displaced) {
+      const ids = selection.toggle ? toggleDecorSelectionId(this.host._decorList, selection.ids, move.id) : [move.id];
+      if (ids) this.properties.selectDecorIds(ids);
+    }
+    if (move?.moved && (!selection || selection.valid && this._decorSelectionPressCurrent(selection))) {
+      if (selection) this.properties.finishDecorGroupMove(move.before, selection, () => this._decorSelectionPressCurrent(selection));
+      else { this._recordGeometry(this.host._t('history.decor_move'), move.before); this._saveConfig(); }
+    }
     this.host._decorMove = null; this.host.requestUpdate();
+  }
+
+private _decorSelectionPressCurrent(press: DecorSelectionPress): boolean {
+    return this.host.isConnected && this.host._mode === 'decor' && this.host._decorTool === 'select'
+      && this.host._canEdit && !this.host._kiosk && press.space === this.host._space
+      && press.adoption === this.host._adoption.adoptionEpoch
+      && this.host._configWriteContext.current(press.authority, this.host.hass);
+  }
+
+private _decorGroupMove(ev: PointerEvent): void {
+    const move = this.host._decorMove, press = move?.selection;
+    if (!move || !press) return;
+    if (!this._decorSelectionPressCurrent(press)) {
+      this.host._decorMove = null; this.properties.retireSelection(); this.host.requestUpdate(); return;
+    }
+    if (Math.hypot(ev.clientX - press.screen[0], ev.clientY - press.screen[1]) > 3) press.displaced = true;
+    if (!press.displaced || press.toggle) return;
+    const o = move.orig, p = this._svgPoint(ev), W = NORM_W, H = this.host._decorH;
+    const x = (o.kind === 'line' ? o.x1 : o.x) * W, y = (o.kind === 'line' ? o.y1 : o.y) * H;
+    const raw = [x + p[0] - move.start[0], y + p[1] - move.start[1]];
+    let anchor: number[];
+    if (o.kind === 'furniture' && !ev.shiftKey) {
+      const angle = (Number(o.angle) || 0) * Math.PI / 180;
+      const center: [number, number] = [raw[0] + o.w * W / 2, raw[1] + o.h * H / 2];
+      const wall = snapFurnitureToWall(center[0], center[1], o.h * H, this._furnWalls,
+        this.host._gridPitch * FURN_WALL_CELLS, this.host._gridPitch, center, [-Math.sin(angle), Math.cos(angle)]);
+      anchor = wall ? [wall.cx - o.w * W / 2, wall.cy - o.h * H / 2] : this._decorSnap(raw, ev.pointerType, press.ids);
+    } else anchor = this._decorSnap(raw, ev.pointerType, press.ids);
+    const result = translateDecorSelection(press.items, press.ids, (anchor[0] - x) / W, (anchor[1] - y) / H);
+    press.valid = result.ok;
+    move.moved = result.ok && result.changed;
+    this.host._curSpaceCfg.decor = result.ok ? result.decor : structuredClone(press.items) as DecorShape[];
+    this.host.requestUpdate();
+  }
+
+/** Canvas-only shortcuts have already passed the shared keyboard field/dialog exclusions. */
+public _selectDecorShortcut(furniture: boolean): void {
+    const host = this.host;
+    if (!host.isConnected || host._mode !== 'decor' || !host._canEdit || host._kiosk || !host._norm || !host._loadOk
+      || !host._configWriteGuard()()) return;
+    if (this.decorLine.active || host._decorDraft || host._decorMove || host._dtDrag || this.backdropGesture.active
+      || host._pointers.size || host._furnTouchPending) return;
+    if (!this.properties.beforeIntent(() => this._selectDecorShortcut(furniture), false, true)) return;
+    const ids = allDecorSelectionIds(host._decorList, furniture);
+    if (!ids) return;
+    this._clearFurniturePreview(); this._furnShiftDetach(); host._decorTool = 'select';
+    this.properties.selectDecorIds(ids); host.requestUpdate();
   }
 
 public _decorShapeDbl(ev: MouseEvent, shape: DecorShape): void {

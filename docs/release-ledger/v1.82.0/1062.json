@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1062,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Bounds immutable registry Git I/O in sparse partial clones and batches missing blobs so optional reuse falls back to fresh execution before the CI deadline. Product behavior, proof authority and release policy remain unchanged.",
+  "summary": {
+    "ru": "Проверка CI reuse пакетно читает недостающие Git-объекты и ограничивает ожидание, предотвращая отмену продуктового прогона.",
+    "en": "CI reuse batches missing Git objects and bounds lookup time to prevent product runs from being cancelled."
+  }
+}

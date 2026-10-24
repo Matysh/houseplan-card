@@ -1,10 +1,11 @@
 // #1044: bounded task evidence on every track; completeness belongs to release.
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { selectSmokes, VISUAL_MINIMUM } from './smoke-select.mjs';
+import { selectSmokes, requiredSmokeIds, VISUAL_MINIMUM } from './smoke-select.mjs';
 import { fingerprintCorpus, postCaptureInputs } from './source-fingerprint.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { readTaskVisualIntent, readPendingVisualIntents } from './task-visual-intent.mjs';
+import { readTaskIntent } from './task-intent.mjs';
 
 export function goldenConnections(scenarios = GOLDEN_SCENARIOS) {
   return {
@@ -17,7 +18,8 @@ export function goldenConnections(scenarios = GOLDEN_SCENARIOS) {
 export function browserPushPlan({ files, diffText, labels = [], render = false, issue,
   root = process.cwd(), corpus = fingerprintCorpus(root), scenarios = GOLDEN_SCENARIOS,
   links = goldenConnections(scenarios), smokeSelection = selectSmokes(diffText, { root }),
-  visualIntent = readTaskVisualIntent({ root, issue }), pendingVisual = null }) {
+  visualIntent = readTaskVisualIntent({ root, issue }), pendingVisual = null,
+  declaredSmokes = visualIntent?.smokes ?? readTaskIntent({ root, issue })?.smokes ?? [] }) {
   if (labels.includes('ci:full')) return fullBrowserPlan(true, true);
   const sceneSet = new Set(scenarios.map(s => s.id));
   const relevant = new Set([...corpus, 'demo/golden/baselines/baselines-index.json']);
@@ -47,18 +49,19 @@ export function browserPushPlan({ files, diffText, labels = [], render = false, 
       ...(unknown.length ? { unresolved: unknown } : {}) };
   }
   const allSmokes = new Set(readdirSync(join(root, 'demo')).filter(f => /^smoke_.*\.mjs$/.test(f)));
-  const selected = [...(smokeSelection.direct || []), ...(smokeSelection.registered || [])]
-    .map(item => typeof item === 'string' ? item : item.smoke).filter(Boolean);
+  const selected = requiredSmokeIds(smokeSelection);
   const changedSmokes = files.filter(f => /^demo\/smoke_[\w-]+\.mjs$/.test(f))
     .map(f => f.slice(5)).filter(id => allSmokes.has(id));
   const unknownSource = files.some(f => /^src\//.test(f)) && (smokeSelection.unproven || !smokeSelection.noExecutableDiff && !selected.length);
   const harnessChanged = files.some(f => /^demo\//.test(f) && !/^demo\/smoke_/.test(f)
     && !/^demo\/(golden|docs|stand)\//.test(f));
   const fallback = unknownSource || harnessChanged ? VISUAL_MINIMUM : [];
-  const ids = [...new Set([...selected, ...changedSmokes, ...(visualIntent?.smokes || []), ...fallback])].sort();
+  const ids = [...new Set([...selected, ...changedSmokes, ...declaredSmokes, ...fallback])].sort();
   for (const id of ids) if (!allSmokes.has(id)) throw Error(`Unknown selected smoke: ${id}; update the task smoke connection`);
   const smoke = ids.length ? { mode: 'selected', ids,
-    reason: fallback.length ? 'connected smokes and bounded visual minimum' : 'smoke-select, changed entries and task intent' }
+    reason: fallback.length ? 'connected smokes and bounded visual minimum' : 'smoke-select, changed entries and task intent',
+    ...(smokeSelection.deferred?.reasons.length ? { deferred: { ...smokeSelection.deferred,
+      smokes: smokeSelection.deferred.smokes.filter(id => !ids.includes(id)) } } : {}) }
     : { mode: 'none', ids: [], reason: 'no related browser smoke' };
   return { schema: 1, scope: 'task', labels: [...labels].sort(), files: [...files].sort(), golden, smoke };
 }

@@ -245,6 +245,9 @@ function withCompanion(fake, { running = true, foreign = false } = {}) {
       run: { id: 55, run_attempt: 1, path: '.github/workflows/validate-tooling.yml',
         head_sha: foreign ? 'e'.repeat(40) : SHA, event: 'push', status: pending ? 'in_progress' : 'completed',
         conclusion: pending ? null : 'success', html_url: 'https://run/tooling' },
+      proof: { schema: context.proof.schema, candidate: { sha: SHA, tree: TREE },
+        run: { id: 55, attempt: 1, workflow: 'validate-tooling.yml', event: 'push' },
+        checks: { preflight: { mode: 'executed', result: 'success' } } },
       jobs: jobsOf('preflight', 'tooling'),
     }]]);
     return context;
@@ -260,6 +263,58 @@ test('#1044 S7 waits for the exact running companion of a completed product push
   assert.equal(outcome.runId, 55);
   assert.equal(outcome.url, 'https://run/tooling');
   assert.deepEqual(fake.dispatched, [], 'a running required profile does not justify canonical re-execution');
+});
+
+test('#1060 S7 discovers a delayed push before dispatch, including no-wait consumers', async () => {
+  const pending = run({ event: 'push', databaseId: 7, status: 'queued', conclusion: null });
+  const fake = fakeOps({ snapshots: [[], [], [pending]] });
+  const result = await validateGate({ ref: 'issue/1060-ci', sha: SHA, ops: fake.ops,
+    mutants: false, wait: false, pollMs: 1000, appearMs: 5000 });
+  assert.equal(result.result, 'pending'); assert.equal(result.runId, 7);
+  assert.equal(fake.ops.now(), 2000); assert.deepEqual(fake.dispatched, []);
+});
+
+test('#1060 a known filtered S7 ingress dispatches immediately; unknown ingress waits a bounded window', async () => {
+  for (const expectPush of [false, true]) {
+    const fake = fakeOps({ snapshots: [[]] });
+    const baseDispatch = fake.ops.dispatch;
+    let at;
+    fake.ops.dispatch = async (...args) => {
+      at = fake.ops.now(); await baseDispatch(...args);
+      fake.ops.listRuns = async () => [run({ databaseId: 8, status: 'queued', conclusion: null })];
+    };
+    const result = await validateGate({ ref: 'issue/1060-ci', sha: SHA, ops: fake.ops,
+      mutants: false, wait: false, expectPush, pollMs: 1000, appearMs: 3000 });
+    assert.equal(result.result, 'pending'); assert.equal(result.runId, 8);
+    assert.equal(at, expectPush ? 3000 : 0); assert.equal(fake.dispatched.length, 1);
+  }
+});
+
+test('#1060 S7 retains product identity while a required companion registers', async () => {
+  const product = run({ event: 'push', databaseId: 7, path: '.github/workflows/validate-product.yml' });
+  const fake = fakeOps({ snapshots: [[product]], jobsById: { 7: OTHER_JOBS } });
+  withCompanion(fake);
+  const proof = fake.ops.proof; let reads = 0;
+  fake.ops.proof = async row => { const context = await proof(row);
+    if (++reads < 3) context.profileRuns.clear(); return context; };
+  const result = await validateGate({ ref: 'issue/1060-ci', sha: SHA, ops: fake.ops,
+    mutants: false, wait: false, pollMs: 1000, appearMs: 5000 });
+  assert.equal(result.result, 'pending'); assert.equal(result.runId, 55);
+  assert.equal(fake.ops.now(), 2000); assert.deepEqual(fake.dispatched, []);
+});
+
+test('#1060 missing companion remains unproven and receives one fallback after discovery expires', async () => {
+  const product = run({ event: 'push', databaseId: 7, path: '.github/workflows/validate-product.yml' });
+  const fake = fakeOps({ snapshots: [[product]], jobsById: { 7: OTHER_JOBS } });
+  withCompanion(fake);
+  const proof = fake.ops.proof; fake.ops.proof = async row => { const context = await proof(row); context.profileRuns.clear(); return context; };
+  const dispatch = fake.ops.dispatch; let at;
+  fake.ops.dispatch = async (...args) => { at = fake.ops.now(); await dispatch(...args);
+    fake.ops.listRuns = async () => [run({ databaseId: 8, status: 'queued', conclusion: null })]; };
+  const result = await validateGate({ ref: 'issue/1060-ci', sha: SHA, ops: fake.ops,
+    mutants: false, wait: false, pollMs: 1000, appearMs: 3000 });
+  assert.equal(result.result, 'pending'); assert.equal(result.runId, 8);
+  assert.equal(at, 3000); assert.equal(fake.dispatched.length, 1);
 });
 
 test('#1044 S7 re-evaluates product evidence once its companion finishes without another producer', async () => {

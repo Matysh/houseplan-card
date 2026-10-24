@@ -15,8 +15,11 @@ import { ensureFormKitStyles } from '../form-kit';
 import { sourcePicker } from '../form-kit';
 import { liveText, liveTextToken } from '../../logic';
 import { decorStyleOf } from '../decor/geometry';
+import { decorSelectionMembers } from '../decor/selection';
+import type { DecorGroupStylePatch } from '../decor/group-edit';
+import { parseGroupColor } from './group-color-draft';
 import { PropertiesFieldController, PropertiesCommandLane, parsePropertiesNumber, propertiesIdentityKey, samePropertiesValue,
-  type PropertiesIdentity, type PropertiesCommit, type PropertiesParse } from './controller';
+  type PropertiesIdentity, type PropertiesCommit, type PropertiesParse, type PropertiesDraft } from './controller';
 import { propertiesCatalog, resolvePropertiesTarget, type PropertiesTarget, type PropertiesSpace } from './catalog';
 import { propertiesIcon, renderPropertiesSurface, type PropertiesField, type PropertiesSurface } from './surface';
 import { propertiesT, type PropertiesString } from './strings';
@@ -27,6 +30,10 @@ import { renderPropertiesSelection } from './selection';
 import { PropertiesSectionMotion } from './section-motion';
 import { parsePropertiesColor, propertiesColorDraft } from './color-draft';
 import type { DecorShape, DecorStyle } from '../decor/types';
+import type { DecorSelectionPress } from '../decor/group-press';
+import type { SpaceGeometryState } from '../../geometry-history-state';
+import { furnitureGraphic } from '../../furniture';
+import { DecorGroupTextBoxes } from '../decor/group-selection';
 import type { DevItem, Marker, ServerConfig } from '../../types';
 import type { HouseplanEditorRuntime } from '../../houseplan-editor-runtime';
 
@@ -40,6 +47,12 @@ export class PropertiesEditor {
   readonly fields: PropertiesFieldController;
   private laneAuthority: object | null = null;
   private selected: PropertiesIdentity | null = null;
+  private selectionContext: { authority: object; adoption: number } | null = null;
+  private groupTarget: { identity: PropertiesIdentity; items: readonly DecorShape[]; target: PropertiesTarget | null } | null = null;
+  private readonly groupText = new DecorGroupTextBoxes();
+  private decorPreview: { draft: PropertiesDraft | null; raw: string; identity: PropertiesIdentity | null;
+    decor: readonly DecorShape[]; error?: string; pending: boolean; value: PropertiesDraft | null;
+    patch: DecorGroupStylePatch | null; ids: ReadonlySet<string> } | null = null;
   private frozenReference: OpeningDimension | null = null;
   private referenceAttempted = false;
   private dimensionCache: { key: string; value: ReturnType<typeof buildOpeningDimensionContext> } | null = null;
@@ -61,7 +74,7 @@ export class PropertiesEditor {
   private width = 0;
   private planHover: { clientX: number; clientY: number } | null = null;
   private suspendedColor: {draft: NonNullable<PropertiesFieldController['draft']>; value: ColorHexDraft} | null = null;
-  private handoff = false;
+  private handoff: object | null = null;
   private ratioLocked = true;
   private ratio: number | null = null;
   private readonly sectionMotion = new PropertiesSectionMotion();
@@ -84,17 +97,63 @@ export class PropertiesEditor {
       beforeFinish: field => {
         const control = [...this.host.renderRoot.querySelectorAll<HTMLElement>('[data-property]')].find(node=>node.dataset.property===field);
         const picker = control?.querySelector<HpColorOpacity>('hp-color-opacity');
-        return picker && !picker.prepareCompletion() ? {key:'invalid_color'} : null;
+        return picker && !picker.prepareCompletion() ? {key:picker.invalidOpacity ? 'invalid_number' : 'invalid_color'} : null;
       },
     }, this.lane);
   }
   private get host() { return this.runtime.host; }
   private commandAuthority(): object {
     const authority = this.host._configWriteContext.claim();
-    if (authority !== this.laneAuthority) { this.lane.retire(); this.laneAuthority = authority; }
+    if (authority !== this.laneAuthority) { this.lane.retire(); this.laneAuthority = authority; this.handoff = null; }
     return authority;
   }
   command<T>(run: () => Promise<T>): Promise<T> { this.commandAuthority(); return this.lane.run(run); }
+  private get handingOff(): boolean { this.commandAuthority(); return !!this.handoff; }
+  /** A dirty/pending field consumes the press; its asynchronous completion never replays a drag. */
+  beforeDecorGroupPress(): boolean {
+    if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
+    return this.beforeIntent(() => {}, false, true);
+  }
+  /** The existing command lane publishes one history step only after the whole move is accepted. */
+  finishDecorGroupMove(before: SpaceGeometryState | null, press: DecorSelectionPress, current: () => boolean): void {
+    const host = this.host, owner = this.identity;
+    if (!before || !owner || !current() || !host._serverCfg || press.ids.length < 2) return;
+    const previous = structuredClone(host._serverCfg);
+    const space = previous.spaces.find(item => item.id === before.spaceId);
+    if (!space) return;
+    if (before.decor === undefined) delete space.decor; else space.decor = structuredClone(before.decor);
+    let candidate: ServerConfig;
+    try { candidate = this.runtime._prepareConfigCandidate(structuredClone(host._serverCfg)); }
+    catch {
+      host._adoption.stageLocalConfig(previous); host._cfgEpoch++;
+      host._showToast(this.t('geometry_error'), 'geometry_error'); host.requestUpdate(); return;
+    }
+    this.commandAuthority();
+    const receipt = {};
+    this.handoff = receipt;
+    // Register the already visible preview before any await. The normal adoption
+    // owner can then roll it back even when the preceding queue entry rejects.
+    const attempt = this.runtime._stageOptimisticConfig(previous, candidate);
+    const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced);
+    const owned = () => this.allowed && current() && this.selected === owner && !!this.target(owner);
+    void this.command(async () => {
+      try {
+        await host._writeChain;
+        if (!owned() || contentFingerprint(host._serverCfg) !== attempt.attemptedFingerprint)
+          throw Object.assign(new Error('group context retired'), { code: 'context-changed' });
+        await this.runtime._saveConfigNow(attempt, () => owned()
+          && contentFingerprint(host._serverCfg) === attempt.attemptedFingerprint);
+        if (owned()) this.runtime._recordGeometry(this.t('group_move_history'), before);
+      } catch (error) {
+        if (host._configWriteContext.owns(press.authority) && host._adoption.adoptionEpoch === press.adoption)
+          restoreDeferred(host._rollbackOptimistic(attempt));
+        if (owned()) {
+          const key = (error as { code?: string })?.code === 'conflict' ? 'external_change' : 'save_error';
+          host._showToast(this.t(key), key);
+        }
+      }
+    }).finally(() => { if (this.handoff === receipt) this.handoff = null; host.requestUpdate(); });
+  }
   private get allowed(): boolean {
     const host = this.host;
     return host.isConnected && host._canEdit && !host._kiosk && host._norm && host._loadOk
@@ -103,15 +162,47 @@ export class PropertiesEditor {
   get wide(): boolean { return this.allowed && this.width >= 960; }
   get identity(): PropertiesIdentity | null {
     const value = this.selected;
+    if (value?.editor === 'decor' && this.selectionContext
+      && (this.selectionContext.adoption !== this.host._adoption.adoptionEpoch
+        || !this.host._configWriteContext.current(this.selectionContext.authority, this.host.hass))) return null;
     return value && this.allowed && value.spaceId === this.host._space && value.editor === this.host._mode
       && this.target(value) ? value : null;
   }
+  /** Canonical volatile IDs. `_decorSel` is only the compatible singleton projection. */
+  get decorSelectionIds(): readonly string[] {
+    const identity = this.identity;
+    if (identity?.editor !== 'decor' || identity.kind === 'backdrop') return [];
+    return identity.objectIds ?? [identity.objectId];
+  }
+  get decorSelectionCount(): number { return this.decorSelectionIds.length; }
+  selectDecorIds(ids: readonly string[]): boolean {
+    if (this.handingOff || !this.allowed || this.host._mode !== 'decor') return false;
+    const members = decorSelectionMembers(this.host._decorList, ids);
+    if (!members) return false;
+    const ordered = members.map(item => item.id);
+    const identity: PropertiesIdentity | null = members.length ? {
+      spaceId: this.host._space, editor: 'decor', kind: members.length > 1 ? 'decor-group' : members[0].kind,
+      objectId: members.length > 1 ? 'selection' : members[0].id,
+      ...(members.length > 1 ? { objectIds: Object.freeze(ordered) } : {}),
+    } : null;
+    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.identity)) return !this.fields.draft;
+    if (this.fields.draft) { void this.fields.finishThen(() => this.setSelection(identity)); return false; }
+    this.setSelection(identity); return true;
+  }
+  retireSelection(): void { this.handoff = null; this.setSelection(null); }
   get selectedTextId(): string | null {
     const target = this.wide && this.identity ? this.target() : null;
     return target?.kind === 'decor' && target.value.kind === 'text' ? target.value.id : null;
   }
   private target(identity = this.selected): PropertiesTarget | null {
     const space = this.host._curSpaceCfg as PropertiesSpace | undefined;
+    if (identity?.kind === 'decor-group' && space) {
+      const items = space.decor ?? [];
+      if (this.groupTarget?.identity !== identity || this.groupTarget.items !== items) this.groupTarget = {
+        identity, items, target: resolvePropertiesTarget(identity, space, this.host._devices, this.host._markers),
+      };
+      return this.groupTarget.target;
+    }
     return identity && space ? resolvePropertiesTarget(identity, space, this.host._devices, this.host._markers) : null;
   }
   t = (key: PropertiesString, vars?: Record<string, string | number>): string =>
@@ -149,8 +240,8 @@ export class PropertiesEditor {
     this.motionEpoch++; this.sectionMotion.dispose();
     this.observer?.disconnect(); this.observed?.removeEventListener('pointerdown', this.pointerGuard, true);
     this.observer = null; this.observed = null; this.dimensionCache = null;
-    this.selected = null; this.variable = null; this.fields.invalidate();
-    this.lane.retire(); this.laneAuthority = null;
+    this.selected = null; this.variable = null; this.fields.invalidate(); this.groupText.clear();
+    this.lane.retire(); this.laneAuthority = null; this.handoff = null;
   }
   private focus(field: string): void {
     if (!this.wide) return;
@@ -163,15 +254,18 @@ export class PropertiesEditor {
   private nativeSelection(identity: PropertiesIdentity | null): void {
     const host = this.host;
     host._physicalSel = identity?.kind === 'partition' || identity?.kind === 'column' ? { kind: identity.kind, id: identity.objectId } : null;
-    host._decorSel = identity?.editor === 'decor' && identity.kind !== 'backdrop' ? identity.objectId : null;
+    host._decorSel = identity?.editor === 'decor' && identity.kind !== 'backdrop' && identity.kind !== 'decor-group' ? identity.objectId : null;
     host._selId = identity?.kind === 'device' ? identity.objectId : null;
     this.runtime.stairs.select(identity?.kind === 'stair' ? identity.objectId : null);
     if (host._ledEditor?.sel !== (identity?.kind === 'led' ? identity.objectId : null)) host._ledEditor?.select(identity?.kind === 'led' ? identity.objectId : null);
   }
   private setSelection(identity: PropertiesIdentity | null): void {
-    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)) return;
+    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)
+      && (!identity || this.identity === this.selected)) return;
     this.runtime.keyboardNudge.retire();
-    this.fields.invalidate(); this.selected = identity; this.frozenReference = null; this.referenceAttempted = false;
+    this.fields.invalidate(); this.selected = identity; this.groupTarget = null;
+    this.selectionContext = identity?.editor === 'decor' ? { authority: this.host._configWriteContext.claim(), adoption: this.host._adoption.adoptionEpoch } : null;
+    this.frozenReference = null; this.referenceAttempted = false;
     if (!identity && this.host._decorTool === 'backdrop') this.host._decorTool = 'select';
     this.ratioLocked = true;
     const target = this.target();
@@ -180,14 +274,15 @@ export class PropertiesEditor {
   }
   /** False consumes a dirty-field press. A delayed success selects, never replays a drag. */
   select(kind: string, objectId: string, binding?: string): boolean {
-    if (!this.wide) return true;
+    if (this.handingOff) return false;
+    if (!this.wide) return this.host._mode === 'decor' && kind !== 'backdrop' ? this.selectDecorIds([objectId]) : true;
     if (kind === 'opening') {
       const opening = (this.host._curSpaceCfg as PropertiesSpace).openings?.find(o => o.id === objectId);
       binding = JSON.stringify(opening?.host ? [opening.host.kind, opening.host.id] : null);
     }
     const identity: PropertiesIdentity = { spaceId: this.host._space, editor: this.host._mode as PropertiesIdentity['editor'], kind, objectId, ...(binding !== undefined ? { binding } : {}) };
     if (!this.target(identity)) return false;
-    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)) {
+    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.identity)) {
       if (this.fields.draft) { void this.fields.finish(); return false; }
       return true;
     }
@@ -233,8 +328,9 @@ export class PropertiesEditor {
   }
   /** Newly created native objects get the same selection owner as direct picking. */
   syncNative(): void {
-    if (!this.wide || this.fields.draft) return;
+    if ((!this.wide && this.host._mode !== 'decor') || this.fields.draft) return;
     const host = this.host;
+    if (this.identity?.kind === 'decor-group' && !host._decorSel) return;
     // Decor creation retains the drawing tool and replaces its native ID even
     // while the previous Properties target remains valid. Other editors keep
     // their explicit target until their existing selection path replaces it.
@@ -250,34 +346,42 @@ export class PropertiesEditor {
       if (strip) this.select('led', strip.id, strip.marker ?? '');
     }
   }
-  clear(): void { void this.fields.finishThen(() => this.setSelection(null)); }
+  clear(): void { if (!this.handingOff) void this.fields.finishThen(() => this.setSelection(null)); }
   private closeTransient(): void {
     for (const picker of this.host.renderRoot.querySelectorAll<HpColorOpacity>('.hp-properties hp-color-opacity')) picker.closePicker();
   }
+  get colorPickerOpen(): boolean {
+    return [...this.host.renderRoot.querySelectorAll<HpColorOpacity>('.hp-properties hp-color-opacity')]
+      .some(picker => picker.pickerOpen);
+  }
   /** Modes/floors/actions and all preserved full dialogs use the same completion gate. */
-  beforeIntent(action: () => void, modal = false): boolean {
-    if (this.handoff) return false;
-    if (!this.wide) { if (modal) this.fields.invalidate(); return true; }
+  beforeIntent(action: () => void, modal = false, compactDecor = false): boolean {
+    if (this.handingOff) return false;
+    if (!this.wide && !compactDecor) { if (modal) this.fields.invalidate(); return true; }
     if (!this.fields.draft && !this.host._writesPending) return true;
-    this.handoff = true;
+    const authority = this.commandAuthority(), identity = this.identity, receipt = {};
+    this.handoff = receipt;
     void this.fields.finishThen(async () => {
       await this.host._writeChain;
-      this.handoff = false;
+      if (this.handoff !== receipt || this.identity !== identity
+        || !this.host._configWriteContext.current(authority, this.host.hass)) return;
+      this.handoff = null;
       this.closeTransient();
       if (modal) this.fields.invalidate();
       action();
-    }).finally(() => { this.handoff = false; });
+    }).catch(() => { if (this.handoff === receipt) this.host._showToast(this.t('save_error'), 'save_error'); })
+      .finally(() => { if (this.handoff === receipt) this.handoff = null; });
     return false;
   }
   invoke(action: () => void): void { if (this.beforeIntent(action)) action(); }
   toolChanged(tool: string): void {
-    if (!this.wide) return;
+    if (!this.wide && this.host._mode !== 'decor') return;
     if (tool === 'backdrop') this.select('backdrop', this.host._space);
     else if (tool !== 'select') this.setSelection(null);
   }
   escape(event: KeyboardEvent): boolean {
-    if (!this.wide || !this.identity || this.host._editorSecondaryDialogBlocked) return false;
-    if (this.host._decorDraft) return false;
+    if ((!this.wide && !this.decorSelectionCount) || !this.identity || this.host._editorSecondaryDialogBlocked) return false;
+    if (this.host._decorDraft || this.host._decorMove || this.host._dtDrag || this.runtime.backdropGesture.active) return false;
     if (event.key !== 'Escape') return false;
     event.preventDefault(); this.clear(); return true;
   }
@@ -352,6 +456,7 @@ export class PropertiesEditor {
     const identity = this.identity, field = identity && this.field(identity, key);
     if (!field || field.mode) return { ok: false, error: { key: 'geometry_error' } };
     if (field.control === 'color') return parsePropertiesColor(raw);
+    if (field.control === 'group-color') return parseGroupColor(raw, key === 'fill' ? 'fill' : 'stroke');
     if (field.control === 'text') return raw.trim() && raw.length <= 200
       ? { ok: true, value: raw.replace(/\r\n?/g, '\n') } : { ok: false, error: { key: 'text_limit' } };
     if (field.control === 'toggle' || key === 'flip_v' && field.control === 'choices') return raw === 'true' || raw === 'false'
@@ -384,8 +489,8 @@ export class PropertiesEditor {
     }
     if (this.fields.edit(field.key, raw)) {
       const draft = this.fields.draft;
-      if (field.control === 'color' && draft && draft.error?.key !== 'external_change') {
-        const result = parsePropertiesColor(raw); draft.error = result.ok ? null : result.error;
+      if ((field.control === 'color' || field.control === 'group-color') && draft && draft.error?.key !== 'external_change') {
+        const result = this.parse(field.key, raw); draft.error = result.ok ? null : result.error;
       }
       if (finish) void this.fields.finish();
     }
@@ -393,7 +498,26 @@ export class PropertiesEditor {
 
   /** A field preview paints only its owned object; it never mutates configuration. */
   previewDecorStyle(shape: DecorShape | null | undefined, style: DecorStyle): DecorStyle {
-    const draft = this.fields.previewDraft;
+    const current = this.fields.draft, identity = this.identity, decor = this.host._decorList;
+    let cache = this.decorPreview;
+    if (!cache || cache.draft !== current || cache.raw !== (current?.raw ?? '') || cache.identity !== identity
+      || cache.decor !== decor || cache.error !== current?.error?.key || cache.pending !== !!current?.pending) {
+      const value = this.fields.previewDraft;
+      const parsed = value?.identity.kind === 'decor-group'
+        ? parseGroupColor(value.raw, value.field === 'fill' ? 'fill' : 'stroke') : null;
+      this.decorPreview = cache = { draft: current, raw: current?.raw ?? '', identity, decor,
+        error: current?.error?.key, pending: !!current?.pending, value,
+        patch: parsed?.ok ? parsed.value as DecorGroupStylePatch : null,
+        ids: new Set(value?.identity.objectIds ?? []) };
+    }
+    const draft = cache.value;
+    if (shape && draft?.identity.kind === 'decor-group' && cache.ids.has(shape.id)) {
+      const patch = cache.patch;
+      if (!patch) return style;
+      return patch.channel === 'fill' ? { ...style,
+        ...(patch.color === undefined ? {} : { fillColor: patch.color }), ...(patch.opacity === undefined ? {} : { fillOpacity: patch.opacity }) }
+        : { ...style, ...(patch.color === undefined ? {} : { color: patch.color }), ...(patch.opacity === undefined ? {} : { opacity: patch.opacity }) };
+    }
     if (!shape || draft?.identity.editor !== 'decor' || draft.identity.objectId !== shape.id) return style;
     const color = propertiesColorDraft(draft.raw);
     if (!color?.inline) return style;
@@ -435,7 +559,7 @@ export class PropertiesEditor {
     } else if (!patchPropertiesTarget(space, target, field, value, { cellCm: host._cellCm,
       ratio: this.ratioLocked ? this.ratio : null, openingReference: this.reference(target) })) return failure('geometry_error');
     if (contentFingerprint(previous) === contentFingerprint(host._serverCfg)) return ok;
-    name = this.t('history', { name: this.model(identity).title });
+    name = this.t(target.kind === 'decor-group' ? 'group_style_history' : 'history', { name: this.model(identity).title });
     const authored = target.kind === 'partition' && /^[ab][01]$/.test(field)
       ? [(space.partitions?.find(w => w.id === target.value.id) ?? target.value)[field[0] as 'a' | 'b']] : [];
     if (physical && !this.runtime._commitPhysicalGeometry(name, snapshot, authored, false)) return failure('geometry_error');
@@ -561,7 +685,9 @@ export class PropertiesEditor {
       && this.host._configWriteContext.current(authority, this.host.hass)
       && propertiesIdentityKey(this.identity) === propertiesIdentityKey(owner);
     const view = renderPropertiesSurface(model, {
-      t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode, inlineColors: this.target(owner)?.kind === 'decor', controller: this.fields, pickerLabels: this.host._colorPickerLabels,
+      t: this.t, imperial: this.host._imperial, dark: this.host.hass?.themes?.darkMode,
+      inlineColors: this.target(owner)?.kind === 'decor' || this.target(owner)?.kind === 'decor-group',
+      decorShortcuts: this.host._mode === 'decor', controller: this.fields, pickerLabels: this.host._colorPickerLabels,
       action: key => { if (current()) void this.fields.finishThen(() => this.action(key)); },
       edit: (field, raw, finish) => { if (current()) this.edit(field, raw, finish); },
       number: (field, value) => field.unit === 'cm' ? cmToField(value, this.host._imperial) : String(Number(value.toFixed(4))),
@@ -584,7 +710,7 @@ export class PropertiesEditor {
     return html`${view}${dialogPresence(this.renderVariable())}`;
   }
   selection(): TemplateResult | typeof nothing {
-    if (!this.wide || !this.identity) return nothing;
+    if ((!this.wide && this.decorSelectionCount < 2) || !this.identity) return nothing;
     let target = this.target();
     const drag = this.runtime.physicalGesture.drag;
     if (target?.kind === 'partition' && drag?.kind === 'partition' && drag.id === target.value.id && drag.moved) {
@@ -596,7 +722,13 @@ export class PropertiesEditor {
     const reference = this.reference(target);
     return renderPropertiesSelection(target, { unitPerPx: this.runtime._cssPxToRender(1), cellCm: this.host._cellCm,
       textBox: this.host._dtBox?.id === this.selectedTextId ? this.host._dtBox : null, reference,
+      decorGroup: { text: shape => this.groupText.get(shape), art: symbol => furnitureGraphic(symbol, this.host) },
     });
+  }
+  /** Called by the existing measureHouseplanDecorText hook after the ordinary decor DOM settles. */
+  measureGroupText(root: ParentNode): void {
+    const target = this.identity && this.target();
+    if (this.groupText.measure(target?.kind === 'decor-group' ? target.value : [], root)) this.host.requestUpdate();
   }
   private async action(key: string): Promise<void> {
     const target = this.target(); if (!target) return;

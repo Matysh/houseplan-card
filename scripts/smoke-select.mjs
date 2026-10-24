@@ -30,17 +30,18 @@ import { fileURLToPath } from 'node:url';
 
 import { registeredSmokes } from './smoke-links.mjs';
 import { guardCliOutput } from './cli-output.mjs';
+import { readTaskIntent } from './task-intent.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
- * Символ, который встречается больше чем в этой доле смоков, ничего не
- * различает: `_serverCfg` есть в 112 из 167, `_setMode` в 101. Такой символ не
- * повод рекомендовать смок — иначе любая правка карточки предлагает всю
- * матрицу, а это ровно то, чего задача просила не делать. Порог измерен по
- * фактическому распределению, а не выбран на глаз.
+ * Частота не становится более узкой связью от роста чужого корпуса (#1060).
+ * Абсолютные потолки фиксируют исходный масштаб #241 (167 смоков: около
+ * 33 широких / 8 редких совпадений), не зависят от размера корпуса.
  */
-export const BROAD_SHARE = 0.2;
+export const MAX_SYMBOL_SMOKES = 32;
+export const MAX_RARE_SMOKES = 8;
+export const MAX_INFERRED_SMOKES = 32;
 
 /**
  * «Визуальный минимум» (#690 п.1′): смоки режимов, слоёв и отрисовки, которые
@@ -49,7 +50,7 @@ export const BROAD_SHARE = 0.2;
  * названные в ТЗ смоки: CSS-правка #687 не выбрала `smoke_modes`, и `dev`
  * остался красным для следующей задачи (#685). Набор фиксирован и короткий —
  * локально меньше минуты, — чтобы «неопределённость» стоила прогона, а не
- * полной матрицы: полная матрица остаётся гейтом `dev` и беты.
+ * полной матрицы: полная матрица остаётся ночным и предрелизным гейтом.
  */
 export const VISUAL_MINIMUM = Object.freeze([
   'smoke_modes.mjs', // режимы: иконки плана, панели, выход в вид (#687)
@@ -265,11 +266,17 @@ const mentions = (text, symbol) =>
  * Ядро выборки. Возвращает данные, а не текст: печать и коды выхода — дело
  * вызывающего, а тест сравнивает структуру.
  */
-export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) {
+export function selectSmokes(diffText, { root = repoRoot, table, corpus, declaredSmokes = [] } = {}) {
   const symbols = table || symbolTable(root);
   const smokes = corpus || smokeCorpus(root);
   const parsed = parseDiff(diffText, symbols);
-  const broadLimit = Math.max(1, Math.floor(smokes.size * BROAD_SHARE));
+  return selectSmokeConnections(parsed, smokes, { declaredSmokes });
+}
+
+/** Pure connection policy; parsed historical inputs can be replayed without Git or browsers. */
+export function selectSmokeConnections(parsed, smokes, { declaredSmokes = [],
+  registry = registeredSmokes(parsed.symbols, parsed.executable) } = {}) {
+  const broadLimit = MAX_SYMBOL_SMOKES;
 
   const spread = new Map();
   for (const symbol of parsed.symbols) {
@@ -289,7 +296,7 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
   // считается либо по двум и более совпадениям, либо по одному редкому символу:
   // `_wallChainSegmentCms` есть в нескольких смоках и сам адресует контракт,
   // `_path` — в восемнадцати и адресует «здесь рисуют».
-  const rareLimit = Math.max(1, Math.floor(smokes.size * 0.05));
+  const rareLimit = MAX_RARE_SMOKES;
   const direct = [];
   for (const [smoke, text] of smokes) {
     const hit = narrow.filter((symbol) => mentions(text, symbol));
@@ -300,14 +307,22 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
   direct.sort((a, b) => Number(b.strong) - Number(a.strong)
     || b.count - a.count || a.smoke.localeCompare(b.smoke));
 
-  const directNames = new Set(direct.map((entry) => entry.smoke));
-  const registered = registeredSmokes(parsed.symbols, parsed.executable)
-    .filter((entry) => !directNames.has(entry.smoke));
+  // A large lexical union is uncertain as a whole. Never take the first N:
+  // explicit registry/changed/intent entries remain mandatory independently.
+  const strong = direct.filter(entry => entry.strong);
+  const inferenceDeferred = strong.length > MAX_INFERRED_SMOKES;
+  const directNames = new Set(inferenceDeferred ? [] : strong.map(entry => entry.smoke));
+  const registered = registry.filter((entry) => !directNames.has(entry.smoke));
 
   // #772: связь по целому файлу дополняет проверки, но не доказывает, что она
   // покрывает именно изменённый контракт; прежний визуальный минимум остаётся.
-  const unproven = parsed.executable.length > 0
-    && !direct.some((entry) => entry.strong) && !registered.some((entry) => entry.symbols.length);
+  const unproven = parsed.executable.length > 0 && (inferenceDeferred
+    || !strong.length && !registered.some((entry) => entry.symbols.length));
+  const changed = parsed.files.filter(file => /^demo\/smoke_[\w-]+\.mjs$/.test(file))
+    .map(file => file.slice(5)).filter(name => smokes.has(name));
+  const deferredSmokes = direct.filter(entry => !entry.strong || inferenceDeferred)
+    .map(entry => entry.smoke).filter(name => !registered.some(entry => entry.smoke === name)
+      && !changed.includes(name) && !declaredSmokes.includes(name));
   return {
     files: parsed.files,
     executable: parsed.executable,
@@ -319,8 +334,18 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
     unseen,
     direct,
     registered,
+    explicit: { changed, declared: [...declaredSmokes] },
+    inference: { limit: MAX_INFERRED_SMOKES, candidates: strong.length, deferred: inferenceDeferred },
+    deferred: {
+      until: 'beta/night',
+      reasons: [inferenceDeferred && 'lexical candidate budget exceeded',
+        direct.some(entry => !entry.strong) && 'weak lexical matches',
+        broad.length && 'broad symbols', unproven && 'unproven browser contract'].filter(Boolean),
+      smokes: deferredSmokes.sort(), symbols: broad,
+    },
     smokeCount: smokes.size,
     broadLimit,
+    rareLimit,
     // Дифф исполняемый, а связь не доказана — единственное состояние, о котором
     // нельзя молчать. `noExecutableDiff` от него отличается: там и правда
     // нечего проверять (docs, i18n-строки без кода, чистая инфраструктура).
@@ -329,6 +354,28 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
     // #690 п.1′: неопределённость не молчит и не отдаёт пустой набор.
     visualMinimum: unproven ? [...VISUAL_MINIMUM] : [],
   };
+}
+
+/** Shared mandatory inference for local gate, task packet and CI. */
+export function requiredSmokeEntries(selection) {
+  if (!selection || selection.noExecutableDiff || selection.inference?.deferred) return [];
+  return (selection.direct || []).filter(entry => entry.strong === true);
+}
+
+export function requiredSmokeIds(selection) {
+  if (!selection) return [];
+  return [...new Set([...requiredSmokeEntries(selection), ...(selection.registered || []),
+    ...(selection.visualMinimum || []), ...(selection.explicit?.changed || []), ...(selection.explicit?.declared || [])]
+    .map(entry => typeof entry === 'string' ? entry : entry.smoke).filter(Boolean))].sort();
+}
+
+/** The ledger is local evidence; this never reads GitHub or infers an issue from text. */
+export function declaredTaskSmokes(root = repoRoot, issue) {
+  if (!issue) {
+    const branch = spawnSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8' });
+    issue = Number(/^issue\/([1-9]\d+)-/.exec(branch.stdout?.trim())?.[1]);
+  }
+  return issue ? readTaskIntent({ root, issue })?.smokes || [] : [];
 }
 
 function gitDiff(base, head) {
@@ -352,7 +399,7 @@ function report(selection) {
   // строках его нет, и ревьюер должен видеть, откуда он взялся.
   const callees = new Set(selection.callees || []);
   const named = (symbols) => symbols.map((symbol) => (callees.has(symbol) ? `${symbol} (вызов)` : symbol)).join(', ');
-  if (selection.noExecutableDiff) {
+  if (selection.noExecutableDiff && !requiredSmokeIds(selection).length) {
     lines.push('Исполняемого frontend-диффа нет (src/**/*.ts не тронут).');
     lines.push('Browser-smoke этим диффом не выбираются — это не «пропустить проверки»,');
     lines.push('а «выбирать нечего»: смоки проверяют собранную карточку.');
@@ -366,7 +413,7 @@ function report(selection) {
     + ` больше ${selection.broadLimit} смоков`);
   lines.push('');
 
-  const strong = selection.direct.filter((entry) => entry.strong);
+  const strong = requiredSmokeEntries(selection);
   const weak = selection.direct.filter((entry) => !entry.strong);
   const listing = (entries) => {
     for (const entry of entries) {
@@ -381,7 +428,7 @@ function report(selection) {
     lines.push('');
   }
   if (weak.length) {
-    lines.push(`Слабая связь — одно распространённое имя, решает ревьюер`
+    lines.push(`Слабая связь — диагностическая, не обязательный запуск`
       + ` (${weak.length}):`);
     listing(weak);
     lines.push('');
@@ -394,6 +441,18 @@ function report(selection) {
       lines.push(`    ← ${[named(entry.symbols), ...(entry.files || []).map((file) => `${file} (файл)`)].filter(Boolean).join(', ')}`);
       for (const because of entry.because) lines.push(`    ${because}`);
     }
+    lines.push('');
+  }
+
+  if (selection.explicit.changed.length || selection.explicit.declared.length) {
+    lines.push('Явные проверки задачи (изменённые smoke / ledger intent):');
+    for (const name of new Set([...selection.explicit.changed, ...selection.explicit.declared])) lines.push(`  demo/${name}`);
+    lines.push('');
+  }
+  if (selection.deferred.reasons.length) {
+    lines.push(`Регрессия отложена до beta/night: ${selection.deferred.reasons.join('; ')}.`);
+    if (selection.inference.deferred) lines.push(`Лексических кандидатов ${selection.inference.candidates} > ${selection.inference.limit}: весь неявный набор отложен, явные связи сохранены.`);
+    for (const name of selection.deferred.smokes) lines.push(`  deferred: demo/${name}`);
     lines.push('');
   }
 
@@ -444,7 +503,8 @@ function main(argv) {
     console.error('использование: smoke-select.mjs --base <ref> [--head <ref>] | --diff <файл|->');
     return 2;
   }
-  const selection = selectSmokes(diffText);
+  const selection = selectSmokes(diffText, { declaredSmokes: !diffPath && head === 'HEAD'
+    ? declaredTaskSmokes(repoRoot, arg('--issue')) : [] });
   if (argv.includes('--json')) {
     console.log(JSON.stringify(selection, null, 2));
   } else {

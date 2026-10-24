@@ -62,7 +62,7 @@ export function generatedProfiles(root = process.cwd()) {
   const product = [...jobs].filter(([id]) => id !== 'tooling').map(([id, text]) => id === 'proof'
     ? text.replace(/, tooling(?=,|\])/, '').replace('          CI_EVENT:', '          CI_WORKFLOW: validate-product.yml\n          CI_EVENT:')
       .replace('          ref: ${{ github.sha }}\n', "          ref: ${{ github.sha }}\n          fetch-depth: 0\n          filter: 'blob:none'\n")
-      .replace('      - name: Собрать единый CI proof', eventStep.replace('ci-profile-event.mjs', 'ci-profile-event.mjs --candidate') + '      - name: Собрать единый CI proof')
+      .replace('      - name: Собрать единый CI proof', eventStep.replace('ci-profile-event.mjs', 'ci-profile-event.mjs --candidate --producer=product') + '      - name: Собрать единый CI proof')
       .replace('          REQUEST_FULL:', '          CI_REQUIRED_PROFILES: ${{ steps.route.outputs.profiles }}\n          REQUEST_FULL:') : text).join('\n');
   const preflight = jobs.get('preflight');
   const docs = preflight.trimEnd() + '\n' + fastProof('docs');
@@ -87,6 +87,9 @@ ${eventStep}`;
     needs: [preflight, changes, tooling, hacs, hassfest]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -96,7 +99,12 @@ ${eventStep}`;
           CI_WORKFLOW: validate-tooling.yml
           NEEDS_JSON: \${{ toJSON(needs) }}
         run: node scripts/ci-profile-proof.mjs
-${artifact}`;
+${artifact}      - name: CAS publish immutable scoped execution addresses
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: \${{ github.token }}
+        run: node scripts/ci-registry-cli.mjs --publish-proof=artifacts/ci-proof/proof.json
+`;
   return new Map([
     ['scripts/ci-profile-paths.json', JSON.stringify(paths, null, 2) + '\n'],
     ['.github/workflows/validate-product.yml', header('product', paths.product, displayName, executionHeader(canonical)) + product],

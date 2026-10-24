@@ -51,7 +51,9 @@ test('the shared component keeps its API and contains no nested native color pic
   }
   for (const token of [
     'public color', 'public opacity', 'public disabled', 'public showOpacity',
-    'hp-color-opacity-change', 'detail: { color: normalized, opacity: clamped, ...(this.allowNoFill ? { noFill: this.noFill } : {}) }',
+    'hp-color-opacity-change', 'public reportTouched = false',
+    'detail: { color: normalized, opacity: clamped, ...(this.allowNoFill ? { noFill: this.noFill } : {}),\n'
+      + '        ...(this.reportTouched ? { touched: { ...this.touched } } : {}) }',
     'confirm: string', "confirm: 'OK'",
   ]) assert.match(component, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(component, /<button class="confirm" type="button"[^>]*@click=/);
@@ -61,7 +63,8 @@ test('the shared component keeps its API and contains no nested native color pic
     'the confirmation remains the final picker control after the optional opacity row');
   assert.match(component, /private _hexNeedsValidInput = false/);
   assert.match(component, /this\._hexInvalid = this\._hexNeedsValidInput/);
-  assert.match(component, /if \(this\._hexInvalid \|\| this\._hexNeedsValidInput\)/);
+  assert.match(component, /if \(!this\._hexInvalid && !this\._hexNeedsValidInput\) return true;/);
+  assert.match(component, /if \(!this\.prepareCompletion\(\)\) return;/);
   const pickerCount = (card.match(/<hp-color-opacity/g) || []).length;
   assert.ok(pickerCount > 0);
   assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, pickerCount,

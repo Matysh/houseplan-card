@@ -7,6 +7,15 @@
   one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale
   menus cannot send a late delete. A temporary backend failure keeps the plan
   intact and explains that the deletion can be retried. (#1045)
+- Select multiple Background objects with Ctrl+click, all decor with Ctrl+A,
+  or furniture with Ctrl+M. Individual outlines show the selection; drag any
+  member to move it together in one Undo step. Matching object types share
+  independent colour/opacity fields, including opacity-only images. Selection
+  can be explicitly rebuilt after another client advances the revision. A
+  retained invalid field also blocks group input on a compact desktop. Invalid
+  group picker input stays visible and blocks outside navigation until corrected
+  or cancelled. Group colour rows leave room for both full mixed-value labels.
+  Text contours measure only selected labels and reuse warm geometry. (#1038)
 - Arrow keys move a selected free wall, opening or device by one grid cell,
   preserving its offset. Connected walls stay fixed; angled openings follow
   their host's dominant screen axis. Each accepted step supports Undo/Redo. (#1025)

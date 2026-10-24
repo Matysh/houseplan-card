@@ -373,6 +373,9 @@ export function realOps({
     diffNames: (from, to, pathspec = []) => must(git('diff', '--name-only', from, to, '--', ...pathspec), 'diff').split('\n').filter(Boolean),
     productPushExpected: (from, to) => {
       try {
+        // A force-push can use a different GitHub comparison from tip..new.
+        // Only a fast-forward range proves that a docs-only push is filtered.
+        if (git('merge-base', '--is-ancestor', from, to).status !== 0) return true;
         const files = must(git('diff', '--no-renames', '--name-only', from, to), 'push diff').split('\n').filter(Boolean);
         const count = Number(must(git('rev-list', '--count', `${from}..${to}`), 'push commits').trim());
         // GitHub bypasses path filtering for pushes over 1,000 commits; do not
@@ -488,6 +491,10 @@ export function realOps({
               return { result: verdict.status, url: verdict.url, note: verdict.note };
             if (verdict.status === 'pending') {
               if (!wait) return { result: 'pending', url: verdict.url, runId: verdict.runId, note: verdict.note, validation };
+              await sleep(20_000);
+              continue;
+            }
+            if (verdict.reason === 'missing-companion' && now() - started < VALIDATE_APPEAR_MS) {
               await sleep(20_000);
               continue;
             }

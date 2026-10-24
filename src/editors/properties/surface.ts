@@ -6,13 +6,15 @@ import type { ColorPickerLabels, HpColorOpacity } from '../../hp-color-opacity';
 import type { PropertiesFieldController } from './controller';
 import type { PropertiesString } from './strings';
 import { propertiesColorDraft, editPropertiesColor } from './color-draft';
+import { groupColorDraft, readGroupColorDraft, editGroupColor, pickerGroupColor, parseGroupColor } from './group-color-draft';
+import type { DecorGroupColorState } from '../decor/group-edit';
 
 export interface PropertiesField {
   key: string; label: PropertiesString;
-  value: number | string | boolean | { color: string; opacity: number; noFill?: boolean } | null;
+  value: number | string | boolean | { color: string; opacity: number; noFill?: boolean } | DecorGroupColorState | null;
   mode?: 'readonly' | 'disabled'; unit?: 'cm' | '%' | '°' | '';
   min?: number; max?: number; step?: number;
-  control?: 'color' | 'select' | 'text' | 'toggle' | 'action' | 'choices';
+  control?: 'color' | 'group-color' | 'select' | 'text' | 'toggle' | 'action' | 'choices';
   wide?: boolean; action?: string; icon?: string;
   options?: { value: string; label: string }[];
   reason?: PropertiesString;
@@ -31,6 +33,7 @@ export interface PropertiesSurface {
 export interface PropertiesSurfacePort {
   t(key: PropertiesString, vars?: Record<string, string | number>): string;
   imperial: boolean; dark?: boolean; inlineColors: boolean; controller: PropertiesFieldController; pickerLabels: ColorPickerLabels;
+  decorShortcuts?: boolean;
   action(key: string): void;
   edit(field: PropertiesField, raw: string, finish?: boolean): void;
   number(field: PropertiesField, value: number): string;
@@ -85,12 +88,33 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
   const blur = (event: FocusEvent) => {
     const control = event.currentTarget as HTMLElement;
     if (!port.mayFinish() || control.contains(event.relatedTarget as Node | null)
-      || field.control === 'color' && (!port.inlineColors || control.querySelector<HpColorOpacity>('hp-color-opacity')?.pickerOpen)) return;
+      || (field.control === 'color' || field.control === 'group-color') && (!port.inlineColors || control.querySelector<HpColorOpacity>('hp-color-opacity')?.pickerOpen)) return;
     void controller.finish();
   };
   const value = draft?.raw ?? (typeof field.value === 'number' ? port.number(field, field.value) : String(field.value ?? ''));
   let control: TemplateResult;
-  if (field.control === 'color') {
+  if (field.control === 'group-color') {
+    const initial = field.value as DecorGroupColorState;
+    const state = readGroupColorDraft(draft?.raw ?? '') ?? groupColorDraft(initial);
+    const color = state.touchedColor ? state.hex : initial.color;
+    const opacity = state.touchedOpacity ? Number(state.alpha) / 100 : initial.opacity;
+    const parsed = parseGroupColor(JSON.stringify(state), field.key === 'fill' ? 'fill' : 'stroke');
+    const pickerChange = (e: CustomEvent, finish = false) => port.edit(field, pickerGroupColor(state, e.detail), finish);
+    control = colorField({ hex: state.hex, opacity: opacity ?? 1, opacityLabel: t('opacity'), alphaOnly: initial.alphaOnly,
+      disabled: pending, inputs: { name: field.key, hex: state.hex, opacity: state.alpha,
+        hexLabel: `${label}: ${port.pickerLabels.hex}`, placeholder: t('mixed_values'),
+        hexInvalid: state.touchedColor && !parsed.ok, opacityInvalid: state.touchedOpacity && !parsed.ok,
+        onHex: raw => port.edit(field, editGroupColor(state, 'hex', raw)),
+        onOpacity: raw => port.edit(field, editGroupColor(state, 'opacity', raw)) },
+      picker: html`<hp-color-opacity data-hp="field" data-field=${`properties-${field.key}`} ${ref(el=>{if(el)port.attachColor(field.key,el as HpColorOpacity);})}
+        .label=${label} .color=${color ?? ''} .opacity=${opacity ?? 1} .mixedColor=${color === null} .mixedOpacity=${opacity === null}
+        .mixedLabel=${t('mixed_values')} .alphaOnly=${initial.alphaOnly} .reportTouched=${true}
+        .pickerLabels=${port.pickerLabels} .disabled=${pending} hide-label flat-swatch compact-swatch
+        @hp-color-opacity-open=${() => port.edit(field, JSON.stringify(state))}
+        @hp-color-opacity-change=${(e: CustomEvent) => pickerChange(e)}
+        @hp-color-opacity-commit=${(e: CustomEvent) => pickerChange(e, true)}
+        @hp-color-opacity-close=${() => { if (port.mayFinish() && controller.draft?.field === field.key) controller.cancel(); }}></hp-color-opacity>` });
+  } else if (field.control === 'color') {
     const state = propertiesColorDraft(draft?.raw ?? JSON.stringify(field.value));
     const color = state?.value;
     control = disabled || !color ? html`<div class="hp-prop-control hp-prop-color"><span class="hp-prop-swatch hp-prop-swatch-empty"></span><span>—</span></div>`
@@ -119,7 +143,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
   else if (field.control === 'toggle') control = html`<button data-hp="field" data-field=${`properties-${field.key}`} id=${id} type="button" class="hp-prop-choice ${field.value === true ? 'active' : ''}"
       aria-label=${label} aria-pressed=${String(field.value === true)} ?disabled=${disabled || readonly || pending}
       @click=${() => port.edit(field, String(field.value !== true), true)}>${field.icon ? propertiesIcon(field.icon) : nothing}${label}</button>`;
-  else if (field.control === 'text') control = html`<textarea data-hp="field" data-field=${`properties-${field.key}`} id=${id} class="hp-prop-text" rows="2" maxlength="200" aria-label=${label} ?disabled=${pending}
+  else if (field.control === 'text') control = html`<textarea data-hp="field" data-field=${`properties-${field.key}`} id=${id} class="hp-prop-text" rows="2" maxlength="200" aria-label=${label} ?disabled=${pending || disabled || readonly}
       .value=${value} @input=${(e: Event) => port.edit(field, (e.target as HTMLTextAreaElement).value)}
       @select=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
       @keyup=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
@@ -131,11 +155,11 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       step: field.step === undefined ? 'any' : field.step / (port.imperial && field.unit === 'cm' ? 2.54 : 1), ariaLabel: label,
       readonly, invalid: !!draft?.error, disabled: pending,
       onInput: raw => port.edit(field, raw) });
-  return html`${field.section ? html`<div class="hp-prop-feature-label">${t(field.section)}</div>` : nothing}<div class="hp-prop-field ${field.mode ?? ''} ${field.control === 'text' || field.wide ? 'wide' : ''}" data-property=${field.key}
+  return html`${field.section ? html`<div class="hp-prop-feature-label">${t(field.section)}</div>` : nothing}<div class="hp-prop-field ${field.mode ?? ''} ${field.control === 'text' || field.wide ? 'wide' : ''} ${field.control === 'group-color' ? 'hp-prop-group-color' : ''}" data-property=${field.key}
       @keydown=${keydown} @focusout=${blur} @focusin=${() => port.enterField(field.key)} title=${field.reason ? t(field.reason) : nothing}>
     ${field.control === 'text' || field.control === 'toggle' || field.control === 'action' ? nothing : html`<label for=${id}>${label}${readonly ? propertiesIcon('lock') : nothing}</label>`}
     ${control}
-    ${field.control === 'text' ? html`<button data-hp="action" data-action="properties-insert-variable" type="button" class="hp-prop-variable" @pointerdown=${(e: Event) => e.preventDefault()}
+    ${field.control === 'text' ? html`<button data-hp="action" data-action="properties-insert-variable" type="button" class="hp-prop-variable" ?disabled=${disabled || readonly || pending} @pointerdown=${(e: Event) => e.preventDefault()}
       @click=${() => port.insertVariable()}>${propertiesIcon('variable')}${t('insert_variable')}</button>` : nothing}
     ${draft?.error ? html`<div class="hp-prop-error" role="alert">${t(draft.error.key as PropertiesString, draft.error.values)}</div>` : nothing}
   </div>`;
@@ -160,7 +184,9 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
           aria-disabled=${String(!!action.disabled)} data-hp-tooltip=${action.disabled ? t(action.disabled) : nothing}
           @click=${() => { if (!action.disabled) port.action(action.key); }}>
           ${propertiesIcon(action.icon)}<span>${t(action.label)}</span></button></div>`)}
-      </div><div class="hp-prop-help"><div><kbd>${model.groups.some(group=>group.fields.some(field=>field.control==='text')) ? 'Ctrl Enter' : 'Enter'}</kbd>${t('apply')}</div><div><kbd>Esc</kbd>${t('cancel_input')}</div><div><kbd>Ctrl Z</kbd>${t('undo')}</div></div>
+      </div><div class="hp-prop-help">${port.decorShortcuts
+        ? html`<div><kbd>Ctrl A</kbd>${t('select_all')}</div><div><kbd>Ctrl M</kbd>${t('select_furniture')}</div>`
+        : html`<div><kbd>${model.groups.some(group=>group.fields.some(field=>field.control==='text')) ? 'Ctrl Enter' : 'Enter'}</kbd>${t('apply')}</div><div><kbd>Esc</kbd>${t('cancel_input')}</div>`}<div><kbd>Ctrl Z</kbd>${t('undo')}</div></div>
       ${controller.draft?.pending ? html`<span class="hp-prop-pending" role="status">${t('pending')}</span>` : nothing}
     </footer>
   </aside>`;
