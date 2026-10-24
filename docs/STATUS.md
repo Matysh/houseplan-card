@@ -30,6 +30,10 @@ after retiring the accepted document. Reattach consumes that intent without
 another HA tick; existing same-context short returns keep their no-reload path.
 An interrupted reattach retains demand after retiring its old transport claim.
 
+Selected task browser checks (#1055) retain their complete computed plan under
+a finite job budget sized from the observed #1051 run. Individual invocation
+limits, semantic assertions and full-matrix/release proof boundaries are separate.
+
 Config-authority smoke (#1052) compares reads across the late-A boundary;
 the independent direct-LQI capability probe no longer looks like a stale-event
 reload. Mandatory paired loading and all authority assertions remain covered.

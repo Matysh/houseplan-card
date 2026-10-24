@@ -4472,6 +4472,14 @@ only; no development mutation execution.
 
 ## Browser progress checks on task pushes (#983)
 
+The selected worker has its own finite job budget (#1055). In #1051, 176 of
+218 selected smokes consumed 1486 seconds before any of its seven Golden scenes;
+the old 25-minute job ended without a complete result. Correct passing cases
+included 145-second contact and 92-second kiosk checks. The job budget accounts
+for that inventory; it does not change the worker's 180-second per-invocation
+limit, selected IDs, semantic assertions, Golden intent or product performance
+thresholds. A timed-out partial run never counts as a green task proof.
+
 For direct own-device signal (#1029), selected scenes
 `direct-zigbee-lqi-flat-dark` and `direct-zigbee-lqi-iso-dark` feed the actual
 authenticated subscription with 137 and real zero after removing HA LQI values.
