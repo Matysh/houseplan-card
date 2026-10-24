@@ -262,6 +262,7 @@ export class PropertiesEditor {
   private setSelection(identity: PropertiesIdentity | null): void {
     if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)
       && (!identity || this.identity === this.selected)) return;
+    this.runtime.keyboardNudge.retire();
     this.fields.invalidate(); this.selected = identity; this.groupTarget = null;
     this.selectionContext = identity?.editor === 'decor' ? { authority: this.host._configWriteContext.claim(), adoption: this.host._adoption.adoptionEpoch } : null;
     this.frozenReference = null; this.referenceAttempted = false;

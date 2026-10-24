@@ -832,7 +832,12 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 // Owner standing permission and exact measurements: issuecomment-6383329349.
 // Record only the measured reference; preserve the 2000-B band, initial View
 // split, every absolute guard and runtime latency predicate.
-export const LAZY_EDITOR_GZIP_CEILING = 349_715;
+// #1025: exact Windows Node22.23.3/Rollup4.62.2 build on accepted e8c618924
+// measures 347075 B gzip versus accepted 343989 B (+3086 B, 0.90%). The existing
+// Properties command lane, topology checks and fenced CAS nudge consumer stay
+// lazy. Owner permits this measured cost; adopt only the actual fact, preserving
+// the 2000-B band, initial View split and every absolute budget/predicate.
+export const LAZY_EDITOR_GZIP_CEILING = 347_075;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

@@ -77,6 +77,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'keyboard-connected-wall-detaches-1025',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-nudge.test.mjs',
+    because: '#1025 AC2: the ordinary L/T/X/chain matrix must reject a connected source even when its translated candidate would become free. Nightly execution only.',
+    patches: [{file:'src/editors/plan-nudge.ts',find:'  if (!freePartitionEnds(wall, walls).every(Boolean)) return null;',replace:'  if (false && !freePartitionEnds(wall, walls).every(Boolean)) return null;'}],
+  },
+  {
+    id: 'keyboard-opening-45-uses-vertical-1025',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-nudge.test.mjs',
+    because: '#1025 AC4: all four opening types must retain Left/Right at 45 degrees for both endpoint orders and both diagonal signs. Nightly execution only.',
+    patches: [{file:'src/editors/plan-nudge.ts',find:'  const horizontal = Math.abs(wx) + EPS >= Math.abs(wy);',replace:'  const horizontal = Math.abs(wx) > Math.abs(wy) + EPS;'}],
+  },
+  {
+    id: 'keyboard-layout-late-ack-regresses-revision-1025',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-nudge.test.mjs',
+    because: '#1025 AC10: a held receipt must not regress a newer foreign revision even when the current point happens to equal the sent target. Nightly execution only.',
+    patches: [{file:'src/editors/keyboard-nudge.ts',find:'this.dataCurrent(owner) && h._layoutRev <= revision',replace:'this.dataCurrent(owner)'}],
+  },
+  {
+    id: 'keyboard-device-selection-keeps-old-control-focus-1025',
+    guard: 'node demo/smoke_editor_nudge.mjs',
+    because: '#1025 AC6/8: trusted device pointer input suppresses native focus transfer; only mounted browser focus and real subsequent arrows expose a retained toolbar button incorrectly owning the keys. Nightly execution only.',
+    patches: [{file:'src/houseplan-card.ts',find:'    (ev.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });',replace:'    void ev.currentTarget;'}],
+  },
+  {
     id: 'form-kit-inline-opacity-input-dropped-1018',
     guard: 'node demo/smoke_ui_1051.mjs',
     because: '#1018 AC7: removing the unused top-level callback must preserve the new nested raw alpha input. Mounted Properties preview, picker synchronization and exactly one atomic commit/Undo must observe the typed 75/100 values; source text alone cannot prove the event reaches the current field session. Static readiness during development; execution only nightly.',
@@ -1916,8 +1940,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: a delayed transport reply across the actual HA/Lit intake lifecycle cannot authorize a different connection or install its old revisions.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "      if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);",
-      replace: '      this._adoption.acceptConfigWrite(canonicalCandidate, response);' }],
+      find: "      if (!isCurrent() || acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);",
+      replace: "      if (acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });\n      this._adoption.acceptConfigWrite(canonicalCandidate, response);" }],
   },
   {
     id: 'vacuum-route-write-forgets-canonical-attempt',
@@ -2802,8 +2826,8 @@ const MUTANT_DEFINITIONS = [
       + '&& node --test --test-name-pattern="#879 AC1/3/4" test/room-device-discovery.test.mjs',
     because: '#879 AC1/AC4: the durable baseline must be in the same accepted config as the room, not only in local state.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout);',
-      replace: 'await this.host._sendConfigCandidate(candidate,contactLayout);',
+      find: 'await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent);',
+      replace: 'await this.host._sendConfigCandidate(candidate,contactLayout,acknowledgementCurrent);',
     }],
   },
   {

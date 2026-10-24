@@ -85,18 +85,31 @@ const out = await page.evaluate(async () => {
     o['litLamp_' + state] = withStates(states, () => c._stateClass(litLamp)) === want;
     o['controlled_' + state] = withStates(states, () => c._stateClass(controlled)) === want;
   }
-  // an unreachable cover still only fades — never yellow, never orange
-  o.litLampUnavailFades = withStates({
+  // #1026: cover sample quality cannot make the whole mixed device offline
+  // while its own light is live. The explicit cover still owns the neutral,
+  // inactive face: never borrow yellow/activity from that live light.
+  const neutralCoverOnAvailableLamp = () => {
+    const p = c._devicePresentation(litLamp);
+    return p.ownAvailability === 'available' && !p.offline
+      && p.sourceKind === 'cover' && p.visual.availability === 'unavailable'
+      && p.visual.status === 'neutral' && p.visual.activity === 'none'
+      && c._stateClass(litLamp) === '';
+  };
+  o.litLampUnavailableCoverStaysNeutral = withStates({
     'light.mixed': st('on', {}), 'cover.mixed': st('unavailable', {}),
-  }, () => c._stateClass(litLamp)) === 'unavail';
+  }, neutralCoverOnAvailableLamp);
   o.controlledUnavailFades = withStates({
     'switch.control': st('on', {}), 'cover.mixed': st('unavailable', {}),
   }, () => c._stateClass(controlled)) === 'unavail';
-  // …and a selected cover with no state is unavailable, never borrowed from
-  // the lit neighbour that the explicit cover action deliberately outranks.
-  o.litLampNoCoverStateIsUnavailable = withStates({
+  o.litLampMissingCoverStaysNeutral = withStates({
     'light.mixed': st('on', {}),
-  }, () => c._stateClass(litLamp)) === 'unavail';
+  }, neutralCoverOnAvailableLamp);
+  // Positive own-offline control: every row in the mixed device's own roster
+  // is explicitly unavailable, so the same marker must retain offline paint.
+  o.litLampOwnOfflineFades = withStates({
+    'light.mixed': st('unavailable', {}), 'cover.mixed': st('unavailable', {}),
+  }, () => c._devicePresentation(litLamp).ownAvailability === 'unavailable'
+    && c._devicePresentation(litLamp).offline && c._stateClass(litLamp) === 'unavail');
 
   // ---- the OTHER side of the rule: nothing changed for the rest ----------
   // the very same mixed device WITHOUT the explicit action keeps its primary
