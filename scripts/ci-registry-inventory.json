@@ -1608,6 +1608,7 @@
       "demo/smoke_device_position_history.mjs",
       "demo/smoke_device_preview_parity.mjs",
       "demo/smoke_device_settings_947.mjs",
+      "demo/smoke_device_settings_action.mjs",
       "demo/smoke_device_settings_form.mjs",
       "demo/smoke_device_signal.mjs",
       "demo/smoke_device_signal_settings.mjs",

@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts', 'src/view-action-context.ts',
+      'src/device-toggle.ts', 'src/logic.ts'],
+    smokes: ['smoke_device_settings_action.mjs'],
+    because: '#1050: trusted View tap/keyboard/context input, permission hints and the actual held content-hashed editor import must resolve the newest current marker without another action; the public fixture and DOM oracle do not name the internal request/authority fences.',
+  },
+  {
     files: ['src/houseplan-card.ts', 'src/houseplan-render-lifecycle.ts'],
     smokes: ['smoke_mounted_authority.mjs'],
     because: '#1056: public mounted same-object HA connection/user replacement must restore one current config/layout pair and visible plan without another tick; ordinary ABA, held replies and missing-HA controls protect existing intake/read ownership.',

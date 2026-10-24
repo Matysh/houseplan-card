@@ -2028,6 +2028,14 @@ const MUTANT_DEFINITIONS = [
       replace: 'public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {\n    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }' }],
   },
   {
+    id: 'view-settings-retired-intent-accepted',
+    guard: 'node demo/smoke_device_settings_action.mjs',
+    because: '#1050 AC5: a trusted View input held across the real content-hashed browser import must not open a dialog after HA/user ABA, navigation, target, permission or detach retirement. Pure target tests do not exercise the mounted Lit owner, actual module delivery and deferred runtime consumer together.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    const current = (): DevItem | null => request === this._markerDialogRequest && this.isConnected\n      && this._mode === \'view\' && modeRequest === this._editorModeRequest\n      && (navigation === undefined || navigation === this._editorRuntime?.navigationIntent)\n      && this._loadOk && authorityCurrent() && deviceEditorAllowed(this._canEdit, this._kiosk)\n      && cardConfig === this._config\n      && epoch === this._adoption.adoptionEpoch && layoutRev === this._layoutRev && !this._otherDialogsBlocked\n      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey) : null;',
+      replace: '    const current = (): DevItem | null => currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey);' }],
+  },
+  {
     id: 'view-edit-ack-forgets-permission',
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=roles',
     because: '#844 AC4: raw acknowledgement under denied authority cannot mutate New or write config.',

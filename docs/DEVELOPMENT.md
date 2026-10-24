@@ -23,6 +23,33 @@ native AFTER and held-import proofs are recorded before handoff. Pure tests
 exercise target replacement/refusal and the real deferred runtime entry; backend
 tests export, parse and apply the literal action through full and space transfer.
 
+The compact executed receipt is
+[`device-settings-validation.json`](development-notes/device-settings-validation.json).
+On the combined accepted-#1056 source, the pinned Linux browser passes all 113
+named checks: actual selector Save/reopen, mouse/keyboard/touch in Flat/2.5D,
+writer without HA-admin, RU/EN denial, thirteen held-import retirements and
+fresh positive requests, plus the real hashed retry URL. The production build
+is Windows Node 22.23.3/Rollup 4.62.2; native execution is Linux Node 22.23.3,
+Playwright 1.62.0/Chromium headless-shell 151.0.7922.34 rev1234.
+
+Two observation corrections retain the original RED receipts. An early capture
+microtask read `defaultPrevented` before dispatch finished; the final receipt
+reads the original event afterwards. Public rebinding independently writes the
+existing area-provenance snapshot before any settings input. A no-intent control
+has the same complete wire payload; old-import delivery and fresh input leave
+the count at one. No product handler or counter is replaced. An unloaded scene
+quarantines its markers, so that case proves no target/lazy work/side effect
+without claiming an unreachable click or toast.
+
+The current matched build against accepted `7ee838b2c` measures raw
+3432625 → 3434473 B, initial View 339665 → 340142 B gzip and lazy editor
+343953 → 344030 B gzip; host references remain 6090. Existing budget references,
+bands and absolute limits pass unchanged. This receipt precedes final accepted
+queue integration; the normal hook and fresh range guards still judge that
+combined material. The 141 focused Node tests and three diagnostic backend
+validation/full-space transfer checks pass. Registered async-intent protection
+has static readiness only; no mutant was executed.
+
 ## Mounted HA authority #1056
 
 `demo/smoke_mounted_authority.mjs` uses public HA assignments on an already

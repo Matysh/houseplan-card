@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 91 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 97 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 253 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **509 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 254 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **510 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -811,6 +811,14 @@ Only the selected smoke section runs per mutant; execution remains nightly.
 - `view-edit-permission-hides-more-info`
 - `view-edit-direct-entry-forgets-permission`
 - `view-edit-late-import-forgets-recheck`
+- `view-settings-retired-intent-accepted`
+
+#1050 holds the real content-hashed module request after trusted View input and
+changes public HA/config/navigation inputs before delivery. The mounted owner
+and its actual runtime consumer must jointly refuse the retired intent; pure
+binding tests alone cannot prove that browser lifecycle boundary. Execution
+remains nightly; local static readiness is not a caught result.
+
 - `view-edit-import-forgets-latest-owner`
 - `view-edit-import-forgets-connected-owner`
 - `view-edit-ack-forgets-permission`

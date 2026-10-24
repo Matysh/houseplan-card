@@ -46,6 +46,7 @@ from custom_components.houseplan.import_export import (
     prepare_apply,
     revalidate_candidate,
 )
+from custom_components.houseplan.room_appearance import normalize_room_appearance
 from custom_components.houseplan.store import (
     async_save_layout_state,
     get_data,
@@ -54,7 +55,6 @@ from custom_components.houseplan.store import (
 )
 from custom_components.houseplan.vacuum_routes import effective_routes
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
-from custom_components.houseplan.room_appearance import normalize_room_appearance
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
 
