@@ -109,6 +109,23 @@
       "scope": "Use the new canonical required scope: explicit changed/AC/ledger checks, registered and proven narrow links plus the bounded visual minimum. Weak/overflow lexical regression is deferred intact to beta/night, not silently truncated.",
       "freshProof": "Current range/process/packaging guards, required task scope and normal hook are reported separately in the new handoff; previous CI success is not substituted for a new exact-SHA verdict."
     },
+    "currentTaskScope": {
+      "requiredProducer": "5006a2137: 39/39 ordinary smokes and 2/2 new group Golden PASS; one direct local execution per unchanged input.",
+      "acceptedRegistryIo": "c861d6150e3dbb01e03d2d65d7d825544eb3872b included by clean merge 0f34b08e7. Only CI Git-I/O/tests/docs changed; product, capture corpus and the browser executions remain unchanged.",
+      "footerVisualScope": {
+        "material": "0f34b08e7; same 6dcd3e74d26b1066fc82ea3932519f733fd7890d578c8be0b631d2c1acb4bfc1 runtime",
+        "geometryScene": "geometry-decor-editor-dark, 1180x900 page, Nothing selected: actual/baseline/diff viewed. New Ctrl+A / Ctrl+M footer replaces Enter / Esc.",
+        "actualSha256": "df8eed05fbf5fa660e499376263fb75573d84a2f216486662a7e471badef9c83",
+        "differingPixels": { "total": 2741, "footer": 1478, "priorHeaderFocusRegion": 1263, "other": 0 },
+        "ownership": "Only the footer is this task's CHANGE. The coordinator independently observed the header focus-ring drift before #1038; it is not assigned to this task, masked, thresholded away or fixed here.",
+        "pendingColourScenes": [
+          { "id": "ui-1051-color-light", "expectation": "new", "actualSha256": "6146cd04ebaf7dae14b398781dbaeacd1b34fe5ad2c431eed962cd9d7858c39a" },
+          { "id": "ui-1051-color-dark", "expectation": "new", "actualSha256": "e6236486af84cd7cc986689a31ce9a30505d3bf0a7059d5fe227425dea150014" }
+        ],
+        "pendingPolicy": "Both colour-panel captures were viewed and remain missing-baseline NEW as already declared by #1051 on this index; their additional Ctrl+A / Ctrl+M footer is explicit. No NEW+CHANGE conflict, old-ledger edit or union-guard relaxation.",
+        "baselineAccepted": false
+      }
+    },
     "ciPreparationRepair": {
       "source": "0bcf61de0dfd64fc95fe1fbdd62457ad0d97835f",
       "run": 40119689035,

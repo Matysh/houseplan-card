@@ -106,6 +106,19 @@ regression is deferred to beta/night. The previous full selected receipt is
 historical evidence; current range/packaging checks and exact-SHA CI remain
 fresh requirements, not assertions inferred from that receipt.
 
+The new required local scope on `5006a2137` passes 39/39 smokes and both new
+group Golden scenes. Accepted bounded registry Git I/O `c861d615` is included
+by clean merge `0f34b08e7`; it changes no product/capture input or browser
+execution. A source-linked visual check also captures and reviews the existing
+`geometry-decor-editor-dark` empty Properties footer: Ctrl+A/Ctrl+M now replace
+Enter/Esc hints (1478 changed footer pixels). Its separate 1263 header focus-ring
+pixels were observed by the coordinator before #1038 and are outside this
+task's intent; no focus or threshold is altered to conceal them. The two
+`ui-1051-color-*` captures include that footer too. They remain pending NEW
+under #1051 on this baseline index, so #1038 keeps NEW rather than introducing
+a conflicting CHANGE. All three additional captures are viewed; baseline
+acceptance and unrelated visual changes remain outside this task.
+
 ## Editor keyboard translation (#1025)
 
 `test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command
