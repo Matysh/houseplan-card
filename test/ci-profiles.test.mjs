@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { parse } from 'yaml';
 import { generatedProfiles } from '../scripts/ci-profiles.mjs';
 import { profilesForFiles, matchesPaths, readProfilePaths } from '../scripts/ci-profile-paths.mjs';
-import { eventFiles, eventProfilePlan } from '../scripts/ci-profile-event.mjs';
+import { eventFiles, eventProfilePlan, producerProfilePlan } from '../scripts/ci-profile-event.mjs';
 import { ciWorkflow, registeredRuns, listCiRuns } from '../scripts/ci-workflows.mjs';
 import { greenShas, judgedShas } from '../scripts/classify-base.mjs';
 import { buildCiProof, evaluateCiProof, JOB_RULES, CI_PROOF_POLICIES } from '../scripts/ci-proof.mjs';
@@ -16,6 +16,16 @@ import { importClosure } from './helpers/import-closure.mjs';
 
 const cases = JSON.parse(readFileSync(new URL('./data/ci-profile-pushes.json', import.meta.url), 'utf8'));
 const SHA = 'a'.repeat(40), TREE = 'b'.repeat(40), ROOT = process.cwd();
+const toolingProof = run => ({ schema: 'houseplan-ci-proof/v1', candidate: { sha: SHA, tree: TREE },
+  run: { id: run.id, attempt: run.run_attempt, workflow: 'validate-tooling.yml', event: run.event },
+  checks: { preflight: { mode: 'executed', result: 'success' } } });
+
+test('#1060 actual product producer declares its coverage without erasing candidate companions', () => {
+  const candidate = { profiles: ['tooling', 'docs'], proven: true };
+  assert.deepEqual(producerProfilePlan(candidate, 'product').profiles, ['product', 'tooling', 'docs']);
+  assert.deepEqual(producerProfilePlan(candidate, 'tooling'), candidate);
+  assert.deepEqual(producerProfilePlan({ profiles: ['product', 'docs'] }, 'product').profiles, ['product', 'docs']);
+});
 
 test('#1032 Python producers install the exact patch from their shared immutable plan', () => {
   const planned = '${{ needs.reuse.outputs.python_version }}';
@@ -181,6 +191,7 @@ test('#980 product proof cannot hide a missing/red tooling profile or spoof work
   const companion = { run: { ...run, id: 10, path: '.github/workflows/validate-tooling.yml' }, jobs: [
     { name: JOB_RULES.preflight[0].name, conclusion: 'success' }, { name: JOB_RULES.frontend.find(r => r.job === 'tooling').name, conclusion: 'success' }] };
   const profileRuns = new Map([['tooling', companion]]);
+  companion.proof = toolingProof(companion.run);
   assert.equal(evaluate({ profileRuns }).status, 'green');
   companion.jobs.pop(); assert.notEqual(evaluate({ profileRuns }).status, 'green');
   companion.run.conclusion = 'failure'; assert.notEqual(evaluate({ profileRuns }).status, 'green');
@@ -210,6 +221,7 @@ test('#1044 full product proof needs tooling coverage even when the changed path
     { name: JOB_RULES.preflight[0].name, conclusion: 'success' },
     { name: JOB_RULES.frontend.find(rule => rule.job === 'tooling').name, conclusion: 'success' }] };
   const profileRuns = new Map([['tooling', companion]]);
+  companion.proof = toolingProof(companion.run);
   assert.equal(evaluate(makeProof(true, ['product', 'tooling']), { profileRuns }).status, 'green');
   companion.run.status = 'in_progress';
   assert.equal(evaluate(makeProof(true, ['product', 'tooling']), { profileRuns }).status, 'pending');

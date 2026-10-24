@@ -387,8 +387,8 @@ jobs:
             gh api -X GET "repos/$REPO/actions/runs" \
               -f branch="$other" -f status=completed -F per_page=100 \
               > /tmp/validate-runs-other.json || echo '{}' > /tmp/validate-runs-other.json
-            node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=range \
-              --name=range_base --fallback="$FALLBACK" \
+            node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=integration --repo="$REPO" \
+              --fallback="$FALLBACK" \
               --runs=/tmp/validate-runs.json --runs=/tmp/validate-runs-other.json
             exit 0
           fi
@@ -411,7 +411,7 @@ jobs:
           FULL_INPUT: ${{ inputs.full }}
           MUTANTS_INPUT: ${{ inputs.mutants }}
           REF_NAME: ${{ github.ref_name }}
-          GREEN_BASE: ${{ steps.base.outputs.base || steps.base.outputs.range_base }}
+          GREEN_BASE: ${{ steps.base.outputs.base }}
         # #751: без pipefail упавший classify-changes оставлял heavy пустым —
         # тяжёлые job молча пропускались, а job changes зеленела.
         run: |
@@ -421,7 +421,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GREEN_BASE: ${{ steps.base.outputs.base || steps.base.outputs.range_base }}
+          GREEN_BASE: ${{ steps.base.outputs.base }}
           HEAD_SHA: ${{ github.sha }}
           REF: ${{ github.ref }}
           FULL: ${{ steps.heavy.outputs.heavy }}
@@ -435,7 +435,8 @@ jobs:
           # Ветка задачи всегда судится целиком от origin/dev, включая ранние
           # изменения до последнего зелёного push. Переписанный event.before
           # после rebase не меняет этот диапазон и не требует всех семейств.
-          # Интеграционный push использует доказанную базу диапазона (#388).
+          # Интеграционный push использует успешное покрытие, отдельно от
+          # судимого диапазона provenance/process (#1060).
           base="$GREEN_BASE"
           case "$REF" in
             refs/heads/issue/*)
@@ -446,6 +447,11 @@ jobs:
               ;;
             *) if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi ;;
           esac
+          if [ -z "$base" ] && { [ "$REF" = "refs/heads/dev" ] || [ "$REF" = "refs/heads/main" ]; }; then
+            echo "No verified green coverage: classify all check families"
+            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ -z "$base" ] || ! git merge-base --is-ancestor "$base" "$HEAD_SHA"; then
             echo "::error::Classification needs a proven ancestor: resolve the Git base and retry, or explicitly request full=true."
             exit 1
@@ -788,13 +794,31 @@ jobs:
     if: needs.changes.outputs.tooling == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    env:
+      TASK_CHECK_FRESH: ${{ needs.changes.outputs.registry_fresh == 'true' || needs.changes.outputs.heavy == 'true' }}
+    outputs:
+      task_check: ${{ steps.receipt.outputs.claim || steps.task_reuse.outputs.claim }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22, cache: npm }
+      - name: Verify unchanged tooling producer
+        id: task_reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/task-check-reuse-cli.mjs --probe=tooling
       - run: npm ci
+        if: steps.task_reuse.outputs.reused != 'true'
       - run: npm run test:tooling
+        if: steps.task_reuse.outputs.reused != 'true'
+      - name: Stamp direct tooling execution
+        id: receipt
+        if: steps.task_reuse.outputs.reused != 'true'
+        run: node scripts/task-check-reuse-cli.mjs --stamp=tooling
 
   dev_build:
     name: "Бандл головы dev для стенда"
@@ -857,39 +881,64 @@ jobs:
     runs-on: ubuntu-24.04
     # #1058: 246/256 smokes used 2358 s; 40 min cancelled the remaining task plan.
     timeout-minutes: 50
+    permissions:
+      contents: read
+      actions: read
+    env:
+      BROWSER_PLAN: ${{ needs.changes.outputs.browser_plan }}
+      TASK_CHECK_FRESH: ${{ needs.changes.outputs.registry_fresh == 'true' || needs.changes.outputs.heavy == 'true' }}
+    outputs:
+      task_check: ${{ steps.receipt.outputs.claim || steps.task_reuse.outputs.claim }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22, cache: npm }
+      - name: Verify identical selected coverage
+        id: task_reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/task-check-reuse-cli.mjs --probe=browser_selected
       - run: npm ci
+        if: steps.task_reuse.outputs.reused != 'true'
       - name: Кэш браузеров Playwright
         id: pw
+        if: steps.task_reuse.outputs.reused != 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install pinned Chromium
-        if: steps.pw.outputs.cache-hit != 'true'
+        if: steps.task_reuse.outputs.reused != 'true' && steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
       - name: Очистить закоммиченный dist перед артефактом
+        if: steps.task_reuse.outputs.reused != 'true'
         run: |
           node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })"
       - name: Забрать собранный бандл
+        if: steps.task_reuse.outputs.reused != 'true'
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: card-bundle
           path: dist
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        if: steps.task_reuse.outputs.reused != 'true'
         with:
           name: card-test-build
           path: test-build
       - run: node scripts/bundle-sync.mjs
+        if: steps.task_reuse.outputs.reused != 'true'
       - name: Run selected progress checks
+        if: steps.task_reuse.outputs.reused != 'true'
         env:
           BROWSER_PLAN: ${{ needs.changes.outputs.browser_plan }}
         run: node scripts/browser-selected.mjs
+      - name: Stamp direct selected execution
+        id: receipt
+        if: steps.task_reuse.outputs.reused != 'true'
+        run: node scripts/task-check-reuse-cli.mjs --stamp=browser_selected
       - name: Preserve selected progress report
-        if: always()
+        if: always() && steps.task_reuse.outputs.reused != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: browser-selected

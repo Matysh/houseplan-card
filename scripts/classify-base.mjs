@@ -30,7 +30,7 @@
 // гейтам диапазона (#388) на пуше прямо в dev опускаться некуда, и там фолбэк
 // остаётся прежним `before`, но с явной пометкой «недоказуемо».
 
-import { ciWorkflow } from './ci-workflows.mjs';
+import { ciWorkflow, registeredRuns } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
 
@@ -39,6 +39,9 @@ import { appendFileSync, readFileSync } from 'node:fs';
  * при этом всё равно один — merge-base.
  */
 export const MAX_CANDIDATES = 300;
+export const MAX_BASE_PROOFS = 5;
+export const BASE_PROOF_MS = 10_000;
+export const BASE_DISCOVERY_MS = 60_000;
 
 /**
  * SHA прогонов, которые ДОШЛИ ДО КОНЦА — успешно или нет, но не отменённые.
@@ -191,6 +194,51 @@ export function pickRangeBase({
   };
 }
 
+/** Integration coverage and range guards answer different questions. A split
+ * status is only a discovery hint: actual immutable proof and its mandatory
+ * companions must pass the same evaluator used by S7/merge. Read at most the
+ * nearest usable producer, not every artifact in the run-list window. */
+export async function integrationBases({ payload, candidates, head, fallback, tagged = new Set(), repo, ops,
+  maxProofs = MAX_BASE_PROOFS, proofMs = BASE_PROOF_MS, totalMs = BASE_DISCOVERY_MS }) {
+  const { evaluateCiProof, CI_PROOF_POLICIES } = await import('./ci-proof.mjs');
+  const rows = registeredRuns(payload, { repo, productOnly: true });
+  const green = new Set();
+  const now = ops.now || Date.now, started = now();
+  let probes = 0;
+  for (const sha of [head, ...capped(candidates)]) {
+    if (tagged.has(sha)) { green.add(sha); break; }
+    const run = rows.find(row => (row.head_sha || row.headSha) === sha);
+    // Do not hide a newer red/partial run behind an older successful producer.
+    if (!run || run.status !== 'completed' || run.conclusion !== 'success'
+      || !['push', 'workflow_dispatch'].includes(run.event)) continue;
+    const remaining = totalMs - (now() - started);
+    if (probes >= maxProofs || remaining <= 0) break;
+    probes++;
+    const controller = new AbortController();
+    let timer;
+    try {
+      const tree = await ops.candidateTree(sha);
+      if (!/^[a-f0-9]{40}$/.test(tree || '')) continue;
+      const context = await Promise.race([ops.proof(run, { signal: controller.signal }), new Promise((_, reject) => {
+        timer = setTimeout(() => { controller.abort(); reject(Error('proof discovery deadline')); }, Math.min(proofMs, remaining));
+      })]);
+      if ([...(context.profileRuns || new Map()).values()].some(({ run: companion }) =>
+        !registeredRuns([companion], { repo, sha }).length)) continue;
+      const verdict = evaluateCiProof({ run, ...context, candidate: { sha, tree },
+        policy: { ...CI_PROOF_POLICIES.mergeLight, name: 'integration-base', task: true } });
+      if (verdict.status === 'green') { green.add(sha); break; }
+    } catch { /* unavailable proof widens coverage; it never justifies a base */ }
+    finally { clearTimeout(timer); controller.abort(); }
+  }
+  const base = green.has(head)
+    ? { base: head, reason: 'head-proven', proven: true, skipped: 0 }
+    : pickBase({ candidates, green, mergeBase: '' });
+  if (!base.proven) base.reason = 'unproven';
+  const range = pickRangeBase({ candidates, green: new Set([...judgedShas({ workflow_runs: rows }), ...green]),
+    fallback, head, headGreen: green, tagged });
+  return { base, range };
+}
+
 const short = (sha) => (typeof sha === 'string' ? sha.slice(0, 8) : '?');
 
 /** Строки для summary: почему диапазон именно такой. */
@@ -202,6 +250,8 @@ export function baseSummary(choice, { head, mergeBase, mode = 'classify' }) {
   const heading = mode === 'range'
     ? '### База диапазона (#388)'
     : '### База классификации (#387)';
+  if (choice.reason === 'unproven') return [heading,
+    'Зелёная база продукта не доказана: семейства проверяются полностью; база рассмотренного диапазона её не заменяет.'];
   if (choice.reason === 'green-ancestor') {
     const skipped = choice.skipped
       ? ` Пропущено коммитов без завершённого прогона: ${choice.skipped}.`
@@ -251,15 +301,16 @@ export function baseSummary(choice, { head, mergeBase, mode = 'classify' }) {
 const arg = (argv, name, fallback = '') =>
   (argv.find((a) => a.startsWith(`--${name}=`)) || '').slice(name.length + 3) || fallback;
 
-function main(argv) {
+async function main(argv) {
   const head = arg(argv, 'head');
   const mode = arg(argv, 'mode', 'classify');
-  const mergeBase = arg(argv, 'merge-base', mode === 'range' ? head : '');
+  const integration = mode === 'integration';
+  const mergeBase = arg(argv, 'merge-base', mode === 'range' || integration ? head : '');
   // `--runs=` можно повторить (#703): на интеграционных ветках — dev и main.
   const runsFiles = argv.filter((a) => a.startsWith('--runs=')).map((a) => a.slice(7)).filter(Boolean);
   if (!head || !mergeBase) {
     process.stderr.write('usage: classify-base.mjs --head=<sha>'
-      + ' [--mode=classify|range] [--merge-base=<sha>] [--fallback=<sha>]'
+      + ' [--mode=classify|range|integration] [--merge-base=<sha>] [--fallback=<sha>]'
       + ' [--name=<output>] [--runs=<file>]\n');
     process.exit(2);
   }
@@ -278,10 +329,36 @@ function main(argv) {
   //
   // В режиме `range` (пуш прямо в dev или main) пола нет: обход идёт по истории до
   // предела MAX_CANDIDATES, потому что merge-base с dev здесь совпал бы с HEAD.
-  const span = mode === 'range' ? head : `${mergeBase}..${head}`;
+  const span = mode === 'range' || integration ? head : `${mergeBase}..${head}`;
   const candidates = execFileSync('git', [
     'rev-list', `--max-count=${MAX_CANDIDATES}`, '--skip=1', span,
   ], { encoding: 'utf8' }).split('\n').map((line) => line.trim()).filter(Boolean);
+
+  if (integration) {
+    const repo = arg(argv, 'repo', process.env.GITHUB_REPOSITORY || '');
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw Error('integration bases need --repo=owner/name');
+    const { loadGithubProofContext } = await import('./ci-proof.mjs');
+    const choices = await integrationBases({ payload, candidates, head, fallback: arg(argv, 'fallback'), repo,
+      tagged: releaseTaggedShas(execFileSync('git', [
+        'for-each-ref', '--format=%(refname:short) %(objectname) %(*objectname)', 'refs/tags',
+      ], { encoding: 'utf8' })),
+      ops: {
+        candidateTree: sha => execFileSync('git', ['rev-parse', `${sha}^{tree}`], { encoding: 'utf8' }).trim(),
+        proof: (run, { signal }) => loadGithubProofContext({ repo, run, token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN,
+          fetchImpl: (url, options) => fetch(url, { ...options,
+            signal: AbortSignal.any([signal, AbortSignal.timeout(5_000)]) }),
+        }),
+      },
+    });
+    for (const [name, choice, summaryMode] of [['base', choices.base, 'classify'], ['range_base', choices.range, 'range']]) {
+      const summary = baseSummary(choice, { head, mode: summaryMode });
+      process.stdout.write(`${summary.join('\n')}\n`);
+      if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,
+        `${name}=${choice.base}\n${name}_proven=${choice.proven}\n`);
+      if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary.join('\n\n')}\n`);
+    }
+    return;
+  }
 
   const choice = mode === 'range'
     ? pickRangeBase({
@@ -312,7 +389,7 @@ function main(argv) {
 
 if (process.argv[1] && process.argv[1].endsWith('classify-base.mjs')) {
   try {
-    main(process.argv.slice(2));
+    await main(process.argv.slice(2));
   } catch (err) {
     process.stderr.write(`classify-base: ${err.message}\n`);
     process.exit(1);

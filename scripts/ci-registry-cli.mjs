@@ -15,6 +15,12 @@ const output = values => {
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, text);
   process.stdout.write(text);
 };
+export function registryPublicationRecords(proof) {
+  if (!proof.requiredChecks.every(id => proof.checks[id]?.result === 'success')) return [];
+  return [...proof.registry?.produced || [], ...Object.values(proof.taskChecks || {})
+    .filter(claim => claim.mode === 'executed' && claim.record?.schema === 'houseplan-task-check/v1')
+    .map(claim => claim.record)];
+}
 export function producerToolchain(root = process.cwd(), job = '') {
   const toolchain = registryToolchain({ text: path => readFileSync(resolve(root, path), 'utf8') },
     { python: process.env.CI_PYTHON_VERSION || null });
@@ -103,7 +109,7 @@ if (isMainModule(import.meta.url)) {
     }
     else if (arg('publish-proof')) {
       const proof = JSON.parse(readFileSync(arg('publish-proof'), 'utf8'));
-      const records = proof.requiredChecks.every(id => proof.checks[id]?.result === 'success') ? proof.registry?.produced || [] : [];
+      const records = registryPublicationRecords(proof);
       output(publishRegistry({ root: process.cwd(), records }));
     } else {
       try { await registryProbeCli({ local: process.argv.includes('--local') }); }

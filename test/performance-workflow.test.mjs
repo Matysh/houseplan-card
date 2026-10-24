@@ -281,8 +281,10 @@ test('#1044: rewritten task pushes retain the complete task range without reques
   assert.doesNotMatch(classify, /\$BEFORE_SHA/);
   assert.match(classify, /refs\/heads\/issue\/\*\)[\s\S]*base=\$\(git merge-base origin\/dev "\$HEAD_SHA"\)/);
   assert.match(classify, /::error::Classification needs a proven ancestor:[\s\S]*exit 1/);
-  assert.equal(classify.match(/classify-changes\.mjs --all/g)?.length, 1,
-    'only intentional full regression may expand every family');
+  assert.equal(classify.match(/classify-changes\.mjs --all/g)?.length, 2,
+    'explicit full or unproven integration coverage selects all families');
+  assert.match(classify, /if \[ -z "\$base" \] && \{ \[ "\$REF" = "refs\/heads\/dev" \] \|\| \[ "\$REF" = "refs\/heads\/main" \]; \}; then[\s\S]*?classify-changes\.mjs --all/,
+    'the new fallback is restricted to integration branches, never a rewritten task push');
   assert.match(classify, /if \[ "\$FULL" = "true" \]; then[\s\S]*?classify-changes\.mjs --all/);
   const performance = workflow.slice(workflow.indexOf('\n  performance_smoke:'), workflow.indexOf('\n  geometry_parity:'));
   assert.match(performance, /needs\.changes\.outputs\.heavy == 'true'/,

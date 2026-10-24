@@ -28,7 +28,7 @@ import { classify } from './process-gate.mjs';
 import {
   classifyRisk, cycleLimit, hasTrackLabel, rebaseBeforeReview, riskClassLine, trackFromLabels, trackOrigin,
 } from './process-track.mjs';
-import { CALL_CONTEXT_LINES, selectSmokes } from './smoke-select.mjs';
+import { CALL_CONTEXT_LINES, selectSmokes, requiredSmokeEntries, declaredTaskSmokes } from './smoke-select.mjs';
 import { roleEntry } from './entry-cost.mjs';
 import { parseSourceCommitLog, sourceReplacementWarnings } from './source-replacement.mjs';
 import { selectHandoff } from './review-handoff.mjs';
@@ -267,6 +267,10 @@ export function requiredChecks({ risk = null, changedFiles = [], smokes = null, 
     const evidence = [...entry.symbols.slice(0, 4), ...(entry.files || []).map((file) => `${file} (файл)`)];
     out.push({ command: `\`node demo/${entry.smoke}\``, reason: `smoke-select: зарегистрированная связь (${evidence.join(', ')})` });
   }
+  for (const smoke of new Set([...(smokes?.explicit?.changed || []), ...(smokes?.explicit?.declared || [])])) {
+    const command = `\`node demo/${smoke}\``;
+    if (!out.some(check => check.command === command)) out.push({ command, reason: 'явная проверка задачи: изменённый smoke / ledger intent' });
+  }
   if (smokes?.visualMinimum?.length) {
     out.push({ command: '`npm run gate:small -- --smokes`', reason: `smoke-select: визуальный минимум — связь диффа со смоками не доказана (#690): ${smokes.visualMinimum.map((s) => s.replace(/\.mjs$/, '')).join(', ')}` });
   }
@@ -393,6 +397,7 @@ export function buildPacket(inputs) {
     nextStep: nextStepLines({ branch: branch ? { ...branch, mergeClean } : null, track: origin.track }),
     risk,
     checks: requiredChecks({ risk: risk.computed ? risk : null, changedFiles, smokes: branch?.smokes ?? null, labels }),
+    deferredSmokes: branch?.smokes?.deferred ?? null,
     changelog: branch ? changelogState({ commits: branch.commits || [], changedFiles, risk: risk.computed ? risk : null }) : null,
     sourceReplacementWarnings: sourceReplacementWarnings(branch?.commits || [], branch?.handoff || ''),
     verdict,
@@ -475,6 +480,11 @@ export function renderPacket(p) {
     for (const check of p.checks) L.push(`- ${check.command} · ${check.reason}`);
     L.push('');
   }
+  if (p.deferredSmokes?.reasons.length) {
+    L.push(`Регрессия отложена до beta/night: ${p.deferredSmokes.reasons.join('; ')}.`);
+    if (p.deferredSmokes.smokes.length) L.push(`Не обязательные task-запуски: ${p.deferredSmokes.smokes.join(', ')}.`);
+    L.push('');
+  }
   const c = p.changelog;
   if (c && (c.yes || c.no || c.visualEvidence)) {
     L.push('## Changelog и визуальное свидетельство');
@@ -535,11 +545,14 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
     try {
       // #754: выборке нужен контекст, чтобы приписать правку аргументов вызову;
       // риск по участкам (`diff`) остаётся на `--unified=0`.
-      const selection = selectSmokes(sh('git', ['-c', 'core.quotePath=false', 'diff', `--unified=${CALL_CONTEXT_LINES}`, '-M', '--no-color', '--no-ext-diff', '--no-textconv', `${base}..${ref}`], { cwd }));
+      const selection = selectSmokes(sh('git', ['-c', 'core.quotePath=false', 'diff', `--unified=${CALL_CONTEXT_LINES}`, '-M', '--no-color', '--no-ext-diff', '--no-textconv', `${base}..${ref}`], { cwd }),
+        { root: cwd, declaredSmokes: declaredTaskSmokes(cwd, number) });
       smokes = {
-        direct: selection.direct.filter((entry) => entry.strong).map(({ smoke, symbols }) => ({ smoke, symbols })),
+        direct: requiredSmokeEntries(selection).map(({ smoke, symbols }) => ({ smoke, symbols })),
         registered: selection.registered.map(({ smoke, symbols, files }) => ({ smoke, symbols, ...(files ? { files } : {}) })),
         visualMinimum: selection.visualMinimum,
+        explicit: selection.explicit,
+        deferred: selection.deferred,
       };
     } catch { smokes = null; }
     // Дерево без docs/reviews — для сравнения с якорем вердикта: git сам его не даёт,

@@ -148,6 +148,7 @@ on:
       - 'test/css-orphans.test.mjs'
       - 'test/data-hp-contract.test.mjs'
       - 'test/data/ci-profile-pushes.json'
+      - 'test/data/smoke-selection-history.json'
       - 'test/decision-context-860.test.mjs'
       - 'test/default-branch-workflows.test.mjs'
       - 'test/demo-fixture.test.mjs'
@@ -283,7 +284,10 @@ on:
       - 'test/status-snapshot.test.mjs'
       - 'test/styles-source.mjs'
       - 'test/switch-cycle-guard.test.mjs'
+      - 'test/task-check-reuse.test.mjs'
       - 'test/task-check-scope.test.mjs'
+      - 'test/task-check-source.test.mjs'
+      - 'test/task-check-workflow.test.mjs'
       - 'test/task-delivery-903.test.mjs'
       - 'test/task-packet.test.mjs'
       - 'test/task-visual-intent.test.mjs'
@@ -448,6 +452,7 @@ on:
       - 'test/css-orphans.test.mjs'
       - 'test/data-hp-contract.test.mjs'
       - 'test/data/ci-profile-pushes.json'
+      - 'test/data/smoke-selection-history.json'
       - 'test/decision-context-860.test.mjs'
       - 'test/default-branch-workflows.test.mjs'
       - 'test/demo-fixture.test.mjs'
@@ -583,7 +588,10 @@ on:
       - 'test/status-snapshot.test.mjs'
       - 'test/styles-source.mjs'
       - 'test/switch-cycle-guard.test.mjs'
+      - 'test/task-check-reuse.test.mjs'
       - 'test/task-check-scope.test.mjs'
+      - 'test/task-check-source.test.mjs'
+      - 'test/task-check-workflow.test.mjs'
       - 'test/task-delivery-903.test.mjs'
       - 'test/task-packet.test.mjs'
       - 'test/task-visual-intent.test.mjs'
@@ -911,13 +919,31 @@ jobs:
     if: needs.changes.outputs.tooling == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    env:
+      TASK_CHECK_FRESH: ${{ needs.changes.outputs.registry_fresh == 'true' || needs.changes.outputs.heavy == 'true' }}
+    outputs:
+      task_check: ${{ steps.receipt.outputs.claim || steps.task_reuse.outputs.claim }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with: { node-version: 22, cache: npm }
+      - name: Verify unchanged tooling producer
+        id: task_reuse
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/task-check-reuse-cli.mjs --probe=tooling
       - run: npm ci
+        if: steps.task_reuse.outputs.reused != 'true'
       - run: npm run test:tooling
+        if: steps.task_reuse.outputs.reused != 'true'
+      - name: Stamp direct tooling execution
+        id: receipt
+        if: steps.task_reuse.outputs.reused != 'true'
+        run: node scripts/task-check-reuse-cli.mjs --stamp=tooling
 
   hacs:
     name: "HACS: валидация репозитория"
@@ -954,6 +980,9 @@ jobs:
     needs: [preflight, changes, tooling, hacs, hassfest]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -971,3 +1000,8 @@ jobs:
           path: artifacts/ci-proof/proof.json
           retention-days: 30
           if-no-files-found: error
+      - name: CAS publish immutable scoped execution addresses
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci-registry-cli.mjs --publish-proof=artifacts/ci-proof/proof.json
