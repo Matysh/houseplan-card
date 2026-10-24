@@ -1,6 +1,9 @@
 """#1045 real authenticated WS/store boundary; ordinary inputs, no planner replacement."""
 import asyncio
 import copy
+import json
+from functools import partial
+from pathlib import Path
 
 import pytest
 from homeassistant.auth.const import GROUP_ID_READ_ONLY, GROUP_ID_USER
@@ -8,6 +11,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from test_wall_node_delete import CASES, fixture
 
 from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN
+from custom_components.houseplan.import_export import (
+    create_preview,
+    get_candidate,
+    parse_document,
+    prepare_apply,
+)
 from custom_components.houseplan.store import get_data
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
@@ -81,6 +90,105 @@ async def test_issue_1045_ws_atomic_concurrency_inverse_store_and_reload(hass, h
     reloaded = (await client.receive_json())["result"]
     assert reloaded["config"] == after and reloaded["rev"] == redo["result"]["rev"]
     assert (await runtime.store.async_load())["layout"] == unrelated_layout
+
+
+@pytest.mark.parametrize("kind", ["full", "space"])
+@pytest.mark.parametrize("current_state", ["accepted", "undo"])
+async def test_issue_1045_accepted_delete_export_import_roundtrip(
+    hass, hass_ws_client, hass_admin_user, kind, current_state,
+):
+    """Restore the accepted result through its real full/copy import owners."""
+    entry, client, before = await setup(hass, hass_ws_client)
+    runtime = get_data(hass)
+    await client.send_json_auto_id(message(before))
+    deleted = await client.receive_json()
+    assert deleted["success"], deleted
+    after = deleted["result"]
+    source_space = copy.deepcopy(after["config"]["spaces"][0])
+    assert len(source_space["partitions"]) == 1
+    assert source_space["openings"][0]["host"] == {"kind": "partition", "id": "a", "t": .75}
+
+    # The public export endpoint reads the accepted server-owned store pair.
+    await client.send_json_auto_id({
+        "type": "houseplan/export/create", "kind": kind,
+        **({"space_id": "f"} if kind == "space" else {}), "card_version": "1045-roundtrip",
+    })
+    exported = await client.receive_json()
+    assert exported["success"], exported
+    raw = json.dumps(exported["result"]["document"]).encode()
+    parsed = parse_document(raw)
+    assert parsed["payload"]["config"]["spaces"][0]["openings"] == source_space["openings"]
+
+    # A full file replaces this installation; a space file always adds an
+    # independent copy. Neither is an ordinary config/set replay of lineage.
+    if current_state == "undo":
+        await client.send_json_auto_id(message(after, direction="undo", before_space=before["config"]["spaces"][0]))
+        undone = await client.receive_json()
+        assert undone["success"] and undone["result"]["config"] == before["config"]
+    config_data = copy.deepcopy(await runtime.config_store.async_load())
+    layout_data = copy.deepcopy(await runtime.store.async_load() or {})
+    current_space = copy.deepcopy(config_data["config"]["spaces"][0])
+    preview = await hass.async_add_executor_job(partial(
+        create_preview, runtime, raw, owner_id=hass_admin_user.id, duplicate_policy="skip",
+        current_config_data=config_data, current_layout_data=layout_data,
+        config_root=Path(hass.config.path("")),
+    ))
+    assert preview["preview"]["source"] == "same"
+    assert not preview["preview"]["confirmation_required"]
+    assert preview["preview"]["opening_repairs"]["detached"] == 0
+    candidate = get_candidate(runtime, preview["token"], hass_admin_user.id)
+    prepared, prepared_layout, _ = prepare_apply(
+        candidate, config_data["config"], layout_data.get("layout", {}), confirm_missing_content=False,
+    )
+    imported_id = "f" if kind == "full" else preview["preview"]["space_id"]
+    imported = next(space for space in prepared["spaces"] if space["id"] == imported_id)
+    if kind == "space":
+        assert imported_id != "f"
+        assert next(space for space in prepared["spaces"] if space["id"] == "f") == current_space
+        assert imported["partitions"][0]["id"] != "a"
+        assert imported["openings"][0]["id"] != source_space["openings"][0]["id"]
+    else:
+        assert len(prepared["spaces"]) == 1
+        assert imported["partitions"] == source_space["partitions"]
+        assert imported["wall_segments"] == source_space["wall_segments"]
+        assert imported["openings"] == source_space["openings"]
+    assert [{key: value for key, value in wall.items() if key != "id"}
+            for wall in imported["partitions"]] == [
+        {key: value for key, value in wall.items() if key != "id"} for wall in source_space["partitions"]
+    ]
+    opening = imported["openings"][0]
+    assert {key: value for key, value in opening.items() if key not in {"id", "host"}} == {
+        key: value for key, value in source_space["openings"][0].items() if key not in {"id", "host"}
+    }
+    assert opening["host"] == {"kind": "partition", "id": imported["partitions"][0]["id"], "t": .75}
+    assert imported["rooms"] == source_space["rooms"]
+    assert imported["future"] == source_space["future"]
+
+    apply_message = {
+        "type": "houseplan/import/apply", "token": preview["token"],
+        "expected_config_rev": preview["expected_config_rev"],
+        "expected_layout_rev": preview["expected_layout_rev"],
+    }
+    # A real stale apply is atomic and leaves this same preview usable.
+    await client.send_json_auto_id({**apply_message, "expected_config_rev": config_data["rev"] - 1})
+    refused = await client.receive_json()
+    assert not refused["success"] and refused["error"]["code"] == "conflict", refused
+    assert await runtime.config_store.async_load() == config_data
+    assert (await runtime.store.async_load() or {}) == layout_data
+    await client.send_json_auto_id(apply_message)
+    applied = await client.receive_json()
+    assert applied["success"], applied
+    assert applied["result"]["config_rev"] == config_data["rev"] + 1
+    assert applied["result"]["layout_rev"] == layout_data.get("rev", 0) + 1
+    assert applied["result"]["space_id"] == (None if kind == "full" else imported_id)
+    assert (await runtime.config_store.async_load())["config"] == prepared
+    assert (await runtime.store.async_load())["layout"] == prepared_layout
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    reloaded = await client.receive_json()
+    assert reloaded["success"] and reloaded["result"]["config"] == prepared
+    assert reloaded["result"]["rev"] == applied["result"]["config_rev"]
 
 
 @pytest.mark.parametrize(("group", "admin_only", "allowed"), [

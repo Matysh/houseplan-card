@@ -196,6 +196,27 @@ narrow intent; authenticated backend proof remains the separate HA test below.
 The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authenticated
 groups, concurrent CAS, stores, metadata projection and integration reload; it
 never replaces the product planner. Run it with the current supported HA harness.
+The AC5 transfer follow-up executes the accepted hosted-partition result through
+the authenticated Delete and export endpoints, JSON parse, the real preview /
+prepare owner, authenticated import/apply, both stores and integration reload.
+Four ordinary inputs distinguish full same-instance restore from independent
+space-copy ID/host remapping, each against the accepted state and its exact Undo.
+The copied floor leaves the original untouched; the opening keeps its physical
+fields, reflection and host fraction, with zero detached repairs. A stale import
+CAS preserves the previous store pair and preview, followed by a valid apply.
+This is not an ordinary config/set replay; that writer's strict lineage refusal
+remains covered. On unchanged product source `52ae9f0864e8557c91130bb5409960bffae3b4c5`,
+the complete HA file passes 25/25 (including these four cases), with explicit
+ruff PASS: WSL Python 3.14.7, HA 2026.8.3, harness 0.13.357. Recipe:
+`PYTHONDONTWRITEBYTECODE=1 <HA-venv>/bin/python -m pytest tests_backend/test_ha_wall_node_delete.py -q -p no:cacheprovider`.
+The final test file SHA-256 is
+`3ae54f4852bba1d44cea81ebcccb20c431a821d740586d676bcbcce7e9dc582d`;
+local receipt `artifacts/1045-import-roundtrip-final.log`
+has SHA-256 `0cd1a084b21a39dc79b5395d015c4279c37b65baf1e7f1b73e908072b2974607`.
+The first attempt only failed fixture setup (`hass_user` is absent in this
+harness); `artifacts/1045-import-roundtrip-first.log` is retained with SHA-256
+`235874b83843c84bb5cac263862bab9e65b145bf8205a6eb684bf8007388f7a6`.
+These receipts describe this source and test material, not a later combined build.
 The CI return on 07030954 caught an unsorted WS import (ruff I001); the ordinary
 quality-neighbour test also caught the new unavailable code missing from
 `ERROR_CODES`. Both are fixed without changing deletion/inverse algorithms:
