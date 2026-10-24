@@ -7,6 +7,7 @@ import { installStaticStability, resetGoldenStability } from './static-stability
 export { resetGoldenStability } from './static-stability.mjs';
 import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
   prepareBatteryZigbeeOverlap, batteryZigbeeProbe, batteryZigbeeClip } from './device-battery.mjs';
+import { makeZigbeeLedFixture, prepareZigbeeLed } from './zigbee-led.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -61,6 +62,7 @@ const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
 })() : scenario.deviceContacts ? makeDeviceContactsFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
+  : scenario.zigbeeLed ? makeZigbeeLedFixture()
   : scenario.fixture === 'large'
   ? makeLargeHouseFixture({ includeStairs: false })
   : makeVisualMatrixFixture({
@@ -2713,6 +2715,7 @@ export async function prepareGoldenScenario(page, scenario) {
     await page.mouse.move(0, 0);
   }
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
+  if (scenario.zigbeeLed) result.zigbeeLed = await prepareZigbeeLed(page);
   if (scenario.directLqi) {
     for (const [id, lqi] of Object.entries(scenario.directLqi)) {
       const line = page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${id}"] .lqi`);

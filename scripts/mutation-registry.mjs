@@ -13914,6 +13914,42 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-led-svg-endpoint-dropped-1004',
+    guard: 'node demo/smoke_zigbee_led_topology.mjs',
+    because: '#1004 native icon/LED/LED pairs require a current SVG endpoint, independently of the hidden icon slot.',
+    patches: [{ file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '    if (marker instanceof SVGPathElement) return readZigbeeLedEndpoint(marker, this);',
+      replace: '    if (marker instanceof SVGPathElement) return null;',
+    }],
+  },
+  {
+    id: 'zigbee-led-first-vertex-anchor-1004',
+    guard: 'node demo/smoke_zigbee_led_topology.mjs',
+    because: '#1004 native half-length/arrow/halo and analytic wall-inset witnesses distinguish the painted midpoint from a stored vertex.',
+    patches: [{ file: 'src/zigbee-topology-endpoint.ts',
+      find: '  const anchor = path.getPointAtLength(length / 2);',
+      replace: '  const anchor = path.getPointAtLength(0);',
+    }],
+  },
+  {
+    id: 'zigbee-led-halo-below-body-1004',
+    guard: 'node demo/smoke_zigbee_led_topology.mjs',
+    because: '#1004 ordinary hover on/off ring pixels on a genuinely wide tube require the small LED halo above its borrowed body paint.',
+    patches: [{ file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '    .halo[data-hp="zigbee-topology-led-anchor"] { z-index: 8; }',
+      replace: '    .halo[data-hp="zigbee-topology-led-anchor"] { z-index: 7; }',
+    }],
+  },
+  {
+    id: 'zigbee-led-retired-path-keeps-hover-1004',
+    guard: 'node demo/smoke_zigbee_led_topology.mjs',
+    because: '#1004 replacing the hovered strip with its differently positioned icon must retire the old native pointer ownership without another tick.',
+    patches: [{ file: 'src/hp-zigbee-topology-overlay.ts',
+      find: "        if (childrenChanged || records.some((record) => record.attributeName === 'data-hp-device-hover')) this._adoptPointerHover();",
+      replace: "        if (records.some((record) => record.attributeName === 'data-hp-device-hover')) this._adoptPointerHover();",
+    }],
+  },
+  {
     id: 'zigbee-topology-endpoint-cleanup-skipped',
     guard: 'node demo/smoke_zigbee_topology_hover.mjs',
     because: 'transient endpoint ownership must not survive leave, modality/mode changes or '
@@ -13922,7 +13958,7 @@ const MUTANT_DEFINITIONS = [
       file: 'src/hp-zigbee-topology-overlay.ts',
       find: '  private _clearEndpointOwnership(): void {\n'
         + '    for (const marker of this._endpointElements) marker.removeAttribute(ENDPOINT_ATTRIBUTE);\n'
-        + '    for (const marker of this._parent?.querySelectorAll<HTMLElement>(`[${ENDPOINT_ATTRIBUTE}]`) || []) {\n'
+        + '    for (const marker of this._eventRoot?.querySelectorAll(`[${ENDPOINT_ATTRIBUTE}]`) || []) {\n'
         + '      marker.removeAttribute(ENDPOINT_ATTRIBUTE);\n'
         + '    }\n'
         + '    this._endpointElements.clear();\n'

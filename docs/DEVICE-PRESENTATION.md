@@ -296,6 +296,18 @@ nothing: the icon works normally. No pulses and no alarm red on the stripe.
 icon; temporarily unavailable keeps it as a dashed grey stripe. In the device
 catalogue the marker stays «On the plan».
 
+Opt-in admin/mouse/View topology includes the same real radio device when its
+icon is replaced by a strip (#1004). The endpoint is halfway along the current
+derived visible SVG path, projected through its own CTM, including 2.5D lift;
+it is independent of the hidden icon slot, value badge and hovered end. A
+14-CSS-pixel halo stays fixed on screen. The participant's actual top strokes
+are lent to a pointer-transparent layer above the routes, with their original
+alpha/mask/dashes, while its hit/focus/actions remain with the LED renderer.
+Only those top strokes are hidden temporarily: keeping two off cores would
+compound their alpha. Hover/representation/context retirement restores them
+synchronously through the existing endpoint ownership. No source, stored
+point, control, offline style or topology permission is changed.
+
 ## Implementation notes
 
 ### Derived Flat contacts (#866)

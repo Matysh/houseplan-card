@@ -194,6 +194,13 @@ and bubbles are above room names and unrelated device markers; the complete
 source and locally connected marker shells stay above the topology. The layer
 remains pointer-transparent and therefore does not change any existing action.
 
+The same diagnostic gesture works on a device represented by an LED strip
+(#1004). Its real visible path is highlighted, with a small fixed-screen halo
+at half the path length; the arrow approaches that halo rather than the
+strip's bounding box. Either hovered end uses the same endpoint. Existing
+mouse/admin/View gates and physical-radio mapping apply; passive value badges,
+touch, kiosk and editors do not become new topology entry points.
+
 The outgoing remote-space caption includes the destination device name in
 parentheses when known (#802). While actual diagnostic text badges are visible,
 the matching device's pointer tooltip moves to a free part of the visible stage;

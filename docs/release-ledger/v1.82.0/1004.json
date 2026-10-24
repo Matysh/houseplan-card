@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "issue": 1004,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already represents devices as LED strips, but its topology overlay accepts only HTMLElement/.dev endpoints. Restore the existing real-radio diagnostic for LED SVG targets using the agreed visible-path midpoint, fixed-screen halo and actual-shape paint; no topology source, permission, storage or action contract changes.",
+  "summary": {
+    "ru": "Zigbee-связи и стрелки доступны и для устройств, показанных LED-лентой.",
+    "en": "Zigbee links and arrows also work for devices represented by LED strips."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      { "id": "zigbee-led-flat-light", "expectation": "new", "reason": "Real directed routes between open/closed LED participants and an icon, fixed-screen midpoint halos and preserved off-core paint in Flat/light." },
+      { "id": "zigbee-led-iso-dark", "expectation": "new", "reason": "The same current-path endpoints and inert participant paint with raised LED bodies in 2.5D/dark." }
+    ],
+    "smokes": ["smoke_zigbee_led_topology.mjs"]
+  }
+}

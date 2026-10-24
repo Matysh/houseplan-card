@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Zigbee links and directional arrows also work for devices shown as LED
+  strips. A small halo marks the midpoint of the visible path; participant
+  highlighting follows its shape and the current plan camera. (#1004)
 - Keep a continuous observed live tail behind a moving vacuum while the
   integration path catches up. Exact native points remain separate; confirmed
   Dreame cleanup starts no longer show the previous current trail. Diagnostics
