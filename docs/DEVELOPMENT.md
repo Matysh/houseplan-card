@@ -639,6 +639,30 @@ semantics; the final normal push hook checks the complete accepted range.
 Targeted proofs supplement gate:small; full regression and mutation execution
 remain in their existing CI/nightly contours.
 
+After accepted Decor/CI integration `b3dbea2811`, the complete Windows
+Node 22.23.3 / Rollup 4.62.2 build at `011c90b71` measures View 340624 B gzip,
+lazy editor 353367 B, Select-only 21458 B, raw dist 3481506 B and 6225 host
+references. The accepted source's existing build at `2170fd3c` independently
+verifies 339980 / 352807 / 18287 / 3464603 B and 6198 references; accepted
+`b3dbea2811` changes only its CODE document and index, not any build input.
+The actual additions are therefore 644 / 560 / 3171 / 16903 B and 27 references,
+not a sum or maximum of branch baselines. Product fingerprint is
+`9296abfaf7f876f14c8698cc705c9d85e680612a822278fc65a4a2884989aced`.
+The same explicit owner permission above records only raw reference 3481506,
+hostRefs 6225 and the exact Select hard cap 21458 (two bytes above its earlier
+21456 boundary, no reserve). The cost remains the existing lazy Delete
+kernel/menu/writer and capability/authority seams. Splitting another writer or
+geometry owner to remove this small cost is disproportionate; byte golfing
+and cosmetic product deletion are avoided. Every ratchet band, initial View
+and lazy-editor ceiling, absolute View/ABI and runtime-latency guard remains.
+Actual card lines are 13293 against reference 13272 plus the existing 50-line
+band, so no core reference or blank-line cleanup is needed.
+The current #1060 planner yields the same 29 required smokes locally and in
+CI, with no Golden demand. Explicit AC/registered links and the bounded visual
+minimum remain required; weak/broad inference is recorded as deferred until
+beta/night. Historical 220-smoke evidence is not relabelled as a new combined
+execution. The final fresh executions, source and hook belong to the handoff.
+
 ## Direct Zigbee LQI #1029
 
 Run `node --test test/device-signal-runtime.test.mjs test/device-signal.test.mjs`

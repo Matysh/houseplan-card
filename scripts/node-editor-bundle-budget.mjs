@@ -26,6 +26,8 @@ const gzip = extra.reduce((sum, path) => sum + byPath.get(path).gzipBytes, 0);
 // This is still a hard Select-only cap; View/editor ceilings remain unchanged.
 // #898, owner decision 2026-10-14: less than 10 % headroom -> +10 %, 18432 -> 20276 B.
 // #1045: approved small byte increase to the measured Delete graph, no headroom.
-const budget = 21_456;
+// Accepted #1038 integration measures 21458 B: the same owner permission adds
+// only these two observed bytes, no reserve and no other budget changes.
+const budget = 21_458;
 assert.ok(gzip <= budget, `${gzip} B gzip exceeds the Select-only ${budget} B budget`);
 console.log(`Select-only node graph: ${gzip} B gzip, budget ${budget}; existing bundle ceilings unchanged`);
