@@ -89,7 +89,15 @@ try{
     c.hass={...c.hass,callWS:async message=>{
       window.__1038Calls.push(message.type);
       if(message.type==='houseplan/config/set')window.__1038Writes.push(structuredClone(message));
-      return call(message);
+      if(message.type==='houseplan/assets/resolve')return {assets:message.asset_ids.map(asset_id=>({
+        asset_id,name:'synthetic.svg',mime:'image/svg+xml',width:20,height:10,bytes:100,
+        url:`/api/houseplan/content/assets/_/${asset_id}.svg`,used_by:[],
+      }))};
+      if(message.type==='houseplan/content/sign')return {urls:Object.fromEntries(message.paths.map(path=>[
+        path,'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10"><path fill="#7856ab" d="M0 0h20v10H0z"/></svg>'),
+      ]))};
+      const response=await call(message);
+      return message.type==='houseplan/config/get'?{...response,decor_assets_api:1}:response;
     }};
   });
   await seed(records());
@@ -183,6 +191,14 @@ try{
       check(`group.matrix.${kind}.opposite_alpha_kept`,after.map(x=>x.opacity),[first.opacity,.8]);
     }else{
       check('group.image.no_hex',await panel.locator('[data-property="stroke"] [data-field="stroke-hex"]').count(),0);
+      const images=card.locator('.decorlayer image[data-kind="image"]');
+      await images.first().waitFor();check('group.image.real_svg_assets',await images.count(),2);
+      await alpha().fill('45');await settle();
+      check('group.image.all_members_preview',await images.evaluateAll(els=>els.map(el=>Number(el.getAttribute('opacity')))),[.45,.45]);
+      check('group.image.preview_not_persisted',(await saved()).map(x=>x.opacity),[first.opacity,.8]);
+      check('group.image.preview_no_write',(await state()).writes,start.writes);
+      await alpha().press('Escape');await settle();
+      check('group.image.cancel_restores_paint',await images.evaluateAll(els=>els.map(el=>Number(el.getAttribute('opacity')))),[first.opacity,.8]);
       const imagePicker=panel.locator('[data-property="stroke"] hp-color-opacity');
       await imagePicker.locator('.trigger').click();
       check('group.image.popup_alpha_only',await imagePicker.locator('.sv-field,.preview,[data-field="colour-hex"],[data-field="colour-none"]').count(),0);

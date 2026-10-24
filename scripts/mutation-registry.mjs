@@ -21201,6 +21201,9 @@ const decorLine1046Cases = [
 ];
 
 const decorGroup1038Cases = [
+  {id:'decor-group-image-alpha-preview-omitted-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC4: actual resolved SVG image elements must preview every selected alpha before Save and restore after Escape; a pure image projection test cannot prove the Properties-to-mounted-image bridge.',
+    patches:[{file:'src/houseplan-card.ts',find:'projectDecorImage({ ...sh, opacity: style.opacity }, W, H)',replace:'projectDecorImage(sh, W, H)'}]},
   {id:'decor-group-mixed-labels-truncated-1038',guard:'node demo/smoke_decor_multiselect.mjs',
     because:'#1038 AC4: both independent mixed-value inputs must fit the actual full phrase in the existing Properties panel; only computed browser font/column width reveals clipping.',
     patches:[{file:'src/editors/properties/catalog.ts',find:"value: state, control: 'group-color', wide: true",replace:"value: state, control: 'group-color', wide: false"}]},
