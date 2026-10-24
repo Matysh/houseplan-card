@@ -1,5 +1,22 @@
 # Development and deployment
 
+## Config authority smoke #1052
+
+`node demo/smoke_config_authority.mjs` records B's config/layout read counts
+before releasing the held A write. Both mandatory reads must have started;
+late A completion and its public config event must leave those counts unchanged.
+The direct-LQI capability probe is an independent initial config read, so a fixed
+total of one was an invalid oracle after #1029. The ordinary pre-fix run and
+read-only phase/stack diagnostics reproduced two reads before A and two after A.
+All authority, write-counter and accepted-B assertions remain. The existing
+`config-old-subscription-interrupts-new-paired-load` witness retains the actual
+subscription guard; only static readiness is checked during development.
+`smoke_readonly_cold_start.mjs` likewise records the initial config count after
+the complete cold frame. Exactly one layout read establishes the mandatory
+pair; neither optional subscription failures nor clicking the active tab may
+increase either count. The ordinary pre-fix diagnostic observed config 2/layout
+1 both before and after the observation window, with the same two initial stacks.
+
 ## Decor creation selection #1047
 
 `smoke_decor_creation_selection.mjs` draws repeated A/B/C lines, rectangles and
