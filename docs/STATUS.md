@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5262 · pure backend 627 · HA-harness backend 528 · browser smokes 432 (`npm run inventory`) |
+| Tests | Node unit 5264 · pure backend 627 · HA-harness backend 528 · browser smokes 433 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -30,6 +30,11 @@ tap action and right click. Only a loaded writer outside kiosk can open it;
 denied users receive a permission hint. Cold and deferred entry retain current
 authority/navigation and resolve the current visible target before opening.
 The action persists through copy and full/space transfer without migration.
+
+- #1056 restores the mounted full card after connection/user replacement inside
+  the same HA object through the existing coalesced intake and read owner. The
+  named ordinary witness separates mandatory config/layout from capability
+  projection and retains ABA, held replies and initial missing-HA controls.
 
 Own availability (#1026) separates available/off, confirmed own unavailable and
 unknown data. Only glyph/value and badge contents fade on confirmed offline;

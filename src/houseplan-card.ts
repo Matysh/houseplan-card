@@ -576,9 +576,14 @@ export class HouseplanCard extends LitElement {
       : `${this._editorSecondaryContextId}:${JSON.stringify(this._editorRuntime?.properties.identity)}`);
   }
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
+    let forceHass = false;
     if (name === 'hass') {
       const authorityChanged = this._configWriteContext.observe(this.hass);
       if (authorityChanged) {
+        // A mounted foreign authority needs one coalesced Lit intake even if
+        // HA reused its object. Detached demand stays with the read owner.
+        forceHass = this.isConnected;
+        if (forceHass) this._renderLife.retireHass();
         this._haVacuumDockRestartApi = null;
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._liveSyncConnection = null;
@@ -601,7 +606,7 @@ export class HouseplanCard extends LitElement {
       // its new read intent independently of Lit/visual snapshot deduplication.
       if (authorityChanged) this._read.defer();
     }
-    if (name === 'hass' && this.hass && this._liveRt) {
+    if (name === 'hass' && this.hass && this._liveRt && !forceHass) {
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
       const render = this._liveRt.hass(
         oldValue as HassRenderSnapshot | null | undefined, this.hass,
@@ -613,7 +618,7 @@ export class HouseplanCard extends LitElement {
     if (name !== undefined) this._terminalFrame = 0;
     if (this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
     this._liveRt?.clear();
-    super.requestUpdate(name, oldValue, options);
+    super.requestUpdate(name, oldValue, forceHass ? { ...options, hasChanged: () => true } : options);
   }
 
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;

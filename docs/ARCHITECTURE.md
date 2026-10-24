@@ -1610,6 +1610,9 @@ still recognised in stored config but no longer served
   replacement/navigation fence every awaited adoption and optional tail.
   Context is observed per HA assignment before Lit coalesces A→B→A; transport
   restart waits for the current usable authority, including a temporary HA gap.
+  A known connection/user replacement on a mounted full card also retires its
+  consumed HA snapshot identity (#1056); even a reused object reaches the normal
+  Lit intake once for the final authority, without an extra HA tick or read owner.
   Static attach revalidates the server; a full long return without HA defers.
   A foreign HA assigned while detached also retains a current read intent
   after retiring the accepted document (#1054). Reconnect consumes that intent

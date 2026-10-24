@@ -1,0 +1,316 @@
+{
+  "schema": 1,
+  "issue": 1056,
+  "scope": "Ordinary public HA inputs; offline fixture, not live HA or full regression.",
+  "acceptedBefore": "e8c618924cfa2845dcf1073f65404cd093efed10",
+  "candidateProduct": "734f6ef81b4625509dea0c571a2b81578f5176ea",
+  "subsequentChanges": "Only B witness precision and this C record; product/build inputs are unchanged from the measured candidate.",
+  "environment": {
+    "browser": "Playwright1.62.0 / Chromium151.0.7922.34 headless-shell rev1234, attested on every launched instance",
+    "runtime": "WSL Ubuntu24.04 / Node22.23.3",
+    "build": {
+      "node": "v22.23.3",
+      "platform": "win32",
+      "execPath": "C:\\Users\\Sergey\\AppData\\Local\\houseplan-toolchain\\node-v22.23.3-win-x64\\node.exe",
+      "rollup": "4.62.2"
+    }
+  },
+  "before": {
+    "recipeSha256": "02c351b066ec626ad335d8142c503a35e9f0fb511c10bc14d2b39bfa63f0744b",
+    "sourceFingerprint": "69757d51fc282a65d82c99e70eff41f169e553933ff091aa8aa45c139c0883cd",
+    "checks": 54,
+    "passed": 39,
+    "failed": 15,
+    "exitCode": 1,
+    "facts": "Mounted same-object connection and same-connection user replacement make zero mandatory config/layout reads and render no rooms. Separate model_version capability read occurs once. New-reference B, ordinary same-context and initial unusable-to-usable same-object controls pass. No writers/editor load/detach input.",
+    "rawReceipt": "artifacts/1056-native-BEFORE-e8.log",
+    "rawReceiptSha256": "6fb7e8f0c50af9587e9f7f63bf2da843102eb6384cdb0e17a44078fa1de50d78"
+  },
+  "after": {
+    "recipe": "demo/smoke_mounted_authority.mjs",
+    "recipeSha256": "a3dd32cad15981ebd7da3301673b33a78d182e6150727512ae47e84e1c227023",
+    "sourceFingerprint": "d5c9c602d43f0c6f317457b4fa9a81f57a04b49d031f391499eb08730f99a5cc",
+    "checks": 69,
+    "passed": 69,
+    "failed": 0,
+    "exitCode": 0,
+    "original54AllPass": true,
+    "cases": {
+      "connection": {
+        "checks": 8,
+        "mandatory": [
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 1,
+            "layout": 1
+          },
+          {
+            "config": 0,
+            "layout": 0
+          }
+        ],
+        "capability": [
+          0,
+          1,
+          0
+        ],
+        "intake": {
+          "sequenceDelta": 1,
+          "traceDelta": 1
+        },
+        "rooms": 4
+      },
+      "user": {
+        "checks": 8,
+        "mandatory": [
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 1,
+            "layout": 1
+          },
+          {
+            "config": 0,
+            "layout": 0
+          }
+        ],
+        "capability": [
+          0,
+          1,
+          0
+        ],
+        "intake": {
+          "sequenceDelta": 2,
+          "traceDelta": 1
+        },
+        "rooms": 4
+      },
+      "new-object": {
+        "checks": 8,
+        "mandatory": [
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 1,
+            "layout": 1
+          },
+          {
+            "config": 0,
+            "layout": 0
+          }
+        ],
+        "capability": [
+          0,
+          1,
+          0
+        ],
+        "intake": {
+          "sequenceDelta": 1,
+          "traceDelta": 1
+        },
+        "rooms": 4
+      },
+      "ABA": {
+        "checks": 9,
+        "mandatory": [
+          {
+            "config": 1,
+            "layout": 1
+          },
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 0,
+            "layout": 0
+          }
+        ],
+        "capability": [
+          0,
+          0,
+          0
+        ],
+        "intake": {
+          "sequenceDelta": 1,
+          "traceDelta": 1
+        },
+        "rooms": 4
+      },
+      "held-old": {
+        "checks": 11,
+        "mandatory": [
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 1,
+            "layout": 1
+          },
+          {
+            "config": 1,
+            "layout": 1
+          }
+        ],
+        "capability": [
+          0,
+          1,
+          1
+        ],
+        "intake": {
+          "sequenceDelta": 2,
+          "traceDelta": 2
+        },
+        "rooms": 4
+      },
+      "held-current": {
+        "checks": 10,
+        "mandatory": [
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 1,
+            "layout": 1
+          },
+          {
+            "config": 0,
+            "layout": 0
+          }
+        ],
+        "capability": [
+          0,
+          1,
+          0
+        ],
+        "intake": {
+          "sequenceDelta": 1,
+          "traceDelta": 1
+        },
+        "rooms": 4
+      },
+      "same-context": {
+        "checks": 8,
+        "mandatory": [
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 0,
+            "layout": 0
+          }
+        ],
+        "capability": [
+          0,
+          0,
+          0
+        ],
+        "intake": {
+          "sequenceDelta": 1,
+          "traceDelta": 1
+        },
+        "rooms": 4
+      },
+      "missing-initial": {
+        "checks": 7,
+        "mandatory": [
+          {
+            "config": 1,
+            "layout": 1
+          },
+          {
+            "config": 0,
+            "layout": 0
+          },
+          {
+            "config": 0,
+            "layout": 0
+          }
+        ],
+        "capability": [
+          0,
+          0,
+          0
+        ],
+        "intake": null,
+        "rooms": 4
+      }
+    },
+    "rawReceipt": "artifacts/1056-native-AFTER-trace.log",
+    "rawReceiptSha256": "1c3ff9d44130945b0abfebd9d715fdbd7df6692598611affac47a91ae8030a25"
+  },
+  "firstAfterDiagnostic": {
+    "checks": 61,
+    "failed": 1,
+    "original54AllPass": true,
+    "reason": "The additional _hassSequence observation also counts direct-signal cache retirement on same-connection user changes. Actual user sequenceDelta2 versus the specific hass-snapshot traceDelta1 confirms the distinction. The observer now reads the existing intake trace and fails on trace truncation; original functional assertions and product A remain unchanged.",
+    "rawReceipt": "artifacts/1056-native-AFTER-734.log",
+    "rawReceiptSha256": "e79cb26c0583a8b23f3628b059ec9750c4ee628c4833a71093c3e22070697d83"
+  },
+  "neighbors": {
+    "runner": "scripts/browser-selected.mjs runSelected",
+    "passed": [
+      "smoke_detached_authority.mjs",
+      "smoke_device_hit_capsules.mjs",
+      "smoke_render_invalidation.mjs",
+      "smoke_sensor_tick_freshness.mjs",
+      "smoke_view_recovery.mjs",
+      "smoke_view_runtime_recovery.mjs",
+      "smoke_wall_node_connected.mjs"
+    ],
+    "authority": "Seven remaining canonical selected cases, together with the separately executed named native, cover all eight computed task checks. Golden mode none. No baseline or mutation execution."
+  },
+  "units": {
+    "command": "node node_modules/typescript/bin/tsc -p tsconfig.test.json; node scripts/fix-test-build.mjs; node --test test/houseplan-render-lifecycle.test.mjs test/card-read-lifecycle.test.mjs test/config-write-context.test.mjs test/config-reload-authority.test.mjs",
+    "passed": 23,
+    "failed": 0
+  },
+  "measurements": {
+    "baseline": {
+      "acceptedSource": "e8c618924cfa2845dcf1073f65404cd093efed10",
+      "measuredSource": "b044e57b5aae518c467867ab6de084d7329072ec",
+      "reason": "Reused actual Windows #1019 post-hook build; b044→accepted e8 changes only review docs and shares exact product/build input fingerprint. No arithmetic combination of branch deltas.",
+      "fingerprint": "69757d51fc282a65d82c99e70eff41f169e553933ff091aa8aa45c139c0883cd",
+      "manifestSha256": "2ff2e928bff83c4e411aa880819c87716b74f4274c9c1e0572a6a447dd795cdd",
+      "raw": 3431714,
+      "viewGzip": 339415,
+      "editorGzip": 343989
+    },
+    "candidate": {
+      "source": "734f6ef81b4625509dea0c571a2b81578f5176ea",
+      "fingerprint": "d5c9c602d43f0c6f317457b4fa9a81f57a04b49d031f391499eb08730f99a5cc",
+      "manifestSha256": "8bb4abbd14445b92d192ce6846afb94967f42020923691f331f84ec74e04813a",
+      "raw": 3431852,
+      "viewGzip": 339476,
+      "editorGzip": 344014
+    },
+    "delta": {
+      "raw": 138,
+      "viewGzip": 61,
+      "editorGzip": 25
+    },
+    "budget": "PASS; references, bands and absolute/performance limits unchanged; real manifest/file hashes, lengths and gzip level9 verified."
+  },
+  "static": {
+    "definitions": 1844,
+    "sourceReads": 1004,
+    "browserGuards": 503,
+    "executions": 0,
+    "caught": "unknown; nightly only"
+  },
+  "boundaries": "No independent read owner/timer/listener/TTL, public config/API or migration. Known mounted authority changes force one normal Lit hass update; detached behavior remains with #1054 owner. Stable-fix provenance is source/history reading of v1.82.0, not a runtime stable execution."
+}
