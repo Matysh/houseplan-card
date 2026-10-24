@@ -16,7 +16,7 @@ import { sourcePicker } from '../form-kit';
 import { liveText, liveTextToken } from '../../logic';
 import { decorStyleOf } from '../decor/geometry';
 import { decorSelectionMembers } from '../decor/selection';
-import type { DecorGroupColorState, DecorGroupStylePatch } from '../decor/group-edit';
+import type { DecorGroupStylePatch } from '../decor/group-edit';
 import { parseGroupColor } from './group-color-draft';
 import { PropertiesFieldController, PropertiesCommandLane, parsePropertiesNumber, propertiesIdentityKey, samePropertiesValue,
   type PropertiesIdentity, type PropertiesCommit, type PropertiesParse, type PropertiesDraft } from './controller';
