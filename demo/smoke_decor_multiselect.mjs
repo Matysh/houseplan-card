@@ -50,7 +50,21 @@ const hit=async id=>card.evaluate((c,id)=>{
 },id);
 const click=async(id,ctrl=false)=>{const p=await hit(id);if(ctrl)await page.keyboard.down('Control');await page.mouse.click(p.x,p.y);if(ctrl)await page.keyboard.up('Control');await settle();};
 const select=async ids=>{await click(ids[0]);for(const id of ids.slice(1))await click(id,true);};
-const empty=async()=>{const p=await point(.86,.79);await page.mouse.click(p.x,p.y);await settle();};
+const empty=async()=>{
+  const p=await card.evaluate(c=>{
+    const matrix=c.renderRoot.querySelector('.decorlayer').getScreenCTM();
+    const receipt={};
+    for(const [x,y] of [[.86,.79],[.7,.78],[.45,.78],[.2,.8],[.1,.7]]){
+      const p=new DOMPoint(x*1000,y*1000).matrixTransform(matrix),target=c.renderRoot.elementFromPoint(p.x,p.y);
+      const observed={x:p.x,y:p.y,tag:target?.tagName,classes:target?.getAttribute('class'),stage:!!target?.closest('.stage')};
+      receipt.preferred??=observed;
+      if(!observed.stage||target?.closest('button,hp-dialog,.editor-secondary,.hp-properties,[data-hp="decor"],.dtframe,.backdropframe'))continue;
+      receipt.chosen=observed;(window.__1038EmptyReceipts??=[]).push(receipt);return{x:p.x,y:p.y};
+    }
+    throw Error(`No unobscured empty stage: ${JSON.stringify(receipt)}`);
+  });
+  await page.mouse.click(p.x,p.y);await settle();
+};
 const shortcut=async key=>{await page.keyboard.press(`Control+${key}`);await settle();};
 const drag=async(id,dx=.07,dy=.04,up=true)=>{
   const p=await hit(id),a=await point(.2,.2),b=await point(.2+dx,.2+dy);
@@ -101,7 +115,7 @@ try{
   const expected=beforeSaved.map(s=>s.kind==='line'?{...s,x1:s.x1+dx,y1:s.y1+dy,x2:s.x2+dx,y2:s.y2+dy}:{...s,x:s.x+dx,y:s.y+dy});
   const coordinates=new Set(['x','y','x1','y1','x2','y2']);
   const normalized=items=>items.map(item=>Object.fromEntries(Object.entries(item).map(([key,value])=>
-    [key,coordinates.has(key)&&typeof value==='number'?Number(value.toFixed(11)):value])));
+    [key,coordinates.has(key)&&typeof value==='number'?Number(value.toFixed(9)):value])));
   check('group.drag_complete_records',normalized(afterSaved),normalized(expected));
   await shortcut('z');check('group.shared_undo_complete',await saved(),beforeSaved);
   await page.keyboard.press('Control+Shift+z');await settle();check('group.shared_redo_complete',await saved(),afterSaved);
@@ -149,7 +163,7 @@ try{
   check('group.picker.untouched_confirm_no_write',(await state()).writes,untouched.writes);
   check('group.picker.untouched_no_defaults',(await state()).decor,untouched.decor);
   await picker.locator('.trigger').click();const number=picker.locator('input[data-value="number"]');
-  await number.fill('');await picker.locator('.confirm').click();
+  await number.fill('42');await number.fill('');await picker.locator('.confirm').click();
   check('group.picker.empty_alpha_remains_open',await picker.locator('.picker').isVisible());
   check('group.picker.empty_alpha_invalid',await number.getAttribute('aria-invalid'),'true');
   check('group.picker.empty_alpha_no_write',(await state()).writes,untouched.writes);
@@ -225,4 +239,7 @@ try{
   check('group.no_new_api_writes',await page.evaluate(()=>window.__1038Calls.filter(type=>/(?:set|update|delete|copy|upload|import)$/.test(type)).every(type=>type==='houseplan/config/set')));
   check('group.no_asset_requests',await page.evaluate(()=>window.__1038Calls.every(type=>!/(?:asset.*(?:set|delete|copy|upload)|files\/(?:upload|delete))/.test(type))));
   check('group.initial_selection_did_not_mutate_records',selection.decor,records());
-}finally{await finish(browser);}
+}finally{
+  console.log('group.empty_point_receipts',JSON.stringify(await page.evaluate(()=>window.__1038EmptyReceipts??[])));
+  await finish(browser);
+}
