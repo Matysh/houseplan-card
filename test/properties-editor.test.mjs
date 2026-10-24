@@ -11,7 +11,7 @@ function harness(kind='rect') {
   const config={model_version:10,spaces:[{id:'floor',title:'Floor',rooms:[],decor:[
     {id:'shape',kind:'rect',x:.1,y:.2,w:.3,h:.2,color:'#ABCDEF',opacity:1,future:null}]}],
     markers:[{id:'light',binding:'virtual',space:'floor',name:'Light',size:null,angle:0,future:{keep:true}}],settings:{}};
-  const state={writes:[],records:[],toasts:[],prepareError:false,hold:null,saveError:null};
+  const state={writes:[],records:[],toasts:[],prepareError:false,hold:null,saveError:null,nudgeRetirements:0};
   const adoption=createConfigAdoption(), context=new ConfigWriteContext();
   adoption.adoptResponses({config:structuredClone(config),rev:1},undefined,()=>{},()=>{});
   const host={hass:{connection:{},user:{id:'owner'},callWS:async()=>({}),states:{}},
@@ -31,7 +31,7 @@ function harness(kind='rect') {
     updateComplete:Promise.resolve(),renderRoot:{querySelectorAll:()=>[]},
   };
   context.observe(host.hass);
-  const runtime={host,stairs:{select(){}},_geometrySnapshot:()=>structuredClone(host._curSpaceCfg),
+  const runtime={host,stairs:{select(){}},keyboardNudge:{retire(){state.nudgeRetirements++;}},_geometrySnapshot:()=>structuredClone(host._curSpaceCfg),
     _recordGeometry:(name,before)=>state.records.push({name,before,after:structuredClone(host._curSpaceCfg)}),
     _prepareConfigCandidate:candidate=>{if(state.prepareError)throw Error('preflight');return candidate;},
     _stageOptimisticConfig:(previous,candidate)=>{const attempt=adoption.beginOptimistic(previous,candidate);adoption.stageLocalConfig(candidate);return attempt;},
@@ -52,6 +52,7 @@ function harness(kind='rect') {
 
 test('#1047 native decor selection follows a new object, preserving a dirty field until completion',async()=>{
   const h=harness();
+  assert.equal(h.state.nudgeRetirements,1,'initial selection retires the former keyboard owner');
   Object.defineProperty(h.host,'_decorList',{get:()=>h.host._curSpaceCfg.decor});
   h.host._curSpaceCfg.decor.push({id:'new',kind:'rect',x:.4,y:.4,w:.1,h:.1,color:'#123456'});
   assert.equal(h.editor.fields.edit('w','invalid'),true);
@@ -59,9 +60,11 @@ test('#1047 native decor selection follows a new object, preserving a dirty fiel
   assert.equal(h.editor.identity.objectId,'shape');
   assert.equal(await h.editor.fields.finish(),false);
   h.editor.syncNative();assert.equal(h.editor.identity.objectId,'shape');
+  assert.equal(h.state.nudgeRetirements,1,'a held dirty selection does not retire a new owner');
   assert.equal(h.state.writes.length,0);
   h.editor.fields.invalidate();h.editor.syncNative();
   assert.equal(h.editor.identity.objectId,'new');assert.equal(h.host._decorSel,'new');
+  assert.equal(h.state.nudgeRetirements,2,'accepted identity change retires the old keyboard owner');
   assert.equal(await h.set('w','240'),true);
   assert.equal(h.host._curSpaceCfg.decor[0].w,.3);
   assert.equal(h.host._curSpaceCfg.decor[1].w,.2);

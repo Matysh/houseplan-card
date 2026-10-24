@@ -12,6 +12,19 @@ binding key. The same resolver passes through the runtime's Properties
 `beforeIntent` retry, before selection, New acknowledgement or draft creation.
 No second loader, poller, read claim, writer or async controller is added.
 
+Editor keyboard translations (#1025) enter through the existing card key
+dispatcher and lazy `KeyboardNudge`, using the Properties command lane.
+`nudgePlan` computes a whole-wall or same-host opening candidate; the existing
+physical geometry/identity barrier and config writer remain authoritative.
+Devices start from their effective contact point, preserve other contact
+anchors and use the existing full-read layout CAS and position history.
+Each queued step fences selection/navigation, authority and config/layout
+revisions again before apply/send. Retirement cancels pending steps; late
+receipts cannot replace newer placements or append retired history. Exact
+preview rollback is restricted to its unchanged revision and targeted fields.
+The existing Devices pointer owner explicitly transfers focus to its canvas
+marker after suppressing the browser default; form/control arrows stay native.
+
 Own availability (#1026) is one three-state fact from `DevItem.entities`, resolved
 before source selection and reused by source eligibility and presentation policy.
 It never expands the roster through controls, values or physical siblings.

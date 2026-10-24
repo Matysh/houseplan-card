@@ -50,6 +50,113 @@ combined material. The 141 focused Node tests and three diagnostic backend
 validation/full-space transfer checks pass. Registered async-intent protection
 has static readiness only; no mutant was executed.
 
+## Editor keyboard translation (#1025)
+
+`test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command
+consumer with the existing contact CAS implementation. Its topology/axis
+matrix retains all four opening types, both endpoint orders, immutable unknown
+fields and no-op boundaries. Controlled ordinary promises cover serial steps,
+fresh-read revision refusal, retired selection, permission loss, rejected CAS,
+accepted transport-loss reconciliation and newer same-point foreign revisions.
+The fixture keeps a separate foreign floor and opaque placement siblings.
+
+`node demo/smoke_editor_nudge.mjs` uses real wall/opening/device hits and native
+keyboard input against the persisted harness endpoints. Controls retain their
+native event outcome through a nested Shadow DOM fixture; the range value
+provides a positive native-control oracle alongside unchanged plan/history.
+Devices selection explicitly receives focus from the pointer owner, whose
+preventDefault otherwise leaves the previous toolbar button active. This is
+checked through actual activeElement and subsequent accepted movement.
+The control fixture first verifies that no physical-settings modal is open:
+rapidly clicking the same wall is the existing double-click entry, whose
+correct focus trap otherwise redirects the test's keys to the thickness field.
+Each synthetic shadow control proves its actual deep focus before native input;
+the range must change from 50 to 51 without a plan/history/write change.
+Group and wall-contact scenarios retain other effective anchors, survive
+reload and keep one world-cell step at a different real camera zoom. A legacy
+wall-flush point can carry longer decimal tails; its expected target uses the
+existing nine-normalized-decimal canonicalization, with the same comparison
+epsilon rather than a relaxed geometry threshold. Held ordinary layout reads
+and receipts prove selection retirement and foreign-revision precedence.
+
+The accepted a71 ordinary BEFORE produced 5 PASS / 2 expected RED: connected
+wall and inactive 45° arrows already stayed fixed; free-wall Right and the
+opening's active Right did not move. The AFTER witness adds hosted-opening
+atomicity, per-step Undo/Redo, device repeats, modifier/input no-op and wire
+counts. Browser timing and geometry thresholds are unchanged. Mutation
+declarations are checked statically (`mutation-gate --check`, execution 0);
+nightly execution alone supplies caught outcomes.
+The two existing registry anchors follow the writer's extended signatures;
+their original foreign-authority and room-discovery guards remain intact.
+
+The earlier published `610f9d264` Windows Node22.23.3/Rollup4.62.2 build on accepted
+`e8c618924cfa2845dcf1073f65404cd093efed10` measures 3,442,107 raw bytes,
+339,505 B initial View gzip and 347,075 B lazy editor gzip. The accepted
+#1019 integration receipt records 3,431,714 / 339,415 / 343,989 B respectively:
+the actual additions are 10,393 / 90 / 3,086 B, without summing branch deltas.
+Under the owner's measured-growth permission, only the raw reference and lazy
+editor ceiling take the new exact facts. Existing bands, absolute budgets,
+initial/lazy boundaries and other coupling references remain unchanged.
+The complete hook also measures 13,272 card lines against the old 13,219 cap
+and unchanged 50-line band. Accepted e8 already has 13,264 lines; this task adds
+eight thin host integration lines, three beyond the old band. The owner's
+standing measured-cost permission records only the exact 13,272 fact in the
+core test, preserving its band and the other core cap; no cosmetic product
+rewrite is used to change the count.
+The earlier e8 local subset passed the new native keyboard smoke and existing
+Decor, partition-opening, free/connected-wall, contact, layout-ACK, canvas-gesture,
+lazy-editor and config-authority smokes. Two existing selected Golden scenes
+(`device-contacts-designer-light`, `geometry-diagonal-45-opening-dark`) pass
+through the canonical selected runner without visual intent or baseline writes.
+This named subset is separate from the full task plan requested from CI.
+
+The first published CI attempt (`40084326899`, selected job `120844476069`)
+hit the documented 40-minute job cap after 246 of 256 selected smokes:
+244 passed, two legacy selection-paint oracles failed and ten did not execute.
+The two failing invocation intervals total about 6.5 seconds; they do not
+explain the measured job capacity failure. No CODE cycle was consumed.
+The old marker-shadow oracle also failed ordinarily on accepted `4dd` while
+its seven other controls passed. Accepted #1051 UI-028 paints the selected
+Devices core blue and sets selection-ring width to zero. The repaired witness
+uses a real wide Devices click, checks that blue core and unchanged shell,
+and still rejects box-shadow transitions/animations. Its existing one-pixel
+resize and hover protections remain. The icon-paint repair comes from accepted
+#1026; no product change is used to satisfy either legacy assertion.
+
+After the ordinary accepted #1056/#1058 merge (`40508a478`), the own product
+patch remains identical (`673893a7d0be9cf4538522eaa9a26cb7fd26ac29`). Fresh
+Windows production bytes at `b09fcea31` measure 3,443,023 raw / 339,771 View
+gzip / 347,064 editor gzip B. The measured accepted #1056 baseline is
+3,432,625 / 339,665 / 343,953 B; its build inputs are identical to accepted
+`40508a478`, with only CI/docs/inventory changes outside the fingerprint corpus.
+The actual additions are 10,398 / 106 / 3,111 B. All existing references,
+bands and ceilings remain unchanged by this integration.
+Fresh pinned Linux native checks pass the nudge, marker-shadow, icon-design
+and full mounted-authority scenarios; both existing canonical selected Golden
+scenes pass with zero differing pixels. These are intermediate local receipts,
+not a claim that the final full CI plan completed. The exact source, wire-plan
+history, toolchain separation, hashes and build-input equivalence are in the
+[integration record](development-notes/editor-nudge-integration.json).
+The final accepted #1059 reader merge (`c6dd76de4`) changes only CI proof,
+tests and documentation outside the build-input corpus. Product and build
+fingerprint remain identical, so the local native/Golden receipts stay current;
+the mandatory normal hook validates the exact final published combined tree.
+
+| AC | Ordinary witness | Observable failure |
+|---|---|---|
+| AC1 | unit wall vectors + native free-wall arrows | one endpoint, offset, id or exact full step differs |
+| AC2 | unit L/T/X/chain/interior matrix + native connected wall | geometry/history/write changes or a native key is consumed |
+| AC3 | immutable unit hosted fields + native hosted opening | host/t/unknown field changes, stale opening coordinates or an extra write |
+| AC4 | unit four types and signed/reversed axes + native 45° | inactive pair moves, active pair refuses or along distance differs |
+| AC5 | unit jamb/end/overlap/room-host cases + existing opening smokes | partial clamp, host hop or a refused candidate enters history |
+| AC6 | contact target unit + native Devices/contact/reload | selected effective step differs or another member/floor moves |
+| AC7 | serial CAS unit + native repeat/Undo/Redo | a step, revision, write or history entry is lost/duplicated |
+| AC8 | runtime guard unit + native Properties/Shadow DOM controls | value/event defaults are stolen or selected geometry changes |
+| AC9 | authority/gesture runtime matrix + native View fence | excluded context sends a write or changes history/layout |
+| AC10 | held read/receipt units + delayed native transport | retired replay, newer data overwritten or false history appended |
+| AC11 | existing Decor, physical/opening/contact/gesture smokes and relevant Golden | old pointer/history/paint contracts regress |
+| AC12 | build/budgets, lazy-editor and lifecycle checks | startup/editor boundary, listener count or current budget regresses |
+
 ## Mounted HA authority #1056
 
 `demo/smoke_mounted_authority.mjs` uses public HA assignments on an already

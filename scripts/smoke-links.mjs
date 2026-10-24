@@ -36,6 +36,12 @@ export const SMOKE_LINKS = [
     because: '#1050: trusted View tap/keyboard/context input, permission hints and the actual held content-hashed editor import must resolve the newest current marker without another action; the public fixture and DOM oracle do not name the internal request/authority fences.',
   },
   {
+    files: ['src/editors/keyboard-nudge.ts','src/editors/plan-nudge.ts','src/device-contact-write.ts'],
+    symbols: ['_onKey'],
+    smokes: ['smoke_editor_nudge.mjs'],
+    because: '#1025 native selection and arrows observe whole-wall/hosted-opening movement, dominant-axis direction, exact device positions, focus, Undo/Redo and ordinary persisted writes without calling or naming the command helper.',
+  },
+  {
     files: ['src/houseplan-card.ts', 'src/houseplan-render-lifecycle.ts'],
     smokes: ['smoke_mounted_authority.mjs'],
     because: '#1056: public mounted same-object HA connection/user replacement must restore one current config/layout pair and visible plan without another tick; ordinary ABA, held replies and missing-HA controls protect existing intake/read ownership.',
