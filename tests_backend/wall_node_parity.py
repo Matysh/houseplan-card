@@ -201,6 +201,8 @@ def run(build_dir=ROOT / "test-build"):
     print(f"wall-node parity: {len(cases)} scenarios + {len(corpus)} corpus documents; "
           f"{counts[0]} moves, {counts[1]} accepted, {counts[2]} exact browser-baseline Undo/Redo; "
           "TS/Python full candidates, cross-idempotence and refusals identical")
+    from wall_node_delete_parity import run as run_delete
+    run_delete(build_dir)
     return counts
 
 

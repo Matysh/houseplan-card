@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5365 · pure backend 639 · HA-harness backend 543 · browser smokes 440 (`npm run inventory`) |
+| Tests | Node unit 5378 · pure backend 643 · HA-harness backend 549 · browser smokes 441 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -160,6 +160,16 @@ Source replacement (#1014): replacements remove the old path in the same
 commit, or the handoff names its location, reason and removal issue. Source
 growth above 3× deletions produces advice only; review judges the explanation.
 Weekly metrics and the stable line-review brief share Git source churn counts.
+
+Wall-node deletion (#1045) joins two safely compatible endpoint sections,
+preserving fixed neighbours, room ownership and physical openings. It uses a
+narrow independently proved server transaction and the existing common history;
+refused inverse operations retain the command and cursor. Storage is unchanged.
+The existing node owner uses the common context menu; pending Properties and
+retained exit paint carry no late write authority after cancellation. Touch
+compatibility tails stay inert and the next deliberate mouse press re-arms.
+Backend quality checks cover its emitted fixed errors as well as Delete/Move
+transactions; unavailable processing has an editor-only localized message.
 
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
 renderer, with the dark body cut out beneath the core so the real plan shows

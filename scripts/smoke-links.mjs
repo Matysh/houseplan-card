@@ -413,6 +413,13 @@ export const SMOKE_LINKS = [
       + 'thickness, stale-proposal refusal and closed failure forms; unit clipping alone cannot witness the runtime wiring.',
   },
   {
+    files: ['src/wall-node-delete-menu.ts', 'src/wall-node-delete.ts', 'src/wall-node-card-adapter.ts',
+      'src/wall-node-write.ts', 'src/wall-node-history.ts'],
+    smokes: ['smoke_wall_node_delete.mjs'],
+    because: '#1045: native node contextmenu, authoritative Delete acknowledgement, rendered geometry, common Undo/Redo '
+      + 'and retired Properties/menu callbacks are visible through the UI and wire, not through pure helper names.',
+  },
+  {
     files: ['src/wall-node-editor.ts', 'src/wall-node-card-adapter.ts', 'src/wall-node-preview.ts',
       'src/wall-thickness.ts', 'src/wall-shell-union.ts', 'src/wall-operand-topology.ts',
       'src/wall-boolean-baseline.ts', 'src/wall-boolean-incremental.ts', 'src/wall-boundary-splice.ts',

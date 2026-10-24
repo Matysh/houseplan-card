@@ -2170,6 +2170,7 @@ export class HouseplanCard extends LitElement {
   private _haSummaryPanelApi: number | null = null;
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
+  private _haWallNodeDeleteApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
@@ -7489,8 +7490,18 @@ export class HouseplanCard extends LitElement {
   private _guardTouchGesture(ev: Event): void {
     if (ev.type === 'keydown') this._deviceDragRetirement.key((ev as KeyboardEvent).key);
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
+    const rightMouseDown = ev.type === 'pointerdown' && (ev as PointerEvent).pointerType === 'mouse'
+      && (ev as PointerEvent).button === 2;
+    // A node consumes this down before pan, but it is still fresh physical
+    // evidence that retires the previous touch compatibility tail.
+    if (rightMouseDown) this._touchClickGuard.pointerDown((ev as PointerEvent).pointerId, 'mouse');
+    // Touch owns pinch compatibility before any node-menu activation.
+    if (ev.type === 'contextmenu') {
+      this._touchClickGuard.handleActivation(ev, this._suppressClick);
+      if (ev.defaultPrevented) return;
+    }
     if (this._editorRuntime?.nodeMove?.guardEvent(ev)) return;
-    if (this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
+    if (ev.type === 'contextmenu' || this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
     if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') {
@@ -7503,7 +7514,7 @@ export class HouseplanCard extends LitElement {
       // #813: a hold whose pointer lost its capture is no longer a hold.
       if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();
     } else if (ev.type === 'pointerdown') this._planTaps.clearNonPlan(pointer);
-    if (ev.type === 'pointerdown') this._touchClickGuard.pointerDown(
+    if (ev.type === 'pointerdown' && !rightMouseDown) this._touchClickGuard.pointerDown(
       pointer.pointerId, pointer.pointerType,
     );
     const wasMultitouch = ev.type === 'pointerup' || ev.type === 'pointercancel'
@@ -8935,7 +8946,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._confirmRoomDelete(keepWalls);
   }
 
-
   // ================= WALL THICKNESS (docs/WALL-THICKNESS.md) =================
 
   /** Keys are always stored in normalised space (GRID_STEP_N). */
@@ -9242,7 +9252,6 @@ export class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
-
   /**
    * View-only clean-floor perimeter above real wall bodies.
    *
@@ -9395,7 +9404,6 @@ export class HouseplanCard extends LitElement {
   private _renderWallThickDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderWallThickDialog();
   }
-
 
   private _openingAt(raw: readonly number[]): RenderOpening | null {
     return this._editorRuntimeOrThrow()._openingAt(raw);
@@ -9867,7 +9875,6 @@ export class HouseplanCard extends LitElement {
   private async _saveConfigNow(): Promise<void> {
     return this._editorRuntimeOrThrow()._saveConfigNow();
   }
-
 
   // ================= FLOORS IMPORT WIZARD =================
 
@@ -10418,7 +10425,6 @@ export class HouseplanCard extends LitElement {
   private async _saveSettingsDialog(): Promise<boolean> {
     return this._editorRuntimeOrThrow()._saveSettingsDialog();
   }
-
 
   /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
   private get _glowRadiusCm(): number {
@@ -11447,6 +11453,7 @@ export class HouseplanCard extends LitElement {
         ${this._editorRuntime?.properties.render()}
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
         ${this._editorRuntime?.decorOrder.render()}
+        ${this._editorRuntime?.nodeMove?.renderMenu()}
         ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing)}
         ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}
         ${dialogPresence(this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing)}
@@ -11543,7 +11550,6 @@ export class HouseplanCard extends LitElement {
       </ha-card>
     `;
   }
-
 
   // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
 
@@ -11850,7 +11856,6 @@ export class HouseplanCard extends LitElement {
         liveGap || rt.jump, physical);
     }
   }
-
 
   /**
    * HP-1540-01: an auto-discovered vacuum has NO config marker until the first

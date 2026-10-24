@@ -5,9 +5,9 @@
  */
 import type { NamedCommand } from './command-stack';
 import type { ServerConfig } from './types';
-import type { NodeMoveHistory } from './wall-node-editor';
+import type { NodeCommandHistory } from './wall-node-editor';
 import { nodeFloorFingerprint, type NodeWriteBasis } from './wall-node-write';
-import { nodeWriteRefusal } from './wall-node-refusal';
+import { nodeDeleteRefusalKey, nodeWriteRefusal } from './wall-node-refusal';
 
 export interface NodeHistoryStack<T> {
   peekUndo(): NamedCommand<T> | null;
@@ -16,17 +16,17 @@ export interface NodeHistoryStack<T> {
   confirmRedo(command: NamedCommand<T>): boolean;
   removeWhere(predicate: (command: NamedCommand<T>) => boolean): number;
 }
-export interface NodeHistoryPort<T extends { nodeMove?: NodeMoveHistory }> {
+export interface NodeHistoryPort<T extends { nodeMove?: NodeCommandHistory }> {
   /** A Plan/Background writer; neither a tool nor a loaded Select is required. */
   enabled(): boolean;
-  api(): boolean;
+  api(history: NodeCommandHistory): boolean;
   epoch(): number;
   stack(): NodeHistoryStack<T>;
   /** The result floor can be shown (not another fixed `floor`). */
   canShow(space: string): boolean;
   /** Show it the way ordinary history does, keeping the editor and its tool. */
   show(space: string): void;
-  write(history: NodeMoveHistory, basis: NodeWriteBasis): Promise<ServerConfig>;
+  write(history: NodeCommandHistory, basis: NodeWriteBasis): Promise<ServerConfig>;
   text(key: string, params?: Record<string, string>): string;
   toast(text: string, id?: string): void;
 }
@@ -38,7 +38,7 @@ export function nodeHistoryRefusal(error: unknown, foreign: boolean): NodeHistor
   return kind === 'proof' ? 'outdated' : kind;
 }
 
-export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
+export async function runNodeHistory<T extends { nodeMove?: NodeCommandHistory }>(
   port: NodeHistoryPort<T>, direction: 'undo' | 'redo',
 ): Promise<void> {
   if (!port.enabled()) return;
@@ -46,7 +46,11 @@ export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
   const command = undo ? stack.peekUndo() : stack.peekRedo();
   const history = command && (undo ? command.before : command.after).nodeMove;
   if (!command || !history) return;
-  if (!port.api()) { port.toast(port.text('node_move_update_required'), 'node_move_update_required'); return; }
+  const deleting = history.kind === 'delete';
+  if (!port.api(history)) {
+    const key = deleting ? 'node_delete_update_required' : 'node_move_update_required';
+    port.toast(port.text(key), key); return;
+  }
   const space = history.beforeSpace.id, epoch = port.epoch();
   // Refused before anything is sent; the active floor and the history stay.
   if (!port.canShow(space)) { port.toast(port.text('history.space_pinned'), 'history.space_pinned'); return; }
@@ -55,6 +59,11 @@ export async function runNodeHistory<T extends { nodeMove?: NodeMoveHistory }>(
     // Undo expects the accepted move's floor, Redo the accepted Undo's floor.
     config = await port.write(history, { epoch, space, floor: history.floor || '' });
   } catch (error) {
+    if (deleting) {
+      const key = nodeDeleteRefusalKey(error, port.epoch() !== epoch);
+      port.toast(port.text(key), key);
+      return; // A refused inverse retains BOTH command and shared cursor.
+    }
     const refusal = nodeHistoryRefusal(error, port.epoch() !== epoch);
     // Only the unfit command leaves; its neighbours and the cursor stay.
     if (refusal === 'outdated') stack.removeWhere(item => item === command);

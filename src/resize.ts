@@ -12,10 +12,11 @@
  */
 import { intersection } from 'polyclip-ts';
 import {
-  polygonArea, segmentsProperlyCross, polyContainsPoly, roomsOverlap,
+  polygonArea, segmentsProperlyCross, polyContainsPoly, roomsOverlap, polyIsSimple,
 } from './logic';
 import { classifyNearAxisSegment } from './near-axis';
 export { areaM2, formatArea } from './area-format';
+export { polyIsSimple } from './logic';
 
 /** Minimal room dimension in centimetres (owner: «мин. габарит ~30 см»). */
 export const MIN_ROOM_CM = 30;
@@ -325,17 +326,6 @@ export function simplifyPoly(poly: number[][], eps = 1e-6): number[][] {
   return pts.length >= 3 ? pts : poly;
 }
 
-/** Simple polygon: no properly crossing edges (shared walls touching is fine). */
-export function polyIsSimple(poly: number[][]): boolean {
-  const n = poly.length;
-  if (n < 3) return false;
-  for (let i = 0; i < n; i++)
-    for (let j = i + 1; j < n; j++) {
-      if (j === i || (j + 1) % n === i || (i + 1) % n === j) continue;
-      if (segmentsProperlyCross(poly[i], poly[(i + 1) % n], poly[j], poly[(j + 1) % n])) return false;
-    }
-  return true;
-}
 
 /**
  * Normal clearance between the moved stretches and every PARALLEL wall of the

@@ -46,6 +46,7 @@ export interface ConfigCapabilitiesCardPort {
   _haSummaryPanelApi: number | null;
   _haRadarStage1Api: number | null;
   _haWallNodeMoveApi?: number | null;
+  _haWallNodeDeleteApi?: number | null;
   _haVacuumDockRestartApi?: number | null;
   _haVacuumHistoryApi?: number | null;
   _syncVersionRecovery(): void;
@@ -67,6 +68,7 @@ export interface AuthoritativeConfigResponse {
   readonly summary_panel_api?: unknown;
   readonly radar_stage1_api?: unknown;
   readonly wall_node_move_api?: unknown;
+  readonly wall_node_delete_api?: unknown;
   readonly vacuum_dock_restart_api?: unknown;
   readonly vacuum_history_api?: unknown;
   readonly virtual_lights?: unknown;
@@ -79,7 +81,7 @@ export function adoptCardConfigCapabilities(
   const capabilities = response && typeof response === 'object'
     ? response as Partial<Record<
         'integration_version' | 'frontend_fingerprint' | 'build' | 'support_api' | 'decor_assets_api'
-        | 'summary_panel_api' | 'radar_stage1_api' | 'wall_node_move_api' | 'vacuum_dock_restart_api' | 'vacuum_history_api' | 'support_package_versions', unknown
+        | 'summary_panel_api' | 'radar_stage1_api' | 'wall_node_move_api' | 'wall_node_delete_api' | 'vacuum_dock_restart_api' | 'vacuum_history_api' | 'support_package_versions', unknown
       >> : {};
   host._haIntegrationVersion = normalizeRuntimeVersion(capabilities.integration_version);
   host._haBackendBuild = {
@@ -99,6 +101,7 @@ export function adoptCardConfigCapabilities(
     ? SUMMARY_PANEL_API_VERSION : null;
   host._haRadarStage1Api = capabilities.radar_stage1_api === 1 ? 1 : null;
   host._haWallNodeMoveApi = capabilities.wall_node_move_api === 1 ? 1 : null;
+  host._haWallNodeDeleteApi = capabilities.wall_node_delete_api === 1 ? 1 : null;
   host._haVacuumDockRestartApi = capabilities.vacuum_dock_restart_api === 1 ? 1 : null;
   host._haVacuumHistoryApi = capabilities.vacuum_history_api === 1 ? 1 : null;
   host._syncVersionRecovery();
