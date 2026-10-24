@@ -52,7 +52,8 @@ try {
     let d=await hp.openSpaceDialog('edit','f1');
     o.fourColourFields=['space-border-color','space-name-color','space-fill-color','space-wall-fill'].every(id=>!!d.querySelector(`[data-field="${id}"]`));
     const custom=d.querySelector('[data-field="space-fill-color"]'),wall=d.querySelector('[data-field="space-wall-fill"]');
-    o.wallImmediatelyFollowsCustom=!!(custom.closest('.hpf-section')?.nextElementSibling?.contains(wall));
+    // UI-025: wall fill precedes the fill-mode/custom-fill sections.
+    o.wallFillPrecedesCustom=!!(wall.compareDocumentPosition(custom)&Node.DOCUMENT_POSITION_FOLLOWING);
     await color(d,'space-name-color','#aa1122',.4);
     o.livePreviewAndMetrics=caption(roomId).color==='rgb(170, 17, 34)'&&caption(roomId).opacity===.4&&caption(roomId).metrics;
     await discard(d);o.cancelNoWrites=JSON.stringify(saved())===before;

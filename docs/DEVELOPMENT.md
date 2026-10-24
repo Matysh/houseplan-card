@@ -19,6 +19,12 @@ increase either count. The ordinary pre-fix diagnostic observed config 2/layout
 
 ## Approved editor kit #1051
 
+The broader selected-browser run also retains the existing furniture signed
+size/flip/zero/save assertions through its stable field/action hooks, the
+UI-025 wall-fill-before-custom order and all four lazy editor sheet slots.
+The style witness checks first-frame adoption, exact cascade order, sharing
+between roots and absence of changes to View for all four sheets.
+
 Run `node demo/smoke_ui_1051.mjs` for inline colour preview/validation,
 Enter/blur/Escape, atomic Undo, contour hit/miss at two zooms, menu input
 retirement/rapid reopen and Devices/View selection boundaries. Run
