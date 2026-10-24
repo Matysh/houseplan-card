@@ -3,7 +3,7 @@
  * the View and on the static card. No LED chunk without a displayed active
  * strip (a hidden shape or an unbound strip loads nothing); an active bound
  * strip replaces the icon, paints the two-stroke stripe and — with Glow — the
- * linear field; off/unavailable have no field, unavailable is dashed. The on
+ * linear field; off/unavailable/unknown retain ordinary inactive ink without a field. The on
  * core takes the source colour with or without Glow. The whole length is one target: a
  * click toggles once, a pan/two-contact touch calls no service (exact ledger,
  * not only final on/off), and the navigation tail stays inert. A hidden marker or an
@@ -148,8 +148,8 @@ for (const dark of [false, true]) for (const iso of [false, true]) {
     await page.waitForTimeout(600);
     const actual = await painted();
     const label = `#790: ${dark ? 'dark' : 'light'}, ${iso ? '2.5D' : 'Flat'}, ${state}`;
-    if (state !== 'unavailable') check(`${label}: core colour`, actual.core, state === 'on' ? '#80d5ff' : '#FFFFFF');
-    check(`${label}: #1043 inner opacity`, Number(actual.coreOpacity), state === 'off' ? 0.7 : 1);
+    check(`${label}: core colour`, actual.core, state === 'on' ? '#80d5ff' : '#FFFFFF');
+    check(`${label}: #1043 inner opacity`, Number(actual.coreOpacity), state === 'on' ? 1 : 0.7);
     if (state === 'on') onGeometry = actual.geometry;
     else check(`${label}: geometry stays unchanged`, actual.geometry, onGeometry);
     if (captureDir) {
@@ -354,13 +354,13 @@ await settle();
 await setState('light.ceiling', 'unavailable');
 await settle();
 const unavailable = await stripe('d_light1');
-check('unavailable: dashed grey, no field', [unavailable?.state, unavailable?.core, !!unavailable?.dash, await field()],
-  ['unavailable', '#9e9e9e', true, 0]);
+check('#1026 unavailable: ordinary inactive white, no dash or field', [unavailable?.state, unavailable?.core, !!unavailable?.dash, await field()],
+  ['off', '#FFFFFF', false, 0]);
 await setState('light.ceiling', 'unknown');
 await settle();
 const unknown = await stripe('d_light1');
-check('#790: unknown keeps the grey dashed unavailable presentation',
-  [unknown?.state, unknown?.core, !!unknown?.dash, await field()], ['unavailable', '#9e9e9e', true, 0]);
+check('#1026 unknown: ordinary inactive white, no dash or field',
+  [unknown?.state, unknown?.core, !!unknown?.dash, await field()], ['off', '#FFFFFF', false, 0]);
 await setState('light.ceiling', 'on', { rgb_color: [128, 213, 255] });
 await setStrips(await evaluate(() => window.__card._serverCfg.spaces[0].led_strips), { glow_enabled: false });
 await settle();

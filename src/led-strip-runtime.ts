@@ -65,9 +65,7 @@ const pts = (points: readonly number[][]): Pt[] => points.map((p) => [p[0], p[1]
 
 const OUTLINE = '#383838';
 const CORE_IDLE = '#FFFFFF';
-const UNAVAILABLE = '#9e9e9e';
-
-export type LedVisualState = 'on' | 'off' | 'unavailable';
+export type LedVisualState = 'on' | 'off';
 
 /** One strip as the card resolved it for this frame. */
 export interface LedStripView {
@@ -168,17 +166,17 @@ export function ledStripView(input: {
 }): LedStripView {
   const eid = input.candidate?.sourceEid || input.device.primary || '';
   const raw = eid ? input.hass?.states?.[eid]?.state : undefined;
-  const unavailable = raw === 'unavailable' || raw === 'unknown'
+  const missingLightSample = raw === 'unavailable' || raw === 'unknown'
     || (!!eid && !!input.hass && !input.hass.states?.[eid] && !input.device.virtual);
   const own = Number(input.device.marker?.glow_radius_cm);
   const radius = Number.isFinite(own) && own > 0
     ? (own / input.cellCm) * input.gridPitch
     : input.defaultRadius;
-  const appearance = unavailable ? null : input.candidate?.appearance ?? null;
+  const appearance = missingLightSample ? null : input.candidate?.appearance ?? null;
   return {
     strip: input.strip,
     device: input.device,
-    state: unavailable ? 'unavailable' : appearance ? 'on' : 'off',
+    state: appearance ? 'on' : 'off',
     glow: input.glow,
     appearance,
     radius,
@@ -318,9 +316,7 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       const xs = path.points.map(p => p[0]), ys = path.points.map(p => p[1]), pad = input.d * 2;
       const mx = Math.min(...xs) - pad, my = Math.min(...ys) - pad;
       const mw = Math.max(...xs) - mx + pad, mh = Math.max(...ys) - my + pad;
-      const unavailable = view.state === 'unavailable';
-      const core = unavailable ? UNAVAILABLE
-        : view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;
+      const core = view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;
       const hitWidth = (2 * stripHitRadiusPx(t * input.perUnit)) / (input.perUnit || 1);
       const dev = view.device;
       const own = (e: MouseEvent) => nearestOwner(e, view, input).device;
@@ -343,13 +339,11 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
           stroke-width="${t}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"
           transform="translate(0 ${iso.depth * k})"></path>`)}` : nothing}
         <path class="led-outline" d="${d}" fill="none" stroke="${OUTLINE}" stroke-width="${t}"
-          stroke-linecap="round" stroke-linejoin="round"
-          stroke-dasharray=${unavailable ? `${t * 2} ${t * 1.5}` : nothing}></path>
+          stroke-linecap="round" stroke-linejoin="round"></path>
         </g>
         <path class="led-core" d="${d}" fill="none" stroke="${core}" stroke-width="${t / 2}"
           stroke-opacity="${off ? 0.7 : 1}"
-          stroke-linecap="round" stroke-linejoin="round"
-          stroke-dasharray=${unavailable ? `${t * 2} ${t * 1.5}` : nothing}></path>
+          stroke-linecap="round" stroke-linejoin="round"></path>
         <path class="led-focus" d="${d}" stroke-width="${t * 1.6}" stroke-linecap="round"
           stroke-linejoin="round" aria-hidden="true"></path>
         ${h ? svg`<path class="led-hit" d="${d}" stroke-width="${hitWidth}"

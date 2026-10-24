@@ -85,7 +85,6 @@ export const ISO_STATE_BODIES = Object.freeze({
   open: '#ff9f43',
   'lock-locked': '#66D17A',
   'lock-unlocked': '#F0410C',
-  unavail: '#B5BAC1',
   alarm: '#F0410C',
 } as const);
 
@@ -125,7 +124,7 @@ export function isoTileStateCss(): string {
     rules.push(`${S} .oplock.${cls}.iso-floor-light { --iso-edge: ${edge(body, 'light', true)}; }`);
   }
   // Floor shadows, theme × floor (a later rule of equal weight wins: dark last).
-  const tinted = ':is(.on, .open, .lock-locked, .lock-unlocked, .unavail, .alarm, .locked, .unlocked)';
+  const tinted = ':is(.on, .open, .lock-locked, .lock-unlocked, .alarm, .locked, .unlocked)';
   const shadow = (sel: string, s: IsoTileShadow, white = true) => `${sel} {`
     + ` --iso-sh-dx: ${u(s.dx)}; --iso-sh-dy: ${u(s.dy)}; --iso-sh-blur: ${u(s.sigma * 2)};`
     + ` --iso-sh-a: ${white ? s.opacityWhite : s.opacityTinted}; --iso-sh-a-white: ${s.opacityWhite}; }`;

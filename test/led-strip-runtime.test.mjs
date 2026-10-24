@@ -82,7 +82,7 @@ test('#919 revealed LED crosses the lazy gate as an ordinary row, without bypass
   assert.equal(owner.marker.hidden, true);
 });
 
-test('#784/AC7: states — off white, on, unavailable without a field; radius 30 cm or the own one', () => {
+test('#784/#1026: states — off white, on, missing samples inactive without a field; radius unchanged', () => {
   const base = { strip, defaultRadius: 6, cellCm: 5, gridPitch: 1, glow: true };
   const on = ledStripView({ ...base, device: device(), hass: { states: { 'light.led': { state: 'on' } } },
     candidate: { key: 's|m1', sourceEid: 'light.led', pos: { x: 0, y: 0 }, radius: 3, appearance: { c: '#ff0000', alpha: 0.5 } } });
@@ -95,7 +95,7 @@ test('#784/AC7: states — off white, on, unavailable without a field; radius 30
   for (const raw of ['unavailable', 'unknown']) {
     const view = ledStripView({ ...base, device: device(), hass: { states: { 'light.led': { state: raw } } },
       candidate: { key: 's|m1', sourceEid: 'light.led', pos: { x: 0, y: 0 }, radius: 3, appearance: { c: '#fff', alpha: 1 } } });
-    assert.equal(view.state, 'unavailable', raw);
+    assert.equal(view.state, 'off', `${raw}: the ordinary inactive geometry`);
     assert.equal(view.appearance, null, `${raw}: no field`);
   }
   const own = ledStripView({ ...base, device: device({ marker: { glow_radius_cm: 100 } }),
@@ -573,7 +573,7 @@ test('#850 AC2: a sensor elsewhere on the plan reuses the frame; each input of �
   rebuilds('the source colour', () => { host._renderPlanHass = { states: { ...states(), 'light.led': { state: 'on', attributes: { rgb_color: [255, 0, 0] } } } }; },
     (frame) => assert.equal(frame.views[0].appearance.c, '#ff0000'));
   rebuilds('unavailable source', () => { host._renderPlanHass = { states: { ...states(), 'light.led': { state: 'unavailable', attributes: {} } } }; },
-    (frame) => assert.equal(frame.views[0].state, 'unavailable'));
+    (frame) => { assert.equal(frame.views[0].state, 'off'); assert.equal(frame.views[0].appearance, null); });
   host._renderPlanHass = { states: { ...states(), 'light.led': { state: 'on', attributes: {} } } };
   rebuilds('icon_size', () => { host._config = { icon_size: 5 }; }, (frame) => assert.ok(frame.d > base.d));
   rebuilds('the glow_light colour', () => { host._fillColors = { glow_light: { c: '#00ff00', a: 0.7 } }; },

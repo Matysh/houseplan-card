@@ -75,7 +75,7 @@ test('media players express power without treating playback as work', () => {
     (({ availability, status, activity }) => ({ availability, status, activity }))(
       entityVisualSample(h, 'media_player.speaker'),
     ),
-    { availability: 'unavailable', status: 'neutral', activity: 'none' },
+    { availability: 'available', status: 'neutral', activity: 'none' },
   );
 });
 
@@ -95,7 +95,7 @@ test('a composite Power switch is a neutral lifecycle, while a lone relay still 
   const soundbarIds = ['switch.soundbar_power', 'switch.soundbar_pure_voice'];
   assert.deepEqual(
     combineVisualSamples(entityVisualSamplesForDevice(h, ['switch.soundbar_power'], soundbarIds)),
-    { availability: 'unavailable', status: 'neutral', activity: 'none' },
+    { availability: 'available', status: 'neutral', activity: 'none' },
   );
   h.states['switch.soundbar_power'].state = 'on';
   assert.deepEqual(
@@ -175,7 +175,7 @@ test('suppresses stale active lifecycle when composite Power is off', () => {
     h.states['switch.washer_power'].state = power;
     assert.deepEqual(
       combineVisualSamples(entityVisualSamplesForDevice(h, role, all)),
-      { availability: 'unavailable', status: 'neutral', activity: 'none' },
+      { availability: power === 'off' ? 'available' : 'unavailable', status: 'neutral', activity: 'none' },
       power,
     );
   }
@@ -206,12 +206,12 @@ test('lone relay stays working beside a neutral lifecycle-like sensor', () => {
   );
 });
 
-test('off media sources share unavailable styling without hiding an active peer', () => {
+test('#1026 off media remains a real neutral sample independently of peer availability', () => {
   const off = entityVisualSample(hass({ 'media_player.one': { state: 'off' } }), 'media_player.one');
   const on = entityVisualSample(hass({ 'media_player.two': { state: 'on' } }), 'media_player.two');
   assert.deepEqual(
     combineVisualSamples([off]),
-    { availability: 'unavailable', status: 'neutral', activity: 'none' },
+    { availability: 'available', status: 'neutral', activity: 'none' },
   );
   assert.deepEqual(
     combineVisualSamples([off, on]),

@@ -423,10 +423,10 @@ export const devicesStyles = css`
     .stage.projection-iso.mode-view .dev[data-hp-zigbee-topology-endpoint] {
       z-index: 8;
     }
-    .dev.unavail {
+    .dev.unavail .device-core > ha-icon,
+    .dev.unavail .device-core > .valtext,
+    .dev.unavail .value-badge-content {
       opacity: 0.35;
-      --device-face-bg: #B5BAC1;
-      --device-shell-stroke: var(--device-shell-base-stroke);
     }
     .dev.virtual .device-shell-frame {
       border-style: dashed;
@@ -522,8 +522,8 @@ export const devicesStyles = css`
       white-space: nowrap;
       pointer-events: none;
     }
-    .dev .value-badge.unavailable,
-    .dev .value-badge.missing { opacity: 0.66; }
+    .dev:not(.unavail) .value-badge.unavailable > .value-badge-content,
+    .dev:not(.unavail) .value-badge.missing > .value-badge-content { opacity: 0.66; }
     .dev .lqi {
       position: absolute;
       top: calc(50% + var(--device-shell-size) / 2 + var(--dev-size) * .05);

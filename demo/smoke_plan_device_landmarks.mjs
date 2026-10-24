@@ -55,13 +55,13 @@ const probe = await page.evaluate(async () => {
   const opacityById = () => Object.fromEntries(markers().filter(visible)
     .map((node) => [node.dataset.id, effectiveOpacity(node)]));
 
-  // One unavailable marker exercises contract item 2: the fade multiplies
-  // the marker's own opacity (.unavail) exactly as the Background layer does.
+  // #1026 confirms every own row unavailable. Editor landmark fade applies
+  // to the shell, while only inner content also receives the own-offline fade.
   const target = markers().find((node) => node.dataset.entity && c.hass.states[node.dataset.entity]);
   if (target) {
-    const entity = target.dataset.entity;
+    const own = c._devices.find(device => device.id === target.dataset.id)?.entities ?? [];
     c.hass = { ...c.hass, states: { ...c.hass.states,
-      [entity]: { ...c.hass.states[entity], state: 'unavailable' } } };
+      ...Object.fromEntries(own.map(entity => [entity, { ...c.hass.states[entity], state: 'unavailable' }])) } };
     await c.updateComplete;
   }
   await enter('view');
@@ -81,8 +81,11 @@ const probe = await page.evaluate(async () => {
   const plain = markers().find((node) => visible(node) && !node.classList.contains('unavail'));
   out.planPlainMarkerAt35 = !!plain && Math.abs(planOpacity[plain.dataset.id] - 0.35) < 1e-3;
   const unavail = markers().find((node) => visible(node) && node.classList.contains('unavail'));
-  out.planUnavailableMarkerAt35x35 = !!unavail
-    && Math.abs(planOpacity[unavail.dataset.id] - 0.35 * 0.35) < 1e-3;
+  out.planUnavailableShellAt35 = !!unavail
+    && Math.abs(planOpacity[unavail.dataset.id] - 0.35) < 1e-3;
+  const unavailableContent = unavail?.querySelector('.device-core > ha-icon,.device-core > .valtext');
+  out.planUnavailableContentAt35x35 = !!unavailableContent
+    && Math.abs(effectiveOpacity(unavailableContent) - 0.35 * 0.35) < 1e-3;
   // Room labels share .devlayer: no layer fade reaches them (their own
   // opacity is the label design, not this contract).
   const label = sr().querySelector('.roomlabel');

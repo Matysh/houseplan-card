@@ -42,7 +42,6 @@ const reference = {
     active: svgState('Light', 'Icon Active.svg'),
     lock: svgState('Light', 'Lock.svg'),
     unlock: svgState('Light', 'Unlock.svg'),
-    unavailable: svgState('Light', 'Unavailable.svg'),
     alert: svgState('Light', 'Alert Value.svg'),
   },
   dark: {
@@ -51,7 +50,6 @@ const reference = {
     active: svgState('Dark', 'Icon Active.svg'),
     lock: svgState('Dark', 'Lock.svg'),
     unlock: svgState('Dark', 'Unlock.svg'),
-    unavailable: svgState('Dark', 'Unavailable.svg'),
     alert: svgState('Dark', 'Alert Value.svg'),
   },
 };
@@ -148,6 +146,9 @@ const beforeUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
   shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
   opacity: getComputedStyle(node).opacity,
+  glyphOpacity: getComputedStyle(node.querySelector('.device-core > ha-icon')).opacity,
+  coreOpacity: getComputedStyle(node.querySelector('.device-core')).opacity,
+  shellOpacity: getComputedStyle(node.querySelector('.device-shell-frame')).opacity,
 }));
 await page.hover(selector('d_kettle'));
 // The production core/shell hover transition is 150 ms. Sampling in the same
@@ -158,6 +159,9 @@ const afterUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
   shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
   opacity: getComputedStyle(node).opacity,
+  glyphOpacity: getComputedStyle(node.querySelector('.device-core > ha-icon')).opacity,
+  coreOpacity: getComputedStyle(node.querySelector('.device-core')).opacity,
+  shellOpacity: getComputedStyle(node.querySelector('.device-shell-frame')).opacity,
 }));
 
 await page.hover(selector('d_tv'));
@@ -322,6 +326,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       shellWidth: parseFloat(shell.borderTopWidth),
       shellStyle: shell.borderStyle,
       opacity: getComputedStyle(lockNode).opacity,
+      glyphOpacity: getComputedStyle(lockNode.querySelector('.device-core > ha-icon')).opacity,
     };
   };
   const stateMatrix = Object.fromEntries(['light', 'dark'].map((theme) => [theme, {
@@ -421,6 +426,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   const lightThemeCore = getComputedStyle(text.querySelector('.device-core')).backgroundColor;
   text.classList.remove('theme-light');
   text.classList.add('theme-dark');
+  const unselectedCoreDecoration = getComputedStyle(text.querySelector('.device-core')).boxShadow;
   text.classList.add('sel');
   const selectedShell = getComputedStyle(text.querySelector('.device-shell-frame')).borderColor;
   const selectedCoreDecoration = getComputedStyle(text.querySelector('.device-core')).boxShadow;
@@ -545,6 +551,10 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
         && stateMatrix[theme][state].shell === reference[theme][state].shell
         && Math.abs(stateMatrix[theme][state].shellWidth
           - Math.max(1, Math.floor(reference[theme][state].shellWidth * 50.4))) <= 0.5)),
+    ownOfflineRetainsOrdinaryThemePaint: ['light', 'dark'].every(theme =>
+      ['core', 'glyph', 'shell', 'shellWidth', 'opacity'].every(key =>
+        stateMatrix[theme].unavailable[key] === stateMatrix[theme].default[key])
+      && stateMatrix[theme].unavailable.glyphOpacity === '0.35'),
     openingLockPaletteMatches: ['light', 'dark'].every((theme) =>
       ['lock', 'unlock'].every((state) =>
         openingLockMatrix[theme][state].core === reference[theme][state].core
@@ -599,8 +609,8 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     darkHoverChangesCoreOnly: ordinaryHover.core === 'rgb(12, 130, 240)'
       && ordinaryHover.glyph === 'rgb(37, 37, 37)'
       && ordinaryHover.shell === 'rgba(37, 37, 37, 0.75)',
-    selectionDecoratesCoreNotShell: selectedShell === defaultShell
-      && selectedCoreDecoration.includes('240, 160, 12'),
+    viewSelectionClassDoesNotDecorateCoreOrShell: selectedShell === defaultShell
+      && selectedCoreDecoration === unselectedCoreDecoration,
     focusDecoratesCoreNotShell: focusVisibleMatched && focusShell === defaultShell
       && focusCoreDecoration.includes('12, 130, 240'),
     acceptedActionFeedback,
@@ -628,7 +638,9 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       && lqiSamples.some((sample) => sample.value > 41 && sample.value < 179
         && sample.actual !== 'rgb(240, 160, 12)'),
     unavailableHasNoHoverOrMotion: JSON.stringify(beforeUnavailable) === JSON.stringify(afterUnavailable)
-      && beforeUnavailable.opacity === '0.35' && !unavailable.querySelector('.device-pulse'),
+      && beforeUnavailable.opacity === '1' && beforeUnavailable.glyphOpacity === '0.35'
+      && beforeUnavailable.coreOpacity === '1' && beforeUnavailable.shellOpacity === '1'
+      && !unavailable.querySelector('.device-pulse'),
     valueCapsuleOwnsHoverAndActionAtEveryPosition: capsulePositions.length === 4
       && capsulePositions.every(({ hover, actionAccepted }) => hover.hovered
         && hover.core === 'rgb(12, 130, 240)'
@@ -651,6 +663,31 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
 }, { beforeUnavailable, afterUnavailable, ordinaryHover, lightHover, capsulePositions, capsuleActions, reference });
 
 const { __debug, ...out } = result;
+// #1051 owns real selection paint in Devices. A leftover class in View is
+// inert; the current editor paints a blue core and retains ordinary framing.
+// The demo host defaults to 780px, where a click intentionally opens a dialog.
+// Resize the fixture host to exercise the actual wide Properties selection.
+await page.evaluate(() => { document.getElementById('host').style.width = '1100px'; });
+await page.evaluate(async () => { await window.__hpTest.setMode('devices'); await window.__hpTest.settled(); });
+await page.waitForFunction(() => window.__card._editorRuntime?.properties.wide);
+const editorShellBefore = await page.$eval(selector('d_tv'), node =>
+  getComputedStyle(node.querySelector('.device-shell-frame')).borderColor);
+await page.locator(selector('d_tv')).click();
+await page.evaluate(async () => {
+  await window.__hpTest.settled();
+  const node = window.__card.renderRoot.querySelector('.dev[data-id="d_tv"]');
+  await Promise.allSettled(node.getAnimations({ subtree: true })
+    .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
+    .map(animation => animation.finished));
+});
+const editorSelectionPaint = await page.$eval(selector('d_tv'), node => ({
+  classes: node.className, mode: window.__card._mode,
+  core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
+  shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
+}));
+out.actualEditorSelectionUsesBlueCoreAndOrdinaryShell = editorSelectionPaint.classes.split(/\s+/).includes('sel')
+  && editorSelectionPaint.core === 'rgb(12, 130, 240)' && editorSelectionPaint.shell === editorShellBefore;
+if (!out.actualEditorSelectionUsesBlueCoreAndOrdinaryShell) console.error({ editorSelectionPaint, editorShellBefore });
 if (Object.values(out).some((value) => value !== true)) {
   console.error(`device icon debug: ${JSON.stringify(__debug, null, 2)}`);
 }

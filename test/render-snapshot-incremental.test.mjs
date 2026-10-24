@@ -28,6 +28,56 @@ const plain = (snapshot) => ({
   geometry: snapshot.geometry,
 });
 
+test('#1026 diagnostic-only own ticks and registry ownership match complete snapshots', () => {
+  const host=captureHost(oracleFixture()),reuse=new RenderSnapshotReuseWindow();
+  const id='perf-device-7',key=presentationSnapshotKey(id,true);
+  const own=host._devices.find(device=>device.id===id);
+  const diagnostic='sensor.perf_7_battery';
+  assert.ok(own.entities.includes(diagnostic));
+  const setRows=values=>{
+    const states={...host.hass.states};
+    for(const [eid,state]of Object.entries(values)){
+      if(state===null)delete states[eid];
+      else states[eid]={...(states[eid]||{entity_id:eid,attributes:{}}),state};
+    }
+    host.hass={...host.hass,states};host._hassSequence++;
+  };
+  setRows(Object.fromEntries(own.entities.map(eid=>[eid,'unavailable'])));
+  let previous=captureRenderDeviceSnapshot(host,reuse);
+  assert.equal(previous.presentations.get(key).ownAvailability,'unavailable');
+  for(const [state,want]of [['100','available'],['unknown','unknown'],[null,'unknown'],
+    ['unavailable','unavailable'],['0','available']]){
+    setRows({[diagnostic]:state});
+    const incremental=captureRenderDeviceSnapshot(host,reuse);
+    assert.deepEqual(plain(incremental),plain(captureRenderDeviceSnapshot(host,null)));
+    const presentation=incremental.presentations.get(key);
+    assert.equal(presentation.ownAvailability,want,`diagnostic=${state}`);
+    assert.equal(presentation.offline,want==='unavailable');
+    assert.notEqual(presentation,previous.presentations.get(key),'own diagnostic invalidates this presentation');
+    assert.equal(incremental.presentations.get(presentationSnapshotKey('perf-device-8',true)),
+      previous.presentations.get(presentationSnapshotKey('perf-device-8',true)),
+      'an unrelated marker retains its presentation');
+    assertDeepFrozen(incremental);previous=incremental;
+  }
+  // An available row stops being own evidence as soon as the registry disables it.
+  host.hass={...host.hass,entities:{...host.hass.entities,
+    [diagnostic]:{...host.hass.entities[diagnostic],disabled_by:'user'}}};
+  host.rebuildRoster();
+  let next=captureRenderDeviceSnapshot(host,reuse);
+  assert.deepEqual(plain(next),plain(captureRenderDeviceSnapshot(host,null)));
+  assert.equal(next.presentations.get(key).ownAvailability,'unavailable');
+  // A new exact-entity marker claims that diagnostic; a registry/context rebuild
+  // cannot let it silently prove the residual physical parent online again.
+  host.hass={...host.hass,entities:{...host.hass.entities,
+    [diagnostic]:{...host.hass.entities[diagnostic],disabled_by:null}}};
+  host._markers.push({id:'own-diagnostic',binding:`entity:${diagnostic}`,space:'perf-floor-1'});
+  host._cfgEpoch++;host.rebuildRoster();
+  next=captureRenderDeviceSnapshot(host,reuse);
+  assert.deepEqual(plain(next),plain(captureRenderDeviceSnapshot(host,null)));
+  assert.equal(next.presentations.get(key).ownAvailability,'unavailable');
+  assert.equal(next.presentations.get(presentationSnapshotKey('own-diagnostic',true)).ownAvailability,'available');
+});
+
 test('#920 an explicit CO2 source outside every room remains in the immutable live snapshot', () => {
   const fixture = oracleFixture();
   const id = 'sensor.external_co2';

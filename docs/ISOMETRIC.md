@@ -12,6 +12,11 @@ stage, is in the ADRs (`docs/adr/089-…`, `122-…`, `160-…`,
 
 ## Activation
 
+Own device offline (#1026) changes only inner glyph/value and badge content
+opacity, just as in Flat. It has no body/edge colour or tinted-shadow table
+entry. The ordinary neutral tile and its geometry remain unchanged; alarm and
+other state colours retain their existing priority.
+
 Flat device contacts (#866) do not change 2.5D tiles. Shared/contact contours,
 wall-derived rotations and Flat contact styling are cleared in iso; individual
 tile edges/shadows, actions and exact saved anchor positions remain unchanged.

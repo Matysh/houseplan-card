@@ -13,7 +13,7 @@ import {
 import {
   combineVisualSamples, entityVisualSample, entityVisualSamplesForDevice,
   isApplianceLifecycleEntity, isDevicePowerSwitch,
-  type DeviceActivity, type DeviceAvailability, type DeviceVisualState, type EntityVisualSample,
+  type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
   displayIsNeutral, displayWantsValue,
@@ -38,6 +38,9 @@ import {
   DEVICE_PULSE_DEFAULT_SCALE, ordinaryDevicePulseColor, resolveDevicePulse, type ResolvedDevicePulse,
 } from './device-pulse';
 import { isManualVirtualLightMarker } from './virtual-light-state';
+import {
+  controllerSourceAvailability, resolveDeviceOwnAvailability, type OwnDeviceAvailability,
+} from './device-own-availability';
 import { classifyDeviceIssue, type ResolvedDeviceIssue } from './device-issues';
 import { PresentationLightFrame } from './presentation-light-frame';
 import { resolveMarkerStateSource, type ResolvedMarkerStateSource } from './marker-state-source';
@@ -95,11 +98,12 @@ export function deviceAccessibleLabel(
 }
 
 export function deviceA11yState(presentation: Pick<
-  ResolvedDevicePresentation, 'visual' | 'lockState' | 'display'
+  ResolvedDevicePresentation, 'visual' | 'lockState' | 'display' | 'offline'
 >): DeviceA11yState {
   if (displayIsNeutral(presentation.display)) return 'neutral';
   if (presentation.visual.status === 'alarm') return 'alarm';
-  if (presentation.visual.availability === 'unavailable') return 'unavailable';
+  if (presentation.offline) return 'unavailable';
+  if (presentation.visual.availability === 'unavailable') return 'neutral';
   if (presentation.lockState) return presentation.lockState;
   if (presentation.visual.status === 'working') return 'working';
   if (presentation.visual.status === 'open') return 'open';
@@ -183,6 +187,10 @@ export interface ResolvedDevicePresentation {
   decisionIds: readonly string[];
 
   visual: DeviceVisualState;
+  /** Own active roster evidence, distinct from the selected sample's quality. */
+  ownAvailability: OwnDeviceAvailability;
+  /** Eligible own-offline content paint after static/live/lifecycle gates. */
+  offline: boolean;
   lockState: DeviceLockState;
   display: DeviceDisplayMode;
   icon: string;
@@ -259,39 +267,6 @@ function sourceStateText(hass: any, eid: string): string {
   return String(st.state ?? '');
 }
 
-/**
- * Availability of the physical controller itself (#251).
- *
- * HA exposes entity states rather than one device state. Controls are not
- * controller evidence: a live battery/LQI/update sibling is, while an
- * event-only `unknown` entity is not. An active physical device with no entity
- * roster has no evidence that it is offline, so it remains available while
- * its target status is resolved independently. A virtual controller has no
- * physical HA binding which can go offline, so it is available by definition.
- */
-export function controllerAvailability(hass: any, d: DevItem): DeviceAvailability {
-  if (d.virtual || d.bindingKind === 'virtual' || d.marker?.binding === 'virtual') {
-    return 'available';
-  }
-  const ownEntities = d.entities || [];
-  // #369(г): "no roster" and "roster fully disabled by the user" are different
-  // evidence. A truly entityless active device stays available (#318); a
-  // device whose registry entities were all deliberately disabled is the user
-  // opting out — it must not look alive.
-  const disabledRoster = d.bindingStatus?.kind === 'ha_disabled'
-    || (d.bindingStatus?.allEntityIds?.length ?? 0) > 0;
-  const activeEntitylessDevice = ownEntities.length === 0
-    && !disabledRoster
-    && (d.bindingKind === 'device' || d.marker?.binding?.startsWith('device:'))
-    && d.bindingStatus?.kind === 'active';
-  if (activeEntitylessDevice) return 'available';
-  const live = ownEntities.some((eid) => {
-    const state = String(hass?.states?.[eid]?.state ?? '').trim().toLowerCase();
-    return state !== '' && state !== 'unknown' && state !== 'unavailable';
-  });
-  return live ? 'available' : 'unavailable';
-}
-
 function sourceOf(
   hass: any, eid: string, role: PresentationSourceRole, sample?: EntityVisualSample,
 ): ResolvedPresentationSource {
@@ -312,6 +287,7 @@ export function resolvePresentationSources(
   planLightSources?: readonly ResolvedLightSource<DevItem>[],
   registryHass: any = hass,
   lightFrame?: PresentationLightFrame,
+  ownAvailability: OwnDeviceAvailability = resolveDeviceOwnAvailability(hass, device),
 ): ResolvedPresentationSources {
   // User-hidden is a renderer concern. It must not erase the source graph used
   // by the design preview. HA-disabled devices already carry no active entities.
@@ -497,7 +473,7 @@ export function resolvePresentationSources(
   let samples = nativeSamples;
   if (stateSource && !protectedFace) {
     const native = combineVisualSamples(nativeSamples);
-    const availability = sourceKind === 'controls' ? controllerAvailability(hass, d) : native.availability;
+    const availability = sourceKind === 'controls' ? controllerSourceAvailability(ownAvailability, d) : native.availability;
     const ordinary = availability === 'unavailable'
       ? { ...stateSource.sample, availability, status: 'neutral' as const, activity: 'none' as const, edge: 'none' as const }
       : stateSource.sample;
@@ -717,16 +693,16 @@ export function activitySourceSignature(
 
 export function presentationClasses(presentation: Pick<
   ResolvedDevicePresentation,
-  'visual' | 'lockState' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse'
+  'visual' | 'lockState' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse' | 'offline'
 >): string[] {
   if (presentation.effectiveHidden) return [];
   if (displayIsNeutral(presentation.display)) return ['static-icon'];
   const classes: string[] = [];
   const { visual } = presentation;
   if (presentation.pulse.kind === 'alarm') classes.push('alarm');
-  else if (visual.availability === 'unavailable') classes.push('unavail');
-  else if (visual.status === 'working') classes.push('on');
-  else if (visual.status === 'open') classes.push('open');
+  if (presentation.offline) classes.push('unavail');
+  else if (visual.availability === 'available' && visual.status === 'working') classes.push('on');
+  else if (visual.availability === 'available' && visual.status === 'open') classes.push('open');
   if (presentation.lockState) classes.push(`lock-${presentation.lockState}`);
   // Keep the semantic class names as styling/debug hooks during the beta;
   // they no longer select a separate renderer or animation implementation.
@@ -756,11 +732,14 @@ export function resolveDevicePresentation(
   // preview, where sources are always resolved.
   const neutralFace = displayIsNeutral(display);
   const sourceless = display === 'static_icon';
+  const ownAvailability = sourceless && options.sourceDetails === false
+    ? 'unknown' : resolveDeviceOwnAvailability(hass, d);
   const sources = sourceless && options.sourceDetails === false
     ? EMPTY_SOURCES : resolvePresentationSources(
         hass, d, options.lightDevices || [d], options.lightSources,
         options.registryHass || hass,
         options.lightFrame,
+        ownAvailability,
       );
   const markerRefs = [d.marker?.value_source, d.marker?.value_badge?.source]
     .filter((source) => source?.kind === 'derived_marker_state')
@@ -817,10 +796,9 @@ export function resolveDevicePresentation(
     display,
     liveStates: options.liveStates,
     sourceVisual: combined,
+    ownAvailability,
     controllerFace,
-    // Preserve the ordinary-marker O(1) fast path: controller evidence is
-    // scanned only when this marker actually projects external controls.
-    controllerAvailability: controllerFace ? controllerAvailability(hass, d) : 'available',
+    controllerSourceAvailability: controllerSourceAvailability(ownAvailability, d),
     shortActivity,
     valueAvailable: value.text != null,
     valueFallback: value.fallback,
@@ -899,6 +877,7 @@ export function resolveDevicePresentation(
     sourceKind: sources.sourceKind,
     primaryDomain: (d.primary || '').split('.')[0],
     visual,
+    offline: policy.offline,
     activity,
   });
   const notices: PresentationReason[] = [];
@@ -935,6 +914,8 @@ export function resolveDevicePresentation(
       `pulse.${pulse.kind}_${pulse.reason}`,
     ],
     visual,
+    ownAvailability,
+    offline: policy.offline,
     lockState,
     display,
     icon,
