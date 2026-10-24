@@ -89,6 +89,8 @@ the accepted shared context-menu presentation. Pending Properties completion
 cannot outlive outside/navigation/authority retirement; normal chosen-action
 close does not revoke an already accepted response. The pure polygon helper is
 shared with Resize rather than imported through the editor runtime facade.
+Processing failures remain fail-closed; the fixed unavailable code belongs to
+the shared backend error registry and the lazy editor dictionary.
 
 Decor Line (#1046) is a lazy-editor `DecorLineDrawing` session. Clean stage
 pointer pairs authorise one native click; navigation/cancel tails have no such

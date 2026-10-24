@@ -77,6 +77,7 @@
   "node_delete_opening": "An opening cannot keep its position on the new wall",
   "node_delete_write_conflict": "The plan changed. Reopen the menu and try deleting the node again.",
   "node_delete_write_unavailable": "Could not delete the node. Try again.",
+  "backup.error.node_delete_backend_unavailable": "The node deletion could not be processed right now. Try again.",
   "node_delete_update_required": "Update the House Plan integration to delete wall nodes.",
   "node_move_unsupported_junction": "This complex through-junction cannot be moved. T and X junctions without extra branches are supported.",
   "furn.title": "Furniture library",

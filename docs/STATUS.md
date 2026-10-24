@@ -92,6 +92,8 @@ refused inverse operations retain the command and cursor. Storage is unchanged.
 The existing node owner uses the common context menu; pending Properties and
 retained exit paint carry no late write authority after cancellation. Touch
 compatibility tails stay inert and the next deliberate mouse press re-arms.
+Backend quality checks cover its emitted fixed errors as well as Delete/Move
+transactions; unavailable processing has an editor-only localized message.
 
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
 renderer, with the dark body cut out beneath the core so the real plan shows

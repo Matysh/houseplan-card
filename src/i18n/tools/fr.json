@@ -77,6 +77,7 @@
   "node_delete_opening": "Une ouverture ne peut pas conserver sa position sur le nouveau mur",
   "node_delete_write_conflict": "Le plan a changé. Rouvrez le menu et réessayez de supprimer le nœud.",
   "node_delete_write_unavailable": "Impossible de supprimer le nœud. Réessayez.",
+  "backup.error.node_delete_backend_unavailable": "La suppression du nœud n’a pas pu être traitée pour le moment. Réessayez.",
   "node_delete_update_required": "Mettez à jour l’intégration House Plan pour supprimer des nœuds de mur.",
   "node_move_unsupported_junction": "Cette jonction traversante complexe ne peut pas être déplacée. Les jonctions T et X sans branche supplémentaire sont prises en charge.",
   "furn.title": "Bibliothèque de mobilier",

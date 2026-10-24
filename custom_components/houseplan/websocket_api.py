@@ -153,8 +153,12 @@ from .virtual_lights import (
     async_toggle_virtual_light,
     async_virtual_light_snapshot,
 )
+from .wall_node_delete import (
+    NodeDeleteError,
+    node_delete_candidate,
+    node_delete_host_baseline,
+)
 from .wall_node_move import NodeMoveError, node_move_candidate, node_move_host_baseline
-from .wall_node_delete import NodeDeleteError, node_delete_candidate, node_delete_host_baseline
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,

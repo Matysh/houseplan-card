@@ -155,6 +155,12 @@ narrow intent; authenticated backend proof remains the separate HA test below.
 The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authenticated
 groups, concurrent CAS, stores, metadata projection and integration reload; it
 never replaces the product planner. Run it with the current supported HA harness.
+The CI return on 07030954 caught an unsorted WS import (ruff I001); the ordinary
+quality-neighbour test also caught the new unavailable code missing from
+`ERROR_CODES`. Both are fixed without changing deletion/inverse algorithms:
+ruff sorts the import, and the fixed code has editor-only EN/RU/DE/FR messages.
+Run `python -m ruff check custom_components/houseplan`, the configured mypy strict
+allowlist and `test_backend_quality.py` alongside the Delete/Move HA subset.
 Ordinary rotated inputs extend parity to 160 scenarios, including finite contacts
 that neither old carrier touched. Sixteen registered kernel/writer/history/menu/capability guards
 have static readiness only; execution and caught evidence remain nightly.

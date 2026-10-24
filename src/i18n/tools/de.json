@@ -77,6 +77,7 @@
   "node_delete_opening": "Eine Öffnung kann ihre Position an der neuen Wand nicht behalten",
   "node_delete_write_conflict": "Der Plan hat sich geändert. Öffne das Menü erneut und versuche nochmals, den Knoten zu löschen.",
   "node_delete_write_unavailable": "Der Knoten konnte nicht gelöscht werden. Versuche es erneut.",
+  "backup.error.node_delete_backend_unavailable": "Das Löschen des Knotens konnte gerade nicht verarbeitet werden. Erneut versuchen.",
   "node_delete_update_required": "Aktualisiere die House-Plan-Integration, um Wandknoten zu löschen.",
   "node_move_unsupported_junction": "Dieser komplexe Durchgangsknoten kann nicht bewegt werden. T- und X-Knoten ohne zusätzliche Äste werden unterstützt.",
   "furn.title": "Möbelbibliothek",
