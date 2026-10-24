@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1018,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Audit historical parallel paths and collect SHA-pinned diagnostic unit/smoke/Golden source coverage without gate/release authority. The separate first product commit removes only proved unused top-level form-kit onOpacity options/numeric fallbacks and their retired tile-unit CSS, preserving the atomic picker and the new nested raw HEX/alpha inputs accepted in #1051; no visible behavior change."
+}

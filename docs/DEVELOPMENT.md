@@ -1,5 +1,46 @@
 # Development and deployment
 
+## Parallel path diagnostic (#1018)
+
+`npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;
+manual source/caller decisions and exact-SHA anchors live in
+`docs/audits/parallel-paths-1018.json`. `npm run coverage:diagnostic -- --sha=<SHA>`
+runs the complete computed unit/smoke/Golden inventory, keeps raw sources/maps
+and coverage under ignored artifacts, and reports incomplete/unknown honestly.
+It requires a clean exact checkout. Normal build bytes/manifest are independently
+compared and restored; the nightly read-only job uses its immutable intent SHA.
+The artifact has no gate/release/mutation authority. Recipe, limits, provenance,
+interpretation and the separately measured form-kit cleanup are documented in
+`docs/audits/parallel-paths-1018.md` and the issue handoff.
+Measured raw V8 retention required a bounded 4-GiB compressed artifact budget;
+the collector/job/upload limits are 105/135/15 minutes. Interrupted runs begin
+in incomplete state, and generated smoke captures under demo/out stay ignored.
+The frozen-a34f projector is a one-off manual repair requiring the ignored raw
+capture, not an entry of Validate or the current nightly collector. Its explicit
+manual-input registration leaves the shared index/report/map engine under the
+ordinary frontend unit inputs.
+Actual Node preload/flush remains a no-browser tooling unit. Its real Chromium
+page/navigation/retry/close checks run as the registered selected browser smoke
+`demo/smoke_coverage_recorder.mjs`; tooling CI needs no browser installation.
+
+The first product cleanup removes only the unused top-level ColorField/ColorTile
+onOpacity options and numeric fallbacks, plus five dead colortile-meta/unit CSS
+blocks (six selector branches). Ten current literal FormKit calls pass no such
+callback. The separate inputs.onHex/onOpacity(raw) route introduced by #1051
+remains a real numeric inline field; its raw invalid draft, atomic save and
+Escape/Undo are covered by the existing smoke_ui_1051 alongside the three named
+General/Space/Room smokes. The frozen CSS fixtures lose only those same six
+retired selector branches; all general unit/opacity and ColorField input styles
+remain. Source and actual production-editor graph sizes are measured separately
+from the historical a34f diagnostic, which is not rerun or relabelled as current.
+
+Matched clean WSL Node22.23.3/Rollup4.62.2 builds fda4894b5→f8ce07b3b reduce the
+two source files72889→71354B/1299→1280lines and the actual16-file production
+editor graph1186151→1185074raw/344783→344566gzip. The small tracked
+`docs/audits/parallel-paths-1018-first-cleanup.json` keeps both source/build
+identities, current literal callers and normal semantic outcomes. The later
+accepted-#1004 merge and final ordinary checks are separate materials.
+
 ## LED Zigbee endpoints (#1004)
 
 `node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input

@@ -1,0 +1,735 @@
+{
+  "schema": "houseplan-first-cleanup/v1",
+  "authority": "normal semantic/size proof for one subsystem; not coverage or release proof",
+  "before": {
+    "sha": "fda4894b5a582161540d998b9883e398e9e0f6c4",
+    "clean": true,
+    "sources": [
+      {
+        "path": "src/editors/form-kit.ts",
+        "rawBytes": 38249,
+        "lfBytes": 38249,
+        "lines": 741,
+        "sha256": "e6141430b7cdf84b76851f37d5853b07375ed357fce0b9a8b535cb730836dfe4",
+        "lfSha256": "e6141430b7cdf84b76851f37d5853b07375ed357fce0b9a8b535cb730836dfe4"
+      },
+      {
+        "path": "src/styles/form-kit.styles.ts",
+        "rawBytes": 34640,
+        "lfBytes": 34640,
+        "lines": 558,
+        "sha256": "fee3d72cb8e3f5dfbb99f709e61bbb50970f181fcd40280db1350316662903c5",
+        "lfSha256": "fee3d72cb8e3f5dfbb99f709e61bbb50970f181fcd40280db1350316662903c5"
+      }
+    ],
+    "totals": {
+      "rawBytes": 72889,
+      "lfBytes": 72889,
+      "lines": 1299
+    },
+    "productionEditor": {
+      "fingerprint": "a128d12cbcf86f4da7cf45ddf7f22a2ce08ae506a3747cb7b3e58c481951b0e6",
+      "files": 16,
+      "rawBytes": 1186151,
+      "gzipBytes": 344783,
+      "manifestLazyEditorGzipBytes": 344783,
+      "graph": [
+        {
+          "path": "houseplan-assets/backdrop-pick-BaMiVgUB.js",
+          "bytes": 80608,
+          "gzipBytes": 26103,
+          "sha256": "0425b0b536462f1f8e1c081e80ff351e8a330066d47c547a9ccf345affae8aab"
+        },
+        {
+          "path": "houseplan-assets/codepoint-order-DUhepFPE.js",
+          "bytes": 11816,
+          "gzipBytes": 4146,
+          "sha256": "beb390ba4a3035397a902fda723037e0b26362a458015d379268e991d7629529"
+        },
+        {
+          "path": "houseplan-assets/device-contact-basis-ChkjUEFu.js",
+          "bytes": 1329,
+          "gzipBytes": 740,
+          "sha256": "28153f07043ecfc8090ff2026941d17bb7c05b6574420b35b8e0016d81186bc1"
+        },
+        {
+          "path": "houseplan-assets/device-contact-geometry-CR_kXWhm.js",
+          "bytes": 9137,
+          "gzipBytes": 3625,
+          "sha256": "70abff1cca1f38395d737ef70b221b8f658ac2877b9bd40615b3fa54bd0e5957"
+        },
+        {
+          "path": "houseplan-assets/device-contact-scene-ClgW8C5j.js",
+          "bytes": 2940,
+          "gzipBytes": 1229,
+          "sha256": "a40573fd81932dd602178e2e1f591bde59a664dc7048cda48f6bbfd6b4265a7e"
+        },
+        {
+          "path": "houseplan-assets/device-contact-write-CJ-pwq_a.js",
+          "bytes": 4307,
+          "gzipBytes": 1842,
+          "sha256": "53b3d403f4f78374d3df7ef1c07f583f04467414bbd27390eb967edd364e9e13"
+        },
+        {
+          "path": "houseplan-assets/editor-DZp6f4lQ.js",
+          "bytes": 3791,
+          "gzipBytes": 1589,
+          "sha256": "3e5fb0085cf6f1b77263c588647f349f601c724cb3e0084fbbe1b21f5e7de050"
+        },
+        {
+          "path": "houseplan-assets/editor-shared-DNhRnkW7.js",
+          "bytes": 37531,
+          "gzipBytes": 14205,
+          "sha256": "ecbb3286c3dc040fcb29479d04ae86fd74666d7e7ec93a3c0539925a6ec1f7d2"
+        },
+        {
+          "path": "houseplan-assets/floating-surface-BSEkz0a9.js",
+          "bytes": 1104,
+          "gzipBytes": 579,
+          "sha256": "44aee91199d745f8fbf77bf38f90d1cc3cb480b5a83fa51d46c4b46b26fd1dee"
+        },
+        {
+          "path": "houseplan-assets/floating-surface-controller-Dq2cKZZU.js",
+          "bytes": 1941,
+          "gzipBytes": 974,
+          "sha256": "30addad2683095c94fa877c64f6a1cd14d5650beebdb76a613b3f8a826927070"
+        },
+        {
+          "path": "houseplan-assets/form-kit.styles-BUCpriKk.js",
+          "bytes": 25739,
+          "gzipBytes": 5446,
+          "sha256": "5469d1854a62c9b2e8cab92a244f48e868d8ff2a993c1fc2a4ce158dba5faa42"
+        },
+        {
+          "path": "houseplan-assets/furniture-plan-art.generated-k3UbdIMI.js",
+          "bytes": 52035,
+          "gzipBytes": 16941,
+          "sha256": "e18e2d435156df71a070df8fb403ada054f1d337e3cff847ce5252f5dd17ea6d"
+        },
+        {
+          "path": "houseplan-assets/houseplan-editor-runtime-DUnSCO40.js",
+          "bytes": 893390,
+          "gzipBytes": 249439,
+          "sha256": "c7816ce6bf54e9c24c8437c95de92e4b6e84bf77659c57320ac3d966e3e2e907"
+        },
+        {
+          "path": "houseplan-assets/hp-color-opacity-CPVG-EL0.js",
+          "bytes": 38964,
+          "gzipBytes": 9984,
+          "sha256": "341084d79b5e6ece4f09471982349ceecf6e717d1281eec302ab6b75794798c1"
+        },
+        {
+          "path": "houseplan-assets/namespace-language-Cm5URc18.js",
+          "bytes": 671,
+          "gzipBytes": 407,
+          "sha256": "7eea7a4eb93291ee91b3511dd430f9f1bb6416ec0d9794d117ea53afa3de2763"
+        },
+        {
+          "path": "houseplan-assets/zigbee-topology-I1sw7-NW.js",
+          "bytes": 20848,
+          "gzipBytes": 7534,
+          "sha256": "0519310e23bf63dc63310dcaff89204831b490fef41069e64fd2b8a006365630"
+        }
+      ]
+    }
+  },
+  "after": {
+    "sha": "f8ce07b3bc4fb8f782cfa2ae5e5c42cb8441e0d8",
+    "clean": true,
+    "sources": [
+      {
+        "path": "src/editors/form-kit.ts",
+        "rawBytes": 37271,
+        "lfBytes": 37271,
+        "lines": 728,
+        "sha256": "4dfb4195896a15148be1f6e42ce4f37254df24862e07454c9959e45920d42539",
+        "lfSha256": "4dfb4195896a15148be1f6e42ce4f37254df24862e07454c9959e45920d42539"
+      },
+      {
+        "path": "src/styles/form-kit.styles.ts",
+        "rawBytes": 34083,
+        "lfBytes": 34083,
+        "lines": 552,
+        "sha256": "7cbdd02ef8940a1b808bc078c32bf2b8cfd85301ca9551d5fc7e14ed1dc31472",
+        "lfSha256": "7cbdd02ef8940a1b808bc078c32bf2b8cfd85301ca9551d5fc7e14ed1dc31472"
+      }
+    ],
+    "totals": {
+      "rawBytes": 71354,
+      "lfBytes": 71354,
+      "lines": 1280
+    },
+    "productionEditor": {
+      "fingerprint": "e94139287a46ebc62f68ba663555fe9472a3d4a25e4b1b709a92faddceaf9632",
+      "files": 16,
+      "rawBytes": 1185074,
+      "gzipBytes": 344566,
+      "manifestLazyEditorGzipBytes": 344566,
+      "graph": [
+        {
+          "path": "houseplan-assets/backdrop-pick-C8KNXdbG.js",
+          "bytes": 80094,
+          "gzipBytes": 25979,
+          "sha256": "fc95ff1f4eec4905066b61b106ecf026355d5fdb3bb4a5f72ef7b3db70e2cc12"
+        },
+        {
+          "path": "houseplan-assets/codepoint-order-B09zFMbC.js",
+          "bytes": 11816,
+          "gzipBytes": 4146,
+          "sha256": "43d9a043cb3ad2a58c3cf06d9bec7bafabc7bc39c8c6dfa3d52a335678e368d8"
+        },
+        {
+          "path": "houseplan-assets/device-contact-basis-C0rhS7Wd.js",
+          "bytes": 1329,
+          "gzipBytes": 738,
+          "sha256": "08124688727f49d8b4da38334f45784f0b5363fb5886cf56057e0fa416b4e405"
+        },
+        {
+          "path": "houseplan-assets/device-contact-geometry-Cqrky3LQ.js",
+          "bytes": 9137,
+          "gzipBytes": 3628,
+          "sha256": "dff4c0fb16c1f659575311c94e295a405718203d927f12fa8f04ad62497cc31f"
+        },
+        {
+          "path": "houseplan-assets/device-contact-scene-Bz9VC93w.js",
+          "bytes": 2940,
+          "gzipBytes": 1229,
+          "sha256": "45242ca3a5c533645c5aceb7f619a5078c033ec972083fe5a3036565bc02ebc1"
+        },
+        {
+          "path": "houseplan-assets/device-contact-write-UZdyUJ_W.js",
+          "bytes": 4307,
+          "gzipBytes": 1839,
+          "sha256": "90002a14b81b5e7ec9b738e47b30615f7748247970018fd007a87cd2ead377b5"
+        },
+        {
+          "path": "houseplan-assets/editor-CbKmxddo.js",
+          "bytes": 3791,
+          "gzipBytes": 1591,
+          "sha256": "2c0db55e214da541f8d4f4e7775a16841174e2302c146cbfca2bc8eddc493116"
+        },
+        {
+          "path": "houseplan-assets/editor-shared-C7x9N7lQ.js",
+          "bytes": 37531,
+          "gzipBytes": 14205,
+          "sha256": "b90b9995ecb6c3cfbacfecd74a9b0a7ac15a462f9576f56001adeea606954a78"
+        },
+        {
+          "path": "houseplan-assets/floating-surface-DoG5xjbD.js",
+          "bytes": 1104,
+          "gzipBytes": 579,
+          "sha256": "477f56a3a7f0ba222c0bcaa0458776bb40a223ab4873bb4948f899d423cd78a9"
+        },
+        {
+          "path": "houseplan-assets/floating-surface-controller-BjxY4c9n.js",
+          "bytes": 1941,
+          "gzipBytes": 975,
+          "sha256": "adb6289c113c6695a7e36fa16fa2caff00266052465dbe762b858b61e479b0a1"
+        },
+        {
+          "path": "houseplan-assets/form-kit.styles-DvLNoDKz.js",
+          "bytes": 25176,
+          "gzipBytes": 5347,
+          "sha256": "1f29e818cb422a518e44d9d4deef61fba8f66868ebcfd04ac6546a05c15b7c1a"
+        },
+        {
+          "path": "houseplan-assets/furniture-plan-art.generated-Za_SB0WQ.js",
+          "bytes": 52035,
+          "gzipBytes": 16940,
+          "sha256": "1f2b331505f26411f49f810b2bb97a5c03018b12d290bb4de454a4b1b632a4a6"
+        },
+        {
+          "path": "houseplan-assets/houseplan-editor-runtime-C21BEh5d.js",
+          "bytes": 893390,
+          "gzipBytes": 249445,
+          "sha256": "9e7a0f6ddc005413ceff9d422335a0dcf83e48fc9561a077f731f63cdd10a256"
+        },
+        {
+          "path": "houseplan-assets/hp-color-opacity-B_JnRGzz.js",
+          "bytes": 38964,
+          "gzipBytes": 9987,
+          "sha256": "a355089f058e4b4dfd81b999d240aff46e2e88586debd26e2b4e72ea62708ac9"
+        },
+        {
+          "path": "houseplan-assets/namespace-language-CG3-yoWm.js",
+          "bytes": 671,
+          "gzipBytes": 406,
+          "sha256": "56baa757e0139a11f19a3b1c4e3d8a5826a173b427d5060760bfe66cd9f9ce5a"
+        },
+        {
+          "path": "houseplan-assets/zigbee-topology-DmoKZ23a.js",
+          "bytes": 20848,
+          "gzipBytes": 7532,
+          "sha256": "b98e9891c1fc803c47f59a8dd1dcfbfa7c0c886da0617507b7a22ab7eea77858"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "node": "v22.23.3",
+    "platform": "linux",
+    "execPath": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+    "NODE_PATH": "/home/sergey/.cache/houseplan-1018-runtime/node_modules",
+    "rollupPackage": "4.62.2"
+  },
+  "delta": {
+    "sourceBytes": -1535,
+    "sourceLines": -19,
+    "editorRawBytes": -1077,
+    "editorGzipBytes": -217
+  },
+  "callerInspection": {
+    "beforeMaterial": "fda4894b5a582161540d998b9883e398e9e0f6c4",
+    "afterMaterial": "3d7d38e781684019d901dee23abf006a2e9a2a78",
+    "afterFormKitBytesMatchFirstCommit": true,
+    "calls": [
+      {
+        "path": "src/editors/general-settings-dialog.ts",
+        "line": 76,
+        "column": 11,
+        "excerpt": "return colorTile({",
+        "callee": "colorTile",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "label",
+          "heading",
+          "hex",
+          "opacity",
+          "opacityLabel",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/general-settings-dialog.ts",
+        "line": 166,
+        "column": 67,
+        "excerpt": "control: html`<div class=\"hpf-color-with-action\">${colorField({",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/general-settings-dialog.ts",
+        "line": 189,
+        "column": 184,
+        "excerpt": "colorRow({ label: st('gs.default_light'), help:html`<hp-help instant .text=${st('gs.default_light_help')} .ariaLabel=${st('gs.default_light_help.aria')}></hp-help>`, picker: colorField({",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "opacity",
+          "opacityLabel",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/marker-dialog.ts",
+        "line": 477,
+        "column": 19,
+        "excerpt": "control: colorField({",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "disabled",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/marker-dialog.ts",
+        "line": 661,
+        "column": 59,
+        "excerpt": "control: html`<div class=\"ripple-colorrow\">${colorField({",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/properties/surface.ts",
+        "line": 97,
+        "column": 8,
+        "excerpt": ": colorField({ hex: color.color.toUpperCase(), valueLabel: color.noFill ? t('no_fill') : undefined, opacity: color.opacity,",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "valueLabel",
+          "opacity",
+          "opacityLabel",
+          "disabled",
+          "inputs",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/room-settings-dialog.ts",
+        "line": 170,
+        "column": 26,
+        "excerpt": "picker: colorField({",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "opacity",
+          "opacityLabel",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/room-settings-dialog.ts",
+        "line": 237,
+        "column": 77,
+        "excerpt": "host._roomNameColor ? colorRow({label:st('room.name_color'),picker:colorField({",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "opacity",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/space-form.ts",
+        "line": 313,
+        "column": 88,
+        "excerpt": ": kind === 'wall-fill' ? 'space.wall_fill.help' : 'space.fill_color.help'),picker:colorField({hex:value.c,",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "opacity",
+          "picker"
+        ]
+      },
+      {
+        "path": "src/editors/space-form.ts",
+        "line": 415,
+        "column": 77,
+        "excerpt": "d.bgMode === 'static' ? colorRow({label:t('space.bg_color'),picker:colorField({hex:d.bgColor || inheritedColor,",
+        "callee": "colorField",
+        "argumentKind": "ObjectLiteralExpression",
+        "keys": [
+          "hex",
+          "picker"
+        ]
+      }
+    ],
+    "nonLiteralCalls": 0,
+    "spreads": 0,
+    "topLevelOnOpacityArguments": 0,
+    "beforeOnOpacityTokenCount": 11,
+    "remainingTokens": [
+      {
+        "path": "src/editors/form-kit.ts",
+        "line": 334,
+        "column": 30,
+        "excerpt": "onHex(raw: string): void; onOpacity(raw: string): void;",
+        "kind": "MethodSignature"
+      },
+      {
+        "path": "src/editors/form-kit.ts",
+        "line": 362,
+        "column": 38,
+        "excerpt": "@input=${(e: Event) => inputs.onOpacity((e.target as HTMLInputElement).value)} /><span>%</span></span></span>` : html`<span class=\"hpf-opacity\" aria-label=${opacityLabel ?? nothing}>${pct}%</span>`}",
+        "kind": "PropertyAccessExpression"
+      },
+      {
+        "path": "src/editors/properties/surface.ts",
+        "line": 102,
+        "column": 10,
+        "excerpt": "onOpacity: raw => port.edit(field, editPropertiesColor(state, 'opacity', raw)) } : undefined,",
+        "kind": "PropertyAssignment"
+      }
+    ]
+  },
+  "removed": {
+    "topLevelOptions": [
+      "ColorFieldOptions.onOpacity",
+      "ColorTileOptions.onOpacity"
+    ],
+    "numericFallbacks": 2,
+    "cssOwner": "ColorTile .colortile-meta .unit descendants created only by its removed numeric fallback",
+    "cssBlocks": 5,
+    "selectorBranches": 6,
+    "cssFixtureFiles": [
+      "test/fixtures/form-kit-card-dialog.css",
+      "test/fixtures/form-kit-card-dialog-with-switch.css"
+    ]
+  },
+  "preserved": [
+    "inputs.onHex(raw)",
+    "inputs.onOpacity(raw)",
+    "inline type=number",
+    "atomic hp-color-opacity-change",
+    "read-only percentage",
+    "reset/disabled/cancel/Save/reopen",
+    "generic unit/opacity CSS",
+    "ColorField inline opacity CSS",
+    "native HSV picker sliders"
+  ],
+  "normalSmokes": [
+    {
+      "id": "smoke:demo/smoke_general_settings_form.mjs",
+      "material": "f8ce07b3bc4fb8f782cfa2ae5e5c42cb8441e0d8",
+      "status": "completed",
+      "exitCode": 0,
+      "logSha256": "71f4e33906f8902e188ff212454661ae11ab51b64a05a058dd1571045caff6ed",
+      "checkNames": [
+        "appearancePlatesMovedToSpaces",
+        "batteryAllAfterLowRemovesKey",
+        "batteryCancelAsks",
+        "batteryCancelKeepsSaved",
+        "batteryDefaultAllInDisplay",
+        "batteryDraftDoesNotMutateSaved",
+        "batteryEnabledRemovesKey",
+        "batteryFailedSaveRollsBackAndKeepsDraft",
+        "batteryFalseSavedWithRevision",
+        "batteryLowSavedAsString",
+        "batteryReopenAfterCancelIsAll",
+        "batteryReopensLowAndClean",
+        "batteryReopensOffAndClean",
+        "batterySavePreservesSiblingSettings",
+        "bgSelectWritesAndHidesColor",
+        "cleanAgainWhenReverted",
+        "cleanClosesImmediately",
+        "colorTilesCount",
+        "compassIs148",
+        "discardAsksFirst",
+        "discardCloses",
+        "emptyNorthStaysUnset",
+        "fourBackgroundPreviews",
+        "glowPlateOpacityWritesOwnKey",
+        "glowRadiusWrites",
+        "invalidGlowKeepsRawAndBlocksOldValue",
+        "keepEditingKeepsDialog",
+        "movedWallFillDraftPreserved",
+        "namedSelects",
+        "noLegacyMarkup",
+        "noNativeColorInputs",
+        "noRedundantSegments",
+        "noSeparateOpacityInputs",
+        "northOutOfRangeBlocksSave",
+        "northWritesWithoutReset",
+        "originPreviewWrites",
+        "resetMakesDirtyWhenDefaultsDiffer",
+        "saveDisabledWhenClean",
+        "saveEnabledWhenDirtyWithStatus",
+        "sixCardsInOrder",
+        "sunMissingIsACallout",
+        "tileHexPrinted",
+        "tileOpacityWritesOwnKey",
+        "toggleTargetsAre44",
+        "toggleWritesShowRoomTooltip",
+        "zigbeeHeadingOnce"
+      ],
+      "logLastWrite": "2026-10-24T06:52:04.159Z",
+      "browserAttestation": null,
+      "attestationAuthority": "not emitted by this legacy invocation; not inferred from a neighbour"
+    },
+    {
+      "id": "smoke:demo/smoke_space_settings_form.mjs",
+      "material": "f8ce07b3bc4fb8f782cfa2ae5e5c42cb8441e0d8",
+      "status": "completed",
+      "exitCode": 0,
+      "logSha256": "65921eb4073767867b84f54b9428e554d3b21ef79dce188f16f6a30b35de2074",
+      "checkNames": [
+        "adjacentBatteryAndSignal",
+        "approvedStructure",
+        "boundariesOwnOpenings",
+        "cleanSaveDisabled",
+        "co2PreviewIsText",
+        "contextLinksStayWithTheirFields",
+        "dirtyStatus",
+        "discardDidNotWrite",
+        "fillKeepsWallStyle",
+        "fits1280",
+        "fits320",
+        "fits390",
+        "fourSections",
+        "generalOpensAtSource",
+        "headerNamesTheSpace",
+        "imageActions1280",
+        "imageActions320",
+        "imageActions390",
+        "independentFonts",
+        "inheritedBackgroundReadOnly",
+        "invalidNorthBlocksSave",
+        "keepEditingPreservesDraft",
+        "legacyRawStillPreservedBeforeSave",
+        "liveThemes",
+        "metricsInTwoColumns",
+        "noWriteWhileEditing",
+        "objectLabels1280",
+        "objectLabels320",
+        "objectLabels390",
+        "previewIndependentFonts",
+        "rawInvalidBlocksSave",
+        "reopensSavedValues",
+        "returnKeepsSpaceDraft",
+        "roomHintNamesBothSpaceBases",
+        "roomPreviewCancelKeepsSpace",
+        "roomPreviewUsesBothSpaceBases",
+        "savedActualKeys",
+        "savedStatusFirst",
+        "sharedCompass",
+        "singlePlanSource",
+        "stackedIdentityFields",
+        "sunFalse",
+        "twoInvalidTemperatures",
+        "validationRevealsHiddenPane"
+      ],
+      "logLastWrite": "2026-10-24T06:52:12.675Z",
+      "browserAttestation": null,
+      "attestationAuthority": "not emitted by this legacy invocation; not inferred from a neighbour"
+    },
+    {
+      "id": "smoke:demo/smoke_room_appearance.mjs",
+      "material": "f8ce07b3bc4fb8f782cfa2ae5e5c42cb8441e0d8",
+      "status": "completed",
+      "exitCode": 0,
+      "logSha256": "d0ac76d87e89f53ebc7feccf01d1a07d870f3cf761de9141b3f3de08ba93b705",
+      "checkNames": [
+        "cancelNoWrites",
+        "failedSaveKeepsAcceptedAndDraft",
+        "fourColourFields",
+        "generalHasNoWallControl",
+        "generalSaveFirstPreservesLegacy",
+        "isoCaptionAndWall",
+        "legacyCaptionAlpha",
+        "legacyWallFill",
+        "livePreviewAndMetrics",
+        "movedWallPlateSolid",
+        "narrow-dark-noOverflow",
+        "narrow-light-noOverflow",
+        "otherSpaceUnchanged",
+        "reloadRetainsColours",
+        "resetDeletesOnlyOverride",
+        "resetPreview",
+        "roomOverrideSaved",
+        "savedIndependent",
+        "spaceChangeRetainsRoomOverride",
+        "staticMatches",
+        "wallFillAlwaysAvailable",
+        "wallFillPrecedesCustom",
+        "zeroAlphaPreview"
+      ],
+      "logLastWrite": "2026-10-24T06:52:21.090Z",
+      "browserAttestation": null,
+      "attestationAuthority": "not emitted by this legacy invocation; not inferred from a neighbour"
+    },
+    {
+      "id": "smoke:demo/smoke_ui_1051.mjs",
+      "material": "f8ce07b3bc4fb8f782cfa2ae5e5c42cb8441e0d8",
+      "status": "completed",
+      "exitCode": 0,
+      "logSha256": "91cdd0053728660fc0f694ff7d65c63faa3a7b2ca337f33dfbc2e4b90025f278",
+      "checkNames": [
+        "atomic_enter_blur_once",
+        "atomic_redo_restores_pair",
+        "atomic_undo_restores_pair",
+        "composite_blur_commits",
+        "device_blue_without_hover",
+        "device_no_old_selection_frame",
+        "empty_plan_default",
+        "escape_restores_preview",
+        "fixture_wall_thickness_0",
+        "fixture_wall_thickness_1",
+        "inline_fields_fit",
+        "invalid_color_blocks_menu",
+        "keyboard_focus_precedes_selection",
+        "menu_delete_last",
+        "menu_disabled_custom",
+        "menu_disabled_dark",
+        "menu_disabled_light",
+        "menu_exit_immediately_inert",
+        "menu_geometry",
+        "menu_hover_custom",
+        "menu_hover_dark",
+        "menu_hover_light",
+        "menu_keyboard_last_custom",
+        "menu_keyboard_last_dark",
+        "menu_keyboard_last_light",
+        "menu_order",
+        "menu_outside_immediately_inert",
+        "menu_reduced_no_animation",
+        "menu_reduced_removes_immediately",
+        "menu_viewport_390",
+        "opacity_text_fits_0",
+        "opacity_text_fits_100",
+        "opacity_text_fits_50",
+        "partial_invalid_no_write",
+        "partial_retains_last_preview",
+        "picker_synchronizes",
+        "preview_never_writes",
+        "rapid_reopen_remains_live",
+        "real_wall_pointer_false",
+        "real_wall_pointer_true",
+        "retained_menu_cannot_write",
+        "same_wall_selected_false",
+        "same_wall_selected_true",
+        "selected_decor_no_glow",
+        "selected_device_own_theme_false",
+        "selected_device_own_theme_true",
+        "selected_keyboard_glyph_visible",
+        "thin_virtual_hit_0",
+        "thin_virtual_hit_1",
+        "thin_virtual_select_0",
+        "thin_virtual_select_1",
+        "thin_virtual_tolerance_miss_0",
+        "thin_virtual_tolerance_miss_1",
+        "trusted_space_selects_device",
+        "valid_pair_previews",
+        "view_selection_does_not_leak",
+        "wall_miss_default_false",
+        "wall_miss_default_true"
+      ],
+      "logLastWrite": "2026-10-24T06:52:32.058Z",
+      "browserAttestation": "browser-attestation ok (ok) [smoke_ui_1051] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell)",
+      "attestationAuthority": "emitted by this invocation"
+    }
+  ],
+  "units": {
+    "material": "f8ce07b3bc4fb8f782cfa2ae5e5c42cb8441e0d8",
+    "command": "node --test test/form-kit.test.mjs test/properties-color-draft.test.mjs test/device-copy-editor.test.mjs test/geometry-history-refusal.test.mjs test/node-history-runtime.test.mjs",
+    "files": [
+      {
+        "path": "test/form-kit.test.mjs",
+        "sha256": "2ff9538ddf8ed8d0b14e5d71a4c9896e1af9f0351346aaabf9054fb5911dbc7b",
+        "matchesCurrentCandidate": true
+      },
+      {
+        "path": "test/properties-color-draft.test.mjs",
+        "sha256": "526092f0bb70c3c7a490f4e9f438719b716b8640c3174ab214297008dc58b640",
+        "matchesCurrentCandidate": true
+      },
+      {
+        "path": "test/device-copy-editor.test.mjs",
+        "sha256": "de0bfeecd2e81f9142fd3cb47ff6db19e65c43ad0c12450a7323b5b519f96555",
+        "matchesCurrentCandidate": true
+      },
+      {
+        "path": "test/geometry-history-refusal.test.mjs",
+        "sha256": "2e366f4e7c95104341bc318b62a3fd1407a4c96c0fb1c0111771fe7db33de5c6",
+        "matchesCurrentCandidate": true
+      },
+      {
+        "path": "test/node-history-runtime.test.mjs",
+        "sha256": "2c1e987029b2a40d082749d4691fdd1d55ca178664da012edd1bc8590883921e",
+        "matchesCurrentCandidate": true
+      }
+    ],
+    "tests": 72,
+    "passed": 72,
+    "failed": 0,
+    "skipped": 0,
+    "logSha256": "f23769c12b5f370ebbebe30ff39f417e901c1d9e253182c3ed839dbe0032d6f0"
+  },
+  "materialBoundary": "Measurements and executions remain pinned to their own before/after SHA. The later accepted-#1004 merge changes other product files; only FormKit/caller/test byte equality is claimed here. Final ordinary gate/CI separately checks the combined candidate.",
+  "coverageBoundary": "The a34f 980-attempt capture and derived recipes remain immutable and incomplete with 1337 reasons. No counter or unknown branch is attributed to this new source; safe-zero stays disabled."
+}

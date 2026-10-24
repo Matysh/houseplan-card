@@ -20,10 +20,40 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5206 · pure backend 627 · HA-harness backend 527 · browser smokes 430 (`npm run inventory`) |
+| Tests | Node unit 5223 · pure backend 627 · HA-harness backend 527 · browser smokes 430 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Parallel paths (#1018): historical insertion ratios identify audit candidates,
+not deletion permission. Manual semantic/caller decisions are pinned separately;
+the complete computed unit/smoke/Golden diagnostic preserves actual source/map
+identity and marks missing/failed collection unknown. Its nightly artifact is
+isolated from ordinary proof and release verdicts. The first product cleanup
+removes only the unused legacy top-level form-kit onOpacity after #1051 S8;
+the new nested raw HEX/alpha inputs and their current CSS remain live.
+Measured raw retention requires a 4-GiB diagnostic bound; interrupted or
+environment-invalid collections remain incomplete and separate from product PASS.
+Diagnostic smoke timeouts follow the canonical product runner; a restarted
+collection repeats the complete inventory on a new clean SHA.
+Expected toolchain pins, bounded Python version probes and actual process
+observations have distinct authority; no runtime pin is inferred from a manifest.
+An actual nested-output TS fixture exposed the compiler map's relative source
+base error; diagnostic TS now uses an explicit sourceRoot and the index rejects
+escaping source paths. Historical samples need a separate Git-verified projection.
+Native range lookup uses ordered generated offsets instead of repeatedly
+scanning a whole minified chunk; half-open and empty-range semantics are preserved.
+The full a34f before inventory executed 980 cases (973 completed, six failed,
+one timeout); its Git-verified derived map has 51,357 native ranges and preserves
+1337 unknown reasons (1298 earlier reasons plus 39 foreign reference scripts).
+The original and derived recipes remain distinct, safe-zero
+is disabled, and a bounded reader verifies the compressed review map on queries.
+Unindexed URLs in known product namespaces are unknown foreign material, even
+when their stale hashed filenames differ from every current manifest entry.
+The refreshed history has76 candidates:73 KEEP and three historical records for
+the one removed legacy opacity subsystem. Its separate normal proof reduces
+source by1535B and the production editor graph by1077raw/217gzip bytes; the
+historical coverage remains incomplete and does not authorize zero-based removal.
 
 LED topology endpoints (#1004) share the current physical-radio mapping and
 nearest SVG hit owner. Half-length visible-path anchors, fixed-screen halos
