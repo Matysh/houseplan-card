@@ -36,6 +36,12 @@ export const SMOKE_LINKS = [
     because: '#1025 native selection and arrows observe whole-wall/hosted-opening movement, dominant-axis direction, exact device positions, focus, Undo/Redo and ordinary persisted writes without calling or naming the command helper.',
   },
   {
+    files: ['src/device-presentation.ts', 'src/device-presentation-policy.ts', 'src/device-face.ts',
+      'src/styles/devices.styles.ts', 'src/led-strip-runtime.ts'],
+    smokes: ['smoke_device_offline.mjs'],
+    because: '#1026: actual computed glyph/Text/badge opacity, opaque shell/diagnostics, own-vs-foreign HA rows and ordinary inactive LED ink must agree across full, static and live preview surfaces; public HA/config inputs do not name the internal availability readers.',
+  },
+  {
     files: ['src/zigbee-topology-endpoint.ts', 'src/hp-zigbee-topology-overlay.ts',
       'src/device-hit-owner.ts', 'src/led-strip-runtime.ts'],
     smokes: ['smoke_zigbee_led_topology.mjs'],

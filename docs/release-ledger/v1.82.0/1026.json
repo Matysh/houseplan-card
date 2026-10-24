@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "issue": 1026,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Changes the intentional stable offline presentation: confirmed unavailability of the marker's own active HA roster fades only glyph/value content, while off/idle/unknown and unavailable foreign sources no longer fade the device. LED strips retain ordinary inactive paint and fade only enabled badge text. This is an owner-approved visible semantic change rather than restoration of stable behaviour; no stored configuration changes.",
+  "summary": {
+    "ru": "Недоступность устройства определяется по его собственным сущностям и приглушает только иконку или текст; выключенное устройство сохраняет обычный вид.",
+    "en": "Device unavailability uses its own entities and dims only icon or text content; powered-off devices retain their ordinary appearance."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "2a00265ef00a121412b22fe06105ecb3e625506c84404d38d156585e9d6dce9b",
+    "golden": [
+      { "id": "device-offline-light", "expectation": "new", "reason": "Own offline icon/Text/badge content alongside off, unknown, controller and inactive LED controls in the light theme." },
+      { "id": "device-offline-dark", "expectation": "new", "reason": "The same own-availability decisions and retained shell/frame/LED paint in the dark theme." }
+    ],
+    "smokes": ["smoke_device_offline.mjs"]
+  }
+}

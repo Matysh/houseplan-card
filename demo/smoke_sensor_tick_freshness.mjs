@@ -148,8 +148,8 @@ now = await view();
 check('LED colour change: stripe and field in the same render', [now.stripe?.core, now.field?.fill], ['#50c878', '#50c878']);
 await tick({ 'light.ceiling': { state: 'unavailable' } });
 now = await view();
-check('LED unavailable: grey dashed in the same render', [now.stripe?.state, now.stripe?.core, !!now.stripe?.dash],
-  ['unavailable', '#9e9e9e', true]);
+check('#1026 LED unavailable: ordinary inactive white in the same render', [now.stripe?.state, now.stripe?.core, !!now.stripe?.dash],
+  ['off', '#FFFFFF', false]);
 await tick({ 'light.ceiling': { state: 'on', attributes: { rgb_color: [128, 213, 255] } } });
 
 // A door contact changes the light scene (the clip of the lamp beside it) in the same render.

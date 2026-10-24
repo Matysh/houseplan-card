@@ -75,6 +75,63 @@ This named subset is separate from the complete task selection executed by CI.
 | AC11 | existing Decor, physical/opening/contact/gesture smokes and relevant Golden | old pointer/history/paint contracts regress |
 | AC12 | build/budgets, lazy-editor and lifecycle checks | startup/editor boundary, listener count or current budget regresses |
 
+## Own offline presentation (#1026)
+
+`device-own-availability.ts` reads only the canonical active own roster. One
+positive row proves availability; only a nonempty all-unavailable roster proves
+offline. Missing/unknown/empty data remain unknown. The controller adapter uses
+that resolved fact plus existing virtual/entityless metadata, not another state
+scan. Source sample quality still gates activity separately.
+
+The ordinary BEFORE on accepted a71 uses public registry/config/layout and HA
+ticks against the official offline native fixture. It shows whole-marker .35,
+unchanged glyph opacity1 and grey background on both media off and unavailable;
+recovery, live-own/foreign-target and no-writer controls pass. Raw receipts are
+linked from the issue. Final native/Golden checks share a data-only fixture;
+task branches capture their two new board scenes without accepting baselines.
+Pure tests cover the ownership matrix, unchanged source semantics, controller
+eligibility and incremental/full parity. No new config field or write exists.
+
+The initial candidate's native run caught two additional legacy owners: the
+2.5D state table still painted a grey body/edge, and full/static LED badge
+adapters omitted the resolved offline flag. The old 2.5D offline table entry is
+removed, and both passive badge adapters forward that same resolved flag.
+The focused ownership/snapshot run passes 16 tests, including diagnostic-only
+ticks, disabled/claimed registry evidence and unchanged unrelated presentations.
+
+The compact executed receipt is
+[`device-offline-validation.json`](development-notes/device-offline-validation.json):
+accepted a71 BEFORE has eight expected symptom failures and six positive
+controls; the combined accepted-#1018 candidate passes all 44 native checks.
+Both new pinned-WSL Golden captures have the same PNG hashes as the earlier
+candidate and were visually inspected without accepting baselines. The actual
+Windows build measures View339869/editor344587 gzip and raw3437705 bytes;
+all limits at that material pass unchanged. The 113 related pure tests also pass.
+
+Eight related native commands cover controls, icon paint/interaction, manual
+state sources, LED Glow, same-tick freshness, cover morphs, editor landmarks
+and LED topology. Seven pass first time; icon-design passes its affected rerun
+after aligning the obsolete View selection expectation with accepted #1051.
+The real wide-editor blue selection and the inert View class are both checked;
+the fixed 780px demo host must be resized for the wide-editor route. Original
+failures and the exact recipe/log hashes remain in the compact receipt.
+
+After accepted #1019 (`e8c618924`), candidate `900800baf` again passes all
+44 native checks and both pinned-WSL captures, with identical PNG hashes.
+The merged source census has 444 files/431 sheets/1142 class consumers and no
+diagnostics or unresolved producers. Actual Windows View 339613/editor 343989
+gzip and raw 3432482 bytes pass the unchanged limits. Matrix 87 contains both
+the accepted Rules scene and this issue's two new boards; no baseline is accepted.
+
+The first normal pre-push hook on `97c793254` is RED: two older matrix-version
+assertions, the explicit corpus passport/capture-input inventory and two moved
+mutation anchors require matching B updates. Product A/build/budgets/CSS pass.
+The one added offline fixture is appended to the passport; all 89 previous
+document identities and inputs remain equal. The 71 affected matrix/fingerprint/
+corpus tests and three exact anchor/ordinary diagnostic tests pass after repair.
+These are ordinary/static checks, not mutant execution or a green whole gate;
+the normal hook must run again on the corrected material before publishing.
+
 ## Dialog CSS ownership #1019
 
 The [migration record](development-notes/dialog-style-migration.md) covers all

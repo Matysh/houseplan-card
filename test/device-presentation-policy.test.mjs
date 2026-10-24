@@ -45,7 +45,7 @@ const neutral = { availability: 'available', status: 'neutral', activity: 'none'
 const basePolicy = (overrides = {}) => ({
   bindingLifecycle: 'active', userHidden: false, designPreview: false,
   display: 'badge', liveStates: true, sourceVisual: neutral,
-  controllerFace: false, controllerAvailability: 'available', shortActivity: null,
+  ownAvailability: 'available', controllerFace: false, controllerSourceAvailability: 'available', shortActivity: null,
   valueAvailable: false, valueFallback: null, vacuumLiveRequested: false,
   ...overrides,
 });
@@ -474,13 +474,13 @@ test('device presentation decision table rows exercise lifecycle and ordered pol
   assert.equal(unavailable.pulseEligible, false);
 
   const controllerUp = resolveDevicePresentationPolicy(basePolicy({
-    controllerFace: true, controllerAvailability: 'available',
+    controllerFace: true, controllerSourceAvailability: 'available',
     sourceVisual: { availability: 'unavailable', status: 'neutral', activity: 'none' },
   }));
   assertDecision(controllerUp, 'availability.controller_available');
   assert.equal(controllerUp.visual.availability, 'available');
   const controllerDown = resolveDevicePresentationPolicy(basePolicy({
-    controllerFace: true, controllerAvailability: 'unavailable',
+    ownAvailability: 'unavailable', controllerFace: true, controllerSourceAvailability: 'unavailable',
     sourceVisual: { availability: 'available', status: 'working', activity: 'running' },
   }));
   assertDecision(controllerDown, 'availability.controller_unavailable');

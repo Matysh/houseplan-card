@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5262 · pure backend 627 · HA-harness backend 527 · browser smokes 432 (`npm run inventory`) |
+| Tests | Node unit 5272 · pure backend 627 · HA-harness backend 527 · browser smokes 433 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -30,6 +30,12 @@ and movable device anchors through the existing physical/config/layout writers
 and histories. Connected walls and invalid full steps remain no-op; opening
 direction follows the agreed dominant screen axis, including Left/Right at 45°.
 The shared dispatcher keeps controls, dialogs and active gestures authoritative.
+
+Own availability (#1026) separates available/off, confirmed own unavailable and
+unknown data. Only glyph/value and badge contents fade on confirmed offline;
+shell, contact ink and diagnostics retain their paint. LED uses ordinary inactive
+geometry and fades badge text only. Source-quality and lifecycle/activity gates
+remain separate; no persisted data or writer changes.
 
 Dialog CSS ownership cleanup (#1019) records all eleven consumers, removes
 confirmed obsolete selectors and leaves shared paint with its existing kit.

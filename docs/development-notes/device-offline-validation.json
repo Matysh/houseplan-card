@@ -1,0 +1,530 @@
+{
+  "schema": 1,
+  "issue": 1026,
+  "acceptedBefore": {
+    "material": "a71acefa9dd071e72a6c32a530025057f4429d9c",
+    "fingerprint": "08ebc3a3c7d934843b5eb1148b6a152f0248111144a5681d07c78d2898b4347d",
+    "receiptSha256": "9f0f67f3ff2b2627e943baa744f4c0df92827ca033cf4453335e0aaabad46be2",
+    "recipeSha256": "7a961f4b0bf48bbd89096afdc435af5cffe49153557314dddb4bff83220358ae",
+    "issueComment": 6381883462,
+    "checks": {
+      "fixtureRealNative": true,
+      "mediaOffDoesNotFadeWholeMarker": false,
+      "unavailableKeepsParentOpaque": false,
+      "unavailableFadesOnlyCoreGlyph": false,
+      "unavailableKeepsCoreOpaque": true,
+      "unavailableKeepsOrdinaryBackground": false,
+      "unavailableKeepsFramePaint": false,
+      "unavailableKeepsContactPaint": false,
+      "unavailableBadgeFrameOpaque": false,
+      "unavailableTextContentOnly": false,
+      "ownLiveControllerIsNotTargetOffline": true,
+      "ownLiveControllerHasRealPositiveRow": true,
+      "recoveryRestoresOrdinaryPaint": true,
+      "noTickWritesOrServices": true
+    },
+    "expectedRed": 8,
+    "positiveControls": 6
+  },
+  "combinedAfter": {
+    "material": "8c0f55b5574189ad4517626d13ac06c104006a9a",
+    "acceptedDev": "9ca630adab1fd6de24cf8c1ec00100fa50cf4f43",
+    "native": {
+      "command": "node demo/smoke_device_offline.mjs",
+      "logSha256": "dc36355842cf30b2ccfff3bea3f23576f70eb106b147767f77d2d147c7bb761b",
+      "toolchain": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "playwright": "1.62.0",
+        "chromium": "151.0.7922.34",
+        "revision": 1234
+      },
+      "checks": {
+        "actualFixtureHasGlyphAndText": true,
+        "mediaOffIsOrdinaryNeutral": true,
+        "unavailableRetainsOrdinaryShell": true,
+        "onlyOfflineGlyphDims": true,
+        "actualTextContentDims": true,
+        "badgeContentHasIndependentOpacity": true,
+        "unknownIsNotConfirmedOffline": true,
+        "missingOwnedStateIsNotConfirmedOffline": true,
+        "foreignSourceQualityDoesNotDimOwnGlyph": true,
+        "twoReasonsHaveOneOfflineOpacity": true,
+        "staticDisplayKeepsItsExistingGate": true,
+        "controllerFixtureReallyHasForeignControl": true,
+        "liveOwnControllerIgnoresOfflineForeignTarget": true,
+        "exactEntityIgnoresHealthyOwnSiblings": true,
+        "samePhysicalWholeRosterUsesItsPositiveDiagnostic": true,
+        "offlineKeepsBatteryIndependent": true,
+        "confirmedAlarmCoexistsWithOwnOffline": true,
+        "liveLegacyMetricsUseRealContentWrapper": true,
+        "allLedFixturesAreActualSvg": true,
+        "ledUnknownAndUnavailableUseOrdinaryOffInk": true,
+        "ordinaryOffLedUsesApprovedWhiteCutout": true,
+        "ledNeverInventsUnavailablePaint": true,
+        "ledWithoutBadgeHasNoOfflineIcon": true,
+        "ledBadgeContentOnlyDimsWhenConfirmed": true,
+        "ownedRecoveryRemovesOfflineWithoutReload": true,
+        "ownedRecoveryKeepsShellGeometry": true,
+        "repeatedOfflineReturnsFromFreshHassRows": true,
+        "unknownPlusUnavailableOwnRowsStayUnknown": true,
+        "everyOwnedRowUnavailableConfirmsOffline": true,
+        "missingOneOwnedRowRevokesOfflineProof": true,
+        "ownRecoveryKeepsConfirmedAlarmColorAndFrame": true,
+        "previewUsesSameContentOnlyOfflinePaint": true,
+        "openPreviewTracksOwnRecovery": true,
+        "staticCardSharesOfflineGlyphAndTextPolicy": true,
+        "staticCardLedBadgeUsesOwnedOfflineContentOnly": true,
+        "staticCardLedUnknownRevokesConfirmedOffline": true,
+        "staticCardTracksOwnRecovery": true,
+        "staticCardLiveStatesFalseKeepsExistingGate": true,
+        "contentOnlyPolicy_dark": true,
+        "contentOnlyPolicy_custom": true,
+        "contentOnlyPolicy_iso": true,
+        "isoShadowKeepsOrdinaryPaint": true,
+        "haUpdatesAndCancelledPreviewHaveNoWriters": true,
+        "highDpiUsesSameContentPolicy": true
+      }
+    },
+    "golden": [
+      {
+        "id": "device-offline-light",
+        "status": "missing-baseline",
+        "actualSha256": "d01992bc64af015fb820d8c0e7bc0c781566329859732eaf0ce6b9859cde49a5",
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "bc7c8f74a749512e2792022309d0276e349dec09a40afd71a6a85b92e672539a",
+          "ci": null
+        },
+        "runtime": {
+          "markers": [
+            {
+              "id": "icon",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "down",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "text",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "unknown",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "missing",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "source",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "double",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "static",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "controller",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "exact",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "alarm",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "legacy",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "whole",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "alarm-whole",
+              "offline": false,
+              "glyphOpacity": 1
+            }
+          ],
+          "leds": 3,
+          "actualText": true,
+          "badgeShellUnaffected": true
+        },
+        "baselineAccepted": false
+      },
+      {
+        "id": "device-offline-dark",
+        "status": "missing-baseline",
+        "actualSha256": "5cea404a6df77bcaae0fc741053e7ab65ca8c75b7b2aa6efcecae470454a1b9a",
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "bc7c8f74a749512e2792022309d0276e349dec09a40afd71a6a85b92e672539a",
+          "ci": null
+        },
+        "runtime": {
+          "markers": [
+            {
+              "id": "icon",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "down",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "text",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "unknown",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "missing",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "source",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "double",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "static",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "controller",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "exact",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "alarm",
+              "offline": true,
+              "glyphOpacity": 0.35
+            },
+            {
+              "id": "legacy",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "whole",
+              "offline": false,
+              "glyphOpacity": 1
+            },
+            {
+              "id": "alarm-whole",
+              "offline": false,
+              "glyphOpacity": 1
+            }
+          ],
+          "leds": 3,
+          "actualText": true,
+          "badgeShellUnaffected": true
+        },
+        "baselineAccepted": false
+      }
+    ],
+    "metrics": {
+      "schema": 1,
+      "sourceSha": "8c0f55b5574189ad4517626d13ac06c104006a9a",
+      "toolchain": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "rollup": "4.62.2"
+      },
+      "fingerprint": "bc7c8f74a749512e2792022309d0276e349dec09a40afd71a6a85b92e672539a",
+      "manifestSha256": "a18ec90c7e2a16f9e885234f689586d069aebf34b3eb055cdae9a44c644814b7",
+      "rawDistBytes": 3437705,
+      "initialViewGzipBytes": 339869,
+      "lazyEditorGzipBytes": 344587
+    }
+  },
+  "limitations": [
+    "BEFORE records the accepted a71 material before implementation; AFTER also includes accepted #1018.",
+    "New Golden scenes have no accepted baseline; capture/runtime/PNG inspection passed, no baseline acceptance occurred.",
+    "The native harness uses official offline HA elements and synthetic data, not the owner live HA installation.",
+    "Static mutation readiness and ordinary checks are not execution or caught evidence; that belongs to nightly."
+  ],
+  "relatedNative": {
+    "initialMaterial": "8dbc7bab5ddcb7b9ef64c2c68639762351e0fe4c",
+    "fingerprint": "bc7c8f74a749512e2792022309d0276e349dec09a40afd71a6a85b92e672539a",
+    "initialReceipts": [
+      {
+        "id": "smoke_controls.mjs",
+        "command": "node demo/smoke_controls.mjs",
+        "begin": "2026-10-24T09:15:08.536Z",
+        "end": "2026-10-24T09:15:10.452Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "logSha256": "06b9e1a91a60a932913b37e837b5f12a10c46cd26869fee5f379fe6bd0c3ba1f"
+      },
+      {
+        "id": "smoke_device_icon_design.mjs",
+        "command": "node demo/smoke_device_icon_design.mjs",
+        "begin": "2026-10-24T09:15:10.453Z",
+        "end": "2026-10-24T09:15:14.433Z",
+        "exitCode": 1,
+        "signal": null,
+        "error": null,
+        "logSha256": "55bafe9f26956f4357e23ee2322e809be3f662ecb485f2793304b1751fffd9e3"
+      },
+      {
+        "id": "smoke_marker_state_source.mjs",
+        "command": "node demo/smoke_marker_state_source.mjs",
+        "begin": "2026-10-24T09:15:14.433Z",
+        "end": "2026-10-24T09:15:23.162Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "logSha256": "230cf07a6042d4b6ef7057de56d7476435dfa2755c0060c2929047d3563d11d3"
+      },
+      {
+        "id": "smoke_led_strip_glow.mjs",
+        "command": "node demo/smoke_led_strip_glow.mjs",
+        "begin": "2026-10-24T09:15:23.162Z",
+        "end": "2026-10-24T09:16:10.278Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "logSha256": "215543ca9bc56306244ebc081678c45783d8809e303f52a1e1455a84d8629034"
+      },
+      {
+        "id": "smoke_sensor_tick_freshness.mjs",
+        "command": "node demo/smoke_sensor_tick_freshness.mjs",
+        "begin": "2026-10-24T09:16:10.279Z",
+        "end": "2026-10-24T09:16:14.534Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "logSha256": "a12b7cb43c9d9134b5bb1b35e9096b66775d9e92e7611d1cc92b02edd6782a87"
+      },
+      {
+        "id": "smoke_cover_no_plate.mjs",
+        "command": "node demo/smoke_cover_no_plate.mjs",
+        "begin": "2026-10-24T09:16:14.535Z",
+        "end": "2026-10-24T09:16:25.156Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "logSha256": "286ad698d83ef8cb146c681bef1e095d39b30ed4a484dacdb98d1a7b4f826663"
+      },
+      {
+        "id": "smoke_plan_device_landmarks.mjs",
+        "command": "node demo/smoke_plan_device_landmarks.mjs",
+        "begin": "2026-10-24T09:16:25.156Z",
+        "end": "2026-10-24T09:16:27.860Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "logSha256": "03324cd653e1fd740ee53954e3e5b0fe35de5bbfb15069905d540720841f4bea"
+      },
+      {
+        "id": "smoke_zigbee_led_topology.mjs",
+        "command": "node demo/smoke_zigbee_led_topology.mjs",
+        "begin": "2026-10-24T09:16:27.861Z",
+        "end": "2026-10-24T09:16:41.141Z",
+        "exitCode": 0,
+        "signal": null,
+        "error": null,
+        "logSha256": "d43bd10b68f8ded455705684b81a32d7c70eb8ec14832e2a858ca770fc2ea006"
+      }
+    ],
+    "affectedRerun": {
+      "id": "smoke_device_icon_design.mjs",
+      "command": "node demo/smoke_device_icon_design.mjs",
+      "recipeMaterial": "5280823fffc15fb0f7bea0485f9913980a5b91d5",
+      "recipeSha256": "0ad7332002f642ed31e22d333009d5ce5abb82fb345b1c4ea4eb1d6a58a464b0",
+      "logSha256": "07cdc92e9a45b9afd048f67de9d385496152b1556aaa63e4a3a7964445922be1",
+      "exitCode": 0,
+      "checks": {
+        "referenceAssetsLoaded": true,
+        "geometryMatchesAt32_56_96": true,
+        "referenceStateMatrixMatches": true,
+        "ownOfflineRetainsOrdinaryThemePaint": true,
+        "openingLockPaletteMatches": true,
+        "orangeGlyphsFollowTheme": true,
+        "referenceHoverMatches": true,
+        "virtualUsesThemeDefaultWithDashedShell": true,
+        "sharedShellGeometry": true,
+        "iconCoreIsCircle": true,
+        "iconShellIsCircle": true,
+        "textCoreIsStadium": true,
+        "textShellIsStadiumAtRepresentativeSizes": true,
+        "textShellMutationGuardRejects50Percent": true,
+        "valueBadgeIsPill": true,
+        "doubleShellKeepsCapsule": true,
+        "packageShadowColor": true,
+        "noBackdropBlur": true,
+        "activeUsesPackageAmber": true,
+        "lightActiveUsesWhiteGlyphAndAmberShell": true,
+        "darkDefaultShellUsesPackageStroke": true,
+        "darkHoverChangesCoreOnly": true,
+        "viewSelectionClassDoesNotDecorateCoreOrShell": true,
+        "focusDecoratesCoreNotShell": true,
+        "acceptedActionFeedback": true,
+        "feedbackLifecycleBounded": true,
+        "reducedMotionUsesNoScale": true,
+        "keyboardActionFeedback": true,
+        "informationalActionHasNoFeedback": true,
+        "lightThemeCoreIsWhite": true,
+        "darkThemeCoreIs252525": true,
+        "darkLockUsesGreenCoreAndDarkGlyph": true,
+        "hitAreaAtLeast44": true,
+        "presenceContinuousGreen": true,
+        "lockedStateProjected": true,
+        "lqiBandsProjected": true,
+        "lqiUsesContinuousComputedColor": true,
+        "unavailableHasNoHoverOrMotion": true,
+        "valueCapsuleOwnsHoverAndActionAtEveryPosition": true,
+        "unavailableAriaIsReadable": true,
+        "textIsComplete": true,
+        "doubleUsesOneShell": true,
+        "viewKeyboard": true,
+        "editorKeyboardOpensSettings": true,
+        "planNotInTabOrder": true,
+        "actualEditorSelectionUsesBlueCoreAndOrdinaryShell": true
+      }
+    },
+    "resolution": "The old synthetic View .sel probe expected the pre-#1051 amber ring. Its accepted replacement is inert in View and blue-core selection in the actual >=960px Properties editor. The demo host defaults to780px (dialog route); an ordinary1100px fixture host exercises real wide-editor native selection. Product A and the original failed logs are unchanged."
+  },
+  "postCssIntegration": {
+    "acceptedDev": "e8c618924cfa2845dcf1073f65404cd093efed10",
+    "metrics": {
+      "schema": 1,
+      "sourceSha": "900800baf3eacb3587bab68eabf25023053311b8",
+      "toolchain": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "rollup": "4.62.2"
+      },
+      "fingerprint": "69430d5a24d70a8aa9d82b6c9c2953f5e76d1ffbfd5a5aed167d1af6c36541ee",
+      "manifestSha256": "1b3f0eb977b711ede0474499b19331520fcb242ee27ec2c1e1c2333306649129",
+      "rawDistBytes": 3432482,
+      "initialViewGzipBytes": 339613,
+      "lazyEditorGzipBytes": 343989
+    },
+    "native": {
+      "command": "node demo/smoke_device_offline.mjs",
+      "logSha256": "dc36355842cf30b2ccfff3bea3f23576f70eb106b147767f77d2d147c7bb761b",
+      "checks": 44,
+      "checksEqualPrevious": true
+    },
+    "golden": [
+      {
+        "id": "device-offline-light",
+        "actualSha256": "d01992bc64af015fb820d8c0e7bc0c781566329859732eaf0ce6b9859cde49a5",
+        "matrixVersion": 87,
+        "status": "missing-baseline",
+        "baselineAccepted": false
+      },
+      {
+        "id": "device-offline-dark",
+        "actualSha256": "5cea404a6df77bcaae0fc741053e7ab65ca8c75b7b2aa6efcecae470454a1b9a",
+        "matrixVersion": 87,
+        "status": "missing-baseline",
+        "baselineAccepted": false
+      }
+    ],
+    "sourceConflictCount": 0,
+    "documentationConflicts": "Both DEVELOPMENT and STATUS sections retained; derived counts regenerated.",
+    "cssCensus": {
+      "files": 444,
+      "emittedSheets": 431,
+      "classConsumers": 1142,
+      "diagnostics": 0,
+      "unresolvedProducers": 0
+    },
+    "limitsChanged": false
+  },
+  "prePushRepair": {
+    "material": "97c79325445443e4db5403b304b5bd81b41a0f3d",
+    "normalHook": {
+      "exitCode": 1,
+      "durationSeconds": 247,
+      "pushDurationSeconds": 260.1770209,
+      "published": false,
+      "logSha256": "0dcd9c705d149ac4e9d861c84ade46dc09d24da4e8b28cee481dda27e450be0d"
+    },
+    "causes": [
+      "Two retired matrixVersion=86 assertions after adding the new scenes (current87)",
+      "Explicit corpus passport missing the new offline fixture",
+      "Two prior semantic mutant anchors moved by A; IDs and guard commands retained",
+      "Capture-input inventory missing demo/golden/device-offline.mjs"
+    ],
+    "repair": {
+      "productAChanged": false,
+      "priorCorpusDocuments": 89,
+      "priorCorpusDocumentsUnchanged": true,
+      "newCorpusDocuments": 1,
+      "newFixture": "demo/fixtures/device-offline.mjs",
+      "targeted": {
+        "command": "node --test test/golden-matrix.test.mjs test/source-fingerprint.test.mjs test/wall-identity-corpus.test.mjs",
+        "pass": 71,
+        "fail": 0,
+        "logSha256": "9f26d3cd86a35bc1c7aa36ef73d9de77b088f3cce7128a07e732a29516c143da"
+      },
+      "anchors": {
+        "command": "node --test --test-name-pattern=\"every mutant patch anchors exactly once|#905 AC3|369г\" test/mutation-gate.test.mjs test/process-digests.test.mjs test/device-presentation.test.mjs",
+        "pass": 3,
+        "fail": 0,
+        "logSha256": "86911803267528260e914c178dbd35e2662c19526f4c7cec6034fdf77dadbd95"
+      },
+      "staticReadiness": {
+        "command": "node scripts/mutation-gate.mjs --check",
+        "definitions": 1848,
+        "uniqueSourceReads": 1006,
+        "browserGuards": 506,
+        "warnings": 5,
+        "execution": 0,
+        "caught": "unknown",
+        "logSha256": "933442fce3ae93b3bc781836472c5a72b3a9802aefa2c80ddea67c8b54d07df6"
+      }
+    },
+    "wholeGateOutcome": "RED; a fresh normal hook is required, targeted repairs alone are not a green gate"
+  }
+}

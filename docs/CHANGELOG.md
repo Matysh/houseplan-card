@@ -5,6 +5,10 @@
 - Arrow keys move a selected free wall, opening or device by one grid cell,
   preserving its offset. Connected walls stay fixed; angled openings follow
   their host's dominant screen axis. Each accepted step supports Undo/Redo. (#1025)
+- Separate a device being off from losing Home Assistant availability. Confirmed
+  offline dims only the icon/value and badge contents; frames and diagnostics
+  retain their appearance in Flat and 2.5D. LED strips keep their ordinary inactive shape and
+  dim only badge text when present. Unknown/missing readings do not prove offline. (#1026)
 
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
