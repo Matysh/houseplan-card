@@ -259,6 +259,8 @@ export class HpDialog extends LitElement {
     :host([compact]) { --hp-dialog-wide-width:560px; }
     :host([settings-layout][compact]) ha-dialog { --ha-dialog-min-height:0px; --ha-dialog-max-height:calc(100dvh - 48px); }
     :host([settings-layout][compact]) .surface { height:auto; max-height:calc(100dvh - 48px); }
+    :host(.decor-properties-dialog) .header { gap:12px; }
+    :host(.decor-properties-dialog) .title-text { line-height:24px; }
     /* #931: the compact HA-variable surface, scoped away from existing dialogs. */
     :host([properties-shell]) { --hp-dialog-wide-width:560px; }
     :host([properties-shell]) ha-dialog { --ha-dialog-width-md:560px; --ha-dialog-border-radius:10px; --ha-dialog-max-height:calc(100dvh - 48px); }

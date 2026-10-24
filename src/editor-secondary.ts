@@ -13,6 +13,7 @@ export interface EditorSecondaryModel {
   kind: EditorSecondaryKind;
   ariaLabel: string;
   visibleLabel?: string;
+  layout?: 'actions';
   content: TemplateResult;
   launcherId?: string;
   dismissPolicy?: 'outside' | 'stay-open-on-canvas';
@@ -235,6 +236,7 @@ export class EditorSecondaryController {
       class="editor-secondary-host kind-${kind} ${model ? 'open' : 'closed'} ${blocked ? 'blocked' : ''}"
       aria-hidden=${model ? 'false' : 'true'}>
       <div id="hp-editor-secondary" class="editor-secondary kind-${kind}"
+        data-layout=${model?.layout ?? nothing}
         data-hp=${model ? 'tray' : nothing}
         data-kind=${model?.launcherId || (model?.kind === 'group' ? model.contextId : model?.kind) || nothing}
         data-context-id=${model?.contextId || ''} role="toolbar"

@@ -1,6 +1,6 @@
 /** Devices-only command/menu, deliberately outside the initial View graph (#935). */
-import { html, nothing, type TemplateResult } from 'lit';
-import { ref } from 'lit/directives/ref.js';
+import { nothing, type TemplateResult } from 'lit';
+import { EditorContextMenu, menuPoint } from './editor-context-menu';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import { deviceEditorAllowed } from './device-editor-access';
 import { deviceCopyFileGroups, deviceCopyIncoming, deviceCopyPosition, deviceCopyRadius, nextDeviceCopyName, rewriteDeviceCopyFiles, virtualDeviceCopy } from './device-copy';
@@ -25,7 +25,7 @@ export class DeviceCopyEditor {
   private busy = false;
   private busyContext: object | null = null;
   private operation = 0;
-  private element: HTMLElement | null = null;
+  private readonly presentation = new EditorContextMenu(() => this.host.requestUpdate());
   constructor(private readonly host: HouseplanEditorHostPort, private readonly copied?: (id: string, sourceId: string) => void) {}
   private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host.hass, this.host._config?.language), key); }
   private allowed(): boolean {
@@ -41,18 +41,10 @@ export class DeviceCopyEditor {
     return this.contextCurrent(m) && h._cfgRev === m.cr && h._layoutRev === m.lr
       && contentFingerprint(h._serverCfg) === m.cfg && contentFingerprint(h._layout) === m.layout;
   }
-  private outside = (event: PointerEvent): void => {
-    if (!this.element || !event.composedPath().includes(this.element)) this.close(false);
-  };
-  private key = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.menu) { event.preventDefault(); event.stopImmediatePropagation(); this.close(true); }
-  };
   close(focus = false): void {
     if (!this.menu) return;
     const target = this.menu?.target;
-    this.menu = null; this.element = null;
-    window.removeEventListener('pointerdown', this.outside, true);
-    window.removeEventListener('keydown', this.key, true);
+    this.presentation.retire(); this.menu = null;
     if (focus && target?.isConnected && 'focus' in target) (target as HTMLElement).focus({ preventScroll: true });
     this.host.requestUpdate();
   }
@@ -67,20 +59,15 @@ export class DeviceCopyEditor {
     this.menu = { id: current.id, space: h._space, context: h._configWriteContext.claim(), cr: h._cfgRev, lr: h._layoutRev,
       cfg: contentFingerprint(h._serverCfg), layout: contentFingerprint(h._layout),
       x: event.clientX, y: event.clientY, target: event.currentTarget as Element | null };
-    window.addEventListener('pointerdown', this.outside, true);
-    window.addEventListener('keydown', this.key, true);
     h.requestUpdate();
   }
   render(): TemplateResult | typeof nothing {
-    const m = this.menu;
-    if (!m) return nothing;
-    if (!this.contextCurrent(m)) { this.close(); return nothing; }
-    return html`<div role="menu" data-hp="device-context-menu" style="position:fixed;z-index:10000;max-width:calc(100vw - 16px);background:var(--card-background-color,#fff);color:var(--primary-text-color,#222);border:1px solid var(--divider-color,#888);border-radius:10px;padding:6px;box-shadow:0 6px 24px #0005;left:${Math.max(8, Math.min(m.x, window.innerWidth - 248))}px;top:${Math.max(8, Math.min(m.y, window.innerHeight - 64))}px"
-      ${ref((el) => { if (el) { this.element = el as HTMLElement; queueMicrotask(() => this.element?.querySelector<HTMLButtonElement>('button')?.focus()); } })}
-      @contextmenu=${(e: Event) => e.preventDefault()} @click=${(e: Event) => e.stopPropagation()}
-      @keydown=${(e: KeyboardEvent) => { if (e.key === 'Tab') this.close(); }}>
-      <button role="menuitem" data-hp="device-copy" style="font:inherit;color:inherit;background:transparent;border:0;border-radius:6px;padding:10px 14px;cursor:pointer;min-height:44px" @click=${() => void this.copy(m)}>${this.t('device.copy')}</button>
-    </div>`;
+    let m = this.menu;
+    if (m && !this.contextCurrent(m)) { this.close(); m = null; }
+    const owner = m;
+    return this.presentation.render(owner ? { token: owner, hp: 'device-context-menu', anchor: menuPoint(owner.x, owner.y), minWidth: 180,
+      returnFocus: owner.target, current: () => this.menu === owner && this.unchanged(owner), close: focus => this.close(focus),
+      items: [{ key: 'copy', hp: 'device-copy', label: this.t('device.copy'), invoke: () => void this.copy(owner) }] } : null);
   }
   /** Same guarded command as the context menu; no synthetic pointer event. */
   async copyDevice(source: DevItem): Promise<void> {

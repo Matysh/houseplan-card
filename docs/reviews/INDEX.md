@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 76, issue: 39. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 83, issue: 44. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -9,6 +9,8 @@
 | #1053 | [CODE-REVIEW-1053-r1.md](CODE-REVIEW-1053-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1052 | [CODE-REVIEW-1052-r1.md](CODE-REVIEW-1052-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1051 | [SPEC-REVIEW-1051-r1.md](SPEC-REVIEW-1051-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1051 | [CODE-REVIEW-1051-r1.md](CODE-REVIEW-1051-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1050 | [SPEC-REVIEW-1050-r1.md](SPEC-REVIEW-1050-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1049 | [SPEC-REVIEW-1049-r1.md](SPEC-REVIEW-1049-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1049 | [CODE-REVIEW-1049-r1.md](CODE-REVIEW-1049-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1048 | [SPEC-REVIEW-1048-r1.md](SPEC-REVIEW-1048-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
@@ -29,6 +31,8 @@
 | #1040 | [CODE-REVIEW-1040-r1.md](CODE-REVIEW-1040-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1040 | [CODE-REVIEW-1040-r2.md](CODE-REVIEW-1040-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | docs/release-ledger/v1.81.0/1040.json не достигает заявленной цели и противоречит сам себе | `docs/release-ledger/v1.81.0/1040.json` `scripts/release-ledger.mjs` `docs/release-ledger/cycle.json` `v1.82.0/1040.json` `v1.81.0/1040.json` `merge-candidate.mjs` `release-contract.mjs` |
 | #1039 | [CODE-REVIEW-1039-r1.md](CODE-REVIEW-1039-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1038 | [SPEC-REVIEW-1038-r1.md](SPEC-REVIEW-1038-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | не определено поведение Ctrl+A/Ctrl+M при активном жесте/черновике | `smoke_decor_multiselect.mjs` |
+| #1038 | [SPEC-REVIEW-1038-r2.md](SPEC-REVIEW-1038-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1037 | [SPEC-REVIEW-1037-r1.md](SPEC-REVIEW-1037-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | не называет затронутый DOM/test-identity контракт docs/STYLING-HOOKS.md | `docs/STYLING-HOOKS.md` `demo/smoke_e2e_hooks.mjs` `docs/reviews/CODE-REVIEW-1011-r3.md` `space-form.ts` `general-settings-dialog.ts` `room-settings-dialog.ts` `STYLING-HOOKS.md` `AGENTS.md` |
 | #1037 | [SPEC-REVIEW-1037-r2.md](SPEC-REVIEW-1037-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | удаление gs-wall-fill не адресует механизм retiredHooks и «compatible transition», на к… | `docs/STYLING-HOOKS.md` `docs/data-hp-contract.json` `data-hp-contract.json` |
 | #1037 | [SPEC-REVIEW-1037-r3.md](SPEC-REVIEW-1037-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
@@ -51,6 +55,8 @@
 | #1029 | [SPEC-REVIEW-1029-r1.md](SPEC-REVIEW-1029-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1029 | [CODE-REVIEW-1029-r1.md](CODE-REVIEW-1029-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1028 | [CODE-REVIEW-1028-r1.md](CODE-REVIEW-1028-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1026 | [SPEC-REVIEW-1026-r1.md](SPEC-REVIEW-1026-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1025 | [SPEC-REVIEW-1025-r1.md](SPEC-REVIEW-1025-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1021 | [CODE-REVIEW-1021-r1.md](CODE-REVIEW-1021-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1019 | [SPEC-REVIEW-1019-r1.md](SPEC-REVIEW-1019-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | аудит в теле issue ошибочно числит живой селектор мёртвым | `plan.styles.ts` `src/houseplan-card.ts` |
 | #1018 | [SPEC-REVIEW-1018-r1.md](SPEC-REVIEW-1018-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
@@ -75,6 +81,7 @@
 | #1006 | [CODE-REVIEW-1006-r1.md](CODE-REVIEW-1006-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1005 | [SPEC-REVIEW-1005-r1.md](SPEC-REVIEW-1005-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1005 | [CODE-REVIEW-1005-r1.md](CODE-REVIEW-1005-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1004 | [SPEC-REVIEW-1004-r1.md](SPEC-REVIEW-1004-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1003 | [SPEC-REVIEW-1003-r1.md](SPEC-REVIEW-1003-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1002 | [SPEC-REVIEW-1002-r1.md](SPEC-REVIEW-1002-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1002 | [CODE-REVIEW-1002-r1.md](CODE-REVIEW-1002-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |

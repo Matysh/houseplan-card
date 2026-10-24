@@ -16,7 +16,7 @@ import { wallThicknessSelection } from './wall-thickness-selection';
 import { PhysicalBodyGestureRuntime, type PhysicalBodyGesturePort } from './physical-body-gesture';
 import { BackdropFrameGestureRuntime, type BackdropPlan } from './backdrop-frame-gesture';
 import { displayVersion } from './card-version';
-import { positionInboxMenu } from './device-inbox-menu';
+import { CatalogContextMenu } from './catalog-context-menu';
 import { DecorOrderEditor } from './decor-order-editor';
 import { DecorLineDrawing, type DecorLineSession } from './editors/decor/line-drawing';
 import { entryBuildLabel } from './build-identity';
@@ -878,6 +878,7 @@ export class HouseplanEditorRuntime {
   });
   public readonly properties = new PropertiesEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
+  private readonly catalogMenu = new CatalogContextMenu(this);
   public readonly decorLine = new DecorLineDrawing({
     context: () => this.host.isConnected && this.host._mode === 'decor' && this.host._decorTool === 'line'
       && this.host._canEdit && !this.host._kiosk && this.host._curSpaceCfg && this.host.hass?.connection?.connected !== false
@@ -908,7 +909,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); }
+  public invalidateEditorNavigation(): void { this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -4962,18 +4963,17 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         kind: 'selection',
         ariaLabel: this.host._t('editor.context_actions', { object: label }),
         visibleLabel: label,
+        layout: 'actions',
         content: html`
           <div class="decor-selection-actions">
-          <button data-hp="action" data-action="decor-properties" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
-            const current = this.host._dtSel;
-            if (current) this._openDecorProperties(current);
-          })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
-          <div class="decor-order-pair">
             ${(['front', 'back'] as const).map(direction => html`<button class="btn ghost" data-hp="action" data-action=${`decor-${direction}`}
               ?disabled=${(direction === 'front' ? this.host._decorList[this.host._decorList.length - 1] : this.host._decorList[0])?.id === selected.id}
               @click=${() => this._runEditorContext(contextId, () => this.decorOrder.command(selected.id, direction))}>
               ${this.decorOrder.label(direction)}</button>`)}
-          </div>
+          <button data-hp="action" data-action="decor-properties" class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+            const current = this.host._dtSel;
+            if (current) this._openDecorProperties(current);
+          })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
           <button data-hp="action" data-action="decor-delete" class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
             <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
           </button></div>`,
@@ -5136,7 +5136,7 @@ public _renderDecorBar(): TemplateResult {
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
         </button>`,
       )}
-      <hp-color-opacity class="decor-default-color" data-hp="field" data-field="decor-color"
+      <hp-color-opacity class="decor-default-color" data-hp="field" data-field="decor-color" chrome-tooltip
         .label=${this.host._t('decor.color')}
         .color=${this.host._decorStyle.color}
         .opacity=${this.host._decorStyle.opacity}
@@ -6361,6 +6361,7 @@ public _splitClick(raw: number[]): void {
 
 public _markupMove(ev: MouseEvent): void {
     if (!this.host._markup) return;
+    if (this.host._tool === 'select') { this.properties.hoverPlan(ev); return; }
     if (this.host._tool === 'column') {
       this.host._cursorPt = this._snap(this._svgPoint(ev));
       return;
@@ -11152,6 +11153,7 @@ public _renderDeviceInbox(): TemplateResult {
       rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew, dialog.spaceFilter,
     );
     const visible = filtered.slice(0, dialog.limit);
+    this.catalogMenu.sync(visible);
     const batch = inboxBatchView(dialog, filtered); // #618 B1: On plan / Hidden only
     if (!dialog.busy && dialog.selected?.length && batch.chosen.length !== dialog.selected.length) {
       dialog = { ...dialog, selected: batch.chosen.map((row) => row.key) };
@@ -11168,7 +11170,7 @@ public _renderDeviceInbox(): TemplateResult {
     return html`<hp-dialog class="device-inbox-dialog ui-dialog" form-shell settings-layout .hass=${this.host.hass}
       data-kind="device-inbox"
       .title=${this.host._t('device_inbox.title')} icon="mdi:devices" wide
-      @hp-close=${() => (this.host._deviceInbox = null)}>
+      @hp-close=${() => { this.catalogMenu.dispose(); this.host._deviceInbox = null; }}>
       <div class="device-inbox" ?inert=${!!dialog.busy}>
         <div class="device-inbox-head">
           <input data-hp="field" data-field="device-catalog-search" class="device-inbox-search" type="search" autofocus
@@ -11274,27 +11276,14 @@ public _renderDeviceInbox(): TemplateResult {
                 ${primary}
                 ${row.canEdit || row.canHide || row.category === 'available'
                     || row.category === 'hidden' || this.host._bindingHasHaPage(row.binding) ? html`
-                  <details class="device-inbox-menu" @toggle=${positionInboxMenu}>
-                    <summary data-hp="action" data-action="device-catalog-menu" data-value=${row.key} class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
+                  <div class="device-inbox-menu">
+                    <button type="button" data-hp="action" data-action="device-catalog-menu" data-value=${row.key} class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
+                      aria-haspopup="menu" aria-expanded=${String(this.catalogMenu.isOpen(row.key))} @click=${(event: MouseEvent) => this.catalogMenu.open(event, row)}
                       title=${this.host._t('device_inbox.more_actions')}>
                       <ha-icon icon="mdi:dots-vertical"></ha-icon>
-                    </summary>
-                    <div class="device-inbox-menu-items">
-                      ${row.canEdit && !(row.category === 'on_plan' && !row.canFind)
-                        ? html`<button data-hp="action" data-action="device-catalog-edit" data-value=${row.key} type="button" class="btn ghost" @click=${() => this._openInboxMarker(row)}>
-                            ${this.host._t('device_inbox.edit')}</button>` : nothing}
-                      ${row.canHide ? html`<button data-hp="action" data-action="device-catalog-hide" data-value=${row.key} type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide')}</button>` : nothing}
-                      ${row.category === 'available' ? html`<button data-hp="action" data-action="device-catalog-disable" data-value=${row.key} type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide_available')}</button>` : nothing}
-                      ${row.category === 'hidden' ? html`<button data-hp="action" data-action="device-catalog-find" data-value=${row.key} type="button" class="btn ghost"
-                        title=${row.canFind ? '' : this.host._t('device_inbox.find_hidden_hint')}
-                        ?disabled=${!row.canFind} @click=${() => this._findInboxDevice(row)}>
-                        <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find')}</button>` : nothing}
-                      ${this.host._bindingHasHaPage(row.binding) ? html`<button data-hp="action" data-action="device-catalog-open-ha" data-value=${row.key} type="button" class="btn ghost"
-                        @click=${() => this.host._openBindingInHa(row.binding)}>${this.host._t('btn.open_in_ha')}</button>` : nothing}
-                    </div>
-                  </details>` : nothing}
+                    </button>
+                    ${this.catalogMenu.render(row.key)}
+                  </div>` : nothing}
               </div>
             </article>`;
           }) : html`<div class="device-inbox-empty">${this.host._t(emptyKey)}</div>`}
@@ -11305,7 +11294,7 @@ public _renderDeviceInbox(): TemplateResult {
         </button>` : nothing}
       </div>
       <div slot="footer" class="row">
-        <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._deviceInbox = null)}>
+        <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => { this.catalogMenu.dispose(); this.host._deviceInbox = null; }}>
           ${this.host._t('btn.close')}</button>
       </div>
     </hp-dialog>`;

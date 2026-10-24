@@ -58,7 +58,7 @@ function setup({ floors = ['f', 'g'] } = {}) {
   window.requestAnimationFrame = callback => { setImmediate(() => callback(0)); return 1; };
   window.cancelAnimationFrame = () => {};
   const document = { defaultView: window, createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) };
-  const stage = { getBoundingClientRect: () => ({ left: 0, top: 0 }) };
+  const stage = { getBoundingClientRect: () => ({ left: 0, top: 0 }), removeAttribute() {} };
   const root = { ownerDocument: document, querySelectorAll: () => [], querySelector: selector => selector === '.stage' ? stage : null };
   const host = {
     get _serverCfg() { return adoption.config; }, set _serverCfg(next) { adoption.stageLocalConfig(next); },

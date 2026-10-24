@@ -6,6 +6,26 @@ transport boundary without changing the production subscription or writer.
 The read-only cold-start witness uses the same separation for optional failure
 and active-tab no-op checks, retaining exactly one mandatory layout read.
 
+Approved editor UI #1051 shares `EditorContextMenu` presentation across device
+(including LED), decor and catalog actions. Callers retain command authority,
+revision, navigation and object identity; `retire()` makes retained exit paint
+inert before caller state disappears. Catalog has one `CatalogContextMenu`
+owner, not independent native-details menus. Styles arrive with the lazy editor.
+The replaced menu markup, inline paint and old catalog positioning are removed.
+The LED editor's existing select-hit listener takes the context-menu press
+before scene pan; the menu adds no camera or command authority.
+Inline Properties colour controls own their opacity wrapper's grid layout;
+the generic form-kit flex layout remains for non-inline consumers.
+
+`disclosure()` owns native details through `disclosureMotion`: one 220 ms
+retargetable content animation, local composed-ancestor scrolling and immediate
+reduced-motion completion. Its content stays mounted through closing without
+retaining interaction. Provider reason groups use the same primitive.
+Decor Properties keeps raw inline HEX/opacity strings and the last valid pair
+in the existing field session. Rendering resolves an owned preview without
+changing config; completion crosses the existing guarded writer/history once.
+Plan hover and contour selection share the same winning hit resolver.
+
 Decor creation (#1047) keeps native selection authoritative for the current
 Properties target even when the previous object still exists. Field completion
 continues to fence selection changes; other editors retain their explicit owner.

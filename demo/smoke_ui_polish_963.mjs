@@ -43,7 +43,13 @@ try {
     await page.evaluate(()=>window.__hpTest.setTool('select'));
   }
   out.history_at_end=await card.locator('.planbar .editbar-end button').count()===3&&await card.locator('.planbar .editbar-tools button[data-hp-tooltip]').filter({has:page.locator('ha-icon[icon="mdi:undo-variant"]')}).count()===0;
-  out.plan_select_pointer=await card.locator('.stage').evaluate(el=>getComputedStyle(el).cursor==='pointer');
+  // #1051, approved UI-028 replaces the old whole-sheet pointer oracle.
+  await page.mouse.move(0,0);
+  out.plan_select_empty_default=await card.locator('.stage').evaluate(el=>getComputedStyle(el).cursor==='default');
+  const contourPoint=await card.locator('.plan-svg').evaluate(el=>{const p=new DOMPoint(400,100).matrixTransform(el.getScreenCTM());return{x:p.x,y:p.y};});
+  await page.mouse.move(contourPoint.x,contourPoint.y);
+  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('.stage')?.hasAttribute('data-plan-select-hit'));
+  out.plan_select_real_hit_pointer=await card.locator('.stage').evaluate(el=>getComputedStyle(el).cursor==='pointer');
   await card.locator('.opening[data-id=window] .op-hit').click();await settle();
   out.window_has_side_choices=await panel.locator('[data-property=flip_h]').count()===0&&await panel.locator('[data-property=flip_v] .hp-prop-choices button').count()===2;
   out.window_side_names=await panel.locator('[data-property=flip_v]').innerText().then(text=>text.includes('Gallery')&&text.includes('Наружу'));

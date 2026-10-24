@@ -30,7 +30,12 @@ function fixture(pdfs=[]) {
   h._configWriteContext.observe(h.hass);
   const editor=new DeviceCopyEditor(h);
   const open=()=>editor.open({clientX:400,clientY:300,currentTarget:null,preventDefault(){},stopPropagation(){}},d);
-  const action=()=>editor.render().values.filter(v=>typeof v==='function').at(-1);
+  const action=()=>{
+    // UI-031 keeps the guarded command in the shared presentation's menuitem.
+    const find=value=>Array.isArray(value)?value.flatMap(find):value?.values
+      ?Array.isArray(value.strings)&&value.strings.join('').includes('role="menuitem"')?[value]:value.values.flatMap(find):[];
+    return find(editor.render())[0].values.find(v=>typeof v==='function');
+  };
   return {h,editor,messages,toasts,adoptions,open,action};
 }
 

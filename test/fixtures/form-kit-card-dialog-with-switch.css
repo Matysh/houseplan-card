@@ -272,7 +272,10 @@
   .hpf-colorrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; min-height: 56px; }
   .hpf-colorrow > .hpf-colorfield { justify-self: end; }
   .hpf-colorrow > .hpf-labelrow { min-height: 0; }
-  .hpf-link { padding: 5px 0; border: 0; background: none; color: var(--hpf-accent); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; }
+  .hpf-link:not(.btn) { padding: 5px 0; border: 0 none transparent; background: transparent; box-shadow:none; color: var(--hpf-accent); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; transition:color 150ms ease; }
+  :is(a[href]:not(.btn):not([role=button]),.hpf-link:not(.btn)):not(:disabled) { color:var(--hpf-accent); background:transparent; border-color:transparent; box-shadow:none; filter:none; cursor:pointer; transition:color 150ms ease; }
+  :is(a[href]:not(.btn):not([role=button]),.hpf-link:not(.btn)):not(:disabled):is(:hover,:focus-visible) { color:var(--primary-text-color); background:transparent; border-color:transparent; box-shadow:none; filter:none; }
+  @media(prefers-reduced-motion:reduce) { :is(a[href]:not(.btn):not([role=button]),.hpf-link:not(.btn)) { transition:none; } }
   .hpf-link:disabled { opacity: .5; cursor: default; }
   .hpf-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .hpf-inline > .hpf-labelrow { flex: 1 1 auto; }
