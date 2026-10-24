@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "issue": 1038,
+  "scope": "Matched local integration evidence; mandatory push gates and CI are recorded in the issue handoff.",
+  "acceptedBase": {
+    "source": "3efc9b0b4e43dc3a0b23f5eb4be22a6f8ba0dcc9",
+    "reviewed": "0d718483b8814b664fdadfc1a6e54e39e220543d",
+    "changedSinceReviewed": [
+      "docs/reviews/CODE-REVIEW-1025-r2.md",
+      "docs/reviews/INDEX.md"
+    ],
+    "productAndBuildInputChanges": [],
+    "fingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+    "primaryMeasurement": "issue-1008-color-picker-polish/artifacts/ui-1025/measure-r1-ledger-0d-after-hook.json",
+    "equivalence": "issue-1008-color-picker-polish/artifacts/ui-1025/actual-S8-accepted-equivalence.json"
+  },
+  "combinedBuild": {
+    "source": "760b809cc03721857ca0ab9536e4fff3c928a4de",
+    "fingerprint": "6dcd3e74d26b1066fc82ea3932519f733fd7890d578c8be0b631d2c1acb4bfc1",
+    "node": "22.23.3",
+    "rollup": "4.62.2",
+    "platform": "win32",
+    "bundleSync": "PASS",
+    "acceptedBaseIsAncestor": true
+  },
+  "measurements": {
+    "before": {
+      "initialViewGzipBytes": 339771,
+      "lazyEditorGzipBytes": 347064,
+      "bundleBytes": 3443023,
+      "hostRefs": 6115
+    },
+    "after": {
+      "initialViewGzipBytes": 339945,
+      "lazyEditorGzipBytes": 352827,
+      "selectOnlyGzipBytes": 18286,
+      "bundleBytes": 3464516,
+      "hostRefs": 6198
+    },
+    "ownDelta": {
+      "initialViewGzipBytes": 174,
+      "lazyEditorGzipBytes": 5763,
+      "bundleBytes": 21493,
+      "hostRefs": 83
+    },
+    "method": "Measured complete matching Windows builds, never sums or maxima of branch JSON.",
+    "coupling": {
+      "delegates": 145,
+      "portMembers": 369,
+      "hostRefs": 6198,
+      "portPrivates": 102,
+      "harnessPrivates": 101,
+      "bundleBytes": 3464516
+    },
+    "unusedViolations": []
+  },
+  "referenceRefresh": {
+    "lazyEditor": {
+      "published": 347075,
+      "measured": 352827
+    },
+    "hostRefs": {
+      "published": 6090,
+      "measured": 6198
+    },
+    "bundleBytes": {
+      "published": 3442107,
+      "measured": 3464516
+    },
+    "unchanged": {
+      "initialViewCeiling": 339368,
+      "absoluteViewBudget": 352000,
+      "lazyGraphBand": 2000,
+      "hostRefsBand": 25,
+      "bundleBytesBand": 2000,
+      "delegatesBaseline": 145,
+      "portMembersBaseline": 368,
+      "portPrivatesBaseline": 102,
+      "harnessPrivatesBaseline": 101,
+      "selectOnlyBudget": "unchanged",
+      "namedExportABI": "unchanged",
+      "latencyLimits": "unchanged"
+    }
+  },
+  "cost": {
+    "reason": "Volatile selection, one rigid group delta, measured individual contours and touched-channel adapters in the existing Properties command lane. No new library, eager editor import, writer or history stack.",
+    "permissionQuote": "сильно на размеры не заморачивайся, если незначительное превышение, устранять которое очень дорого — разрешаю поднять лимиты",
+    "earlierMeasuredRecord": "https://github.com/Matysh/houseplan-card/issues/1038#issuecomment-6383329349",
+    "finalMeasuredRecord": "https://github.com/Matysh/houseplan-card/issues/1038#issuecomment-6387520046",
+    "policy": "Refresh only the measured references; retain existing bands and absolute predicates."
+  },
+  "ordinaryProof": {
+    "native": {
+      "group": "PASS",
+      "keyboardNudge": "PASS",
+      "groupIncludes": [
+        "real SVG Text extent and positive dimensions",
+        "resolved image alpha preview before Save and rollback after Escape",
+        "independent stroke/fill/alpha",
+        "held/context retirement and one accepted history command",
+        "1000-record cold reload"
+      ]
+    },
+    "targetedUnits": {
+      "tests": 61,
+      "passed": 61,
+      "failed": 0
+    },
+    "backendTransfer": {
+      "passed": 4,
+      "failed": 0,
+      "ruff": "PASS",
+      "python": "3.14.7",
+      "homeAssistant": "2026.8.3",
+      "authority": "Local diagnostic runtime; not a CI stamp.",
+      "planOnly": "Retains the existing #167 closed privacy projection; full/space/ZIP preserve compatible unknown attributes."
+    },
+    "golden": {
+      "matrixVersion": 88,
+      "node": "22.23.3",
+      "playwright": "1.62.0",
+      "chromium": "151.0.7922.34",
+      "revision": 1234,
+      "platform": "WSL Ubuntu-24.04",
+      "scenes": [
+        {
+          "id": "decor-multiselect-light",
+          "runtime": "PASS",
+          "comparison": "missing-baseline",
+          "sha256": "cff4ea7d1eca5994d5b3f1f21bd10ee2d0e92c5444db117e653732461daa6ec3"
+        },
+        {
+          "id": "decor-multiselect-dark",
+          "runtime": "PASS",
+          "comparison": "missing-baseline",
+          "sha256": "afa6d3e07ee24f588bcee703ef3d086bc83494e2960375ad24fe88eb08c05be2"
+        }
+      ],
+      "inspection": "Both actual PNGs viewed: full independent mixed labels, individual contours, count 2 and disabled individual fields; identical pixels to the earlier viewed layout checkpoint.",
+      "baselineAccepted": false
+    },
+    "staticReadiness": {
+      "result": "PASS",
+      "definitions": 1868,
+      "uniqueSourceReads": 1016,
+      "browserGuards": 518,
+      "existingWarnings": 5,
+      "execution": 0,
+      "caught": "unknown (nightly only)"
+    }
+  }
+}

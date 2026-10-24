@@ -25,7 +25,7 @@ incorrect B expectation of lossless plan-only privacy data; production remains
 unchanged. The native scenario mounts a fresh public card on the saved pair,
 then checks complete quota-sized records and empty volatile selection/history.
 
-Matched Windows Node 22.23.3 / Rollup 4.62.2 builds on accepted `4dd092a031`
+Earlier matched Windows Node 22.23.3 / Rollup 4.62.2 builds on accepted `4dd092a031`
 measure View 339613 -> 339782 B gzip, lazy editor 343989 -> 349715 B gzip,
 raw output 3432482 -> 3453991 B and host references 6090 -> 6173. The accepted
 facts come from `device-offline-validation.json` / `postCssIntegration`; the
@@ -38,11 +38,29 @@ avoid that 5726-B lazy cost would add disproportionate complexity.
 The [measured-growth record](https://github.com/Matysh/houseplan-card/issues/1038#issuecomment-6383329349)
 quotes the owner's standing permission: «сильно на размеры не заморачивайся,
 если незначительное превышение, устранять которое очень дорого — разрешаю
-поднять лимиты». The measured lazy reference becomes 349715 B; raw reference
-becomes 3453991 B and host-reference baseline 6173. Published raw 3437873 B
+поднять лимиты». At that checkpoint the measured lazy reference became 349715 B;
+raw reference became 3453991 B and host-reference baseline 6173. Published raw 3437873 B
 was a reference, not the accepted build's actual size. No ratchet band,
 initial-View ceiling, absolute byte guard or runtime latency limit changes.
 This accounts for the implementation cost; it claims no speed improvement.
+
+The final ordinary merge `760b809cc` includes accepted keyboard nudge
+`3efc9b0b4` and preserves both its retirement/current/ACK guards and the group
+receipt/authority owner. A real combined Windows build (Node 22.23.3 / Rollup
+4.62.2) measures View 339771 -> 339945 B gzip, editor 347064 -> 352827 B gzip,
+raw 3443023 -> 3464516 B and host references 6115 -> 6198. Select-only is
+18286 B gzip. These are whole-build facts, not added branch deltas. Under the
+same quoted permission, the final lazy reference is 352827 B, raw reference
+3464516 B and host-reference baseline 6198; every existing band, initial View
+ceiling, absolute byte/ABI guard and latency threshold stays unchanged.
+The weight remains the lazy selection/contour/Properties adapters rather than
+a new dependency, eager editor import or second writer. Avoiding the 5763-B
+lazy cost by splitting another command/picker owner would add disproportionate
+complexity. The [integration record](development-notes/decor-multiselect-integration.json)
+pins the accepted input equivalence, actual measurements and ordinary native,
+61-unit, four-mode transfer and two viewed Golden capture results. New baseline
+images were not accepted; static declarations still have execution 0 and unknown
+caught outcomes. The final push gate and CI belong to the issue handoff.
 
 ## Editor keyboard translation (#1025)
 

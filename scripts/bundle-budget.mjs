@@ -826,18 +826,14 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 // These are actual combined builds, not sums of branch measurements. The owner
 // permits this measured growth (issue #1051, comment 6377420988); preserve
 // the 2000-B band, initial-View split and all absolute predicates.
-// #1038: matched Windows builds on accepted 4dd092a031 measure editor
-// 343989 -> 349715 B (+5726 B, 1.66%) for volatile multi-selection, atomic
-// group commands/individual contours and independent mixed colour drafts.
-// Owner standing permission and exact measurements: issuecomment-6383329349.
-// Record only the measured reference; preserve the 2000-B band, initial View
-// split, every absolute guard and runtime latency predicate.
-// #1025: exact Windows Node22.23.3/Rollup4.62.2 build on accepted e8c618924
-// measures 347075 B gzip versus accepted 343989 B (+3086 B, 0.90%). The existing
-// Properties command lane, topology checks and fenced CAS nudge consumer stay
-// lazy. Owner permits this measured cost; adopt only the actual fact, preserving
-// the 2000-B band, initial View split and every absolute budget/predicate.
-export const LAZY_EDITOR_GZIP_CEILING = 347_075;
+// #1038: final matched Windows Node22.23.3/Rollup4.62.2 builds on accepted
+// 3efc9b0b4 measure 347064 -> 352827 B (+5763 B, 1.66%). Volatile group
+// selection, measured individual contours and touched-channel commands reuse
+// the existing lazy Properties owner. Both keyboard nudge and group fences stay.
+// Exact whole-build facts and owner permission: decor-multiselect-integration.json
+// and issuecomment-6383329349. Refresh the measured reference only; preserve
+// the 2000-B band, initial View split, absolute guards and latency predicates.
+export const LAZY_EDITOR_GZIP_CEILING = 352_827;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
