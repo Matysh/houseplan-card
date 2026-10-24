@@ -41,6 +41,55 @@ The real wide-editor blue selection and the inert View class are both checked;
 the fixed 780px demo host must be resized for the wide-editor route. Original
 failures and the exact recipe/log hashes remain in the compact receipt.
 
+## Dialog CSS ownership #1019
+
+The [migration record](development-notes/dialog-style-migration.md) covers all
+eleven consumers of the dialog kit. Keep subject geometry and winning local
+validation/hover paint; a similar common declaration is insufficient evidence
+for deletion. Historical form-kit fixture files remain unchanged: the byte
+comparison projects out nine explicitly retired rules and checks every other
+byte, while the actual summary-panel comparison stays unmodified.
+
+Build and sync each tree before browser comparisons. Existing selected Support
+and Inbox Golden captures retain their canonical baselines. A difference already
+present on the unchanged accepted tree is a baseline fact, not a new task intent
+or permission to accept a baseline. Production-size comparisons use matching
+Node/Rollup and actual builds on both sides; do not infer combined sizes by
+adding task deltas.
+
+For native HA comparisons use `node scripts/dev/css-migration-capture.mjs
+--root=<built-checkout> --out=<artifact-directory>`, then the same command for
+the candidate with `--compare=<before-directory>`. It uses the shared deterministic
+Chromium arguments, attests the launched browser, checks the loaded fingerprint
+and compares computed paint, geometry and exact PNG bytes. The offline HA
+fixture's optional `repoRoot` and `browserArgs` keep both runs on the same
+capture recipe; defaults for existing smokes are unchanged. Fresh documents
+isolate viewport/theme cases. `--themes=light --widths=1280,600` bounds a
+diagnostic run; it does not represent the full default matrix. Artifacts remain
+local and do not replace canonical Golden evidence or baseline acceptance.
+
+`node scripts/css-orphans.mjs` is part of `gate:small`. It reads product TS
+through the TypeScript AST and the shared `scripts/css-lex.mjs` lexer. Actual
+class attributes, DOM class assignments and reachable helper returns are
+consumers; arbitrary strings, queries, import paths and negative `:not` tokens
+are not positive DOM requirements. Named animation uses include reachable CSS
+variables and distinguish animation names from shorthand timing grammar.
+
+For irreducible finite production, put the exact JSON comment immediately
+before the actual render/assignment statement, with its closest named owner:
+
+```ts
+/* css-uses {"owner":"Example.render","kind":"class","values":["state-a","state-b"],"reason":"Finite values from the model's state union"} */
+```
+
+The only keys are `owner`, `kind` (`class` or `keyframes`), `values` and `reason`.
+The checker rejects misplaced/unused annotations, mismatched owners or emitted
+prefixes, duplicate values and wildcards. Do not turn a query-only reference into
+a consumer. Unknown CSS recipes or unsupported native CSS nesting fail explicitly
+instead of silently omitting definitions. The legacy #805 graph-ownership token
+index stays separate from this stricter consumer index; it answers a different
+question. Both ownership and `styles-diff` now share the lexical parser.
+
 ## Parallel path diagnostic (#1018)
 
 `npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;

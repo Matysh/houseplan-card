@@ -163,6 +163,7 @@ ${S} .oplock { --iso-radius: min(${u(ISO_TILE.radius)}, calc(var(--oplock-core-s
  */
 export function renderIsoTileShadow(kind: 'dev' | 'oplock', owner: string, classes: string, style: string,
   face: TemplateResult | typeof nothing): TemplateResult {
+  /* css-uses {"owner":"renderIsoTileShadow","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2","theme-light","theme-dark","iso-floor-light","locked","unlocked"],"reason":"Two real ghost callers forward presentationClasses, deviceThemeClass and floor-light, or the opening lock state"} */
   return html`<div class="${kind} iso-tile-shadow ${classes}" data-shadow-of=${owner} style=${style}
     aria-hidden="true">${face}</div>`;
 }
