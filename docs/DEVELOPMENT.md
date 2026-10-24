@@ -13,6 +13,10 @@ method to retire HA identity, or add an independent loader/timer.
 The [ordinary validation record](development-notes/mounted-authority-validation.json)
 pins the original 54-check RED, 69-check AFTER, the shared-counter diagnostic,
 seven selected neighbours, runtime and measured production sizes separately.
+Its historical range ends at pre-integration `4aeb7599`. The separate
+[accepted-source integration](development-notes/mounted-authority-integration.json)
+records the later ordinary merge of #1026, unchanged local product patch,
+fresh combined native/selected checks and actual matched production sizes.
 
 ## Own offline presentation (#1026)
 
