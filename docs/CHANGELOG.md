@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restore the full card's current plan when Home Assistant changes its
+  connection or user inside the same `hass` object, without another HA tick. (#1056)
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)

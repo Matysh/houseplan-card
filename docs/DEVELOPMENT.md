@@ -1,5 +1,16 @@
 # Development and deployment
 
+## Mounted HA authority #1056
+
+`demo/smoke_mounted_authority.mjs` uses public HA assignments on an already
+loaded full card. Keep mandatory config/layout reads separate from the actual
+`fields: ['model_version']` capability projection; an empty fields array is a
+full document. Reused-object connection/user replacement, same-turn ABA and
+held replies must retain one current read owner. Rendering snapshots keep
+their intake in `willUpdate`, while ordinary skipped state updates retain the
+existing operational fast path. Do not reset the broad diagnostics invalidation
+method to retire HA identity, or add an independent loader/timer.
+
 ## Dialog CSS ownership #1019
 
 The [migration record](development-notes/dialog-style-migration.md) covers all
