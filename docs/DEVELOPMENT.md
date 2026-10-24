@@ -119,8 +119,10 @@ real clicks. The old drag setup reproduced eight cascading failures because no
 decor/history step existed; its original refusal, neighbour-order, cursor and
 server-write assertions remain unchanged after adapting that one gesture.
 
-After rebasing onto accepted dev `845c20c3e` (#1029/#1047/#1052/#1053), fresh
-pinned Node 22.23.3 builds measure raw `bundleBytes` 3411158 → 3416670 (+5512 B).
+After integrating accepted dev `c2d49829b` (#1055), the final pinned Node
+22.23.3 build again measures raw `bundleBytes` 3416670. Its product and build
+inputs are identical to accepted `845c20c3e` (#1029/#1047/#1052/#1053), whose
+fresh baseline build measured 3411158: the actual combined delta is +5512 B.
 Host references measured from that dev's source are 6048 → 6070 (+22); the
 published reference was still 6038, so the combined 32-reference growth is
 recorded at 6070. Only those two measured baselines change; their 2000-B and
