@@ -20,6 +20,20 @@ Two selected new Golden scenes render real open/closed LED routes; capture
 keeps missing-baseline status and never accepts PNGs. Registry declarations
 only receive static readiness during development.
 
+Matched Windows Node22.23.3/Rollup4.62.2 builds of accepted `1bf87673` and the
+combined `1f6f3dc2e` source measure raw dist3432791→3437873 B (+5082 B).
+The lazy topology overlay itself grows18874→23565 B raw /6275→7617 B gzip for
+current SVG projection, inert real-shape paint and bounded masks; the initial
+View graph is339621→339611 B gzip, editor344832→344715 B gzip. These incidental
+gzip decreases are not a performance improvement claim. There is no replaced
+LED renderer/cache to remove: the ordinary body still owns lighting/hit/focus,
+and the overlay borrows only participating top strokes while active.
+The owner's explicit small-size-growth allowance in the bulk instruction
+overrides the stricter no-increase wording in #1004's SPEC for raw bundleBytes
+only. Its reference moves to the measured3437873 B fact. This does increase
+that reference; the2000-B bands, absolute View/performance budgets and all
+other references/metrics remain unchanged. The issue records the same rationale.
+
 ## Config authority smoke #1052
 
 `node demo/smoke_config_authority.mjs` records B's config/layout read counts
