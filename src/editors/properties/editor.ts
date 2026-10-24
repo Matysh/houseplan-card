@@ -170,6 +170,7 @@ export class PropertiesEditor {
   }
   private setSelection(identity: PropertiesIdentity | null): void {
     if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)) return;
+    this.runtime.keyboardNudge.retire();
     this.fields.invalidate(); this.selected = identity; this.frozenReference = null; this.referenceAttempted = false;
     if (!identity && this.host._decorTool === 'backdrop') this.host._decorTool = 'select';
     this.ratioLocked = true;

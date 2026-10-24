@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Arrow keys move a selected free wall, opening or device by one grid cell,
+  preserving its offset. Connected walls stay fixed; angled openings follow
+  their host's dominant screen axis. Each accepted step supports Undo/Redo. (#1025)
+
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)

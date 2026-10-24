@@ -3063,6 +3063,13 @@ export class HouseplanCard extends LitElement {
     const isY = key === 'y' || (!latinLetter && e.code === 'KeyY');
     const redo = mod && ((isZ && e.shiftKey) || isY);
     const undo = mod && isZ && !e.shiftKey;
+    const arrow = e.key === 'ArrowLeft' ? [-this._gridPitch, 0]
+      : e.key === 'ArrowRight' ? [this._gridPitch, 0]
+        : e.key === 'ArrowUp' ? [0, -this._gridPitch]
+          : e.key === 'ArrowDown' ? [0, this._gridPitch] : null;
+    if (arrow && this._mode !== 'decor' && this._editorRuntime?.keyboardNudge.handle(e, arrow[0], arrow[1])) {
+      e.preventDefault(); return;
+    }
     if (this._mode === 'decor') {
       if ((undo || redo) && inField) return;
       if (redo) { e.preventDefault(); this._redoGeometry(); return; }
@@ -3082,12 +3089,7 @@ export class HouseplanCard extends LitElement {
         this._decorDeleteSel();
         return;
       }
-      const arrow = e.key === 'ArrowLeft' ? [-this._gridPitch, 0]
-        : e.key === 'ArrowRight' ? [this._gridPitch, 0]
-          : e.key === 'ArrowUp' ? [0, -this._gridPitch]
-            : e.key === 'ArrowDown' ? [0, this._gridPitch]
-              : null;
-      if (arrow && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel
+      if (arrow && !e.defaultPrevented && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel
           && this._decorList.some((shape) => shape.id === this._decorSel)
           && !this._decorDraft && !this._decorMove && !this._dtDrag && !this._editorRuntime?.backdropGesture.active
           && !inField && !inEditorSecondary && !this._editorSecondaryDialogBlocked) {
@@ -5455,7 +5457,8 @@ export class HouseplanCard extends LitElement {
 
   private _devicePlacementForCanvas(d: DevItem, x: number, y: number, exact = false): DevicePlacement {
     if (!this._norm) return { x: Math.round(x), y: Math.round(y) };
-    // Only a proven contact bypasses the lattice, never canonicalization/writer.
+    // A proven contact or exact keyboard translation bypasses the lattice,
+    // never canonicalization or the existing guarded writer.
     if (exact) return canonicalizePosition({ s: d.space, x: clampCanvasN(x / NORM_W), y: clampCanvasN(y / NORM_W) });
     const g = this._gridPitch;
     const gx = Math.round(x / g) * g;
@@ -5474,6 +5477,7 @@ export class HouseplanCard extends LitElement {
 
   /** Abort an uncommitted device preview. Returns true when a drag existed. */
   private _cancelDeviceDrag(): boolean {
+    this._editorRuntime?.keyboardNudge.retire();
     const drag = this._deviceDrag;
     if (!drag) return false;
     this._editorRuntime?._cancelPointerMove('device');
@@ -5497,14 +5501,15 @@ export class HouseplanCard extends LitElement {
     deviceId: string,
     placement: DevicePlacement | null,
     related?:DevicePositionState['related'],
+    commandGuard?:import('./device-contact-write').PlacementCommandGuard,
   ): Promise<void> {
     const isCurrent = this._layoutIO.guard();
     if (this._serverStorage && (!isCurrent() || !this._loadOk)) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     this._layout = applyDevicePlacement(this._layout, deviceId, placement);
-    if(related?.length) {
+    if(related?.length || commandGuard) {
       const {persistContactPlacements}=await import('./device-contact-write');
       if(!isCurrent())throw new Error('contact write context changed');
-      return persistContactPlacements(this,{deviceId,spaceId:placement?.s??this._space,placement,related});
+      return persistContactPlacements(this,{deviceId,spaceId:placement?.s??this._space,placement,related},commandGuard);
     }
     if (this._serverStorage) {
       const settled = this._layoutIO.begin();
@@ -7259,6 +7264,9 @@ export class HouseplanCard extends LitElement {
       return;
     }
     ev.preventDefault();
+    // Preventing the drag default also suppresses the browser's focus transfer.
+    // The selected canvas marker must own subsequent keys, not an old toolbar control.
+    (ev.currentTarget as HTMLElement | null)?.focus({ preventScroll: true });
     const p = this._pos(d);
     this._deviceDrag = {
       id: d.id,
@@ -7910,7 +7918,7 @@ export class HouseplanCard extends LitElement {
    * this boundary makes View-owned metadata writes and strict editor writes
    * converge on the same payload contract without making View load the editor.
    */
-  private async _sendConfigCandidate(candidate: ServerConfig, contactLayout?:DeviceLayout): Promise<void> {
+  private async _sendConfigCandidate(candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean): Promise<void> {
     const isCurrent = this._configWriteGuard();
     if (!isCurrent() || !this._loadOk) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
     const canonicalCandidate = canonicalizeConfigGeometry(candidate);
@@ -7920,7 +7928,7 @@ export class HouseplanCard extends LitElement {
         type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: this._cfgRev,
         ...(contactLayout?{contact_layout:contactLayout,expected_layout_rev:this._layoutRev}:{}),
       });
-      if (!isCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
+      if (!isCurrent() || acknowledgementCurrent && !acknowledgementCurrent()) throw Object.assign(new Error('config authority changed'), { code: 'context-changed' });
       this._adoption.acceptConfigWrite(canonicalCandidate, response);
       if(contactLayout)for(const [id,pos] of Object.entries((response as {contact_layout?:DeviceLayout})?.contact_layout??{})) {
         this._previewDevicePlacement(id,pos);

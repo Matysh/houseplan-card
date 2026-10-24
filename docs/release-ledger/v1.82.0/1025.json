@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1025,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already has Plan wall/opening editing, device placement/history and one-cell Decor keyboard nudging. Extend precise keyboard translation to those existing Plan/Devices workflows through their existing physical and CAS writers, without a new model, endpoint or editing subsystem.",
+  "summary": {
+    "ru": "Сдвиг свободной стены, проёма и устройства стрелками на клетку с сохранением смещения и отдельной отменой каждого шага.",
+    "en": "Move free walls, openings and devices one grid cell with arrow keys, preserving their offset and individual Undo steps."
+  }
+}

@@ -238,6 +238,7 @@ import {
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
 import { zeroWallHasOpening, zeroWallStyleOf } from './zero-walls';
+import { KeyboardNudge } from './editors/keyboard-nudge';
 import { snapNearAxisEndpoint } from './near-axis';
 import { alignDrawnWallEnd, planWalls } from './wall-end-align';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
@@ -278,7 +279,7 @@ import {
 } from './support-feedback';
 import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick'; import { StairEditorRuntime, type StairEditorHostPort } from './stairs-editor';
 import { CommandStack } from './command-stack';
-import type { DeviceLayout, DevicePlacement, DeviceEditorHistoryState } from './device-position-history';
+import type { DeviceLayout, DevicePlacement, DeviceEditorHistoryState, DevicePositionState } from './device-position-history';
 import { PropertiesEditor } from './editors/properties/editor';
 import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
 import { DeviceContactMagnet } from './device-contact-snap';
@@ -730,7 +731,8 @@ export interface HouseplanEditorHostPort {
   _pointers: Map<number, { x: number; y: number; }>;
   _pos: (d: DevItem) => { x: number; y: number; };
   _livePos: (d: DevItem) => { x: number; y: number; };
-  _persistDevicePlacement(deviceId: string, placement: DevicePlacement | null): Promise<void>;
+  _persistDevicePlacement(deviceId: string, placement: DevicePlacement | null, related?:DevicePositionState['related'], guard?:import('./device-contact-write').PlacementCommandGuard): Promise<void>;
+  _devicePlacementForCanvas(d:DevItem,x:number,y:number,exact?:boolean):DevicePlacement;
   _previewDevicePlacement(deviceId: string, placement: DevicePlacement | null): void;
   _prepareModeTransition: (request: number, from: ModeVisualState, targetMode: HouseplanMode, targetZoom: number, targetCenterX?: number, targetCenterY?: number) => void;
   _reducedMotion: boolean;
@@ -841,7 +843,7 @@ export interface HouseplanEditorHostPort {
   _wallUnionPool: Map<string, { key: string; value: ReturnType<typeof wallBodiesUnionPath>; }>;
   _writeChain: Promise<void>;
   _writesPending: number;
-  _sendConfigCandidate: (candidate: ServerConfig, contactLayout?:DeviceLayout) => Promise<void>;
+  _sendConfigCandidate: (candidate: ServerConfig, contactLayout?:DeviceLayout, acknowledgementCurrent?:()=>boolean) => Promise<void>;
   _configWriteGuard: (pendingOnly?: boolean) => () => boolean;
   _writeConfig: () => Promise<void>;
   _requestMode: (mode: 'view' | 'plan' | 'devices' | 'decor', animate?: boolean) => Promise<void>;
@@ -868,6 +870,7 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  public readonly keyboardNudge = new KeyboardNudge(this);
   public readonly backupTransfer = new LazyBackupArchiveClient(this.host);
   public readonly deviceCopy = new DeviceCopyEditor(this.host, (id, sourceId) => {
     const selected = this.properties.identity;
@@ -908,7 +911,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); }
+  public invalidateEditorNavigation(): void { this.keyboardNudge.retire(); this.decorLine.reset(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -955,6 +958,7 @@ export class HouseplanEditorRuntime {
       commit: (key, before) => this._commitPhysicalGeometry(host._t(key), before),
       select: (selection) => {
         if (!this.properties.select(selection.kind, selection.id)) return false;
+        if (host._physicalSel?.id !== selection.id || host._physicalSel?.kind !== selection.kind) this.keyboardNudge.retire();
         host._physicalSel = selection; return true;
       },
       openDialog: (kind, id) => this._openPhysicalDialog(kind, id),
@@ -1722,7 +1726,7 @@ public async _reloadRejectedPhysicalWrite(): Promise<void> {
 
 public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigGeometry(config); }
 
-public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean): Promise<void> {
+public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean, acknowledgementCurrent?:()=>boolean): Promise<void> {
     this.host._writesPending++;
     const isCurrent = this.host._configWriteGuard?.() ?? (() => true);
     const ownsPending = this.host._configWriteGuard?.(true) ?? (() => true);
@@ -1762,7 +1766,8 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null, cand
       try {
         const contactLayout=discoveryWrite?.placements.length ? undefined
           : await contactConfigPatch(this.host,discoveryWrite?.config || candidate);
-        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout);
+        if (candidateCurrent && !candidateCurrent()) throw Object.assign(new Error('candidate changed before dispatch'), { code: 'conflict' });
+        await this.host._sendConfigCandidate(discoveryWrite?.config || candidate,contactLayout,acknowledgementCurrent);
       } catch (error) {
         if (!isCurrent()) throw error;
         if (discoveryWrite?.placements.length) {
@@ -2220,6 +2225,7 @@ public _commitPhysicalGeometry(
   }
 
 public _clearGeometryGesture(preserveWallChainRedo = false): void {
+    this.keyboardNudge.retire();
     this.decorLine.reset();
     this.chainExit.invalidate();
     // Reload/rollback may discard a room-face proposal without its Save path.
@@ -8277,12 +8283,12 @@ public async _deleteSpace(withDevices = false): Promise<void> {
     if (accepted) await completeSpaceDeletion(this.host, spaceId, dependencies, removeMarkers);
   }
 
-public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean): Promise<void> {
+public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null, candidateCurrent?: () => boolean, acknowledgementCurrent?:()=>boolean): Promise<void> {
     this.host._cfgEpoch++;
     try {
       // same queue as the debounced writer: a dialog saving while a background
       // write is still out must not race it into a self-inflicted conflict
-      await this._writeConfig(attempt, candidateCurrent);
+      await this._writeConfig(attempt, candidateCurrent, acknowledgementCurrent);
     } catch (e: any) {
       if (e?.physicalGeometryRolledBack) await this._reloadRejectedPhysicalWrite();
       else if (e?.code === 'conflict') await this.host._reloadConfigOnly();

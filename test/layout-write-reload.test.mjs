@@ -231,11 +231,13 @@ test('#902 AC3 held drag still cancels its preview without a write or command', 
   const h = harness();
   h.host._deviceDrag = { id: 'point', pointerId: 7, before: pos(.1) };
   h.host._previewDevicePlacement('point', pos(.5));
-  h.host._deviceDragRetirement = { retire() {} }; h.host._editorRuntime = { _cancelPointerMove() {}, _commitLiveEditor() {} };
+  let keyboardRetired=0;
+  h.host._deviceDragRetirement = { retire() {} }; h.host._editorRuntime = { keyboardNudge:{retire(){keyboardRetired++;}},_cancelPointerMove() {}, _commitLiveEditor() {} };
   assert.equal(proto._cancelDeviceDrag.call(h.host), true);
   assert.deepEqual(h.host._layout.point, pos(.1));
   assert.equal(h.host._devicePositionHistory.size, 0);
   assert.equal(h.writes.length, 0);
+  assert.equal(keyboardRetired,1);
 });
 
 test('#902 same-element short detach retains already accepted history, unlike a retired pending completion', async () => {

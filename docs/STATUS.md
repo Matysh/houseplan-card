@@ -25,6 +25,12 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Editor arrows (#1025) translate selected independent walls, same-host openings
+and movable device anchors through the existing physical/config/layout writers
+and histories. Connected walls and invalid full steps remain no-op; opening
+direction follows the agreed dominant screen axis, including Left/Right at 45°.
+The shared dispatcher keeps controls, dialogs and active gestures authoritative.
+
 LED topology endpoints (#1004) share the current physical-radio mapping and
 nearest SVG hit owner. Half-length visible-path anchors, fixed-screen halos
 and inert real-shape participant paint follow Flat/2.5D cameras; representation

@@ -1,5 +1,59 @@
 # Development and deployment
 
+## Editor keyboard translation (#1025)
+
+`test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command
+consumer with the existing contact CAS implementation. Its topology/axis
+matrix retains all four opening types, both endpoint orders, immutable unknown
+fields and no-op boundaries. Controlled ordinary promises cover serial steps,
+fresh-read revision refusal, retired selection, permission loss, rejected CAS,
+accepted transport-loss reconciliation and newer same-point foreign revisions.
+The fixture keeps a separate foreign floor and opaque placement siblings.
+
+`node demo/smoke_editor_nudge.mjs` uses real wall/opening/device hits and native
+keyboard input against the persisted harness endpoints. Controls retain their
+native event outcome through a nested Shadow DOM fixture; the range value
+provides a positive native-control oracle alongside unchanged plan/history.
+Devices selection explicitly receives focus from the pointer owner, whose
+preventDefault otherwise leaves the previous toolbar button active. This is
+checked through actual activeElement and subsequent accepted movement.
+The control fixture first verifies that no physical-settings modal is open:
+rapidly clicking the same wall is the existing double-click entry, whose
+correct focus trap otherwise redirects the test's keys to the thickness field.
+Each synthetic shadow control proves its actual deep focus before native input;
+the range must change from 50 to 51 without a plan/history/write change.
+Group and wall-contact scenarios retain other effective anchors, survive
+reload and keep one world-cell step at a different real camera zoom. A legacy
+wall-flush point can carry longer decimal tails; its expected target uses the
+existing nine-normalized-decimal canonicalization, with the same comparison
+epsilon rather than a relaxed geometry threshold. Held ordinary layout reads
+and receipts prove selection retirement and foreign-revision precedence.
+
+The accepted a71 ordinary BEFORE produced 5 PASS / 2 expected RED: connected
+wall and inactive 45° arrows already stayed fixed; free-wall Right and the
+opening's active Right did not move. The AFTER witness adds hosted-opening
+atomicity, per-step Undo/Redo, device repeats, modifier/input no-op and wire
+counts. Browser timing and geometry thresholds are unchanged. Mutation
+declarations are checked statically (`mutation-gate --check`, execution 0);
+nightly execution alone supplies caught outcomes.
+The two existing registry anchors follow the writer's extended signatures;
+their original foreign-authority and room-discovery guards remain intact.
+
+| AC | Ordinary witness | Observable failure |
+|---|---|---|
+| AC1 | unit wall vectors + native free-wall arrows | one endpoint, offset, id or exact full step differs |
+| AC2 | unit L/T/X/chain/interior matrix + native connected wall | geometry/history/write changes or a native key is consumed |
+| AC3 | immutable unit hosted fields + native hosted opening | host/t/unknown field changes, stale opening coordinates or an extra write |
+| AC4 | unit four types and signed/reversed axes + native 45° | inactive pair moves, active pair refuses or along distance differs |
+| AC5 | unit jamb/end/overlap/room-host cases + existing opening smokes | partial clamp, host hop or a refused candidate enters history |
+| AC6 | contact target unit + native Devices/contact/reload | selected effective step differs or another member/floor moves |
+| AC7 | serial CAS unit + native repeat/Undo/Redo | a step, revision, write or history entry is lost/duplicated |
+| AC8 | runtime guard unit + native Properties/Shadow DOM controls | value/event defaults are stolen or selected geometry changes |
+| AC9 | authority/gesture runtime matrix + native View fence | excluded context sends a write or changes history/layout |
+| AC10 | held read/receipt units + delayed native transport | retired replay, newer data overwritten or false history appended |
+| AC11 | existing Decor, physical/opening/contact/gesture smokes and relevant Golden | old pointer/history/paint contracts regress |
+| AC12 | build/budgets, lazy-editor and lifecycle checks | startup/editor boundary, listener count or current budget regresses |
+
 ## LED Zigbee endpoints (#1004)
 
 `node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input

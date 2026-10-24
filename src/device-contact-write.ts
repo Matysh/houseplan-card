@@ -48,7 +48,7 @@ export async function contactConfigPatch(value:object,candidate:ServerConfig):Pr
 }
 
 export function prepareContactMove(value:object,drag:{id:string;spaceId:string;before:DevicePlacement|null;contactMembers?:readonly string[]},
-  after:DevicePlacement):{before:DevicePositionState;after:DevicePositionState} {
+  after:DevicePlacement,exactTarget=false):{before:DevicePositionState;after:DevicePositionState} {
   const host=value as ContactWriter,scene=host._deviceContacts?.scene;
   const base={deviceId:drag.id,spaceId:drag.spaceId};
   const result={before:{...base,placement:drag.before} as DevicePositionState,after:{...base,placement:after} as DevicePositionState};
@@ -59,8 +59,9 @@ export function prepareContactMove(value:object,drag:{id:string;spaceId:string;b
   ids.add(drag.id);
   for(const id of [...ids].sort()) {
     const shape=scene.shapes.get(id);if(!shape)continue;
-    const position=canonicalizePosition({x:shape.marker.x/1000,y:shape.marker.y/1000,s:drag.spaceId});
-    const basis={...makeContactBasis(shape.marker,drag.spaceId),
+    const marker=id===drag.id&&exactTarget?{...shape.marker,x:after.x*1000,y:after.y*1000}:shape.marker;
+    const position=canonicalizePosition({x:marker.x/1000,y:marker.y/1000,s:drag.spaceId});
+    const basis={...makeContactBasis(marker,drag.spaceId),
       at:{x:position.x,y:position.y,s:drag.spaceId}};
     const existing=host._layout[id]?.contact_basis;
     const opaque=record(existing)?.v!==1&&existing!==undefined;
@@ -76,7 +77,8 @@ export function prepareContactMove(value:object,drag:{id:string;spaceId:string;b
 
 /** Existing layout/set CAS over a fresh complete read, never the active-floor
  * projection. A conflicting read cannot overwrite another client's positions. */
-export async function persistContactPlacements(value:object,state:DevicePositionState):Promise<void> {
+export interface PlacementCommandGuard { current(revision?:number):boolean; accepted(revision:number):boolean }
+export async function persistContactPlacements(value:object,state:DevicePositionState,guard?:PlacementCommandGuard):Promise<void> {
   const host=value as ContactWriter;
   // Canonicalise only the named edits, never the fresh snapshot's foreign floors.
   const changes=[state,...state.related??[]].map(c=>({...c,
@@ -85,8 +87,9 @@ export async function persistContactPlacements(value:object,state:DevicePosition
   const current=host._layoutIO.guard(),owns=host._layoutIO.guard(true),finish=host._layoutIO.begin();
   const sent=new Map<string,DeviceLayout[string]|null>();
   try {
-    if(!current()||!host._loadOk)throw new Error('contact write context changed');
+    if(!current()||!host._loadOk||guard&&!guard.current())throw new Error('contact write context changed');
     if(!host._serverStorage){
+      if(guard&&!guard.accepted(host._layoutRev))return;
       for(const c of changes)host._adoption.stageLocalLayout(applyDevicePlacement(host._layout,c.deviceId,c.placement));
       host._persistLocalLayout();return;
     }
@@ -95,6 +98,8 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     const expected=new Map(changes.map(c=>[c.deviceId,devicePlacement(accepted,c.deviceId)]));
     const snapshot=record(await host.hass.callWS({type:'houseplan/layout/get'}));
     if(!current()||typeof snapshot?.rev!=='number'||!record(snapshot.layout))throw new Error('invalid complete layout snapshot');
+    if(guard&&!guard.current(snapshot.rev))throw Object.assign(new Error('contact command changed before dispatch'),
+      {code:guard.current()?'conflict':'context-changed'});
     if(host._cfgRev!==configRevision)throw Object.assign(new Error('device configuration changed elsewhere'),{code:'conflict'});
     let layout=structuredClone(snapshot.layout) as DeviceLayout;
     for(const c of changes) {
@@ -118,6 +123,7 @@ export async function persistContactPlacements(value:object,state:DevicePosition
     }
     if(!current())throw new Error('contact write context changed');
     if(typeof response?.rev!=='number')throw new Error('invalid contact write acknowledgement');
+    if(guard&&!guard.accepted(response.rev))return;
     for(const [id,pos] of sent) {
       host._adoption.stageLocalLayout(applyDevicePlacement(host._layout,id,pos));
       host._adoption.acceptLayoutPosition(id,pos,response?.rev);

@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/editors/keyboard-nudge.ts','src/editors/plan-nudge.ts','src/device-contact-write.ts'],
+    symbols: ['_onKey'],
+    smokes: ['smoke_editor_nudge.mjs'],
+    because: '#1025 native selection and arrows observe whole-wall/hosted-opening movement, dominant-axis direction, exact device positions, focus, Undo/Redo and ordinary persisted writes without calling or naming the command helper.',
+  },
+  {
     files: ['src/zigbee-topology-endpoint.ts', 'src/hp-zigbee-topology-overlay.ts',
       'src/device-hit-owner.ts', 'src/led-strip-runtime.ts'],
     smokes: ['smoke_zigbee_led_topology.mjs'],
