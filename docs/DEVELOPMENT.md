@@ -24,6 +24,12 @@ size/flip/zero/save assertions through its stable field/action hooks, the
 UI-025 wall-fill-before-custom order and all four lazy editor sheet slots.
 The style witness checks first-frame adoption, exact cascade order, sharing
 between roots and absence of changes to View for all four sheets.
+The ordinary Linux Device Copy sequence also proves that the LED context
+press leaves no scene pan for a subsequent mouse move with no buttons held.
+Its emitted LED select listener owns button 2 before the canvas; primary
+selection/drag and the existing Copy command remain unchanged. Accepted
+845c20c3e passed while the initial common-menu implementation failed this
+viewport invariant; no forced click, camera reset or timing relaxation is used.
 
 Run `node demo/smoke_ui_1051.mjs` for inline colour preview/validation,
 Enter/blur/Escape, atomic Undo, contour hit/miss at two zooms, menu input

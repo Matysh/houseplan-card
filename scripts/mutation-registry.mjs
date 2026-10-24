@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'ui-led-menu-keeps-scene-pan-1051',
+    guard: 'node demo/smoke_device_copy.mjs',
+    because: '#1051 AC6: a trusted Linux SVG LED context press must not seed a scene pan that survives the menu and moves the viewport on a later buttons=0 motion. The ordinary emitted listener and viewport oracle require a real browser; nightly execution only.',
+    patches: [{ file: 'src/led-strip-editor.ts',
+      find: '          if (e.button === 2) e.stopPropagation();',
+      replace: '          if (false && e.button === 2) e.stopPropagation();' }],
+  },
+  {
     id: 'direct-signal-detached-host-acquires-1053',
     guard: 'node demo/smoke_direct_signal_lifecycle.mjs',
     because: '#1053 AC1: real full/space Lit elements may finish queued updates after remove(); public late HA assignment must acquire no config/layout/capability/feed while a mounted neighbour keeps its shared live reading. Nightly execution only.',

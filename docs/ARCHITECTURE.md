@@ -12,6 +12,8 @@ revision, navigation and object identity; `retire()` makes retained exit paint
 inert before caller state disappears. Catalog has one `CatalogContextMenu`
 owner, not independent native-details menus. Styles arrive with the lazy editor.
 The replaced menu markup, inline paint and old catalog positioning are removed.
+The LED editor's existing select-hit listener takes the context-menu press
+before scene pan; the menu adds no camera or command authority.
 
 `disclosure()` owns native details through `disclosureMotion`: one 220 ms
 retargetable content animation, local composed-ancestor scrolling and immediate

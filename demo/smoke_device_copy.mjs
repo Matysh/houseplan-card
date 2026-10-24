@@ -110,6 +110,15 @@ checkAll({ ledGeometryUnchanged:JSON.stringify(ledBefore.cfg.spaces)===JSON.stri
   ledOriginalStillStrip:await card.locator('.led-select-hit[data-id="v_led"]').count()===1,
   ledCopyNearVisibleAnchor:Math.hypot(ledAfter.layout[ledCopy.id].x-.4,ledAfter.layout[ledCopy.id].y-.65)<.2 });
 
+// A Linux context-menu sequence may finish without a scene pointerup. The
+// completed LED command must leave no pan owner for a later buttons=0 move.
+const viewportAfterLed = await page.evaluate(() => JSON.stringify(window.__card._view));
+const sourceBox = await card.locator('[data-hp="device"][data-id="v_source"]').boundingBox();
+await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
+if (!check('led-context-menu-retires-scene-pan', await page.evaluate(() => JSON.stringify(window.__card._view)), viewportAfterLed)) {
+  await finish(browser); process.exit(1); // A later target is no longer visible after this failed invariant.
+}
+
 // Stale menu, current permission and a real rejected transport all preserve the pair.
 await open('v_source');
 await page.evaluate(async()=>{await window.__hpTest.setServerConfig(cfg=>({...cfg,settings:{...cfg.settings,copy_fixture:1}}));});
