@@ -1944,6 +1944,27 @@ export async function prepareGoldenScenario(page, scenario) {
           || dialog.querySelector('.btn.on')) {
         throw new Error('golden Optimize preflight failure dialog is incomplete');
       }
+    } else if (scenario.dialog === 'icon-rules-invalid') {
+      card._setMode('devices');
+      await card.updateComplete;
+      await settleMode(card);
+      const trigger = card.renderRoot.querySelector('[data-tool="icon-rules"]');
+      if (!trigger) throw new Error(`golden icon rules trigger is missing: ${scenario.id}`);
+      trigger.click();
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog[data-kind="rules"]');
+      const pattern = dialog?.querySelector('[data-field="icon-rule-pattern"]');
+      if (!pattern) throw new Error(`golden icon rules field is missing: ${scenario.id}`);
+      pattern.value = '[';
+      pattern.dispatchEvent(new Event('input', { bubbles: true }));
+      await card.updateComplete;
+      await frame();
+      if (dialog.querySelectorAll('.rpat.bad').length !== 1
+          || !dialog.querySelector('[data-action="icon-rule-delete"]')
+          || !dialog.querySelector('[data-hp="dialog-confirm"]')
+          || dialog.scrollWidth > dialog.clientWidth + 1) {
+        throw new Error(`golden invalid icon rules dialog is incomplete or clipped: ${scenario.id}`);
+      }
     } else if (scenario.dialog === 'device-inbox') {
       card._setMode('devices');
       await card.updateComplete;

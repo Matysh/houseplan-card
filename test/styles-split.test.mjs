@@ -2,6 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { cssOfSource } from '../scripts/css-source.mjs';
+import { parseRules } from '../scripts/css-lex.mjs';
 import { cardStyles, baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles }
   from '../test-build/styles.js';
 import { CARD_DIALOG_FORM_KIT, formKitCss } from '../test-build/styles/form-kit.styles.js';
@@ -11,37 +13,9 @@ const FILES = ['base', 'plan', 'devices', 'chrome', 'dialogs'];
 const sourceOf = (name) =>
   readFileSync(new URL(`../src/styles/${name}.styles.ts`, import.meta.url), 'utf8');
 
-const selectorsOf = (tsSource) => {
-  // Only the css`` payload: the TS import/export scaffolding is not CSS.
-  const css = [...tsSource.matchAll(/css`([\s\S]*?)`/g)].map((m) => m[1]).join('\n');
-  const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const out = new Set();
-  const walk = (chunk, scope) => {
-    let i = 0;
-    while (i < chunk.length) {
-      const open = chunk.indexOf('{', i);
-      if (open === -1) break;
-      const header = chunk.slice(i, open).replace(/\s+/g, ' ').trim();
-      let depth = 1, j = open + 1;
-      while (j < chunk.length && depth > 0) {
-        if (chunk[j] === '{') depth++;
-        else if (chunk[j] === '}') depth--;
-        j++;
-      }
-      if (header.startsWith('@media') || header.startsWith('@supports')) {
-        walk(chunk.slice(open + 1, j - 1), `${scope}${header} :: `);
-      } else if (!header.startsWith('@')) {
-        // The key includes the media scope: the SAME selector inside and
-        // outside a wrapper are different cascade entries by construction
-        // (a multi-zone @media block lands in base as a whole).
-        for (const sel of header.split(',')) out.add(`${scope}${sel.trim()}`);
-      }
-      i = j;
-    }
-  };
-  walk(text, '');
-  return out;
-};
+const selectorsOf = tsSource => new Set(parseRules(cssOfSource(tsSource))
+  .filter(rule => rule.kind === 'rule')
+  .flatMap(rule => rule.selectors.map(selector => rule.scope.map(scope => scope + ' :: ').join('') + selector)));
 
 test('issue 266 the aggregator is exactly the five surface files in the cascade order', () => {
   // 2026-09-18, #594: набор контролов формы в этот массив НЕ входит — он живёт
@@ -54,33 +28,10 @@ test('issue 266 the aggregator is exactly the five surface files in the cascade 
 });
 
 test('#649 every 2.5D tile rule is scoped to the 2.5D View stage', () => {
-  const text = isoTilesStyles.map((sheet) => sheet.cssText).join('\n').replace(/\/\*[\s\S]*?\*\//g, '');
-  const headers = [];
-  const walk = (chunk) => {
-    let i = 0;
-    while (i < chunk.length) {
-      const open = chunk.indexOf('{', i);
-      if (open === -1) break;
-      const header = chunk.slice(i, open).replace(/\s+/g, ' ').trim();
-      let depth = 1, j = open + 1;
-      while (j < chunk.length && depth > 0) { if (chunk[j] === '{') depth++; else if (chunk[j] === '}') depth--; j++; }
-      if (header.startsWith('@')) walk(chunk.slice(open + 1, j - 1)); else headers.push(header);
-      i = j;
-    }
-  };
-  walk(text);
-  assert.ok(headers.length > 40, `expected the generated tables, got ${headers.length} rules`);
-  for (const header of headers) {
-    const parts = [];
-    let depth = 0, from = 0;
-    for (let k = 0; k < header.length; k++) {
-      if (header[k] === '(') depth++; else if (header[k] === ')') depth--;
-      else if (header[k] === ',' && depth === 0) { parts.push(header.slice(from, k)); from = k + 1; }
-    }
-    parts.push(header.slice(from));
-    for (const selector of parts) {
-      assert.match(selector, /\.stage\.projection-iso\.mode-view /, `unscoped 2.5D rule: ${selector}`);
-    }
+  const rules = parseRules(isoTilesStyles.map(sheet => sheet.cssText).join('\n')).filter(rule => rule.kind === 'rule');
+  assert.ok(rules.length > 40, `expected the generated tables, got ${rules.length} rules`);
+  for (const rule of rules) for (const selector of rule.selectors) {
+    assert.match(selector, /\.stage\.projection-iso\.mode-view /, `unscoped 2.5D rule: ${selector}`);
   }
 });
 

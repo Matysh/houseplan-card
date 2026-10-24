@@ -20,10 +20,17 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5223 · pure backend 627 · HA-harness backend 527 · browser smokes 430 (`npm run inventory`) |
+| Tests | Node unit 5247 · pure backend 627 · HA-harness backend 527 · browser smokes 431 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Dialog CSS ownership cleanup (#1019) records all eleven consumers, removes
+confirmed obsolete selectors and leaves shared paint with its existing kit.
+Subject geometry, validation/hover exceptions and View confirmations retain
+their actual owners. No configuration, runtime API or visual contract changes.
+Finite producer annotations name the existing presentation, Properties,
+opening-surface and Radar glyph vocabularies; they add no runtime state.
 
 Parallel paths (#1018): historical insertion ratios identify audit candidates,
 not deletion permission. Manual semantic/caller decisions are pinned separately;

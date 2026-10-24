@@ -329,10 +329,14 @@ try {
     };
   });
   const editorSet = new Set(afterLoad.editor);
+  const supportLabelSelector = 'hp-dialog.ui-dialog .supportform > label:not(.srcrow)';
   out.editorSheetsCarryTheMovedRules = editorSet.has('.radarcoordinates') && editorSet.has('.device-inbox-row')
-    && editorSet.has('.supportform > label:not(.srcrow)') && editorSet.has('.editor-secondary-host');
+    // #1019 retired the defeated local label rule. The separately adopted lazy
+    // settings kit owns it; it is deliberately not one of the four #805 sheets.
+    && afterLoad.card.selectors.includes(supportLabelSelector) && editorSet.has('.editor-secondary-host');
   out.coldRootsMatchNoMovedSelector = [cold.card, cold.kiosk, cold.space]
-    .every((inventory) => inventory.selectors.every((selector) => !editorSet.has(selector)));
+    .every((inventory) => inventory.selectors.every((selector) => !editorSet.has(selector)
+      && selector !== supportLabelSelector));
   // The cold root holds the card's static styles and nothing editor-only: its rule count is theirs.
   console.log(`cold card root: ${cold.litRules} rules in the ${cold.litSheets} sheets of cardStyles`
     + ` (${cold.card.ruleCount} in all ${cold.card.kinds.length} sheets, later ones: summary panel);`

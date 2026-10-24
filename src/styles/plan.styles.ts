@@ -255,7 +255,6 @@ export const planStyles = css`
     .iso-walls-svg,
     .iso-overlays-svg,
     .iso-underlay,
-    .iso-shadows,
     .iso-walls,
     .iso-openings {
       pointer-events: none;
@@ -680,15 +679,6 @@ export const planStyles = css`
     }
     :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
     .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
-    .rlgear {
-      --mdc-icon-size: 0.9em;
-      display: inline-flex;
-      margin-right: 0.2em;
-      opacity: 0.6;
-      cursor: pointer;
-      pointer-events: auto;
-    }
-    :host([data-pointer-hover]) .rlgear:hover { opacity: 1; }
     .rlgo {
       --mdc-icon-size: 0.85em;
       display: inline-flex;
@@ -1164,9 +1154,6 @@ export const planStyles = css`
     .opening-dimension-tick {
       stroke-width: 2;
     }
-    .stage.edit .room {
-      pointer-events: none;
-    }
     .stage.markup {
       cursor: crosshair;
     }
@@ -1582,8 +1569,7 @@ export const planStyles = css`
       pointer-events: none;
     }
     .physical-chrome { pointer-events: none; }
-    .physical-chrome .frame,
-    .physical-chrome .stem {
+    .physical-chrome .frame {
       fill: none;
       stroke: #ffc14d;
       stroke-width: 2;
@@ -1600,7 +1586,6 @@ export const planStyles = css`
     .drawwall.invalid input { border-color: var(--error-color, #db4437); }
     .drawwall .rangehint { margin-inline-start: 4px; font-size: 0.78em; opacity: 0.72; }
     .drawwall.invalid .rangehint { color: var(--error-color, #db4437); opacity: 1; }
-    .stage.markup.tool-partition,
     .stage.markup.tool-column { cursor: crosshair; }
     /* room resize tool (docs/RESIZE.md) */
     /* wall handle: invisible finger-sized hit circle (HP-1550-04 hit priority

@@ -167,6 +167,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
 
 export function renderPropertiesSurface(model: PropertiesSurface, port: PropertiesSurfacePort, inert: boolean): TemplateResult {
   const { t, controller } = port;
+  /* css-uses {"owner":"renderPropertiesSurface","kind":"class","values":["position","geometry","appearance","features","copy","delete","replace","display_device","decor-front","decor-back"],"reason":"Finite group and footer action keys emitted by the Properties catalog"} */
   return html`<aside class="hp-properties" data-theme=${port.dark == null ? 'auto' : port.dark ? 'dark' : 'light'} data-hp="properties-panel" aria-label=${t('title')} ?inert=${inert}
     aria-busy=${String(!!controller.draft?.pending)} @pointerdown=${(e: Event) => e.stopPropagation()}
     @click=${(e: Event) => e.stopPropagation()} @wheel=${(e: Event) => e.stopPropagation()}>

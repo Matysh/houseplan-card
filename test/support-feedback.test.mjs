@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { settingsDialogCss } from '../test-build/styles/settings-dialogs.styles.js';
+import { parseRules } from '../scripts/css-lex.mjs';
 import {
   codePointLength,
   newSupportDialogState,
@@ -114,8 +116,6 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
   const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
   const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
   const styles = readFileSync(new URL('../src/styles/plan.styles.ts', import.meta.url), 'utf8');
-  // #805: the support form's rules ride with the lazy editor runtime.
-  const dialogStyles = readFileSync(new URL('../src/styles/editor-dialogs.styles.ts', import.meta.url), 'utf8');
   const header = card.slice(card.indexOf('<div class="zoomctl">'), card.indexOf('</div>\n        ${this._canEdit'));
   assert.ok(header.indexOf('_openSettingsDialog') < header.indexOf('_openSupportDialog'));
   assert.ok(header.indexOf('_openSettingsDialog') < header.indexOf('_openPdfDialog'));
@@ -132,7 +132,12 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
   assert.ok(actions.indexOf('open.settings') < actions.indexOf('open.pdf'));
   assert.ok(actions.indexOf('open.pdf') < actions.indexOf('open.support'));
   assert.match(styles, /\.header-action\s*\{[\s\S]*?min-width:\s*44px;[\s\S]*?min-height:\s*44px;/);
-  assert.match(dialogStyles, /\.supportmessage\s*\{[\s\S]*?background:\s*var\(--hp-bg\);/);
+  // #1019: the lazy common kit already won over the retired local background.
+  // Check the emitted rule at its actual owner, not an unused legacy spelling.
+  const supportInput = parseRules(settingsDialogCss).find(rule => rule.kind === 'rule'
+    && rule.selectors.includes('hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw)'));
+  assert.ok(supportInput);
+  assert.ok(supportInput.declarations.includes('background:var(--hpf-surface)'));
 });
 
 test('the consent copy names exact geometry, project relay, retention and network address', () => {
