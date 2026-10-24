@@ -139,16 +139,16 @@ The native scene has an untouched room envelope for actual floor bounds and a
 wide host for real Properties. Its visible SVG span is checked separately from
 the physical input line's round non-scaling caps.
 
-Measured on the combined accepted #1051/#1046 source: initial View 340206 B gzip
-(+585 from #1051), lazy editor 345289 B (+457), Select-only 21453 B.
-The Select-only hard byte cap changes from 20276 to exactly 21453 B (+1177),
+Measured on the combined accepted #1051/#1046/#1054 source: initial View 340247 B gzip
+(+626 from #1051), lazy editor 345313 B (+481), Select-only 21455 B.
+The Select-only hard byte cap changes from 20276 to exactly 21455 B (+1179),
 for the independently proved Delete kernel, cancellable menu and its writer
 integration; it adds no reserve. This uses the owner's explicit permission:
 «сильно на размеры не заморачивайся, если незначительное превышение, устранять
 которое очень дорого — разрешаю поднять лимиты». Further removal would require
 disproportionate restructuring of the bounded proof/controller graph; the heavy
 editor facade is independently forbidden from that graph. `hostRefs` increases
-6090→6117 and total raw bundle bytes 3432791→3449157 for the new capability,
+6090→6117 and total raw bundle bytes 3432791→3449308 for the new capability,
 current-context ports and Delete code. Only those measured baselines grow;
 bands, View/editor ceilings, named exports and latency limits remain unchanged.
 Targeted proofs supplement gate:small; full regression and mutation execution
