@@ -63,7 +63,7 @@ test('AST CSS extraction ignores comments and ordinary strings', () => {
 test('AST class producers include real helper returns, classMap and imperative writers', () => fixture(
   'const css=null,html=null,classMap=null; function helper(kind:"first"|"second"){return "helper-"+kind;}'
   + 'const unused="ghost",id="id-only";document.querySelector(".query");element.classList.contains("contains");element.classList.remove("removed");'
-  + 'element.classList.replace("old","replacement");element.classList.add("added");element.classList.toggle("toggled",false);'
+  + 'element.classList.replace("old","replacement");element.classList.add("added");element.classList.toggle("toggled",true);'
   + 'element.setAttribute("class","imperative");element.className="assigned";element.innerHTML=\'<i class="inner"></i>\';'
   + 'const state:"on"|"off"=input;const view=html' + template('<i id=${id} class="live ${helper(kind)} ${classMap({mapped:true,["computed-"+state]:true})}"></i>')
   + ';const s=css' + template('.live.helper-first,.helper-second,.mapped,.computed-on,.computed-off,.replacement,.added,.toggled,.imperative,.assigned,.inner{color:red}.ghost,.query,.contains,.removed,.old,.id-only{color:red}') + ';', root => {
@@ -230,4 +230,30 @@ test('classMap follows actual variable/spread keys and reports opaque maps', () 
   + ';const s=css' + template('.first,.flag,.side-a,.side-b{color:red}') + ';', root => {
     const result = scanCssOrphans(root);
     assert.deepEqual(names(result,'class'), []); assert.equal(result.dynamic.length, 1);
+  }));
+
+test('literal HTML class entities fail closed; ordinary escaped CSS identifiers and expression strings remain valid', () => {
+  const slash = String.fromCharCode(92), cssName = '.a' + slash + slash + '&amp' + slash + slash + ';';
+  for (const encoded of ['a&amp;', 'a&copy;', 'a&#38;', 'a&#x26;', 'a&#X26;']) fixture(
+    'const html=null,css=null;const x=html' + template('<i class="' + encoded + '"></i>')
+    + ';const s=css' + template(cssName + '{color:red}') + ';', root => {
+      const result = scanCssOrphans(root);
+      assert.ok(result.diagnostics.some(row => row.kind === 'html-entity'), encoded);
+      assert.equal(result.consumers.includes(encoded), false);
+    });
+  fixture('const html=null,css=null;const x=html' + template('<i class="a&"></i><i class=${"a&amp;"}></i>')
+    + ';const s=css' + template('.a' + slash + slash + '&,' + cssName + '{color:red}') + ';', root => {
+      const result = scanCssOrphans(root);
+      assert.deepEqual(result.diagnostics, []); assert.deepEqual(result.dynamic, []);
+    });
+});
+
+test('constant-false classMap/toggle/ternary branches are not consumers; true and unknown controls are', () => fixture(
+  'const css=null,html=null,classMap=null;const no=false;const view=html'
+  + template('<i class=${classMap({mapFalse:false,mapConst:no,mapTrue:true,mapUnknown:flag})}></i><i class="${false ? "ternaryFalse" : "ternaryTrue"} ${flag ? "unknownYes" : "unknownNo"}"></i>')
+  + ';element.classList.toggle("toggleFalse",false);element.classList.toggle("toggleTrue",true);element.classList.toggle("toggleUnknown",flag);'
+  + 'const s=css' + template('.mapFalse,.mapConst,.ternaryFalse,.toggleFalse,.mapTrue,.mapUnknown,.ternaryTrue,.unknownYes,.unknownNo,.toggleTrue,.toggleUnknown{color:red}') + ';', root => {
+    const result = scanCssOrphans(root);
+    assert.deepEqual(names(result,'class'), ['mapFalse','mapConst','ternaryFalse','toggleFalse']);
+    assert.deepEqual(result.dynamic, []);
   }));

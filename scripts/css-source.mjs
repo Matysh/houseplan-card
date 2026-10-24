@@ -507,6 +507,8 @@ export function analyzeCssSources(root) {
         for (const prop of object.properties) {
           if (ts.isSpreadAssignment(prop)) complete = objectKeys(prop.expression, seen) && complete;
           else if (ts.isPropertyAssignment(prop) || ts.isShorthandPropertyAssignment(prop)) {
+            const flags = evaluate(ts.isPropertyAssignment(prop) ? prop.initializer : prop.name);
+            if (flags.length && flags.every(value => value === false)) continue;
             if (ts.isComputedPropertyName(prop.name)) classExpression(prop.name.expression, prefix, suffix, producer);
             else for (const word of words(propertyName(prop.name) || '')) addClass(prefix + word + suffix, producer);
           }
@@ -576,8 +578,13 @@ export function analyzeCssSources(root) {
           return branch;
         }))];
       }
-      if (ts.isConditionalExpression(node)) return [...new Set([
-        ...expression(node.whenTrue, [...states], next), ...expression(node.whenFalse, [...states], next)])];
+      if (ts.isConditionalExpression(node)) {
+        const tests = evaluate(node.condition), possible = tests.includes(UNKNOWN);
+        return [...new Set([
+          ...(possible || tests.some(Boolean) ? expression(node.whenTrue, [...states], next) : []),
+          ...(possible || tests.some(value => !value) ? expression(node.whenFalse, [...states], next) : []),
+        ])];
+      }
       if (ts.isTemplateExpression(node)) {
         states = literal(node.head.text, states);
         for (const part of node.templateSpans) states = literal(part.literal.text, expression(part.expression, states, next));
@@ -657,7 +664,12 @@ export function analyzeCssSources(root) {
       return [...new Set(values.map(value => value + text.slice(from)))];
     };
     for (const attribute of htmlAttributes(text)) {
-      if (attribute.name === 'class') classAttribute(attribute.value, expressions, producer);
+      if (attribute.name === 'class') {
+        if (/&(?:#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z][a-zA-Z0-9]*);?/.test(attribute.value))
+          diagnostics.push({ ...site(producer), kind: 'html-entity', name: attribute.value,
+            message: 'Unsupported entity syntax in literal HTML class attribute; raw encoded text is not an emitted class' });
+        else classAttribute(attribute.value, expressions, producer);
+      }
       if (attribute.name === 'style') {
         const placeholder = /^__HP_EXPR_(\d+)__$/.exec(attribute.value);
         const expression = placeholder && unwrap(expressions[Number(placeholder[1])]);
@@ -713,7 +725,9 @@ export function analyzeCssSources(root) {
     if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
       const method = node.expression.name.text, receiver = node.expression.expression;
       if (ts.isPropertyAccessExpression(receiver) && receiver.name.text === 'classList') {
-        const args = method === 'add' ? node.arguments : method === 'toggle' ? node.arguments.slice(0, 1) : method === 'replace' ? node.arguments.slice(1, 2) : [];
+        const force = method === 'toggle' && node.arguments.length > 1 ? evaluate(node.arguments[1]) : [];
+        const never = force.length && force.every(value => value === false);
+        const args = method === 'add' ? node.arguments : method === 'toggle' && !never ? node.arguments.slice(0, 1) : method === 'replace' ? node.arguments.slice(1, 2) : [];
         for (const arg of args) classExpression(arg, '', '', node);
       }
       if (method === 'setAttribute' && evaluate(node.arguments[0])[0] === 'class') classExpression(node.arguments[1], '', '', node);
