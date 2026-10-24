@@ -50,7 +50,7 @@ const hit=async id=>card.evaluate((c,id)=>{
 },id);
 const click=async(id,ctrl=false)=>{const p=await hit(id);if(ctrl)await page.keyboard.down('Control');await page.mouse.click(p.x,p.y);if(ctrl)await page.keyboard.up('Control');await settle();};
 const select=async ids=>{await click(ids[0]);for(const id of ids.slice(1))await click(id,true);};
-const empty=async()=>{
+const empty=async(hoverOnly=false)=>{
   const p=await card.evaluate(c=>{
     const matrix=c.renderRoot.querySelector('.decorlayer').getScreenCTM();
     const receipt={observed:[]};
@@ -69,7 +69,8 @@ const empty=async()=>{
     }
     throw Error(`No unobscured empty stage: ${JSON.stringify(receipt)}`);
   });
-  await page.mouse.click(p.x,p.y);await settle();
+  if(hoverOnly)await page.mouse.move(p.x,p.y);else await page.mouse.click(p.x,p.y);
+  await settle();
 };
 const shortcut=async key=>{await page.keyboard.press(`Control+${key}`);await settle();};
 const drag=async(id,dx=.07,dy=.04,up=true)=>{
@@ -108,10 +109,33 @@ try{
   check('group.selection_only_no_writes',(await state()).writes,base.writes);
   check('group.selection_only_no_history',(await state()).history,base.history);
 
+  for(const tool of ['rect','ellipse','furniture'])for(const key of ['a','m']){
+    await page.evaluate(tool=>window.__hpTest.setTool(tool),tool);
+    if(tool==='furniture'){
+      const category=card.locator('[data-hp="furniture-category"][data-id="sofa"]');
+      if(await category.count())await category.click();
+      await card.locator('[data-hp="furniture-item"][data-id="sofa"]').click();
+      await empty(true);
+      check(`group.idle.${tool}.${key}.real_hover`,await card.locator('.furniture-placement-preview').count()>0);
+    }
+    // The main toolbar is outside the palette/field keyboard exclusion.
+    await card.locator('[data-hp="zoom-fit"]').focus();
+    const armed=await state();check(`group.idle.${tool}.${key}.armed`,armed.tool,tool);
+    await shortcut(key);const selected=await state();
+    check(`group.idle.${tool}.${key}.select_tool`,selected.tool,'select');
+    check(`group.idle.${tool}.${key}.exact_ids`,selected.ids,key==='a'?records().map(x=>x.id):['furniture']);
+    check(`group.idle.${tool}.${key}.no_object`,selected.decor,armed.decor);
+    check(`group.idle.${tool}.${key}.no_write`,selected.writes,armed.writes);
+    check(`group.idle.${tool}.${key}.no_history`,selected.history,armed.history);
+    check(`group.idle.${tool}.${key}.hover_retired`,await card.locator('.furniture-placement-preview').count(),0);
+  }
+
   await empty();await shortcut('a');
   const before=await state(),beforeSaved=await saved();
   await drag('ellipse',.07,.04,false);
   await page.evaluate(()=>window.__card._editorRuntime._whenLiveEditorSettled());
+  const held=await state();await shortcut('a');await shortcut('m');
+  check('group.shortcut.active_drag_preserved',await state(),held);
   check('group.drag_live_paints_every_member',await card.locator('.hp-live-decor [data-hp="decor"]').evaluateAll(els=>[...new Set(els.map(el=>el.dataset.id))]),before.ids);
   await page.mouse.up();await settle();const moved=await state(),afterSaved=await saved();
   const dx=afterSaved[1].x-beforeSaved[1].x,dy=afterSaved[1].y-beforeSaved[1].y;
