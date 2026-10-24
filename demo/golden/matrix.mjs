@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 84;
+export const GOLDEN_MATRIX_VERSION = 85;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1456,6 +1456,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'iso-led-strip-dark', fixture: 'visual', ledStrips: true, space: 'golden-led',
     mode: 'view', projection: 'iso', fillMode: 'none', language: 'en', theme: 'dark',
     viewport: { width: 1000, height: 760 }, ...stage },
+  { id: 'zigbee-led-flat-light', fixture: 'visual', zigbeeLed: true, space: 'golden-zigbee-led',
+    mode: 'view', fillMode: 'none', language: 'en', theme: 'light',
+    viewport: { width: 1100, height: 900 }, ...stage },
+  { id: 'zigbee-led-iso-dark', fixture: 'visual', zigbeeLed: true, space: 'golden-zigbee-led',
+    mode: 'view', projection: 'iso', fillMode: 'none', language: 'en', theme: 'dark',
+    viewport: { width: 1100, height: 900 }, ...stage },
   ...['maintenance', 'alarm'].flatMap(deviceIssues => [
     { id: `device-issues-${deviceIssues}-plan`, deviceIssues, fixture: 'visual',
       space: 'golden-lighting', mode: 'view', iconSize: 5, language: 'ru', theme: 'dark',

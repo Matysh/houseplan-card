@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5219 · pure backend 627 · HA-harness backend 527 · browser smokes 429 (`npm run inventory`) |
+| Tests | Node unit 5223 · pure backend 627 · HA-harness backend 527 · browser smokes 430 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -50,6 +50,11 @@ The original and derived recipes remain distinct, safe-zero
 is disabled, and a bounded reader verifies the compressed review map on queries.
 Unindexed URLs in known product namespaces are unknown foreign material, even
 when their stale hashed filenames differ from every current manifest entry.
+
+LED topology endpoints (#1004) share the current physical-radio mapping and
+nearest SVG hit owner. Half-length visible-path anchors, fixed-screen halos
+and inert real-shape participant paint follow Flat/2.5D cameras; representation
+retirement restores the original LED paint without changing actions or storage.
 
 Recorder test loading (#1057) reuses the shared pure-import namespace isolation
 inside its temporary HA stubs. Canonical absolute imports cannot execute the

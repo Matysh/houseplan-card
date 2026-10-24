@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/zigbee-topology-endpoint.ts', 'src/hp-zigbee-topology-overlay.ts',
+      'src/device-hit-owner.ts', 'src/led-strip-runtime.ts'],
+    smokes: ['smoke_zigbee_led_topology.mjs'],
+    because: '#1004 native SVG hover, live-camera coordinates, real LED shape/alpha and a fixed screen halo are observable through painted endpoints and public pointer/config input, not helper names.',
+  },
+  {
     files: ['src/device-signal-runtime.ts'],
     smokes: ['smoke_direct_signal_lifecycle.mjs', 'smoke_direct_zigbee_lqi.mjs', 'smoke_view_recovery.mjs'],
     because: '#1053: public full/space lifecycle and actual direct-reading DOM must retain one shared feed, reject late detached HA assignment and reconnect. Generic recovery separately preserves exact mandatory transports and held canonical authority; its metadata distinction is observable only at the transport boundary.',
