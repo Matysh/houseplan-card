@@ -9,7 +9,8 @@
   can be explicitly rebuilt after another client advances the revision. A
   retained invalid field also blocks group input on a compact desktop. Invalid
   group picker input stays visible and blocks outside navigation until corrected
-  or cancelled. Group colour rows leave room for both full mixed-value labels. (#1038)
+  or cancelled. Group colour rows leave room for both full mixed-value labels.
+  Text contours measure only selected labels and reuse warm geometry. (#1038)
 - Arrow keys move a selected free wall, opening or device by one grid cell,
   preserving its offset. Connected walls stay fixed; angled openings follow
   their host's dominant screen axis. Each accepted step supports Undo/Redo. (#1025)

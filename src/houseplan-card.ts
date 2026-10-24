@@ -1,6 +1,7 @@
 import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
+import { decorTextElementId } from './decor-text-element';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -8763,7 +8764,7 @@ export class HouseplanCard extends LitElement {
         // text-anchor) and vertically — so adding a second line grows the
         // label in both directions instead of pushing the first one up
         const y0 = ay - ((lines.length - 1) * fs * DT_LINE) / 2;
-        return svg`<text class="${cls} dtext" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+        return svg`<text id=${onlyId === undefined ? decorTextElementId(sh.id) : nothing} class="${cls} dtext" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           x="${ax}" y="${ay}" fill="${style.color}" fill-opacity="${style.opacity}"
           font-size="${fs}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}
           @pointerdown=${down} @dblclick=${dbl}>${lines.map(

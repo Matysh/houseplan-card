@@ -1,5 +1,6 @@
 import { nothing, svg, type TemplateResult } from 'lit';
 import { NORM_W } from '../../canvas-constants';
+import { decorTextElement } from '../../decor-text-element';
 import { furnitureRenderTransform, type FurnitureGraphic } from '../../furniture';
 import type { DecorShape } from './types';
 
@@ -40,13 +41,11 @@ export class DecorGroupTextBoxes {
   measure(members: readonly DecorShape[], root: ParentNode): boolean {
     const texts = members.filter(shape => shape.kind === 'text');
     if (!texts.length) { this.boxes.clear(); return false; }
-    const elements = new Map([...root.querySelectorAll<SVGGraphicsElement>('text.dtext[data-id]')]
-      .map(node => [node.getAttribute('data-id'), node]));
     const current = new Set(texts.map(shape => shape.id));
     for (const id of this.boxes.keys()) if (!current.has(id)) this.boxes.delete(id);
     let changed = false;
     for (const shape of texts) {
-      const element = elements.get(shape.id); if (!element) continue;
+      const element = decorTextElement(root, shape.id); if (!element) continue;
       const style = getComputedStyle(element);
       const key = JSON.stringify([element.textContent, style.fontFamily, style.fontSize, style.fontWeight, style.letterSpacing]);
       if (this.boxes.get(shape.id)?.key === key) continue;

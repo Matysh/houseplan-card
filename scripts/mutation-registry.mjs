@@ -21249,6 +21249,10 @@ const decorLine1046Cases = [
 ];
 
 const decorGroup1038Cases = [
+  {id:'decor-group-text-measure-scans-unselected-1038',guard:'node demo/smoke_decor_group_text_scale.mjs',
+    because:'#1038 CODE r1 / AC2+7: 1000 mounted Text labels with only two selected expose unrelated ID enumeration across public HA updates and actual pointer movement; geometry/cache/write positives remain mandatory.',
+    patches:[{file:'src/editors/decor/group-selection.ts',find:'    const current = new Set(texts.map(shape => shape.id));',
+      replace:"    for (const node of root.querySelectorAll<SVGGraphicsElement>('text.dtext[data-id]')) node.getAttribute('data-id');\n    const current = new Set(texts.map(shape => shape.id));"}]},
   {id:'decor-group-text-outline-width-discarded-1038',guard:'node demo/smoke_decor_multiselect.mjs',
     because:'#1038 AC2: the individual Text contour must match the real rotated SVG text extent, including a positive measured width; only mounted font geometry proves the existing live-editor measurement handoff.',
     patches:[{file:'src/editors/decor/group-selection.ts',find:'dx: box.x-shape.x*NORM_W, dy: box.y-shape.y*NORM_W, w: box.width, h: box.height',replace:'dx: box.x-shape.x*NORM_W, dy: box.y-shape.y*NORM_W, w: 0, h: box.height'}]},

@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/decor-text-element.ts', 'src/editors/decor/group-selection.ts'],
+    smokes: ['smoke_decor_group_text_scale.mjs'],
+    because: '#1038 CODE r1: instrumented native DOM reads on 1000 real Text nodes prove that two selected labels never enumerate or measure the unrelated labels during HA updates and drag; the smoke does not call the measurement helper.',
+  },
+  {
     files: ['src/editors/decor/group-edit.ts', 'src/editors/decor/group-selection.ts',
       'src/editors/properties/group-color-draft.ts'],
     smokes: ['smoke_decor_multiselect.mjs'],
