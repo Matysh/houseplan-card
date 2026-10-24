@@ -27,6 +27,13 @@ retired selector branches; all general unit/opacity and ColorField input styles
 remain. Source and actual production-editor graph sizes are measured separately
 from the historical a34f diagnostic, which is not rerun or relabelled as current.
 
+Matched clean WSL Node22.23.3/Rollup4.62.2 builds fda4894b5→f8ce07b3b reduce the
+two source files72889→71354B/1299→1280lines and the actual16-file production
+editor graph1186151→1185074raw/344783→344566gzip. The small tracked
+`docs/audits/parallel-paths-1018-first-cleanup.json` keeps both source/build
+identities, current literal callers and normal semantic outcomes. The later
+accepted-#1004 merge and final ordinary checks are separate materials.
+
 ## LED Zigbee endpoints (#1004)
 
 `node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input

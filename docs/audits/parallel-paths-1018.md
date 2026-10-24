@@ -10,11 +10,14 @@ node scripts/parallel-path-audit.mjs --sha=<40-character-SHA> --base=v1.80.1 --s
 ```
 
 The [complete named disposition](parallel-paths-1018-disposition.md) is pinned
-to accepted `845c20c3eaef7da16120b8c3d507b2a551698b47`: 70 candidates,
-67 KEEP and three historical REMOVE records for the one onOpacity subsystem.
+to task material `3d7d38e781684019d901dee23abf006a2e9a2a78`: 76 candidates,
+73 KEEP and three historical REMOVED records for the one onOpacity subsystem.
 All 19 earlier needs-witness entries now name concrete existing witnesses and
 distinct current consumers/states; their saved execution outcomes retain the
-separate a34f capture SHA. The final post-#1051 delta must be checked before S7.
+separate a34f capture SHA. The final history delta includes accepted
+#1051/#1046/#1054/#1004. Seven witness records now differ from frozen a34f source
+and say so explicitly; their actual normal 72-test follow-up retains its
+separate f8 material.
 
 The main list is every fix/refactor with non-i18n text src additions > 0 and
 additions ≥ 3 × deletions in that range. It separates the two stable cycles
@@ -25,12 +28,19 @@ additional migration commits trace the actual General/Space/Room removal of
 onOpacity callers. New commits without a recorded review stay needs-witness;
 a frozen semantic decision is never silently promoted to a later candidate.
 
-The first selected cleanup is the shared colorField/colorTile onOpacity option,
-conditional callback and separate numeric input. #948 deprecated that branch;
-#945/#946 removed its remaining Space/Room callers. Product forms now use
-atomic hp-color-opacity-change. Check callers again after #1051 S8 before the
-separate product commit. Preserve atomic color/alpha updates, percentage label,
-reset, disabled, cancel/Save/reopen and the current picker itself.
+The first cleanup, isolated in `f8ce07b3bc4fb8f782cfa2ae5e5c42cb8441e0d8`, removes
+only the shared top-level colorField/colorTile onOpacity option, conditional
+callback and numeric fallback. #948 deprecated that branch; #945/#946 removed
+its remaining Space/Room callers. The fresh post-#1051 AST inspection found ten
+literal calls, no legacy callback and no spread argument. The new nested
+inputs.onHex/onOpacity(raw), real numeric inline field, atomic picker, percentage,
+reset, disabled and cancel/Save/reopen remain. Only the removed ColorTile numeric
+branch produced tile-meta/unit descendants, so its five CSS blocks/six selector
+branches were retired in the same commit; generic and ColorField CSS stays.
+The [first-cleanup proof](parallel-paths-1018-first-cleanup.json) records matched
+clean fda→f8 source−1535B/−19lines and production editor−1077raw/−217gzip, four
+unchanged normal smokes and72meaningful units. It does not transfer a34f coverage
+counters onto the new source or claim final combined CI before it runs.
 
 Keep the general boolean operation behind proved local boundary reuse: its
 inputs include cases for which the fast path returns no proof. Keep generic
@@ -38,8 +48,9 @@ isometric placement for floor/raised planes and arbitrary callers. Keep stairs
 defaultStair and snapStairToStairs, which stairs-box/stairs-editor still call.
 The old View card-local import/slot ownership was already removed; current
 ViewRuntimeCode/Boundary, summary code caching and guarded retry states remain
-distinct. Other candidates are retained or need witnesses, never removed merely
-because their coverage is absent. CSS work remains #1019; config sunset #1015.
+distinct. All other listed candidates are retained with named consumers/states;
+future unreviewed candidates still need inspection, never removal merely because
+coverage is absent. Broader CSS work remains #1019; config sunset #1015.
 
 Run the complete computed diagnostic inventory from a clean checkout at an
 explicit SHA (the before-cleanup run is a separate material from its later

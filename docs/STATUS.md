@@ -50,6 +50,10 @@ The original and derived recipes remain distinct, safe-zero
 is disabled, and a bounded reader verifies the compressed review map on queries.
 Unindexed URLs in known product namespaces are unknown foreign material, even
 when their stale hashed filenames differ from every current manifest entry.
+The refreshed history has76 candidates:73 KEEP and three historical records for
+the one removed legacy opacity subsystem. Its separate normal proof reduces
+source by1535B and the production editor graph by1077raw/217gzip bytes; the
+historical coverage remains incomplete and does not authorize zero-based removal.
 
 LED topology endpoints (#1004) share the current physical-radio mapping and
 nearest SVG hit owner. Half-length visible-path anchors, fixed-screen halos
