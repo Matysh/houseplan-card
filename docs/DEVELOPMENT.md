@@ -93,6 +93,19 @@ checks this lifecycle. Both complete ordinary smokes pass with unchanged product
 fingerprint and timeout limits; no assertion was relaxed. The failed CI is retained as a red
 receipt; fresh CI and independent CODE remain separate requirements.
 
+The subsequent canonical `40127211133` completed 237/237 selected smokes and
+both declared Golden scenes successfully. While it ran, accepted CI policy
+#1060 advanced dev to `16b5fd77`; flattening the old task history replayed
+already resolved keyboard/offline conflicts before CODE. The ordinary whole
+accepted merge `102dd06dd` is clean and makes dev an ancestor, without rewriting
+published commits or changing product/capture inputs. Profiles and registry
+inventory were explicitly regenerated for that accepted policy; the new
+inventory records this task's ledger. Subsequent validation uses the canonical
+required scope and retains every explicit AC/intent; weak or oversized lexical
+regression is deferred to beta/night. The previous full selected receipt is
+historical evidence; current range/packaging checks and exact-SHA CI remain
+fresh requirements, not assertions inferred from that receipt.
+
 ## Editor keyboard translation (#1025)
 
 `test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command

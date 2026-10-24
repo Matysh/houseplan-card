@@ -97,6 +97,18 @@
     "policy": "Refresh only the measured references; retain existing bands and absolute predicates."
   },
   "ordinaryProof": {
+    "acceptedCiPolicyIntegration": {
+      "acceptedDev": "16b5fd77dad41a333b57b1c0ade94d89bce741d4",
+      "merge": "102dd06dd",
+      "return": "6389245419 / process 40130506967; historical flatten-rebase conflict, model SKIPPED, no CODE cycle consumed",
+      "previousMaterial": "00066d3bb22ca229145d084d66b050a066eb2ecb",
+      "completedCanonical": { "run": 40127211133, "smokesPassed": 237, "smokesFailed": 0, "declaredGoldenPassed": 2 },
+      "productChanged": false,
+      "captureFingerprint": "6dcd3e74d26b1066fc82ea3932519f733fd7890d578c8be0b631d2c1acb4bfc1",
+      "generatorPolicy": "Explicitly regenerated and checked profiles and registry inventory using accepted #1060; the inventory adds this task's ledger to the declared inputs.",
+      "scope": "Use the new canonical required scope: explicit changed/AC/ledger checks, registered and proven narrow links plus the bounded visual minimum. Weak/overflow lexical regression is deferred intact to beta/night, not silently truncated.",
+      "freshProof": "Current range/process/packaging guards, required task scope and normal hook are reported separately in the new handoff; previous CI success is not substituted for a new exact-SHA verdict."
+    },
     "ciPreparationRepair": {
       "source": "0bcf61de0dfd64fc95fe1fbdd62457ad0d97835f",
       "run": 40119689035,
