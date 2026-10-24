@@ -39,6 +39,21 @@ nightly execution alone supplies caught outcomes.
 The two existing registry anchors follow the writer's extended signatures;
 their original foreign-authority and room-discovery guards remain intact.
 
+The final combined Windows Node22.23.3/Rollup4.62.2 build on accepted
+`e8c618924cfa2845dcf1073f65404cd093efed10` measures 3,442,107 raw bytes,
+339,505 B initial View gzip and 347,075 B lazy editor gzip. The accepted
+#1019 integration receipt records 3,431,714 / 339,415 / 343,989 B respectively:
+the actual additions are 10,393 / 90 / 3,086 B, without summing branch deltas.
+Under the owner's measured-growth permission, only the raw reference and lazy
+editor ceiling take the new exact facts. Existing bands, absolute budgets,
+initial/lazy boundaries and other coupling references remain unchanged.
+The fresh e8 local subset passes the new native keyboard smoke and existing
+Decor, partition-opening, free/connected-wall, contact, layout-ACK, canvas-gesture,
+lazy-editor and config-authority smokes. Two existing selected Golden scenes
+(`device-contacts-designer-light`, `geometry-diagonal-45-opening-dark`) pass
+through the canonical selected runner without visual intent or baseline writes.
+This named subset is separate from the complete task selection executed by CI.
+
 | AC | Ordinary witness | Observable failure |
 |---|---|---|
 | AC1 | unit wall vectors + native free-wall arrows | one endpoint, offset, id or exact full step differs |
