@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1054,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "The stable v1.82.0 read lifecycle, foreign HA document retirement and disconnected loader guard already permit a detached HA assignment to consume its Lit update without preserving a mandatory read intent. Preserve that current intent, including demand interrupted by another detach, and consume it on reattach through the existing owner. Keep loaded idle same-context frames, TTL, transport fences and writers; no second loader.",
+  "summary": {
+    "ru": "Полная карточка восстанавливает план после смены подключения Home Assistant вне DOM без ожидания следующего обновления HA.",
+    "en": "The full card restores its plan after Home Assistant changes while detached, without waiting for another HA update."
+  }
+}
