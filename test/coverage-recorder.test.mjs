@@ -19,27 +19,16 @@ test('mapped replacement uses native substitution semantics', () => {
     assert.equal(replacementEdits('abc', /(b)/, replacement).code, 'abc'.replace(/(b)/, replacement));
   }
 });
-test('opt-in preload captures actual Node sources and direct browser pages before navigation, then flushes on close', { timeout: 60000 }, () => {
+test('opt-in preload captures actual Node source and flushes native coverage on exit without a browser', { timeout: 60000 }, () => {
   const root = process.cwd(), dir = mkdtempSync(resolve(tmpdir(), 'hp-coverage-'));
   try {
     mkdirSync(resolve(dir, 'test-build'));
     writeFileSync(resolve(dir, 'test-build/probe.js'), 'export function probe(flag) { return flag ? 41 : 42; }\n');
-    // A data module resolves Playwright against this repository while the
-    // compiled fixture stays under its isolated candidate root.
-    const playwright = pathToFileURL(resolve(root, 'node_modules/playwright/index.mjs')).href;
-    const entry = `import { chromium } from ${JSON.stringify(playwright)};
-      import { probe } from './test-build/probe.js';
-      if(probe(true)!==41)throw Error('probe');
-      const browser=await chromium.launch({headless:true});
-      const context=await browser.newContext();const one=await context.newPage();
-      await one.goto('data:text/html,<script>function before(){return 1}before()</script>');
-      await one.goto('data:text/html,<script>function after(){return 2}after()</script>');
-      const two=await browser.newPage();await two.setContent('<script>function second(){return 3}second()</script>');
-      await two.route('http://probe.local/test-build/probe.js*',route=>route.fulfill({contentType:'text/javascript',
-        headers:{'access-control-allow-origin':'*'},body:'export function probe(flag) { return flag ? 41 : 42; }\\n'}));
-      await two.evaluate(async()=>{for(const query of ['first=1','retry=2']){
-        const module=await import('http://probe.local/test-build/probe.js?'+query);if(module.probe(true)!==41)throw Error('retry');}});
-      await one.close();await browser.close();`;
+    // The real browser/navigation/retry contract runs in the selected browser
+    // job as smoke_coverage_recorder, rather than requiring Chromium in #982's
+    // no-browser tooling partition. This unit retains actual Node recording.
+    const entry = `import { probe } from './test-build/probe.js';
+      if(probe(true)!==41 || probe(false)!==42)throw Error('probe');`;
     writeFileSync(resolve(dir, 'package.json'), '{"type":"module"}');
     writeFileSync(resolve(dir, 'probe.mjs'), entry);
     const result = spawnSync(process.execPath, ['--import', pathToFileURL(resolve(root, 'scripts/coverage-preload.mjs')).href, 'probe.mjs'], {
@@ -50,12 +39,9 @@ test('opt-in preload captures actual Node sources and direct browser pages befor
     assert.equal(result.status, 0, result.stderr);
     const files = walkFiles(resolve(dir, 'raw'));
     const meta = JSON.parse(readFileSync(files.find(p => /recorder-/.test(p)), 'utf8'));
-    assert.deepEqual(meta.issues, []); assert.equal(meta.pages.length, 2);
-    assert.ok(meta.pages.every(p => p.early && p.saved));
-    const browser = files.filter(p => /browser-/.test(p)).flatMap(p => JSON.parse(readFileSync(p, 'utf8')).entries);
-    for (const name of ['before', 'after', 'second']) assert.ok(browser.some(e => e.source.includes(`function ${name}()`)), name);
-    const retries = browser.filter(e => e.url.startsWith('http://probe.local/test-build/probe.js?'));
-    assert.equal(retries.length, 2); assert.equal(retries[0].source, retries[1].source);
+    assert.deepEqual(meta.issues, []); assert.deepEqual(meta.pages, []);
+    assert.deepEqual(meta.browsers, []); assert.equal(meta.exitCode, 0);
+    assert.ok(meta.ended >= meta.started);
     const sources = JSON.parse(readFileSync(files.find(p => /node-sources-/.test(p)), 'utf8')).sources;
     assert.ok(Object.values(sources).some(s => s.source.includes('export function probe(')));
     const native = files.filter(p => /coverage-\d+-\d+-\d+\.json$/.test(p)).flatMap(p => JSON.parse(readFileSync(p, 'utf8')).result);

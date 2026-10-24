@@ -19,6 +19,9 @@ The frozen-a34f projector is a one-off manual repair requiring the ignored raw
 capture, not an entry of Validate or the current nightly collector. Its explicit
 manual-input registration leaves the shared index/report/map engine under the
 ordinary frontend unit inputs.
+Actual Node preload/flush remains a no-browser tooling unit. Its real Chromium
+page/navigation/retry/close checks run as the registered selected browser smoke
+`demo/smoke_coverage_recorder.mjs`; tooling CI needs no browser installation.
 
 The first product cleanup removes only the unused top-level ColorField/ColorTile
 onOpacity options and numeric fallbacks, plus five dead colortile-meta/unit CSS

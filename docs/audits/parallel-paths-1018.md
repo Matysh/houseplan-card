@@ -108,6 +108,15 @@ mutation witness, gate or semantic PASS. Slow instrumented performance cases
 remain failed/incomplete diagnostics. Nightly uploads partial artifacts even
 on failure; manual runs return exit 2 when incomplete. Raw/maps remain ignored.
 
+The actual Node preload/exit fixture is a no-browser tooling unit. Its real
+Chromium page/navigation/retry/close counterpart is
+`demo/smoke_coverage_recorder.mjs`, selected by the canonical changed-smoke
+entry and included in the computed nightly inventory. Its pages use the common
+watchPage/closed-browser error verdict. It retains every original browser assertion and attests the actual
+launched browser; moving that witness does not weaken it or install Chromium
+in the lightweight tooling partition. This post-capture B correction does not
+change the immutable a34f inventory or its recorded outcomes.
+
 The historical a34f run completed all 980 attempts, but its original dist maps
 escaped to ../src because the TS plugin interpreted outDir-relative sources
 against the original module. Its 498 valid maps proved structure/bounds only;
