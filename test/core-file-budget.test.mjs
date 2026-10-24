@@ -81,7 +81,13 @@ const CAPS = {
   // #1035 after #1033, owner standing permission for small expensive-to-remove
   // overages: 11732 actual lines exceed the old cap + band by 5. The decor
   // implementation lives in its own module; keep the 50-line band unchanged.
-  'src/houseplan-editor-runtime.ts': 11735,
+  // #1038 after accepted #1025: 11767 -> 11834 actual lines (+67).
+  // Pure group geometry/contours stay in leaf modules; the current pointer,
+  // selection and history owners retain only their integration seams here.
+  // Splitting another gesture owner solely for 49 lines beyond the prior
+  // 11735+50 band would add disproportionate complexity. The owner permits
+  // this exact observed cost; keep CORE_BAND50 and the other core cap.
+  'src/houseplan-editor-runtime.ts': 11834,
 };
 
 /**

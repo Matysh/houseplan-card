@@ -62,6 +62,24 @@ pins the accepted input equivalence, actual measurements and ordinary native,
 images were not accepted; static declarations still have execution 0 and unknown
 caught outcomes. The final push gate and CI belong to the issue handoff.
 
+The first mandatory hook on `bfe5ea3dc` was red in ordinary unit fixtures while
+build, byte budgets and unused checks passed. History fixtures now supply the
+existing real `ConfigWriteContext`, observe a stable public connection/user,
+and keep their original server, CAS and Undo assertions. They do not replace
+`claim`/`current` with no-ops. The picker and live-editor source contracts retain
+their complete new optional detail/completion and render/align wiring; the
+English guide has the matching multiple-decor subsection. These B/C repairs
+pass 83 targeted checks without changing product code or capture inputs.
+
+The canonical runtime line count is accepted `3ef`: 11767, combined: 11834,
+an own addition of 67. The old published 11735 reference plus its 50-line band
+leaves an actual overage of 49 lines. Pure geometry and contour logic already
+live in leaf modules; these are the existing pointer/selection/history seams.
+Introducing another gesture owner solely to move those lines would add
+disproportionate complexity. The same owner permission records only the exact
+11834 core reference, preserving the 50-line band, the card cap and every byte,
+ABI and latency predicate. No cosmetic product deletion is used to alter it.
+
 ## Editor keyboard translation (#1025)
 
 `test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command

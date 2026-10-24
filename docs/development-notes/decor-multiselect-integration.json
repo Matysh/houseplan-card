@@ -55,6 +55,13 @@
     "unusedViolations": []
   },
   "referenceRefresh": {
+    "coreRuntimeLines": {
+      "published": 11735,
+      "acceptedActual": 11767,
+      "measured": 11834,
+      "ownDelta": 67,
+      "band": 50
+    },
     "lazyEditor": {
       "published": 347075,
       "measured": 352827
@@ -90,6 +97,18 @@
     "policy": "Refresh only the measured references; retain existing bands and absolute predicates."
   },
   "ordinaryProof": {
+    "ordinaryHookRepair": {
+      "initialSource": "bfe5ea3dc08472dffdf00013942eb3b611254d2a",
+      "initialGateSeconds": 204,
+      "initialProductFailures": 51,
+      "initialToolingFailures": 1,
+      "productCodeChanged": false,
+      "fixtureAuthority": "Existing real ConfigWriteContext, one per history setup; stable public connection/user, original server/CAS/Undo oracles and faithful current/owns guard.",
+      "sourceOracles": "Keep the full opt-in touched/default-false picker detail and completion guard, and both live decor rendering plus align guides.",
+      "guide": "Matching EN/RU H2-H4 structure with a separate multiple-decor subsection.",
+      "targetedAfterRepair": { "passed": 83, "failed": 0 },
+      "coreCost": "The existing pointer/selection/history owner retains 67 integration lines above accepted 3ef; pure geometry/contours already live in leaf modules. Another gesture owner solely to remove 49 lines beyond the old reference+band is disproportionate. Adopt the exact 11834 reference under the quoted permission, retaining band 50 and the card cap."
+    },
     "native": {
       "group": "PASS",
       "keyboardNudge": "PASS",
