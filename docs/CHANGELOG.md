@@ -6,6 +6,9 @@
   without moving them, preserve supported openings and undo the whole edit in
   one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale
   menus cannot send a late delete. (#1045)
+- Zigbee links and directional arrows also work for devices shown as LED
+  strips. A small halo marks the midpoint of the visible path; participant
+  highlighting follows its shape and the current plan camera. (#1004)
 - Restore the full plan after Home Assistant changes while its card is detached,
   including another removal while loading, without waiting for another HA
   update or page event. Loaded, idle short returns in the same HA context

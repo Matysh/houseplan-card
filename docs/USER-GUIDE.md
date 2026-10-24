@@ -521,6 +521,12 @@ incoming arrows show devices routing through this node. The coordinator has
 incoming arrows only. Ordinary neighbour links are hidden; LQI is not used to
 guess a route. Confirmed incoming devices on other spaces are counted.
 
+Links also work when a device is represented by an LED strip. Highlighting
+follows its visible shape; a small halo marks half its path length and the
+arrow approaches that halo. There is no need to restore the icon or calibrate
+another point. Hovering the other end keeps the same anchor. This is a plan
+reference, not a claim about the LED controller's physical location.
+
 The active diagnostic layer is deliberately drawn above room names and devices
 that are not part of the shown link, so a busy plan cannot hide the route. The
 complete source and locally connected device markers remain above the lines.

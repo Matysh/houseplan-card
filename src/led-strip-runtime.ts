@@ -306,6 +306,10 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       .led-strip .led-focus { fill: none; stroke: transparent; }
       .led-strip:has(.led-hit:focus-visible) .led-focus { stroke: var(--primary-color, #03a9f4); }
       .led-strip .led-hit { fill: none; stroke: transparent; cursor: pointer; outline: none; }
+      /* Only active topology participants lend their top paint to the inert
+         overlay. Keeping the off core in both layers would double its alpha. */
+      .led-strip:has(.led-hit[data-hp-zigbee-topology-endpoint]) .led-outline,
+      .led-strip:has(.led-hit[data-hp-zigbee-topology-endpoint]) .led-core { visibility: hidden; }
     </style>
     ${repeat(ordered, (view) => view.strip.id, (view) => {
       const { t, path, d } = ledStripePath(view.strip, input.faces, input.d);

@@ -1,5 +1,39 @@
 # Development and deployment
 
+## LED Zigbee endpoints (#1004)
+
+`node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input
+and native mouse hover. It covers all three icon/LED pairings, opposite-end
+hover, nearest overlapping hit floors, a wall-inset analytic point, fixed-screen
+halo/arrow clearance in Flat/2.5D and themes, badge independence, off-core paint
+ownership, representation retirement and existing access/input cleanup. Native
+CDP touch/cancel and pen input target the real SVG hit path; public kiosk
+entry clears its paint, and a bounded steady-hover RAF observation plus idle
+cleanup checks guard against a repeating overlay layout loop. Its
+wide-tube oracle compares ordinary hover on/off pixels inside the halo ring;
+it does not patch a product guard or style. The initial accepted-dev run is
+red on missing LED routes. The earlier auxiliary hidden-halo measurement is
+excluded from ordinary-input and caught claims. Existing topology hover/tooltip and LED tube,
+draw/bind smokes retain the other owners. The new endpoint unit suite checks
+camera projection, singular/invalid input and screen-distance clearance.
+Two selected new Golden scenes render real open/closed LED routes; capture
+keeps missing-baseline status and never accepts PNGs. Registry declarations
+only receive static readiness during development.
+
+Matched Windows Node22.23.3/Rollup4.62.2 builds of accepted `1bf87673` and the
+combined `1f6f3dc2e` source measure raw dist3432791→3437873 B (+5082 B).
+The lazy topology overlay itself grows18874→23565 B raw /6275→7617 B gzip for
+current SVG projection, inert real-shape paint and bounded masks; the initial
+View graph is339621→339611 B gzip, editor344832→344715 B gzip. These incidental
+gzip decreases are not a performance improvement claim. There is no replaced
+LED renderer/cache to remove: the ordinary body still owns lighting/hit/focus,
+and the overlay borrows only participating top strokes while active.
+The owner's explicit small-size-growth allowance in the bulk instruction
+overrides the stricter no-increase wording in #1004's SPEC for raw bundleBytes
+only. Its reference moves to the measured3437873 B fact. This does increase
+that reference; the2000-B bands, absolute View/performance budgets and all
+other references/metrics remain unchanged. The issue records the same rationale.
+
 ## Config authority smoke #1052
 
 `node demo/smoke_config_authority.mjs` records B's config/layout read counts
@@ -139,18 +173,28 @@ The native scene has an untouched room envelope for actual floor bounds and a
 wide host for real Properties. Its visible SVG span is checked separately from
 the physical input line's round non-scaling caps.
 
-Measured on the combined accepted #1051/#1046/#1054 source: initial View 340247 B gzip
-(+626 from #1051), lazy editor 345313 B (+481), Select-only 21455 B.
-The Select-only hard byte cap changes from 20276 to exactly 21455 B (+1179),
-for the independently proved Delete kernel, cancellable menu and its writer
-integration; it adds no reserve. This uses the owner's explicit permission:
-«сильно на размеры не заморачивайся, если незначительное превышение, устранять
-которое очень дорого — разрешаю поднять лимиты». Further removal would require
-disproportionate restructuring of the bounded proof/controller graph; the heavy
-editor facade is independently forbidden from that graph. `hostRefs` increases
-6090→6117 and total raw bundle bytes 3432791→3449308 for the new capability,
-current-context ports and Delete code. Only those measured baselines grow;
+Measured on the combined accepted #1051/#1046/#1054/#1004 source: initial View
+340258 B gzip (+591 from the actual #1004 build, 339667), lazy editor
+345273 B (+475 from 344798), Select-only 21451 B. These are real complete builds,
+not summed branch measurements. The Select-only hard byte cap changes from 20276
+to exactly 21451 B (+1175), for the independently proved Delete kernel,
+cancellable menu and its writer integration; it adds no reserve. This uses the
+owner's explicit permission: «сильно на размеры не заморачивайся, если
+незначительное превышение, устранять которое очень дорого — разрешаю поднять
+лимиты». Further removal would require disproportionate restructuring of the
+bounded proof/controller graph; the heavy editor facade is independently
+forbidden from that graph. Actual hostRefs increases 6090→6117 and total raw
+bundle bytes 3438014→3454385 for the new capability, current-context ports and
+Delete code (#1004's published JSON raw baseline was 3437873; its measured
+3438014 build is the comparison source). Only those measured baselines grow;
 bands, View/editor ceilings, named exports and latency limits remain unchanged.
+The separate core line overage was removed by seven redundant blank separators
+and one shorter comment: 13277→13269 lines, with byte-identical uncommented
+TypeScript output. Its existing 13219 cap and 50-line band stay unchanged.
+The first full local gate exposed the core limit, the new fifth passage-validator
+call, seventeen uninventoried fixture documents and the missing English guide
+subsection. Targeted follow-ups retain all existing passport entries and guard
+semantics; the final normal push hook checks the complete accepted range.
 Targeted proofs supplement gate:small; full regression and mutation execution
 remain in their existing CI/nightly contours.
 

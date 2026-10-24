@@ -7467,8 +7467,7 @@ export class HouseplanCard extends LitElement {
     // A node consumes this down before pan, but it is still fresh physical
     // evidence that retires the previous touch compatibility tail.
     if (rightMouseDown) this._touchClickGuard.pointerDown((ev as PointerEvent).pointerId, 'mouse');
-    // A compatibility contextmenu after a pinch belongs to the existing touch
-    // barrier before any node-menu activation can claim it.
+    // Touch owns pinch compatibility before any node-menu activation.
     if (ev.type === 'contextmenu') {
       this._touchClickGuard.handleActivation(ev, this._suppressClick);
       if (ev.defaultPrevented) return;
@@ -8917,7 +8916,6 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._confirmRoomDelete(keepWalls);
   }
 
-
   // ================= WALL THICKNESS (docs/WALL-THICKNESS.md) =================
 
   /** Keys are always stored in normalised space (GRID_STEP_N). */
@@ -9224,7 +9222,6 @@ export class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
-
   /**
    * View-only clean-floor perimeter above real wall bodies.
    *
@@ -9377,7 +9374,6 @@ export class HouseplanCard extends LitElement {
   private _renderWallThickDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderWallThickDialog();
   }
-
 
   private _openingAt(raw: readonly number[]): RenderOpening | null {
     return this._editorRuntimeOrThrow()._openingAt(raw);
@@ -9849,7 +9845,6 @@ export class HouseplanCard extends LitElement {
   private async _saveConfigNow(): Promise<void> {
     return this._editorRuntimeOrThrow()._saveConfigNow();
   }
-
 
   // ================= FLOORS IMPORT WIZARD =================
 
@@ -10400,7 +10395,6 @@ export class HouseplanCard extends LitElement {
   private async _saveSettingsDialog(): Promise<boolean> {
     return this._editorRuntimeOrThrow()._saveSettingsDialog();
   }
-
 
   /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
   private get _glowRadiusCm(): number {
@@ -11526,7 +11520,6 @@ export class HouseplanCard extends LitElement {
     `;
   }
 
-
   // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
 
   private _adoptVacuumTrails(packet: unknown, context: Parameters<typeof adoptEcovacsSources>[2]): void {
@@ -11831,7 +11824,6 @@ export class HouseplanCard extends LitElement {
         liveGap || rt.jump, physical);
     }
   }
-
 
   /**
    * HP-1540-01: an auto-discovered vacuum has NO config marker until the first

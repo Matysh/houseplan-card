@@ -42,11 +42,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 7 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 84 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 98 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 85 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 100 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 249 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **499 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 250 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **503 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -112,6 +112,8 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+- `zigbee-led-halo-below-body-1004`
 
 - `ui-inline-opacity-loses-grid-slot-1051`
 
@@ -297,6 +299,8 @@ The native right node press and later no-button motion must leave capture and
 the presented camera unchanged before and after the common contextmenu.
 The legacy compatibility contextmenu after two public touch contacts stays
 inert; the following real mouse press on that same visible node re-arms it.
+- `zigbee-led-svg-endpoint-dropped-1004`
+- `zigbee-led-first-vertex-anchor-1004`
 
 - `ui-led-menu-keeps-scene-pan-1051`
 
@@ -559,6 +563,7 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 
 The actual menu must show the operation-specific disabled reason for degree,
 attributes, openings and old backend metadata before any write is possible.
+- `zigbee-led-retired-path-keeps-hover-1004`
 
 - `direct-signal-detached-host-acquires-1053`
 - `decor-line-first-properties-panel-stale-1046`

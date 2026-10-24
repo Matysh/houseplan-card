@@ -1764,6 +1764,20 @@ live in the device catalog's Discovery-filters section and are resolved only by
 
 ## Contextual Zigbee topology (#54, #457, #464)
 
+LED endpoints (#1004) read the current painted hit path's native half-length
+point and screen CTM, then convert once into the HTML overlay camera through
+`zigbee-topology-endpoint.ts`. No stored hidden-icon position, second LED frame
+cache or eager runtime import is used. The existing nearest LED hit owner now
+publishes its transient hover attribute for SVG targets too. The overlay
+observes the common stage for SVG/HTML input and active layout changes; child
+replacement rechecks that owner instead of keeping hover on a replacement icon
+elsewhere. An inert local participant layer borrows only the actual LED top
+strokes, preserving off-core alpha via bounded path masks. Original shadows,
+edges, hit/focus and services remain owned by the LED renderer. Endpoint cleanup
+restores original top paint and clears passive-badge elevation. The small
+LED halo is after that layer at z8; its inverse local camera scale preserves
+14 CSS pixels even over a wide tube. Ordinary icon halo/layer policy is unchanged.
+
 #867 separates physical diagnostics (`device-signal.ts`) from functional/action
 rosters. Registry-identity ownership indexing is reused across state ticks; own
 sibling reads are tracked by the presentation reuse window and included in the
