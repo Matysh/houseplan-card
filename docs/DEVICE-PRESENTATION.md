@@ -1,5 +1,75 @@
 # Отображение маркера устройства: таблица решений
 
+## Own availability (#1026)
+
+`device-own-availability.ts` resolves one runtime fact from the existing active
+`DevItem.entities` roster. Exact-entity markers have only that allowed entity;
+physical devices use their existing residual/enabled roster. `allEntities`,
+controls, selected state/value/badge sources and physical siblings outside that
+roster cannot supply own network evidence. Virtual/inactive bindings and empty
+rosters have unknown physical availability. No registry enumeration, timer,
+subscription or persisted field is added.
+
+| Own permitted states | Fact | Offline content |
+| --- | --- | --- |
+| At least one real state other than empty/unknown/unavailable | available | no |
+| Nonempty roster, every row explicitly unavailable | unavailable | yes, subject to policy gates |
+| Missing/unknown/empty/malformed row without positive data | unknown | no |
+
+Off/idle/standby/paused remain real available samples. A composite Power=off
+neutralizes ordinary work/activity without marking every role unavailable.
+The existing binary sample-quality field still gates work/pulse; it is not an
+own-network conclusion. Controller source eligibility derives from the same
+resolved fact and existing virtual/active-entityless metadata, without a second
+state scan. Unknown own telemetry cannot fabricate work, while virtual and
+active physical controllers with no own entities retain their target behavior.
+
+`ResolvedDevicePresentation.ownAvailability` and the policy's eligible `offline`
+boolean belong to the accepted immutable frame. Only eligible confirmed own
+offline emits `.unavail`, a device-unavailable explanation and a11y state.
+Static modes, live-states:false and lifecycle gates keep their existing policy.
+Alarm authority, reasons and red paint are independent. The old whole-marker
+opacity and grey background are removed: only the core glyph/Text and inner
+`.value-badge-content` receive 0.35. Source-quality uses one content opacity
+instead of multiplying parent/child fades. Frames, contact ink, shadow, LQI,
+battery and hit geometry keep ordinary paint and dimensions. Existing confirmed
+offline visual-hover eligibility remains; ordinary actions are unchanged.
+
+LED source loss suppresses light and uses the same inactive shape as off.
+The previous unavailable enum/grey/dash paint branch is retired. With no badge
+there is no extra offline sign; with a badge only its content gets own-offline
+opacity. The topology endpoint copies those actual strokes/mask through the
+existing owner, without a second availability classifier or geometry change.
+
+Tests: `device-own-availability`, the existing presentation/policy/visual and LED
+units; native/Golden evidence is recorded in the issue handoff. No config or
+archive migration is needed.
+
+The semantic source inventory remains separate from that universal own fact:
+
+| Actual classifier branch | Existing work/activity meaning retained |
+| --- | --- |
+| Critical binary classes, siren, triggered alarm panel | Alarm/service classification and critical priority come from `device-issues` |
+| Binary motion/vibration/sound | Witnessed rising event |
+| Binary occupancy/presence | Continuous presence while on |
+| Binary door/window/garage_door/opening | Open status and rising edge |
+| Binary moving, running/power, remaining binary classes | Transition, running, or neutral respectively |
+| Cover | Neutral body; exact icon morph and opening/closing transition |
+| Lock and valve | Existing open/locked state and terminal transition |
+| Climate | Action attribute, then enabled HVAC mode fallback |
+| Light/switch/fan/humidifier | On means working; ordinary off remains available |
+| Media player | All real power/transport states stay neutral; off is available |
+| Vacuum | Cleaning/returning activity, otherwise neutral |
+| Script, automation, button/event | Script execution; automation enablement neutral; witnessed button/event change |
+| Other domains/custom operation sensors | Existing work-action/state fallback, otherwise neutral |
+| Composite Power role | Power off suppresses ordinary work without fabricating source loss; unavailable power still gates ordinary samples |
+| Controls/manual state/value/badge/virtual sources | Existing source authority and sample-quality gates; none enlarges the own roster |
+
+The domain matrix test exercises off/idle/standby/paused/unknown/unavailable in
+all explicit domain families and the custom-domain fallback through the real
+presentation resolver. Existing domain, alarm, source and activity units cover
+their positive work and transition branches.
+
 ## Manual ordinary state source (#977)
 
 `marker-state-source.ts` resolves optional `marker.state_source` independently
@@ -194,7 +264,7 @@ climate and LQI retain their existing registry-scoped single contributions.
 | S02 | cover — побочная capability при light/role | `source.cover_capability_bypassed` | cover не перехватывает выбранный face | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S03 | есть active external controls | `source.controls` + `availability.controller_available` | status берётся от целей, availability — от контроллера | normal | `controller-availability-follows-target`; `presentation-row-contract` |
 | S04 | цели unavailable, controller имеет live diagnostic | `availability.controller_available` | доступная нейтральная подложка, не `unavail` | normal | `controller-diagnostics-do-not-prove-online`; `presentation-row-contract` |
-| S05 | у controller есть собственные entities, но ни одной live entity; цель работает | `availability.controller_unavailable` | faded controller; нет yellow/pulse | normal action сохраняется | `controller-availability-follows-target`; `presentation-row-contract` |
+| S05 | у controller есть собственные entities, но ни одной live entity; цель работает | `availability.controller_unavailable` | source quality suppresses yellow/pulse; own offline content only when every own row is unavailable, otherwise unknown without fade | normal action сохраняется | `controller-availability-follows-target`; `presentation-row-contract` |
 | S06 | virtual controller + controls | `source.virtual_controller` | controller доступен; status следует цели | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S07 | все saved controls отфильтрованы tombstone | `source.filtered_saved_controls` | controller-role сохранён, availability дают свои diagnostics | normal | `wireless-controller-loses-filtered-target-role`; `wireless-controller-preview-drops-sibling-markers` |
 | S08 | manual virtual light с outgoing controls | `source.manual_virtual_light` | собственный manual source владеет face | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
@@ -211,7 +281,7 @@ climate and LQI retain their existing registry-scoped single contributions.
 | ID | Вход | Решение | Наблюдаемый результат | Интерактивность | Доказательство |
 |---|---|---|---|---|---|
 | F01 | dynamic + alarm | `status.alarm` | красный alarm face | normal | `device-presentation-policy-alarm`; `presentation-row-contract` |
-| F02 | dynamic + unavailable | `status.unavailable` | faded neutral plate, без pulse/hover paint | normal action сохраняется | `device-presentation-policy-unavailable`; `device-unavailable-hover-restored` |
+| F02 | dynamic + unavailable sample | `status.unavailable` | no fabricated work/pulse; own confirmed offline fades only glyph/badge content, never plate/frame | normal action сохраняется | `device-presentation-policy-unavailable`; `device-unavailable-hover-restored` |
 | F03 | lock locked/unlocked | `source.device_role` + `status.neutral/open` | `lock-locked` / `lock-unlocked`, согласованный a11y state | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | F04 | working available | `status.working` | yellow plate | normal | `device-presentation-policy-status`; `presentation-row-contract` |
 | F05 | open available, не cover | `status.open` | orange plate | normal | `device-presentation-policy-status`; `presentation-row-contract` |
@@ -293,7 +363,8 @@ badge is drawn at the anchor as a passive satellite (`data-led-badge`) — no
 icon core, pulse or auto-slot (r1 M1). A hidden shape (`active: false`) changes
 nothing: the icon works normally. No pulses and no alarm red on the stripe.
 `hidden` / HA-disabled suppress the stripe, its target and its light like an
-icon; temporarily unavailable keeps it as a dashed grey stripe. In the device
+icon; unavailable/unknown light samples keep the ordinary inactive shape without
+inventing light. Own offline affects only badge content when present. In the device
 catalogue the marker stays «On the plan».
 
 Opt-in admin/mouse/View topology includes the same real radio device when its
@@ -485,7 +556,7 @@ Hidden, removed or HA-disabled lifecycle rules still outrank display mode.
    toggles into its working state; this covers integrations which expose power,
    modes and options as uncategorised peer switches. If HA metadata identifies
    a dedicated Power entity in that composite controller, Power=on is neutral
-   and Power=off uses the existing faded unavailable style. A lone relay is
+   and Power=off stops work while remaining a real available sample. A lone relay is
    unchanged and remains yellow while on.
    `primaryEntity` is only the first entity of this same set for actions which
    require one target; it no longer defines marker availability by itself.
@@ -555,10 +626,10 @@ opening/cancelling the confirmation never produces dispatch feedback (#849).
 The resolved role stays `media_player.*` for every TV, receiver, speaker and
 soundbar; no model/name exception is involved. Its HA transport states
 (`on`, `idle`, `playing`, `paused`, `standby`, etc.) all produce a neutral
-marker with no running effect. Explicit `off` deliberately reuses the existing
-`.dev.unavail` faded presentation used by `unknown` / `unavailable`; it does
-not add another visual status. When a marker resolves several media entities,
-it fades only if none is currently available and powered.
+marker with no running effect. Explicit `off` is a real available neutral sample.
+Own offline is resolved separately: every active own row must explicitly be
+`unavailable`. Unknown/missing or a single unavailable selected source cannot
+substitute that fact. Only eligible own-offline glyph/badge contents fade.
 
 The media role also outranks auxiliary `light.*`/`switch.*` entities belonging
 to the same physical device. Status LEDs, display illumination and vendor
@@ -579,7 +650,7 @@ no working/open plate in any state:
 | `open`, ajar (`open` + position) | neutral | — | open glyph |
 | `opening`, `closing` | neutral | continuous pulse in Icon + state and activity | open glyph |
 | `unknown` / no state | neutral | — | base icon, no morph |
-| `unavailable` | neutral, faded (`.unavail`) | — | base icon |
+| `unavailable` | neutral plate; own-confirmed offline fades only contents | — | base icon |
 
 Until this the domain shared one branch with `valve` and wore `.dev.open` —
 an orange FILLED badge (`--hp-open`), not a mere border — while open or

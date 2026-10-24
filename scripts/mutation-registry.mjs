@@ -8296,11 +8296,9 @@ const MUTANT_DEFINITIONS = [
     because: 'a roster the user deliberately disabled is evidence of opting out, not of life — '
       + 'dropping the guard makes the marker glow forever (#369g)',
     patches: [{
-      file: 'src/device-presentation.ts',
-      find: '  const activeEntitylessDevice = ownEntities.length === 0\n'
-        + '    && !disabledRoster\n',
-      replace: '  void disabledRoster;\n'
-        + '  const activeEntitylessDevice = ownEntities.length === 0\n',
+      file: 'src/device-own-availability.ts',
+      find: '    && !(device.bindingStatus?.allEntityIds?.length)\n',
+      replace: '',
     }],
   },
   {
@@ -11879,6 +11877,82 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-own-offline-fades-whole-marker',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 preserves ordinary shell, frame, contact, diagnostic and hit paint; '
+      + 'the native computed-ancestor oracle distinguishes a faded parent from inner content opacity',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '    .dev.unavail .device-core > ha-icon,',
+      replace: '    .dev.unavail,\n    .dev.unavail .device-core > ha-icon,',
+    }],
+  },
+  {
+    id: 'device-own-offline-fades-badge-frame',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 dims badge content once, independently of source quality, while its frame remains opaque',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '    .dev.unavail .value-badge-content {',
+      replace: '    .dev.unavail .value-badge {',
+    }],
+  },
+  {
+    id: 'device-own-offline-unknown-proves-unavailable',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="own availability is symmetric" test/device-own-availability.test.mjs',
+    because: '#1026 requires every nonempty own row explicitly unavailable; unknown, missing and empty are not evidence',
+    patches: [{
+      file: 'src/device-own-availability.ts',
+      find: "    if (state !== 'unavailable') allUnavailable = false;",
+      replace: "    if (false) allUnavailable = false;",
+    }],
+  },
+  {
+    id: 'device-own-offline-led-repaints-inactive-core',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 variant 3 retains normal inactive LED ink for unknown and unavailable states; '
+      + 'the browser compares it with an ordinary off strip and verifies no invented glow',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: "      const core = view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
+      replace: "      const core = view.state === 'on' && view.appearance ? view.appearance.c : '#B5BAC1';",
+    }],
+  },
+  {
+    id: 'device-own-offline-restores-iso-grey-body',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 keeps the neutral 2.5D body and edge; native computed paint must detect '
+      + 'restoring the former grey state table even though glyph opacity still passes',
+    patches: [{
+      file: 'src/iso-tiles.ts',
+      find: "  'lock-unlocked': '#F0410C',",
+      replace: "  'lock-unlocked': '#F0410C',\n  unavail: '#B5BAC1',",
+    }],
+  },
+  {
+    id: 'device-own-offline-full-led-badge-loses-fact',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 requires the full-card passive LED badge to consume the shared resolved offline fact; '
+      + 'only mounted SVG/badge rendering proves the content remains dim with an opaque frame',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'class="dev led-badge ${presentation.offline ? \'unavail\' : \'\'} ${deviceThemeClass(this._renderPlanHass)}"',
+      replace: 'class="dev led-badge ${deviceThemeClass(this._renderPlanHass)}"',
+    }],
+  },
+  {
+    id: 'device-own-offline-space-led-badge-loses-fact',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 also requires the mounted static space-card LED badge to consume the shared offline fact; '
+      + 'a full-card witness alone cannot prove this independent surface adapter',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: 'class="dev led-badge ${presentation.offline ? \'unavail\' : \'\'} ${deviceThemeClass(planHass)}"',
+      replace: 'class="dev led-badge ${deviceThemeClass(planHass)}"',
+    }],
+  },
+  {
     id: 'device-unavailable-hover-restored',
     guard: 'node demo/smoke_device_icon_design.mjs',
     because: 'unavailable keeps click/keyboard access but must never regain the blue visual hover '
@@ -11898,9 +11972,9 @@ const MUTANT_DEFINITIONS = [
       + 'the focused matrix keeps own availability and target working as separate facts (#251)',
     patches: [{
       file: 'src/device-presentation-policy.ts',
-      find: "  let visual = input.controllerFace\n"
-        + "    ? { ...input.sourceVisual, availability: input.controllerAvailability }",
-      replace: "  let visual = input.controllerFace\n    ? input.sourceVisual",
+      find: "  let visual = input.controllerFace && input.sourceVisual.status !== 'alarm'\n"
+        + "    ? { ...input.sourceVisual, availability: input.controllerSourceAvailability }",
+      replace: "  let visual = input.controllerFace && input.sourceVisual.status !== 'alarm'\n    ? input.sourceVisual",
     }],
   },
   {
@@ -11911,10 +11985,9 @@ const MUTANT_DEFINITIONS = [
     because: 'battery, LQI and update are the available evidence for event-only wireless '
       + 'controllers; excluding those siblings restores the field defect (#251)',
     patches: [{
-      file: 'src/device-presentation.ts',
-      find: '  const live = ownEntities.some((eid) => {',
-      replace: "  const live = ownEntities.filter((eid) => !eid.startsWith('sensor.') "
-        + "&& !eid.startsWith('update.')).some((eid) => {",
+      file: 'src/device-own-availability.ts',
+      find: '  for (const eid of own) {',
+      replace: "  for (const eid of own.filter(eid => !eid.startsWith('sensor.') && !eid.startsWith('update.'))) {",
     }],
   },
   {
@@ -11925,9 +11998,9 @@ const MUTANT_DEFINITIONS = [
     because: 'an active physical controller whose HA device exposes no own entities has no offline '
       + 'evidence; its face must remain available while controls decide working versus neutral (#318)',
     patches: [{
-      file: 'src/device-presentation.ts',
-      find: "  if (activeEntitylessDevice) return 'available';",
-      replace: "  if (activeEntitylessDevice) return 'unavailable';",
+      file: 'src/device-own-availability.ts',
+      find: "  return activeEntityless ? 'available' : 'unavailable';",
+      replace: "  return 'unavailable';",
     }],
   },
   {
@@ -19760,8 +19833,8 @@ const MUTANT_DEFINITIONS = [
     because: '#790: the actual SVG core must match the resolved field colour across live HA/config updates, with or without Glow; this needs the rendered DOM and its update lifecycle',
     patches: [{
       file: 'src/led-strip-runtime.ts',
-      find: ": view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
-      replace: ": view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;",
+      find: "const core = view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
+      replace: "const core = view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;",
     }],
   },
   {

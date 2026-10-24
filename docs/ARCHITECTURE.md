@@ -1,5 +1,15 @@
 # House Plan architecture
 
+Own availability (#1026) is one three-state fact from `DevItem.entities`, resolved
+before source selection and reused by source eligibility and presentation policy.
+It never expands the roster through controls, values or physical siblings.
+The existing sample-quality gate still suppresses invented work/activity; only
+confirmed own unavailable produces the policy's eligible offline content paint.
+The shared face owns one inner badge span, including the geometry-only shadow
+twin. LED source loss uses the ordinary inactive path; its badge consumes the
+same presentation fact. Snapshot row tracking captures the own reads without
+adding a registry scan, listener, polling owner or writer.
+
 The config-authority browser witness (#1052) isolates late foreign-event reads
 from already-started mandatory and optional capability reads. It observes the
 transport boundary without changing the production subscription or writer.

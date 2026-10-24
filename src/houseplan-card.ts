@@ -12132,7 +12132,7 @@ export class HouseplanCard extends LitElement {
     const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
     if (face === nothing) return nothing;
     const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
-    return html`<div class="dev led-badge ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
+    return html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
       style="left:${((point[0] - view.x) / view.w) * 100}%;top:${((point[1] - view.y) / view.h) * 100}%">${face}</div>`;
   }
 

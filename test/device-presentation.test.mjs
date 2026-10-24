@@ -440,6 +440,15 @@ test('issue 251 separates controller availability from controlled target status'
   result = resolveDevicePresentation(h, controller, options);
   assert.equal(result.visual.availability, 'unavailable');
   assert.equal(result.visual.status, 'working', 'target work remains a separate fact');
+  assert.equal(result.ownAvailability, 'unknown', 'unavailable plus unknown does not prove own offline');
+  assert.ok(!result.classes.includes('unavail'));
+  assert.ok(!result.classes.includes('on'));
+  assert.equal(deviceA11yState(result), 'neutral');
+  assert.equal(result.pulse.kind, 'none');
+
+  h.states['event.wall_action'].state = 'unavailable';
+  result = resolveDevicePresentation(h, controller, options);
+  assert.equal(result.ownAvailability, 'unavailable', 'every own row is now explicitly unavailable');
   assert.ok(result.classes.includes('unavail'));
   assert.ok(!result.classes.includes('on'));
   assert.equal(deviceA11yState(result), 'unavailable');
@@ -452,6 +461,7 @@ test('issue 251 separates controller availability from controlled target status'
     availability: 'available', status: 'neutral', activity: 'none',
   });
 
+  h.states['event.wall_action'].state = 'unknown';
   h.states['light.wall_group'].state = 'unavailable';
   const eventOnly = resolveDevicePresentation(h, {
     ...controller,
@@ -546,7 +556,7 @@ test('issue 318 keeps an active entityless physical controller available', () =>
   });
 
   h.states['light.wall_group'] = state('light.wall_group', 'on');
-  const provenOffline = resolveDevicePresentation(h, {
+  const ownRowDevice = {
     ...controller,
     entities: ['event.entityless_wall_action'],
     primary: 'event.entityless_wall_action',
@@ -555,7 +565,16 @@ test('issue 318 keeps an active entityless physical controller available', () =>
       enabledEntityIds: ['event.entityless_wall_action'],
       allEntityIds: ['event.entityless_wall_action'],
     },
-  }, options);
+  };
+  const missingOwn = resolveDevicePresentation(h, ownRowDevice, options);
+  assert.equal(missingOwn.visual.availability, 'unavailable', 'missing own data cannot create work');
+  assert.equal(missingOwn.ownAvailability, 'unknown');
+  assert.ok(!missingOwn.classes.includes('unavail'));
+  assert.ok(!missingOwn.classes.includes('on'));
+  assert.equal(deviceA11yState(missingOwn), 'neutral');
+
+  h.states['event.entityless_wall_action'] = state('event.entityless_wall_action', 'unavailable');
+  const provenOffline = resolveDevicePresentation(h, ownRowDevice, options);
   assert.equal(provenOffline.visual.availability, 'unavailable');
   assert.equal(provenOffline.visual.status, 'working');
   assert.ok(provenOffline.classes.includes('unavail'));

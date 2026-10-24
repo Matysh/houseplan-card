@@ -8,6 +8,8 @@ export { resetGoldenStability } from './static-stability.mjs';
 import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
   prepareBatteryZigbeeOverlap, batteryZigbeeProbe, batteryZigbeeClip } from './device-battery.mjs';
 import { makeZigbeeLedFixture, prepareZigbeeLed } from './zigbee-led.mjs';
+import { makeDeviceOfflineFixture } from '../fixtures/device-offline.mjs';
+import { prepareDeviceOfflineBoard } from './device-offline.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -60,6 +62,7 @@ const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
   }
   return fixture;
 })() : scenario.deviceContacts ? makeDeviceContactsFixture()
+  : scenario.offlineBoard ? makeDeviceOfflineFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
   : scenario.zigbeeLed ? makeZigbeeLedFixture()
@@ -2741,6 +2744,7 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);
+  if (scenario.offlineBoard) result.offlineBoard = await prepareDeviceOfflineBoard(page);
   if (scenario.revealHiddenDevices) {
     // #919 enters through the same native header action as the user. No
     // private visibility writes: a missing/wrong face fails before capture.
