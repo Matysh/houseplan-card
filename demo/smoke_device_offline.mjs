@@ -37,7 +37,7 @@ try {
   out.unknownIsNotConfirmedOffline = !offline(f['offline-unknown']) && opaque(f['offline-unknown']?.glyph);
   out.missingOwnedStateIsNotConfirmedOffline = !offline(f['offline-missing']) && opaque(f['offline-missing']?.glyph);
   out.foreignSourceQualityDoesNotDimOwnGlyph = !offline(f['offline-source']) && opaque(f['offline-source']?.glyph)
-    && closeTo(badge(f['offline-source'])?.paint?.effective, .66);
+    && opaque(badge(f['offline-source'])?.paint) && closeTo(badge(f['offline-source'])?.content?.effective, .66);
   out.twoReasonsHaveOneOfflineOpacity = offline(f['offline-double'])
     && opaque(badge(f['offline-double'])?.paint) && dim(badge(f['offline-double'])?.content);
   out.staticDisplayKeepsItsExistingGate = !offline(f['offline-static']) && opaque(f['offline-static']?.glyph)
