@@ -1,6 +1,7 @@
 """#1045 clean-runner equality of complete TS/Python local deletion documents."""
 import copy
 import json
+import math
 from pathlib import Path
 
 from pure_imports import load_pure
@@ -23,6 +24,25 @@ def run(build_dir):
                     {"id": "s", "poly": [[2, 0], [1, 0], [0, 0], [0, -1], [2, -1]]}]),
     ]:
         cases.append({"name": name, "input": {"spaces": [{"id": "f", "rooms": rooms}], "markers": [], "settings": {}}, "point": [1, 0]})
+    originals = list(cases)
+    for angle in (45, 90, 135, 180, 225, 270, 315):
+        radians = math.radians(angle)
+        c, s = math.cos(radians), math.sin(radians)
+        def transform(point, cosine=c, sine=s):
+            return [point[0] * cosine - point[1] * sine + .125, point[0] * sine + point[1] * cosine - .25]
+        for original in originals:
+            case = copy.deepcopy(original)
+            case["name"] += f"-rotated-{angle}"
+            case["point"] = transform(case["point"])
+            for space in case["input"]["spaces"]:
+                for wall in space.get("partitions", []) + space.get("wall_segments", []):
+                    wall["a"], wall["b"] = transform(wall["a"]), transform(wall["b"])
+                for room in space.get("rooms", []):
+                    room["poly"] = [transform(p) for p in room["poly"]]
+                for opening in space.get("openings", []):
+                    opening["x"], opening["y"] = transform([opening["x"], opening["y"]])
+                    opening["angle"] = (opening["angle"] + angle + 90) % 180 - 90
+            cases.append(case)
     rows = frontend({"action": "delete", "cases": cases}, build_dir)
     assert len(rows) == len(cases)
     accepted = 0

@@ -2261,8 +2261,8 @@ const MUTANT_DEFINITIONS = [
     because: '#843 AC1: Undo/Redo of a node move belongs to every Plan/Background tool of a writer; '
       + 'only capture and handles are Select-only, otherwise a tool, mode or floor change loses the history',
     patches: [{ file: 'src/wall-node-card-adapter.ts',
-      find: "      enabled: () => ['plan', 'decor'].includes(host._mode) && writer(), api,",
-      replace: "      enabled: () => ['plan', 'decor'].includes(host._mode) && host._tool === 'select' && writer(), api,",
+      find: "      enabled: () => ['plan', 'decor'].includes(host._mode) && writer(),",
+      replace: "      enabled: () => ['plan', 'decor'].includes(host._mode) && host._tool === 'select' && writer(),",
     }],
   },
   {
@@ -20973,7 +20973,42 @@ const vacuumLive1049Cases = [
     patches:[{file:'src/vacuum-live-tail.ts',find:'VAC_LIVE_POINTS = 512',replace:'VAC_LIVE_POINTS = 100000'}]},
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases].map((mutant) => ({
+const wallNodeDelete1045Cases = [
+  { id: 'node-delete-physical-degree-bypassed-1045',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-node-delete.test.mjs',
+    because: '#1045 AC2: two catalogue entries on one physical ray do not make a degree-two deletable node.',
+    patches: [{ file: 'src/wall-node-delete.ts', find: 'node.valence !== 2', replace: 'false' }] },
+  { id: 'node-delete-future-attributes-discarded-1045',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-node-delete.test.mjs',
+    because: '#1045 AC2: differing future JSON attributes, including bool versus number, cannot be silently chosen from one carrier.',
+    patches: [{ file: 'src/wall-node-delete.ts', find: 'attrs(first) !== attrs(second)', replace: 'attrs(first) !== attrs(first)' }] },
+  { id: 'node-delete-returned-attributes-alias-before-1045',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-node-delete.test.mjs',
+    because: '#1045 AC3/AC5: changing a nested attribute of the returned candidate must never mutate the immutable before snapshot.',
+    patches: [{ file: 'src/wall-node-delete.ts', find: 'const merged = { ...copy(first),', replace: 'const merged = { ...first,' }] },
+  { id: 'node-delete-chord-new-contact-accepted-1045',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-node-delete.test.mjs',
+    because: '#1045 AC2: a new crossing/contact on the replacement chord is refused even when neither old section touched it.',
+    patches: [{ file: 'src/wall-node-delete.ts', find: 'if (contacts(merged, wall).some(', replace: 'if (false && contacts(merged, wall).some(' }] },
+  { id: 'node-delete-server-inverse-proof-bypassed-1045',
+    guard: 'node scripts/backend-test-guard.mjs forged_inverse tests_backend/test_ha_wall_node_delete.py',
+    because: '#1045 AC4/AC5: real authenticated Undo cannot use a forged before_space to change foreign fields, endpoints or opening size.',
+    patches: [{ file: 'custom_components/houseplan/wall_node_delete.py',
+      find: 'if not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):', replace: 'if False:' }] },
+  { id: 'node-delete-server-cas-bypassed-1045',
+    guard: 'node scripts/backend-test-guard.mjs atomic_concurrency tests_backend/test_ha_wall_node_delete.py',
+    because: '#1045 AC4: two real websocket clients at one revision can accept only one deletion and one durable revision.',
+    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
+      find: '        if msg["expected_rev"] != rev:\n            connection.send_error(msg["id"], "conflict", "Plan revision changed; reopen the menu before deleting a node")',
+      replace: '        if False:\n            connection.send_error(msg["id"], "conflict", "Plan revision changed; reopen the menu before deleting a node")' }] },
+  { id: 'node-delete-refused-inverse-removes-command-1045',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/node-delete-history.test.mjs',
+    because: '#1045 AC5: every refused Delete inverse retains the exact command and both common-stack cursor identities.',
+    patches: [{ file: 'src/wall-node-history.ts', find: 'return; // A refused inverse retains BOTH command and shared cursor.',
+      replace: 'stack.removeWhere(item => item === command); return; // mutant: lose a refused Delete command' }] },
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...wallNodeDelete1045Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

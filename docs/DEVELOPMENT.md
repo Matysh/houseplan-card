@@ -42,6 +42,11 @@ keeps both. Existing Move tests remain mandatory for the shared path.
 The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authenticated
 groups, concurrent CAS, stores, metadata projection and integration reload; it
 never replaces the product planner. Run it with the current supported HA harness.
+Ordinary rotated inputs extend parity to 160 scenarios, including finite contacts
+that neither old carrier touched. Seven registered kernel/writer/history guards
+have static readiness only; execution and caught evidence remain nightly.
+The existing `node-history-requires-select` witness keeps its identity/oracle;
+only its adapter anchor follows the new operation-specific capability callback.
 Targeted proofs supplement gate:small; full regression and mutation execution
 remain in their existing CI/nightly contours.
 

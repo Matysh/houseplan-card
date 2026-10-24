@@ -71,4 +71,13 @@ test('#1045 structural neighbours, ownership, finite coordinates and full attrib
   const room = commitWallSegmentModel({ spaces: [{ id: 'f', rooms: [{ id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }] }] }).config.spaces[0];
   room.rooms[0].wall_ids[1] = 'forged';
   assert.equal(applyNodeDelete(room, { point: [1, 0] }).ok, false);
+  for (const [poly, point] of [
+    [[[0, 0], [1, 0], [0, 1]], [1, 0]],
+    [[[0, 0], [2, 0], [2, 2], [1, 1], [0, 2]], [2, 0]],
+  ]) {
+    const source = commitWallSegmentModel({ spaces: [{ id: 'f', rooms: [{ id: 'r', poly }] }] }).config.spaces[0];
+    const before = structuredClone(source);
+    assert.equal(applyNodeDelete(source, { point }).ok, false, 'collapsed/self-touching candidate is never adopted');
+    assert.deepEqual(source, before);
+  }
 });

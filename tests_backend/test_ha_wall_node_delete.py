@@ -5,10 +5,11 @@ import copy
 import pytest
 from homeassistant.auth.const import GROUP_ID_READ_ONLY, GROUP_ID_USER
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from test_wall_node_delete import fixture
+from test_wall_node_delete import CASES, fixture
 
 from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN
 from custom_components.houseplan.store import get_data
+from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
 
 @pytest.fixture(autouse=True)
@@ -37,6 +38,8 @@ def message(snapshot, **extra):
 async def test_issue_1045_ws_atomic_concurrency_inverse_store_and_reload(hass, hass_ws_client):
     entry, client, snapshot = await setup(hass, hass_ws_client)
     runtime = get_data(hass)
+    unrelated_layout = {"legacy-untouched-device": {"s": "f", "x": .2, "y": .4, "k": 1.3}}
+    await runtime.store.async_save({"layout": unrelated_layout, "rev": 7})
     assert snapshot["wall_node_delete_api"] == 1 and snapshot["wall_node_move_api"] == 1
     assert "wall_node_delete_api" not in snapshot["config"]
     events = []
@@ -56,6 +59,7 @@ async def test_issue_1045_ws_atomic_concurrency_inverse_store_and_reload(hass, h
         "host": {"kind": "partition", "id": "a", "t": .75}}
     assert after["spaces"][0]["future"] == snapshot["config"]["spaces"][0]["future"]
     assert (await runtime.config_store.async_load())["config"] == after
+    assert (await runtime.store.async_load())["layout"] == unrelated_layout
     await client.send_json_auto_id(message(accepted, direction="undo", before_space=snapshot["config"]["spaces"][0]))
     undo = await client.receive_json()
     assert undo["success"], undo
@@ -76,6 +80,7 @@ async def test_issue_1045_ws_atomic_concurrency_inverse_store_and_reload(hass, h
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     reloaded = (await client.receive_json())["result"]
     assert reloaded["config"] == after and reloaded["rev"] == redo["result"]["rev"]
+    assert (await runtime.store.async_load())["layout"] == unrelated_layout
 
 
 @pytest.mark.parametrize(("group", "admin_only", "allowed"), [
@@ -134,4 +139,21 @@ async def test_issue_1045_ws_forged_inverse_cannot_modify_foreign_data(hass, has
     await client.send_json_auto_id(message(accepted["result"], direction="undo", before_space=before))
     refused = await client.receive_json()
     assert not refused["success"] and refused["error"]["code"] == "node_delete_unsafe", refused
+    assert await get_data(hass).config_store.async_load() == frozen
+
+
+@pytest.mark.parametrize("case", [c for c in CASES if c["name"] in {
+    "thickness-mismatch", "future-attribute-mismatch", "chord-crossing", "new-contact", "chord-overlap", "angled-opening",
+}], ids=lambda case: case["name"])
+async def test_issue_1045_ws_independent_geometry_refusal_on_ordinary_accepted_source(hass, hass_ws_client, case):
+    space = {**copy.deepcopy(case["space"]), "title": "Floor", "view_box": [0, 0, 2, 2]}
+    for opening in space.get("openings", []):
+        opening["type"] = "door"
+    source = commit_wall_segment_model({"spaces": [space], "markers": [], "settings": {}})[0]
+    _, client, snapshot = await setup(hass, hass_ws_client, source=source)
+    frozen = copy.deepcopy(await get_data(hass).config_store.async_load())
+    await client.send_json_auto_id(message(snapshot, intent={"point": case["point"]}))
+    refused = await client.receive_json()
+    assert not refused["success"], refused
+    assert refused["error"]["code"] == "node_delete_" + case["reason"], refused
     assert await get_data(hass).config_store.async_load() == frozen
