@@ -2198,6 +2198,11 @@ receipt never proves full-matrix coverage, and a controller without the scoped
 validator forces fresh execution. Integration classification uses verified
 green coverage separately from the judged range used by process guards.
 
+Sparse registry lookup (#1062) hydrates missing immutable blobs in bounded
+batches. Git reads disable implicit lazy fetch and share the probe deadline,
+so an unavailable object or remote produces fresh execution rather than a
+blocked lookup job. The independent policy and source checks remain mandatory.
+
 Python-producing jobs (#1032) install the exact patch selected by the reuse
 bootstrap, not an independently resolved minor from their runner cache. The
 bootstrap exports its actual setup-python version even when the registry probe

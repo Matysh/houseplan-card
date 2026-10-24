@@ -34,6 +34,10 @@ dev classification advances through verified split proof independently of the
 judged range. Full beta/night/release obligations and fresh range/packaging
 guards remain in force.
 
+Sparse registry lookup (#1062) bounds synchronous Git I/O and batches missing
+blob downloads; slow or unavailable sources return fresh execution before the
+CI job deadline. Immutable policy/source authentication remains mandatory.
+
 Editor arrows (#1025) translate selected independent walls, same-host openings
 and movable device anchors through the existing physical/config/layout writers
 and histories. Connected walls and invalid full steps remain no-op; opening

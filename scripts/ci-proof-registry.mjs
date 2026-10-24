@@ -6,17 +6,28 @@ import { readCiProofArtifact } from './ci-proof.mjs';
 import { registryPath, verifyRegistryRecord } from './ci-registry-verify.mjs';
 import { jobInstanceNames, validateJobs } from './workflow-jobs.mjs';
 import { snapshotEntries, sourceEquivalenceCommon, sourceEquivalenceJob } from './ci-registry-equivalence.mjs';
-import { registryReader } from './ci-registry-inputs.mjs';
+import { registryReader, registryRemaining } from './ci-registry-inputs.mjs';
 
 const git = (root, args, options = {}) => execFileSync('git', ['-C', root, ...args],
   { maxBuffer: 8 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'], ...options }).toString('utf8').trim();
-export function fetchRegistry(root) {
+export function fetchRegistry(root, { deadline = Date.now() + 8000, gitOp = git } = {}) {
+  const read = (args, cap = Infinity) => {
+    const result = gitOp(root, args, { timeout: registryRemaining(deadline, cap), killSignal: 'SIGKILL',
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
+    registryRemaining(deadline);
+    return result;
+  };
   try {
-    git(root, ['fetch', '--quiet', '--no-tags', '--depth=1', 'origin', '+refs/heads/ci-proofs:refs/remotes/origin/ci-proofs'],
-      { timeout: 3000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
-    const tip = git(root, ['rev-parse', 'refs/remotes/origin/ci-proofs']);
+    read(['fetch', '--quiet', '--no-tags', '--depth=1', 'origin', '+refs/heads/ci-proofs:refs/remotes/origin/ci-proofs'], 3000);
+    const tip = read(['rev-parse', 'refs/remotes/origin/ci-proofs']);
     return { tip, read(job, key) {
-      try { return JSON.parse(git(root, ['show', tip + ':' + registryPath(job, key)])); }
+      // A partial clone can lazily fetch even this apparent local `show`.
+      // Its subprocess therefore shares the lookup's absolute deadline too.
+      try {
+        const record = JSON.parse(read(['show', tip + ':' + registryPath(job, key)]));
+        registryRemaining(deadline);
+        return record;
+      }
       catch { return null; }
     } };
   } catch { return { tip: null, read: () => null }; }
@@ -29,15 +40,22 @@ const namesOf = job => {
 const headers = token => ({ Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token,
   'User-Agent': 'houseplan-ci-registry', 'X-GitHub-Api-Version': '2022-11-28' });
 export function registryApi({ repo, token, candidateSha = null, candidateSnapshot = null, mode = 'exact',
-  fetchImpl = fetch, signal = null, apiBase = process.env.GITHUB_API_URL || 'https://api.github.com', root = process.cwd() }) {
+  fetchImpl = fetch, signal = null, deadline = Date.now() + 8000,
+  apiBase = process.env.GITHUB_API_URL || 'https://api.github.com', root = process.cwd() }) {
   const pending = new Map();
-  const readSignal = () => signal ? AbortSignal.any([signal, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000);
+  const readSignal = () => {
+    signal?.throwIfAborted();
+    const timeout = AbortSignal.timeout(registryRemaining(deadline, 5000));
+    return signal ? AbortSignal.any([signal, timeout]) : timeout;
+  };
   const request = path => {
     if (!pending.has(path)) pending.set(path, (async () => {
       const response = await fetchImpl(apiBase.replace(/\/+$/, '') + '/repos/' + repo + '/' + path,
         { headers: headers(token), signal: readSignal() });
       if (!response.ok) throw Error('registry source API ' + response.status);
-      return response.json();
+      const body = await response.json();
+      registryRemaining(deadline); signal?.throwIfAborted();
+      return body;
     })());
     return pending.get(path);
   };
@@ -69,7 +87,8 @@ export function registryApi({ repo, token, candidateSha = null, candidateSnapsho
       // Review/CI already has the material's Git objects. Read those immutable
       // blobs, never the working tree or candidate code, for the policy walk.
       let reader;
-      try { reader = registryReader(root, candidateSha); } catch { /* remote, bounded fallback below */ }
+      try { reader = registryReader(root, candidateSha, { deadline }); } catch { /* remote, bounded fallback below */ }
+      registryRemaining(deadline); signal?.throwIfAborted();
       const current = reader ? { entries: snapshotEntries(reader.rows), read: reader.read, readMany: reader.readMany }
         : { ...await snapshot(candidateSha), policyReadBudget: 32 };
       [current.inventory, current.domains] = await Promise.all(
@@ -85,6 +104,7 @@ export function registryApi({ repo, token, candidateSha = null, candidateSnapsho
     return sourceEquivalenceJob(current, previous, record, await commonChecks.get(key));
   };
   return async record => {
+    registryRemaining(deadline); signal?.throwIfAborted();
     const id = record.run, attempt = record.attempt, artifactName = 'ci-proof-' + id + '-' + attempt;
     const [run, latest, body, artifacts, equivalent] = await Promise.all([
       request('actions/runs/' + id + '/attempts/' + attempt), request('actions/runs/' + id),
@@ -124,6 +144,7 @@ export function registryApi({ repo, token, candidateSha = null, candidateSnapsho
       }
       if (!proof.requiredProfiles?.includes('product')) companionsGreen = false;
     }
+    registryRemaining(deadline); signal?.throwIfAborted();
     return { run, jobs: body.jobs || [], proof, artifact, companionsGreen, ...equivalent };
   };
 }
@@ -134,9 +155,9 @@ export async function probeRegistry({ root, repo, plan, jobs, allowed = true, st
   await Promise.all(jobs.map(async job => {
     results[job] = { accepted: false, reason: allowed ? 'no indexed producer' : 'fresh policy' };
     if (!allowed) return;
-    const record = store.read(job, plan.keys[job]);
-    if (!record) return;
     try {
+      const record = store.read(job, plan.keys[job]);
+      if (!record) return;
       const context = await source(record);
       results[job] = verifyRegistryRecord(record, { plan, job, repo, ...context, now, jobNames: nameOf(job) });
     } catch (error) { results[job] = { accepted: false, reason: 'fresh: ' + error.message }; }
