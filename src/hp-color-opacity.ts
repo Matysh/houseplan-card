@@ -574,6 +574,9 @@ export class HpColorOpacity extends LitElement {
     if (!this._open) return;
     const path = event.composedPath();
     if (!this._floating.containsPath(path)) {
+      if (this.reportTouched && !this.prepareCompletion()) {
+        event.preventDefault(); event.stopImmediatePropagation(); return;
+      }
       this._closePicker(false, 'outside');
     }
   };

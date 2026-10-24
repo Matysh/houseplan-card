@@ -53,12 +53,18 @@ const select=async ids=>{await click(ids[0]);for(const id of ids.slice(1))await 
 const empty=async()=>{
   const p=await card.evaluate(c=>{
     const matrix=c.renderRoot.querySelector('.decorlayer').getScreenCTM();
-    const receipt={};
-    for(const [x,y] of [[.86,.79],[.7,.78],[.45,.78],[.2,.8],[.1,.7],[.08,.55],[.08,.08]]){
-      const p=new DOMPoint(x*1000,y*1000).matrixTransform(matrix),target=c.renderRoot.elementFromPoint(p.x,p.y);
-      const observed={x:p.x,y:p.y,tag:target?.tagName,classes:target?.getAttribute('class'),stage:!!target?.closest('.stage')};
-      receipt.preferred??=observed;
+    const receipt={observed:[]};
+    const initial=new DOMPoint(860,790).matrixTransform(matrix);
+    const original=c.renderRoot.elementFromPoint(initial.x,initial.y);
+    receipt.preferred={x:initial.x,y:initial.y,tag:original?.tagName,classes:original?.getAttribute('class'),stage:!!original?.closest('.stage')};
+    const b=c.renderRoot.querySelector('.stage').getBoundingClientRect();
+    const left=Math.max(0,b.left),right=Math.min(innerWidth,b.right),top=Math.max(0,b.top),bottom=Math.min(innerHeight,b.bottom);
+    for(const fy of [.8,.65,.45,.25])for(const fx of [.2,.4,.6,.8]){
+      const p={x:left+(right-left)*fx,y:top+(bottom-top)*fy},target=c.renderRoot.elementFromPoint(p.x,p.y);
+      const observed={...p,tag:target?.tagName,classes:target?.getAttribute('class'),stage:!!target?.closest('.stage')};
+      receipt.observed.push(observed);
       if(!observed.stage||target?.closest('button,hp-dialog,.editor-secondary,.hp-properties,[data-hp="decor"],.dtframe,.backdropframe'))continue;
+      delete receipt.observed;
       receipt.chosen=observed;(window.__1038EmptyReceipts??=[]).push(receipt);return{x:p.x,y:p.y};
     }
     throw Error(`No unobscured empty stage: ${JSON.stringify(receipt)}`);
@@ -207,14 +213,15 @@ try{
 
   await seed(records());await select(['rect','ellipse']);const selection=await state();
   await card.locator('[data-hp="tool"][data-tool="shapes"]').click();await card.locator('[data-hp="tool"][data-tool="line"]').click();
-  const anchor=await point(.22,.72);await page.mouse.click(anchor.x,anchor.y);
+  const anchor=await point(.22,.55);await page.mouse.click(anchor.x,anchor.y);
   const chainState=()=>page.evaluate(()=>({active:window.__card._editorRuntime.decorLine.active,anchor:window.__card._editorRuntime.decorLine.snapshot,
     draft:structuredClone(window.__card._decorDraft),ids:[...window.__card._editorRuntime.properties.decorSelectionIds],
     history:window.__card._geometryHistory.size,decor:structuredClone(window.__card._decorList),tool:window.__card._decorTool}));
   const chain=await chainState();
+  check('group.shortcut.active_line_started',chain.active,true);
   await shortcut('a');await shortcut('m');
   check('group.shortcut.active_line_preserved',await chainState(),chain);
-  const end=await point(.36,.72);await page.mouse.click(end.x,end.y);await settle();
+  const end=await point(.36,.55);await page.mouse.click(end.x,end.y);await settle();
   check('group.shortcut.active_line_continues',(await state()).decor.length,chain.decor.length+1);
   await page.keyboard.press('Escape');await seed(records());await empty();await shortcut('a');
   await page.setViewportSize({width:850,height:1100});await settle();
@@ -236,7 +243,7 @@ try{
   const quotaSaved=await saved();
   check('group.quota.one_write',(await state()).writes,quotaBefore.writes+1);
   check('group.quota.one_history',(await state()).history,quotaBefore.history+1);
-  check('group.quota.complete_records',quotaSaved,many.map(item=>({...item,opacity:.5})));
+  check('group.quota.complete_records',normalized(quotaSaved),normalized(many.map(item=>({...item,opacity:.5}))));
   check('group.no_services',await page.evaluate(()=>window.__serviceCalls.length),0);
   check('group.no_persistent_group_keys',(await saved()).every(item=>!Object.hasOwn(item,'group')&&!Object.hasOwn(item,'selected')));
   check('group.no_new_api_writes',await page.evaluate(()=>window.__1038Calls.filter(type=>/(?:set|update|delete|copy|upload|import)$/.test(type)).every(type=>type==='houseplan/config/set')));

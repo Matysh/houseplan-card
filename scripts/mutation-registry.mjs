@@ -21128,6 +21128,9 @@ const decorLine1046Cases = [
 ];
 
 const decorGroup1038Cases = [
+  {id:'decor-group-invalid-popup-dismissed-by-navigation-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC4/6: document-capture outside pointer delivery must not discard an invalid mounted group picker before the real canvas selection owner sees it.',
+    patches:[{file:'src/hp-color-opacity.ts',find:'      if (this.reportTouched && !this.prepareCompletion()) {',replace:'      if (false && this.reportTouched && !this.prepareCompletion()) {'}]},
   {id:'decor-group-same-revision-selection-stays-retired-1038',guard:'node --test test/properties-editor.test.mjs',
     because:'#1038 AC1/6: a same-content external revision retires selection but a fresh explicit same-ID selection must establish a new current owner.',
     patches:[{file:'src/editors/properties/editor.ts',find:'      && (!identity || this.identity === this.selected)) return;',replace:'      ) return;'}]},

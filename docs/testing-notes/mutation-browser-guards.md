@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 85 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 97 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 254 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **504 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 255 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **505 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -555,9 +555,11 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `decor-group-live-paint-only-leader-1038`
 - `decor-group-picker-button-shortcut-escapes-1038`
 - `decor-group-empty-popup-alpha-becomes-zero-1038`
+- `decor-group-invalid-popup-dismissed-by-navigation-1038`
 
 The #1038 witnesses observe the existing mounted pointer/Line owner, all-member
 live SVG ink, a focused popup confirm button and raw empty-vs-zero number input.
+Document-capture outside navigation must retain invalid HEX before canvas input.
 Pure group kernels and field units cannot prove native event routing, custom
 element draft ownership or the live/settled presentation handoff. All four are
 registered for nightly execution; development runs ordinary input only.
