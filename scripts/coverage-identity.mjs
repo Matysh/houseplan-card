@@ -138,7 +138,15 @@ export function identifyScript(index, { url, source }) {
     const suffix = file.path.startsWith('dist/') ? file.path.slice(5) : file.path;
     return path.endsWith(`/${suffix}`);
   });
-  if (!candidates.length) return { status: 'external', reason: 'not-candidate-product-script' };
+  if (!candidates.length) {
+    // An obsolete/foreign hashed product filename is still product material;
+    // it cannot silently become an external library just by missing the index.
+    const product = /\/(?:houseplan-assets|test-build)\//.test(path)
+      || /\/(?:houseplan-card|houseplan-panel)\.js$/.test(path);
+    return product ? { status: 'unknown', reason: 'unindexed-product-script', url,
+      hash: typeof source === 'string' ? digestBytes(source) : null }
+      : { status: 'external', reason: 'not-candidate-product-script' };
+  }
   if (typeof source !== 'string') return { status: 'unknown', reason: 'missing-actual-script-bytes', url };
   const hash = digestBytes(source), matches = candidates.filter(file => file.jsHash === hash);
   if (matches.length !== 1) return { status: 'unknown', reason: 'foreign-script-bytes', url, hash };
