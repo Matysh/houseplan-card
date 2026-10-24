@@ -21249,6 +21249,10 @@ const decorLine1046Cases = [
 ];
 
 const vacuumHistory999Cases = [
+  {id:'vacuum-history-get-suppression-retains-preview-999',
+    guard:'node --test --test-name-pattern="server suppression" test/vacuum-history.test.mjs',
+    because:'#999 AC5/AC6: an explicit saved-marker suppression must retire painted A even before the client learns hidden/static/live-off configuration.',
+    patches:[{file:'src/vacuum-history.ts',find:"      ||reason==='suppressed'\n",replace:''}]},
   {id:'vacuum-history-server-denial-keeps-preview-999',
     guard:'node --test --test-name-pattern="server authority" test/vacuum-history.test.mjs',
     because:'#999 AC5/AC6: an explicit backend denial must retire painted material even before the client permission flag catches up.',

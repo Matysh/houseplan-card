@@ -72,6 +72,9 @@ record remains different and keeps an otherwise valid painted record. The
 ordinary frontend witness first failed for get/suppressed while the unavailable
 positive passed; fresh endpoint cases cover all four saved suppression forms
 without another physical read or history-owned Store change.
+The targeted frontend pair passes after a fresh TypeScript compilation on
+`769ff9f53`. The suppression guard is registered separately for nightly, using
+that ordinary unit oracle; static readiness is not a mutant execution claim.
 
 The whole accepted `b3dbea281` merge includes decor multi-selection and bounded
 registry Git I/O. The Golden matrix keeps both independent additions under
