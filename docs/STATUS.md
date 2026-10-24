@@ -20,10 +20,16 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5275 · pure backend 631 · HA-harness backend 533 · browser smokes 434 (`npm run inventory`) |
+| Tests | Node unit 5290 · pure backend 631 · HA-harness backend 533 · browser smokes 435 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Editor arrows (#1025) translate selected independent walls, same-host openings
+and movable device anchors through the existing physical/config/layout writers
+and histories. Connected walls and invalid full steps remain no-op; opening
+direction follows the agreed dominant screen axis, including Left/Right at 45°.
+The shared dispatcher keeps controls, dialogs and active gestures authoritative.
 
 - #1056 restores the mounted full card after connection/user replacement inside
   the same HA object through the existing coalesced intake and read owner. The

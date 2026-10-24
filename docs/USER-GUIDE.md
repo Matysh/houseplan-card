@@ -957,6 +957,23 @@ selected room measurement source still has priority over the automatic average.
 
 ### Plan tools
 
+#### Moving walls and openings with arrow keys
+
+In **Select**, arrow keys move the selected free independent wall by one current
+grid cell. Both endpoints and hosted openings move together. A wall connected
+to another wall or room stays fixed; the command keeps junctions and neighbours
+intact.
+
+A selected opening moves one cell along its existing wall. Left/Right work on
+a horizontal or mostly horizontal host; Up/Down work on a mostly vertical host.
+At 45°, Left/Right work and the other pair does nothing. Right/Down point right
+and down regardless of endpoint order. An opening stays fixed if the complete
+step would cross an end or another opening.
+
+`Shift` does not accelerate a step. Zoom and magnets do not change the cell
+distance or original grid offset. Each accepted press is a separate Undo step.
+Inputs, Properties, dialogs, menus and unfinished gestures keep their own keys.
+
 #### Moving wall nodes
 
 In **Select**, hover a wall endpoint, room corner or supported junction: the
@@ -1325,6 +1342,13 @@ and its other entities remain deleted. The complete device stays available in
 **Available again** if you later decide to restore it explicitly as well.
 
 ### Device editor
+
+Arrow keys move the selected marker one current grid cell from its visible
+position, preserving its grid offset; `Shift` does not accelerate the step.
+Only the selected member of a contact group moves; the other visible anchors
+stay fixed. An invalid complete step does nothing. Each accepted press has its
+own **Undo/Redo** step. Focused inputs, dialogs and controls keep their native
+arrow action. This does not edit drawn LED geometry.
 
 - **Magnets** (#866, #1003) start enabled for this session. A marker snaps to
   a visible wall face, both faces of a corner, or an exact neighbour pitch.
