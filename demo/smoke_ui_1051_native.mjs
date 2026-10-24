@@ -52,11 +52,21 @@ try {
     const s=getComputedStyle(el),track=getComputedStyle(el,'::before');return s.width==='44px'&&s.height==='44px'&&track.width==='36px'&&track.height==='22px';
   }));
   const before=await page.evaluate(()=>JSON.stringify(window.__card._serverCfg));
-  for(const width of [820,390]) {
-    await page.setViewportSize({width,height:1000});await settle();
-    out[`furniture_fit_${width}`]=await furniture.locator('.body.hpf-form').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.getBoundingClientRect().left>=0&&el.getBoundingClientRect().right<=innerWidth);
-    await page.screenshot({path:`artifacts/browser-selected/ui-1051-native/furniture-${width}.png`});
+  const originalStyle=await card.getAttribute('style'),originalThemes=await page.evaluate(()=>window.__card.hass.themes);
+  const palettes={light:['rgb(255, 255, 255)','rgb(34, 48, 57)','#64747e','#dce2e6','#008aa5'],dark:['rgb(23, 34, 46)','rgb(231, 238, 244)','#a6b6c3','#354755','#67cfe8'],custom:['rgb(255, 246, 233)','rgb(53, 41, 29)','#75634e','#d6c3ac','#9b45b7']};
+  for(const [theme,palette]of Object.entries(palettes)) {
+    await card.evaluate((el,{theme,palette})=>{for(const [i,key]of ['--card-background-color','--primary-text-color','--secondary-text-color','--divider-color','--primary-color'].entries())el.style.setProperty(key,palette[i]);el.style.colorScheme=theme==='dark'?'dark':'light';},{theme,palette});
+    await page.evaluate(dark=>{const c=window.__card;c.hass={...c.hass,themes:{...c.hass.themes,darkMode:dark}};},theme==='dark');
+    for(const width of [820,390]) {
+      await page.setViewportSize({width,height:1000});await settle();
+      await furniture.evaluate(el=>Promise.allSettled(el.getAnimations({subtree:true}).map(a=>a.finished)));
+      out[`furniture_${theme}_fit_${width}`]=await furniture.locator('.body.hpf-form').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.getBoundingClientRect().left>=0&&el.getBoundingClientRect().right<=innerWidth);
+      await page.screenshot({path:`artifacts/browser-selected/ui-1051-native/furniture-${theme}-${width}.png`});
+    }
+    out[`furniture_${theme}_tokens`]=await furniture.locator('.body.hpf-form').evaluate((el,p)=>{const s=getComputedStyle(el);return s.backgroundColor===p[0]&&s.color===p[1];},palette);
   }
+  await card.evaluate((el,style)=>style===null?el.removeAttribute('style'):el.setAttribute('style',style),originalStyle);
+  await page.evaluate(themes=>{const c=window.__card;c.hass={...c.hass,themes};},originalThemes);
   await furniture.locator('[data-field=decor-width]').fill('210');
   await close(furniture);
   out.furniture_cancel_preserves_plan=await page.evaluate(before=>JSON.stringify(window.__card._serverCfg)===before,before);

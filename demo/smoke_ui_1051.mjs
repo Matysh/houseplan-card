@@ -118,7 +118,18 @@ try {
   await clickAt(260,450,{button:'right'}); await page.waitForTimeout(170);
   out.rapid_reopen_remains_live=await menu.evaluate(el=>!el.inert);
   await menu.screenshot({path:'artifacts/browser-selected/ui-1051/context-menu.png'});
-  await page.keyboard.press('Escape'); await menu.waitFor({state:'detached'});
+  await page.setViewportSize({width:390,height:1000});await settle();
+  out.menu_viewport_390=await menu.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;});
+  await menu.screenshot({path:'artifacts/browser-selected/ui-1051/context-menu-390.png'});
+  await page.setViewportSize({width:1500,height:1000});await settle();
+  await page.mouse.click(0,0);
+  out.menu_outside_immediately_inert=await menu.evaluate(el=>el.inert);
+  await menu.waitFor({state:'detached'});
+  await page.emulateMedia({reducedMotion:'reduce'});await clickAt(260,450,{button:'right'});await menu.waitFor();
+  out.menu_reduced_no_animation=await menu.evaluate(el=>el.getAnimations().length===0);
+  await page.keyboard.press('Escape');await settle();
+  out.menu_reduced_removes_immediately=await menu.count()===0;
+  await page.emulateMedia({reducedMotion:'no-preference'});
   // Selected device paint remains after the mouse leaves, including keyboard focus.
   await mode('devices');
   const lamp=card.locator('.dev[data-id=lamp]');

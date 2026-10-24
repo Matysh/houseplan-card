@@ -43,6 +43,10 @@ paint before sampling; its exact RGB checks remain unchanged. Menu hover/disable
 ink and keyboard order cover light/dark/custom tokens; selected device glyphs
 cover both explicit HA theme states. Ordinary `smoke_zigbee_enable_refresh`
 retains its language/theme/reload matrix and all save/authority guards.
+The native furniture shell covers light/dark/custom palettes at820/390px;
+the menu additionally checks390px placement, outside retirement and reduced
+motion removal. The device keyboard probe reaches an unselected marker with
+trusted Tab, then selects it with Space before checking persistent paint.
 
 Golden `ui-1051-{color,menu,device}-{light,dark}` scenes crop their actual
 surface. `tray-medium-selection-ru` intentionally changes for UI-019. Task
