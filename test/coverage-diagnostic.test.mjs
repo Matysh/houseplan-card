@@ -102,7 +102,9 @@ test('mapped V8 merger preserves family columns, actual retry identity, native b
   assert.equal(index.valid, true);
   const raw = { entries: [{ url: pathToFileURL(resolve(root, 'test-build/probe.js')).href + '?retry=2', source: text,
     functions: [{ functionName: 'yes', isBlockCoverage: true, ranges: [{ startOffset: 7, endOffset: text.length - 1, count: 1 },
-      { startOffset: text.indexOf('2;'), endOffset: text.indexOf('2;') + 1, count: 0 }] }] }] };
+      { startOffset: text.indexOf('2;'), endOffset: text.indexOf('2;') + 1, count: 0 }] },
+      { functionName: 'empty', ranges: [{ startOffset: 7, endOffset: 7, count: 99 }] },
+      { functionName: 'outside', ranges: [{ startOffset: text.length + 1, endOffset: text.length + 5, count: 99 }] }] }] };
   const file = (path, value) => writeFileSync(resolve(artifactDir, 'cases/0', path), JSON.stringify(value));
   file('browser-1-0-1-1.json', raw); file('recorder-1-0.json', { ended: 1, exitCode: 0, issues: [],
     pages: [{ early: true, saved: true, raw: ['browser-1-0-1-1.json'] }] });
@@ -114,6 +116,9 @@ test('mapped V8 merger preserves family columns, actual retry identity, native b
   assert.ok(report.observedScripts.some(s => s.status === 'verified' && s.family === 'smoke'));
   assert.equal(report.invocations[0].pages.length, 1);
   assert.equal(report.nativeMappedRanges.find(r => r.kind === 'branch').smoke.status, 'zero-observed');
+  const branch = report.nativeMappedRanges.find(r => r.kind === 'branch');
+  assert.equal(branch.column, text.indexOf('2;')); assert.equal(branch.endColumn, branch.column, 'the end offset is exclusive');
+  assert.ok(!report.nativeMappedRanges.some(r => r.name === 'empty' || r.name === 'outside'));
   const derived = resolve(root, 'derived'); mkdirSync(resolve(derived, 'build/test-build'), { recursive: true });
   for (const name of ['probe.js', 'probe.js.map']) writeFileSync(resolve(derived, 'build/test-build', name),
     readFileSync(resolve(artifactDir, 'build/test-build', name)));

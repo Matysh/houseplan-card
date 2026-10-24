@@ -40,6 +40,8 @@ observations have distinct authority; no runtime pin is inferred from a manifest
 An actual nested-output TS fixture exposed the compiler map's relative source
 base error; diagnostic TS now uses an explicit sourceRoot and the index rejects
 escaping source paths. Historical samples need a separate Git-verified projection.
+Native range lookup uses ordered generated offsets instead of repeatedly
+scanning a whole minified chunk; half-open and empty-range semantics are preserved.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling
 diagnostic entities. Its minimal household-readable feed is independent of

@@ -7,6 +7,21 @@ import { identifyScript, walkFiles, COVERAGE_SCHEMA, digestBytes } from './cover
 import { lineOffsets } from './coverage-maps.mjs';
 
 const json = path => JSON.parse(path.endsWith('.gz') ? gunzipSync(readFileSync(path)) : readFileSync(path, 'utf8'));
+// Source-map segments are ordered by generated position. Locate a native
+// half-open range without rescanning every point in a large minified chunk.
+function mappedRange(points, start, end) {
+  const lowerBound = value => {
+    let lo = 0, hi = points.length;
+    while (lo < hi) { const mid = (lo + hi) >>> 1; if (points[mid].offset < value) lo = mid + 1; else hi = mid; }
+    return lo;
+  };
+  const from = lowerBound(start), to = lowerBound(end);
+  if (from >= to) return null;
+  const first = points[from];
+  let last = to - 1;
+  while (points[last].path !== first.path) last--;
+  return [first, points[last]];
+}
 export function diagnosticCompleteness(inventory, invocations, index) {
   const reasons = [...index.issues];
   const byId = new Map(invocations.map(c => [c.id, c]));
@@ -63,9 +78,9 @@ export function buildCoverageReport({ root = process.cwd(), artifactDir, rawRoot
     for (const fn of script.functions || []) {
       if (!Array.isArray(fn.ranges) || !fn.ranges.length) { issues.push({ reason: 'missing-native-ranges', owner }); continue; }
       fn.ranges.forEach((range, n) => {
-        const witness = points.filter(p => p.offset >= range.startOffset && p.offset < range.endOffset);
-        if (!witness.length) return; // Generated facades and dependency-only functions have no src witness.
-        const first = witness[0], last = witness.findLast(p => p.path === first.path);
+        const witness = mappedRange(points, range.startOffset, range.endOffset);
+        if (!witness) return; // Generated facades and dependency-only functions have no src witness.
+        const [first, last] = witness;
         const kind = n === 0 ? (range.startOffset === 0 && range.endOffset === source.length ? 'script' : 'function') : 'branch';
         const key = `${first.path}:${first.line}:${first.column}:${last.line}:${last.column}:${kind}:${fn.functionName || ''}`;
         if (!rows.has(key)) rows.set(key, { path: first.path, line: first.line, column: first.column,
