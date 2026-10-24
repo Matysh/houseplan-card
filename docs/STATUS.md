@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5219 · pure backend 626 · HA-harness backend 527 · browser smokes 428 (`npm run inventory`) |
+| Tests | Node unit 5219 · pure backend 627 · HA-harness backend 527 · browser smokes 429 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -49,6 +49,16 @@ The original and derived recipes remain distinct, safe-zero
 is disabled, and a bounded reader verifies the compressed review map on queries.
 Unindexed URLs in known product namespaces are unknown foreign material, even
 when their stale hashed filenames differ from every current manifest entry.
+
+Recorder test loading (#1057) reuses the shared pure-import namespace isolation
+inside its temporary HA stubs. Canonical absolute imports cannot execute the
+real integration initializer under fake HA; success and import failure restore
+the original module identities, including an already loaded real HA harness.
+
+Detached HA replacement (#1054) preserves the full-card current read intent
+after retiring the accepted document. Reattach consumes that intent without
+another HA tick; existing same-context short returns keep their no-reload path.
+An interrupted reattach retains demand after retiring its old transport claim.
 
 Selected task browser checks (#1055) retain their complete computed plan under
 a finite job budget sized from the observed #1051 run. Individual invocation

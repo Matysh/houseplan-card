@@ -1263,6 +1263,16 @@ quota exhaustion and RU/EN output independently of sampled/native quality.
 unavailable and ambiguous maps, and strict orphan-to-route generations;
 `test_ha_vacuum_paths.py` exercises real Store teardown/restart and late callbacks.
 
+The recorder's temporary HA loader (#1057) delegates canonical package isolation
+to `tests_backend/pure_imports.py::load_pure`. Both successful loading and an
+exception after dependency imports restore the original HA, alias and canonical
+module identities; `test_trail_recorder_imports.py` observes those identities
+without writing to the import machine. Run `node scripts/trail-resume-test-guard.mjs` and
+`node scripts/backend-test-guard.mjs issue_495_dropped_route_runs_reach_the_store tests_backend/test_trail_recorder.py`
+with `PYTHON` pointing to an HA-enabled interpreter. A combined pytest invocation
+of recorder, recorder imports, trails and `test_ha_setup.py` checks coexistence with the real
+integration. These ordinary guards retain their existing selection and assertions.
+
 After a fresh `npm run bundle:sync`, run
 `node demo/smoke_vacuum_route_recovery.mjs`,
 `node demo/smoke_vacuum_path_fidelity.mjs` and
@@ -2480,6 +2490,17 @@ For View recovery (#824), run `node demo/smoke_view_recovery.mjs` after
 short/long/cold return with late HA, the real bounded paint timeout in both
 cards, and held stale responses under connection/placement/floor replacement.
 No private state is written to simulate a successful load or controller timeout.
+For detached HA replacement (#1054), also run
+`node demo/smoke_detached_authority.mjs`: real full/space hosts and an enabled
+signal feed exercise short/aged returns, a reused HA object and coalesced ABA.
+The held-return case also removes the card while the new mandatory pair is
+pending, drains Lit, and reattaches without another HA assignment. One retired
+pair and one current pair are expected; the late old response cannot own a tail.
+The current config/layout pair, plan/device layers, signal, read-only permission
+and cold View boundary must recover without another HA tick; a loaded
+same-context short return still makes no read. Its projection fixture follows
+the backend contract (`fields:[]` means full config); metadata probe matching
+uses the exact `fields:['model_version']` request from #1053.
 The historical beta.8 checkout is the negative control, not a development-time
 mutation run. Node ownership/controller tests complement, not replace, those
 mounted caller witnesses. Run existing continuity, warm/dialog/owner/navigation,

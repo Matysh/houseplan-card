@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1057,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Reuse the existing pure-import namespace loader inside recorder test HA stubs so canonical absolute imports cannot run the real integration initializer during isolated pytest collection. Restore module identities after successful and failed imports; retain product imports, runtime, guard commands, test selection and protected assertions. Both previously failing clean guards and real HA coexistence pass without rerunning the cancelled nightly mutation suite."
+}

@@ -3144,6 +3144,36 @@ const MUTANT_DEFINITIONS = [
     }],
   })),
   {
+    id: 'full-detached-authority-intent-dropped-1054',
+    guard: 'node demo/smoke_detached_authority.mjs',
+    because: '#1054 AC1: a foreign HA retires the accepted document off-DOM; the public reconnect must restore the current config, layers and live signal without another HA tick, including coalesced ABA.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (authorityChanged) this._read.defer();',
+      replace: '      if (false) this._read.defer();',
+    }],
+  },
+  {
+    id: 'full-reattach-pending-authority-not-started-1054',
+    guard: 'node demo/smoke_detached_authority.mjs',
+    because: '#1054 AC1: Lit has already consumed the detached HA assignment, so reconnect itself must consume the pending current intent while same-context short returns still make no read.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '\n    if (this._read.pending) void this._loadFromServer();\n    this.requestUpdate();',
+      replace: '\n    this.requestUpdate();',
+    }],
+  },
+  {
+    id: 'full-interrupted-reattach-loses-read-intent-1054',
+    guard: 'node demo/smoke_detached_authority.mjs',
+    because: '#1054 AC1: a second detach while the new HA config/layout pair is held must retire that transport and retain its demand; another attach restores the plan without a new HA tick or page event.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (interruptedRead) this._read.defer();',
+      replace: '    if (false) this._read.defer();',
+    }],
+  },
+  {
     id: 'full-read-ignores-lifecycle-owner',
     guard: 'node demo/smoke_view_recovery.mjs',
     because: '#824 AC4 crosses real asynchronous HA reads, floor navigation and element replacement: '

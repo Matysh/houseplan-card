@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Restore the full plan after Home Assistant changes while its card is detached,
+  including another removal while loading, without waiting for another HA
+  update or page event. Loaded, idle short returns in the same HA context
+  retain their existing frame without reloading. (#1054)
 - Unify editor action trays, furniture properties, context menus, disclosures
   and text links with the shared UI kit. Decor colours support inline HEX and
   opacity preview with one Undo step; device selection stays blue after hover,
