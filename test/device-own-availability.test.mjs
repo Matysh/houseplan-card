@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {resolveDeviceOwnAvailability,controllerSourceAvailability} from '../test-build/device-own-availability.js';
 import {resolveDevicePresentation,deviceA11yState} from '../test-build/device-presentation.js';
 import {entityVisualSample,entityVisualSamplesForDevice} from '../test-build/device-visual.js';
+import {buildDevices} from '../test-build/devices.js';
 
 const row=(entity_id,state,attributes={})=>({entity_id,state,attributes});
 const device=(entities=['media_player.own'],extra={})=>({id:'own',name:'Own',model:'',icon:'mdi:television',
@@ -11,6 +12,36 @@ const device=(entities=['media_player.own'],extra={})=>({id:'own',name:'Own',mod
   marker:{id:'own',binding:'device:physical'},...extra});
 const hass=states=>({states,entities:{},devices:{},config:{unit_system:{temperature:'°C'}}});
 const options={liveStates:true,showTemperature:false,showSignal:false,showBattery:false,now:10000};
+
+test('#1026 real roster ownership excludes claimed and disabled siblings from residual evidence',()=>{
+  const ids=['media_player.own','switch.aux','sensor.battery'];
+  const h={...hass(Object.fromEntries(ids.map(id=>[id,row(id,id==='sensor.battery'?'100':'unavailable')]))),
+    devices:{physical:{id:'physical',name:'Physical',area_id:'room',identifiers:[['demo','physical']]}},
+    entities:Object.fromEntries(ids.map(id=>[id,{entity_id:id,device_id:'physical',platform:'demo',
+      disabled_by:id==='sensor.battery'?'user':null}]))};
+  const marker={id:'exact',binding:'entity:media_player.own',controls:['switch.elsewhere']};
+  const build=markers=>buildDevices({hass:h,areaToSpace:{room:'floor'},markers,settings:{group_lights:false},
+    excluded:new Set(),showAll:false,firstSpaceId:'floor',loc:key=>key});
+  let roster=build([marker]);
+  const exact=roster.find(d=>d.id==='exact'),residual=roster.find(d=>d.id==='physical');
+  assert.deepEqual(exact.entities,['media_player.own']);
+  assert.deepEqual(residual.entities,['switch.aux']);
+  assert.equal(resolveDeviceOwnAvailability(h,exact),'unavailable');
+  assert.equal(resolveDeviceOwnAvailability(h,residual),'unavailable');
+  h.entities['sensor.battery']={...h.entities['sensor.battery'],disabled_by:null};
+  roster=build([marker]);
+  assert.equal(resolveDeviceOwnAvailability(h,roster.find(d=>d.id==='exact')),'unavailable');
+  assert.equal(resolveDeviceOwnAvailability(h,roster.find(d=>d.id==='physical')),'available',
+    'a newly enabled own diagnostic proves the residual parent available');
+  h.states['media_player.own']=row('media_player.own','off');
+  roster=build([marker,{id:'whole',binding:'device:physical'}]);
+  assert.equal(resolveDeviceOwnAvailability(h,roster.find(d=>d.id==='whole')),'available');
+  assert.equal(resolveDeviceOwnAvailability(h,roster.find(d=>d.id==='exact')),'available');
+  h.entities['media_player.own']={...h.entities['media_player.own'],disabled_by:'user'};
+  const disabled=build([marker]).find(d=>d.id==='exact');
+  assert.equal(disabled.bindingStatus.kind,'ha_disabled');
+  assert.equal(resolveDeviceOwnAvailability(h,disabled),'unknown');
+});
 
 test('#1026 own availability is symmetric, three-valued and independent of domain power',()=>{
   const cases=[

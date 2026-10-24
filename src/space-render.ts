@@ -624,9 +624,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   };
   // #780 r1 M1: a strip keeps its value badge at the half-length anchor, passive.
   const ledBadges = leds.size ? devs.filter((d) => leds.has(d.id)).map((d) => {
-    const face = renderDeviceShadowFace(presentationOf(d));
+    const presentation = presentationOf(d), face = renderDeviceShadowFace(presentation);
     const a = ledAnchor(leds.get(d.id)!.points, NORM_W);
-    return face === nothing ? nothing : html`<div class="dev led-badge ${deviceThemeClass(planHass)}" data-led-badge=${d.id} aria-hidden="true"
+    return face === nothing ? nothing : html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(planHass)}" data-led-badge=${d.id} aria-hidden="true"
       style="left:${((a.x - vb[0]) / vb[2]) * 100}%;top:${((a.y - vb[1]) / vb[3]) * 100}%">${face}</div>`;
   }) : nothing;
   // #764: markers and opening symbols are keyed like the rooms above (#745): `.device-core`

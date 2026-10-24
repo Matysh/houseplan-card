@@ -17,6 +17,13 @@ task branches capture their two new board scenes without accepting baselines.
 Pure tests cover the ownership matrix, unchanged source semantics, controller
 eligibility and incremental/full parity. No new config field or write exists.
 
+The initial candidate's native run caught two additional legacy owners: the
+2.5D state table still painted a grey body/edge, and full/static LED badge
+adapters omitted the resolved offline flag. The old 2.5D offline table entry is
+removed, and both passive badge adapters forward that same resolved flag.
+The focused ownership/snapshot run passes 16 tests, including diagnostic-only
+ticks, disabled/claimed registry evidence and unchanged unrelated presentations.
+
 ## LED Zigbee endpoints (#1004)
 
 `node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input

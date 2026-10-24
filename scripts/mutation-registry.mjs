@@ -11847,6 +11847,49 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-own-offline-fades-whole-marker',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 preserves ordinary shell, frame, contact, diagnostic and hit paint; '
+      + 'the native computed-ancestor oracle distinguishes a faded parent from inner content opacity',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '    .dev.unavail .device-core > ha-icon,',
+      replace: '    .dev.unavail,\n    .dev.unavail .device-core > ha-icon,',
+    }],
+  },
+  {
+    id: 'device-own-offline-fades-badge-frame',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 dims badge content once, independently of source quality, while its frame remains opaque',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '    .dev.unavail .value-badge-content {',
+      replace: '    .dev.unavail .value-badge {',
+    }],
+  },
+  {
+    id: 'device-own-offline-unknown-proves-unavailable',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="own availability is symmetric" test/device-own-availability.test.mjs',
+    because: '#1026 requires every nonempty own row explicitly unavailable; unknown, missing and empty are not evidence',
+    patches: [{
+      file: 'src/device-own-availability.ts',
+      find: "    if (state !== 'unavailable') allUnavailable = false;",
+      replace: "    if (false) allUnavailable = false;",
+    }],
+  },
+  {
+    id: 'device-own-offline-led-repaints-inactive-core',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 variant 3 retains normal inactive LED ink for unknown and unavailable states; '
+      + 'the browser compares it with an ordinary off strip and verifies no invented glow',
+    patches: [{
+      file: 'src/led-strip-runtime.ts',
+      find: "      const core = view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
+      replace: "      const core = view.state === 'on' && view.appearance ? view.appearance.c : '#B5BAC1';",
+    }],
+  },
+  {
     id: 'device-unavailable-hover-restored',
     guard: 'node demo/smoke_device_icon_design.mjs',
     because: 'unavailable keeps click/keyboard access but must never regain the blue visual hover '
