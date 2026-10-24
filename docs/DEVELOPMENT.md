@@ -75,6 +75,14 @@ without another physical read or history-owned Store change.
 The targeted frontend pair passes after a fresh TypeScript compilation on
 `769ff9f53`. The suppression guard is registered separately for nightly, using
 that ordinary unit oracle; static readiness is not a mutant execution claim.
+The initial get owner lookup also distinguishes source authority from a later
+record failure. Only that `_owner` call maps unsupported/ambiguous/unavailable
+saved ownership to `retired`; list remains descriptive, and catalog/read/decode
+failures keep their original errors. Before the correction, three real HA
+unavailable/disabled/rebound cases failed while two valid-owner malformed/provider
+positives passed. The unchanged inputs then pass all nine owner/suppression/record
+cases; eleven frontend cases confirm retirement versus keeping a valid A.
+These narrow results do not replace final accepted-base task execution.
 
 The whole accepted `b3dbea281` merge includes decor multi-selection and bounded
 registry Git I/O. The Golden matrix keeps both independent additions under

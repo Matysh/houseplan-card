@@ -158,10 +158,10 @@ test('#999 server suppression on get retires A while the client still sees the s
  host.hass.callWS=async message=>message.type.endsWith('/list')?listing:response(message.record_id);
  await owner.load();await owner.show();paint(owner);assert.equal(owner.visible,true);assert.equal(owner.shown.id,B);
 });
-test('#999 an ordinary unavailable get retains the valid painted A',async()=>{
+for(const code of ['unavailable','unsupported','stale'])test(`#999 an ordinary ${code} get retains the valid painted A`,async()=>{
  const {host,owner}=await loaded();await owner.show();paint(owner);const shown=owner.shown;
- owner.selected=B;host.hass.callWS=async()=>{throw {code:'unavailable'};};await owner.show();
- assert.equal(owner.shown,shown);assert.equal(owner.visible,true);assert.equal(owner.reason,'unavailable');
+ owner.selected=B;host.hass.callWS=async()=>{throw {code};};await owner.show();
+ assert.equal(owner.shown,shown);assert.equal(owner.visible,true);assert.equal(owner.reason,code);
  assert.equal(owner.catalog.records.length,2);assert.equal(owner.canShow,true);
 });
 for(const change of ['hide','space','authority_aba','permission','kiosk','removed','hidden','live_off','calibration','binding','other_vacuum','detach','pagehide','new_cleanup'])

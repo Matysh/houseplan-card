@@ -121,7 +121,14 @@ async def _request(hass: HomeAssistant, connection, msg: dict, *, geometry: bool
         stored = await rt.config_store.async_load() or {}
         if get_data(hass) is not rt or connection.user is not user or not _check_write(hass, connection):
             raise PathRejected("retired")
-        owner = _owner(hass, stored.get("config") or {}, msg["marker_id"])
+        try:
+            owner = _owner(hass, stored.get("config") or {}, msg["marker_id"])
+        except PathRejected as err:
+            # A get follows an earlier catalog. An unproved saved owner ends
+            # that authority, while later ordinary record failures need not.
+            if geometry and str(err) in ("unsupported", "ambiguous", "unavailable"):
+                raise PathRejected("retired") from None
+            raise
         records, revision, limited = _catalog(owner)
         epoch = history_epoch(owner["rec"], msg["marker_id"])
         if not geometry:

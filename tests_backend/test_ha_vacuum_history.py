@@ -147,6 +147,43 @@ async def test_saved_marker_suppression_refuses_old_catalog_without_another_prov
     assert hass.data[DOMAIN]["trail_recorder"] is rec
 
 
+@pytest.mark.parametrize("change,reason", [("unavailable", "unavailable"), ("disabled", "unsupported"), ("rebound", "ambiguous")])
+async def test_initial_get_owner_refusal_is_retired_but_list_remains_descriptive(hass, hass_ws_client, change, reason):
+    _, rt, rec, camera, client = await prepared(hass, hass_ws_client)
+    listing = await catalog(client)
+    if change == "unavailable":
+        hass.states.async_set(SOURCE, "unavailable")
+    elif change == "disabled":
+        er.async_get(hass).async_update_entity(SOURCE, disabled_by=er.RegistryEntryDisabler.USER)
+    else:
+        changed = copy.deepcopy(await rt.config_store.async_load())
+        changed["config"]["markers"][0]["binding"] = "entity:vacuum.missing999"
+        changed["rev"] += 1
+        await rt.config_store.async_save(changed)
+    before = [copy.deepcopy(await store.async_load()) for store in (rt.config_store, rt.store, rec.store)]
+    descriptive = await request(client, "list")
+    assert descriptive["error"]["code"] == reason, descriptive
+    refused = await geometry(client, listing)
+    assert refused["error"]["code"] == "retired", refused
+    assert camera.calls == [], "unproved owner must not start another physical read"
+    assert [await store.async_load() for store in (rt.config_store, rt.store, rec.store)] == before
+
+
+@pytest.mark.parametrize("failure,reason", [("malformed", "unsupported"), ("provider", "stale")])
+async def test_valid_owner_record_failure_keeps_its_ordinary_error(hass, hass_ws_client, failure, reason):
+    _, _, _, camera, client = await prepared(hass, hass_ws_client)
+    listing = await catalog(client)
+    if failure == "malformed":
+        camera.payload["history_map"] = False
+    else:
+        camera.pending = asyncio.get_running_loop().create_future()
+        camera.pending.set_exception(RuntimeError("synthetic record failure"))
+    answer = await geometry(client, listing)
+    assert answer["error"]["code"] == reason, answer
+    assert len(camera.calls) == 1
+    assert (await catalog(client))["records"] == listing["records"]
+
+
 async def settle(predicate):
     for _ in range(200):
         if predicate():

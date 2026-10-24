@@ -5,8 +5,9 @@
 - Preview a selected past Dreame cleanup path on this screen without saving
   settings or controlling the robot. Hide restores the latest live path; a new
   cleanup ends preview even when its catalog arrives before live updates.
-  Confirmed loss of access clears an already shown preview, including a server
-  refusal after the device is hidden or its live display is disabled. (#999)
+  Server-confirmed loss of access, hidden/live-disabled devices and retired or
+  unavailable sources clear an already shown preview. Ordinary errors loading
+  another cleanup retain the valid shown path. (#999)
 - Select multiple Background objects with Ctrl+click, all decor with Ctrl+A,
   or furniture with Ctrl+M. Individual outlines show the selection; drag any
   member to move it together in one Undo step. Matching object types share

@@ -21249,6 +21249,10 @@ const decorLine1046Cases = [
 ];
 
 const vacuumHistory999Cases = [
+  {id:'vacuum-history-initial-get-owner-keeps-preview-999',
+    guard:'node scripts/backend-test-guard.mjs initial_get_owner_refusal tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC5/AC6: a fresh get must distinguish a retired saved owner from an ordinary record failure before a stale client can keep painted A.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'if geometry and str(err) in ("unsupported", "ambiguous", "unavailable"):',replace:'if False and geometry and str(err) in ("unsupported", "ambiguous", "unavailable"):'}]},
   {id:'vacuum-history-get-suppression-retains-preview-999',
     guard:'node --test --test-name-pattern="server suppression" test/vacuum-history.test.mjs',
     because:'#999 AC5/AC6: an explicit saved-marker suppression must retire painted A even before the client learns hidden/static/live-off configuration.',
