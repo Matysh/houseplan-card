@@ -148,6 +148,13 @@ device editor), `.virtual` (a marker with no entity), `.valonly` (value
 instead of icon), `.static-icon` (the always-static display mode), `.noicon`,
 `.sel` (selected in an editor).
 
+#1026 narrows `.unavail` to confirmed unavailable of the marker's active own HA
+roster. Off, unknown, missing and unavailable foreign targets do not set it.
+It dims only the core glyph/Text and inner badge contents; the marker background,
+frame, contact ink and diagnostics keep their ordinary paint. Whole-marker opacity
+or a grey-background override is no longer the built-in offline appearance.
+Static/live/lifecycle gates still apply; the class adds no hit target or action.
+
 Unified device activity is exposed by one descendant `.device-pulse` with
 exactly one kind class: `.alarm`, `.short` or `.continuous`. Semantic reason is
 available as `.reason-alarm`, `.reason-event`, `.reason-presence`,
@@ -570,3 +577,7 @@ Toast identity follows the actual key through direct/helper translations,
 conditional keys, single-key junction/Resize labels and toast ports. No translated-text reverse lookup is used.
 `test/toast-identity-source.test.mjs` checks senders and forwarding adapters;
 the inbox and history smokes observe ids after real operations/refusals.
+
+The [dialog CSS migration record](development-notes/dialog-style-migration.md)
+lists all eleven shared-style consumers, retained subject rules and exact
+properties whose owner is now the common dialog kit (#1019).

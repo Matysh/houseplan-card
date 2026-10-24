@@ -85,7 +85,6 @@ export const ISO_STATE_BODIES = Object.freeze({
   open: '#ff9f43',
   'lock-locked': '#66D17A',
   'lock-unlocked': '#F0410C',
-  unavail: '#B5BAC1',
   alarm: '#F0410C',
 } as const);
 
@@ -125,7 +124,7 @@ export function isoTileStateCss(): string {
     rules.push(`${S} .oplock.${cls}.iso-floor-light { --iso-edge: ${edge(body, 'light', true)}; }`);
   }
   // Floor shadows, theme × floor (a later rule of equal weight wins: dark last).
-  const tinted = ':is(.on, .open, .lock-locked, .lock-unlocked, .unavail, .alarm, .locked, .unlocked)';
+  const tinted = ':is(.on, .open, .lock-locked, .lock-unlocked, .alarm, .locked, .unlocked)';
   const shadow = (sel: string, s: IsoTileShadow, white = true) => `${sel} {`
     + ` --iso-sh-dx: ${u(s.dx)}; --iso-sh-dy: ${u(s.dy)}; --iso-sh-blur: ${u(s.sigma * 2)};`
     + ` --iso-sh-a: ${white ? s.opacityWhite : s.opacityTinted}; --iso-sh-a-white: ${s.opacityWhite}; }`;
@@ -164,6 +163,7 @@ ${S} .oplock { --iso-radius: min(${u(ISO_TILE.radius)}, calc(var(--oplock-core-s
  */
 export function renderIsoTileShadow(kind: 'dev' | 'oplock', owner: string, classes: string, style: string,
   face: TemplateResult | typeof nothing): TemplateResult {
+  /* css-uses {"owner":"renderIsoTileShadow","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2","theme-light","theme-dark","iso-floor-light","locked","unlocked"],"reason":"Two real ghost callers forward presentationClasses, deviceThemeClass and floor-light, or the opening lock state"} */
   return html`<div class="${kind} iso-tile-shadow ${classes}" data-shadow-of=${owner} style=${style}
     aria-hidden="true">${face}</div>`;
 }

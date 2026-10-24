@@ -20,10 +20,28 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5223 · pure backend 627 · HA-harness backend 527 · browser smokes 430 (`npm run inventory`) |
+| Tests | Node unit 5275 · pure backend 631 · HA-harness backend 533 · browser smokes 434 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+- #1056 restores the mounted full card after connection/user replacement inside
+  the same HA object through the existing coalesced intake and read owner. The
+  named ordinary witness separates mandatory config/layout from capability
+  projection and retains ABA, held replies and initial missing-HA controls.
+
+Own availability (#1026) separates available/off, confirmed own unavailable and
+unknown data. Only glyph/value and badge contents fade on confirmed offline;
+shell, contact ink and diagnostics retain their paint. LED uses ordinary inactive
+geometry and fades badge text only. Source-quality and lifecycle/activity gates
+remain separate; no persisted data or writer changes.
+
+Dialog CSS ownership cleanup (#1019) records all eleven consumers, removes
+confirmed obsolete selectors and leaves shared paint with its existing kit.
+Subject geometry, validation/hover exceptions and View confirmations retain
+their actual owners. No configuration, runtime API or visual contract changes.
+Finite producer annotations name the existing presentation, Properties,
+opening-surface and Radar glyph vocabularies; they add no runtime state.
 
 Parallel paths (#1018): historical insertion ratios identify audit candidates,
 not deletion permission. Manual semantic/caller decisions are pinned separately;
@@ -70,9 +88,11 @@ after retiring the accepted document. Reattach consumes that intent without
 another HA tick; existing same-context short returns keep their no-reload path.
 An interrupted reattach retains demand after retiring its old transport claim.
 
-Selected task browser checks (#1055) retain their complete computed plan under
-a finite job budget sized from the observed #1051 run. Individual invocation
-limits, semantic assertions and full-matrix/release proof boundaries are separate.
+Selected task browser checks (#1055/#1058) retain their complete computed plan
+under a finite 50-minute job budget, resized after #1025 completed 246 of 256
+smokes before the former 40-minute timeout. Individual invocation limits,
+semantic assertions and full-matrix/release proof boundaries are separate;
+cancelled partial results remain incomplete.
 
 Config-authority smoke (#1052) compares reads across the late-A boundary;
 the independent direct-LQI capability probe no longer looks like a stale-event
@@ -1070,6 +1090,10 @@ Path profiles (#980) separate product, tooling and docs push/PR entry points.
 Filters follow computed test ownership and unknown inputs remain conservative.
 Consumers check registered workflow paths and complete product evidence;
 canonical full dispatch remains available to S7, night and release.
+A surplus product workflow with a valid companion-only candidate plan (#1059)
+cannot grant acceptance: after its own execution checks it requires canonical
+validation. Invalid plans and failed/incomplete execution remain fail closed;
+the existing exact-material dispatch retains the requested light policy.
 
 CI proof inheritance (#981) uses the portable orphan ci-proofs index, immutable
 source attempts and actual job outcomes. Frontend is reusable; filesystem/range

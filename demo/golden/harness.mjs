@@ -8,6 +8,8 @@ export { resetGoldenStability } from './static-stability.mjs';
 import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
   prepareBatteryZigbeeOverlap, batteryZigbeeProbe, batteryZigbeeClip } from './device-battery.mjs';
 import { makeZigbeeLedFixture, prepareZigbeeLed } from './zigbee-led.mjs';
+import { makeDeviceOfflineFixture } from '../fixtures/device-offline.mjs';
+import { prepareDeviceOfflineBoard } from './device-offline.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -60,6 +62,7 @@ const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
   }
   return fixture;
 })() : scenario.deviceContacts ? makeDeviceContactsFixture()
+  : scenario.offlineBoard ? makeDeviceOfflineFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
   : scenario.zigbeeLed ? makeZigbeeLedFixture()
@@ -1942,6 +1945,27 @@ export async function prepareGoldenScenario(page, scenario) {
           || dialog.querySelector('.btn.on')) {
         throw new Error('golden Optimize preflight failure dialog is incomplete');
       }
+    } else if (scenario.dialog === 'icon-rules-invalid') {
+      card._setMode('devices');
+      await card.updateComplete;
+      await settleMode(card);
+      const trigger = card.renderRoot.querySelector('[data-tool="icon-rules"]');
+      if (!trigger) throw new Error(`golden icon rules trigger is missing: ${scenario.id}`);
+      trigger.click();
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog[data-kind="rules"]');
+      const pattern = dialog?.querySelector('[data-field="icon-rule-pattern"]');
+      if (!pattern) throw new Error(`golden icon rules field is missing: ${scenario.id}`);
+      pattern.value = '[';
+      pattern.dispatchEvent(new Event('input', { bubbles: true }));
+      await card.updateComplete;
+      await frame();
+      if (dialog.querySelectorAll('.rpat.bad').length !== 1
+          || !dialog.querySelector('[data-action="icon-rule-delete"]')
+          || !dialog.querySelector('[data-hp="dialog-confirm"]')
+          || dialog.scrollWidth > dialog.clientWidth + 1) {
+        throw new Error(`golden invalid icon rules dialog is incomplete or clipped: ${scenario.id}`);
+      }
     } else if (scenario.dialog === 'device-inbox') {
       card._setMode('devices');
       await card.updateComplete;
@@ -2720,6 +2744,7 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);
+  if (scenario.offlineBoard) result.offlineBoard = await prepareDeviceOfflineBoard(page);
   if (scenario.revealHiddenDevices) {
     // #919 enters through the same native header action as the user. No
     // private visibility writes: a missing/wrong face fails before capture.

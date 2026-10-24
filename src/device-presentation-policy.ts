@@ -1,5 +1,6 @@
 import type { DeviceAvailability, DeviceVisualState } from './device-visual';
 import { displayIsNeutral, displayWantsValue, type DeviceDisplayMode } from './logic';
+import type { OwnDeviceAvailability } from './device-own-availability';
 
 export type PresentationReason =
   | 'neutral'
@@ -41,8 +42,9 @@ export interface DevicePresentationPolicyInput {
   display: DeviceDisplayMode;
   liveStates: boolean;
   sourceVisual: DeviceVisualState;
+  ownAvailability: OwnDeviceAvailability;
   controllerFace: boolean;
-  controllerAvailability: DeviceAvailability;
+  controllerSourceAvailability: DeviceAvailability;
   shortActivity: 'event' | 'transition' | null;
   valueAvailable: boolean;
   valueFallback: ValueFallbackReason | null;
@@ -53,6 +55,7 @@ export interface DevicePresentationPolicyResult {
   effectiveHidden: boolean;
   bindingUnavailable: boolean;
   visual: DeviceVisualState;
+  offline: boolean;
   face: PresentationFace;
   dynamicIcon: boolean;
   metrics: boolean;
@@ -97,11 +100,11 @@ export function resolveDevicePresentationPolicy(
 
   const neutralFace = displayIsNeutral(input.display);
   const wantsValue = displayWantsValue(input.display);
-  let visual = input.controllerFace
-    ? { ...input.sourceVisual, availability: input.controllerAvailability }
+  let visual = input.controllerFace && input.sourceVisual.status !== 'alarm'
+    ? { ...input.sourceVisual, availability: input.controllerSourceAvailability }
     : input.sourceVisual;
   decisions.push(input.controllerFace
-    ? input.controllerAvailability === 'available'
+    ? input.controllerSourceAvailability === 'available'
       ? 'availability.controller_available'
       : 'availability.controller_unavailable'
     : 'availability.source');
@@ -118,6 +121,9 @@ export function resolveDevicePresentationPolicy(
   } else {
     decisions.push('face.dynamic');
   }
+  const offline = input.ownAvailability === 'unavailable' && !effectiveHidden
+    && !bindingUnavailable && !neutralFace && input.liveStates;
+  decisions.push(`availability.own_${input.ownAvailability}`);
 
   if (!neutralFace && !effectiveHidden && input.liveStates
       && input.sourceVisual.status !== 'alarm' && input.shortActivity) {
@@ -154,6 +160,7 @@ export function resolveDevicePresentationPolicy(
     effectiveHidden,
     bindingUnavailable,
     visual,
+    offline,
     face,
     dynamicIcon,
     metrics,
@@ -171,6 +178,7 @@ export interface PresentationReasonInput {
   sourceKind: 'cover' | 'light' | 'controls' | 'device_role' | 'primary' | 'none';
   primaryDomain: string;
   visual: DeviceVisualState;
+  offline: boolean;
   activity: 'none' | 'event' | 'presence' | 'transition' | 'running';
 }
 
@@ -182,7 +190,8 @@ export function resolvePresentationReason(input: PresentationReasonInput): Prese
   if (input.display === 'value_static_icon') return 'value_static_icon';
   if (input.visual.status === 'alarm') return 'alarm';
   if (!input.liveStates) return 'live_states_disabled';
-  if (input.visual.availability === 'unavailable') return 'unavailable';
+  if (input.offline) return 'unavailable';
+  if (input.visual.availability === 'unavailable') return 'neutral';
   if (input.sourceKind === 'cover') return 'cover_icon_state';
   if (input.activity === 'presence') return 'presence';
   if (input.activity === 'event') return 'event';

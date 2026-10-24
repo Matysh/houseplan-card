@@ -36,6 +36,12 @@ export class RenderLifecycle {
     this.diagnosticsCache = null;
   }
 
+  /** A known foreign mounted HA may reuse the consumed snapshot object (#1056). */
+  retireHass(): void {
+    this.seen = null;
+    this.invalidate();
+  }
+
   private invalidateDiagnosticsForHass(
     before: HassRenderSnapshot | null | undefined,
     after: HassRenderSnapshot | null | undefined,

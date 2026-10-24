@@ -1,5 +1,13 @@
 # Config compatibility registry
 
+## Own offline presentation (#1026)
+
+No persisted fields, model/Store/ZIP versions or migrations change. The own
+availability fact and eligible content opacity are derived runtime presentation.
+Existing source, controls, marker appearance and LED settings are neither
+rewritten nor normalized by state ticks. Reverting the task restores the former
+paint without changing saved plans or backups.
+
 ## Dreame native recovery (#1048)
 
 No config/model/Store/public trail format changes. The existing private

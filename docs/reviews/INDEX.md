@@ -1,11 +1,15 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 88, issue: 46. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 94, issue: 49. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.83.0-beta.1 | [SHIP-REVIEW-v1.83.0-beta.1.md](SHIP-REVIEW-v1.83.0-beta.1.md) | пакетное ревью ship · — | 🟢 зелёный | 0 | 0 | — | — |
+| #1059 | [CODE-REVIEW-1059-r1.md](CODE-REVIEW-1059-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1058 | [CODE-REVIEW-1058-r1.md](CODE-REVIEW-1058-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1058 | [CODE-REVIEW-1058-r2.md](CODE-REVIEW-1058-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1057 | [CODE-REVIEW-1057-r1.md](CODE-REVIEW-1057-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1056 | [CODE-REVIEW-1056-r1.md](CODE-REVIEW-1056-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1055 | [CODE-REVIEW-1055-r1.md](CODE-REVIEW-1055-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1054 | [CODE-REVIEW-1054-r1.md](CODE-REVIEW-1054-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1053 | [CODE-REVIEW-1053-r1.md](CODE-REVIEW-1053-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
@@ -58,9 +62,11 @@
 | #1029 | [CODE-REVIEW-1029-r1.md](CODE-REVIEW-1029-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1028 | [CODE-REVIEW-1028-r1.md](CODE-REVIEW-1028-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1026 | [SPEC-REVIEW-1026-r1.md](SPEC-REVIEW-1026-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1026 | [CODE-REVIEW-1026-r1.md](CODE-REVIEW-1026-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1025 | [SPEC-REVIEW-1025-r1.md](SPEC-REVIEW-1025-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1021 | [CODE-REVIEW-1021-r1.md](CODE-REVIEW-1021-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1019 | [SPEC-REVIEW-1019-r1.md](SPEC-REVIEW-1019-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | аудит в теле issue ошибочно числит живой селектор мёртвым | `plan.styles.ts` `src/houseplan-card.ts` |
+| #1019 | [CODE-REVIEW-1019-r1.md](CODE-REVIEW-1019-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1018 | [SPEC-REVIEW-1018-r1.md](SPEC-REVIEW-1018-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1018 | [CODE-REVIEW-1018-r1.md](CODE-REVIEW-1018-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1016 | [CODE-REVIEW-1016-r1.md](CODE-REVIEW-1016-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | устаревшая формулировка в docs/TESTING.md:385 | `docs/TESTING.md` `bundle-sync.mjs` `AGENTS.md` `PROCESS.md` `docs/ARCHITECTURE.md` `docs/DEVELOPMENT.md` `docs/STATUS.md` `docs/process/AUTHOR.md` |

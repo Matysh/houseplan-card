@@ -1178,6 +1178,7 @@ export function renderIsoWalls(
             : nothing}`;
         }
         const surface = entry.surface;
+        /* css-uses {"owner":"renderIsoWalls","kind":"class","values":["iso-door","iso-window"],"reason":"Opening surfaces have exactly the door/window type union"} */
         return svg`<path class="iso-opening-panel iso-${surface.type} iso-opening-${surface.kind} iso-material-${surface.material}"
           d=${surface.d} data-id=${surface.id} data-kind=${surface.type}
           data-surface=${surface.kind} data-leaf=${surface.leaf ?? nothing}></path>${layers.materialNuance

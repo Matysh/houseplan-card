@@ -1,5 +1,15 @@
 # House Plan architecture
 
+Own availability (#1026) is one three-state fact from `DevItem.entities`, resolved
+before source selection and reused by source eligibility and presentation policy.
+It never expands the roster through controls, values or physical siblings.
+The existing sample-quality gate still suppresses invented work/activity; only
+confirmed own unavailable produces the policy's eligible offline content paint.
+The shared face owns one inner badge span, including the geometry-only shadow
+twin. LED source loss uses the ordinary inactive path; its badge consumes the
+same presentation fact. Snapshot row tracking captures the own reads without
+adding a registry scan, listener, polling owner or writer.
+
 The config-authority browser witness (#1052) isolates late foreign-event reads
 from already-started mandatory and optional capability reads. It observes the
 transport boundary without changing the production subscription or writer.
@@ -646,6 +656,14 @@ clicks (`detail=0`); it cannot immobilise header/toolbar controls after a drag.
 
 ## Styles (#266)
 
+The [eleven-consumer migration record](development-notes/dialog-style-migration.md)
+names common owners and retained subject properties (#1019). Removed legacy
+paint was already defeated in the actual shared root; genuine obsolete classes
+are recorded separately with their retired producers. Composition order and
+ShadowRoot boundaries remain part of the cascade contract.
+Finite `css-uses` comments belong to actual render statements whose string
+vocabularies cannot be resolved statically; executable renderer code is unchanged.
+
 Dialog composition extends the existing form kit (#1007), documented in
 [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). Explicit sections own separators and outer
 spacing; fields own only their internal layout. Actions and independent Help
@@ -688,8 +706,9 @@ shared by two surfaces; `plan` stage ink, `devices` markers, `chrome`
 toolbars/tabs/menus, `dialogs` dialogs/forms/pickers. `form-kit.styles.ts`
 (#594), `editor-secondary.styles.ts` and the summary-panel sheets live outside
 that aggregator. `test/styles-split.test.mjs` pins composition, no cross-file
-duplicate selectors and `@media` wrappers; `scripts/dev/styles-diff.mjs` proves
-a move refactor-only. Public selectors: `STYLING-HOOKS.md`. CSS only the
+duplicate selectors and `@media` wrappers; `scripts/dev/styles-diff.mjs` compares
+the normalized rule multiset, not cascade or visual equivalence. Public selectors:
+`STYLING-HOOKS.md`. CSS only the
 editor renders is not in the first frame (#805): `editor-dialogs.styles.ts` (the
 editor-only rules of `dialogs`) and `editor-secondary.styles.ts` (the tray) are
 adopted by the lazy editor runtime's constructor (`editor-style-adoption.ts`) into
@@ -1595,6 +1614,9 @@ still recognised in stored config but no longer served
   replacement/navigation fence every awaited adoption and optional tail.
   Context is observed per HA assignment before Lit coalesces A→B→A; transport
   restart waits for the current usable authority, including a temporary HA gap.
+  A known connection/user replacement on a mounted full card also retires its
+  consumed HA snapshot identity (#1056); even a reused object reaches the normal
+  Lit intake once for the final authority, without an extra HA tick or read owner.
   Static attach revalidates the server; a full long return without HA defers.
   A foreign HA assigned while detached also retains a current read intent
   after retiring the accepted document (#1054). Reconnect consumes that intent

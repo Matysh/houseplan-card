@@ -40,6 +40,36 @@ const liveHost = (lifecycle) => ({
   _resize: { dragging: false },
 });
 
+test('#1056 known authority retirement admits a reused snapshot once; diagnostics invalidation does not', () => {
+  const lifecycle = new RenderLifecycle(), snapshot = base();
+  let intakes = 0;
+  lifecycle.intake(snapshot, () => intakes++);
+  lifecycle.invalidate();
+  lifecycle.intake(snapshot, () => intakes++);
+  assert.equal(intakes, 1, 'ordinary config/registry diagnostics do not re-intake a consumed snapshot');
+  lifecycle.retireHass();
+  lifecycle.retireHass(); // Same-turn intermediate authorities coalesce before Lit intake.
+  lifecycle.observe(snapshot, snapshot, { entityIds: ['light.plan'] }, () => intakes++);
+  lifecycle.intake(snapshot, () => intakes++);
+  assert.equal(intakes, 2, 'the final authority consumes the reused object once');
+});
+
+test('#1056 rendering snapshots retain willUpdate intake ordering and skip-path intake remains single', () => {
+  const lifecycle = new RenderLifecycle(), live = new LiveRuntime(liveHost(lifecycle));
+  const before = base(), after = { ...before, connection: {} };
+  let intakes = 0;
+  const intake = () => intakes++;
+  assert.equal(live.hass(before, after, { entityIds: ['light.plan'] }, intake), true);
+  assert.equal(intakes, 0, 'a rendering update allows remaining same-turn mutations before intake');
+  lifecycle.observe(before, after, { entityIds: ['light.plan'] }, intake);
+  assert.equal(intakes, 1);
+  const unrelated = { ...after, states: { ...after.states, 'sensor.other': { state: '1' } } };
+  assert.equal(live.hass(after, unrelated, { entityIds: ['light.plan'] }, intake), false);
+  assert.equal(intakes, 2, 'deliberately skipped visual updates still do operational intake');
+  lifecycle.observe(after, unrelated, { entityIds: ['light.plan'] }, intake);
+  assert.equal(intakes, 2, 'a later unrelated Lit update cannot duplicate that intake');
+});
+
 test('a relevant HA tick is deferred only while a continuous interaction is active', () => {
   const lifecycle = new RenderLifecycle();
   const host = liveHost(lifecycle);

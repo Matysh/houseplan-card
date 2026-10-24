@@ -7,6 +7,13 @@
   one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale
   menus cannot send a late delete. A temporary backend failure keeps the plan
   intact and explains that the deletion can be retried. (#1045)
+- Restore the full card's current plan when Home Assistant changes its
+  connection or user inside the same `hass` object, without another HA tick. (#1056)
+- Separate a device being off from losing Home Assistant availability. Confirmed
+  offline dims only the icon/value and badge contents; frames and diagnostics
+  retain their appearance in Flat and 2.5D. LED strips keep their ordinary inactive shape and
+  dim only badge text when present. Unknown/missing readings do not prove offline. (#1026)
+
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)

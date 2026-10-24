@@ -576,9 +576,14 @@ export class HouseplanCard extends LitElement {
       : `${this._editorSecondaryContextId}:${JSON.stringify(this._editorRuntime?.properties.identity)}`);
   }
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
+    let forceHass = false;
     if (name === 'hass') {
       const authorityChanged = this._configWriteContext.observe(this.hass);
       if (authorityChanged) {
+        // A mounted foreign authority needs one coalesced Lit intake even if
+        // HA reused its object. Detached demand stays with the read owner.
+        forceHass = this.isConnected;
+        if (forceHass) this._renderLife.retireHass();
         this._haVacuumDockRestartApi = null;
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._liveSyncConnection = null;
@@ -601,7 +606,7 @@ export class HouseplanCard extends LitElement {
       // its new read intent independently of Lit/visual snapshot deduplication.
       if (authorityChanged) this._read.defer();
     }
-    if (name === 'hass' && this.hass && this._liveRt) {
+    if (name === 'hass' && this.hass && this._liveRt && !forceHass) {
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
       const render = this._liveRt.hass(
         oldValue as HassRenderSnapshot | null | undefined, this.hass,
@@ -613,7 +618,7 @@ export class HouseplanCard extends LitElement {
     if (name !== undefined) this._terminalFrame = 0;
     if (this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
     this._liveRt?.clear();
-    super.requestUpdate(name, oldValue, options);
+    super.requestUpdate(name, oldValue, forceHass ? { ...options, hasChanged: () => true } : options);
   }
 
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
@@ -12073,6 +12078,7 @@ export class HouseplanCard extends LitElement {
             value: presentation.lqiText,
           }) : '',
     ]);
+    /* css-uses {"owner":"HouseplanCard._renderDevice","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2"],"reason":"presentationClasses emits this finite semantic state vocabulary"} */
     return html`<div
       ${''/* docs/STYLING-HOOKS.md §3: the styling contract. `nothing` on an
              attribute binding REMOVES the attribute, so a virtual marker has
@@ -12125,14 +12131,13 @@ export class HouseplanCard extends LitElement {
       ${this._vacRouteBadge(d)}
     </div>`;
   }
-
   /** #780 r1 M1: the value badge of a strip, passive, at its anchor (`_pos`). */
   private _ledBadge(d: DevItem, view: { x: number; y: number; w: number; h: number }, iso?: IsoOverlayPlacement) {
     const presentation = this._devicePresentation(d, false);
     const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
     if (face === nothing) return nothing;
     const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
-    return html`<div class="dev led-badge ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
+    return html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
       style="left:${((point[0] - view.x) / view.w) * 100}%;top:${((point[1] - view.y) / view.h) * 100}%">${face}</div>`;
   }
 

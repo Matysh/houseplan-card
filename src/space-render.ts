@@ -624,9 +624,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   };
   // #780 r1 M1: a strip keeps its value badge at the half-length anchor, passive.
   const ledBadges = leds.size ? devs.filter((d) => leds.has(d.id)).map((d) => {
-    const face = renderDeviceShadowFace(presentationOf(d));
+    const presentation = presentationOf(d), face = renderDeviceShadowFace(presentation);
     const a = ledAnchor(leds.get(d.id)!.points, NORM_W);
-    return face === nothing ? nothing : html`<div class="dev led-badge ${deviceThemeClass(planHass)}" data-led-badge=${d.id} aria-hidden="true"
+    return face === nothing ? nothing : html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(planHass)}" data-led-badge=${d.id} aria-hidden="true"
       style="left:${((a.x - vb[0]) / vb[2]) * 100}%;top:${((a.y - vb[1]) / vb[3]) * 100}%">${face}</div>`;
   }) : nothing;
   // #764: markers and opening symbols are keyed like the rooms above (#745): `.device-core`
@@ -662,6 +662,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             value: presentation.lqiText,
           }) : '',
     ]);
+    /* css-uses {"owner":"renderSpaceStatic","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2"],"reason":"The static face consumes the same finite presentationClasses vocabulary as the full card"} */
     return html`<div class="dev ${deviceThemeClass(planHass)} ${presentation.classes.join(' ')} ${d.virtual ? 'virtual' : ''} ${presentation.valueText != null ? 'valonly' : ''}"
       data-hp="device" data-id="${d.id}" data-entity=${d.primary || nothing} data-area=${d.area || nothing}
       role="img" aria-label=${deviceAriaLabel}

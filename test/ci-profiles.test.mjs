@@ -214,3 +214,48 @@ test('#1044 full product proof needs tooling coverage even when the changed path
   companion.run.status = 'in_progress';
   assert.equal(evaluate(makeProof(true, ['product', 'tooling']), { profileRuns }).status, 'pending');
 });
+
+function surplusProductProof() {
+  const needs = { preflight: { result: 'success' }, changes: { result: 'success', outputs: { frontend: 'true' } },
+    reuse: { result: 'success', outputs: {} }, frontend: { result: 'success' } };
+  const proof = buildCiProof({ candidateSha: SHA, candidateTree: TREE, runId: 9, attempt: 1, event: 'push', needs,
+    workflow: 'validate-product.yml', requiredProfiles: ['tooling', 'docs'] });
+  const jobs = ['preflight', 'changes', 'reuse', 'frontend'].flatMap(id =>
+    jobInstanceNames(validateJobs().get(id)).map(name => ({ name, conclusion: 'success' })));
+  const run = { id: 9, run_attempt: 1, path: '.github/workflows/validate-product.yml', head_sha: SHA,
+    event: 'push', status: 'completed', conclusion: 'success' };
+  return { run, proof, jobs, candidate: { sha: SHA, tree: TREE }, policy: CI_PROOF_POLICIES.mergeLight };
+}
+
+test('#1059 a complete surplus product proof with a companion-only plan requires canonical validation, never acceptance', () => {
+  for (const requiredProfiles of [['tooling', 'docs'], ['docs'], ['tooling']]) {
+    const input = surplusProductProof(); input.proof.requiredProfiles = requiredProfiles;
+    const result = evaluateCiProof(input);
+    assert.equal(result.status, 'stale', JSON.stringify(requiredProfiles));
+    assert.match(result.note, /canonical validation required/);
+  }
+});
+
+test('#1059 malformed plans, foreign material and incomplete/red surplus execution remain fail closed', () => {
+  for (const requiredProfiles of [undefined, null, [], {}, 'tooling', ['unknown'], ['tooling', null], ['docs', 'docs'], ['product', 'unknown'], Array(1)]) {
+    const input = surplusProductProof(); input.proof.requiredProfiles = requiredProfiles;
+    assert.equal(evaluateCiProof(input).status, 'failed', JSON.stringify(requiredProfiles));
+  }
+  const red = surplusProductProof(); red.run.conclusion = 'failure';
+  assert.equal(evaluateCiProof(red).status, 'failed', 'real failed run is not merely stale');
+  const missing = surplusProductProof(); missing.jobs.pop();
+  assert.equal(evaluateCiProof(missing).status, 'failed', 'missing executed product job');
+  const incomplete = surplusProductProof(); incomplete.proof.requiredChecks.pop();
+  assert.equal(evaluateCiProof(incomplete).status, 'failed', 'inconsistent required-check list');
+  const refused = surplusProductProof(); refused.proof.checks.frontend.result = 'failure';
+  assert.equal(evaluateCiProof(refused).status, 'failed', 'unsuccessful required check');
+  for (const alter of [
+    input => { input.proof.candidate.sha = 'c'.repeat(40); },
+    input => { input.proof.run.attempt++; },
+    input => { input.proof.run.event = 'workflow_dispatch'; },
+    input => { input.run.path = '.github/workflows/foreign.yml'; },
+  ]) {
+    const input = surplusProductProof(); alter(input);
+    assert.notEqual(evaluateCiProof(input).status, 'green', 'foreign identity cannot grant acceptance');
+  }
+});

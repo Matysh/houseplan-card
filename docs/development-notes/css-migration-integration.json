@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "issue": 1019,
+  "scope": "Technical integration after incomplete CODE infrastructure result; no new manual product changes or new visual capture.",
+  "priorTaskHead": "bfd5dfe0df545ca6549cf3278461d88e97ef9a99",
+  "acceptedDev": "9ca630adab1fd6de24cf8c1ec00100fa50cf4f43",
+  "measuredCombined": "ea61039cd1afa8b9d559770de8228d5efe108c1f",
+  "merge": "Ordinary merge; product conflict-free. C/derived conflicts preserve both tasks and use canonical inventory/profile/status generators.",
+  "acceptedProductDeltaFromPriorTask": [
+    "src/editors/form-kit.ts",
+    "src/styles/form-kit.styles.ts"
+  ],
+  "acceptedDeltaReason": "Accepted #1018 removes only unused legacy top-level opacity callbacks/numeric fallbacks and retired ColorTile unit CSS; the #1019 CSS cleanup is retained.",
+  "historicalVisual": {
+    "validation": "docs/development-notes/css-migration-validation.json",
+    "validationSha256": "573d380e0d19e02ea5debd583d7e66be71c30104802d48c4ad3fd570ef5ae8d7",
+    "sourceBefore": "98e7d8d09ce44742ce6bdd290b487960c76b4b71",
+    "sourceCandidate": "b3f4adb54f13dcf57d3afb99cbafb4c6a850dd3e",
+    "nativeStatePairs": 117,
+    "canonicalPairs": 11,
+    "originalRecipeSha256": "cb9de59367e67861581b84e277f0d57fc09f633a3a2744a8100f4f36d306b4a9",
+    "captureListSha256": "c8c0496c15c75b482e11b7dbe114b0740e844b704e1c0860a4378aa7ec8e4882",
+    "preservation": "Read-only verification of all 117 existing PNG/computed/geometry pairs and 11 canonical PNG pairs. All existing bytes and original receipt hashes are preserved; no new browser invocation.",
+    "authority": "The original laterChanges statement describes the old task range through bfd, not the subsequent accepted #1018 merge. Historical captures are not re-attributed to the combined SHA."
+  },
+  "freshMeasurement": {
+    "command": "npm run build; node artifacts/1019-measure-bundles.mjs <label> <built-checkout> <exact-sha>",
+    "toolchain": {
+      "node": "v22.23.3",
+      "platform": "win32",
+      "execPath": "C:\\Users\\Sergey\\AppData\\Local\\houseplan-toolchain\\node-v22.23.3-win-x64\\node.exe",
+      "rollup": "4.62.2"
+    },
+    "before": {
+      "sourceSha": "9ca630adab1fd6de24cf8c1ec00100fa50cf4f43",
+      "fingerprint": "ee619cb358dfbf7cedc4ea9f12dc484cc7ae602b29c0f6ef039c3b3990972d27",
+      "manifestSha256": "87a6cd47cc1dbd5b3ac01de1319c849b0781fc45d3e15541ee4f26c25c7b5355",
+      "rawDistBytes": 3436937,
+      "initialView": {
+        "files": 4,
+        "rawBytes": 1179843,
+        "gzipBytes": 339660
+      },
+      "lazyEditor": {
+        "files": 16,
+        "rawBytes": 1185074,
+        "gzipBytes": 344555
+      },
+      "localReceipt": "artifacts/1019-measure-accepted-9ca.json",
+      "localReceiptSha256": "6a4d7f1a50f8fbdbd2ea522da70eb8ed8b78666cb9baf41b450baa80d84abdd1"
+    },
+    "after": {
+      "sourceSha": "ea61039cd1afa8b9d559770de8228d5efe108c1f",
+      "fingerprint": "69757d51fc282a65d82c99e70eff41f169e553933ff091aa8aa45c139c0883cd",
+      "manifestSha256": "2ff2e928bff83c4e411aa880819c87716b74f4274c9c1e0572a6a447dd795cdd",
+      "rawDistBytes": 3431714,
+      "initialView": {
+        "files": 4,
+        "rawBytes": 1178401,
+        "gzipBytes": 339415
+      },
+      "lazyEditor": {
+        "files": 16,
+        "rawBytes": 1181298,
+        "gzipBytes": 343989
+      },
+      "localReceipt": "artifacts/1019-measure-combined-ea610.json",
+      "localReceiptSha256": "eee03b7bd918600a3cc0fa5fb98ad91eaec2112fd3d98452472735b64207b499"
+    },
+    "delta": {
+      "rawDistBytes": -5223,
+      "initialViewGzipBytes": -245,
+      "lazyEditorRawBytes": -3776,
+      "lazyEditorGzipBytes": -566
+    },
+    "validation": "Real manifest/file SHA-256, raw length and gzip level 9 verified independently for every emitted JS file. Raw dist includes every emitted file. No summed branch deltas.",
+    "budget": "node scripts/bundle-budget.mjs PASS on measured combined source; no budget, reference or band change."
+  },
+  "freshStatic": {
+    "cssOrphans": {
+      "typescriptFiles": 443,
+      "emittedSheets": 431,
+      "classConsumers": 1142,
+      "diagnostics": 0,
+      "unresolvedProducers": 0
+    },
+    "registry": {
+      "definitions": 1841,
+      "uniqueSourceReads": 1003,
+      "browserGuards": 500,
+      "executions": 0,
+      "caught": "unknown"
+    },
+    "process": "origin/dev..ea610: 10 commits, 0 warnings",
+    "inputs": "PASS",
+    "docs": "PASS with canonical screenshots=warn; existing pre-beta stale screenshot index is not accepted."
+  },
+  "limits": "The 36-smoke/one-new-Golden computed plan is not claimed as a newly executed local matrix. Previous exact visual and named smoke results retain their original identities. No mutant execution, baseline acceptance or release."
+}

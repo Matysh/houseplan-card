@@ -1,5 +1,129 @@
 # Development and deployment
 
+## Mounted HA authority #1056
+
+`demo/smoke_mounted_authority.mjs` uses public HA assignments on an already
+loaded full card. Keep mandatory config/layout reads separate from the actual
+`fields: ['model_version']` capability projection; an empty fields array is a
+full document. Reused-object connection/user replacement, same-turn ABA and
+held replies must retain one current read owner. Rendering snapshots keep
+their intake in `willUpdate`, while ordinary skipped state updates retain the
+existing operational fast path. Do not reset the broad diagnostics invalidation
+method to retire HA identity, or add an independent loader/timer.
+The [ordinary validation record](development-notes/mounted-authority-validation.json)
+pins the original 54-check RED, 69-check AFTER, the shared-counter diagnostic,
+seven selected neighbours, runtime and measured production sizes separately.
+Its historical range ends at pre-integration `4aeb7599`. The separate
+[accepted-source integration](development-notes/mounted-authority-integration.json)
+records the later ordinary merge of #1026, unchanged local product patch,
+fresh combined native/selected checks and actual matched production sizes.
+
+## Own offline presentation (#1026)
+
+`device-own-availability.ts` reads only the canonical active own roster. One
+positive row proves availability; only a nonempty all-unavailable roster proves
+offline. Missing/unknown/empty data remain unknown. The controller adapter uses
+that resolved fact plus existing virtual/entityless metadata, not another state
+scan. Source sample quality still gates activity separately.
+
+The ordinary BEFORE on accepted a71 uses public registry/config/layout and HA
+ticks against the official offline native fixture. It shows whole-marker .35,
+unchanged glyph opacity1 and grey background on both media off and unavailable;
+recovery, live-own/foreign-target and no-writer controls pass. Raw receipts are
+linked from the issue. Final native/Golden checks share a data-only fixture;
+task branches capture their two new board scenes without accepting baselines.
+Pure tests cover the ownership matrix, unchanged source semantics, controller
+eligibility and incremental/full parity. No new config field or write exists.
+
+The initial candidate's native run caught two additional legacy owners: the
+2.5D state table still painted a grey body/edge, and full/static LED badge
+adapters omitted the resolved offline flag. The old 2.5D offline table entry is
+removed, and both passive badge adapters forward that same resolved flag.
+The focused ownership/snapshot run passes 16 tests, including diagnostic-only
+ticks, disabled/claimed registry evidence and unchanged unrelated presentations.
+
+The compact executed receipt is
+[`device-offline-validation.json`](development-notes/device-offline-validation.json):
+accepted a71 BEFORE has eight expected symptom failures and six positive
+controls; the combined accepted-#1018 candidate passes all 44 native checks.
+Both new pinned-WSL Golden captures have the same PNG hashes as the earlier
+candidate and were visually inspected without accepting baselines. The actual
+Windows build measures View339869/editor344587 gzip and raw3437705 bytes;
+all limits at that material pass unchanged. The 113 related pure tests also pass.
+
+Eight related native commands cover controls, icon paint/interaction, manual
+state sources, LED Glow, same-tick freshness, cover morphs, editor landmarks
+and LED topology. Seven pass first time; icon-design passes its affected rerun
+after aligning the obsolete View selection expectation with accepted #1051.
+The real wide-editor blue selection and the inert View class are both checked;
+the fixed 780px demo host must be resized for the wide-editor route. Original
+failures and the exact recipe/log hashes remain in the compact receipt.
+
+After accepted #1019 (`e8c618924`), candidate `900800baf` again passes all
+44 native checks and both pinned-WSL captures, with identical PNG hashes.
+The merged source census has 444 files/431 sheets/1142 class consumers and no
+diagnostics or unresolved producers. Actual Windows View 339613/editor 343989
+gzip and raw 3432482 bytes pass the unchanged limits. Matrix 87 contains both
+the accepted Rules scene and this issue's two new boards; no baseline is accepted.
+
+The first normal pre-push hook on `97c793254` is RED: two older matrix-version
+assertions, the explicit corpus passport/capture-input inventory and two moved
+mutation anchors require matching B updates. Product A/build/budgets/CSS pass.
+The one added offline fixture is appended to the passport; all 89 previous
+document identities and inputs remain equal. The 71 affected matrix/fingerprint/
+corpus tests and three exact anchor/ordinary diagnostic tests pass after repair.
+These are ordinary/static checks, not mutant execution or a green whole gate;
+the normal hook must run again on the corrected material before publishing.
+
+## Dialog CSS ownership #1019
+
+The [migration record](development-notes/dialog-style-migration.md) covers all
+eleven consumers of the dialog kit. Keep subject geometry and winning local
+validation/hover paint; a similar common declaration is insufficient evidence
+for deletion. Historical form-kit fixture files remain unchanged: the byte
+comparison projects out nine explicitly retired rules and checks every other
+byte, while the actual summary-panel comparison stays unmodified.
+
+Build and sync each tree before browser comparisons. Existing selected Support
+and Inbox Golden captures retain their canonical baselines. A difference already
+present on the unchanged accepted tree is a baseline fact, not a new task intent
+or permission to accept a baseline. Production-size comparisons use matching
+Node/Rollup and actual builds on both sides; do not infer combined sizes by
+adding task deltas.
+
+For native HA comparisons use `node scripts/dev/css-migration-capture.mjs
+--root=<built-checkout> --out=<artifact-directory>`, then the same command for
+the candidate with `--compare=<before-directory>`. It uses the shared deterministic
+Chromium arguments, attests the launched browser, checks the loaded fingerprint
+and compares computed paint, geometry and exact PNG bytes. The offline HA
+fixture's optional `repoRoot` and `browserArgs` keep both runs on the same
+capture recipe; defaults for existing smokes are unchanged. Fresh documents
+isolate viewport/theme cases. `--themes=light --widths=1280,600` bounds a
+diagnostic run; it does not represent the full default matrix. Artifacts remain
+local and do not replace canonical Golden evidence or baseline acceptance.
+
+`node scripts/css-orphans.mjs` is part of `gate:small`. It reads product TS
+through the TypeScript AST and the shared `scripts/css-lex.mjs` lexer. Actual
+class attributes, DOM class assignments and reachable helper returns are
+consumers; arbitrary strings, queries, import paths and negative `:not` tokens
+are not positive DOM requirements. Named animation uses include reachable CSS
+variables and distinguish animation names from shorthand timing grammar.
+
+For irreducible finite production, put the exact JSON comment immediately
+before the actual render/assignment statement, with its closest named owner:
+
+```ts
+/* css-uses {"owner":"Example.render","kind":"class","values":["state-a","state-b"],"reason":"Finite values from the model's state union"} */
+```
+
+The only keys are `owner`, `kind` (`class` or `keyframes`), `values` and `reason`.
+The checker rejects misplaced/unused annotations, mismatched owners or emitted
+prefixes, duplicate values and wildcards. Do not turn a query-only reference into
+a consumer. Unknown CSS recipes or unsupported native CSS nesting fail explicitly
+instead of silently omitting definitions. The legacy #805 graph-ownership token
+index stays separate from this stricter consumer index; it answers a different
+question. Both ownership and `styles-diff` now share the lexical parser.
+
 ## Parallel path diagnostic (#1018)
 
 `npm run audit:parallel-paths -- --sha=<SHA>` computes history candidates;
@@ -4779,6 +4903,19 @@ for that inventory; it does not change the worker's 180-second per-invocation
 limit, selected IDs, semantic assertions, Golden intent or product performance
 thresholds. A timed-out partial run never counts as a green task proof.
 
+The larger #1025 selected plan exposed the next measured boundary (#1058):
+run `40084326899`, job `120844476069`, was cancelled by the explicit
+`40m0s` job timeout after completing 246 of 256 smokes (244 PASS, two FAIL,
+ten not executed; no Golden scenes). The completed interval was 2358.432 s;
+the two failures used only about 6.5 s and remain separate task failures.
+The selected job now has 50 minutes: extrapolating that completed interval to
+256 checks gives about 41 minutes, with finite headroom for setup and ordinary
+runner variation. This changes only the aggregate selected-job timeout in the
+canonical workflow and its generated product profile. Per-invocation limits,
+selected/full routing, assertions, Golden acceptance and product budgets retain
+their existing contracts. Consumers must still obtain their own complete green
+plan; this infrastructure change does not turn the partial run into proof.
+
 For direct own-device signal (#1029), selected scenes
 `direct-zigbee-lqi-flat-dark` and `direct-zigbee-lqi-iso-dark` feed the actual
 authenticated subscription with 137 and real zero after removing HA LQI values.
@@ -4865,6 +5002,15 @@ The shared display name preserves the existing `workflow_run` trigger in main;
 stays in `validate.yml`. Non-product proofs cannot satisfy product policy.
 A product proof names the profiles required by the complete candidate range;
 missing/pending companions request canonical validation, red companions fail.
+After a rebase, the push-event range may start a surplus product workflow while
+the candidate range requests only known companion profiles (#1059). A nonempty,
+unique docs/tooling-only plan makes that otherwise complete product proof stale,
+never accepted. Its own failed/missing execution still fails; malformed plans
+and foreign identities gain no authority. The existing validate gate requests
+canonical `validate.yml` on the exact material with `full=false/mutants=false`
+for an ordinary light task and accepts only its completed applicable proof.
+`ci-profiles.test.mjs` and `validate-gate.test.mjs` cover this input, the actual
+dispatch contract and red/pending/missing/incomplete/foreign canonical outcomes.
 Only canonical completed runs advance the old range/classification induction;
 a narrower push profile cannot erase an unjudged ancestor. Night and release
 continue to request full policy. The proof schema stays `houseplan-ci-proof/v1`.

@@ -70,6 +70,7 @@ export async function applyHaDialogTypography(page) {
 export async function launchHaDialogFixture({
   authentic = true, viewport = { width: 1600, height: 1000 },
   pin = HA_DIALOG_PIN, cacheDir, wheelPath, assets, colorScheme = 'light', extraModules = [], hasTouch = false, videoDir,
+  repoRoot = REPO, browserArgs = [],
 } = {}) {
   const ha = authentic ? assets || await prepareHaDialogAssets({ pin, cacheDir, wheelPath }) : null;
   const errors = [], externalRequests = [], websocketAttempts = [];
@@ -88,7 +89,7 @@ export async function launchHaDialogFixture({
       else if (pathname === '/ha505-module-index.json' && ha) {
         body = JSON.stringify(ha.manifest.modules); type = 'application/json';
       } else {
-        let base = join(REPO, 'demo/srv'), relative = pathname;
+        let base = join(repoRoot, 'demo/srv'), relative = pathname;
         if (pathname === '/product.html') relative = '/demo.html';
         if (ha && (pathname.startsWith('/frontend_latest/') || pathname.startsWith('/static/'))) base = ha.root;
         const file = resolve(base, '.' + relative);
@@ -127,7 +128,7 @@ export async function launchHaDialogFixture({
   const url = `http://127.0.0.1:${server.address().port}`;
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await chromium.launch({args: browserArgs});
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme, hasTouch, timezoneId: 'Europe/Moscow', serviceWorkers: 'block', ...(videoDir ? {recordVideo:{dir:videoDir,size:viewport}} : {}) });
     await context.route('**/*', async (route) => {
       if (new URL(route.request().url()).origin !== url) {

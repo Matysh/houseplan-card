@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1058,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Resize only the finite selected-browser CI job timeout from 40 to 50 minutes after #1025 run 40084326899/job 120844476069 completed 246 of 256 smokes in 2358.432 seconds and hit the explicit 40-minute limit. Preserve the complete computed plan, 180-second per-invocation limit, assertions, full/selected routing, Golden acceptance and product budgets. The original cancelled run remains incomplete; each consumer still needs its own complete green proof. No product or configuration behaviour changes."
+}

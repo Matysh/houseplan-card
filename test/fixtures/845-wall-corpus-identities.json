@@ -231,6 +231,10 @@
       "configs": 0
     },
     {
+      "file": "demo/fixtures/device-offline.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/large-house.mjs",
       "configs": 1
     },
@@ -4750,6 +4754,35 @@
           "space": "kept",
           "catalogue": [],
           "rooms": [],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/device-offline.mjs:makeDeviceOfflineFixture/config",
+      "fingerprint": "d7e1155c80d33495b24f0d51d21265504af1bd886471927418c19ede80f68dfa",
+      "ok": true,
+      "identity": [
+        {
+          "space": "golden-offline",
+          "catalogue": [
+            "wall-5bqttjoeg7x5wlo735ny",
+            "wall-hael34ljevi2yesucfqb",
+            "wall-6772lqgramn6hvyoxbjy",
+            "wall-kchzpayqzzjt6m3n7zg6"
+          ],
+          "rooms": [
+            {
+              "id": "offline-room",
+              "walls": [
+                "wall-hael34ljevi2yesucfqb",
+                "wall-kchzpayqzzjt6m3n7zg6",
+                "wall-6772lqgramn6hvyoxbjy",
+                "wall-5bqttjoeg7x5wlo735ny"
+              ]
+            }
+          ],
           "openings": [],
           "partitions": []
         }
