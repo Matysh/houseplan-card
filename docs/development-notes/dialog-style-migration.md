@@ -169,3 +169,19 @@ Seven producer annotations are independently checked against immutable
 `ba5ccbaa5b60bdc3cabcfa8c8cdc8bdb7b60606e`: TypeScript transpilation with
 comments removed emits identical JavaScript for every annotated module. This
 supports reuse of the existing runtime contract; it is not a browser test.
+
+## Subsequent accepted-source integration
+
+The separate [integration record](css-migration-integration.json) preserves the
+original visual record byte-for-byte and identifies the later ordinary merge
+with accepted #1018. Its only product delta from the previous task head is the
+already accepted legacy opacity cleanup in the two form-kit files. The original
+117 native and eleven canonical pairs retain their historical source identities;
+they are not new captures of this merged material. No CSS behavior was changed
+manually during this technical recovery.
+
+Fresh matched Windows builds of accepted `9ca630ad` and combined `ea61039c`
+measure raw dist 3436937 → 3431714 B, initial View 339660 → 339415 B gzip, and
+lazy editor 344555 → 343989 B gzip on Node 22.23.3 / Rollup 4.62.2. The record
+pins both fingerprints, manifest hashes and receipts. Actual files, lengths and
+gzip were verified; budgets and references remain unchanged.
