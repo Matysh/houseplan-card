@@ -36,6 +36,11 @@ export const SMOKE_LINKS = [
     because: '#1038: native painted hits and keyboard/field controls prove common rigid move, all-member live ink, individual outlines, same-kind mixed channels, image alpha-only and context-safe shortcuts across the existing writer/history boundary.',
   },
   {
+    files: ['src/houseplan-card.ts', 'src/houseplan-render-lifecycle.ts'],
+    smokes: ['smoke_mounted_authority.mjs'],
+    because: '#1056: public mounted same-object HA connection/user replacement must restore one current config/layout pair and visible plan without another tick; ordinary ABA, held replies and missing-HA controls protect existing intake/read ownership.',
+  },
+  {
     files: ['src/device-presentation.ts', 'src/device-presentation-policy.ts', 'src/device-face.ts',
       'src/styles/devices.styles.ts', 'src/led-strip-runtime.ts'],
     smokes: ['smoke_device_offline.mjs'],

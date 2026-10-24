@@ -420,13 +420,19 @@ export function evaluateCiProof({
   if (policy?.mutants && !asBool(proof.request?.mutants)) return result('stale', 'proof has no requested mutant jobs');
   if (asBool(proof.request?.full) && proof.selection?.tooling === false)
     return result('failed', 'full regression cannot omit tooling tests');
+  let canonicalRequired = false;
   if (profile === 'product') {
-    if (!Array.isArray(proof.requiredProfiles) || !proof.requiredProfiles.includes('product')
-      || proof.requiredProfiles.some(p => !['product', 'tooling', 'docs'].includes(p)))
+    if (!Array.isArray(proof.requiredProfiles) || !proof.requiredProfiles.length
+      || [...proof.requiredProfiles].some(p => !['product', 'tooling', 'docs'].includes(p))
+      || new Set(proof.requiredProfiles).size !== proof.requiredProfiles.length)
       return result('failed', 'product profile has no complete event coverage plan');
-    if (asBool(proof.request?.full) && !proof.requiredProfiles.includes('tooling'))
+    // #1059: push-event and candidate ranges can differ after rebase. A valid
+    // companion-only plan grants no product authority; verify this run below
+    // before requesting canonical validation, without waiting for companions.
+    canonicalRequired = !proof.requiredProfiles.includes('product');
+    if (!canonicalRequired && asBool(proof.request?.full) && !proof.requiredProfiles.includes('tooling'))
       return result('stale', 'full product proof has no tooling coverage plan; canonical validation required');
-    for (const required of proof.requiredProfiles.filter(p => p !== 'product')) {
+    for (const required of canonicalRequired ? [] : proof.requiredProfiles.filter(p => p !== 'product')) {
       const companion = profileRuns.get(required);
       if (!companion) return result('stale', `${required} profile for the event is missing; canonical validation required`);
       if (runShaOf(companion.run) !== identity.sha || CI_WORKFLOWS[ciWorkflow(companion.run)] !== required)
@@ -544,6 +550,8 @@ export function evaluateCiProof({
       return result('failed', `${id}: source run does not verify the reused successful job`);
     }
   }
+  if (canonicalRequired)
+    return result('stale', 'product profile is outside the candidate coverage plan; canonical validation required');
   return result('green', `${policy?.name || 'consumer'} proof is complete`);
 }
 

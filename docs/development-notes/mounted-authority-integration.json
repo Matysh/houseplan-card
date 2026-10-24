@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "issue": 1056,
+  "scope": "Fresh ordinary validation after merging accepted #1026; preserve original #1056 BEFORE and first AFTER separately.",
+  "acceptedDev": "4dd092a031080afee33f00fb0c724f5972b7dcb8",
+  "measuredCombined": "57a39b442e93052799f900309ec7d7e300e77d84",
+  "originalRecord": {
+    "path": "docs/development-notes/mounted-authority-validation.json",
+    "sha256": "7e36c96c557e6c6f21385f21308f950afdf76379a1a28b5d22f8c53a4628ef24",
+    "boundary": "The original record describes e8→734 and subsequent B/C through 4aeb; it does not claim that the later accepted #1026 merge is B/C only."
+  },
+  "merge": {
+    "productConflicts": 0,
+    "resolved": [
+      "docs/DEVELOPMENT.md",
+      "docs/STATUS.md",
+      "docs/testing-notes/mutation-browser-guards.md",
+      "scripts/smoke-links.mjs"
+    ],
+    "resolution": "Both prose/IDs/links retained; canonical browser counts, inventory, CI profiles and snapshot regenerated.",
+    "localProductPatchIdenticalTo734": true
+  },
+  "freshChecks": {
+    "native": {
+      "passed": 69,
+      "failed": 0,
+      "recipeSha256": "a3dd32cad15981ebd7da3301673b33a78d182e6150727512ae47e84e1c227023",
+      "log": "artifacts/1056-combined-57a/smoke_mounted_authority.mjs.log",
+      "logSha256": "cc6a56c6f7b0497964bf3610a437d09bd3b1a69d9fbaa9dff0132329e9e0689d"
+    },
+    "selected": {
+      "passed": [
+        "smoke_detached_authority.mjs",
+        "smoke_device_hit_capsules.mjs",
+        "smoke_mounted_authority.mjs",
+        "smoke_render_invalidation.mjs",
+        "smoke_sensor_tick_freshness.mjs",
+        "smoke_view_recovery.mjs",
+        "smoke_view_runtime_recovery.mjs",
+        "smoke_wall_node_connected.mjs"
+      ],
+      "report": "artifacts/1056-combined-57a/report.json",
+      "sha256": "794a1e6d19c84a4538cbc5000da156a52d1bfb13de1d3224bfb239b95ff7f095"
+    },
+    "ownerUnits": 23,
+    "static": {
+      "definitions": 1851,
+      "sourceReads": 1007,
+      "browserGuards": 509,
+      "execution": 0,
+      "caught": "unknown; nightly only"
+    },
+    "process": "accepted4dd..57a: 3 commits, 0 warnings"
+  },
+  "environment": {
+    "browser": "Attested WSL Playwright1.62.0/Chromium151.0.7922.34 rev1234; canonical launch freshness and actual fingerprint checks enabled.",
+    "build": {
+      "node": "v22.23.3",
+      "platform": "win32",
+      "execPath": "C:\\Users\\Sergey\\AppData\\Local\\houseplan-toolchain\\node-v22.23.3-win-x64\\node.exe",
+      "rollup": "4.62.2"
+    }
+  },
+  "actualMeasurements": {
+    "accepted": {
+      "schema": 1,
+      "sourceSha": "900800baf3eacb3587bab68eabf25023053311b8",
+      "toolchain": {
+        "node": "v22.23.3",
+        "platform": "win32",
+        "rollup": "4.62.2"
+      },
+      "fingerprint": "69430d5a24d70a8aa9d82b6c9c2953f5e76d1ffbfd5a5aed167d1af6c36541ee",
+      "manifestSha256": "1b3f0eb977b711ede0474499b19331520fcb242ee27ec2c1e1c2333306649129",
+      "rawDistBytes": 3432482,
+      "initialViewGzipBytes": 339613,
+      "lazyEditorGzipBytes": 343989,
+      "acceptedSource": "4dd092a031080afee33f00fb0c724f5972b7dcb8",
+      "inputEquivalence": "git diff of measured900→accepted4dd contains only the following B/C files outside the source-fingerprint corpus",
+      "changedPathsOutsideBuildInputs": [
+        "docs/DEVELOPMENT.md",
+        "docs/development-notes/device-offline-validation.json",
+        "docs/reviews/CODE-REVIEW-1026-r1.md",
+        "docs/reviews/INDEX.md",
+        "scripts/mutation-registry.mjs",
+        "test/fixtures/845-wall-corpus-identities.json",
+        "test/golden-matrix.test.mjs",
+        "test/source-fingerprint.test.mjs"
+      ]
+    },
+    "combined": {
+      "source": "57a39b442e93052799f900309ec7d7e300e77d84",
+      "fingerprint": "fcec36e884ce8dbca36f494bb34b0110dbeb23d12af317dbf8ade81ebe11a0c9",
+      "manifestSha256": "18d56e13218b4f2b26912dbce283348bcfc031dc32ac4102788fb1b93187c035",
+      "rawDistBytes": 3432625,
+      "initialViewGzipBytes": 339665,
+      "lazyEditorGzipBytes": 343953
+    },
+    "delta": {
+      "raw": 143,
+      "viewGzip": 52,
+      "editorGzip": -36
+    },
+    "authority": "Actual Windows files/manifests/raw/gzip compared on the same Node22.23.3/Rollup4.62.2. No summed branch sizes or limit/band/reference changes."
+  },
+  "exclusions": "No new Golden intent, baseline acceptance, live HA claim, full regression or mutant execution. Current task plan is exactly eight selected smokes and Golden none."
+}
