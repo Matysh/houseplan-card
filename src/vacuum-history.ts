@@ -29,6 +29,7 @@ export type HistoryReason='update'|'unsupported'|'unavailable'|'empty'|'empty_pa
   |'suppressed'|'mode'|'unauthorized'|'retired'|'interrupted';
 const errorReason=(error:unknown):HistoryReason=>{
   const code=(error as {code?:string})?.code;
+  if(code==='not_found')return 'retired';
   return ['unsupported','unavailable','empty','stale','ambiguous','limited','incomplete','coordinates_unverified',
     'needs_calibration','missing_space','suppressed','unauthorized','retired'].includes(code??'')?code as HistoryReason:'unavailable';
 };
@@ -144,6 +145,14 @@ export class VacuumHistory {
     }
     this.observedEpoch=value;
   }
+  private fail(error:unknown,catalog=false):void {
+    const reason=errorReason(error);
+    if(reason==='unauthorized'||reason==='retired'
+      ||catalog&&['unavailable','unsupported','suppressed','ambiguous'].includes(reason)){
+      this.hide(reason);this.listGeneration++;this.catalog=null;this.loadingList=false;this.labelMemo=null;
+      // Keep this dialog's loaded/open state: rendering must not retry a denial.
+    }else this.reason=reason;
+  }
   async load():Promise<void> {
     if(!this.synchronize()||this.loadingList||!this.context)return;
     const generation=++this.listGeneration,context=this.context,epochAtStart=this.observedEpoch;
@@ -170,7 +179,7 @@ export class VacuumHistory {
       if(retired){this.requested=null;this.loadingShow=false;}
       if(this.shown&&!catalog.records.some(r=>r.id===this.shown!.id))this.hide('stale');
       else this.reason=!catalog.records.length?'empty':retired?'stale':learnedEpoch||endedAtStart?'retired':catalog.limited?'limited':null;
-    }catch(error){if(current())this.reason=errorReason(error);}
+    }catch(error){if(current())this.fail(error,true);}
     finally {if(generation===this.listGeneration){this.loadingList=false;this.host.requestUpdate();}}
   }
   async show():Promise<void> {
@@ -195,7 +204,7 @@ export class VacuumHistory {
       }
       this.shown=material.paths.length?material:null;this.renderLimited=false;
       this.reason=!material.paths.length?'empty_path':!material.completed?'interrupted':null;
-    }catch(error){if(current())this.reason=errorReason(error);}
+    }catch(error){if(current())this.fail(error);}
     finally {if(this.requested===intent){this.requested=null;this.loadingShow=false;this.host.requestUpdate();}}
   }
 }

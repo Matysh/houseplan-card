@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from typing import Any
 
 import voluptuous as vol
@@ -115,6 +116,7 @@ async def _request(hass: HomeAssistant, connection, msg: dict, *, geometry: bool
     user = connection.user
     watch = None
     owner = None
+    current_check: Callable[[], bool] | None = None
     try:
         stored = await rt.config_store.async_load() or {}
         if get_data(hass) is not rt or connection.user is not user or not _check_write(hass, connection):
@@ -143,6 +145,8 @@ async def _request(hass: HomeAssistant, connection, msg: dict, *, geometry: bool
             except PathRejected:
                 return False
 
+        current_check = current
+
         async def read():
             return await owner["camera"].history_map_image(record.index, False, False, True, False, False, False)
 
@@ -165,17 +169,25 @@ async def _request(hass: HomeAssistant, connection, msg: dict, *, geometry: bool
         value, completed = await hass.async_add_executor_job(history_snapshot, payload)
         latest = await rt.config_store.async_load() or {}
         if not current() or latest.get("rev") != stored.get("rev"):
-            raise PathRejected("stale")
+            raise PathRejected("retired")
         now = _owner(hass, latest.get("config") or {}, msg["marker_id"])
         if now["fingerprint"] != owner["fingerprint"]:
-            raise PathRejected("stale")
+            raise PathRejected("retired")
         route = history_route(value, now["routes"], now["rec"].book.data.get(msg["marker_id"]), now["spaces"])
         connection.send_result(msg["id"], {"version": 1, "id": record.id,
             "timestamp": record.timestamp, "completed": completed, "revision": revision, "epoch": epoch,
             "route": route, "vacuum": owner["vacuum"], "paths": value.paths})
     except (PathRejected, TimeoutError) as err:
-        connection.send_error(msg["id"], str(err) if isinstance(err, PathRejected) else "stale",
-                              "Historical cleanup could not be read safely")
+        code = str(err) if isinstance(err, PathRejected) else "stale"
+        # A retired owner supersedes a record/provider failure. The client may
+        # still have stale permission/config flags and an older painted preview.
+        if current_check is not None:
+            try:
+                if not current_check():
+                    code = "retired"
+            except Exception:  # noqa: BLE001 — an unproved owner cannot retain preview authority
+                code = "retired"
+        connection.send_error(msg["id"], code, "Historical cleanup could not be read safely")
     except Exception:  # noqa: BLE001 — optional provider cannot disclose URL/token/error details
         connection.send_error(msg["id"], "unavailable", "Historical cleanup is unavailable")
     finally:

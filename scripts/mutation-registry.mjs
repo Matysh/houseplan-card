@@ -21247,6 +21247,14 @@ const decorLine1046Cases = [
 ];
 
 const vacuumHistory999Cases = [
+  {id:'vacuum-history-server-denial-keeps-preview-999',
+    guard:'node --test --test-name-pattern="server authority" test/vacuum-history.test.mjs',
+    because:'#999 AC5/AC6: an explicit backend denial must retire painted material even before the client permission flag catches up.',
+    patches:[{file:'src/vacuum-history.ts',find:"if(reason==='unauthorized'||reason==='retired'\n",replace:"if(false&&(reason==='unauthorized'||reason==='retired')\n"}]},
+  {id:'vacuum-history-retired-owner-reported-as-record-error-999',
+    guard:'node scripts/backend-test-guard.mjs real_household_user_losing_write_role tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC5/AC6: a real role revocation during a held read must revoke old preview authority, not be reported as an ordinary record failure.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'if not current_check():',replace:'if False and not current_check():'}]},
   {id:'vacuum-history-catalog-allocation-unbounded-999',
     guard:'node scripts/backend-test-guard.mjs metadata_encode_allocation tests_backend/test_vacuum_history.py',
     because:'#999 AC7: metadata rejected at 64 KiB must be bounded before encoding repeated strings into a much larger transient JSON value.',

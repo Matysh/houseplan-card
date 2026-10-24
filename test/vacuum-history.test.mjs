@@ -111,6 +111,40 @@ test('#999 newer Show owns adoption and finally; error B retains accepted A',asy
  assert.equal(owner.shown,a);assert.equal(owner.reason,'stale');assert.equal(owner.loadingShow,false);
  host.hold=false;await owner.show();paint(owner);assert.equal(owner.shown.id,B);assert.equal(owner.visible,true);
 });
+for(const command of ['list','get'])for(const code of ['unauthorized','retired','not_found'])
+ test(`#999 server authority ${code} on ${command} retires A despite a stale client writer flag`,async()=>{
+  const {host,owner}=await loaded();await owner.show();paint(owner);assert.equal(owner.visible,true);
+  host.hass.callWS=async()=>{throw {code};};owner.selected=B;
+  await (command==='list'?owner.load():owner.show());
+  assert.equal(host._canEdit,true,'the server refusal, not a fabricated client permission update, is the input');
+  assert.equal(owner.shown,null);assert.equal(owner.catalog,null);assert.equal(owner.canShow,false);
+  assert.equal(owner.loadingList,false);assert.equal(owner.loadingShow,false);
+  assert.equal(owner.reason,code==='unauthorized'?'unauthorized':'retired');
+  host.hass.callWS=async message=>message.type.endsWith('/list')?listing:response(message.record_id);
+  await owner.load();owner.selected=B;await owner.show();paint(owner);
+  assert.equal(owner.visible,true,'a fresh authorised catalog and explicit Show can recover');
+ });
+test('#999 server authority refusal on a catalog also fences an older held Show',async()=>{
+ const {host,owner,pending}=await loaded();await owner.show();paint(owner);
+ host.hold=true;owner.selected=B;const old=owner.show();
+ host.hass.callWS=async()=>{throw {code:'unauthorized'};};await owner.load();
+ pending[0].resolve(response(B));await old;
+ assert.equal(owner.shown,null);assert.equal(owner.catalog,null);assert.equal(owner.loadingShow,false);
+});
+for(const code of ['unavailable','unsupported','suppressed','ambiguous'])
+ test(`#999 a fresh catalog reports ${code} and withdraws unproved old source material`,async()=>{
+  const {host,owner}=await loaded();await owner.show();paint(owner);
+  host.hass.callWS=async()=>{throw {code};};await owner.load();
+  assert.equal(owner.shown,null);assert.equal(owner.catalog,null);assert.equal(owner.reason,code);
+ });
+test('#999 rendering a server-denied catalog does not turn its error into automatic polling',async()=>{
+ const {host,owner,device}=prepared();host._markerDialog={devId:device.id};owner.open(device);
+ await new Promise(resolve=>setImmediate(resolve));let deniedCalls=0;
+ host.hass.callWS=async()=>{deniedCalls++;throw {code:'unauthorized'};};await owner.load();
+ for(let i=0;i<10;i++){owner.hostUpdate();owner.open(device);}
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(deniedCalls,1);assert.equal(owner.reason,'unauthorized');assert.equal(owner.catalog,null);
+});
 for(const change of ['hide','space','authority_aba','permission','kiosk','removed','hidden','live_off','calibration','binding','other_vacuum','detach','pagehide','new_cleanup'])
  test(`#999 pending Show retires on ${change}; its finally cannot unlock a new intent`,async()=>{
   const {host,owner,pending,adoption,config,device}=await loaded();host.hold=true;const old=owner.show();

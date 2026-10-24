@@ -59,6 +59,12 @@ files remain local; task Golden frames contain only synthetic data.
 The HA endpoint suite also changes a real household user's group to read-only
 while geometry is held: the same recorder survives, the old reply has no paths,
 the next catalog request is unauthorized and House Plan stores remain unchanged.
+An invalidated backend owner reports `retired`, even if the underlying read
+also timed out or failed. The frontend clears both painted material and its
+catalog for that explicit refusal before a stale client permission flag updates;
+ordinary errors loading another record still retain a valid shown record.
+Catalog refusal also fences held Show replies. Keeping the open dialog marked
+as loaded prevents its next render from automatically retrying the denial.
 
 ## Editor keyboard translation (#1025)
 

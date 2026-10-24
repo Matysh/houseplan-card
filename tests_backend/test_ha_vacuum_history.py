@@ -9,16 +9,17 @@ import pytest
 from homeassistant.auth.const import GROUP_ID_READ_ONLY, GROUP_ID_USER
 from homeassistant.components.camera import Camera
 from homeassistant.components.camera.const import DATA_COMPONENT
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_component import EntityComponent
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from test_ha_vacuum_paths import Clock
+from test_ha_websocket import _access_token_for_group
 
 from custom_components.houseplan.const import DOMAIN
 from custom_components.houseplan.store import get_data
-from custom_components.houseplan.vacuum_paths import dreame_snapshot
 from custom_components.houseplan.vacuum_history import retire_history
-from test_ha_websocket import _access_token_for_group
-from test_ha_vacuum_paths import Clock
+from custom_components.houseplan.vacuum_paths import dreame_snapshot
 
 FIXTURE = json.loads((Path(__file__).resolve().parent.parent / "test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json").read_text())
 SOURCE = "camera.synthetic_history"
@@ -206,7 +207,7 @@ async def test_held_read_cannot_publish_foreign_or_retired_record(hass, hass_ws_
         await rt.config_store.async_save({**stored, "rev": stored["rev"] + 1})
     future.set_result(None)
     result = await pending
-    assert not result["success"] and result["error"]["code"] == "stale", result
+    assert not result["success"] and result["error"]["code"] == "retired", result
     assert "paths" not in json.dumps(result)
 
 
@@ -240,7 +241,7 @@ async def test_real_household_user_losing_write_role_retires_held_history(hass, 
     assert [group.id for group in user.groups] == [GROUP_ID_READ_ONLY]
     future.set_result(None)
     answer = await pending
-    assert not answer["success"] and answer["error"]["code"] == "stale", answer
+    assert not answer["success"] and answer["error"]["code"] == "retired", answer
     assert "paths" not in json.dumps(answer) and not rec._closed
     assert [await store.async_load() for store in (rt.config_store, rt.store, rec.store)] == before
     denied = await request(client, "list")
