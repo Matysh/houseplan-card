@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Create rooms from valid existing off-grid contours without moving their walls.
+  Optimize accepts the exact supported alignment of a retained wall carrier;
+  unproved trimming, lost opening hosts and stale writes remain refused. (#1061)
 - Select multiple Background objects with Ctrl+click, all decor with Ctrl+A,
   or furniture with Ctrl+M. Individual outlines show the selection; drag any
   member to move it together in one Undo step. Matching object types share

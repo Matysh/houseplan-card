@@ -40,8 +40,8 @@ const settle = async (rounds = 12) => { for (let i = 0; i < rounds; i++) await n
 const WALL = 'Add wall', LINE = 'Add line', SEGMENT = 'Add wall segment';
 const UNSAFE = () => ({ ok: false, reason: 'wall-failed-core' });
 
-function setup({ floors = ['f', 'g'] } = {}) {
-  const config = commitWallSegmentModel({ model_version: 10, spaces: floors.map(square), markers: [], settings: {} }).config;
+function setup({ floors = ['f', 'g'], configInput } = {}) {
+  const config = commitWallSegmentModel(configInput ?? { model_version: 10, spaces: floors.map(square), markers: [], settings: {} }).config;
   const server = { config: clone(config), rev: 3, sets: 0 };
   const toasts = [], shell = [];
   const adoption = createConfigAdoption(() => {});
@@ -160,6 +160,43 @@ function setup({ floors = ['f', 'g'] } = {}) {
 const undone = name => `history.undone{"name":"${name}"}`;
 const redone = name => `history.redone{"name":"${name}"}`;
 const removed = (direction, name, reason) => `history.removed_${direction}{"name":"${name}","reason":"history.reason_${reason}"}`;
+
+test('#1061 existing off-grid faces cross the actual commit/write/history owners separately and sequentially', async () => {
+  const { roomSource, graphSources, inheritedY } = await import('./helpers/room-contact-grid.mjs');
+  const { buildWallFaceGraph, findWallFaceAtPoint } = await import('../test-build/wall-face-graph.js');
+  const receipts = [];
+  for (const clicks of [[.375], [.625], [.375, .625]]) {
+  const s = setup({ floors: ['floor'], configInput: roomSource() });
+  const source = clone(s.server.config), candidates = [];
+  const oldRoom = clone(s.spaceOf('floor').rooms[0]);
+  for (const [i, x] of clicks.entries()) {
+    const space = s.spaceOf('floor');
+    const graph = buildWallFaceGraph(graphSources(space), 1000 / 240 * .0002);
+    const face = findWallFaceAtPoint(graph, [x * 1000, 150]);
+    assert.ok(face);
+    const before = s.runtime._geometrySnapshot('floor');
+    space.rooms.push({ id: `new${i}`, name: 'New', area: null,
+      poly: face.ring.map(point => point.map(value => value / 1000)) });
+    assert.equal(s.runtime._commitPhysicalGeometry('Room', before), true);
+    assert.deepEqual(await s.writes(), { armed: true, sets: i + 1 });
+    assert.deepEqual(s.spaceOf('floor').rooms[0], oldRoom);
+    assert.equal(s.server.config.spaces[0].rooms.length, i + 2);
+    assert.ok(s.server.config.spaces[0].rooms.at(-1).poly.some(point => point[1] === inheritedY));
+    candidates.push(clone(s.server.config));
+  }
+  assert.equal(s.geometryHistory.size, clicks.length);
+  s.runtime._undoGeometry(); await s.writes();
+  assert.equal(s.server.config.spaces[0].rooms.length, clicks.length);
+  s.runtime._redoGeometry(); await s.writes();
+  assert.equal(s.server.config.spaces[0].rooms.length, clicks.length + 1);
+  assert.equal(s.toasts.includes('toast.geometry_unsafe'), false);
+  receipts.push({ clicks, source, candidates });
+  }
+  if (process.env.HP_1061_ROOM_RECEIPT) {
+    const { writeFileSync } = await import('node:fs');
+    writeFileSync(process.env.HP_1061_ROOM_RECEIPT, JSON.stringify(receipts, null, 2) + '\n');
+  }
+});
 
 test('#891 AC2 strict pre-send refusal removes only owned physical commands and rebases independent Background snapshots', async () => {
   const s = setup();

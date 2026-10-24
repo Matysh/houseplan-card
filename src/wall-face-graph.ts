@@ -210,6 +210,9 @@ function uniqueSorted(values: number[], epsilon: number): number[] {
 }
 
 function pointAt(source: WallGraphSourceSegment, t: number): [number, number] {
+  // Authored endpoints must not acquire interpolation roundoff at t=0/1.
+  if (t === 0) return [source.a[0], source.a[1]];
+  if (t === 1) return [source.b[0], source.b[1]];
   return [
     source.a[0] + (source.b[0] - source.a[0]) * t,
     source.a[1] + (source.b[1] - source.a[1]) * t,
@@ -403,10 +406,27 @@ function discoverPairCuts(
   }
 }
 
-/** Atomize valid source axes without changing their persisted representation. */
-export function atomizeWallSegments(
+type SourceVertex = { point: [number, number]; sourceKey: string; endpoint: boolean };
+
+/** Exact incident-source coordinates, separate from the topology epsilon key. */
+function sourceVertex(candidates: readonly SourceVertex[]): [number, number] | null {
+  const ordered = [...candidates].sort((a, b) => Number(b.endpoint) - Number(a.endpoint)
+    || a.sourceKey.localeCompare(b.sourceKey)
+    || a.point[0] - b.point[0] || a.point[1] - b.point[1]);
+  const point = ordered[0]?.point;
+  if (!point) return null;
+  // Only arithmetic roundoff is interchangeable. Topologically close authored
+  // points with different coordinates are ambiguous, not a licence to move one.
+  const roundoff = Number.EPSILON * 16
+    * Math.max(1, ...ordered.flatMap(item => item.point.map(Math.abs)));
+  return ordered.every(item => item.point.every((value, axis) =>
+    Math.abs(value - point[axis]) <= roundoff)) ? [...point] : null;
+}
+
+function atomize(
   input: readonly WallGraphSourceSegment[],
-  epsilon = DEFAULT_EPSILON,
+  epsilon: number,
+  vertices?: Map<string, SourceVertex[]>,
 ): WallGraphAtom[] {
   const safeEpsilon = Number.isFinite(epsilon) && epsilon > 0 ? epsilon : DEFAULT_EPSILON;
   const sources = input.filter((source) => finitePoint(source.a) && finitePoint(source.b)
@@ -424,6 +444,15 @@ export function atomizeWallSegments(
       source.b[0] - source.a[0], source.b[1] - source.a[1],
     );
     const parameters = uniqueSorted(cuts[i], safeEpsilon / Math.max(length, 1));
+    // A topology-close cut may deduplicate t=1. Its authored endpoint still
+    // constrains the representative; it cannot silently become that cut.
+    if (vertices) for (const t of new Set([0, 1, ...parameters])) {
+      const point = pointAt(source, t);
+      const key = vertexKey(point, safeEpsilon);
+      const candidates = vertices.get(key) || [];
+      candidates.push({ point, sourceKey: source.key, endpoint: t === 0 || t === 1 });
+      vertices.set(key, candidates);
+    }
     for (let j = 0; j + 1 < parameters.length; j++) {
       const a = canonicalVertex(pointAt(source, parameters[j]), safeEpsilon);
       const b = canonicalVertex(pointAt(source, parameters[j + 1]), safeEpsilon);
@@ -448,13 +477,21 @@ export function atomizeWallSegments(
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
+/** Atomize axes for topology; their epsilon coordinates are never storage. */
+export function atomizeWallSegments(
+  input: readonly WallGraphSourceSegment[], epsilon = DEFAULT_EPSILON,
+): WallGraphAtom[] {
+  return atomize(input, epsilon);
+}
+
 /** Build deterministic simple bounded faces from already-atomized axes. */
 export function buildWallFaceGraph(
   input: readonly WallGraphSourceSegment[],
   epsilon = DEFAULT_EPSILON,
 ): WallFaceGraph {
   const safeEpsilon = Number.isFinite(epsilon) && epsilon > 0 ? epsilon : DEFAULT_EPSILON;
-  const atoms = atomizeWallSegments(input, safeEpsilon);
+  const vertices = new Map<string, SourceVertex[]>();
+  const atoms = atomize(input, safeEpsilon, vertices);
   const points = new Map<string, [number, number]>();
   const adjacency = new Map<string, Set<string>>();
   const atomsByKey = new Map(atoms.map((atom) => [atom.key, atom]));
@@ -514,7 +551,9 @@ export function buildWallFaceGraph(
       }
       if (!closed || new Set(vertexKeys).size < 3
           || new Set(vertexKeys).size !== vertexKeys.length) continue;
-      const ring = vertexKeys.map((key) => points.get(key)!) as [number, number][];
+      const exact = vertexKeys.map(key => sourceVertex(vertices.get(key) || []));
+      if (exact.some(point => point === null)) continue;
+      const ring = exact as [number, number][];
       const area = signedArea(ring);
       if (!(area > safeEpsilon * safeEpsilon)) continue;
       // Derived T/X vertices are topology, not polygon identity. A harmless

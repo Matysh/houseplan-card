@@ -2219,3 +2219,11 @@ bootstrap exports its actual setup-python version even when the registry probe
 falls back to fresh execution. Producer stamps still compare the actual Python
 runtime with that plan. Node remains an actual-runtime stamp; a different Node
 or Python stamp cannot mint a reusable record. No trust or proof schema changes.
+
+Room-face persistence (#1061) separates canonical topology keys from incident
+source coordinates inside `wall-face-graph.ts`. Source constraints belong to
+atomization; ambiguous representatives cannot create a writable face. The room
+writer still owns materialization, lineage and off-grid/physical non-growth.
+The backend's existing Optimize validation separately proves the exact known
+retained-carrier Align/storage result; it does not add a writer or bypass the
+opening-host and full structural-removal validators.

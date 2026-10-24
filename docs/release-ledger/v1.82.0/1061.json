@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1061,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Released room creation can turn an inherited off-grid source coordinate into a distinct rounded scalar and falsely refuse the write. Released Optimize also misclassifies its exact retained-carrier Align trim as unproved removal. Preserve source provenance and independently prove only the established Align/storage result, keeping structural and opening guards.",
+  "summary": {
+    "ru": "Создание комнаты сохраняет точные исходные узлы вне сетки; допустимое выравнивание носителя принимается сервером без снятия защит.",
+    "en": "Room creation preserves exact inherited off-grid nodes; the server accepts proved carrier alignment while retaining its safety guards."
+  }
+}

@@ -14,6 +14,7 @@ import voluptuous as vol
 
 from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_config_geometry,
+    canonicalize_lattice_coordinate,
     canonicalize_layout_geometry,
     canonicalize_position,
 )
@@ -437,12 +438,9 @@ def _optimize_partition_needs_proof(old_partition: dict, space: dict) -> bool:
         return False
     if current is None:
         return True
-    if not (_known_optimize_partition(old_partition)
-            and _known_optimize_partition(current)):
+    if _exact_partition_align(old_partition, current):
         return False
     try:
-        if float(current.get("cm")) != float(old_partition.get("cm")):
-            return False
         old_a, old_b = old_partition["a"], old_partition["b"]
         current_range = _axis_range(current["a"], current["b"], old_a, old_b)
         _, _, old_length = _segment_metrics(old_a, old_b)
@@ -452,6 +450,36 @@ def _optimize_partition_needs_proof(old_partition: dict, space: dict) -> bool:
         current_range[0] > _OPTIMIZE_REHOST_EPSILON
         or current_range[1] < old_length - _OPTIMIZE_REHOST_EPSILON
     )
+
+
+def _exact_partition_align(before: dict, after: dict) -> bool:
+    """Prove the existing TS Align + storage result, never an arbitrary trim.
+
+    Optimize canonicalizes its input before snapN, then canonicalizes storage.
+    The ordinary config/set owner never calls this Optimize-only predicate.
+    Unknown semantics, changed identity/thickness and collapsed axes cannot use
+    this exception; their structural loss still needs the original full proof.
+    """
+    if not (_known_optimize_partition(before) and _known_optimize_partition(after)):
+        return False
+    if ({key: value for key, value in before.items() if key not in {"a", "b"}}
+            != {key: value for key, value in after.items() if key not in {"a", "b"}}):
+        return False
+    step = 1 / NORMALIZED_CANVAS_CELLS
+    expected = []
+    for field in ("a", "b"):
+        point = before.get(field)
+        if not isinstance(point, list) or len(point) != 2:
+            return False
+        if any(isinstance(value, bool) or not isinstance(value, (int, float))
+               or not math.isfinite(value) for value in point):
+            return False
+        # Math.round ties toward +infinity, unlike Python's round().
+        expected.append([canonicalize_lattice_coordinate(
+            math.floor(canonicalize_lattice_coordinate(value) / step + 0.5) * step
+        ) for value in point])
+    return (after.get("a") == expected[0] and after.get("b") == expected[1]
+            and math.dist(*expected) > step * 1e-6)
 
 
 def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:

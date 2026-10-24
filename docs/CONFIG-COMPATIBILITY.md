@@ -1636,3 +1636,14 @@ Room settings #946 introduce no new stored keys. Empty fill selection keeps inhe
 
 
 Device settings #947 add no persisted fields. Existing hide_signal/hide_battery flags, missing sources and unknown fields keep their owners. Showing a default Glow radius or a normalized preview size does not write an override. Saved manual/future radar data remains preserved and runtime behavior unchanged; new tab eligibility reads hardware recognition independently of stored radar data.
+
+Room source fidelity and retained-carrier Align (#1061) change no schema or
+read/import/export normalization. Topology keys never authorize a different
+persisted off-grid scalar. Optimize independently reproduces its existing
+pre-snap canonicalization, JavaScript nearest-grid rounding and storage target
+for a known same-ID carrier with unchanged metadata/thickness. Only that exact
+nondegenerate result avoids structural-removal proof. Other cuts, unknown
+carrier semantics, changed thickness, removed/replaced carriers and opening
+host/fit/jamb checks retain the complete original proof. Ordinary config/set
+does not acquire this Optimize exception. Paired revisions, intent/recovery and
+one-deep Undo are unchanged; no automatic Optimize or migration runs on read.

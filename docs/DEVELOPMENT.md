@@ -5240,3 +5240,25 @@ sources fall back to fresh jobs. Actual
 Node flags/options, locale and timezone are part of the recorded environment;
 local reuse never substitutes CI image values. The proof publisher alone has
 contents:write and skips fork PR index writes.
+
+## Existing wall-face coordinates and exact Align #1061
+
+Independent synthetic inputs reproduce two failures on accepted b3dbea2811:
+two wall faces each grow off-grid scalar debt from one to two after the old
+graph/materialization path, and genuine `optimizePlans` candidates both with and
+without a hosted opening fail authenticated Optimize with `optimize delta
+unproved`. The private support plan is not a fixture. The initial HA fixture
+missed required `view_box`; that B-only setup error is recorded separately from
+the subsequent real writer failures.
+
+Targeted proofs use `test/room-contact-grid.test.mjs`, the #1061 case in
+`test/geometry-history-refusal.test.mjs`, and
+`tests_backend/test_{ha_,}room_contact_grid.py`. The stored fixture of room
+candidates is emitted by the actual runtime commit/write/history test; the Align
+fixture is produced by the actual TypeScript optimizer. HA tests exercise
+authenticated config/set or paired Optimize, stores, reload, Undo and atomic
+refusals. Neither fixture replaces the server validator or the ordinary writer.
+Current partial proof, final native, planner scope, actual build sizes and final
+normal hook/CI are recorded with their own source identities in the handoff;
+this section does not predict a final PASS. No grid/epsilon/counter/absolute
+budget is relaxed, and no mutant is executed.

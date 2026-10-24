@@ -1,0 +1,178 @@
+[
+  {
+    "name": "without-openings",
+    "source": {
+      "model_version": 10,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.2499,
+                0.25
+              ],
+              "b": [
+                0.7501,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": []
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "layout": {},
+    "candidate": {
+      "model_version": 10,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.25,
+                0.25
+              ],
+              "b": [
+                0.75,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": [],
+          "wall_segments": []
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "candidateLayout": {}
+  },
+  {
+    "name": "hosted-opening",
+    "source": {
+      "model_version": 10,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.2499,
+                0.25
+              ],
+              "b": [
+                0.7501,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "type": "door",
+              "x": 0.5,
+              "y": 0.25,
+              "angle": 0,
+              "length": 0.1,
+              "host": {
+                "kind": "partition",
+                "id": "p",
+                "t": 0.5
+              }
+            }
+          ]
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "layout": {},
+    "candidate": {
+      "model_version": 10,
+      "spaces": [
+        {
+          "id": "floor",
+          "title": "Synthetic",
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "cell_cm": 5,
+          "rooms": [],
+          "partitions": [
+            {
+              "id": "p",
+              "a": [
+                0.25,
+                0.25
+              ],
+              "b": [
+                0.75,
+                0.25
+              ],
+              "cm": 20
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "type": "door",
+              "x": 0.5,
+              "y": 0.25,
+              "angle": 0,
+              "length": 0.1,
+              "host": {
+                "kind": "partition",
+                "id": "p",
+                "t": 0.5
+              }
+            }
+          ],
+          "wall_segments": []
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "candidateLayout": {}
+  }
+]

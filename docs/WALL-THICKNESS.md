@@ -932,3 +932,12 @@ cm. Room vertices and endpoints of partitions that host an opening never move,
 multiple valid repairs fail closed, and the immutable proposal is revalidated
 against current geometry before use. Move and room are one history/config
 transaction; cancelling or rejecting the room applies nothing.
+
+**Source coordinates (#1061).** Face adjacency and identity use the existing
+topology epsilon; persisted rings use only exact coordinates proved by incident
+source cuts. Authored endpoints are copied at t=0/1. Independent cuts may agree
+within arithmetic roundoff, while incompatible source representatives fail
+closed. A topology-close cut cannot discard the endpoint constraint. No nearest
+wall search, authored-debt allowance, changed grid or relaxed off-grid counter
+is introduced. T/X/overlap provenance and the existing materialization/lineage
+barriers remain part of the same transaction.

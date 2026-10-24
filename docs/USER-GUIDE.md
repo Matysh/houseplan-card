@@ -844,6 +844,11 @@ break the structural wall axis, and a zero-thickness axis remains part of the
 closure graph. A new room may not partially overlap another room, while a
 fully nested island room is supported.
 
+Existing valid wall coordinates outside the grid are retained when creating a
+room from their closed contour; running Optimize first is unnecessary. Explicit
+alignment in Optimize keeps its preview/confirmation flow and must preserve each
+opening's wall carrier. A refused operation leaves the stored plan unchanged.
+
 The room dialog is grouped into four cards: the first has no heading (display
 name and Home Assistant area side by side), followed by **Fill**, **Sensor
 sources** (temperature, humidity and CO₂) and **Room caption** (colour and font sizes). The area help is next
