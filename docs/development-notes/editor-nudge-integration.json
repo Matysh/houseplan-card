@@ -39,7 +39,7 @@
     "boundary": "The two failed invocation intervals total about 6.5 s; they did not cause the measured 40 min capacity failure. No CODE cycle consumed."
   },
   "legacyOracles": {
-    "approvedSource": "Accepted #1051 UI-028 selection paint: src/styles/devices.styles.ts blue core and zero selection-ring width.",
+    "approvedSource": "Accepted #1051 UI-026 selection paint: src/styles/devices.styles.ts blue core and zero selection-ring width; UI-028 owns the separate Plan cursor contract.",
     "ordinaryBefore": "Accepted 4dd: old marker-shadow oracle 2 RED, seven other controls PASS. Accepted #1026 supplies the repaired actual icon-selection oracle.",
     "repair": "Marker shadow now uses a real wide Devices click and checks the blue core, unchanged shell width and absence of box-shadow transitions/animations; existing resize and hover protections remain."
   },
@@ -204,5 +204,102 @@
     ],
     "fingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
     "localProofBoundary": "The four native and two Golden receipts remain b09f local executions, with identical actual product/build inputs after the final CI-reader merge. Mandatory normal hook will independently execute the complete gate on the exact final published SHA."
+  },
+  "postCiCoverOracleRepair": {
+    "priorPublishedSource": "8984bdc166e39b70c9fa1d8e85a7b3fd795ce90e",
+    "acceptedDev": "fdb24af3adad4364bf106890206ca884a2c4f8b5",
+    "mergedSource": "f217a2eb7e3dcccd9710e7e4d14bb34e399a86e9",
+    "priorCi": {
+      "run": 40094784165,
+      "job": 120875219000,
+      "planned": 257,
+      "completed": 257,
+      "passed": 256,
+      "failed": 1,
+      "remaining": 0,
+      "goldenDemand": 0,
+      "durationSeconds": 2260,
+      "timeout": false,
+      "failedSmoke": "smoke_cover_plate_precedence.mjs",
+      "failedAssertions": [
+        "litLampUnavailFades",
+        "litLampNoCoverStateIsUnavailable"
+      ],
+      "otherSmokeChecksPassed": 35,
+      "codeInvoked": false,
+      "budget": "0/4 unchanged",
+      "reportSha256": "e999e8e16d97db07291a2c25e6ccc96cecd95e7ae5672338755609d64cd3c60d"
+    },
+    "ordinaryBefore": {
+      "source": "fdb24af3adad4364bf106890206ca884a2c4f8b5",
+      "aAndBModified": false,
+      "build": "Ordinary Windows Node22.23.3/Rollup4.62.2 build and bundle-sync",
+      "runtime": "WSL Node22.23.3/Playwright1.62.0/Chromium151.0.7922.34 rev1234",
+      "checks": {
+        "passed": 35,
+        "failed": 2
+      },
+      "receipt": {
+        "source": "fdb24af3adad4364bf106890206ca884a2c4f8b5",
+        "startedAt": "2026-10-24T14:32:09.1372631Z",
+        "completedAt": "2026-10-24T14:32:16.7217392Z",
+        "exitCode": 1,
+        "runtime": "WSL Node22.23.3/PW1.62.0/Chromium151.0.7922.34 rev1234",
+        "build": "Windows Node22.23.3/Rollup4.62.2 ordinary accepted-fdb build+sync",
+        "smokeSha256": "564978345ea660247b7d95d43d9df80355c2273174552bd7c4d77ade9d5799f3"
+      },
+      "logSha256": "bbc6fb38bcddec83452774d3ac9f9f754b46f9274c7b7b3251627859a8e70e75"
+    },
+    "acceptedContract": "Accepted #1026 SPEC Own availability and docs/DEVICE-PRESENTATION.md: one positive own light state proves available. Unavailable/missing selected cover sample is neutral and inactive without borrowing the light work/pulse, not whole-device offline. Every own row explicitly unavailable remains offline.",
+    "repair": "Only the two retired exact unavail expectations change to available-own/neutral-cover checks. All 35 prior positive checks remain, including cover-only own offline. A mixed all-own-unavailable positive control is added. No product change, timeout or assertion weakening.",
+    "ordinaryAfter": {
+      "source": "f217a2eb7e3dcccd9710e7e4d14bb34e399a86e9",
+      "checks": {
+        "passed": 38,
+        "failed": 0
+      },
+      "nativeReceipts": [
+        {
+          "name": "cover",
+          "path": "demo/smoke_cover_plate_precedence.mjs",
+          "source": "f217a2eb7e3dcccd9710e7e4d14bb34e399a86e9",
+          "startedAt": "2026-10-24T14:35:43.2171445Z",
+          "completedAt": "2026-10-24T14:35:50.6529635Z",
+          "exitCode": 0
+        },
+        {
+          "name": "nudge",
+          "path": "demo/smoke_editor_nudge.mjs",
+          "source": "f217a2eb7e3dcccd9710e7e4d14bb34e399a86e9",
+          "startedAt": "2026-10-24T14:35:50.6738213Z",
+          "completedAt": "2026-10-24T14:36:01.8284140Z",
+          "exitCode": 0
+        }
+      ],
+      "logSha256": "9ce240e1e7ac39c0545c6a13d4f0ca198d5548147dbaab12cfca1ed47894c636"
+    },
+    "sourceEquivalence": {
+      "sha": "f217a2eb7e3dcccd9710e7e4d14bb34e399a86e9",
+      "previous": "8984bdc166e39b70c9fa1d8e85a7b3fd795ce90e",
+      "fingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+      "changed": [
+        "demo/smoke_cover_plate_precedence.mjs",
+        "docs/images/03-space-create.png",
+        "docs/images/06-device-display-preview.png",
+        "docs/images/06-device-editor.png",
+        "docs/images/07-background-editor.png",
+        "docs/images/screenshots.json"
+      ],
+      "buildInputChanges": [],
+      "productChanges": []
+    },
+    "measurement": {
+      "source": "f217a2eb7e3dcccd9710e7e4d14bb34e399a86e9",
+      "fingerprint": "60a808773c3bb50bfc72038b47e85f0a034b436c7303be7207a6455a0c91962a",
+      "rawDistBytes": 3443023,
+      "initialViewGzipBytes": 339771,
+      "lazyEditorGzipBytes": 347064
+    },
+    "proofBoundary": "Fresh cover and nudge native execute on the combined source. The previous four native/two Golden b09f receipts remain historical local executions with identical product/build inputs. The fresh mandatory normal hook checks the final published source; full task plan remains a CI requirement, not a local-pass claim."
   }
 }
