@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { baselineIndexHash, readTaskVisualIntent, readPendingVisualIntents, validateVisualIntent } from '../scripts/task-visual-intent.mjs';
 import { preserveSelectedGolden } from '../scripts/browser-selected.mjs';
+import { declaredTaskSmokes } from '../scripts/smoke-select.mjs';
+import { browserPushPlan } from '../scripts/browser-push-plan.mjs';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-visual-intent-1044-'));
@@ -44,6 +46,29 @@ test('#1044 rejects contradictory, malformed or path-like visual intent', t => {
   }
   assert.throws(() => validateVisualIntent({ ...visual, smokes: ['../other.mjs'] }, 1044), /smoke IDs/);
   assert.throws(() => readTaskVisualIntent({ root, issue: '../4' }), /Invalid task issue/);
+});
+
+test('#1060 Golden acceptance expires visual changes but preserves declared smokes locally and in CI', t => {
+  const { root, baselines, visual, put } = fixture(t);
+  const smokes = ['smoke_task_contract.mjs'];
+  writeFileSync(join(root, 'demo', smokes[0]), '');
+  put(1060, { ...visual, smokes });
+  const plan = () => browserPushPlan({ root, issue: 1060, files: [], diffText: '', corpus: [],
+    scenarios: [{ id: visual.golden[0].id }], pendingVisual: { golden: [] },
+    smokeSelection: { noExecutableDiff: true } });
+  assert.deepEqual(declaredTaskSmokes(root, 1060), smokes);
+  const before = plan();
+  assert.deepEqual(before.smoke.ids, smokes);
+  assert.equal(before.golden.mode, 'selected');
+  writeFileSync(join(baselines, 'baselines-index.json'), '{"scenarios":{},"accepted":"beta"}\n');
+  assert.equal(readTaskVisualIntent({ root, issue: 1060 }), null);
+  assert.deepEqual(declaredTaskSmokes(root, 1060), smokes);
+  const after = plan();
+  assert.deepEqual(after.smoke, before.smoke);
+  assert.equal(after.golden.mode, 'none');
+  put(1060, { ...visual, smokes: ['../invalid.mjs'] });
+  assert.throws(() => declaredTaskSmokes(root, 1060), /smoke IDs/);
+  assert.throws(plan, /smoke IDs/);
 });
 
 test('#1044 selected artifacts retain exact current frames and refuse changed bytes without touching baselines', t => {

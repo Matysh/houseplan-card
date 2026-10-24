@@ -30,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 
 import { registeredSmokes } from './smoke-links.mjs';
 import { guardCliOutput } from './cli-output.mjs';
-import { readTaskVisualIntent } from './task-visual-intent.mjs';
+import { readTaskIntent } from './task-intent.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -375,7 +375,7 @@ export function declaredTaskSmokes(root = repoRoot, issue) {
     const branch = spawnSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8' });
     issue = Number(/^issue\/([1-9]\d+)-/.exec(branch.stdout?.trim())?.[1]);
   }
-  return issue ? readTaskVisualIntent({ root, issue })?.smokes || [] : [];
+  return issue ? readTaskIntent({ root, issue })?.smokes || [] : [];
 }
 
 function gitDiff(base, head) {

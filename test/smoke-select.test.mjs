@@ -9,6 +9,7 @@ import { selectSmokes, selectSmokeConnections, parseDiff, symbolTable, VISUAL_MI
   requiredSmokeEntries, requiredSmokeIds, MAX_SYMBOL_SMOKES, MAX_RARE_SMOKES, MAX_INFERRED_SMOKES } from '../scripts/smoke-select.mjs';
 import { smokesToRun } from '../scripts/gate-small.mjs';
 import { SMOKE_LINKS, registeredSmokes } from '../scripts/smoke-links.mjs';
+import historical from './data/smoke-selection-history.json' with { type: 'json' };
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 const fixture = (name) =>
@@ -83,7 +84,6 @@ test('#1060 smoke-only edits and declared AC survive no executable source diff',
 });
 
 test('#1060 historical task plans shrink without losing their explicit contracts', () => {
-  const historical = JSON.parse(fixture('historical-plans.json'));
   for (const sample of historical.cases) {
     const corpus = new Map(sample.corpus.map(([name, symbols]) => [name, symbols.join(' ')]));
     const selection = selectSmokeConnections(sample.parsed, corpus,

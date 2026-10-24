@@ -5,6 +5,7 @@ import { selectSmokes, requiredSmokeIds, VISUAL_MINIMUM } from './smoke-select.m
 import { fingerprintCorpus, postCaptureInputs } from './source-fingerprint.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { readTaskVisualIntent, readPendingVisualIntents } from './task-visual-intent.mjs';
+import { readTaskIntent } from './task-intent.mjs';
 
 export function goldenConnections(scenarios = GOLDEN_SCENARIOS) {
   return {
@@ -17,7 +18,8 @@ export function goldenConnections(scenarios = GOLDEN_SCENARIOS) {
 export function browserPushPlan({ files, diffText, labels = [], render = false, issue,
   root = process.cwd(), corpus = fingerprintCorpus(root), scenarios = GOLDEN_SCENARIOS,
   links = goldenConnections(scenarios), smokeSelection = selectSmokes(diffText, { root }),
-  visualIntent = readTaskVisualIntent({ root, issue }), pendingVisual = null }) {
+  visualIntent = readTaskVisualIntent({ root, issue }), pendingVisual = null,
+  declaredSmokes = visualIntent?.smokes ?? readTaskIntent({ root, issue })?.smokes ?? [] }) {
   if (labels.includes('ci:full')) return fullBrowserPlan(true, true);
   const sceneSet = new Set(scenarios.map(s => s.id));
   const relevant = new Set([...corpus, 'demo/golden/baselines/baselines-index.json']);
@@ -54,7 +56,7 @@ export function browserPushPlan({ files, diffText, labels = [], render = false, 
   const harnessChanged = files.some(f => /^demo\//.test(f) && !/^demo\/smoke_/.test(f)
     && !/^demo\/(golden|docs|stand)\//.test(f));
   const fallback = unknownSource || harnessChanged ? VISUAL_MINIMUM : [];
-  const ids = [...new Set([...selected, ...changedSmokes, ...(visualIntent?.smokes || []), ...fallback])].sort();
+  const ids = [...new Set([...selected, ...changedSmokes, ...declaredSmokes, ...fallback])].sort();
   for (const id of ids) if (!allSmokes.has(id)) throw Error(`Unknown selected smoke: ${id}; update the task smoke connection`);
   const smoke = ids.length ? { mode: 'selected', ids,
     reason: fallback.length ? 'connected smokes and bounded visual minimum' : 'smoke-select, changed entries and task intent',

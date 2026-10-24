@@ -10,25 +10,42 @@ import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { selectSmokeConnections } from '../scripts/smoke-select.mjs';
+import historical from './data/smoke-selection-history.json' with { type: 'json' };
 
 const empty = { direct: [], registered: [], unproven: false, noExecutableDiff: true };
 const make = (options) => browserPushPlan({ files: [], diffText: '', corpus: ['src/known.ts', 'demo/golden/device-battery.mjs'],
   smokeSelection: empty, pendingVisual: { golden: [] }, ...options });
 
 test('#1060 CI reads the same call context as the local selector and task packet', () => {
-  const diff = readFileSync(new URL('./fixtures/smoke-select/741-call-arguments.diff', import.meta.url), 'utf8');
+  const diff = ['diff --git a/src/argument.ts b/src/argument.ts', '@@ -1,3 +1,3 @@',
+    ' resolveSubject({', '-  value: 1,', '+  value: 2,', ' });'].join('\n');
   const calls = [];
   const demand = readTaskDemand({ refName: 'issue/1060-ci', repo: 'owner/repo', run(command, args) {
     calls.push([command, ...args]);
     if (command === 'gh') return JSON.stringify({ labels: [{ name: 'track:ask' }] });
     if (args[0] === 'merge-base') return 'a'.repeat(40);
-    if (args.includes('--name-only')) return 'src/houseplan-card.ts\n';
+    if (args.includes('--name-only')) return 'src/argument.ts\n';
     if (args[0] === 'diff') return diff;
     throw Error('unexpected read');
   } });
   assert.equal(demand.diffText, diff);
   assert.ok(calls.some(args => args.includes('--unified=3')));
   assert.ok(!calls.some(args => args.includes('--unified=0')));
+});
+
+test('#1060 historical mandatory scope reaches CI unchanged on every task track', () => {
+  for (const sample of historical.cases) {
+    const smokeSelection = selectSmokeConnections(sample.parsed,
+      new Map(sample.corpus.map(([name, symbols]) => [name, symbols.join(' ')])),
+      { registry: sample.registry, declaredSmokes: sample.declaredSmokes });
+    for (const track of ['ship', 'show', 'ask']) {
+      const plan = make({ files: sample.parsed.files, labels: [`track:${track}`], smokeSelection,
+        visualIntent: { golden: [], smokes: sample.declaredSmokes } });
+      assert.deepEqual(plan.smoke.ids, sample.afterIds, `#${sample.issue} ${track}`);
+      assert.equal(plan.scope, 'task');
+    }
+  }
 });
 
 test('#1060 every track excludes weak inference while preserving explicit scope and full coverage', () => {
