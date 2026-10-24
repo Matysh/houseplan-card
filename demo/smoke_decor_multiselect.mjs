@@ -41,7 +41,7 @@ const point=async(x,y)=>card.locator('.decorlayer').evaluate((el,[x,y])=>{
 const hit=async id=>card.evaluate((c,id)=>{
   const shapes=[...c.renderRoot.querySelectorAll('[data-hp="decor"][data-id]')].filter(el=>el.dataset.id===id);
   for(const shape of shapes){const b=shape.getBoundingClientRect();
-    for(const fy of [.5,.1,.9,.25,.75])for(const fx of [.5,.1,.9,.25,.75]){
+    for(const fy of [.5,.1,.9,.25,.75,0,1])for(const fx of [.5,.1,.9,.25,.75,0,1]){
       const x=b.x+b.width*fx,y=b.y+b.height*fy;if(x<0||y<0||x>innerWidth||y>innerHeight)continue;
       const actual=c.renderRoot.elementFromPoint(x,y)?.closest('[data-hp="decor"]');
       if(actual?.dataset.id===id)return{x,y};
