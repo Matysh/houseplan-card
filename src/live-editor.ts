@@ -29,12 +29,12 @@ interface LiveEditorHost {
   _tool: string;
   _deviceDrag: { id: string } | null;
   _editorRuntime?: {
-    readonly properties?: { selection(): unknown; readonly selectedTextId?: string | null };
+    readonly properties?: { selection(): unknown; readonly selectedTextId?: string | null; measureGroupText?(root: ParentNode): void };
     readonly physicalGesture?: { readonly active: boolean; readonly drag: { kind: string; id: string; moved: boolean } | null };
     readonly backdropGesture?: { readonly active: boolean; renderFrame(view: unknown): unknown };
   } | null;
   _decorDraft?: unknown;
-  _decorMove?: { id: string } | null;
+  _decorMove?: { id: string; selection?: { ids: readonly string[] } } | null;
   _dtDrag?: { id: string } | null;
   _opDrag?: unknown;
   _resize?: { dragging: boolean; plan?: { roomIds: string[]; movingOpeningIds: string[] } | null };
@@ -59,7 +59,7 @@ interface LiveEditorHost {
   _renderActiveChainInk: () => unknown;
   _renderPlanSnapOverlay: () => unknown;
   _renderWallThickUi: () => unknown;
-  _renderDecorLayer: (onlyId?: string | null) => unknown;
+  _renderDecorLayer: (onlyId?: string | readonly string[] | null) => unknown;
   _renderTextFrame: (view: unknown) => unknown;
   _renderLiveEditorMeasurements: (view: unknown) => unknown;
   /** #521: guides for the gesture in flight; `nothing` while the runtime loads. */
@@ -290,7 +290,7 @@ const editorTemplate = (host: LiveEditorHost): TemplateResult | typeof nothing =
     const view = host._viewOr(host._baseVb());
     const activeId = host._dtDrag?.id || host._decorMove?.id || null;
     return svg`<g class="hp-live-decor" aria-hidden="true" pointer-events="none">
-      ${host._renderDecorLayer(activeId)}
+      ${host._renderDecorLayer(host._decorMove?.selection?.ids ?? activeId)}
       ${host._renderAlignGuides()}
       ${host._editorRuntime?.backdropGesture?.renderFrame(view)}
       ${host._renderTextFrame(view)}
@@ -326,10 +326,11 @@ const paintDevice = (host: LiveEditorHost, root: ParentNode, id = host._deviceDr
 };
 
 const makeDecorShapeTransparent = (
-  state: LiveEditorState, root: ParentNode, id: string,
+  state: LiveEditorState, root: ParentNode, ids: readonly string[],
 ): void => {
+  const selected = new Set(ids);
   for (const element of root.querySelectorAll<HTMLElement>('.decorlayer [data-hp="decor"]')) {
-    if (element.closest('[data-hp-live-editor]') || element.dataset.id !== id) continue;
+    if (element.closest('[data-hp-live-editor]') || !selected.has(element.dataset.id || '')) continue;
     if (element.style.opacity === '0') continue;
     element.style.opacity = '0';
     state.transparent.push(element);
@@ -386,7 +387,7 @@ export function paintHouseplanEditor(value: object): void {
     makeMovingOpeningsTransparent(state, root, physicalOpeningIds(host._editorRuntime?.physicalGesture?.drag, host._openingsR));
   } else if (host._mode === 'decor') {
     const activeId = host._dtDrag?.id || host._decorMove?.id;
-    if (activeId) makeDecorShapeTransparent(state, root, activeId);
+    if (activeId) makeDecorShapeTransparent(state, root, host._decorMove?.selection?.ids ?? [activeId]);
     makeTransparent(state, root, '.dtframe, .backdropframe');
   }
   render(svg`${editorTemplate(host)}${host._editorRuntime?.properties?.selection() ?? nothing}`, target);
@@ -422,6 +423,7 @@ export function whenHouseplanEditorSettled(value: object): Promise<void> {
 /** Only text needs a DOM measurement; every box-like item owns its config box. */
 export function measureHouseplanDecorText(value: object): void {
   const host = value as LiveEditorHost;
+  host._editorRuntime?.properties?.measureGroupText?.(host.renderRoot);
   const selectedTextId = host._editorRuntime?.properties?.selectedTextId;
   const shape = host._dtSel ?? (selectedTextId ? { id: selectedTextId, kind: 'text' } : null);
   if (!shape) {

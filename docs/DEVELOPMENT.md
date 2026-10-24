@@ -1,5 +1,137 @@
 # Development and deployment
 
+## Decor multi-selection (#1038)
+
+The approved SPEC r2 and owner variant B add only volatile decor IDs and
+individual contours to the existing editor. Group move and style pass through
+the current config writer/history. `test/decor-group-edit.test.mjs` proves full
+record preservation, all-or-none bounds and the 1000-object quota; Properties
+editor/controller tests execute accepted/refused/held authority paths. The
+ordinary native witness is `node demo/smoke_decor_multiselect.mjs`, using actual
+painted DOM hits, mouse/keyboard, field controls and persisted harness responses.
+Colour-only/alpha-only input causes are distinct; empty raw alpha is invalid,
+while numeric zero is real. The shared picker retains this draft across width
+changes without introducing another popup or write owner.
+Target Golden scenes document the intentional new group presentation; task
+branches do not accept baselines. Measurements and exact-source run results
+belong to the issue handoff; no mutant execution is part of this task.
+
+`test_ha_decor_group_transfer.py` runs the actual backend full/space JSON,
+plan-only and portable ZIP paths for literal six-kind post-group records.
+Full/space/ZIP retain compatible future attributes; plan-only deliberately
+keeps #167's existing closed privacy projection (unknown keys omitted and live
+Text references frozen to a dash). The first ordinary transfer run exposed an
+incorrect B expectation of lossless plan-only privacy data; production remains
+unchanged. The native scenario mounts a fresh public card on the saved pair,
+then checks complete quota-sized records and empty volatile selection/history.
+
+Earlier matched Windows Node 22.23.3 / Rollup 4.62.2 builds on accepted `4dd092a031`
+measure View 339613 -> 339782 B gzip, lazy editor 343989 -> 349715 B gzip,
+raw output 3432482 -> 3453991 B and host references 6090 -> 6173. The accepted
+facts come from `device-offline-validation.json` / `postCssIntegration`; the
+new build is `850d1ed5d`, fingerprint `f0b7ca357dbd…`, with product inputs
+unchanged by the later native-only follow-up. The small extra editor weight
+is the selection/rigid group/individual-contour helpers and the existing
+Properties command/mixed-field adapters. View gains only 169 B and still has
+no eager import of the editor. Splitting another command or picker owner to
+avoid that 5726-B lazy cost would add disproportionate complexity.
+The [measured-growth record](https://github.com/Matysh/houseplan-card/issues/1038#issuecomment-6383329349)
+quotes the owner's standing permission: «сильно на размеры не заморачивайся,
+если незначительное превышение, устранять которое очень дорого — разрешаю
+поднять лимиты». At that checkpoint the measured lazy reference became 349715 B;
+raw reference became 3453991 B and host-reference baseline 6173. Published raw 3437873 B
+was a reference, not the accepted build's actual size. No ratchet band,
+initial-View ceiling, absolute byte guard or runtime latency limit changes.
+This accounts for the implementation cost; it claims no speed improvement.
+
+The final ordinary merge `760b809cc` includes accepted keyboard nudge
+`3efc9b0b4` and preserves both its retirement/current/ACK guards and the group
+receipt/authority owner. A real combined Windows build (Node 22.23.3 / Rollup
+4.62.2) measures View 339771 -> 339945 B gzip, editor 347064 -> 352827 B gzip,
+raw 3443023 -> 3464516 B and host references 6115 -> 6198. Select-only is
+18286 B gzip. These are whole-build facts, not added branch deltas. Under the
+same quoted permission, the final lazy reference is 352827 B, raw reference
+3464516 B and host-reference baseline 6198; every existing band, initial View
+ceiling, absolute byte/ABI guard and latency threshold stays unchanged.
+The weight remains the lazy selection/contour/Properties adapters rather than
+a new dependency, eager editor import or second writer. Avoiding the 5763-B
+lazy cost by splitting another command/picker owner would add disproportionate
+complexity. The [integration record](development-notes/decor-multiselect-integration.json)
+pins the accepted input equivalence, actual measurements and ordinary native,
+61-unit, four-mode transfer and two viewed Golden capture results. New baseline
+images were not accepted; static declarations still have execution 0 and unknown
+caught outcomes. The final push gate and CI belong to the issue handoff.
+
+The first mandatory hook on `bfe5ea3dc` was red in ordinary unit fixtures while
+build, byte budgets and unused checks passed. History fixtures now supply the
+existing real `ConfigWriteContext`, observe a stable public connection/user,
+and keep their original server, CAS and Undo assertions. They do not replace
+`claim`/`current` with no-ops. The picker and live-editor source contracts retain
+their complete new optional detail/completion and render/align wiring; the
+English guide has the matching multiple-decor subsection. These B/C repairs
+pass 83 targeted checks without changing product code or capture inputs.
+
+The canonical runtime line count is accepted `3ef`: 11767, combined: 11834,
+an own addition of 67. The old published 11735 reference plus its 50-line band
+leaves an actual overage of 49 lines. Pure geometry and contour logic already
+live in leaf modules; these are the existing pointer/selection/history seams.
+Introducing another gesture owner solely to move those lines would add
+disproportionate complexity. The same owner permission records only the exact
+11834 core reference, preserving the 50-line band, the card cap and every byte,
+ABI and latency predicate. No cosmetic product deletion is used to alter it.
+
+The first selected CI on `0bcf61de0` completed all 237 smokes (236 passed,
+one failed) and both declared Golden scenes passed with the same image hashes.
+Only the old furniture-polish recipe's two Escape/listener checks failed: it
+assigned the tool privately, bypassing the existing `Properties.toolChanged`
+retirement of the previously placed singleton. A separate unchanged-source
+public-input witness passed real toolbar/category/item clicks, native placement,
+rearm and Escape, including balanced keyboard listeners (4 adds / 4 removes).
+The B-only repair uses the real tool adapter and one public Escape delivery;
+both original oracles remain. The multi-selection native scenario now also
+checks this lifecycle. Both complete ordinary smokes pass with unchanged product,
+fingerprint and timeout limits; no assertion was relaxed. The failed CI is retained as a red
+receipt; fresh CI and independent CODE remain separate requirements.
+
+The subsequent canonical `40127211133` completed 237/237 selected smokes and
+both declared Golden scenes successfully. While it ran, accepted CI policy
+#1060 advanced dev to `16b5fd77`; flattening the old task history replayed
+already resolved keyboard/offline conflicts before CODE. The ordinary whole
+accepted merge `102dd06dd` is clean and makes dev an ancestor, without rewriting
+published commits or changing product/capture inputs. Profiles and registry
+inventory were explicitly regenerated for that accepted policy; the new
+inventory records this task's ledger. Subsequent validation uses the canonical
+required scope and retains every explicit AC/intent; weak or oversized lexical
+regression is deferred to beta/night. The previous full selected receipt is
+historical evidence; current range/packaging checks and exact-SHA CI remain
+fresh requirements, not assertions inferred from that receipt.
+
+The new required local scope on `5006a2137` passes 39/39 smokes and both new
+group Golden scenes. Accepted bounded registry Git I/O `c861d615` is included
+by clean merge `0f34b08e7`; it changes no product/capture input or browser
+execution. A source-linked visual check also captures and reviews the existing
+`geometry-decor-editor-dark` empty Properties footer: Ctrl+A/Ctrl+M now replace
+Enter/Esc hints (1478 changed footer pixels). Its separate 1263 header focus-ring
+pixels were observed by the coordinator before #1038 and are outside this
+task's intent; no focus or threshold is altered to conceal them. The two
+`ui-1051-color-*` captures include that footer too. They remain pending NEW
+under #1051 on this baseline index, so #1038 keeps NEW rather than introducing
+a conflicting CHANGE. All three additional captures are viewed; baseline
+acceptance and unrelated visual changes remain outside this task.
+
+The mandatory hook on `32a085a69` passed product/build/budget/unused checks but
+failed one inherited scoped-reuse positive fixture after 11.1 seconds. That
+fixture retained an eight-second bounded Git reader across unrelated setup.
+Its unchanged isolated file passed 36/36; a controlled real-reader age witness
+reported the expected deadline refusal, while fresh readers of the identical
+committed before/after SHA accepted. Each positive verification now opens its
+own per-lookup reader immediately before use, retaining the original real Git
+inputs and `accepted === true` oracle and printing the actual refusal reason on
+failure. Production deadlines, equivalence policy and negative cases are not
+changed. The failed hook remains a red receipt; its retry is mandatory.
+The scoped-reuse and immutable Git-input files pass all 57 positive/negative
+checks after this fixture-only repair, with no skipped case.
+
 ## Editor keyboard translation (#1025)
 
 `test/editor-nudge.test.mjs` calls the actual pure candidate and lazy command
@@ -4952,7 +5084,7 @@ accepting global baselines: declared task deltas remain pending until beta.
 render connection requires an explicit scene plan, with an actionable error;
 it never silently skips the change or expands to every Golden scene.
 
-Read-only replays in `test/fixtures/smoke-select/historical-plans.json` pin the
+Read-only replays in `test/data/smoke-selection-history.json` pin the
 original material, base, corpus and registered links: #1051 selects 41 smokes
 instead of 223, #1046 34 instead of 168, and #1047 17 instead of 75. These are
 selection counts, not measured execution time or repeated browser runs.
@@ -5099,10 +5231,12 @@ accepted dev has the new reader, the trusted controller uses a compatible fresh
 fallback rather than accepting unsupported receipt semantics.
 
 Lookup's own checkout is sparse: ordinary file identity uses immutable Git blob
-content IDs plus modes, independent of commit ancestry. Only trust/config files
-and beta scalar mirrors need their bytes; bundles and baseline images are not
-downloaded for lookup. Network authentication has an eight-second
-lookup deadline and unavailable/slow sources fall back to fresh jobs. Actual
+content IDs plus modes, independent of commit ancestry. Trust/config files,
+tooling dependency closure and beta scalar mirrors require bytes; bundles and
+baseline images are not downloaded for lookup. Missing immutable blobs are
+fetched in batches with implicit per-object lazy fetch disabled (#1062). Git I/O
+and network authentication share a bounded lookup deadline; unavailable/slow
+sources fall back to fresh jobs. Actual
 Node flags/options, locale and timezone are part of the recorded environment;
 local reuse never substitutes CI image values. The proof publisher alone has
 contents:write and skips fork PR index writes.

@@ -2126,7 +2126,26 @@ colour makes it the next default without recolouring other objects. Outline and
 text sizes are physical centimetres/inches, so zoom changes their on-screen
 width consistently rather than changing the saved line weight.
 
-### Decor order and context menu
+### Multiple decor objects
+
+In **Select**, hold `Ctrl` and click objects to add or remove each member.
+`Ctrl+A` selects all decor in the current space, and `Ctrl+M` selects furniture.
+The backdrop image and devices do not enter this selection. Each object has an
+individual contour, and the wide Properties panel shows their count. Drag any
+selected member to move the whole set; the empty space between members remains
+canvas. An ordinary click returns to one selected object. An empty click or
+idle `Esc` clears the set; `Esc` during a drag restores all positions and keeps
+the selection.
+
+Matching object kinds share colour and opacity fields. Rectangles and ovals
+have independent fill fields; images have opacity only. **Different values**
+is independent for colour and percentage: editing one preserves every member's
+other channel. Opening or cancelling the picker saves nothing. Other fields
+and individual commands stay disabled; right-click or double-click enters the
+existing single-object scenario. One group edit is one `Ctrl+Z` step. Selection
+shortcuts remain native in fields/dialogs and do not interrupt unfinished drawing.
+
+### Single-object order and context menu
 
 Select a decor object. The properties sidebar shows **Bring to front** and
 **Send to back** in one row immediately above **Delete**. They move the object

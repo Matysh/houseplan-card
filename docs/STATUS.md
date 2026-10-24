@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5277 · pure backend 627 · HA-harness backend 527 · browser smokes 434 (`npm run inventory`) |
+| Tests | Node unit 5346 · pure backend 627 · HA-harness backend 528 · browser smokes 436 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -33,6 +33,10 @@ runtime without granting full coverage. S7/merge await push/companion discovery;
 dev classification advances through verified split proof independently of the
 judged range. Full beta/night/release obligations and fresh range/packaging
 guards remain in force.
+
+Sparse registry lookup (#1062) bounds synchronous Git I/O and batches missing
+blob downloads; slow or unavailable sources return fresh execution before the
+CI job deadline. Immutable policy/source authentication remains mandatory.
 
 Editor arrows (#1025) translate selected independent walls, same-host openings
 and movable device anchors through the existing physical/config/layout writers
@@ -174,6 +178,12 @@ Decor Line (#1046) accepts successive clean clicks like Walls, with exact
 Shift 45° preview/commit and one ordinary history step per independent segment.
 Its temporary anchor follows active-chain Undo/Redo and ends on Esc or context
 replacement. Navigation/cancel tails never draw; saved decor has no new fields.
+
+Decor multi-selection (#1038) uses the accepted individual-contour variant B.
+Current-space decor IDs remain volatile; one rigid move or common style edit
+uses one accepted existing Save/history command. Same-kind touched colour/alpha
+channels preserve opposite per-object values; images remain opacity-only and
+no group context actions, stored groups or new asset/API paths are introduced.
 
 Print download (#1036) combines unchanged PDF with a static SVG of the current
 View. SVG starts with devices off and transparent background, offers the shared

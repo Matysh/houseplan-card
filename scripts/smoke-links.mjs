@@ -30,6 +30,17 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/decor-text-element.ts', 'src/editors/decor/group-selection.ts'],
+    smokes: ['smoke_decor_group_text_scale.mjs'],
+    because: '#1038 CODE r1: instrumented native DOM reads on 1000 real Text nodes prove that two selected labels never enumerate or measure the unrelated labels during HA updates and drag; the smoke does not call the measurement helper.',
+  },
+  {
+    files: ['src/editors/decor/group-edit.ts', 'src/editors/decor/group-selection.ts',
+      'src/editors/properties/group-color-draft.ts'],
+    smokes: ['smoke_decor_multiselect.mjs'],
+    because: '#1038: native painted hits and keyboard/field controls prove common rigid move, all-member live ink, individual outlines, same-kind mixed channels, image alpha-only and context-safe shortcuts across the existing writer/history boundary.',
+  },
+  {
     files: ['src/editors/keyboard-nudge.ts','src/editors/plan-nudge.ts','src/device-contact-write.ts'],
     symbols: ['_onKey'],
     smokes: ['smoke_editor_nudge.mjs'],
