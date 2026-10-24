@@ -7,6 +7,10 @@
       "configs": 5
     },
     {
+      "file": "test/fixtures/1045-wall-node-delete.json",
+      "configs": 17
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -460,6 +464,327 @@
             }
           ],
           "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/0/space",
+      "fingerprint": "2f1e1165cf1ef12835366fb86431371c8490f279ef74fb1a25a1d05481856bea",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/1/space",
+      "fingerprint": "53ba4e829848b083ff9657423f4cccfe49266fa633f63b1e223968f2735904bc",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "b",
+            "a"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/2/space",
+      "fingerprint": "10d1c28d4e86e02c26477c1086994122932e39331bc5d9a4ec4d875ec0613dce",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "b",
+            "a"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/3/space",
+      "fingerprint": "c4e1aaafe39cb701b8cf8d69725db0749cc4a8a26c58dba72247d38ed295d2ef",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/4/space",
+      "fingerprint": "70884e30cc4d9e993e1da3cbb4741e0b52604f72c1b09fb60a384ec65cf2a9f8",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/5/space",
+      "fingerprint": "046e25b518aff9d0f01e6f5f70bed882c5598c82098825d192e20b38f299c676",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/6/space",
+      "fingerprint": "ebbffa51184616d514986558beef4120d014ed04c9ea6d45670685053143333a",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/7/space",
+      "fingerprint": "4d97d68049db10c7e213e928692eaeb8c41b6e1e841dadabc1b6ada4dd1e110b",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/8/space",
+      "fingerprint": "b99f48f56cee3286115114e5dfa77c6c478e56970faf074a029bc704a0c08398",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/9/space",
+      "fingerprint": "a9f99582d2464a435cec7154c8613f24f576c6e8b7edf37f6a429fab2b87b42d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/10/space",
+      "fingerprint": "e92ec5dcaf93e63e3e1d40916548d70441a5ed2315aa053fff9b6692225f6309",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/11/space",
+      "fingerprint": "aad5ca64dc80a0aa11356331ebc63cd72fc58dc251733ead53356b32c6e23011",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/12/space",
+      "fingerprint": "1637a203b87b2007255d5b628f45de249bce906c76522f6e69130a80c35e2292",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/13/space",
+      "fingerprint": "2e5991a3a762e156d9c628ef8d44ea527cb678e7dc9cf889a08a3e5c2fa40e6d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "o",
+              "host": null
+            }
+          ],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/14/space",
+      "fingerprint": "97b5cc9569d4dd456f0f4da5f1f48c21852fa4daf36856b93527bb0c94c4c307",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "o",
+              "host": {
+                "kind": "partition",
+                "id": "a"
+              }
+            }
+          ],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/15/space",
+      "fingerprint": "6beefd4fb564a2faf77cecd9477e431b5797b012c273929e8e1df5e18c634ce1",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "o",
+              "host": {
+                "kind": "partition",
+                "id": "b"
+              }
+            }
+          ],
+          "partitions": [
+            "a",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1045-wall-node-delete.json/16/space",
+      "fingerprint": "a75e7dad47fc331259c703e411c76aea84b61485660d88cf9c84a2c8bfbf7ec3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "o",
+              "host": {
+                "kind": "partition",
+                "id": "a"
+              }
+            }
+          ],
+          "partitions": [
+            "a",
+            "b"
+          ]
         }
       ]
     },
