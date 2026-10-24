@@ -4940,13 +4940,22 @@ Task pushes collect them without accepting global baselines.
 `task-ci-plan.mjs` uses the same bounded task plan for push, S7 and merge on
 ship/show/ask (#1044). It reads the complete task diff from its merge base with
 `origin/dev`, not merely the last push; range guards retain their separate
-`GREEN_BASE`. Smokes come from changed entries,
-smoke-select and declared AC; unproven source/shared harness coverage adds the
-bounded visual minimum. `ci:full` expands coverage to the full matrix, without
+judged base. Local gate, task packet and CI share the required smoke scope
+(#1060): changed entries, declared AC/ledger intent, registered links and strong
+narrow symbol links. Weak lexical matches are diagnostics only. Symbol limits
+are absolute, independent of corpus growth; an overflowing inferred union is
+deferred as a whole to beta/night, with the bounded visual minimum. Explicit
+entries are never truncated to the first N. `smoke.deferred` records omitted
+inferred work and reasons. `ci:full` expands coverage to the full matrix, without
 accepting global baselines: declared task deltas remain pending until beta.
 `ci:golden` requests connected scenes plus the issue's visual intent. An unknown
 render connection requires an explicit scene plan, with an actionable error;
 it never silently skips the change or expands to every Golden scene.
+
+Read-only replays in `test/fixtures/smoke-select/historical-plans.json` pin the
+original material, base, corpus and registered links: #1051 selects 41 smokes
+instead of 223, #1046 34 instead of 168, and #1047 17 instead of 75. These are
+selection counts, not measured execution time or repeated browser runs.
 
 Store visual intent in the existing `docs/release-ledger/<previous-stable>/<NN>.json`
 entry. Obtain `baselineIndex` with `node scripts/task-visual-intent.mjs --baseline-index`:
@@ -5003,20 +5012,26 @@ The shared display name preserves the existing `workflow_run` trigger in main;
 `run-name` identifies the profile. Consumers register exact workflow paths in
 `ci-workflows.mjs`; a matching display name grants no authority. Full dispatch
 stays in `validate.yml`. Non-product proofs cannot satisfy product policy.
-A product proof names the profiles required by the complete candidate range;
-missing/pending companions request canonical validation, red companions fail.
-After a rebase, the push-event range may start a surplus product workflow while
-the candidate range requests only known companion profiles (#1059). A nonempty,
-unique docs/tooling-only plan makes that otherwise complete product proof stale,
-never accepted. Its own failed/missing execution still fails; malformed plans
-and foreign identities gain no authority. The existing validate gate requests
-canonical `validate.yml` on the exact material with `full=false/mutants=false`
-for an ordinary light task and accepts only its completed applicable proof.
-`ci-profiles.test.mjs` and `validate-gate.test.mjs` cover this input, the actual
-dispatch contract and red/pending/missing/incomplete/foreign canonical outcomes.
-Only canonical completed runs advance the old range/classification induction;
-a narrower push profile cannot erase an unjudged ancestor. Night and release
-continue to request full policy. The proof schema stays `houseplan-ci-proof/v1`.
+A product proof names its executed product profile and required companions.
+S7/merge await an existing applicable producer, including the bounded GitHub
+registration window for push and required companions (#1060). A first empty
+list is not permission for a second producer. An independently proved filtered
+fast-forward push permits immediate canonical fallback; force-push remains
+unknown. Red companions fail; incomplete, foreign or unsupported proof never
+grants product authority. Older companion-only product plans remain inapplicable
+(#1059) and use canonical validation on the exact material. Full intent and
+release requirements retain their independent coverage checks.
+
+On dev/main, `classify-base.mjs --mode=integration --repo=owner/repo` verifies
+actual product/canonical proof, exact SHA/tree/attempt and all mandatory
+companions before advancing `base`. A newer red or partial producer cannot be
+hidden behind an older green run. Separately, `range_base` may use an already
+judged failed canonical run for provenance/process guards. Missing green proof
+leaves `base` empty and expands check families; it never substitutes the judged
+range as successful coverage. Artifact reads stop at the nearest valid base,
+with bounded attempts and a shared deadline; unavailable sources widen coverage.
+Tests: `classify-base`, `promotion-range`, `validate-gate`, `merge-candidate` and
+`validate-workflow`. Night/release retain full policy and the v1 proof schema.
 
 
 ## Cross-branch CI proof registry (#981)
@@ -5037,6 +5052,9 @@ trusted generators and pinned dependencies, only when their code/runtime match
 the material. Generator-policy changes require an explicit author refresh;
 the final merge candidate still needs Validate on its exact SHA (#1044).
 Frontend job runs build/types/pure units only when no compatible source exists.
+The independent snapshot-policy check reconstructs positive tooling dependency
+triggers from immutable inputs; their presence does not remove product coverage.
+Forged tables, executable input changes and foreign source identities refuse.
 Bundle distribution and product guards always assemble/verify the exact current
 bytes, run FS/Git/process units, range, budget/unused and backend manifest checks.
 A beta alias validates all seven existing synchronized release mirrors (root
@@ -5070,6 +5088,15 @@ fresh guards and bundle production. Canonical and product variants share a
 key over both registered recipe variants; the source records the variant that
 actually executed. Source Git/file API responses are cached per immutable SHA;
 local pre-push supplies its real committed snapshot, including unpublished HEAD.
+
+Tooling and selected browser receipts (#1060) also require a direct successful
+immutable producer: run/attempt, actual completed job, input identity, effective
+recipe, runtime and requested selection/visual intent must match. Documentation
+alone may change; executable dependencies may not. Partial/red/cancelled sources
+and recursive receipt chains refuse. Selected evidence never grants full or
+release authority; range/process/filesystem/packaging checks remain fresh. Until
+accepted dev has the new reader, the trusted controller uses a compatible fresh
+fallback rather than accepting unsupported receipt semantics.
 
 Lookup's own checkout is sparse: ordinary file identity uses immutable Git blob
 content IDs plus modes, independent of commit ancestry. Only trust/config files

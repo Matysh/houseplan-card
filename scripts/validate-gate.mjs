@@ -83,7 +83,7 @@ export function provesMutants(jobs) {
  */
 export async function validateGate({
   ref, sha, ops, appearMs = VALIDATE_APPEAR_MS, totalMs = VALIDATE_TOTAL_MS, pollMs = POLL_MS, wait = true,
-  mutants = true, full = false, golden = false,
+  mutants = true, full = false, golden = false, expectPush = true,
 }) {
   // #954: full и golden независимы. Несовместимый завершённый proof не
   // принимается; заранее спланированный push можно дождаться без дубля.
@@ -123,6 +123,12 @@ export async function validateGate({
           await ops.sleep(pollMs);
           continue;
         }
+        // A product may finish before GitHub lists its companion. Keep its
+        // identity while discovery is bounded; no incomplete proof is accepted.
+        if (verdict.reason === 'missing-companion' && ops.now() - started < appearMs) {
+          await ops.sleep(pollMs);
+          continue;
+        }
         // cancelled, light, stale или legacy run без proof — не доказательство.
         ignored.add(run.databaseId);
         tracked = null;
@@ -136,6 +142,13 @@ export async function validateGate({
         };
       }
     } else if (dispatchedAt === null) {
+      // The first empty API response can precede push registration. Only a
+      // proven filtered ingress or an incompatible existing proof warrants an
+      // immediate canonical producer. --no-wait still discovers an exact ID.
+      if (!mutants && expectPush !== false && ignored.size === 0 && ops.now() - started < appearMs) {
+        await ops.sleep(pollMs);
+        continue;
+      }
       await ops.dispatch(ref, { mutants, full });
       dispatchedAt = ops.now();
       attempts = 1;
@@ -208,7 +221,8 @@ if (invokedDirectly) {
   // #954: ci:full и ci:golden — отдельные требования.
   const full = arg('full') === 'true';
   const golden = ['true', 'add', 'present'].includes(arg('golden'));
-  const outcome = await validateGate({ ref, sha, wait, mutants, full, golden, ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
+  const outcome = await validateGate({ ref, sha, wait, mutants, full, golden, expectPush: arg('expect-push') !== 'false',
+    ops: realOps({ repo, workflow: arg('workflow') || 'validate.yml' }) });
   const lines = [`result=${outcome.result}`, `url=${outcome.url || ''}`, `run_id=${outcome.runId || ''}`, `note=${outcome.note}`];
   for (const line of lines) console.log(line);
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`);

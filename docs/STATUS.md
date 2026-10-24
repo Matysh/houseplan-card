@@ -25,6 +25,15 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+CI task scope (#1060) shares one bounded required smoke selection across local
+gate, packet and CI; weak lexical matches remain deferred diagnostics. Immutable
+registry equivalence includes computed tooling dependencies. Direct successful
+tooling/selected-browser receipts preserve exact inputs, intent, recipe and
+runtime without granting full coverage. S7/merge await push/companion discovery;
+dev classification advances through verified split proof independently of the
+judged range. Full beta/night/release obligations and fresh range/packaging
+guards remain in force.
+
 Editor arrows (#1025) translate selected independent walls, same-host openings
 and movable device anchors through the existing physical/config/layout writers
 and histories. Connected walls and invalid full steps remain no-op; opening

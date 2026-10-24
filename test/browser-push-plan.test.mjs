@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { browserPushPlan, browserPlanExecution, goldenConnections } from '../scripts/browser-push-plan.mjs';
-import { taskCiPlan } from '../scripts/task-ci-plan.mjs';
+import { taskCiPlan, readTaskDemand } from '../scripts/task-ci-plan.mjs';
 import { validateSelectedPlan, selectedGoldenPassed, runSelected } from '../scripts/browser-selected.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { buildCiProof, evaluateCiProof, CI_PROOF_POLICIES, JOB_RULES, UNCONSUMED_JOBS } from '../scripts/ci-proof.mjs';
@@ -14,6 +14,41 @@ import { findStep, runStep } from './helpers/workflow-step.mjs';
 const empty = { direct: [], registered: [], unproven: false, noExecutableDiff: true };
 const make = (options) => browserPushPlan({ files: [], diffText: '', corpus: ['src/known.ts', 'demo/golden/device-battery.mjs'],
   smokeSelection: empty, pendingVisual: { golden: [] }, ...options });
+
+test('#1060 CI reads the same call context as the local selector and task packet', () => {
+  const diff = readFileSync(new URL('./fixtures/smoke-select/741-call-arguments.diff', import.meta.url), 'utf8');
+  const calls = [];
+  const demand = readTaskDemand({ refName: 'issue/1060-ci', repo: 'owner/repo', run(command, args) {
+    calls.push([command, ...args]);
+    if (command === 'gh') return JSON.stringify({ labels: [{ name: 'track:ask' }] });
+    if (args[0] === 'merge-base') return 'a'.repeat(40);
+    if (args.includes('--name-only')) return 'src/houseplan-card.ts\n';
+    if (args[0] === 'diff') return diff;
+    throw Error('unexpected read');
+  } });
+  assert.equal(demand.diffText, diff);
+  assert.ok(calls.some(args => args.includes('--unified=3')));
+  assert.ok(!calls.some(args => args.includes('--unified=0')));
+});
+
+test('#1060 every track excludes weak inference while preserving explicit scope and full coverage', () => {
+  const selection = { ...empty, noExecutableDiff: false,
+    direct: [{ smoke: 'smoke_modes.mjs', strong: false }, { smoke: 'smoke_decor.mjs', strong: true }],
+    registered: [{ smoke: 'smoke_mode_transition.mjs' }],
+    deferred: { until: 'beta/night', reasons: ['weak lexical matches'], smokes: ['smoke_modes.mjs'], symbols: [] } };
+  for (const track of ['ship', 'show', 'ask']) {
+    const input = { files: ['src/known.ts', 'demo/smoke_hide_layers.mjs'], labels: [`track:${track}`],
+      smokeSelection: selection, visualIntent: { golden: [], smokes: ['smoke_static_zoom_sharpness.mjs'] } };
+    const plan = make(input);
+    assert.deepEqual(plan.smoke.ids, ['smoke_decor.mjs', 'smoke_hide_layers.mjs', 'smoke_mode_transition.mjs', 'smoke_static_zoom_sharpness.mjs']);
+    assert.deepEqual(plan.smoke.deferred.smokes, ['smoke_modes.mjs']);
+    const explicitWeak = make({ ...input, visualIntent: { golden: [], smokes: ['smoke_modes.mjs'] } });
+    assert.ok(explicitWeak.smoke.ids.includes('smoke_modes.mjs'));
+    assert.deepEqual(explicitWeak.smoke.deferred.smokes, []);
+    const full = make({ ...input, labels: [...input.labels, 'ci:full'] });
+    assert.equal(full.scope, 'full'); assert.equal(full.smoke.mode, 'full'); assert.equal(full.golden.mode, 'full');
+  }
+});
 
 test('#1044 unrelated tests/docs do not run golden; explicit full stays full', () => {
   for (const file of ['test/subject.test.mjs', 'docs/DEVELOPMENT.md']) {
@@ -38,7 +73,7 @@ test('#1044 connected scenes stay targeted; missing render scope needs intent, n
 
 test('#1044 ordinary tasks use smoke-select; uncertainty gets the bounded minimum', () => {
   const known = make({ files: ['src/known.ts'], smokeSelection: {
-    ...empty, direct: [{ smoke: 'smoke_modes.mjs' }], noExecutableDiff: false,
+    ...empty, direct: [{ smoke: 'smoke_modes.mjs', strong: true }], noExecutableDiff: false,
   } });
   assert.equal(known.smoke.mode, 'selected'); assert.deepEqual(known.smoke.ids, ['smoke_modes.mjs']);
   for (const selection of [{ ...empty, noExecutableDiff: false }, { ...empty, unproven: true }]) {

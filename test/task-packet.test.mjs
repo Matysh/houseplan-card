@@ -399,6 +399,19 @@ test('#707 AC10: обязательные проверки с основания
   assert.match(renderPacket(packetOf({ branch: branchWith({ diff: GEOMETRY }) })), /## Обязательные проверки\n- `npm run gate:small` · всегда \(§8\)\n- `npm run invariants -- --config <экспорт>` · риск geometry/);
 });
 
+test('#1060 packet keeps explicit smokes and separates deferred regression from task obligations', () => {
+  const p = packetOf({ branch: branchWith({ smokes: {
+    direct: [], registered: [], visualMinimum: [],
+    explicit: { changed: ['smoke_owned.mjs'], declared: ['smoke_owned.mjs', 'smoke_ac.mjs'] },
+    deferred: { until: 'beta/night', reasons: ['lexical candidate budget exceeded'], smokes: ['smoke_unrelated.mjs'] },
+  } }) });
+  assert.deepEqual(p.checks.slice(1).map(check => check.command), ['`node demo/smoke_owned.mjs`', '`node demo/smoke_ac.mjs`']);
+  const text = renderPacket(p);
+  assert.match(text, /Регрессия отложена до beta\/night: lexical candidate budget exceeded/);
+  assert.match(text, /Не обязательные task-запуски: smoke_unrelated.mjs/);
+  assert.ok(!p.checks.some(check => check.command.includes('smoke_unrelated')));
+});
+
 test('#707 AC11: changelog и визуальное свидетельство', () => {
   const commits = [
     { message: 'fix: a (#707)\n\nIssue: #707\nUser-Visible: yes\n' },

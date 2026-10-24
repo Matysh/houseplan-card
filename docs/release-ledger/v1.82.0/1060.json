@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1060,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repairs immutable CI reuse policy, bounds inferred task browser scope, prevents duplicate producers and separates verified green integration coverage from judged ranges. It preserves fresh guards and full beta/night/release authority without changing product behavior or baselines.",
+  "summary": {
+    "ru": "Целевые проверки задач и доказанный CI reuse устраняют лишние прогоны; база dev учитывает полные split-доказательства.",
+    "en": "Targeted task checks and verified CI reuse remove duplicate runs; dev coverage includes complete split-profile proofs."
+  }
+}

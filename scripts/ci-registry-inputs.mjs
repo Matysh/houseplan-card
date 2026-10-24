@@ -47,13 +47,32 @@ export function registryReader(root, ref = 'HEAD') {
     if (header[0] !== oid || header[1] !== 'blob' || !Number.isInteger(size)) throw Error('bad bulk input object');
     objects.set(oid, data.subarray(end + 1, end + 1 + size)); offset = end + size + 2;
   }
+  const readMany = paths => {
+    const entries = paths.map(path => {
+      const row = byPath.get(path);
+      if (!row || row.mode !== '100644' && row.mode !== '100755') throw Error('missing/symbolic input: ' + path);
+      return row;
+    });
+    const missing = [...new Set(entries.map(row => row.oid).filter(oid => !objects.has(oid)))];
+    if (missing.length) {
+      const bytes = git(root, ['cat-file', '--batch'], { input: missing.join('\n') + '\n' });
+      let at = 0;
+      for (const oid of missing) {
+        const end = bytes.indexOf(10, at), header = bytes.subarray(at, end).toString('utf8').split(' ');
+        const size = Number(header[2]);
+        if (header[0] !== oid || header[1] !== 'blob' || !Number.isInteger(size)) throw Error('bad bulk input object');
+        objects.set(oid, bytes.subarray(end + 1, end + 1 + size)); at = end + size + 2;
+      }
+    }
+    return entries.map(row => objects.get(row.oid));
+  };
   const read = path => {
     const row = byPath.get(path);
     if (!row || row.mode !== '100644' && row.mode !== '100755') throw Error('missing/symbolic input: ' + path);
     if (!objects.has(row.oid)) objects.set(row.oid, git(root, ['cat-file', 'blob', row.oid]));
     return objects.get(row.oid);
   };
-  return { tracked, read, text: p => read(p).toString('utf8'), rows };
+  return { tracked, read, readMany, text: p => read(p).toString('utf8'), rows };
 }
 
 // Parse scalar spans, preserving every byte outside the named version fields.
@@ -182,7 +201,7 @@ export function registryInputs(root, { ref = 'HEAD', toolchain = null, mode = 'e
   }
   const plan = { schema: 1, mode, treeId, keys, recipes, workflowRecipes, toolchain: environment, perfSet, inventories };
   const entries = new Map(reader.rows.map(row => [row.path, { oid: row.oid, mode: row.mode }]));
-  Object.defineProperty(plan, '_snapshot', { value: { entries, read: reader.read, inventory, domains } });
+  Object.defineProperty(plan, '_snapshot', { value: { entries, read: reader.read, readMany: reader.readMany, inventory, domains } });
   return plan;
 }
 
