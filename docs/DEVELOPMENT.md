@@ -42,6 +42,9 @@ real HA endpoint tests, `vacuum-history.test.mjs`, the four named
 separate ordinary inputs. Capture new Golden frames in the task;
 acceptance remains the pre-beta Linux artifact operation. Final source receipts,
 all required risks, measurements and normal hook must be current before S7.
+The ledger explicitly retains the required recovery/fidelity/live-tail/native
+neighbors and the affected camera/visibility guards, so their AC coverage does
+not depend on a weak lexical match being part of a task plan.
 
 The local UI-030 comparison uses its accepted section markup/layout CSS with
 the same synthetic records, current shared kit, theme, viewport and state. All
