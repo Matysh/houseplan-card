@@ -54,7 +54,7 @@ const empty=async()=>{
   const p=await card.evaluate(c=>{
     const matrix=c.renderRoot.querySelector('.decorlayer').getScreenCTM();
     const receipt={};
-    for(const [x,y] of [[.86,.79],[.7,.78],[.45,.78],[.2,.8],[.1,.7]]){
+    for(const [x,y] of [[.86,.79],[.7,.78],[.45,.78],[.2,.8],[.1,.7],[.08,.55],[.08,.08]]){
       const p=new DOMPoint(x*1000,y*1000).matrixTransform(matrix),target=c.renderRoot.elementFromPoint(p.x,p.y);
       const observed={x:p.x,y:p.y,tag:target?.tagName,classes:target?.getAttribute('class'),stage:!!target?.closest('.stage')};
       receipt.preferred??=observed;
@@ -174,6 +174,9 @@ try{
   check('group.picker.invalid_hex_stays_visible',await popupHex.inputValue(),'INVALID');
   const invalidBefore=await state();await number.fill('65');await picker.locator('.confirm').click();
   check('group.picker.alpha_cannot_launder_invalid_hex',(await state()).writes,invalidBefore.writes);
+  await empty();
+  check('group.picker.invalid_hex_blocks_canvas_navigation',(await state()).ids,invalidBefore.ids);
+  check('group.picker.invalid_hex_remains_open_on_navigation',await picker.locator('.picker').isVisible());
   await page.keyboard.press('Escape');await settle();check('group.picker.cancel_restores_full_baseline',(await state()).decor,invalidBefore.decor);
 
   await seed([rect('a',.18,.32),rect('b',.58,.32),rect('unselected',.4,.62)]);await select(['a','b']);
