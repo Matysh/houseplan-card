@@ -90,6 +90,47 @@ timestamp must be visible without horizontal clipping. Existing accepted
 scenes are not intentionally changed. Task capture is not baseline acceptance;
 the complete canonical Linux artifact is accepted only before a beta.
 
+## Decor click-Line #1046
+
+`demo/smoke_decor_line_click.mjs` exercises real clicks, stationary Shift,
+active/completed Undo/Redo, invalid Properties, navigation/cancel tails, clean
+touch delivery, external config reload and View inertness. Its data/history,
+native/Properties ID and painted SVG frame are the oracles. Ordinary negative
+input is permitted; registered guard witnesses are checked statically only.
+`test/decor-line-drawing.test.mjs` covers the pure endpoint/session contract;
+its boundary case also executes the production `_decorSnap`, draft commit and
+common-history recording. A non-square viewport still has `_decorH = NORM_W`;
+all magnet candidates pass through bounded `_snap`, so normalization cannot
+clip one Shift axis after the preview. The finite endpoint and half-grid
+checks match the synchronous draft writer, with no await between them; only
+then does the existing asynchronous config writer own persistence/refusal.
+`test/node-history-runtime.test.mjs` covers a foreign server-command Undo/Redo
+retiring the Line owner before its asynchronous write;
+existing decor/order smokes retain non-Line coverage. No full regression or
+baseline acceptance is part of this task; no backend or migration is needed.
+The #1047 creation-selection smoke uses two clean clicks only for Line and
+keeps its immediate frame/field-write checks. It first reproduced an empty
+Properties field after the first segment: the continuing preview retained the
+lightweight frame before the newly selected owner reached the panel. The Line
+commit now synchronizes that owner while its draft is terminal, then resumes
+the preview. No Escape or programmatic selection masks that integration case.
+The #883 history-refusal smoke likewise creates its Background Line with two
+real clicks. The old drag setup reproduced eight cascading failures because no
+decor/history step existed; its original refusal, neighbour-order, cursor and
+server-write assertions remain unchanged after adapting that one gesture.
+
+After integrating accepted dev `c2d49829b` (#1055), the final pinned Node
+22.23.3 build again measures raw `bundleBytes` 3416670. Its product and build
+inputs are identical to accepted `845c20c3e` (#1029/#1047/#1052/#1053), whose
+fresh baseline build measured 3411158: the actual combined delta is +5512 B.
+Host references measured from that dev's source are 6048 → 6070 (+22); the
+published reference was still 6038, so the combined 32-reference growth is
+recorded at 6070. Only those two measured baselines change; their 2000-B and
+25-reference bands and the other monolith dimensions stay fixed. Initial View
+is 339508 B gzip (reference 339368 +2000) and lazy editor 340612 B (339040
++2000), both within their existing bands and the absolute View wall. These
+are actual combined-build facts, not a sum or maximum of branch baselines.
+
 ## Device contacts #1003 — local evidence
 
 The task's pinned Windows Node 22.23.3 source build measured initial View

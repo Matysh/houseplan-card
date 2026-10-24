@@ -24,6 +24,7 @@ const { canonicalizeConfigGeometry } = await import('../test-build/coordinate-ca
 const { virtualLightSnapshot } = await import('../test-build/virtual-light-state.js');
 const { applyNodeMove, prepareNodeMove, structuralWallNodes } = await import('../test-build/wall-node-move.js');
 const { commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
+const { DecorLineDrawing } = await import('../test-build/editors/decor/line-drawing.js');
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const square = id => {
@@ -212,6 +213,25 @@ for (const [label, change] of [
 });
 
 // ---------------------------------------------------------------- AC2
+test('#1046 a foreign server-owned node history command ends the active Line session', async () => {
+  const s=await moved();s.host._mode='decor';s.host._decorTool='line';
+  const drawing=new DecorLineDrawing({
+    context:()=>s.host._mode==='decor'?'f':null,current:()=>()=>true,blocked:()=>false,
+    point:e=>[e.clientX,e.clientY],snap:p=>p,pitch:()=>10,events:new EventTarget(),
+    queue:run=>run(),cancelQueue(){},
+    preview:(a,b)=>{s.host._decorDraft=a?{kind:'line',a,b,pid:-1}:null;},
+    commit(){throw new Error('a first anchor cannot write');},
+  });
+  s.runtime.decorLine=drawing;
+  const begin=()=>{const e={clientX:100,clientY:100,pointerId:1,button:0,pointerType:'mouse',shiftKey:false};
+    drawing.pointerDown(e);drawing.pointerUp(e);drawing.click(e,false);assert.equal(drawing.active,true);};
+  begin();s.runtime._undoGeometry();await s.idle();
+  assert.equal(drawing.active,false);assert.deepEqual(s.floorOf('f'),s.original);
+  begin();s.runtime._redoGeometry();await s.idle();
+  assert.equal(drawing.active,false);assert.deepEqual(s.floorOf('f'),s.after);
+  assert.deepEqual(s.nodeWrites(),['apply@3:f','undo@4:f','apply@5:f']);
+});
+
 for (const when of ['waits for Save', 'is in flight']) {
   test(`#843 AC2 own settings write ${when}: one node request with the revision after it and the exact inverse`, async () => {
     const s = await moved();
