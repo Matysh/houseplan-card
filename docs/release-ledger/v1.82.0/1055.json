@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1055,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Size only the finite selected-browser CI job budget from the observed #1051 task inventory: 176 of 218 smokes used 1486 seconds before seven Golden scenes, so the 25-minute job could not preserve a complete result. Keep the complete selected plan, 180-second per-invocation limit, semantic and pixel checks, product performance thresholds and release proof boundaries unchanged. No product or config behaviour changes."
+}
