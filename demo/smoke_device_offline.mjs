@@ -126,9 +126,20 @@ try {
   await page.waitForFunction(() => document.querySelector('houseplan-space-card')?.shadowRoot
     ?.querySelector('.dev[data-id="offline-down"] .device-core'));
   await waitDeviceOfflinePaint(page);
-  const staticPaint = await readDeviceOfflinePaint(page, ['offline-down', 'offline-text'], 'space'); observations.space = staticPaint;
+  const staticPaint = await readDeviceOfflinePaint(page,
+    ['offline-down', 'offline-text', 'offline-led-unavailable', 'offline-led-unknown'], 'space'); observations.space = staticPaint;
   out.staticCardSharesOfflineGlyphAndTextPolicy = ['offline-down', 'offline-text'].every(id =>
     offline(staticPaint.faces[id]) && opaque(staticPaint.faces[id]?.parent) && dim(staticPaint.faces[id]?.glyph));
+  out.staticCardLedBadgeUsesOwnedOfflineContentOnly = offline(staticPaint.faces['offline-led-unavailable'])
+    && opaque(staticPaint.faces['offline-led-unavailable']?.parent)
+    && opaque(badge(staticPaint.faces['offline-led-unavailable'])?.paint)
+    && dim(badge(staticPaint.faces['offline-led-unavailable'])?.content)
+    && opaque(badge(staticPaint.faces['offline-led-unknown'])?.content);
+  await setDeviceOfflineStates(page, { 'light.offline_led_unavailable': 'unknown' });
+  const staticLedUnknown = await readDeviceOfflinePaint(page, ['offline-led-unavailable'], 'space');
+  out.staticCardLedUnknownRevokesConfirmedOffline = !offline(staticLedUnknown.faces['offline-led-unavailable'])
+    && opaque(badge(staticLedUnknown.faces['offline-led-unavailable'])?.content);
+  await setDeviceOfflineStates(page, { 'light.offline_led_unavailable': 'unavailable' });
   await setDeviceOfflineStates(page, { 'media_player.offline_down': 'off' });
   const staticLive = await readDeviceOfflinePaint(page, ['offline-down'], 'space');
   out.staticCardTracksOwnRecovery = !offline(staticLive.faces['offline-down']) && opaque(staticLive.faces['offline-down']?.glyph);
