@@ -137,13 +137,13 @@ export function renderDeviceFace(
               class=${valueBadgeClassName(badge)}
               title=${valueBadgeTitle(badge)}
               style=${`--value-font-scale:${deviceTextScale(badge.fullText || badge.text)}`}
-            >${badge.text}</span>`
+            ><span class="value-badge-content">${badge.text}</span></span>`
           : nothing}
         ${legacyMetrics.map((metric) => html`<span
           class="value-badge legacy-secondary available tone-${metric.kind}"
           title=${metric.text + metric.suffix}
           style=${`--value-font-scale:${deviceTextScale(metric.text + metric.suffix)}`}
-        >${metric.text}${metric.suffix}</span>`)}
+        ><span class="value-badge-content">${metric.text}${metric.suffix}</span></span>`)}
       </span>` : nothing}
       ${presentation.battery ? html`<span class="device-battery"
         data-state=${presentation.battery.state} aria-hidden="true">
@@ -194,12 +194,12 @@ export function renderDeviceShadowFace(
           ? html`<span
               class=${valueBadgeClassName(badge)}
               style=${`--value-font-scale:${deviceTextScale(badge.fullText || badge.text)}`}
-            >${badge.text}</span>`
+            ><span class="value-badge-content">${badge.text}</span></span>`
           : nothing}
         ${legacyMetrics.map((metric) => html`<span
           class="value-badge legacy-secondary available tone-${metric.kind}"
           style=${`--value-font-scale:${deviceTextScale(metric.text + metric.suffix)}`}
-        >${metric.text}${metric.suffix}</span>`)}
+        ><span class="value-badge-content">${metric.text}${metric.suffix}</span></span>`)}
       </span>
     </span>
   `;

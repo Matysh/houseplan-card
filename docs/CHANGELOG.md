@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Separate a device being off from losing Home Assistant availability. Confirmed
+  offline dims only the icon/value and badge contents; frames and diagnostics
+  retain their appearance. LED strips keep their ordinary inactive shape and
+  dim only badge text when present. Unknown/missing readings do not prove offline. (#1026)
+
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)

@@ -1732,7 +1732,7 @@ tooltip/highlight immediately; later mouse movement restores desktop hover.
 | Red lock | Lock is unsecured | Unlocked/open lock |
 | Green lock | Lock is secured | Locked lock |
 | Orange | Physically open | Door/window contact, opening valve |
-| Faded | Data unavailable | All relevant entities unknown, unavailable or absent |
+| Faded contents | Confirmed own offline | Every active own entity explicitly unavailable; only the core icon/value and badge contents fade |
 | Neutral | No alarm, work or open condition | Off, closed, idle, standby, docked |
 
 For a controller with `controls`, target work and controller availability are
@@ -1743,9 +1743,13 @@ and opaque when all of its lamps are unavailable. If an active physical HA
 device exposes no entities at all, House Plan also keeps its controller opaque:
 missing telemetry alone is not evidence that the device is offline, so its
 controlled target makes it yellow when working and neutral otherwise. If the
-device does expose own entities but all of them are missing, `unknown` or
-`unavailable`, the controller fades even if a target is on. A virtual controller
-is always available.
+device does expose own entities but has no real own reading, a working target
+does not create yellow paint or a pulse. Only every own row explicitly reporting
+`unavailable` fades the contents; a mixture with missing/unknown is not confirmed
+offline. A virtual controller has no physical offline evidence. Off/idle/standby/
+paused are ordinary available states, including media players. Frames, contact
+ink, LQI and battery retain their appearance. An LED strip keeps its ordinary
+inactive shape and fades only badge text when a badge is present.
 This remains true when the same target was separately removed from the plan:
 the removed marker is not restored, but it cannot make the controller look
 offline or make its editor preview disagree with the plan.
@@ -1942,7 +1946,7 @@ the open state is not hidden.
 | `lock.*` | Red unlocked, green locked | Travelling while locking/unlocking | Card; Toggle forbidden |
 | `valve.*` | Orange while open/moving | Travelling | Card; Toggle may be explicit |
 | `climate.*` | Yellow for real heating/cooling/work; HVAC mode fallback only when action is absent | Work | House Plan card |
-| `media_player.*` | Neutral when active, dimmed at off | None | House Plan card |
+| `media_player.*` | Neutral including off; only confirmed own offline dims contents | None | House Plan card |
 | `vacuum.*` | Yellow cleaning/returning | Work/travelling | House Plan card; live puck opens HA more-info |
 | `script.*` / `automation.*` | Script yellow while on; automation stays neutral | Work / short explicit Run event | Card or explicit Run |
 | `button.*` / `event.*` | Neutral | Short event on change | House Plan card |

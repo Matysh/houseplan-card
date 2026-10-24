@@ -275,10 +275,9 @@ export function entityVisualSample(hass: any, eid: string): EntityVisualSample {
     // A media-player state describes its power/transport lifecycle, not an
     // actuator doing work.  In particular, `playing` must not turn every TV,
     // receiver or soundbar into a permanent yellow "working" marker.  Keep
-    // every powered/transport state neutral. An explicit `off` uses the same
-    // existing faded presentation as unknown/unavailable: this is a visual
-    // availability flag, not another status in the marker state machine.
-    return state === 'off' ? { ...base, availability: 'unavailable' } : base;
+    // every powered/transport state neutral. Power off is still a real sample;
+    // physical availability is resolved independently from the own roster.
+    return base;
   }
 
   if (domain === 'vacuum') {
@@ -311,9 +310,8 @@ export function entityVisualSample(hass: any, eid: string): EntityVisualSample {
  * Classify a resolved device role with the small amount of topology that an
  * entity alone cannot provide. A switch-only controller with several peer
  * switches and a dedicated Power entity is a powered appliance: its feature
- * toggles do not define device activity, Power=on is neutral, and Power=off
- * reuses the existing unavailable/faded presentation. A lone relay remains a
- * normal working switch.
+ * toggles do not define device activity, and Power=off suppresses work without
+ * declaring a network outage. A lone relay remains a normal working switch.
  */
 export function entityVisualSamplesForDevice(
   hass: any,
@@ -331,8 +329,7 @@ export function entityVisualSamplesForDevice(
     eid !== powerEid && isApplianceLifecycleEntity(hass, eid),
   );
   const powerSample = entityVisualSample(hass, powerEid);
-  const powerUnavailable = powerSample.availability === 'unavailable' || powerSample.state === 'off';
-  if (powerUnavailable) {
+  if (powerSample.availability === 'unavailable') {
     return resolvedEids.map((eid) => ({
       eid,
       state: hass?.states?.[eid] ? lower(hass.states[eid].state) : '__missing__',
@@ -341,6 +338,10 @@ export function entityVisualSamplesForDevice(
       activity: 'none',
       edge: 'none',
     }));
+  }
+  if (powerSample.state === 'off') {
+    return resolvedEids.map((eid) => ({ ...entityVisualSample(hass, eid),
+      status: 'neutral', activity: 'none', edge: 'none' }));
   }
 
   return resolvedEids.map((eid) => {

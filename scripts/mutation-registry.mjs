@@ -11866,9 +11866,9 @@ const MUTANT_DEFINITIONS = [
       + 'the focused matrix keeps own availability and target working as separate facts (#251)',
     patches: [{
       file: 'src/device-presentation-policy.ts',
-      find: "  let visual = input.controllerFace\n"
-        + "    ? { ...input.sourceVisual, availability: input.controllerAvailability }",
-      replace: "  let visual = input.controllerFace\n    ? input.sourceVisual",
+      find: "  let visual = input.controllerFace && input.sourceVisual.status !== 'alarm'\n"
+        + "    ? { ...input.sourceVisual, availability: input.controllerSourceAvailability }",
+      replace: "  let visual = input.controllerFace && input.sourceVisual.status !== 'alarm'\n    ? input.sourceVisual",
     }],
   },
   {
@@ -11879,10 +11879,9 @@ const MUTANT_DEFINITIONS = [
     because: 'battery, LQI and update are the available evidence for event-only wireless '
       + 'controllers; excluding those siblings restores the field defect (#251)',
     patches: [{
-      file: 'src/device-presentation.ts',
-      find: '  const live = ownEntities.some((eid) => {',
-      replace: "  const live = ownEntities.filter((eid) => !eid.startsWith('sensor.') "
-        + "&& !eid.startsWith('update.')).some((eid) => {",
+      file: 'src/device-own-availability.ts',
+      find: '  for (const eid of own) {',
+      replace: "  for (const eid of own.filter(eid => !eid.startsWith('sensor.') && !eid.startsWith('update.'))) {",
     }],
   },
   {
@@ -11893,9 +11892,9 @@ const MUTANT_DEFINITIONS = [
     because: 'an active physical controller whose HA device exposes no own entities has no offline '
       + 'evidence; its face must remain available while controls decide working versus neutral (#318)',
     patches: [{
-      file: 'src/device-presentation.ts',
-      find: "  if (activeEntitylessDevice) return 'available';",
-      replace: "  if (activeEntitylessDevice) return 'unavailable';",
+      file: 'src/device-own-availability.ts',
+      find: "  return activeEntityless ? 'available' : 'unavailable';",
+      replace: "  return 'unavailable';",
     }],
   },
   {

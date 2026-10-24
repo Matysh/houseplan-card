@@ -1,5 +1,22 @@
 # Development and deployment
 
+## Own offline presentation (#1026)
+
+`device-own-availability.ts` reads only the canonical active own roster. One
+positive row proves availability; only a nonempty all-unavailable roster proves
+offline. Missing/unknown/empty data remain unknown. The controller adapter uses
+that resolved fact plus existing virtual/entityless metadata, not another state
+scan. Source sample quality still gates activity separately.
+
+The ordinary BEFORE on accepted a71 uses public registry/config/layout and HA
+ticks against the official offline native fixture. It shows whole-marker .35,
+unchanged glyph opacity1 and grey background on both media off and unavailable;
+recovery, live-own/foreign-target and no-writer controls pass. Raw receipts are
+linked from the issue. Final native/Golden checks share a data-only fixture;
+task branches capture their two new board scenes without accepting baselines.
+Pure tests cover the ownership matrix, unchanged source semantics, controller
+eligibility and incremental/full parity. No new config field or write exists.
+
 ## LED Zigbee endpoints (#1004)
 
 `node demo/smoke_zigbee_led_topology.mjs` uses public config/HA/provider input
