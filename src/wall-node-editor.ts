@@ -12,9 +12,13 @@ import type { NodePreviewScene } from './wall-node-preview';
 import type { NodeWriteBasis } from './wall-node-write';
 import { nodeDragRefusalKey } from './wall-node-refusal';
 import { VISUAL_MITRE_LIMIT } from './wall-thickness';
+import type { NodeDeleteIntent } from './wall-node-delete';
+import { WallNodeDeleteMenu, type NodeDeleteMenuPort } from './wall-node-delete-menu';
 
 /** `floor`: the target floor fingerprint this direction expects before it is sent (#843). */
-export interface NodeMoveHistory { beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
+export interface NodeMoveHistory { kind?: 'move'; beforeSpace: NodeMoveSpace; intent: NodeMoveIntent; direction: 'apply' | 'undo'; floor?: string }
+export interface NodeDeleteHistory { kind: 'delete'; beforeSpace: NodeMoveSpace; intent: NodeDeleteIntent; direction: 'apply' | 'undo'; floor?: string }
+export type NodeCommandHistory = NodeMoveHistory | NodeDeleteHistory;
 export interface NodeEditorContext { enabled: boolean; space: string; revision: number; api: boolean }
 export interface WallNodeEditorPort {
   context(): NodeEditorContext;
@@ -39,6 +43,7 @@ export interface WallNodeEditorPort {
   holds?(basis: NodeWriteBasis): boolean;
   dispose?(): void;
   scene?(space: NodeMoveSpace, before: NodeMoveSpace): NodePreviewScene | null;
+  delete?: Omit<NodeDeleteMenuPort, 'topology' | 'busy' | 'setBusy' | 'document' | 'stage' | 'root' | 'changed' | 'text' | 'toast' | 'config'>;
 }
 interface Session {
   pointer: number; revision: number; basis: NodeWriteBasis | null; configIdentity: string; plan: NodeMovePlan;
@@ -73,8 +78,13 @@ export class WallNodeEditor {
   private moveFrame: number | null = null;
   private pendingMove: PendingNodeMove | null = null;
   public busy = false;
+  private readonly deleteMenu: WallNodeDeleteMenu | null;
   private readonly pagehide = (): void => { this.cancel(); this.port.dispose?.(); };
   constructor(private readonly port: WallNodeEditorPort) {
+    this.deleteMenu = port.delete ? new WallNodeDeleteMenu({ ...port.delete,
+      config: port.config, topology: () => this.nodes(), busy: () => this.busy || this.dragging,
+      setBusy: value => { this.busy = value; }, document: port.document, stage: port.stage, root: port.root,
+      changed: port.changed, text: port.text, toast: port.toast }) : null;
     port.document.defaultView?.addEventListener('pagehide', this.pagehide);
   }
   get dragging(): boolean { return !!this.session; }
@@ -111,6 +121,16 @@ export class WallNodeEditor {
 
   /** Invoked by the existing capture-phase input owner, ahead of wall bodies. */
   guardEvent(event: Event): boolean {
+    if (event.type === 'contextmenu' && this.deleteMenu && this.port.delete?.context().enabled && !this.dragging
+        && (!(event as PointerEvent).pointerType || (event as PointerEvent).pointerType === 'mouse')
+        && event.composedPath().includes(this.port.stage()!)) {
+      const data = this.nodes(), ev = event as PointerEvent;
+      const hit = data && pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
+      if (hit && (hit.node || hit.ambiguous)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        this.deleteMenu.open(ev, hit.node?.point ?? null); return true;
+      }
+    }
     if (event.type === 'click' || event.type === 'contextmenu') {
       if (!this.tail || !event.composedPath().includes(this.port.stage()!)) return false;
       if (event.type === 'click' && (event as MouseEvent).detail === 0) return false;
@@ -135,6 +155,14 @@ export class WallNodeEditor {
     const ctx = this.port.context(), stage = this.port.stage();
     if (!ctx.enabled || !stage || !ev.composedPath().includes(stage)) return false;
     if (this.busy) { ev.preventDefault(); ev.stopImmediatePropagation(); return true; }
+    if (ev.pointerType === 'mouse' && ev.button === 2 && this.deleteMenu && this.port.delete?.context().enabled) {
+      const data = this.nodes();
+      const hit = data && pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
+      if (!hit || !hit.node && !hit.ambiguous) return false;
+      // The native contextmenu opens separately. Right down never captures,
+      // starts Move or reaches the stage's pan owner.
+      ev.preventDefault(); ev.stopImmediatePropagation(); return true;
+    }
     if (ev.pointerType !== 'mouse' || ev.button !== 0 || !ev.isPrimary) return false;
     const data = this.nodes(); if (!data) return false;
     const hit = pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
@@ -277,6 +305,7 @@ export class WallNodeEditor {
   /** #843: the port owns stack, own queue and floor; repeated presses wait for this one. */
   history(direction: 'undo' | 'redo'): void {
     if (this.busy) return;
+    this.deleteMenu?.cancel();
     this.busy = true; this.port.changed();
     void this.port.history(direction).finally(() => { this.busy = false; this.cache = null; this.port.changed(); });
   }
@@ -284,17 +313,20 @@ export class WallNodeEditor {
     // The runtime also calls cancel while idle when leaving Select. Let the
     // adapter retire any retained immutable baseline on that context change.
     this.port.context();
+    const closed = this.deleteMenu?.cancel() ?? false;
     const s = this.session;
     this.clearMoveFrame(); this.pendingMove = null;
-    if (!s) return false;
+    if (!s) return closed;
     this.session = null; this.cache = null; this.tail = true;
     s.capture.style.cursor = '';
     try { if (s.capture.hasPointerCapture(s.pointer)) s.capture.releasePointerCapture(s.pointer); } catch { /* detached */ }
     this.restorePaint(); this.clearLive(); this.sourceGhost = null; this.sourceCoverage = null;
     this.port.changed(); return true;
   }
-  dispose(): void { this.cancel(); this.port.dispose?.(); this.cache = null; this.clearLive(); this.listening = false;
+  dispose(): void { this.cancel(); this.deleteMenu?.dispose(); this.port.dispose?.(); this.cache = null; this.clearLive(); this.listening = false;
     this.port.document.defaultView?.removeEventListener('pagehide', this.pagehide); }
+
+  renderMenu(): TemplateResult | typeof nothing { return this.deleteMenu?.render() ?? nothing; }
 
   render(live = false): TemplateResult | typeof nothing {
     const ctx = this.port.context();

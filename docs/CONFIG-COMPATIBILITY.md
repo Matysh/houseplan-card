@@ -137,6 +137,17 @@ an unknown schema.
 
 ## Schema manifest and parity (#33)
 
+The additive #1045 `houseplan/wall/node_delete` endpoint is gated by
+`wall_node_delete_api === 1` in config/get transport metadata. Its intent is
+only `{point}` with space_id/expected_rev; an arbitrary candidate is rejected.
+Undo supplies before_space and must reproduce the complete current canonical
+document through the same forward deletion. Independent original-carrier
+lineage authorizes host IDs before strict opening/junction validation. The
+existing atomic writer persists the result; config/model/Store versions do
+not change. Older clients retain node_move API1; an older backend disables
+Delete with update advice. A refused Delete inverse leaves local history and
+cursor intact, including proof, revision and transport refusals.
+
 The #803 `houseplan/wall/node_move` protocol is capability-gated by
 `config/get.wall_node_move_api === 1`. It requires writer ACL and `expected_rev`
 under the shared config write lock. The client sends the frozen point, target,

@@ -1004,6 +1004,25 @@ ambiguous nearby nodes. Node movement is mouse-first in the Plan editor, absent
 in View and kiosk. An older backend shows an integration-update hint instead
 of saving an unsupported edit.
 
+#### Deleting a wall node
+
+In the Plan editor with **Select**, right-click an intermediate node and choose
+**Delete node**. Its two neighbouring sections become one straight wall between
+their unchanged outer endpoints. A safe corner is supported too: the room
+boundary follows the new straight span. A shared wall counts once regardless
+of how many rooms own it.
+
+The command is disabled at an endpoint, T/X junction, incompatible sections or
+an unsafe result; the menu explains why. Openings keep their position, size and
+settings. If they cannot remain on the new wall, the entire deletion is refused.
+Devices, decor and other floors are neither removed nor moved.
+
+A right-click alone does not move the node. **Esc** or an outside click closes
+the menu. Deletion is one common history step: Undo restores both sections and
+the node; Redo repeats the replacement. A server refusal keeps the command in
+history. Finish editing a Properties field before the action. View and kiosk
+have no command; an older integration shows an update hint. The menu is mouse-first.
+
 #### Plan tools at a glance
 
 | Tool | Result | Room area | Light and shadow | Main limit |

@@ -6,6 +6,11 @@
   Optimize accepts the exact supported alignment of a retained wall carrier;
   unproved trimming, unsupported wall attributes, lost opening hosts and stale
   writes remain refused. (#1061)
+- Safely delete an intermediate wall node in Plan/Select: join its two neighbours
+  without moving them, preserve supported openings and undo the whole edit in
+  one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale
+  menus cannot send a late delete. A temporary backend failure keeps the plan
+  intact and explains that the deletion can be retried. (#1045)
 - Select multiple Background objects with Ctrl+click, all decor with Ctrl+A,
   or furniture with Ctrl+M. Individual outlines show the selection; drag any
   member to move it together in one Undo step. Matching object types share

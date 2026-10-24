@@ -1,12 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { cardVersionReloadSafetySnapshot } from '../test-build/version-recovery-card.js';
+import { adoptCardConfigCapabilities, cardVersionReloadSafetySnapshot } from '../test-build/version-recovery-card.js';
 import { PhysicalBodyGestureRuntime } from '../test-build/physical-body-gesture.js';
 import { BackdropFrameGestureRuntime } from '../test-build/backdrop-frame-gesture.js';
 
 const pending = (size = 0) => ({ size });
 const debounce = (value = false) => ({ pending: () => value });
+
+test('#1045 node deletion is a literal transport capability, never a saved config grant', () => {
+  const host = { _syncVersionRecovery() {} };
+  adoptCardConfigCapabilities(host, { wall_node_delete_api: 1, wall_node_move_api: 1,
+    config: { wall_node_delete_api: false } });
+  assert.equal(host._haWallNodeDeleteApi, 1); assert.equal(host._haWallNodeMoveApi, 1);
+  for (const value of [undefined, 0, 2, true, '1', null]) {
+    adoptCardConfigCapabilities(host, { wall_node_delete_api: value, wall_node_move_api: 1,
+      config: { wall_node_delete_api: 1 } });
+    assert.equal(host._haWallNodeDeleteApi, null); assert.equal(host._haWallNodeMoveApi, 1);
+  }
+});
 
 function safeHost(overrides = {}) {
   return {

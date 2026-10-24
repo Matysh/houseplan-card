@@ -535,6 +535,134 @@ reproduced 28 failures, including old-object writes; it was an ordinary baseline
 run, not mutation execution. Registered witnesses are static-readiness only
 during development; their execution remains nightly.
 
+## Wall-node deletion #1045
+
+`test/wall-node-delete.test.mjs` and `tests_backend/test_wall_node_delete.py`
+exercise ordinary two-section, corner/shared-owner, attribute, crossing/contact,
+opening and inverse inputs. Mutating a returned nested future attribute cannot
+change the before snapshot. `wall_node_delete_parity.py`, invoked by the existing
+wall-node CI parity entry, compares complete TS/Python candidates and exact
+browser-baseline Undo/Redo; missing compiled inputs fail closed.
+`test/node-delete-history.test.mjs` drives the real serialized writer and common
+CommandStack: data/cursor change only after acceptance, every refused inverse
+keeps both. Existing Move tests remain mandatory for the shared path.
+Delete also fences its pending queue entry by the original authority and intent;
+retiring it while an own write waits sends no late node request. A response from
+a replaced HA authority cannot be adopted or trigger a reload into the new one.
+Closing an already sent menu intent does not discard a valid accepted reply from
+the same authority. The pre-existing Move writer uses its unchanged default path.
+`demo/smoke_wall_node_delete.mjs` is the native menu acceptance entry: exact
+A–C/host/foreign fields, painted opening and carrier span, one common Undo/Redo,
+reload, disabled geometry, retained callbacks and real Properties completion.
+Its recording wire respects metadata outside read projection and recomputes the
+narrow intent; authenticated backend proof remains the separate HA test below.
+The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authenticated
+groups, concurrent CAS, stores, metadata projection and integration reload; it
+never replaces the product planner. Run it with the current supported HA harness.
+The AC5 transfer follow-up executes the accepted hosted-partition result through
+the authenticated Delete and export endpoints, JSON parse, the real preview /
+prepare owner, authenticated import/apply, both stores and integration reload.
+Four ordinary inputs distinguish full same-instance restore from independent
+space-copy ID/host remapping, each against the accepted state and its exact Undo.
+The copied floor leaves the original untouched; the opening keeps its physical
+fields, reflection and host fraction, with zero detached repairs. A stale import
+CAS preserves the previous store pair and preview, followed by a valid apply.
+This is not an ordinary config/set replay; that writer's strict lineage refusal
+remains covered. On unchanged product source `52ae9f0864e8557c91130bb5409960bffae3b4c5`,
+the complete HA file passes 25/25 (including these four cases), with explicit
+ruff PASS: WSL Python 3.14.7, HA 2026.8.3, harness 0.13.357. Recipe:
+`PYTHONDONTWRITEBYTECODE=1 <HA-venv>/bin/python -m pytest tests_backend/test_ha_wall_node_delete.py -q -p no:cacheprovider`.
+The final test file SHA-256 is
+`3ae54f4852bba1d44cea81ebcccb20c431a821d740586d676bcbcce7e9dc582d`;
+local receipt `artifacts/1045-import-roundtrip-final.log`
+has SHA-256 `0cd1a084b21a39dc79b5395d015c4279c37b65baf1e7f1b73e908072b2974607`.
+The first attempt only failed fixture setup (`hass_user` is absent in this
+harness); `artifacts/1045-import-roundtrip-first.log` is retained with SHA-256
+`235874b83843c84bb5cac263862bab9e65b145bf8205a6eb684bf8007388f7a6`.
+These receipts describe this source and test material, not a later combined build.
+The CI return on 07030954 caught an unsorted WS import (ruff I001); the ordinary
+quality-neighbour test also caught the new unavailable code missing from
+`ERROR_CODES`. Both are fixed without changing deletion/inverse algorithms:
+ruff sorts the import, and the fixed code has editor-only EN/RU/DE/FR messages.
+Run `python -m ruff check custom_components/houseplan`, the configured mypy strict
+allowlist and `test_backend_quality.py` alongside the Delete/Move HA subset.
+Ordinary rotated inputs extend parity to 160 scenarios, including finite contacts
+that neither old carrier touched. Sixteen registered kernel/writer/history/menu/capability guards
+have static readiness only; execution and caught evidence remain nightly.
+The existing `node-history-requires-select` witness keeps its identity/oracle;
+only its adapter anchor follows the new operation-specific capability callback.
+The node editor owns one `WallNodeDeleteMenu` intent, with the accepted shared
+`EditorContextMenu` presentation. An opening waiting for Properties can follow
+its own Save; outside/Esc/foreign authority retires the callback. The selected
+action survives normal menu retirement, rechecks the exact source before WS,
+and records one common command only after acceptance. The shared geometry
+validator `polyIsSimple` lives in `logic.ts` and is re-exported by Resize, so
+the Select chunk never imports the editor runtime facade; the named-export ABI
+gate remains unchanged. Contextmenu checks the existing touch barrier first;
+a fresh right mouse down reaches that same owner before the node consumes pan.
+The native scene has an untouched room envelope for actual floor bounds and a
+wide host for real Properties. Its visible SVG span is checked separately from
+the physical input line's round non-scaling caps.
+
+Measured on the combined accepted #1051/#1046/#1054/#1004 source: initial View
+340262 B gzip (+595 from the actual #1004 build, 339667), lazy editor
+345342 B (+544 from 344798), Select-only 21455 B. These are real complete builds,
+not summed branch measurements. The Select-only hard byte cap changes from 20276
+to exactly 21455 B (+1179), for the independently proved Delete kernel,
+cancellable menu and its writer integration; it adds no reserve. This uses the
+owner's explicit permission: «сильно на размеры не заморачивайся, если
+незначительное превышение, устранять которое очень дорого — разрешаю поднять
+лимиты». Further removal would require disproportionate restructuring of the
+bounded proof/controller graph; the heavy editor facade is independently
+forbidden from that graph. Actual hostRefs increases 6090→6117 and total raw
+bundle bytes 3438014→3454916 for the new capability, current-context ports and
+Delete code (#1004's published JSON raw baseline was 3437873; its measured
+3438014 build is the comparison source). Only those measured baselines grow;
+bands, View/editor ceilings, named exports and latency limits remain unchanged.
+The CI quality follow-up adds the missing fixed error's lazy translations:
+relative to the earlier 07030954 build this is +4 B View, +69 B editor, +4 B
+Select-only and +531 raw bytes; hostRefs is unchanged. Its hard Select cap
+follows the final measured 21455 B exactly, with no additional allowance.
+After the accepted #1018 cleanup (dev `9ca630ada`), a fresh combined build
+measures View 340266 B, editor 345114 B, Select-only 21456 B gzip and 3453839
+raw bytes; hostRefs remains 6117. The one-byte Select cap adjustment to the
+actual 21456 B uses the same explicit permission above and adds no reserve.
+The raw baseline records the lower measured total; existing bands, ABI and
+latency limits are unchanged. No task measurements are added or maximized.
+The separate core line overage was removed by seven redundant blank separators
+and one shorter comment: 13277→13269 lines, with byte-identical uncommented
+TypeScript output. Its existing 13219 cap and 50-line band stay unchanged.
+The first full local gate exposed the core limit, the new fifth passage-validator
+call, seventeen uninventoried fixture documents and the missing English guide
+subsection. Targeted follow-ups retain all existing passport entries and guard
+semantics; the final normal push hook checks the complete accepted range.
+Targeted proofs supplement gate:small; full regression and mutation execution
+remain in their existing CI/nightly contours.
+
+After accepted Decor/CI integration `b3dbea2811`, the complete Windows
+Node 22.23.3 / Rollup 4.62.2 build at `011c90b71` measures View 340624 B gzip,
+lazy editor 353367 B, Select-only 21458 B, raw dist 3481506 B and 6225 host
+references. The accepted source's existing build at `2170fd3c` independently
+verifies 339980 / 352807 / 18287 / 3464603 B and 6198 references; accepted
+`b3dbea2811` changes only its CODE document and index, not any build input.
+The actual additions are therefore 644 / 560 / 3171 / 16903 B and 27 references,
+not a sum or maximum of branch baselines. Product fingerprint is
+`9296abfaf7f876f14c8698cc705c9d85e680612a822278fc65a4a2884989aced`.
+The same explicit owner permission above records only raw reference 3481506,
+hostRefs 6225 and the exact Select hard cap 21458 (two bytes above its earlier
+21456 boundary, no reserve). The cost remains the existing lazy Delete
+kernel/menu/writer and capability/authority seams. Splitting another writer or
+geometry owner to remove this small cost is disproportionate; byte golfing
+and cosmetic product deletion are avoided. Every ratchet band, initial View
+and lazy-editor ceiling, absolute View/ABI and runtime-latency guard remains.
+Actual card lines are 13293 against reference 13272 plus the existing 50-line
+band, so no core reference or blank-line cleanup is needed.
+The current #1060 planner yields the same 29 required smokes locally and in
+CI, with no Golden demand. Explicit AC/registered links and the bounded visual
+minimum remain required; weak/broad inference is recorded as deferred until
+beta/night. Historical 220-smoke evidence is not relabelled as a new combined
+execution. The final fresh executions, source and hook belong to the handoff.
+
 ## Direct Zigbee LQI #1029
 
 Run `node --test test/device-signal-runtime.test.mjs test/device-signal.test.mjs`
