@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1056,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already retires a foreign HA document before visual deduplication, while RenderLifecycle skips a consumed object identity. A mounted reused hass object can therefore lose operational intake until another HA tick. Preserve the existing coalesced intake/read owner for the current connection/user without a new timer, loader, API or format.",
+  "summary": {
+    "ru": "Полная карточка восстанавливает план при смене подключения или пользователя HA внутри того же объекта hass без ожидания следующего обновления.",
+    "en": "The full card restores its plan when the HA connection or user changes inside the same hass object, without another HA update."
+  }
+}

@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5272 · pure backend 627 · HA-harness backend 527 · browser smokes 433 (`npm run inventory`) |
+| Tests | Node unit 5274 · pure backend 627 · HA-harness backend 527 · browser smokes 434 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -30,6 +30,11 @@ and movable device anchors through the existing physical/config/layout writers
 and histories. Connected walls and invalid full steps remain no-op; opening
 direction follows the agreed dominant screen axis, including Left/Right at 45°.
 The shared dispatcher keeps controls, dialogs and active gestures authoritative.
+
+- #1056 restores the mounted full card after connection/user replacement inside
+  the same HA object through the existing coalesced intake and read owner. The
+  named ordinary witness separates mandatory config/layout from capability
+  projection and retains ABA, held replies and initial missing-HA controls.
 
 Own availability (#1026) separates available/off, confirmed own unavailable and
 unknown data. Only glyph/value and badge contents fade on confirmed offline;
@@ -89,9 +94,11 @@ after retiring the accepted document. Reattach consumes that intent without
 another HA tick; existing same-context short returns keep their no-reload path.
 An interrupted reattach retains demand after retiring its old transport claim.
 
-Selected task browser checks (#1055) retain their complete computed plan under
-a finite job budget sized from the observed #1051 run. Individual invocation
-limits, semantic assertions and full-matrix/release proof boundaries are separate.
+Selected task browser checks (#1055/#1058) retain their complete computed plan
+under a finite 50-minute job budget, resized after #1025 completed 246 of 256
+smokes before the former 40-minute timeout. Individual invocation limits,
+semantic assertions and full-matrix/release proof boundaries are separate;
+cancelled partial results remain incomplete.
 
 Config-authority smoke (#1052) compares reads across the late-A boundary;
 the independent direct-LQI capability probe no longer looks like a stale-event

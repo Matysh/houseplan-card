@@ -75,6 +75,24 @@ This named subset is separate from the complete task selection executed by CI.
 | AC11 | existing Decor, physical/opening/contact/gesture smokes and relevant Golden | old pointer/history/paint contracts regress |
 | AC12 | build/budgets, lazy-editor and lifecycle checks | startup/editor boundary, listener count or current budget regresses |
 
+## Mounted HA authority #1056
+
+`demo/smoke_mounted_authority.mjs` uses public HA assignments on an already
+loaded full card. Keep mandatory config/layout reads separate from the actual
+`fields: ['model_version']` capability projection; an empty fields array is a
+full document. Reused-object connection/user replacement, same-turn ABA and
+held replies must retain one current read owner. Rendering snapshots keep
+their intake in `willUpdate`, while ordinary skipped state updates retain the
+existing operational fast path. Do not reset the broad diagnostics invalidation
+method to retire HA identity, or add an independent loader/timer.
+The [ordinary validation record](development-notes/mounted-authority-validation.json)
+pins the original 54-check RED, 69-check AFTER, the shared-counter diagnostic,
+seven selected neighbours, runtime and measured production sizes separately.
+Its historical range ends at pre-integration `4aeb7599`. The separate
+[accepted-source integration](development-notes/mounted-authority-integration.json)
+records the later ordinary merge of #1026, unchanged local product patch,
+fresh combined native/selected checks and actual matched production sizes.
+
 ## Own offline presentation (#1026)
 
 `device-own-availability.ts` reads only the canonical active own roster. One
@@ -4855,6 +4873,19 @@ included 145-second contact and 92-second kiosk checks. The job budget accounts
 for that inventory; it does not change the worker's 180-second per-invocation
 limit, selected IDs, semantic assertions, Golden intent or product performance
 thresholds. A timed-out partial run never counts as a green task proof.
+
+The larger #1025 selected plan exposed the next measured boundary (#1058):
+run `40084326899`, job `120844476069`, was cancelled by the explicit
+`40m0s` job timeout after completing 246 of 256 smokes (244 PASS, two FAIL,
+ten not executed; no Golden scenes). The completed interval was 2358.432 s;
+the two failures used only about 6.5 s and remain separate task failures.
+The selected job now has 50 minutes: extrapolating that completed interval to
+256 checks gives about 41 minutes, with finite headroom for setup and ordinary
+runner variation. This changes only the aggregate selected-job timeout in the
+canonical workflow and its generated product profile. Per-invocation limits,
+selected/full routing, assertions, Golden acceptance and product budgets retain
+their existing contracts. Consumers must still obtain their own complete green
+plan; this infrastructure change does not turn the partial run into proof.
 
 For direct own-device signal (#1029), selected scenes
 `direct-zigbee-lqi-flat-dark` and `direct-zigbee-lqi-iso-dark` feed the actual

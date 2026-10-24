@@ -36,6 +36,11 @@ export const SMOKE_LINKS = [
     because: '#1025 native selection and arrows observe whole-wall/hosted-opening movement, dominant-axis direction, exact device positions, focus, Undo/Redo and ordinary persisted writes without calling or naming the command helper.',
   },
   {
+    files: ['src/houseplan-card.ts', 'src/houseplan-render-lifecycle.ts'],
+    smokes: ['smoke_mounted_authority.mjs'],
+    because: '#1056: public mounted same-object HA connection/user replacement must restore one current config/layout pair and visible plan without another tick; ordinary ABA, held replies and missing-HA controls protect existing intake/read ownership.',
+  },
+  {
     files: ['src/device-presentation.ts', 'src/device-presentation-policy.ts', 'src/device-face.ts',
       'src/styles/devices.styles.ts', 'src/led-strip-runtime.ts'],
     smokes: ['smoke_device_offline.mjs'],
