@@ -10,7 +10,7 @@
 //   closed / open / ajar   -> neutral core, the ICON tells the state
 //   opening / closing      -> neutral plate + activity-transition when the
 //                             marker opts into «Icon + activity»
-//   unknown / unavailable  -> package unavailable core, without a morph
+//   unknown / unavailable  -> neutral core, without a morph (#1026)
 //
 // The frame itself is NOT gone: door/window binary sensors and locks still
 // wear it, and a valve keeps it too (nothing morphs its icon). Those are
@@ -137,9 +137,10 @@ const out = await page.evaluate(async () => {
   // one the name rule «ворота|garage|gate» hands out, and it morphs too
   o.gateAutoIcon = c._devices.find((x) => x.bindingRef === 'd_gate')?.icon === 'mdi:garage-variant';
   o.morphNoClass = await morph('', 'mdi:garage-variant', 'mdi:garage-open-variant');
-  // …and an unreadable state morphs nothing and uses the package unavailable core.
+  // #1026 unknown data morphs nothing and preserves the ordinary neutral core.
   await setCover('unknown', { device_class: 'curtain' });
-  o.unknownPlateUnavailable = plate() === probe('#B5BAC1');
+  o.unknownPlateNeutral = plate() === NEUTRAL;
+  o.unknownDoesNotProveOffline = !cls().includes('unavail');
   o.unknownNotYellow = plate() !== YELLOW;
   o.unknownNotOrange = plate() !== ORANGE;
   o.unknownNoPlateClass = !cls().includes('on') && !cls().includes('open');
