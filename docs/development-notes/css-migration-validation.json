@@ -422,5 +422,14 @@
       }
     ],
     "scope": "Eight focused checks passed before the B correction; the affected ninth and the new Golden passed afterward. Final product src is byte-identical across these runs. The complete computed task CI plan is 36 smokes plus one new Golden and is not claimed as locally executed."
+  },
+  "localGateCorrection": {
+    "firstSource": "b67badef4d26aa5bacfaa35f886389978986c2ac",
+    "firstNormalHookSeconds": 238,
+    "firstResult": "failure: one stale source assertion in support-feedback.test.mjs expected the defeated local textarea background",
+    "correction": "Assert the actual emitted common settings CSS rule and its hpf-surface background using the shared lexical parser; no product code, budget or tested behavior changed",
+    "affectedCommand": "node --test test/support-feedback.test.mjs",
+    "affectedResult": "9/9 passed",
+    "finalNormalHook": "Recorded in the issue handoff after execution"
   }
 }
