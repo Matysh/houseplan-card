@@ -150,7 +150,7 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-pane[data-settings-section=details] .hpf-grid{grid-template-columns:minmax(0,1fr);align-items:start;}
 .hpf-settings-pane .radargroup > legend{padding:0 0 18px;margin:0 0 18px;border-bottom:1px solid var(--hpf-line);width:100%;box-sizing:border-box;}
 .hpf-settings-pane .hpf-profile-target-heading{display:grid;align-items:center;gap:12px;justify-content:start;}
-.hpf-settings-pane .hpf-profile-diagnostics > .vacdiag,.hpf-settings-pane .hpf-profile-maproutes > .vacroutes{margin-top:12px;}
+.hpf-settings-pane .hpf-profile-maproutes > .vacroutes{margin-top:12px;}
 .hpf-settings-pane .hpf-profile-diagnostics .vacdiag > div{padding:6px 0;}
 .hpf-settings-pane .hpf-profile-target-heading .btn{justify-self:start;}
 .hpf-settings-pane .radarcoordinates{display:flex;flex-wrap:wrap;gap:12px;}

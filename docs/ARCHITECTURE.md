@@ -14,6 +14,8 @@ owner, not independent native-details menus. Styles arrive with the lazy editor.
 The replaced menu markup, inline paint and old catalog positioning are removed.
 The LED editor's existing select-hit listener takes the context-menu press
 before scene pan; the menu adds no camera or command authority.
+Inline Properties colour controls own their opacity wrapper's grid layout;
+the generic form-kit flex layout remains for non-inline consumers.
 
 `disclosure()` owns native details through `disclosureMotion`: one 220 ms
 retargetable content animation, local composed-ancestor scrolling and immediate

@@ -63,6 +63,12 @@ try {
   }));
   const before=await model(), h=await history();
   out.selected_decor_no_glow=await card.locator('.decorlayer .dsel').evaluate(el=>getComputedStyle(el).filter==='none');
+  for(const value of ['0','50','100']) {
+    await alpha.fill(value);await alpha.press('ControlOrMeta+A');
+    out[`opacity_text_fits_${value}`]=await alpha.evaluate(el=>el.scrollWidth<=el.clientWidth);
+  }
+  await stroke.locator('.hpf-colorfield').screenshot({path:'artifacts/browser-selected/ui-1051/opacity-selected.png'});
+  await alpha.press('Escape');await settle();
   await hex.fill('f00'); await alpha.fill('75'); await settle();
   out.valid_pair_previews=await card.locator('.decorlayer [data-id=rect]').first().evaluate(el=>getComputedStyle(el).stroke==='rgb(255, 0, 0)'&&Number(el.getAttribute('stroke-opacity'))===.75);
   out.preview_never_writes=JSON.stringify(await model())===JSON.stringify(before)&&await history()===h;

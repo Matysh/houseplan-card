@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'ui-inline-opacity-loses-grid-slot-1051',
+    guard: 'node demo/smoke_ui_1051.mjs',
+    because: '#1051 AC2/7: actual 0/50/100 input paint must fit the intended inline grid slot. The common form-kit cascade can leave the opacity wrapper flex and clip digits despite an unchanged outer control box; only mounted browser layout reveals this. Nightly execution only.',
+    patches: [{ file: 'src/editors/properties/styles.ts',
+      find: '  .hp-properties .hpf-colorfield > .hpf-opacity.hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }',
+      replace: '  .hp-properties .hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }' }],
+  },
+  {
     id: 'ui-led-menu-keeps-scene-pan-1051',
     guard: 'node demo/smoke_device_copy.mjs',
     because: '#1051 AC6: a trusted Linux SVG LED context press must not seed a scene pan that survives the menu and moves the viewport on a later buttons=0 motion. The ordinary emitted listener and viewport oracle require a real browser; nightly execution only.',

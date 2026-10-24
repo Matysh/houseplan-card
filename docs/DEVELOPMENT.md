@@ -34,6 +34,9 @@ The native vacuum source picker also checks shared marker paint, its 44 px
 button, keyboard open/close, immediate inert content, retained focus and no
 configuration write. Its former local summary/marker rules are removed;
 the common disclosure is the only owner and the private picker margin remains.
+Inline opacity also checks the actual 0/50/100 text width and selected paint:
+the generic form-kit flex rule must not outrank the inline grid owner. The
+outer control stays 150.5 by 36 px while the numeric input keeps its 28 px slot.
 
 Run `node demo/smoke_ui_1051.mjs` for inline colour preview/validation,
 Enter/blur/Escape, atomic Undo, contour hit/miss at two zooms, menu input

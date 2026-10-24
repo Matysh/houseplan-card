@@ -40,6 +40,7 @@ with immediate input retirement and one common disclosure motion owner. Decor
 inline colour is a field-session preview followed by the existing atomic
 writer/history; it creates no config schema or independent command path.
 The LED context press stays with its existing editor hit target before scene pan.
+Inline opacity owns its numeric grid slot so the complete value stays visible.
 UI-029/030 remain in their separate issues. Private UI Lab material stays local.
 
 Direct Zigbee LQI (#1029) uses passive Z2M and cached ZHA without enabling

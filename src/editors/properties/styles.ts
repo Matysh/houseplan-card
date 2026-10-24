@@ -78,7 +78,7 @@ export const propertiesStyles = unsafeCSS(css`
   .hp-properties .hpf-colorfield .hpf-hex { font-size: 12px; font-family: inherit; padding: 0; color: var(--prop-value); }
   .hp-properties .hpf-colorfield .hpf-opacity { font-size: 11px; color: var(--prop-muted); margin-left: auto; }
   .hp-properties .hpf-colorfield:has(.hpf-inline-hex) { display:grid; grid-template-columns:24px minmax(56px,1fr) 28px 8px; gap:2px; padding-inline:4px; cursor:default; }
-  .hp-properties .hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }
+  .hp-properties .hpf-colorfield > .hpf-opacity.hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }
   .hp-properties .hpf-colorfield .hpf-inline-hex,
   .hp-properties .hpf-colorfield .hpf-inline-opacity .hpf-unit > input {
     box-sizing:border-box; min-width:0; width:100%; height:28px; margin:0; padding:3px 2px;
