@@ -6,11 +6,14 @@
 and native mouse hover. It covers all three icon/LED pairings, opposite-end
 hover, nearest overlapping hit floors, a wall-inset analytic point, fixed-screen
 halo/arrow clearance in Flat/2.5D and themes, badge independence, off-core paint
-ownership, representation retirement and existing access/input cleanup. Its
+ownership, representation retirement and existing access/input cleanup. Native
+CDP touch/cancel and pen input target the real SVG hit path; public kiosk
+entry clears its paint, and a bounded steady-hover RAF observation plus idle
+cleanup checks guard against a repeating overlay layout loop. Its
 wide-tube oracle compares ordinary hover on/off pixels inside the halo ring;
 it does not patch a product guard or style. The initial accepted-dev run is
-red on missing LED routes. Supporting hidden-paint diagnostics are not mutation
-execution or caught evidence. Existing topology hover/tooltip and LED tube,
+red on missing LED routes. The earlier auxiliary hidden-halo measurement is
+excluded from ordinary-input and caught claims. Existing topology hover/tooltip and LED tube,
 draw/bind smokes retain the other owners. The new endpoint unit suite checks
 camera projection, singular/invalid input and screen-distance clearance.
 Two selected new Golden scenes render real open/closed LED routes; capture

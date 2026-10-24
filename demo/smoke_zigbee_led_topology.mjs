@@ -84,13 +84,49 @@ try {
       markedOwner: window.__card.renderRoot.querySelector('[data-hp-device-hover]')?.getAttribute('data-id'),
       actualHit: window.__card.renderRoot.elementFromPoint(point.x, point.y)?.outerHTML.slice(0, 180),
     }), point);
-    samples.push({ id, point, ...sample }); return sample;
+    samples.push({ id, point, ...sample }); return { point, ...sample };
   };
   const fromIcon = await hover('d_lamp');
   check('icon hover draws confirmed route to LED', fromIcon.lines, 1);
   const fromLed = await hover('d_light1', true);
   check('LED hover draws its outgoing and confirmed incoming routes', fromLed.lines, 2);
   check('LED hover draws both data-directed arrows', fromLed.arrows.length, 2);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [fromLed.point] });
+  await page.waitForTimeout(80);
+  check('native touch on the SVG target clears topology and borrowed paint', await root.evaluate(card =>
+    !card.renderRoot.querySelector('[data-hp-zigbee-topology-endpoint]')
+    && !card.renderRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot.querySelector('line')));
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+  await page.mouse.move(2, 2);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', pointerType: 'pen', ...fromLed.point });
+  await page.waitForTimeout(80);
+  check('native pen over the SVG target cannot activate topology', await root.evaluate(card =>
+    !card.renderRoot.querySelector('[data-hp-zigbee-topology-endpoint]')
+    && !card.renderRoot.querySelector('hp-zigbee-topology-overlay')?.shadowRoot.querySelector('line')));
+  await cdp.detach();
+  await hover('d_light1', true);
+  const pendingFrames = await root.locator('hp-zigbee-topology-overlay').evaluate(async overlay => {
+    const samples = [];
+    for (let i = 0; i < 8; i++) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      samples.push(overlay._layoutFrame);
+    }
+    return samples;
+  });
+  check('steady SVG hover does not retain a repeating overlay layout RAF', pendingFrames.every(frame => frame === 0));
+  await page.evaluate(() => {
+    const card = window.__card; card.setConfig({ ...card._config, kiosk: true });
+    return window.__hpTest.settled();
+  });
+  check('public kiosk entry removes topology and every borrowed LED endpoint', await root.evaluate(card =>
+    !card.renderRoot.querySelector('hp-zigbee-topology-overlay,[data-hp-zigbee-topology-endpoint]')
+    && [...card.renderRoot.querySelectorAll('.led-core')].every(n => getComputedStyle(n).visibility === 'visible')));
+  await page.evaluate(() => {
+    const card = window.__card; card.setConfig({ ...card._config, kiosk: false });
+    return window.__hpTest.settled();
+  });
+  check('fresh mouse hover after kiosk restores the same directed SVG routes', (await hover('d_light1', true)).lines, 2);
   // A wide tube can cover a small fixed-size halo if it paints a level above
   // that halo. Ordinary hover on/off pixels must change inside the ring itself.
   await page.evaluate(() => window.__card.setConfig({ ...window.__card._config, icon_size: 8 }));
@@ -299,6 +335,8 @@ try {
   check('pointer departure restores original body and clears every endpoint owner', await page.evaluate(() =>
     !window.__card.renderRoot.querySelector('[data-hp-zigbee-topology-endpoint]')
     && [...window.__card.renderRoot.querySelectorAll('.led-core')].every(n => getComputedStyle(n).visibility === 'visible')));
+  check('idle overlay releases its layout RAF and resize observer', await root.locator('hp-zigbee-topology-overlay').evaluate(overlay =>
+    overlay._layoutFrame === 0 && overlay._layoutResize === undefined));
   for (let cycle = 0; cycle < 2; cycle++) {
     await hover('d_light1');
     const detached = await page.evaluate(async () => {

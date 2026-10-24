@@ -48,7 +48,18 @@ function assertMapping(mapped) {
   });
 }
 
-test('compiled overlay reuses real mapping after an unrelated HA update/new registry wrapper (#906 AC1)', () => {
+test('compiled overlay reuses real mapping after an unrelated HA update/new registry wrapper (#906 AC1)', (t) => {
+  // A missing native endpoint now retires hover and its browser layout work.
+  // Supply browser primitives without replacing an overlay method or geometry.
+  const cancel = globalThis.cancelAnimationFrame, browserWindow = globalThis.window;
+  globalThis.cancelAnimationFrame = () => {};
+  globalThis.window = { removeEventListener() {} };
+  t.after(() => {
+    if (cancel === undefined) delete globalThis.cancelAnimationFrame;
+    else globalThis.cancelAnimationFrame = cancel;
+    if (browserWindow === undefined) delete globalThis.window;
+    else globalThis.window = browserWindow;
+  });
   const input = fixture();
   const overlay = new HpZigbeeTopologyOverlay();
   // Compiled render with ordinary provider/registry fixture; no DOM geometry is
@@ -66,6 +77,7 @@ test('compiled overlay reuses real mapping after an unrelated HA update/new regi
   assert.ok(initialScans > 0);
   overlay.hass = { ...input.hass, states: { 'sensor.unrelated': { state: '42' } } };
   overlay.registry = { ...input.registry };
+  overlay._hovered = 'm2'; // a new input intent after the absent endpoint retired it
   overlay.render();
   assertMapping(overlay._mappedMemo.mapped);
   const repeatedScans = input.scans() - initialScans;

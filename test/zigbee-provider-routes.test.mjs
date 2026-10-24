@@ -309,6 +309,10 @@ test('exact device/entity ownership and hidden/ambiguous placements still fail c
   const topology = zha([row(1, 'Coordinator'), row(2, 'Router', { routes: [route(0)] })]);
   assert.equal(mapTopologyNodes(topology, [...markers, { ...markers[1], id: 'duplicate' }], registry).placements.has(key(2)), false);
   assert.equal(mapTopologyNodes(topology, markers.map((device) => ({ ...device, hidden: true })), registry).placements.size, 0);
+  const virtualControl = markers.map(device => device.id === 'm2'
+    ? { ...device, virtual: true, entities: ['light.from_real_radio'] } : device);
+  assert.equal(mapTopologyNodes(topology, virtualControl, registry).placements.has(key(2)), false,
+    'a virtual LED control cannot borrow radio identity from its controlled light');
   const entityRegistry = { ...registry, entities: { 'sensor.router': { device_id: 'd2' } } };
   const entityMarkers = markers.map((device) => device.id === 'm2'
     ? { ...device, bindingKind: 'entity', bindingRef: 'sensor.router' } : device);

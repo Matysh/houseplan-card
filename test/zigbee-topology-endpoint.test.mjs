@@ -2,6 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { zigbeeLedProjection, zigbeeEndpointClearance, ZIGBEE_LED_HALO_RADIUS } from '../test-build/zigbee-topology-endpoint.js';
 import { zigbeeArrowGeometry } from '../test-build/zigbee-topology-geometry.js';
+import { zigbeeTopologyOverlayRequested } from '../test-build/zigbee-topology-overlay-bridge.js';
+
+test('#1004 SVG representation preserves the full-card admin/View/enabled/non-kiosk eligibility', () => {
+  const allowed = { hass: { user: { is_admin: true } }, view: true, kiosk: false,
+    settings: { zigbee_topology: { enabled: true } } };
+  assert.equal(zigbeeTopologyOverlayRequested(allowed), true);
+  for (const changed of [
+    { hass: { user: { is_admin: false } } }, { hass: {} }, { view: false },
+    { kiosk: true }, { settings: {} }, { settings: { zigbee_topology: { enabled: false } } },
+  ]) assert.equal(zigbeeTopologyOverlayRequested({ ...allowed, ...changed }), false);
+});
 
 test('#1004 a lifted/skewed SVG path projects through the current HTML camera once', () => {
   const matrix = { a: 2, b: 1, c: -.5, d: 1, e: 170, f: 95 };
