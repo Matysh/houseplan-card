@@ -480,5 +480,51 @@
       "unresolvedProducers": 0
     },
     "limitsChanged": false
+  },
+  "prePushRepair": {
+    "material": "97c79325445443e4db5403b304b5bd81b41a0f3d",
+    "normalHook": {
+      "exitCode": 1,
+      "durationSeconds": 247,
+      "pushDurationSeconds": 260.1770209,
+      "published": false,
+      "logSha256": "0dcd9c705d149ac4e9d861c84ade46dc09d24da4e8b28cee481dda27e450be0d"
+    },
+    "causes": [
+      "Two retired matrixVersion=86 assertions after adding the new scenes (current87)",
+      "Explicit corpus passport missing the new offline fixture",
+      "Two prior semantic mutant anchors moved by A; IDs and guard commands retained",
+      "Capture-input inventory missing demo/golden/device-offline.mjs"
+    ],
+    "repair": {
+      "productAChanged": false,
+      "priorCorpusDocuments": 89,
+      "priorCorpusDocumentsUnchanged": true,
+      "newCorpusDocuments": 1,
+      "newFixture": "demo/fixtures/device-offline.mjs",
+      "targeted": {
+        "command": "node --test test/golden-matrix.test.mjs test/source-fingerprint.test.mjs test/wall-identity-corpus.test.mjs",
+        "pass": 71,
+        "fail": 0,
+        "logSha256": "9f26d3cd86a35bc1c7aa36ef73d9de77b088f3cce7128a07e732a29516c143da"
+      },
+      "anchors": {
+        "command": "node --test --test-name-pattern=\"every mutant patch anchors exactly once|#905 AC3|369г\" test/mutation-gate.test.mjs test/process-digests.test.mjs test/device-presentation.test.mjs",
+        "pass": 3,
+        "fail": 0,
+        "logSha256": "86911803267528260e914c178dbd35e2662c19526f4c7cec6034fdf77dadbd95"
+      },
+      "staticReadiness": {
+        "command": "node scripts/mutation-gate.mjs --check",
+        "definitions": 1848,
+        "uniqueSourceReads": 1006,
+        "browserGuards": 506,
+        "warnings": 5,
+        "execution": 0,
+        "caught": "unknown",
+        "logSha256": "933442fce3ae93b3bc781836472c5a72b3a9802aefa2c80ddea67c8b54d07df6"
+      }
+    },
+    "wholeGateOutcome": "RED; a fresh normal hook is required, targeted repairs alone are not a green gate"
   }
 }

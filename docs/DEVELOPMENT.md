@@ -43,10 +43,19 @@ failures and the exact recipe/log hashes remain in the compact receipt.
 
 After accepted #1019 (`e8c618924`), candidate `900800baf` again passes all
 44 native checks and both pinned-WSL captures, with identical PNG hashes.
-The merged source census has444 files/431 sheets/1142 class consumers and no
-diagnostics or unresolved producers. Actual Windows View339613/editor343989
-gzip and raw3432482 bytes pass the unchanged limits. Matrix87 contains both
+The merged source census has 444 files/431 sheets/1142 class consumers and no
+diagnostics or unresolved producers. Actual Windows View 339613/editor 343989
+gzip and raw 3432482 bytes pass the unchanged limits. Matrix 87 contains both
 the accepted Rules scene and this issue's two new boards; no baseline is accepted.
+
+The first normal pre-push hook on `97c793254` is RED: two older matrix-version
+assertions, the explicit corpus passport/capture-input inventory and two moved
+mutation anchors require matching B updates. Product A/build/budgets/CSS pass.
+The one added offline fixture is appended to the passport; all 89 previous
+document identities and inputs remain equal. The 71 affected matrix/fingerprint/
+corpus tests and three exact anchor/ordinary diagnostic tests pass after repair.
+These are ordinary/static checks, not mutant execution or a green whole gate;
+the normal hook must run again on the corrected material before publishing.
 
 ## Dialog CSS ownership #1019
 

@@ -8272,11 +8272,9 @@ const MUTANT_DEFINITIONS = [
     because: 'a roster the user deliberately disabled is evidence of opting out, not of life — '
       + 'dropping the guard makes the marker glow forever (#369g)',
     patches: [{
-      file: 'src/device-presentation.ts',
-      find: '  const activeEntitylessDevice = ownEntities.length === 0\n'
-        + '    && !disabledRoster\n',
-      replace: '  void disabledRoster;\n'
-        + '  const activeEntitylessDevice = ownEntities.length === 0\n',
+      file: 'src/device-own-availability.ts',
+      find: '    && !(device.bindingStatus?.allEntityIds?.length)\n',
+      replace: '',
     }],
   },
   {
@@ -19811,8 +19809,8 @@ const MUTANT_DEFINITIONS = [
     because: '#790: the actual SVG core must match the resolved field colour across live HA/config updates, with or without Glow; this needs the rendered DOM and its update lifecycle',
     patches: [{
       file: 'src/led-strip-runtime.ts',
-      find: ": view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
-      replace: ": view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;",
+      find: "const core = view.state === 'on' && view.appearance ? view.appearance.c : CORE_IDLE;",
+      replace: "const core = view.state === 'on' && !view.glow && view.appearance ? view.appearance.c : CORE_IDLE;",
     }],
   },
   {
