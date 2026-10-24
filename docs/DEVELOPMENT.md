@@ -44,6 +44,11 @@ retiring it while an own write waits sends no late node request. A response from
 a replaced HA authority cannot be adopted or trigger a reload into the new one.
 Closing an already sent menu intent does not discard a valid accepted reply from
 the same authority. The pre-existing Move writer uses its unchanged default path.
+`demo/smoke_wall_node_delete.mjs` is the native menu acceptance entry: exact
+A–C/host/foreign fields, painted opening and carrier span, one common Undo/Redo,
+reload, disabled geometry, retained callbacks and real Properties completion.
+Its recording wire respects metadata outside read projection and recomputes the
+narrow intent; authenticated backend proof remains the separate HA test below.
 The Linux `test_ha_wall_node_delete.py` subset uses actual registration, authenticated
 groups, concurrent CAS, stores, metadata projection and integration reload; it
 never replaces the product planner. Run it with the current supported HA harness.

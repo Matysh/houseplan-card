@@ -1963,6 +1963,7 @@
       "demo/smoke_wall_junctions.mjs",
       "demo/smoke_wall_key_roundtrip.mjs",
       "demo/smoke_wall_node_connected.mjs",
+      "demo/smoke_wall_node_delete.mjs",
       "demo/smoke_wall_node_move.mjs",
       "demo/smoke_wall_node_reliability.mjs",
       "demo/smoke_wall_node_topology.mjs",
