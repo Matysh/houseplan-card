@@ -61,6 +61,11 @@ computed registries. Golden capture is a coverage input; it never accepts PNGs
 or updates baseline indexes. Existing performance thresholds remain unchanged.
 
 run.json/inventory.json record expected cases and every result/exit/time;
+expectedPins are expectations, not confirmed runtime versions. identity records
+bounded Python command/version probes for PYTHON/platform selection and the
+independent literal python3 consumer. A probe is labelled probed, a failed probe
+unknown; neither claims that every Python child was observed. Separately saved
+process observations describe only the children actually seen on that material.
 build-index.json and build/ retain final JS/maps, byte hashes, actual src and
 sourcesContent hashes, product manifest and recipe. Normal and diagnostic JS
 and manifest must agree byte for byte; normal output is restored independently.

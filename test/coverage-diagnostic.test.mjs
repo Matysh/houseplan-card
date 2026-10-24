@@ -9,7 +9,7 @@ import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { editMappedSource } from '../scripts/coverage-maps.mjs';
-import { indexGeneratedFiles, digestBytes } from '../scripts/coverage-identity.mjs';
+import { indexGeneratedFiles, digestBytes, probePythonRuntime, pythonRuntimeProbes } from '../scripts/coverage-identity.mjs';
 import { buildCoverageReport, diagnosticCompleteness } from '../scripts/coverage-report.mjs';
 import { historicalCandidates } from '../scripts/parallel-path-audit.mjs';
 import { runInvocation } from '../scripts/coverage-diagnostic.mjs';
@@ -24,6 +24,23 @@ const fixture = t => {
   t.after(() => { assert.ok(dir.startsWith(resolve(tmpdir(), 'hp-diagnostic-'))); rmSync(dir, { recursive: true, force: true }); });
   return dir;
 };
+test('Python metadata distinguishes override/default resolution, actual version probes and unknown children', () => {
+  const absent = 'houseplan-deliberately-missing-python-1018';
+  assert.equal(probePythonRuntime(absent).status, 'unknown');
+  const runtime = pythonRuntimeProbes(process.cwd(), { env: { ...process.env, PYTHON: absent } });
+  assert.equal(runtime.selections.platformBridge, absent);
+  assert.equal(runtime.selections.supportBridge, absent);
+  assert.equal(runtime.selections.infiniteCanvas, 'python3', 'this smoke ignores PYTHON');
+  assert.equal(runtime.probes.find(p => p.command === absent).status, 'unknown');
+  for (const probe of runtime.probes) assert.equal(probe.invocationAttestation, false);
+  const python = runtime.probes.find(p => p.command === 'python3');
+  if (python.status === 'probed') {
+    const actual = JSON.parse(execFileSync('python3', ['-I', '-c',
+      'import json,sys; print(json.dumps({"executable":sys.executable,"version":sys.version}))'], { encoding: 'utf8', windowsHide: true }));
+    assert.equal(python.executable, actual.executable);
+    assert.equal(python.version, actual.version);
+  } else assert.equal(python.status, 'unknown');
+});
 test('computed scope is the entire existing product unit, smoke and golden inventories', () => {
   const inventory = coverageInventory();
   assert.deepEqual(inventory.cases.filter(c => c.family === 'unit').map(c => c.script), unitGroups().product);

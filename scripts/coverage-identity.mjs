@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { sourceFingerprint } from './source-fingerprint.mjs';
 import { hashMapRecipe } from './coverage-maps.mjs';
 import { TraceMap, decodedMappings } from '@jridgewell/trace-mapping';
@@ -20,6 +20,38 @@ export function walkFiles(path) {
   return existsSync(path) ? readdirSync(path, { withFileTypes: true }).flatMap(entry =>
     entry.isDirectory() ? walkFiles(resolve(path, entry.name)) : entry.isFile() ? [resolve(path, entry.name)] : []) : [];
 }
+/** Availability/version evidence, deliberately not an attestation of each child. */
+export function probePythonRuntime(command, { root = process.cwd(), env = process.env } = {}) {
+  const unknown = (reason, detail = '') => ({ status: 'unknown', command, reason,
+    detail: String(detail).slice(0, 500), invocationAttestation: false });
+  const options = { cwd: root, env, encoding: 'utf8', timeout: 3000, maxBuffer: 65536, windowsHide: true };
+  // An uninstalled Windows command alias may open a GUI instead of an interpreter.
+  if (process.platform === 'win32' && !isAbsolute(command)) {
+    const found = spawnSync('where.exe', [command], options);
+    const first = found.stdout?.trim().split(/\r?\n/)[0];
+    if (found.status !== 0 || !first) return unknown('python-command-unresolved', found.error?.code || found.stderr);
+    if (/[/\\]WindowsApps[/\\]/i.test(first)) return unknown('python-command-is-app-alias', first);
+  }
+  const result = spawnSync(command, ['-I', '-c',
+    'import json,os,sys; print(json.dumps({"executable":sys.executable,"realExecutable":os.path.realpath(sys.executable),"version":sys.version,"versionInfo":list(sys.version_info)}))'], options);
+  if (result.error || result.status !== 0) return unknown('python-probe-failed', result.error?.code || result.stderr);
+  try {
+    const observed = JSON.parse(result.stdout);
+    if (!isAbsolute(observed.executable) || !isAbsolute(observed.realExecutable)
+        || typeof observed.version !== 'string' || !Array.isArray(observed.versionInfo)
+        || observed.versionInfo.length !== 5
+        || !observed.versionInfo.slice(0, 3).every(n => Number.isSafeInteger(n) && n >= 0)) throw Error('Invalid Python response');
+    return { status: 'probed', command, ...observed, invocationAttestation: false };
+  } catch (error) { return unknown('invalid-python-probe', error); }
+}
+export function pythonRuntimeProbes(root = process.cwd(), { env = process.env } = {}) {
+  const local = resolve(root, '.venv-ci/Scripts/python.exe');
+  const bridge = env.PYTHON || (process.platform === 'win32' ? existsSync(local) ? local : 'python' : 'python3');
+  const selections = { platformBridge: bridge, supportBridge: env.PYTHON || 'python3', infiniteCanvas: 'python3' };
+  return { pythonEnvironment: env.PYTHON || null, selections,
+    probes: [...new Set(Object.values(selections))].map(command => probePythonRuntime(command, { root, env })),
+    scope: 'Expected pins are separate. These are bounded command-resolution/version probes, not observed bridge invocations; an unobserved child runtime remains unknown.' };
+}
 export function materialIdentity(root = process.cwd()) {
   const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   const recipe = ['coverage-diagnostic', 'coverage-inventory', 'coverage-identity', 'coverage-maps', 'coverage-preload', 'coverage-report',
@@ -31,6 +63,7 @@ export function materialIdentity(root = process.cwd()) {
     platform: process.platform, arch: process.arch, executable: process.execPath,
     nodePath: process.env.NODE_PATH || null,
     rollupVersion: JSON.parse(readFileSync(resolve(root, 'node_modules/rollup/package.json'), 'utf8')).version,
+    pythonRuntimes: pythonRuntimeProbes(root),
     recipeFiles, recipeHash: digestBytes(JSON.stringify(recipeFiles)) };
 }
 

@@ -55,7 +55,7 @@ export async function diagnosticRun({ root = process.cwd(), sha, out = 'artifact
   mkdirSync(artifactDir, { recursive: true });
   const save = (name, value) => writeFileSync(inside(artifactDir, name), typeof value === 'string' ? value : JSON.stringify(value, null, 2));
   const state = { schema: COVERAGE_SCHEMA, authority: 'diagnostic-only', semanticApproval: false,
-    identity, pins: pinsFromSources(), inventory, invocations: [], builds: [], issues: [], started: Date.now(),
+    identity, expectedPins: pinsFromSources(), inventory, invocations: [], builds: [], issues: [], started: Date.now(),
     limits: { collectionMinutes: 105, compressedRawBytes: 4 * 1024 ** 3, unitConcurrency: 4, smokeConcurrency: 2, goldenConcurrency: 1 },
     completeness: { complete: false, reasons: [{ reason: 'collection-in-progress-or-interrupted' }] } };
   save('run.json', state); save('inventory.json', inventory);
