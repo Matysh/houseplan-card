@@ -65,6 +65,13 @@ catalog for that explicit refusal before a stale client permission flag updates;
 ordinary errors loading another record still retain a valid shown record.
 Catalog refusal also fences held Show replies. Keeping the open dialog marked
 as loaded prevents its next render from automatically retrying the denial.
+The explicit `suppressed` refusal retires material for both list and get: it
+means the saved marker is hidden/static or live display is disabled, even while
+the client still has its earlier accepted snapshot. An ordinary unavailable
+record remains different and keeps an otherwise valid painted record. The
+ordinary frontend witness first failed for get/suppressed while the unavailable
+positive passed; fresh endpoint cases cover all four saved suppression forms
+without another physical read or history-owned Store change.
 
 The whole accepted `b3dbea281` merge includes decor multi-selection and bounded
 registry Git I/O. The Golden matrix keeps both independent additions under

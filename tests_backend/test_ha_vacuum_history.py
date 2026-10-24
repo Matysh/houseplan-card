@@ -120,6 +120,33 @@ async def geometry(client, listing):
     return await request(client, "get", record_id=listing["records"][0]["id"], revision=listing["revision"])
 
 
+@pytest.mark.parametrize("suppression", ["hidden", "static_icon", "value_static_icon", "live_off"])
+async def test_saved_marker_suppression_refuses_old_catalog_without_another_provider_read(hass, hass_ws_client, suppression):
+    _, rt, rec, camera, client = await prepared(hass, hass_ws_client)
+    listing = await catalog(client)
+    assert (await geometry(client, listing))["success"]
+    initial = copy.deepcopy(await rt.config_store.async_load())
+    changed = copy.deepcopy(initial)
+    marker = changed["config"]["markers"][0]
+    if suppression == "hidden":
+        marker["hidden"] = True
+    elif suppression == "live_off":
+        marker["vacuum"]["live"] = False
+    else:
+        marker["display"] = suppression
+    changed["rev"] += 1
+    await rt.config_store.async_save(changed)
+    before = [copy.deepcopy(await store.async_load()) for store in (rt.config_store, rt.store, rec.store)]
+    answer = await geometry(client, listing)
+    assert answer["error"]["code"] == "suppressed", answer
+    assert len(camera.calls) == 1, "suppressed saved authority must refuse before a physical provider read"
+    assert [await store.async_load() for store in (rt.config_store, rt.store, rec.store)] == before
+    initial["rev"] = changed["rev"] + 1
+    await rt.config_store.async_save(initial)
+    assert (await catalog(client))["records"] == listing["records"]
+    assert hass.data[DOMAIN]["trail_recorder"] is rec
+
+
 async def settle(predicate):
     for _ in range(200):
         if predicate():

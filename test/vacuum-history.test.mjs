@@ -145,6 +145,25 @@ test('#999 rendering a server-denied catalog does not turn its error into automa
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(deniedCalls,1);assert.equal(owner.reason,'unauthorized');assert.equal(owner.catalog,null);
 });
+test('#999 server suppression on get retires A while the client still sees the saved marker',async()=>{
+ const {host,owner,device}=prepared();host._markerDialog={devId:device.id};owner.open(device);
+ await new Promise(resolve=>setImmediate(resolve));owner.selected=A;await owner.show();paint(owner);
+ assert.equal(owner.visible,true);let deniedCalls=0;
+ host.hass.callWS=async()=>{deniedCalls++;throw {code:'suppressed'};};owner.selected=B;await owner.show();
+ assert.equal(device.marker.hidden,undefined,'the server refusal arrives before the client configuration update');
+ assert.equal(host._canEdit,true);assert.equal(owner.shown,null);assert.equal(owner.catalog,null);
+ assert.equal(owner.canShow,false);assert.equal(owner.reason,'suppressed');assert.equal(owner.loadingShow,false);
+ for(let i=0;i<10;i++){owner.hostUpdate();owner.open(device);}
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(deniedCalls,1);
+ host.hass.callWS=async message=>message.type.endsWith('/list')?listing:response(message.record_id);
+ await owner.load();await owner.show();paint(owner);assert.equal(owner.visible,true);assert.equal(owner.shown.id,B);
+});
+test('#999 an ordinary unavailable get retains the valid painted A',async()=>{
+ const {host,owner}=await loaded();await owner.show();paint(owner);const shown=owner.shown;
+ owner.selected=B;host.hass.callWS=async()=>{throw {code:'unavailable'};};await owner.show();
+ assert.equal(owner.shown,shown);assert.equal(owner.visible,true);assert.equal(owner.reason,'unavailable');
+ assert.equal(owner.catalog.records.length,2);assert.equal(owner.canShow,true);
+});
 for(const change of ['hide','space','authority_aba','permission','kiosk','removed','hidden','live_off','calibration','binding','other_vacuum','detach','pagehide','new_cleanup'])
  test(`#999 pending Show retires on ${change}; its finally cannot unlock a new intent`,async()=>{
   const {host,owner,pending,adoption,config,device}=await loaded();host.hold=true;const old=owner.show();

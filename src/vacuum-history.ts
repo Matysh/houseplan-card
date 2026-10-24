@@ -148,6 +148,7 @@ export class VacuumHistory {
   private fail(error:unknown,catalog=false):void {
     const reason=errorReason(error);
     if(reason==='unauthorized'||reason==='retired'
+      ||reason==='suppressed'
       ||catalog&&['unavailable','unsupported','suppressed','ambiguous'].includes(reason)){
       this.hide(reason);this.listGeneration++;this.catalog=null;this.loadingList=false;this.labelMemo=null;
       // Keep this dialog's loaded/open state: rendering must not retry a denial.

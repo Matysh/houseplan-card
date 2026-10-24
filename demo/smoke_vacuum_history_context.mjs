@@ -30,27 +30,27 @@ try{
  out.keyboard_select=!!(await ui.history.locator('select').inputValue());
  await page.keyboard.press('Escape');await settled();
  out.escape_dialog_closes=!(await ui.dialog.isVisible());
- for(const command of ['get','list']){
+ for(const [command,code] of [['get','unauthorized'],['list','retired'],['get','suppressed']]){
   await reset();ui=await openVacuumHistory(page);await chooseVacuumHistory(page,ui.history,ids.a);
   await ui.show.click();await page.waitForFunction(()=>window.__card._vacHistory.visible);
   if(command==='get'){
-   await page.evaluate(()=>{window.__history999.getError='unauthorized';});
+   await page.evaluate(code=>{window.__history999.getError=code;},code);
    await chooseVacuumHistory(page,ui.history,ids.b);await ui.show.click();
   }else{
    await ui.dialog.getByRole('button',{name:'Cancel',exact:true}).click();
-   await page.evaluate(()=>{window.__history999.listError='retired';});ui=await openVacuumHistory(page);
+   await page.evaluate(code=>{window.__history999.listError=code;},code);ui=await openVacuumHistory(page);
   }
   await settled();
-  out[`server_${command}_refusal_retires_preview`]=await noPreview()&&await ui.show.isDisabled()&&await ui.hide.isDisabled()
+  out[`server_${command}_${code}_refusal_retires_preview`]=await noPreview()&&await ui.show.isDisabled()&&await ui.hide.isDisabled()
    &&await page.evaluate(()=>window.__card._canEdit&&window.__card._vacHistory.catalog===null);
   const count=await page.evaluate(()=>window.__history999.requests.length);
   for(let i=0;i<6;i++)await page.evaluate(async()=>{const c=window.__card;c.hass={...c.hass};await window.__hpTest.settled();});
-  out[`server_${command}_denial_does_not_poll`]=count===await page.evaluate(()=>window.__history999.requests.length);
+  out[`server_${command}_${code}_denial_does_not_poll`]=count===await page.evaluate(()=>window.__history999.requests.length);
   await page.evaluate(()=>{const w=window.__history999;w.getError=null;w.listError=null;});
   await ui.dialog.getByRole('button',{name:'Cancel',exact:true}).click();ui=await openVacuumHistory(page);
   await chooseVacuumHistory(page,ui.history,ids.b);await ui.show.click();
   await page.waitForFunction(()=>window.__card._vacHistory.visible);
-  out[`server_${command}_fresh_catalog_recovers`]=await page.evaluate(()=>window.__card._vacHistory.shown.id==='b'.repeat(64));
+  out[`server_${command}_${code}_fresh_catalog_recovers`]=await page.evaluate(()=>window.__card._vacHistory.shown.id==='b'.repeat(64));
   await ui.dialog.getByRole('button',{name:'Cancel',exact:true}).click();
  }
  for(const retirement of ['hide','space','other-vacuum','connection','auth','new-cleanup','reload','catalog']){
