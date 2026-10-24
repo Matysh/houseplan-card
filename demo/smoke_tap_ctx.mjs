@@ -1,5 +1,21 @@
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
+// The entityless branch needs an actual saved virtual marker; the ordinary
+// demo no longer guarantees one. Seed it through the public server/layout API.
+await page.evaluate(async () => {
+  let space;
+  await window.__hpTest.setServerConfig(cfg => {
+    space = cfg.spaces[0].id;
+    return { ...cfg, markers: [...cfg.markers, {
+      id: 'ctx_virtual', binding: 'virtual', space, name: 'Virtual context target',
+      tap_action: 'settings',
+    }] };
+  });
+  await window.__hpTest.setLayout(layout => ({ ...layout,
+    ctx_virtual: { s: space, x: 0.35, y: 0.45 },
+  }));
+  await window.__hpTest.switchSpace(space);
+});
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -38,7 +54,7 @@ const res = await page.evaluate(async () => {
     && !!sr().querySelector('[data-hp="device-copy"]');
   // 4) Виртуальное без primary открывает тот же редактор без HA more-info.
   c._setMode('view'); await c.updateComplete;
-  const virt = c._devices.find((d) => d.virtual && !d.primary) || null;
+  const virt = c._devices.find((d) => d.id === 'ctx_virtual' && d.virtual && !d.primary) || null;
   if (virt) {
     c._ctxDevice(new MouseEvent('contextmenu', { cancelable: true }), virt);
     out.virtSettings = c._markerDialog?.devId === virt.id && moreInfo === null;
