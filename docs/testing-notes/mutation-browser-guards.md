@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 85 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 97 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 57 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 246 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **496 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 249 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **499 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -824,6 +824,9 @@ Controller-only timeout state/retry policy has separate cheap Node witnesses.
 - `full-timeout-drops-matching-projection`
 - `space-timeout-drops-matching-projection`
 - `full-read-ignores-lifecycle-owner`
+- `full-detached-authority-intent-dropped-1054`
+- `full-reattach-pending-authority-not-started-1054`
+- `full-interrupted-reattach-loses-read-intent-1054`
 - `space-read-ignores-lifecycle-owner`
 
 `zigbee-hover-incomplete-uses-global-partial` (#816) checks the mounted lazy

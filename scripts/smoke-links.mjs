@@ -41,6 +41,11 @@ export const SMOKE_LINKS = [
     because: '#1053: public full/space lifecycle and actual direct-reading DOM must retain one shared feed, reject late detached HA assignment and reconnect. Generic recovery separately preserves exact mandatory transports and held canonical authority; its metadata distinction is observable only at the transport boundary.',
   },
   {
+    files: ['src/houseplan-card.ts', 'src/card-read-lifecycle.ts'],
+    smokes: ['smoke_detached_authority.mjs', 'smoke_view_recovery.mjs'],
+    because: '#1054: public remove/hass/append must preserve the current mandatory read intent after foreign authority retirement, including a reused HA object and coalesced ABA; existing recovery protects same-context no-reload and stale read fencing.',
+  },
+  {
     files: ['src/editor-context-menu.ts','src/editor-context-menu.styles.ts','src/catalog-context-menu.ts','src/editors/properties/color-draft.ts',
       'src/editor-secondary.styles.ts','src/editors/properties/surface.ts','src/editors/properties/selection.ts'],
     smokes: ['smoke_ui_1051.mjs','smoke_ui_1051_native.mjs','smoke_properties_panel.mjs','smoke_decor_order.mjs','smoke_device_copy.mjs','smoke_ui_polish_976.mjs'],

@@ -5,6 +5,10 @@
 - Zigbee links and directional arrows also work for devices shown as LED
   strips. A small halo marks the midpoint of the visible path; participant
   highlighting follows its shape and the current plan camera. (#1004)
+- Restore the full plan after Home Assistant changes while its card is detached,
+  including another removal while loading, without waiting for another HA
+  update or page event. Loaded, idle short returns in the same HA context
+  retain their existing frame without reloading. (#1054)
 - Unify editor action trays, furniture properties, context menus, disclosures
   and text links with the shared UI kit. Decor colours support inline HEX and
   opacity preview with one Undo step; device selection stays blue after hover,
