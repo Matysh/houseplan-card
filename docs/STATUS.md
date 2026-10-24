@@ -30,7 +30,8 @@ not deletion permission. Manual semantic/caller decisions are pinned separately;
 the complete computed unit/smoke/Golden diagnostic preserves actual source/map
 identity and marks missing/failed collection unknown. Its nightly artifact is
 isolated from ordinary proof and release verdicts. The first product cleanup
-is restricted to unused form-kit onOpacity after #1051 S8.
+removes only the unused legacy top-level form-kit onOpacity after #1051 S8;
+the new nested raw HEX/alpha inputs and their current CSS remain live.
 Measured raw retention requires a 4-GiB diagnostic bound; interrupted or
 environment-invalid collections remain incomplete and separate from product PASS.
 Diagnostic smoke timeouts follow the canonical product runner; a restarted

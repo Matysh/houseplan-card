@@ -16,6 +16,17 @@ Measured raw V8 retention required a bounded 4-GiB compressed artifact budget;
 the collector/job/upload limits are 105/135/15 minutes. Interrupted runs begin
 in incomplete state, and generated smoke captures under demo/out stay ignored.
 
+The first product cleanup removes only the unused top-level ColorField/ColorTile
+onOpacity options and numeric fallbacks, plus five dead colortile-meta/unit CSS
+blocks (six selector branches). Ten current literal FormKit calls pass no such
+callback. The separate inputs.onHex/onOpacity(raw) route introduced by #1051
+remains a real numeric inline field; its raw invalid draft, atomic save and
+Escape/Undo are covered by the existing smoke_ui_1051 alongside the three named
+General/Space/Room smokes. The frozen CSS fixtures lose only those same six
+retired selector branches; all general unit/opacity and ColorField input styles
+remain. Source and actual production-editor graph sizes are measured separately
+from the historical a34f diagnostic, which is not rerun or relabelled as current.
+
 ## Config authority smoke #1052
 
 `node demo/smoke_config_authority.mjs` records B's config/layout read counts

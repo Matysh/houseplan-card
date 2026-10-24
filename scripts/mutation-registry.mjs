@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'form-kit-inline-opacity-input-dropped-1018',
+    guard: 'node demo/smoke_ui_1051.mjs',
+    because: '#1018 AC7: removing the unused top-level callback must preserve the new nested raw alpha input. Mounted Properties preview, picker synchronization and exactly one atomic commit/Undo must observe the typed 75/100 values; source text alone cannot prove the event reaches the current field session. Static readiness during development; execution only nightly.',
+    patches: [{ file: 'src/editors/form-kit.ts',
+      find: '@input=${(e: Event) => inputs.onOpacity((e.target as HTMLInputElement).value)}',
+      replace: '@input=${(_e: Event) => {}}' }],
+  },
+  {
     id: 'ui-inline-opacity-loses-grid-slot-1051',
     guard: 'node demo/smoke_ui_1051.mjs',
     because: '#1051 AC2/7: actual 0/50/100 input paint must fit the intended inline grid slot. The common form-kit cascade can leave the opacity wrapper flex and clip digits despite an unchanged outer control box; only mounted browser layout reveals this. Nightly execution only.',
