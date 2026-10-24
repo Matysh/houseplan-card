@@ -11890,6 +11890,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-own-offline-restores-iso-grey-body',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 keeps the neutral 2.5D body and edge; native computed paint must detect '
+      + 'restoring the former grey state table even though glyph opacity still passes',
+    patches: [{
+      file: 'src/iso-tiles.ts',
+      find: "  'lock-unlocked': '#F0410C',",
+      replace: "  'lock-unlocked': '#F0410C',\n  unavail: '#B5BAC1',",
+    }],
+  },
+  {
+    id: 'device-own-offline-full-led-badge-loses-fact',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 requires the full-card passive LED badge to consume the shared resolved offline fact; '
+      + 'only mounted SVG/badge rendering proves the content remains dim with an opaque frame',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'class="dev led-badge ${presentation.offline ? \'unavail\' : \'\'} ${deviceThemeClass(this._renderPlanHass)}"',
+      replace: 'class="dev led-badge ${deviceThemeClass(this._renderPlanHass)}"',
+    }],
+  },
+  {
+    id: 'device-own-offline-space-led-badge-loses-fact',
+    guard: 'node demo/smoke_device_offline.mjs',
+    because: '#1026 also requires the mounted static space-card LED badge to consume the shared offline fact; '
+      + 'a full-card witness alone cannot prove this independent surface adapter',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: 'class="dev led-badge ${presentation.offline ? \'unavail\' : \'\'} ${deviceThemeClass(planHass)}"',
+      replace: 'class="dev led-badge ${deviceThemeClass(planHass)}"',
+    }],
+  },
+  {
     id: 'device-unavailable-hover-restored',
     guard: 'node demo/smoke_device_icon_design.mjs',
     because: 'unavailable keeps click/keyboard access but must never regain the blue visual hover '
