@@ -16,7 +16,7 @@ export async function prepareDeviceOfflineBoard(page) {
     const records = [];
     for (const [id, offline] of [['icon', false], ['down', true], ['text', true],
       ['unknown', false], ['missing', false], ['source', false], ['double', true],
-      ['static', false], ['controller', false], ['exact', true]]) {
+      ['static', false], ['controller', false], ['exact', true], ['alarm', true], ['legacy', false]]) {
       const marker = face(id), core = marker?.querySelector('.device-core');
       const glyph = core?.querySelector('ha-icon,.valtext');
       if (!marker || !core || !glyph) throw new Error(`offline board missing real face: ${id}`);
@@ -29,6 +29,10 @@ export async function prepareDeviceOfflineBoard(page) {
       }
       if (id === 'text' && (!glyph.matches('.valtext') || !glyph.textContent.includes('23.5')))
         throw new Error('offline board did not render the actual Text value');
+      if (id === 'alarm' && !marker.classList.contains('alarm'))
+        throw new Error('offline board lost a confirmed owned critical state source');
+      if (id === 'legacy' && marker.querySelectorAll('.value-badge').length !== 2)
+        throw new Error('offline board lost the real legacy second metric');
       if (glyph.matches('ha-icon')) {
         await glyph.updateComplete;
         if (!glyph.shadowRoot?.querySelector('path')?.getAttribute('d'))

@@ -13,6 +13,7 @@ const offline = face => /(?:^|\s)unavail(?:\s|$)/.test(face?.classes ?? '');
 const badge = face => face?.badges[0];
 const ids = ['offline-icon', 'offline-down', 'offline-text', 'offline-unknown', 'offline-missing',
   'offline-source', 'offline-double', 'offline-static', 'offline-controller', 'offline-exact',
+  'offline-alarm', 'offline-legacy',
   'offline-led-unavailable', 'offline-led-unknown'];
 const shape = face => [face?.core, face?.frame, face?.contact, badge(face)?.paint]
   .map(node => node?.rect?.slice(2));
@@ -48,6 +49,11 @@ try {
     && opaque(f['offline-controller']?.glyph);
   out.exactEntityIgnoresHealthyOwnSiblings = offline(f['offline-exact']) && dim(f['offline-exact']?.glyph);
   out.offlineKeepsBatteryIndependent = opaque(f['offline-exact']?.battery);
+  out.confirmedAlarmCoexistsWithOwnOffline = offline(f['offline-alarm'])
+    && /(?:^|\s)alarm(?:\s|$)/.test(f['offline-alarm']?.classes ?? '')
+    && dim(f['offline-alarm']?.glyph) && opaque(f['offline-alarm']?.core);
+  out.liveLegacyMetricsUseRealContentWrapper = f['offline-legacy']?.badges.length === 2
+    && f['offline-legacy'].badges.every(item => opaque(item.paint) && opaque(item.content));
 
   const leds = await readDeviceOfflineLeds(page); observations.leds = leds;
   out.allLedFixturesAreActualSvg = Object.values(leds).every(led => led?.core?.d && led?.outline?.d && led?.hit?.d);
@@ -88,6 +94,14 @@ try {
   const absent = await readDeviceOfflinePaint(page, ['offline-controller']);
   out.missingOneOwnedRowRevokesOfflineProof = !offline(absent.faces['offline-controller']);
   await setDeviceOfflineStates(page, { 'sensor.offline_controller_battery': '100', 'event.offline_controller': 'unknown' });
+  await setDeviceOfflineStates(page, { 'switch.offline_alarm_power': 'off' });
+  const liveAlarm = (await readDeviceOfflinePaint(page, ['offline-alarm'])).faces['offline-alarm'];
+  observations.liveAlarm = liveAlarm;
+  out.ownRecoveryKeepsConfirmedAlarmColorAndFrame = !offline(liveAlarm) && opaque(liveAlarm?.glyph)
+    && /(?:^|\s)alarm(?:\s|$)/.test(liveAlarm?.classes ?? '')
+    && liveAlarm?.core?.background === f['offline-alarm']?.core?.background
+    && liveAlarm?.frame?.border === f['offline-alarm']?.frame?.border;
+  await setDeviceOfflineStates(page, { 'switch.offline_alarm_power': 'unavailable' });
 
   // Real input to the normal marker editor exposes the shared preview renderer.
   await page.evaluate(async () => { await window.__hpTest.setMode('devices'); await window.__hpTest.openMarkerDialog('offline-down'); });
