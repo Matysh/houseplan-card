@@ -6,6 +6,8 @@ export interface PropertiesIdentity {
   objectId: string;
   /** Binding/lifecycle identity, not the changing object's whole snapshot. */
   binding?: string;
+  /** Volatile multi-selection, in native paint order; never part of configuration. */
+  objectIds?: readonly string[];
 }
 
 export interface PropertiesError {
@@ -18,7 +20,8 @@ export type PropertiesCommit = { ok: true }
   | { ok: false; error: PropertiesError };
 
 export const propertiesIdentityKey = (value: PropertiesIdentity | null): string =>
-  value ? JSON.stringify([value.spaceId, value.editor, value.kind, value.objectId, value.binding ?? null]) : '';
+  value ? JSON.stringify([value.spaceId, value.editor, value.kind, value.objectId, value.binding ?? null,
+    ...(value.objectIds ? [value.objectIds] : [])]) : '';
 
 /** Preserve presence/null and compare only the field's declared value. */
 export function samePropertiesValue(left: unknown, right: unknown): boolean {

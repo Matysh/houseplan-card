@@ -8,6 +8,40 @@ comments can point at them (`docs/DECOR-EDITOR.md §3.2`).
 
 ## 1. Purpose and invariants
 
+### Multiple selection (#1038)
+
+In Select, Ctrl/Cmd+click toggles one current-space decor ID. A clean ordinary
+click selects one object; dragging a selected member retains and moves the
+whole set. Ctrl+A selects current-space decor; Ctrl+M selects only decor
+furniture. Devices shown as furniture, rooms, walls and the backdrop are excluded.
+An armed idle shape/furniture tool can become Select; an active drawing anchor,
+draft or pointer gesture consumes these shortcuts without changing its state.
+Fields, search, dialogs and the shared colour picker retain their native keys.
+
+The approved variant B paints only individual contours. There is no common
+frame, group handle or hit surface across empty canvas. Compact desktop keeps
+selection and move; the existing wide Properties panel supplies group fields.
+At N>1, geometry, type-specific and individual action fields stay disabled with
+a reason. Arrow keys do not move a hidden singleton. Right/double click explicitly
+returns to the existing singleton flow. Empty click or idle Escape clears the set.
+
+One immutable begin snapshot and one leader snap produce a literal dx/dy for
+all IDs, excluding every selected member from snap targets. A nonfinite result
+or stored-axis extent beyond the existing CANVAS bound refuses the whole move;
+members are never individually clamped. Cancel restores all begin records and
+the original selection. One accepted group write creates one command in the
+existing 50-command geometry history; refusal creates none.
+
+Only identical kinds share colour fields: rect/ellipse each have independent
+stroke and fill pairs, line/text/furniture have their existing colour/opacity
+pair, images have opacity only. Mixed kinds can move but cannot be recoloured.
+Different values are mixed independently by channel. Only actual input causes
+write a channel, preserving every member's opposite value, optional-key absence,
+fill flag and foreign attributes. Open/focus/cancel/untouched confirmation are
+not writes. Invalid HEX/alpha keeps the compound field owned and blocks completion.
+Selection is volatile and retires on external adoption, authority, navigation
+or detach; it never enters config, transfer, asset storage or reload state.
+
 The trash tool is **Delete** (#976), with a32px arrow/cross cursor (hotspot2,2)
 also over transparent decor hit shapes. It retains confirmation and named
 Undo/Redo. An enabled toolbar tool closes an open secondary menu and activates

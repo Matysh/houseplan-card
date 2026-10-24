@@ -999,6 +999,25 @@ ambiguous nearby nodes. Node movement is mouse-first in the Plan editor, absent
 in View and kiosk. An older backend shows an integration-update hint instead
 of saving an unsupported edit.
 
+#### Deleting a wall node
+
+In the Plan editor with **Select**, right-click an intermediate node and choose
+**Delete node**. Its two neighbouring sections become one straight wall between
+their unchanged outer endpoints. A safe corner is supported too: the room
+boundary follows the new straight span. A shared wall counts once regardless
+of how many rooms own it.
+
+The command is disabled at an endpoint, T/X junction, incompatible sections or
+an unsafe result; the menu explains why. Openings keep their position, size and
+settings. If they cannot remain on the new wall, the entire deletion is refused.
+Devices, decor and other floors are neither removed nor moved.
+
+A right-click alone does not move the node. **Esc** or an outside click closes
+the menu. Deletion is one common history step: Undo restores both sections and
+the node; Redo repeats the replacement. A server refusal keeps the command in
+history. Finish editing a Properties field before the action. View and kiosk
+have no command; an older integration shows an update hint. The menu is mouse-first.
+
 #### Plan tools at a glance
 
 | Tool | Result | Room area | Light and shadow | Main limit |
@@ -2135,7 +2154,26 @@ colour makes it the next default without recolouring other objects. Outline and
 text sizes are physical centimetres/inches, so zoom changes their on-screen
 width consistently rather than changing the saved line weight.
 
-### Decor order and context menu
+### Multiple decor objects
+
+In **Select**, hold `Ctrl` and click objects to add or remove each member.
+`Ctrl+A` selects all decor in the current space, and `Ctrl+M` selects furniture.
+The backdrop image and devices do not enter this selection. Each object has an
+individual contour, and the wide Properties panel shows their count. Drag any
+selected member to move the whole set; the empty space between members remains
+canvas. An ordinary click returns to one selected object. An empty click or
+idle `Esc` clears the set; `Esc` during a drag restores all positions and keeps
+the selection.
+
+Matching object kinds share colour and opacity fields. Rectangles and ovals
+have independent fill fields; images have opacity only. **Different values**
+is independent for colour and percentage: editing one preserves every member's
+other channel. Opening or cancelling the picker saves nothing. Other fields
+and individual commands stay disabled; right-click or double-click enters the
+existing single-object scenario. One group edit is one `Ctrl+Z` step. Selection
+shortcuts remain native in fields/dialogs and do not interrupt unfinished drawing.
+
+### Single-object order and context menu
 
 Select a decor object. The properties sidebar shows **Bring to front** and
 **Send to back** in one row immediately above **Delete**. They move the object

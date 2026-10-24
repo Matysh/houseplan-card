@@ -2,7 +2,8 @@
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { REGISTRY_JOBS, registryInputs, registryToolchain, cleanRegistryInputs, jobRecipe } from './ci-registry-inputs.mjs';
+import { REGISTRY_JOBS, registryInputs, registryToolchain, registryReader, registryRemaining,
+  cleanRegistryInputs, jobRecipe } from './ci-registry-inputs.mjs';
 import { fetchRegistry, probeRegistry, publishRegistry, registryApi } from './ci-proof-registry.mjs';
 import { registryPolicy } from './ci-registry-verify.mjs';
 import { isMainModule } from './spawn-portable.mjs';
@@ -15,6 +16,12 @@ const output = values => {
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, text);
   process.stdout.write(text);
 };
+export function registryPublicationRecords(proof) {
+  if (!proof.requiredChecks.every(id => proof.checks[id]?.result === 'success')) return [];
+  return [...proof.registry?.produced || [], ...Object.values(proof.taskChecks || {})
+    .filter(claim => claim.mode === 'executed' && claim.record?.schema === 'houseplan-task-check/v1')
+    .map(claim => claim.record)];
+}
 export function producerToolchain(root = process.cwd(), job = '') {
   const toolchain = registryToolchain({ text: path => readFileSync(resolve(root, path), 'utf8') },
     { python: process.env.CI_PYTHON_VERSION || null });
@@ -31,10 +38,11 @@ export function producerRecipe(root, job, env = process.env) {
   if (!['.github/workflows/validate.yml', '.github/workflows/validate-product.yml'].includes(workflow)) throw Error('foreign producer workflow');
   return jobRecipe({ text: path => readFileSync(resolve(root, path), 'utf8') }, job, workflow);
 }
-export function controllerSupportsRegistry(root = process.cwd()) {
+export function controllerSupportsRegistry(root = process.cwd(), { deadline = Date.now() + 8000 } = {}) {
   try {
     return execFileSync('git', ['-C', root, 'show', 'origin/dev:scripts/ci-registry-verify.mjs'],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).includes('houseplan-job-proof/v1');
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: registryRemaining(deadline, 3000),
+        killSignal: 'SIGKILL', env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } }).includes('houseplan-job-proof/v1');
   } catch { return false; }
 }
 export function intentPolicy(env = process.env, version = JSON.parse(readFileSync('package.json', 'utf8')).version,
@@ -57,20 +65,50 @@ export function intentPolicy(env = process.env, version = JSON.parse(readFileSyn
     return { ...policy, allowed: false, reason: 'fresh bootstrap for the pre-registry dev controller' };
   return policy;
 }
-export async function registryProbeCli({ root = process.cwd(), local = false } = {}) {
-  const started = Date.now();
+// The timer owns asynchronous requests; every synchronous subprocess must also
+// receive the same deadline. Moving only the timer before Git cannot interrupt it.
+export async function withinRegistryDeadline(deadline, action) {
+  const controller = new AbortController();
+  let timer;
+  const expired = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const error = Object.assign(Error('registry probe deadline exceeded'), { code: 'REGISTRY_TIMEOUT' });
+      controller.abort(error); reject(error);
+    }, registryRemaining(deadline));
+  });
+  try {
+    const value = await Promise.race([expired, Promise.resolve().then(() => {
+      registryRemaining(deadline);
+      return action(controller.signal);
+    })]);
+    registryRemaining(deadline);
+    return value;
+  } finally { clearTimeout(timer); controller.abort(); }
+}
+export async function registryProbeCli({ root = process.cwd(), local = false, deadline = Date.now() + 8000 } = {}) {
   const repo = process.env.GITHUB_REPOSITORY || 'Matysh/houseplan-card';
   const mode = process.env.REGISTRY_MODE || 'exact', allowed = !bool(process.env.REGISTRY_FRESH);
-  const plan = registryInputs(root, { mode, perfSet: performanceSet(process.env) });
-  const store = allowed ? fetchRegistry(root) : { tip: null, read: () => null };
-  const token = allowed ? process.env.GH_TOKEN || execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim() : '';
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), Math.max(1, 8000 - (Date.now() - started)));
-  const source = registryApi({ repo, token, candidateSnapshot: plan._snapshot, mode: plan.mode, signal: controller.signal });
-  const jobs = local ? ['frontend'] : REGISTRY_JOBS;
-  let result;
-  try { result = await probeRegistry({ root, repo, plan, jobs, allowed: allowed && (!local || cleanRegistryInputs(root, plan)), store, source }); }
-  finally { clearTimeout(timer); }
+  let plan, result;
+  try { result = await withinRegistryDeadline(deadline, async signal => {
+    const reader = registryReader(root, 'HEAD', { deadline });
+    const toolchain = registryToolchain(reader, { deadline, python: process.env.CI_PYTHON_VERSION || null });
+    plan = registryInputs(root, { mode, reader, toolchain, perfSet: performanceSet(process.env) });
+    registryRemaining(deadline);
+    const store = allowed ? fetchRegistry(root, { deadline }) : { tip: null, read: () => null };
+    const token = allowed ? process.env.GH_TOKEN || execFileSync('gh', ['auth', 'token'],
+      { encoding: 'utf8', timeout: registryRemaining(deadline), killSignal: 'SIGKILL' }).trim() : '';
+    const source = registryApi({ root, repo, token, candidateSnapshot: plan._snapshot,
+      mode: plan.mode, signal, deadline });
+    const jobs = local ? ['frontend'] : REGISTRY_JOBS;
+    return probeRegistry({ root, repo, plan, jobs,
+      allowed: allowed && (!local || cleanRegistryInputs(root, plan, { deadline })), store, source });
+  }); } catch (error) {
+    if (!plan) throw error;
+    // Retain a complete input plan for newly executed producers, but never
+    // retain a partial/late accepted result from the expired lookup.
+    result = { schema: 1, plan, registryTip: null, results: Object.fromEntries(REGISTRY_JOBS
+      .map(job => [job, { accepted: false, reason: 'fresh: ' + error.message }])) };
+  }
   // Large path inventories stay in the committed generator output, never in a
   // Linux environment variable / GHA job output. Identity alone travels.
   delete result.plan.inventories;
@@ -103,7 +141,7 @@ if (isMainModule(import.meta.url)) {
     }
     else if (arg('publish-proof')) {
       const proof = JSON.parse(readFileSync(arg('publish-proof'), 'utf8'));
-      const records = proof.requiredChecks.every(id => proof.checks[id]?.result === 'success') ? proof.registry?.produced || [] : [];
+      const records = registryPublicationRecords(proof);
       output(publishRegistry({ root: process.cwd(), records }));
     } else {
       try { await registryProbeCli({ local: process.argv.includes('--local') }); }

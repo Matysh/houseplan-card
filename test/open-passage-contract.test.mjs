@@ -73,7 +73,11 @@ test('placement preview adds passage-only cut geometry without changing saved sy
 });
 
 test('all write/import paths invoke the semantic passage validator', () => {
-  assert.equal((backend.match(/validate_opening_passages\(/g) || []).length, 4);
+  assert.equal((backend.match(/validate_opening_passages\(/g) || []).length, 5);
+  const nodeDelete = backend.slice(backend.indexOf('async def ws_wall_node_delete('),
+    backend.indexOf('# ---------------- whole-plan maintenance'));
+  assert.match(nodeDelete, /validate_opening_passages\(candidate, previous\)/,
+    'Delete validates the independently proved candidate before the common writer');
   assert.match(backend, /validate_opening_passages\(candidate_config, config_data\.get\("config"\)\)/,
     'Optimize validates the submitted v7 model before the identity barrier');
   assert.match(backend, /validate_opening_passages\(msg\["config"\], config_data\.get\("config"\)\)/,

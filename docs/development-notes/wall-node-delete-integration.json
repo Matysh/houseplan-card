@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "issue": 1045,
+  "accepted": "b3dbea2811d2dc7b2b19d165cf18e313f244c604",
+  "acceptedMeasurement": {
+    "source": "2170fd3c7bf5a5ea180998f4a9a2147cf7988e1a",
+    "fingerprint": "06f7c271357a3d5986dd5dec5de06f2eb425abe4ea20cf4a9ecfe403689c50b9",
+    "metrics": {
+      "viewGzip": 339980,
+      "editorGzip": 352807,
+      "selectOnlyGzip": 18287,
+      "raw": 3464603,
+      "hostRefs": 6198,
+      "cardLines": 13288
+    },
+    "measuredBeforeAcceptance": true,
+    "acceptedDifferenceFiles": [
+      "docs/reviews/CODE-REVIEW-1038-r2.md",
+      "docs/reviews/INDEX.md"
+    ],
+    "matchingProductAndBuildInputs": true
+  },
+  "combinedMeasurement": {
+    "source": "011c90b71efb705ec6249de0618b0fae85aec8f7",
+    "fingerprint": "9296abfaf7f876f14c8698cc705c9d85e680612a822278fc65a4a2884989aced",
+    "metrics": {
+      "viewGzip": 340624,
+      "editorGzip": 353367,
+      "selectOnlyGzip": 21458,
+      "raw": 3481506,
+      "hostRefs": 6225,
+      "cardLines": 13293
+    },
+    "toolchain": {
+      "node": "v22.23.3",
+      "platform": "win32",
+      "execPath": "C:\\Users\\Sergey\\AppData\\Local\\houseplan-toolchain\\node-v22.23.3-win-x64\\node.exe",
+      "rollup": "4.62.2"
+    },
+    "coupling": {
+      "delegates": 145,
+      "portMembers": 370,
+      "hostRefs": 6225,
+      "portPrivates": 103,
+      "harnessPrivates": 101,
+      "bundleBytes": 3481506
+    },
+    "manifestSha256": "2af9cd2d5fb5960b07c422725f53a5ed87cec5f0c105a14a17033916b4965e4d",
+    "recipeSha256": "5962a563dba7fecda4fd9871c5cd6dd699ff90e1268fb777b3860c6ac382c745"
+  },
+  "exactGrowth": {
+    "viewGzip": 644,
+    "editorGzip": 560,
+    "selectOnlyGzip": 3171,
+    "raw": 16903,
+    "hostRefs": 27
+  },
+  "permission": {
+    "comment": "https://github.com/Matysh/houseplan-card/issues/1045#issuecomment-6390598488",
+    "rawReference": 3481506,
+    "hostRefsReference": 6225,
+    "selectHardCap": 21458,
+    "selectCapIncrease": 2,
+    "bandsUnchanged": true,
+    "absoluteViewAndLatencyUnchanged": true,
+    "coreReferenceUnchanged": true
+  },
+  "proof": {
+    "namedNative": {
+      "id": "smoke_wall_node_delete.mjs",
+      "status": "passed"
+    },
+    "ha": {
+      "file": "tests_backend/test_ha_wall_node_delete.py",
+      "passed": 25,
+      "seconds": 9.01,
+      "runtime": "WSL Ubuntu-24.04 / Python3.14.7 / HA2026.8.3 / pytest-homeassistant-custom-component0.13.357",
+      "exportImportRoundtripCases": 4,
+      "priorFixtureErrorNotReclassified": true
+    },
+    "invariants": {
+      "acceptedScenarios": 8,
+      "fullBeforeAfterStates": 16,
+      "status": "passed"
+    },
+    "browser": {
+      "required": [
+        "smoke_daycycle_zoom_layers.mjs",
+        "smoke_decor_layer_order.mjs",
+        "smoke_decor_order.mjs",
+        "smoke_detached_authority.mjs",
+        "smoke_device_copy.mjs",
+        "smoke_device_inbox_delete.mjs",
+        "smoke_dialog_segments_i18n.mjs",
+        "smoke_e2e_hooks.mjs",
+        "smoke_e2e_primitive_fields.mjs",
+        "smoke_hide_layers.mjs",
+        "smoke_lazy_admin_locale.mjs",
+        "smoke_mode_transition.mjs",
+        "smoke_modes.mjs",
+        "smoke_mounted_authority.mjs",
+        "smoke_node_history_context.mjs",
+        "smoke_properties_panel.mjs",
+        "smoke_static_zoom_sharpness.mjs",
+        "smoke_support_diagnostics.mjs",
+        "smoke_support_feedback.mjs",
+        "smoke_ui_1051.mjs",
+        "smoke_ui_1051_native.mjs",
+        "smoke_ui_polish_976.mjs",
+        "smoke_view_recovery.mjs",
+        "smoke_visual_continuity.mjs",
+        "smoke_wall_hatch_density.mjs",
+        "smoke_wall_key_roundtrip.mjs",
+        "smoke_wall_node_connected.mjs",
+        "smoke_wall_node_delete.mjs",
+        "smoke_wall_node_reliability.mjs"
+      ],
+      "passed": 29,
+      "failed": 0,
+      "execution": "named native first, remaining28 through canonical runSelected",
+      "goldenDemand": {
+        "mode": "none",
+        "ids": [],
+        "reason": "no golden demand"
+      },
+      "deferred": {
+        "until": "beta/night",
+        "reasons": [
+          "lexical candidate budget exceeded",
+          "weak lexical matches",
+          "broad symbols",
+          "unproven browser contract"
+        ],
+        "smokes": [
+          "smoke_backdrop.mjs",
+          "smoke_bg_color.mjs",
+          "smoke_card_tool_conflict.mjs",
+          "smoke_controls.mjs",
+          "smoke_decor.mjs",
+          "smoke_decor_line_click.mjs",
+          "smoke_decor_multiselect.mjs",
+          "smoke_decor_text.mjs",
+          "smoke_device_contact_editor_frame.mjs",
+          "smoke_device_equal_spacing.mjs",
+          "smoke_drag_bounds.mjs",
+          "smoke_edit_walk.mjs",
+          "smoke_editor_gestures.mjs",
+          "smoke_editor_guides_lifecycle.mjs",
+          "smoke_floor_cache_reuse.mjs",
+          "smoke_floor_geometry_cache.mjs",
+          "smoke_furniture.mjs",
+          "smoke_furniture_polish.mjs",
+          "smoke_geometry_corpus.mjs",
+          "smoke_glow.mjs",
+          "smoke_grid_scale_invariance.mjs",
+          "smoke_grid_snap.mjs",
+          "smoke_houseplan_panel.mjs",
+          "smoke_junction_holes.mjs",
+          "smoke_kiosk_scale_no_editor.mjs",
+          "smoke_led_strip_glow.mjs",
+          "smoke_linked_virtual_light.mjs",
+          "smoke_long_press_gesture.mjs",
+          "smoke_merge_split.mjs",
+          "smoke_open_passage.mjs",
+          "smoke_opening_preview.mjs",
+          "smoke_opening_tunnel_fill.mjs",
+          "smoke_optimize_micro_interval.mjs",
+          "smoke_optional_space_model.mjs",
+          "smoke_pan_any_zoom.mjs",
+          "smoke_plan_snap_overlay.mjs",
+          "smoke_resize_audit_1550.mjs",
+          "smoke_resize_inner_dimensions.mjs",
+          "smoke_resize_labels.mjs",
+          "smoke_resize_outer_reconciliation.mjs",
+          "smoke_resize_wall_thickness.mjs",
+          "smoke_room_cards.mjs",
+          "smoke_room_co2.mjs",
+          "smoke_room_resize.mjs",
+          "smoke_split_corner_wall.mjs",
+          "smoke_stairs.mjs",
+          "smoke_view_runtime_kiosk_recovery.mjs",
+          "smoke_wall_end_align.mjs",
+          "smoke_wall_face_room_split.mjs",
+          "smoke_wall_node_move.mjs",
+          "smoke_wall_node_topology.mjs",
+          "smoke_zero_divider_taper.mjs"
+        ],
+        "symbols": [
+          "_editorRuntime",
+          "_geometryHistory",
+          "_loadOk",
+          "_mode",
+          "_modeTransitionBusy",
+          "_path",
+          "_serverCfg",
+          "pointerType"
+        ]
+      },
+      "runtime": "Linux Node22.23.3 / Playwright1.62.0 / Chromium151.0.7922.34 revision1234",
+      "pythonCommand": "/home/sergey/.cache/houseplan-editors-1045-venv/bin/python",
+      "pythonObserved": "Python 3.14.7"
+    },
+    "browserInventory": {
+      "ours": 514,
+      "accepted": 519,
+      "union": 523,
+      "missing": [],
+      "extra": [],
+      "mutantsExecuted": 0
+    },
+    "mutantsExecuted": 0,
+    "historicalReceipts": "Prior220-smoke CI40080136749 and old pure/parity/quality runs remain dated source52ae evidence; not new executions of this combined material.",
+    "exactFinalHookAndCi": "Recorded after normal push in the issue handoff and official exact-material CI, not predicted by this report."
+  },
+  "localReceiptSha256": {
+    "artifacts/1045-final-post1038-build.log": "f4d6de9832f09deb935d613d79114ecfdc66f69ba798e8fb7479444e4a97f8d6",
+    "artifacts/1045-final-post1038-native.log": "a8281601b4e0c98e6fdaa4f308c50ce4f5def79c3a47004d07d4790038e2d521",
+    "artifacts/1045-final-post1038-ha.log": "340e1afe74d540758983d9bd8a548f724ab8894e35ca1c6b050425aa5fda51e6",
+    "artifacts/1045-final-post1038-invariants.log": "7513bc0e5e4007f2c0f38cac9860cb97c57c7b356044fba36d5c46be31b7ffeb",
+    "artifacts/1045-final-selected-smokes.log": "cd13fc414e4972d9dc16711ecc88a546150a044e5d9b0743951c1d51a9dd7ed1"
+  }
+}

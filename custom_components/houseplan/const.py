@@ -122,7 +122,7 @@ ERROR_CODES: frozenset[str] = frozenset({
     "invalid_value_source_attribute", "io_error", "marker_control_cycle",
     "marker_control_missing", "marker_control_not_light",
     "marker_control_self", "missing_content", "missing_plan", "no_backup",
-    "node_move_backend_unavailable", "not_ready", "not_toggleable", "nothing_to_repair", "preview_expired",
+    "node_delete_backend_unavailable", "node_move_backend_unavailable", "not_ready", "not_toggleable", "nothing_to_repair", "preview_expired",
     "preview_owner_mismatch", "space_in_use", "space_not_found",
     "support_invalid_message", "support_package_too_large",
     "support_preview_expired", "support_rate_limited", "support_rejected",
@@ -137,6 +137,7 @@ ERROR_CODES: frozenset[str] = frozenset({
 ERROR_CODE_FAMILIES: tuple[str, ...] = (
     "junction_limit_",
     "node_move_",
+    "node_delete_",
     "value_badge_",
     "value_source_",
 )

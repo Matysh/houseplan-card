@@ -328,8 +328,11 @@ export interface ColorFieldOptions {
   /** Прозрачность 0–1; `undefined` — поле без прозрачности. */
   opacity?: number;
   opacityLabel?: string;
+  /** An image group has alpha but no common colour channel. */
+  alphaOnly?: boolean;
   inputs?: {
     name: string; hex: string; opacity: string; hexLabel: string;
+    placeholder?: string;
     hexInvalid: boolean; opacityInvalid: boolean;
     onHex(raw: string): void; onOpacity(raw: string): void;
   };
@@ -346,18 +349,18 @@ export interface ColorFieldOptions {
  * не будет: `nativeColors() === 0` — контракт со свидетелем.
  */
 export function colorField({
-  picker, hex, valueLabel, opacity, opacityLabel, inputs, resetLabel, onReset, disabled = false,
+  picker, hex, valueLabel, opacity, opacityLabel, alphaOnly = false, inputs, resetLabel, onReset, disabled = false,
 }: ColorFieldOptions): TemplateResult {
   const pct = opacity === undefined ? null : Math.round(Math.min(1, Math.max(0, opacity)) * 100);
   return html`<div class="hpf-colorfield">
     ${picker}
-    ${inputs ? html`<input class="hpf-inline-hex" data-hp="field" data-field=${`${inputs.name}-hex`} id=${`hp-property-${inputs.name}-hex`} type="text" spellcheck="false" autocomplete="off" maxlength="7"
+    ${alphaOnly ? nothing : inputs ? html`<input class="hpf-inline-hex" data-hp="field" data-field=${`${inputs.name}-hex`} id=${`hp-property-${inputs.name}-hex`} type="text" spellcheck="false" autocomplete="off" maxlength="7" placeholder=${inputs.placeholder ?? nothing}
       .value=${inputs.hex} ?disabled=${disabled} aria-label=${inputs.hexLabel} aria-invalid=${String(inputs.hexInvalid)}
       @input=${(event: Event) => inputs.onHex((event.target as HTMLInputElement).value)} />`
       : html`<code class="hpf-hex">${valueLabel ?? hex.toUpperCase()}</code>`}
     ${pct === null ? nothing : inputs ? html`<span class="hpf-opacity hpf-inline-opacity">
       <span class="hpf-unit"><input data-hp="field" data-field=${`${inputs.name}-opacity`} type="number" inputmode="numeric" min="0" max="100" step="1"
-        class="hpf-inline-alpha" .value=${inputs.opacity} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
+        class="hpf-inline-alpha" .value=${inputs.opacity} placeholder=${inputs.placeholder ?? nothing} ?disabled=${disabled} aria-label=${opacityLabel ?? 'Opacity'}
         aria-invalid=${String(inputs.opacityInvalid)}
         @input=${(e: Event) => inputs.onOpacity((e.target as HTMLInputElement).value)} /><span>%</span></span></span>` : html`<span class="hpf-opacity" aria-label=${opacityLabel ?? nothing}>${pct}%</span>`}
     ${resetLabel && onReset ? html`<button data-hp="action" data-action="colour-reset" class="hpf-link" type="button" ?disabled=${disabled} @click=${onReset}>${resetLabel}</button>` : nothing}

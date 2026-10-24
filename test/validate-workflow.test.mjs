@@ -232,7 +232,7 @@ test('golden failure retains actual evidence and cannot create a reusable succes
   assert.match(proof, /ci-registry-cli\.mjs --publish-proof=/);
 });
 
-test('task classification uses the complete task diff; integration pushes use a proven range (#387/#1044)', () => {
+test('task classification uses its complete diff; integration uses verified green coverage (#1060)', () => {
   const workflow = read('validate.yml');
   const changes = workflow.slice(
     workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'),
@@ -252,11 +252,14 @@ test('task classification uses the complete task diff; integration pushes use a 
   assert.match(changes, /actions: read/, 'чтение прогонов требует прав');
   // У PR диапазон задан событием, считать его нечем и незачем.
   assert.match(changes, /if: github\.event_name != 'pull_request'/);
-  assert.match(changes, /--name=range_base/);
+  assert.match(changes, /--mode=integration --repo="\$REPO"/);
+  assert.match(changes, /GREEN_BASE: \$\{\{ steps\.base\.outputs\.base \}\}/);
+  assert.doesNotMatch(changes, /GREEN_BASE:[^\n]*range_base/, 'judged range is not green product coverage');
   assert.match(classify.run, /git merge-base --is-ancestor "\$base" "\$HEAD_SHA"/);
-  const empty = classify.run.slice(classify.run.indexOf('if [ -z "$base" ]'));
+  const empty = classify.run.slice(classify.run.indexOf('if [ -z "$base" ] ||'));
   assert.match(empty, /::error::Classification needs a proven ancestor:[\s\S]*exit 1/);
-  assert.doesNotMatch(empty, /--all/, 'an unproven range fails with a remedy instead of requesting all families');
+  assert.doesNotMatch(empty, /--all/, 'unknown task ancestry still fails; only integration absence widens coverage');
+  assert.match(classify.run, /No verified green coverage:[\s\S]*classify-changes\.mjs --all/);
 });
 
 test('#619/#1044: dev and main retain a proven base without forcing every check family', () => {
@@ -265,8 +268,8 @@ test('#619/#1044: dev and main retain a proven base without forcing every check 
     workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'),
   );
   const integrationRefs = /\[ "\$REF" = "refs\/heads\/dev" \] \|\| \[ "\$REF" = "refs\/heads\/main" \]/g;
-  assert.equal(changes.match(integrationRefs)?.length, 1,
-    'the base step recognizes both integration branches; classification uses its proven output');
+  assert.equal(changes.match(integrationRefs)?.length, 2,
+    'base discovery and the unproven coverage fallback recognize both integration branches');
   assert.doesNotMatch(changes, /dev\/main: без фильтров, всё true/);
 
   const frontend = workflow.slice(
@@ -276,7 +279,7 @@ test('#619/#1044: dev and main retain a proven base without forcing every check 
     'no-new-any на main обязан судить диапазон от доказанного предка, а не HEAD..HEAD');
 });
 
-test('#1044 classifier shell retains whole-task scope after rewritten pushes and refuses unproven ranges', (t) => {
+test('#1060 classifier shell preserves task scope and widens unproven integration coverage', (t) => {
   if (spawnSync(posixCommand('bash'), ['--version']).status !== 0) { t.skip('bash unavailable'); return; }
   const root = mkdtempSync(join(tmpdir(), 'hp-classify-task-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -329,9 +332,9 @@ test('#1044 classifier shell retains whole-task scope after rewritten pushes and
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(result.call, { args: [], files: ['docs/task.md'] }, 'integration uses the proven range');
     const unknown = run({ REF: ref, GREEN_BASE: '' });
-    assert.notEqual(unknown.status, 0);
-    assert.equal(unknown.call, null);
-    assert.match(unknown.stdout, /resolve the Git base.*full=true/);
+    assert.equal(unknown.status, 0, unknown.stderr);
+    assert.deepEqual(unknown.call, { args: ['--all'], files: [] });
+    assert.match(unknown.stdout, /No verified green coverage/);
   }
   git('update-ref', '-d', 'refs/remotes/origin/dev');
   const missing = run();
@@ -355,9 +358,10 @@ test('перф-смок добавляет профиль ровно при св
   assert.match(changes, /unknown_inputs: \$\{\{ steps\.classify\.outputs\.unknown_inputs \}\}/);
   assert.match(changes, /sed -n 's\/\^unknown_inputs=\/\/p' \/tmp\/classify\.out/);
   assert.match(changes, /Неизвестные входы \(#492\)/);
-  // Только намеренный full раскрывается через --all; недоказанная база — отказ.
+  // Explicit full and an absent integration green base widen families. Neither
+  // a failed judged base nor unproven task ancestry silently narrows coverage.
   const fallbacks = changes.split('node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"').length - 1;
-  assert.equal(fallbacks, 1, 'only explicit full regression expands every family');
+  assert.equal(fallbacks, 2, 'full intent and absent integration coverage both use the canonical family selector');
   assert.ok(!changes.includes("printf 'frontend=true"), 'ручной список выходов в fallback-е запрещён');
 
   const start = workflow.indexOf('\n  performance_smoke:\n');

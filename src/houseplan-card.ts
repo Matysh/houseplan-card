@@ -1,6 +1,7 @@
 import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
+import { decorTextElementId } from './decor-text-element';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -984,6 +985,7 @@ export class HouseplanCard extends LitElement {
   private _decorMove: {
     id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean;
     before: SpaceGeometryState | null;
+    selection?: import('./editors/decor/group-press').DecorSelectionPress;
   } | null = null;
   private _decorSel: string | null = null;
   /** Pending eraser-tool confirmation. Delete/Backspace remains the direct
@@ -2165,6 +2167,7 @@ export class HouseplanCard extends LitElement {
   private _haSummaryPanelApi: number | null = null;
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
+  private _haWallNodeDeleteApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;
@@ -3066,6 +3069,8 @@ export class HouseplanCard extends LitElement {
     const latinLetter = /^[a-z]$/.test(key);
     const isZ = key === 'z' || (!latinLetter && e.code === 'KeyZ');
     const isY = key === 'y' || (!latinLetter && e.code === 'KeyY');
+    const selectAll = key === 'a' || (!latinLetter && e.code === 'KeyA');
+    const selectFurniture = key === 'm' || (!latinLetter && e.code === 'KeyM');
     const redo = mod && ((isZ && e.shiftKey) || isY);
     const undo = mod && isZ && !e.shiftKey;
     const arrow = e.key === 'ArrowLeft' ? [-this._gridPitch, 0]
@@ -3076,6 +3081,10 @@ export class HouseplanCard extends LitElement {
       e.preventDefault(); return;
     }
     if (this._mode === 'decor') {
+      if (mod && !e.altKey && !e.shiftKey && (selectAll || selectFurniture) && !inField
+        && !inEditorSecondary && !this._editorSecondaryDialogBlocked && !this._editorRuntime?.properties.colorPickerOpen && this._canEdit && !this._kiosk) {
+        e.preventDefault(); this._editorRuntime?._selectDecorShortcut(selectFurniture); return;
+      }
       if ((undo || redo) && inField) return;
       if (redo) { e.preventDefault(); this._redoGeometry(); return; }
       if (undo) {
@@ -3088,13 +3097,14 @@ export class HouseplanCard extends LitElement {
         this._undoGeometry();
         return;
       }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel &&
+      if ((e.key === 'Delete' || e.key === 'Backspace') && this._decorSel && (this._editorRuntime?.properties.decorSelectionCount ?? 0) <= 1 &&
           !inField && !inEditorSecondary) {
         e.preventDefault();
         this._decorDeleteSel();
         return;
       }
       if (arrow && !e.defaultPrevented && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel
+          && (this._editorRuntime?.properties.decorSelectionCount ?? 0) <= 1
           && this._decorList.some((shape) => shape.id === this._decorSel)
           && !this._decorDraft && !this._decorMove && !this._dtDrag && !this._editorRuntime?.backdropGesture.active
           && !inField && !inEditorSecondary && !this._editorSecondaryDialogBlocked) {
@@ -7473,8 +7483,18 @@ export class HouseplanCard extends LitElement {
   private _guardTouchGesture(ev: Event): void {
     if (ev.type === 'keydown') this._deviceDragRetirement.key((ev as KeyboardEvent).key);
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
+    const rightMouseDown = ev.type === 'pointerdown' && (ev as PointerEvent).pointerType === 'mouse'
+      && (ev as PointerEvent).button === 2;
+    // A node consumes this down before pan, but it is still fresh physical
+    // evidence that retires the previous touch compatibility tail.
+    if (rightMouseDown) this._touchClickGuard.pointerDown((ev as PointerEvent).pointerId, 'mouse');
+    // Touch owns pinch compatibility before any node-menu activation.
+    if (ev.type === 'contextmenu') {
+      this._touchClickGuard.handleActivation(ev, this._suppressClick);
+      if (ev.defaultPrevented) return;
+    }
     if (this._editorRuntime?.nodeMove?.guardEvent(ev)) return;
-    if (this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
+    if (ev.type === 'contextmenu' || this._touchClickGuard.handleActivation(ev, this._suppressClick)) return;
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
     if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') {
@@ -7487,7 +7507,7 @@ export class HouseplanCard extends LitElement {
       // #813: a hold whose pointer lost its capture is no longer a hold.
       if (this._kioskHold.pointerId === pointer.pointerId) this._kioskHold.cancel();
     } else if (ev.type === 'pointerdown') this._planTaps.clearNonPlan(pointer);
-    if (ev.type === 'pointerdown') this._touchClickGuard.pointerDown(
+    if (ev.type === 'pointerdown' && !rightMouseDown) this._touchClickGuard.pointerDown(
       pointer.pointerId, pointer.pointerType,
     );
     const wasMultitouch = ev.type === 'pointerup' || ev.type === 'pointercancel'
@@ -7502,6 +7522,7 @@ export class HouseplanCard extends LitElement {
           && !!(pointer.target as Element | null)?.closest?.('.stage'),
       });
       if (this._touchContacts.size >= 2) { if (this._editorRuntime?._cancelRoomGearForMultitouch()) this._roomGearTouchNavigation = true;
+        if (this._decorMove?.selection) this._cancelDecorGesture();
         this._deviceHits.clearPointers();
         this._clearRoomFocus(true);
         this._clearTransientHover();
@@ -8618,7 +8639,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _renderDecorLayer(
-    onlyId?: string | null,
+    onlyId?: string | readonly string[] | null,
     planView = this._viewOr(this._baseVb()),
   ): TemplateResult {
     const W = NORM_W, H = this._decorH;
@@ -8636,7 +8657,8 @@ export class HouseplanCard extends LitElement {
     const furnitureScreenScale = furniturePlanScreenScale(
       stage?.clientWidth, stage?.clientHeight, planView.w, planView.h,
     );
-    const shapes = this._decorList.filter((sh) => onlyId === undefined || sh.id === onlyId).map((sh) => {
+    const onlyIds = Array.isArray(onlyId) ? new Set(onlyId) : null;
+    const shapes = this._decorList.filter((sh) => onlyIds ? onlyIds.has(sh.id) : onlyId === undefined || sh.id === onlyId).map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
       const strokeWidth = this._decorWidthUnits(sh);
@@ -8686,7 +8708,7 @@ export class HouseplanCard extends LitElement {
             transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></ellipse>` : nothing}`;
       }
       if (sh.kind === 'image') {
-        const projection = projectDecorImage(sh, W, H);
+        const projection = projectDecorImage({ ...sh, opacity: style.opacity }, W, H);
         if (!projection) return nothing;
         const [x, y, w, h, opacity, transform] = projection;
         const asset = this._decorAssets.get(sh.asset_id);
@@ -8752,7 +8774,7 @@ export class HouseplanCard extends LitElement {
         // text-anchor) and vertically — so adding a second line grows the
         // label in both directions instead of pushing the first one up
         const y0 = ay - ((lines.length - 1) * fs * DT_LINE) / 2;
-        return svg`<text class="${cls} dtext" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
+        return svg`<text id=${onlyId === undefined ? decorTextElementId(sh.id) : nothing} class="${cls} dtext" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
           x="${ax}" y="${ay}" fill="${style.color}" fill-opacity="${style.opacity}"
           font-size="${fs}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}
           @pointerdown=${down} @dblclick=${dbl}>${lines.map(
@@ -8916,7 +8938,6 @@ export class HouseplanCard extends LitElement {
   private _confirmRoomDelete = (keepWalls: boolean): void => {
     return this._editorRuntimeOrThrow()._confirmRoomDelete(keepWalls);
   }
-
 
   // ================= WALL THICKNESS (docs/WALL-THICKNESS.md) =================
 
@@ -9224,7 +9245,6 @@ export class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
-
   /**
    * View-only clean-floor perimeter above real wall bodies.
    *
@@ -9377,7 +9397,6 @@ export class HouseplanCard extends LitElement {
   private _renderWallThickDialog(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderWallThickDialog();
   }
-
 
   private _openingAt(raw: readonly number[]): RenderOpening | null {
     return this._editorRuntimeOrThrow()._openingAt(raw);
@@ -9869,7 +9888,6 @@ export class HouseplanCard extends LitElement {
   private async _saveConfigNow(): Promise<void> {
     return this._editorRuntimeOrThrow()._saveConfigNow();
   }
-
 
   // ================= FLOORS IMPORT WIZARD =================
 
@@ -10420,7 +10438,6 @@ export class HouseplanCard extends LitElement {
   private async _saveSettingsDialog(): Promise<boolean> {
     return this._editorRuntimeOrThrow()._saveSettingsDialog();
   }
-
 
   /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
   private get _glowRadiusCm(): number {
@@ -11448,6 +11465,7 @@ export class HouseplanCard extends LitElement {
         ${this._editorRuntime?.properties.render()}
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
         ${this._editorRuntime?.decorOrder.render()}
+        ${this._editorRuntime?.nodeMove?.renderMenu()}
         ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing)}
         ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}
         ${dialogPresence(this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing)}
@@ -11544,7 +11562,6 @@ export class HouseplanCard extends LitElement {
       </ha-card>
     `;
   }
-
 
   // ---------------- live robot vacuums (docs/VACUUM.md) ----------------
 
@@ -11850,7 +11867,6 @@ export class HouseplanCard extends LitElement {
         liveGap || rt.jump, physical);
     }
   }
-
 
   /**
    * HP-1540-01: an auto-discovered vacuum has NO config marker until the first

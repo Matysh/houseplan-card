@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5282 · pure backend 627 · HA-harness backend 528 · browser smokes 435 (`npm run inventory`) |
+| Tests | Node unit 5364 · pure backend 631 · HA-harness backend 535 · browser smokes 438 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -30,6 +30,19 @@ tap action and right click. Only a loaded writer outside kiosk can open it;
 denied users receive a permission hint. Cold and deferred entry retain current
 authority/navigation and resolve the current visible target before opening.
 The action persists through copy and full/space transfer without migration.
+
+CI task scope (#1060) shares one bounded required smoke selection across local
+gate, packet and CI; weak lexical matches remain deferred diagnostics. Immutable
+registry equivalence includes computed tooling dependencies. Direct successful
+tooling/selected-browser receipts preserve exact inputs, intent, recipe and
+runtime without granting full coverage. S7/merge await push/companion discovery;
+dev classification advances through verified split proof independently of the
+judged range. Full beta/night/release obligations and fresh range/packaging
+guards remain in force.
+
+Sparse registry lookup (#1062) bounds synchronous Git I/O and batches missing
+blob downloads; slow or unavailable sources return fresh execution before the
+CI job deadline. Immutable policy/source authentication remains mandatory.
 
 Editor arrows (#1025) translate selected independent walls, same-host openings
 and movable device anchors through the existing physical/config/layout writers
@@ -147,6 +160,16 @@ commit, or the handoff names its location, reason and removal issue. Source
 growth above 3× deletions produces advice only; review judges the explanation.
 Weekly metrics and the stable line-review brief share Git source churn counts.
 
+Wall-node deletion (#1045) joins two safely compatible endpoint sections,
+preserving fixed neighbours, room ownership and physical openings. It uses a
+narrow independently proved server transaction and the existing common history;
+refused inverse operations retain the command and cursor. Storage is unchanged.
+The existing node owner uses the common context menu; pending Properties and
+retained exit paint carry no late write authority after cancellation. Touch
+compatibility tails stay inert and the next deliberate mouse press re-arms.
+Backend quality checks cover its emitted fixed errors as well as Delete/Move
+transactions; unavailable processing has an editor-only localized message.
+
 Off LED strips (#1043) use 70% inner-band opacity through the shared live/static
 renderer, with the dark body cut out beneath the core so the real plan shows
 through. On/unavailable paint, rim, geometry and interactions stay unchanged.
@@ -171,6 +194,12 @@ Decor Line (#1046) accepts successive clean clicks like Walls, with exact
 Shift 45° preview/commit and one ordinary history step per independent segment.
 Its temporary anchor follows active-chain Undo/Redo and ends on Esc or context
 replacement. Navigation/cancel tails never draw; saved decor has no new fields.
+
+Decor multi-selection (#1038) uses the accepted individual-contour variant B.
+Current-space decor IDs remain volatile; one rigid move or common style edit
+uses one accepted existing Save/history command. Same-kind touched colour/alpha
+channels preserve opposite per-object values; images remain opacity-only and
+no group context actions, stored groups or new asset/API paths are introduced.
 
 Print download (#1036) combines unchanged PDF with a static SVG of the current
 View. SVG starts with devices off and transparent background, offers the shared

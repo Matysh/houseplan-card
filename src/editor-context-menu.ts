@@ -9,7 +9,7 @@ export interface EditorMenuItem {
 }
 export interface EditorMenuModel {
   /** A new opening always gets a new owner token, even for the same object. */
-  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu'; items: EditorMenuItem[];
+  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu'; items: EditorMenuItem[];
   anchor: RectLike | (() => RectLike); gap?: number; minWidth?: number; viewport?: () => FloatingViewport;
   localTo?: HTMLElement;
   returnFocus?: Element | null;
@@ -153,7 +153,7 @@ export class EditorContextMenu {
     }
     this.model = model;
     const token = model.token;
-    this.view = html`<div class="hpf-context-menu" data-hp=${model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu' : 'catalog-context-menu'} role="menu"
+    this.view = html`<div class="hpf-context-menu" data-hp=${model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu' : model.hp === 'node-context-menu' ? 'node-context-menu' : 'catalog-context-menu'} role="menu"
       ${ref(element => this.mount(element, token))}
       @pointerdown=${(event: Event) => event.stopPropagation()} @click=${(event: Event) => event.stopPropagation()}
       @contextmenu=${(event: Event) => event.preventDefault()}>

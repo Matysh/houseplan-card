@@ -29,12 +29,8 @@ const out = await page.evaluate(async () => {
   };
 
   // в декор-режим, инструмент «мебель», выбрать символ
-  await c._requestMode('decor', false);
-  await c.updateComplete;
-  c._editorSecondary.openPalette?.();
-  c._decorTool = 'furniture';
-  c._furnPalette = null; c._furnCategory = null;
-  c.requestUpdate(); await c.updateComplete;
+  await window.__hpTest.setMode('decor');
+  await window.__hpTest.setTool('furniture');
   const pal = () => sr().querySelector('.furnpalette');
   pal()?.querySelector('.furnitem[data-category="sofa"]')?.click();
   await c.updateComplete;
@@ -92,18 +88,16 @@ const out = await page.evaluate(async () => {
   window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift', bubbles: true }));
 
   // r2-H1: Escape с armed-символом тоже снимает слушатели (путь мимо place)
-  c._editorSecondary.openPalette?.();
-  c._decorTool = 'furniture';
-  c._furnPalette = null; c._furnCategory = null;
-  c.requestUpdate(); await c.updateComplete;
+  // Use the same tool transition as the toolbar: it also retires the placed
+  // singleton's Properties selection before arming a new placement session.
+  await window.__hpTest.setTool('furniture');
   pal()?.querySelector('.furnitem[data-category="sofa"]')?.click();
   await c.updateComplete;
   pal()?.querySelector('.furnitem[data-symbol="sofa"]')?.click();
   await c.updateComplete;
   const addsBeforeEscape = shiftAdds;
   out.rearmAttachesAgain = shiftAdds === shiftRemoves + 2;
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-  c._onKey?.(new KeyboardEvent('keydown', { key: 'Escape' }));
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
   await c.updateComplete;
   out.escapeClosesPalette = !c._furnPalette && c._decorTool === 'select';
   out.escapeDetachesListeners = shiftRemoves === addsBeforeEscape;

@@ -10,6 +10,7 @@
   "include": [
     "src/junction-limits.ts",
     "src/wall-node-move.ts",
+    "src/wall-node-delete.ts",
     "src/wall-segment-model.ts"
   ]
 }

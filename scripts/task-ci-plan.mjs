@@ -2,6 +2,7 @@
 import { execFileSync } from 'node:child_process';
 import { classifyRisk } from './change-risk.mjs';
 import { browserPushPlan } from './browser-push-plan.mjs';
+import { CALL_CONTEXT_LINES } from './smoke-select.mjs';
 
 export function taskCiPlan(inputs, { baseFull = false, labels = [], risk = null, unknown = false,
   diffText, files, root, browserOptions = {} } = {}) {
@@ -25,7 +26,7 @@ export function readTaskDemand({ refName, repo = process.env.GITHUB_REPOSITORY, 
     // Task scope is the complete task diff, independent of a prior successful
     // push. Range/provenance guards keep their own GREEN_BASE separately.
     const base = run('git', ['merge-base', 'origin/dev', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-    const diff = run('git', ['diff', '--unified=0', base, 'HEAD'], { cwd: root, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+    const diff = run('git', ['diff', `--unified=${CALL_CONTEXT_LINES}`, base, 'HEAD'], { cwd: root, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
     const files = run('git', ['diff', '--name-only', base, 'HEAD'], { cwd: root, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
     return { labels: issue.labels.map(x => x.name), risk: classifyRisk(diff), diffText: diff, files, root };
   } catch { return { unknown: true }; }

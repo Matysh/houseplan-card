@@ -12,6 +12,16 @@ binding key. The same resolver passes through the runtime's Properties
 `beforeIntent` retry, before selection, New acknowledgement or draft creation.
 No second loader, poller, read claim, writer or async controller is added.
 
+Decor multi-selection (#1038) lives in the existing lazy `PropertiesEditor` as
+volatile paint-ordered IDs. `_decorSel` projects only a singleton. Pure decor
+selection/group-edit helpers resolve all members, one rigid delta and independent
+touched style channels; no group model or writer endpoint is persisted.
+The existing move pointer owner, command lane, config-adoption optimistic attempt,
+serialized Save and geometry history provide one accepted command. Handoff receipts
+are owner-specific so a retired queued operation cannot unlock a newer authority.
+Individual contours reuse Properties paint and the existing live-editor/text
+measurement hook; all moving selected shapes share its live presentation.
+
 Editor keyboard translations (#1025) enter through the existing card key
 dispatcher and lazy `KeyboardNudge`, using the Properties command lane.
 `nudgePlan` computes a whole-wall or same-host opening candidate; the existing
@@ -110,6 +120,22 @@ gesture fences. Context hit testing reads actual SVG geometry in reverse paint
 order only on a right-click, including under pointer-inert drawing tools.
 Commands use the current geometry history/config writer; View has no menu
 listener or commands. No asset/file API, backend change or schema migration.
+
+Wall-node deletion (#1045) is a lazy structural operation with pure TS/Python
+proof kernels. The narrow endpoint derives the two-section delta and independent
+opening lineage under the existing config lock/atomic writer. The client sends
+point intent rather than candidate geometry and adopts only the accepted result.
+Its discriminated node command joins the existing serialized writer and common
+50-command history. Refused Delete inverse commands keep their cursor/identity;
+Move keeps its existing refusal policy. Capability is transport-only, with no
+new View import, polling, persisted selection or model change.
+The existing node editor owns the cancellable opening/action intent and uses
+the accepted shared context-menu presentation. Pending Properties completion
+cannot outlive outside/navigation/authority retirement; normal chosen-action
+close does not revoke an already accepted response. The pure polygon helper is
+shared with Resize rather than imported through the editor runtime facade.
+Processing failures remain fail-closed; the fixed unavailable code belongs to
+the shared backend error registry and the lazy editor dictionary.
 
 Decor Line (#1046) is a lazy-editor `DecorLineDrawing` session. Clean stage
 pointer pairs authorise one native click; navigation/cancel tails have no such
@@ -2163,7 +2189,10 @@ Device settings (#947) reuse shared settings sections/controls. Hardware-only `r
 
 Task-push browser evidence (#983) has an explicit selected scope independent
 of the complete CI-matrix receipt. Its plan follows a proven diff boundary,
-source/capture inputs and declared scene links; unknown links broaden. A
+source/capture inputs and declared scene links. All task tracks share the same
+bounded selector (#1060): explicit links survive, weak lexical candidates are
+deferred, and an oversized inferred union retains the visual minimum plus
+authoritative checks. The complete matrix belongs to night/beta validation. A
 selected worker cannot emit a reusable full receipt or satisfy full review/
 release policy, and its actual job outcome must match proof metadata.
 
@@ -2196,6 +2225,21 @@ assembly and one real bundle smoke remain fresh. Night/stable deny reuse.
 The v1 proof extension is additive: trusted old controllers can consume fresh
 migration evidence, while new controllers also require actual fresh bundle/
 product guards and independently authenticate every inherited source.
+
+Scoped tooling/selected-browser receipts (#1060) use the same index with distinct
+job addresses and `houseplan-task-check/v1` records. Their conservative identity
+covers all non-documentation inputs, exact selected IDs/visual intent, actual
+runtime and job recipe. A direct successful source attempt and its immutable
+artifact must authenticate the record; a reused result cannot produce another
+source. Current Git/range/process/packaging checks remain fresh. A selected
+receipt never proves full-matrix coverage, and a controller without the scoped
+validator forces fresh execution. Integration classification uses verified
+green coverage separately from the judged range used by process guards.
+
+Sparse registry lookup (#1062) hydrates missing immutable blobs in bounded
+batches. Git reads disable implicit lazy fetch and share the probe deadline,
+so an unavailable object or remote produces fresh execution rather than a
+blocked lookup job. The independent policy and source checks remain mandatory.
 
 Python-producing jobs (#1032) install the exact patch selected by the reuse
 bootstrap, not an independently resolved minor from their runner cache. The

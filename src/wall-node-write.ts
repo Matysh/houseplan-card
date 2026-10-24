@@ -2,11 +2,11 @@
  * #843: the expected revision is read after this tab's own write queue. */
 import type { ConfigAdoption } from './config-adoption';
 import type { ServerConfig } from './types';
-import type { NodeMoveHistory } from './wall-node-editor';
+import type { NodeCommandHistory } from './wall-node-editor';
 import { contentFingerprint } from './visual-continuity';
 
 export interface WallNodeWriteHost {
-  hass: { callWS<T>(message: Record<string, unknown>): Promise<T> };
+  hass: { callWS<T>(message: Record<string, unknown>): Promise<T>; connection?: { connected?: boolean } };
   readonly _serverCfg: ServerConfig | null;
   readonly _cfgRev: number;
   readonly _adoption: ConfigAdoption;
@@ -20,6 +20,9 @@ export interface WallNodeWriteHost {
 
 /** What a node command starts from: the adoption epoch and its exact target floor. */
 export interface NodeWriteBasis { epoch: number; space: string; floor: string }
+/** #1045: a pending intent can retire before sending; an accepted reply still
+ * belongs to its original HA authority after the menu/navigation has closed. */
+export interface NodeWriteGuard { send(): boolean; accept(): boolean }
 
 /** Target floor content, key-order independent like the server's own comparison. */
 export const nodeFloorFingerprint = (space: unknown): string =>
@@ -62,23 +65,28 @@ async function settleOwnQueue(host: WallNodeWriteHost): Promise<void> {
 }
 
 export async function writeWallNode(
-  host: WallNodeWriteHost, history: NodeMoveHistory, basis: NodeWriteBasis,
+  host: WallNodeWriteHost, history: NodeCommandHistory, basis: NodeWriteBasis,
+  guard: NodeWriteGuard | null = null,
 ): Promise<ServerConfig> {
   // Nothing is sent and nothing reloaded when the own queue fails: the local
   // edit and the history stay as they are.
+  if (guard && !guard.send()) throw new Error('stale-node-snapshot');
   await settleOwnQueue(host);
+  if (guard && !guard.send()) throw new Error('stale-node-snapshot');
   const live = () => JSON.stringify(host._serverCfg);
   let accepted: ServerConfig | null = null;
   const work = host._writeChain.then(async () => {
     // Own accepted writes may have advanced the revision. A foreign adoption or
     // another target floor never lets the frozen operation through.
     if (!nodeBasisHolds(host, basis)) throw new Error('stale-node-snapshot');
+    if (guard && !guard.send()) throw new Error('stale-node-snapshot');
     const revision = host._cfgRev, identity = live();
     const response = await host.hass.callWS<{ config: ServerConfig; rev: number }>({
-      type: 'houseplan/wall/node_move', space_id: history.beforeSpace.id,
+      type: history.kind === 'delete' ? 'houseplan/wall/node_delete' : 'houseplan/wall/node_move', space_id: history.beforeSpace.id,
       expected_rev: revision, intent: history.intent, direction: history.direction,
       ...(history.direction === 'undo' ? { before_space: history.beforeSpace } : {}),
     });
+    if (guard && !guard.accept()) throw new Error('stale-node-snapshot');
     if (!response.config || !Number.isSafeInteger(response.rev)) throw new Error('invalid-node-response');
     // A newer adoption always wins. Our own echo is safe but an unrelated local
     // edit must never be overwritten by a response to this frozen operation.
@@ -95,7 +103,7 @@ export async function writeWallNode(
   catch (error) {
     // Nothing provisional ever entered config. Reload still advances a stale
     // revision after a refused request, before the next independent writer.
-    await host._reloadRejectedPhysicalWrite();
+    if (!guard || guard.accept()) await host._reloadRejectedPhysicalWrite();
     throw error;
   }
   if (!accepted) throw new Error('missing-node-result');

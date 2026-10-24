@@ -28,6 +28,7 @@ import { portableCommand } from './spawn-portable.mjs';
 import { localGateKey, restoreLocalGate, invalidateLocalGate, sealLocalGate } from './local-gate-proof.mjs';
 import { unitGroups, groupsAffectedBy } from './unit-groups.mjs';
 import { restoreLocalRegistry } from './local-registry-proof.mjs';
+import { requiredSmokeIds, selectSmokes, declaredTaskSmokes, CALL_CONTEXT_LINES } from './smoke-select.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const npm = 'npm';
@@ -42,15 +43,10 @@ export function parseArgs(argv) {
 }
 
 /**
- * Смоки для прогона из JSON smoke-select: прямые + зарегистрированные, без
- * «широких»; при недоказанной связи — ещё визуальный минимум (#690 п.1′).
+ * Тот же обязательный scope, что у CI: доказанные узкие, явные связи и минимум.
  */
 export function smokesToRun(selection) {
-  if (!selection || selection.noExecutableDiff) return [];
-  const names = [...(selection.direct || []), ...(selection.registered || []), ...(selection.visualMinimum || [])]
-    .map((entry) => (typeof entry === 'string' ? entry : entry.smoke))
-    .filter(Boolean);
-  return [...new Set(names)].sort();
+  return requiredSmokeIds(selection);
 }
 
 /** Ограниченный параллелизм: browser-consumers тяжёлые, по умолчанию два разом. */
@@ -132,6 +128,12 @@ export function summarize(results) {
 export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = false, jobs = 2, group = 'auto', log = console.log } = {}) {
   const started = Date.now();
   const groups = requiredUnitGroups(cwd, base, group);
+  // Smoke-only edits/intents still need a fresh bundle when execution was asked
+  // for explicitly. The ordinary gate does not acquire browser work this way.
+  if (smokes && !groups.includes('product')) {
+    const diff = execFileSync('git', ['diff', `--unified=${CALL_CONTEXT_LINES}`, `${base}...HEAD`], { cwd, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+    if (requiredSmokeIds(selectSmokes(diff, { root: cwd, declaredSmokes: declaredTaskSmokes(cwd) })).length) groups.push('product');
+  }
   const productRequired = groups.includes('product');
   log(`#982 required unit groups: ${groups.join(', ') || 'none (documentation only)'}`);
   let key = null, reused = false;
@@ -187,15 +189,16 @@ export async function gateSmall({ cwd = ROOT, base = 'origin/dev', smokes = fals
     let selection = null;
     try { selection = JSON.parse(select.out || 'null'); } catch { /* ниже — сырой вывод */ }
     if (!selection) log(select.out.trim() || '  (smoke-select ничего не напечатал)');
-    else if (selection.noExecutableDiff) log('smoke-select: исполняемого frontend-диффа нет — смоки этим диффом не выбираются');
+    else if (!smokesToRun(selection).length) log('smoke-select: обязательных browser-smoke нет');
     else {
       const names = smokesToRun(selection);
       const what = (selection.visualMinimum || []).length
-        ? 'связь не доказана — прямые, зарегистрированные и визуальный минимум (#690)'
-        : 'прямые и зарегистрированные';
+        ? 'явные связи и ограниченный визуальный минимум (#690, #1060)'
+        : 'доказанные узкие и явные связи';
       log(`smoke-select: ${what} (${names.length})${smokes ? ' — прогнаны выше' : ' — гоняются автором (или `--smokes`), решение по каждой строке в ревью'}:`);
       for (const name of names) log(`  demo/${name}`);
       if ((selection.broad || []).length) log(`  «широких» символов: ${selection.broad.length} — решает ревьюер, автоматически не гоняются`);
+      if (selection.deferred?.reasons.length) log(`  regression deferred to beta/night: ${selection.deferred.reasons.join('; ')}; ${selection.deferred.smokes.length} inferred smokes deferred`);
     }
   }
   for (const r of results) {

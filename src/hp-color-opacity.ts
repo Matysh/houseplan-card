@@ -15,7 +15,8 @@ export type ColorPickerLabels = {
   invalidHex: string;
   confirm: string;
 };
-export type ColorHexDraft = { raw: string; needsValidInput: boolean };
+export type ColorHexDraft = { raw: string; needsValidInput: boolean; touched?: { color: boolean; opacity: boolean };
+  opacityDraft?: { raw: string | null; invalid: boolean } };
 
 const DEFAULT_LABELS: ColorPickerLabels = {
   title: 'Color picker',
@@ -45,6 +46,16 @@ export class HpColorOpacity extends LitElement {
   public opacityLabel = 'Opacity';
   public color = '#607d8b';
   public opacity = 1;
+  /** Group fields expose mixed channels without treating a picker seed as an edit. */
+  public mixedColor = false;
+  public mixedOpacity = false;
+  public mixedLabel = 'Different values';
+  public alphaOnly = false;
+  public reportTouched = false;
+  private touched = { color: false, opacity: false };
+  private opacityRaw: string | null = null;
+  private opacityInvalid = false;
+  public get invalidOpacity(): boolean { return this.opacityInvalid || !!this.resumedHex?.opacityDraft?.invalid; }
   public disabled = false;
   public showOpacity = true;
   public hideLabel = false;
@@ -70,18 +81,24 @@ export class HpColorOpacity extends LitElement {
   private resumedHex: ColorHexDraft | null = null;
   /** Session-only owner handoff when a responsive surface is temporarily unmounted. */
   public captureHexDraft(): ColorHexDraft | null {
-    return this._open ? {raw:this._hexDraft,needsValidInput:this._hexNeedsValidInput} : this.resumedHex;
+    return this._open ? {raw:this._hexDraft,needsValidInput:this._hexNeedsValidInput,
+      ...(this.reportTouched ? { touched: { ...this.touched }, opacityDraft: { raw: this.opacityRaw, invalid: this.opacityInvalid } } : {})} : this.resumedHex;
   }
   public resumeHexDraft(value: ColorHexDraft): void { this.resumedHex = {...value}; }
   /** A compound-field owner may finish on navigation without bypassing an invalid HEX draft. */
   public prepareCompletion(): boolean {
     if (!this._open) {
       if (!this.resumedHex) return true;
-      if (!this.resumedHex.needsValidInput && normalizeHexColor(this.resumedHex.raw)) return true;
+      if (!this.invalidOpacity && (!this.resumedHex.needsValidInput && normalizeHexColor(this.resumedHex.raw)
+        || this.reportTouched && (this.alphaOnly || !this.resumedHex.touched?.color))) return true;
       void this.togglePicker(); return false;
     }
     if (this._emitRaf) { this._cancelQueuedEmit(); this._emitHsv(); }
-    this._commitHex();
+    if (this.opacityInvalid) {
+      void this.updateComplete.then(()=>this._surface()?.querySelector<HTMLInputElement>('input[data-value="number"]')?.focus());
+      return false;
+    }
+    if (!this.alphaOnly && (!this.reportTouched || this.touched.color)) this._commitHex();
     if (!this._hexInvalid && !this._hexNeedsValidInput) return true;
     void this.updateComplete.then(()=>this._surface()?.querySelector<HTMLInputElement>('input[type="text"]')?.focus());
     return false;
@@ -119,6 +136,11 @@ export class HpColorOpacity extends LitElement {
     opacityLabel: { type: String, attribute: 'opacity-label' },
     color: { type: String },
     opacity: { type: Number },
+    mixedColor: { type: Boolean, attribute: false },
+    mixedOpacity: { type: Boolean, attribute: false },
+    mixedLabel: { type: String, attribute: false },
+    alphaOnly: { type: Boolean, attribute: false },
+    reportTouched: { type: Boolean, attribute: false },
     disabled: { type: Boolean, reflect: true },
     showOpacity: { type: Boolean, attribute: 'show-opacity' },
     // #600 Q5: компактная плашка набора рисует подпись сама; `label` при этом
@@ -552,6 +574,9 @@ export class HpColorOpacity extends LitElement {
     if (!this._open) return;
     const path = event.composedPath();
     if (!this._floating.containsPath(path)) {
+      if (this.reportTouched && !this.prepareCompletion()) {
+        event.preventDefault(); event.stopImmediatePropagation(); return;
+      }
       this._closePicker(false, 'outside');
     }
   };
@@ -574,6 +599,9 @@ export class HpColorOpacity extends LitElement {
     this._forceFallback = false;
     const resumed = this.resumedHex; this.resumedHex = null;
     this._syncFromColor(this.color, false);
+    this.touched = resumed?.touched ? { ...resumed.touched } : { color: false, opacity: false };
+    this.opacityRaw = resumed?.opacityDraft?.raw ?? null;
+    this.opacityInvalid = resumed?.opacityDraft?.invalid ?? false;
     this._hexInvalid = resumed?.needsValidInput ?? false;
     this._hexNeedsValidInput = resumed?.needsValidInput ?? false;
     if (resumed) this._hexDraft = resumed.raw;
@@ -721,6 +749,8 @@ export class HpColorOpacity extends LitElement {
   }
 
   private _emitHsv(): void {
+    this.touched.color = true;
+    if (this.reportTouched) this._hexNeedsValidInput = false;
     this._emit(hsvToHex({ h: this._hue, s: this._saturation, v: this._value }), this.opacity);
   }
 
@@ -740,7 +770,19 @@ export class HpColorOpacity extends LitElement {
   }
 
   private _setOpacity(value: number): void {
-    this._emit(this._lastValidColor, value);
+    this.touched.opacity = true;
+    this.opacityRaw = String(Math.round(value * 100)); this.opacityInvalid = false;
+    this._emit(this._lastValidColor, value, this.reportTouched);
+  }
+
+  private _opacityInput(event: Event): void {
+    const raw = (event.target as HTMLInputElement).value;
+    if (!this.reportTouched) { this._setOpacity(Number(raw) / 100); return; }
+    this.touched.opacity = true; this.opacityRaw = raw;
+    const value = Number(raw);
+    this.opacityInvalid = !raw.trim() || !Number.isFinite(value) || value < 0 || value > 100;
+    if (!this.opacityInvalid) this._emit(this._lastValidColor, value / 100, true);
+    this.requestUpdate();
   }
 
   private _shiftRangeKey(
@@ -814,12 +856,13 @@ export class HpColorOpacity extends LitElement {
   }
 
   private _hexInput(event: Event): void {
+    this.touched.color = true;
     const value = (event.target as HTMLInputElement).value;
     this._hexDraft = value;
     const normalized = normalizeHexColor(value);
     const rgb = normalized ? hexToRgb(normalized) : null;
     if (!normalized || !rgb) {
-      this._hexInvalid = this._hexNeedsValidInput;
+      this._hexInvalid = this.reportTouched || this._hexNeedsValidInput;
       return;
     }
     this._hexNeedsValidInput = false;
@@ -834,7 +877,7 @@ export class HpColorOpacity extends LitElement {
   private _commitHex(): void {
     const normalized = normalizeHexColor(this._hexDraft);
     if (!normalized) {
-      this._hexDraft = this._lastValidColor;
+      if (!this.reportTouched) this._hexDraft = this._lastValidColor;
       this._hexInvalid = true;
       this._hexNeedsValidInput = true;
       return;
@@ -851,15 +894,10 @@ export class HpColorOpacity extends LitElement {
   private _confirm(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this._commitHex();
-    if (this._hexInvalid || this._hexNeedsValidInput) {
-      this.updateComplete.then(() => {
-        this._surface()?.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
-      });
-      return;
-    }
+    if (!this.prepareCompletion()) return;
     this.dispatchEvent(new CustomEvent('hp-color-opacity-commit', {
-      detail: { color: this.color, opacity: this.opacity, ...(this.allowNoFill ? { noFill: this.noFill } : {}) }, bubbles: true, composed: true,
+      detail: { color: this.color, opacity: this.opacity, ...(this.allowNoFill ? { noFill: this.noFill } : {}),
+        ...(this.reportTouched ? { touched: { ...this.touched } } : {}) }, bubbles: true, composed: true,
     }));
     this._closePicker(true);
   }
@@ -881,9 +919,13 @@ export class HpColorOpacity extends LitElement {
     this.opacity = clamped;
     this._lastValidColor = normalized;
     if (!preserveHexDraft) this._hexDraft = normalized;
-    this._hexInvalid = this._hexNeedsValidInput;
+    this._hexInvalid = this._hexNeedsValidInput || this.reportTouched && this.touched.color && !normalizeHexColor(this._hexDraft);
+    // An invalid raw alpha belongs to this compound draft; another control may
+    // change its local colour, but cannot publish a stale/seed alpha meanwhile.
+    if (this.reportTouched && (this.opacityInvalid || this._hexInvalid)) return;
     this.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
-      detail: { color: normalized, opacity: clamped, ...(this.allowNoFill ? { noFill: this.noFill } : {}) },
+      detail: { color: normalized, opacity: clamped, ...(this.allowNoFill ? { noFill: this.noFill } : {}),
+        ...(this.reportTouched ? { touched: { ...this.touched } } : {}) },
       bubbles: true,
       composed: true,
     }));
@@ -904,9 +946,10 @@ export class HpColorOpacity extends LitElement {
       <div class="picker" popover=${usePopover ? 'manual' : nothing} role="dialog" aria-label=${labels.title}>
         <div class="picker-head">
           <span class="caption">${this.label || labels.title}</span>
-          <span class="preview" aria-hidden="true"><span style=${`background:${color};opacity:${pct / 100}`}></span></span>
+          ${this.alphaOnly || this.mixedColor && !this.touched.color ? html`<span class="caption">${this.alphaOnly ? this.opacityLabel : this.mixedLabel}</span>`
+            : html`<span class="preview" aria-hidden="true"><span style=${`background:${color};opacity:${pct / 100}`}></span></span>`}
         </div>
-        <div class="sv-field" aria-hidden="true" data-hp="field" data-field="colour-sv"
+        ${this.alphaOnly ? nothing : html`<div class="sv-field" aria-hidden="true" data-hp="field" data-field="colour-sv"
           style=${`--hp-picker-hue:${hueColor};--hp-picker-saturation:${this._saturation}%;--hp-picker-value:${100 - this._value}%`}
           @pointerdown=${(e: PointerEvent) => this._svPointerDown(e)}
           @pointermove=${(e: PointerEvent) => this._svPointerMove(e)}
@@ -942,23 +985,24 @@ export class HpColorOpacity extends LitElement {
         <label class="control">
           <span class="caption">${labels.hex}</span>
           <input data-hp="field" data-field="colour-hex" type="text" inputmode="text" autocomplete="off" spellcheck="false"
-            .value=${this._hexDraft} aria-label=${labels.hex}
+            .value=${this.mixedColor && !this.touched.color ? '' : this._hexDraft} placeholder=${this.mixedLabel} aria-label=${labels.hex}
             aria-invalid=${this._hexInvalid ? 'true' : 'false'}
             aria-describedby=${this._hexInvalid ? 'hex-error' : nothing}
             @input=${(e: Event) => this._hexInput(e)}
-            @blur=${() => this._commitHex()}
+            @blur=${() => { if (!this.reportTouched || this.touched.color) this._commitHex(); }}
             @keydown=${(e: KeyboardEvent) => this._hexKeyDown(e)} />
           ${this._hexInvalid ? html`<span id="hex-error" class="error">${labels.invalidHex}</span>` : nothing}
-        </label>
+        </label>`}
         ${this.showOpacity ? html`<div class="row">
           <span class="caption">${this.opacityLabel}</span>
           <input data-hp="field" data-field="colour-opacity" data-value="range" type="range" min="0" max="100" step="1" .value=${String(pct)}
-            aria-label=${this.opacityLabel} aria-valuetext=${`${pct}%`}
+            aria-label=${this.opacityLabel} aria-valuetext=${this.mixedOpacity && !this.touched.opacity ? this.mixedLabel : `${pct}%`}
             @input=${(e: Event) => this._setOpacity(Number((e.target as HTMLInputElement).value) / 100)}
             @keydown=${(e: KeyboardEvent) => this._shiftRangeKey(e, pct, 0, 100, (next) => this._setOpacity(next / 100))} />
-          <input data-hp="field" data-field="colour-opacity" data-value="number" type="number" min="0" max="100" step="1" .value=${String(pct)}
-            aria-label=${`${this.opacityLabel}, %`}
-            @change=${(e: Event) => this._setOpacity(Number((e.target as HTMLInputElement).value) / 100)} />
+          <input data-hp="field" data-field="colour-opacity" data-value="number" type="number" min="0" max="100" step="1" .value=${this.reportTouched && this.opacityRaw !== null ? this.opacityRaw : this.mixedOpacity && !this.touched.opacity ? '' : String(pct)} placeholder=${this.mixedLabel}
+            aria-label=${`${this.opacityLabel}, %`} aria-invalid=${String(this.opacityInvalid)}
+            @input=${(e: Event) => { if (this.reportTouched) this._opacityInput(e); }}
+            @change=${(e: Event) => this._opacityInput(e)} />
           <span class="pct">%</span>
         </div>` : nothing}
         ${this.allowNoFill ? html`<label class="row"><input data-hp="field" data-field="colour-none" type="checkbox" .checked=${this.noFill}
@@ -980,7 +1024,7 @@ export class HpColorOpacity extends LitElement {
     const pct = Math.round(Math.min(1, Math.max(0, Number(this.opacity) || 0)) * 100);
     const solid = this._solidSwatch;
     const color = safeStoredColor(this.color, '#607d8b');
-    const title = this.showOpacity
+    const title = this.alphaOnly ? `${this.opacityLabel}: ${this.mixedOpacity ? this.mixedLabel : pct + '%'}` : this.mixedColor ? this.mixedLabel : this.showOpacity
       ? `${this.label || 'Color'}: ${color}, ${pct}%`
       : `${this.label || 'Color'}: ${color}`;
     return html`
@@ -989,7 +1033,7 @@ export class HpColorOpacity extends LitElement {
         aria-label=${this.triggerLabel || title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         data-hp-tooltip=${this.chromeTooltip ? title : nothing}
         title=${this.nativeTooltip && !this.chromeTooltip ? title : nothing} @click=${this._toggle}>
-        <span class="swatch" style=${this.allowNoFill && this.noFill
+        <span class="swatch" style=${this.alphaOnly ? 'background:currentColor;opacity:.3' : this.mixedColor ? 'background:repeating-linear-gradient(135deg,#aaa 0 3px,#fff 3px 6px)' : this.allowNoFill && this.noFill
           ? 'background:linear-gradient(135deg,transparent 45%,currentColor 46%,currentColor 53%,transparent 54%)'
           : `background:${color};opacity:${solid ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
       </button>

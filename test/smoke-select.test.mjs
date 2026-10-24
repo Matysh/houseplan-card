@@ -5,9 +5,11 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { selectSmokes, parseDiff, symbolTable, VISUAL_MINIMUM } from '../scripts/smoke-select.mjs';
+import { selectSmokes, selectSmokeConnections, parseDiff, symbolTable, VISUAL_MINIMUM,
+  requiredSmokeEntries, requiredSmokeIds, MAX_SYMBOL_SMOKES, MAX_RARE_SMOKES, MAX_INFERRED_SMOKES } from '../scripts/smoke-select.mjs';
 import { smokesToRun } from '../scripts/gate-small.mjs';
 import { SMOKE_LINKS, registeredSmokes } from '../scripts/smoke-links.mjs';
+import historical from './data/smoke-selection-history.json' with { type: 'json' };
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 const fixture = (name) =>
@@ -19,6 +21,84 @@ const fixture = (name) =>
 const names = (selection) => selection.direct.map((entry) => entry.smoke);
 const strongNames = (selection) => selection.direct
   .filter((entry) => entry.strong).map((entry) => entry.smoke);
+
+const connectionInput = symbols => ({ files: ['src/subject.ts'], executable: ['src/subject.ts'], symbols, callees: [] });
+const unrelatedCorpus = count => new Map(Array.from({ length: count }, (_, i) => [`smoke_unrelated_${i}.mjs`, '']));
+
+test('#1060 corpus growth cannot promote broad or weak names to mandatory task checks', () => {
+  const original = unrelatedCorpus(0);
+  for (let i = 0; i <= MAX_SYMBOL_SMOKES; i++) original.set(`smoke_broad_${i}.mjs`, '_commonField');
+  for (let i = 0; i <= MAX_RARE_SMOKES; i++) original.set(`smoke_weak_${i}.mjs`, '_sharedField');
+  original.set('smoke_precise.mjs', '_specificContract');
+  const parsed = connectionInput(['_commonField', '_sharedField', '_specificContract']);
+  const options = { registry: [] };
+  const before = selectSmokeConnections(parsed, original, options);
+  const after = selectSmokeConnections(parsed, new Map([...original, ...unrelatedCorpus(1500)]), options);
+  assert.deepEqual(requiredSmokeIds(before), ['smoke_precise.mjs']);
+  assert.deepEqual(requiredSmokeIds(after), requiredSmokeIds(before));
+  assert.equal(after.broadLimit, MAX_SYMBOL_SMOKES);
+  assert.equal(after.rareLimit, MAX_RARE_SMOKES);
+  assert.ok(after.broad.includes('_commonField'));
+  assert.equal(after.deferred.smokes.length, MAX_RARE_SMOKES + 1);
+  assert.equal(after.deferred.until, 'beta/night');
+});
+
+test('#1060 overflow defers the whole inferred set and preserves every explicit route', () => {
+  const corpus = unrelatedCorpus(200), symbols = [];
+  for (let i = 0; i <= MAX_INFERRED_SMOKES; i++) {
+    const symbol = `_specificContract${i}`;
+    symbols.push(symbol); corpus.set(`smoke_contract_${i}.mjs`, symbol);
+  }
+  const parsed = connectionInput(symbols);
+  parsed.files.push('demo/smoke_contract_0.mjs');
+  const registry = [{ smoke: 'smoke_contract_1.mjs', symbols: [symbols[1]], because: ['Explicit AC witness'] }];
+  const options = { registry, declaredSmokes: ['smoke_contract_2.mjs'] };
+  const selection = selectSmokeConnections(parsed, corpus, options);
+  assert.deepEqual(requiredSmokeEntries(selection), [], 'no first-N truncation');
+  assert.equal(selection.inference.deferred, true);
+  assert.deepEqual(selection.registered, registry, 'deferred matches cannot hide registered evidence');
+  assert.deepEqual(requiredSmokeIds(selection), [...VISUAL_MINIMUM, 'smoke_contract_0.mjs',
+    'smoke_contract_1.mjs', 'smoke_contract_2.mjs'].sort());
+  assert.equal(selection.deferred.smokes.length, MAX_INFERRED_SMOKES - 2);
+  assert.deepEqual(requiredSmokeIds(selectSmokeConnections(parsed, new Map([...corpus].reverse()), options)),
+    requiredSmokeIds(selection), 'selection is independent of corpus order');
+  assert.deepEqual(smokesToRun(selection), requiredSmokeIds(selection), 'the local gate uses the same mandatory scope');
+});
+
+test('#1060 weak lexical coincidence cannot suppress an authoritative registry link', () => {
+  const corpus = unrelatedCorpus(200);
+  for (let i = 0; i <= MAX_RARE_SMOKES; i++) corpus.set(`smoke_shared_${i}.mjs`, '_sharedField');
+  const registry = [{ smoke: 'smoke_shared_0.mjs', symbols: ['_sharedField'], because: ['Explicit contract'] }];
+  const selection = selectSmokeConnections(connectionInput(['_sharedField']), corpus, { registry });
+  assert.deepEqual(selection.registered, registry);
+  assert.deepEqual(requiredSmokeIds(selection), ['smoke_shared_0.mjs']);
+  assert.ok(!selection.deferred.smokes.includes('smoke_shared_0.mjs'));
+});
+
+test('#1060 smoke-only edits and declared AC survive no executable source diff', () => {
+  const corpus = new Map([['smoke_changed.mjs', ''], ['smoke_declared.mjs', '']]);
+  const selection = selectSmokes('diff --git a/demo/smoke_changed.mjs b/demo/smoke_changed.mjs\n+assert(actual);',
+    { table: new Set(), corpus, declaredSmokes: ['smoke_declared.mjs'] });
+  assert.equal(selection.noExecutableDiff, true);
+  assert.deepEqual(smokesToRun(selection), ['smoke_changed.mjs', 'smoke_declared.mjs']);
+});
+
+test('#1060 historical task plans shrink without losing their explicit contracts', () => {
+  for (const sample of historical.cases) {
+    const corpus = new Map(sample.corpus.map(([name, symbols]) => [name, symbols.join(' ')]));
+    const selection = selectSmokeConnections(sample.parsed, corpus,
+      { registry: sample.registry, declaredSmokes: sample.declaredSmokes });
+    const actual = [...new Set([...requiredSmokeIds(selection), ...(sample.harnessChanged ? VISUAL_MINIMUM : [])])].sort();
+    assert.deepEqual(actual, sample.afterIds, `#${sample.issue} immutable task plan`);
+    assert.ok(actual.length < sample.beforeIds.length / 2, `#${sample.issue}: ${actual.length} vs ${sample.beforeIds.length}`);
+    const mandatory = [...sample.registry.map(entry => entry.smoke), ...sample.declaredSmokes,
+      ...sample.parsed.files.filter(file => /^demo\/smoke_[\w-]+\.mjs$/.test(file)).map(file => file.slice(5)).filter(name => corpus.has(name))];
+    for (const smoke of mandatory) assert.ok(actual.includes(smoke), `#${sample.issue} lost ${smoke}`);
+    const grown = selectSmokeConnections(sample.parsed, new Map([...corpus, ...unrelatedCorpus(2000)]),
+      { registry: sample.registry, declaredSmokes: sample.declaredSmokes });
+    assert.deepEqual(requiredSmokeIds(grown), requiredSmokeIds(selection), `#${sample.issue} corpus growth inflated scope`);
+  }
+});
 
 test('#234: выборка находит все четыре смока контрольного случая (#241)', () => {
   const selection = selectSmokes(fixture('234-chain-thickness.diff'), { root: repoRoot });

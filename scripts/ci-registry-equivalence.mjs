@@ -4,6 +4,7 @@ import { CHECKS, globToRegExp } from './check-inputs.mjs';
 import { profilePaths } from './ci-profile-paths.mjs';
 import { jobRecipe, versionNormalizer } from './ci-registry-inputs.mjs';
 import { sameRecord } from './ci-registry-verify.mjs';
+import { immutableToolingDependencies } from './tooling-dependencies.mjs';
 
 export const VERSION_PATHS = Object.freeze(['package.json', 'package-lock.json',
   'custom_components/houseplan/manifest.json', 'custom_components/houseplan/const.py',
@@ -43,11 +44,43 @@ function assertPaths(candidate, source, paths, mode) {
   }
   return versionDifferences;
 }
-export function validateSnapshotPolicy(candidate) {
+const snapshotPolicies = new WeakMap();
+export async function validateSnapshotPolicy(candidate) {
   const table = candidate.domains, tooling = table?.tooling;
-  if (!Array.isArray(tooling)) throw Error('missing path policy');
-  const tests = tooling.filter(path => /^test\/[^/]+\.test\.mjs$/.test(path));
-  if (!sameRecord(table, profilePaths(tests))) throw Error('unrecognized product path exclusions');
+  if (!Array.isArray(tooling) || !Array.isArray(table.product)) throw Error('missing path policy');
+  for (const [path, claimed] of [['scripts/ci-profile-paths.json', table], ['scripts/ci-registry-inventory.json', candidate.inventory]]) {
+    assertFile(candidate, path);
+    if (!sameRecord(JSON.parse((await candidate.read(path)).toString('utf8')), claimed))
+      throw Error('computed policy differs from immutable Git input: ' + path);
+  }
+  // A product test may itself be a positive dependency of a tooling test.
+  // Only the exclusions identify owned tests; positive triggers never do.
+  const tests = table.product.filter(path => /^!test\/[^/]+\.test\.mjs$/.test(path)).map(path => path.slice(1));
+  if (new Set(tests).size !== tests.length) throw Error('duplicate owned tooling test');
+  for (const path of tests) assertFile(candidate, path);
+  // The extra positive triggers are derived from actual immutable code reads,
+  // never accepted from the claimed table. They cannot add product exclusions.
+  const key = JSON.stringify(tests);
+  let cached = snapshotPolicies.get(candidate);
+  if (cached?.key !== key) {
+    const expected = immutableToolingDependencies(tests, {
+      tracked: [...candidate.entries.keys()], maxReads: candidate.policyReadBudget ?? 4096,
+      read: async path => {
+        assertFile(candidate, path);
+        return (await candidate.read(path)).toString('utf8');
+      },
+      ...(candidate.readMany ? { readMany: async paths => {
+        for (const path of paths) assertFile(candidate, path);
+        return (await candidate.readMany(paths)).map(bytes => bytes.toString('utf8'));
+      } } : {}),
+    }).then(paths => {
+      for (const path of paths) assertFile(candidate, path);
+      return profilePaths(tests, paths);
+    });
+    cached = { key, expected };
+    snapshotPolicies.set(candidate, cached);
+  }
+  if (!sameRecord(table, await cached.expected)) throw Error('unrecognized product path exclusions or tooling dependencies');
   const inventory = candidate.inventory;
   if (inventory?.schema !== 1 || !Array.isArray(inventory.protocol) || !inventory.protocol.length
     || Object.values(inventory.jobs || {}).some(paths => !Array.isArray(paths) || !paths.length))
@@ -60,14 +93,14 @@ async function normalizedVersions(snapshot) {
 }
 /** Shared once per immutable source/candidate pair, including beta version bytes. */
 export async function sourceEquivalenceCommon(candidate, source, mode) {
-  validateSnapshotPolicy(candidate);
+  await validateSnapshotPolicy(candidate);
   if (!['exact', 'candidate'].includes(mode)) throw Error('unknown equivalence mode');
   const product = compiledMatch(candidate.domains.product);
   const paths = new Set([...candidate.entries.keys(), ...source.entries.keys()].filter(product));
   const versions = assertPaths(candidate, source, paths, mode);
   // Equal metadata plus byte-identical transitive trust code cannot hide a
   // different input closure behind a forged producer key or an edited JSON list.
-  assertPaths(candidate, source, ['scripts/ci-registry-inventory.json', ...candidate.inventory.protocol], 'exact');
+  assertPaths(candidate, source, ['scripts/ci-profile-paths.json', 'scripts/ci-registry-inventory.json', ...candidate.inventory.protocol], 'exact');
   if (mode === 'candidate') {
     const current = await normalizedVersions(candidate);
     const previous = versions.length ? await normalizedVersions(source) : current;

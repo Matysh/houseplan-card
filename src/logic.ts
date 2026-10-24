@@ -2266,3 +2266,16 @@ export function diffNewDevices(
   const fresh = currentIds.filter((id) => !knownSet.has(id));
   return { fresh, known: fresh.length ? [...known, ...fresh] : known };
 }
+
+// Shared by resize and the lazy node editor; no import back into the editor runtime.
+/** Simple polygon: no properly crossing edges (shared walls touching is fine). */
+export function polyIsSimple(poly: number[][]): boolean {
+  const n = poly.length;
+  if (n < 3) return false;
+  for (let i = 0; i < n; i++)
+    for (let j = i + 1; j < n; j++) {
+      if (j === i || (j + 1) % n === i || (i + 1) % n === j) continue;
+      if (segmentsProperlyCross(poly[i], poly[(i + 1) % n], poly[j], poly[(j + 1) % n])) return false;
+    }
+  return true;
+}

@@ -12,8 +12,21 @@ const ordered = value => Array.isArray(value) ? value.map(ordered) : value && ty
   ? Object.fromEntries(Object.keys(value).sort().map(key => [key, ordered(value[key])])) : value;
 export const canonical = value => JSON.stringify(ordered(value));
 const normalize = raw => raw.includes(0) ? raw : Buffer.from(raw.toString('utf8').replace(/\r\n?/g, '\n'));
-const git = (root, args, options = {}) => execFileSync('git', ['-C', root, ...args],
-  { maxBuffer: 192 * 1024 * 1024, ...options });
+export function registryRemaining(deadline, cap = Infinity) {
+  const remaining = Math.floor(Math.min(deadline - Date.now(), cap));
+  if (!Number.isFinite(remaining) || remaining < 1) {
+    const error = Error('registry probe deadline exceeded'); error.code = 'REGISTRY_TIMEOUT'; throw error;
+  }
+  return remaining;
+}
+const git = (root, args, { deadline = Date.now() + 8000, network = false, ...options } = {}) => {
+  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_NO_LAZY_FETCH: '1', GIT_NO_REPLACE_OBJECTS: '1' };
+  // Git <2.45 ignores GIT_NO_LAZY_FETCH. Deny transports as well: only the
+  // explicit, bounded batch fetch below may contact a remote on any Git version.
+  if (!network) env.GIT_ALLOW_PROTOCOL = '';
+  return execFileSync('git', ['-C', root, ...args], { maxBuffer: 192 * 1024 * 1024,
+    stdio: ['pipe', 'pipe', 'pipe'], ...options, env, timeout: registryRemaining(deadline), killSignal: 'SIGKILL' });
+};
 
 /** Trust code is transitive executable input, not a hand-maintained checksum. */
 export function registryProtocolFiles(reader) {
@@ -33,27 +46,49 @@ export function registryProtocolFiles(reader) {
 }
 
 /** Bulk-read control files once; ordinary input identity uses Git blob content IDs. */
-export function registryReader(root, ref = 'HEAD') {
-  const rows = git(root, ['ls-tree', '-rz', '--full-tree', ref]).toString('utf8').split('\0').filter(Boolean)
+export function registryReader(root, ref = 'HEAD', { deadline = Date.now() + 8000 } = {}) {
+  const run = (args, options) => git(root, args, { ...options, deadline });
+  const rows = run(['ls-tree', '-rz', '--full-tree', ref]).toString('utf8').split('\0').filter(Boolean)
     .map(row => { const m = /^(\d+) blob ([a-f0-9]{40})\t(.+)$/.exec(row); if (!m) throw Error('unsupported input tree'); return { mode: m[1], oid: m[2], path: m[3] }; });
   const tracked = rows.map(r => r.path), byPath = new Map(rows.map(r => [r.path, r]));
-  const controls = /^(?:scripts\/|\.github\/workflows\/|(?:package(?:-lock)?\.json|\.python-version|\.nvmrc|pyproject\.toml)$)/;
-  const textObjects = [...new Set(rows.filter(r => controls.test(r.path)).map(r => r.oid))];
-  const data = git(root, ['cat-file', '--batch'], { input: textObjects.join('\n') + '\n' });
-  const objects = new Map(); let offset = 0;
-  for (const oid of textObjects) {
-    const end = data.indexOf(10, offset), header = data.subarray(offset, end).toString('utf8').split(' ');
-    const size = Number(header[2]);
-    if (header[0] !== oid || header[1] !== 'blob' || !Number.isInteger(size)) throw Error('bad bulk input object');
-    objects.set(oid, data.subarray(end + 1, end + 1 + size)); offset = end + size + 2;
-  }
-  const read = path => {
-    const row = byPath.get(path);
-    if (!row || row.mode !== '100644' && row.mode !== '100755') throw Error('missing/symbolic input: ' + path);
-    if (!objects.has(row.oid)) objects.set(row.oid, git(root, ['cat-file', 'blob', row.oid]));
-    return objects.get(row.oid);
+  // Enumerating existing OIDs never hydrates a promisor object, including on
+  // older Git. No baseline/bundle bytes are read just to find missing code.
+  const available = new Set(run(['cat-file', '--batch-all-objects', '--unordered', '--batch-check=%(objectname)'])
+    .toString('utf8').trim().split('\n').filter(Boolean));
+  const objects = new Map();
+  const readMany = paths => {
+    registryRemaining(deadline);
+    const entries = paths.map(path => {
+      const row = byPath.get(path);
+      if (!row || row.mode !== '100644' && row.mode !== '100755') throw Error('missing/symbolic input: ' + path);
+      return row;
+    });
+    const missing = [...new Set(entries.map(row => row.oid).filter(oid => !objects.has(oid)))];
+    if (missing.length) {
+      const cold = missing.filter(oid => !available.has(oid));
+      if (cold.length) run(['-c', 'fetch.negotiationAlgorithm=noop', 'fetch', 'origin', '--no-tags',
+        '--no-write-fetch-head', '--recurse-submodules=no', '--no-auto-maintenance', '--filter=blob:none', '--stdin'],
+      { input: cold.join('\n') + '\n', network: true });
+      const bytes = run(['cat-file', '--batch'], { input: missing.join('\n') + '\n' });
+      let at = 0;
+      for (const oid of missing) {
+        const end = bytes.indexOf(10, at), header = bytes.subarray(at, end).toString('utf8').split(' ');
+        const size = Number(header[2]);
+        if (end < at || header[0] !== oid || header[1] !== 'blob' || !Number.isSafeInteger(size) || size < 0
+          || end + size + 1 >= bytes.length || bytes[end + size + 1] !== 10) throw Error('bad bulk input object');
+        const content = bytes.subarray(end + 1, end + 1 + size);
+        if (createHash('sha1').update(`blob ${size}\0`).update(content).digest('hex') !== oid)
+          throw Error('bulk input bytes differ from immutable Git OID');
+        objects.set(oid, content); available.add(oid); at = end + size + 2;
+      }
+      if (at !== bytes.length) throw Error('unexpected bulk input bytes');
+    }
+    return entries.map(row => objects.get(row.oid));
   };
-  return { tracked, read, text: p => read(p).toString('utf8'), rows };
+  const read = path => readMany([path])[0];
+  const controls = /^(?:scripts\/|\.github\/workflows\/|(?:package(?:-lock)?\.json|\.python-version|\.nvmrc|pyproject\.toml)$)/;
+  readMany(tracked.filter(path => controls.test(path)));
+  return { tracked, read, readMany, text: p => read(p).toString('utf8'), rows, deadline };
 }
 
 // Parse scalar spans, preserving every byte outside the named version fields.
@@ -129,11 +164,13 @@ export function jobRecipe(reader, job, workflow = '.github/workflows/validate.ym
   return digest('job-recipe/v1\0' + executionHeader(text) + '\0' + ids.map(id => jobs.get(id)).join('\0'));
 }
 
-export function registryToolchain(reader, { node = process.versions.node, platform = process.platform, arch = process.arch, python = null } = {}) {
+export function registryToolchain(reader, { node = process.versions.node, platform = process.platform, arch = process.arch,
+  python = null, deadline = reader.deadline ?? Date.now() + 8000 } = {}) {
   const read = path => reader.text(path).replace(/\r\n?/g, '\n');
   const lock = read('package-lock.json'), version = JSON.parse(lock).version;
   const pins = maskJsonScalars(lock, [['version'], ['packages', '', 'version']], version);
-  python = python || execFileSync('python', ['-c', 'import platform; print(platform.python_version())'], { encoding: 'utf8' }).trim();
+  python = python || execFileSync('python', ['-c', 'import platform; print(platform.python_version())'],
+    { encoding: 'utf8', timeout: registryRemaining(deadline), killSignal: 'SIGKILL' }).trim();
   const format = new Intl.DateTimeFormat().resolvedOptions();
   return { node, platform, arch, python, pythonPin: read('.python-version').trim(),
     nodeFlags: process.execArgv, nodeOptions: process.env.NODE_OPTIONS || null, nodeEnv: process.env.NODE_ENV || null,
@@ -182,14 +219,14 @@ export function registryInputs(root, { ref = 'HEAD', toolchain = null, mode = 'e
   }
   const plan = { schema: 1, mode, treeId, keys, recipes, workflowRecipes, toolchain: environment, perfSet, inventories };
   const entries = new Map(reader.rows.map(row => [row.path, { oid: row.oid, mode: row.mode }]));
-  Object.defineProperty(plan, '_snapshot', { value: { entries, read: reader.read, inventory, domains } });
+  Object.defineProperty(plan, '_snapshot', { value: { entries, read: reader.read, readMany: reader.readMany, inventory, domains } });
   return plan;
 }
 
 /** A local pre-push cannot substitute committed keys for dirty executable input. */
-export function cleanRegistryInputs(root, plan) {
+export function cleanRegistryInputs(root, plan, { deadline = Date.now() + 8000 } = {}) {
   const owned = new Set(Object.values(plan.inventories).flat());
-  const dirty = git(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all']).toString('utf8').split('\0').filter(Boolean);
+  const dirty = git(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all'], { deadline }).toString('utf8').split('\0').filter(Boolean);
   return dirty.every(row => {
     const path = row.slice(3);
     if (BUILD_OUTPUT.some(glob => matchesPaths(path, [glob]))) return true;

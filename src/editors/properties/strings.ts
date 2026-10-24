@@ -4,6 +4,10 @@ import { t, langOf, type I18nKey } from '../../i18n';
 const reused = {title:'btn.properties',copy:'btn.copy',delete:'btn.delete',cancel:'btn.cancel',
   fill:'decor.fill',line:'decor.line',rect:'decor.rect',ellipse:'decor.ellipse',furniture:'decor.furniture'} as const satisfies Record<string,I18nKey>;
 const en = {
+  selection_count: 'Selected: {count}', mixed_values: 'Different values',
+  group_incompatible: 'Select objects of one type to edit their shared appearance.',
+  group_single_only: 'Available for one selected object.', select_all: 'Select all decor', select_furniture: 'Select all furniture',
+  group_move_history: 'Move selected decor', group_style_history: 'Change selected decor appearance',
   bring_front: 'Bring to front', send_back: 'Send to back', already_front: 'Already at the front', already_back: 'Already at the back',
   title: 'Properties',  empty: 'Nothing selected', empty_hint: 'Select an object on the plan to edit its properties.',
   position: 'Position', geometry: 'Geometry', appearance: 'Appearance',
@@ -51,6 +55,10 @@ const en = {
 };
 type Key = keyof typeof en;
 const ru: Record<Key, string> = {
+  selection_count: 'Выбрано: {count}', mixed_values: 'Разные значения',
+  group_incompatible: 'Выберите объекты одного типа, чтобы изменить их общее оформление.',
+  group_single_only: 'Доступно при выборе одного объекта.', select_all: 'Выделить весь декор', select_furniture: 'Выделить всю мебель',
+  group_move_history: 'Переместить выбранный декор', group_style_history: 'Изменить оформление выбранного декора',
   bring_front: 'На передний план', send_back: 'На задний план', already_front: 'Уже на переднем плане', already_back: 'Уже на заднем плане',
   title: 'Свойства',  empty: 'Ничего не выбрано', empty_hint: 'Выберите объект на плане, чтобы изменить его свойства.',
   position: 'Положение', geometry: 'Геометрия', appearance: 'Оформление',

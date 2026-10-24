@@ -18,6 +18,14 @@ if(request.action==='corpus'){
     try{const base=commit(c.input);return {...c,ok:true,base,repeat:commit(base)};}
     catch(error){return {...c,ok:false,reason:reason(error)};}
   })));
+}else if(request.action==='delete'){
+  const {applyNodeDelete}=await import(pathToFileURL(resolve(build,'wall-node-delete.js')).href);
+  console.log(JSON.stringify(request.cases.map(c=>{
+    const before=c.mode==='pure'?c.input:commit(c.input);
+    const result=applyNodeDelete(before.spaces[0],{point:c.point});
+    return {name:c.name,before,...result,...(result.ok?{after:commit({...before,
+      spaces:before.spaces.map((s,i)=>i===0?result.space:s)})}: {})};
+  })));
 }else if(request.action==='cross'){
   console.log(JSON.stringify(request.configs.map(c=>commit(c))));
 }else{

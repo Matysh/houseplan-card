@@ -1,6 +1,7 @@
 import { CANVAS_LIMIT } from '../../canvas-constants';
 import { normalizeHexColor } from '../../color-picker';
 import type { DecorShape } from '../decor/types';
+import { styleDecorSelection, type DecorGroupStylePatch } from '../decor/group-edit';
 import type { PropertiesSpace, PropertiesTarget } from './catalog';
 import { cmPerNorm, patchBackdropProperties, patchDecorProperties, patchStairProperties, type GeometryField } from './transforms';
 import { openingPropertiesCore, patchOpeningProperties, patchPartitionEndpoint } from './physical';
@@ -27,6 +28,13 @@ export function patchPropertiesTarget(
   context: { cellCm: number; ratio: number | null; openingReference: OpeningDimension | null },
 ): boolean {
   const { cellCm } = context, factor = cmPerNorm(cellCm);
+  if (target.kind === 'decor-group') {
+    if (field !== 'stroke' && field !== 'fill') return false;
+    const result = styleDecorSelection(space.decor ?? [], target.value.map(item => item.id), value as DecorGroupStylePatch, cellCm);
+    if (!result.ok) return false;
+    if (result.changed) space.decor = result.decor;
+    return true;
+  }
   if (target.kind === 'device' || target.kind === 'led' || target.kind === 'contour') return false;
   if (target.kind === 'backdrop') {
     if (!finite(value) || (!geometries.has(field) && field !== 'opacity')) return false;

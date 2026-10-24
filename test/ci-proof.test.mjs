@@ -7,8 +7,11 @@ import { fileURLToPath } from 'node:url';
 import {
   CI_PROOF_POLICIES, MUTANT_JOB_PREFIX, baselineReviewedRun, buildCiProof, evaluateCiProof, githubApiBase, githubCandidateTree,
   loadGithubProofContext, localEvidence,
-  parseReuseMarker, productTreeId, readCiProofArtifact, requiredCheckIds, selectCiProofVerdict,
+  parseReuseMarker, productTreeId, readCiProofArtifact, requiredCheckIds, selectCiProofVerdict, taskChecksFromNeeds,
 } from '../scripts/ci-proof.mjs';
+import { browserPlanExecution } from '../scripts/browser-plan-proof.mjs';
+import { TASK_CHECK_SCHEMA, makeTaskCheckRecord, normalizeTaskCheckScope } from '../scripts/task-check-reuse.mjs';
+import { canonical, digest } from '../scripts/ci-registry-inputs.mjs';
 import { REUSE_JOBS } from '../scripts/check-inputs.mjs';
 import { reuseKey } from '../scripts/gate-reuse.mjs';
 import { jobInstanceNames, parseWorkflowJobs, validateJobs, VALIDATE_WORKFLOW_PATH } from '../scripts/workflow-jobs.mjs';
@@ -154,6 +157,116 @@ test('#1044 complete dev diagnostics with pending visuals never authorize a rele
   assert.equal(evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release }).status, 'stale');
   delete fixture.proof.request.pendingVisual;
   assert.equal(evaluateCiProof({ ...fixture, policy: CI_PROOF_POLICIES.release }).status, 'green');
+});
+
+const selectedPlan = () => ({ schema: 1, scope: 'task', files: ['src/view.ts'], labels: ['ci:golden'],
+  smoke: { mode: 'selected', ids: ['smoke_modes.mjs'], reason: 'explicit AC' },
+  golden: { mode: 'selected', ids: ['view-dark'], reason: 'explicit intent',
+    intent: [{ id: 'view-dark', issue: 1060, expectation: 'change', reason: 'requested frame' }] } });
+function scopedClaim(job, mode, browserPlan = selectedPlan()) {
+  const fields = { schema: TASK_CHECK_SCHEMA, job,
+    scope: normalizeTaskCheckScope(job, browserPlan, ['test/ci-proof.test.mjs']),
+    inputs: 'e'.repeat(64), recipe: 'f'.repeat(64),
+    toolchain: { node: '22.23.3', platform: 'linux', arch: 'x64', locale: 'en_US.UTF-8', timezone: 'UTC', nodeFlags: [] } };
+  const plan = { ...fields, key: digest(canonical(fields)) };
+  const record = makeTaskCheckRecord(plan, { repo: 'x/y', run: mode === 'executed' ? 10 : 99,
+    attempt: mode === 'executed' ? 2 : 1, sha: mode === 'executed' ? SHA : 'c'.repeat(40),
+    workflow: '.github/workflows/validate.yml', created: '2026-10-24T10:00:00Z' });
+  return { mode, plan, record };
+}
+function scopedFixture(job, mode) {
+  const fixture = proofFixture({ full: false, mutants: false, geometryParity: false, backend: false, integration: false });
+  const plan = selectedPlan(), claim = scopedClaim(job, mode, plan);
+  const needs = { [job]: { result: 'success', outputs: { task_check: JSON.stringify(claim) } } };
+  fixture.proof.taskChecks = taskChecksFromNeeds(needs);
+  if (job === 'browser_selected') {
+    fixture.proof.browserPlan = browserPlanExecution(plan, needs);
+    fixture.jobs.push(...namesOf(job).map(success));
+  }
+  fixture.taskCheckContexts = new Map(mode === 'reused' ? [[job, { accepted: true, record: claim.record }]] : []);
+  fixture.policy = { ...CI_PROOF_POLICIES.mergeLight, task: true };
+  return fixture;
+}
+
+test('#1060 scoped producer metadata preserves executed/reused distinction and verifies a direct receipt', () => {
+  for (const job of ['tooling', 'browser_selected']) {
+    const direct = scopedFixture(job, 'executed');
+    assert.equal(evaluateCiProof(direct).status, 'green');
+    const claim = direct.proof.taskChecks[job];
+    claim.record.attempt = 9;
+    assert.equal(evaluateCiProof(direct).status, 'failed');
+    claim.record.attempt = 2; claim.plan.inputs = '0'.repeat(64);
+    assert.equal(evaluateCiProof(direct).status, 'failed', 'receipt and actual claimed plan must agree');
+  }
+  assert.throws(() => taskChecksFromNeeds({ tooling: { outputs: { task_check: '{bad' } } }));
+  assert.throws(() => taskChecksFromNeeds({ tooling: { outputs: { task_check: JSON.stringify({ mode: 'executed', record: { job: 'browser_selected' } }) } } }));
+});
+
+test('#1060 task reuse requires an independently verified exact record, semantically compared', () => {
+  for (const job of ['tooling', 'browser_selected']) {
+    const fixture = scopedFixture(job, 'reused');
+    assert.equal(evaluateCiProof(fixture).status, 'green');
+    const record = fixture.proof.taskChecks[job].record;
+    fixture.taskCheckContexts.set(job, { accepted: true, record: Object.fromEntries(Object.entries(record).reverse()) });
+    assert.equal(evaluateCiProof(fixture).status, 'green', 'JSON member order is not execution identity');
+    for (const context of [undefined, { accepted: false, record }, { accepted: true, record: { ...record, run: 100 } }]) {
+      fixture.taskCheckContexts = new Map(context ? [[job, context]] : []);
+      assert.equal(evaluateCiProof(fixture).status, 'failed');
+    }
+    fixture.taskCheckContexts = new Map([[job, { accepted: true, record }]]);
+    fixture.jobs = fixture.jobs.filter(row => row.name !== namesOf(job)[0]);
+    assert.equal(evaluateCiProof(fixture).status, 'failed', 'a valid source cannot substitute for the current verifying job');
+  }
+});
+
+test('#1060 selected reused coverage matches current intent and never grants full/fresh authority', () => {
+  const reused = scopedFixture('browser_selected', 'reused');
+  assert.deepEqual(Object.keys(reused.proof.browserPlan.executed), []);
+  assert.deepEqual(reused.proof.browserPlan.reused.smoke.ids, ['smoke_modes.mjs']);
+  assert.equal(evaluateCiProof({ ...reused, policy: { ...reused.policy, golden: true } }).status, 'green');
+  assert.equal(evaluateCiProof({ ...reused, policy: CI_PROOF_POLICIES.release }).status, 'stale');
+  reused.proof.browserPlan.planned.golden.intent[0].reason = 'different acceptance intent';
+  assert.equal(evaluateCiProof(reused).status, 'failed');
+  for (const job of ['tooling', 'browser_selected']) {
+    for (const request of ['full', 'fresh']) {
+      const fixture = scopedFixture(job, 'reused');
+      if (request === 'full') {
+        const full = proofFixture({ mutants: false });
+        fixture.proof = { ...full.proof, taskChecks: fixture.proof.taskChecks,
+          ...(fixture.proof.browserPlan && { browserPlan: fixture.proof.browserPlan }) };
+        fixture.jobs = [...full.jobs, ...(job === 'browser_selected' ? namesOf(job).map(success) : [])];
+      } else fixture.proof.request.fresh = true;
+      const verdict = evaluateCiProof(fixture);
+      assert.equal(verdict.status, 'failed'); assert.match(verdict.note, /fresh\/full policy/);
+    }
+    const fixture = scopedFixture(job, 'reused'); fixture.proof.request.fresh = true;
+    assert.equal(evaluateCiProof({ ...fixture, policy: { ...fixture.policy, fresh: true } }).status, 'failed');
+  }
+  const mixed = scopedFixture('browser_selected', 'reused');
+  mixed.proof.browserPlan.executed.smoke = mixed.proof.browserPlan.reused.smoke;
+  assert.equal(evaluateCiProof(mixed).status, 'failed', 'reused coverage cannot also claim fresh execution');
+});
+
+test('#1060 reused tooling companion needs its immutable proof and verified source, including parent full policy', () => {
+  const parent = scopedFixture('browser_selected', 'executed');
+  parent.proof.taskChecks = {}; delete parent.proof.browserPlan;
+  parent.proof.run.workflow = 'validate-product.yml'; parent.run.path = '.github/workflows/validate-product.yml';
+  parent.proof.requiredProfiles = ['product', 'tooling'];
+  const child = scopedFixture('tooling', 'reused');
+  child.proof.run = { id: 55, attempt: 1, workflow: 'validate-tooling.yml', event: 'push' };
+  const companion = { run: { id: 55, run_attempt: 1, head_sha: SHA, status: 'completed', conclusion: 'success',
+    path: '.github/workflows/validate-tooling.yml', event: 'push' },
+    proof: child.proof, jobs: child.jobs, taskCheckContexts: child.taskCheckContexts };
+  parent.profileRuns = new Map([['tooling', companion]]);
+  assert.equal(evaluateCiProof(parent).status, 'green');
+  companion.taskCheckContexts = new Map();
+  assert.equal(evaluateCiProof(parent).status, 'failed');
+  companion.taskCheckContexts = child.taskCheckContexts;
+  companion.proof = null; assert.equal(evaluateCiProof(parent).status, 'failed');
+  companion.proof = child.proof; companion.proof.run.attempt = 2;
+  assert.equal(evaluateCiProof(parent).status, 'failed');
+  companion.proof.run.attempt = 1; parent.proof.request.full = true;
+  assert.match(evaluateCiProof(parent).note, /fresh\/full policy/, 'full demand propagates into tooling companion checks');
 });
 
 test('#656 AC: newest compatible full proof decides; light proofs do not', () => {

@@ -619,12 +619,16 @@ test('#1044 a known filtered push performs one discovery read without waiting th
 
 test('#1044 push prediction reads the committed filter and fails conservatively on unknown or broad ranges', () => {
   const paths = { product: ['**', '!docs/**'], tooling: ['scripts/**'], docs: ['docs/**'] };
-  let files = 'docs/reviews/INDEX.md\n', count = '1', broken = false;
+  let files = 'docs/reviews/INDEX.md\n', count = '1', broken = false, fastForward = true;
   const ops = realOps({ repo: 'x/y', token: 'none', exec: (_cmd, args) => {
     if (broken) return { status: 1, stderr: 'unknown range' };
+    if (args[0] === 'merge-base') return { status: fastForward ? 0 : 1, stdout: '' };
     return { status: 0, stdout: args[0] === 'diff' ? files : args[0] === 'rev-list' ? count : JSON.stringify(paths) };
   } });
   assert.equal(ops.productPushExpected('before', 'after'), false);
+  fastForward = false; assert.equal(ops.productPushExpected('before', 'after'), true,
+    'a docs-equivalent force push does not prove the GitHub ingress is filtered');
+  fastForward = true;
   files = 'src/led-backlight.ts\n'; assert.equal(ops.productPushExpected('before', 'after'), true);
   files = 'docs/reviews/INDEX.md\n'; count = '1001'; assert.equal(ops.productPushExpected('before', 'after'), true);
   count = '1'; broken = true; assert.equal(ops.productPushExpected('before', 'after'), true);
@@ -659,6 +663,25 @@ test('#1044 waiting on a companion seals the product identity, never the compani
     sleep: async () => assert.fail('deferred companion must not occupy the runner') });
   const result = await ops.waitValidate(sha, { event: 'push', wait: false });
   assert.equal(result.result, 'pending'); assert.equal(result.runId, 45);
+  assert.deepEqual(result.validation, { id: 44, attempt: 2, path: product.path });
+});
+
+test('#1060 merge waits for a late companion registration without replacing the product producer', async () => {
+  const sha = 'c'.repeat(40), tree = 'd'.repeat(40);
+  const product = { databaseId: 44, attempt: 2, status: 'completed', conclusion: 'success',
+    url: 'https://run/44', event: 'push', headSha: sha, path: '.github/workflows/validate-product.yml' };
+  const gh = scriptedExec([[product]]); let reads = 0, clock = 0;
+  const context = { proof: buildCiProof({ candidateSha: sha, candidateTree: tree, runId: 44, attempt: 2,
+    event: 'push', workflow: 'validate-product.yml', requiredProfiles: ['product', 'tooling'], needs: {} }) };
+  const companion = { run: { id: 45, run_attempt: 1, head_sha: sha,
+    path: '.github/workflows/validate-tooling.yml', status: 'in_progress', html_url: 'https://run/45' } };
+  const ops = realOps({ repo: 'x/y', token: 'none', exec: gh.exec, mutants: false,
+    candidateTree: async () => tree, proofContext: async () => ({ ...context,
+      profileRuns: new Map(++reads < 3 ? [] : [['tooling', companion]]) }),
+    now: () => clock, sleep: async ms => { clock += ms; } });
+  const result = await ops.waitValidate(sha, { event: 'push', wait: false });
+  assert.equal(result.result, 'pending'); assert.equal(result.runId, 45);
+  assert.equal(clock, 40_000);
   assert.deepEqual(result.validation, { id: 44, attempt: 2, path: product.path });
 });
 
