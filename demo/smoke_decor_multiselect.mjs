@@ -113,6 +113,14 @@ try{
   await empty();check('group.empty_click_clear',(await state()).ids,[]);
   await shortcut('a');check('group.ctrl_a_all',(await state()).ids,records().map(x=>x.id));
   check('group.text_contour_measured',await card.locator('.hp-prop-group-contour[data-decor-selection="text"] rect').count(),1);
+  check('group.text_contour_matches_real_svg_geometry',await card.evaluate(c=>{
+    const outline=c.renderRoot.querySelector('.hp-prop-group-contour[data-decor-selection="text"] rect').getBoundingClientRect();
+    const texts=[...c.renderRoot.querySelectorAll('.decorlayer text.dtext[data-id="text"]')];
+    return outline.width>0&&outline.height>0&&texts.some(text=>{
+      const ink=text.getBoundingClientRect();
+      return ink.width>0&&ink.height>0&&['x','y','width','height'].every(key=>Math.abs(outline[key]-ink[key])<.1);
+    });
+  }));
   check('group.mixed_kind.no_style_writer',await panel.locator('hp-color-opacity').count(),0);
   await shortcut('m');check('group.ctrl_m_only_furniture',(await state()).ids,['furniture']);
   check('group.selection_only_no_writes',(await state()).writes,base.writes);

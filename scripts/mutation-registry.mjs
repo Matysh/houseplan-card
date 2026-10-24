@@ -21225,6 +21225,9 @@ const decorLine1046Cases = [
 ];
 
 const decorGroup1038Cases = [
+  {id:'decor-group-text-outline-width-discarded-1038',guard:'node demo/smoke_decor_multiselect.mjs',
+    because:'#1038 AC2: the individual Text contour must match the real rotated SVG text extent, including a positive measured width; only mounted font geometry proves the existing live-editor measurement handoff.',
+    patches:[{file:'src/editors/decor/group-selection.ts',find:'dx: box.x-shape.x*NORM_W, dy: box.y-shape.y*NORM_W, w: box.width, h: box.height',replace:'dx: box.x-shape.x*NORM_W, dy: box.y-shape.y*NORM_W, w: 0, h: box.height'}]},
   {id:'decor-group-image-alpha-preview-omitted-1038',guard:'node demo/smoke_decor_multiselect.mjs',
     because:'#1038 AC4: actual resolved SVG image elements must preview every selected alpha before Save and restore after Escape; a pure image projection test cannot prove the Properties-to-mounted-image bridge.',
     patches:[{file:'src/houseplan-card.ts',find:'projectDecorImage({ ...sh, opacity: style.opacity }, W, H)',replace:'projectDecorImage(sh, W, H)'}]},
