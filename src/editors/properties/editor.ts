@@ -112,7 +112,7 @@ export class PropertiesEditor {
   /** A dirty/pending field consumes the press; its asynchronous completion never replays a drag. */
   beforeDecorGroupPress(): boolean {
     if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
-    return this.beforeIntent(() => {});
+    return this.beforeIntent(() => {}, false, true);
   }
   /** The existing command lane publishes one history step only after the whole move is accepted. */
   finishDecorGroupMove(before: SpaceGeometryState | null, press: DecorSelectionPress, current: () => boolean): void {
@@ -260,7 +260,8 @@ export class PropertiesEditor {
     if (host._ledEditor?.sel !== (identity?.kind === 'led' ? identity.objectId : null)) host._ledEditor?.select(identity?.kind === 'led' ? identity.objectId : null);
   }
   private setSelection(identity: PropertiesIdentity | null): void {
-    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)) return;
+    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)
+      && (!identity || this.identity === this.selected)) return;
     this.fields.invalidate(); this.selected = identity; this.groupTarget = null;
     this.selectionContext = identity?.editor === 'decor' ? { authority: this.host._configWriteContext.claim(), adoption: this.host._adoption.adoptionEpoch } : null;
     this.frozenReference = null; this.referenceAttempted = false;
@@ -280,7 +281,7 @@ export class PropertiesEditor {
     }
     const identity: PropertiesIdentity = { spaceId: this.host._space, editor: this.host._mode as PropertiesIdentity['editor'], kind, objectId, ...(binding !== undefined ? { binding } : {}) };
     if (!this.target(identity)) return false;
-    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.selected)) {
+    if (propertiesIdentityKey(identity) === propertiesIdentityKey(this.identity)) {
       if (this.fields.draft) { void this.fields.finish(); return false; }
       return true;
     }
@@ -353,9 +354,9 @@ export class PropertiesEditor {
       .some(picker => picker.pickerOpen);
   }
   /** Modes/floors/actions and all preserved full dialogs use the same completion gate. */
-  beforeIntent(action: () => void, modal = false): boolean {
+  beforeIntent(action: () => void, modal = false, compactDecor = false): boolean {
     if (this.handingOff) return false;
-    if (!this.wide) { if (modal) this.fields.invalidate(); return true; }
+    if (!this.wide && !compactDecor) { if (modal) this.fields.invalidate(); return true; }
     if (!this.fields.draft && !this.host._writesPending) return true;
     const authority = this.commandAuthority(), identity = this.identity, receipt = {};
     this.handoff = receipt;

@@ -179,6 +179,14 @@ try{
   check('group.shortcut.fallback_picker_button_keeps_set',(await state()).ids,['a','b']);
   await page.keyboard.press('Escape');await settle();
   await page.evaluate(()=>Object.defineProperty(HTMLElement.prototype,'showPopover',window.__1038Popover));
+  await hex().fill('INVALID');const hiddenDraft=await state();
+  await page.setViewportSize({width:850,height:1100});await settle();
+  await drag('a',.03,.02);await shortcut('a');await shortcut('m');
+  check('group.compact.invalid_hidden_field_no_move',(await state()).decor,hiddenDraft.decor);
+  check('group.compact.invalid_hidden_field_keeps_set',(await state()).ids,hiddenDraft.ids);
+  check('group.compact.invalid_hidden_field_no_write',(await state()).writes,hiddenDraft.writes);
+  await page.setViewportSize({width:1600,height:1100});await settle();
+  await hex().press('Escape');
 
   await seed(records());await select(['rect','ellipse']);const selection=await state();
   await card.locator('[data-hp="tool"][data-tool="shapes"]').click();await card.locator('[data-hp="tool"][data-tool="line"]').click();
@@ -199,6 +207,10 @@ try{
   await empty();await shortcut('a');
   await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>({...cfg,settings:{...cfg.settings,external1038:true}})));
   check('group.external_revision_retires_selection',(await state()).ids,[]);
+  await shortcut('a');
+  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>cfg));
+  check('group.same_content_revision_retires_selection',(await state()).ids,[]);
+  await shortcut('a');check('group.same_content_can_reselect_same_ids',(await state()).ids,records().map(x=>x.id));
   const many=Array.from({length:1000},(_,i)=>({...rect(`quota-${i}`,.12+(i%40)*.017,.15+Math.floor(i/40)*.022,i%2?'#ff0000':'#0000ff',(i%10)/10),w:.012,h:.012}));
   await seed(many);await empty();await shortcut('a');
   check('group.quota.all_1000_ids',(await state()).ids,many.map(x=>x.id));

@@ -21128,6 +21128,12 @@ const decorLine1046Cases = [
 ];
 
 const decorGroup1038Cases = [
+  {id:'decor-group-same-revision-selection-stays-retired-1038',guard:'node --test test/properties-editor.test.mjs',
+    because:'#1038 AC1/6: a same-content external revision retires selection but a fresh explicit same-ID selection must establish a new current owner.',
+    patches:[{file:'src/editors/properties/editor.ts',find:'      && (!identity || this.identity === this.selected)) return;',replace:'      ) return;'}]},
+  {id:'decor-group-compact-press-skips-field-gate-1038',guard:'node --test test/properties-editor.test.mjs',
+    because:'#1038 AC6: compact group pointer input consumes a retained invalid field instead of creating an unsaved drag preview.',
+    patches:[{file:'src/editors/properties/editor.ts',find:'return this.beforeIntent(() => {}, false, true);',replace:'return this.beforeIntent(() => {});'}]},
   {id:'decor-group-active-line-shortcut-steals-anchor-1038',guard:'node demo/smoke_decor_multiselect.mjs',
     because:'#1038 AC5: real Ctrl+A/M during an active two-click Line preserves the exact anchor, draft, selection and next clean segment.',
     patches:[{file:'src/houseplan-editor-runtime.ts',find:'    if (this.decorLine.active || host._decorDraft || host._decorMove || host._dtDrag || this.backdropGesture.active',

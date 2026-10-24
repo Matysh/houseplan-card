@@ -215,3 +215,34 @@ test('#1038 retirement while waiting never writes and rolls back only the unchan
     assert.deepEqual(h.host._serverCfg,initial);assert.equal(h.state.writes.length,0);assert.equal(h.state.records.length,0);
   }
 });
+
+test('#1038 same-content external revision retires selection and permits a fresh explicit selection of the same IDs',()=>{
+  const h=groupHarness();
+  h.adoption.adoptResponses({config:structuredClone(h.host._serverCfg),rev:3},undefined,()=>{},()=>{});
+  assert.equal(h.editor.identity,null);assert.deepEqual(h.editor.decorSelectionIds,[]);
+  assert.equal(h.editor.selectDecorIds(['shape','second']),true);
+  assert.deepEqual(h.editor.decorSelectionIds,['shape','second']);
+  assert.equal(h.state.writes.length,0);assert.equal(h.state.records.length,0);
+});
+
+test('#1038 shared intent completion waits for its accepted field without losing the existing positive dialog path',async()=>{
+  const h=harness(),hold=deferred();h.state.hold=hold;let opened=0;
+  assert.equal(h.editor.fields.edit('w','480'),true);
+  assert.equal(h.editor.beforeIntent(()=>{opened++;},true),false);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(opened,0);assert.equal(h.state.writes.length,1);
+  hold.resolve();await settleGroup(h);await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(opened,1);assert.equal(h.state.records.length,1);
+  assert.equal(h.editor.beforeIntent(()=>{opened++;},true),true);
+});
+
+test('#1038 compact group press consumes an existing invalid hidden field instead of starting a gesture',async()=>{
+  const h=groupHarness(),initial=structuredClone(h.host._serverCfg);
+  const value=groupColorDraft(decorGroupColorState(h.host._decorList,'stroke',5));
+  assert.equal(h.editor.fields.edit('stroke',editGroupColor(value,'hex','INVALID')),true);
+  h.editor.width=850;
+  assert.equal(h.editor.beforeDecorGroupPress(),false);
+  await settleGroup(h);
+  assert.equal(h.editor.fields.draft.error.key,'invalid_color');
+  assert.deepEqual(h.host._serverCfg,initial);assert.equal(h.state.writes.length,0);assert.equal(h.state.records.length,0);
+});

@@ -4042,7 +4042,7 @@ public _selectDecorShortcut(furniture: boolean): void {
       || !host._configWriteGuard()()) return;
     if (this.decorLine.active || host._decorDraft || host._decorMove || host._dtDrag || this.backdropGesture.active
       || host._pointers.size || host._furnTouchPending) return;
-    if (!this.properties.beforeIntent(() => this._selectDecorShortcut(furniture))) return;
+    if (!this.properties.beforeIntent(() => this._selectDecorShortcut(furniture), false, true)) return;
     const ids = allDecorSelectionIds(host._decorList, furniture);
     if (!ids) return;
     this._clearFurniturePreview(); this._furnShiftDetach(); host._decorTool = 'select';
