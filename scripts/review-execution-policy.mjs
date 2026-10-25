@@ -81,7 +81,8 @@ export function bashProblem(input, policy) {
   const [bin, ...rest] = args;
   if (['pwd', 'ls', 'cat', 'head', 'tail', 'wc'].includes(bin)) return null;
   if (bin === 'rg' && !rest.some(a => /^--(?:pre|hostname-bin)(?:=|$)/.test(a))) return null;
-  if (bin === 'sed' && rest.length >= 3 && rest[0] === '-n' && /^\d+(?:,\d+)?p$/.test(rest[1])) return null;
+  if (bin === 'sed' && rest.length >= 3 && rest[0] === '-n' && /^\d+(?:,\d+)?p$/.test(rest[1])
+    && rest.slice(2).every(a => !a.startsWith('-') && canonicalFile(a, policy))) return null;
   if (bin === 'git' && READ_GIT.has(rest[0]) && !rest.some(a => /^(?:--output(?:=|$)|--ext-diff$|--textconv$|--filters$|--open-files-in-pager(?:=|$))/.test(a))) return null;
   if (bin === 'git' && rest.join(' ') === 'branch --show-current') return null;
   if (bin === 'node') {

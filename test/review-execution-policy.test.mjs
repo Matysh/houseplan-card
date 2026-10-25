@@ -14,7 +14,7 @@ import { reviewResultProblems, sha256, PASSPORT_FIELDS } from '../scripts/review
 const root = fileURLToPath(new URL('..', import.meta.url));
 const outputs = [join(tmpdir(), 'hp-policy-report.md')];
 const policy = { root: resolve(root), stage: 'code', kind: 'task', outputs,
-  files: ['test/review-result-gate.test.mjs', 'scripts/ci-profiles.mjs', 'scripts/mutation-gate.mjs', 'tsconfig.test.json'] };
+  files: ['PROCESS.md', 'AGENTS.md', 'test/review-result-gate.test.mjs', 'scripts/ci-profiles.mjs', 'scripts/mutation-gate.mjs', 'tsconfig.test.json'] };
 const bash = command => ({ tool_name: 'Bash', tool_input: { command } });
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const call = (id, name, input) => ({ type: 'tool_use', id, name, input });
@@ -35,7 +35,7 @@ test('#1065 native hook settings deny on startup/SDK timeout failures, before an
 });
 
 test('#1065 ordinary reads, exact unchanged tests and static readiness are allowed', () => {
-  for (const command of ['git diff origin/dev...HEAD', 'rg -n limit scripts', 'sed -n 30,50p PROCESS.md',
+  for (const command of ['git diff origin/dev...HEAD', 'rg -n limit scripts', 'sed -n 30,50p PROCESS.md', 'sed -n 1p PROCESS.md AGENTS.md',
     'node --test test/review-result-gate.test.mjs', 'node --test --test-name-pattern="schema failure" test/review-result-gate.test.mjs',
     'node scripts/ci-profiles.mjs --check', 'node scripts/mutation-gate.mjs --check', 'npm run build']) {
     assert.equal(toolProblem(bash(command), policy), null, command);
@@ -50,6 +50,11 @@ test('#1065 ordinary reads, exact unchanged tests and static readiness are allow
 // canonical implementation/guard/bundle patched to obtain a negative result.
 for (const command of [
   "sed -i 's/timeout-minutes: 35/timeout-minutes: 25/' .github/workflows/validate.yml",
+  'sed -n 1p -i PROCESS.md', 'sed -n 1p --in-place PROCESS.md',
+  "sed -n 1p -e '1e forbidden-action' PROCESS.md",
+  "sed -n 1p --expression='1e forbidden-action' PROCESS.md",
+  'sed -n 1p --file=/tmp/foreign-script PROCESS.md',
+  'sed -n 1p PROCESS.md -i AGENTS.md', 'sed -n 1p /tmp/untracked-input',
   'git checkout -- .github/workflows/validate.yml', 'git restore test-build/guard.js',
   'node -e "require(\'fs\').writeFileSync(\'guard.js\', \'false\')"',
   'python -c "open(\'guard.py\',\'w\').write(\'false\')"', 'cp /tmp/patched.js test-build/guard.js',

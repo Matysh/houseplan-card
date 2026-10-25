@@ -15964,6 +15964,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-sed-read-allows-extra-options-1065',
+    guard: 'node --test --test-name-pattern="#1065 refuses unsafe" test/review-execution-policy.test.mjs',
+    because: '#1065: read-only sed must validate every trailing filename, not just its initial -n/address; extra -i/-e/--file inputs are refused as DATA without executing sed.',
+    patches: [{
+      file: 'scripts/review-execution-policy.mjs',
+      find: "    && rest.slice(2).every(a => !a.startsWith('-') && canonicalFile(a, policy))) return null;",
+      replace: '    && true) return null;',
+    }],
+  },
+  {
     id: 'review-native-hook-failure-opens-tool-1065',
     guard: 'node --test --test-name-pattern="#1065 native hook settings" test/review-execution-policy.test.mjs',
     because: '#1065: native SDK failure behavior must block a tool on hook startup/outer deadline failure; post-execution publication refusal is not prevention.',

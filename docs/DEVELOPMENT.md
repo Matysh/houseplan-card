@@ -5802,6 +5802,13 @@ the sealed artifact's exact file set and the no-upload boundary are unchanged.
 Night-only registrations cover Bash-policy bypass, native failure behavior,
 missing-journal refusal and false ordinary claims. Only static readiness is
 checked in development; registration and ordinary PASS are not caught evidence.
+An author ordinary DATA probe on the first S7 material found a concrete sed
+argv hole: a valid `-n <address>p` prefix admitted additional options. Review
+was withdrawn without pushing over S7; no proposed sed command was executed.
+All trailing operands now must be unchanged tracked filenames without option
+prefixes. Single/multiple-file read controls remain allowed; inert `-i`, `-e`,
+`--expression`, `--file` and external-file negatives cover the refusal. A fifth
+night-only registration protects this tail check, without development execution.
 
 Protocol references: [Claude hook input/PreToolUse decisions](https://code.claude.com/docs/en/hooks),
 [CLI settings sources](https://code.claude.com/docs/en/cli-reference), and the
