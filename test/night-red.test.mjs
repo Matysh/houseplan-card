@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,16 +26,33 @@ const SCRIPTS = fileURLToPath(new URL('../scripts', import.meta.url));
 const REPO = 'o/r';
 const TREE = 'b'.repeat(40);
 
-// Окружение git без GIT_* родителя (урок #633) и без глобального конфига (#496).
+// #1069: isolate the whole test worker, including production gitClient reads,
+// not only fixture writes. Never edit the owner's repository/global config.
+for (const key of Object.keys(process.env)) if (/^GIT_/i.test(key)) delete process.env[key];
 const ENV = {
-  ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
+  ...process.env,
   GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
   GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null',
   GIT_CONFIG_COUNT: '2',
   GIT_CONFIG_KEY_0: 'core.autocrlf', GIT_CONFIG_VALUE_0: 'false',
   GIT_CONFIG_KEY_1: 'init.defaultBranch', GIT_CONFIG_VALUE_1: 'dev',
 };
+Object.assign(process.env, ENV);
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', env: ENV, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+// #925/#969: no detached maintenance may outlive a fixture command. The
+// historical ENOTEMPTY writer is unknown; retries also cover transient locks.
+const FIXTURE_GIT_CONFIG = [['maintenance.auto', 'false'], ['gc.auto', '0'], ['receive.autogc', 'false']];
+const REMOVE_FIXTURE_TREE = Object.freeze({ recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+function temporaryTree(t, prefix) {
+  const root = mkdtempSync(join(tmpdir(), prefix));
+  // No catch: exhausted native retries must fail the owning test.
+  t.after(() => rmSync(root, REMOVE_FIXTURE_TREE));
+  return root;
+}
+function initFixtureGit(cwd) {
+  git(cwd, 'init', '-q');
+  for (const [key, value] of FIXTURE_GIT_CONFIG) git(cwd, 'config', '--local', key, value);
+}
 
 /** Коммит файлов `files` с сообщением `message`; возвращает SHA. */
 function commit(cwd, files, message) {
@@ -55,9 +72,8 @@ function commit(cwd, files, message) {
  * Ветка `other` в `dev` не влита.
  */
 function history(t) {
-  const cwd = mkdtempSync(join(tmpdir(), 'hp-736-git-'));
-  t.after(() => rmSync(cwd, { recursive: true, force: true }));
-  git(cwd, 'init', '-q');
+  const cwd = temporaryTree(t, 'hp-736-git-');
+  initFixtureGit(cwd);
   const sha = {};
   sha.base = commit(cwd, ['README.md'], 'chore: base');
   sha.G = commit(cwd, ['src/g.ts'], 'feat: green\n\nIssue: #9\nUser-Visible: no');
@@ -78,6 +94,56 @@ function history(t) {
   git(cwd, 'checkout', '-q', 'dev');
   return { cwd, sha, add: (files, message) => commit(cwd, files, message) };
 }
+
+test('#1069 fixture history owns Git config, real branch reads and completed after-hook cleanup', async (t) => {
+  let root;
+  await t.test('real history', (child) => {
+    const { cwd, sha, add } = history(child);
+    root = cwd;
+    for (const [key, value] of FIXTURE_GIT_CONFIG) assert.equal(git(cwd, 'config', '--local', '--get', key), value);
+    const reader = gitClient({ cwd });
+    assert.equal(reader.isAncestor(sha.c6, sha.R), true, 'real merged second parent is reachable');
+    assert.equal(reader.isAncestor(sha.other, sha.R), false, 'unmerged branch stays separate');
+    const added = add(['src/cleanup-witness.ts'], 'test: real fixture commit\n\nIssue: #1069\nUser-Visible: no');
+    const changes = reader.rangeCommits(sha.R, added);
+    assert.deepEqual(changes.map(({ sha: value, files }) => [value, files]), [[added, ['src/cleanup-witness.ts']]]);
+    assert.equal(git(cwd, 'status', '--porcelain'), '');
+  });
+  assert.equal(existsSync(root), false, 'the complete .git tree is removed before the child finishes');
+});
+
+test('#1069 inherited Git variables cannot redirect fixture writes or production Git reads', (t) => {
+  const root = temporaryTree(t, 'hp-1069-parent-env-');
+  const missing = join(root, 'not-a-repository');
+  const global = join(root, 'parent.gitconfig');
+  const config = '[core]\n\tbare = true\n[maintenance]\n\tauto = true\n[gc]\n\tauto = 1\n';
+  writeFileSync(global, config);
+  const childEnv = { ...ENV };
+  delete childEnv.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, ['--test', '--test-reporter=tap', '--test-name-pattern=^#1069 fixture history', fileURLToPath(import.meta.url)], {
+    cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
+    env: { ...childEnv, GIT_DIR: missing, GIT_WORK_TREE: missing, GIT_COMMON_DIR: missing, GIT_INDEX_FILE: join(root, 'parent.index'),
+      GIT_CONFIG_GLOBAL: global, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'maintenance.auto', GIT_CONFIG_VALUE_0: 'true' },
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /ok \d+ - \\?#1069 fixture history/);
+  assert.equal(existsSync(missing), false, 'parent paths receive no fixture writes');
+  assert.equal(existsSync(join(root, 'parent.index')), false);
+  assert.equal(readFileSync(global, 'utf8'), config, 'parent global config is unchanged');
+});
+
+test('#1069 an ordinary assertion failure survives completed bounded fixture cleanup', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'hp-1069-assertion-'));
+  const sentinel = new assert.AssertionError({ message: 'ordinary fixture assertion failure' });
+  assert.throws(() => {
+    try {
+      initFixtureGit(cwd);
+      commit(cwd, ['witness.txt'], 'test: real commit before assertion');
+      throw sentinel;
+    } finally { rmSync(cwd, REMOVE_FIXTURE_TREE); }
+  }, (error) => error === sentinel);
+  assert.equal(existsSync(cwd), false);
+});
 
 // #622: имена job — из validate.yml, не копией строк.
 const WORKFLOW = validateJobs();
@@ -389,11 +455,10 @@ function fakeGh(root, issues) {
 
 /** Шаг ночи в рабочей копии `cwd` с `scripts/` из этого дерева; асинхронно — сервер живёт в этом процессе. */
 async function runNightStep(t, { cwd, items, issues = {}, fail = false, scripts = SCRIPTS, env = {} }) {
-  const root = mkdtempSync(join(tmpdir(), 'hp-736-step-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const root = temporaryTree(t, 'hp-736-step-');
   const api = await actionsServer(t, items, { fail });
   const gh = fakeGh(root, issues);
-  rmSync(join(cwd, 'scripts'), { recursive: true, force: true });
+  rmSync(join(cwd, 'scripts'), REMOVE_FIXTURE_TREE);
   symlinkSync(scripts, join(cwd, 'scripts'));
   const files = { log: join(root, 'gh.log'), summary: join(root, 'summary.md') };
   // #856: domain consumer invokes this exact existing command directly.
@@ -483,8 +548,7 @@ test('#736 К6 на настоящем bash: сбой API или упавший 
   assert.match(broken.stdout, /^::warning::красная ночь \(#736\): GitHub API 500 .* — комментарии не написаны; цвет ночи — цвет Validate$/m);
   assert.match(broken.summary, /- Сбой: GitHub API 500/);
   assert.deepEqual(broken.log, []);
-  const empty = mkdtempSync(join(tmpdir(), 'hp-736-noscripts-'));
-  t.after(() => rmSync(empty, { recursive: true, force: true }));
+  const empty = temporaryTree(t, 'hp-736-noscripts-');
   const crashed = await runNightStep(t, { cwd, items, scripts: empty });
   assert.notEqual(crashed.status, 0, 'native command fails; controller must retain a diagnostic warning and RED verdict');
   const retained = await resumeDomainContinuation({ kind: 'night', candidate: sha.R }, {

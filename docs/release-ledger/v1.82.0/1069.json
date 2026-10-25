@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1069,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Isolates temporary night-red Git test repositories and hardens their bounded cleanup without changing production behavior or claiming the historical ENOTEMPTY writer is known.",
+  "summary": {
+    "ru": "Временные Git-репозитории тестов night-red изолируют окружение, отключают автообслуживание и завершают ограниченную очистку без подавления ошибок.",
+    "en": "Temporary night-red Git test repositories isolate their environment, disable automatic maintenance and complete bounded cleanup without suppressing failures."
+  }
+}

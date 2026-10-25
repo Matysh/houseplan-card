@@ -3680,6 +3680,18 @@ git config core.untrackedCache true
 
 ## Local repository maintenance (#628)
 
+Night-red test repositories (#1069) disable `maintenance.auto`, `gc.auto` and
+`receive.autogc` in their own local config before the first commit. The Node
+test worker removes inherited `GIT_*` and supplies its own identity/config for
+both fixture writes and production Git reads; owner/global config is untouched.
+All owned temporary trees use native recursive `rmSync` with ten retries and
+50 ms linear backoff, with no catch that could suppress exhausted cleanup.
+Ordinary tests exercise real history/branch reads, an inherited-environment
+negative input, completed after-hook removal and assertion-failure propagation;
+the existing HTTP/CLI delivery and failure diagnostics remain covered on Linux.
+This hardens the observed ENOTEMPTY path without claiming a reproduced race or
+an identified historical writer. Production `scripts/night-red.mjs` is unchanged.
+
 Ship-review test repositories (#925) set `maintenance.auto=false` and
 `gc.auto=0` in their own local config, including the sandbox's bare origin.
 They never change owner/global Git configuration. Both fixture after-hooks use
