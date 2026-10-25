@@ -11,6 +11,14 @@
       "configs": 17
     },
     {
+      "file": "test/fixtures/1061-align-carrier.json",
+      "configs": 4
+    },
+    {
+      "file": "test/fixtures/1061-room-candidates.json",
+      "configs": 9
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -796,6 +804,618 @@
           "partitions": [
             "a",
             "b"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-align-carrier.json/0/source",
+      "fingerprint": "08c00a4cb1297ddbc5f3595484f8ff9f4bb4235ffceb66cb8344739704d327d6",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "p"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-align-carrier.json/0/candidate",
+      "fingerprint": "bf454f7e378104837164a68c1f8879b80645158aed4e7c89ad75c3c3918af4b9",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "p"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-align-carrier.json/1/source",
+      "fingerprint": "c082bc49eb9668e4a086d1c1841438d31ec3e2381f2daaef25ae252fc7ef9825",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "p"
+              }
+            }
+          ],
+          "partitions": [
+            "p"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-align-carrier.json/1/candidate",
+      "fingerprint": "c2d9986b64a141e70b522896bbab1c34f95fd3b876c2cbce2d8338855d48e952",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "p"
+              }
+            }
+          ],
+          "partitions": [
+            "p"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/0/source",
+      "fingerprint": "a7924fc15bc46b86c5f17dba4b851132d130cf77b8cdb4f4ba5638cf4e0ff611",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9",
+            "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
+            "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
+            "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
+                "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
+                "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
+                "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/0/candidates/0",
+      "fingerprint": "b92f0560b17dafc1a3056a8c79dca0372963dffbdf9f7328e6c086584c93b98e",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9",
+            "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
+            "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
+            "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
+            "wall-6c26cdbd-6a79-418f-a903-59c1989a71f7",
+            "wall-529c317f-33a0-4e85-b0f0-608b446ed974",
+            "wall-5811ece0-d858-4f70-9843-aaef785f5ed8"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e",
+                "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
+                "wall-504d2dc4-e239-4c9f-9e99-53c63e7ae5cc",
+                "wall-2fb4cc19-9d7e-4870-b385-393d8f2f5ee9"
+              ]
+            },
+            {
+              "id": "new0",
+              "walls": [
+                "wall-f2d2e6a7-74ab-4d2a-8bed-5ec8950c9dd2",
+                "wall-6c26cdbd-6a79-418f-a903-59c1989a71f7",
+                "wall-5811ece0-d858-4f70-9843-aaef785f5ed8",
+                "wall-529c317f-33a0-4e85-b0f0-608b446ed974"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6f82c4be-ab62-4b3c-87f9-1d3197195f1e"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/1/source",
+      "fingerprint": "8aececd2a3d310c6acece6f36446ebec5c22e90df97ada28054ed80dfa964358",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-c645ffbf-6345-4fee-8bf1-4378d9428311",
+            "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
+            "wall-400455fc-75b2-4918-9441-ea1c54319132",
+            "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
+                "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b",
+                "wall-400455fc-75b2-4918-9441-ea1c54319132",
+                "wall-c645ffbf-6345-4fee-8bf1-4378d9428311"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/1/candidates/0",
+      "fingerprint": "3235e21b4ca26898bd3919c49171a0fdb6a63da9fd05733328bc783b87706535",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-c645ffbf-6345-4fee-8bf1-4378d9428311",
+            "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
+            "wall-400455fc-75b2-4918-9441-ea1c54319132",
+            "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b",
+            "wall-2f3d4613-d04f-4e99-a90f-2f09c443f6bb",
+            "wall-cb8e9bc9-14de-479c-af86-688552fa2bc4",
+            "wall-bd230e7e-d671-4c0d-8928-46d0d3f346ed",
+            "wall-ab682b24-6388-4f54-bb0a-37b5e96e4ff4"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09",
+                "wall-c95ed6bb-3ccf-40da-86e7-d54e94a5bc6b",
+                "wall-400455fc-75b2-4918-9441-ea1c54319132",
+                "wall-c645ffbf-6345-4fee-8bf1-4378d9428311"
+              ]
+            },
+            {
+              "id": "new0",
+              "walls": [
+                "wall-2f3d4613-d04f-4e99-a90f-2f09c443f6bb",
+                "wall-cb8e9bc9-14de-479c-af86-688552fa2bc4",
+                "wall-ab682b24-6388-4f54-bb0a-37b5e96e4ff4",
+                "wall-bd230e7e-d671-4c0d-8928-46d0d3f346ed"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-3e3ad2de-9a4a-47e0-b887-8e8c85be1b09"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/2/source",
+      "fingerprint": "2509a7f83d71ba94201765a502958ebfaff50435c27819f4cdb2c66f70c4ef31",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2",
+            "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+            "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+            "wall-8cf2e17c-9258-46ee-9572-b25f384f3059"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+                "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+                "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/2/candidates/0",
+      "fingerprint": "7b29da7a960afad19e23e1fb10ce98ab9aa07f1e0f9415e0e56f775d5829031d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2",
+            "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+            "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+            "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+            "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
+            "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7",
+            "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+                "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+                "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2"
+              ]
+            },
+            {
+              "id": "new0",
+              "walls": [
+                "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
+                "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
+                "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/2/candidates/1",
+      "fingerprint": "d72161b4a890edf825bebc5136bbcbcae369526539586689574333bfa2dfa656",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2",
+            "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+            "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+            "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+            "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
+            "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7",
+            "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
+            "wall-93a2fb88-0b56-45a6-a6d1-0de6ce1c3e85",
+            "wall-d45b238f-f7e8-47a4-a40d-0dc0a8c53541",
+            "wall-a485cd08-8290-4fb3-abd9-62071ee41d22"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a",
+                "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                "wall-05e0ce9f-4848-4b49-8207-ef105563c8c7",
+                "wall-5f3e3d71-1eca-42b2-bdd2-b1979ba06fe2"
+              ]
+            },
+            {
+              "id": "new0",
+              "walls": [
+                "wall-8cf2e17c-9258-46ee-9572-b25f384f3059",
+                "wall-39c21028-d217-4d4d-9b76-0cfbe5287e41",
+                "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
+                "wall-aa12e9c3-893a-4bd7-ae3e-9a7653f444f7"
+              ]
+            },
+            {
+              "id": "new1",
+              "walls": [
+                "wall-032539cc-48d6-4e41-b9fe-2453d3fcb131",
+                "wall-93a2fb88-0b56-45a6-a6d1-0de6ce1c3e85",
+                "wall-a485cd08-8290-4fb3-abd9-62071ee41d22",
+                "wall-d45b238f-f7e8-47a4-a40d-0dc0a8c53541"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-44da68ac-bfec-47ca-8ad2-ac2c4a42325a"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/3/source",
+      "fingerprint": "8a6f118dc5a0c779b084e8a3bd3acd88b5250522d7184838ad2b3802e8804821",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d",
+            "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+            "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+            "wall-87a82db2-421a-46a6-b695-aa7142cd0add"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+                "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+                "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+                "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-092606bb-2610-4eff-a611-f67dd38b7ddd"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1061-room-candidates.json/3/candidates/0",
+      "fingerprint": "4af698be67fb6641e61f33ada4f9d5e78f8cbd0bc43ebad62aeeadf38dcdc09c",
+      "ok": true,
+      "identity": [
+        {
+          "space": "floor",
+          "catalogue": [
+            "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d",
+            "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+            "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+            "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+            "wall-f95435eb-8087-4dfe-a687-27771877665d",
+            "wall-3a602a2c-bd3b-4cde-9f5c-b8184663e804",
+            "wall-c1364653-dd43-425c-a776-7e8eec169ceb"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "wall-092606bb-2610-4eff-a611-f67dd38b7ddd",
+                "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+                "wall-bb442b27-a14d-445d-9caf-ce52e6b1de16",
+                "wall-2dc38609-2a49-4798-949b-bb5b7ec84e1d"
+              ]
+            },
+            {
+              "id": "new0",
+              "walls": [
+                "wall-87a82db2-421a-46a6-b695-aa7142cd0add",
+                "wall-f95435eb-8087-4dfe-a687-27771877665d",
+                "wall-c1364653-dd43-425c-a776-7e8eec169ceb",
+                "wall-3a602a2c-bd3b-4cde-9f5c-b8184663e804"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "old-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-092606bb-2610-4eff-a611-f67dd38b7ddd"
+              }
+            }
+          ],
+          "partitions": [
+            "north",
+            "south",
+            "middle",
+            "east"
+          ]
+        },
+        {
+          "space": "remote",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "remote-wall"
           ]
         }
       ]

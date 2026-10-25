@@ -5624,3 +5624,9 @@ RED/AFTER. Source hostedFit is necessary but not sufficient: the exact-Align
 exception also retains each hosted record by ID and partition-host identity.
 An ordinary no-trim Optimize Drop remains accepted in pure and authenticated HA
 controls, so the new check does not replace the general repair/drop policy.
+
+After whole accepted #999, the #845 corpus passport adds only the thirteen
+configs in the two new synthetic #1061 JSON files. Every prior inventory row,
+input fingerprint, identity and document order is compared exactly before the
+additive update. Fresh focused graph/history and corpus checks pass107/107;
+no old baseline entry is replaced to make this addition pass.
