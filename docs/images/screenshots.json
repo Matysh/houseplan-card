@@ -3,7 +3,7 @@
   "fixture": "synthetic-only",
   "chromium": "151.0.7922.34",
   "oxipng": "oxipng 10.2.0",
-  "sourceFingerprint": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+  "sourceFingerprint": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
   "captureScriptSha256": "2cbf1e2cf86a6efa5c42c217f51fcd019c9d03e6e2e57db9fa22ec1672759b16",
   "command": "npm run build && node demo/docs/capture.mjs",
   "scenarios": {
@@ -15,7 +15,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "261d3a6916dbb5b4d2dc64a1cee7d1c559ecc803727afef7fd8db30845d6553d"
     },
     "view-touch": {
@@ -26,7 +26,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "381c04721383d32fa5d1576ec4c06d290d02b1f8d7d0b3c2aa9a4f64893a9772"
     },
     "space-create": {
@@ -37,7 +37,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "627b017eb3739302da6fcff07f38987c23257605b25309f9d6b4da455c783e6a"
     },
     "room-contour-close": {
@@ -48,7 +48,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "502d189838ab0e5f520411f2470337e0b9851aec62329340c8f885053aebbc2e"
     },
     "plan-context-tray": {
@@ -59,7 +59,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "82daaefd143cf1e6c5d9037d0b513d1081a3a81b31745e4b4417dbe2e0cc747a"
     },
     "device-editor": {
@@ -70,7 +70,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "67e67451396dc07fce95d389349d870b995b9e596a09cc5789d27bc23cb89d01"
     },
     "device-display-preview": {
@@ -81,7 +81,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "7ec6bb8f762cd4f1a4e96b7c5f17c6c15c50cf9fec1770e114f865b5f1e6b986"
     },
     "background-editor": {
@@ -92,8 +92,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
-      "imageSha256": "4f3e6db3c4a3a8366465fe1030578359132b29c0ef2e58266224e6bd00903cd7"
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
+      "imageSha256": "4d581b5f7dcd017b470c23990b2acb2803428de7a957ba1ae5c3b2fde5028e1b"
     },
     "room-card": {
       "file": "08-room-card.png",
@@ -103,7 +103,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "cfecfb182876a8c1c864b8cfea76b2ab61b2786f8e430a583b48d8779f610136"
     },
     "device-info": {
@@ -114,7 +114,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "0e8d27ddebc6f2496276ad348ab32ad5be9c6d081cbd8df6920658c2bb313d83"
     },
     "pdf-export": {
@@ -125,19 +125,16 @@
       },
       "theme": "light",
       "language": "en",
-      "sourceSha256": "8496ce392cf9084bd304c0dbc459c15d6149845891d9defc8d138fb2fd0ae456",
+      "sourceSha256": "91ab6ac39e9ebad067a31eae90bfc594067b22b89d21dc9b4f01529ffffd6a8c",
       "imageSha256": "3649a7aa87a5ac613ac0fc6109ade7e9ce35abb0cded0f105c9bb4c33d411f58"
     }
   },
   "acceptedOn": "linux",
   "acceptance": {
     "declared": [
-      "space-create",
-      "device-editor",
-      "device-display-preview",
       "background-editor"
     ],
-    "witnesses": 7,
+    "witnesses": 10,
     "floor": 2
   }
 }
