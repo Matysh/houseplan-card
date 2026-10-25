@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "issue": 1061,
+  "preparationOnly": true,
+  "beforeMaterial": "165709621151ebbbfedd4050604036d843d15aa5",
+  "ordinaryBefore": {
+    "failed": 2,
+    "cases": [
+      "pure valid central source opening removed from exact Align after",
+      "authenticated Optimize incorrectly returned success with revisions8/5"
+    ]
+  },
+  "correction": "Only the new exact-Align exception requires each original hosted record once in the after under its ID and partition-host identity. Original hostedFit remains independent. Global repair/drop policy and full replacement/rehost proof are unchanged.",
+  "ordinaryAfter": {
+    "passed": 40,
+    "seconds": 6.03,
+    "ruff": "passed",
+    "includes": [
+      "pure and real HA central-door Drop atomic refusal",
+      "both stored halves/revisions remain unchanged on refusal",
+      "supported no-openings and central-door Align/store/reload/Undo positives",
+      "pure and actual authenticated ordinary opening Drop without carrier trim remains accepted"
+    ]
+  },
+  "setupErrorSeparate": "The first new ordinary Drop control used a raw v10 source without wall_segments as its submitted after and was refused by schema. The control now uses the genuine schema-complete TS candidate with its original unsnapped carrier restored; no validator changed for the setup error.",
+  "backendSourceSha256": "35703b80b7d54aa52499fb7e956828d5d0f394272391a53d45f09247d60f88cb",
+  "staticReadiness": {
+    "definitions": 1891,
+    "uniqueSourceReads": 1027,
+    "browserGuards": 523,
+    "mutantsExecuted": 0,
+    "caught": "unknown"
+  },
+  "witness": "optimize-align-drops-valid-original-opening-1061",
+  "earlierSnapshots": [
+    "docs/development-notes/room-contact-grid-preparation.json",
+    "docs/development-notes/room-contact-grid-hosted-fit.json"
+  ],
+  "finalPending": "No final combined build/native/hook or task push before accepted #999, following #1050. Historical counters are not assigned to a future source SHA.",
+  "receiptSha256": {
+    "artifacts/1061-valid-opening-drop-before.log": "dca06a4650e3f6089dd656c3c9df195d2c8496c2fd368896d8a5cb29cf7158fa",
+    "artifacts/1061-valid-opening-drop-after-controls-fixed.log": "33ccb1646a517a84e7dd6f75dbae80a14a2773bdac155e7e6fa9be70bca7c539",
+    "artifacts/1061-valid-opening-drop-readiness.log": "ccaec99133f401f50f9ddb839568117afb6b026a60229aa32df6915ffa7a031b"
+  }
+}

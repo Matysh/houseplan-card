@@ -5403,3 +5403,9 @@ same existing scalar canonicalization before the established Align EPS check.
 Deleting a record from the submitted after cannot authorize a trim that the
 original TS source would skip. Supported no-opening/central-door cases remain;
 no broader opening deletion ban or new tolerance is introduced.
+
+`room-contact-grid-drop.json` records the independent valid central-record Drop
+RED/AFTER. Source hostedFit is necessary but not sufficient: the exact-Align
+exception also retains each hosted record by ID and partition-host identity.
+An ordinary no-trim Optimize Drop remains accepted in pure and authenticated HA
+controls, so the new check does not replace the general repair/drop policy.

@@ -21414,7 +21414,7 @@ const roomContact1061Cases = [
     guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
     because: '#1061: a same-ID carrier still needs independent full removal proof unless its endpoints match the exact canonical Align result; ordinary short-cut/narrower/future inputs refuse.',
     patches: [{file:'custom_components/houseplan/validation.py',
-      find:'    if _exact_partition_align(old_partition, current, old_space):',replace:'    if True:'}],
+      find:'    if _exact_partition_align(old_partition, current, old_space, space):',replace:'    if True:'}],
   },
   {
     id: 'optimize-unknown-carrier-uses-align-1061',
@@ -21430,6 +21430,14 @@ const roomContact1061Cases = [
     because: '#1061: the existing TS Align considers the original hosted openings; deleting a record in a crafted after cannot authorize the trim that this exact source would skip.',
     patches: [{file:'custom_components/houseplan/validation.py',
       find:'    for opening in old_space.get("openings") or []:',replace:'    for opening in []:'}],
+  },
+  {
+    id: 'optimize-align-drops-valid-original-opening-1061',
+    guard: 'python3 -m pytest tests_backend/test_room_contact_grid.py -q',
+    because: '#1061: original hostedFit alone is not a retained-record proof; exact same-ID Align cannot remove the valid central source opening from its submitted after.',
+    patches: [{file:'custom_components/houseplan/validation.py',
+      find:'        if not opening.get("id") or len(retained) != 1:\n            return False',
+      replace:'        if not opening.get("id") or len(retained) != 1:\n            continue'}],
   },
 ];
 

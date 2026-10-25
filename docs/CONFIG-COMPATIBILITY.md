@@ -1655,7 +1655,11 @@ pre-snap canonicalization, JavaScript nearest-grid rounding and storage target
 for a known same-ID carrier with unchanged metadata/thickness. Original hosted
 openings must fit the snapped axis using the same pre-Align scalar
 canonicalization and existing EPS; deleting an opening from the submitted after
-cannot erase this source constraint. Only that exact nondegenerate result avoids
+cannot erase this source constraint. Each original hosted record must remain
+present once under its own ID and partition-host identity for this new exception.
+This is not a global deletion ban: an unchanged carrier and the original complete
+replacement/rehost proofs retain their ordinary Optimize/repair policy.
+Only that exact nondegenerate result avoids
 structural-removal proof. Other cuts, unknown
 carrier semantics, changed thickness, removed/replaced carriers and opening
 host/fit/jamb checks retain the complete original proof. Ordinary config/set

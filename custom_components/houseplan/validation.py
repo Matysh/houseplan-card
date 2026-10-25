@@ -439,7 +439,7 @@ def _optimize_partition_needs_proof(old_partition: dict, space: dict, old_space:
         return False
     if current is None:
         return True
-    if _exact_partition_align(old_partition, current, old_space):
+    if _exact_partition_align(old_partition, current, old_space, space):
         return False
     try:
         old_a, old_b = old_partition["a"], old_partition["b"]
@@ -453,7 +453,7 @@ def _optimize_partition_needs_proof(old_partition: dict, space: dict, old_space:
     )
 
 
-def _exact_partition_align(before: dict, after: dict, old_space: dict) -> bool:
+def _exact_partition_align(before: dict, after: dict, old_space: dict, space: dict) -> bool:
     """Prove the existing TS Align + storage result, never an arbitrary trim.
 
     Optimize canonicalizes its input before snapN, then canonicalizes storage.
@@ -502,6 +502,17 @@ def _exact_partition_align(before: dict, after: dict, old_space: dict) -> bool:
         along = t * span
         if (not math.isfinite(length) or length <= 0 or not math.isfinite(t) or not 0 <= t <= 1
                 or along - length / 2 < -epsilon or along + length / 2 > span + epsilon):
+            return False
+        # This narrow exception cannot use an omitted/replaced source opening
+        # to authorize a carrier trim. Other Optimize repairs still use their
+        # original full structural/rehost proof outside this exception.
+        retained = [item for item in space.get("openings") or []
+                    if isinstance(item, dict) and item.get("id") == opening.get("id")]
+        if not opening.get("id") or len(retained) != 1:
+            return False
+        retained_host = retained[0].get("host")
+        if (not isinstance(retained_host, dict) or retained_host.get("kind") != "partition"
+                or retained_host.get("id") != before["id"]):
             return False
     return True
 
