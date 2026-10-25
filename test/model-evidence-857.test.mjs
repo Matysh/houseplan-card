@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, rmSync, mkdirSync, copyFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync, mkdirSync, copyFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -10,6 +10,9 @@ import { reviewContext } from '../scripts/review-context.mjs';
 import { issueBodyDigest, ANCHOR_MARKER } from '../scripts/review-doc-guard.mjs';
 import { modelObservations, tokenUsage } from '../scripts/process-metrics.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { shellPath } from './helpers/posix-shell.mjs';
+import { createHash } from 'node:crypto';
+import { parseManifest } from '../scripts/review-result-gate.mjs';
 
 const root = new URL('..', import.meta.url);
 const sha = 'a'.repeat(40), tree = 'b'.repeat(40), body = 'immutable issue body';
@@ -116,15 +119,42 @@ test('#857 real ship seal step cannot publish green for interrupted output', t =
   for (const file of ['model-usage-details.mjs', 'model-usage.mjs', 'spawn-portable.mjs'])
     copyFileSync(new URL(`scripts/${file}`, root), join(dir, 'scripts', file));
   const source = join(dir, 'review.md'); writeFileSync(source, 'Full otherwise-green review');
-  const execute = line => runStep(step, step.run, { cwd: dir, env: { ...process.env, SOURCE: source,
-    OUT: JSON.stringify({ high: 0, medium: 0, low: 0, summary: 'green' }), RUNNER_TEMP: dir, USAGE_DETAILS: line } });
+  const output = join(dir, 'outputs');
+  const producer = { schema: 1, kind: 'ship', repo: 'fixture/repo', candidate: sha, base: 'v1.82.0',
+    document: 'docs/reviews/SHIP-REVIEW-v1.83.0-beta.2.md', input_manifest: 'c'.repeat(64), run_id: '42', run_attempt: '1' };
+  const execute = line => runStep(step, step.run, { cwd: dir, env: { ...process.env, SOURCE: shellPath(source),
+    OUT: JSON.stringify({ high: 0, medium: 0, low: 0, summary: 'green' }), RUNNER_TEMP: shellPath(dir), USAGE_DETAILS: line,
+    REPO: producer.repo, CANDIDATE: producer.candidate, BASE: producer.base, DOC: producer.document,
+    INPUT_MANIFEST: producer.input_manifest, GITHUB_RUN_ID: producer.run_id, GITHUB_RUN_ATTEMPT: producer.run_attempt,
+    GITHUB_OUTPUT: shellPath(output) } });
   const interrupted = formatModelDetails(modelDetailsFromMessages([{ ...sdk, subtype: 'error_max_turns' }]));
-  assert.notEqual(execute(interrupted).status, 0);
-  assert.equal(execute(details).status, 0);
+  const refused = execute(interrupted);
+  assert.notEqual(refused.status, 0, refused.stdout + refused.stderr);
+  assert.equal(existsSync(join(dir, 'ship-review-result')), false, 'interrupted output never reaches the seal');
+  assert.equal(existsSync(output), false, 'interrupted output emits no producer authority');
+  const complete = execute(details);
+  assert.equal(complete.status, 0, complete.stdout + complete.stderr);
+  const resultDir = join(dir, 'ship-review-result');
+  assert.deepEqual(JSON.parse(readFileSync(join(resultDir, 'producer.json'), 'utf8')), producer);
+  const manifest = readFileSync(join(resultDir, 'manifest.sha256'), 'utf8');
+  const entries = parseManifest(manifest);
+  assert.ok(entries, 'real sha256sum manifest parses on Windows and Linux');
+  assert.deepEqual(entries.map(entry => entry.name).sort(), ['producer.json', 'result.json', 'ship-review.md']);
+  for (const entry of entries)
+    assert.equal(entry.hash, createHash('sha256').update(readFileSync(join(resultDir, entry.name))).digest('hex'));
+  const manifestHash = createHash('sha256').update(manifest).digest('hex');
+  const outputs = readFileSync(output, 'utf8');
+  assert.match(outputs, /^producer_run_id=42$/m);
+  assert.match(outputs, /^producer_attempt=1$/m);
+  assert.ok(outputs.includes(`producer_manifest=${manifestHash}\n`));
+  assert.match(outputs, /^artifact=ship-review-result-42-1$/m);
+  const runner = readFileSync(new URL('scripts/review-native-runner.mjs', root), 'utf8');
+  assert.match(runner, /'--model', 'claude-sonnet-5', '--effort', 'high', '--max-turns', String\(config.maxTurns\)/);
   for (const file of ['_process.yml', '_ship-review.yml']) {
     const text = readFileSync(new URL(`.github/workflows/${file}`, root), 'utf8');
-    assert.match(text, /--max-turns 150/);
-    assert.match(text, /--model claude-sonnet-5\s/);
-    assert.match(text, /--effort high\s/);
+    const review = findStep(text, { name: 'Review' });
+    assert.match(review.run, /review-native-runner\.mjs"$/);
+    const block = text.split('\n').slice(review.line - 1, review.last).join('\n');
+    assert.match(block, /REVIEW_MAX_TURNS: 150/);
   }
 });

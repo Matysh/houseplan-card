@@ -95,12 +95,14 @@ test('#749 AC2: в job integrate ни один шаг не зовёт скрип
   // Все вызовы, которые issue называет, — через снимок (#749 К2).
   const byScript = (name) => calls.filter((call) => call.endsWith(`: ${name}`)).length;
   assert.deepEqual(
-    Object.fromEntries(['review-result-gate.mjs', 'review-doc-guard.mjs', 'reviews-index.mjs', 'merge-candidate.mjs', 'process-track.mjs', 'status-label.mjs']
+    Object.fromEntries(['review-result-gate.mjs', 'review-doc-guard.mjs', 'reviews-index.mjs', 'merge-candidate.mjs', 'process-track.mjs', 'review-publication.mjs', 'status-label.mjs']
       .map((name) => [name, byScript(name)])),
     // review-doc-guard: якорь, его повтор с сертификатом после findings attach,
     // рубеж индекса, два рубежа диапазона (до и после
     // ребейза) и --doc=- шага #413; merge-candidate: два разбора отказа push и слияние.
-    { 'review-result-gate.mjs': 1, 'review-doc-guard.mjs': 6, 'reviews-index.mjs': 1, 'merge-candidate.mjs': 3, 'process-track.mjs': 1, 'status-label.mjs': 1 },
+    // process-track: pre-publication routing and later status decision;
+    // review-publication: sealed publication, document receipt, reuse gate.
+    { 'review-result-gate.mjs': 1, 'review-doc-guard.mjs': 6, 'reviews-index.mjs': 1, 'merge-candidate.mjs': 3, 'process-track.mjs': 2, 'review-publication.mjs': 3, 'status-label.mjs': 1 },
     calls.join('\n'),
   );
   const publish = steps.find(step => step.name === 'Опубликовать документ ревью').code;
@@ -187,7 +189,8 @@ test('#749 AC2: снимок самодостаточен — шаг как ес
   const { resolveJobRules } = await import(pathToFileURL(join(dir, 'scripts', 'ci-proof.mjs')).href);
   assert.doesNotThrow(() => resolveJobRules(), 'контракт имён job читается из validate.yml снимка (#622)');
   // Каждый скрипт, который зовут шаги, импортируется из снимка без node_modules.
-  for (const name of ['review-result-gate', 'review-doc-guard', 'reviews-index', 'merge-candidate', 'process-track', 'status-label']) {
-    await import(pathToFileURL(join(dir, 'scripts', `${name}.mjs`)).href);
+  const used = new Set(integrateSteps().flatMap(step => [...step.code.matchAll(/node "\$TOOLS\/scripts\/([\w.-]+\.mjs)"/g)].map(match => match[1])));
+  for (const name of used) {
+    await import(pathToFileURL(join(dir, 'scripts', name)).href);
   }
 });
