@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { taskCheckSource, loadTaskCheckContexts } from '../scripts/task-check-source.mjs';
 import { taskCheckCli, taskCheckEnvironment, controllerSupportsTaskChecks, taskCheckReusePolicy } from '../scripts/task-check-reuse-cli.mjs';
 import { TASK_CHECK_JOB_NAMES, taskCheckPlanFromSnapshot, makeTaskCheckRecord } from '../scripts/task-check-reuse.mjs';
@@ -57,12 +59,14 @@ function zip(proof) {
   end.writeUInt32LE(central.length + name.length, 12); end.writeUInt32LE(local.length + name.length + body.length, 16);
   return Buffer.concat([local, name, body, central, name, end]);
 }
-function api(f, { mutate = value => value } = {}) {
+function api(f, { mutate = value => value, unavailable = {} } = {}) {
   const calls = [];
   const fetchImpl = async url => {
     calls.push(url);
     if (url === f.context.artifact.archive_download_url) return { ok: true, arrayBuffer: async () => zip(f.context.proof) };
     const path = url.split(`/repos/${repo}/`)[1]; let value;
+    if (unavailable[path] === 'transport') throw Error('ordinary source transport reset');
+    if (unavailable[path]) return { ok: false, status: unavailable[path] };
     if (path === 'actions/runs/42/attempts/2') value = f.context.run;
     else if (path === 'actions/runs/42') value = f.context.latestRun;
     else if (path === 'actions/runs/42/attempts/2/jobs?per_page=100') value = { total_count: f.context.jobs.length, jobs: f.context.jobs };
@@ -73,7 +77,10 @@ function api(f, { mutate = value => value } = {}) {
       const id = Number(path.split('/')[2]);
       value = { total_count: f.companionJobs[id].length, jobs: f.companionJobs[id] };
     }
-    else if (path?.startsWith('git/trees/')) value = { sha: tree, truncated: false,
+    else if (path?.startsWith('git/commits/')) value = { sha: path.slice('git/commits/'.length), tree: { sha: tree } };
+    // GitHub accepts a commit alias here but echoes that requested SHA. It
+    // is not the commit's tree identity; only /git/commits binds those two.
+    else if (path?.startsWith('git/trees/')) value = { sha: path.split('/')[2].split('?')[0], truncated: false,
       tree: [...f.source.entries].map(([path, entry]) => ({ path, type: 'blob', mode: entry.mode, sha: entry.oid })) };
     else if (path?.startsWith('git/blobs/')) {
       const oid = path.slice('git/blobs/'.length), pair = [...f.source.entries].find(([, entry]) => entry.oid === oid);
@@ -83,6 +90,76 @@ function api(f, { mutate = value => value } = {}) {
   };
   return { calls, fetchImpl };
 }
+
+test('#1074 cold source authenticates commit identity before requesting the actual tree', async () => {
+  const f = await fixture('tooling'), network = api(f);
+  const contexts = await loadTaskCheckContexts({ proof: f.consumer, repo, candidateSha,
+    root: 'missing-local-repo', fetchImpl: network.fetchImpl, now });
+  assert.equal(contexts.get('tooling').accepted, true, contexts.get('tooling').reason);
+  for (const id of [sha, candidateSha]) assert.ok(network.calls.some(url => url.endsWith('/git/commits/' + id)));
+  const trees = network.calls.filter(url => url.includes('/git/trees/'));
+  assert.equal(trees.length, 1, 'two commits sharing one tree reuse its immutable response');
+  assert.ok(trees[0].endsWith('/git/trees/' + tree + '?recursive=1'), 'the tree endpoint receives a tree SHA, never a commit alias');
+});
+
+test('#1074 foreign or malformed immutable commit responses refuse both snapshot roles', async () => {
+  for (const id of [sha, candidateSha]) for (const malformed of [
+    null, [], {}, { sha: 'd'.repeat(40), tree: { sha: tree } },
+    { sha: id }, { sha: id, tree: null }, { sha: id, tree: { sha: 'not-a-tree-sha' } },
+  ]) {
+    const f = await fixture('tooling'), network = api(f, { mutate: (value, path) => path === 'git/commits/' + id ? malformed : value });
+    const contexts = await loadTaskCheckContexts({ proof: f.consumer, repo, candidateSha,
+      root: 'missing-local-repo', fetchImpl: network.fetchImpl, now });
+    assert.equal(contexts.get('tooling').accepted, false, JSON.stringify({ id, malformed }));
+    assert.match(contexts.get('tooling').reason, /commit differs from immutable source/);
+  }
+});
+
+test('#1074 foreign, echo-commit or incomplete tree responses cannot authenticate a source', async () => {
+  for (const malformed of [
+    null, [], {}, { sha: 'd'.repeat(40), truncated: false, tree: [] },
+    { sha, truncated: false, tree: [] }, { sha: candidateSha, truncated: false, tree: [] },
+    { sha: tree, truncated: true, tree: [] }, { sha: tree, tree: [] },
+    { sha: tree, truncated: 0, tree: [] }, { sha: tree, truncated: false, tree: {} },
+  ]) {
+    const f = await fixture('tooling'), network = api(f, { mutate: (value, path) => path.startsWith('git/trees/') ? malformed : value });
+    const contexts = await loadTaskCheckContexts({ proof: f.consumer, repo, candidateSha,
+      root: 'missing-local-repo', fetchImpl: network.fetchImpl, now });
+    assert.equal(contexts.get('tooling').accepted, false, JSON.stringify(malformed));
+    assert.match(contexts.get('tooling').reason, /incomplete\/foreign task-check Git tree/);
+  }
+});
+
+test('#1074 failed commit/tree API status and transport remain explicit refusals', async () => {
+  for (const [path, failure] of [
+    ['git/commits/' + sha, 404], ['git/commits/' + candidateSha, 403],
+    ['git/trees/' + tree + '?recursive=1', 500], ['git/commits/' + sha, 'transport'],
+    ['git/trees/' + tree + '?recursive=1', 'transport'],
+  ]) {
+    const f = await fixture('tooling'), network = api(f, { unavailable: { [path]: failure } });
+    const contexts = await loadTaskCheckContexts({ proof: f.consumer, repo, candidateSha,
+      root: 'missing-local-repo', fetchImpl: network.fetchImpl, now });
+    assert.equal(contexts.get('tooling').accepted, false, path);
+    assert.match(contexts.get('tooling').reason, failure === 'transport' ? /ordinary source transport reset/ : new RegExp('source API ' + failure));
+  }
+});
+
+test('#1074 available immutable local snapshots never request remote commit/tree bodies', async () => {
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+  const localSha = git(['rev-parse', 'HEAD']), localTree = git(['rev-parse', 'HEAD^{tree}']);
+  const f = await fixture('tooling');
+  f.record.sha = localSha;
+  f.context.run.head_sha = localSha; f.context.latestRun.head_sha = localSha;
+  const network = api(f), source = taskCheckSource({ repo, token: 'test-token', candidateSha: localSha, root,
+    fetchImpl: network.fetchImpl });
+  const context = await source(f.record);
+  assert.equal(context.sourceSnapshot.sha, localSha); assert.equal(context.candidateSnapshot.sha, localSha);
+  assert.equal(context.sourceSnapshot.tree, localTree); assert.equal(context.candidateSnapshot.tree, localTree);
+  assert.deepEqual(context.sourceSnapshot.read('scripts/task-check-source.mjs'),
+    execFileSync('git', ['show', localSha + ':scripts/task-check-source.mjs'], { cwd: root }));
+  assert.equal(network.calls.some(url => url.includes('/git/')), false, 'local snapshots avoid remote Git metadata and blobs');
+});
 
 test('#1060 cold probe bootstrap and fresh policy do not fetch the index or build a receipt plan', async () => {
   for (const options of [{ supported: false, env: {} }, { supported: true, env: { TASK_CHECK_FRESH: 'true' } }]) {

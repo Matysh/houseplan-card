@@ -20,10 +20,15 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5444 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
+| Tests | Node unit 5449 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Remote scoped task snapshots (#1074) bind the immutable commit API response to
+its actual tree before reading the tree. Commit aliases are not tree identities;
+foreign/incomplete/error responses remain refused, with unchanged local reads,
+deadlines and independent source authentication.
 
 Background group colour/opacity (#1071) retains its sidebar-only edit contract;
 the toolbar palette remains creation defaults. Structural wall/light keys
