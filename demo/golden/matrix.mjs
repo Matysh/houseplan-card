@@ -1,7 +1,8 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 89;
+// Keyboard-state preparation is part of these three existing Plan scene definitions.
+export const GOLDEN_MATRIX_VERSION = 90;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.

@@ -182,3 +182,101 @@ async def test_issue_1061_ordinary_drop_policy_without_carrier_trim_is_unchanged
     stored = await runtime.config_store.async_load()
     assert stored["config"]["spaces"][0]["partitions"] == case["source"]["spaces"][0]["partitions"]
     assert stored["config"]["spaces"][0]["openings"] == []
+
+
+# This is a transport DTO, not a Python implementation of Optimize. The TS unit
+# checks its exact output and fixed point with optimizePlans + all five shared
+# invariant families. The ordinary HA writer must first produce the EXACT input.
+ROOM_OPTIMIZE = json.loads((Path(__file__).parents[1] / "test" / "fixtures"
+                           / "1061-room-optimize-deltas.json").read_text(encoding="utf-8"))
+
+
+def _room_optimize_target(config: dict, layout: dict, edits: list) -> dict:
+    target = copy.deepcopy({"config": config, "layout": layout})
+    for edit in edits:
+        owner = target
+        for key in edit["path"][:-1]:
+            assert key in owner if isinstance(owner, dict) else 0 <= key < len(owner)
+            owner = owner[key]
+        key = edit["path"][-1]
+        assert key in owner if isinstance(owner, dict) else 0 <= key < len(owner)
+        assert owner[key] == edit["before"], f"stale Optimize DTO: {edit['path']}"
+        if edit.get("remove"):
+            del owner[key]
+        else:
+            owner[key] = copy.deepcopy(edit["after"])
+    return target
+
+
+@pytest.mark.parametrize("recipe", ROOM_OPTIMIZE["rows"], ids=lambda row: row["name"])
+async def test_issue_1061_created_room_then_full_optimize_reload_and_undo(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, recipe: dict,
+) -> None:
+    from hashlib import sha256
+
+    assert ROOM_OPTIMIZE["schema"] == 1
+    fixture_path = Path(__file__).parents[1] / "test" / "fixtures" / "1061-room-candidates.json"
+    assert sha256(fixture_path.read_bytes()).hexdigest() == ROOM_OPTIMIZE["sourceFixtureSha256"]
+    case = ROOM_CASES[recipe["caseIndex"]]
+    entry, runtime = await _setup(hass)
+    await runtime.config_store.async_save({"config": copy.deepcopy(case["source"]), "rev": 7})
+    await runtime.store.async_save({"layout": copy.deepcopy(ROOM_OPTIMIZE["layout"]), "rev": 4})
+    client = await hass_ws_client(hass)
+    config_rev = 7
+    for candidate in case["candidates"][:recipe["candidateIndex"] + 1]:
+        await client.send_json_auto_id({
+            "type": "houseplan/config/set", "config": copy.deepcopy(candidate), "expected_rev": config_rev,
+        })
+        created = await client.receive_json()
+        assert created["success"], created
+        config_rev += 1
+
+    before_config = await runtime.config_store.async_load()
+    before_layout = await runtime.store.async_load()
+    assert before_config["rev"] == config_rev
+    assert before_layout["rev"] == 4
+    # The cross-language join is exact, including unrelated spaces/records and
+    # identities. No canonicalizer/projection may hide a mismatched HA input.
+    assert before_config["config"] == case["candidates"][recipe["candidateIndex"]]
+    assert before_layout["layout"] == ROOM_OPTIMIZE["layout"]
+    target = _room_optimize_target(before_config["config"], before_layout["layout"], recipe["edits"])
+
+    # The on-grid control is already changed=False in the TS producer: the UI
+    # sends nothing. Its unchanged pair is submitted here as an extra API
+    # validation control, not an assertion that UI issues a redundant write.
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize", "config": target["config"], "layout": target["layout"],
+        "expected_config_rev": config_rev, "expected_layout_rev": 4,
+    })
+    optimized = await client.receive_json()
+    assert optimized["success"], optimized
+    assert optimized["result"]["config_rev"] == config_rev + 1
+    assert optimized["result"]["layout_rev"] == 5
+    after_config = await runtime.config_store.async_load()
+    after_layout = await runtime.store.async_load()
+    assert after_config["config"] == target["config"]
+    assert after_config["rev"] == config_rev + 1
+    assert after_layout["layout"] == target["layout"]
+    assert after_layout["rev"] == 5
+    assert "optimize_pending" not in after_layout
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    reloaded = get_data(hass)
+    assert reloaded is not None
+    assert await reloaded.config_store.async_load() == after_config
+    assert await reloaded.store.async_load() == after_layout
+    # Exact target equality above joins this persisted pair to the real TS
+    # second-Optimize no-op assertion; HA does not require Node or a test build.
+    restored_client = await hass_ws_client(hass)
+    await restored_client.send_json_auto_id({
+        "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": config_rev + 1, "expected_layout_rev": 5,
+    })
+    undone = await restored_client.receive_json()
+    assert undone["success"], undone
+    restored_config = await reloaded.config_store.async_load()
+    restored_layout = await reloaded.store.async_load()
+    assert restored_config["config"] == before_config["config"]
+    assert restored_layout["layout"] == before_layout["layout"]
+    assert restored_config["rev"] == config_rev + 2
+    assert restored_layout["rev"] == 6

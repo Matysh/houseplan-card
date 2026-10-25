@@ -80,3 +80,68 @@ test('#1061 HA Align fixtures are exact current optimizer outputs and a second O
   assert.deepEqual(optimizePlans(source,{}).config.spaces[0].partitions,cases[1].candidate.spaces[0].partitions,
     'hostedFit consumes the existing scalar-canonicalized input');
 });
+
+
+// Cross-runtime join: the existing real _applyWallFaceBatch producer pins each
+// creation input; these explicit synthetic DTO edits pin full Optimize output.
+// The HA test must first persist EXACTLY the same input through config/set.
+const roomOptimizeFixture = JSON.parse(fs.readFileSync(
+  new URL('./fixtures/1061-room-optimize-deltas.json', import.meta.url), 'utf8'));
+const roomCandidatesBytes = fs.readFileSync(new URL('./fixtures/1061-room-candidates.json', import.meta.url));
+const roomCandidates = JSON.parse(roomCandidatesBytes.toString('utf8'));
+const {createHash} = await import('node:crypto');
+const {
+  checkReferences, checkWallKeys, checkMixedRoleRecords, checkHiddenObstacles, checkPhysicalGeometry,
+} = await import('../scripts/model-invariants.mjs');
+assert.equal(roomOptimizeFixture.schema, 1);
+assert.equal(createHash('sha256').update(roomCandidatesBytes).digest('hex'),
+  roomOptimizeFixture.sourceFixtureSha256, 'the real batch input fixture changed; re-produce the join explicitly');
+assert.deepEqual(roomOptimizeFixture.rows.map(row => row.name), [
+  'first-face-step1', 'second-face-step1', 'sequential-faces-step1',
+  'sequential-faces-step2', 'on-grid-control-step1',
+]);
+
+function expectedRoomOptimizePair(input, edits) {
+  const target = structuredClone(input);
+  for (const edit of edits) {
+    let owner = target;
+    for (const key of edit.path.slice(0, -1)) {
+      assert.ok(Object.hasOwn(owner, key), `missing DTO input path: ${edit.path}`);
+      owner = owner[key];
+    }
+    const key = edit.path.at(-1);
+    assert.ok(Object.hasOwn(owner, key), `missing DTO input value: ${edit.path}`);
+    assert.deepEqual(owner[key], edit.before, `stale Optimize DTO: ${edit.path}`);
+    if (edit.remove) delete owner[key];
+    else owner[key] = structuredClone(edit.after);
+  }
+  return target;
+}
+
+const roomOptimizeViolations = ({config, layout}) => {
+  const notes = [];
+  return [
+    ...checkReferences({config, layout}, {notes}), ...checkWallKeys(config, {notes}),
+    ...checkMixedRoleRecords(config), ...checkHiddenObstacles(config), ...checkPhysicalGeometry(config),
+  ];
+};
+
+for (const row of roomOptimizeFixture.rows) {
+  test(`#1061 ${row.name}: real creation -> full Optimize -> shared invariants -> exact no-op`, () => {
+    const input = {config: structuredClone(roomCandidates[row.caseIndex].candidates[row.candidateIndex]),
+      layout: structuredClone(roomOptimizeFixture.layout)};
+    const original = structuredClone(input);
+    const expected = expectedRoomOptimizePair(input, row.edits);
+    assert.deepEqual(roomOptimizeViolations(input), [], 'all five pre-Optimize invariant families');
+    const result = optimizePlans(input.config, input.layout);
+    assert.deepEqual(input, original, 'Optimize cannot mutate the persisted input');
+    assert.equal(result.changed, row.changed);
+    assert.deepEqual({config: result.config, layout: result.layout}, expected,
+      'the DTO is the full current TS Optimize output, not a Python optimizer');
+    assert.deepEqual(roomOptimizeViolations(expected), [], 'all five post-Optimize invariant families');
+    const again = optimizePlans(expected.config, expected.layout);
+    assert.equal(again.changed, false);
+    assert.deepEqual({config: again.config, layout: again.layout}, expected,
+      'the EXACT pair subsequently persisted by HA is an Optimize fixed point');
+  });
+}

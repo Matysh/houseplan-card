@@ -997,6 +997,78 @@ export function prepareGoldenFixture(scenario) {
   return fixture;
 }
 
+/** Only the three existing Plan frames own this keyboard-state contract.
+ * Shared-page UA focus history must not choose whether their mode tab has a ring.
+ * Keep the full scene/persistence oracle; a live Resize preview is intentional.
+ */
+async function preparePlanKeyboardCapture(page, scenario) {
+  await page.waitForFunction(() => !window.__goldenCard.renderRoot.querySelector('.bootveil, .stage.hpsettle'),
+    undefined, { timeout: 9000 });
+  const guard = await page.evaluateHandle(({ space, tool }) => {
+    const card = window.__goldenCard, root = card.renderRoot;
+    const tab = root.querySelector('[data-hp="mode-tab"][data-mode="plan"].active');
+    const deepActive = () => {
+      let node = document.activeElement;
+      while (node?.shadowRoot?.activeElement) node = node.shadowRoot.activeElement;
+      return node;
+    };
+    if (!tab || deepActive() !== tab || card._mode !== 'plan' || card._space !== space || card._tool !== tool)
+      throw Error('golden Plan keyboard precondition lacks the current active Plan tab/mode/space/tool');
+    if (tool === 'resize' && !card._resize?.preview)
+      throw Error('golden Plan keyboard precondition lost the intended live Resize preview');
+    const read = () => {
+      const stage = root.querySelector('.stage');
+      if (!stage) throw Error('golden Plan keyboard precondition lacks scene geometry');
+      const pending = { config: card._saveConfigDebounced.pending(), layout: card._persistLayout.pending(),
+        writes: card._writesPending, dirty: card._dirtyPos.size, sent: card._sentPos.size,
+        mode: card._modeTransitionBusy, camera: !!card._cameraTransition?.active };
+      if (Object.values(pending).some(Boolean)) throw Error(`golden Plan keyboard precondition is not settled: ${JSON.stringify(pending)}`);
+      const rect = stage.getBoundingClientRect();
+      return { config: JSON.stringify(card._serverCfg), layout: JSON.stringify(card._layout),
+        cfgRev: card._cfgRev, layoutRev: card._layoutRev, mode: card._mode, space: card._space, tool: card._tool,
+        stageRect: [rect.x, rect.y, rect.width, rect.height],
+        geometry: [stage, ...stage.querySelectorAll('svg,g,path,polygon,polyline,line,rect,circle,ellipse,image,text')]
+          .map(node => ({ tag: node.tagName, id: node.getAttribute('data-id'), attrs: Object.fromEntries(
+            ['d','points','x','y','x1','x2','y1','y2','cx','cy','r','rx','ry','width','height','transform','viewBox']
+              .filter(key => node.hasAttribute(key)).map(key => [key, node.getAttribute(key)])) })),
+        resize: card._resize ? { delta: card._resize.delta, preview: card._resize.preview,
+          liveLabels: card._resize.liveLabels, roomIds: card._resize.plan?.roomIds } : null };
+    };
+    const events = [], listener = event => { if (event.key === 'Tab') events.push(event); };
+    const baseline = JSON.stringify(read()), writeChain = card._writeChain, resize = card._resize;
+    document.addEventListener('keydown', listener, true);
+    return { card, tab, root, deepActive, read, baseline, writeChain, resize, events, listener };
+  }, { space: scenario.space, tool: scenario.safeResizePreview ? 'resize' : 'select' });
+  try {
+    await page.keyboard.press('Shift+Tab');
+    if (!(await guard.evaluate(state => state.deepActive() !== state.tab)))
+      throw Error(`golden Plan Shift+Tab did not leave its actual tab: ${scenario.id}`);
+    await page.keyboard.press('Tab');
+    await page.evaluate(async () => {
+      await window.__goldenCard.updateComplete;
+      await new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
+    });
+    return await guard.evaluate((state, id) => {
+      if (window.__goldenCard !== state.card || state.deepActive() !== state.tab
+          || !state.tab.matches(':focus-visible')) throw Error(`golden Plan keyboard focus did not return: ${id}`);
+      const keys = state.events.map(event => ({ trusted: event.isTrusted, shift: event.shiftKey,
+        defaultPrevented: event.defaultPrevented }));
+      if (keys.length !== 2 || !keys[0].shift || keys[1].shift
+          || keys.some(event => !event.trusted || event.defaultPrevented))
+        throw Error(`golden Plan keyboard input was not ordinary navigation: ${id}`);
+      if (state.card._writeChain !== state.writeChain || state.card._resize !== state.resize
+          || JSON.stringify(state.read()) !== state.baseline)
+        throw Error(`golden Plan keyboard prep changed persistence, preview or geometry: ${id}`);
+      return { precondition: 'native Shift+Tab then Tab', focusVisible: true,
+        mode: state.card._mode, space: state.card._space, tool: state.card._tool,
+        persistenceAndGeometryUnchanged: true, trustedTabEvents: keys };
+    }, scenario.id);
+  } finally {
+    await guard.evaluate(state => document.removeEventListener('keydown', state.listener, true));
+    await guard.dispose();
+  }
+}
+
 export async function prepareGoldenScenario(page, scenario) {
   await stableEnvironment(page, scenario);
   // Scenarios share one Playwright page, including its pointer position. A
@@ -2787,6 +2859,11 @@ export async function prepareGoldenScenario(page, scenario) {
       if ((await line.textContent()).trim() !== String(lqi)) throw new Error(`direct LQI frame missing ${id}=${lqi}`);
     }
     result.directLqi = { values: scenario.directLqi, diagnosticStatesAbsent: true };
+  }
+  if (scenario.id === 'geometry-plan-editor-dark'
+      || scenario.id === 'safe-resize-handles-clamp-light'
+      || scenario.id === 'safe-resize-handles-clamp-dark') {
+    result.planKeyboardFocus = await preparePlanKeyboardCapture(page, scenario);
   }
   return result;
 }

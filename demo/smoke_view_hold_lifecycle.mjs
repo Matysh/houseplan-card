@@ -7,6 +7,7 @@ import { launchColdView, reportPageErrors } from './serve.mjs';
 const out = {};
 const DEVICE = 'houseplan-card .dev[data-id="d_light1"]';
 const INFO = 'houseplan-card hp-dialog[data-kind="info"]';
+const SETTINGS = 'houseplan-card hp-dialog[data-kind="marker"]';
 const wait = (page, ms = 750) => page.waitForTimeout(ms);
 const point = async (locator) => {
   const box = await locator.boundingBox();
@@ -19,16 +20,19 @@ const state = (page) => page.evaluate(() => {
     light: c.hass.states['light.ceiling'].state, info: c._infoCard?.id ?? null,
     fired: c._holdFired, owner: c._viewHold.pointerId, pointers: c._pointers.size,
     contacts: c._touchContacts.size, view: JSON.stringify(c._view),
-    more: window.__holdMoreInfo, space: c._space,
+    more: window.__holdMoreInfo, services: window.__serviceCalls.length, space: c._space,
+    settings: c._markerDialog?.devId ?? null, canEdit: c._canEdit, kiosk: c._kiosk, mode: c._mode,
   };
 });
 const sameInert = async (page, before, name, ms = 750) => {
   await wait(page, ms);
   const after = await state(page);
   assert.equal(after.info, null, `${name}: no device card`);
+  assert.equal(after.settings, null, `${name}: no settings dialog`);
   assert.equal(after.fired, false, `${name}: no fired hold`);
   assert.equal(after.light, before.light, `${name}: no service`);
   assert.equal(after.more, before.more, `${name}: no more-info`);
+  assert.equal(after.services, before.services, `${name}: no service call`);
   out[name] = true;
 };
 const events = (page) => page.evaluate(() => window.__holdEvents);
@@ -288,11 +292,28 @@ const show = (page, kind) => page.evaluate((mode) => {
     await page.mouse.move(q.x, q.y); await page.mouse.down();
     await page.locator(INFO).waitFor({ state: 'attached', timeout: 1600 });
     await page.mouse.up(); await closeInfo(page); out.cleanTrustedMouseHold = true;
-    const count = (await state(page)).more;
-    await page.locator(DEVICE).click({ button: 'right' }); await wait(page, 80);
-    assert.equal((await state(page)).more, count + 1);
-    await page.locator(DEVICE).focus(); await page.keyboard.press('Shift+F10'); await wait(page, 80);
-    assert.equal((await state(page)).more, count + 2);
+    const contextBefore = await state(page);
+    assert.equal(contextBefore.canEdit, true, 'fresh View context uses an eligible writer');
+    assert.equal(contextBefore.kiosk, false, 'fresh View context is outside kiosk');
+    const expectedTarget = await page.locator(DEVICE).getAttribute('data-id');
+    const acceptedSettings = async (name) => {
+      // #1050 AC3: a fresh native View context opens current device settings.
+      await page.locator(SETTINGS).waitFor({ state: 'attached', timeout: 1600 });
+      const accepted = await state(page);
+      assert.equal(accepted.settings, expectedTarget, `${name}: current target settings`);
+      assert.equal(accepted.mode, 'view', `${name}: no editor mode navigation`);
+      assert.equal(accepted.info, null, `${name}: no overlapping device card`);
+      assert.equal(accepted.more, contextBefore.more, `${name}: no HA more-info`);
+      assert.equal(accepted.services, contextBefore.services, `${name}: no service call`);
+      assert.equal(accepted.light, contextBefore.light, `${name}: no target actuation`);
+      await page.locator(SETTINGS).locator('.hpf-footer [data-hp=dialog-cancel]').click();
+      await page.locator(SETTINGS).waitFor({ state: 'detached' });
+      out[name] = true;
+    };
+    await page.locator(DEVICE).click({ button: 'right' });
+    await acceptedSettings('freshRightContextSettings');
+    await page.locator(DEVICE).focus(); await page.keyboard.press('Shift+F10');
+    await acceptedSettings('freshKeyboardContextSettings');
     out.freshDesktopContextIntents = true;
     // Pure touch pan has an inert contextmenu tail, then a clean touch tap works.
     const panBefore = await state(page);

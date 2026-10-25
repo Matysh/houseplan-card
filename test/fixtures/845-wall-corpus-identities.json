@@ -19,6 +19,10 @@
       "configs": 9
     },
     {
+      "file": "test/fixtures/1061-room-optimize-deltas.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
