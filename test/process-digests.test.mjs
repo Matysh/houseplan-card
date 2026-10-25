@@ -97,6 +97,8 @@ const KEY_RULES = {
     ['24-тз-на-ревью', '`docs/reviews/SPEC-REVIEW-<NN>-r<N>.md`'],
     ['27-код-ревью', '`docs/reviews/CODE-REVIEW-<tag|NN>-r<N>.md`'],
     ['27-код-ревью', 'Ревьюер отвечает за полноту доказательств AC, а не заменяет их исполнение'],
+    ['27-код-ревью', 'Независимый поиск дефектов — до авторских выводов'],
+    ['27-код-ревью', 'Качество и читаемость входят в ревью'],
     ['27-код-ревью', 'проверено чтением, не исполнением'],
     ['27-код-ревью', 'Защитный AC доказывается таблицей «чем краснеет»'],
     ['27-код-ревью', 'Пустой третий столбец — находка Medium, а не примечание'],
@@ -280,6 +282,28 @@ function promptFixture(stage, track, findingsRaw = '') {
     assert.fail('Prompt fixture must explicitly handle the actual expression: ' + expression);
   });
 }
+
+// These contracts protect review instructions, not a model's ability to find bugs.
+test('#1063 task and ship review keep independent analysis ahead of evidence and preserve scoped checks', () => {
+  const ship = read('.github/workflows/_ship-review.yml');
+  const shipPrompt = ship.slice(ship.indexOf('          prompt: |'), ship.indexOf('          claude_args: |'));
+  for (const prompt of [promptFixture('code', 'ask'), promptFixture('code', 'show'), shipPrompt]) {
+    const flat = norm(prompt);
+    assert.match(flat, /независимо проследи/);
+    assert.match(flat, /вызывающие пути, инварианты, побочные эффекты и отказы/);
+    assert.match(flat, /реальное окружение против фикстуры, холодное\/прогретое состояние/);
+    assert.match(flat, /неверные\/неоднозначные конструкции, читаемость/);
+    assert.match(flat, /что удалено взамен добавленного/);
+    assert.match(flat, /зелёный proof подтверждает выполненные проверки, а не корректность реализации или полноту сценариев/);
+    assert.match(flat, /oracle нельзя подменять чтением/);
+    assert.match(flat, /полные наборы — предрелизный гейт/);
+  }
+  assert.match(norm(shipPrompt), /не повторяй покрытые проверки/);
+  assert.doesNotMatch(shipPrompt, /Исполняй, где дёшево|`npm test`/);
+  const task = norm(promptFixture('code', 'ask'));
+  assert.ok(task.indexOf('сначала независимо проследи') < task.indexOf('затем сопоставь выводы с авторским'));
+  assert.match(task, /бюджет циклов не смягчает находки/);
+});
 
 test('#926 actual prompt carries the server snapshot for each route, never delegates authority to a mutable file', () => {
   for (const stage of ['spec', 'code']) for (const track of ['ask', 'show', 'ship']) for (const raw of ['', '[905]']) {

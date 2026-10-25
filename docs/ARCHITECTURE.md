@@ -2172,6 +2172,13 @@ This is a local workflow contract, not a new CI or author-identity authority.
 
 ## Review handoff provenance (#904)
 
+Review policy (#1063) separates independent code judgement from evidence
+reuse: task and ship batch reviewers trace callers, state, side effects and
+failure paths before comparing author explanations and tests. A valid proof
+authenticates executed coverage, not semantic correctness or completeness.
+Explicit Sonnet 5/high settings in all three model review workflows fix the
+requested reviewer configuration without changing verdict publication authority.
+
 `review-handoff.mjs` owns a bounded syntactic parser and edited-comment selector
 shared by collection and format validation. API order and author identity are
 not authority; updated timestamp and numeric id select one candidate, including

@@ -123,6 +123,8 @@ test('#857 real ship seal step cannot publish green for interrupted output', t =
   assert.equal(execute(details).status, 0);
   for (const file of ['_process.yml', '_ship-review.yml']) {
     const text = readFileSync(new URL(`.github/workflows/${file}`, root), 'utf8');
-    assert.match(text, /--max-turns 150/); assert.doesNotMatch(text, /--model\s/);
+    assert.match(text, /--max-turns 150/);
+    assert.match(text, /--model claude-sonnet-5\s/);
+    assert.match(text, /--effort high\s/);
   }
 });

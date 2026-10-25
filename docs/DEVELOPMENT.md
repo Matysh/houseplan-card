@@ -4370,6 +4370,23 @@ gate, gets a timeout above the sum of its own waits and says so in a comment.
 
 ## What the review model is allowed to do (#556)
 
+The three review entrypoints (`_process.yml`, `_ship-review.yml`,
+`release-review.yml`) explicitly request `claude-sonnet-5` and effort `high`
+(#1063) through matching environment and CLI settings. The model environment
+has precedence over the action's parsed `--model`; the contract test checks
+the effective step configuration and agreement instead of relying on defaults.
+These settings are a requested configuration, not telemetry of internal
+reasoning or a guarantee of defect discovery. The release review retains its
+independent whole-line purpose. A task changing the trusted prompt is reviewed
+with the current `dev` controller; its new prompt becomes active after S8.
+
+Task and ship prompts require independent path/failure analysis before author
+evidence, including concrete code quality and legacy concerns. Prompt contracts
+protect the instructions and reuse boundary; they do not measure review quality.
+Use `node --test test/review-model-config.test.mjs test/process-digests.test.mjs`
+for these contracts. Full regression is still pre-beta; an accepted test receipt
+does not justify repeating covered checks or treating untested scenarios as proven.
+
 The `model_review` job is the only untrusted stage of the review pipeline: it
 runs a model with `Read/Write/Bash` over the material. Its `permissions:` block
 is the real ceiling **only because** the `Review` step is handed

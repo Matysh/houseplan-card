@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1063,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Pins review model and effort and strengthens independent code, quality and legacy analysis while preserving targeted checks and authenticated evidence reuse. No product behavior changes.",
+  "summary": {
+    "ru": "Код-ревью закрепляет Sonnet 5/high и независимый поиск дефектов, неоднозначностей и оставшегося легаси с сохранением целевых проверок.",
+    "en": "Code review pins Sonnet 5/high and independently checks defects, ambiguity and replaced legacy while retaining targeted checks."
+  }
+}
