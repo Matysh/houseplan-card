@@ -146,14 +146,16 @@ test('#1068 inherited Git repository/index variables cannot redirect immutable o
 test('#1068 immutable symbolic inputs, missing snapshots and exhausted read budgets refuse', t => {
   const root = fixture(t), initial = git(root, ['rev-parse', 'HEAD']);
   for (const path of [STATUS_COUNTER_PATH, 'test/a.test.mjs', 'demo/smoke_a.mjs']) {
-    git(root, ['checkout', '-q', '--detach', initial]);
+    // cacheinfo changes only the index mode; restore this verified temporary
+    // fixture's worktree too before the next case, including on symlink-capable Git.
+    git(root, ['checkout', '-q', '--force', '--detach', initial]);
     const oid = git(root, ['rev-parse', 'HEAD:' + path]);
     git(root, ['update-index', '--cacheinfo', '120000,' + oid + ',' + path]);
     git(root, ['commit', '-qm', 'symbolic mode fixture']);
     const result = validateStatusCounters({ root, ref: 'HEAD' });
     assert.equal(result.ok, false); assert.match(result.reason, /nonregular/);
   }
-  git(root, ['checkout', '-q', '--detach', initial]);
+  git(root, ['checkout', '-q', '--force', '--detach', initial]);
   git(root, ['rm', '-qr', 'demo']);
   put(root, STATUS_COUNTER_PATH, snapshot({ ...counts, smokes: 0 })); commit(root);
   assert.match(validateStatusCounters({ root, ref: 'HEAD' }).reason, /missing counter input directory/);
