@@ -5574,3 +5574,12 @@ limit. Further splitting these integration seams for five excess lines/reference
 would add disproportionate complexity. This records cost, not a speed gain;
 the identities and exact facts are in
 `development-notes/vacuum-history-measurement.json` (public cost comment6391633547).
+
+The first mandatory normal push hook on3922415d refused two real checks:
+the new View banner hover selector lacked the shared pointer-modality gate,
+and the complete fixture corpus passport missed the two history JSON files.
+Use the established `:host([data-pointer-hover])` gate. Add only those two
+zero-config inventory rows to the passport, preserving every existing config,
+identity, order and negative oracle. The two affected suites then pass13/13;
+the original failed hook remains evidence, not a successful push. A fresh build,
+bounded browser proof and normal push are required after this source change.

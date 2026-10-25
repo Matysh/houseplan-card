@@ -653,7 +653,7 @@ export const devicesStyles = css`
       font:inherit;color:var(--primary-color);border:0;border-radius:6px;padding:6px 8px;
       background:transparent;cursor:pointer;transition:background 160ms;
     }
-    .vacuum-history-banner > button:hover {background:color-mix(in srgb,var(--primary-color) 12%,transparent);}
+    :host([data-pointer-hover]) .vacuum-history-banner > button:hover {background:color-mix(in srgb,var(--primary-color) 12%,transparent);}
     .devicepreview-empty {
       min-height: 82px;
       margin: 4px 0 14px;
