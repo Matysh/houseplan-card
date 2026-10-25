@@ -4,7 +4,7 @@ import { appendFileSync, constants, closeSync, fstatSync, mkdirSync, openSync, r
 import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync, spawn } from 'node:child_process';
 import { delimiter, dirname, isAbsolute, join, relative, sep } from 'node:path';
-import { callDigest } from './review-call-digest.mjs';
+import { nativeCallDigest as callDigest } from './review-native-call-digest.mjs';
 import { capabilityDigest, readReviewCapabilities, REVIEW_MCP_NATIVE_TOOL_NAME } from './review-capabilities.mjs';
 
 export const CHECK_RESULT_SCHEMA = 'houseplan-review-check-result/v1';

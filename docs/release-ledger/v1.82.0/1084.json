@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1084,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Adds a separately versioned binding for source-proven native 2.1.295 Grep aliases while retaining exact unrelated values, raw diagnostics, old algorithms and all execution-audit refusals. Only review tooling and documentation change; no historical failed review gains authority.",
+  "summary": {
+    "ru": "Аудит ревью учитывает подтверждённые aliases native Grep без ослабления проверки журнала и отказов.",
+    "en": "Review auditing binds confirmed native Grep aliases without weakening journal or refusal checks."
+  }
+}

@@ -2326,11 +2326,13 @@ This is an accidental-action tool boundary, not OS isolation of reviewed child
 programs or authentication against a hostile same-user process. It does not
 turn static checks or denied requests into execution evidence or mutant caught.
 
-Call equality (#1065 repair) has an explicit `sha256/hp-json-keys-v1` marker in
+Historical call equality (#1065 repair) has an explicit `sha256/hp-json-keys-v1` marker in
 policy and journal rows. Its leaf serializer changes only recursive object key
 order, preserving exact call names/values/types/strings/arrays and signed zero;
-unsupported JSON values refuse. Current startup/hook/audit require that marker,
-with no legacy fallback. Exact builtin ToolSearch only reads a deferred catalog;
+unsupported JSON values refuse. Current startup/hook/audit require the distinct
+`sha256/hp-native-2.1.295-json-v1` marker (#1084). Its pure Grep-only projection
+matches the pinned native aliases; raw inputs and old digests are unchanged.
+Conflicting aliases refuse and unknown fields are retained. Exact builtin ToolSearch only reads a deferred catalog;
 each discovered actual tool still passes the existing guard independently.
 Raw shape metadata remains order-sensitive diagnostic evidence, not admission.
 

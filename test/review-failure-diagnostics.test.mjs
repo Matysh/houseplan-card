@@ -12,7 +12,8 @@ import { traceProblems, toolProblem } from '../scripts/review-execution-policy.m
 import { literalArgv } from '../scripts/review-execution-policy.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from '../scripts/review-tool-metadata.mjs';
 import { REQUIRED_FILES } from '../scripts/review-result-gate.mjs';
-import { CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM, callDigest } from '../scripts/review-call-digest.mjs';
+import { LEGACY_CALL_DIGEST_ALGORITHM, CALL_DIGEST_ALGORITHM as JSON_KEYS_ALGORITHM, callDigest as jsonKeysDigest } from '../scripts/review-call-digest.mjs';
+import { NATIVE_CALL_DIGEST_ALGORITHM as CALL_DIGEST_ALGORITHM, nativeCallDigest as callDigest } from '../scripts/review-native-call-digest.mjs';
 import { buildReviewCapabilities, REVIEW_MCP_NATIVE_TOOL_NAME } from '../scripts/review-capabilities.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -35,6 +36,30 @@ function fixture() {
   return { call, messages, entries, policy: policy(), provenance };
 }
 const cert = row => buildFailureCertificate(row ?? fixture());
+
+test('#1084 diagnostic comparison uses the recorded algorithm and retains raw shape differences', () => {
+  const f = fixture(); f.call.name = 'Grep'; f.call.input = { pattern: secret, path: 'src', '-l': true };
+  f.messages.at(-1).permission_denials = [];
+  const actual = { pattern: secret, path: 'src', output_mode: 'files_with_matches' };
+  f.entries = [{ id: f.call.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
+    input: callDigest('Grep', actual), denied: false, diagnostic: reviewToolMetadata('Grep', actual),
+    diagnosticDecision: reviewDecisionMetadata(null) }];
+  const current = cert(f).calls[0];
+  assert.equal(current.journal.inputDigestMatches, true);
+  assert.equal(current.journal.metadataAgreesWithTrace, false);
+  assert.deepEqual(current.problems, []);
+  f.policy.callDigestAlgorithm = JSON_KEYS_ALGORITHM;
+  f.entries[0].callDigestAlgorithm = JSON_KEYS_ALGORITHM;
+  f.entries[0].input = jsonKeysDigest('Grep', actual);
+  const historical = cert(f);
+  assert.equal(historical.calls[0].journal.inputDigestMatches, false);
+  assert.ok(historical.calls[0].problems.includes('input-digest-mismatch'));
+  assert.equal(historical.calls[0].callDigest.algorithm.algorithm, JSON_KEYS_ALGORITHM);
+  assert.equal(historical.calls[0].expected.denied, null);
+  assert.equal(historical.calls[0].expected.semantics, 'legacy-not-re-evaluated');
+  assert.equal(historical.verdictAuthority, false);
+  assert.ok(!JSON.stringify(historical).includes(secret));
+});
 function temp(t) { const dir = mkdtempSync(join(tmpdir(), 'hp-review-failure-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; }
 
 test('#1082 AC1: forbidden request, missing/mismatched decision and unmatched records remain distinct diagnostics', () => {

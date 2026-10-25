@@ -5822,15 +5822,28 @@ Failures yield no admissible verdict/merge authority; the existing current
 request recovery returns task review without spending a blocking cycle.
 This post-execution publication refusal is distinct from pre-execution denial.
 
-Call binding uses `sha256/hp-json-keys-v1`: a shared pure serializer sorts only
+Original call binding `sha256/hp-json-keys-v1` remains unchanged: its pure serializer sorts only
 object keys recursively, retaining the call name, every value/type/key, array
 order and exact strings (including whitespace and NFC/NFD differences). Signed
 zero is explicit (`-0` differs from `0`); unsupported/nonfinite/cyclic/sparse
-non-JSON input is refused without invoking accessors or `toJSON`. Prepare,
-startup probe, hook rows and audit require the same explicit current algorithm;
-missing/mixed/unknown markers cannot acquire CODE authority. This fixes the
+non-JSON input is refused without invoking accessors or `toJSON`. This fixes the
 JSON insertion-order sensitivity without claiming that it explains every old
 trace mismatch with hidden string values.
+
+Current prepare/startup/hook/audit and fixed-check receipts use the distinct
+`sha256/hp-native-2.1.295-json-v1` binding (#1084). Only exact native Grep is
+projected: nonempty `file_path` aliases `path`; boolean `true` or string `"true"`
+on `-l` / `-c` becomes `output_mode: files_with_matches` / `count`, and on `-r`
+is removed because native search is recursive. Equal canonical/alias pairs
+are redundant; conflicting values or competing output aliases refuse.
+False-like values and unknown keys are retained, not stripped or defaulted.
+The original input is never mutated; other tools, strings, arrays, signed zero,
+report bytes and all unrelated values retain their exact binding. Missing,
+mixed and unknown markers refuse. Diagnostics use each recorded algorithm,
+keep raw shape metadata, and never repair the historical rejected certificate.
+Source basis: checksum-verified native 2.1.295, `lCt` byte 215618468,
+`mU` byte 215547561 and Grep `coerceInput` byte 215622847; this is source evidence,
+not a new provider execution or retroactive acceptance of #1066.
 
 The exact SDK builtin `ToolSearch` is read-only deferred-catalog discovery, not
 execution of a discovered tool and not a missing-journal exemption. Its normal

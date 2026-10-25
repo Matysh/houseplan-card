@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
-import { CALL_DIGEST_ALGORITHM, callDigest } from './review-call-digest.mjs';
+import { NATIVE_CALL_DIGEST_ALGORITHM as CALL_DIGEST_ALGORITHM, nativeCallDigest as callDigest } from './review-native-call-digest.mjs';
 import { buildReviewCapabilities, readReviewCapabilities, reviewChecksMarkdown,
   NATIVE_REVIEW_TOOLS, REVIEW_MCP_NATIVE_TOOL_NAME } from './review-capabilities.mjs';
 import { checkTraceProblems, readCheckExecutionEntries, verifyCheckExecutionFiles } from './review-approved-check.mjs';

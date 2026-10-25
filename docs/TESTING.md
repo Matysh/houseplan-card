@@ -55,6 +55,11 @@ error port, real-git beta/stable ancestry and workflow Bash parsing. Existing
 archive and process-digest units retain the exact proof/CAS/lease contracts.
 Synthetic credentials only; none of these tests calls a real write API or model.
 
+`test/review-native-call-digest.test.mjs` checks pinned Grep alias projection
+(#1084) with inert JSON, including conflicts, unknown keys, exact values and
+non-JSON refusal. Policy/diagnostic tests retain journal/result/denial fences
+and the old-algorithm mismatch; no historical certificate is reaccepted.
+
 Зелёный тест в этом проекте несколько раз означал «ничего не проверено»:
 смок непрерывности не заметил удаления механизма, который защищает; golden-сцена,
 заведённая под #71, была пустой; смок теней был зелёным, пока тени физически не

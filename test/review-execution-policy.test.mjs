@@ -11,7 +11,7 @@ import { bashProblem, literalArgv, reportProblems, toolProblem, traceProblems,
   adapterProblems } from '../scripts/review-execution-policy.mjs';
 import { buildReviewCapabilities, REVIEW_MCP_NATIVE_TOOL_NAME } from '../scripts/review-capabilities.mjs';
 import { reviewResultProblems, sha256, PASSPORT_FIELDS } from '../scripts/review-result-gate.mjs';
-import { CALL_DIGEST_ALGORITHM, callDigest } from '../scripts/review-call-digest.mjs';
+import { NATIVE_CALL_DIGEST_ALGORITHM as CALL_DIGEST_ALGORITHM, nativeCallDigest as callDigest } from '../scripts/review-native-call-digest.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const outputs = [join(tmpdir(), 'hp-policy-report.md')];
@@ -27,6 +27,21 @@ const trace = calls => [{ type: 'assistant', message: { content: calls } },
   { type: 'result', subtype: 'success', is_error: false, permission_denials: [] }];
 const journal = calls => calls.map(c => ({ id: c.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
   input: callDigest(c.name, c.input), denied: false }));
+
+test('#1084 native Grep projection preserves exact audit identity and all refusal paths', () => {
+  const grep = call('grep-alias', 'Grep', { pattern: 'needle', path: 'src', '-l': true });
+  const calls = [grep, report], messages = trace(calls), rows = journal(calls);
+  rows[0].input = callDigest('Grep', { pattern: 'needle', path: 'src', output_mode: 'files_with_matches' });
+  assert.deepEqual(traceProblems(messages, rows, policy), []);
+  for (const change of [{ input: 'different' }, { denied: true }, { callDigestAlgorithm: 'sha256/hp-json-keys-v1' },
+    { callDigestAlgorithm: 'unknown' }]) assert.ok(traceProblems(messages, [{ ...rows[0], ...change }, rows[1]], policy).length);
+  assert.ok(traceProblems(messages, rows.slice(1), policy).length);
+  assert.ok(traceProblems(messages, [rows[0], ...rows], policy).length);
+  for (const input of [{ ...grep.input, pattern: 'changed' }, { ...grep.input, path: 'other' },
+    { ...grep.input, '-l': false }, { ...grep.input, unexpected: true }, { ...grep.input, output_mode: 'count' }])
+    assert.ok(traceProblems(trace([{ ...grep, input }, report]), rows, policy).length);
+  assert.ok(traceProblems(messages, rows, { ...policy, callDigestAlgorithm: 'sha256/hp-json-keys-v1' }).length);
+});
 
 test('#1065 native hook settings deny on startup/SDK timeout failures, before any execution', () => {
   const settings = executionSettings('unchanged handler');
