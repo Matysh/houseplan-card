@@ -426,7 +426,11 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #1029 on integrated #1049 dev: the shared connection/user LQI feed, strict
 // atomic projection decoder and existing-surface invalidation measure339368 B.
 // Keep the2000-B band and352000-B absolute wall; no new editor graph is eager.
-export const INITIAL_VIEW_GZIP_CEILING = 339_368;
+// #999 after accepted #1050: matched Windows22.23.3/Rollup4.62.2 builds
+// measure341095 ->344467 B (+3372,0.99%). The owner permits a small measured
+// excess where further splitting costs disproportionately; history UI stays
+// lazy. Record the fact, retain the2000-B band and352000-B absolute wall.
+export const INITIAL_VIEW_GZIP_CEILING = 344_467;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

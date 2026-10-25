@@ -5558,3 +5558,19 @@ sources fall back to fresh jobs. Actual
 Node flags/options, locale and timezone are part of the recorded environment;
 local reuse never substitutes CI image values. The proof publisher alone has
 contents:write and skips fork PR index writes.
+
+### #999: measured history preview cost after #1050
+
+Matched Windows Node22.23.3 / Rollup4.62.2 builds of accepted #1050 and clean
+4b65494c measure initial View341095→344467B gzip (+0.99%), lazy editor
+353394→354564B, Select-only21455→21449B and raw dist3483369→3508073B (+0.71%).
+The card grows13312→13327 lines and runtime11843→11845; hostRefs6225→6255.
+History state/values/UI remain leaf modules; the fifteen card lines connect
+lifecycle, rendering and capability ownership. The old core gate reports five
+lines beyond13272+50. Under the owner's standing small-growth permission,
+record only the blocked View/raw/hostRefs/card references at measured values.
+Keep every band, absolute wall, runtime/editor/Select reference and physical
+limit. Further splitting these integration seams for five excess lines/references
+would add disproportionate complexity. This records cost, not a speed gain;
+the identities and exact facts are in
+`development-notes/vacuum-history-measurement.json` (public cost comment6391633547).
