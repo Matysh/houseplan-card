@@ -1,0 +1,78 @@
+# Diagnostic only. No CODE/release/CI-proof output or acceptance route.
+name: 1065 one-shot native compatibility
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        required: true
+        type: string
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: 1065-one-shot-native-compatibility
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    if: github.repository == 'Matysh/houseplan-card' && github.ref == 'refs/heads/codex/archive/1065-native-probe' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Read diagnostic carrier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: carrier
+          persist-credentials: false
+      - name: Read exact final 1065 tooling source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: material
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22.23.3
+      - name: Prepare clean synthetic material and unchanged policy
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: >-
+          node carrier/scripts/1065-native-probe.mjs prepare
+          --source="$GITHUB_WORKSPACE/material" --source-sha="$SOURCE_SHA"
+          --work="$RUNNER_TEMP/1065-native-probe"
+      - name: Install exact native CLI
+        id: native
+        run: |
+          set -euo pipefail
+          bin="$RUNNER_TEMP/1065-native-cli/claude"
+          mkdir -p "$(dirname "$bin")"
+          curl -fsSL --retry 3 https://downloads.claude.ai/claude-code-releases/2.1.295/linux-x64/claude -o "$bin"
+          echo "4503bfe11a6c7fcc1e0b39b5e0d347c04248f750b03b0977b3ad6b531fe6f358  $bin" | sha256sum -c -
+          chmod +x "$bin"
+          echo "path=$bin" >> "$GITHUB_OUTPUT"
+      - name: One synthetic native compatibility session
+        id: native_probe
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          NATIVE_PATH: ${{ steps.native.outputs.path }}
+        run: >-
+          node carrier/scripts/1065-native-probe.mjs run
+          --work="$RUNNER_TEMP/1065-native-probe" --native="$NATIVE_PATH"
+      - name: Audit and project sanitized diagnostic summary
+        if: always()
+        env:
+          NATIVE_PATH: ${{ steps.native.outputs.path }}
+        run: >-
+          node carrier/scripts/1065-native-probe.mjs finish
+          --work="$RUNNER_TEMP/1065-native-probe" --native="$NATIVE_PATH"
+      - name: Upload only safe diagnostic summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: 1065-native-compatibility-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/1065-native-probe/public/summary.json
+          retention-days: 1
+          if-no-files-found: error

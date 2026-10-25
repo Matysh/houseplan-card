@@ -1,155 +1,19 @@
-# Скриншоты документации снимаются здесь и только здесь (#246).
-#
-# Съёмка на машине исполнителя даёт байтово разный PNG при одинаковом кадре:
-# сглаживание и хинтинг зависят от окружения. Измерено на истории — пересъёмка
-# в #231 изменила два файла из девяти на 7–8 байт, набор с беты все девять
-# целиком. Одно окружение убирает этот шум насовсем.
-#
-# Джоба ничего не коммитит: она публикует артефакт, который человек принимает
-# локально через `npm run docs:accept -- --reviewed --from=<распакованный>`.
-# Та же конструкция, что у golden-эталонов, и по той же причине: картинки
-# попадают в репозиторий через явное решение, а не через бота.
-#
-# Снимать здесь больше не обязанность, а удобство (#401). Приёмка проверяет не
-# место съёмки, а её воспроизводимость: каждый кадр, не объявленный изменённым,
-# должен совпасть с закоммиченным байт-в-байт. Эта джоба потому и удобна, что
-# среда у неё та же, в которой снят закоммиченный набор, — но принять получится
-# из любой, где кадры воспроизводятся, и не получится ни из одной, где нет.
-name: Скриншоты документации
-
+# Replace docs-screenshots.yml only in the diagnostic archive branch.
+name: 1065 native diagnostic carrier
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: Ветка или SHA, с которого снимать
-        required: false
-        default: dev
-
+      source_sha:
+        description: Exact final 1065 source commit; no branch/ref alias
+        required: true
+        type: string
 permissions:
   contents: read
-
 jobs:
-  capture:
-    name: Съёмка и сверка скриншот-индекса
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ inputs.ref }}
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      # Тот же кэш и тот же отказ от --with-deps, что в smoke/golden (#175, #206):
-      # системные библиотеки Chromium уже в образе раннера.
-      - name: Кэш браузеров Playwright
-        id: pw
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - name: Install pinned Chromium
-        if: steps.pw.outputs.cache-hit != 'true'
-        run: npx playwright install chromium
-      - name: Build the bundle the screenshots must come from
-        run: npm run build
-      # oxipng без потерь снимает с набора ~19% (замер в #345 на pyoxipng 9.1.1;
-      # у 10.2.0 пресеты уровней перебалансированы, точная доля может отличаться,
-      # но кадры остаются пиксельно идентичными в любой версии — это перепаковка).
-      #
-      # Пин версии и контрольной суммы намеренно, а не `apt-get install oxipng`:
-      # пакет из образа раннера может пропасть или переехать, а падение шага
-      # съёмки стоит целого цикла приёмки. Тот же урок, что с azure-зеркалом
-      # Playwright (#175, #206).
-      - name: Установить oxipng
-        env:
-          OXIPNG_VERSION: 10.2.0
-          OXIPNG_SHA256: b33f84c73d42cb592bea5d84c431030b1e97784817693380dfcec7d9575f871e
-        run: |
-          set -euo pipefail
-          asset="oxipng-${OXIPNG_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          curl -fsSL -o "$asset" \
-            "https://github.com/oxipng/oxipng/releases/download/v${OXIPNG_VERSION}/${asset}"
-          echo "${OXIPNG_SHA256}  ${asset}" | sha256sum -c -
-          mkdir -p "$HOME/.local/bin"
-          tar -xzf "$asset" --strip-components=1 -C "$HOME/.local/bin" \
-            "oxipng-${OXIPNG_VERSION}-x86_64-unknown-linux-gnu/oxipng"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          "$HOME/.local/bin/oxipng" --version
-      # Съёмка идёт дважды и сравнивается по хешам (#422). Прежний замер
-      # (`--stability`) отвечает на вопрос «плавает ли кадр от времени внутри
-      # страницы» и остаётся ниже; дефект #410 был по другой оси — обрезка
-      # плавала МЕЖДУ прогонами, и три снимка внутри одного процесса совпали бы
-      # всегда. Проверка, объявленная гарантией воспроизводимости, на
-      # собственном инциденте промолчала бы.
-      #
-      # Второй прогон заодно оставляет в `docs/images` кадры, которые и уедут в
-      # артефакт: сравнивать хеши и публиковать разные файлы было бы странно.
-      - name: "Съёмка воспроизводима между прогонами (#410, #422)"
-        run: node scripts/capture-determinism.mjs
-      # Вердикт до всякой приёмки. Само число изменившихся файлов ничего не
-      # говорит: набор, снятый другим браузером, меняет их все, и это нормально
-      # ровно один раз — при переходе на канонический прогон. Сравнивать надо
-      # браузер: тот же Chromium и десять изменившихся картинок означают, что
-      # изменился продукт (или что-то не так), другой Chromium — ожидаемую
-      # разницу рендеринга.
-      # Хеши печатаются в лог, а не только уезжают в артефакт (#410): чтобы
-      # сравнить два прогона одного и того же SHA, нужен текст, который видно с
-      # экрана. Именно так измеряется недетерминированность съёмки — и её
-      # отсутствие после починки.
-      # Съёмка обязана быть воспроизводимой, и это проверяется, а не
-      # предполагается (#410): три снимка на сценарий в одном процессе, без
-      # правки состояния между ними, обязаны совпасть побайтово. Шаг падает,
-      # если кадр снова начнёт зависеть от времени.
-      #
-      # Шаг стоит ПОСЛЕ съёмки и до вердикта: публикацию артефакта он всё равно
-      # блокирует падением job'а, а снимать набор третий раз ради порядка строк
-      # в логе незачем.
-      - name: "Кадр не плавает внутри одного состояния (#410)"
-        run: node demo/docs/capture.mjs --stability=3
-      - name: Хеши кадров
-        run: |
-          for f in docs/images/*.png; do sha256sum "$f"; done
-      - name: Вердикт
-        run: |
-          # Поле манифеста «до» — из закоммиченного состояния, «после» — из
-          # свежего. Читается одинаково для браузера и для упаковщика: оба
-          # переписывают все кадры сразу, и различить их причины обязан вердикт,
-          # а не человек по памяти (#345).
-          field() {
-            node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).$1||'')}catch{console.log('')}})"
-          }
-          git status --porcelain docs/images
-          changed=$(git diff --name-only docs/images | grep -c png || true)
-          before=$(git show HEAD:docs/images/screenshots.json | field chromium)
-          after=$(node -e "console.log(require('./docs/images/screenshots.json').chromium)")
-          packer_before=$(git show HEAD:docs/images/screenshots.json | field oxipng)
-          packer_after=$(node -e "console.log(require('./docs/images/screenshots.json').oxipng || '')")
-          echo "--- изменившихся PNG: $changed"
-          echo "--- Chromium: было «${before:-не записан}», стало «$after»"
-          echo "--- oxipng: было «${packer_before:-не записан}», стало «${packer_after:-нет}»"
-          if [ "$packer_before" != "$packer_after" ] && [ "$changed" -gt 0 ]; then
-            echo "ВЕРДИКТ: изменился упаковщик, поэтому переписаны все кадры сразу."
-            echo "Это перепаковка без потерь: пиксели те же, размер меньше на ~19%."
-            echo "Ожидаемо один раз — при включении oxipng либо при смене его версии."
-            echo "Проверить можно сравнением декодированных кадров, а не байтов."
-          elif [ "$before" = "$after" ] && [ "$changed" -gt 0 ]; then
-            echo "ВЕРДИКТ: тот же браузер и тот же упаковщик, а картинки изменились —"
-            echo "изменился продукт. Смотрите на кадры: если изменение ожидаемое, принимайте."
-          elif [ "$before" != "$after" ]; then
-            echo "ВЕРДИКТ: браузер другой, поэтому переписаны все кадры сразу."
-            echo "Это ожидаемо один раз — при переходе на канонический прогон."
-            echo "Если Chromium сменился неожиданно, сверьте закреплённую версию в package-lock."
-          else
-            echo "ВЕРДИКТ: ничего не изменилось, принимать нечего."
-          fi
-      - name: Upload candidate
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: docs-screenshots
-          path: |
-            docs/images/*.png
-            docs/images/screenshots.json
-          if-no-files-found: error
+  native_compatibility:
+    if: github.repository == 'Matysh/houseplan-card' && github.ref == 'refs/heads/codex/archive/1065-native-probe' && github.run_attempt == 1
+    uses: ./.github/workflows/1065-native-probe.yml
+    with:
+      source_sha: ${{ inputs.source_sha }}
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
