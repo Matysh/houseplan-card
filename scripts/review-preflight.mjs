@@ -12,6 +12,7 @@ import { moveStatusLabel } from './status-label.mjs';
 import { labelTrack, parseNumstat } from './process-track.mjs';
 import { sourceReplacementWarnings } from './source-replacement.mjs';
 import { HANDOFF_FIELDS, handoffDigest, handoffSnapshot, parseHandoff, selectHandoff, validHandoffProvenance } from './review-handoff.mjs';
+import { issueSourceContext, sourceContextPacket } from './review-context.mjs';
 
 export const PREFLIGHT_SCHEMA = 'houseplan-review-preflight/v2';
 const objectId = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
@@ -119,6 +120,7 @@ export function checkReviewInput(input, { ledgerReader = readMergeEntry, readObj
 }
 
 export function collectReviewInput(options, { git, api }) {
+  const startedAt = new Date().toISOString();
   const snapshot = api('repos/' + options.repo + '/issues/' + options.issue);
   const currentSha = git(['rev-parse', 'HEAD']);
   const currentTree = git(['rev-parse', 'HEAD^{tree}']);
@@ -131,7 +133,8 @@ export function collectReviewInput(options, { git, api }) {
       sourceFiles: parseNumstat(git(['show', '--no-renames', '--numstat', '--format=', sha])),
       files: git(['diff-tree', '--no-commit-id', '--name-only', '-r', sha]).split('\n').filter(Boolean),
       deletedFiles: git(['diff-tree', '--no-commit-id', '--name-only', '--diff-filter=D', '-r', sha]).split('\n').filter(Boolean) })) : [];
-  const pages = options.stage === 'code' ? api('repos/' + options.repo + '/issues/' + options.issue + '/comments', true) : [];
+  const pages = options.stage === 'code' || options.contextOutput
+    ? api('repos/' + options.repo + '/issues/' + options.issue + '/comments', true) : [];
   const selected = selectHandoff(pages);
   const handoff = selected.body;
   const labels = snapshot.labels.map((row) => typeof row === 'string' ? row : row.name);
@@ -141,6 +144,9 @@ export function collectReviewInput(options, { git, api }) {
     && !labels.includes('blocked') && !labels.includes('review-4');
   return { ...options, body: snapshot.body || '', currentSha, currentTree, files, infrastructure, commits, handoff,
     handoffProvenance: selected.provenance, handoffError: selected.error,
+    ...(options.contextOutput ? { sourceContext: issueSourceContext({ repo: options.repo, number: options.issue,
+      snapshot, pages, after: api('repos/' + options.repo + '/issues/' + options.issue), owner: options.owner,
+      startedAt, finishedAt: new Date().toISOString() }) } : {}),
     requestActive, currentTrack: labelTrack({ labels, infrastructure }) };
 }
 
@@ -181,11 +187,14 @@ if (isMainModule(import.meta.url)) {
     ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
     const options = { issue: Number(value('issue')), repo: value('repo'), stage: value('stage'), track: value('track'),
       sha: value('sha'), tree: value('tree'), bodyDigest: value('body-digest'), base: value('base'),
-      expectedHandoff: value('handoff-snapshot') };
+      expectedHandoff: value('handoff-snapshot'), contextOutput: value('context-output'), owner: value('owner') };
     const input = collectReviewInput(options, { git, api });
     const result = checkReviewInput(input, { ledgerReader: (sha, issue) => readMergeEntry(sha, issue, git),
       readObject: (object) => git(['show', object]) });
     result.elapsedMs = Math.round(performance.now() - started);
+    if (options.contextOutput && result.ok) writeFileSync(options.contextOutput, JSON.stringify(sourceContextPacket({
+      kind: 'task', sha: input.currentSha, tree: input.currentTree, sources: [input.sourceContext], preflight: result,
+    }), null, 2) + '\n', { flag: 'wx' });
     if (value('output')) writeFileSync(value('output'), JSON.stringify(result, null, 2) + '\n');
     if (value('comment')) writeFileSync(value('comment'), preflightComment(result));
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, 'ok=' + result.ok + '\n'

@@ -37,6 +37,48 @@ const artifacts = ['review-result-897-70-1', 'review-prepared-897-70-1', 'workfl
 const evidence = (over = {}) => resumeEvidence({ repo: 'o/r', issue, run, artifacts,
   loadJson: (_artifact, file) => file === 'prepared.json' ? prepared : p, loadResult: () => sealedResult(), ...over });
 
+const retainedEvidence = (over = {}) => evidence({ run: { ...run, attempt: 3 }, request, body, branch, sha: b,
+  artifacts: [...artifacts.slice(0, 2), { name: 'workflow-continuation-70-3', expired: false }],
+  loadJson: (_artifact, file) => file === 'prepared.json' ? prepared : { ...p, producer: { ...p.producer, attempt: 3 } },
+  ...over });
+
+test('#1065 retained same-run result is only a barrier, never another model call or approval', async () => {
+  const result = await resume({ repo: 'o/r', branch, sha: b,
+    validateRun: { id: 80, event: 'push', status: 'completed', headSha: b },
+    ops: { state: () => ({ labels: ['S7-code-review'], body, request, headSha: b }),
+      runs: () => [{ ...run, attempt: 3 }],
+      pendingOf: (_run, context) => retainedEvidence(context), relabel: () => assert.fail('retained result must not relabel') },
+    sleep: () => assert.fail('known retained result must not enter delivery retry') });
+  assert.equal(result.action, 'noop'); assert.equal(result.applied, false);
+  assert.match(result.reason, /retry its original integration.*not review approval/);
+  assert.equal(retainedEvidence().completedModel, undefined);
+});
+
+test('#1065 retained result refuses ambiguous/foreign/changed identities and corrupt bytes', () => {
+  const current = { ...p, producer: { ...p.producer, attempt: 3 } };
+  for (const over of [
+    { artifacts: [...artifacts.slice(0, 2), { name: 'review-result-897-70-2' }] },
+    { artifacts: [{ name: 'review-result-897-70-4' }] },
+    { artifacts: [{ name: 'review-result-897-70-01' }] },
+    { artifacts: [{ ...artifacts[0], expired: true }] },
+    { artifacts: [artifacts[0]] },
+    { request: { ...request, at: '2026-10-15T00:00:00Z' } },
+    { body: 'different body' }, { branch: 'issue/897-foreign' }, { run: { ...run, attempt: 3, stage: 'spec' } },
+    { loadJson: (_artifact, file) => file === 'prepared.json' ? { ...prepared, run_id: 71 } : current },
+    { loadJson: (_artifact, file) => file === 'prepared.json' ? prepared : { ...current, epoch: 'another' } },
+    { loadJson: (_artifact, file) => file === 'prepared.json' ? prepared : { ...current, material: c } },
+    { loadJson: (_artifact, file) => file === 'prepared.json' ? prepared : { ...current, candidate: c } },
+    { loadResult: () => { const r = sealedResult(); r.bytes['review-document.md'] += 'changed'; return r; } },
+  ]) assert.throws(() => retainedEvidence(over), /retained|prepared/);
+});
+
+test('#1065 retained publication without continuation stops on exact source, including non-green verdicts', () => {
+  const result = sealedResult({ 'verdict.json': JSON.stringify({ verdict: 'red', high: 1, medium: 0, summary: 'real finding' }) });
+  const barrier = retainedEvidence({ artifacts: artifacts.slice(0, 2), sha: a, loadResult: () => result });
+  assert.equal(barrier.retainedModel, true); assert.equal(barrier.completedModel, undefined);
+  assert.throws(() => retainedEvidence({ artifacts: artifacts.slice(0, 2) }), /no continuation/);
+});
+
 test('#897 AC1 complete deferred model receipt is a successful noop, never a second review', async () => {
   let writes = 0;
   const result = await resume({ repo: 'o/r', branch, sha: b,
@@ -114,11 +156,13 @@ test('#897 AC1 corrupt/incomplete/foreign result never earns the completed-model
       pendingOf: () => ({ ...evidence(), continuation: { ...p, epoch: 'foreign' } }), relabel: () => assert.fail('foreign noop must not relabel') } }), /another epoch/);
 });
 
-for (const raw of [null, '', `[${issue}]`]) test(`#897/#961 actual resume CLI: ${raw === null ? 'legacy' : raw ? 'file' : 'issues'} policy exits zero only for verified receipts, no writes`, t => {
+for (const raw of [null, '', `[${issue}]`, 'retained']) test(`#897/#961 actual resume CLI: ${raw === 'retained' ? 'retained' : raw === null ? 'legacy' : raw ? 'file' : 'issues'} policy exits zero only for verified receipts, no writes`, t => {
   if (process.platform === 'win32') { t.skip('POSIX Actions entrypoint'); return; }
   const dir = temp(t), bin = join(dir, 'bin'), fixture = join(dir, 'fixture.json'), calls = join(dir, 'calls');
   mkdirSync(bin);
-  const policy = raw === null ? null : findingsPolicy(raw, policyTarget);
+  const retained = raw === 'retained', attempt = retained ? 3 : 1;
+  const actualArtifacts = [artifacts[0], artifacts[1], { ...artifacts[2], name: `workflow-continuation-70-${attempt}` }];
+  const policy = raw === null ? null : findingsPolicy(retained ? '' : raw, policyTarget);
   const passport = { ...prepared, ...(policy ? { findings_policy_snapshot: JSON.stringify(policy) } : {}) };
   const companions = policy?.mode === 'file' ? { [FINDINGS_FILE]: 'No outside findings.\n' } : {};
   const result = sealedResult(companions, passport);
@@ -128,13 +172,13 @@ for (const raw of [null, '', `[${issue}]`]) test(`#897/#961 actual resume CLI: $
     writeFileSync(join(location, 'manifest.sha256'), `${sha256(text)}  ${file}\n`);
   };
   jsonArtifact(artifacts[1].name, 'prepared.json', passport);
-  jsonArtifact(artifacts[2].name, 'pending.json', p);
+  jsonArtifact(actualArtifacts[2].name, 'pending.json', { ...p, producer: { ...p.producer, attempt } });
   const resultDir = join(dir, artifacts[0].name); mkdirSync(resultDir);
   for (const [name, bytes] of Object.entries(result.bytes)) writeFileSync(join(resultDir, name), bytes);
   writeFileSync(fixture, JSON.stringify({ issue: { state: 'OPEN', labels: [{ name: 'S7-code-review' }], body },
     events: [{ id: request.id, event: 'labeled', label: { name: request.label }, created_at: request.at }],
-    run: { id: 70, run_attempt: 1, status: 'completed', conclusion: 'success', event: 'issues',
-      display_title: 'process #897 · S7-code-review', created_at: run.createdAt }, artifacts }));
+    run: { id: 70, run_attempt: attempt, status: 'completed', conclusion: 'success', event: 'issues',
+      display_title: 'process #897 · S7-code-review', created_at: run.createdAt }, artifacts: actualArtifacts }));
   writeFileSync(join(bin, 'gh'), [
     '#!/usr/bin/env node', "const fs = require('node:fs'), path = require('node:path');",
     'const args=process.argv.slice(2), f=JSON.parse(fs.readFileSync(process.env.FAKE_FIXTURE));',
@@ -154,7 +198,8 @@ for (const raw of [null, '', `[${issue}]`]) test(`#897/#961 actual resume CLI: $
     env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, FAKE_FIXTURE: fixture, FAKE_CALLS: calls, FAKE_ARTIFACTS: dir,
       GITHUB_OUTPUT: join(dir, 'output') } });
   const normal = execute(); assert.equal(normal.status, 0, normal.stderr); assert.match(normal.stdout, /action=noop/);
-  assert.match(normal.stdout, /reason=completed sealed model review; merge continuation owns/);
+  assert.match(normal.stdout, retained ? /reason=retained same-run sealed model result; retry its original integration/
+    : /reason=completed sealed model review; merge continuation owns/);
   assert.match(normal.stdout, /applied=false/);
   writeFileSync(join(resultDir, 'review-document.md'), '# tampered after seal');
   const corrupt = execute(); assert.notEqual(corrupt.status, 0); assert.match(corrupt.stderr, /seal invalid/);

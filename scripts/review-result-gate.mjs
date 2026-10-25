@@ -3,7 +3,7 @@
  * Граница доверия между стадией модели и привилегированной публикацией (#556).
  *
  * `model_review` — единственная недоверенная стадия конвейера: там исполняется
- * чужой код с Read/Write/Bash. Всё, что она может передать дальше, — один
+ * чужой код с Read/Write и fixed-check runner. Всё, что она может передать дальше, — один
  * artifact. Публикация разбора, перестановка метки и слияние в `dev` идут в
  * другой job, на чистом checkout `dev`, и обязаны принимать этот artifact как
  * недоверенный ввод: полный набор файлов, сходящиеся контрольные суммы и
@@ -18,10 +18,10 @@
  */
 import { createHash } from 'node:crypto';
 import { reportProblems } from './review-execution-policy.mjs';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FINDINGS_FILE, findingsTextProblems, readFindingsPolicy } from './review-findings-policy.mjs';
+import { FINDINGS_FILE, findingsTextProblems, outsideFindingsProblems, readFindingsPolicy } from './review-findings-policy.mjs';
 
 /** Ровно эти файлы и ни одного больше: лишний файл — это уже чужой artifact. */
 export const REQUIRED_FILES = ['manifest.sha256', 'prepared.json', 'review-document.md', 'verdict.json'];
@@ -43,6 +43,18 @@ export const ROUTES = ['fix', 'reclassify'];
 
 export const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
+/** Only trusted successful model-job outputs may identify a retained same-run artifact. */
+export function reviewProducerIdentity({ run, attempt, producerRun, producerAttempt, producerManifest, manifest, producerResult }) {
+  const supplied = [producerRun, producerAttempt, producerManifest, producerResult].some(v => v !== undefined && v !== '');
+  if (!supplied) return { run_id: String(run ?? ''), run_attempt: String(attempt ?? '') };
+  const valid = value => /^[1-9]\d{0,15}$/.test(String(value)) && Number.isSafeInteger(Number(value));
+  if (producerResult !== 'success' || !valid(run) || String(producerRun) !== String(run)
+    || !valid(attempt) || !valid(producerAttempt)
+    || Number(producerAttempt) > Number(attempt) || !/^[a-f0-9]{64}$/.test(producerManifest || '')
+    || producerManifest !== sha256(manifest)) throw new Error('retained review producer identity is missing, foreign or inconsistent');
+  return { run_id: String(producerRun), run_attempt: String(producerAttempt) };
+}
+
 /**
  * Маршрут структурного вердикта: поля нет (вердикты до #726, модель его не
  * заполнила) — `fix`, прежний путь; значение вне словаря — `null`.
@@ -53,7 +65,7 @@ export function verdictRoute(verdict) {
 }
 
 /** Причины отказа самого `verdict.json`; пустой массив — вердикт цел. */
-export function verdictProblems(verdict) {
+export function verdictProblems(verdict, findingsPolicy) {
   const problems = [];
   if (!VERDICTS.includes(verdict?.verdict)) problems.push(`verdict вне словаря: ${JSON.stringify(verdict?.verdict)}`);
   if (typeof verdict?.high !== 'number') problems.push('verdict.high не число');
@@ -67,6 +79,9 @@ export function verdictProblems(verdict) {
     // молчаливый green здесь хуже остановки (#726, порядок владельца #707).
     problems.push('reclassify при зелёном вердикте — результат противоречив');
   }
+  problems.push(...outsideFindingsProblems(verdict?.outside_findings, findingsPolicy));
+  for (const finding of Array.isArray(verdict?.outside_findings) ? verdict.outside_findings : [])
+    problems.push(...reportProblems(finding?.body || ''));
   return problems;
 }
 
@@ -144,7 +159,32 @@ export function reviewResultProblems({ files, read, expected }) {
   } catch (error) {
     return [...problems, `verdict.json не разобран: ${error.message}`];
   }
-  return [...problems, ...verdictProblems(verdict), ...reportProblems(verdict?.summary)];
+  return [...problems, ...verdictProblems(verdict, policy), ...reportProblems(verdict?.summary)];
+}
+
+/** Ship/release publication retries bind only to trusted outputs of their successful model job. */
+export function batchReviewResultProblems({ kind, files, read, expected, consumer, producer }) {
+  if (!['ship', 'release'].includes(kind)) return ['unknown batch review kind'];
+  if (producer?.producerResult !== 'success') return ['batch review has no successful trusted producer'];
+  const report = `${kind}-review.md`, required = ['manifest.sha256', 'producer.json', 'result.json', report];
+  if ([...files].sort().join(',') !== required.sort().join(',')) return ['batch review artifact file set differs'];
+  try {
+    const identity = reviewProducerIdentity({ ...consumer, ...producer, manifest: read('manifest.sha256') });
+    const sealed = JSON.parse(read('producer.json'));
+    const want = { schema: 1, kind, ...expected, ...identity };
+    if (Object.keys(sealed).sort().join(',') !== Object.keys(want).sort().join(',')
+      || Object.keys(want).some(key => sealed[key] !== want[key])) return ['batch review producer passport differs'];
+    if (!/^[a-f0-9]{40}$/.test(want.candidate || '') || !/^[a-f0-9]{64}$/.test(want.input_manifest || ''))
+      return ['batch review trusted material/input identity missing'];
+    const manifest = parseManifest(read('manifest.sha256'));
+    const payloads = required.filter(name => name !== 'manifest.sha256').sort();
+    if (!manifest || manifest.map(row => row.name).sort().join(',') !== payloads.join(',')
+      || manifest.some(row => row.hash !== sha256(read(row.name)))) return ['batch review manifest differs'];
+    const result = JSON.parse(read('result.json'));
+    if (!['high', 'medium', 'low'].every(key => typeof result[key] === 'number') || typeof result.summary !== 'string'
+      || !String(read(report)).trim()) return ['batch review result/report incomplete'];
+    return [...reportProblems(read(report)), ...reportProblems(result.summary)];
+  } catch { return ['batch review producer or artifact is invalid']; }
 }
 
 const invokedDirectly = process.argv[1]
@@ -152,10 +192,26 @@ const invokedDirectly = process.argv[1]
 if (invokedDirectly) {
   const dir = process.argv.find((a) => a.startsWith('--dir='))?.slice(6);
   if (!dir) { console.error('usage: review-result-gate.mjs --dir=<путь>'); process.exit(2); }
+  const batch = process.argv.find(a => a.startsWith('--batch='))?.slice(8);
+  if (batch) {
+    const problems = batchReviewResultProblems({ kind: batch,
+      files: readdirSync(dir, { withFileTypes: true }).map(e => e.name), read: name => readFileSync(resolve(dir, name), 'utf8'),
+      expected: { repo: process.env.REPO, candidate: process.env.CANDIDATE, base: process.env.BASE || '',
+        document: process.env.DOC, input_manifest: process.env.INPUT_MANIFEST },
+      consumer: { run: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT },
+      producer: { producerRun: process.env.REVIEW_PRODUCER_RUN_ID, producerAttempt: process.env.REVIEW_PRODUCER_ATTEMPT,
+        producerManifest: process.env.REVIEW_PRODUCER_MANIFEST, producerResult: process.env.REVIEW_PRODUCER_RESULT } });
+    if (problems.length) { console.error(problems.join('; ')); process.exit(1); }
+    console.log('batch review producer and exact artifact verified'); process.exit(0);
+  }
   const env = (name) => process.env[name.toUpperCase()] ?? '';
   const expected = Object.fromEntries(PASSPORT_FIELDS.map((field) => [field, env(field)]));
-  expected.run_id = process.env.GITHUB_RUN_ID ?? '';
-  expected.run_attempt = process.env.GITHUB_RUN_ATTEMPT ?? '';
+  try {
+    Object.assign(expected, reviewProducerIdentity({ run: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT,
+      producerRun: process.env.REVIEW_PRODUCER_RUN_ID, producerAttempt: process.env.REVIEW_PRODUCER_ATTEMPT,
+      producerManifest: process.env.REVIEW_PRODUCER_MANIFEST, producerResult: process.env.REVIEW_PRODUCER_RESULT,
+      manifest: readFileSync(resolve(dir, 'manifest.sha256')) }));
+  } catch (error) { console.error(`::error::${error.message}`); process.exit(1); }
   expected.repo = process.env.REPO ?? '';
   const problems = reviewResultProblems({
     files: readdirSync(dir, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name),
@@ -166,5 +222,7 @@ if (invokedDirectly) {
     for (const problem of problems) console.error(`::error::результат модели отвергнут — ${problem}`);
     process.exit(1);
   }
+  if (process.env.REVIEW_VERIFIED_OUTPUT)
+    writeFileSync(process.env.REVIEW_VERIFIED_OUTPUT, JSON.stringify(expected) + '\n', { flag: 'wx' });
   console.log('результат модели полон, суммы сходятся, паспорт совпал');
 }

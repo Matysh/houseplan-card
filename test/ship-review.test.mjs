@@ -107,7 +107,9 @@ test('#696 _ship-review.yml: модель без права записи, док
   const workflow = readFileSync(fileURLToPath(new URL('../.github/workflows/_ship-review.yml', import.meta.url)), 'utf8');
   const model = workflow.slice(workflow.indexOf('\n  model_review:'), workflow.indexOf('\n  publish:'));
   assert.match(model, /permissions:\n\s+contents: read\n\s+steps:/, 'модель только читает');
-  assert.match(model, /github_token: \$\{\{ secrets\.GITHUB_TOKEN \}\}/, 'без обмена OIDC на App-токен (#556)');
+  assert.match(model, /run: node "\$RUNNER_TEMP\/review-policy-tools\/scripts\/review-native-runner\.mjs"/);
+  assert.doesNotMatch(model, /uses: anthropics\/claude-code-action|github_token:|additional_permissions|mcp__github/,
+    'direct native не обменивает OIDC на App-токен и не открывает business GitHub tools (#556)');
   const publish = workflow.slice(workflow.indexOf('\n  publish:'));
   assert.match(publish, /m\.anchorBlock\(/, 'машинный блок пишет публикация, не модель');
   assert.match(publish, /reviews-index\.mjs --dir=docs\/reviews --strict/);

@@ -73,7 +73,12 @@ export function decideResume({ labels = [], issue, request, branch, headSha, bod
   if (latest.status !== 'completed' || latest.conclusion !== 'success') {
     return { action: 'noop', reason: `latest process run is ${latest.status}/${latest.conclusion || 'none'} — nothing was left pending` };
   }
-  const pending = pendingOf(latest);
+  const pending = pendingOf(latest, { request, branch, sha, body });
+  if (pending?.retainedModel) {
+    if (pending.request !== request.id || pending.branch !== branch || pending.candidate !== sha
+      || pending.bodyDigest !== issueBodyDigest(body || '')) throw Error('retained review barrier belongs to another request/body/material');
+    return { action: 'noop', reason: 'retained same-run sealed model result; retry its original integration, not the model (not review approval)' };
+  }
   if (pending?.completedModel) {
     const p = pending.continuation;
     if (p.epoch !== request.id || p.branch !== branch || p.candidate !== sha
@@ -98,7 +103,7 @@ function gh(args) {
 
 /** A normal completed model is a barrier, not an exception. Only a verified
  * complete result + its exact merge intent earns this successful no-op. */
-export function resumeEvidence({ repo, issue, run, artifacts, loadJson, loadResult }) {
+export function resumeEvidence({ repo, issue, run, artifacts, loadJson, loadResult, request, branch, sha, body }) {
   const find = name => {
     const matches = artifacts.filter(a => a.name === name && !a.expired);
     if (matches.length > 1) throw Error(`duplicate ${name} artifacts`);
@@ -125,6 +130,44 @@ export function resumeEvidence({ repo, issue, run, artifacts, loadJson, loadResu
       || p.bodyDigest !== prepared.material_issue_body || p.branch !== prepared.branch || run.stage !== 'code')
       throw Error('completed model and merge receipt identity differ');
     return { completedModel: true, continuation: p };
+  }
+  // A partial GitHub rerun can retain the successful model job from an earlier
+  // attempt. Recognize it only as a barrier; current integrate must still bind
+  // its trusted producer outputs and validate the complete passport itself.
+  const prefix = `review-result-${issue}-${run.id}-`;
+  const retained = artifacts.filter(a => a.name.startsWith(prefix)).map(artifact => ({ artifact,
+    attempt: Number(artifact.name.slice(prefix.length)) }));
+  if (retained.length) {
+    if (retained.length !== 1 || !Number.isSafeInteger(Number(run.attempt)) || Number(run.attempt) < 2
+      || !Number.isSafeInteger(retained[0].attempt) || retained[0].attempt < 1
+      || String(retained[0].attempt) !== retained[0].artifact.name.slice(prefix.length)
+      || retained[0].attempt >= Number(run.attempt) || retained[0].artifact.expired)
+      throw Error('retained model evidence is ambiguous, expired or has a foreign attempt');
+    if (!request?.id || request.label !== REVIEW_LABEL || reviewRunsForRequest([run], issue, request).length !== 1
+      || typeof body !== 'string' || typeof branch !== 'string' || !/^[a-f0-9]{40}$/.test(sha || ''))
+      throw Error('retained model evidence has no current immutable request context');
+    const producer = { ...run, attempt: retained[0].attempt };
+    const preparedArtifact = find(`review-prepared-${issue}-${run.id}-${producer.attempt}`);
+    if (!preparedArtifact) throw Error('retained model has no original prepared receipt');
+    const prepared = loadJson(preparedArtifact, 'prepared.json');
+    const why = preparedEvidenceError(prepared, { issue: { number: issue }, stage: 'code', run: producer });
+    if (why) throw Error(why);
+    if (run.stage !== 'code' || prepared.branch !== branch || prepared.material_issue_body !== issueBodyDigest(body))
+      throw Error('retained model request/body/branch identity differs');
+    const receipt = loadResult(retained[0].artifact);
+    const problems = reviewResultProblems({ ...receipt, expected: { ...prepared, repo } });
+    if (problems.length) throw Error(`retained model seal invalid: ${problems.join('; ')}`);
+    const mergeArtifact = find(continuationName(run.id, run.attempt));
+    if (mergeArtifact) {
+      const p = loadJson(mergeArtifact, 'pending.json');
+      if (!validContinuation(p) || p.kind !== 'merge' || p.repo !== repo || Number(p.issue) !== Number(issue)
+        || Number(p.producer.run) !== Number(run.id) || Number(p.producer.attempt) !== Number(run.attempt)
+        || p.epoch !== request.id || p.branch !== branch || p.material !== prepared.material_sha
+        || p.bodyDigest !== prepared.material_issue_body || p.candidate !== sha)
+        throw Error('retained model and current merge continuation identity differ');
+    } else if (sha !== prepared.material_sha) throw Error('retained model has no continuation for changed candidate');
+    return { retainedModel: true, request: request.id, branch, candidate: sha,
+      bodyDigest: prepared.material_issue_body, producerAttempt: producer.attempt };
   }
   const pending = find(pendingArtifactName(issue, run));
   return pending ? loadJson(pending, 'pending.json') : null;
@@ -155,10 +198,10 @@ export async function resume({ repo, branch, sha, validateRun, apply = true, ops
         headSha: JSON.parse(gh(['api', `repos/${repo}/git/ref/heads/${branch}`])).object.sha };
     },
     runs: (request) => request ? processRuns(repo, [], { since: request.at }) : [],
-    pendingOf: (run) => {
+    pendingOf: (run, context) => {
       return resumeEvidence({ repo, issue, run, artifacts: artifactNames(repo, run),
         loadJson: (artifact, file) => loadSealedArtifact(repo, run, artifact, file),
-        loadResult: artifact => loadResult(repo, run, artifact) });
+        loadResult: artifact => loadResult(repo, run, artifact), ...context });
     },
     relabel: () => relabel(repo, { number: issue }, REVIEW_LABEL),
   };

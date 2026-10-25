@@ -5754,14 +5754,16 @@ product change, guard change or separate extra build is introduced.
 
 Task, ship and release model jobs prepare `review-execution-policy.json` and
 explicit Claude settings from accepted-dev tooling, outside the reviewed tree.
-`--setting-sources ""` excludes user/project/local settings. Project instructions
-remain untrusted input and cannot enlarge this explicit policy. A synchronous
-PreToolUse hook accepts read tools, one literal foreground command from the
-review check allowlist, or Write to the exact external report/findings paths.
-Shell composition/redirection, inline interpreters, untracked executable input,
-canonical Write/Edit, mutation execution and rollback are refused. Ordinary
-build/typecheck/smoke and explicit unit/backend files remain available; generated
-outputs are produced by those unchanged programs, not patched through Write.
+The pinned native launcher passes explicit settings, an empty settings-source
+argument and a strict single MCP configuration directly as argv; it does not
+use the action adapter which discarded the empty source argument. Project
+instructions remain untrusted input and cannot enlarge this policy. The native
+catalogue exposes Read/Grep/Glob/Write/ToolSearch plus the bound schema output,
+not generic Bash/Edit/Agent or business MCP. Its only executable interface is
+`mcp__houseplan_review__run_check(check_id)`: accepted tooling owns each recipe,
+runtime, argv, environment and cwd. Ordinary build/typecheck/smoke and explicit
+unit/backend oracles remain executable. Generated outputs come from those
+unchanged programs, not arbitrary Write or shell programs.
 An unsupported recipe must remain unverified or use existing suitable proof;
 it is not an invitation to bypass the hook or claim its denial as a test result.
 
@@ -5804,9 +5806,27 @@ trace mismatch with hidden string values.
 
 The exact SDK builtin `ToolSearch` is read-only deferred-catalog discovery, not
 execution of a discovered tool and not a missing-journal exemption. Its normal
-hook/journal binding remains required. Each subsequent MCP/business/Bash call
-still receives its own unchanged guard; shell recipes, SDK pin/flags/deadlines,
-report/material checks and forbidden-request refusal are not broadened.
+hook/journal binding remains required. Each fixed-check MCP call is independently
+matched to the server's receipt and journal. Unknown check IDs report unavailable
+without dispatch or a synthetic PASS; arbitrary execution overrides refuse.
+The SDK pin, model/effort/turn limits, report/material checks and forbidden-request
+refusal are not broadened.
+
+Task/spec context is prepared from authenticated body/comments/handoff and
+immutable Git/CI facts; ship keeps its complete task context, while release
+retains independent line inputs without author specs or round reports. The model
+writes only external report/findings. A valid seal precedes trusted publication:
+issues mode uses bounded typed outside findings, file mode keeps Markdown.
+Stable publication keys and receipts reconcile partial writes; ambiguity stops
+instead of duplicating issues, reaching S8 or repeating model execution. Sealed
+report/verdict bytes stay unchanged. A retained successful model producer may
+precede the consumer attempt only in the same run with matching manifest and
+all original material bindings; missing producer outputs remain refusal.
+Only the generated terminal publication footer, bound to its preceding payload
+and authenticated publisher, is a receipt; protocol quotations in review text
+remain ordinary data. The Validate resume listener recognizes an earlier
+same-run sealed result only as a barrier against another model call. It does
+not authorize S8: the original integration must still verify the exact producer.
 
 Ordinary tests submit unsafe commands as JSON/string DATA to the unchanged
 hook and feed synthetic SDK/journal/report records to the audit. They never
@@ -5820,7 +5840,7 @@ waiting dependency under the unchanged deadline; neither dispatches the input.
 Windows skips those POSIX fixtures rather than pretending to prove Linux or a
 live provider session. An actual isolated CLI ABI probe needs no model request;
 ordinary synthetic records alone do not prove the provider's live message stream.
-The isolated checksum-verified 2.1.295 ABI receipt uses `--init-only` (no model
+The historical isolated checksum-verified 2.1.295 ABI receipt used `--init-only` (no model
 or provider request) with the existing model/effort/turn arguments and hook
 settings. The hidden `--max-turns` parses successfully while an unknown-option
 control is rejected; normal `--help`/`--version` alone are not that proof.

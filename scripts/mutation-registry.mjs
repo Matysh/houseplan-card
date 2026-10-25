@@ -15959,7 +15959,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1065: forbidden patch/restore/inline commands are ordinary DATA inputs to the unchanged PreToolUse policy and must be denied, never dispatched by the fixture.',
     patches: [{
       file: 'scripts/review-execution-policy.mjs',
-      find: "  if (call.tool_name === 'Bash') return bashProblem(call.tool_input, policy);",
+      find: "  if (call.tool_name === 'Bash') return bashProblem(call.tool_input, policy) || 'generic shell is not exposed; use declared run_check';",
       replace: "  if (call.tool_name === 'Bash') return null;",
     }],
   },
@@ -16135,20 +16135,19 @@ const MUTANT_DEFINITIONS = [
       + 'ветку задачи в обход ревью и слияния — потолок прав этой job проверяется дословно',
     patches: [{
       file: '.github/workflows/_process.yml',
-      find: '    permissions:\n      contents: read\n      issues: write\n    needs: [guard, prepare]\n',
-      replace: '    permissions:\n      contents: write\n      issues: write\n    needs: [guard, prepare]\n',
+      find: '    permissions:\n      contents: read\n      issues: read\n    needs: [guard, prepare]\n',
+      replace: '    permissions:\n      contents: write\n      issues: read\n    needs: [guard, prepare]\n',
     }],
   },
   {
     id: 'review-job-trusts-the-app-token',
-    guard: 'node --test --test-name-pattern="job-scoped" test/review-doc-guard.test.mjs',
-    because: '#556 r1 H1: без переданного ambient-токена claude-code-action меняет OIDC на '
-      + 'собственный App-токен с дефолтом contents/issues/pull_requests: write, и объявленные '
-      + '`permissions:` недоверенной стадии перестают быть потолком — молча, зелёным прогоном',
+    guard: 'node --test --test-name-pattern="direct native transport" test/review-doc-guard.test.mjs',
+    because: '#556/#1065: возвращение action вместо direct native вновь открывает App/OIDC fallback; '
+      + 'model job must keep its declared capability and permission boundary',
     patches: [{
       file: '.github/workflows/_process.yml',
-      find: '          github_token: ${{ secrets.GITHUB_TOKEN }}\n',
-      replace: '',
+      find: '        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-native-runner.mjs"\n',
+      replace: '        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520\n',
     }],
   },
   {
@@ -17937,8 +17936,9 @@ const MUTANT_DEFINITIONS = [
       + 'would let it file issues and comments the owner never took into work (#638, #556)',
     patches: [{
       file: '.github/workflows/release-review.yml',
-      find: '            --allowedTools Read,Write,Grep,Glob,Bash\n',
-      replace: '            --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment\n',
+      find: '        run: node "$RUNNER_TEMP/review-policy-tools/scripts/review-native-runner.mjs"\n',
+      replace: '        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520\n'
+        + '        with:\n          claude_args: --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment\n',
     }],
   },
   {

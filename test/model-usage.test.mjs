@@ -15,7 +15,7 @@ import { parseModelDetails } from '../scripts/model-usage-details.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
 
 // #737: расход сессии модели — одной машинной строкой в документе ревью.
-// Шаг `Review` (claude-code-action) отдаёт `execution_file` — все сообщения
+// Шаг `Review` (pinned native runner) отдаёт `execution_file` — все сообщения
 // сессии SDK, включая результаты инструментов. Из них берётся только последнее
 // `result`; остальное — возможные секреты, и ни одна их буква не выходит наружу.
 // #1065 audit and #1082 bounded failure diagnostics read the private trace locally.
@@ -293,8 +293,8 @@ test('#737 AC5: шаг снятия расхода сразу после Review 
 test('#737 AC5: execution_file никуда не выгружается, граница доверия #556 не изменилась', () => {
   for (const { file } of PIPELINES) {
     const code = readFileSync(join(WORKFLOWS, file), 'utf8').split('\n').filter((line) => !/^\s*#/.test(line));
-    assert.deepEqual(code.filter((line) => line.includes('claude-execution-output')),
-      ['          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/claude-execution-output.json'],
+    assert.deepEqual(code.filter((line) => line.includes('native-messages.json')),
+      ['          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/review-native-execution/native-messages.json'],
       `${file}: raw filename is only a local failure-collector fallback, never an upload path`);
     assert.deepEqual(code.filter((line) => line.includes('execution_file')),
       ['          EXEC: ${{ steps.review.outputs.execution_file }}',

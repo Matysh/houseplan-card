@@ -309,12 +309,15 @@ S1-new → S2-analysis → S3-spec → S4-spec-review ⟲ → S5-ready →
   зарегистрированного свидетеля — id и статус «не исполнялся». Статический
   `--check`, регистрация и ordinary PASS не являются caught.
 
-  Bash/Write для обычных build/test, их generated outputs и документа ревью
-  разрешены; это не разрешение менять предмет ревью ради отрицательного
-  свидетеля. Изоляция generated outputs/index и внешний REVIEW_DOC сохраняются.
+  Обычные build/test и их generated outputs разрешены через доверенный
+  `run_check(check_id)`; доступный исполнимый oracle нельзя заменять чтением.
+  Это не разрешение менять предмет ревью ради отрицательного свидетеля.
+  Изоляция generated outputs/index и внешний REVIEW_DOC сохраняются.
 
-  Tool policy перед ревью (#1065) разрешает только literal foreground checks
-  неизменённого материала и запись во внешний report/findings. Подмена,
+  Tool policy перед ревью (#1065) предъявляет закрытый native каталог чтения,
+  внешнего Write и единственный fixed-check MCP. Модель выбирает только
+  `check_id`; executable/argv/env/cwd задаёт manifest принятого tooling, а не
+  текст запроса. Общих Bash/Edit/Agent и business MCP в каталоге нет. Подмена,
   rollback, inline interpreter и shell composition отказываются до исполнения.
   SDK-hook startup/timeout отказывает нативно; перед моделью обязателен отказной
   self-probe неизменённого hook с командой только как JSON-данными.
@@ -327,6 +330,11 @@ S1-new → S2-analysis → S3-spec → S4-spec-review ⟲ → S5-ready →
   ревью, не admission и не authority для seal/слияния.
   Это ограничение инструментов против ошибочных действий ревьюера, не OS
   sandbox для враждебного reviewed child code и не доказательство caught.
+  Модель не публикует комментарии/issues. После валидного seal доверенная
+  публикация сохраняет issues/file маршрут побочных находок и отдельный
+  completion receipt, не переписывая sealed report/verdict. Частичная или
+  неизвестная публикация не разрешает S8/reuse и не требует нового вызова
+  модели: продолжается исходная публикация с проверкой её producer identity.
 
   **Мутант пишется, но в разработке не гоняется** — ни локально, ни в CI, ни
   ревьюером (#709, решение владельца 2026-09-29). Мутанты проверяют тесты, а не

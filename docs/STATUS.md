@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5470 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
+| Tests | Node unit 5541 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -55,6 +55,11 @@ targeted checks, and full regression remains a beta obligation.
 
 Review execution (#1065) checks requested tools before execution and compares
 the complete SDK trace with its private policy journal before report sealing.
+Its native catalogue has no generic shell/editor/business MCP; ordinary
+executable oracles use accepted fixed recipes selected only by check_id.
+Complete context and post-seal publication remove the model's GitHub write
+dependency. Completion receipts block partial-publication reuse/S8 without
+rerunning the model or changing sealed report bytes.
 Canonical patch/run/restore is refused rather than relabelled ordinary input.
 Missing/inconsistent evidence has no verdict authority; the tool boundary is
 not an operating-system sandbox for reviewed child programs.

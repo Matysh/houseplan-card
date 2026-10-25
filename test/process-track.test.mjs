@@ -18,6 +18,9 @@ import { classify as classifyPath } from '../scripts/change-classes.mjs';
 import { CARD_FILE, RUNTIME_FILE } from '../scripts/monolith-metrics.mjs';
 import { trackFromLabels as packetTrack } from '../scripts/task-packet.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
+import { parse } from 'yaml';
+
+const modelStep = (workflow, name) => parse(workflow).jobs.model_review.steps.find(step => step.name === name);
 
 // #696: конвейер ревью решает цену захода по треку; трек и рамки ship —
 // механические, потому что по ним задача сливается без ревью модели.
@@ -818,7 +821,7 @@ test('#707 AC4: шаг трека в _process.yml — один вызов, ко�
   const prepare = workflow.slice(workflow.indexOf('\n  prepare:'), workflow.indexOf('    steps:', workflow.indexOf('\n  prepare:')));
   assert.match(prepare, /risk_note: \$\{\{ steps\.track\.outputs\.risk_note \}\}/);
   assert.match(prepare, /ship_risk: \$\{\{ steps\.track\.outputs\.ship_risk \}\}/);
-  const prompt = workflow.slice(workflow.indexOf('          prompt: |\n'), workflow.indexOf('          claude_args: |'));
+  const prompt = modelStep(workflow, 'Подготовить native review prompt').env.REVIEW_PROMPT_TEXT;
   assert.match(prompt, /\n\s+\$\{\{ needs\.prepare\.outputs\.risk_note \}\}\n/, 'risk_note доходит до промпта Review');
   const decide = workflow.slice(workflow.indexOf(DECIDE_STEP), workflow.indexOf('      - name: dev ушёл вперёд'));
   assert.match(decide, /SHIP_RISK: \$\{\{ needs\.prepare\.outputs\.ship_risk \}\}/);
@@ -1380,12 +1383,12 @@ test('#726 К1: критерии маршрута — пункты «Подск�
 
 test('#726 AC5: схема вердикта, заметка маршрута в промпте, публикация передаёт маршрут', () => {
   const workflow = readFileSync(WORKFLOW, 'utf8');
-  const schema = JSON.parse(/--json-schema '([^']+)'/.exec(workflow)[1]);
+  const schema = JSON.parse(modelStep(workflow, 'Review').env.REVIEW_JSON_SCHEMA);
   assert.deepEqual(schema.properties.route, { type: 'string', enum: ['fix', 'reclassify'] });
   assert.deepEqual(schema.properties.criterion, { type: 'string' });
   assert.ok(schema.required.includes('route'), 'route обязателен');
   assert.ok(!schema.required.includes('criterion'), 'criterion необязателен');
-  const prompt = workflow.slice(workflow.indexOf('          prompt: |\n'), workflow.indexOf('          claude_args: |'));
+  const prompt = modelStep(workflow, 'Подготовить native review prompt').env.REVIEW_PROMPT_TEXT;
   assert.match(prompt, /\n\s+\$\{\{ needs\.prepare\.outputs\.route_note \}\}\n/, 'заметка маршрута доходит до промпта');
   const prepare = workflow.slice(workflow.indexOf('\n  prepare:'), workflow.indexOf('    steps:', workflow.indexOf('\n  prepare:')));
   assert.match(prepare, /route_note: \$\{\{ steps\.track\.outputs\.route_note \}\}/);
@@ -1421,7 +1424,10 @@ test('#726 AC5: шаг решения — один вызов process-track.mjs 
   assert.equal((run.match(/gh issue edit/g) || []).length, 1, 'метки меняются в одном месте');
   assert.match(run, /if \[ -n "\$add" \]; then edit\+=\(--add-label "\$add"\); fi\n\s+if \[ -n "\$remove" \]; then edit\+=\(--remove-label "\$remove"\); fi/);
   assert.match(run, /add=\$\(field add_labels\); remove=\$\(field remove_labels\); comment=\$\(field comment\)/);
-  assert.match(run, /--body-file "\$comment"/, 'тело комментария — файл скрипта');
+  assert.doesNotMatch(run, /--body-file "\$comment"/, 'маршрут уже опубликован trusted postseal publisher');
+  const publication = stepRun(workflow, '      - name: Опубликовать запечатанный вердикт и побочные находки');
+  assert.match(publication, /--routing="\$RUNNER_TEMP\/publication-route\/comment\.md"/,
+    'файл того же route-генератора передаётся trusted publisher целиком');
   assert.doesNotMatch(run, /--add-label (?:review-4|blocked|track:)/, 'ни одной метки, вписанной в bash');
   // Ветки ship и reuse — до вызова скрипта, без него.
   const call = run.indexOf('process-track.mjs');
@@ -1465,17 +1471,18 @@ test('#726 AC5: шаг решения на настоящем bash — reclassif
   const commentPath = join(dirname(box.work), 'runner', 'route', 'comment.md');
   assert.deepEqual(r.calls, [
     LABELS_VIEW,
-    `issue comment 7 --repo o/r --body-file ${commentPath}`,
     `issue edit 7 --repo o/r --add-label ${route.add_labels} --remove-label ${route.remove_labels}`,
   ]);
   assert.deepEqual([route.add_labels, route.remove_labels, route.kind], ['track:ask', 'track:show', 'reclassify'], 'метки — по выходу скрипта');
   assert.deepEqual({ green: r.output.green, from: r.output.from, to: r.output.to }, { green: 'false', from: 'S7-code-review', to: 'S3-spec' });
-  assert.equal(r.comment.split('\n')[0], '**Ревью show: решать есть что — трек повышен до `track:ask`.**');
-  assert.match(r.comment, /- `docs\/reviews\/CODE-REVIEW-7-r1\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md`\n/);
-  assert.doesNotMatch(r.comment, /CODE-REVIEW-70|SPEC-REVIEW/, 'только документы код-ревью этой задачи');
-  assert.match(r.comment, /Бюджет код-ревью: 2\/4/);
-  assert.match(r.comment, /\[Прогон\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/42\)/);
-  assert.match(r.comment, /<!-- hp:route reclassify criterion=undocumented -->\n$/);
+  const generated = readFileSync(commentPath, 'utf8');
+  assert.equal(r.comment, '', 'решение не публикует комментарий повторно');
+  assert.equal(generated.split('\n')[0], '**Ревью show: решать есть что — трек повышен до `track:ask`.**');
+  assert.match(generated, /- `docs\/reviews\/CODE-REVIEW-7-r1\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md`\n/);
+  assert.doesNotMatch(generated, /CODE-REVIEW-70|SPEC-REVIEW/, 'только документы код-ревью этой задачи');
+  assert.match(generated, /Бюджет код-ревью: 2\/4/);
+  assert.match(generated, /\[Прогон\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/42\)/);
+  assert.match(generated, /<!-- hp:route reclassify criterion=undocumented -->\n$/);
   assert.match(r.summary, /^- маршрут вердикта \*\*reclassify\*\* \(критерий `undocumented`\) → `S3-spec` · блокирующих циклов этапа code: 2\/4$/m);
   // Метки не прочитаны — берутся метки guard.
   box.labels(null);
@@ -1494,21 +1501,21 @@ test('#726 AC5: шаг решения на настоящем bash — исче�
   // show, spent 1, fix — review-4 этим же вердиктом, возврат в S6.
   const exhausted = box.run(run, decideEnv());
   assert.equal(exhausted.status, 0, exhausted.stderr + exhausted.stdout);
-  assert.deepEqual(exhausted.calls, [LABELS_VIEW, `issue comment 7 --repo o/r --body-file ${commentPath}`, 'issue edit 7 --repo o/r --add-label review-4']);
-  assert.match(exhausted.comment, /^Лимит циклов ревью исчерпан: блокирующих циклов 2 из 2 на этапе `code`/);
-  assert.match(exhausted.comment, /- `docs\/reviews\/CODE-REVIEW-7-r1\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md` — этот заход\n/);
+  assert.deepEqual(exhausted.calls, [LABELS_VIEW, 'issue edit 7 --repo o/r --add-label review-4']);
+  assert.match(readFileSync(commentPath, 'utf8'), /^Лимит циклов ревью исчерпан: блокирующих циклов 2 из 2 на этапе `code`/);
+  assert.match(readFileSync(commentPath, 'utf8'), /- `docs\/reviews\/CODE-REVIEW-7-r1\.md`\n- `docs\/reviews\/CODE-REVIEW-7-r2\.md` — этот заход\n/);
   assert.equal(exhausted.output.to, 'S6-in-progress');
   assert.match(exhausted.summary, /· `review-4`$/m);
   // Подтверждённый show: blocked и вопрос владельцу; blocked уже стоит — метка не ставится второй раз.
   box.comments([]);
   const question = box.run(run, decideEnv({ CONFIRMED: 'true', SPENT: '0', CYCLE: '1', OUT: verdictOut({ route: 'reclassify', criterion: 'surfaces' }) }));
   assert.equal(question.status, 0, question.stderr);
-  assert.deepEqual(question.calls.slice(1), [`issue comment 7 --repo o/r --body-file ${commentPath}`, 'issue edit 7 --repo o/r --add-label blocked']);
-  assert.equal(question.comment.split('\n')[0], '**Ревью show: решать есть что — вопрос владельцу.**');
+  assert.deepEqual(question.calls.slice(1), ['issue edit 7 --repo o/r --add-label blocked']);
+  assert.equal(readFileSync(commentPath, 'utf8').split('\n')[0], '**Ревью show: решать есть что — вопрос владельцу.**');
   assert.equal(question.output.to, 'S6-in-progress');
   box.labels(['track:show', 'S7-code-review', 'blocked']);
   const again = box.run(run, decideEnv({ CONFIRMED: 'true', SPENT: '0', CYCLE: '1', OUT: verdictOut({ route: 'reclassify', criterion: 'surfaces' }) }));
-  assert.deepEqual(again.calls.slice(1), [`issue comment 7 --repo o/r --body-file ${commentPath}`], 'комментарий один, меток не трогает');
+  assert.deepEqual(again.calls.slice(1), [], 'повторной публикации и правок меток нет');
   // Обычный fix без исчерпания — ни комментария, ни меток; статус — S6.
   box.labels(['track:show', 'S7-code-review']);
   const fix = box.run(run, decideEnv({ SPENT: '0', CYCLE: '1' }));

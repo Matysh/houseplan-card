@@ -1017,8 +1017,8 @@ test('конвейер: права выдаются по job, модель не 
 
   const jobBlock = (name, next) => workflow.slice(workflow.indexOf(`\n  ${name}:\n`), workflow.indexOf(`\n  ${next}:\n`));
   const model = jobBlock('model_review', 'integrate');
-  assert.match(model, /^\s+permissions:\n\s+contents: read\n\s+issues: write$/m,
-    'модели — чтение репозитория и ровно одно право записи: комментарий в issue');
+  assert.match(model, /^\s+permissions:\n\s+contents: read\n\s+issues: read$/m,
+    'модели доступно только чтение; публикацию делает trusted integrate');
   assert.doesNotMatch(model.slice(0, model.indexOf('steps:')), /contents: write/,
     'модель не получает права записи в репозиторий');
 
@@ -1034,18 +1034,15 @@ test('конвейер: права выдаются по job, модель не 
 // пока claude-code-action меняла OIDC на собственный App-токен: его дефолт —
 // `contents/issues/pull_requests: write`, и `ghs_…` от claude[bot] лежал прямо в
 // окружении Bash-инструмента модели. Потолком права становятся только при
-// переданном ambient-токене: `OVERRIDE_GITHUB_TOKEN` замыкает обмен в
-// `setupGitHubToken`. Свидетель стоит на проводке, потому что снятие одной
-// строки возвращает модели запись в репозиторий молча — прогон остаётся зелёным.
-test('ревью: модель работает job-scoped токеном, а не App-обменом (#556)', () => {
+// Теперь direct native transport не вызывает action/token exchange вообще.
+// Свидетель сохраняет исходную границу: модель не получает App/OIDC запись.
+test('ревью: direct native transport не обменивает ambient token на App-права (#556)', () => {
   const workflow = readFileSync(new URL('../.github/workflows/_process.yml', import.meta.url), 'utf8');
   const model = workflow.slice(workflow.indexOf('\n  model_review:\n'), workflow.indexOf('\n  integrate:\n'));
-  const review = model.slice(model.indexOf('      - name: Review\n'));
-  const withBlock = review.slice(review.indexOf('        with:'), review.indexOf('          prompt: |'));
-  assert.match(withBlock, /^\s+github_token: \$\{\{ secrets\.GITHUB_TOKEN \}\}$/m,
-    'шагу Review передан ambient job-scoped токен');
-  assert.doesNotMatch(withBlock, /additional_permissions/,
-    'права не расширяются через additional_permissions');
+  const review = model.slice(model.indexOf('      - name: Review\n'), model.indexOf('      - name: Снять расход модели'));
+  assert.match(review, /run: node "\$RUNNER_TEMP\/preflight-tools\/scripts\/review-native-runner\.mjs"/);
+  assert.doesNotMatch(review, /uses:|github_token:|GH_TOKEN:|GITHUB_TOKEN:|HP_PROCESS_TOKEN:|additional_permissions/,
+    'native model entry не получает credential для внешней публикации или App-обмена');
   // Без обмена OIDC не нужен, и заявка на него — признак вернувшегося App-токена.
   assert.doesNotMatch(model.slice(0, model.indexOf('steps:')), /id-token: write/,
     'OIDC этой стадии больше не выдаётся');

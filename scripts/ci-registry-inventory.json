@@ -4462,6 +4462,7 @@
     "scripts/release-membership.mjs",
     "scripts/release-narrative.mjs",
     "scripts/release-notes.mjs",
+    "scripts/review-call-digest.mjs",
     "scripts/review-doc-guard.mjs",
     "scripts/review-findings-policy.mjs",
     "scripts/review-material.mjs",

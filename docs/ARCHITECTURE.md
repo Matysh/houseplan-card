@@ -2301,9 +2301,11 @@ retained-carrier Align/storage result; it does not add a writer or bypass the
 opening-host and full structural-removal validators.
 
 Review execution policy (#1065) is prepared from accepted-dev tools outside
-the material checkout. All three model entrypoints load its explicit hook
-settings without user/project/local settings. PreToolUse validates a literal
-foreground check or an external report Write; arbitrary shell programs and
+the material checkout. All three model entrypoints use the pinned direct native
+launcher, explicit isolated settings and a positive tool catalogue. PreToolUse
+validates a fixed `run_check(check_id)` or an external report Write; the manifest
+owns executable/argv/env/cwd. Generic Bash/Edit/Agent and business MCP are absent;
+arbitrary shell programs and
 canonical implementation/guard/limit replacement are not review inputs.
 The private journal stores tool IDs, input digests and decisions, with optional
 bounded fixed-vocabulary diagnostic shape metadata (#1082). The SDK's
@@ -2323,6 +2325,15 @@ unsupported JSON values refuse. Current startup/hook/audit require that marker,
 with no legacy fallback. Exact builtin ToolSearch only reads a deferred catalog;
 each discovered actual tool still passes the existing guard independently.
 Raw shape metadata remains order-sensitive diagnostic evidence, not admission.
+
+Trusted context supplies complete bounded source discussions and Git/CI facts;
+release review keeps its independent line scope. The model does not publish
+outside its report. After valid audit/seal, the trusted publisher preserves
+the configured issues/file route, uses stable finding IDs and completion
+receipts, and never rewrites sealed report/verdict bytes. Pending or ambiguous
+publication blocks forwarding/reuse; retry uses the same authenticated producer
+rather than another model call. Retained producer attempts remain bound to the
+same run/material and exact sealed manifest, never a cross-run waiver.
 
 Failure diagnostics (#1082) are a separate trusted read-only projection of the
 existing execution trace and private journal. A model/audit failure collects a

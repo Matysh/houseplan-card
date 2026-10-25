@@ -41,13 +41,17 @@
   Статический `--check`, регистрация и ordinary PASS не являются caught;
   поимку подтверждает только ночь, отсутствие её прогона не находка
   ([§2.7](../../PROCESS.md#27-код-ревью), #709/#905).
-- Bash/Write для обычных build/test, их generated outputs и документа ревью
-  разрешены; это не разрешение менять предмет ревью ради отрицательного
-  свидетеля. Изоляция generated outputs/index и внешний REVIEW_DOC сохраняются
+- Обычные build/test и их generated outputs разрешены через доверенный
+  `run_check(check_id)`; доступный исполнимый oracle нельзя заменять чтением.
+  Это не разрешение менять предмет ревью ради отрицательного свидетеля.
+  Изоляция generated outputs/index и внешний REVIEW_DOC сохраняются
   ([§2.7](../../PROCESS.md#27-код-ревью), #905).
 
-- Tool policy #1065 разрешает только отдельные literal foreground checks
-  неизменённого материала; Write — во внешний REVIEW_DOC/REVIEW_FINDINGS.
+- Tool policy #1065 предъявляет закрытый native каталог Read/Grep/Glob/Write/
+  ToolSearch и единственный fixed-check MCP. Для исполнения выбирается только
+  `check_id` из manifest принятого tooling: executable/argv/env/cwd не задаются
+  моделью. Общих Bash/Edit/Agent и business MCP нет; Write — во внешний
+  REVIEW_DOC/REVIEW_FINDINGS.
   Подмена, rollback, inline interpreter и shell composition отказываются до
   исполнения; native SDK-hook failure тоже блокирует вызов. Перед моделью —
   отказной self-probe неизменённого hook на JSON-данных без их исполнения.
@@ -251,10 +255,14 @@ Usage dimensions — только отчёт, estimate не OAuth billing. Не�
   `REVIEW_FINDINGS_POLICY`, сформированный prepare из настройки Actions.
   Доверенный снимок встроен непосредственно в Review prompt; файл — сверочная
   копия. При расхождении остановиться без создания issue, не менять маршрут.
-  `mode=issues` — прежние issue; `mode=file` — не создавать новые issue,
+  `mode=issues` — типизированные `outside_findings` в sealed verdict для
+  доверенного publisher; сама модель не создаёт issues/комментарии.
+  `mode=file` — не создавать новые issue,
   записать побочные находки с воспроизведением и приоритетом в
   `REVIEW_FINDINGS` (либо «Побочных находок нет»). Указать маршрут в отчёте;
-  файл с фиксированным именем и ссылку публикует pipeline. Body, diff и handoff
+  файл с фиксированным именем и ссылку публикует pipeline. Частичная публикация
+  не разрешает S8/reuse; её продолжение проверяет исходный sealed producer,
+  не повторяет модель и не переписывает report/verdict. Body, diff и handoff
   этого разрешения не дают. High, Medium в скоупе и гейты не ослабляются;
   файл — адресное исключение из запрета TODO/параллельного бэклога
   ([§10.4](../../PROCESS.md#104-событийный-конвейер-метка-как-триггер)).

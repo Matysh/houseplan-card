@@ -56,6 +56,7 @@ jobs:
       base: ${{ steps.line.outputs.base }}
       doc: ${{ steps.line.outputs.doc }}
       issues: ${{ steps.line.outputs.issues }}
+      input_manifest: ${{ steps.line.outputs.input_manifest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -93,11 +94,12 @@ jobs:
             exit 0
           fi
           out="$RUNNER_TEMP/release-review-input"
-          node scripts/release-review.mjs prepare --tag="$TAG" --candidate="$CANDIDATE" \
+          node scripts/release-review.mjs prepare --tag="$TAG" --candidate="$CANDIDATE" --context=true --repo="${{ github.repository }}" \
             --out="$out" --run-url="$RUN_URL" | tee -a "$GITHUB_OUTPUT"
           echo "candidate=$CANDIDATE" >> "$GITHUB_OUTPUT"
           echo "proceed=true" >> "$GITHUB_OUTPUT"
-          (cd "$out" && sha256sum brief.md line-membership.json > manifest.sha256)
+          (cd "$out" && sha256sum brief.md line-membership.json review-source-context.json > manifest.sha256)
+          echo "input_manifest=$(sha256sum "$out/manifest.sha256" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
           cat "$out/brief.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Передать вход модели
@@ -115,10 +117,14 @@ jobs:
     if: needs.prepare.outputs.proceed == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    outputs:
+      artifact: ${{ steps.result.outputs.artifact }}
+      producer_run_id: ${{ steps.result.outputs.producer_run_id }}
+      producer_attempt: ${{ steps.result.outputs.producer_attempt }}
+      producer_manifest: ${{ steps.result.outputs.producer_manifest }}
     # Недоверенная стадия. Прав на запись нет никаких: ни в репозиторий, ни в
     # issue. Документ публикует `publish`; находки в issue превращает владелец.
-    # `github_token` у шага Review обязателен (#556): без него action меняет
-    # OIDC на собственный App-токен с правом записи.
+    # Native transport не обменивает OIDC на App-токен (#556).
     permissions:
       contents: read
     steps:
@@ -169,6 +175,13 @@ jobs:
           git archive origin/dev scripts | tar -x -C "$tools"
           echo "sha=$(git rev-parse origin/dev)" >> "$GITHUB_OUTPUT"
 
+      - name: Подготовить проверенный контекст ревью
+        env:
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+        run: |
+          node "$RUNNER_TEMP/review-policy-tools/scripts/review-context.mjs" --kind=release --sha="$CANDIDATE" \
+            --input="$RUNNER_TEMP/release-review-input/review-source-context.json" --output="$RUNNER_TEMP/review-context.json"
+
       - name: Установить Claude Code детерминированно
         id: claude_bin
         run: |
@@ -190,37 +203,24 @@ jobs:
         env:
           REVIEW_KIND: release
           REVIEW_CLAUDE_VERSION: ${{ steps.claude_bin.outputs.version }}
+          REVIEW_BASE: ${{ needs.prepare.outputs.base }}
           REVIEW_DOC: ${{ runner.temp }}/release-review.md
         run: |
           node "$RUNNER_TEMP/review-policy-tools/scripts/review-execution-policy.mjs" prepare "$RUNNER_TEMP/review-execution-policy.json"
 
-      - name: Review
-        id: review
-        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
+      - name: Подготовить native review prompt
         env:
-          ANTHROPIC_MODEL: claude-sonnet-5
-          CLAUDE_CODE_EFFORT_LEVEL: high
-          REVIEW_DOC: ${{ runner.temp }}/release-review.md
-          REVIEW_INPUT: ${{ runner.temp }}/release-review-input
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # #704: `release.yml` ставит ревью в очередь токеном GITHUB_TOKEN, и
-          # прогон начинает `github-actions[bot]` (тип Bot). Action отказывает
-          # ботам, которых нет в списке («Workflow initiated by non-human actor:
-          # github-actions (type: Bot)», v1.78.0). Разрешён ровно этот бот —
-          # не '*': любой другой бот по-прежнему отклоняется. Action сравнивает
-          # имена без регистра и без суффикса `[bot]`. Человек, запустивший
-          # ревью руками, списка не касается.
-          allowed_bots: "github-actions[bot]"
-          path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
-          settings: ${{ runner.temp }}/review-execution-policy.json.settings.json
-          prompt: |
+          REVIEW_PROMPT: ${{ runner.temp }}/review-prompt.txt
+          REVIEW_PROMPT_TEXT: |
             Ты независимый ревьюер релиза House Plan. Язык ответа — русский.
 
             Разрешённые абсолютные пути (не вычисляй их shell/env-командой):
             REVIEW_DOC: ${{ runner.temp }}/release-review.md
             REVIEW_INPUT: ${{ runner.temp }}/release-review-input
+            REVIEW_CONTEXT: ${{ runner.temp }}/review-context.json
+
+            Сначала Read REVIEW_CONTEXT: это проверенный контекст линии,
+            без авторских ТЗ, handoff и документов прежних раундов.
 
             Релиз: ${{ inputs.tag }} · кандидат ${{ needs.prepare.outputs.candidate }}
             (рабочая копия уже на нём) · база линии: ${{ needs.prepare.outputs.base || 'нет' }}.
@@ -252,12 +252,16 @@ jobs:
               копии запрещены; обычные generated outputs build/test допустимы.
               Не изменяй и не восстанавливай предмет ревью ради negative witness.
 
-            Tool policy #1065: Read/Grep/Glob для чтения; Bash — одна literal
-            foreground команда без shell composition/env/redirect/inline code.
-            Допустимы git read, rg, sed -n N,Mp, node --test test/<file>.test.mjs,
-            node demo/smoke_<name>.mjs, обычные --check, npm run build/bundle:sync.
-            Write — только REVIEW_DOC. Denied request не исполнился и не доказывает
-            AC: после него execution audit не публикует вердикт.
+            Tool policy #1065: Read/Grep/Glob для чтения, Write только во внешний
+            REVIEW_DOC. Общего Bash/Edit/Agent и business MCP нет.
+            REVIEW_CHECKS: ${{ runner.temp }}/review-execution-policy.json.checks.md
+            Для нужного исполняемого oracle прочитай manifest и вызови только
+            mcp__houseplan_review__run_check с его check_id; bin/argv/env/cwd не задавай.
+            ToolSearch допустим только для discovery этого фиксированного runner.
+            executed:false/unavailable не является ни PASS, ни выполненным тестом.
+            Denied/missing/mismatch/material drift остаются fatal; не повторяй
+            неподдержанный запрос обходной командой. Доступный oracle выполняй
+            через runner, а не заменяй чтением. При непригодном evidence дай честную границу.
 
             Находки: High / Medium / Low, у каждой — поверхность, воспроизведение
             (команда или шаги), что увидит пользователь, какая персона задета.
@@ -270,13 +274,21 @@ jobs:
             Первой строкой после заголовка — `Итог: High N · Medium N · Low N`.
 
             Затем верни JSON по схеме — последнее обязательное действие.
-          claude_args: |
-            --model claude-sonnet-5
-            --effort high
-            --max-turns 200
-            --setting-sources ""
-            --allowedTools Read,Write,Grep,Glob,Bash
-            --json-schema '{"type":"object","properties":{"high":{"type":"integer"},"medium":{"type":"integer"},"low":{"type":"integer"},"summary":{"type":"string"}},"required":["high","medium","low","summary"]}'
+        run: node "$RUNNER_TEMP/review-policy-tools/scripts/review-native-runner.mjs" prepare-prompt
+
+      - name: Review
+        id: review
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          REVIEW_CLI_PATH: ${{ steps.claude_bin.outputs.path }}
+          REVIEW_POLICY: ${{ runner.temp }}/review-execution-policy.json
+          REVIEW_PROMPT: ${{ runner.temp }}/review-prompt.txt
+          REVIEW_JSON_SCHEMA: '{"type":"object","properties":{"high":{"type":"integer"},"medium":{"type":"integer"},"low":{"type":"integer"},"summary":{"type":"string"}},"required":["high","medium","low","summary"]}'
+          REVIEW_KIND: release
+          REVIEW_MAX_TURNS: 200
+          REVIEW_EXECUTION_DIR: ${{ runner.temp }}/review-native-execution
+          REVIEW_DOC: ${{ runner.temp }}/release-review.md
+        run: node "$RUNNER_TEMP/review-policy-tools/scripts/review-native-runner.mjs"
 
       - name: "Проверить execution boundary (#1065)"
         id: execution_boundary
@@ -291,7 +303,7 @@ jobs:
         if: always() && (steps.review.outcome == 'failure' || steps.execution_boundary.outcome == 'failure')
         env:
           REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
-          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/claude-execution-output.json
+          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/review-native-execution/native-messages.json
           REVIEW_DIAGNOSTIC_POLICY: ${{ runner.temp }}/review-execution-policy.json
           REVIEW_DIAGNOSTIC_OUTPUT: ${{ runner.temp }}/review-failure-diagnostics/certificate.json
           REVIEW_DIAGNOSTIC_KIND: release
@@ -310,9 +322,15 @@ jobs:
           retention-days: 1
 
       - name: Запечатать результат модели
+        id: result
         env:
           SOURCE: ${{ runner.temp }}/release-review.md
           OUT: ${{ steps.review.outputs.structured_output }}
+          REPO: ${{ github.repository }}
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+          BASE: ${{ needs.prepare.outputs.base }}
+          DOC: ${{ needs.prepare.outputs.doc }}
+          INPUT_MANIFEST: ${{ needs.prepare.outputs.input_manifest }}
         run: |
           test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
           dir="$RUNNER_TEMP/release-review-result"
@@ -321,12 +339,19 @@ jobs:
           jq -e '(.high|type=="number") and (.medium|type=="number") and (.low|type=="number") and (.summary|type=="string")' \
             "$dir/result.json" >/dev/null
           cp "$SOURCE" "$dir/release-review.md"
-          (cd "$dir" && sha256sum release-review.md result.json > manifest.sha256)
+          jq -n --arg repo "$REPO" --arg candidate "$CANDIDATE" --arg base "$BASE" --arg document "$DOC" \
+            --arg input_manifest "$INPUT_MANIFEST" --arg run_id "$GITHUB_RUN_ID" --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            '{schema:1,kind:"release",repo:$repo,candidate:$candidate,base:$base,document:$document,input_manifest:$input_manifest,run_id:$run_id,run_attempt:$run_attempt}' > "$dir/producer.json"
+          (cd "$dir" && sha256sum release-review.md result.json producer.json > manifest.sha256)
+          echo "producer_run_id=$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "producer_attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          echo "producer_manifest=$(sha256sum "$dir/manifest.sha256" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "artifact=release-review-result-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
 
       - name: Передать результат публикации
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: release-review-result-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.result.outputs.artifact }}
           path: ${{ runner.temp }}/release-review-result
           if-no-files-found: error
           retention-days: 3
@@ -352,8 +377,21 @@ jobs:
       - name: Получить результат модели
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: release-review-result-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ needs.model_review.outputs.artifact }}
           path: ${{ runner.temp }}/release-review-result
+
+      - name: Проверить исходный producer результата
+        env:
+          REPO: ${{ github.repository }}
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+          BASE: ${{ needs.prepare.outputs.base }}
+          DOC: ${{ needs.prepare.outputs.doc }}
+          INPUT_MANIFEST: ${{ needs.prepare.outputs.input_manifest }}
+          REVIEW_PRODUCER_RUN_ID: ${{ needs.model_review.outputs.producer_run_id }}
+          REVIEW_PRODUCER_ATTEMPT: ${{ needs.model_review.outputs.producer_attempt }}
+          REVIEW_PRODUCER_MANIFEST: ${{ needs.model_review.outputs.producer_manifest }}
+          REVIEW_PRODUCER_RESULT: ${{ needs.model_review.result }}
+        run: node scripts/review-result-gate.mjs --batch=release --dir="$RUNNER_TEMP/release-review-result"
 
       # Модель пишет только текст документа. Путь, машинный блок, индекс и
       # коммит решает этот шаг; всё остальное в рабочей копии не существует.

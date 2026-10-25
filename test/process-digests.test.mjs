@@ -182,14 +182,10 @@ test('#634 конспект: объявляет себя выжимкой, ка�
 
 test('#634 промпт ревьюера: конспект вместо пересказа, машинные требования на месте', () => {
   const workflow = read('.github/workflows/_process.yml');
-  const start = workflow.indexOf('          prompt: |\n');
-  const end = workflow.indexOf('          claude_args: |', start);
-  assert.ok(start > 0 && end > start, 'блок prompt найден');
-  const prompt = workflow.slice(start, end);
+  const prompt = actualReviewPrompt();
   const flat = prompt.replace(/\s+/g, ' ');
   assert.match(flat, /docs\/process\/REVIEWER\.md/, 'ревьюер читает конспект');
   for (const required of [
-    '`Вердикт: зелёный/жёлтый/красный · заход r${{ needs.guard.outputs.cycle }} · блокирующих циклов ${{ needs.guard.outputs.spent }}/${{ needs.guard.outputs.limit }} · High: N · Medium: N → в задаче | #…`',
     'Материал ревью — ровно `${{ needs.prepare.outputs.material_sha }}`',
     'Не делай `git fetch`, `git pull` и `git checkout` на другой коммит',
     'переменной окружения REVIEW_DOC (абсолютный, ВНЕ репозитория)',
@@ -201,7 +197,7 @@ test('#634 промпт ревьюера: конспект вместо пере
     '«Закрытие раунда r<N-1>»',
     '«Унаследовано из r<N-1>»',
     'какие гейты прогнал, какие нет и почему',
-    'тип, приоритет, S1-new',
+    'outside_findings',
     '${{ needs.prepare.outputs.validated_note }}',
     '${{ needs.prepare.outputs.rebase_note }}',
     'Затем верни JSON по схеме',
@@ -221,7 +217,7 @@ test('#634 промпт ревьюера: конспект вместо пере
 // без раздела оставила бы ревьюера без правила, которое промпт больше не несёт.
 test('#750 AC2: ссылки промпта на REVIEWER.md ведут в существующие разделы; перенесённое на месте', () => {
   const workflow = read('.github/workflows/_process.yml');
-  const prompt = workflow.slice(workflow.indexOf('          prompt: |\n'), workflow.indexOf('          claude_args: |'));
+  const prompt = actualReviewPrompt();
   const flat = prompt.replace(/\s+/g, ' ');
   const reviewer = read('docs/process/REVIEWER.md');
   const sections = new Set(headings(reviewer).filter((h) => h.level === 2).map((h) => h.text));
@@ -249,12 +245,12 @@ test('#750 AC2: ссылки промпта на REVIEWER.md ведут в су�
 
 // Read the real Review input scalar, bounded by the parsed workflow step.
 // This is deliberately not another copy of the policy or a generic YAML/GHA engine.
-function actualReviewPrompt() {
-  const workflow = read('.github/workflows/_process.yml');
-  const step = findStep(workflow, { name: 'Review' });
+function actualReviewPrompt(path = '.github/workflows/_process.yml') {
+  const workflow = read(path);
+  const step = findStep(workflow, { name: 'Подготовить native review prompt' });
   const source = workflow.split('\n').slice(step.line - 1, step.last).join('\n');
-  const match = /^          prompt: \|\n((?:^            .*\n|^\s*\n)*)/m.exec(source);
-  assert.ok(match, 'Review has the supported literal prompt scalar');
+  const match = /^          REVIEW_PROMPT_TEXT: \|\n((?:^            .*\n|^\s*\n)*)/m.exec(source);
+  assert.ok(match, 'Native Review has the supported literal prompt scalar');
   return match[1].replace(/^ {12}/gm, '');
 }
 
@@ -286,7 +282,7 @@ function promptFixture(stage, track, findingsRaw = '') {
 // These contracts protect review instructions, not a model's ability to find bugs.
 test('#1063 task and ship review keep independent analysis ahead of evidence and preserve scoped checks', () => {
   const ship = read('.github/workflows/_ship-review.yml');
-  const shipPrompt = ship.slice(ship.indexOf('          prompt: |'), ship.indexOf('          claude_args: |'));
+  const shipPrompt = actualReviewPrompt('.github/workflows/_ship-review.yml');
   for (const prompt of [promptFixture('code', 'ask'), promptFixture('code', 'show'), shipPrompt]) {
     const flat = norm(prompt);
     assert.match(flat, /независимо проследи/);
@@ -329,7 +325,7 @@ function policyProblems(source) {
   for (const phrase of ['negative-input cases на неизменённой реализации разрешены',
     'временный ручной патч исполняемой реализации', 'собранной копии (`test-build`/bundle)',
     'гарда или лимита', 'вне ночного workflow', 'запрещено', 'не исполнялся',
-    'статический `--check`', 'ordinary PASS не являются caught', 'Bash/Write'])
+    'статический `--check`', 'ordinary PASS не являются caught', 'run_check'])
     if (!text.includes(norm(phrase))) problems.push('missing: ' + phrase);
   for (const recipe of [/прогона со снятой защитой/, /без названной мутации/,
     /после проверки «умеет ли тест падать»/, /ревьюер мутирует и затем восстанавливает/,
@@ -363,7 +359,7 @@ test('#905 AC1/AC2 common policy reaches the actual prompt for every stage/track
   assert.match(workflow, /git reset -q --hard "origin\/\$target"/);
   assert.match(workflow, /git clean -fdq -e node_modules/);
   assert.match(workflow, /REVIEW_DOC: \$\{\{ runner\.temp \}\}\/review-document\.md/);
-  assert.match(workflow, /--max-turns 150/);
+  assert.match(workflow, /REVIEW_MAX_TURNS: 150/);
 });
 
 test('#905 AC3 ordinary input fixtures and static readiness are not caught execution evidence', () => {

@@ -2,14 +2,18 @@
 // Ordinary checks execute unchanged material; ad-hoc shell programs do not.
 import { appendFileSync, existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
 import { CALL_DIGEST_ALGORITHM, callDigest } from './review-call-digest.mjs';
+import { buildReviewCapabilities, readReviewCapabilities, reviewChecksMarkdown,
+  NATIVE_REVIEW_TOOLS, REVIEW_MCP_NATIVE_TOOL_NAME } from './review-capabilities.mjs';
+import { checkTraceProblems, readCheckExecutionEntries, verifyCheckExecutionFiles } from './review-approved-check.mjs';
 
 export const REVIEW_CLI_VERSION = '2.1.295';
+export const REVIEW_CLI_SHA256 = '4503bfe11a6c7fcc1e0b39b5e0d347c04248f750b03b0977b3ad6b531fe6f358';
 export const HOOK_TIMEOUT_SECONDS = 30;
 const STARTUP_PROBE = { tool_use_id: 'startup-probe', tool_name: 'Bash', tool_input: {
   command: "sed -i 's/timeout-minutes: 35/timeout-minutes: 25/' .github/workflows/validate.yml" } };
@@ -30,8 +34,7 @@ const CHECK_SCRIPTS = new Set([
 ]);
 // Native SDK ToolSearch reads a deferred catalog; discovered tool execution is
 // a separate hook call and receives no permission from discovery.
-const READ_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch', 'TodoWrite', 'ToolSearch']);
-const ISSUE_TOOLS = new Set(['mcp__github__add_issue_comment', 'mcp__github__issue_write', 'mcp__github__issue_read']);
+const READ_TOOLS = new Set(NATIVE_REVIEW_TOOLS.filter(name => name !== 'Write'));
 class PolicyRefusal extends Error {}
 
 export function hookCommand({ executable = process.execPath, handler = fileURLToPath(import.meta.url), policyPath }) {
@@ -84,6 +87,8 @@ function canonicalFile(path, policy) {
   catch { return false; }
 }
 
+// Legacy command grammar classifies refusals for diagnostics only. A null
+// classification never grants Bash: toolProblem always denies that tool.
 export function bashProblem(input, policy) {
   const args = literalArgv(input?.command);
   if (!args || input.run_in_background) return 'only one foreground literal command is permitted';
@@ -117,12 +122,17 @@ export function bashProblem(input, policy) {
 }
 
 export function toolProblem(call, policy) {
+  try { readReviewCapabilities(policy); } catch { return 'review capability manifest unavailable or changed'; }
   if (!call || typeof call.tool_name !== 'string') return 'malformed tool call';
   if (READ_TOOLS.has(call.tool_name)) return null;
   if (call.tool_name === 'StructuredOutput') return reportProblems(call.tool_input?.summary || '').length
     ? 'misleading ordinary mutation claim cannot be published' : null;
-  if (ISSUE_TOOLS.has(call.tool_name) && policy.kind === 'task') return reportProblems(call.tool_input?.body || call.tool_input?.comment || '').length
-    ? 'misleading ordinary mutation claim cannot be published' : null;
+  if (call.tool_name === REVIEW_MCP_NATIVE_TOOL_NAME) {
+    const input = call.tool_input;
+    return !input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).length !== 1
+      || typeof input.check_id !== 'string' || !input.check_id.length || input.check_id.length > 256
+      ? 'run_check requires only a bounded check_id' : null;
+  }
   if (call.tool_name === 'Write') {
     const path = call.tool_input?.file_path;
     if (typeof call.tool_input?.content !== 'string' || reportProblems(call.tool_input.content).length) return 'external report must be text without misleading ordinary mutation claims';
@@ -132,7 +142,7 @@ export function toolProblem(call, policy) {
     } catch { return 'output parent is unavailable'; }
     return null;
   }
-  if (call.tool_name === 'Bash') return bashProblem(call.tool_input, policy);
+  if (call.tool_name === 'Bash') return bashProblem(call.tool_input, policy) || 'generic shell is not exposed; use declared run_check';
   return 'tool is not permitted by the review execution boundary';
 }
 
@@ -149,16 +159,21 @@ export function reportProblems(text) {
   });
 }
 
-export function traceProblems(messages, entries, policy, { reportText } = {}) {
+export function traceProblems(messages, entries, policy, { reportText, checkEntries = [] } = {}) {
   if (!Array.isArray(messages) || !Array.isArray(entries)) return ['execution trace or hook journal is unavailable'];
   if (policy?.callDigestAlgorithm !== CALL_DIGEST_ALGORITHM) return ['unsupported call digest algorithm'];
+  try { readReviewCapabilities(policy); } catch { return ['review capability manifest unavailable or changed']; }
+  if (!Array.isArray(checkEntries)) return ['check execution journal is unavailable'];
   const calls = messages.filter(m => m?.type === 'assistant').flatMap(m => m.message?.content || [])
     .filter(b => b?.type === 'tool_use');
   const results = messages.filter(m => m?.type === 'user').flatMap(m => m.message?.content || [])
     .filter(b => b?.type === 'tool_result');
-  const problems = []; const ids = new Set();
+  const problems = []; const ids = new Set(), receiptIds = new Set();
   const result = messages.findLast(m => m?.type === 'result');
-  if (!result || result.subtype !== 'success' || result.is_error || !calls.some(c => c.name === 'Write'
+  if (!result || messages.at(-1) !== result || messages.filter(m => m?.type === 'result').length !== 1
+    || result.subtype !== 'success' || result.is_error !== false
+    || !Array.isArray(result.permission_denials) || result.permission_denials.length
+    || !calls.some(c => c.name === 'Write'
     && c.input?.file_path === policy.outputs[0])) problems.push('complete execution with external report Write is required');
   const written = calls.findLast(c => c.name === 'Write' && c.input?.file_path === policy.outputs[0]);
   if (reportText !== undefined && written?.input?.content !== reportText) problems.push('report bytes differ from the last external Write');
@@ -171,6 +186,7 @@ export function traceProblems(messages, entries, policy, { reportText } = {}) {
     // Only that exact channel, bound to the terminal output, is exempt. It
     // cannot turn an unjournalled Bash/Write/MCP call into admitted execution.
     const outputChannel = call.name === 'StructuredOutput' && isDeepStrictEqual(call.input, result?.structured_output);
+    if (call.name === 'StructuredOutput' && !outputChannel) problems.push('structured output is not bound to terminal result');
     let inputDigest;
     try { inputDigest = callDigest(call.name, call.input); }
     catch { problems.push('invalid JSON tool call'); }
@@ -178,13 +194,31 @@ export function traceProblems(messages, entries, policy, { reportText } = {}) {
       || matching[0].callDigestAlgorithm !== CALL_DIGEST_ALGORITHM
       || !inputDigest || matching[0].input !== inputDigest
       || matching[0].denied !== Boolean(expected))) problems.push('tool call has no matching policy decision');
-    if (results.filter(r => r.tool_use_id === call.id).length !== 1) problems.push('tool result is missing or duplicated');
+    const observed = results.filter(r => r.tool_use_id === call.id);
+    if (observed.length !== 1) problems.push('tool result is missing or duplicated');
+    if (call.name === REVIEW_MCP_NATIVE_TOOL_NAME) {
+      const checked = checkTraceProblems(call, observed.length === 1 ? observed[0] : null, checkEntries, policy);
+      problems.push(...checked.problems);
+      if (checked.receiptId) {
+        if (receiptIds.has(checked.receiptId)) problems.push('duplicate check execution receipt');
+        receiptIds.add(checked.receiptId);
+      }
+    }
     // A denied call is not evidence that the tool executed. Do not publish a
     // successful policy audit when a forbidden action was even requested.
     if (expected) problems.push('review requested a forbidden tool call');
   }
   if (entries.some(e => !ids.has(e.id)) || results.some(r => !ids.has(r.tool_use_id))) problems.push('hook journal and execution trace differ');
+  if (checkEntries.some(e => !receiptIds.has(e?.receiptId))) problems.push('orphan check execution receipt');
   return problems;
+}
+
+export function adapterProblems(adapter, { policy, messages, executionFile }) {
+  return !adapter || adapter.schema !== 'houseplan-native-review/v1' || adapter.status !== 'success'
+    || adapter.cliVersion !== REVIEW_CLI_VERSION || adapter.cliSha256 !== REVIEW_CLI_SHA256
+    || adapter.materialSha !== policy.sha || adapter.exitCode !== 0 || adapter.exitSignal !== null
+    || adapter.executionFile !== executionFile || adapter.messages !== messages.length
+    ? ['native adapter evidence is missing, failed or inconsistent'] : [];
 }
 
 function unchanged(policy) {
@@ -200,12 +234,20 @@ if (isMainModule(import.meta.url)) {
         throw new PolicyRefusal('verified Linux CLI with native onFailure:block is required');
       const root = realpathSync(process.cwd());
       const outputs = [process.env.REVIEW_DOC, process.env.REVIEW_FINDINGS].filter(Boolean).map(p => resolve(p));
-      if (!outputs.length || outputs.some(p => !relative(root, p).startsWith('..') || realpathSync(dirname(p)) !== dirname(p))) throw new Error('reports must be outside material');
-      const policy = { schema: 1, root, outputs, cliVersion: REVIEW_CLI_VERSION, sha: git('rev-parse', 'HEAD'), kind: process.env.REVIEW_KIND,
+      if (!outputs.length || outputs.some(p => {
+        const rel = relative(root, p);
+        return !(isAbsolute(rel) || rel === '..' || rel.startsWith('..' + sep)) || realpathSync(dirname(p)) !== dirname(p);
+      })) throw new Error('reports must be outside material');
+      const sha = git('rev-parse', 'HEAD');
+      const base = git('rev-parse', `${process.env.REVIEW_BASE || sha}^{commit}`);
+      const policy = { schema: 2, root, outputs, cliVersion: REVIEW_CLI_VERSION, cliSha256: REVIEW_CLI_SHA256,
+        sha, base, changedFiles: git('diff', '--name-only', base, sha).split('\n').filter(Boolean), kind: process.env.REVIEW_KIND,
         callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
-        stage: process.env.REVIEW_STAGE || 'code', files: git('ls-files').split('\n'), journal: `${policyPath}.jsonl` };
+        stage: process.env.REVIEW_STAGE || 'code', files: git('ls-files').split('\n'), journal: `${policyPath}.jsonl`, checksJournal: `${policyPath}.checks.jsonl` };
       unchanged(policy);
-      writeFileSync(policyPath, JSON.stringify(policy)); writeFileSync(policy.journal, '');
+      policy.capabilities = buildReviewCapabilities(policy);
+      writeFileSync(policyPath, JSON.stringify(policy)); writeFileSync(policy.journal, ''); writeFileSync(policy.checksJournal, '');
+      writeFileSync(`${policyPath}.checks.md`, reviewChecksMarkdown(policy.capabilities));
       // Native SDK onFailure:block prevents execution on startup/outer timeout.
       // Inner deadline/exit 2 is additional protection, not a substitute for it.
       const command = hookCommand({ policyPath });
@@ -233,14 +275,19 @@ if (isMainModule(import.meta.url)) {
       if (problem) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: problem } }));
     } else if (mode === 'audit') {
       const policy = JSON.parse(readFileSync(policyPath, 'utf8')); unchanged(policy);
+      readReviewCapabilities(policy);
       const messages = JSON.parse(readFileSync(process.env.REVIEW_EXECUTION_FILE, 'utf8'));
       const entries = readFileSync(policy.journal, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line));
       const structured = JSON.parse(process.env.REVIEW_STRUCTURED_OUTPUT);
       if (typeof structured?.summary !== 'string') throw new PolicyRefusal('structured summary is missing');
       const final = messages.findLast(m => m?.type === 'result');
-      if (final?.structured_output && !isDeepStrictEqual(final.structured_output, structured)) throw new PolicyRefusal('structured output differs from the terminal SDK result');
+      if (!isDeepStrictEqual(final?.structured_output, structured)) throw new PolicyRefusal('structured output differs from the terminal SDK result');
       const reportText = readFileSync(process.env.REVIEW_DOC, 'utf8');
-      const problems = [...traceProblems(messages, entries, policy, { reportText }), ...reportProblems(reportText),
+      const checkEntries = readCheckExecutionEntries(policy);
+      const adapter = JSON.parse(readFileSync(resolve(dirname(process.env.REVIEW_EXECUTION_FILE), 'native-adapter.json'), 'utf8'));
+      const problems = [...traceProblems(messages, entries, policy, { reportText, checkEntries }),
+        ...verifyCheckExecutionFiles(checkEntries, policy, policyPath),
+        ...adapterProblems(adapter, { policy, messages, executionFile: process.env.REVIEW_EXECUTION_FILE }), ...reportProblems(reportText),
         ...reportProblems(structured.summary)];
       if (problems.length) throw new PolicyRefusal([...new Set(problems)].join('; '));
       console.log(`review execution boundary: ${entries.length} tool calls verified; unchanged material; tool policy, not an OS sandbox`);

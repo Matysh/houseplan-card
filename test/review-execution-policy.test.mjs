@@ -7,21 +7,24 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { bashProblem, literalArgv, reportProblems, toolProblem, traceProblems,
-  REVIEW_CLI_VERSION, HOOK_TIMEOUT_SECONDS, hookCommand, hookStartupAcceptsDeny, executionSettings } from '../scripts/review-execution-policy.mjs';
+  REVIEW_CLI_VERSION, REVIEW_CLI_SHA256, HOOK_TIMEOUT_SECONDS, hookCommand, hookStartupAcceptsDeny, executionSettings,
+  adapterProblems } from '../scripts/review-execution-policy.mjs';
+import { buildReviewCapabilities, REVIEW_MCP_NATIVE_TOOL_NAME } from '../scripts/review-capabilities.mjs';
 import { reviewResultProblems, sha256, PASSPORT_FIELDS } from '../scripts/review-result-gate.mjs';
 import { CALL_DIGEST_ALGORITHM, callDigest } from '../scripts/review-call-digest.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const outputs = [join(tmpdir(), 'hp-policy-report.md')];
-const policy = { root: resolve(root), stage: 'code', kind: 'task', outputs,
+const policy = { schema: 2, sha: 'a'.repeat(40), base: 'b'.repeat(40), root: resolve(root), stage: 'code', kind: 'task', outputs,
   callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
   files: ['PROCESS.md', 'AGENTS.md', 'test/review-result-gate.test.mjs', 'scripts/ci-profiles.mjs', 'scripts/mutation-gate.mjs', 'tsconfig.test.json'] };
+policy.capabilities = buildReviewCapabilities(policy);
 const bash = command => ({ tool_name: 'Bash', tool_input: { command } });
 const call = (id, name, input) => ({ type: 'tool_use', id, name, input });
 const report = call('report', 'Write', { file_path: outputs[0], content: '# Review\nOrdinary unchanged-input unit checks only.' });
 const trace = calls => [{ type: 'assistant', message: { content: calls } },
   { type: 'user', message: { content: calls.map(c => ({ type: 'tool_result', tool_use_id: c.id, content: 'synthetic observed result' })) } },
-  { type: 'result', subtype: 'success' }];
+  { type: 'result', subtype: 'success', is_error: false, permission_denials: [] }];
 const journal = calls => calls.map(c => ({ id: c.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
   input: callDigest(c.name, c.input), denied: false }));
 
@@ -35,18 +38,25 @@ test('#1065 native hook settings deny on startup/SDK timeout failures, before an
   assert.equal(group.hooks[0].command, 'unchanged handler');
 });
 
-test('#1065 ordinary reads, exact unchanged tests and static readiness are allowed', () => {
+test('#1065 native reads and opaque checks are allowed; generic shell is never exposed', () => {
   for (const command of ['git diff origin/dev...HEAD', 'git log --format=%H --max-count=1',
     'git diff --no-ext-diff --no-textconv origin/dev...HEAD', 'git diff --output-indicator-new=+ HEAD',
     'rg -n limit scripts', 'sed -n 30,50p PROCESS.md', 'sed -n 1p PROCESS.md AGENTS.md',
     'node --test test/review-result-gate.test.mjs', 'node --test --test-name-pattern="schema failure" test/review-result-gate.test.mjs',
     'node scripts/ci-profiles.mjs --check', 'node scripts/mutation-gate.mjs --check', 'npm run build']) {
-    assert.equal(toolProblem(bash(command), policy), null, command);
+    assert.ok(toolProblem(bash(command), policy), command);
   }
+  for (const name of ['Read', 'Grep', 'Glob', 'ToolSearch'])
+    assert.equal(toolProblem({ tool_name: name, tool_input: {} }, policy), null);
+  for (const check_id of ['unit:test/review-result-gate.test.mjs', 'unknown opaque id'])
+    assert.equal(toolProblem({ tool_name: REVIEW_MCP_NATIVE_TOOL_NAME, tool_input: { check_id } }, policy), null);
+  for (const input of [{}, { check_id: '' }, { check_id: 'x'.repeat(257) }, { check_id: 3 },
+    { check_id: 'known', command: 'ls' }, { check_id: 'known', env: {} }, { check_id: 'known', cwd: '/' }])
+    assert.ok(toolProblem({ tool_name: REVIEW_MCP_NATIVE_TOOL_NAME, tool_input: input }, policy));
   assert.equal(toolProblem({ tool_name: 'Write', tool_input: report.input }, policy), null);
   assert.ok(toolProblem(bash('npm run build'), { ...policy, stage: 'spec' }));
-  assert.equal(toolProblem(bash('node --test test/review-result-gate.test.mjs'), { ...policy, stage: 'spec' }), null,
-    'existing spec feasibility/ordinary negative input remains available without installing/building');
+  assert.ok(policy.capabilities.checks.some(check => check.id === 'unit:test/review-result-gate.test.mjs'),
+    'ordinary unchanged unit capability remains available through fixed recipes');
 });
 
 // These strings are ordinary hook INPUTS. None is executed, nor is any
@@ -87,7 +97,9 @@ test('#1065 Write/Edit/generated-guard and outside-script paths cannot change im
   assert.ok(toolProblem({ tool_name: 'Agent', tool_input: {} }, policy));
   assert.ok(toolProblem({ tool_name: 'mcp__github__issue_write' }, { ...policy, kind: 'ship' }));
   assert.equal(toolProblem({ tool_name: 'Read', tool_input: {} }, policy), null);
-  assert.equal(toolProblem({ tool_name: 'WebFetch', tool_input: {} }, policy), null);
+  assert.ok(toolProblem({ tool_name: 'WebFetch', tool_input: {} }, policy));
+  for (const name of ['WebSearch', 'TodoWrite', 'mcp__github__issue_read', 'mcp__github__add_issue_comment'])
+    assert.ok(toolProblem({ tool_name: name, tool_input: {} }, policy));
   assert.ok(toolProblem({ tool_name: 'Write', tool_input: { file_path: outputs[0],
     content: 'Ordinary negative-input: temporary patch and test run, then git checkout -- guard.mjs.' } }, policy));
   assert.ok(toolProblem({ tool_name: 'mcp__github__add_issue_comment', tool_input: {
@@ -97,7 +109,7 @@ test('#1065 Write/Edit/generated-guard and outside-script paths cannot change im
 });
 
 test('#1065 journal binds every call and refuses missing, duplicate, forbidden and incomplete traces', () => {
-  const check = call('check', 'Bash', { command: 'node --test test/review-result-gate.test.mjs' });
+  const check = call('check', 'Read', { file_path: 'test/review-result-gate.test.mjs' });
   const calls = [check, report];
   assert.deepEqual(traceProblems(trace(calls), journal(calls), policy), []);
   assert.ok(traceProblems(trace(calls), journal(calls), policy, { reportText: 'foreign report' }).length);
@@ -122,9 +134,8 @@ test('#1065 journal binds every call and refuses missing, duplicate, forbidden a
 });
 
 test('#1065 repair: reordered equal JSON hook input must bind without weakening semantic changes', () => {
-  const command = 'node --test test/review-result-gate.test.mjs';
-  const observed = call('ordered', 'Bash', { command, description: 'ordinary fixture', timeout: 1000 });
-  const hook = { ...observed, input: { command, timeout: 1000, description: 'ordinary fixture' } };
+  const observed = call('ordered', 'Read', { file_path: 'fixture', offset: 1, limit: 10 });
+  const hook = { ...observed, input: { limit: 10, offset: 1, file_path: 'fixture' } };
   assert.deepEqual(traceProblems(trace([observed, report]), journal([hook, report]), policy), []);
 });
 
@@ -142,6 +153,42 @@ test('#1065 current audit refuses missing, mixed and unknown policy/journal dige
   const changed = { ...report, input: { ...report.input, content: report.input.content + ' ' } };
   assert.ok(traceProblems(trace([changed]), records, policy).length, 'exact report content remains bound');
   assert.ok(traceProblems(trace([{ ...report, name: 'Read' }]), records, policy).length, 'call name remains bound');
+  for (const altered of [{ ...policy, schema: 1 }, { ...policy, capabilities: null },
+    { ...policy, capabilities: { ...policy.capabilities, digest: '0'.repeat(64) } }])
+    assert.ok(traceProblems(trace(calls), records, altered).length, 'current audit requires exact current capabilities');
+});
+
+test('#1065 parsed native adapter failure cannot become a valid audit from a terminal-looking partial trace', () => {
+  const messages = trace([report]), executionFile = '/tmp/native-messages.json';
+  const adapter = { schema: 'houseplan-native-review/v1', status: 'success', cliVersion: REVIEW_CLI_VERSION,
+    cliSha256: REVIEW_CLI_SHA256, materialSha: policy.sha, exitCode: 0, exitSignal: null,
+    executionFile, messages: messages.length };
+  assert.deepEqual(adapterProblems(adapter, { policy, messages, executionFile }), []);
+  for (const change of [{ status: 'invalid-or-truncated-native-stream' }, { exitCode: 1 }, { exitSignal: 'SIGTERM' },
+    { materialSha: 'c'.repeat(40) }, { messages: 99 }, { executionFile: '/other' }, { cliSha256: '0'.repeat(64) }])
+    assert.ok(adapterProblems({ ...adapter, ...change }, { policy, messages, executionFile }).length);
+  const denied = trace([report]); denied.at(-1).permission_denials.push({ tool_name: 'Bash' });
+  assert.ok(traceProblems(denied, journal([report]), policy).length);
+});
+
+test('#1065 check receipts bind opaque IDs and unique ledger entries without inventing PASS for failure/unavailable', () => {
+  for (const [checkId, status] of [['unit:test/review-result-gate.test.mjs', 'failed'], ['unknown id', 'unavailable']]) {
+    const requested = call('check', REVIEW_MCP_NATIVE_TOOL_NAME, { check_id: checkId });
+    const recipe = policy.capabilities.checks.find(entry => entry.id === checkId);
+    const receipt = { schema: 'houseplan-review-check-result/v1', receiptId: '11111111-1111-1111-1111-111111111111',
+      checkId, materialSha: policy.sha, manifestDigest: policy.capabilities.digest, recipeDigest: recipe?.recipeDigest ?? null,
+      callDigest: callDigest(requested.name, requested.input), materialUnchanged: true,
+      executed: Boolean(recipe), status, exitCode: recipe ? 1 : null, steps: recipe ? [{ exitCode: 1 }] : [] };
+    const messages = trace([requested, report]);
+    messages[1].message.content[0].content = JSON.stringify(receipt);
+    assert.deepEqual(traceProblems(messages, journal([requested, report]), policy, { checkEntries: [receipt] }), []);
+    assert.ok(traceProblems(messages, journal([requested, report]), policy, { checkEntries: [] }).length);
+    assert.ok(traceProblems(messages, journal([requested, report]), policy, { checkEntries: [receipt, receipt] }).length);
+    assert.ok(traceProblems(messages, journal([requested, report]), policy,
+      { checkEntries: [{ ...receipt, checkId: 'other' }] }).length);
+    const phantom = trace([report]);
+    assert.ok(traceProblems(phantom, journal([report]), policy, { checkEntries: [receipt] }).includes('orphan check execution receipt'));
+  }
 });
 
 test('#1065 published historical claim is rejected as report DATA, not reenacted', () => {
@@ -177,6 +224,11 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
   const path = join(dir, 'policy.json');
   const invoke = (mode, input) => spawnSync(process.execPath, [script, mode, path], { cwd: repo, env, input: JSON.stringify(input), encoding: 'utf8' });
   assert.equal(invoke('prepare').status, 0);
+  const externalReport = env.REVIEW_DOC;
+  mkdirSync(join(repo, '..reports'));
+  env.REVIEW_DOC = join(repo, '..reports', 'inside.md');
+  assert.equal(invoke('prepare').status, 1, 'a name beginning with dots is still inside the reviewed material');
+  env.REVIEW_DOC = externalReport;
   assert.equal(JSON.parse(readFileSync(path, 'utf8')).callDigestAlgorithm, CALL_DIGEST_ALGORITHM);
   const settings = JSON.parse(readFileSync(`${path}.settings.json`, 'utf8'));
   assert.equal(settings.hooks.PreToolUse[0].hooks[0].onFailure, 'block');
@@ -187,7 +239,8 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
   assert.equal(response.status, 0);
   assert.equal(JSON.parse(response.stdout).hookSpecificOutput.permissionDecision, 'deny');
   assert.equal(readFileSync(guard, 'utf8'), before, 'ordinary hook input did not patch or execute the guard');
-  const accepted = invoke('hook', { tool_use_id: 'safe', ...bash('node --test test/probe.test.mjs') });
+  const accepted = invoke('hook', { tool_use_id: 'safe', tool_name: REVIEW_MCP_NATIVE_TOOL_NAME,
+    tool_input: { check_id: 'unit:test/probe.test.mjs' } });
   assert.equal(accepted.status, 0); assert.equal(accepted.stdout, '', 'normal permissions apply to allowed checks');
   assert.equal(JSON.parse(readFileSync(`${path}.jsonl`, 'utf8').split('\n')[0]).denied, true);
   const recorded = JSON.parse(readFileSync(`${path}.jsonl`, 'utf8').split('\n')[0]);
@@ -204,21 +257,26 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
   // Fresh synthetic session: only input records/report DATA; the fixture never
   // runs a patched guard, a mutation CLI or even the proposed test command.
   assert.equal(invoke('prepare').status, 0);
-  const commands = [call('ordinary', 'Bash', { command: 'node --test test/probe.test.mjs', description: 'DATA only', timeout: 1000 }),
+  const commands = [call('ordinary', 'Read', { file_path: 'test/probe.test.mjs', offset: 1, limit: 10 }),
     call('catalog-only', 'ToolSearch', { query: 'select:mcp__example__unsafe' }),
     call('report', 'Write', { file_path: env.REVIEW_DOC, content: '# Ordinary unchanged-input review' })];
   for (const c of commands) {
-    const input = c.name === 'Bash' ? { command: c.input.command, timeout: 1000, description: 'DATA only' } : c.input;
+    const input = c.name === 'Read' ? { file_path: c.input.file_path, limit: 10, offset: 1 } : c.input;
     assert.equal(invoke('hook', { tool_use_id: c.id, tool_name: c.name, tool_input: input }).stdout, '');
   }
   writeFileSync(env.REVIEW_DOC, commands.find(c => c.name === 'Write').input.content);
   const execution = join(dir, 'execution.json'); env.REVIEW_EXECUTION_FILE = execution;
   env.REVIEW_STRUCTURED_OUTPUT = JSON.stringify({ summary: 'ordinary immutable input checks' });
-  writeFileSync(execution, JSON.stringify(trace(commands)));
+  const complete = trace(commands); complete.at(-1).structured_output = JSON.parse(env.REVIEW_STRUCTURED_OUTPUT);
+  writeFileSync(execution, JSON.stringify(complete));
+  const actualPolicy = JSON.parse(readFileSync(path));
+  writeFileSync(join(dir, 'native-adapter.json'), JSON.stringify({ schema: 'houseplan-native-review/v1', status: 'success',
+    cliVersion: REVIEW_CLI_VERSION, cliSha256: REVIEW_CLI_SHA256, materialSha: actualPolicy.sha,
+    exitCode: 0, exitSignal: null, messages: trace(commands).length, executionFile: execution }));
   assert.equal(invoke('audit').status, 0, 'complete matching ordinary input session is accepted');
-  writeFileSync(execution, JSON.stringify(trace(commands).slice(0, 1)));
+  writeFileSync(execution, JSON.stringify(complete.slice(0, 1)));
   assert.equal(invoke('audit').status, 1, 'truncated execution is not proof');
-  writeFileSync(execution, JSON.stringify(trace(commands)));
+  writeFileSync(execution, JSON.stringify(complete));
   writeFileSync(env.REVIEW_DOC, 'Ordinary negative-input: temporary patch and test run, then git checkout -- guard.mjs.');
   assert.equal(invoke('audit').status, 1, 'false ordinary claim refuses publication');
   assert.equal(readFileSync(guard, 'utf8'), before);
@@ -253,11 +311,13 @@ for (const name of ['_process.yml', '_ship-review.yml', 'release-review.yml']) {
     const setup = index('Ограничить инструменты ревью (#1065)'), review = index('Review'),
       audit = index('Проверить execution boundary (#1065)'), seal = index('Запечатать результат модели');
     assert.ok(setup >= 0 && setup < review && review < audit && audit < seal);
-    assert.equal(steps[review].with.settings, '${{ runner.temp }}/review-execution-policy.json.settings.json');
-    assert.match(steps[review].with.claude_args, /--setting-sources ""/);
-    for (const [key, value] of Object.entries(steps[review].env).filter(([key]) => key.startsWith('REVIEW_'))) {
-      assert.ok(steps[review].with.prompt.includes(`${key}: ${value}`), `${key}: literal paths need no forbidden env expansion`);
-    }
+    assert.match(steps[review].run, /review-native-runner\.mjs/);
+    assert.equal(steps[review].env.REVIEW_POLICY, '${{ runner.temp }}/review-execution-policy.json');
+    assert.equal(steps[review].with, undefined, 'pinned native launcher owns exact catalogue and empty settings argv');
+    const prompt = steps.find(step => step.name === 'Подготовить native review prompt').env.REVIEW_PROMPT_TEXT;
+    for (const [key, value] of Object.entries(steps[setup].env).filter(([key]) => ['REVIEW_DOC', 'REVIEW_FINDINGS'].includes(key)))
+      assert.ok(prompt.includes(`${key}: ${value}`), `${key}: literal paths need no forbidden env expansion`);
+    assert.match(prompt, /mcp__houseplan_review__run_check/);
     assert.match(steps[setup].run, /review-execution-policy\.mjs.*prepare/);
     assert.equal(steps[setup].env.REVIEW_CLAUDE_VERSION, '${{ steps.claude_bin.outputs.version }}');
     const bootstrap = steps.find(s => s.id === 'claude_bin');
@@ -268,6 +328,6 @@ for (const name of ['_process.yml', '_ship-review.yml', 'release-review.yml']) {
     assert.equal(steps[audit]['continue-on-error'], undefined);
     assert.equal(steps[audit].env.REVIEW_EXECUTION_FILE, '${{ steps.review.outputs.execution_file }}');
     assert.equal(steps[audit].env.REVIEW_STRUCTURED_OUTPUT, '${{ steps.review.outputs.structured_output }}');
-    assert.doesNotMatch(steps[review].with.prompt, /git checkout -- \. && git clean -fd/);
+    assert.doesNotMatch(prompt, /git checkout -- \. && git clean -fd/);
   });
 }

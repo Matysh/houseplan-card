@@ -39,6 +39,7 @@ import { lastUsageIn, publishedUsageLine } from './model-usage.mjs';
 import { publishedModelDetails } from './model-usage-details.mjs';
 import { issueTrailers, readCandidateHistory } from './release-membership.mjs';
 import { parseDocName } from './reviews-index.mjs';
+import { batchSourceContext, collectIssueSource } from './review-context.mjs';
 
 export const SHIP_REVIEW_DIR = 'docs/reviews';
 /** #727: зарезервированное значение входа `tag` — ночной режим ship-ревью. */
@@ -515,15 +516,23 @@ export function readRangeDocs({ candidate, base = undefined, devRef = 'origin/de
   return [...found.values()].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
 }
 
-function collect({ tag, candidate, repo }) {
+function collect({ tag, candidate, repo, context = false }) {
   const mode = shipReviewMode({ tag, candidate });
   if (!SHA_RE.test(String(candidate))) throw new Error(`invalid candidate SHA: ${candidate}`);
   if (!repo) throw new Error('--repo (или GITHUB_REPOSITORY) обязателен');
   const { base, commits } = readCandidateHistory(candidate);
-  const ship = shipIssuesInRange({ commits, issueData: (number) => ghIssue(repo, number) });
+  const sources = new Map();
+  const ship = shipIssuesInRange({ commits, issueData: (number) => {
+    if (!context) return ghIssue(repo, number);
+    const source = collectIssueSource({ repo, number, api: (endpoint, paginated) => JSON.parse(gh([
+      'api', endpoint, ...(paginated ? ['--paginate', '--slurp'] : []),
+    ])) });
+    sources.set(number, source);
+    return { ...source.issue, comments: source.comments };
+  } });
   const patches = issuePatchSets({ commits, numbers: ship.map((issue) => issue.number) });
   for (const issue of ship) issue.patches = patches.get(issue.number);
-  return { mode, base, ship };
+  return { mode, base, ship, sources };
 }
 
 if (isMainModule(import.meta.url)) {
@@ -547,7 +556,8 @@ if (isMainModule(import.meta.url)) {
         && git(['merge-base', '--is-ancestor', candidate, devRef], { allowFailure: true }) == null) {
         throw new Error(`candidate ${candidate} не предок ${devRef}: ночное ревью читает только код dev`);
       }
-      const { mode, base, ship } = collect({ tag, candidate, repo });
+      const withContext = value('context') === 'true';
+      const { mode, base, ship, sources } = collect({ tag, candidate, repo, context: withContext });
       const doc = shipDocPath({ tag, candidate, base: base?.tag ?? null });
       const docs = force ? [] : readRangeDocs({ candidate, base: base?.tag ?? null, devRef });
       const plan = planShipReview({ tag, ship, docs, base: base?.tag ?? null, force });
@@ -559,6 +569,11 @@ if (isMainModule(import.meta.url)) {
       writeFileSync(join(out, 'brief.md'), renderShipBrief({
         tag, candidate, base, ship: plan.read, runUrl: value('run-url'), doc, covered: plan.covered, held: plan.held,
       }));
+      if (withContext) writeFileSync(join(out, 'review-source-context.json'), JSON.stringify(batchSourceContext({
+        kind: 'ship', sha: candidate, tree: git(['rev-parse', `${candidate}^{tree}`]).trim(),
+        base: base?.sha ?? null,
+        issueNumbers: plan.read.map(issue => issue.number), sources: [...sources.values()],
+      }), null, 2) + '\n', { flag: 'wx' });
       console.log(`mode=${mode}`);
       console.log(`doc=${doc}`);
       console.log(`base=${base ? base.tag : ''}`);

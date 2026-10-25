@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
 
 import {
-  reviewResultProblems, parseManifest, sha256, REQUIRED_FILES, PASSPORT_FIELDS, ROUTES, verdictRoute,
+  reviewResultProblems, parseManifest, sha256, REQUIRED_FILES, PASSPORT_FIELDS, ROUTES, verdictRoute, reviewProducerIdentity, batchReviewResultProblems,
 } from '../scripts/review-result-gate.mjs';
 
 const EXPECTED = Object.fromEntries(PASSPORT_FIELDS.map((f) => [f, `значение-${f}`]));
@@ -36,6 +36,49 @@ function fixture(over = {}) {
 
 test('#556: честный результат принимается', () => {
   assert.deepEqual(reviewResultProblems(fixture()), []);
+});
+
+test('#1065 same-run successful sealed producer may precede the consumer attempt', () => {
+  const input = { run: '123', attempt: '2', producerRun: '123', producerAttempt: '1',
+    producerResult: 'success', manifest: 'exact manifest bytes\n', producerManifest: sha256('exact manifest bytes\n') };
+  assert.deepEqual(reviewProducerIdentity(input), { run_id: '123', run_attempt: '1' });
+  for (const over of [{ producerRun: '124' }, { producerAttempt: '3' }, { producerAttempt: '0' },
+    { producerAttempt: '999999999999999999999' }, { producerResult: 'failure' }, { producerResult: '' },
+    { producerManifest: '' }, { producerManifest: 'f'.repeat(64) }, { manifest: 'changed bytes' }])
+    assert.throws(() => reviewProducerIdentity({ ...input, ...over }));
+  assert.deepEqual(reviewProducerIdentity({ run: '123', attempt: '2' }), { run_id: '123', run_attempt: '2' });
+  assert.throws(() => reviewProducerIdentity({ run: '123', attempt: '2', producerResult: 'success' }), 'new workflow requires all producer outputs');
+});
+
+for (const kind of ['ship', 'release']) test(`#1065 ${kind} retains only the same-run successful producer and exact batch inputs`, () => {
+  const expected = { repo: 'o/r', candidate: 'a'.repeat(40), base: 'v1.82.0', document: `docs/reviews/${kind}.md`,
+    input_manifest: sha256('immutable prepared input manifest') };
+  const bytes = { [`${kind}-review.md`]: '# Independent review\n',
+    'result.json': JSON.stringify({ high: 0, medium: 0, low: 0, summary: 'Complete independent inspection' }),
+    'producer.json': JSON.stringify({ schema: 1, kind, ...expected, run_id: '42', run_attempt: '1' }) };
+  bytes['manifest.sha256'] = Object.entries(bytes).map(([name, value]) => `${sha256(value)}  ${name}`).join('\n');
+  const input = { kind, files: Object.keys(bytes), read: name => bytes[name], expected,
+    consumer: { run: '42', attempt: '2' }, producer: { producerRun: '42', producerAttempt: '1',
+      producerResult: 'success', producerManifest: sha256(bytes['manifest.sha256']) } };
+  assert.deepEqual(batchReviewResultProblems(input), []);
+  assert.deepEqual(batchReviewResultProblems({ ...input, consumer: { run: '42', attempt: '1' } }), []);
+  for (const over of [{ producer: {} }, { producer: { ...input.producer, producerResult: 'failure' } },
+    { producer: { ...input.producer, producerRun: '43' } }, { consumer: { run: '42', attempt: '0' } },
+    { producer: { ...input.producer, producerAttempt: '3' } },
+    { producer: { ...input.producer, producerManifest: 'f'.repeat(64) } },
+    { files: [...input.files, 'untrusted.json'] }, { kind: 'task' }])
+    assert.ok(batchReviewResultProblems({ ...input, ...over }).length);
+  for (const key of Object.keys(expected))
+    assert.ok(batchReviewResultProblems({ ...input, expected: { ...expected, [key]: 'foreign' } }).length, key);
+  assert.ok(batchReviewResultProblems({ ...input, read: name => name === `${kind}-review.md` ? 'changed' : bytes[name] }).length);
+});
+
+test('#1065 typed publication payload is part of sealed verdict validation', () => {
+  const item = { id: 'F1', title: 'Outside issue', body: 'Concrete independent defect.', severity: 'medium' };
+  assert.deepEqual(reviewResultProblems(fixture({ verdict: { outside_findings: [item] } })), []);
+  for (const outside_findings of [[{ ...item, repo: 'foreign/repo' }], [{ ...item, severity: 'high' }],
+    [{ ...item, body: 'Temporary patch then run ordinary test, mutant not executed' }], [item, item]])
+    assert.ok(reviewResultProblems(fixture({ verdict: { outside_findings } })).length);
 });
 
 test('#556: неполный набор файлов отвергается', () => {

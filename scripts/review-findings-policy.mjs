@@ -7,9 +7,13 @@ import { TextDecoder } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
 import { createHash } from 'node:crypto';
 import { ANCHOR_MARKER } from './review-doc-guard.mjs';
+import { canonicalCallJson } from './review-call-digest.mjs';
 
 export const FINDINGS_VARIABLE = 'HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES';
 export const FINDINGS_FILE = 'outside-findings.md';
+export const OUTSIDE_FINDINGS_LIMIT = 32;
+export const OUTSIDE_FINDINGS_BYTES = 262144;
+export const OUTSIDE_FINDINGS_KINDS = Object.freeze(['bug', 'feature', 'enhancement', 'infra', 'tech-debt', 'docs']);
 const SCHEMA = 'houseplan-outside-findings-policy/v1';
 const KEYS = ['schema', 'source', 'variable', 'repo', 'issue', 'stage', 'round', 'mode', 'path'].sort();
 const positive = value => Number.isSafeInteger(value) && value > 0;
@@ -53,6 +57,35 @@ export function findingsTextProblems(text) {
   if (typeof text !== 'string' || !text.trim() || text.includes('\0') || Buffer.byteLength(text) > 262144)
     return ['outside findings: empty, NUL or larger than 256 KiB'];
   return [];
+}
+
+/** Publication data only; it cannot choose repository, routing or issue labels. */
+export function outsideFindingsProblems(value, { mode = 'issues' } = {}) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > OUTSIDE_FINDINGS_LIMIT)
+    return ['outside_findings: expected a bounded array'];
+  let encoded;
+  try { encoded = canonicalCallJson(value); }
+  catch { return ['outside_findings: expected plain JSON data']; }
+  if (mode === 'file' && value.length) return ['outside_findings: file mode uses its sealed Markdown companion'];
+  const errors = [], ids = new Set();
+  if (Buffer.byteLength(encoded) > OUTSIDE_FINDINGS_BYTES) errors.push('outside_findings: payload exceeds 256 KiB');
+  for (const item of value) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)
+      || !['body,id,severity,title', 'body,id,kind,severity,title'].includes(Object.keys(item).sort().join(','))) {
+      errors.push('outside_findings: unexpected item shape'); continue;
+    }
+    if (typeof item.id !== 'string' || !/^F[1-9]\d{0,3}$/.test(item.id) || ids.has(item.id))
+      errors.push('outside_findings: invalid or duplicate local ID');
+    ids.add(item.id);
+    if (item.severity !== 'medium') errors.push('outside_findings: only out-of-scope Medium is routed to an issue');
+    if (item.kind !== undefined && !OUTSIDE_FINDINGS_KINDS.includes(item.kind)) errors.push('outside_findings: unsupported issue kind');
+    if (typeof item.title !== 'string' || !item.title.trim() || item.title.length > 256 || /[\r\n\0]/.test(item.title))
+      errors.push('outside_findings: invalid issue title');
+    if (typeof item.body !== 'string' || !item.body.trim() || item.body.includes('\0'))
+      errors.push('outside_findings: invalid issue body');
+  }
+  return errors;
 }
 
 function readFindingsFile(path) {

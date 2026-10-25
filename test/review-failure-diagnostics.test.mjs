@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -13,12 +13,16 @@ import { literalArgv } from '../scripts/review-execution-policy.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from '../scripts/review-tool-metadata.mjs';
 import { REQUIRED_FILES } from '../scripts/review-result-gate.mjs';
 import { CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM, callDigest } from '../scripts/review-call-digest.mjs';
+import { buildReviewCapabilities, REVIEW_MCP_NATIVE_TOOL_NAME } from '../scripts/review-capabilities.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const secret = 'ghp_SYNTHETIC_CREDENTIAL_NEVER_PUBLISH_1082';
-const policy = () => ({ schema: 1, root: ROOT, files: [], stage: 'code', kind: 'task', cliVersion: '2.1.295', sha: 'a'.repeat(40),
-  callDigestAlgorithm: CALL_DIGEST_ALGORITHM });
+const policy = () => {
+  const value = { schema: 2, root: realpathSync(ROOT), files: [], stage: 'code', kind: 'task', cliVersion: '2.1.295', sha: 'a'.repeat(40),
+    callDigestAlgorithm: CALL_DIGEST_ALGORITHM };
+  return { ...value, capabilities: buildReviewCapabilities(value) };
+};
 const provenance = { run: '123', attempt: '2', issue: '1082', stage: 'code', kind: 'task', materialSha: 'a'.repeat(40), toolsSha: 'b'.repeat(40) };
 function fixture() {
   // Command strings are inert DATA. Neither the collector nor these tests dispatches them.
@@ -179,7 +183,7 @@ test('#1082 actual hook shape preserves raw order differences while canonical eq
 });
 
 test('#1065 legacy diagnostic hashes stay legacy and recorded ToolSearch refusals never become new-policy allows', () => {
-  const f = fixture(); delete f.policy.callDigestAlgorithm;
+  const f = fixture(); f.policy.schema = 1; delete f.policy.callDigestAlgorithm;
   f.call.name = 'ToolSearch'; f.call.input = { query: secret };
   f.entries = [{ id: f.call.id, input: hash({ name: f.call.name, input: f.call.input }), denied: true,
     diagnosticDecision: reviewDecisionMetadata('tool is not permitted by the review execution boundary') }];
@@ -198,7 +202,7 @@ test('#1065 legacy diagnostic hashes stay legacy and recorded ToolSearch refusal
 });
 
 test('#1065 old key-order mismatch remains a historical mismatch; new algorithm is never applied retroactively', () => {
-  const f = fixture(); delete f.policy.callDigestAlgorithm;
+  const f = fixture(); f.policy.schema = 1; delete f.policy.callDigestAlgorithm;
   f.call.name = 'Read'; f.call.input = { file_path: secret, offset: 1 };
   const actual = { offset: 1, file_path: secret };
   assert.equal(callDigest('Read', actual), callDigest('Read', f.call.input));
@@ -207,6 +211,31 @@ test('#1065 old key-order mismatch remains a historical mismatch; new algorithm 
   assert.equal(row.journal.inputDigestMatches, false); assert.ok(row.problems.includes('input-digest-mismatch'));
   assert.equal(row.callDigest.algorithm.algorithm, LEGACY_CALL_DIGEST_ALGORITHM);
   assert.equal(row.expected.denied, null);
+});
+
+test('#1065 schema1 with canonical hashes still never receives schema2 capability semantics', () => {
+  const f = fixture(); f.policy.schema = 1; f.call.name = 'ToolSearch'; f.call.input = { query: secret };
+  f.entries = [{ id: f.call.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
+    input: callDigest(f.call.name, f.call.input), denied: true }];
+  const row = cert(f).calls[0];
+  assert.equal(row.journal.inputDigestMatches, true);
+  assert.equal(row.expected.denied, null);
+  assert.equal(row.expected.semantics, 'legacy-not-re-evaluated');
+  assert.ok(row.problems.includes('forbidden-request'));
+});
+
+test('#1065 closed check metadata reveals only finite vocabulary and hashes, never opaque IDs', () => {
+  const f = fixture(); f.call.name = REVIEW_MCP_NATIVE_TOOL_NAME; f.call.input = { check_id: secret };
+  f.entries = [{ id: f.call.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
+    input: callDigest(f.call.name, f.call.input), denied: false,
+    diagnostic: reviewToolMetadata(f.call.name, f.call.input) }];
+  const result = cert(f), row = result.calls[0];
+  assert.equal(row.tool, REVIEW_MCP_NATIVE_TOOL_NAME);
+  assert.equal(row.expected.denied, false, 'an unknown opaque id is data; executor decides unavailable');
+  assert.equal(row.input.check.idDigest, hash(secret));
+  assert.ok(!JSON.stringify(result).includes(secret));
+  const broken = cert({ ...f, policy: { ...f.policy, capabilities: null } }).calls[0];
+  assert.equal(broken.expected.denied, null, 'malformed capabilities cannot establish current semantics');
 });
 
 test('#1065 unknown/mixed/missing marker comparisons stay unavailable without leaking raw marker values', () => {

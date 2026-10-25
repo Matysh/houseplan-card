@@ -1,8 +1,8 @@
 // #1082: safe shape only, not a tool policy or an execution capability.
 import { createHash } from 'node:crypto';
 const words = value => new Set(value.split(' '));
-const TOOLS = words('Read Write Edit MultiEdit Grep Glob Bash TodoWrite ToolSearch StructuredOutput EndConversation Task Agent WebFetch WebSearch Skill ExitPlanMode EnterPlanMode mcp__github__add_issue_comment mcp__github__issue_write mcp__github__issue_read');
-const KEYS = words('command description timeout run_in_background file_path content old_string new_string replace_all edits pattern path glob type output_mode head_limit offset limit multiline case_insensitive query url prompt owner repo issue_number body comment method perPage page tool_name tool_use_id tool_input');
+const TOOLS = words('Read Write Edit MultiEdit Grep Glob Bash TodoWrite ToolSearch StructuredOutput EndConversation Task Agent WebFetch WebSearch Skill ExitPlanMode EnterPlanMode mcp__github__add_issue_comment mcp__github__issue_write mcp__github__issue_read mcp__houseplan_review__run_check');
+const KEYS = words('command description timeout run_in_background file_path content old_string new_string replace_all edits pattern path glob type output_mode head_limit offset limit multiline case_insensitive query url prompt owner repo issue_number body comment method perPage page tool_name tool_use_id tool_input check_id');
 const BINS = words('node git rg sed npm npx python python3 pwd ls cat head tail wc');
 const FLAGS = words('--test --check --write --fix --apply --accept --execute-nightly --return --seal --publish --push --force -e -i --eval --expression --file --output --output-indicator-new --ext-diff --textconv --filters --open-files-in-pager --test-name-pattern --test-concurrency --report --no-install --no-ext-diff --no-textconv -n -p -m -q -x');
 const FIELDS = ['offset', 'limit', 'head_limit', 'timeout', 'run_in_background', 'replace_all', 'multiline', 'case_insensitive'];
@@ -22,6 +22,9 @@ const DECISIONS = new Map([
   ['spec feasibility checks do not build or launch browsers/backend', 'spec-execution-boundary'],
   ['tool is not permitted by the review execution boundary', 'tool-not-allowlisted'],
   ['malformed tool call', 'malformed-tool'],
+  ['review capability manifest unavailable or changed', 'capability-unavailable'],
+  ['run_check requires only a bounded check_id', 'check-input'],
+  ['generic shell is not exposed; use declared run_check', 'generic-shell-not-exposed'],
   ['Write is restricted to the external review report/findings', 'write-target'],
   ['symlink output is forbidden', 'write-symlink'], ['output parent is unavailable', 'write-parent'],
   ['external report must be text without misleading ordinary mutation claims', 'report-claim-or-type'],
@@ -46,6 +49,8 @@ export function reviewToolMetadata(name, input, { files = [], literalArgv } = {}
   return { schema: 1, tool: knownToolName(name), toolNameDigest: metadataDigest(name), inputDigest: metadataDigest(input),
     inputType: typeOf(input), keys: keys.filter(key => KEYS.has(key)), otherKeyCount: keys.filter(key => !KEYS.has(key)).length,
     orderedKeyDigests: keys.slice(0, 48).map(metadataDigest), omittedKeys: Math.max(0, keys.length - 48), fields,
+    ...(Object.hasOwn(input ?? {}, 'check_id') ? { check: { type: typeOf(input.check_id),
+      idDigest: metadataDigest(input.check_id), bytes: typeof input.check_id === 'string' ? Buffer.byteLength(input.check_id) : null } } : {}),
     command: typeof input?.command !== 'string' ? null : { literal: Boolean(argv), bytes: Buffer.byteLength(input.command),
       binary: argv ? (BINS.has(argv[0]) ? argv[0] : 'other') : 'unknown', argumentCount: argv ? argv.length - 1 : null,
       flags: argv ? [...new Set(argv.slice(1).map(arg => arg.split('=')[0]).filter(arg => FLAGS.has(arg)))].sort() : [],
@@ -62,6 +67,8 @@ export function projectStoredToolMetadata(value) {
     inputType: types.includes(value.inputType) ? value.inputType : 'unknown',
     keys: value.keys.filter(key => KEYS.has(key)).slice(0, KEYS.size), otherKeyCount: count(value.otherKeyCount),
     orderedKeyDigests: value.orderedKeyDigests.slice(0, 48).map(hex), omittedKeys: count(value.omittedKeys),
+    ...(value.check && typeof value.check === 'object' ? { check: { type: types.includes(value.check.type) ? value.check.type : 'unknown',
+      idDigest: hex(value.check.idDigest), bytes: count(value.check.bytes) } } : {}),
     fields: value.fields.filter(row => FIELDS.includes(row?.key)).slice(0, FIELDS.length).map(row => ({ key: row.key,
       type: types.includes(row.type) ? row.type : 'unknown',
       ...(row.type === 'boolean' && typeof row.value === 'boolean' || row.type === 'number' && safeNumber(row.value)

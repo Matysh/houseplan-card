@@ -77,8 +77,9 @@ test('#638: только ручной/вызванный запуск на dev, 
   assert.match(WORKFLOW, /\npermissions:\n {2}contents: read\n/, 'потолок прав workflow — чтение');
   assert.ok(!/: write/.test(WORKFLOW), 'ни одного права на запись: документ пушится токеном процесса, а не GITHUB_TOKEN');
   const model = jobBlock('model_review');
-  assert.match(model, /github_token: \$\{\{ secrets\.GITHUB_TOKEN \}\}/, '#556: без него action выдаст App-токен с записью');
-  assert.match(model, /--allowedTools Read,Write,Grep,Glob,Bash\n/, 'модели не даны инструменты GitHub');
+  assert.match(model, /run: node "\$RUNNER_TEMP\/review-policy-tools\/scripts\/review-native-runner\.mjs"/);
+  assert.doesNotMatch(model, /uses: anthropics\/claude-code-action|github_token:|additional_permissions|mcp__github/,
+    '#556: direct native не выполняет App-обмен и не открывает business GitHub tools');
   assert.ok(!/HP_PROCESS_TOKEN/.test(model), 'токен процесса модели недоступен');
   assert.match(model, /ref: \$\{\{ needs\.prepare\.outputs\.candidate \}\}/, 'судится ровно кандидат');
   assert.match(model, /Не читай ТЗ задач/, 'независимость: без ТЗ');
@@ -99,40 +100,23 @@ test('#638: повтор на тот же тег не тратит модель,
   assert.match(jobBlock('model_review'), /if: needs\.prepare\.outputs\.proceed == 'true'/);
 });
 
-// #704: `release.yml` ставит ревью в очередь токеном GITHUB_TOKEN — прогон
-// начинает `github-actions[bot]`, и claude-code-action без списка ботов
-// отказывал ему (v1.78.0: release run 36468444979, ревью 36468505112). Список —
-// ровно этот бот, не '*': любой другой бот отклоняется, как и прежде.
-const EXPECTED_BOT = 'github-actions[bot]';
-
-/** Ключи `with:` шага action ревью — строки с отступом на уровень глубже `with:`. */
-function reviewStepInputs() {
+// #704: прежний action отвергал dispatch от github-actions[bot]. Native
+// transport не имеет этого event/actor parser; сам dispatch остаётся прежним.
+function nativeReviewStep() {
   const model = jobBlock('model_review');
   const start = model.indexOf('      - name: Review\n');
   assert.ok(start > 0, 'шаг Review найден');
   const rest = model.slice(start + 1);
   const next = rest.search(/\n {6}- name: /);
   const step = next < 0 ? rest : rest.slice(0, next + 1);
-  assert.match(step, /^ {8}uses: anthropics\/claude-code-action@[0-9a-f]{40} /m, 'action пиннут полным SHA');
-  const withAt = step.indexOf('\n        with:\n');
-  assert.ok(withAt > 0, 'у шага есть with:');
-  const inputs = new Map();
-  for (const line of step.slice(withAt + '\n        with:\n'.length).split('\n')) {
-    if (line.trim() && !/^ {10}/.test(line)) break;
-    const m = /^ {10}([a-z_]+):\s*(.*)$/.exec(line);
-    if (m) inputs.set(m[1], m[2].trim());
-  }
-  return inputs;
+  return step;
 }
 
-test('#704 AC1/AC3: action ревью разрешает ровно бота, который ставит его в очередь, и не всех ботов', () => {
-  const inputs = reviewStepInputs();
-  assert.ok(inputs.has('allowed_bots'), 'allowed_bots на месте: без него прогон от github-actions[bot] отклоняется');
-  const raw = inputs.get('allowed_bots');
-  const value = raw.replace(/^(['"])(.*)\1$/, '$2');
-  assert.notEqual(value.trim(), '*', "'*' пустил бы любого бота");
-  const bots = value.split(',').map((bot) => bot.trim()).filter(Boolean);
-  assert.deepEqual(bots, [EXPECTED_BOT], 'ровно один бот — тот, от имени которого dispatch');
+test('#704 AC1/AC3: native review accepts the existing trusted dispatch without an action actor override', () => {
+  const step = nativeReviewStep();
+  assert.match(step, /run: node "\$RUNNER_TEMP\/review-policy-tools\/scripts\/review-native-runner\.mjs"/);
+  assert.doesNotMatch(step, /uses:|allowed_bots:|github_token:|additional_permissions/,
+    'no action actor wildcard, token exchange or alternate transport');
   // Ожидаемое имя держится за то, как release.yml ставит ревью в очередь: dispatch
   // токеном GITHUB_TOKEN — это и есть github-actions[bot].
   const release = readFileSync(fileURLToPath(new URL('../.github/workflows/release.yml', import.meta.url)), 'utf8');

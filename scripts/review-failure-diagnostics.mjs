@@ -8,6 +8,7 @@ import { literalArgv, toolProblem, REVIEW_CLI_VERSION } from './review-execution
 import { knownToolName, projectStoredDecision, projectStoredToolMetadata, reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 import { CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM, callDigest, legacyCallDigest } from './review-call-digest.mjs';
+import { readReviewCapabilities } from './review-capabilities.mjs';
 
 export const FAILURE_LIMITS = Object.freeze({ traceBytes: 64 * 1024 * 1024, policyBytes: 4 * 1024 * 1024,
   journalBytes: 2 * 1024 * 1024, calls: 256, journalRows: 2048, denials: 64, certificateBytes: 256 * 1024 });
@@ -26,7 +27,7 @@ function inputShape(input, policy) {
   const value = reviewToolMetadata(undefined, input, { files: policy?.files, literalArgv });
   return { keys: value.keys, orderedKeyDigests: value.orderedKeyDigests, omittedKeys: value.omittedKeys,
     otherKeyCount: value.otherKeyCount, digest: value.inputDigest, type: value.inputType,
-    fields: value.fields, command: value.command, digestAlgorithm: LEGACY_CALL_DIGEST_ALGORITHM };
+    fields: value.fields, command: value.command, check: value.check ?? null, digestAlgorithm: LEGACY_CALL_DIGEST_ALGORITHM };
 }
 
 // Absent markers describe the old wire algorithm only in OLD diagnostics.
@@ -46,9 +47,10 @@ function callSummary(call, entries, results, policy, final, duplicate) {
   const journalAlgorithm = algorithmInfo(matches.length === 1 ? matches[0] : null,
     matches.length === 1 && policyAlgorithm.algorithm === LEGACY_CALL_DIGEST_ALGORITHM);
   let expectedReason = 'policy-unavailable';
-  try { if (policy?.schema === 1 && typeof policy.root === 'string' && Array.isArray(policy.files))
-    if (policyAlgorithm.algorithm === CALL_DIGEST_ALGORITHM)
-      expectedReason = toolProblem({ tool_name: call?.name, tool_input: call?.input }, policy); }
+  try { if (policy?.schema === 2 && policyAlgorithm.algorithm === CALL_DIGEST_ALGORITHM) {
+    readReviewCapabilities(policy);
+    expectedReason = toolProblem({ tool_name: call?.name, tool_input: call?.input }, policy);
+  } }
   catch { expectedReason = 'policy-evaluation-unavailable'; }
   const decisionKnown = !['policy-unavailable', 'policy-evaluation-unavailable'].includes(expectedReason);
   const schemaChannel = call?.name === 'StructuredOutput' && isDeepStrictEqual(call.input, final?.structured_output);
@@ -79,7 +81,7 @@ function callSummary(call, entries, results, policy, final, duplicate) {
   return { toolUseIdDigest: identity(id), tool: knownToolName(call?.name), toolNameDigest: identity(call?.name),
     input: inputShape(call?.input, policy), callDigest: { algorithm: policyAlgorithm, digest: inputDigest },
     expected: { denied: decisionKnown ? Boolean(expectedReason) : null,
-      semantics: decisionKnown ? 'current' : policyAlgorithm.algorithm === LEGACY_CALL_DIGEST_ALGORITHM ? 'legacy-not-re-evaluated' : 'unavailable',
+      semantics: decisionKnown ? 'current' : policy?.schema === 1 ? 'legacy-not-re-evaluated' : 'unavailable',
       ...reviewDecisionMetadata(expectedReason) },
     journal: { count: matches.length, callDigestAlgorithm: journalAlgorithm, inputDigestMatches: inputMatches,
       denied: matches.length === 1 && typeof matches[0].denied === 'boolean' ? matches[0].denied : null,
@@ -103,7 +105,8 @@ export function buildFailureCertificate({ messages, entries, policy, provenance 
     provenance: { run: number(provenance.run), attempt: number(provenance.attempt), issue: number(provenance.issue),
       kind: state(provenance.kind, ['task', 'ship', 'release']), stage: state(provenance.stage, ['spec', 'code', 'ship', 'release']),
       materialSha: sha(provenance.materialSha), policyMaterialSha: sha(policy?.sha), toolsSha: sha(provenance.toolsSha),
-      policySchema: policy?.schema === 1 ? 1 : null,
+      policySchema: [1, 2].includes(policy?.schema) ? policy.schema : null,
+      capabilityDigest: policy?.schema === 2 && /^[a-f0-9]{64}$/.test(policy.capabilities?.digest || '') ? policy.capabilities.digest : null,
       callDigestAlgorithm: algorithmInfo(policy, policy?.schema === 1),
       cliVersion: policy?.cliVersion === REVIEW_CLI_VERSION ? REVIEW_CLI_VERSION : null,
       materialMatchesPolicy: sha(provenance.materialSha) && sha(policy?.sha) ? provenance.materialSha === policy.sha : null },
@@ -174,7 +177,7 @@ export function collectFailureCertificate({ policyPath, tracePath, provenance, o
   const journal = readDiagnosticInput(policyPath ? `${policyPath}.jsonl` : '', FAILURE_LIMITS.journalBytes, { jsonl: true });
   const metadata = (row, expected) => ({ status: row.status, sha256: row.sha256, omitted: row.omitted ?? 0,
     shape: row.value === null ? 'unavailable' : expected === 'array' ? (Array.isArray(row.value) ? 'expected' : 'wrong')
-      : row.value?.schema === 1 && typeof row.value.root === 'string' && Array.isArray(row.value.files) ? 'expected' : 'wrong' });
+      : [1, 2].includes(row.value?.schema) && typeof row.value.root === 'string' && Array.isArray(row.value.files) ? 'expected' : 'wrong' });
   const certificate = buildFailureCertificate({ policy: policy.value, messages: trace.value, entries: journal.value,
     provenance, inputs: { policy: metadata(policy, 'policy'), trace: metadata(trace, 'array'), journal: metadata(journal, 'array') } });
   mkdirSync(dirname(output), { recursive: true });

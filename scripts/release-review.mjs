@@ -23,6 +23,7 @@ import { buildReleaseMembership, issueTrailers, validateReleaseMembership } from
 import { readTaskCommit, taskDelivery } from './task-delivery.mjs';
 import { classify } from './process-gate.mjs';
 import { isBetaCommit, parseSourceCommitLog, renderSourceGrowth, sourceGrowthMetrics } from './source-replacement.mjs';
+import { sourceContextPacket } from './review-context.mjs';
 
 export const RELEASE_REVIEW_DIR = 'docs/reviews';
 export const STABLE_TAG_RE = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -137,6 +138,13 @@ if (isMainModule(import.meta.url)) {
       mkdirSync(out, { recursive: true });
       writeFileSync(join(out, 'line-membership.json'), `${JSON.stringify(membership, null, 2)}\n`);
       writeFileSync(join(out, 'brief.md'), renderBrief({ membership, files, sourceGrowth, runUrl: value('run-url') }));
+      if (value('context') === 'true') {
+        writeFileSync(join(out, 'review-source-context.json'), JSON.stringify(sourceContextPacket({
+          kind: 'release', sha: candidate, tree: git(['rev-parse', `${candidate}^{tree}`]), base: base?.sha ?? null, sources: [],
+          readFacts: { membership, productFiles: productFiles(files),
+            brief: renderBrief({ membership, files, sourceGrowth, runUrl: value('run-url') }) },
+        }), null, 2) + '\n', { flag: 'wx' });
+      }
       console.log(`doc=${releaseReviewDocPath(tag)}`);
       console.log(`base=${base ? base.tag : ''}`);
       console.log(`issues=${membership.issues.map((row) => row.number).join(',')}`);

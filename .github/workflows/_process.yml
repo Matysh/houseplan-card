@@ -44,7 +44,7 @@ on:
 # #556: права выдаются по job, а не одной строкой на весь workflow. Общий блок
 # давал `issues: write` и OIDC даже той стадии, которая ничего не пишет, —
 # модели. Ниже минимум на каждую: писать в issue умеют только детерминированные
-# стадии, OIDC нужен исключительно `claude-code-action`.
+# стадии; native model runner не получает полномочий публикации.
 permissions:
   contents: read
 
@@ -335,6 +335,7 @@ jobs:
       material_issue_body: ${{ steps.material.outputs.issue_body }}
       handoff_snapshot: ${{ steps.preflight.outputs.handoff_snapshot }}
       findings_policy_snapshot: ${{ steps.findings.outputs.snapshot }}
+      publisher_id: ${{ steps.publisher.outputs.id }}
       reuse: ${{ steps.reuse.outputs.reuse }}
       reuse_doc: ${{ steps.reuse.outputs.doc }}
       reuse_round: ${{ steps.reuse.outputs.round }}
@@ -1026,6 +1027,16 @@ jobs:
           TOOLS: ${{ steps.tools.outputs.dir }}
         run: node "$TOOLS/scripts/review-findings-policy.mjs" collect
 
+      - name: Зафиксировать доверенного publisher
+        id: publisher
+        if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && steps.track.outputs.ship != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+        run: |
+          id=$(gh api user --jq '.id')
+          case "$id" in ''|*[!0-9]*) exit 1 ;; esac
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
       - name: Собрать контракт материала между стадиями
         id: prepared
         if: steps.gate.outputs.proceed == 'true' && steps.reuse.outputs.reuse != 'true' && steps.track.outputs.ship != 'true'
@@ -1091,25 +1102,12 @@ jobs:
     # Единственная недоверенная стадия: модель читает материал и кладёт
     # запечатанный artifact. Писать в issue и в репозиторий ей незачем — это
     # делает `integrate`, проверив происхождение: в репозиторий модель не пишет
-    # вообще, а в issue — только своим комментарием и отдельным issue по §12.
+    # вообще; комментарий и отдельный issue по §12 публикует только integrate.
     #
-    # Права здесь реальны только вместе с `github_token` у шага Review. Без него
-    # claude-code-action меняет OIDC на собственный App-токен с дефолтом
-    # `contents/issues/pull_requests: write` (`src/github/token.ts`), и блок ниже
-    # не ограничивает ничего: токен `ghs_…` от claude[bot] лежит прямо в
-    # окружении Bash-инструмента модели — это поймало ревью r1 по #556 в
-    # собственной же сессии. С переданным `secrets.GITHUB_TOKEN` обмена не
-    # происходит, `id-token` больше не нужен, и этот список становится потолком.
-    #
-    # `issues: write` остаётся: процесс требует от ревьюера комментарий с
-    # вердиктом (§7.2) и отдельный issue на Medium вне скоупа (§12). Снять его
-    # можно только перенеся и то и другое в `integrate` — это отдельная правка
-    # конвейера, не эта задача. Что остаётся модели этим правом: комментарий,
-    # метки, правка тела issue. Чего не остаётся: запись в репозиторий, слияние
-    # (его решает запечатанный verdict.json в `integrate`), релиз.
+    # Model has no external publishing authority; trusted integrate owns writes.
     permissions:
       contents: read
-      issues: write
+      issues: read
     needs: [guard, prepare]
     # #696/#727: `ship` в рамках сливается без модели — пакетное ревью ночью;
     # перед бетой проверка покрытия и непрочитанная дельта (PROCESS.md §11.7).
@@ -1126,6 +1124,10 @@ jobs:
       # #737: строка расхода сессии модели (scripts/model-usage.mjs).
       usage: ${{ steps.usage.outputs.line }}
       usage_details: ${{ steps.usage.outputs.details }}
+      artifact: ${{ steps.result.outputs.artifact }}
+      producer_run_id: ${{ steps.result.outputs.producer_run_id }}
+      producer_attempt: ${{ steps.result.outputs.producer_attempt }}
+      producer_manifest: ${{ steps.result.outputs.producer_manifest }}
     steps:
       - name: Начать измерение стадии
         id: clock
@@ -1207,7 +1209,7 @@ jobs:
           git archive --format=tar "$TOOLS_SHA" scripts | tar -x -C "$tools"
           node "$tools/scripts/review-preflight.mjs" --repo="$REPO" --issue="$NUM" \
             --stage="$STAGE" --track="$TRACK" --sha="$SHA" --tree="$TREE" \
-            --body-digest="$DIGEST" --base="$TOOLS_SHA" --handoff-snapshot="$HANDOFF_SNAPSHOT" --return=true
+            --body-digest="$DIGEST" --base="$TOOLS_SHA" --handoff-snapshot="$HANDOFF_SNAPSHOT" --context-output="$RUNNER_TEMP/review-source-context.json" --return=true
 
       - name: "Закрепить адресный контекст ревью (#857)"
         env:
@@ -1216,9 +1218,21 @@ jobs:
           TOOLS_SHA: ${{ needs.prepare.outputs.tools_sha }}
         run: |
           tools="$RUNNER_TEMP/preflight-tools"
-          node "$tools/scripts/review-context.mjs" \
+          node "$tools/scripts/review-context.mjs" --input="$RUNNER_TEMP/review-source-context.json" \
             --prepared="$RUNNER_TEMP/review-prepared/prepared.json" --repo="$REPO" \
             --base="$TOOLS_SHA" --output="$RUNNER_TEMP/review-context.json"
+
+      - name: Не повторять модель для незавершённой публикации
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
+          MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
+          MATERIAL_ISSUE_BODY: ${{ needs.prepare.outputs.material_issue_body }}
+          REVIEW_PUBLISHER_ID: ${{ needs.prepare.outputs.publisher_id }}
+        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-publication.mjs" assert-no-pending
 
       # #696: окружение ставится по нужде. Ревью ТЗ кода не исполняет — ни
       # `npm ci`, ни браузера. Ревью `show` ставит Chromium, только если тело
@@ -1305,6 +1319,7 @@ jobs:
         env:
           REVIEW_KIND: task
           REVIEW_CLAUDE_VERSION: ${{ steps.claude_bin.outputs.version }}
+          REVIEW_BASE: ${{ needs.prepare.outputs.tools_sha }}
           REVIEW_STAGE: ${{ needs.guard.outputs.stage }}
           REVIEW_DOC: ${{ runner.temp }}/review-document.md
           REVIEW_FINDINGS: ${{ runner.temp }}/review-outside-findings.md
@@ -1312,32 +1327,10 @@ jobs:
           tools="$RUNNER_TEMP/preflight-tools"
           node "$tools/scripts/review-execution-policy.mjs" prepare "$RUNNER_TEMP/review-execution-policy.json"
 
-      - name: Review
-        id: review
-        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
+      - name: Подготовить native review prompt
         env:
-          ANTHROPIC_MODEL: claude-sonnet-5
-          CLAUDE_CODE_EFFORT_LEVEL: high
-          # Вне рабочей копии: восстановление дерева ревьюером не должно
-          # уничтожать его собственный артефакт (#220).
-          REVIEW_DOC: ${{ runner.temp }}/review-document.md
-          REVIEW_CONTEXT: ${{ runner.temp }}/review-context.json
-          REVIEW_FINDINGS_POLICY: ${{ runner.temp }}/review-findings-policy.json
-          REVIEW_FINDINGS: ${{ runner.temp }}/review-outside-findings.md
-        with:
-          # Подписка, а не отдельный счёт API: токен выпускается через
-          # `claude setup-token` (Pro/Max). Действуют лимиты подписки.
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Ambient job-scoped токен вместо App-обмена (#556). Со ним
-          # `permissions:` этой job — настоящий потолок прав модели: ни записи в
-          # репозиторий, ни постановки метки, ни комментария. Строку нельзя
-          # снять, не вернув модели право двигать процесс.
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # #1040: authenticated main-to-dev dispatch is started by this bot.
-          allowed_bots: "github-actions[bot]"
-          path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
-          settings: ${{ runner.temp }}/review-execution-policy.json.settings.json
-          prompt: |
+          REVIEW_PROMPT: ${{ runner.temp }}/review-prompt.txt
+          REVIEW_PROMPT_TEXT: |
             Ты ревьюер проекта House Plan. Язык ответа — русский.
 
             Issue: #${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
@@ -1361,16 +1354,20 @@ jobs:
             CLI и с последующим восстановлением; вне ночного workflow запрещено.
             Для «чем краснеет» назови обычный отрицательный случай с результатом
             либо id registered witness с «не исполнялся». Статический `--check`,
-            регистрация и ordinary PASS не являются caught. Bash/Write для
-            обычных build/test, generated outputs и документа ревью разрешены;
+            регистрация и ordinary PASS не являются caught. Обычные build/test
+            доступны через fixed-check runner, Write — для документа ревью;
             предмет ревью ради отрицательной проверки не меняй (#905).
 
-            Tool policy #1065: Read/Grep/Glob для чтения; Bash — одна literal
-            foreground команда без shell composition/env/redirect/inline code.
-            Допустимы git read, rg, sed -n N,Mp, node --test test/<file>.test.mjs,
-            node demo/smoke_<name>.mjs, обычные --check, npm run build/bundle:sync.
-            Write — только REVIEW_DOC/REVIEW_FINDINGS. Denied request не исполнился
-            и не доказывает AC: после него execution audit не публикует вердикт.
+            Tool policy #1065: Read/Grep/Glob для чтения, Write только во внешний
+            REVIEW_DOC/REVIEW_FINDINGS. Общего Bash/Edit/Agent и business MCP нет.
+            REVIEW_CHECKS: ${{ runner.temp }}/review-execution-policy.json.checks.md
+            Для нужного исполняемого oracle прочитай manifest и вызови только
+            mcp__houseplan_review__run_check с его check_id; bin/argv/env/cwd не задавай.
+            ToolSearch допустим только для discovery этого фиксированного runner.
+            executed:false/unavailable не является ни PASS, ни выполненным тестом.
+            Denied/missing/mismatch/material drift остаются fatal; не повторяй
+            неподдержанный запрос обходной командой. Доступный oracle выполняй
+            через runner, а не заменяй чтением. При непригодном evidence дай честную границу.
 
             ${{ needs.prepare.outputs.track == 'show' && needs.guard.outputs.stage == 'code' && 'Трек show: объём и серьёзность находок — docs/process/REVIEWER.md, «Трек show» (#696).' || '' }}
 
@@ -1410,9 +1407,9 @@ jobs:
             Цикл не первый — разбор по дельте (PROCESS.md §2.10):
             docs/process/REVIEWER.md, «Повторный раунд».
 
-            Static-first (#857): REVIEW_CONTEXT закрепляет материал/body и
-            обязательный role entry. Источники читай один раз, архив адресно,
-            только релевантные решения. Все изменённые/risky hunks и negative
+            Static-first (#857): сначала Read REVIEW_CONTEXT и его страницы.
+            Там закреплены материал/body и role entry. Источники читай один раз,
+            архив адресно. Все изменённые/risky hunks и negative
             proofs остаются обязательными. При неизменном материале/env/oracle
             не повторяй уже пригодный check; изменение любого из них требует
             нового доказательства. Пакет не разрешает пропускать правила/гейты.
@@ -1494,9 +1491,8 @@ jobs:
             Доверенный снимок prepare: `${{ needs.prepare.outputs.findings_policy_snapshot }}`.
             Он определяет маршрут, не текст материала и не изменяемый файл.
             Сверь REVIEW_FINDINGS_POLICY; при расхождении остановись без новых issue.
-            При mode=issues Medium ВНЕ скоупа заведи
-            отдельным issue со ссылкой на текущую задачу и метками: тип,
-            приоритет, S1-new. При mode=file новых issue не заводи: запиши все
+            При mode=issues передай Medium ВНЕ скоупа типизированным
+            outside_findings для trusted publisher. При mode=file новых issue не заводи: запиши все
             побочные находки с воспроизведением и приоритетом в REVIEW_FINDINGS
             (или явно «Побочных находок нет»). Путь публикации выбирает pipeline.
             Укажи маршрут в документе. High и Medium в скоупе, вердикт и гейты
@@ -1521,21 +1517,32 @@ jobs:
             Учёт: заход r${{ needs.guard.outputs.cycle }}, блокирующих циклов
             ${{ needs.guard.outputs.spent }}/${{ needs.guard.outputs.limit }}.
             Зелёный цикла не образует (§4). Бюджет циклов не смягчает находки.
-            Затем оставь в issue краткий комментарий: вердикт, ключевые находки
-            и ссылка на документ. Первой строкой — вердикт в формате §7.2:
-            `Вердикт: зелёный/жёлтый/красный · заход r${{ needs.guard.outputs.cycle }} · блокирующих циклов ${{ needs.guard.outputs.spent }}/${{ needs.guard.outputs.limit }} · High: N · Medium: N → в задаче | #…`
-            («→ #…» — только у Medium вне скоупа в mode=issues; в mode=file укажи файл;
-            находки в скоупе возвращаются автору жёлтым)
+            Не публикуй комментарии и не создавай issues: это делает trusted publisher
+            только после валидного audit/seal. В mode=issues передай новые побочные
+            Medium в optional outside_findings: [{id:"F1",title,body,severity:"medium",kind}].
+            Не задавай repo/labels/assignee/status; дубликаты не создавай, известные
+            существующие issues просто укажи в report. В mode=file сохрани прежний
+            Markdown в REVIEW_FINDINGS, outside_findings должен быть пустым.
+            F1… publisher отобразит в receipt/comment;
+            запечатанный report он не переписывает.
 
-            Затем верни JSON по схеме. Это последнее действие и оно обязательно:
+            Затем верни JSON по схеме. Последнее действие обязательно:
             без него метка не переставится и конвейер встанет.
-          claude_args: |
-            --model claude-sonnet-5
-            --effort high
-            --max-turns 150
-            --setting-sources ""
-            --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
-            --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"},"route":{"type":"string","enum":["fix","reclassify"]},"criterion":{"type":"string"}},"required":["verdict","high","medium","summary","route"]}'
+        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-native-runner.mjs" prepare-prompt
+
+      - name: Review
+        id: review
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          REVIEW_CLI_PATH: ${{ steps.claude_bin.outputs.path }}
+          REVIEW_POLICY: ${{ runner.temp }}/review-execution-policy.json
+          REVIEW_PROMPT: ${{ runner.temp }}/review-prompt.txt
+          REVIEW_JSON_SCHEMA: '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"},"route":{"type":"string","enum":["fix","reclassify"]},"criterion":{"type":"string"},"outside_findings":{"type":"array","maxItems":32,"items":{"type":"object","additionalProperties":false,"properties":{"id":{"type":"string","pattern":"^F[1-9]\\d{0,3}$"},"title":{"type":"string","maxLength":256},"body":{"type":"string"},"severity":{"type":"string","enum":["medium"]},"kind":{"type":"string","enum":["bug","feature","enhancement","infra","tech-debt","docs"]}},"required":["id","title","body","severity"]}}},"required":["verdict","high","medium","summary","route"]}'
+          REVIEW_KIND: task
+          REVIEW_MAX_TURNS: 150
+          REVIEW_EXECUTION_DIR: ${{ runner.temp }}/review-native-execution
+          REVIEW_DOC: ${{ runner.temp }}/review-document.md
+        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-native-runner.mjs"
 
       # #737: расход сессии — отчётная величина, как длительность стадии: по
       # нему ничего не решается, поэтому он идёт выходом job, а не через
@@ -1592,7 +1599,7 @@ jobs:
         if: always() && (steps.review.outcome == 'failure' || steps.execution_boundary.outcome == 'failure')
         env:
           REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
-          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/claude-execution-output.json
+          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/review-native-execution/native-messages.json
           REVIEW_DIAGNOSTIC_POLICY: ${{ runner.temp }}/review-execution-policy.json
           REVIEW_DIAGNOSTIC_OUTPUT: ${{ runner.temp }}/review-failure-diagnostics/certificate.json
           REVIEW_DIAGNOSTIC_KIND: task
@@ -1641,6 +1648,10 @@ jobs:
           files=(prepared.json review-document.md verdict.json)
           if [ -f "$dir/outside-findings.md" ]; then files+=(outside-findings.md); fi
           (cd "$dir" && sha256sum "${files[@]}" > manifest.sha256)
+          node "$tools/scripts/review-publication.mjs" validate-verdict --verdict="$dir/verdict.json"
+          echo "producer_run_id=$GITHUB_RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "producer_attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          echo "producer_manifest=$(sha256sum "$dir/manifest.sha256" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
           echo "artifact=review-result-${NUM}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
 
       - name: Передать результат интеграции
@@ -1755,7 +1766,7 @@ jobs:
         if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: review-result-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ needs.model_review.outputs.artifact }}
           path: ${{ runner.temp }}/review-result
 
       - name: Проверить полноту и происхождение результата
@@ -1768,6 +1779,11 @@ jobs:
         # inline-shell в `scripts/review-result-gate.mjs` ради враждебных
         # фикстур — в YAML её нельзя прогнать ни одним отрицательным случаем.
         env:
+          REVIEW_VERIFIED_OUTPUT: ${{ runner.temp }}/review-verified.json
+          REVIEW_PRODUCER_RUN_ID: ${{ needs.model_review.outputs.producer_run_id }}
+          REVIEW_PRODUCER_ATTEMPT: ${{ needs.model_review.outputs.producer_attempt }}
+          REVIEW_PRODUCER_MANIFEST: ${{ needs.model_review.outputs.producer_manifest }}
+          REVIEW_PRODUCER_RESULT: ${{ needs.model_review.result }}
           ISSUE: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
@@ -1795,6 +1811,36 @@ jobs:
           # structured_output не обязан оканчиваться LF: delimiter команды
           # GitHub должен начинаться с отдельной строки.
           printf '\nEOF_RESULT\n' >> "$GITHUB_OUTPUT"
+
+      - name: Опубликовать запечатанный вердикт и побочные находки
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          CYCLE: ${{ needs.guard.outputs.cycle }}
+          SPENT: ${{ needs.guard.outputs.spent }}
+          LIMIT: ${{ needs.guard.outputs.limit }}
+          TRACK: ${{ needs.prepare.outputs.track }}
+          CONFIRMED: ${{ needs.prepare.outputs.confirmed }}
+          BRANCH: ${{ needs.prepare.outputs.branch }}
+          MATERIAL: ${{ needs.prepare.outputs.material_sha }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
+        run: |
+          set -euo pipefail
+          labels=$(gh issue view "$NUM" --repo "$REPO" --json labels --jq '[.labels[].name] | join(",")')
+          node "$TOOLS/scripts/process-track.mjs" route --stage="$STAGE" --track="$TRACK" \
+            --confirmed="$CONFIRMED" --labels="$labels" --verdict="$RUNNER_TEMP/review-result/verdict.json" \
+            --spent="$SPENT" --limit="$LIMIT" --num="$NUM" --cycle="$CYCLE" --branch="$BRANCH" \
+            --ref="$MATERIAL" \
+            --out="$RUNNER_TEMP/publication-route" --run-url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$RUNNER_TEMP/publication-route.txt"
+          export SPENT=$(sed -n 's/^spent_after=//p' "$RUNNER_TEMP/publication-route.txt")
+          export LIMIT=$(sed -n 's/^limit_after=//p' "$RUNNER_TEMP/publication-route.txt")
+          routing=()
+          if [ -f "$RUNNER_TEMP/publication-route/comment.md" ]; then routing+=(--routing="$RUNNER_TEMP/publication-route/comment.md"); fi
+          node "$TOOLS/scripts/review-publication.mjs" publish --dir="$RUNNER_TEMP/review-result" \
+            --expected="$RUNNER_TEMP/review-verified.json" --output="$RUNNER_TEMP/review-publication.json" "${routing[@]}"
 
       # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
       # решает этот шаг, а не модель: всё остальное откатывается.
@@ -1910,6 +1956,7 @@ jobs:
           else
             echo "::warning::$SOURCE не найден — документа для публикации нет"
           fi
+          node "$TOOLS/scripts/review-publication.mjs" attach --document="$doc" --receipt="$RUNNER_TEMP/review-publication.json"
           # Индексируется ровно один путь, а не каталог: `git add docs/reviews`
           # забрал бы всё, что там окажется, а после reset там не должно быть
           # ничего постороннего — но полагаться на «не должно» здесь нельзя.
@@ -2057,6 +2104,19 @@ jobs:
           # Судится опубликованная версия, а не рабочая копия: именно её прочтёт
           # следующий раунд.
           git show "origin/$target:$doc" | node "$TOOLS/scripts/review-doc-guard.mjs" --doc=-
+      - name: Проверить завершение публикации переиспользуемого ревью
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUM: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
+          STAGE: ${{ needs.guard.outputs.stage }}
+          MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
+          MATERIAL_ISSUE_BODY: ${{ needs.prepare.outputs.material_issue_body }}
+          REUSE_DOC: ${{ needs.prepare.outputs.reuse_doc }}
+          TOOLS: ${{ steps.tools.outputs.dir }}
+        run: node "$TOOLS/scripts/review-publication.mjs" verify --document="docs/reviews/$REUSE_DOC"
+
       - name: Решение по вердикту
         id: decide
         if: steps.ready.outputs.proceed == 'true'
@@ -2152,9 +2212,7 @@ jobs:
             verdict=$(field verdict); high=$(field high)
             green=$(field green); from=$(field from); to=$(field to)
             add=$(field add_labels); remove=$(field remove_labels); comment=$(field comment)
-            if [ -n "$comment" ]; then
-              gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file "$comment"
-            fi
+            # Canonical verdict and routing were already published from the sealed artifact.
             edit=()
             if [ -n "$add" ]; then edit+=(--add-label "$add"); fi
             if [ -n "$remove" ]; then edit+=(--remove-label "$remove"); fi

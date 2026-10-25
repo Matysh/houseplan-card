@@ -104,8 +104,8 @@ Synthetic credentials only; none of these tests calls a real write API or model.
 Отсутствие registry CLI и последующее восстановление не дают исключения.
 В ревью называются обычный отрицательный случай либо id registered witness
 с «не исполнялся». Статический `--check`, регистрация и ordinary PASS не
-являются caught. Bash/Write для обычных build/test, их generated outputs и
-документа ревью разрешены; изоляция generated outputs/index и внешний
+являются caught. Обычные build/test доступны модели через `run_check(check_id)`;
+их generated outputs и внешний Write документа ревью разрешены. Изоляция generated outputs/index и внешний
 REVIEW_DOC сохраняются. Это не разрешение менять предмет ревью.
 
 Проверка: `node scripts/mutation-gate.mjs --check` — якоря патчей живы;
