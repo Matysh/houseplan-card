@@ -53,6 +53,52 @@ No nodes are excluded from the geometry assertion. Matrix90 records this state
 definition change; all242 IDs, meaningful scenario assertions and thresholds
 remain. Shared-page collateral still requires the next complete capture.
 
+Targeted verification on `99e91d02` passed the hold lifecycle smoke and all
+three Plan captures through the unchanged selected runner. Visual review found
+only the pre-existing summary-control residual (810/832/808 pixels), below the
+unchanged thresholds; geometry, preview and real keyboard-focus guards passed.
+The second vacuum-profile hover also needed the same direct-heading selector;
+the first targeted smoke failure is retained rather than reported as PASS.
+On `8cfdd3410d3825221b7380b5b2a5e59d9535b957`, the unchanged runner then
+executed `HP_SMOKE_CHECKS=1 node demo/smoke_device_settings_947.mjs`: PASS,
+including the complete multi-width/theme/section checks and zero commands.
+The passing hold leaf was
+`HP_SMOKE_CHECKS=1 node demo/smoke_view_hold_lifecycle.mjs`; Golden leaves were
+`node demo/golden/run.mjs --mode=capture --scenario=<id>` for the three named
+IDs. These are selected observations, not complete release proof.
+
+## Existing scene accounting from the approved contracts
+
+The original pending ledger names22 NEW and2 CHANGE scenes. Ten existing
+scenes additionally show approved behavior whose existing IDs were omitted
+from that ledger. Their scope comes from the original issue decisions and
+accepted source below, independently of the red screenshot. They are explicit
+extra CHANGE inputs to the canonical beta-derived workflow, subject to review
+of the next complete capture. No Plan-focus scene is added to those inputs.
+
+| Existing scene | Original contract and accepted source | Bounded intended difference |
+|---|---|---|
+| `device-icon-state-table-light`, `device-icon-state-table-dark` | #1026 owner decision [6374075078](https://github.com/Matysh/houseplan-card/issues/1026#issuecomment-6374075078), AC3; `d7961f90e` | Confirmed own-offline fades core contents only. The ordinary unlocked shell and LQI180 retain their paint. The fixture remains unchanged. |
+| `device-issues-maintenance-plan` | #1026 AC1/AC3, same accepted source | Own connection=on and Power=off mean available/neutral; the appliance shell and maintenance overlay no longer inherit whole-marker fading. |
+| `device-state-source-unknown-en` | #1026 AC2/AC3; #1051 UI-026/AC5, `9a55e2e0648` | Unknown remains unknown without false offline. The existing preview explanation becomes shorter; the selected marker behind the dialog uses the approved persistent blue fill. |
+| `furniture-transform-light` | #1051 UI-019; `9a55e2e0648`, `editor-secondary.styles.ts` | The existing secondary Properties tray uses width352, padding16 and two-column actions. Tiny unrelated edge differences remain subject to the original tolerance. |
+| `decor-color-popover-desktop-en` | #1051 UI-019, same source | The selected Line's secondary tray behind the dialog changes; this does not declare a new color-popover design. |
+| `decor-color-popover-mobile-ru` | #1051 UI-019, same source | The selected Line tray and its existing shadow affect the lower panel region. A normal runtime observation reproduced all697 significant CI-delta pixels exactly inside this local mask; separate whole-frame focus differences are excluded. |
+| `space-room-color-popover-desktop-ru` | #1051 UI-025, `space-form.ts`, same source | The approved room-field order changes inside the existing dialog; the native conditional/order/save-reopen checks remain. |
+| `isometric-stage3-overlays-dark`, `vacuum-trail-smoothing-dark` | #1049 initial/reconnect adoption, `e72d20456a5d0a0bdcb4bb61663a25504517dd8b`; existing `VACUUM.md` moving-puck contract | Cold generic trail adoption now ticks rebuilt devices before capture, restoring the already promised live round puck for a moving robot with valid position/calibration. Path, dock, puck template and glyph remain the existing ones. |
+
+For the vacuum source hypothesis, one ordinary smoothing preparation on each
+immutable beta.1/current build observed identical HA, camera, calibration,
+telemetry, route and viewport inputs. Beta.1 had no runtime/captured moving
+fact or puck; accepted source had moving=true and one puck. This is matched
+endpoint evidence, not an isolated-commit replay; the isometric branch is
+supported by the same source predicate and its full-CI image. Any conflicting
+fresh capture reopens diagnosis rather than granting broader pixel permission.
+
+Thus the proposed explicit scope is22 NEW plus12 CHANGE (the original2 plus
+these10). Existing passed, nonzero frames keep their old baseline hashes.
+No tolerance, pixel witness, capture policy or acceptance predicate changes.
+
 ## Create room followed by full Optimize (#1061)
 
 The owner's additional request explicitly covers that sequence. An ordinary
