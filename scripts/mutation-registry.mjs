@@ -2014,7 +2014,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=roles',
     because: '#844 AC2: a denied direct call must not fetch/install the editor chunk.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '    const request = ++this._markerDialogRequest;\n    if (!deviceEditorAllowed(this._canEdit, this._kiosk)) return;',
+      find: '    const request = ++this._markerDialogRequest;\n    if (!deviceEditorAllowed(this._canEdit, this._kiosk) || viewSettings && !this._loadOk) {\n      if (viewSettings) this._showToast(this._t(\'toast.device_settings_unavailable\'), \'toast.device_settings_unavailable\');\n      return;\n    }',
       replace: '    const request = ++this._markerDialogRequest;' }],
   },
   {
@@ -2022,8 +2022,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_view_edit_permissions.mjs --only=late',
     because: '#844 AC3/#899: permission/kiosk revocation during the real browser import refuses the old dialog. Both the card completion and runtime entry enforce this contract, so the definition must omit both redundant rechecks, not remove either product defence.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '            && deviceEditorAllowed(this._canEdit, this._kiosk)) this._editorRuntime?._openMarkerDialog(d);',
-      replace: '            ) this._editorRuntime?._openMarkerDialog(d);' }, { file: 'src/houseplan-editor-runtime.ts',
+      find: '            && deviceEditorAllowed(this._canEdit, this._kiosk)) open();',
+      replace: '            ) open();' }, { file: 'src/houseplan-editor-runtime.ts',
       find: '    if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;',
       replace: '    // mutant: omit the redundant runtime entry permission check' }],
   },
@@ -2048,8 +2048,16 @@ const MUTANT_DEFINITIONS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-editor-permissions-runtime.test.mjs',
     because: '#844 AC4: the runtime independently rejects a denied port before acknowledgement.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts',
-      find: 'public _openMarkerDialog(d?: DevItem): void {\n    if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;',
-      replace: 'public _openMarkerDialog(d?: DevItem): void {' }],
+      find: 'public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {\n    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }\n    if (!deviceEditorAllowed(this.host._canEdit, this.host._kiosk)) return;',
+      replace: 'public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): void {\n    if (currentTarget) { const current = currentTarget(); if (!current) return; d = current; }' }],
+  },
+  {
+    id: 'view-settings-retired-intent-accepted',
+    guard: 'node demo/smoke_device_settings_action.mjs',
+    because: '#1050 AC5: a trusted View input held across the real content-hashed browser import must not open a dialog after HA/user ABA, navigation, target, permission or detach retirement. Pure target tests do not exercise the mounted Lit owner, actual module delivery and deferred runtime consumer together.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    const current = (): DevItem | null => request === this._markerDialogRequest && this.isConnected\n      && this._mode === \'view\' && modeRequest === this._editorModeRequest\n      && (navigation === undefined || navigation === this._editorRuntime?.navigationIntent)\n      && this._loadOk && authorityCurrent() && deviceEditorAllowed(this._canEdit, this._kiosk)\n      && cardConfig === this._config\n      && epoch === this._adoption.adoptionEpoch && layoutRev === this._layoutRev && !this._otherDialogsBlocked\n      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey) : null;',
+      replace: '    const current = (): DevItem | null => currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey);' }],
   },
   {
     id: 'view-edit-ack-forgets-permission',
@@ -21341,6 +21349,10 @@ const decorLine1046Cases = [
 ];
 
 const vacuumHistory999Cases = [
+  {id:'vacuum-history-capture-inputs-untracked-999',
+    guard:'node --test --test-name-pattern="consumed history capture inputs" test/source-fingerprint.test.mjs',
+    because:'#999 AC1/AC9: changing a rendered historical path or the UI capture helper must retire old source/visual evidence, including JSON outside the ordinary Golden module roots.',
+    patches:[{file:'scripts/source-fingerprint.mjs',find:'    ...HISTORY_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),\n',replace:''}]},
   {id:'vacuum-history-initial-get-owner-keeps-preview-999',
     guard:'node scripts/backend-test-guard.mjs initial_get_owner_refusal tests_backend/test_ha_vacuum_history.py',
     because:'#999 AC5/AC6: a fresh get must distinguish a retired saved owner from an ordinary record failure before a stale client can keep painted A.',

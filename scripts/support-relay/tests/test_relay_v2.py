@@ -39,7 +39,10 @@ class V2TestCase(unittest.TestCase):
         }]
         package["plan_backup"]["config"]["markers"] = [{
             "id": "marker-case-1", "binding_kind": "entity", "binding": "entity:entity-case-1",
-            "vacuum": {"new_run_after_dock": True},
+            "vacuum": {"new_run_after_dock": True}, "tap_action": "settings",
+        }]
+        package["diagnostics"]["devices"]["client"] = [{
+            "id": "marker-case-1", "binding": "entity:entity-case-1", "tap_action": "settings",
         }]
         module.validate_package(package)
         positive = json.dumps(package).encode()
@@ -52,6 +55,10 @@ class V2TestCase(unittest.TestCase):
             (("diagnostics", "schema"), True),
             (("version",), 3),
             (("plan_backup", "config", "markers"), [{"id": "marker-case-1", "vacuum": {"new_run_after_dock": "true"}}]),
+            (("plan_backup", "config", "markers"), [{"id": "marker-case-1", "tap_action": "future-settings"}]),
+            (("plan_backup", "config", "markers"), [{"id": "marker-case-1", "tap_action": {"private": "not an action"}}]),
+            (("diagnostics", "devices", "client"), [{"id": "marker-case-1", "tap_action": "future-settings"}]),
+            (("diagnostics", "devices", "client"), [{"id": "marker-case-1", "tap_action": {"private": "not an action"}}]),
             (("diagnostics", "devices", "entities"), [{"id": "sensor.raw", "shape": "numeric"}]),
             (("diagnostics", "vacuums"), [{"marker": "marker-case-1", "current": {"sample": {"kept_points": True}}}]),
             (("plan_backup", "config", "spaces"), [{"settings": {"label_co2": "true"}}]),

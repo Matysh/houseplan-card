@@ -48,7 +48,8 @@
       "smoke_editor_guides_lifecycle.mjs",
       "smoke_decor_multiselect.mjs",
       "smoke_decor_group_text_scale.mjs",
-      "smoke_wall_node_delete.mjs"
+      "smoke_wall_node_delete.mjs",
+      "smoke_device_settings_action.mjs"
     ]
   }
 }

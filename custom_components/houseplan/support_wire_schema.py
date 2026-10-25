@@ -488,7 +488,7 @@ MARKER = Object(
         ),
         **fields("ripple_size size angle glow_radius_cm", nullable(NUMBER)),
         "tap_action": nullable(
-            enum("toggle", "card", "info", "more-info", "run", "cover", "none", "link")
+            enum("toggle", "card", "info", "more-info", "settings", "run", "cover", "none", "link")
         ),
         "display": nullable(DISPLAY),
         "ripple_color": nullable(COLOR),
@@ -614,7 +614,7 @@ DEVICE_CLIENT = Object(
         "pulse_reason": enum(
             "none", "alarm", "event", "presence", "transition", "running"
         ),
-        "tap_action": enum("info", "more-info", "toggle", "run", "none"),
+        "tap_action": enum("info", "more-info", "settings", "toggle", "run", "none"),
         **fields("hidden ha_disabled orphaned vacuum_live", BOOL),
         "face": VALUE_RESULT,
         "badge": VALUE_RESULT,

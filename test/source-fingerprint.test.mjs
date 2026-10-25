@@ -9,6 +9,28 @@ import {
 } from '../scripts/source-fingerprint.mjs';
 import { verifyDocsCandidate } from '../scripts/docs-accept.mjs';
 
+test('#999 edits to consumed history capture inputs retire source and visual identities', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'hp-history-capture-inputs-'));
+  try {
+    for (const name of ['src', 'demo/helpers', 'demo/golden', 'test/fixtures/vacuum-history'])
+      mkdirSync(resolve(directory, name), { recursive: true });
+    const put = (name, value) => writeFileSync(resolve(directory, name), value);
+    put('src/example.ts', 'export const value=1;\n');
+    put('demo/golden/vacuum-history.mjs', "import {record} from '../helpers/vacuum-history.mjs';\nexport const selected=record;\n");
+    put('demo/helpers/vacuum-history.mjs', "export const record='a';\n");
+    const fixture = 'test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json';
+    put(fixture, JSON.stringify({payload:{path:[[1,0,0,1000,0]]}}));
+    const initial = [sourceFingerprint(directory), visualFingerprint(directory)];
+    put(fixture, JSON.stringify({payload:{path:[[1,0,0,2000,0]]}}));
+    const geometryChanged = [sourceFingerprint(directory), visualFingerprint(directory)];
+    assert.notEqual(geometryChanged[0], initial[0], 'a different rendered history path needs a fresh source identity');
+    assert.notEqual(geometryChanged[1], initial[1], 'old captures cannot prove the changed path');
+    put('demo/helpers/vacuum-history.mjs', "export const record='b';\n");
+    assert.notEqual(sourceFingerprint(directory), geometryChanged[0], 'the actual capture selection helper is an input');
+    assert.notEqual(visualFingerprint(directory), geometryChanged[1], 'a changed selected record retires visual evidence');
+  } finally { rmSync(directory, {recursive:true, force:true}); }
+});
+
 test('#896 capture identity follows browser flags and local helper dependencies, before candidate copying', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'hp-capture-identity-'));
   try {
@@ -236,7 +258,7 @@ test('состав исключения объявлен списком, а не
   assert.deepEqual(postCaptureInputs(), ['demo/golden/accept.mjs', 'demo/golden/policy.mjs']);
 });
 
-test('в корпусе настоящего репозитория все canonical golden capture inputs (#344, #792, #881, #896, #866, #1026, #1038)', () => {
+test('в корпусе настоящего репозитория все canonical golden capture inputs (#344, #792, #881, #896, #866, #1026, #1038, #999)', () => {
   const corpus = fingerprintCorpus(fileURLToPath(new URL('..', import.meta.url)));
   const golden = corpus.filter((file) => file.startsWith('demo/golden/')).sort();
   assert.deepEqual(golden, [
@@ -246,8 +268,11 @@ test('в корпусе настоящего репозитория все canon
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
     'demo/golden/scene-repaint.mjs',
     'demo/golden/static-stability.mjs',
+    'demo/golden/vacuum-history.mjs',
     'demo/golden/zigbee-led.mjs',
   ]);
+  assert.ok(corpus.includes('demo/helpers/vacuum-history.mjs'), 'history capture consumes the real UI helper');
+  assert.ok(corpus.includes('test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json'), 'history geometry comes from this original-producer fixture');
   assert.ok(corpus.includes('scripts/source-fingerprint.mjs'), 'сам отпечаток остаётся входом сборки');
   assert.ok(corpus.some((file) => file.startsWith('src/')), 'корпус без src был бы пуст по смыслу');
 });

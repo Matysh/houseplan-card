@@ -352,9 +352,16 @@ const out = await page.evaluate(async () => {
   let moreInfoCalls = 0;
   card._openMoreInfo = () => { moreInfoCalls++; };
   const sensorDevice = root().querySelector('.dev[data-id="d_temp"]');
-  sensorDevice?.dispatchEvent(new MouseEvent('contextmenu', {
-    bubbles: true, composed: true, button: 2,
-  }));
+  const deviceContext = new MouseEvent('contextmenu', {
+    bubbles: true, composed: true, cancelable: true, button: 2,
+  });
+  sensorDevice?.dispatchEvent(deviceContext);
+  await card.updateComplete;
+  // #1050 changes only the context action; the raised marker still owns it.
+  const contextOpenedDeviceSettings = deviceContext.defaultPrevented
+    && card._markerDialog?.devId === 'd_temp' && card._mode === 'view' && moreInfoCalls === 0;
+  root().querySelector('hp-dialog[data-kind="marker"] [data-hp="dialog-cancel"]')?.click();
+  await card.updateComplete;
   sensorDevice?.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'Enter', bubbles: true, composed: true,
   }));
@@ -367,7 +374,7 @@ const out = await page.evaluate(async () => {
   history.replaceState(null, '', '/#space=f1');
   const lockRoot = root().querySelector('.oplock');
   lockRoot?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
-  result.raisedActionsRemainOwned = moreInfoCalls === 1 && keyboardOpenedDeviceCard
+  result.raisedActionsRemainOwned = contextOpenedDeviceSettings && moreInfoCalls === 0 && keyboardOpenedDeviceCard
     && areaPath === '/config/areas/area/living_room'
     && card._openingInfo?.id === 'iso-centred-door';
   card._openingInfo = null;

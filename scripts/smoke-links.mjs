@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/houseplan-card.ts', 'src/houseplan-editor-runtime.ts', 'src/view-action-context.ts',
+      'src/device-toggle.ts', 'src/logic.ts'],
+    smokes: ['smoke_device_settings_action.mjs'],
+    because: '#1050: trusted View tap/keyboard/context input, permission hints and the actual held content-hashed editor import must resolve the newest current marker without another action; the public fixture and DOM oracle do not name the internal request/authority fences.',
+  },
+  {
     files: ['src/decor-text-element.ts', 'src/editors/decor/group-selection.ts'],
     smokes: ['smoke_decor_group_text_scale.mjs'],
     because: '#1038 CODE r1: instrumented native DOM reads on 1000 real Text nodes prove that two selected labels never enumerate or measure the unrelated labels during HA updates and drag; the smoke does not call the measurement helper.',

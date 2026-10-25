@@ -614,6 +614,16 @@ read-only presentation) and returns on explicit `tap_action: none` before
 capability lookup, confirmation, cards/toasts, press feedback or HA dispatch;
 hold and context-menu handlers stay independent.
 
+`settings` is a local UI action (#1050), not a Toggle/Run intent. Short pointer
+and keyboard activation enter the existing marker dialog before service binding
+or confirmation checks; View right click uses the same entry independently of
+the saved action. The shared dialog request owns lazy loading, current writer/
+kiosk/loaded authority, navigation retirement and exact current marker binding.
+No service or successful-command press feedback is created. Denial shows the
+localized permission hint without loading the editor or opening another card.
+Virtual/offline devices do not inherit a new service-capability ACL. Static
+space cards remain noninteractive; Devices keeps its existing context menu.
+
 Information-card row toggles use `resolveInfoRowToggleIntent` from the same
 authority, explicitly bypassing marker-group resolution: each row retains its
 own exact entity. `infoCardTapConfirmationRequired` mirrors the editor's

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1050,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds a persisted Device settings tap action and changes View right click from HA more-info to the existing House Plan device editor. The owner selected permission-hint-only denial for non-writers and kiosk. This is a new visible capability and gesture contract without a data model migration.",
+  "summary": {
+    "ru": "Настройки устройства открываются из просмотра действием по нажатию или правым кликом при праве редактирования вне киоска.",
+    "en": "Device settings open from View by tap action or right click for a House Plan writer outside kiosk."
+  }
+}

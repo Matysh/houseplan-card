@@ -99,6 +99,96 @@ capability keys together in the authoritative recovery adapter. Existing node,
 keyboard and group retirement stays intact; the node-Delete native is an
 explicit integration neighbor. Browser guard counts are regenerated from the
 union of reviewed IDs, without changing its guideline or dropping either set.
+The final accepted device-settings merge keeps its re-evaluated current-target
+factory at every deferred dialog entry; history still follows actual accepted
+selection and ordinary close keeps Show. History's original-producer JSON and
+shared UI helper are explicit capture inputs outside the usual Golden module
+roots. The ordinary identity test was red when changing the rendered path left
+both identities unchanged; the closed input declaration now retires source and
+visual evidence for either consumed file. No fixture bytes or thresholds change.
+
+## Device settings from View (#1050)
+
+The persisted `settings` tap action and View context menu reuse the existing
+marker dialog, editor loader and Properties transaction owner. They require a
+loaded House Plan configuration, edit permission and a non-kiosk card before
+requesting that loader. A denied entry shows the localized permission hint and
+does not fall through to information, HA more-info, confirmation or services.
+
+The existing marker request also fences the asynchronous View entry. It retains
+the current config authority, adoption/layout generations, card options and
+navigation intent; after import and after a deferred Properties intent, it
+resolves a fresh visible device on the same floor with the same binding. Ordinary
+HA state changes do not replace that stable target identity. Add/Inbox and the
+preexisting editor entry retain their own scope and permission checks.
+
+The immutable ordinary BEFORE on accepted `4dd092a` has five feature failures
+and nine positive controls: no settings option, settings tap opens information,
+and View right click still opens HA more-info. The existing information-card
+Edit path is the positive control. Raw recipe and receipts are linked in #1050;
+native AFTER and held-import proofs are recorded before handoff. Pure tests
+exercise target replacement/refusal and the real deferred runtime entry; backend
+tests export, parse and apply the literal action through full and space transfer.
+
+The compact executed receipt is
+[`device-settings-validation.json`](development-notes/device-settings-validation.json).
+On the combined accepted-#1056 source, the pinned Linux browser passes all 113
+named checks: actual selector Save/reopen, mouse/keyboard/touch in Flat/2.5D,
+writer without HA-admin, RU/EN denial, thirteen held-import retirements and
+fresh positive requests, plus the real hashed retry URL. The production build
+is Windows Node 22.23.3/Rollup 4.62.2; native execution is Linux Node 22.23.3,
+Playwright 1.62.0/Chromium headless-shell 151.0.7922.34 rev1234.
+
+Two observation corrections retain the original RED receipts. An early capture
+microtask read `defaultPrevented` before dispatch finished; the final receipt
+reads the original event afterwards. Public rebinding independently writes the
+existing area-provenance snapshot before any settings input. A no-intent control
+has the same complete wire payload; old-import delivery and fresh input leave
+the count at one. No product handler or counter is replaced. An unloaded scene
+quarantines its markers, so that case proves no target/lazy work/side effect
+without claiming an unreachable click or toast.
+
+The current matched build against accepted `7ee838b2c` measures raw
+3432625 → 3434473 B, initial View 339665 → 340142 B gzip and lazy editor
+343953 → 344030 B gzip; host references remain 6090. Existing budget references,
+bands and absolute limits pass unchanged. This receipt precedes final accepted
+queue integration; the normal hook and fresh range guards still judge that
+combined material. The 141 focused Node tests and three diagnostic backend
+validation/full-space transfer checks pass. Registered async-intent protection
+has static readiness only; no mutant was executed.
+
+The final whole accepted merge includes #1025/#1038/#1045 and CI scope/reuse
+#1060/#1062 at `af23dada609`. Its own product patch remains identical; accepted
+keyboard nudge, group receipt/authority and node lifecycle are preserved. A fresh
+Windows build measures View 341095 B, editor 353394 B, Select-only 21455 B and
+raw 3483369 B, with 6225 host references. Against the actual accepted #1045
+receipt the deltas are +471 / +27 / -3 / +1863 B and zero references. All byte,
+band, core and ABI limits remain unchanged. The pinned Linux native scenario
+passes 113 checks, focused units 141 and diagnostic backend transfer/enum 3.
+The current required scope is 26 smokes, without Golden demand. Its initial
+24/26 result is retained: two old context-action oracles still expected HA
+more-info. Narrow B repairs require the same marker's settings dialog instead,
+with event consumption/no more-info, public Cancel between entries, and all
+pinch, geometry, keyboard info-card, area and lock controls retained. Only those
+two recipes were rerun (18/18 and 47/47); their 14 source-contract units also
+pass. This is not relabelled as another complete run. Exact receipts and
+boundaries are in the validation JSON; final hook/CI/CODE are separate.
+
+The first mandatory hook on `f81391d94` stopped before publication: generated
+config-schema parity lacked the new enum and the pinned-browser list lacked
+the formal recipe; build, byte/core budgets, unused and process checks passed.
+The schema dump is regenerated from validation.py and the explicit pinned
+recipe inventory now includes this scenario. A further ordinary Support
+input exposed two real closed-wire refusals: projected marker config and
+diagnostic client both rejected settings. Only that literal is added to both
+canonical tap-action enums and the byte-identical relay mirror; unknown strings
+and objects remain rejected. Wire/projection/manifest tests pass 19/19 and
+relay tests pass 41/41, including both real validators and local HTTP positive
+and negative cases. Frontend/build inputs remain fp81e9; the additional final
+product diff is Python Support compatibility, not the earlier identical whole
+product patch. The relay README requires separate accepted-source staging/prod
+deployment and an issue receipt after S8, before HACS sends this enum. Local
+tests and source S8 do not claim that external deployment.
 
 ## Decor multi-selection (#1038)
 

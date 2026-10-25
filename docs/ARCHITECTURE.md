@@ -16,6 +16,18 @@ shared with live collection; timeouts retain unfinished physical operations.
 Only the existing confirmed task boundary rotates a transient history epoch,
 delivered additively with trails. Store schema and recording policy stay intact.
 
+## Device settings from View (#1050)
+
+`_clickDevice` and View `_ctxDevice` share the existing `_openMarkerDialog`
+request owner; keyboard and LED hits retain their current dispatch. The local
+`settings` action branches before service eligibility/confirmation/feedback.
+The marker request reuses loaded writer/kiosk authority, ConfigWriteContext,
+adoption/layout revisions, card options and existing navigation counters.
+After lazy loading it resolves a fresh visible marker with the captured stable
+binding key. The same resolver passes through the runtime's Properties
+`beforeIntent` retry, before selection, New acknowledgement or draft creation.
+No second loader, poller, read claim, writer or async controller is added.
+
 Decor multi-selection (#1038) lives in the existing lazy `PropertiesEditor` as
 volatile paint-ordered IDs. `_decorSel` projects only a singleton. Pure decor
 selection/group-edit helpers resolve all members, one rigid delta and independent
