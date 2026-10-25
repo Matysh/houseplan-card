@@ -97,11 +97,16 @@ test('#749 AC2: в job integrate ни один шаг не зовёт скрип
   assert.deepEqual(
     Object.fromEntries(['review-result-gate.mjs', 'review-doc-guard.mjs', 'reviews-index.mjs', 'merge-candidate.mjs', 'process-track.mjs', 'status-label.mjs']
       .map((name) => [name, byScript(name)])),
-    // review-doc-guard: якорь, рубеж индекса, два рубежа диапазона (до и после
+    // review-doc-guard: якорь, его повтор с сертификатом после findings attach,
+    // рубеж индекса, два рубежа диапазона (до и после
     // ребейза) и --doc=- шага #413; merge-candidate: два разбора отказа push и слияние.
-    { 'review-result-gate.mjs': 1, 'review-doc-guard.mjs': 5, 'reviews-index.mjs': 1, 'merge-candidate.mjs': 3, 'process-track.mjs': 1, 'status-label.mjs': 1 },
+    { 'review-result-gate.mjs': 1, 'review-doc-guard.mjs': 6, 'reviews-index.mjs': 1, 'merge-candidate.mjs': 3, 'process-track.mjs': 1, 'status-label.mjs': 1 },
     calls.join('\n'),
   );
+  const publish = steps.find(step => step.name === 'Опубликовать документ ревью').code;
+  assert.deepEqual([...publish.matchAll(/node "\$TOOLS\/scripts\/review-doc-guard\.mjs" "\$\{anchor_args\[@\]\}"([^\n]*)/g)]
+    .map(match => match[1].trim()), ['', '"${certificate_args[@]}"'],
+  'both anchor publications use the same trusted tool and argument array; only the second receives certificate arguments');
 });
 
 test('#749 AC2: снимок — один на job, из origin/dev, с validate.yml, до первого шага со скриптом', () => {

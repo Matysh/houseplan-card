@@ -1403,7 +1403,12 @@ test('#726 AC5: схема вердикта, заметка маршрута в 
   const publish = stepRun(workflow, PUBLISH_STEP);
   assert.match(publish, /route=\$\(printf '%s' "\$OUT" \| jq -r '\.route \/\/ empty' 2>\/dev\/null \|\| true\)/);
   assert.match(publish, /criterion=\$\(printf '%s' "\$OUT" \| jq -r '\.criterion \/\/ empty' 2>\/dev\/null \|\| true\)/);
-  assert.match(publish, /--verdict="\$verdict" --high="\$high" \\\n\s+--route="\$route" --criterion="\$criterion"\n/);
+  const anchorArgs = /^\s*anchor_args=\(([\s\S]*?)\)\s*$/m.exec(publish)?.[1];
+  assert.ok(anchorArgs, 'publication defines the anchor argument array');
+  assert.match(anchorArgs, /--verdict="\$verdict" --high="\$high"\n\s+--route="\$route" --criterion="\$criterion"$/);
+  assert.deepEqual([...publish.matchAll(/node "\$TOOLS\/scripts\/review-doc-guard\.mjs" "\$\{anchor_args\[@\]\}"([^\n]*)/g)]
+    .map(match => match[1].trim()), ['', '"${certificate_args[@]}"'],
+  'both trusted anchor publications receive the verdict and route, including certificate publication');
 });
 
 test('#726 AC5: шаг решения — один вызов process-track.mjs route, метки только по его выходу, ship и reuse его не зовут', () => {

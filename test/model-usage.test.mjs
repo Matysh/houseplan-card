@@ -207,7 +207,7 @@ const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url
 // рабочая копия — кандидат линии dev, и скрипт зовётся из неё.
 const PIPELINES = [
   {
-    file: '_process.yml', publishJob: 'integrate', publishStep: 'Опубликовать документ ревью', consumes: /^ +--usage="\$USAGE" \\$/m,
+    file: '_process.yml', publishJob: 'integrate', publishStep: 'Опубликовать документ ревью', consumes: /(?:^|\s)--usage="\$USAGE"(?:\s|$)/,
     call: /^line=\$\(node "\$tools\/scripts\/model-usage\.mjs" --execution-file="\$EXEC"\)$/m, snapshot: true,
   },
   {
@@ -266,7 +266,15 @@ test('#737 AC5: шаг снятия расхода сразу после Review 
     assert.match(head, /^ {4}outputs:\n(?: {6}[^\n]*\n)*? {6}usage: \$\{\{ steps\.usage\.outputs\.line \}\}$/m, `${file}: выход job usage`);
     const publish = named(stepsOf(jobBlock(text, publishJob)), publishStep);
     assert.match(publish, /^ {10}USAGE: \$\{\{ needs\.model_review\.outputs\.usage \}\}$/m, `${file}: публикация берёт выход job`);
-    assert.match(runOf(publish), consumes, file);
+    const publishRun = runOf(publish);
+    if (file === '_process.yml') {
+      const anchorArgs = /^\s*anchor_args=\(([\s\S]*?)\)\s*$/m.exec(publishRun)?.[1];
+      assert.ok(anchorArgs, 'publication defines the anchor argument array');
+      assert.match(anchorArgs, consumes, 'model usage is passed as a quoted anchor argument');
+      assert.deepEqual([...publishRun.matchAll(/node "\$TOOLS\/scripts\/review-doc-guard\.mjs" "\$\{anchor_args\[@\]\}"([^\n]*)/g)]
+        .map(match => match[1].trim()), ['', '"${certificate_args[@]}"'],
+      'both trusted publications receive the usage-bearing array');
+    } else assert.match(publishRun, consumes, file);
   }
   if (!hasBash()) return;
   // Изменённые тела проходят bash -n.
