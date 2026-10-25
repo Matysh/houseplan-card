@@ -5809,6 +5809,16 @@ All trailing operands now must be unchanged tracked filenames without option
 prefixes. Single/multiple-file read controls remain allowed; inert `-i`, `-e`,
 `--expression`, `--file` and external-file negatives cover the refusal. A fifth
 night-only registration protects this tail check, without development execution.
+Git read recipes also reject every prefix of the forbidden long options,
+including their `=value` forms; unrelated `--format`, safe disabling flags and
+full `--output-indicator-new` remain allowed. Local Git's official `gitcli`
+manual documents unique-prefix parsing. Upstream v2.43 `builtin/cat-file.c`
+uses `parse_options(..., 0)` for `--filters`/`--textconv`, so their prefixes are
+a concrete source-proven conversion path. `git diff --out` is refused
+conservatively, without claiming it executes here: `diff_opt_parse` uses
+`KEEP_UNKNOWN_OPT` and the output-indicator options also share that prefix.
+The negative witness only passes strings to the unchanged function; no Git
+output/filter command is executed. The sixth night registration protects this.
 
 Protocol references: [Claude hook input/PreToolUse decisions](https://code.claude.com/docs/en/hooks),
 [CLI settings sources](https://code.claude.com/docs/en/cli-reference), and the

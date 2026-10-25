@@ -35,7 +35,9 @@ test('#1065 native hook settings deny on startup/SDK timeout failures, before an
 });
 
 test('#1065 ordinary reads, exact unchanged tests and static readiness are allowed', () => {
-  for (const command of ['git diff origin/dev...HEAD', 'rg -n limit scripts', 'sed -n 30,50p PROCESS.md', 'sed -n 1p PROCESS.md AGENTS.md',
+  for (const command of ['git diff origin/dev...HEAD', 'git log --format=%H --max-count=1',
+    'git diff --no-ext-diff --no-textconv origin/dev...HEAD', 'git diff --output-indicator-new=+ HEAD',
+    'rg -n limit scripts', 'sed -n 30,50p PROCESS.md', 'sed -n 1p PROCESS.md AGENTS.md',
     'node --test test/review-result-gate.test.mjs', 'node --test --test-name-pattern="schema failure" test/review-result-gate.test.mjs',
     'node scripts/ci-profiles.mjs --check', 'node scripts/mutation-gate.mjs --check', 'npm run build']) {
     assert.equal(toolProblem(bash(command), policy), null, command);
@@ -65,6 +67,9 @@ for (const command of [
   'node --test --test-name-pattern=all', 'python -m pytest -q',
   'PATH=/tmp/bin node --test test/review-result-gate.test.mjs', 'rg --pre=patch.sh guard',
   'git diff --output=src/guard.ts', 'git -c alias.patch=whatever patch',
+  'git diff --out=src/guard.ts', 'git diff --o=src/guard.ts', 'git diff --ext-dif',
+  'git cat-file --textc HEAD:src/guard.ts', 'git cat-file --filt HEAD:src/guard.ts',
+  'git log --open-files-in-p=whatever',
   'git cat-file --filters HEAD:src/guard.ts',
   'node scripts/ci-profiles.mjs --writ?',
   'node --test $(touch guard.js)', 'node --test `touch guard.js`',

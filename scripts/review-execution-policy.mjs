@@ -16,6 +16,13 @@ const STARTUP_PROBE = { tool_use_id: 'startup-probe', tool_name: 'Bash', tool_in
 const git = (...args) => execFileSync('git', args, { encoding: 'utf8', timeout: 5000, maxBuffer: 4 * 1024 * 1024,
   stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const READ_GIT = new Set(['show', 'diff', 'log', 'status', 'rev-parse', 'rev-list', 'cat-file', 'blame', 'ls-files', 'ls-tree', 'merge-base']);
+const FORBIDDEN_GIT_OPTIONS = ['--output', '--ext-diff', '--textconv', '--filters', '--open-files-in-pager'];
+function forbiddenGitOption(arg) {
+  const option = arg.split('=')[0];
+  // Git parse-options can accept unique long-option prefixes. Refuse even an
+  // ambiguous prefix; a later Git option table must not silently grant writes.
+  return option.length > 2 && option.startsWith('--') && FORBIDDEN_GIT_OPTIONS.some(name => name.startsWith(option));
+}
 const CHECK_SCRIPTS = new Set([
   'bundle-budget.mjs', 'check-inputs.mjs', 'ci-profiles.mjs', 'ci-registry-inventory.mjs',
   'inventory.mjs', 'no-new-any.mjs', 'no-new-private-writes.mjs', 'no-render-layout-read.mjs',
@@ -83,7 +90,7 @@ export function bashProblem(input, policy) {
   if (bin === 'rg' && !rest.some(a => /^--(?:pre|hostname-bin)(?:=|$)/.test(a))) return null;
   if (bin === 'sed' && rest.length >= 3 && rest[0] === '-n' && /^\d+(?:,\d+)?p$/.test(rest[1])
     && rest.slice(2).every(a => !a.startsWith('-') && canonicalFile(a, policy))) return null;
-  if (bin === 'git' && READ_GIT.has(rest[0]) && !rest.some(a => /^(?:--output(?:=|$)|--ext-diff$|--textconv$|--filters$|--open-files-in-pager(?:=|$))/.test(a))) return null;
+  if (bin === 'git' && READ_GIT.has(rest[0]) && !rest.some(forbiddenGitOption)) return null;
   if (bin === 'git' && rest.join(' ') === 'branch --show-current') return null;
   if (bin === 'node') {
     if (rest[0] === '--test' && rest.slice(1).some(a => /^test\/.+\.test\.mjs$/.test(a)) && rest.slice(1).every(a =>

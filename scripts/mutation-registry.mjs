@@ -15974,6 +15974,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-git-read-allows-option-prefix-1065',
+    guard: 'node --test --test-name-pattern="#1065 refuses unsafe" test/review-execution-policy.test.mjs',
+    because: '#1065: Git parse-options unique prefixes cannot bypass the forbidden output/conversion/filter options; all vectors remain DATA and no Git write/filter command runs in the witness.',
+    patches: [{
+      file: 'scripts/review-execution-policy.mjs',
+      find: 'FORBIDDEN_GIT_OPTIONS.some(name => name.startsWith(option))',
+      replace: 'FORBIDDEN_GIT_OPTIONS.some(name => name === option)',
+    }],
+  },
+  {
     id: 'review-native-hook-failure-opens-tool-1065',
     guard: 'node --test --test-name-pattern="#1065 native hook settings" test/review-execution-policy.test.mjs',
     because: '#1065: native SDK failure behavior must block a tool on hook startup/outer deadline failure; post-execution publication refusal is not prevention.',
