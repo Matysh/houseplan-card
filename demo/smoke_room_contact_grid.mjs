@@ -41,7 +41,10 @@ for(const [name,clicks,action]of [
         const c=window.__card,rect=c.renderRoot.querySelector('.stage').getBoundingClientRect(),v=c._viewOr(c._baseVb());
         return {x:rect.left+(x*1000-v.x)/v.w*rect.width,y:rect.top+(150-v.y)/v.h*rect.height};
       },x);
-      await page.mouse.click(target.x,target.y,action==='shift'?{modifiers:['Shift']}:{});
+      if(action==='shift')await page.keyboard.down('Shift');
+      try{await page.mouse.click(target.x,target.y);}finally{
+        if(action==='shift')await page.keyboard.up('Shift');
+      }
       if(action==='view'||action==='shift')continue;
       const dialog=page.locator('hp-dialog[data-kind="room"]');
       await dialog.waitFor({state:'visible'});
