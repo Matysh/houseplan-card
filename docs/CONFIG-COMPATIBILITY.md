@@ -1652,8 +1652,11 @@ Room source fidelity and retained-carrier Align (#1061) change no schema or
 read/import/export normalization. Topology keys never authorize a different
 persisted off-grid scalar. Optimize independently reproduces its existing
 pre-snap canonicalization, JavaScript nearest-grid rounding and storage target
-for a known same-ID carrier with unchanged metadata/thickness. Only that exact
-nondegenerate result avoids structural-removal proof. Other cuts, unknown
+for a known same-ID carrier with unchanged metadata/thickness. Original hosted
+openings must fit the snapped axis using the same pre-Align scalar
+canonicalization and existing EPS; deleting an opening from the submitted after
+cannot erase this source constraint. Only that exact nondegenerate result avoids
+structural-removal proof. Other cuts, unknown
 carrier semantics, changed thickness, removed/replaced carriers and opening
 host/fit/jamb checks retain the complete original proof. Ordinary config/set
 does not acquire this Optimize exception. Paired revisions, intent/recovery and

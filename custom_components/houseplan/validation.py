@@ -16,6 +16,7 @@ from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_lattice_coordinate,
     canonicalize_layout_geometry,
+    canonicalize_number,
     canonicalize_position,
 )
 from custom_components.houseplan.led_strips import (
@@ -429,7 +430,7 @@ def _axis_point(a: list, b: list, along: float) -> list[float]:
             float(a[1]) + dy / length * along]
 
 
-def _optimize_partition_needs_proof(old_partition: dict, space: dict) -> bool:
+def _optimize_partition_needs_proof(old_partition: dict, space: dict, old_space: dict) -> bool:
     """Select #296 removal/splitting, not ordinary Optimize grid alignment."""
     partition_id = str(old_partition.get("id", ""))
     current = next((item for item in space.get("partitions") or []
@@ -438,7 +439,7 @@ def _optimize_partition_needs_proof(old_partition: dict, space: dict) -> bool:
         return False
     if current is None:
         return True
-    if _exact_partition_align(old_partition, current):
+    if _exact_partition_align(old_partition, current, old_space):
         return False
     try:
         old_a, old_b = old_partition["a"], old_partition["b"]
@@ -452,7 +453,7 @@ def _optimize_partition_needs_proof(old_partition: dict, space: dict) -> bool:
     )
 
 
-def _exact_partition_align(before: dict, after: dict) -> bool:
+def _exact_partition_align(before: dict, after: dict, old_space: dict) -> bool:
     """Prove the existing TS Align + storage result, never an arbitrary trim.
 
     Optimize canonicalizes its input before snapN, then canonicalizes storage.
@@ -483,8 +484,26 @@ def _exact_partition_align(before: dict, after: dict) -> bool:
         expected.append([canonicalize_lattice_coordinate(
             math.floor(canonicalize_lattice_coordinate(value) / step + 0.5) * step
         ) for value in point])
-    return (after.get("a") == expected[0] and after.get("b") == expected[1]
-            and math.dist(*expected) > step * 1e-6)
+    span = math.dist(*expected)
+    epsilon = step * 1e-6  # Existing align-grid.ts EPS, not a new fit tolerance.
+    if after.get("a") != expected[0] or after.get("b") != expected[1] or span <= epsilon:
+        return False
+    for opening in old_space.get("openings") or []:
+        if not isinstance(opening, dict):
+            return False
+        host = opening.get("host")
+        if not isinstance(host, dict) or host.get("kind") != "partition" or host.get("id") != before["id"]:
+            continue
+        try:
+            length = float(canonicalize_number(opening["length"]))
+            t = float(canonicalize_number(host["t"]))
+        except (KeyError, TypeError, ValueError, OverflowError):
+            return False
+        along = t * span
+        if (not math.isfinite(length) or length <= 0 or not math.isfinite(t) or not 0 <= t <= 1
+                or along - length / 2 < -epsilon or along + length / 2 > span + epsilon):
+            return False
+    return True
 
 
 def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:
@@ -868,7 +887,7 @@ def validate_partition_opening_hosts(
                 )
         if allow_optimize_rehost and old_space:
             for old_partition in old_space.get("partitions") or []:
-                if (_optimize_partition_needs_proof(old_partition, space)
+                if (_optimize_partition_needs_proof(old_partition, space, old_space)
                         and not _safe_optimize_partition_delta(space, old_partition)):
                     raise PartitionOpeningHostError(
                         f"space={space_id}; partition={old_partition.get('id', '')}; "

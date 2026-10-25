@@ -5395,3 +5395,11 @@ Across independently executed fixture recipes, newly allocated random wall IDs
 are compared through a bijection that remains shared across every state; each
 run separately proves exact retained IDs and exact Undo/Redo identities. The
 production ID allocator is never substituted to make a fixture deterministic.
+
+The subsequent source-hostedFit correction preserves the E0 preparation JSON
+as historical evidence. `room-contact-grid-hosted-fit.json` records its separate
+ordinary RED/AFTER and exact source hash: original opening length/t receive the
+same existing scalar canonicalization before the established Align EPS check.
+Deleting a record from the submitted after cannot authorize a trim that the
+original TS source would skip. Supported no-opening/central-door cases remain;
+no broader opening deletion ban or new tolerance is introduced.

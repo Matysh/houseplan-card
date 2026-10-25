@@ -5,7 +5,7 @@
 - Create rooms from valid existing off-grid contours without moving their walls.
   Optimize accepts the exact supported alignment of a retained wall carrier;
   unproved trimming, unsupported wall attributes, lost opening hosts and stale
-  writes remain refused. (#1061)
+  writes remain refused. Alignment retains the original opening-fit checks. (#1061)
 - Safely delete an intermediate wall node in Plan/Select: join its two neighbours
   without moving them, preserve supported openings and undo the whole edit in
   one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale

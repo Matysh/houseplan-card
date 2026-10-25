@@ -66,4 +66,17 @@ test('#1061 HA Align fixtures are exact current optimizer outputs and a second O
     assert.deepEqual(result.layout,item.candidateLayout);
     assert.equal(optimizePlans(result.config,result.layout).changed,false);
   }
+  const source=structuredClone(cases[1].source);
+  source.spaces[0].openings[0].length=0.5001;
+  const skipped=optimizePlans(source,{});
+  assert.deepEqual(skipped.config.spaces[0].partitions,source.spaces[0].partitions,
+    'pre-existing hostedFit decides whether Align may move this carrier');
+  const canonicalBlocked=structuredClone(cases[1].candidate);
+  canonicalBlocked.spaces[0].partitions=structuredClone(source.spaces[0].partitions);
+  canonicalBlocked.spaces[0].openings[0].length=0.5001;
+  assert.equal(optimizePlans(canonicalBlocked,{}).changed,false,
+    'an already canonical source with a blocked carrier is a genuine Optimize no-op');
+  source.spaces[0].openings[0].length=0.50000000834;
+  assert.deepEqual(optimizePlans(source,{}).config.spaces[0].partitions,cases[1].candidate.spaces[0].partitions,
+    'hostedFit consumes the existing scalar-canonicalized input');
 });

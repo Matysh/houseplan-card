@@ -49,6 +49,25 @@ def test_unknown_existing_carrier_is_not_claimed_as_known_align():
         v.validate_partition_opening_hosts(after, before, allow_optimize_rehost=True)
 
 
+def test_retained_carrier_align_reproduces_the_original_hosted_fit_condition():
+    before, after = copy.deepcopy(CASES[1]["source"]), copy.deepcopy(CASES[1]["candidate"])
+    # Fits the old .5002 axis, but not the .5 snapped axis. The existing TS
+    # Align must retain this carrier; deleting the record cannot prove its trim.
+    before["spaces"][0]["openings"][0]["length"] = 0.5001
+    after["spaces"][0]["openings"] = []
+    with pytest.raises(v.PartitionOpeningHostError, match="optimize delta unproved"):
+        v.validate_partition_opening_hosts(after, before, allow_optimize_rehost=True)
+
+
+def test_hosted_fit_uses_the_existing_pre_align_scalar_canonicalization():
+    before, after = copy.deepcopy(CASES[1]["source"]), copy.deepcopy(CASES[1]["candidate"])
+    # The existing scalar canonicalizer resolves .50000000834 to .500000008
+    # before Align's exact EPS check. Raw pre-canonical input is a different oracle.
+    before["spaces"][0]["openings"][0]["length"] = 0.50000000834
+    assert v._exact_partition_align(before["spaces"][0]["partitions"][0],
+                                   after["spaces"][0]["partitions"][0], before["spaces"][0])
+
+
 @pytest.mark.parametrize("mutation", ["host-drop", "foreign-host", "jamb"])
 def test_align_does_not_bypass_opening_host_and_fit(mutation):
     before, after = copy.deepcopy(CASES[1]["source"]), copy.deepcopy(CASES[1]["candidate"])
@@ -66,12 +85,12 @@ def test_align_does_not_bypass_opening_host_and_fit(mutation):
 def test_javascript_negative_half_tie_and_storage_formula_are_exact():
     before = {"id": "p", "a": [-0.00625, 0.25], "b": [0.75, 0.25], "cm": 0}
     after = {**before, "a": [-1 / 240, 0.25]}
-    assert v._exact_partition_align(before, after)
-    assert not v._exact_partition_align(before, {**after, "a": [-2 / 240, 0.25]})
-    assert not v._exact_partition_align(before, {**after, "cm": 20})
-    assert not v._exact_partition_align({**before, "b": before["a"]}, {**after, "b": after["a"]})
+    assert v._exact_partition_align(before, after, {})
+    assert not v._exact_partition_align(before, {**after, "a": [-2 / 240, 0.25]}, {})
+    assert not v._exact_partition_align(before, {**after, "cm": 20}, {})
+    assert not v._exact_partition_align({**before, "b": before["a"]}, {**after, "b": after["a"]}, {})
     for field in ("id", "cm", "a", "b"):
         incomplete = {key: value for key, value in before.items() if key != field}
-        assert not v._exact_partition_align(incomplete, after)
+        assert not v._exact_partition_align(incomplete, after, {})
     for cm in (True, -1, float("nan"), float("inf")):
-        assert not v._exact_partition_align({**before, "cm": cm}, {**after, "cm": cm})
+        assert not v._exact_partition_align({**before, "cm": cm}, {**after, "cm": cm}, {})

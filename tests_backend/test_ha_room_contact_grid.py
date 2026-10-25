@@ -113,11 +113,14 @@ async def test_issue_1061_align_real_writer_and_reload(
     assert (await reloaded.store.async_load())["rev"] == 6
 
 
-@pytest.mark.parametrize("mutation", ["short-a", "narrower", "host-drop", "host-drop-config-set", "foreign-host", "jamb", "stale-config", "stale-layout"])
+@pytest.mark.parametrize("mutation", ["short-a", "narrower", "host-drop", "host-drop-config-set", "foreign-host", "jamb", "stale-config", "stale-layout", "old-host-fit"])
 async def test_issue_1061_bad_optimize_is_atomic(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, mutation: str,
 ) -> None:
     case = copy.deepcopy(CASES[1])
+    if mutation == "old-host-fit":
+        case["source"]["spaces"][0]["openings"][0]["length"] = 0.5001
+        case["candidate"]["spaces"][0]["openings"] = []
     _, runtime = await _setup(hass)
     await runtime.config_store.async_save({"config": case["source"], "rev": 7})
     await runtime.store.async_save({"layout": case["layout"], "rev": 4})
@@ -136,7 +139,7 @@ async def test_issue_1061_bad_optimize_is_atomic(
         space["openings"][0]["length"] = 0.49
     elif mutation == "stale-config":
         config_rev -= 1
-    else:
+    elif mutation == "stale-layout":
         layout_rev -= 1
     client = await hass_ws_client(hass)
     message = {

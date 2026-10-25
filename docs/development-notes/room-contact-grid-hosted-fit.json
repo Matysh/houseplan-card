@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "issue": 1061,
+  "preparationOnly": true,
+  "originalPreparationMaterial": "e0ca1835354a2f27d5ac82769f6868551b752b6c",
+  "originalPreparation": "docs/development-notes/room-contact-grid-preparation.json",
+  "correction": "Exact Align proof also consumes the original space hostedFit, after the existing scalar canonicalization. A missing after opening cannot erase this source constraint.",
+  "ordinaryBefore": {
+    "status": "red",
+    "failed": 1,
+    "reason": "crafted exact trim with omitted original opening was incorrectly admitted"
+  },
+  "ordinaryAfter": {
+    "backendAndHaPassed": 36,
+    "seconds": 6,
+    "ruff": "passed",
+    "includes": "real authenticated Optimize crafted-removal refusal with both stores/revisions unchanged; supported no-opening and central-door positives retained"
+  },
+  "independentTypeScriptControl": {
+    "passed": 1,
+    "assertions": [
+      "the original .5002 carrier remains unsnapped when its .5001 opening would not fit",
+      "already canonical blocked source produces genuine changed=false Optimize",
+      "existing pre-Align scalar canonicalization and EPS boundary agree with the backend"
+    ]
+  },
+  "unchangedFrontendProductMaterial": "e0ca1835354a2f27d5ac82769f6868551b752b6c",
+  "backendSourceSha256": "6acd8c0807c90b29de4e771d1b121518fb34898ac9e8373cd3e968f78125c1a3",
+  "newReadinessWitness": "optimize-align-ignores-original-hosted-fit-1061",
+  "staticReadiness": {
+    "definitions": 1890,
+    "uniqueSourceReads": 1027,
+    "browserGuards": 523,
+    "mutantsExecuted": 0,
+    "caught": "unknown"
+  },
+  "finalStillPending": "whole accepted #999 after #1050; final scope/build/native/hook/CI/CODE/actualS8. Earlier33-native and E0 preparation counters remain historical, not reassigned.",
+  "localReceiptSha256": {
+    "artifacts/1061-existing-host-fit-before.log": "8e35a7906ac500b797bbb40e5e5f82dd7e6f63503a39c2587bf245b3109a21ca",
+    "artifacts/1061-original-hosted-fit-canonical-after.log": "5a5f85f763f238b032c62e9016a9fd3793ef231be5ea787e7dfdf9d6227b3819",
+    "artifacts/1061-hosted-fit-ts-controls.log": "1c62e39d81fd3285d2e5056f4b6a1754c0445f362a1d9b305344f15df97611d6",
+    "artifacts/1061-hosted-fit-readiness.log": "8ffe13be08132e765b96f46de59f3133ba4617ec1fa371f7bbabbbe49856a090"
+  }
+}
