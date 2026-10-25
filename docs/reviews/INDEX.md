@@ -1,12 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 118, issue: 59. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 119, issue: 59. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.83.0-beta.1 | [SHIP-REVIEW-v1.83.0-beta.1.md](SHIP-REVIEW-v1.83.0-beta.1.md) | пакетное ревью ship · — | 🟢 зелёный | 0 | 0 | — | — |
 | #1075 | [SPEC-REVIEW-1075-r1.md](SPEC-REVIEW-1075-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | классификация release-ledger не учитывает, что мебельный путь не внутри-бетный | `docs/release-ledger/v1.82.0/1075.json` `1071.json` `1039.json` `1053.json` `1051.json` `docs/process/REVIEWER.md` |
 | #1075 | [SPEC-REVIEW-1075-r2.md](SPEC-REVIEW-1075-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | новая классификация stable-fix противоречит собственному описанию доли «Меню/node Delet… | `PROCESS.md` `1071.json` `1075.json` |
+| #1075 | [SPEC-REVIEW-1075-r3.md](SPEC-REVIEW-1075-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #1074 | [CODE-REVIEW-1074-r1.md](CODE-REVIEW-1074-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1071 | [SPEC-REVIEW-1071-r1.md](SPEC-REVIEW-1071-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1071 | [SPEC-REVIEW-1071-r2.md](SPEC-REVIEW-1071-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | «sun/light consumers» из Скоупа не достигают заявленного нуля перебора | `src/glow-scene.ts` `src/houseplan-card.ts` `src/live-interaction-runtime.ts` `src/space-render.ts` `src/floor-geometry-key.ts` `src/device-contact-card.ts` `glow-scene.ts` `houseplan-card.ts` |
