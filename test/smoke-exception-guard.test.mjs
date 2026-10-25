@@ -70,7 +70,7 @@ test('пробы вызываются в job с браузером и служа
 test('#434 smoke job and each smoke file have independent time bounds', () => {
   const workflow = read('.github/workflows/validate.yml');
   const smoke = workflow.slice(workflow.indexOf('\n  smoke:\n'), workflow.indexOf('\n  smoke_done:\n'));
-  assert.match(smoke, /\n    timeout-minutes: 25\n/,
+  assert.match(smoke, /\n    timeout-minutes: 35\n/,
     'job smoke must not inherit the six-hour GitHub Actions default');
   assert.match(smoke, /timeout --kill-after=10s 180s node "\$f"/,
     'one hung file must be killed while the remaining shard files still run');
