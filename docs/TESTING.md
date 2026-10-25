@@ -48,17 +48,12 @@ keeps its clocks, scene, functional guards and recorded budgets; phase wall-time
 is not CPU/GPU acceptance. Details: [observer contract](../demo/helpers/README-node-performance.md).
 
 Pipeline outcomes: `node --test test/pipeline-outcomes-897.test.mjs` exercises
-complete/corrupt/foreign sealed model receipts, current/stopped/raced merge
-requests, idempotent failure diagnostics, redaction at the actual `realOps`
-error port, real-git beta/stable ancestry and workflow Bash parsing. Existing
-`process-resume`, `proof-loop-856`, `merge-continuation-882`, `merge-candidate`,
-archive and process-digest units retain the exact proof/CAS/lease contracts.
-Synthetic credentials only; none of these tests calls a real write API or model.
-
-`test/review-native-call-digest.test.mjs` checks pinned Grep alias projection
-(#1084) with inert JSON, including conflicts, unknown keys, exact values and
-non-JSON refusal. Policy/diagnostic tests retain journal/result/denial fences
-and the old-algorithm mismatch; no historical certificate is reaccepted.
+complete/corrupt/foreign sealed receipts, current/stopped/raced merge requests,
+idempotent diagnostics/redaction at `realOps`, Git beta/stable ancestry and Bash
+parsing. `process-resume`, `proof-loop-856`, `merge-continuation-882`,
+`merge-candidate`, archive and process-digest units retain proof/CAS/lease contracts.
+`review-native-call-digest.test.mjs` covers pinned Grep projection with inert JSON (#1084).
+Policy/diagnostic tests retain denial/result/old-algorithm fences; credentials are synthetic, with no live write API/model calls.
 
 Зелёный тест в этом проекте несколько раз означал «ничего не проверено»:
 смок непрерывности не заметил удаления механизма, который защищает; golden-сцена,
