@@ -23,12 +23,14 @@ test('#1075 decor-only restore changes exactly decor while retaining physical re
  assert.equal(restoreDecorOnlyHistory(config,current,before),true);assert.deepEqual(config,original);
  config.spaces[0].decor[0].future.preserve.push('changed');assert.deepEqual(before.decor[0].future.preserve,[true,1]);
 });
-for(const kind of ['legacy','draft','open-to','node','chain','references','walls','stairs','transform','unknown','wrong-floor','invalid-decor'])
+for(const kind of ['legacy','draft','open-to','mixed-catalogue','missing-wall-ids','node','chain','references','walls','stairs','transform','unknown','wrong-floor','invalid-decor'])
  test(`#1075 ${kind} keeps the strict history lane and leaves config untouched`,()=>{
   const {config,before,target}=fixture();
   if(kind==='legacy')config.model_version=9;
   if(kind==='draft')config.spaces[1].room_drafts=[];
   if(kind==='open-to')config.spaces[0].rooms[0].open_to=[['a']];
+  if(kind==='mixed-catalogue')delete config.spaces[1].wall_segments;
+  if(kind==='missing-wall-ids')delete config.spaces[0].rooms[0].wall_ids;
   if(kind==='node')target.nodeMove={kind:'delete'};
   if(kind==='chain')before.wallChainSeedIds=[];
   if(kind==='references')target.roomReferences=[];
