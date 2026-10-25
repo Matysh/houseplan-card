@@ -17,6 +17,7 @@
  *   node scripts/review-result-gate.mjs --dir=<путь>   # поля ожидания из env
  */
 import { createHash } from 'node:crypto';
+import { reportProblems } from './review-execution-policy.mjs';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -119,6 +120,7 @@ export function reviewResultProblems({ files, read, expected }) {
   }
 
   if (!String(read('review-document.md')).trim()) problems.push('документ ревью пуст');
+  problems.push(...reportProblems(read('review-document.md')));
   if (policy.mode === 'file') problems.push(...findingsTextProblems(read(FINDINGS_FILE)));
 
   let prepared;
@@ -142,7 +144,7 @@ export function reviewResultProblems({ files, read, expected }) {
   } catch (error) {
     return [...problems, `verdict.json не разобран: ${error.message}`];
   }
-  return [...problems, ...verdictProblems(verdict)];
+  return [...problems, ...verdictProblems(verdict), ...reportProblems(verdict?.summary)];
 }
 
 const invokedDirectly = process.argv[1]

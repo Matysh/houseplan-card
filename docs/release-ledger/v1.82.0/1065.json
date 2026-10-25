@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1065,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Adds a pre-tool review execution policy and fail-closed trace/report checks to prevent temporary canonical guard/limit patches being used as ordinary negative-input evidence. It changes only CI review tooling and documentation; product behavior and historical reviews remain unchanged.",
+  "summary": {
+    "ru": "Инструменты ревью отказывают в подмене реализации и проверяют execution trace до публикации отчёта.",
+    "en": "Review tools refuse implementation replacement and verify the execution trace before publishing a report."
+  }
+}

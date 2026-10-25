@@ -184,21 +184,36 @@ jobs:
         run: npx playwright install chromium
 
       # Тот же обход, что у конвейера (_process.yml, anthropics issue 1817).
+      - name: "Получить accepted review policy (#1065)"
+        run: |
+          tools="$RUNNER_TEMP/review-policy-tools"
+          mkdir -p "$tools"
+          git archive origin/dev scripts | tar -x -C "$tools"
+
       - name: Установить Claude Code детерминированно
         id: claude_bin
         run: |
-          src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
-          ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
-          ver="${ver:-2.1.265}"
+          ver=$(node "$RUNNER_TEMP/review-policy-tools/scripts/review-execution-policy.mjs" version)
           base=https://downloads.claude.ai/claude-code-releases
-          bin="$HOME/.local/bin/claude"
+          bin="$RUNNER_TEMP/review-cli/claude"
           mkdir -p "$(dirname "$bin")"
           curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
           sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
           echo "$sum  $bin" | sha256sum -c -
           chmod +x "$bin"
-          "$bin" --version
+          actual=$("$bin" --version)
+          test "${actual%% *}" = "$ver"
+          echo "$actual"
           echo "path=$bin" >> "$GITHUB_OUTPUT"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+
+      - name: "Ограничить инструменты ревью (#1065)"
+        env:
+          REVIEW_KIND: ship
+          REVIEW_CLAUDE_VERSION: ${{ steps.claude_bin.outputs.version }}
+          REVIEW_DOC: ${{ runner.temp }}/ship-review.md
+        run: |
+          node "$RUNNER_TEMP/review-policy-tools/scripts/review-execution-policy.mjs" prepare "$RUNNER_TEMP/review-execution-policy.json"
 
       - name: Review
         id: review
@@ -214,6 +229,7 @@ jobs:
           # #1040: authenticated main-to-dev dispatch is started by this bot.
           allowed_bots: "github-actions[bot]"
           path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
+          settings: ${{ runner.temp }}/review-execution-policy.json.settings.json
           prompt: |
             Ты ревьюер кода проекта House Plan. Язык ответа — русский.
 
@@ -265,8 +281,15 @@ jobs:
 
             Ты ничего не правишь и не публикуешь: ни код, ни issue, ни
             комментарии. Права на запись у тебя нет. Любые изменения рабочей
-            копии будут отброшены — после проверок восстанови её сам
-            (`git checkout -- . && git clean -fd`), если что-то менял.
+            копии запрещены; обычные generated outputs build/test допустимы.
+            Не изменяй и не восстанавливай предмет ревью ради negative witness.
+
+            Tool policy #1065: Read/Grep/Glob для чтения; Bash — одна literal
+            foreground команда без shell composition/env/redirect/inline code.
+            Допустимы git read, rg, sed -n N,Mp, node --test test/<file>.test.mjs,
+            node demo/smoke_<name>.mjs, обычные --check, npm run build/bundle:sync.
+            Write — только REVIEW_DOC. Denied request не исполнился и не доказывает
+            AC: после него execution audit не публикует вердикт.
 
             Напиши документ в файл по пути из переменной REVIEW_DOC (абсолютный,
             вне репозитория). Первой строкой после заголовка —
@@ -279,6 +302,7 @@ jobs:
             --model claude-sonnet-5
             --effort high
             --max-turns 150
+            --setting-sources ""
             --allowedTools Read,Write,Grep,Glob,Bash
             --json-schema '{"type":"object","properties":{"high":{"type":"integer"},"medium":{"type":"integer"},"low":{"type":"integer"},"summary":{"type":"string"}},"required":["high","medium","low","summary"]}'
 
@@ -298,6 +322,13 @@ jobs:
           summary=$(node scripts/model-usage-details.mjs --summary-line="$details")
           echo "- модели/outcome: $summary" >> "$GITHUB_STEP_SUMMARY"
           echo "- расход модели: \`$line\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Проверить execution boundary (#1065)"
+        env:
+          REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          REVIEW_STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
+          REVIEW_DOC: ${{ runner.temp }}/ship-review.md
+        run: node "$RUNNER_TEMP/review-policy-tools/scripts/review-execution-policy.mjs" audit "$RUNNER_TEMP/review-execution-policy.json"
 
       - name: Запечатать результат модели
         env:

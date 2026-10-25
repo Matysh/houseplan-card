@@ -46,6 +46,16 @@
   свидетеля. Изоляция generated outputs/index и внешний REVIEW_DOC сохраняются
   ([§2.7](../../PROCESS.md#27-код-ревью), #905).
 
+- Tool policy #1065 разрешает только отдельные literal foreground checks
+  неизменённого материала; Write — во внешний REVIEW_DOC/REVIEW_FINDINGS.
+  Подмена, rollback, inline interpreter и shell composition отказываются до
+  исполнения; native SDK-hook failure тоже блокирует вызов. Перед моделью —
+  отказной self-probe неизменённого hook на JSON-данных без их исполнения.
+  Полный execution trace и журнал сверяются перед seal: отсутствие,
+  отказ или несовпадение не дают допустимого вердикта. Это не OS sandbox для
+  reviewed child code и не caught. Исторические отчёты не переписываются
+  ([§2.7](../../PROCESS.md#27-код-ревью), #1065).
+
 ## Ревью ТЗ
 
 - Артефакт — `docs/reviews/SPEC-REVIEW-<NN>-r<N>.md`. Ревью ТЗ проходит только

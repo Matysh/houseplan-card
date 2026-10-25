@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5433 · pure backend 653 · HA-harness backend 555 · browser smokes 443 (`npm run inventory`) |
+| Tests | Node unit 5441 · pure backend 653 · HA-harness backend 555 · browser smokes 443 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -41,6 +41,12 @@ release review. Task and ship reviewers trace code and failure paths before
 weighing author conclusions, including ambiguity, readability and replaced
 legacy. Accepted proof still avoids duplicate checks; uncovered risks receive
 targeted checks, and full regression remains a beta obligation.
+
+Review execution (#1065) checks requested tools before execution and compares
+the complete SDK trace with its private policy journal before report sealing.
+Canonical patch/run/restore is refused rather than relabelled ordinary input.
+Missing/inconsistent evidence has no verdict authority; the tool boundary is
+not an operating-system sandbox for reviewed child programs.
 
 Historical vacuum preview (#999) is local to one card's memory. Its accepted
 default keeps a selected/pending cleanup across ordinary dialog close, while

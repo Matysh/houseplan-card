@@ -5712,3 +5712,65 @@ Affected contract tests pass21/21 and the fresh native passes8scenarios/63checks
 The local Windows documentation writer's CRLF was restored to canonical LF
 without changing release-proof text or its test. No private-write exemption,
 product change, guard change or separate extra build is introduced.
+
+## Review execution boundary (#1065)
+
+Task, ship and release model jobs prepare `review-execution-policy.json` and
+explicit Claude settings from accepted-dev tooling, outside the reviewed tree.
+`--setting-sources ""` excludes candidate/user/local customization. A synchronous
+PreToolUse hook accepts read tools, one literal foreground command from the
+review check allowlist, or Write to the exact external report/findings paths.
+Shell composition/redirection, inline interpreters, untracked executable input,
+canonical Write/Edit, mutation execution and rollback are refused. Ordinary
+build/typecheck/smoke and explicit unit/backend files remain available; generated
+outputs are produced by those unchanged programs, not patched through Write.
+An unsupported recipe must remain unverified or use existing suitable proof;
+it is not an invitation to bypass the hook or claim its denial as a test result.
+
+The CLI pin has one source, `REVIEW_CLI_VERSION` in the policy module. Bootstrap
+keeps the checksum-verified isolated download and verifies actual `--version`;
+the pin supports native `onFailure:block`. That native SDK setting denies a
+tool call when its hook cannot start, crashes or reaches its outer timeout.
+Before the model starts, prepare also requires the original hook to deny an
+unsafe JSON request; the proposed command is never dispatched. The inner
+bounded deadline and shell `exit 2` are defense in depth, not a substitute for
+native fail-closed behavior. Runtime/parse failures in the handler explicitly
+deny too. These are conventional tool-hook controls, not a new OS sandbox or
+a guarantee against hostile child code or same-user tampering.
+Its pre-execution claim is the native SDK contract with these loaded settings;
+it does not cover an externally replaced or disabled hook runtime.
+
+Before sealing any model result, the deterministic audit compares every SDK
+tool-use ID/input digest with the private decision journal and refuses missing,
+truncated, inconsistent or forbidden execution. The material HEAD/tracked diff
+must still match; report bytes equal the final external Write. The SDK's
+nonexecuting StructuredOutput call may have no hook event, but its data must
+equal the final structured result. It is not an exemption for executable tools.
+A narrow report/structured-summary lint rejects the concrete
+temporary patch + run + ordinary/non-mutant claim; it is not a general semantic
+truth detector. The task artifact consumer repeats that report lint. No private
+transcript, command, tool output or input text is published by the audit.
+Failures yield no admissible verdict/merge authority; the existing current
+request recovery returns task review without spending a blocking cycle.
+This post-execution publication refusal is distinct from pre-execution denial.
+
+Ordinary tests submit unsafe commands as JSON/string DATA to the unchanged
+hook and feed synthetic SDK/journal/report records to the audit. They never
+execute those commands or a modified guard implementation. The historical
+#1064 claim is copied as inert negative-report data; the report is not rewritten and its
+published claim is not treated as caught evidence. The old legacy fallback
+copy from a reviewer-written `docs/reviews/` path is removed: reports use only
+the established external Write path and the deterministic publisher.
+Linux-only launcher fixtures additionally cover an absent handler and an inert
+waiting dependency under the unchanged deadline; neither dispatches the input.
+Windows skips those POSIX fixtures rather than pretending to prove Linux or a
+live provider session. An actual isolated CLI ABI probe needs no model request;
+ordinary synthetic records alone do not prove the provider's live message stream.
+The isolated checksum-verified 2.1.295 ABI receipt uses `--init-only` (no model
+or provider request) with the existing model/effort/turn arguments and hook
+settings. The hidden `--max-turns` parses successfully while an unknown-option
+control is rejected; normal `--help`/`--version` alone are not that proof.
+
+Protocol references: [Claude hook input/PreToolUse decisions](https://code.claude.com/docs/en/hooks),
+[CLI settings sources](https://code.claude.com/docs/en/cli-reference), and the
+[pinned action settings input](https://github.com/anthropics/claude-code-action/blob/9cdae7f0d995e3ba7c33f226087fdf82a59cd520/action.yml).

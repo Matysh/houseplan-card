@@ -1271,23 +1271,24 @@ jobs:
       # v1.0.218 (Claude Code 2.1.265) лаунчер ~/.local/bin/claude на
       # ubuntu-latest иногда не появляется, хотя установщик рапортует об успехе;
       # action верит рапорту и падает на ENOENT (anthropics, issue 1817).
-      # Кладём бинарник сами: версию берём ту, что пинит сам action (он уже
-      # скачан в _actions к началу job), контрольную сумму — из манифеста релиза.
+      # Изолированный runtime: pin из принятой execution policy (#1065),
+      # контрольная сумма из манифеста; пользовательский CLI не меняется.
       - name: Установить Claude Code детерминированно
         id: claude_bin
         run: |
-          src=$(ls "$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-*/v1/src/entrypoints/run.ts 2>/dev/null | head -1)
-          ver=$(grep -oE 'claudeCodeVersion = "[0-9]+\.[0-9]+\.[0-9]+"' "$src" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
-          ver="${ver:-2.1.265}"
+          ver=$(node "$RUNNER_TEMP/preflight-tools/scripts/review-execution-policy.mjs" version)
           base=https://downloads.claude.ai/claude-code-releases
-          bin="$HOME/.local/bin/claude"
+          bin="$RUNNER_TEMP/review-cli/claude"
           mkdir -p "$(dirname "$bin")"
           curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
           sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
           echo "$sum  $bin" | sha256sum -c -
           chmod +x "$bin"
-          "$bin" --version
+          actual=$("$bin" --version)
+          test "${actual%% *}" = "$ver"
+          echo "$actual"
           echo "path=$bin" >> "$GITHUB_OUTPUT"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
 
       - name: "Передать типизированное назначение находок (#926)"
         env:
@@ -1298,6 +1299,15 @@ jobs:
           FINDINGS_POLICY_SNAPSHOT: ${{ needs.prepare.outputs.findings_policy_snapshot }}
           REVIEW_FINDINGS_POLICY: ${{ runner.temp }}/review-findings-policy.json
         run: node "$RUNNER_TEMP/preflight-tools/scripts/review-findings-policy.mjs" model
+
+      - name: "Ограничить инструменты ревью (#1065)"
+        env:
+          REVIEW_KIND: task
+          REVIEW_CLAUDE_VERSION: ${{ steps.claude_bin.outputs.version }}
+          REVIEW_STAGE: ${{ needs.guard.outputs.stage }}
+          REVIEW_DOC: ${{ runner.temp }}/review-document.md
+          REVIEW_FINDINGS: ${{ runner.temp }}/review-outside-findings.md
+        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-execution-policy.mjs" prepare "$RUNNER_TEMP/review-execution-policy.json"
 
       - name: Review
         id: review
@@ -1323,6 +1333,7 @@ jobs:
           # #1040: authenticated main-to-dev dispatch is started by this bot.
           allowed_bots: "github-actions[bot]"
           path_to_claude_code_executable: ${{ steps.claude_bin.outputs.path }}
+          settings: ${{ runner.temp }}/review-execution-policy.json.settings.json
           prompt: |
             Ты ревьюер проекта House Plan. Язык ответа — русский.
 
@@ -1344,6 +1355,13 @@ jobs:
             регистрация и ordinary PASS не являются caught. Bash/Write для
             обычных build/test, generated outputs и документа ревью разрешены;
             предмет ревью ради отрицательной проверки не меняй (#905).
+
+            Tool policy #1065: Read/Grep/Glob для чтения; Bash — одна literal
+            foreground команда без shell composition/env/redirect/inline code.
+            Допустимы git read, rg, sed -n N,Mp, node --test test/<file>.test.mjs,
+            node demo/smoke_<name>.mjs, обычные --check, npm run build/bundle:sync.
+            Write — только REVIEW_DOC/REVIEW_FINDINGS. Denied request не исполнился
+            и не доказывает AC: после него execution audit не публикует вердикт.
 
             ${{ needs.prepare.outputs.track == 'show' && needs.guard.outputs.stage == 'code' && 'Трек show: объём и серьёзность находок — docs/process/REVIEWER.md, «Трек show» (#696).' || '' }}
 
@@ -1506,6 +1524,7 @@ jobs:
             --model claude-sonnet-5
             --effort high
             --max-turns 150
+            --setting-sources ""
             --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"},"route":{"type":"string","enum":["fix","reclassify"]},"criterion":{"type":"string"}},"required":["verdict","high","medium","summary","route"]}'
 
@@ -1549,6 +1568,13 @@ jobs:
           echo "- модели/outcome: $summary" >> "$GITHUB_STEP_SUMMARY"
           echo "- расход модели: \`$line\`" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: "Проверить execution boundary (#1065)"
+        env:
+          REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          REVIEW_STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
+          REVIEW_DOC: ${{ runner.temp }}/review-document.md
+        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-execution-policy.mjs" audit "$RUNNER_TEMP/review-execution-policy.json"
+
       - name: Запечатать результат модели
         id: result
         env:
@@ -1564,10 +1590,6 @@ jobs:
         run: |
           tools="$RUNNER_TEMP/preflight-tools"
           node "$tools/scripts/model-usage-details.mjs" --require-complete-line="$USAGE_DETAILS"
-          marker=CODE-REVIEW
-          if [ "$STAGE" = "spec" ]; then marker=SPEC-REVIEW; fi
-          legacy="docs/reviews/${marker}-${NUM}-r${CYCLE}.md"
-          if [ ! -f "$SOURCE" ] && [ -f "$legacy" ]; then cp "$legacy" "$SOURCE"; fi
           test -s "$SOURCE" || { echo "::error::модель не оставила документ ревью"; exit 1; }
           printf '%s' "$OUT" > "$RUNNER_TEMP/verdict.json"
           jq -e '
