@@ -556,6 +556,12 @@ function shipSandbox(t) {
   writeFileSync(join(bin, 'gh'), [
     '#!/usr/bin/env bash',
     'echo "$*" >> "$FAKE_DIR/gh-calls"',
+    'if [ "$1" = api ]; then',
+    '  case "$2" in',
+    '    repos/o/r/issues/*/comments?per_page=100) number=${2#repos/o/r/issues/}; number=${number%%/*}; cat "$FAKE_DIR/api-comments-$number.json"; exit $? ;;',
+    '    repos/o/r/issues/*) number=${2#repos/o/r/issues/}; case "$number" in *[!0-9]*) ;; *) cat "$FAKE_DIR/api-issue-$number.json"; exit $? ;; esac ;;',
+    '  esac',
+    'fi',
     'if [ "$1 $2" = "issue view" ]; then cat "$FAKE_DIR/issue-$3.json"; exit 0; fi',
     'if [ "$1 $2" = "issue comment" ]; then',
     '  while [ $# -gt 0 ]; do if [ "$1" = --body ]; then printf "%s\\t%s\\n" "$NUM" "$2" >> "$FAKE_DIR/comments"; fi; NUM=${NUM:-$3}; shift; done',
@@ -566,15 +572,24 @@ function shipSandbox(t) {
   ].join('\n'), { mode: 0o755 });
   // Коммит публикации документа несёт `Issue: #696` (бета) или `Issue: #727`
   // (ночь, #748) — задачи не ship.
-  writeFileSync(join(fake, 'issue-696.json'), JSON.stringify({ number: 696, title: 'Пакетное ревью ship', body: '', labels: [], comments: [] }));
-  writeFileSync(join(fake, 'issue-727.json'), JSON.stringify({ number: 727, title: 'Ночное пакетное ревью ship', body: '', labels: [], comments: [] }));
+  const saveIssue = (number, { title = `Задача ${number}`, body = '## ТЗ\n\nстрока', labels = [], comments = [] } = {}) => {
+    const url = `https://github.com/o/r/issues/${number}`, stamp = '2026-10-15T10:00:00Z';
+    const rows = comments.map((row, index) => ({ id: number * 1000 + index + 1,
+      html_url: `${url}#issuecomment-${number * 1000 + index + 1}`, user: { login: 'o' },
+      created_at: stamp, updated_at: stamp, ...row }));
+    const issue = { number, title, body, labels, comments: rows };
+    writeFileSync(join(fake, `issue-${number}.json`), JSON.stringify(issue));
+    writeFileSync(join(fake, `api-issue-${number}.json`), JSON.stringify({ ...issue,
+      html_url: url, state: 'open', updated_at: stamp, comments: rows.length }));
+    writeFileSync(join(fake, `api-comments-${number}.json`), JSON.stringify([rows]));
+  };
+  saveIssue(696, { title: 'Пакетное ревью ship', body: '' });
+  saveIssue(727, { title: 'Ночное пакетное ревью ship', body: '' });
   const box = {
     root, origin, work, temp, fake, git, commit,
     push() { git(work, 'push', '-q', '--tags', 'origin', 'HEAD:dev'); git(work, 'fetch', '-q', 'origin'); },
     issue(number, { comments = [{ body: `Слияние без ревью модели\n\n${MARKER}` }], labels = [] } = {}) {
-      writeFileSync(join(fake, `issue-${number}.json`), JSON.stringify({
-        number, title: `Задача ${number}`, body: '## ТЗ\n\nстрока', labels, comments,
-      }));
+      saveIssue(number, { labels, comments });
     },
     run({ step, script }, env) {
       for (const file of ['output', 'summary.md']) rmSync(join(temp, file), { force: true });
@@ -595,6 +610,9 @@ function shipSandbox(t) {
       return { status: r.status, stdout: r.stdout, stderr: r.stderr, output, summary: read(join(temp, 'summary.md')) };
     },
     prepare(env) {
+      // Each prepare call models a fresh workflow job. Its immutable context
+      // output must not reuse the previous simulated job's RUNNER_TEMP files.
+      rmSync(join(temp, 'ship-review-input'), { recursive: true, force: true });
       return box.run(runnable('Кандидат, база и ship-задачи'), {
         FORCE: 'false', CANDIDATE: '', RUN_URL: 'https://github.com/o/r/actions/runs/1', ...env,
       });
@@ -652,6 +670,13 @@ test('#727 AC2/AC5 _ship-review.yml на настоящем bash: ночь чи�
   assert.match(first.output.patches, /^701:[0-9a-f]{40},702:[0-9a-f]{40}$/);
   assert.equal(first.output.subject, 'Ночное пакетное ревью: кандидат — голова `dev` после ночного полного Validate.');
   assert.match(readFileSync(join(box.temp, 'ship-review-input', 'brief.md'), 'utf8'), /^# Вход ночного пакетного ревью ship$/m);
+  const sourceContext = JSON.parse(readFileSync(join(box.temp, 'ship-review-input', 'review-source-context.json'), 'utf8'));
+  assert.deepEqual(sourceContext.sources.map(source => source.issue.number), [701, 702]);
+  for (const source of sourceContext.sources) {
+    assert.equal(source.issue.comments, source.comments.length);
+    assert.deepEqual(source.boundary.pageCounts, [source.comments.length]);
+    assert.match(source.comments[0].body, /hp:ship-merge/);
+  }
 
   // Публикация: mode и patches — из prepare; поле patches в результате модели не читается.
   const bogus = { high: 0, medium: 1, low: 0, summary: 'ok', patches: '701:' + 'd'.repeat(40) };

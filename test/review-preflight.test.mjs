@@ -151,12 +151,14 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
   git('add', '.'); git('commit', '-qm', 'fix\n\nIssue: #7\nUser-Visible: no');
   const bin = join(dir, 'bin'); mkdirSync(bin);
   const fixture = join(dir, 'issue.json');
-  writeFileSync(fixture, JSON.stringify({ state: 'open', labels: [{ name: 'S7-code-review' }], body: '' }));
+  writeFileSync(fixture, JSON.stringify({ number: 7, title: 'Synthetic preflight issue',
+    html_url: 'https://github.com/o/r/issues/7', updated_at: stamp, comments: 1,
+    state: 'open', labels: [{ name: 'S7-code-review' }], body: '' }));
   const gh = join(bin, 'gh');
   writeFileSync(gh, '#!/usr/bin/env node\n' +
     'const fs=require("node:fs"); const args=process.argv.slice(2);\n' +
     'if(args.includes("POST")||args[0]==="issue"){fs.appendFileSync(process.env.CALLS,args.join(" ")+"\\n");process.stdout.write("{}");}\n' +
-    'else if(args.some(x=>x.endsWith("/comments")))process.stdout.write(JSON.stringify([[{id:11,html_url:"https://github.com/o/r/issues/7#issuecomment-11",created_at:"2026-10-15T10:00:00Z",updated_at:process.env.HANDOFF_UPDATED||"2026-10-15T10:00:00Z",body:process.env.HANDOFF}]]));\n' +
+    'else if(args.some(x=>x.endsWith("/comments")))process.stdout.write(JSON.stringify([[{id:11,html_url:"https://github.com/o/r/issues/7#issuecomment-11",user:{login:"o"},created_at:"2026-10-15T10:00:00Z",updated_at:process.env.HANDOFF_UPDATED||"2026-10-15T10:00:00Z",body:process.env.HANDOFF}]]));\n' +
     'else process.stdout.write(fs.readFileSync(process.env.FIXTURE,"utf8"));\n');
   chmodSync(gh, 0o755);
   const calls = join(dir, 'calls'); writeFileSync(calls, '');
@@ -165,7 +167,7 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
   const execute = (digest) => {
     writeFileSync(output, '');
     return runStep(step, step.run, { cwd: dir, env: { ...env, PATH: bin + ':' + process.env.PATH,
-      FIXTURE: fixture, CALLS: calls, HANDOFF: handoff, NUM: '7', REPO: 'owner/repo', STAGE: 'code', TRACK: 'show',
+      FIXTURE: fixture, CALLS: calls, HANDOFF: handoff, NUM: '7', REPO: 'o/r', STAGE: 'code', TRACK: 'show',
       SHA: git('rev-parse', 'HEAD'), TREE: git('rev-parse', 'HEAD^{tree}'), DIGEST: digest, BASE: base,
       TOOLS: ROOT, RUNNER_TEMP: dir, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary } });
   };
@@ -180,7 +182,7 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
     MATERIAL_TREE: git('rev-parse', 'HEAD^{tree}'), MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: issueBodyDigest(''),
     VALIDATE_RESULT: 'green', VALIDATE_URL: 'https://example.test/validate', REBASE_NOTE: '', VALIDATED_NOTE: '',
     SPEC_BODY_CHANGED: 'false', SPEC_BODY_DOC: '', SPEC_BODY_RECORDED: '', HANDOFF_SNAPSHOT: selectedSnapshot,
-    FINDINGS_POLICY_SNAPSHOT: JSON.stringify(findingsPolicy('', { repo: 'owner/repo', issue: 7, stage: 'code', round: 1 })) };
+    FINDINGS_POLICY_SNAPSHOT: JSON.stringify(findingsPolicy('', { repo: 'o/r', issue: 7, stage: 'code', round: 1 })) };
   const preparedStep = findStep(workflow, { id: 'prepared' });
   assert.equal(runStep(preparedStep, preparedStep.run, { cwd: dir, env: preparedEnv }).status, 0);
   const verifyStep = findStep(workflow, { name: 'Проверить контракт и exact material' });
@@ -190,7 +192,7 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
   const packet = JSON.parse(readFileSync(packetPath));
   assert.equal(packet.handoff_snapshot, selectedSnapshot);
   writeFileSync(packetPath, JSON.stringify({ ...packet, findings_policy_snapshot: JSON.stringify(findingsPolicy('[7]',
-    { repo: 'owner/repo', issue: 7, stage: 'code', round: 1 })) }));
+    { repo: 'o/r', issue: 7, stage: 'code', round: 1 })) }));
   writeFileSync(join(packetDir, 'manifest.sha256'), execFileSync('sha256sum', ['prepared.json'], { cwd: packetDir }));
   assert.notEqual(runStep(verifyStep, verifyStep.run, { cwd: dir, env: preparedEnv }).status, 0,
     'A rehashed packet cannot replace the Actions routing policy');
@@ -201,11 +203,16 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
   assert.equal(runStep(preparedStep, preparedStep.run, { cwd: dir, env: preparedEnv }).status, 0);
   const boundary = findStep(workflow, { name: 'Перепроверить тело перед моделью (#855)' });
   const boundaryEnv = { ...env, PATH: bin + ':' + process.env.PATH, FIXTURE: fixture, CALLS: calls,
-    HANDOFF: handoff, NUM: '7', REPO: 'owner/repo', STAGE: 'code', TRACK: 'show',
+    HANDOFF: handoff, NUM: '7', REPO: 'o/r', STAGE: 'code', TRACK: 'show',
     SHA: git('rev-parse', 'HEAD'), TREE: git('rev-parse', 'HEAD^{tree}'), DIGEST: issueBodyDigest(''),
     TOOLS_SHA: base, RUNNER_TEMP: dir, GITHUB_OUTPUT: output, HANDOFF_SNAPSHOT: selectedSnapshot };
   result = runStep(boundary, boundary.run, { cwd: dir, env: boundaryEnv });
   assert.equal(result.status, 0, result.stderr);
+  const context = JSON.parse(readFileSync(join(dir, 'review-source-context.json'), 'utf8'));
+  assert.equal(context.sources[0].issue.url, 'https://github.com/o/r/issues/7');
+  assert.equal(context.sources[0].issue.comments, 1);
+  assert.equal(context.sources[0].comments[0].body, handoff);
+  assert.deepEqual(context.sources[0].boundary.pageCounts, [1]);
   result = runStep(boundary, boundary.run, { cwd: dir,
     env: { ...boundaryEnv, HANDOFF: handoff + ' edited', HANDOFF_UPDATED: '2026-10-15T11:00:00Z' } });
   assert.notEqual(result.status, 0, 'An edited handoff cannot reuse the prepare PASS at the model boundary');

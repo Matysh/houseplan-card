@@ -14,6 +14,8 @@ import { importClosure } from './helpers/import-closure.mjs';
 import { findingsPolicy } from '../scripts/review-findings-policy.mjs';
 import { readTaskCommit, taskDelivery } from '../scripts/task-delivery.mjs';
 import { ANCHOR_MARKER } from '../scripts/review-doc-guard.mjs';
+import { publicationPlan } from '../scripts/review-publication.mjs';
+import { PASSPORT_FIELDS } from '../scripts/review-result-gate.mjs';
 
 // #723: два шага публикуют коммит и прежде любой отказ push считали сдвигом
 // ветки — документ ревью релиза в `dev` (release-review.yml, три попытки) и
@@ -54,7 +56,7 @@ const git = (cwd, ...args) => execFileSync('git', args, {
 const commitAll = (cwd, msg) => { git(cwd, 'add', '-A'); git(cwd, 'commit', '-q', '-m', msg); };
 
 /** Скрипты, которые зовут шаги, — с замыканием импортов. */
-const STEP_SCRIPTS = ['release-review.mjs', 'ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs', 'merge-candidate.mjs', 'review-findings-policy.mjs']
+const STEP_SCRIPTS = ['release-review.mjs', 'ship-review.mjs', 'reviews-index.mjs', 'review-doc-guard.mjs', 'merge-candidate.mjs', 'review-findings-policy.mjs', 'review-publication.mjs']
   .reduce((seen, name) => importClosure(join(SCRIPTS, name), seen), new Set());
 
 const hasTools = () => process.platform !== 'win32'
@@ -334,10 +336,28 @@ function runReviewDoc(box, out = '{"verdict":"green","high":0}', extra = {}) {
   mkdirSync(join(box.temp, 'review-result'));
   writeFileSync(source, (extra.STAGE === 'spec' ? '# SPEC-REVIEW-9-r1' : '# Код-ревью #9, раунд 1')
     + '\n\nВердикт: **зелёный** · High: 0 · Medium: 0\n' + (extra.REVIEW_SOURCE_TAIL ?? ''));
+  // This fixture starts after trusted publication. Supply its completed receipt;
+  // external API publication is covered separately, never stub the document step.
+  const stage = extra.STAGE ?? 'code', material = git(box.origin, 'rev-parse', BRANCH);
+  const materialTree = git(box.origin, 'rev-parse', `${BRANCH}^{tree}`);
+  const bodyDigest = extra.MATERIAL_ISSUE_BODY ?? 'a'.repeat(64);
+  const expected = { ...Object.fromEntries(PASSPORT_FIELDS.map(key => [key, ''])), repo: 'o/r', issue: '9', stage,
+    cycle: '1', branch: BRANCH, run_id: '42', run_attempt: '1', material_sha: material, material_tree: materialTree,
+    material_issue_body: bodyDigest, findings_policy_snapshot: JSON.stringify(findingsPolicy('', { repo: 'o/r', issue: 9, stage, round: 1 })) };
+  const sealed = { 'prepared.json': JSON.stringify({ schema: 1, ...expected }),
+    'review-document.md': readFileSync(source, 'utf8'),
+    'verdict.json': JSON.stringify({ medium: 0, summary: 'Fixture upstream verdict', ...JSON.parse(out) }) };
+  const hash = text => createHash('sha256').update(text).digest('hex');
+  sealed['manifest.sha256'] = Object.entries(sealed).map(([name, value]) => `${hash(value)}  ${name}`).join('\n');
+  const plan = publicationPlan({ files: Object.keys(sealed), read: name => sealed[name], expected, spent: 0, limit: 2 });
+  const receipt = { schema: plan.schema, type: 'complete', key: plan.key, identity: plan.identity,
+    reportDigest: plan.reportDigest, verdictDigest: plan.verdictDigest, verdictCanonicalDigest: plan.verdictCanonicalDigest,
+    findings: [], comment: { id: 42, url: 'https://github.com/o/r/issues/9#issuecomment-42', bodyDigest: hash('Fixture upstream comment') } };
+  writeFileSync(join(box.temp, 'review-publication.json'), JSON.stringify(receipt));
   return box.run(REVIEW_DOC_STEP(), {
     BRANCH, NUM: '9', STAGE: 'code', CYCLE: '1', SOURCE: source, TOOLS: extra.TOOLS ?? devTools(box, extra.STAGE ?? 'code'),
-    MATERIAL_SHA: git(box.origin, 'rev-parse', BRANCH), MATERIAL_TREE: git(box.origin, 'rev-parse', `${BRANCH}^{tree}`),
-    MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: '', OUT: out, ...extra,
+    MATERIAL_SHA: material, MATERIAL_TREE: materialTree,
+    MATERIAL_SPECS: '', MATERIAL_ISSUE_BODY: bodyDigest, OUT: out, ...extra,
     REPO: 'o/r', FINDINGS_POLICY_SNAPSHOT: extra.FINDINGS_POLICY_SNAPSHOT ?? JSON.stringify(findingsPolicy('',
       { repo: 'o/r', issue: 9, stage: 'code', round: 1 })),
   });
