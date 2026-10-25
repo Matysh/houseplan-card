@@ -3,14 +3,14 @@ import { readCiProofArtifact, githubApiBase, JOB_RULES } from './ci-proof.mjs';
 import { snapshotEntries } from './ci-registry-equivalence.mjs';
 import { spawnSync } from 'node:child_process';
 import { registeredRuns, ciWorkflow, CI_WORKFLOWS } from './ci-workflows.mjs';
-import { taskCheckSnapshot, taskCheckPlanFromSnapshot, verifyTaskCheckClaim, TASK_CHECK_JOB_NAMES } from './task-check-reuse.mjs';
+import { taskCheckSnapshot, taskCheckPlanFromSnapshot, verifyTaskCheckClaim, retainedTaskCheck, TASK_CHECK_JOB_NAMES } from './task-check-reuse.mjs';
 
 const headers = token => ({ Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token,
   'User-Agent': 'houseplan-task-check', 'X-GitHub-Api-Version': '2022-11-28' });
 const validSha = sha => /^[a-f0-9]{40}$/.test(sha || '');
 
 export function taskCheckSource({ repo, token, candidateSha, candidateSnapshot = null, root = process.cwd(),
-  fetchImpl = fetch, apiBase = githubApiBase(), signal = null } = {}) {
+  fetchImpl = fetch, apiBase = githubApiBase(), signal = null, consumerProof = null } = {}) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw Error('invalid task-check repository');
   const requests = new Map(), snapshots = new Map();
   const requestSignal = () => signal ? AbortSignal.any([signal, AbortSignal.timeout(5000)]) : AbortSignal.timeout(5000);
@@ -100,26 +100,58 @@ export function taskCheckSource({ repo, token, candidateSha, candidateSnapshot =
       return readCiProofArtifact(Buffer.from(await response.arrayBuffer()));
     })());
     const proof = await requests.get(downloadKey);
+    let retainedRun = null, retainedJobs = [];
+    if (retainedTaskCheck(consumerProof, { mode: 'executed', record })) {
+      const target = consumerProof.run;
+      const [attemptRun, targetJobs] = await Promise.all([
+        json(`actions/runs/${id}/attempts/${target.attempt}`),
+        json(`actions/runs/${id}/attempts/${target.attempt}/jobs?per_page=100`),
+      ]);
+      if (!Array.isArray(targetJobs.jobs) || Number(targetJobs.total_count || 0) > targetJobs.jobs.length)
+        throw Error('incomplete retained current job inventory');
+      retainedRun = attemptRun; retainedJobs = targetJobs.jobs;
+    }
     return { run, latestRun, jobs: jobList.jobs, artifact, proof,
-      companionsGreen: await companionStatus(record, proof), candidateSnapshot: current, sourceSnapshot: previous };
+      companionsGreen: await companionStatus(record, proof), candidateSnapshot: current, sourceSnapshot: previous,
+      retainedRun, retainedJobs };
   };
 }
 
 /** Used by review/merge proof readers; failures remain explicit refusal contexts. */
 export async function loadTaskCheckContexts({ proof, repo, token, candidateSha = proof?.candidate?.sha,
-  fetchImpl = fetch, apiBase = githubApiBase(), root = process.cwd(), source = null, now = Date.now() } = {}) {
+  fetchImpl = fetch, apiBase = githubApiBase(), root = process.cwd(), source = null, now = Date.now(), producing = false } = {}) {
   const out = new Map();
-  const claims = Object.entries(proof?.taskChecks || {}).filter(([, claim]) => claim?.mode === 'reused');
+  const claims = Object.entries(proof?.taskChecks || {}).filter(([, claim]) =>
+    claim?.mode === 'reused' || retainedTaskCheck(proof, claim));
   if (!claims.length) return out;
-  source ||= taskCheckSource({ repo, token, candidateSha, fetchImpl, apiBase, root });
+  source ||= taskCheckSource({ repo, token, candidateSha, fetchImpl, apiBase, root, consumerProof: proof });
   await Promise.all(claims.map(async ([job, claim]) => {
     try {
       if (claim.record?.job !== job || claim.plan?.job !== job) throw Error('task-check claim job differs from its slot');
       const context = await source(claim.record);
       const plan = await taskCheckPlanFromSnapshot(context.candidateSnapshot, { job,
         browserPlan: proof.browserPlan?.planned, environment: claim.plan.toolchain });
-      out.set(job, await verifyTaskCheckClaim(claim, { plan, repo, now, request: proof.request || {}, ...context }));
+      out.set(job, await verifyTaskCheckClaim(claim, { plan, repo, now, request: proof.request || {}, ...context,
+        consumerProof: proof, producing }));
     } catch (error) { out.set(job, { accepted: false, reason: error.message }); }
   }));
   return out;
+}
+
+/** Producer refuses unprovable retained outputs before publishing a green passport. */
+export async function stampRetainedTaskChecks(proof, options = {}) {
+  const pending = Object.entries(proof.taskChecks || {}).filter(([, claim]) => claim.mode === 'executed'
+    && (claim.record?.run !== proof.run?.id || claim.record?.attempt !== proof.run?.attempt
+      || claim.record?.sha !== proof.candidate?.sha || claim.record?.workflow !== '.github/workflows/' + proof.run?.workflow));
+  if (!pending.length) return proof;
+  for (const [job, claim] of pending) if (!retainedTaskCheck(proof, claim))
+    throw Error(job + ': foreign direct task receipt (not a retained current-run execution)');
+  const contexts = await loadTaskCheckContexts({ ...options, proof, producing: true });
+  for (const [job, claim] of pending) {
+    const verified = contexts.get(job);
+    if (!verified?.accepted || !verified.retained) throw Error(job + ': retained task receipt: ' + (verified?.reason || 'source unverified'));
+    // Add provenance only. Original record, plan, attempt and timestamps are immutable.
+    claim.retained = verified.retained;
+  }
+  return proof;
 }

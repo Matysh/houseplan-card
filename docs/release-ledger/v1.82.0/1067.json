@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1067,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Authenticates retained current-run tooling/browser job receipts after partial CI reruns without renaming source attempts, weakening full/fresh checks or changing product behavior.",
+  "summary": {
+    "ru": "Паспорт частичного CI rerun сохраняет исходную попытку и проверяет реальное исполнение retained job.",
+    "en": "Partial CI rerun receipts preserve the source attempt and authenticate the retained job execution."
+  }
+}

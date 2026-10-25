@@ -303,8 +303,14 @@ function taskCheckProblem(proof, jobs, contexts, policy) {
     }
     if (claim.mode === 'executed') {
       if (claim.record.sha !== proof.candidate?.sha || claim.record.run !== proof.run?.id
-        || claim.record.attempt !== proof.run?.attempt
         || claim.record.workflow !== '.github/workflows/' + proof.run?.workflow) return id + ': foreign direct task receipt';
+      if (claim.record.attempt !== proof.run?.attempt) {
+        const verified = contexts?.get(id);
+        if (!verified?.accepted || !verified.retained || !sameRecord(verified.record, claim.record)
+          || !sameRecord(verified.target, proof.run) || claim.record.attempt >= proof.run.attempt
+          || claim.retained !== undefined && !sameRecord(claim.retained, verified.retained))
+          return id + ': foreign direct task receipt (retained source was not independently verified)';
+      } else if (claim.retained !== undefined) return id + ': retained passport has no earlier source attempt';
     } else {
       if (policy?.fresh || policy?.full || asBool(proof.request?.full) || asBool(proof.request?.fresh))
         return id + ': fresh/full policy forbids scoped reuse';
@@ -777,7 +783,8 @@ export async function loadGithubProofContext({
     }
   }
   let taskCheckContexts = new Map();
-  if (Object.values(proof?.taskChecks || {}).some(claim => claim?.mode === 'reused')) {
+  if (Object.values(proof?.taskChecks || {}).some(claim => claim?.mode === 'reused'
+    || claim?.mode === 'executed' && claim.record?.attempt !== proof.run?.attempt)) {
     const { loadTaskCheckContexts } = await import('./task-check-source.mjs');
     taskCheckContexts = await loadTaskCheckContexts({ proof, repo, token,
       candidateSha: runShaOf(run), fetchImpl, apiBase });
@@ -786,7 +793,7 @@ export async function loadGithubProofContext({
     ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
 }
 
-if (isMainModule(import.meta.url)) {
+async function main() {
   const value = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
   const marker = value('marker');
   const emit = value('emit');
@@ -830,6 +837,9 @@ if (isMainModule(import.meta.url)) {
     proof.environments = producerEnvironments(needs);
     proof.performanceSet = ['glow', asBool(needs?.changes?.outputs?.perf_iso) && 'iso',
       asBool(needs?.changes?.outputs?.perf_interaction) && 'interaction'].filter(Boolean).join('-');
+    const { stampRetainedTaskChecks } = await import('./task-check-source.mjs');
+    await stampRetainedTaskChecks(proof, { repo: process.env.GITHUB_REPOSITORY,
+      token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN });
     const target = resolve(emit);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, `${JSON.stringify(proof, null, 2)}\n`);
@@ -842,3 +852,10 @@ if (isMainModule(import.meta.url)) {
     process.exitCode = 2;
   }
 }
+
+// Finish module evaluation before loading the source adapter, which imports
+// this module's artifact reader. Awaiting it at module scope deadlocks the CLI.
+if (isMainModule(import.meta.url)) main().catch(error => {
+  console.error(error.message);
+  process.exitCode = 1;
+});

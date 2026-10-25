@@ -202,6 +202,22 @@ test('#1060 scoped producer metadata preserves executed/reused distinction and v
   assert.throws(() => taskChecksFromNeeds({ tooling: { outputs: { task_check: JSON.stringify({ mode: 'executed', record: { job: 'browser_selected' } }) } } }));
 });
 
+test('#1067 retained direct receipt needs exact independently authenticated source and current attempt', () => {
+  const fixture = scopedFixture('tooling', 'executed'), claim = fixture.proof.taskChecks.tooling;
+  claim.record.attempt = 1;
+  assert.equal(evaluateCiProof(fixture).status, 'failed', 'overall green cannot authenticate a retained receipt');
+  const verified = { accepted: true, record: structuredClone(claim.record), target: structuredClone(fixture.proof.run),
+    retained: { sourceAttempt: 1, sourceJobId: 91, currentAttempt: 2, currentJobId: 92, execution: 'd'.repeat(64) } };
+  fixture.taskCheckContexts = new Map([['tooling', verified]]);
+  assert.equal(evaluateCiProof(fixture).status, 'green', 'legacy passport also requires independent retention evidence');
+  claim.retained = structuredClone(verified.retained);
+  assert.equal(evaluateCiProof(fixture).status, 'green');
+  claim.retained.currentJobId = 999;
+  assert.equal(evaluateCiProof(fixture).status, 'failed');
+  claim.retained = structuredClone(verified.retained); verified.target.attempt = 3;
+  assert.equal(evaluateCiProof(fixture).status, 'failed', 'a verified source for another current attempt grants nothing');
+});
+
 test('#1060 task reuse requires an independently verified exact record, semantically compared', () => {
   for (const job of ['tooling', 'browser_selected']) {
     const fixture = scopedFixture(job, 'reused');

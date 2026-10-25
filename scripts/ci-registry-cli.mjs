@@ -19,7 +19,8 @@ const output = values => {
 export function registryPublicationRecords(proof) {
   if (!proof.requiredChecks.every(id => proof.checks[id]?.result === 'success')) return [];
   return [...proof.registry?.produced || [], ...Object.values(proof.taskChecks || {})
-    .filter(claim => claim.mode === 'executed' && claim.record?.schema === 'houseplan-task-check/v1')
+    .filter(claim => claim.mode === 'executed' && claim.record?.schema === 'houseplan-task-check/v1'
+      && claim.record.run === proof.run?.id && claim.record.attempt === proof.run?.attempt)
     .map(claim => claim.record)];
 }
 export function producerToolchain(root = process.cwd(), job = '') {

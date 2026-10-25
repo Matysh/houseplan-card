@@ -96,6 +96,7 @@ ${eventStep}`;
         with: { node-version: 22 }
       - name: Зафиксировать progress proof
         env:
+          GH_TOKEN: \${{ github.token }}
           CI_WORKFLOW: validate-tooling.yml
           NEEDS_JSON: \${{ toJSON(needs) }}
         run: node scripts/ci-profile-proof.mjs

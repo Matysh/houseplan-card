@@ -178,3 +178,81 @@ test('direct record validation binds key, scope, actual execution identity and f
     const record = structuredClone(claim.record); change(record); assert.ok(taskCheckRecordError(record));
   }
 });
+
+async function retainedFixture(request = {}, job = 'tooling') {
+  const f = await fixture(job), c = f.context, record = f.claim.record;
+  f.claim.mode = 'executed';
+  c.proof.request = structuredClone(request);
+  c.consumerProof = structuredClone(c.proof); c.consumerProof.run.attempt = 3;
+  c.run.conclusion = 'failure'; // An unrelated failed shard does not erase this green job.
+  const at = ms => new Date(now + ms).toISOString();
+  c.jobs[0] = { ...c.jobs[0], id: 101, run_attempt: 2, head_sha: sha,
+    started_at: at(-50000), completed_at: at(-9000),
+    steps: [{ number: 1, name: 'ordinary tooling suite', status: 'completed', conclusion: 'success',
+      started_at: at(-50000), completed_at: at(-9000) }] };
+  c.retainedRun = { ...c.run, run_attempt: 3, conclusion: 'success', run_started_at: at(-4000) };
+  c.latestRun = { ...c.retainedRun };
+  c.retainedJobs = [{ ...structuredClone(c.jobs[0]), id: 102, run_attempt: 3 }];
+  c.request = structuredClone(request);
+  assert.equal(record.attempt, 2);
+  return f;
+}
+
+test('#1067 retained same-run execution verifies original immutable proof and cloned job without rewriting the receipt', async () => {
+  const cases = [[{}, 'browser_selected'], [{}, 'tooling'], [{ full: true }, 'tooling'],
+    [{ fresh: true }, 'tooling'], [{ full: true, fresh: true }, 'tooling']];
+  for (const [request, job] of cases) {
+    const f = await retainedFixture(request, job), before = JSON.stringify(f.claim.record);
+    const verified = await verifyTaskCheckClaim(f.claim, f.context);
+    assert.equal(verified.accepted, true, verified.reason);
+    assert.equal(verified.retained.sourceJobId, 101); assert.equal(verified.retained.currentJobId, 102);
+    assert.equal(verified.retained.sourceAttempt, 2); assert.equal(verified.retained.currentAttempt, 3);
+    assert.equal(JSON.stringify(f.claim.record), before);
+    f.claim.retained = verified.retained;
+    assert.equal((await verifyTaskCheckClaim(f.claim, f.context)).accepted, true);
+  }
+});
+
+for (const [name, change] of Object.entries({
+  absentOriginal: f => { f.context.jobs = []; },
+  absentClone: f => { f.context.retainedJobs = []; },
+  ambiguousClone: f => { f.context.retainedJobs.push(f.context.retainedJobs[0]); },
+  originalRed: f => { f.context.jobs[0].conclusion = 'failure'; },
+  cloneRed: f => { f.context.retainedJobs[0].conclusion = 'failure'; },
+  cloneForeignSha: f => { f.context.retainedJobs[0].head_sha = 'd'.repeat(40); },
+  cloneForeignRun: f => { f.context.retainedJobs[0].run_id = 99; },
+  cloneForeignAttempt: f => { f.context.retainedJobs[0].run_attempt = 2; },
+  absentStamps: f => { delete f.context.jobs[0].started_at; },
+  absentSteps: f => { delete f.context.retainedJobs[0].steps; },
+  changedSteps: f => { f.context.retainedJobs[0].steps[0].name = 'another suite'; },
+  failedStep: f => { f.context.jobs[0].steps[0].conclusion = 'failure'; },
+  executedAgain: f => { f.context.retainedJobs[0].started_at = f.context.retainedRun.run_started_at; },
+  foreignCurrentWorkflow: f => { f.context.retainedRun.path = '.github/workflows/other.yml'; },
+  foreignCurrentRepository: f => { f.context.retainedRun.repository = { full_name: 'foreign/repo' }; },
+  newerAttempt: f => { f.context.latestRun.run_attempt++; },
+  changedTree: f => { f.context.consumerProof.candidate.tree = 'd'.repeat(40); },
+  changedScope: f => { f.claim.plan.scope.tests.push('test/foreign.test.mjs'); },
+  changedRuntime: f => { f.claim.plan.toolchain.node = 'foreign'; },
+  changedRecipe: f => { f.claim.plan.recipe = 'd'.repeat(64); },
+  changedInputs: f => { f.context.candidateSnapshot.entries.set('src/widget.ts', { mode: '100644', oid: '4'.repeat(40) }); },
+  freshWaiver: f => { f.context.consumerProof.request.fresh = true; },
+  fullWaiver: f => { f.context.consumerProof.request.full = true; },
+  inheritedSource: f => { f.context.proof.taskChecks.tooling.mode = 'reused'; },
+  forgedPassport: f => { f.claim.retained = { sourceJobId: 101, currentJobId: 103 }; },
+  absentArtifact: f => { f.context.artifact = null; },
+  lateArtifact: f => { f.context.artifact.created_at = new Date(now).toISOString(); },
+  expired: f => { f.context.now = now + 1000 * 60 * 60 * 24 * 100; },
+})) test('#1067 retained execution refuses ' + name, async () => {
+  const f = await retainedFixture(); change(f);
+  const result = await verifyTaskCheckClaim(f.claim, f.context);
+  assert.equal(result.accepted, false, result.reason);
+});
+
+test('#1067 only producer sealing may observe the still-running current proof job', async () => {
+  const f = await retainedFixture();
+  f.context.retainedRun.status = 'in_progress'; f.context.retainedRun.conclusion = null;
+  f.context.latestRun = { ...f.context.retainedRun };
+  assert.equal((await verifyTaskCheckClaim(f.claim, f.context)).accepted, false);
+  const result = await verifyTaskCheckClaim(f.claim, { ...f.context, producing: true });
+  assert.equal(result.accepted, true, result.reason);
+});
