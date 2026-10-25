@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import { mkdtempSync, readFileSync, writeFileSync, unlinkSync, rmdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
+import { compareDaycycleFiles } from '../scripts/daycycle-compare.mjs';
 import { installDaycycleObservation, observeDaycycleFrames } from '../demo/helpers/daycycle-observation.mjs';
 import { daycycleEnvironment, beginDaycycleLayers, daycycleLayerNodes,
   daycycleTraceObservation } from '../demo/helpers/daycycle-diagnostics.mjs';
@@ -217,4 +222,25 @@ test('#1066 absent trust, missing frames/geometry and clock provenance remain in
   const report = observedReport();
   report.staticSamples[0].diagnostics.clockAlignment = { status: 'unavailable' };
   assert.equal(analyzeDaycycleReport(report).samples[0].temporalBins, null);
+});
+
+test('#1066 CLI reads plain/gzipped evidence and compactly reports every original sample and verdict', () => {
+  const root = mkdtempSync(join(tmpdir(), 'hp-daycycle-evidence-'));
+  const plain = join(root, 'plain.json'), compressed = join(root, 'compressed.bin');
+  const bytes = Buffer.from(JSON.stringify(observedReport()));
+  try {
+    writeFileSync(plain, bytes); writeFileSync(compressed, gzipSync(bytes));
+    const result = compareDaycycleFiles(plain, compressed);
+    assert.equal(result.matching.source, true);
+    assert.equal(result.right.samples.length, 6);
+    assert.equal(result.right.originalVerdict.rasterRatioWithinBudget, false);
+    const summary = compareDaycycleFiles(plain, compressed, { summary: true });
+    assert.equal(summary.reports.length, 2);
+    assert.ok(summary.reports.every(report => report.samples.length === 6));
+    assert.equal(summary.reports[1].samples[3].outlineViewBoxWrites, 30);
+    assert.equal(summary.reports[1].verdict.rasterRatioWithinBudget, false);
+    assert.deepEqual(readFileSync(plain), bytes, 'evidence never rewritten');
+    writeFileSync(compressed, '{invalid JSON');
+    assert.throws(() => compareDaycycleFiles(plain, compressed), SyntaxError);
+  } finally { unlinkSync(plain); unlinkSync(compressed); rmdirSync(root); }
 });

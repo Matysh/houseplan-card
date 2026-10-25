@@ -3695,13 +3695,18 @@ missing thread CPU durations are never inferred from elapsed task durations.
 CI saves the standalone raw report on success and failure. Selected-browser
 artifacts and full-smoke diagnostic artifacts contain the same JSON format.
 
-Compare two reports with `node scripts/daycycle-compare.mjs LEFT.json RIGHT.json`.
+Compare plain or gzip reports with `node scripts/daycycle-compare.mjs LEFT.json RIGHT.json`;
+`--summary` keeps every sample's metrics without the long temporal-bin detail.
 The summary preserves both original verdicts and all raw inputs. Its pointer
 interval bins describe temporal coincidence, not causal frame attribution.
 Source/tree/pins mismatches and missing historical observations stay explicit.
 The original ratio ceiling 2.0, three alternating pairs, native 60-step path,
 readiness guards and actual renderer are unchanged. An external resource-control
 run is diagnostic evidence only and never substitutes for ordinary CI proof.
+The bounded #1066 comparison and complete compressed reports are retained in
+`docs/reviews/evidence-1066/`. It reproduces the time-budget work-count mechanism
+but does not recover the historical runner's missing resource trigger. The
+reported observer overhead covers page callbacks, not every CDP/tracer effect.
 
 ## Local repository maintenance (#628)
 

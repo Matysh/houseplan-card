@@ -82,7 +82,6 @@ export const NOT_AN_INPUT = [
   ['scripts/golden-accept.mjs', 'приёмка эталонов человеком, после прогона (#344)'],
   ['scripts/golden-container.mjs', 'локальная съёмка в пиновом образе (#334), ручной запуск'],
   ['scripts/benchmark-wall-segment-model.mjs', 'ручной бенчмарк (npm run benchmark:wall-model)'],
-  ['scripts/daycycle-compare.mjs', 'ручное offline-сопоставление уже сохранённых JSON #1066; не исполняется Validate и не меняет результат исходного гейта'],
   ['scripts/coverage-reproject-1018.mjs', 'одноразовая ручная перепроекция immutable a34f для #1018: требует ignored raw capture, не вызывается Validate/nightly; общий index/report/maps проверяется frontend units'],
   ['scripts/wall-strip-containment.mjs', 'ручной гейт внешних бэкапов планов (docs/WALL-THICKNESS.md)'],
   ['scripts/sh3d-convert/make-fixtures.mjs', 'генератор фикстур конвертера, ручной'],

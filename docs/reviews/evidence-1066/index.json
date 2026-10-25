@@ -1,0 +1,386 @@
+{
+  "schema": 1,
+  "source": "be5ce50f72fe9a0d9b8311b76ee446821491704d",
+  "tree": "0d75dc999d569afccabd062a0b29775595cf682b",
+  "originalMaterial": "ef4eac9c3568f7831e43d2b375552954efc8a9b3",
+  "productSameAsOriginalEf4": true,
+  "sourceBlobs": {
+    "src/live-viewport.ts": "2202b4f62dcb7b1ffd1c984fa75cbed73351d73f",
+    "demo/smoke_daycycle_raster.mjs": "2f5903ac26f7d71547f74e06a9de064f6e34e928",
+    "demo/helpers/daycycle-measurement.mjs": "10c53b8066893196a0d8d9917bbc806d55d8ad5d",
+    "demo/helpers/daycycle-observation.mjs": "6d1b58b7a6899adc23d53755d15ebd9050b1824f",
+    "demo/helpers/daycycle-diagnostics.mjs": "9477f6b45d496d5d56dcc885cb8027f1c86da7fc",
+    "demo/serve.mjs": "f2407692f6735c534eff0b381c80c0350f0123aa"
+  },
+  "reports": [
+    {
+      "file": "ci.json.gz",
+      "provenance": {
+        "kind": "ordinary task CI",
+        "run": 40179808116,
+        "attempt": 1,
+        "job": 121128814694,
+        "artifact": 12594061208,
+        "exit": 0
+      },
+      "rawBytes": 6866114,
+      "gzipBytes": 187867,
+      "rawSha256": "ad8b60d1ee14d441ccadba624890bd50eb2b02bfc92f6247b8b87427215b3819",
+      "gzipSha256": "2af4dc5f2164ccc38d57f88f255b364fc73e058132172a4058616037969ff655",
+      "materialSha": "be5ce50f72fe9a0d9b8311b76ee446821491704d",
+      "materialTree": "0d75dc999d569afccabd062a0b29775595cf682b",
+      "originalVerdict": {
+        "valid": true,
+        "ceiling": 2,
+        "ratio": 1.214589872070187,
+        "pairedRatios": [
+          1.1427049655198191,
+          1.322234884954709,
+          1.214589872070187
+        ],
+        "pass": true
+      },
+      "samples": [
+        {
+          "mode": "static",
+          "round": 0,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 25,
+          "rasterTasks": 400,
+          "rasterElapsedMs": 107.018,
+          "pageCallbackElapsedMs": 3.80000000007567,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "static",
+          "round": 1,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 27,
+          "rasterTasks": 382,
+          "rasterElapsedMs": 101.786,
+          "pageCallbackElapsedMs": 3.0000000000873115,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "static",
+          "round": 2,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 28,
+          "rasterTasks": 382,
+          "rasterElapsedMs": 108.966,
+          "pageCallbackElapsedMs": 3.200000000069849,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 0,
+          "inputMedianMs": 83.30000000000291,
+          "outlineViewBoxWrites": 31,
+          "planViewBoxWrites": 31,
+          "rasterTasks": 682,
+          "rasterElapsedMs": 122.29,
+          "pageCallbackElapsedMs": 3.499999999985448,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 1,
+          "inputMedianMs": 83.30000000000291,
+          "outlineViewBoxWrites": 31,
+          "planViewBoxWrites": 31,
+          "rasterTasks": 682,
+          "rasterElapsedMs": 134.585,
+          "pageCallbackElapsedMs": 3.1000000000349246,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 2,
+          "inputMedianMs": 83.30000000000291,
+          "outlineViewBoxWrites": 31,
+          "planViewBoxWrites": 31,
+          "rasterTasks": 682,
+          "rasterElapsedMs": 132.349,
+          "pageCallbackElapsedMs": 3.19999999992433,
+          "clockAlignment": "available"
+        }
+      ],
+      "cameraWrites": [
+        {
+          "round": 0,
+          "writes": 31,
+          "afterPointerUp": 1,
+          "maxNormalizedX": 0.037523005558894235,
+          "maxNormalizedY": 0.04785690892992727,
+          "maxScale": 0
+        },
+        {
+          "round": 1,
+          "writes": 31,
+          "afterPointerUp": 1,
+          "maxNormalizedX": 0.037523005558894235,
+          "maxNormalizedY": 0.04785690892992727,
+          "maxScale": 0
+        },
+        {
+          "round": 2,
+          "writes": 31,
+          "afterPointerUp": 1,
+          "maxNormalizedX": 0.037523005558894235,
+          "maxNormalizedY": 0.04785690892992727,
+          "maxScale": 0
+        }
+      ]
+    },
+    {
+      "file": "wsl.json.gz",
+      "provenance": {
+        "kind": "ordinary author-owned pinned WSL",
+        "ciAuthority": false,
+        "exit": 0
+      },
+      "rawBytes": 6859685,
+      "gzipBytes": 187063,
+      "rawSha256": "7696e6dcb89ddb463f87f99c4bdcca58b9190f43e0be398f1a292c46e3ee69e1",
+      "gzipSha256": "c794ac64df9cdf16effe2873bd66b24df53a00980e3a4b93bedaec44babcfb58",
+      "materialSha": "be5ce50f72fe9a0d9b8311b76ee446821491704d",
+      "materialTree": "0d75dc999d569afccabd062a0b29775595cf682b",
+      "originalVerdict": {
+        "valid": true,
+        "ceiling": 2,
+        "ratio": 1.2819604369648656,
+        "pairedRatios": [
+          1.0994404071132142,
+          1.2819604369648656,
+          1.2833597137155048
+        ],
+        "pass": true
+      },
+      "samples": [
+        {
+          "mode": "static",
+          "round": 0,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 24,
+          "rasterTasks": 396,
+          "rasterElapsedMs": 106.506,
+          "pageCallbackElapsedMs": 3.1999999936670065,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "static",
+          "round": 1,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 26,
+          "rasterTasks": 361,
+          "rasterElapsedMs": 94.836,
+          "pageCallbackElapsedMs": 2.5000000009313226,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "static",
+          "round": 2,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 26,
+          "rasterTasks": 361,
+          "rasterElapsedMs": 87.186,
+          "pageCallbackElapsedMs": 3.1000000033527613,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 0,
+          "inputMedianMs": 66.79999999981374,
+          "outlineViewBoxWrites": 31,
+          "planViewBoxWrites": 31,
+          "rasterTasks": 682,
+          "rasterElapsedMs": 117.097,
+          "pageCallbackElapsedMs": 3.1999999983236194,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 1,
+          "inputMedianMs": 66.70000000018626,
+          "outlineViewBoxWrites": 31,
+          "planViewBoxWrites": 31,
+          "rasterTasks": 682,
+          "rasterElapsedMs": 121.576,
+          "pageCallbackElapsedMs": 3.600000004284084,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 2,
+          "inputMedianMs": 66.70000000018626,
+          "outlineViewBoxWrites": 31,
+          "planViewBoxWrites": 31,
+          "rasterTasks": 682,
+          "rasterElapsedMs": 111.891,
+          "pageCallbackElapsedMs": 2.999999998137355,
+          "clockAlignment": "available"
+        }
+      ],
+      "cameraWrites": [
+        {
+          "round": 0,
+          "writes": 31,
+          "afterPointerUp": 1,
+          "maxNormalizedX": 0.037523005558894235,
+          "maxNormalizedY": 0.04785690892992727,
+          "maxScale": 0
+        },
+        {
+          "round": 1,
+          "writes": 31,
+          "afterPointerUp": 1,
+          "maxNormalizedX": 0.037523005558894235,
+          "maxNormalizedY": 0.04785690892992727,
+          "maxScale": 0
+        },
+        {
+          "round": 2,
+          "writes": 31,
+          "afterPointerUp": 1,
+          "maxNormalizedX": 0.037523005558894235,
+          "maxNormalizedY": 0.04785690892992727,
+          "maxScale": 0
+        }
+      ]
+    },
+    {
+      "file": "controlled.json.gz",
+      "provenance": {
+        "kind": "one bounded WSL CPU1 plus one owned competing worker",
+        "ciAuthority": false,
+        "exit": 1,
+        "onlyFailedCheck": "rasterRatioWithinBudget",
+        "measurementTimeoutSeconds": 180,
+        "killAfterSeconds": 10
+      },
+      "rawBytes": 7463147,
+      "gzipBytes": 211157,
+      "rawSha256": "a5db4fcba2cc2de0a65deea1102de492bed750a142e56a2c3c4309b8bfc44417",
+      "gzipSha256": "12d9cdb7d6803a41887ebdce4b92fad18cd3a563d7d60a7478296404d2c61c98",
+      "materialSha": "be5ce50f72fe9a0d9b8311b76ee446821491704d",
+      "materialTree": "0d75dc999d569afccabd062a0b29775595cf682b",
+      "originalVerdict": {
+        "valid": true,
+        "ceiling": 2,
+        "ratio": 2.3645784924249464,
+        "pairedRatios": [
+          1.7870976987961673,
+          2.3645784924249464,
+          2.488242230082983
+        ],
+        "pass": false
+      },
+      "samples": [
+        {
+          "mode": "static",
+          "round": 0,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 25,
+          "rasterTasks": 395,
+          "rasterElapsedMs": 48.844,
+          "pageCallbackElapsedMs": 2.800000003539026,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "static",
+          "round": 1,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 25,
+          "rasterTasks": 361,
+          "rasterElapsedMs": 43.036,
+          "pageCallbackElapsedMs": 2.200000003911555,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "static",
+          "round": 2,
+          "inputMedianMs": 50,
+          "outlineViewBoxWrites": 0,
+          "planViewBoxWrites": 25,
+          "rasterTasks": 361,
+          "rasterElapsedMs": 44.949,
+          "pageCallbackElapsedMs": 2.3999999994412065,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 0,
+          "inputMedianMs": 116.70000000018626,
+          "outlineViewBoxWrites": 60,
+          "planViewBoxWrites": 60,
+          "rasterTasks": 1237,
+          "rasterElapsedMs": 87.289,
+          "pageCallbackElapsedMs": 2.399999998509884,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 1,
+          "inputMedianMs": 116.70000000018626,
+          "outlineViewBoxWrites": 60,
+          "planViewBoxWrites": 60,
+          "rasterTasks": 1237,
+          "rasterElapsedMs": 101.762,
+          "pageCallbackElapsedMs": 2.700000001117587,
+          "clockAlignment": "available"
+        },
+        {
+          "mode": "daynight",
+          "round": 2,
+          "inputMedianMs": 116.70000000018626,
+          "outlineViewBoxWrites": 60,
+          "planViewBoxWrites": 60,
+          "rasterTasks": 1237,
+          "rasterElapsedMs": 111.844,
+          "pageCallbackElapsedMs": 2.9000000013038516,
+          "clockAlignment": "available"
+        }
+      ],
+      "cameraWrites": [
+        {
+          "round": 0,
+          "writes": 60,
+          "afterPointerUp": 0,
+          "maxNormalizedX": 0.018761502779447117,
+          "maxNormalizedY": 0.02392847397748162,
+          "maxScale": 0
+        },
+        {
+          "round": 1,
+          "writes": 60,
+          "afterPointerUp": 0,
+          "maxNormalizedX": 0.018761502779447117,
+          "maxNormalizedY": 0.02392847397748162,
+          "maxScale": 0
+        },
+        {
+          "round": 2,
+          "writes": 60,
+          "afterPointerUp": 0,
+          "maxNormalizedX": 0.018761502779447117,
+          "maxNormalizedY": 0.02392847397748162,
+          "maxScale": 0
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Mutation delivery timestamps are upper bounds.",
+    "Only page-callback overhead is measured directly.",
+    "Historical CI had no page/layer/resource telemetry; its exact resource trigger is unknown.",
+    "Controlled negative evidence is not ordinary CI or release authority."
+  ]
+}
