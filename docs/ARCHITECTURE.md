@@ -2175,8 +2175,15 @@ This is a local workflow contract, not a new CI or author-identity authority.
 Counter rebase equivalence (#1068) is a task-delta comparison across the old
 and accepted new base. `status-counter-equivalence.mjs` validates four Tests
 values against immutable Git blobs with bounded, no-lazy-fetch reads; it never
-loads a task's generator. `review-task-delta.mjs` preserves other patch bytes
-and modes. The trusted publisher certifies a green report and its base/material,
+loads a task's generator. `review-task-delta.mjs` binds changed files to their
+complete before/after blob identities, hunk positions and modes, normalizing
+only those four validated values before the STATUS blob identities are computed.
+An identical edit moved elsewhere is different; upstream edits to a task-touched
+file conservatively require ordinary review. The sole structured case is the
+canonical CI registry inventory: additions/removals are bound to their complete
+job/protocol key and unique sorted path values, so a shifted array index is
+harmless but moving a path to another job changes the delta. CI fingerprints
+still include the raw inventory. The trusted publisher certifies a green report and its base/material,
 body and delta identities in a durable artifact. Reentry authenticates that
 artifact before retaining green. It requires final candidate Validate even
 on fast-forward; ordinary proof consumers still invalidate changed inputs.

@@ -210,7 +210,9 @@ function fixture(t) {
   const run = (step, extra) => {
     const output = join(temp, `output-${Math.random().toString(36).slice(2)}`);
     const summary = join(temp, 'summary.md');
-    const r = runStep(findStep(workflow(), `      - name: ${step.name}\n`, '_process.yml'), step.run, {
+    // Actions resolves this context before bash receives the real step body.
+    const body = step.run.replaceAll('${{ github.repository }}', 'o/r');
+    const r = runStep(findStep(workflow(), `      - name: ${step.name}\n`, '_process.yml'), body, {
       cwd: work, encoding: 'utf8', env: { ...env, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, ...extra },
     });
     let out = '';

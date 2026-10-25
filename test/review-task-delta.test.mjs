@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { canonicalReviewDiff, counterOnlyTaskRebase, reviewTaskDelta } from '../scripts/review-task-delta.mjs';
+import { counterOnlyTaskRebase, registryInventoryReviewDelta, reviewTaskDelta } from '../scripts/review-task-delta.mjs';
 import { STATUS_COUNTER_BEGIN, STATUS_COUNTER_END, STATUS_COUNTER_POLICY_PATHS } from '../scripts/status-counter-equivalence.mjs';
 import { anchorRebaseCertificateFrom, reviewDocumentDigest, reusableCounterGreenVerdict } from '../scripts/review-doc-guard.mjs';
 
@@ -16,7 +16,8 @@ const snapshot = n => [STATUS_COUNTER_BEGIN, '| Item | State |', '|---|---|',
   '| Latest stable tag | `v1.82.0` |', '| Latest prerelease tag | `v1.83.0-beta.2` |',
   `| Tests | Node unit ${n} · pure backend 0 · HA-harness backend 0 · browser smokes 0 (\`npm run inventory\`) |`,
   STATUS_COUNTER_END, '', 'Human status text stays significant.', ''].join('\n');
-function fixture(t) {
+function fixture(t, { baseSource = 'export const value = 1;\n', taskSource = 'export const value = 2;\n',
+  statusText = '', taskStatusText = statusText } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'hp-review-delta-test-'));
   assert.ok(resolve(root).startsWith(resolve(tmpdir()) + sep));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -27,15 +28,15 @@ function fixture(t) {
   git('init', '-q'); git('config', 'core.autocrlf', 'false');
   for (const path of STATUS_COUNTER_POLICY_PATHS) put(path, readFileSync(join(REPO, path), 'utf8').replace(/\r\n/g, '\n'));
   for (const path of ['test/.keep', 'tests_backend/.keep', 'demo/.keep']) put(path, 'fixture\n');
-  put('docs/STATUS.md', snapshot(0)); put('src/fixture.mjs', 'export const value = 1;\n');
+  put('docs/STATUS.md', snapshot(0) + statusText); put('src/fixture.mjs', baseSource);
   const oldBase = commit();
-  const task = () => { put('test/task.test.mjs', "test('task', () => {});\n"); put('src/fixture.mjs', 'export const value = 2;\n'); };
-  task(); put('docs/STATUS.md', snapshot(1)); const oldMaterial = commit();
+  const task = () => { put('test/task.test.mjs', "test('task', () => {});\n"); put('src/fixture.mjs', taskSource); };
+  task(); put('docs/STATUS.md', snapshot(1) + taskStatusText); const oldMaterial = commit();
   git('checkout', '-q', '--detach', oldBase);
   put('test/upstream.test.mjs', "test('upstream', () => {});\n");
   put('test/fixtures/upstream.json', '{"realRuntimeInput":true}\n');
-  put('docs/STATUS.md', snapshot(1)); const newBase = commit();
-  task(); put('docs/STATUS.md', snapshot(2)); const newMaterial = commit();
+  put('docs/STATUS.md', snapshot(1) + statusText); const newBase = commit();
+  task(); put('docs/STATUS.md', snapshot(2) + taskStatusText); const newMaterial = commit();
   return { root, git, put, commit, oldBase, oldMaterial, newBase, newMaterial,
     old: () => reviewTaskDelta({ root, base: oldBase, material: oldMaterial }),
     current: () => reviewTaskDelta({ root, base: newBase, material: 'HEAD' }) };
@@ -103,12 +104,82 @@ test('#1068 immutable delta reads ignore inherited Git repository, index and obj
   }
 });
 
-test('#1068 canonical diff preserves bytes and binary identity while ignoring only text blob IDs and hunk coordinates', () => {
-  const diff = 'diff --git a/a b/a\nindex aabb..ccdd 100644\n--- a/a\n+++ b/a\n@@ -1 +1 @@ context\n-a\n+b\n';
-  assert.equal(canonicalReviewDiff(diff), canonicalReviewDiff(diff.replace('aabb..ccdd', 'eeee..ffff').replace('-1 +1', '-8 +9')));
-  assert.notEqual(canonicalReviewDiff(diff), canonicalReviewDiff(diff.replace('+b', '+ b')));
-  const binary = diff.split('@@')[0] + 'Binary files a/a and b/a differ\n';
-  assert.notEqual(canonicalReviewDiff(binary), canonicalReviewDiff(binary.replace('aabb..ccdd', 'eeee..ffff')));
+test('#1068 equal edit bytes cannot relocate between functions or between duplicate blocks inside one function', t => {
+  const cases = [
+    'export function alpha() {\n  const value = 1;\n  return value;\n}\n\nexport function beta() {\n  const value = 1;\n  return value;\n}\n',
+    'export function choose(branch) {\n  if (branch === 1) {\n    const value = 1;\n    return value;\n  }\n  if (branch === 2) {\n    const value = 1;\n    return value;\n  }\n}\n',
+  ];
+  for (const baseSource of cases) {
+    const taskSource = baseSource.replace('const value = 1', 'const value = 2');
+    const second = baseSource.lastIndexOf('const value = 1');
+    const relocated = baseSource.slice(0, second) + baseSource.slice(second).replace('const value = 1', 'const value = 2');
+    const f = fixture(t, { baseSource, taskSource }), reviewed = f.old();
+    assert.equal(counterOnlyTaskRebase(reviewed, f.current()), true, 'same location with counter drift stays reusable');
+    f.put('src/fixture.mjs', relocated); f.commit();
+    const current = f.current();
+    assert.notEqual(reviewed.normalized_delta, current.normalized_delta, 'location is bound to both full file identities');
+    assert.equal(counterOnlyTaskRebase(reviewed, current), false);
+  }
+});
+
+test('#1068 handwritten STATUS edits retain location identity after counter normalization', t => {
+  const statusText = '## First workflow\nEnabled: no\n\n## Second workflow\nEnabled: no\n';
+  const taskStatusText = statusText.replace('Enabled: no', 'Enabled: yes');
+  const f = fixture(t, { statusText, taskStatusText }), reviewed = f.old();
+  assert.equal(counterOnlyTaskRebase(reviewed, f.current()), true);
+  const second = statusText.lastIndexOf('Enabled: no');
+  f.put('docs/STATUS.md', snapshot(2) + statusText.slice(0, second) + statusText.slice(second).replace('Enabled: no', 'Enabled: yes'));
+  f.commit();
+  assert.equal(counterOnlyTaskRebase(reviewed, f.current()), false);
+});
+
+test('#1068 upstream edits inside a task-touched ordinary file conservatively require fresh review', t => {
+  const f = fixture(t), reviewed = f.old();
+  f.git('checkout', '-q', '--detach', f.newBase);
+  f.put('src/fixture.mjs', '// accepted upstream context\nexport const value = 1;\n');
+  const base = f.commit();
+  f.put('src/fixture.mjs', '// accepted upstream context\nexport const value = 2;\n');
+  f.put('test/task.test.mjs', "test('task', () => {});\n"); f.put('docs/STATUS.md', snapshot(2));
+  const material = f.commit();
+  assert.equal(counterOnlyTaskRebase(reviewed, reviewTaskDelta({ root: f.root, base, material })), false);
+});
+
+test('#1068 upstream STATUS prose drift with unchanged counter edit cannot create a general rebase exception', t => {
+  const f = fixture(t), reviewed = f.old();
+  f.git('checkout', '-q', '--detach', f.oldBase);
+  f.put('test/fixtures/other.json', '{"accepted":true}\n');
+  f.put('docs/STATUS.md', snapshot(0) + 'Accepted upstream note.\n'); const base = f.commit();
+  f.put('src/fixture.mjs', 'export const value = 2;\n');
+  f.put('test/task.test.mjs', "test('task', () => {});\n");
+  f.put('docs/STATUS.md', snapshot(1) + 'Accepted upstream note.\n'); const material = f.commit();
+  const current = reviewTaskDelta({ root: f.root, base, material });
+  assert.equal(reviewed.raw_delta, current.raw_delta, 'metadata drift alone is not a changed counter edit');
+  assert.equal(counterOnlyTaskRebase(reviewed, current), false);
+});
+
+test('#1068 canonical inventory binds each path edit to its job despite unrelated upstream array offsets', () => {
+  const blob = (changes = {}) => ({ mode: '100644', text: JSON.stringify({ schema: 1,
+    jobs: Object.fromEntries(['frontend', 'backend', 'geometry_parity', 'smoke', 'golden', 'performance_smoke']
+      .map(job => [job, changes[job] || []])), protocol: changes.protocol || [] }, null, 2) + '\n' });
+  const before = blob({ frontend: ['src/a.ts'], smoke: ['src/a.ts'] });
+  const after = blob({ frontend: ['src/a.ts', 'test/task.test.mjs'], smoke: ['src/a.ts'] });
+  const upstream = blob({ frontend: ['src/a.ts', 'test/accepted.test.mjs'], smoke: ['src/a.ts'] });
+  const same = blob({ frontend: ['src/a.ts', 'test/accepted.test.mjs', 'test/task.test.mjs'], smoke: ['src/a.ts'] });
+  const relocated = blob({ frontend: ['src/a.ts', 'test/accepted.test.mjs'], smoke: ['src/a.ts', 'test/task.test.mjs'] });
+  assert.equal(registryInventoryReviewDelta(before, after), registryInventoryReviewDelta(upstream, same));
+  assert.notEqual(registryInventoryReviewDelta(before, after), registryInventoryReviewDelta(upstream, relocated));
+  assert.notEqual(registryInventoryReviewDelta(before, after), registryInventoryReviewDelta(before, { ...after, mode: '100755' }));
+  for (const value of [
+    blob({ frontend: ['src/a.ts', 'src/a.ts'] }),
+    blob({ frontend: ['src/z.ts', 'src/a.ts'] }),
+    blob({ frontend: ['../escape.ts'] }),
+    { ...after, text: after.text.replace('"schema": 1,', '"schema": 1,\n  "schema": 1,') },
+    { ...after, text: after.text.replace('"schema": 1', '"schema": 2') },
+    { ...after, text: after.text.replace('"jobs": {', '"extra": true,\n  "jobs": {') },
+    { ...after, text: after.text.replace('"frontend": [', '"unknownJob": [') },
+    { ...after, text: after.text.trim() },
+    { ...after, mode: '120000' }, null,
+  ]) assert.throws(() => registryInventoryReviewDelta(before, value), /inventory|JSON|Registry/);
 });
 
 test('#1068 trusted publisher CLI binds its actual report and immutable delta for a later manual rebase', async t => {

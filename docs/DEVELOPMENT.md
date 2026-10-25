@@ -4391,6 +4391,12 @@ provenance falls back to ordinary review. Automatic and author rebases use the
 same counter validation and recalculate from the combined tracked inputs,
 including a clean Git merge of equal increments. Handwritten prose, version,
 date, tags and unsupported generator changes remain outside the exception.
+Full blob identities and hunk positions prevent an identical textual edit from
+moving to a different function or block under the old green verdict. Changed
+upstream context in a task-touched file conservatively falls back to review.
+Canonical CI inventory arrays instead use their job/protocol keys and unique
+sorted added/removed paths; changing the job is significant, changing a list's
+line number is not. This comparison never removes the inventory from CI inputs.
 The resulting candidate still passes Validate; reuse does not suppress checks
 whose actual inputs changed in incoming dev commits. Test this boundary with
 `node --test test/status-counter-equivalence.test.mjs test/status-counter-rebase.test.mjs
