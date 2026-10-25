@@ -20,10 +20,16 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5365 · pure backend 640 · HA-harness backend 538 · browser smokes 438 (`npm run inventory`) |
+| Tests | Node unit 5370 · pure backend 641 · HA-harness backend 539 · browser smokes 439 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Device settings from View (#1050) use the existing device dialog for the saved
+tap action and right click. Only a loaded writer outside kiosk can open it;
+denied users receive a permission hint. Cold and deferred entry retain current
+authority/navigation and resolve the current visible target before opening.
+The action persists through copy and full/space transfer without migration.
 
 CI task scope (#1060) shares one bounded required smoke selection across local
 gate, packet and CI; weak lexical matches remain deferred diagnostics. Immutable

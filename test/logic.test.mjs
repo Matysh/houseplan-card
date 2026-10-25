@@ -34,7 +34,7 @@ import {
 } from '../test-build/rules.js';
 
 test('tap action editor choices keep the canonical order', () => {
-  assert.deepEqual([...TAP_ACTIONS], ['info', 'more-info', 'toggle', 'run', 'none']);
+  assert.deepEqual([...TAP_ACTIONS], ['info', 'more-info', 'settings', 'toggle', 'run', 'none']);
 });
 
 test('room tooltip preference is default-on and only exact false disables it', () => {

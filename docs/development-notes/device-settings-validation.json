@@ -1,0 +1,535 @@
+{
+  "schema": 1,
+  "issue": 1050,
+  "baseStable": "v1.82.0",
+  "before": {
+    "material": "4dd092a031080afee33f00fb0c724f5972b7dcb8",
+    "productAModified": false,
+    "command": "node artifacts/bulk-s8/1050-ordinary-before-4dd-context-final.mjs",
+    "environment": "Windows Node 22.23.3 / Playwright 1.62.0 / Chromium 151.0.7922.34 rev1234",
+    "recipeSha256": "071a5428c7857c3a1c46ca733ddba713a75d24397479d307d969143bfb44a521",
+    "receiptSha256": "c0cfc68e590a1a670318bdb1b51759709a6ca147e32e2f8d7f49ef2ae5b45274",
+    "predicates": {
+      "initialWriterOutsideKiosk": true,
+      "actualTargetVisible": true,
+      "settingsTapOpensExactCurrentDialog": false,
+      "settingsTapDoesNotOpenInfo": false,
+      "settingsTapDoesNotConfirmOrCallHA": true,
+      "settingsTapStaysView": true,
+      "actualTrustedClick": true,
+      "existingInfoEditStillOpensCorrectTarget": true,
+      "settingsIsOfferedInActualSelector": false,
+      "noneShortClickRemainsNoOp": true,
+      "rightClickIgnoresSavedNoneAndOpensSettings": false,
+      "rightClickHasNoMoreInfoSideEffect": false,
+      "actualContextMenuConsumed": true,
+      "noServiceCalls": true
+    },
+    "passed": 9,
+    "expectedFeatureFailures": 5
+  },
+  "after": {
+    "material": {
+      "source": "ed3531540429c08a68a34c066005c7b4c99e6b7a",
+      "fingerprint": "a73baa99eb454aa30629c728c82768d46777b56d3c92d742e32fc927a2d253d1"
+    },
+    "productMaterial": "da71b9ffd (ordinary accepted-#1056 merge; ed353 changes only legacy smoke closure)",
+    "command": "node demo/smoke_device_settings_action.mjs",
+    "buildEnvironment": "Windows Node 22.23.3 / Rollup 4.62.2",
+    "browserEnvironment": "Linux Node 22.23.3 / Playwright 1.62.0 / Chromium headless-shell 151.0.7922.34 rev1234",
+    "buildFingerprint": "a73baa99eb454aa30629c728c82768d46777b56d3c92d742e32fc927a2d253d1",
+    "manifestSha256": "53ccbeb15da022e098def26de8ac57e5233479cbd1b8d20012237b8cf4f84f1c",
+    "recipeSha256": "09ac5a222a1a4445c950bf25f93558db27f075286c11b1ac476da4feb0154c79",
+    "receiptSha256": "30958589d2df962840046b937548ee7b0ff5b7cee485905944af553abe859567",
+    "passed": 113,
+    "failed": 0,
+    "exitCode": 0,
+    "namedChecks": [
+      "denied/kiosk/en/right:exactToastNoOtherAction",
+      "denied/kiosk/en/tap:exactToastNoOtherAction",
+      "denied/kiosk/ru/right:exactToastNoOtherAction",
+      "denied/kiosk/ru/tap:exactToastNoOtherAction",
+      "denied/kiosk:adminDoesNotOverrideHousePlanPermission",
+      "denied/kiosk:noLazyRequestOrRuntime",
+      "denied/no-write/en/right:exactToastNoOtherAction",
+      "denied/no-write/en/tap:exactToastNoOtherAction",
+      "denied/no-write/ru/right:exactToastNoOtherAction",
+      "denied/no-write/ru/tap:exactToastNoOtherAction",
+      "denied/no-write:adminDoesNotOverrideHousePlanPermission",
+      "denied/no-write:noLazyRequestOrRuntime",
+      "denied/unloaded:adminDoesNotOverrideHousePlanPermission",
+      "denied/unloaded:noLazyRequestOrRuntime",
+      "denied/unloaded:noSettingsOrOtherAction",
+      "denied/unloaded:oldNativeTargetIsQuarantined",
+      "fixture:coldViewHasNoEditor",
+      "fixture:noEditorResourceBeforeIntent",
+      "fixture:spaceAndRebindingTargetExist",
+      "flat/Enter:exactTargetAndOnlySettings",
+      "flat/Enter:noServiceWriteMoreInfoOrPressFeedback",
+      "flat/Space:exactTargetAndOnlySettings",
+      "flat/Space:noServiceWriteMoreInfoOrPressFeedback",
+      "flat/rightSavedNone:exactTargetAndOnlySettings",
+      "flat/rightSavedNone:noServiceWriteMoreInfoOrPressFeedback",
+      "flat/tap:exactTargetAndOnlySettings",
+      "flat/tap:noServiceWriteMoreInfoOrPressFeedback",
+      "form:settingsPersistedSelectorIsOffered",
+      "held/ABA:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/ABA:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/ABA:importActuallyPending",
+      "held/ABA:oldIntentDoesNotOpen",
+      "held/connection:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/connection:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/connection:importActuallyPending",
+      "held/connection:oldIntentDoesNotOpen",
+      "held/delete:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/delete:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/delete:importActuallyPending",
+      "held/delete:oldIntentDoesNotOpen",
+      "held/detach:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/detach:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/detach:importActuallyPending",
+      "held/detach:oldIntentDoesNotOpen",
+      "held/hidden:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/hidden:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/hidden:importActuallyPending",
+      "held/hidden:oldIntentDoesNotOpen",
+      "held/mode:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/mode:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/mode:importActuallyPending",
+      "held/mode:oldIntentDoesNotOpen",
+      "held/move:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/move:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/move:importActuallyPending",
+      "held/move:oldIntentDoesNotOpen",
+      "held/newest:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/newest:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/newest:importActuallyPending",
+      "held/newest:onlyLatestWins:exactTargetAndOnlySettings",
+      "held/newest:onlyLatestWins:noServiceWriteMoreInfoOrPressFeedback",
+      "held/permission:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/permission:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/permission:importActuallyPending",
+      "held/permission:oldIntentDoesNotOpen",
+      "held/rebind:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/rebind:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/rebind:freshInputDoesNotAddWrite",
+      "held/rebind:importActuallyPending",
+      "held/rebind:noWriteFromRetiredIntent",
+      "held/rebind:oldIntentDoesNotOpen",
+      "held/route:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/route:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/route:importActuallyPending",
+      "held/route:oldIntentDoesNotOpen",
+      "held/space:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/space:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/space:importActuallyPending",
+      "held/space:oldIntentDoesNotOpen",
+      "held/user:freshCurrentIntent:exactTargetAndOnlySettings",
+      "held/user:freshCurrentIntent:noServiceWriteMoreInfoOrPressFeedback",
+      "held/user:importActuallyPending",
+      "held/user:oldIntentDoesNotOpen",
+      "iso/Enter:exactTargetAndOnlySettings",
+      "iso/Enter:noServiceWriteMoreInfoOrPressFeedback",
+      "iso/Space:exactTargetAndOnlySettings",
+      "iso/Space:noServiceWriteMoreInfoOrPressFeedback",
+      "iso/rightSavedNone:exactTargetAndOnlySettings",
+      "iso/rightSavedNone:noServiceWriteMoreInfoOrPressFeedback",
+      "iso/tap:exactTargetAndOnlySettings",
+      "iso/tap:noServiceWriteMoreInfoOrPressFeedback",
+      "loader:oneRuntimeForColdAndWarmEntries",
+      "native:trustedConsumedContextMenu",
+      "native:trustedKey/ ",
+      "native:trustedKey/Enter",
+      "native:trustedMouseClick",
+      "native:trustedTouch",
+      "none:shortTapRemainsNoOp",
+      "rebindControl:noEditorIntentOrOtherAction",
+      "rebindControl:onlyExistingAreaProvenanceWrite",
+      "retry:currentRequest:exactTargetAndOnlySettings",
+      "retry:currentRequest:noServiceWriteMoreInfoOrPressFeedback",
+      "retry:onePlainAndOneActualHashedRetry",
+      "selector:SaveAndReopenNeverCallHAServiceOrMoreInfo",
+      "selector:SavePersistsSettingsWithoutTouchingConfirmation",
+      "selector:oneExistingConfigWriter",
+      "selector:reopenTargetsSameDeviceAndSavedValue",
+      "touch/flat:exactTargetAndOnlySettings",
+      "touch/flat:noServiceWriteMoreInfoOrPressFeedback",
+      "touch/iso:exactTargetAndOnlySettings",
+      "touch/iso:noServiceWriteMoreInfoOrPressFeedback",
+      "writer:nonAdminStillAllowed:exactTargetAndOnlySettings",
+      "writer:nonAdminStillAllowed:noServiceWriteMoreInfoOrPressFeedback"
+    ],
+    "rebindTimeline": {
+      "beforeSetup": {
+        "at": 1792841124627,
+        "target": null,
+        "visible": false,
+        "mode": "view",
+        "other": false,
+        "writes": 0,
+        "services": 0,
+        "moreInfo": 0,
+        "feedback": 0,
+        "writePayloadSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "afterPublicRebind": {
+        "at": 1792841124743,
+        "target": null,
+        "visible": false,
+        "mode": "view",
+        "other": false,
+        "writes": 1,
+        "services": 0,
+        "moreInfo": 0,
+        "feedback": 0,
+        "writePayloadSha256": "30564703caa3f3af729575618e2b9129f930a4ae19e4e9c29d01d0222628210e"
+      },
+      "afterOldImportRelease": {
+        "at": 1792841124860,
+        "target": null,
+        "visible": false,
+        "mode": "view",
+        "other": false,
+        "writes": 1,
+        "services": 0,
+        "moreInfo": 0,
+        "feedback": 0,
+        "writePayloadSha256": "30564703caa3f3af729575618e2b9129f930a4ae19e4e9c29d01d0222628210e"
+      },
+      "beforeFreshInput": {
+        "at": 1792841124976,
+        "target": null,
+        "visible": false,
+        "mode": "view",
+        "other": false,
+        "writes": 1,
+        "services": 0,
+        "moreInfo": 0,
+        "feedback": 0,
+        "writePayloadSha256": "30564703caa3f3af729575618e2b9129f930a4ae19e4e9c29d01d0222628210e"
+      },
+      "afterFreshInput": {
+        "at": 1792841125097,
+        "target": "d_temp",
+        "visible": true,
+        "mode": "view",
+        "other": false,
+        "writes": 1,
+        "services": 0,
+        "moreInfo": 0,
+        "feedback": 0,
+        "writePayloadSha256": "30564703caa3f3af729575618e2b9129f930a4ae19e4e9c29d01d0222628210e"
+      }
+    },
+    "rebindControl": {
+      "target": null,
+      "visible": false,
+      "mode": "view",
+      "other": false,
+      "writes": 1,
+      "services": 0,
+      "moreInfo": 0,
+      "feedback": 0,
+      "writePayloadSha256": "30564703caa3f3af729575618e2b9129f930a4ae19e4e9c29d01d0222628210e"
+    },
+    "unloaded": {
+      "target": null,
+      "visible": false,
+      "mode": "view",
+      "other": false,
+      "writes": 0,
+      "services": 0,
+      "moreInfo": 0,
+      "feedback": 0,
+      "writePayloadSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "rebindPayloadMatchesOrdinaryControl": true
+  },
+  "targetedUnits": {
+    "command": "node --test test/device-settings-action.test.mjs test/device-editor-permissions-runtime.test.mjs test/logic.test.mjs",
+    "passed": 141,
+    "failed": 0
+  },
+  "backend": {
+    "environment": "Diagnostic WSL Python3.14.7 / HA2026.8.3; CI still uses repository pins",
+    "command": "python -m pytest tests_backend/test_ha_import_export.py::test_issue1050_settings_action_survives_export_parse_and_apply tests_backend/test_validation.py::test_every_tap_action_the_editor_offers_is_accepted -q -p no:cacheprovider",
+    "passed": 3,
+    "failed": 0
+  },
+  "metrics": {
+    "environment": "Matched Windows Node22.23.3 / Rollup4.62.2",
+    "acceptedDev": "7ee838b2c192be7f1382e7459a67aad98d62e5c9",
+    "accepted": {
+      "bundleBytes": 3432625,
+      "initialViewGzip": 339665,
+      "lazyEditorGzip": 343953,
+      "hostRefs": 6090
+    },
+    "current": {
+      "bundleBytes": 3434473,
+      "initialViewGzip": 340142,
+      "lazyEditorGzip": 344030,
+      "hostRefs": 6090
+    },
+    "delta": {
+      "bundleBytes": 1848,
+      "initialViewGzip": 477,
+      "lazyEditorGzip": 77,
+      "hostRefs": 0
+    },
+    "budgetResult": "PASS; reference, band and absolute budgets unchanged"
+  },
+  "negativeWitness": {
+    "id": "view-settings-retired-intent-accepted",
+    "status": "registered, static readiness PASS; not executed (nightly only)",
+    "pureCases": "same binding/current floor/visibility and actual deferred-runtime resolver negative cases"
+  },
+  "limitations": [
+    "Unloaded configuration removes the actual marker. The native witness proves quarantine and zero lazy/UI/service effects; no fabricated click or toast is claimed.",
+    "Public rebinding triggers the existing area-provenance writer before the settings intent. The ordinary no-intent control and complete payload remain equal; old import release and fresh settings input add no write.",
+    "Full regression, global Golden acceptance and mutants were not run locally. Final combined-base guards, normal hook and independent CODE remain required."
+  ],
+  "finalIntegration": {
+    "acceptedDev": "af23dada6097584b17007169443719eee377fb31",
+    "productExecutionSource": "a49220f15bc90ddae2b7c85618866676893e7f67",
+    "fingerprint": "81e9ef92a99b193063588917cf872136f2a08d745306a90b37d3a9fbb21612b0",
+    "manifestSha256": "18541b390f9a2ea231595ad66f9bfb904e6eb99b373f3fd09732b517a06fe599",
+    "merge": {
+      "conflicts": "Five B/C documentation/registration conflicts; no product conflict.",
+      "productPatchBefore": "37b0a20dbee0c04e1e9fcea221fb385a09134f49",
+      "productPatchAfter": "37b0a20dbee0c04e1e9fcea221fb385a09134f49",
+      "preserved": "Accepted keyboard nudge, group Properties receipt/authority/retirement and node-edit lifecycle; current-target resolver is re-evaluated after deferred Properties without fallback to a retired device."
+    },
+    "build": {
+      "environment": "Windows Node22.23.3 / Rollup4.62.2",
+      "command": "npm run bundle:sync",
+      "result": "PASS"
+    },
+    "native": {
+      "command": "node demo/smoke_device_settings_action.mjs",
+      "environment": "Linux Node22.23.3 / Playwright1.62.0 / Chromium headless-shell151.0.7922.34 rev1234",
+      "passed": 113,
+      "failed": 0,
+      "source": "a49220f15bc90ddae2b7c85618866676893e7f67",
+      "receipt": "artifacts/bulk-s8/1050-final-native-a492.json",
+      "receiptSha256": "751a2e65f0e722f94282348141b9951f8fe3c611cc43e40ffa72f5661d4f1b1f"
+    },
+    "requiredScope": {
+      "policyIssue": 1060,
+      "smokes": [
+        "smoke_area_relocation_safety.mjs",
+        "smoke_config_authority.mjs",
+        "smoke_config_reload_race.mjs",
+        "smoke_controls.mjs",
+        "smoke_detached_authority.mjs",
+        "smoke_device_copy.mjs",
+        "smoke_device_hit_capsules.mjs",
+        "smoke_device_icon_design.mjs",
+        "smoke_device_position_history.mjs",
+        "smoke_device_settings_action.mjs",
+        "smoke_editor_gestures.mjs",
+        "smoke_info_card_confirm.mjs",
+        "smoke_info_card_context.mjs",
+        "smoke_isometric_contract.mjs",
+        "smoke_isometric_live_touch.mjs",
+        "smoke_linked_virtual_light.mjs",
+        "smoke_live_pan_coverage.mjs",
+        "smoke_mounted_authority.mjs",
+        "smoke_optimize_cleanup.mjs",
+        "smoke_orphan_space_references.mjs",
+        "smoke_post_write_adoption.mjs",
+        "smoke_space_delete_with_devices.mjs",
+        "smoke_summary_panel.mjs",
+        "smoke_tap_ctx.mjs",
+        "smoke_version_recovery.mjs",
+        "smoke_view_recovery.mjs"
+      ],
+      "golden": [],
+      "deferred": "Weak/broad inferred work remains deferred whole to beta/night; explicit required checks are retained.",
+      "firstRun": {
+        "source": "a49220f15bc90ddae2b7c85618866676893e7f67",
+        "passed": 24,
+        "failed": 2,
+        "receipt": "artifacts/bulk-s8/1050-final-required-a492.json"
+      },
+      "legacyRepairs": [
+        {
+          "smoke": "smoke_editor_gestures.mjs",
+          "before": {
+            "passed": 16,
+            "failed": 2
+          },
+          "after": {
+            "passed": 18,
+            "failed": 0
+          },
+          "retained": "Pinch/compatibility/terminal/hold/pan/draw guards; noActivation additionally refuses marker dialogs. Current View mouse/keyboard context must open the same settings target, consume the event and call no HA more-info/service."
+        },
+        {
+          "smoke": "smoke_isometric_contract.mjs",
+          "before": {
+            "passed": 46,
+            "failed": 1
+          },
+          "after": {
+            "passed": 47,
+            "failed": 0
+          },
+          "retained": "Raised target ownership, independent Enter info card, area navigation, opening-lock info and all projection/cache/fallback/geometry checks."
+        }
+      ],
+      "affectedReceipt": "artifacts/bulk-s8/1050-final-affected-a492.json",
+      "affectedResults": [
+        {
+          "id": "smoke_editor_gestures.mjs",
+          "command": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+          "args": [
+            "demo/smoke_editor_gestures.mjs"
+          ],
+          "recipeSha256": "40ad364c77f7dfad4360a978a25b661679be918db153cd9e88046612ad29ef7a",
+          "exit": 0,
+          "error": null,
+          "seconds": 4.939,
+          "log": "artifacts/bulk-s8/1050-final-affected-smoke_editor_gestures.log"
+        },
+        {
+          "id": "smoke_isometric_contract.mjs",
+          "command": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+          "args": [
+            "demo/smoke_isometric_contract.mjs"
+          ],
+          "recipeSha256": "93ab8ac4f141913e0d29b24b4c0f922d4eb30d1c6ea10b9ee2538dcda057a351",
+          "exit": 0,
+          "error": null,
+          "seconds": 4.912,
+          "log": "artifacts/bulk-s8/1050-final-affected-smoke_isometric_contract.log"
+        },
+        {
+          "id": "backend-settings-transfer",
+          "command": "/home/sergey/.cache/houseplan-editors-1045-venv/bin/python",
+          "args": [
+            "-m",
+            "pytest",
+            "tests_backend/test_ha_import_export.py::test_issue1050_settings_action_survives_export_parse_and_apply",
+            "tests_backend/test_validation.py::test_every_tap_action_the_editor_offers_is_accepted",
+            "-q",
+            "-p",
+            "no:cacheprovider"
+          ],
+          "recipeSha256": null,
+          "exit": 0,
+          "error": null,
+          "seconds": 2.936,
+          "log": "artifacts/bulk-s8/1050-final-affected-backend-settings-transfer.log"
+        }
+      ],
+      "proofBoundary": "24 unchanged recipes passed the original complete 26-command scope; only the two changed legacy recipes were rerun. The original 24/26 RED report is retained, not relabelled as a fresh 26/26 run. Product/build inputs are unchanged; exact-current hook/CI remain separate."
+    },
+    "units": {
+      "focused": 141,
+      "isometricSourceContract": 14,
+      "failed": 0
+    },
+    "backend": {
+      "command": "python -m pytest tests_backend/test_ha_import_export.py::test_issue1050_settings_action_survives_export_parse_and_apply tests_backend/test_validation.py::test_every_tap_action_the_editor_offers_is_accepted -q -p no:cacheprovider",
+      "passed": 3,
+      "failed": 0,
+      "environment": "Read-only diagnostic WSL Python3.14.7 / HA2026.8.3; CI repository pins are unchanged."
+    },
+    "metrics": {
+      "acceptedSource": "96cea9546fbf24ebe25c47d2b735fd8bf8ef3e6a",
+      "acceptedProof": "docs/development-notes/wall-node-delete-integration.json; source96cea to acceptedaf23 changes only CODE/INDEX, no build input.",
+      "environment": "Matched Windows Node22.23.3 / Rollup4.62.2",
+      "accepted": {
+        "initialViewGzip": 340624,
+        "lazyEditorGzip": 353367,
+        "selectOnlyGzip": 21458,
+        "bundleBytes": 3481506,
+        "hostRefs": 6225
+      },
+      "current": {
+        "initialViewGzip": 341095,
+        "lazyEditorGzip": 353394,
+        "selectOnlyGzip": 21455,
+        "bundleBytes": 3483369,
+        "hostRefs": 6225
+      },
+      "delta": {
+        "initialViewGzip": 471,
+        "lazyEditorGzip": 27,
+        "selectOnlyGzip": -3,
+        "bundleBytes": 1863,
+        "hostRefs": 0
+      },
+      "budgets": "PASS; no reference, band, absolute, ABI or latency limit was changed."
+    },
+    "staticReadiness": {
+      "id": "view-settings-retired-intent-accepted",
+      "definitions": 1,
+      "uniqueSourceReads": 3,
+      "execution": 0,
+      "caught": "unknown; nightly only"
+    },
+    "limits": "These exact-source local receipts supplement mandatory normal pre-push and independent CODE/automatic integration; no full regression, mutant execution, Golden acceptance or release was performed.",
+    "hookAttempts": [
+      {
+        "source": "f81391d944ea1106070c35734b0205188d730c0c",
+        "gateSeconds": 250,
+        "pushSeconds": 257.9480021,
+        "result": "RED before publication",
+        "failures": [
+          "Generated config-schema.json did not yet include the accepted settings enum",
+          "Pinned-browser smoke inventory lacked the new formal native recipe"
+        ],
+        "passed": "Fresh build/types, bundle budgets/core, unused, CSS, private-write and process guards",
+        "receipt": "artifacts/bulk-s8/1050-normal-push-f813.json"
+      }
+    ],
+    "supportWireCompatibility": {
+      "scope": "Necessary closed-wire compatibility for the same persisted settings enum; no Support UX/fields/endpoint/schema-version or privacy expansion.",
+      "before": {
+        "product": "f81391d944ea1106070c35734b0205188d730c0c",
+        "newOrdinaryCases": 2,
+        "failed": 2,
+        "receipt": "artifacts/bulk-s8/1050-support-wire-before.log",
+        "reason": "Both actual projected config and CLIENT_INPUT rejected settings with WireRejected."
+      },
+      "productDelta": "Add only literal settings to canonical marker and diagnostic-device tap_action enums; relay copy remains byte-identical.",
+      "canonical": "custom_components/houseplan/support_wire_schema.py",
+      "mirror": "scripts/support-relay/hp_relay/support_wire_schema.py",
+      "schemaSha256": "701807ad96124ccc1d4dfa5b768770c1962ecd3c5c35cb274b4de6407ad71048",
+      "schemaManifest": {
+        "command": "python scripts/dump-config-schema.py",
+        "paths": 340
+      },
+      "after": {
+        "backend": {
+          "command": "python -m pytest tests_backend/test_support_wire_schema.py tests_backend/test_config_schema_manifest.py tests_backend/test_support_config_projection.py -q -p no:cacheprovider",
+          "passed": 19,
+          "failed": 0,
+          "receipt": "artifacts/bulk-s8/1050-support-wire-after.log"
+        },
+        "relay": {
+          "command": "python -m unittest discover -s scripts/support-relay/tests",
+          "passed": 41,
+          "failed": 0,
+          "receipt": "artifacts/bulk-s8/1050-relay-tests.log",
+          "boundary": "Actual canonical and relay validators plus local HTTP positive settings in config/client and unknown-string/object negatives. No external delivery."
+        },
+        "node": {
+          "command": "node --test test/config-schema-parity.test.mjs test/browser-attestation.test.mjs",
+          "passed": 13,
+          "skipped": 1,
+          "failed": 0,
+          "receipt": "artifacts/bulk-s8/1050-hook-repair-targeted.log"
+        }
+      },
+      "frontend": "Frontend source/build inputs and fingerprint81e9 remain unchanged; native113 and existing required-scope receipts are retained, not rerun for a backend-only enum change.",
+      "deployment": {
+        "status": "NOT deployed; separate accepted-source receipt remains required before release.",
+        "canon": "scripts/support-relay/README.md, order after S8",
+        "required": "After actual S8 take the accepted relay tree/SHA/digests, preserve code/unit backup, validate isolated staging discard with synthetic v1/v2/negative HTTP, then switch the same tree to prod and verify deliver health. Record SHA/digests/backup path in the issue before HACS emits the new enum. S8/HACS does not automatically update relay."
+      }
+    }
+  }
+}

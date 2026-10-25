@@ -36,6 +36,29 @@ def client():
     }
 
 
+@pytest.mark.parametrize("carrier", ["config", "client"])
+def test_issue1050_settings_action_has_closed_support_wire_parity(carrier):
+    if carrier == "config":
+        payload, _ = project({"spaces": [], "markers": [
+            {"id": "settings-marker", "binding": "virtual", "tap_action": "settings"}
+        ]})
+        payload["model_version"] = 10
+        rows, schema = "markers", CONFIG
+    else:
+        payload = client()
+        payload["devices"] = [
+            {"id": "settings-marker", "binding": "virtual", "tap_action": "settings"}
+        ]
+        rows, schema = "devices", CLIENT_INPUT
+    assert payload[rows][0]["tap_action"] == "settings"
+    validate(payload, schema)
+    for refused in ("future-settings", {"private": "not an action"}):
+        invalid = copy.deepcopy(payload)
+        invalid[rows][0]["tap_action"] = refused
+        with pytest.raises(WireRejected):
+            validate(invalid, schema)
+
+
 @pytest.mark.parametrize("flag", [None, False, True])
 def test_issue940_support_projects_only_public_boolean_and_bounded_empty_reason(flag):
     from custom_components.houseplan.support_diagnostic_values import DiagnosticIds

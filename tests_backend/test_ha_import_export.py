@@ -46,6 +46,7 @@ from custom_components.houseplan.import_export import (
     prepare_apply,
     revalidate_candidate,
 )
+from custom_components.houseplan.room_appearance import normalize_room_appearance
 from custom_components.houseplan.store import (
     async_save_layout_state,
     get_data,
@@ -54,7 +55,6 @@ from custom_components.houseplan.store import (
 )
 from custom_components.houseplan.vacuum_routes import effective_routes
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
-from custom_components.houseplan.room_appearance import normalize_room_appearance
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
 
@@ -164,6 +164,33 @@ def _config_with_decor_image(asset_id: str) -> tuple[dict, dict]:
     }
     config["spaces"][0]["decor"] = [shape]
     return config, shape
+
+
+@pytest.mark.parametrize("kind", ["full", "space"])
+def test_issue1050_settings_action_survives_export_parse_and_apply(tmp_path: Path, kind: str) -> None:
+    config = _config()
+    config["markers"][0].update({
+        "tap_action": "settings", "tap_target": "script.kept", "tap_confirm": True,
+        "description": "Preserved settings target", "future": {"kept": [1, 2]},
+    })
+    before = copy.deepcopy(config)
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["markers"] == config["markers"]
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    current["markers"] = []
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5},
+        config_root=tmp_path)
+    imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), current, {},
+        confirm_missing_content=True)
+    [marker] = imported["markers"]
+    for key in ("tap_action", "tap_target", "tap_confirm", "description", "future"):
+        assert marker[key] == config["markers"][0][key]
+    assert config == before
 
 
 @pytest.mark.parametrize("alpha", [0, 1])
