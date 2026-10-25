@@ -1,0 +1,228 @@
+{
+  "schema": 1,
+  "purpose": "Authenticated read-only issue context for independent CODE; historical comments are evidence, not new execution permission or review authority.",
+  "sourceMaterial": "c0c7f519d4360866240cb5f588538d1ad6f0c7de",
+  "acceptedTools": "98baf6d77e28fdc0fbe53d75a715cd4b9d9ba82f",
+  "repository": {
+    "fullName": "Matysh/houseplan-card",
+    "id": 1290210112,
+    "apiUrl": "https://api.github.com/repos/Matysh/houseplan-card"
+  },
+  "retrieval": {
+    "client": "GitHub CLI authenticated REST API",
+    "apiVersion": "2022-11-28",
+    "authenticatedActor": {
+      "login": "Matysh",
+      "id": 6027457
+    },
+    "method": "GET",
+    "issueEndpoint": "https://api.github.com/repos/Matysh/houseplan-card/issues/1065",
+    "commentsEndpoint": "https://api.github.com/repos/Matysh/houseplan-card/issues/1065/comments?per_page=100&page=N",
+    "observations": [
+      {
+        "contentSha256": "c8a3ee5dafcd3aa58a40dd70370d43814b31a1fd8f19cf0f5642857476920a62",
+        "startedAt": "2026-10-25T18:31:51.360Z",
+        "completedAt": "2026-10-25T18:31:53.115Z",
+        "pageCount": 1,
+        "pageLengths": [
+          14
+        ]
+      },
+      {
+        "contentSha256": "c8a3ee5dafcd3aa58a40dd70370d43814b31a1fd8f19cf0f5642857476920a62",
+        "startedAt": "2026-10-25T18:31:53.115Z",
+        "completedAt": "2026-10-25T18:31:54.736Z",
+        "pageCount": 1,
+        "pageLengths": [
+          14
+        ]
+      }
+    ],
+    "completeness": {
+      "twiceIdentical": true,
+      "issueStableAroundEachPagination": true,
+      "allPagesFetched": true,
+      "uniqueCommentIds": true,
+      "countMatchesIssue": true,
+      "originalBodyByteExact": true,
+      "credentialPatternScan": "no matches",
+      "note": "Hashes cover exact decoded UTF-8 body/comment strings. This snapshot precedes the final author handoff; later pipeline events are outside this snapshot."
+    }
+  },
+  "issue": {
+    "id": 6020948211,
+    "number": 1065,
+    "title": "Process: исключить подмену лимитов в ревью и ложную классификацию как ordinary negative-input",
+    "url": "https://github.com/Matysh/houseplan-card/issues/1065",
+    "author": "Matysh",
+    "createdAt": "2026-10-25T04:46:07Z",
+    "updatedAt": "2026-10-25T18:24:49Z",
+    "state": "open",
+    "labels": [
+      "P2",
+      "S6-in-progress",
+      "infra",
+      "process"
+    ],
+    "declaredCommentCount": 14,
+    "body": "## Основание и граница доказательства\n\nОтдельная находка по PROCESS §12 после actual S8 #1064. В опубликованном [CODE-REVIEW-1064-r1.md:72](https://github.com/Matysh/houseplan-card/blob/0908d904c0465b72d8715e8a38027ccde76a3209/docs/reviews/CODE-REVIEW-1064-r1.md#L72) на принятом [коммите 0908d904c0465b72d8715e8a38027ccde76a3209](https://github.com/Matysh/houseplan-card/commit/0908d904c0465b72d8715e8a38027ccde76a3209) модель сообщает: временный `sed -i 's/timeout-minutes: 35/timeout-minutes: 25/' .github/workflows/validate.yml`, прогон двух witness-тестов, затем `git checkout --`. При этом строка называет это «Обычный negative-input case» и утверждает, что мутант «вне ночного workflow не исполнялся». То же описание повторено в [комментарии CODE](https://github.com/Matysh/houseplan-card/issues/1064#issuecomment-6393520978). Процесс ревью: [run 40162190928](https://github.com/Matysh/houseplan-card/actions/runs/40162190928), completed/success.\n\n**Заявлено в опубликованном отчёте; raw execution trace отдельно не проверялся.** Подтверждены содержание отчёта и его неверная классификация; фактическое исполнение команды не объявляется независимо установленным. Если действие исполнено именно так, как описано, это запрещённый вне ночи мутационный прогон. Само утверждение «патч + тест + откат = ordinary input и не мутант» уже противоречит действующему правилу.\n\n## Действующее правило\n\n[PROCESS §2.7:302–310](https://github.com/Matysh/houseplan-card/blob/0908d904c0465b72d8715e8a38027ccde76a3209/PROCESS.md#L302-L310):\n\n> Временный ручной патч исполняемой реализации, её собранной копии (`test-build`/bundle), гарда или лимита с последующим прогоном — исполнение мутанта. Ни отсутствие registry CLI, ни последующее восстановление не дают исключения: вне ночного workflow такое исполнение запрещено, в том числе ревьюеру.\n\nТо же правило прямо дано в [REVIEWER.md:30–43](https://github.com/Matysh/houseplan-card/blob/0908d904c0465b72d8715e8a38027ccde76a3209/docs/process/REVIEWER.md#L30-L43). [PROCESS §12](https://github.com/Matysh/houseplan-card/blob/0908d904c0465b72d8715e8a38027ccde76a3209/PROCESS.md#L2448-L2449): «Нарушение процесса — тоже issue».\n\n## Требуемый результат будущей работы\n\n1. Исключить в ревью путь временного изменения canonical implementation/build/guard/limit с исполнением проверок вне ночного workflow. Обычные отрицательные входы на неизменённой реализации и штатные build/test остаются допустимыми; повторять описанную подмену для проверки этой задачи нельзя.\n2. Исключить ложную классификацию такого пути как ordinary negative-input либо «мутант не исполнялся» из-за отсутствия регистрации/CLI или последующего отката. Недостаточное исполнение/trace описывается с честной границей; caught не приписывается статическому анализу или ordinary PASS.\n3. Проверить защиту на обычных безопасных входах/синтетическом fixture и неизменённой реализации. Конкретное техническое решение определить при взятии задачи; разрешение запускать мутанты вне ночи этим issue не предоставляется.\n\n## Разграничение с #1064 и выпуском\n\nАвтор #1064 эту подмену не выполнял. Его [handoff](https://github.com/Matysh/houseplan-card/issues/1064#issuecomment-6393419112) фиксирует обычные 75/75 targeted tests и normal pre-push PASS; три push CI на неизменённом `4dda29f77994c023ee9ee7adc8933e69aa91a920` независимо имеют success: [tooling 40161798939](https://github.com/Matysh/houseplan-card/actions/runs/40161798939), [product 40161798976](https://github.com/Matysh/houseplan-card/actions/runs/40161798976), [docs 40161798940](https://github.com/Matysh/houseplan-card/actions/runs/40161798940).\n\nЗапрещённый claim не используется как caught или доказательство AC1. Принятые исходники, S8 и опубликованный CODE не отменяются и не переписываются; это отдельный infra/process P2 вне исходной партии беты, без нового release gate или пересмотра CODE. В рамках фиксации только прочитаны источники/метаданные и создан issue: код, лимиты, workflow, refs, ledger и статусы исходной задачи не меняются, исполнения тестов/мутантов и нового ревью нет.",
+    "bodySha256": "54a9f9ef09580f97513b492ce36dc287bf22112539eaad766098d4246866245d",
+    "bodyUtf8Bytes": 5910
+  },
+  "comments": [
+    {
+      "id": 6395114960,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6395114960",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T07:55:48Z",
+      "updatedAt": "2026-10-25T07:55:48Z",
+      "body": "Взял: автор инфраструктуры · сессия /root/editors_queue · ветка issue/1065-review-execution-boundary от принятого origin/dev 0d733917f1f1fd51bc93fc4bca63b07cf2675a03.\n\nТолько B/C: предотвращение временной подмены canonical implementation/build/guard/limit в review runner/tooling и проверка честности evidence/report. Исторические CODE #1064 и S8 не переписываются. Запрещённый mutation path не воспроизводится; проверка обычными входами на неизменённой реализации и безопасным synthetic fixture. После адресных проверок, согласованного heavy-окна и normal pre-push — обычный S7 и независимый CODE до автоматического S8. Инфраструктурный вход без S1–S6 по PROCESS §1; реализация ещё не начата, review/CI не dispatch.",
+      "bodySha256": "d85f0a3b9f9031c5cd5f3f16c13303180db8415cd12550b21b3db820fc712851",
+      "bodyUtf8Bytes": 1062
+    },
+    {
+      "id": 6396218045,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6396218045",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T09:57:41Z",
+      "updatedAt": "2026-10-25T09:57:41Z",
+      "body": "Техническая готовность перед S7: код #1065 готов; собственная дельта к принятому dev остаётся B/C, продуктовых A/D-правок нет.\n\nПосле успешного normal push 2a6942abd (478 с, 0 FAIL) принят внешний #1071: dev f2c2b36019da464102d1c35dac5c4c61031a2e9c. Весь этот dev обычным merge включён в clean 16bb4695e4b55fd35ea77491250048ed7d5d565d; единственный конфликт Tests в STATUS пересчитан каноническим генератором, обе standing notes сохранены. Policy/CLI и собственные test bytes не изменились.\n\nRemote-to-local диапазон push включает уже принятую A-историю #1071, поэтому неизменённый process-gate требует S5+. Ставлю техническую S5-ready как фактическую готовность к независимому review, без новой A-реализации, без S6/WIP и без заявления о SPEC. Это не исключение из гарда: после перехода будет ещё один обязательный normal pre-push на объединённом материале. Предыдущий зелёный hook не выдаётся за проверку нового combined tree. Затем новый точный handoff и S7 при свободном review-слоте; до actual S8 работа не завершена.\n",
+      "bodySha256": "ab0686e1140d32ab7f5aa0311877441887f728c10d83b4e275e429905b741a51",
+      "bodyUtf8Bytes": 1580
+    },
+    {
+      "id": 6396319754,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6396319754",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T10:08:06Z",
+      "updatedAt": "2026-10-25T10:08:06Z",
+      "body": "Сделано:\nИнфраструктурная #1065: task/ship/release review получают из принятого tooling явную PreToolUse policy. Подмена canonical implementation/guard/limit, rollback, inline interpreter, shell composition и запись вне точных внешних report/findings отклоняются. Обычные чтение, точечные unchanged tests/build/static --check доступны. Явные absolute input/report paths переданы в prompts без env-discovery-команд.\nИзолированный checksum-verified CLI pin 2.1.295 поддерживает native onFailure:block. До модели выполняется отказной startup-probe неизменённого hook с unsafe строкой только как JSON DATA; внутренний deadline/exit 2 — дополнительная защита. Перед seal отдельный audit сверяет полный SDK trace/terminal result, журнал ID+digest+decision, байты последней внешней Write и неизменность материала. Отсутствие/несовпадение/forbidden request отказывает в публикации без допустимого verdict. Узкий deterministic lint исходного ложного ordinary patch/run/restore claim повторяется в consumer. Исторические CODE/S8 #1064 не переписывались.\n\nФайлы:\n.github/workflows/{_process,_ship-review,release-review}.yml; scripts/review-execution-policy.mjs; scripts/review-result-gate.mjs; scripts/check-inputs.mjs; scripts/mutation-registry.mjs; test/review-execution-policy.test.mjs; test/model-usage.test.mjs; test/process-digests.test.mjs; канон/конспект/ARCHITECTURE/DEVELOPMENT/STATUS; infra ledger v1.82.0/1065.json; канонически generated profiles/inventory.\n\nГейты:\nМатериал: 16bb4695e4b55fd35ea77491250048ed7d5d565d, ветка issue/1065-review-execution-boundary; whole accepted dev f2c2b36019da464102d1c35dac5c4c61031a2e9c включён. git push с HP_PREPUSH_GATE=1 → normal hook PASS 492 с, 0 FAIL; process-gate 0 WARN; remote SHA проверен SSH. Canonical profiles/registry/status checks PASS; собственных src/demo изменений к accepted dev нет.\nWindows pinned Node 22.23.3, own affinity 240 / availableParallelism 4; Linux Node 22.23.3. Первые normal-hook 4 tooling RED сохранены (опись, локальный второй trace consumer, trusted snapshot path); последний полный адресный набор 8 файлов после исправления: 109 PASS / 5 POSIX SKIP / 0 FAIL. Второй RED — 3 strict prompt-fixture отказа неизвестного runner.temp; исправлен точный mapping, unknown-expression refusal сохранён. POSIX-only hook/startup/deadline fixtures реально исполнены отдельно на Linux: 52/52 PASS, не выданы за Windows proof. Ночной registry только static --check: 1907 definitions, execution 0, caught unknown. Ни временная canonical подмена с прогоном, ни mutant execution не исполнялись. Изолированный CLI checksum/version/full args/settings parser --init-only PASS, неизвестный флаг negative exit 1; provider/model requests 0. Нормальные --help/--version сами по себе не считаются proof скрытого --max-turns.\n\nНЕ сделано:\nOS sandbox и защита от враждебного unchanged child code/same-user tampering не добавлялись. Live provider/SDK tool session этим локальным ABI/init-only probe не проверялся. Исходный report #1064 и его S8 не отменялись. Продуктовые A/D, версия, релиз и baseline не менялись. Прежний legacy copy report из docs/reviews удалён; второй путь публикации не оставлен. Полные browser/Golden/performance и исполнение мутантов не запускались: B/C scope, обязательный normal hook и целевые ordinary inputs.\n\nРиски:\nPre-execution гарантия опирается на документированный native SDK contract с загруженными settings; внешняя замена/отключение runtime за её пределами. Post-audit — отдельный publication refusal, а не предотвращение уже выполненного действия. Initial CODE идёт через прежний accepted controller; новая policy не выдаётся за уже применённую к собственному первому review. Lint ловит конкретный известный класс ложной формулировки, не всю семантическую истину отчёта. Неподдерживаемый check остаётся unverified либо использует пригодный существующий proof; отказ hook не равен failed AC/caught.\n\nСледующий статус:\nS7-code-review — независимый CI CODE на claude-sonnet-5/high, затем штатная интеграция до actual S8. Бюджет и gates не обходятся.\n\nНовые issue:\nНет.\n",
+      "bodySha256": "b08a9de7ca401ff681ee0e56450f5b01b8b47ac1fba39dbc6face5f538fe4c30",
+      "bodyUtf8Bytes": 5541
+    },
+    {
+      "id": 6396420871,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6396420871",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T10:19:03Z",
+      "updatedAt": "2026-10-25T10:19:03Z",
+      "body": "Технический author-return из S7: найден собственный конкретный обход в pre-tool policy на frozen 16bb4695e4b55fd35ea77491250048ed7d5d565d. Безопасный read-only авторский probe вызвал только неизменённую `bashProblem()` с JSON/string DATA. Для `sed -n 1p -i guard.mjs` и `sed -n 1p -e '1e forbidden-action' guard.mjs` она вернула refusal=null; assertion о запрете дополнительных options покраснел. Ни одна из этих shell-команд не исполнялась; implementation/guard/limit не подменялись. Raw local receipt: artifacts/1065/sed-argv-readonly-red.log, proposedCommandsExecuted=0.\n\nВозвращаю S6 для узкой проверки всех хвостовых sed-аргументов: разрешены только канонические tracked filenames без дополнительных options/expressions. Будут ordinary DATA negatives и положительный read-control, новый normal hook и точный handoff. Унаследованные provider/CLI/OS-sandbox границы не расширяются. Это авторский технический возврат, не CODE-вердикт; бюджет/исторические отчёты/вершина dev не меняются. Текущий reviewed material сохраняется; поверх S7 ничего не пушилось. Свежий API показывает только blocked #1069 в S6, поэтому новый активный S6 не превышает WIP.\n",
+      "bodySha256": "354b056d0dd470c06551028e9a151a8032f3bc1a7131a0eb9e94c2ac55c80f0c",
+      "bodyUtf8Bytes": 1663
+    },
+    {
+      "id": 6396484842,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6396484842",
+      "author": "github-actions[bot]",
+      "authorAssociation": "CONTRIBUTOR",
+      "createdAt": "2026-10-25T10:26:00Z",
+      "updatedAt": "2026-10-25T10:26:00Z",
+      "body": "Вердикт: красный · заход r1 · блокирующих циклов 0/2 · High: 1 · Medium: 0 · Документ: docs/reviews/CODE-REVIEW-1065-r1.md\n\n**High** — `scripts/review-execution-policy.mjs:84` (`bashProblem`, ветка `sed`) проверяет только первые два аргумента (`-n`, `N[,M]p`) и требует лишь «хотя бы один» дальнейший аргумент (`rest.length >= 3`), не сверяя ни его количество, ни флаги, ни путь через `canonicalFile()` (в отличие от всех остальных веток политики). Обычный negative-input вызов экспортированной функции синтетическими строками (ни одна команда не исполнялась):\n\n```\nbashProblem({ command: 'sed -n 1p -i guard.mjs' }, policy)               // → null (ожидалось: отказ)\nbashProblem({ command: \"sed -n 1p -e '1e forbidden-action' guard.mjs' }, policy) // → null\nbashProblem({ command: 'sed -n 1,5p /etc/passwd' }, policy)               // → null\n```\n\n`sed -n Np -i file` реально перезаписывает файл в place, `-e '1e …'` — известный вектор исполнения через GNU-расширение sed. Это ровно тот путь временного патча canonical guard/limit, который AC1 issue #1065 обязана исключить — он остаётся открытым на зафиксированном материале. Тестовый файл покрывает только позитивный случай `sed -n 30,50p PROCESS.md`, негативного кейса на лишние флаги/аргументы нет.\n\nЭто не открытие с нуля: автор сам нашёл тот же обход тем же методом на этом же SHA и зафиксировал это в [комментарии](https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6396420871), вернув задачу в `S6-in-progress`. Красный вердикт по зафиксированному `16bb4695e4b55fd35ea77491250048ed7d5d565d` подтверждает то же состояние независимо (чтением кода + обычным вызовом чистой функции), а не повторяет авторский вывод без проверки.\n\nМаршрут: `fix` — дефект корректности, не вопрос критериев §5.\n\nОстальная архитектура (native fail-closed hook, startup self-probe, post-execution trace/journal audit, узкий report-lint, интеграция во все три workflow, release-ledger `infra`, трейлеры, 4 новых ночных мутанта статически целостны) проверена и корректна; подробности, таблица AC·доказательство·свидетель и полный список прогнанных проверок — в документе ревью.\n\nГейты: `node --test test/review-execution-policy.test.mjs` (33/33), `node --test test/model-usage.test.mjs test/process-digests.test.mjs test/review-result-gate.test.mjs` (38/38), `node scripts/mutation-gate.mjs --check` (статическая целостность реестра, 4/4 новых `ok`), `node scripts/ci-profiles.mjs --check`, `node scripts/check-inputs.mjs --coverage`, `node scripts/inventory.mjs` (Node unit 5444 = STATUS.md). Не прогонялись: build/typecheck (диффа в `src/**` нет), golden/browser smokes/pytest/HA-harness (диффа в `demo/**`/Python нет) — объём гейтов соразмерен B/C-инфраструктуре. Переиспользован без повтора validate-gate run [40183401314](https://github.com/Matysh/houseplan-card/actions/runs/40183401314) (review-light proof). Побочных находок вне скоупа нет (mode=issues).",
+      "bodySha256": "c20c93f21838d2bdb2256d4af473fc021d025ab9214ddfd4a885957178a6a4ed",
+      "bodyUtf8Bytes": 4117
+    },
+    {
+      "id": 6396886268,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6396886268",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T11:09:59Z",
+      "updatedAt": "2026-10-25T11:09:59Z",
+      "body": "Сделано:\n#1065, CODE r2. Сохранена полная B/C реализация task/ship/release execution boundary: accepted tooling вне материала, изолированный checksum-verified CLI 2.1.295 с native onFailure:block, отказной startup self-probe без dispatch входной команды, отдельный post-execution trace/journal/report audit перед seal, известный false ordinary claim lint и consumer check. Model/effort/turn budgets не менялись; исходный report #1064 и исторические S8 не переписываются.\n\nЗакрытие R1: единственный High из CODE-REVIEW-1065-r1.md на 16bb4695e закрыт в 49b711086. В sed read recipe теперь проверяется КАЖДЫЙ хвостовой operand: только unchanged tracked filenames без option prefixes; поэтому -i/-e/--expression/--file и external operands отказываются. Сохранены положительные single/multiple-file reads. Семь новых negative cases — только string DATA к исходной функции; ни один sed command не исполнялся. Авторский ordinary RED предшествовал формальному R1, reviewer независимо подтвердил тот же High; это не mutant/caught.\n\nДополнительная source-backed проверка Git long options закрыта в ce706c8ff: запрещены и exact options, и их prefixes (включая =value), безопасные --format/--no-ext-diff/--no-textconv и full --output-indicator-new разрешены. Локальная официальная Git CLI документация описывает unique-prefix parsing; upstream v2.43 builtin/cat-file.c:918–930 и parse-options.c:352–419 подтверждают --filt/--textc. Конкретный git diff --out runtime не запускался и НЕ объявляется доказанным write path: diff_opt_parse использует KEEP_UNKNOWN_OPT, output-indicator-* делят prefix. Его отказ — консервативный fail-closed contract. Все Git negative vectors также только DATA, ни write/filter command не исполнялся.\n\nНеизменённая и принятая R1 архитектура trace/native failure/lint/workflow integration сохранена; новый код не заменяет её вторым writer. Оба новых refusal-инварианта имеют night-only регистрации, всего собственных регистраций #1065 шесть. Remote CODE R1 принят обычным merge, документ не редактировался. Канонический review-doc-guard --counters после R1: attempt=2, spent=1. Предупреждение о нестрогой declaration в R1 doc сохранено: files spent=0, comments spent=1, MAX корректно 1; автор не менял счётчики/историю.\n\nФайлы:\n.github/workflows/{_process,_ship-review,release-review}.yml; scripts/review-execution-policy.mjs; scripts/review-result-gate.mjs; scripts/check-inputs.mjs; scripts/mutation-registry.mjs; test/review-execution-policy.test.mjs; test/model-usage.test.mjs; test/process-digests.test.mjs; PROCESS/REVIEWER/ARCHITECTURE/DEVELOPMENT/STATUS; infra ledger v1.82.0/1065.json; canonical generated profiles/inventory. CODE-REVIEW-1065-r1.md — только опубликованный ботом исторический результат. INDEX не авторский.\n\nГейты:\nМатериал: 258d599029eb77615a2ae18e4bd9e8eda32eedb3, issue/1065-review-execution-boundary. Git push с HP_PREPUSH_GATE=1 → normal hook PASS 576 с / 0 FAIL, Node 22.23.3, verified own-shell affinity 240 / availableParallelism 4, affinity восстановлена finally, hooks ON; remote SHA проверен. Whole accepted dev 0bbf6152a5fe6127ca176dbd5d975d93bea5aaee (#1074) включён в 258d599029eb77615a2ae18e4bd9e8eda32eedb3. Из canon изменён только STATUS, прочитан; единственный конфликт Tests разрешён канонической regeneration, оба standing decisions сохранены. Own A=0. Packet/canonical profiles/registry/status актуальны.\nАдресные ordinary producers на исправленных policy inputs: Windows pinned Node 22.23.3 — 122 PASS / 5 POSIX SKIP; Linux Node 22.23.3 — 65/65 PASS, включая реальный неизменённый hook/startup/deadline на synthetic dependency inputs. CLI checksum/version/full-args/settings parser --init-only PASS, provider/model requests 0; это не live SDK tool session. После accepted1074 policy/workflow/test bytes и pins не изменились, эти проверки не повторялись без причины. Объединённый material проверяет обязательный normal hook. Fresh static readiness на 258d: definitions=1910, unique-source-reads=1039, execution=0, caught=unknown (nightly only). Ни canonical patch/run/restore, ни mutant execution не исполнялись.\n\nНЕ сделано:\nПродуктовые A/D, версия/релиз/эталоны/пороги не менялись. Browser/Golden/perf/pytest не запускались: B/C scope, smoke-select не требует browser. Произвольные новые executable probes не разрешаются policy; неподдерживаемый рецепт остаётся unverified либо использует пригодный existing proof. Legacy report fallback в docs/reviews удалён, новый параллельный путь публикации не оставлен.\n\nРиски:\nTool boundary не OS sandbox и не защита от hostile unchanged child code/same-user tampering. Native pre-execution claim опирается на SDK contract с загруженными settings; внешняя замена/отключение runtime за её пределами. Post-audit отказывает в публикации, а не предотвращает уже выполненное действие. Narrow lint не является semantic truth detector. Initial review выполнялся прежним accepted controller; собственная policy не выдаётся за уже применённую к нему. Private trace/journal не публикуются, sealed artifact file set прежний. Отказ hook/статический PASS/регистрация не равны caught или failed AC.\n\nСледующий статус:\nS7-code-review, заход r2, blocking spent=1 из 2 по каноническому счётчику; независимый CODE claude-sonnet-5/high. После метки никаких author push до результата; официальный waiter до actual S8, без manual dev merge.\n\nНовые issue:\nНет; sed High и Git prefix correction закрываются в текущем #1065.\n",
+      "bodySha256": "246e4a788c5a742252adfc36dd1f11d43cd49c7e5e8ccdbe89ff229a3760697b",
+      "bodyUtf8Bytes": 7242
+    },
+    {
+      "id": 6397084454,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6397084454",
+      "author": "github-actions[bot]",
+      "authorAssociation": "CONTRIBUTOR",
+      "createdAt": "2026-10-25T11:31:13Z",
+      "updatedAt": "2026-10-25T11:31:13Z",
+      "body": "Вердикт: зелёный · заход r2 · блокирующих циклов 1/2 · High: 0 · Medium: 0\n\nМатериал: `258d599029eb77615a2ae18e4bd9e8eda32eedb3`. Дельта к r1 — ровно два коммита: `49b711086` (fix sed-хвоста) и `ce706c8ff` (fix ambiguous-prefix в git-опциях, самостоятельно найден автором при работе над первым фиксом).\n\nЕдинственный High из `docs/reviews/CODE-REVIEW-1065-r1.md` (sed-ветка `bashProblem` пропускала хвостовые флаги/непроверенные пути после `-n N[,M]p`) закрыт в `49b711086`: добавлена проверка `rest.slice(2).every(a => !a.startsWith('-') && canonicalFile(a, policy))`. Подтверждено обычным прогоном `node --test test/review-execution-policy.test.mjs` (46/46, было 33/33) и независимым повторным вызовом `bashProblem()` синтетическими строками вне тестового файла — все семь новых негативных случаев (`-i`, `--in-place`, `-e 'N e …'`, `--expression=`, `--file=`, хвостовой `-i` после файла, нетрекаемый внешний путь) отказаны.\n\nВторая правка `ce706c8ff` закрывает самостоятельно найденную автором брешь: `git`-ветка проверяла только точные `--output(?:=|$)`/`--ext-diff$`/… и пропускала однозначные git-сокращения (`--out`, `--o`, `--ext-dif`, `--textc`, `--filt`, `--open-files-in-p=`). Теперь `forbiddenGitOption()` отказывает любому префиксу, для которого хотя бы одно из пяти опасных полных имён начинается с данного аргумента (включая `=value`-форму), оставляя разрешёнными более длинные легитимные опции (`--output-indicator-new`, `--no-ext-diff`, `--no-textconv`). Подтверждено тем же прогоном и независимыми вызовами на дополнительных сочетаниях (`git diff --o=x`, `git cat-file --textc`, `git log --open-files-in-p=…` и т.д.) — все отказаны; `git diff -O <file>`/`git cat-file --batch` остаются разрешены, но это чтение без записи/исполнения, не новая находка.\n\nОба фикса сопровождены точными ночными мутантами-инверсиями (`review-sed-read-allows-extra-options-1065`, `review-git-read-allows-option-prefix-1065`), статически `ok` в `mutation-gate.mjs --check`, не исполнялись. Остальной материал (`PROCESS.md`, `REVIEWER.md`, `ARCHITECTURE.md`, workflow-файлы, `review-result-gate.mjs`, release-ledger `infra`, трейлеры) между r1 и r2 побайтово не изменился — архитектурные выводы r1 переиспользованы без повтора. Новых High/Medium не обнаружено. Критерии §5 не нарушены — маршрут `fix`.\n\nГейты: `node --test test/review-execution-policy.test.mjs` (46/46), `node --test` того же файла + `model-usage`/`process-digests`/`review-result-gate` (84/84), `node scripts/mutation-gate.mjs --check`, `node scripts/ci-profiles.mjs --check`, `node scripts/check-inputs.mjs --coverage`, `node scripts/inventory.mjs` (Node unit 5449 = STATUS.md), плюс собственный независимый `bashProblem()` negative-probe вне тестового файла. Не прогонялись: build/typecheck/golden/browser/HA-harness/pytest/полный `npm test` — диффа в `src/**`/`demo/**`/Python нет, объём соразмерен двум точечным правкам в одном B/C-модуле (§8). Переиспользован без повтора review-light proof / validate-gate run [40188072152](https://github.com/Matysh/houseplan-card/actions/runs/40188072152). Побочных находок вне скоупа нет (mode=issues).\n\nДокумент: docs/reviews/CODE-REVIEW-1065-r2.md (шаг публикации присвоит имя).",
+      "bodySha256": "ed0471c42b2b60947ce18943b1b7c21014c611c6c5958a8feb57436cabfb5cdb",
+      "bodyUtf8Bytes": 4463
+    },
+    {
+      "id": 6397091705,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6397091705",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T11:31:59Z",
+      "updatedAt": "2026-10-25T11:31:59Z",
+      "body": "Пока шло ревью, `dev` продвинулся на 3 коммит(ов). Материал ревью — `258d59902`. Вердикт вынесен по дереву, которое уже не совпадает с вершиной линии: слияние приведёт ветку к dev, и это другой код (§2.10).",
+      "bodySha256": "2108bea50e375ee87069930ecf5e88aea3b673e65d30431d3db026220af6b9d5",
+      "bodyUtf8Bytes": 346
+    },
+    {
+      "id": 6397092181,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6397092181",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T11:32:02Z",
+      "updatedAt": "2026-10-25T11:32:02Z",
+      "body": "**Слияние не выполнено: сбой шага слияния (#492).**\n\n```\nCI generator differs from trusted tools; refresh/review it explicitly: scripts/check-inputs.mjs\n```\n\nВердикт ревью в силе. Задача в `S6-in-progress`; после разбора сбоя вернуть `S7-code-review`.",
+      "bodySha256": "4811a3326036d3f1d93deeb70440bfcaa3bd9aff684a2e981067ae7f56d6986c",
+      "bodyUtf8Bytes": 331
+    },
+    {
+      "id": 6397365734,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6397365734",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T12:00:52Z",
+      "updatedAt": "2026-10-25T12:00:52Z",
+      "body": "Сделано:\n#1065: штатное восстановление интеграции после GREEN CODE r2. Проверенный material 258d599029eb77615a2ae18e4bd9e8eda32eedb3 и опубликованный CODE-REVIEW-1065-r2.md сохранены. R2 GREEN: High 0 / Medium 0, комментарий 6397084454; blocking spent 1 из 2, счётчики и исторические отчёты не редактировались.\n\nТехнический возврат 6397092181 был вызван проверкой equality доверенного CI generator после продвижения dev тремя SPEC-документами. Выполнена обычная синхронизация всей принятой базы f4f689127f0e7bec9dd872f102d635bc15cf1065 и remote CODE r2. Фактический HEAD 5fb6a47a88476703102017b5ae7bd85ba1e90c64 отличается от reviewed 258d599 только в docs/reviews. Diff вне docs/reviews пустой; оригинальный review-doc-guard на действительном HEAD и свежем digest тела issue вернул reuse=true, doc=CODE-REVIEW-1065-r2.md, round=2, без validation_required. Это обычный маршрут #499 повторного применения вердикта; новый вызов модели не требуется. Trusted generator equality и намеренное проверенное изменение scripts/check-inputs.mjs не обходились и не менялись.\n\nФайлы:\nПосле CODE r2 изменены только принятые docs/reviews (SPEC-REVIEW-1075-r3, SPEC-digest-1075-r3, INDEX) и принята опубликованная CODE-REVIEW-1065-r2.md. Полная ранее проверенная B/C реализация #1065: scripts/review-execution-policy.mjs, review-result-gate, check-inputs, mutation registry, task/ship/release workflows, tests, PROCESS/REVIEWER/ARCHITECTURE/DEVELOPMENT/STATUS, infra ledger v1.82.0/1065.json и канонические generated profiles/inventory. Own A=0; INDEX не авторский.\n\nГейты:\nТекущий material: 5fb6a47a88476703102017b5ae7bd85ba1e90c64, tree a325b6f0794d0080c6a37d1c3a4e04f713b29024, issue/1065-review-execution-boundary. Обязательный normal git push с HP_PREPUSH_GATE=1: gate:small PASS 653 с / 0 FAIL, hooks ON, Node 22.23.3, own-shell affinity 240 и availableParallelism 4 проверены, affinity восстановлена finally. Remote task head и dev проверены SSH; dev является предком HEAD. Smoke-select: обязательных browser-smoke нет. Отдельный повторный standalone full gate не выполнялся.\n\nНеизменённые ordinary producers исправленной policy: Windows Node 22.23.3 — 122 PASS / 5 POSIX SKIP; Linux Node 22.23.3 — 65/65 PASS, startup/deadline на synthetic dependency inputs и неизменённом hook. Изолированный CLI 2.1.295: checksum/version/full-args/settings parser --init-only PASS, provider/model requests 0; это не live SDK tool session. Эти исполнения не повторялись ради review-only sync. Static readiness на reviewed 258d: definitions 1910 / source reads 1039 / execution 0 / caught unknown. Собственные регистрации night-only; никаких предложенных sed/Git команд, временной canonical подмены с прогоном или мутантов не исполнялось.\n\nНЕ сделано:\nНовых A/B изменений после проверенного r2 нет. Не менялись модель/effort/turn budgets, permissions, guards, лимиты, версия, релиз, эталоны, исходный report #1064. Browser/Golden/perf/pytest не запускались. Старый отказ generator не объявляется зелёной интеграцией; actual S8 ещё ожидается.\n\nРиски:\nПовторное применение вердикта проверяет неизменность reviewed bytes и тела issue, а не подменяет независимое CODE. Если принятый dev изменится до fast-forward, действуют штатные повторные проверки/технический возврат, без generator override. Tool boundary не является OS sandbox; onFailure:block относится к SDK при загруженных settings, post-audit отдельно отказывает в публикации. Narrow lint не semantic truth detector. Raw trace/journal остаются приватными, sealed artifact прежний.\n\nСледующий статус:\nS7-code-review: штатное повторное применение GREEN CODE r2 по #499 и интеграция на стабильной принятой базе, spent 1/2. После метки author push прекращается; официальный waiter до actual S8. Никакого manual dev merge.\n\nНовые issue:\nНет.\r\n",
+      "bodySha256": "21adc3547e62e901fc8aeb1908ab85f2ba6903e462d846e5f7ebdfd51c4e8682",
+      "bodyUtf8Bytes": 5195
+    },
+    {
+      "id": 6397398329,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6397398329",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T12:04:11Z",
+      "updatedAt": "2026-10-25T12:04:11Z",
+      "body": "Вердикт: зелёный · заход r3 · применён повторно из r2 без вызова модели (#499) · High: 0 · Medium: 0 · Документ: docs/reviews/CODE-REVIEW-1065-r2.md\n\nДерево материала `db919d30cb1f` с захода r2 не изменилось вне документов ревью (проверено git diff). Новый документ и новый вызов модели не нужны.",
+      "bodySha256": "ef4167f28195c6670e6542be00c3146c3115212111eb1bcb3ab6ed9e9d35d25e",
+      "bodyUtf8Bytes": 459
+    },
+    {
+      "id": 6397400008,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6397400008",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T12:04:21Z",
+      "updatedAt": "2026-10-25T12:04:21Z",
+      "body": "материал `5fb6a47a` · dev@`f4f68912` → кандидат `5892911a` · dev не двигался · слито · ветка `issue/1065-review-execution-boundary` удалена",
+      "bodySha256": "7dca01140851372ba7fbe4e9b9b3be18f743380efc185c5c54a372d2605f7d24",
+      "bodyUtf8Bytes": 188
+    },
+    {
+      "id": 6401171862,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6401171862",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T18:01:03Z",
+      "updatedAt": "2026-10-25T18:01:03Z",
+      "body": "Возвращаю **тот же #1065** из S8 в S6 по новому подтверждённому свидетельству #1067; беру узкое B/C-исправление совместимости. Отдельный #1084 не создаётся. Прежний S8, CODE r2 GREEN и история сохраняются; бюджет **1/2** не сбрасывается, старые CODE-документы не переписываются. Этот новый материал должен пройти обычные гейты и независимый CODE; разовое ручное разрешение владельца на #1082 сюда не относится.\n\nИсточник: подлинный bounded certificate #1067, 75 382 байта, SHA256 `b606ea469f4d4c7a7738a08ea2925bebccc52689f7b3167dbac2017c7e327f66`. В нём четыре allowed Node test-запроса имеют actual journal `denied=false`, но `input-digest-mismatch`; trace key order `command,description,timeout`, hook key order `command,timeout,description`, видимые numeric timeout/shape совпадают. Это не доказывает равенство скрытых строк и не доказывает, что все четыре mismatch вызваны только порядком. Независимо от этого source `JSON.stringify`-hash чувствителен к порядку object keys — конкретный дефект сопоставления JSON-вызовов.\n\nОтдельные четыре настоящих отказа остаются фактами: literal sed (86 байт, trackedOperands 0), два nonliteral Bash (148 и 77 байт), ToolSearch. Raw argv не восстанавливается; trackedOperands 0 не доказывает абсолютный путь. Forbidden/nonliteral/inline/eval/Agent/Edit не разрешаются и старые partial GREEN не принимаются.\n\nПланируемый scope: canonical call digest, меняющий только порядок object keys при сериализации и сохраняющий все JSON values/types/keys/array order/exact strings; явные algorithm markers и fail-closed current hook/startup/audit; честная legacy/unknown диагностика #1082. Точное builtin ToolSearch разрешается только как source-proven read-only catalog lookup, без разрешения последующих business/MCP/tool calls в обход guard. CLI pin, модель, flags/timeouts, shell/sed allowlist, report/material/denied-request правила не меняются.\n\nБаза и новая ветка: accepted `98baf6d77e28fdc0fbe53d75a715cd4b9d9ba82f`, `issue/1065-canonical-call-digest`; старые ветки/receipts сохранены. Сейчас **только PLAN** после перечитывания issue/canon/evidence; implementation/push/S7/dev-операций нет. Конкретный план передаётся координатору до реализации; проверок с исполнением proposed commands или мутантов не будет.\n",
+      "bodySha256": "05db2d42774c3b1d22f8e7f5e51f1f8e8c68ba8dfcb248ee680d3efbd3f9338a",
+      "bodyUtf8Bytes": 3215
+    },
+    {
+      "id": 6401436006,
+      "url": "https://github.com/Matysh/houseplan-card/issues/1065#issuecomment-6401436006",
+      "author": "Matysh",
+      "authorAssociation": "OWNER",
+      "createdAt": "2026-10-25T18:24:49Z",
+      "updatedAt": "2026-10-25T18:24:49Z",
+      "body": "Дополнительное подтверждённое свидетельство из #1078 после фактического S8 у #1082.\n\nОдин наблюдаемый SPEC run: [40219908411](https://github.com/Matysh/houseplan-card/actions/runs/40219908411), attempt 1, model job 121249308814. Material/policy/tools SHA совпадают: 98baf6d77e28fdc0fbe53d75a715cd4b9d9ba82f; CLI 2.1.295. Новый artifact [review-failure-diagnostics-task-40219908411-1](https://github.com/Matysh/houseplan-card/actions/runs/40219908411/artifacts/12608527973), id 12608527973, 8364 compressed bytes; certificate 77980 bytes, SHA256 de0dfd97ca5875bb481e46521b3ac8b39ea30d1813cd3f6108472df7da3ad6dc. Policy/trace/journal read, shape expected, без усечения.\n\n47 tool calls / 47 journal rows, malformed/orphan journal/results = 0, metadataBlocks = 0. Terminal subtype success/is_error false НЕ даёт допустимый вердикт: audit RED.\n\nДве allowed Grep дают input-digest-mismatch при actual denied=false и согласованном policy decision. Набор и число ключей по metadata совпадают, порядок различается:\n- tool ID digest 002475a10a12422ff75047b44a8706e6fe4e4d2668d5a3a444a7163807a0fe5b: trace [pattern,path,H1,H2], hook [pattern,path,H2,H1]. Оба otherKeyCount=2; H1=e56a46f6e3e8abd3eff04c9b3579ee1b4bb946295e52cf59e1e528b42205fa44, H2=fd7bb54b374e8a54c953a24a47a636547eac5482047e897f253642589074e6ea.\n- tool ID digest 00b764554dba852f35016db2a494c71cc88d01be6eb440f77a42b785e283616a: trace [pattern,path,H1,output_mode,head_limit], hook [pattern,path,output_mode,H1,head_limit]. Оба otherKeyCount=1, head_limit number 10.\n\nЭто дополнительный ordinary-свидетель order-sensitive digest для Grep, помимо Node requests #1067. Равенство скрытых pattern/path/value строк lossy certificate не доказывает; автоматическое признание результатов или игнорирование новых ключей/типов не предлагается.\n\nНезависимо от mismatch подтверждены 6 actual denied requests (journal matches trace, input digests и decisions согласованы; те же IDs в SDK denials): 3 nonliteral foreground Bash (43/65/90 bytes, background=false); 1 literal Bash (224 bytes, binary=other, argumentCount=9, category spec-execution-boundary); 2 ToolSearch (tool-not-allowlisted). Raw argv/строки не восстанавливаются и не исполнялись автором. Исправление порядка хеширования само по себе не устранит эти самостоятельные отказы; прежний denied-request policy сохраняется до нового решения.\n\nНовых повторов #1078 не запускаю, вернул S3 + blocked по #1065. Продуктовый черновик только локальный. Старый сырой semantic response не принят и не переносится в S5; бюджет ревью не потрачен. Вопрос о субагентах/ручном принятии владелец не разрешал.",
+      "bodySha256": "754c6a97558b8cc3877a7c7ddf0d5ae87e6bec91f149db386caf5ba03a98d4e6",
+      "bodyUtf8Bytes": 3307
+    }
+  ]
+}
