@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.83.0-beta.2 — 2026-10-25
+
 - Create rooms from valid existing off-grid contours without moving their walls.
   Optimize accepts the exact supported alignment of a retained wall carrier;
   unproved trimming, unsupported wall attributes, lost opening hosts and stale

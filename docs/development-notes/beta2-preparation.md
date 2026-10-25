@@ -111,3 +111,27 @@ Existing room fixture bytes/identities remain unchanged. The DTO adds only one
 configs0 inventory row; all older corpus documents/order are retained exactly.
 Fresh emission and47 targeted Node tests passed;45 targeted Python/HA tests and
 Ruff passed. No product code or safety limit changed.
+
+## Final infrastructure acceptance and evidence boundary
+
+The second full run, `40158618236`, completed with shards 2/3 passing 148/147
+scenarios. Shard 1 reached 130 successful scenarios before its 25-minute job
+watchdog cancelled it; 18 remained unexecuted. This is incomplete evidence,
+never 443/443 or full release PASS.
+
+#1064 passed ordinary CODE review r1 (H0/M0) and reached actual S8 at
+`0908d904c0465b72d8715e8a38027ccde76a3209`. Its finite whole-job budget is 35
+minutes, with the same three partitions, 180-second child limit, 10-second kill
+grace and failure/empty guards. Author-targeted tests passed75/75, the normal
+hook passed with 0 failures, and all three exact-source push CI runs succeeded.
+The final beta candidate still requires strict full release CI.
+
+The published CODE report also claims a temporary edit of the canonical job
+limit followed by test execution and rollback. PROCESS §2.7/#905 defines that
+as mutation execution outside the permitted nightly route, rather than an
+ordinary negative input. This report claim is excluded from caught/AC1
+evidence; the raw execution trace was not separately verified. The ordinary
+author/CI results above are independent of that claim. The separate process
+finding is [#1065](https://github.com/Matysh/houseplan-card/issues/1065), with a
+[corrective comment](https://github.com/Matysh/houseplan-card/issues/1064#issuecomment-6393581133)
+preserving the original report and source history. This adds no release waiver.

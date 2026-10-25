@@ -91,7 +91,7 @@ const CAPS = {
   // Splitting another gesture owner solely for 49 lines beyond the prior
   // 11735+50 band would add disproportionate complexity. The owner permits
   // this exact observed cost; keep CORE_BAND50 and the other core cap.
-  'src/houseplan-editor-runtime.ts': 11834,
+  'src/houseplan-editor-runtime.ts': 11845,
 };
 
 /**

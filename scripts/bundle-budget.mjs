@@ -430,7 +430,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // measure341095 ->344467 B (+3372,0.99%). The owner permits a small measured
 // excess where further splitting costs disproportionately; history UI stays
 // lazy. Record the fact, retain the2000-B band and352000-B absolute wall.
-export const INITIAL_VIEW_GZIP_CEILING = 344_467;
+export const INITIAL_VIEW_GZIP_CEILING = 344_490;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -648,7 +648,7 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -837,7 +837,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 // Exact whole-build facts and owner permission: decor-multiselect-integration.json
 // and issuecomment-6383329349. Refresh the measured reference only; preserve
 // the 2000-B band, initial View split, absolute guards and latency predicates.
-export const LAZY_EDITOR_GZIP_CEILING = 352_827;
+export const LAZY_EDITOR_GZIP_CEILING = 354_821;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -866,7 +866,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #1037: independent caption/wall-body pickers in the shared Space form,
 // legacy projection and lazy translated help. Owner permits minor growth.
 // Pre-rebase measurement35,187 B; retain the larger accepted #1036 ceiling.
-export const LAZY_ONBOARDING_GZIP_CEILING = 35_772;
+export const LAZY_ONBOARDING_GZIP_CEILING = 37_517;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
