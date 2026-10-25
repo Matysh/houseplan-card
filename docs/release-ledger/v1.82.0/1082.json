@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1082,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Adds bounded redacted diagnostic-only failure certificates for the existing review execution audit. It changes review tooling and failure evidence retention without changing product behavior, tool admission, verdict sealing or merge authority.",
+  "summary": {
+    "ru": "Отказ ревью сохраняет ограниченную безопасную диагностику без публикации transcript или недопустимого вердикта.",
+    "en": "Failed reviews retain bounded safe diagnostics without publishing transcripts or admitting a refused verdict."
+  }
+}

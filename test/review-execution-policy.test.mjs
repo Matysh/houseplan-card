@@ -165,6 +165,9 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
   const accepted = invoke('hook', { tool_use_id: 'safe', ...bash('node --test test/probe.test.mjs') });
   assert.equal(accepted.status, 0); assert.equal(accepted.stdout, '', 'normal permissions apply to allowed checks');
   assert.equal(JSON.parse(readFileSync(`${path}.jsonl`, 'utf8').split('\n')[0]).denied, true);
+  const recorded = JSON.parse(readFileSync(`${path}.jsonl`, 'utf8').split('\n')[0]);
+  assert.equal(recorded.diagnostic.schema, 1, 'actual hook keeps optional safe shape metadata');
+  assert.equal(recorded.diagnosticDecision.category, 'command-not-allowlisted');
   assert.equal(invoke('audit').status, 1, 'missing execution/report cannot mint PASS');
   assert.match(settings.hooks.PreToolUse[0].hooks[0].command, /^timeout --kill-after=1s 12s .+ \|\| exit 2$/,
     'handler launch/crash/inner deadline refuses before the longer outer hook deadline');

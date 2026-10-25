@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5449 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
+| Tests | Node unit 5461 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -58,6 +58,12 @@ the complete SDK trace with its private policy journal before report sealing.
 Canonical patch/run/restore is refused rather than relabelled ordinary input.
 Missing/inconsistent evidence has no verdict authority; the tool boundary is
 not an operating-system sandbox for reviewed child programs.
+
+Review failure evidence (#1082) preserves a bounded redacted certificate for
+task/spec, ship and release failures independently of result sealing. It names
+decision/trace mismatches with fixed vocabulary and hashes; missing evidence
+stays unknown. Raw transcripts remain private and the refusal still blocks
+publication without spending a CODE cycle.
 
 Historical vacuum preview (#999) is local to one card's memory. Its accepted
 default keeps a selected/pending cleanup across ordinary dialog close, while

@@ -2305,7 +2305,8 @@ the material checkout. All three model entrypoints load its explicit hook
 settings without user/project/local settings. PreToolUse validates a literal
 foreground check or an external report Write; arbitrary shell programs and
 canonical implementation/guard/limit replacement are not review inputs.
-The private journal stores only tool IDs, input digests and decisions. The SDK's
+The private journal stores tool IDs, input digests and decisions, with optional
+bounded fixed-vocabulary diagnostic shape metadata (#1082). The SDK's
 nonexecuting StructuredOutput channel is bound to the final structured result;
 it does not gain a shell/file capability when its internal call has no hook.
 Sealing requires a complete SDK result, a matching decision for executable tool calls, no
@@ -2314,3 +2315,12 @@ known patch/run/restore-as-ordinary claim. Historical review files remain intact
 This is an accidental-action tool boundary, not OS isolation of reviewed child
 programs or authentication against a hostile same-user process. It does not
 turn static checks or denied requests into execution evidence or mutant caught.
+
+Failure diagnostics (#1082) are a separate trusted read-only projection of the
+existing execution trace and private journal. A model/audit failure collects a
+bounded fixed-schema certificate before success-only sealing; an always-run
+failure uploader retains only that exact newly generated file for one day.
+Tool IDs and unknown names/keys are pseudonymized, argv is represented only by
+finite semantic categories, and payloads/credentials are never copied. Missing,
+malformed and oversized evidence stays explicit. Metadata channels are observed
+without gaining an admission exemption. The diagnostic has no verdict authority.

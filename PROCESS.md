@@ -321,6 +321,10 @@ S1-new → S2-analysis → S3-spec → S4-spec-review ⟲ → S5-ready →
   Перед seal сверяются полный execution trace, журнал решений, неизменность
   материала и отсутствие ложного ordinary patch/run/restore claim. Нет trace,
   есть отказ или несовпадение — нет допустимого вердикта, цикл не расходуется.
+  При отказе модели/audit сохраняется отдельный ограниченный certificate
+  диагностики (#1082): только fixed-schema metadata и хеши, без raw transcript,
+  argv/content/секретов. Отсутствие/усечение входов явно; certificate не результат
+  ревью, не admission и не authority для seal/слияния.
   Это ограничение инструментов против ошибочных действий ревьюера, не OS
   sandbox для враждебного reviewed child code и не доказательство caught.
 

@@ -7,6 +7,7 @@ import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
+import { reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
 
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export const REVIEW_CLI_VERSION = '2.1.295';
@@ -217,7 +218,9 @@ if (isMainModule(import.meta.url)) {
       unchanged(policy);
       const problem = toolProblem(call, policy);
       appendFileSync(policy.journal, JSON.stringify({ id: call.tool_use_id,
-        input: digest({ name: call.tool_name, input: call.tool_input }), denied: Boolean(problem) }) + '\n');
+        input: digest({ name: call.tool_name, input: call.tool_input }), denied: Boolean(problem),
+        diagnostic: reviewToolMetadata(call.tool_name, call.tool_input, { files: policy.files, literalArgv }),
+        diagnosticDecision: reviewDecisionMetadata(problem) }) + '\n');
       if (problem) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: problem } }));
     } else if (mode === 'audit') {
       const policy = JSON.parse(readFileSync(policyPath, 'utf8')); unchanged(policy);

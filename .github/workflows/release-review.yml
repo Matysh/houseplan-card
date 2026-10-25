@@ -162,10 +162,12 @@ jobs:
 
       # Тот же обход, что у конвейера (_process.yml, anthropics issue 1817).
       - name: "Получить accepted review policy (#1065)"
+        id: policy_tools
         run: |
           tools="$RUNNER_TEMP/review-policy-tools"
           mkdir -p "$tools"
           git archive origin/dev scripts | tar -x -C "$tools"
+          echo "sha=$(git rev-parse origin/dev)" >> "$GITHUB_OUTPUT"
 
       - name: Установить Claude Code детерминированно
         id: claude_bin
@@ -277,11 +279,35 @@ jobs:
             --json-schema '{"type":"object","properties":{"high":{"type":"integer"},"medium":{"type":"integer"},"low":{"type":"integer"},"summary":{"type":"string"}},"required":["high","medium","low","summary"]}'
 
       - name: "Проверить execution boundary (#1065)"
+        id: execution_boundary
         env:
           REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
           REVIEW_STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
           REVIEW_DOC: ${{ runner.temp }}/release-review.md
         run: node "$RUNNER_TEMP/review-policy-tools/scripts/review-execution-policy.mjs" audit "$RUNNER_TEMP/review-execution-policy.json"
+
+      - name: "Собрать безопасную диагностику отказа (#1082)"
+        id: failure_diagnostics
+        if: always() && (steps.review.outcome == 'failure' || steps.execution_boundary.outcome == 'failure')
+        env:
+          REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/claude-execution-output.json
+          REVIEW_DIAGNOSTIC_POLICY: ${{ runner.temp }}/review-execution-policy.json
+          REVIEW_DIAGNOSTIC_OUTPUT: ${{ runner.temp }}/review-failure-diagnostics/certificate.json
+          REVIEW_DIAGNOSTIC_KIND: release
+          REVIEW_DIAGNOSTIC_STAGE: release
+          REVIEW_DIAGNOSTIC_SHA: ${{ needs.prepare.outputs.candidate }}
+          REVIEW_DIAGNOSTIC_TOOLS_SHA: ${{ steps.policy_tools.outputs.sha }}
+        run: node "$RUNNER_TEMP/review-policy-tools/scripts/review-failure-diagnostics.mjs"
+
+      - name: "Сохранить диагностику отказа, не вердикт (#1082)"
+        if: always() && (steps.review.outcome == 'failure' || steps.execution_boundary.outcome == 'failure')
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: review-failure-diagnostics-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.failure_diagnostics.outputs.certificate }}
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Запечатать результат модели
         env:

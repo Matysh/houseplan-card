@@ -1578,6 +1578,7 @@ jobs:
           echo "- расход модели: \`$line\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: "Проверить execution boundary (#1065)"
+        id: execution_boundary
         env:
           REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
           REVIEW_STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
@@ -1585,6 +1586,30 @@ jobs:
         run: |
           tools="$RUNNER_TEMP/preflight-tools"
           node "$tools/scripts/review-execution-policy.mjs" audit "$RUNNER_TEMP/review-execution-policy.json"
+
+      - name: "Собрать безопасную диагностику отказа (#1082)"
+        id: failure_diagnostics
+        if: always() && (steps.review.outcome == 'failure' || steps.execution_boundary.outcome == 'failure')
+        env:
+          REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          REVIEW_DIAGNOSTIC_TRACE_FALLBACK: ${{ runner.temp }}/claude-execution-output.json
+          REVIEW_DIAGNOSTIC_POLICY: ${{ runner.temp }}/review-execution-policy.json
+          REVIEW_DIAGNOSTIC_OUTPUT: ${{ runner.temp }}/review-failure-diagnostics/certificate.json
+          REVIEW_DIAGNOSTIC_KIND: task
+          REVIEW_DIAGNOSTIC_STAGE: ${{ needs.guard.outputs.stage }}
+          REVIEW_DIAGNOSTIC_ISSUE: ${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}
+          REVIEW_DIAGNOSTIC_SHA: ${{ needs.prepare.outputs.material_sha }}
+          REVIEW_DIAGNOSTIC_TOOLS_SHA: ${{ needs.prepare.outputs.tools_sha }}
+        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-failure-diagnostics.mjs"
+
+      - name: "Сохранить диагностику отказа, не вердикт (#1082)"
+        if: always() && (steps.review.outcome == 'failure' || steps.execution_boundary.outcome == 'failure')
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: review-failure-diagnostics-task-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.failure_diagnostics.outputs.certificate }}
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Запечатать результат модели
         id: result

@@ -5811,7 +5811,7 @@ control is rejected; normal `--help`/`--version` alone are not that proof.
 Absolute external input/report paths are also given directly in the model
 prompt; discovering an environment variable does not require a forbidden shell
 expansion. The coverage manifest no longer excludes the now-explicit HA dialog
-oracle. Usage and execution audit are the two named private trace consumers;
+oracle. Usage, execution audit and bounded failure collection are the named private trace consumers;
 the sealed artifact's exact file set and the no-upload boundary are unchanged.
 Night-only registrations cover Bash-policy bypass, native failure behavior,
 missing-journal refusal and false ordinary claims. Only static readiness is
@@ -5837,3 +5837,41 @@ output/filter command is executed. The sixth night registration protects this.
 Protocol references: [Claude hook input/PreToolUse decisions](https://code.claude.com/docs/en/hooks),
 [CLI settings sources](https://code.claude.com/docs/en/cli-reference), and the
 [pinned action settings input](https://github.com/anthropics/claude-code-action/blob/9cdae7f0d995e3ba7c33f226087fdf82a59cd520/action.yml).
+
+## Review failure certificates (#1082)
+
+Task/spec, ship and release model/audit failures collect a separate
+`houseplan-review-failure/v1` certificate using accepted tools, then upload its
+exact generated path for one day. The collection/upload conditions use
+`always()` with model/audit failure outcomes, independently of success-only
+sealing. Collection or upload failure remains visible; hard runner termination
+and unavailable storage cannot be turned into guaranteed retained evidence.
+
+The read-only collector caps trace/policy/journal reads at 64/4/2 MiB, journal
+rows at 2048, calls at 256, SDK denials/metadata channels at 64 each, and output
+at 256 KiB. Missing, invalid, oversized and truncated inputs are explicit.
+It retains trusted run/attempt/issue/stage/material/tools provenance and input
+hashes, known tool/key vocabulary, pseudonymized IDs, journal presence/decision
+and digest agreement. Fixed semantic argv fields contain only binary category,
+known flags, counts and literal/background shape, never argument values or paths.
+Unknown tool names and input keys are hashes/counts. Raw prompts, Write contents,
+tool results, MCP configuration, environment values and transcripts stay private.
+
+`expected.category` is the current unchanged policy's local diagnostic evaluation.
+Optional hook-side shape/decision metadata preserves known key order, type and
+bounded numeric/boolean fields, independently of the original exact input hash.
+The collector reprojects that metadata and compares both sides without changing
+admission normalization. Old journals lack these fields: `reasonAvailable`
+stays false and metadata agreement unknown. No raw reason text is copied.
+Missing policy never becomes a proved forbidden request. Observing
+`server_tool_use`/`tool_reference` metadata grants no tool or missing-journal
+exemption. Structured output is represented only by a digest, not a verdict.
+The artifact is diagnostic-only: admission, SDK pin, refusal, exact sealed file
+set, cycle accounting and merge authority are unchanged. The six historical
+#1067 denials remain unexplained because their private trace was not retained.
+Do not accept their refused structured GREEN or retry it without new evidence.
+
+Ordinary proof: `node --test test/review-failure-diagnostics.test.mjs
+test/review-execution-policy.test.mjs test/model-usage.test.mjs`. Fixtures supply
+inert JSON/command strings to unchanged functions and real collector I/O;
+proposed commands and mutants are never dispatched.
