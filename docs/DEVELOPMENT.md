@@ -1,5 +1,112 @@
 # Development and deployment
 
+## Local vacuum history preview (#999)
+
+`vacuum_history_websocket.py` reads only the public registered Dreame camera;
+`vacuum_history.py` owns the closed catalog/history/map-witness values. The
+shared `vacuum_camera_read.py` lease retains the physical operation after a
+logical timeout. Existing live collection keeps its own parser, acceptance,
+retry and final-read policy. The existing confirmed task proof only rotates a
+weakly held transient history epoch, never a new archive or Store field.
+Completed physical results are released even after caller timeout; background
+provider errors are consumed through a bounded sanitized result. A queued read
+rechecks saved authority before starting the provider. Request-scoped catalog
+watches use the existing recorder state callback: position/token updates remain
+valid, while a catalog change or unavailable interval retires even an ABA reply.
+No separate subscription or polling is introduced.
+The 64-KiB catalog limit is checked before JSON encoding with a string-character
+lower bound, then against exact encoded bytes. Repeated provider strings cannot
+inflate a rejected catalog into tens of MiB of temporary serialized data; Unicode
+and escaped labels still obey the exact byte limit.
+
+The frontend separates selected, requested and painted records. It derives
+route/calibration from the accepted configuration snapshot, uses the existing
+geometry cache/render quota, and preserves a pending Show across ordinary close
+or a different dropdown selection. A restored select sets the selected option
+when its dialog DOM is recreated; setting only its value before options mount
+loses the visible choice. Source replacement and late finally callbacks cannot
+inherit the next intent. Settings strings remain lazy; View owns only banner
+copy and local overlay state. No writer/service enters this flow.
+Before any actual device selection, a cold View history owner does not scan
+the device roster on ordinary renders; an ordinary consumer test counts that
+read and retains the positive accepted-selection case.
+An authoritative catalog can learn a new cleanup before the trail event: it
+ends the old preview and admits the new epoch, preserving the selected row for
+a separate Show. The epoch observed at request start also fences an older
+initial catalog when a newer trail signal arrived during its await.
+
+The synthetic fixtures in `test/fixtures/vacuum-history/` were produced by the
+unchanged pinned metadata/selector/serializer ASTs, with source hashes recorded
+in each file; `produce.py --source <pinned vendor component>` reproduces the
+two-record fixture. Authenticated selection of index 2 proves its distinct path
+and interrupted status, with no Store writes. This covers the public DTO, not
+cloud download/vendor decoding or an installed robot. `test_vacuum_history.py`,
+real HA endpoint tests, `vacuum-history.test.mjs`, the four named
+`smoke_vacuum_history*.mjs` scenarios and four dedicated Golden scenes cover
+separate ordinary inputs. Capture new Golden frames in the task;
+acceptance remains the pre-beta Linux artifact operation. Final source receipts,
+all required risks, measurements and normal hook must be current before S7.
+The ledger explicitly retains the required recovery/fidelity/live-tail/native
+neighbors and the affected camera/visibility guards, so their AC coverage does
+not depend on a weak lexical match being part of a task plan.
+
+The local UI-030 comparison uses its accepted section markup/layout CSS with
+the same synthetic records, current shared kit, theme, viewport and state. All
+12 initial/selected/shown × dark/light × wide/narrow pairs have equal dimensions
+and zero differing pixels. This is a section comparison, not a claim that an
+old private whole-plan screenshot equals the current product. Private reference
+files remain local; task Golden frames contain only synthetic data.
+The HA endpoint suite also changes a real household user's group to read-only
+while geometry is held: the same recorder survives, the old reply has no paths,
+the next catalog request is unauthorized and House Plan stores remain unchanged.
+An invalidated backend owner reports `retired`, even if the underlying read
+also timed out or failed. The frontend clears both painted material and its
+catalog for that explicit refusal before a stale client permission flag updates;
+ordinary errors loading another record still retain a valid shown record.
+Catalog refusal also fences held Show replies. Keeping the open dialog marked
+as loaded prevents its next render from automatically retrying the denial.
+The explicit `suppressed` refusal retires material for both list and get: it
+means the saved marker is hidden/static or live display is disabled, even while
+the client still has its earlier accepted snapshot. An ordinary unavailable
+record remains different and keeps an otherwise valid painted record. The
+ordinary frontend witness first failed for get/suppressed while the unavailable
+positive passed; fresh endpoint cases cover all four saved suppression forms
+without another physical read or history-owned Store change.
+The targeted frontend pair passes after a fresh TypeScript compilation on
+`769ff9f53`. The suppression guard is registered separately for nightly, using
+that ordinary unit oracle; static readiness is not a mutant execution claim.
+The initial get owner lookup also distinguishes source authority from a later
+record failure. Only that `_owner` call maps unsupported/ambiguous/unavailable
+saved ownership to `retired`; list remains descriptive, and catalog/read/decode
+failures keep their original errors. Before the correction, three real HA
+unavailable/disabled/rebound cases failed while two valid-owner malformed/provider
+positives passed. The unchanged inputs then pass all nine owner/suppression/record
+cases; eleven frontend cases confirm retirement versus keeping a valid A.
+These narrow results do not replace final accepted-base task execution.
+
+The whole accepted `b3dbea281` merge includes decor multi-selection and bounded
+registry Git I/O. The Golden matrix keeps both independent additions under
+version 89; its capture contract explicitly admits the existing `vacuum-history`
+clip, alongside the unchanged shared captures. Its four entries also declare
+their actual synthetic visual fixture; the first contract run exposed the
+previously missing metadata and both stale version-88 assertions. Neither the
+fixture producer nor image/comparison thresholds change. The history task scope retains
+both selected-decor smokes as integration neighbors. Final source execution and
+measurements follow the remaining accepted device/node changes; this merge
+checkpoint alone does not claim those checks.
+The whole accepted `af23dada6` merge also preserves node-Delete and history
+capability keys together in the authoritative recovery adapter. Existing node,
+keyboard and group retirement stays intact; the node-Delete native is an
+explicit integration neighbor. Browser guard counts are regenerated from the
+union of reviewed IDs, without changing its guideline or dropping either set.
+The final accepted device-settings merge keeps its re-evaluated current-target
+factory at every deferred dialog entry; history still follows actual accepted
+selection and ordinary close keeps Show. History's original-producer JSON and
+shared UI helper are explicit capture inputs outside the usual Golden module
+roots. The ordinary identity test was red when changing the rendered path left
+both identities unchanged; the closed input declaration now retires source and
+visual evidence for either consumed file. No fixture bytes or thresholds change.
+
 ## Device settings from View (#1050)
 
 The persisted `settings` tap action and View context menu reuse the existing
@@ -5451,6 +5558,31 @@ sources fall back to fresh jobs. Actual
 Node flags/options, locale and timezone are part of the recorded environment;
 local reuse never substitutes CI image values. The proof publisher alone has
 contents:write and skips fork PR index writes.
+
+### #999: measured history preview cost after #1050
+
+Matched Windows Node22.23.3 / Rollup4.62.2 builds of accepted #1050 and clean
+4b65494c measure initial View341095→344467B gzip (+0.99%), lazy editor
+353394→354564B, Select-only21455→21449B and raw dist3483369→3508073B (+0.71%).
+The card grows13312→13327 lines and runtime11843→11845; hostRefs6225→6255.
+History state/values/UI remain leaf modules; the fifteen card lines connect
+lifecycle, rendering and capability ownership. The old core gate reports five
+lines beyond13272+50. Under the owner's standing small-growth permission,
+record only the blocked View/raw/hostRefs/card references at measured values.
+Keep every band, absolute wall, runtime/editor/Select reference and physical
+limit. Further splitting these integration seams for five excess lines/references
+would add disproportionate complexity. This records cost, not a speed gain;
+the identities and exact facts are in
+`development-notes/vacuum-history-measurement.json` (public cost comment6391633547).
+
+The first mandatory normal push hook on3922415d refused two real checks:
+the new View banner hover selector lacked the shared pointer-modality gate,
+and the complete fixture corpus passport missed the two history JSON files.
+Use the established `:host([data-pointer-hover])` gate. Add only those two
+zero-config inventory rows to the passport, preserving every existing config,
+identity, order and negative oracle. The two affected suites then pass13/13;
+the original failed hook remains evidence, not a successful push. A fresh build,
+bounded browser proof and normal push are required after this source change.
 
 ## Existing wall-face coordinates and exact Align #1061
 

@@ -26,6 +26,7 @@ from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
 from .vacuum_ecovacs_reader import EcovacsReader, automatic_ecovacs_source, ecovacs_pair
+from .vacuum_history import observe_history_state, retire_history
 from .vacuum_live_tail import acknowledge_live, append_live, ensure_live, observe_task
 from .vacuum_path_collector import PathCollector, PathContext
 from .vacuum_paths import (
@@ -976,6 +977,7 @@ class TrailRecorder:
                                                       verified=verified)
             changed |= activity_changed
             if boundary:
+                retire_history(self, marker)
                 changed |= self.book.begin_native_task(marker, now)
                 current = record.get("current")
             if isinstance(current, dict) and current.get("path_format") == 2 \
@@ -1198,6 +1200,7 @@ class TrailRecorder:
     @callback
     def _on_state(self, event: Any) -> None:
         eid = event.data.get("entity_id")
+        observe_history_state(self, eid, event.data.get("new_state"))
         now = time.time()
         changed = False
         for src, pair_list in self.pairs.items():

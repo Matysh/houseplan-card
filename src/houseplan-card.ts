@@ -113,6 +113,8 @@ import { recordLocalVacuumPosition, type LocalVacuumPath } from './vacuum-local-
 import { recordVacuumLivePosition, type VacuumLivePending } from './vacuum-live-tail';
 import { currentVacuumTrailFrame, vacuumTrailMaterial, type VacuumServerBook } from './vacuum-trail-material';
 import { vacuumTrailSvg, type VacuumSvgFrame } from './vacuum-trail-render';
+import { VacuumHistory, type VacuumHistoryHost } from './vacuum-history';
+import { renderVacuumHistoryBanner } from './vacuum-history-banner';
 import { diagnoseVacuumTrail, type VacuumTrailDiagnostic } from './vacuum-trail-diagnostics';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 import {
@@ -586,6 +588,7 @@ export class HouseplanCard extends LitElement {
         forceHass = this.isConnected;
         if (forceHass) this._renderLife.retireHass();
         this._haVacuumDockRestartApi = null;
+        this._haVacuumHistoryApi = null;
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._liveSyncConnection = null;
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
@@ -2169,6 +2172,7 @@ export class HouseplanCard extends LitElement {
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
+  private _haVacuumHistoryApi: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;
   private _alignDialog: OptimizePlansDialogState | null = null;
@@ -2345,6 +2349,7 @@ export class HouseplanCard extends LitElement {
   private _vacSrvTrails: VacuumServerBook = {};
   private _vacTrailFormat = 1;
   private _vacGeometryCache = new VacuumPathGeometryCache();
+  private readonly _vacHistory = new VacuumHistory(this as unknown as VacuumHistoryHost);
   private _unsubTrail?: () => void;
   private _vacJumpOnce = false;
   private _continuity = this._newContinuityController();
@@ -2383,6 +2388,7 @@ export class HouseplanCard extends LitElement {
     this._continuity.visibility(signal);
     this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
     if (signal.kind === 'hidden') {
+      this._vacHistory.suspend();
       this._abandonViewInput();
       this._cancelDeviceDrag();
       if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
@@ -11446,6 +11452,7 @@ export class HouseplanCard extends LitElement {
           </div>
           <div data-hp-live-editor-html></div>
           </div>
+          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}
           ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}
           <div class="zoombadge" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
           ${this._renderFarHint()}
@@ -11569,6 +11576,7 @@ export class HouseplanCard extends LitElement {
     const response = packet as { trails?: unknown; trail_format?: number } | null;
     this._vacSrvTrails = vacuumTrailMaterial(response?.trails);
     this._vacTrailFormat = response?.trail_format === 2 ? 2 : 1;
+    this._vacHistory.adoptEpochs(packet);
     adoptEcovacsSources(this, packet, context);
     this._planHassMemo = null;
     this._vacTick();
@@ -12008,6 +12016,13 @@ export class HouseplanCard extends LitElement {
         serverPrevious: srv0?.previous ?? null,
         explicitRoutes: Array.isArray(d.marker?.vacuum?.map_routes),
       });
+      const history = this._vacHistory.markerId === d.id && this._vacHistory.applicable ? this._vacHistory.shown : null;
+      if (history?.route.calibration) {
+        const frame = this._vacTrailPathD(history.paths, history.route.calibration, trailBudget);
+        trailBudget -= frame.count;
+        this._vacHistory.paint(history, !!frame.d, frame.limited);
+        if (frame.d) trails.push(svg`<path data-hp="vacuum-trail-segment" data-entity=${this._vacEntity(d)} data-kind="history" data-vacuum-owner=${d.id} style=${trailStyle} class="core" d=${frame.d}></path>`);
+      }
       if (!plan.live && !plan.previous) continue;
       const matrix = plan.live;
       const rt = fact?.runtime ?? this._vacRt.get(d.id);
@@ -12021,12 +12036,12 @@ export class HouseplanCard extends LitElement {
       const srvPrev = plan.previous ? srv?.previous ?? null : null;
       // the PREVIOUS run stays visible even at rest: users compare where the
       // robot has been against where it has not (owner call 2026-07-31)
-      if (tmode === 'always' && srvPrev && plan.previous) {
+      if (!history && tmode === 'always' && srvPrev && plan.previous) {
         previousRuns.push({ path: normalizeVacPath(srvPrev.path_format === 2 ? srvPrev.paths : srvPrev.points), matrix: plan.previous, id: d.id, entity: this._vacEntity(d), style: trailStyle });
       }
       // One arbitration authority: integration multi-subpath → server run →
       // local runtime. Only drawable segments participate.
-      if (showCur && matrix) {
+      if (!history && showCur && matrix) {
         const { current, path: raw, frame } = currentVacuumTrailFrame({ telemetry: tele, server: srvCur,
           local: rt?.material ?? rt?.trail ?? [], serverFormat: this._vacTrailFormat, moving, matrix,
           livePending: rt?.livePending,

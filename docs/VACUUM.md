@@ -570,8 +570,76 @@ debounced persistence and live-update path as a later state event.
 5. A disabled source must be re-enabled in HA or replaced explicitly; House
    Plan will not guess a replacement.
 
-Commands, zones/no-go polygons, cleaning-history UI and Roomba string parsing
-are outside this contract.
+Commands, zones/no-go polygons and Roomba string parsing are outside this
+contract. The separately bounded history preview follows below.
+
+## One-screen historical cleanup preview (#999)
+
+The device's Vacuum section offers **Cleaning history preview** after path
+colour. A writer outside kiosk selects a real provider record, then explicitly
+chooses Show. Selecting another record does not apply it; filled Show and the
+dated banner describe the actually painted record. Hide, including the banner
+button, returns the latest ordinary live material without Save or robot actions.
+History can temporarily replace this robot's paths even when trail mode is Never;
+other robots, its dock and current live puck retain their ordinary behaviour.
+No historical tip connects to the current puck. View and Devices share the
+canonical Flat/2.5D projection, geometry cache, physical smoothing contract and
+20,000-point space budget; Plan/Background remain excluded surfaces.
+
+There is no timeout or persistent preview. Closing the dialog preserves an
+accepted or pending Show, and changing its dropdown alone never retires that
+intent. Explicit Hide, another Show, changing space/robot, deletion/rebinding,
+source/route/calibration or authority changes retire stale replies. Only the
+existing independently confirmed Dreame new-task boundary ends a preview for
+a new cleanup; a pause or arbitrary movement edge does not prove it. Detach
+and page hide retire callbacks; warm paint requires renewed same-owner checks.
+Collection continues throughout, so Hide does not restore an old SVG snapshot.
+
+The first provider passport is Tasshack Dreame 2.0.2 at
+`f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585`. Its registered ordinary camera
+(`map_index` integer 0) exposes `cleaning_history_picture` and public
+`history_map_image(index, False, False, True, False, False, False)`.
+Catalog labels are presentation only. The proxy URL's bounded machine `v`
+field is the record start epoch and `index` only its current address: the URL
+and token are neither fetched, logged nor returned. Opaque record identity is
+bound to source/robot/start epoch, with a catalog revision checked around the
+await. Duplicate epochs or addresses are ambiguous. A source State/camera or
+registry replacement, config revision or confirmed-task epoch also invalidates
+the read; an observed ABA does not inherit old authority.
+
+The separate historical decoder requires numeric version 2, genuine
+`history_map=true`, typed completed/interrupted status, valid frame/map identity
+and complete finite raw-millimetre chunks. It rejects a malformed value as a
+whole. The ordinary live decoder still refuses history. Matching uses only an
+exact-source native current/previous coordinate witness with known provenance,
+saved route/map and typed `dreame_coordinate_key` floor/slot identity. Those
+slots never provide the selected cleanup content. Missing/ambiguous coordinates,
+an unknown floor or missing saved calibration are explicit refusals; there is no
+current/default-map guess, new fit or automatic floor switch.
+The history side requires an explicit typed `saved_map_id`, including genuine
+zero; an archive transport `map_id` alone cannot certify its floor. Ordinary
+restored live maps retain their existing map-ID fallback. Forbidden map flags
+must be absent or exactly false, not malformed truthy/unknown values.
+
+The additive `vacuum_history_api=1` commands
+`houseplan/vacuum/history/list` and `/get` require current House Plan write
+permission before and after awaits. They accept marker ID and opaque record/
+catalog identities, never client source/index/URL. Lists are capped at 100
+records and 64 KiB metadata. Geometry retains the existing 8 MiB pre-decode,
+100,000-point/1,024-fragment bounds. Live/history share the HA-lifetime physical
+camera lease, 10-second minimum and 10-second logical timeout; cancellation
+cannot free an unfinished vendor operation. This bounds our bridge, not
+upstream allocation before it. Reads are explicit, without polling or an archive.
+
+Catalog-empty and an empty selected path have different messages. Interrupted
+records carry a warning. Dates use HA timezone; all records colliding in one
+minute show real seconds, and remaining DST collisions add the real UTC offset.
+Other integrations and unknown public capabilities show unsupported/update
+guidance, not sample records or a relabelled live/previous run. Original public
+serializer fixtures and real HA ACL/Store tests prove the pinned contract;
+cloud download, vendor decoder and compatibility with an installed device still
+need their own field evidence. History is absent from config/Store/import/export
+and is not restored from local/session storage after reload.
 
 ## Deleting and restoring a vacuum marker (#369)
 

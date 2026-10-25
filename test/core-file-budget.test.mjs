@@ -59,7 +59,11 @@ const CAPS = {
   // This is 3 lines beyond the existing 13219+50 band. The owner permits the
   // exact observed cost: keyboard dispatch/focus and existing writer/ACK seams;
   // topology/queue/CAS logic stays in separate lazy modules. Keep CORE_BAND 50.
-  'src/houseplan-card.ts': 13272,
+  // #999 after accepted #1050:13312 ->13327 actual lines. History state and
+  // UI live in leaf modules;15 host lifecycle/render/capability seams remain.
+  // Actual gate was5 lines above13272+50. Owner permits this observed small
+  // cost instead of disproportionate splitting; retain CORE_BAND50.
+  'src/houseplan-card.ts': 13327,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.

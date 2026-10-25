@@ -14,6 +14,7 @@ import {saveVacuumDockRestart,vacuumDockRestartPending} from '../vacuum-dock-res
 import {ecovacsSourceState,ecovacsSourceAllowed} from '../vacuum-ecovacs-client';
 import { previewVacuumTrailStyle } from '../vacuum-trail-style';
 import { effectiveRoutes } from '../vacuum-routes';
+import { renderVacuumHistorySection } from './vacuum-history-section';
 
 export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:NonNullable<HouseplanEditorRuntime['host']['_markerDialog']>,toolsT:(key:ToolsI18nKey)=>string):TemplateResult|typeof nothing {
     const {st}=settingsCopy(runtime.host);
@@ -164,6 +165,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
             hex:trailStyle.color,transparency:100-Math.round(trailStyle.opacity*100),
           })}</span>
         </div>`,
+          renderVacuumHistorySection(runtime.host,dev),
           toggleRow({id:'marker-vacuum-dock-restart',title:runtime.host._t('vac.new_run_after_dock'),
           caption:runtime.host._t(runtime.host._haVacuumDockRestartApi===1?'vac.new_run_after_dock_hint':'vac.new_run_after_dock_update'),
           checked:v.new_run_after_dock===true,

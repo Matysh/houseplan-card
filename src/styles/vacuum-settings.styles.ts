@@ -12,6 +12,12 @@ export const vacuumSettingsCss = `
 .vacuum-profile .vacuum-trail-color > span:first-child{font-weight:500;}
 .vacuum-profile .vacuum-trail-color hp-color-opacity{flex:none;}
 .vacuum-profile .vacuum-trail-readout{color:var(--secondary-text-color);font-size:12px;overflow-wrap:anywhere;}
+.vacuum-history{display:grid;gap:12px;min-width:0;}
+.vacuum-history h3{margin:0;font:inherit;font-weight:600;line-height:22px;}
+.vacuum-history .vacuum-history-actions{display:flex;gap:8px;flex-wrap:wrap;margin:0;}
+.vacuum-history .hpf-callout,.vacuum-history .rhint{margin:0;}
+.vacuum-history-status{margin:0;color:var(--primary-color);font-size:13px;line-height:20px;}
+.vacuum-history hp-settings-select{min-width:0;width:100%;}
 .vacuum-profile .hpf-profile-maproutes > .hpf-sub{margin:0 0 16px;}
 .vacuum-profile .vacroutes{display:grid;gap:16px;border:0;margin:0;padding:0;min-width:0;}
 .vacuum-profile .vacroutes > .vacdiag{margin:0;padding:0;}

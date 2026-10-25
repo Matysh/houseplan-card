@@ -7,6 +7,13 @@
   unproved trimming, unsupported wall attributes, lost opening hosts and stale
   writes remain refused. Alignment retains the original opening-fit checks;
   valid hosted openings cannot disappear during alignment. (#1061)
+- Preview a selected past Dreame cleanup path on this screen without saving
+  settings or controlling the robot. Hide restores the latest live path; a new
+  cleanup ends preview even when its catalog arrives before live updates.
+  Server-confirmed loss of access, hidden/live-disabled devices and retired or
+  unavailable sources clear an already shown preview. Ordinary errors loading
+  another cleanup retain the valid shown path. The banner's hover feedback
+  follows the current pointer modality, including after touch input. (#999)
 - Safely delete an intermediate wall node in Plan/Select: join its two neighbours
   without moving them, preserve supported openings and undo the whole edit in
   one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale

@@ -1362,5 +1362,9 @@
   "svg.view_required": "Passez en mode Vue pour exporter la vue actuelle.",
   "svg.cancelled": "Export annulé : le plan ou les droits d’accès ont changé.",
   "svg.not_ready": "Le plan est en cours de chargement. Réessayez une fois le chargement terminé.",
-  "tip.signal_last_known": "Dernière valeur connue, source indisponible"
+  "tip.signal_last_known": "Dernière valeur connue, source indisponible",
+  "vac.history_banner": "Historique de nettoyage · {date}",
+  "vac.history_hide": "Masquer",
+  "vac.history_limited": "Affichage limité",
+  "vac.history_interrupted": "Nettoyage interrompu"
 }

@@ -1237,7 +1237,7 @@ const MUTANT_DEFINITIONS = [
     id: 'wall-dialog-back-inside-camera-layer',
     guard: compiledNodeSmoke('smoke_canvas_surface_gestures'),
     because: '#900 AC4 depends on measured intermediate DOM rectangles during live camera CSS projection, before the terminal viewBox clears that projection.',
-    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}', replace: '          ${dialogPresence(this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing)}\n          </div>' }],
+    patches: [{ file: 'src/houseplan-card.ts', find: '          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}\n          ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}', replace: '          ${dialogPresence(this._wallDialog ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>` : nothing)}\n          </div>\n          ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}' }],
   },
   {
     id: 'layout-full-read-ignores-overlapping-own-write',
@@ -1415,8 +1415,8 @@ const MUTANT_DEFINITIONS = [
     guard: compiledNodeSmoke('smoke_editor_guides_lifecycle'),
     because: '#893 AC3: actual queued native input and previously painted frames cross the shared mounted lifecycle delivery; retired tails must produce no layout/history/service/DOM effects.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "    if (signal.kind === 'hidden') {\n      this._abandonViewInput();\n      this._cancelDeviceDrag();",
-      replace: "    if (signal.kind === 'hidden') {\n      this._abandonViewInput();\n      // mutant: unfinished device preview survives background" }],
+      find: "    if (signal.kind === 'hidden') {\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      this._cancelDeviceDrag();",
+      replace: "    if (signal.kind === 'hidden') {\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      // mutant: unfinished device preview survives background" }],
   },
   {
     id: 'space-device-drag-survives-navigation',
@@ -21348,6 +21348,53 @@ const decorLine1046Cases = [
       replace:'      e.preventDefault(); return;'}] },
 ];
 
+const vacuumHistory999Cases = [
+  {id:'vacuum-history-capture-inputs-untracked-999',
+    guard:'node --test --test-name-pattern="consumed history capture inputs" test/source-fingerprint.test.mjs',
+    because:'#999 AC1/AC9: changing a rendered historical path or the UI capture helper must retire old source/visual evidence, including JSON outside the ordinary Golden module roots.',
+    patches:[{file:'scripts/source-fingerprint.mjs',find:'    ...HISTORY_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),\n',replace:''}]},
+  {id:'vacuum-history-initial-get-owner-keeps-preview-999',
+    guard:'node scripts/backend-test-guard.mjs initial_get_owner_refusal tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC5/AC6: a fresh get must distinguish a retired saved owner from an ordinary record failure before a stale client can keep painted A.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'if geometry and str(err) in ("unsupported", "ambiguous", "unavailable"):',replace:'if False and geometry and str(err) in ("unsupported", "ambiguous", "unavailable"):'}]},
+  {id:'vacuum-history-get-suppression-retains-preview-999',
+    guard:'node --test --test-name-pattern="server suppression" test/vacuum-history.test.mjs',
+    because:'#999 AC5/AC6: an explicit saved-marker suppression must retire painted A even before the client learns hidden/static/live-off configuration.',
+    patches:[{file:'src/vacuum-history.ts',find:"      ||reason==='suppressed'\n",replace:''}]},
+  {id:'vacuum-history-server-denial-keeps-preview-999',
+    guard:'node --test --test-name-pattern="server authority" test/vacuum-history.test.mjs',
+    because:'#999 AC5/AC6: an explicit backend denial must retire painted material even before the client permission flag catches up.',
+    patches:[{file:'src/vacuum-history.ts',find:"if(reason==='unauthorized'||reason==='retired'\n",replace:"if(false&&(reason==='unauthorized'||reason==='retired')\n"}]},
+  {id:'vacuum-history-retired-owner-reported-as-record-error-999',
+    guard:'node scripts/backend-test-guard.mjs real_household_user_losing_write_role tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC5/AC6: a real role revocation during a held read must revoke old preview authority, not be reported as an ordinary record failure.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'if not current_check():',replace:'if False and not current_check():'}]},
+  {id:'vacuum-history-catalog-allocation-unbounded-999',
+    guard:'node scripts/backend-test-guard.mjs metadata_encode_allocation tests_backend/test_vacuum_history.py',
+    because:'#999 AC7: metadata rejected at 64 KiB must be bounded before encoding repeated strings into a much larger transient JSON value.',
+    patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'if characters > HISTORY_METADATA_BYTES:',replace:'if False and characters > HISTORY_METADATA_BYTES:'}]},
+  {id:'vacuum-history-new-catalog-keeps-old-preview-999',
+    guard:'node --test --test-name-pattern="fresh catalog learns" test/vacuum-history.test.mjs',
+    because:'#999 AC5: a fresh catalog may be the first confirmed new-cleanup signal; it must retire old shown material before accepting the new epoch.',
+    patches:[{file:'src/vacuum-history.ts',find:"if(learnedEpoch){\n        this.hide('retired');",replace:'if(learnedEpoch){'}]},
+  {id:'vacuum-history-catalog-aba-admitted-999',
+    guard:'node scripts/backend-test-guard.mjs public_source_ticks tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC5/AC7: normal position/token updates may continue a read, but an observed changed-and-restored catalog must not revive its old authority.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'and not watch.retired and now["state"] is watch.state',replace:'and now["state"] is watch.state'}]},
+  {id:'vacuum-history-retired-show-adopted-999',guard:'node demo/smoke_vacuum_history.mjs',
+    because:'#999 AC5: a completed older Show must not resurrect after Hide or publish/unlock a newer intent across the real dialog and Lit renderer.',
+    patches:[{file:'src/vacuum-history.ts',find:'this.requested===intent&&this.synchronize()',replace:'this.synchronize()'}]},
+  {id:'vacuum-history-live-payload-admitted-999',
+    guard:'node scripts/backend-test-guard.mjs partial_or_wrong_passport tests_backend/test_vacuum_history.py',
+    because:'#999 AC3/AC7: current or incomplete payloads cannot be relabelled as a selected genuine historical cleanup.',
+    patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'or data.get("history_map") is not True or type(data.get("completed")) is not bool',
+      replace:'or type(data.get("completed")) is not bool'}]},
+  {id:'vacuum-history-stale-catalog-accepted-999',
+    guard:'node scripts/backend-test-guard.mjs record_index_shift_before_get tests_backend/test_ha_vacuum_history.py',
+    because:'#999 AC3/AC5: a stale catalog revision cannot silently inherit a shifted history index.',
+    patches:[{file:'custom_components/houseplan/vacuum_history_websocket.py',find:'if revision != msg["revision"] or record is None:',replace:'if record is None:'}]},
+];
+
 const decorGroup1038Cases = [
   {id:'decor-group-text-measure-scans-unselected-1038',guard:'node demo/smoke_decor_group_text_scale.mjs',
     because:'#1038 CODE r1 / AC2+7: 1000 mounted Text labels with only two selected expose unrelated ID enumeration across public HA updates and actual pointer movement; geometry/cache/write positives remain mandatory.',
@@ -21449,7 +21496,7 @@ const roomContact1061Cases = [
   },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases].map((mutant) => ({
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

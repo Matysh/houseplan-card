@@ -497,7 +497,9 @@ gates or saved data. Their complete elements/enums/identity metadata live in
 | `device[data-hp-device-component]`, `device-contact-contour[data-component][data-grouped]` | Group owner marker id on all members and the owner's existing contour; `data-grouped=true` means at least two devices. |
 | `device-history[data-action]` | Position undo/redo, preserving the old history attribute. |
 | `device-catalog-row[data-id]`, `device-catalog-select[data-id]`, `device-catalog-select-all` | HA inbox row key or virtual marker id, and actual selection checkboxes. |
-| `vacuum-trail`, `vacuum-trail-segment[data-entity][data-kind]`, `vacuum-puck[data-entity]` | Shared trail SVG, each current/previous/tip result's vacuum entity and the visible robot puck. Container presence alone does not identify one vacuum. |
+| `vacuum-trail`, `vacuum-trail-segment[data-entity][data-kind]`, `vacuum-puck[data-entity]` | Shared trail SVG, each current/previous/history/tip result's vacuum entity and the visible robot puck. Container presence alone does not identify one vacuum. |
+| `vacuum-history`, `field[data-field="vacuum-history-record"]`, `vacuum-history-show`, `vacuum-history-hide`, `vacuum-history-retry` | Owner's temporary cleanup selector and its actions; the same Hide action is available on the stage banner. |
+| `vacuum-history-shown`, `vacuum-history-reason`, `vacuum-history-banner` | Actual shown cleanup, explanatory status and stage reminder. |
 | `vacuum-calibration`, `vacuum-calibration-action[data-action]`, `vacuum-calibration-step[data-step]` | Existing manual fit bar, rotate/mirror/save/cancel and existing manual overlay. No wizard steps are invented. |
 | `backdrop`, `decor[data-kind][data-id]` | Existing backdrop image and every rendered decor branch, including passive image/furniture paths and erase hit shapes. Several SVG elements may identify one object. |
 | `furniture-category[data-id]`, `furniture-item[data-id]` | Existing canonical category and symbol buttons. |

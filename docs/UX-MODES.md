@@ -8,6 +8,15 @@
 
 ## Principle
 
+Vacuum history (#999) is an explicit writer-only preview entered through the
+existing device settings outside kiosk. View and Devices render the selected
+history on the ordinary overlay surface; Plan and Background suppress it and
+disable Show with an explanation, without switching modes. The filled Show
+button and dated banner mean that accepted history is actually painted.
+Choosing another list row does not replace it. Close preserves even a pending
+Show; Hide, space/robot change, revoked authority or confirmed new cleanup
+retires it. Reload has no persisted preview to restore.
+
 The approved #963 chrome places the right-hand header actions in one wrapping
 pool, with three44px zoom targets and joined44px summary controls. The composite
 settings glyph shows a complete gear and panel; active toggles use an accent

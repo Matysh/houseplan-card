@@ -1,0 +1,24 @@
+{
+  "issue": 999,
+  "measuredSource": "4b65494c8e0016038764730b9087666a2678d4ef",
+  "acceptedBase": "646c9145f21cb406c4579f4c4e656b5ca0c15026",
+  "baseMeasuredSource": "6b4f59f6dc7a78eee5bfb6cf6328c2a3fb7a7f0e",
+  "baseEquivalence": "Only CODE review and review index differ between measured base and accepted base; product/build/capture inputs are identical.",
+  "environment": {"platform": "win32", "node": "22.23.3", "rollup": "4.62.2"},
+  "sourceFingerprint": "7c817e31d0ae9f86dd5cd5d4c1b16f80fc3175d522508e033a2c040e176b0bbc",
+  "manifestSha256": "d8297fe6085dd07e9f7244e109fd7dfffb5ded0a44cab8c30ea2c7c569997da4",
+  "matched": {
+    "initialViewGzip": {"before":341095,"after":344467},
+    "lazyEditorGzip": {"before":353394,"after":354564},
+    "selectOnlyGzip": {"before":21455,"after":21449},
+    "bundleBytes": {"before":3483369,"after":3508073},
+    "hostRefs": {"before":6225,"after":6255},
+    "cardLines": {"before":13312,"after":13327},
+    "runtimeLines": {"before":11843,"after":11845}
+  },
+  "coreBefore": {"passed":6,"failed":1,"cap":13272,"band":50,"excess":5},
+  "authorization": "Owner permits a small measured excess when eliminating it would be disproportionately expensive; public cost comment6391633547.",
+  "changedReferences": {"initialViewGzip":344467,"bundleBytes":3508073,"hostRefs":6255,"cardLines":13327},
+  "preserved": "All bands, absolute View352000B, editor/Select/runtime references, physical/performance limits and remaining monolith references.",
+  "reason": "History owner, values and UI are separate leaf modules. Fifteen card integration lines connect lifecycle/render/capability; additional splitting for five excess lines/five references costs more than the measured small growth. No byte/line golf, new writer, eager editor or claimed performance gain."
+}
