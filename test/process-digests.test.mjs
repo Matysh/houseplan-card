@@ -259,7 +259,7 @@ function actualReviewPrompt() {
 }
 
 function promptFixture(stage, track, findingsRaw = '') {
-  const values = { 'github.event.issue.number': '905',
+  const values = { 'github.event.issue.number': '905', 'runner.temp': '/tmp/hp-review-fixture',
     'fromJSON(inputs.source_event || toJSON(github.event)).issue.number': '905', 'github.repository': 'owner/repo',
     'needs.guard.outputs.stage': stage, 'needs.guard.outputs.cycle': '1',
     'needs.guard.outputs.spent': '0', 'needs.guard.outputs.limit': '4',
