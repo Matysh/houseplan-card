@@ -3678,6 +3678,31 @@ git config core.fsmonitor true
 git config core.untrackedCache true
 ```
 
+## Daycycle raster observations (#1066)
+
+`smoke_daycycle_raster.mjs --report=artifacts/diagnostics/863/<own-name>.json`
+retains all six raw samples, native pointer deliveries, the existing two rAF
+callbacks per step, actual viewBox/transform/style attributes and mutation
+delivery times. It performs no per-step layout reads, additional frame waits
+or per-step CDP calls. Observer work has a measured overhead; it is not claimed
+to have zero observer effect. CPU/GPU, affinity/cgroup and workflow provenance
+describe the actual host; unsupported protocol metadata is explicitly unknown.
+
+A page user-timing marker aligns page timestamps with trace microseconds.
+LayerTree events retain Node receipt time and backend-node IDs, separately from
+the page/trace clock. Complete RasterTask args and optional tts/tdur survive;
+missing thread CPU durations are never inferred from elapsed task durations.
+CI saves the standalone raw report on success and failure. Selected-browser
+artifacts and full-smoke diagnostic artifacts contain the same JSON format.
+
+Compare two reports with `node scripts/daycycle-compare.mjs LEFT.json RIGHT.json`.
+The summary preserves both original verdicts and all raw inputs. Its pointer
+interval bins describe temporal coincidence, not causal frame attribution.
+Source/tree/pins mismatches and missing historical observations stay explicit.
+The original ratio ceiling 2.0, three alternating pairs, native 60-step path,
+readiness guards and actual renderer are unchanged. An external resource-control
+run is diagnostic evidence only and never substitutes for ordinary CI proof.
+
 ## Local repository maintenance (#628)
 
 Night-red test repositories (#1069) disable `maintenance.auto`, `gc.auto` and

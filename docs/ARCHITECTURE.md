@@ -2128,6 +2128,14 @@ observations in the browser after a native wheel. It changes no product timer
 or renderer. The paired daycycle report is a separate test-only oracle over raw
 RasterTask/phase/readiness/environment evidence; no sample is silently removed.
 
+The #1066 daycycle observation is test-only: passive native pointer events,
+attribute-only geometry snapshots in the existing two-rAF wait, MutationObserver
+delivery records, a trace/page clock marker, LayerTree backend-node identities
+and GPU/resource provenance. The offline analysis never changes the paired
+measurement verdict. Missing historical telemetry and missing thread CPU clocks
+stay unknown; elapsed raster durations and notification delivery times are not
+relabelled as CPU time or frame boundaries.
+
 `space.led_strips` belongs to the space; the link is one-way strip → marker
 and the device model stays the only owner of state and services. Four modules:
 

@@ -23,6 +23,8 @@
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { attestLaunchedBrowser } from '../scripts/browser-attestation.mjs';
 import { PAN_STEPS, SAMPLE_ROUNDS, DAYCYCLE_FIXTURE, pairedMeasurementReport } from './helpers/daycycle-measurement.mjs';
+import { installDaycycleObservation, observeDaycycleFrames } from './helpers/daycycle-observation.mjs';
+import { daycycleEnvironment, beginDaycycleLayers, daycycleLayerNodes, daycycleTraceObservation } from './helpers/daycycle-diagnostics.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -35,6 +37,8 @@ const cdp = await page.context().newCDPSession(page);
 const environment = await attestLaunchedBrowser(browser, { reason: '#863 measurement environment', log: () => {} });
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const materialSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+const materialTree = execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { cwd: ROOT, encoding: 'utf8' }).trim();
+const diagnosticEnvironment = await daycycleEnvironment(browser);
 const materialClean = !execFileSync('git', ['status', '--porcelain', '--untracked-files=normal', '--',
   'src', 'demo', 'scripts', 'package.json', 'package-lock.json', 'tsconfig.json', 'rollup.config.mjs'],
 { cwd: ROOT, encoding: 'utf8' }).trim();
@@ -106,12 +110,16 @@ const measurePan = async (round, order) => {
   const ready = { mode: currentMode, ok: readyStyle?.daycycle === (currentMode === 'daynight')
     && readyStyle?.outlinePresent === (currentMode === 'daynight'), style: readyStyle };
   const box = await stageBox();
+  const marker = `hp-daycycle-${currentMode}-${round}-${order}`;
+  await page.evaluate(installDaycycleObservation, { marker });
+  const layerNodes = await daycycleLayerNodes(cdp);
+  const layerObservation = await beginDaycycleLayers(cdp);
   const startedAt = performance.now();
   const events = [];
   const collect = ({ value }) => events.push(...value);
   cdp.on('Tracing.dataCollected', collect);
   await cdp.send('Tracing.start', {
-    traceConfig: { includedCategories: ['disabled-by-default-devtools.timeline'] },
+    traceConfig: { includedCategories: ['disabled-by-default-devtools.timeline', 'blink.user_timing'] },
     transferMode: 'ReportEvents',
   });
   const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
@@ -128,9 +136,7 @@ const measurePan = async (round, order) => {
     );
     // Два кадра на шаг: первый ставит кадр в очередь, второй ждёт, пока он
     // действительно отрисуется. Иначе замер считает не работу, а очередь.
-    await page.evaluate(() => new Promise((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(resolve));
-    }));
+    await page.evaluate(observeDaycycleFrames, step);
   }
   await page.mouse.up();
   await page.waitForTimeout(200);
@@ -144,12 +150,16 @@ const measurePan = async (round, order) => {
     if (event.name !== 'RasterTask' || event.ph !== 'X' || typeof event.dur !== 'number') continue;
     micros += event.dur;
     tasks += 1;
-    rasterTasks.push({ ts: event.ts, dur: event.dur, pid: event.pid, tid: event.tid });
+    rasterTasks.push({ ts: event.ts, dur: event.dur, pid: event.pid, tid: event.tid,
+      tts: event.tts ?? null, tdur: event.tdur ?? null, args: event.args ?? null });
   }
   const endedAt = performance.now();
+  const pageObservation = await page.evaluate(() => window.__hpDaycycleObservation.stop());
+  const layers = await layerObservation.stop();
   return { mode: currentMode, round, order, steps: PAN_STEPS, ready,
     startedAt, endedAt, wallMs: endedAt - startedAt,
-    ms: micros / 1000, tasks, rasterTasks };
+    ms: micros / 1000, tasks, rasterTasks,
+    diagnostics: { ...daycycleTraceObservation(events, pageObservation, layers), layerNodes } };
 };
 
 const out = {};
@@ -198,10 +208,13 @@ out.safePlanLayerIsExplicit = (safeDayStyle?.planWillChange || '') === 'opacity'
 
 out.rasterTasksObserved = [...staticSamples, ...dayCycleSamples].every((sample) => sample.tasks > 0);
 const report = pairedMeasurementReport({ materialSha, materialClean, environment,
-  fixture: DAYCYCLE_FIXTURE, staticSamples, dayCycleSamples });
+  materialTree, diagnosticEnvironment, fixture: DAYCYCLE_FIXTURE, staticSamples, dayCycleSamples });
 out.measurementValid = report.measurementValid;
 out.rasterRatioWithinBudget = report.rasterRatioWithinBudget;
-const reportArg = process.argv.find(arg => arg.startsWith('--report='))?.slice(9);
+const ciName = [process.env.GITHUB_RUN_ID || 'ci', process.env.GITHUB_RUN_ATTEMPT || '0',
+  process.env.GITHUB_JOB || 'job', process.pid].join('-').replace(/[^A-Za-z0-9_-]/g, '_');
+const reportArg = process.argv.find(arg => arg.startsWith('--report='))?.slice(9)
+  || (process.env.CI ? `artifacts/diagnostics/863/daycycle-${ciName}.json` : null);
 if (reportArg) {
   if (!/^artifacts\/diagnostics\/863\/[A-Za-z0-9_-]+\.json$/.test(reportArg)) throw new Error('report must be an own artifacts/diagnostics/863 JSON path');
   const path = resolve(ROOT, reportArg); mkdirSync(dirname(path), { recursive: true });

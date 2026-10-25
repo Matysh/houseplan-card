@@ -945,6 +945,7 @@ jobs:
           path: |
             artifacts/browser-selected
             artifacts/golden
+            artifacts/diagnostics/863
           if-no-files-found: error
 
   smoke:
@@ -1069,6 +1070,13 @@ jobs:
         with:
           name: smoke-logs-${{ matrix.shard }}
           path: /tmp/smoke-logs
+      - name: Preserve raw daycycle observations on every outcome
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: daycycle-diagnostics-${{ matrix.shard }}
+          path: artifacts/diagnostics/863
+          if-no-files-found: ignore
 
   # Registry receipt is minted only after all three direct shards and smoke_done succeed.
       - name: Stamp registry producer toolchain

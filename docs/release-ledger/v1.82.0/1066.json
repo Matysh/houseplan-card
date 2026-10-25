@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1066,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Retains passive daycycle input, camera, layer and host evidence for bounded CI/WSL diagnosis. Preserves the renderer, native pan, raw pairs and original performance verdict without changing product behavior.",
+  "summary": {
+    "ru": "Диагностика растеризации сохраняет фактические события камеры, кадров, слоёв и ресурсов вместе с исходным результатом проверки.",
+    "en": "Raster diagnostics retain actual camera, frame, layer and resource observations alongside the original check result."
+  }
+}
