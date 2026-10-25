@@ -1373,6 +1373,11 @@ state ticks. Contract: [`WALL-THICKNESS.md`](WALL-THICKNESS.md) §2–§4, §9�
 
 Floor-geometry caches are keyed by their inputs, never by the global config
 epoch, and their keys and pools come from one module, `src/floor-geometry-key.ts`.
+The structural reader excludes annotations through `structural-space-record.ts`
+(#1071), retaining all non-decor fields and both model/current records. Contact
+walls use that same reader. Light barriers use the same projection plus their
+existing LED-source exclusion, so the shared masonry tag stays aligned.
+The generic record memo, complete config hash and history remain decor-aware.
 The wall union, physical bodies, inner contours and clean floors key by the
 content of one floor record (#744, #769); the union, the bodies and the opening
 tunnels keep a bounded pool of recently shown floors (eight, LRU) next to the

@@ -42,6 +42,14 @@ not writes. Invalid HEX/alpha keeps the compound field owned and blocks completi
 Selection is volatile and retires on external adoption, authority, navigation
 or detach; it never enters config, transfer, asset storage or reload state.
 
+The toolbar palette always sets creation defaults, including with a group
+selected; existing objects are edited through Properties. Applying their
+colour/opacity must not rebuild physical walls or light barriers (#1071).
+Structural floor fingerprints exclude decor; complete configuration/history
+fingerprints still include every annotation. Undo may explicitly retire caches
+under its existing conservative restore contract; its resulting walls remain
+identical to a cold card.
+
 The trash tool is **Delete** (#976), with a32px arrow/cross cursor (hotspot2,2)
 also over transparent decor hit shapes. It retains confirmation and named
 Undo/Redo. An enabled toolbar tool closes an open secondary menu and activates

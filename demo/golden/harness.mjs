@@ -1140,6 +1140,7 @@ export async function prepareGoldenScenario(page, scenario) {
       language: scenario.language || 'en',
       ...(scenario.kiosk ? { kiosk: true } : {}),
     };
+    let decorStyleRevision=1;
     const hassFor = () => ({
       language: scenario.language || 'en', locale: { language: scenario.language || 'en' },
       ...(scenario.stage3Golden
@@ -1157,9 +1158,12 @@ export async function prepareGoldenScenario(page, scenario) {
         three: { floor_id: 'three', name: 'Three', level: 2 },
       },
       callWS: async (message) => {
+        if(scenario.decorGroupStyle&&message.type==='houseplan/config/set'){
+          fixture.config=structuredClone(message.config);return {ok:true,rev:++decorStyleRevision};
+        }
         if (message.type === 'zha/devices' && fixture.zhaDevices) return structuredClone(fixture.zhaDevices);
         if (message.type === 'houseplan/config/get') return {
-          config: structuredClone(fixture.config), rev: 1,
+          config: structuredClone(fixture.config), rev: scenario.decorGroupStyle?decorStyleRevision:1,
           can_write: scenario.canWrite !== false,
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
           ...(scenario.directLqi ? { zigbee_lqi_api: 1 } : {}),
@@ -2851,7 +2855,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   if (scenario.zigbeeLed) result.zigbeeLed = await prepareZigbeeLed(page);
   if (scenario.vacuumHistory) result.vacuumHistory = await prepareVacuumHistoryGolden(page,scenario);
-  if (scenario.decorMultiselect) result.decorMultiselect = await prepareDecorMultiselect(page);
+  if (scenario.decorMultiselect) result.decorMultiselect = await prepareDecorMultiselect(page,scenario);
   if (scenario.directLqi) {
     for (const [id, lqi] of Object.entries(scenario.directLqi)) {
       const line = page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${id}"] .lqi`);
