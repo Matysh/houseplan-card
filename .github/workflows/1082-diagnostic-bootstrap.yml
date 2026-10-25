@@ -1,0 +1,175 @@
+# Author diagnostic only; NEVER a CODE review, CI proof or acceptance input.
+name: 1082 one-shot diagnostic bootstrap
+run-name: '1082 diagnostic-only · ${{ github.sha }}'
+on:
+  push:
+    branches: [issue/1082-diagnostic-bootstrap]
+    paths: [.github/workflows/1082-diagnostic-bootstrap.yml]
+permissions:
+  contents: read
+concurrency:
+  group: 1082-diagnostic-bootstrap-one-shot
+  cancel-in-progress: false
+jobs:
+  diagnostic:
+    if: github.repository == 'Matysh/houseplan-card' && github.ref == 'refs/heads/issue/1082-diagnostic-bootstrap' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Read this exact diagnostic orchestration
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Preserve this orchestration outside the immutable checkout
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/1082-orchestration"
+          cp scripts/1082-diagnostic-bootstrap.mjs "$RUNNER_TEMP/1082-orchestration/1082-diagnostic-bootstrap.mjs"
+          git show 5892911a8863249e5649bcc452668d7525d03244:scripts/spawn-portable.mjs > "$RUNNER_TEMP/1082-orchestration/spawn-portable.mjs"
+      - name: Read immutable original material
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: 98baf6d77e28fdc0fbe53d75a715cd4b9d9ba82f
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .nvmrc
+      - name: Read authentic context and archive accepted toolkit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node "$RUNNER_TEMP/1082-orchestration/1082-diagnostic-bootstrap.mjs"
+          prepare "$RUNNER_TEMP/1082-bootstrap" "$RUNNER_TEMP/1082-accepted-tools"
+      - name: Install unchanged accepted native runtime
+        id: native
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/1082-accepted-tools"
+          ver=$(node "$tools/scripts/review-execution-policy.mjs" version)
+          test "$ver" = 2.1.295
+          base=https://downloads.claude.ai/claude-code-releases
+          bin="$RUNNER_TEMP/1082-native/claude"
+          mkdir -p "$(dirname "$bin")"
+          curl -fsSL --retry 3 "$base/$ver/linux-x64/claude" -o "$bin"
+          sum=$(curl -fsSL --retry 3 "$base/$ver/manifest.json" | jq -r '.platforms["linux-x64"].checksum')
+          test "$sum" = 4503bfe11a6c7fcc1e0b39b5e0d347c04248f750b03b0977b3ad6b531fe6f358
+          echo "$sum  $bin" | sha256sum -c -
+          chmod +x "$bin"
+          actual=$("$bin" --version)
+          test "${actual%% *}" = "$ver"
+          echo "path=$bin" >> "$GITHUB_OUTPUT"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+      - name: Prepare original accepted hook and settings
+        id: policy
+        env:
+          REVIEW_KIND: task
+          REVIEW_STAGE: code
+          REVIEW_CLAUDE_VERSION: ${{ steps.native.outputs.version }}
+          REVIEW_DOC: ${{ runner.temp }}/1082-bootstrap/document.md
+          REVIEW_FINDINGS: ${{ runner.temp }}/1082-bootstrap/findings.md
+        run: >-
+          node "$RUNNER_TEMP/1082-accepted-tools/scripts/review-execution-policy.mjs"
+          prepare "$RUNNER_TEMP/1082-bootstrap/policy.json"
+      - name: Bind exact pre-model policy/settings/context/diff bytes
+        id: binding
+        run: >-
+          node "$RUNNER_TEMP/1082-orchestration/1082-diagnostic-bootstrap.mjs"
+          attest "$RUNNER_TEMP/1082-bootstrap" "$RUNNER_TEMP/1082-accepted-tools" "$RUNNER_TEMP/1082-native/claude"
+      - name: One read-only author diagnostic, no official verdict
+        id: review
+        uses: anthropics/claude-code-action@9cdae7f0d995e3ba7c33f226087fdf82a59cd520 # v1
+        env:
+          ANTHROPIC_MODEL: claude-sonnet-5
+          CLAUDE_CODE_EFFORT_LEVEL: high
+          REVIEW_DOC: ${{ runner.temp }}/1082-bootstrap/document.md
+          REVIEW_FINDINGS: ${{ runner.temp }}/1082-bootstrap/findings.md
+          REVIEW_CONTEXT: ${{ runner.temp }}/1082-bootstrap/context.json
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          allowed_bots: 'github-actions[bot]'
+          path_to_claude_code_executable: ${{ steps.native.outputs.path }}
+          settings: ${{ runner.temp }}/1082-bootstrap/policy.json.settings.json
+          prompt: |
+            Это ОДИН авторский diagnostic-only запуск для #1082, НЕ официальный
+            CODE и НЕ основание для GREEN, смены статуса, интеграции или CI proof.
+            Язык — русский. Не оставляй комментарии и не меняй issue/repository.
+
+            Неизменный материал находится в ${{ github.workspace }}.
+            REVIEW_CONTEXT: ${{ runner.temp }}/1082-bootstrap/context.json
+            REVIEW_DOC: ${{ runner.temp }}/1082-bootstrap/document.md
+            REVIEW_FINDINGS: ${{ runner.temp }}/1082-bootstrap/findings.md
+            Абсолютный diff: ${{ runner.temp }}/1082-bootstrap/diff.patch
+
+            Работай ТОЛЬКО Read/Grep/Glob. Write разрешён ТОЛЬКО двум внешним
+            REVIEW_DOC/REVIEW_FINDINGS, затем StructuredOutput. Никаких Bash,
+            Edit/MultiEdit, MCP, ToolSearch, Agent/Task, web-запросов, тестов,
+            сборок или новых исполнений. Не исследуй credentials, runner TEMP
+            или settings/journal/trace; читай только названный контекст и исходники.
+            Политика/SDK/CLI и бюджет здесь те же, что в принятом 5892911a.
+
+            Прочитай полный current body/comments в authentic REVIEW_CONTEXT,
+            SCOPE/AGENTS/REVIEWER/PROCESS, все изменённые файлы по diff и рискованные
+            вызывающие пути/negative fixtures. Независимо проверь три AC #1082:
+            сохранение evidence на failure; redaction/границы/привязка; отсутствие
+            admission/verdict/merge authority. CI 40199442844 и author producers
+            на exact98baf переиспользованы; они не гарантируют полноту/корректность.
+            При конкретном непокрытом риске назови его, не форсируй GREEN.
+
+            Прошлые попытки НЕ admissible CODE: известны только итоговые audit
+            отказы; точные denied calls/причины missing journal неизвестны.
+            Самоутверждение модели об Edit не является аутентичным trace.
+            Не пытайся повторить неизвестный/запрещённый вызов. Denied request
+            не доказывает исполнение. Это tool policy, не OS sandbox.
+
+            Запиши source-only observations/границы в REVIEW_DOC, найденные риски
+            в REVIEW_FINDINGS. Явно озаглавь «Diagnostic only — no CODE authority».
+            Верни итоговый JSON по неизменной схеме последним действием; никакой
+            partial summary или GREEN не публикуется и не используется как ревью.
+          claude_args: |
+            --model claude-sonnet-5
+            --effort high
+            --max-turns 150
+            --setting-sources ""
+            --allowedTools Read,Write,Grep,Glob,Bash,mcp__github__add_issue_comment,mcp__github__issue_write,mcp__github__issue_read
+            --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["green","yellow","red"]},"high":{"type":"integer"},"medium":{"type":"integer"},"summary":{"type":"string"},"route":{"type":"string","enum":["fix","reclassify"]},"criterion":{"type":"string"}},"required":["verdict","high","medium","summary","route"]}'
+      - name: Preserve original accepted audit outcome
+        id: audit
+        if: always() && steps.policy.outcome == 'success' && steps.review.outcome != 'skipped'
+        env:
+          REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          REVIEW_STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
+          REVIEW_DOC: ${{ runner.temp }}/1082-bootstrap/document.md
+        run: >-
+          node "$RUNNER_TEMP/1082-accepted-tools/scripts/review-execution-policy.mjs"
+          audit "$RUNNER_TEMP/1082-bootstrap/policy.json"
+      - name: After model only, project bounded diagnostic and fixed provenance
+        id: evidence
+        if: always()
+        env:
+          REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          REVIEW_OUTCOME: ${{ steps.review.outcome }}
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+          BEFORE_MODEL_DIGEST: ${{ steps.binding.outputs.digest }}
+        run: >-
+          node "$RUNNER_TEMP/1082-orchestration/1082-diagnostic-bootstrap.mjs"
+          finish "$RUNNER_TEMP/1082-bootstrap" "$RUNNER_TEMP/1082-accepted-tools" "$RUNNER_TEMP/1082-native/claude"
+      - name: Retain only the exact new bounded certificate
+        if: always() && steps.evidence.outputs.certificate != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: 1082-bootstrap-certificate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.evidence.outputs.certificate }}
+          if-no-files-found: error
+          retention-days: 1
+      - name: Retain fixed-schema diagnostic provenance, never a review result
+        if: always() && steps.evidence.outputs.provenance != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: 1082-bootstrap-provenance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.evidence.outputs.provenance }}
+          if-no-files-found: error
+          retention-days: 1
