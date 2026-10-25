@@ -31,8 +31,13 @@ export function taskCheckSource({ repo, token, candidateSha, candidateSnapshot =
         const local = spawnSync('git', ['rev-parse', '--verify', `${sha}^{commit}`], { cwd: root, stdio: 'ignore' });
         if (local.status === 0) return taskCheckSnapshot(root, sha);
       } catch { /* bounded remote fallback */ }
-      const tree = await json(`git/trees/${sha}?recursive=1`);
-      if (tree.truncated || !validSha(tree.sha) || !Array.isArray(tree.tree)) throw Error('incomplete task-check Git tree');
+      // /git/trees accepts commit aliases but may echo the commit SHA. Bind
+      // the immutable commit to its real tree before authenticating that tree.
+      const commit = await json(`git/commits/${sha}`);
+      if (commit?.sha !== sha || !validSha(commit?.tree?.sha)) throw Error('task-check commit differs from immutable source');
+      const treeSha = commit.tree.sha;
+      const tree = await json(`git/trees/${treeSha}?recursive=1`);
+      if (tree?.sha !== treeSha || tree.truncated !== false || !Array.isArray(tree.tree)) throw Error('incomplete/foreign task-check Git tree');
       const entries = snapshotEntries(tree.tree), reads = new Map();
       const read = path => {
         if (!reads.has(path)) reads.set(path, (async () => {

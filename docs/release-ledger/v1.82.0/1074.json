@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1074,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Corrects existing immutable commit-to-tree binding in remote scoped CI source snapshots without weakening source proof checks, local readers or deadlines. No product behavior changes.",
+  "summary": {
+    "ru": "Удалённый источник CI связывает коммит с настоящим Git-деревом и сохраняет строгую проверку доказательств при отсутствии локальных объектов.",
+    "en": "Remote CI source snapshots bind commits to their actual Git trees while preserving strict proof checks when local objects are unavailable."
+  }
+}

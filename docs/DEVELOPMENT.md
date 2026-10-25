@@ -5621,6 +5621,20 @@ release authority; range/process/filesystem/packaging checks remain fresh. Until
 accepted dev has the new reader, the trusted controller uses a compatible fresh
 fallback rather than accepting unsupported receipt semantics.
 
+Remote scoped snapshots (#1074) authenticate `/git/commits/<immutable-sha>`
+against the requested commit and obtain its actual `tree.sha` before requesting
+`/git/trees/<tree-sha>?recursive=1`. That response must name the requested tree,
+explicitly report `truncated=false` and contain the complete tree array. GitHub
+also accepts a commit alias at the trees endpoint but echoes that alias as
+`sha`; it is not an authenticated tree identity. The former alias lookup is
+removed. No tree comes from the proof, and local immutable snapshots, existing
+API/reader deadlines and source/scope/recipe/runtime/full/fresh guards remain.
+Ordinary HTTP fixtures mirror the alias response and reject foreign/malformed
+commits, foreign/echo/incomplete trees and failed status/transport inputs. A
+real API-only cold-source witness observes the accepted source refusal before
+the fix and independent authentication after it, without executing candidate
+code. This proves the remote-reader defect, not the original CI cache state.
+
 Lookup's own checkout is sparse: ordinary file identity uses immutable Git blob
 content IDs plus modes, independent of commit ancestry. Trust/config files,
 tooling dependency closure and beta scalar mirrors require bytes; bundles and
