@@ -67,6 +67,22 @@ two recipes were rerun (18/18 and 47/47); their 14 source-contract units also
 pass. This is not relabelled as another complete run. Exact receipts and
 boundaries are in the validation JSON; final hook/CI/CODE are separate.
 
+The first mandatory hook on `f81391d94` stopped before publication: generated
+config-schema parity lacked the new enum and the pinned-browser list lacked
+the formal recipe; build, byte/core budgets, unused and process checks passed.
+The schema dump is regenerated from validation.py and the explicit pinned
+recipe inventory now includes this scenario. A further ordinary Support
+input exposed two real closed-wire refusals: projected marker config and
+diagnostic client both rejected settings. Only that literal is added to both
+canonical tap-action enums and the byte-identical relay mirror; unknown strings
+and objects remain rejected. Wire/projection/manifest tests pass 19/19 and
+relay tests pass 41/41, including both real validators and local HTTP positive
+and negative cases. Frontend/build inputs remain fp81e9; the additional final
+product diff is Python Support compatibility, not the earlier identical whole
+product patch. The relay README requires separate accepted-source staging/prod
+deployment and an issue receipt after S8, before HACS sends this enum. Local
+tests and source S8 do not claim that external deployment.
+
 ## Decor multi-selection (#1038)
 
 The approved SPEC r2 and owner variant B add only volatile decor IDs and

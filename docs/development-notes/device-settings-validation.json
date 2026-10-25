@@ -470,6 +470,66 @@
       "execution": 0,
       "caught": "unknown; nightly only"
     },
-    "limits": "These exact-source local receipts supplement mandatory normal pre-push and independent CODE/automatic integration; no full regression, mutant execution, Golden acceptance or release was performed."
+    "limits": "These exact-source local receipts supplement mandatory normal pre-push and independent CODE/automatic integration; no full regression, mutant execution, Golden acceptance or release was performed.",
+    "hookAttempts": [
+      {
+        "source": "f81391d944ea1106070c35734b0205188d730c0c",
+        "gateSeconds": 250,
+        "pushSeconds": 257.9480021,
+        "result": "RED before publication",
+        "failures": [
+          "Generated config-schema.json did not yet include the accepted settings enum",
+          "Pinned-browser smoke inventory lacked the new formal native recipe"
+        ],
+        "passed": "Fresh build/types, bundle budgets/core, unused, CSS, private-write and process guards",
+        "receipt": "artifacts/bulk-s8/1050-normal-push-f813.json"
+      }
+    ],
+    "supportWireCompatibility": {
+      "scope": "Necessary closed-wire compatibility for the same persisted settings enum; no Support UX/fields/endpoint/schema-version or privacy expansion.",
+      "before": {
+        "product": "f81391d944ea1106070c35734b0205188d730c0c",
+        "newOrdinaryCases": 2,
+        "failed": 2,
+        "receipt": "artifacts/bulk-s8/1050-support-wire-before.log",
+        "reason": "Both actual projected config and CLIENT_INPUT rejected settings with WireRejected."
+      },
+      "productDelta": "Add only literal settings to canonical marker and diagnostic-device tap_action enums; relay copy remains byte-identical.",
+      "canonical": "custom_components/houseplan/support_wire_schema.py",
+      "mirror": "scripts/support-relay/hp_relay/support_wire_schema.py",
+      "schemaSha256": "701807ad96124ccc1d4dfa5b768770c1962ecd3c5c35cb274b4de6407ad71048",
+      "schemaManifest": {
+        "command": "python scripts/dump-config-schema.py",
+        "paths": 340
+      },
+      "after": {
+        "backend": {
+          "command": "python -m pytest tests_backend/test_support_wire_schema.py tests_backend/test_config_schema_manifest.py tests_backend/test_support_config_projection.py -q -p no:cacheprovider",
+          "passed": 19,
+          "failed": 0,
+          "receipt": "artifacts/bulk-s8/1050-support-wire-after.log"
+        },
+        "relay": {
+          "command": "python -m unittest discover -s scripts/support-relay/tests",
+          "passed": 41,
+          "failed": 0,
+          "receipt": "artifacts/bulk-s8/1050-relay-tests.log",
+          "boundary": "Actual canonical and relay validators plus local HTTP positive settings in config/client and unknown-string/object negatives. No external delivery."
+        },
+        "node": {
+          "command": "node --test test/config-schema-parity.test.mjs test/browser-attestation.test.mjs",
+          "passed": 13,
+          "skipped": 1,
+          "failed": 0,
+          "receipt": "artifacts/bulk-s8/1050-hook-repair-targeted.log"
+        }
+      },
+      "frontend": "Frontend source/build inputs and fingerprint81e9 remain unchanged; native113 and existing required-scope receipts are retained, not rerun for a backend-only enum change.",
+      "deployment": {
+        "status": "NOT deployed; separate accepted-source receipt remains required before release.",
+        "canon": "scripts/support-relay/README.md, order after S8",
+        "required": "After actual S8 take the accepted relay tree/SHA/digests, preserve code/unit backup, validate isolated staging discard with synthetic v1/v2/negative HTTP, then switch the same tree to prod and verify deliver health. Record SHA/digests/backup path in the issue before HACS emits the new enum. S8/HACS does not automatically update relay."
+      }
+    }
   }
 }
