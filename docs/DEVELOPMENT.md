@@ -5652,3 +5652,13 @@ real HA17, thirteen invariant states and source-bound receipt hashes. The
 matched Windows build changes View344478→344475B, editor354587→354779B,
 Select21455→21451B and raw3508101→3508761B; hostRefs6255 stays exact. No budget,
 reference, band, absolute ceiling or geometry tolerance is changed.
+
+The first mandatory hook refused the #1061 smoke's private stale-state write
+and nonterminal page-error verdict. Its log remains a RED receipt. The stale
+scenario now uses the existing `__hpTest.setServerConfig` server event and
+real authoritative adoption; an extra assertion verifies the foreign geometry
+was actually consumed. `reportPageErrors` now throws before any success output.
+Affected contract tests pass21/21 and the fresh native passes8scenarios/63checks.
+The local Windows documentation writer's CRLF was restored to canonical LF
+without changing release-proof text or its test. No private-write exemption,
+product change, guard change or separate extra build is introduced.

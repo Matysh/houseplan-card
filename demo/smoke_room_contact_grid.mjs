@@ -26,7 +26,13 @@ for(const [name,clicks,action]of [
       const state={saved:structuredClone(card._serverCfg),revision:card._cfgRev,writes:0,reads:0};
       card.hass={...card.hass,callWS:async message=>{
         if(message.type==='houseplan/config/get'){
-          state.reads++;return {config:structuredClone(state.saved),rev:state.revision,can_write:true};
+          state.reads++;
+          if(state.external){
+            const response=await fallback(message);
+            state.saved=structuredClone(response.config);state.revision=response.rev;
+            return response;
+          }
+          return {config:structuredClone(state.saved),rev:state.revision,can_write:true};
         }
         if(message.type!=='houseplan/config/set')return fallback(message);
         if(message.expected_rev!==state.revision)throw Object.assign(new Error('conflict'),{code:'conflict'});
@@ -51,11 +57,14 @@ for(const [name,clicks,action]of [
       if(action==='cancel')await dialog.locator('.dialog-action-commit [data-hp="dialog-cancel"]').click();
       else{
         await dialog.locator('#room-name').fill(`Synthetic ${x}`);
-        if(action==='stale')await page.evaluate(()=>{
-          // Ordinary foreign geometry change after the real dialog opened.
-          window.__card._curSpaceCfg.partitions[0].cm=25;window.__card.requestUpdate();
+        if(action==='stale')await page.evaluate(async()=>{
+          const state=window.__roomContact,next=structuredClone(state.saved);
+          next.spaces[0].partitions[0].cm=25;state.external=true;
+          // Existing public fixture server event, followed by real authoritative adoption.
+          await window.__hpTest.setServerConfig(next);
         });
-        await dialog.locator('.dialog-action-commit [data-hp="dialog-confirm"]').click();
+        const confirm=dialog.locator('.dialog-action-commit [data-hp="dialog-confirm"]');
+        if(action!=='stale'||await confirm.isVisible())await confirm.click();
       }
       await page.waitForTimeout(850);
       await page.waitForFunction(()=>window.__card._writesPending===0);
@@ -86,8 +95,9 @@ for(const [name,clicks,action]of [
     }else results[name]={noWrite:state.server.writes===0,noHistory:state.history===0,noRoom:space.rooms.length===1};
     if(action==='view')results[name].noEditorDialog=!state.roomDialog;
     if(action==='shift')results[name].startsOrdinaryChain=state.pathLength===1&&!state.roomDialog;
+    if(action==='stale')results[name].foreignGeometryAdopted=space.partitions[0].cm===25&&state.server.reads>0;
     checkAll(Object.fromEntries(Object.entries(results[name]).map(([key,value])=>[`${name}:${key}`,value])));
   }finally{await browser.close();}
 }
-await reportPageErrors();
+if (await reportPageErrors()) throw new Error('Uncaught card exception during room source-coordinate smoke');
 await finish(lastBrowser,results);
