@@ -5644,3 +5644,11 @@ substitutes rendering/transport/physical-verdict boundaries as documented in
 the history suite; the public native scenario covers the real presentation
 and physical guard. Only the owned thirteen passport rows are refreshed after
 asserting every accepted row and its order remain exact.
+
+
+`room-contact-grid-validation.json` records the final integrated #1061 author
+evidence on accepted #999: corrected batch native8/62, seven narrow neighbors,
+real HA17, thirteen invariant states and source-bound receipt hashes. The
+matched Windows build changes View344478→344475B, editor354587→354779B,
+Select21455→21451B and raw3508101→3508761B; hostRefs6255 stays exact. No budget,
+reference, band, absolute ceiling or geometry tolerance is changed.

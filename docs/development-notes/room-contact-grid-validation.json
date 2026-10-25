@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "issue": 1061,
+  "material": {
+    "source": "d48525db4e1b7d38ef42914a62af6b49fd3936d7",
+    "tree": "8efd49416acb247d222ddb35ed71747be1065eba",
+    "acceptedBase": "0293b3bce6c23833bd3a6edf827a1c4f5a67eb3b",
+    "buildSource": "739e35e181bab94d81ce38a6fc5c60d79bcb0c7d",
+    "buildInputsUnchangedAfterBuild": true,
+    "fingerprint": "40e1748c4ebbd125ebe2d4b9f4a38ce2cf9d92f126453c34ce42ce4c1b5f0cf4",
+    "productSources": {
+      "src/wall-face-graph.ts": "c03d14fe6bd6a82fa588742ff1c64693c0d0afd15581d2efc845e1d691686196",
+      "custom_components/houseplan/validation.py": "897e4cc79e03239de07f39b71f5dd78e55dec5933c465b8843e903a86fb16b39"
+    }
+  },
+  "ordinaryEvidence": {
+    "originalBefore": "76ea8af: two independent off-grid debt1→2 failures and two genuine TypeScript Align candidates refused by authenticated HA Optimize",
+    "originalHostedFit": "E0 crafted trim ordinary RED; independently reproduced source hostedFit now required",
+    "originalOpeningDrop": "165 valid central opening removed: pure+authenticated ordinary2RED; db1 requires old ID exactly once and the same partition host only within the new exception",
+    "noTrimDrop": "Pure and authenticated positive controls retain the existing ordinary no-trim Drop policy",
+    "fixtureCorrection": "The manual room insertion producer was not complete room-batch evidence; this attribution is explicitly withdrawn in room-contact-grid-producer.json. The new producer uses real _applyWallFaceBatch, promotion/reconcile, history and deferred writer. Node shell transport/render/physical-verdict substitutions remain explicit; public native covers the real projection/physical guard."
+  },
+  "tests": {
+    "initialFreshFocused": {
+      "passed": 107,
+      "note": "Before B producer correction; unaffected graph-family results retain unchanged inputs."
+    },
+    "relatedBackend": {
+      "passed": 257,
+      "skipped": 1,
+      "skipReason": "Existing unavailable private #280 fixture; not a new skip",
+      "note": "Initial accepted combined run; the changed HA room fixture consumers were then executed afresh below."
+    },
+    "correctedProducerFocused": {
+      "passed": 42,
+      "authenticatedHA": 17,
+      "invariantStates": 13,
+      "invariantFamilies": [
+        "references",
+        "wall keys",
+        "mixed roles",
+        "hidden obstacles",
+        "physical geometry"
+      ],
+      "passportNewConfigs": 13,
+      "acceptedPassport": "All prior inventory rows, source fingerprints, identities and order retained exactly"
+    },
+    "ruff": "passed",
+    "native": {
+      "scenarios": 8,
+      "checks": 62,
+      "passed": true
+    },
+    "requiredSmokeIds": [
+      "smoke_resize_pointer_real_plan.mjs",
+      "smoke_resize_wall_thickness.mjs",
+      "smoke_room_autoclose.mjs",
+      "smoke_room_contact_grid.mjs",
+      "smoke_value_face_source.mjs",
+      "smoke_wall_face_lineage.mjs",
+      "smoke_wall_face_overlap.mjs",
+      "smoke_wall_face_room_split.mjs"
+    ],
+    "neighborInvocations": 7,
+    "golden": {
+      "mode": "none",
+      "ids": [],
+      "reason": "no golden demand"
+    },
+    "scope": "All eight canonical required entries executed: corrected native once after changed fixture inputs; seven unchanged neighbors retain their actual successful invocations. No full local matrix or mutants executed."
+  },
+  "runtime": {
+    "build": {
+      "node": "v22.23.3",
+      "platform": "win32",
+      "execPath": "C:\\Users\\Sergey\\AppData\\Local\\houseplan-toolchain\\node-v22.23.3-win-x64\\node.exe",
+      "rollup": "4.62.2"
+    },
+    "browser": {
+      "node": "v22.23.3",
+      "execPath": "/home/sergey/.nvm/versions/node/v22.23.3/bin/node",
+      "platform": "linux",
+      "nodePath": "/home/sergey/.cache/houseplan-1018-runtime/node_modules",
+      "playwright": "1.62.0"
+    },
+    "browserAttestation": "Actual Playwright1.62.0 / Chromium151.0.7922.34 rev1234 headless-shell; attestation in native log",
+    "backend": {
+      "python": "3.14.7",
+      "homeAssistant": "2026.8.3",
+      "interpreter": "/home/sergey/.cache/houseplan-editors-1045-venv/bin/python",
+      "note": "Local actual runtime, not a claim of the CI Python pin."
+    }
+  },
+  "measurement": {
+    "baselineSource": "c1adca26fab12958c22f1c8b3ea06d6521af55e7",
+    "baselineAccepted": "0293b3bce6c23833bd3a6edf827a1c4f5a67eb3b",
+    "equivalence": "Only CODE-REVIEW-999-r1.md and INDEX differ, confirmed by fresh Git; no build/capture input delta.",
+    "baselineFingerprint": "e211ad076ab9f218ee53bbcc9c1c930e3a6281ca7b8a34d7818c99c58ec17473",
+    "baseline": {
+      "viewGzip": 344478,
+      "editorGzip": 354587,
+      "selectGzip": 21455,
+      "rawDistBytes": 3508101,
+      "hostRefs": 6255
+    },
+    "candidate": {
+      "viewGzip": 344475,
+      "editorGzip": 354779,
+      "selectGzip": 21451,
+      "rawDistBytes": 3508761,
+      "hostRefs": 6255
+    },
+    "delta": {
+      "viewGzip": -3,
+      "editorGzip": 192,
+      "selectGzip": -4,
+      "rawDistBytes": 660,
+      "hostRefs": 0
+    },
+    "limits": "No budget, rolling reference, band, epsilon, off-grid counter or absolute ceiling changed."
+  },
+  "staticReadiness": {
+    "definitions": 1903,
+    "uniqueSourceReads": 1035,
+    "browserGuards": 525,
+    "warnings": 5,
+    "mutantsExecuted": 0,
+    "caught": "unknown"
+  },
+  "receiptSha256": {
+    "artifacts/1061-final-pure-corpus.log": "9dafa1c52cf95e6ad7299ff249dccd9ed1b4d6ccaad7d42959a77ff981fa64c8",
+    "artifacts/1061-final-backend.log": "2d7b5b5d5f05e461ba81415183e42d9fba71f3e3e91b891ed5ac01b2e76b2ba0",
+    "artifacts/1061-final-ruff.log": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0",
+    "artifacts/1061-real-batch-focused.log": "f86c3f662ae66ae0d80d7d59e3accc98ad8977a8d07e9be6e3bce8deee2c0ad3",
+    "artifacts/1061-real-batch-ha.log": "eb187b7fe40ed74476ea9355a2c7875ca58b7d38f32ba9dc1918e0718d7cb44c",
+    "artifacts/1061-real-batch-model-invariants.log": "23ae6f0be504883c16fbbca592a0e6f31364dfd51d8f7c5d4a6689f2e02211d8",
+    "artifacts/1061-real-batch-corpus-update.log": "82e1340e33da933a150ee1d3316a22f96749a7f7ccc69fedf60502a204de5d8f",
+    "artifacts/1061-final-expanded-native.log": "6a95c9c32cf87a0bbca25ded6266a91bc73079c6eb2c8651e01d3363fc60bc75",
+    "artifacts/1061-final-neighbors-report.json": "30b2800845655c7bd6b406862d2db906566972ab1b35613e419e37321e94a60b",
+    "artifacts/1061-final-build.log": "28ddb23a2bd91cbe98699668d6cab3d9f330be7c0cfcee53e6953b8259a68940",
+    "artifacts/1061-measure-final-after999.json": "6dad6513d56fe786ad206b8a9124e29f8c6517140504db4fa9497be48169a284",
+    "artifacts/1061-final-readiness.log": "1e1c9b7846232851047df9a8e4fc2e699b4eeb539f1d381dbd83abaf7ed0b90b",
+    "artifacts/1061-final-process.log": "420b76fbbf366a65068d5580efc7cfb96fd430e32c04ac439056d3991cda220a"
+  },
+  "delivery": "This file records source-bound author evidence, not review authority. The mandatory normal hook, exact remote push, active preflight and independent CODE/integration are reported separately on the issue."
+}
