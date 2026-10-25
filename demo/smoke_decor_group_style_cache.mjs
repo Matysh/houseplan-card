@@ -57,6 +57,7 @@ try {
   await page.keyboard.press('Control+m');await settle();
   const before=await state();check('sidebar.two_furniture_selected',before.ids,['a','b']);
   check('sidebar.physical_fixture_is_warm',before.builds.wallUnion>0&&before.walls.length>0,true);
+  check('sidebar.light_fixture_is_warm',before.builds.lightBarrier>0&&before.builds.lightPhysicalBodies>0,true);
   await picker().locator('.trigger').click();await picker().locator('[data-field="colour-hex"]').fill('#CA24EF');
   await page.waitForFunction(()=>[...window.__card.renderRoot.querySelectorAll('.decorlayer path.dshape[data-kind="furniture"][stroke]')]
     .every(el=>el.getAttribute('stroke')==='#ca24ef'));

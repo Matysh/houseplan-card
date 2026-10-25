@@ -1058,9 +1058,9 @@ const MUTANT_DEFINITIONS = [
     id: 'contact-wall-key-includes-decor',
     guard: 'node --test test/device-contact-card.test.mjs',
     because: '#935: a real decor-size input must leave the contact wall cache warm; architectural inputs and different model/current records must still invalidate it.',
-    patches: [{ file: 'src/device-contact-card.ts',
-      find: "Object.entries(record).filter(([key]) => key !== 'decor')",
-      replace: "Object.entries(record).filter(([key]) => key !== '__mutation_never_excluded__')" }],
+    patches: [{ file: 'src/structural-space-record.ts',
+      find: "key !== 'decor' && !nonStructural.includes(key)",
+      replace: "key !== '__mutation_never_excluded__' && !nonStructural.includes(key)" }],
   },
   {
     id: 'copy-attachments-bypass-upload-quota',
