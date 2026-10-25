@@ -19,6 +19,9 @@ mistaken for a colour-edit regression. Timing is diagnostic, not a portable
 threshold: on the author's Windows host the next-frame pause fell from about
 380 ms to 58 ms, while network completion remains independent. The assertion
 is zero unrelated structural rebuilds, not those machine-specific milliseconds.
+Selected visual scope is explicit: `decor-group-style-applied-light/dark` are
+new regression frames after native sidebar confirmation, not a change to the
+existing appearance. No existing baseline receives a pixel-change allowance.
 
 ## Full-smoke CI capacity (#1064)
 

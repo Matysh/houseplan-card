@@ -9,6 +9,19 @@ import {
 import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
+test('#1071 group-style regression frames confirm furniture colour natively in both themes', () => {
+  const scenes=GOLDEN_SCENARIOS.filter(scene=>scene.decorGroupStyle);
+  assert.deepEqual(scenes.map(scene=>scene.id),['decor-group-style-applied-light','decor-group-style-applied-dark']);
+  assert.deepEqual(scenes.map(scene=>scene.theme),['light','dark']);
+  for(const scene of scenes){
+    assert.equal(scene.mode,'decor');assert.equal(scene.decorMultiselect,true);
+    const decor=prepareGoldenFixture(scene).config.spaces.find(space=>space.id===scene.space).decor;
+    assert.deepEqual(decor.map(item=>item.kind),['furniture','furniture']);
+    assert.deepEqual(decor.map(item=>item.opacity),[.3,.8]);
+    assert.deepEqual(decor.map(item=>item.color),['#ff0000','#0000ff'],'colour is applied by the native preparation, not preseeded');
+  }
+});
+
 test('#1048 retained-path diagnostics get a distinct dialog scene, not a changed baseline', () => {
   const scene = GOLDEN_SCENARIOS.find(item => item.id === 'vacuum-retained-path-diagnostics-dark');
   assert.ok(scene);
@@ -483,7 +496,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 90);
+  assert.equal(GOLDEN_MATRIX_VERSION, 91);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -977,7 +990,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 90);
+  assert.equal(GOLDEN_MATRIX_VERSION, 91);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',
