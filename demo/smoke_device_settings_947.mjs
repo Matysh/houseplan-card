@@ -78,7 +78,7 @@ try{
    await sourceHelp.locator('button.trigger').hover();await sourceHelp.locator('.tooltip').waitFor({state:'visible'});
    out.vacuum_source_keeps_real_button=await picker.locator(':scope > summary').evaluate(el=>el.classList.contains('btn')&&!el.querySelector('.btn'));out.vacuum_documentation_keeps_normal_type=await dialog.locator('.vacbtns .hpf-action-help').evaluate(el=>!el.classList.contains('hpf-labelrow'));out.vacuum_documentation_help_present=await dialog.locator('.vacbtns .hpf-action-help hp-help[instant]').count()===1;out.vacuum_source_help_hover_keeps_picker_closed=!await picker.evaluate(el=>el.open);
    await sourceHelp.locator('button.trigger').click();out.vacuum_source_help_click_keeps_picker_closed=!await picker.evaluate(el=>el.open);
-   await dialog.locator('[data-card=vacuum] h3').hover();
+   await dialog.locator('[data-card=vacuum] > .hpf-head > h3').hover();
    const diagnostics=dialog.locator('.hpf-profile-diagnostics');out.vacuum_diagnostics_start_collapsed=!await diagnostics.locator('.vacdiag').isVisible();
    await diagnostics.locator('summary').click();out.vacuum_diagnostics_still_available=await diagnostics.locator('.vacdiag').isVisible()&&(await diagnostics.textContent()).includes('camera.demo_x50_map');await diagnostics.locator('summary').click();
    out.vacuum_path_uses_shared_menu=await dialog.locator('[data-card=vacuum] hp-settings-select:has(select)').first().locator('select').inputValue()==='always';
