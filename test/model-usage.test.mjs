@@ -18,6 +18,7 @@ import { findStep, runStep } from './helpers/workflow-step.mjs';
 // Шаг `Review` (claude-code-action) отдаёт `execution_file` — все сообщения
 // сессии SDK, включая результаты инструментов. Из них берётся только последнее
 // `result`; остальное — возможные секреты, и ни одна их буква не выходит наружу.
+// #1065 also reads the private trace locally for policy audit, never uploads it.
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CLI = join(ROOT, 'scripts', 'model-usage.mjs');
@@ -293,7 +294,11 @@ test('#737 AC5: execution_file никуда не выгружается, гра�
     const code = readFileSync(join(WORKFLOWS, file), 'utf8').split('\n').filter((line) => !/^\s*#/.test(line));
     assert.ok(!code.some((line) => line.includes('claude-execution-output')), `${file}: файл сессии по имени не упоминается`);
     assert.deepEqual(code.filter((line) => line.includes('execution_file')),
-      ['          EXEC: ${{ steps.review.outputs.execution_file }}'], `${file}: execution_file — только вход шага снятия`);
+      ['          EXEC: ${{ steps.review.outputs.execution_file }}',
+        '          REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}'],
+      `${file}: execution_file — только два явных локальных входа usage и private policy audit`);
+    const audit = findStep(code.join('\n'), { name: 'Проверить execution boundary (#1065)' }, file);
+    assert.match(audit.run, /review-execution-policy\.mjs.*audit/);
   }
   assert.deepEqual(REQUIRED_FILES, ['manifest.sha256', 'prepared.json', 'review-document.md', 'verdict.json'],
     'расход не входит в запечатанный artifact');

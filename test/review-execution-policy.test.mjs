@@ -209,6 +209,9 @@ for (const name of ['_process.yml', '_ship-review.yml', 'release-review.yml']) {
     assert.ok(setup >= 0 && setup < review && review < audit && audit < seal);
     assert.equal(steps[review].with.settings, '${{ runner.temp }}/review-execution-policy.json.settings.json');
     assert.match(steps[review].with.claude_args, /--setting-sources ""/);
+    for (const [key, value] of Object.entries(steps[review].env).filter(([key]) => key.startsWith('REVIEW_'))) {
+      assert.ok(steps[review].with.prompt.includes(`${key}: ${value}`), `${key}: literal paths need no forbidden env expansion`);
+    }
     assert.match(steps[setup].run, /review-execution-policy\.mjs.*prepare/);
     assert.equal(steps[setup].env.REVIEW_CLAUDE_VERSION, '${{ steps.claude_bin.outputs.version }}');
     const bootstrap = steps.find(s => s.id === 'claude_bin');

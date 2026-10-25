@@ -233,6 +233,10 @@ jobs:
           prompt: |
             Ты ревьюер кода проекта House Plan. Язык ответа — русский.
 
+            Разрешённые абсолютные пути (не вычисляй их shell/env-командой):
+            REVIEW_DOC: ${{ runner.temp }}/ship-review.md
+            REVIEW_INPUT: ${{ runner.temp }}/ship-review-input
+
             ${{ needs.prepare.outputs.subject }}
             Кандидат ${{ needs.prepare.outputs.candidate }} (рабочая копия уже на нём) · база
             диапазона: ${{ needs.prepare.outputs.base || 'нет' }}.

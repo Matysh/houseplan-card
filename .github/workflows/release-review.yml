@@ -216,6 +216,10 @@ jobs:
           prompt: |
             Ты независимый ревьюер релиза House Plan. Язык ответа — русский.
 
+            Разрешённые абсолютные пути (не вычисляй их shell/env-командой):
+            REVIEW_DOC: ${{ runner.temp }}/release-review.md
+            REVIEW_INPUT: ${{ runner.temp }}/release-review-input
+
             Релиз: ${{ inputs.tag }} · кандидат ${{ needs.prepare.outputs.candidate }}
             (рабочая копия уже на нём) · база линии: ${{ needs.prepare.outputs.base || 'нет' }}.
             Вход линии — файл $REVIEW_INPUT/brief.md (issue линии, доказанные

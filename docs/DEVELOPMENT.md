@@ -5717,7 +5717,8 @@ product change, guard change or separate extra build is introduced.
 
 Task, ship and release model jobs prepare `review-execution-policy.json` and
 explicit Claude settings from accepted-dev tooling, outside the reviewed tree.
-`--setting-sources ""` excludes candidate/user/local customization. A synchronous
+`--setting-sources ""` excludes user/project/local settings. Project instructions
+remain untrusted input and cannot enlarge this explicit policy. A synchronous
 PreToolUse hook accepts read tools, one literal foreground command from the
 review check allowlist, or Write to the exact external report/findings paths.
 Shell composition/redirection, inline interpreters, untracked executable input,
@@ -5770,6 +5771,14 @@ The isolated checksum-verified 2.1.295 ABI receipt uses `--init-only` (no model
 or provider request) with the existing model/effort/turn arguments and hook
 settings. The hidden `--max-turns` parses successfully while an unknown-option
 control is rejected; normal `--help`/`--version` alone are not that proof.
+Absolute external input/report paths are also given directly in the model
+prompt; discovering an environment variable does not require a forbidden shell
+expansion. The coverage manifest no longer excludes the now-explicit HA dialog
+oracle. Usage and execution audit are the two named private trace consumers;
+the sealed artifact's exact file set and the no-upload boundary are unchanged.
+Night-only registrations cover Bash-policy bypass, native failure behavior,
+missing-journal refusal and false ordinary claims. Only static readiness is
+checked in development; registration and ordinary PASS are not caught evidence.
 
 Protocol references: [Claude hook input/PreToolUse decisions](https://code.claude.com/docs/en/hooks),
 [CLI settings sources](https://code.claude.com/docs/en/cli-reference), and the

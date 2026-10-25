@@ -1276,7 +1276,8 @@ jobs:
       - name: Установить Claude Code детерминированно
         id: claude_bin
         run: |
-          ver=$(node "$RUNNER_TEMP/preflight-tools/scripts/review-execution-policy.mjs" version)
+          tools="$RUNNER_TEMP/preflight-tools"
+          ver=$(node "$tools/scripts/review-execution-policy.mjs" version)
           base=https://downloads.claude.ai/claude-code-releases
           bin="$RUNNER_TEMP/review-cli/claude"
           mkdir -p "$(dirname "$bin")"
@@ -1307,7 +1308,9 @@ jobs:
           REVIEW_STAGE: ${{ needs.guard.outputs.stage }}
           REVIEW_DOC: ${{ runner.temp }}/review-document.md
           REVIEW_FINDINGS: ${{ runner.temp }}/review-outside-findings.md
-        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-execution-policy.mjs" prepare "$RUNNER_TEMP/review-execution-policy.json"
+        run: |
+          tools="$RUNNER_TEMP/preflight-tools"
+          node "$tools/scripts/review-execution-policy.mjs" prepare "$RUNNER_TEMP/review-execution-policy.json"
 
       - name: Review
         id: review
@@ -1343,6 +1346,12 @@ jobs:
               spec — ревью ТЗ (PROCESS.md §2.4)
               code — код-ревью (PROCESS.md §2.7)
             Трек: ${{ needs.prepare.outputs.track || 'ask' }} (PROCESS.md §5)
+
+            Разрешённые абсолютные пути (не вычисляй их shell/env-командой):
+            REVIEW_DOC: ${{ runner.temp }}/review-document.md
+            REVIEW_CONTEXT: ${{ runner.temp }}/review-context.json
+            REVIEW_FINDINGS_POLICY: ${{ runner.temp }}/review-findings-policy.json
+            REVIEW_FINDINGS: ${{ runner.temp }}/review-outside-findings.md
 
             Общая политика для всех треков и этапов — docs/process/REVIEWER.md,
             «Отрицательные проверки и мутанты». Обычные negative-input cases
@@ -1573,7 +1582,9 @@ jobs:
           REVIEW_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
           REVIEW_STRUCTURED_OUTPUT: ${{ steps.review.outputs.structured_output }}
           REVIEW_DOC: ${{ runner.temp }}/review-document.md
-        run: node "$RUNNER_TEMP/preflight-tools/scripts/review-execution-policy.mjs" audit "$RUNNER_TEMP/review-execution-policy.json"
+        run: |
+          tools="$RUNNER_TEMP/preflight-tools"
+          node "$tools/scripts/review-execution-policy.mjs" audit "$RUNNER_TEMP/review-execution-policy.json"
 
       - name: Запечатать результат модели
         id: result

@@ -15954,6 +15954,46 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-tool-policy-allows-arbitrary-bash-1065',
+    guard: 'node --test --test-name-pattern="#1065 refuses unsafe" test/review-execution-policy.test.mjs',
+    because: '#1065: forbidden patch/restore/inline commands are ordinary DATA inputs to the unchanged PreToolUse policy and must be denied, never dispatched by the fixture.',
+    patches: [{
+      file: 'scripts/review-execution-policy.mjs',
+      find: "  if (call.tool_name === 'Bash') return bashProblem(call.tool_input, policy);",
+      replace: "  if (call.tool_name === 'Bash') return null;",
+    }],
+  },
+  {
+    id: 'review-native-hook-failure-opens-tool-1065',
+    guard: 'node --test --test-name-pattern="#1065 native hook settings" test/review-execution-policy.test.mjs',
+    because: '#1065: native SDK failure behavior must block a tool on hook startup/outer deadline failure; post-execution publication refusal is not prevention.',
+    patches: [{
+      file: 'scripts/review-execution-policy.mjs',
+      find: "    type: 'command', command, timeout: HOOK_TIMEOUT_SECONDS, onFailure: 'block',",
+      replace: "    type: 'command', command, timeout: HOOK_TIMEOUT_SECONDS, onFailure: 'ignore',",
+    }],
+  },
+  {
+    id: 'review-trace-skips-hook-journal-binding-1065',
+    guard: 'node --test --test-name-pattern="#1065 journal binds" test/review-execution-policy.test.mjs',
+    because: '#1065: complete synthetic SDK records cannot seal an absent, duplicated or foreign hook decision; nonexecuting schema output is the only exact terminal-bound exemption.',
+    patches: [{
+      file: 'scripts/review-execution-policy.mjs',
+      find: '    if (!(outputChannel && matching.length === 0) && (matching.length !== 1',
+      replace: '    if (false && !(outputChannel && matching.length === 0) && (matching.length !== 1',
+    }],
+  },
+  {
+    id: 'review-report-calls-patch-run-ordinary-1065',
+    guard: 'node --test --test-name-pattern="#1065 published historical claim" test/review-execution-policy.test.mjs',
+    because: '#1065: the old published sentence is inert report DATA, not reenacted; a known temporary patch/run/restore claim cannot become admissible ordinary evidence.',
+    patches: [{
+      file: 'scripts/review-execution-policy.mjs',
+      find: '    return patch && claimed && run ?',
+      replace: '    return false && patch && claimed && run ?',
+    }],
+  },
+  {
     id: 'review-integration-skips-evidence-checksum',
     guard: 'node --test test/review-result-gate.test.mjs',
     because: '#551/#556: artifact между моделью и привилегированной интеграцией — вход '
