@@ -11,6 +11,7 @@ import {
   attemptFromRounds, blockingFromDocs, isBlockingVerdict, reviewCounters, reviewRoundsFromFiles, verdictDeclaration,
   commentCounters, stageVerdictComments,
   anchorTreeFrom, anchorVerdictFrom, reusableGreenVerdict,
+  anchorRebaseCertificateFrom, reviewDocumentDigest, reusableCounterGreenVerdict,
   anchorIssueBodyFrom, issueBodyChanged, issueBodyDigest, normalizeIssueBody,
 } from '../scripts/review-doc-guard.mjs';
 import { findStep, runStep } from './helpers/workflow-step.mjs';
@@ -553,6 +554,51 @@ const TREE_A = 'a'.repeat(40);
 const TREE_B = 'b'.repeat(40);
 const docWith = (name, anchors) => ({ name, text: withMaterialAnchors(`# ${name}\n\nВердикт: зелёный · заход r9\n`, anchors) });
 
+test('#1068 authenticated counter rebase survives missing old material objects and requires exact candidate validation', async () => {
+  const body = 'd'.repeat(64), base = 'b'.repeat(40);
+  const anchor = { run_id: 12, run_attempt: 1, digest: 'e'.repeat(64) };
+  const doc = docWith('CODE-REVIEW-1068-r1.md', { tree: TREE_A, verdict: 'green', high: 0, issueBody: body, rebaseCertificate: anchor });
+  assert.deepEqual(anchorRebaseCertificateFrom(doc.text), anchor);
+  const calls = [];
+  const source = { tree: TREE_A, doc: 'docs/reviews/' + doc.name, base: 'a'.repeat(40), policy: 'p', normalized_delta: 'n', raw_delta: 'r' };
+  const options = { repo: 'owner/repo', issue: 1068, body, head: 'current',
+    loadCertificate: async request => {
+      calls.push(['certificate', request]);
+      assert.equal(request.documentDigest, reviewDocumentDigest(doc.text));
+      return source;
+    },
+    gitRunner: args => { calls.push(['git', args]); return args[1] === '--is-ancestor' ? '' : base; },
+    delta: () => ({ ...source, base, raw_delta: 'new' }),
+  };
+  const reused = await reusableCounterGreenVerdict([doc], options);
+  assert.equal(reused.validation_required, true); assert.equal(reused.role, 'rebase');
+  assert.equal(reused.tree, TREE_A);
+  assert.ok(calls.some(([kind, args]) => kind === 'git' && args.join(' ') === `merge-base --is-ancestor ${source.base} ${base}`));
+  assert.ok(!calls.some(([kind, args]) => kind === 'git' && args.includes('cat-file')), 'old material need not survive force push');
+  for (const change of [
+    { loadCertificate: async () => null },
+    { loadCertificate: async () => { throw Error('artifact expired'); } },
+    { loadCertificate: async () => ({ ...source, tree: TREE_B }) },
+    { loadCertificate: async () => ({ ...source, doc: 'docs/reviews/CODE-REVIEW-2-r1.md' }) },
+    { gitRunner: () => { throw Error('unaccepted dev base'); } },
+    { delta: () => ({ ...source, base, normalized_delta: 'changed semantic delta', raw_delta: 'new' }) },
+    { delta: () => ({ ...source, base, policy: 'changed generator', raw_delta: 'new' }) },
+    { delta: () => ({ ...source, base }) },
+    { body: 'f'.repeat(64) },
+  ]) assert.equal(await reusableCounterGreenVerdict([doc], { ...options, ...change }), null);
+  const yellow = docWith('CODE-REVIEW-1068-r2.md', { tree: TREE_A, verdict: 'yellow', high: 0, issueBody: body, rebaseCertificate: anchor });
+  assert.equal(await reusableCounterGreenVerdict([doc, yellow], options), null, 'newer blocking round wins');
+});
+
+test('#1068 report digest binds content while generated anchors remain replaceable and duplicate certificate anchors fail closed', () => {
+  const anchor = { run_id: 12, run_attempt: 1, digest: 'e'.repeat(64) };
+  const text = withMaterialAnchors('# Actual review\n\nFinding.\n', { tree: TREE_A, rebaseCertificate: anchor });
+  assert.equal(reviewDocumentDigest(text), reviewDocumentDigest(withMaterialAnchors(text, { tree: TREE_B })));
+  assert.notEqual(reviewDocumentDigest(text), reviewDocumentDigest(text.replace('Finding.', 'Changed finding.')));
+  assert.equal(anchorRebaseCertificateFrom(text + `- Сертификат переноса счётчиков: \`${JSON.stringify(anchor)}\`\n`), null);
+  assert.equal(anchorRebaseCertificateFrom(text + ANCHOR_MARKER), null);
+});
+
 test('блок якорей несёт вердикт конвейера, и он читается обратно (#499)', () => {
   const block = materialAnchorBlock({ sha: 'c'.repeat(40), tree: TREE_A, branch: 'issue/1-x', verdict: 'green', high: 0 });
   assert.match(block, /Вердикт конвейера: `green` · High 0/);
@@ -689,7 +735,9 @@ test('#510 AC2: конвейер запускает Validate с мутантам
     'гейт закончен в отдельной стадии до установки зависимостей/ревью');
   const gateStep = workflow.slice(gate, back);
   assert.match(gateStep, /node "\$TOOLS\/scripts\/validate-gate\.mjs" --repo="\$\{\{ github\.repository \}\}" --ref="\$BRANCH" --sha="\$SHA"/);
-  assert.match(gateStep, /if \[ "\$STAGE" != "code" \] \|\| \[ "\$REUSE" = "true" \]/, 'этап spec и reuse гейт не проходят');
+  assert.match(gateStep, /if \[ "\$STAGE" != "code" \] \|\| \{ \[ "\$REUSE" = "true" \] && \[ "\$REUSE_VALIDATION_REQUIRED" != "true" \]; \}/,
+    'spec and old docs-only reuse skip; authenticated counter rebase must validate');
+  assert.match(gateStep, /REUSE_VALIDATION_REQUIRED: \$\{\{ steps\.reuse\.outputs\.validation_required \}\}/);
   assert.match(gateStep, /SHA: \$\{\{ steps\.material\.outputs\.sha \}\}/, 'проверяется именно материал');
   // skip-ветка (spec/reuse) даёт proceed=true: ревью идёт, возврата S7→S6 нет (ревью ТЗ r2)
   assert.match(gateStep, /\{ echo 'proceed=true'; echo 'result=skipped'; \}/, 'skipped = proceed');

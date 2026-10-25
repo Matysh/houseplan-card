@@ -314,7 +314,7 @@ const ANCHOR_ROUTES = ['fix', 'reclassify'];
 /** Идентификатор критерия в якоре: только формат, смысл судит `reviewRoute`. */
 const ANCHOR_CRITERION = /^[a-z][a-z0-9-]{0,39}$/;
 
-export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high, issueBody, route, criterion, usage, usageDetails } = {}) {
+export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, high, issueBody, route, criterion, usage, usageDetails, rebaseCertificate } = {}) {
   const short = (value) => (typeof value === 'string' ? value.slice(0, 12) : '');
   const lines = [
     ANCHOR_MARKER,
@@ -362,6 +362,7 @@ export function materialAnchorBlock({ sha, tree, branch, specs = [], verdict, hi
     }
     lines.push(line);
   }
+  if (rebaseCertificate) lines.push(`- Сертификат переноса счётчиков: \`${JSON.stringify(rebaseCertificate)}\``);
   // #737: расход сессии модели — последней строкой блока (`model-usage.mjs`).
   // Значение приходит выходом недоверенной стадии (#556) и разбирается строго:
   // пусто — `reason=missing`, не по формату — `reason=invalid`. Прежние строки
@@ -593,6 +594,61 @@ export function reusableGreenVerdict(docs, differs, issueBodyDigest = null) {
   return { doc: latest.name, round: latest.round, tree, verdict: 'green' };
 }
 
+/** The human report is bound independently of its generated anchor block. */
+export function reviewDocumentDigest(text) {
+  return createHash('sha256').update(withMaterialAnchors(text, {}).split(ANCHOR_MARKER)[0]).digest('hex');
+}
+
+export function anchorRebaseCertificateFrom(text) {
+  const block = String(text).split(ANCHOR_MARKER);
+  if (block.length !== 2) return null;
+  const rows = [...block[1].matchAll(/^- Сертификат переноса счётчиков: `([^`\n]+)`$/gm)];
+  if (rows.length !== 1) return null;
+  try {
+    const value = JSON.parse(rows[0][1]);
+    return Number.isSafeInteger(value.run_id) && value.run_id > 0
+      && Number.isSafeInteger(value.run_attempt) && value.run_attempt > 0
+      && /^[0-9a-f]{64}$/.test(value.digest) && Object.keys(value).sort().join(',') === 'digest,run_attempt,run_id'
+      ? value : null;
+  } catch { return null; }
+}
+
+/** A signed-by-provenance publisher artifact, not Markdown, extends reuse. */
+export async function reusableCounterGreenVerdict(docs, {
+  repo, issue, body, head = 'HEAD', root = process.cwd(), loadCertificate, delta, gitRunner,
+} = {}) {
+  const latest = [...docs].sort((a, b) => Number(b.name.match(/-r(\d+)\.md$/)?.[1] || 0)
+    - Number(a.name.match(/-r(\d+)\.md$/)?.[1] || 0))[0];
+  if (!latest || !/^[0-9a-f]{64}$/.test(body || '')) return null;
+  const verdict = anchorVerdictFrom(latest.text), tree = anchorTreeFrom(latest.text);
+  const anchor = anchorRebaseCertificateFrom(latest.text);
+  if (!anchor || verdict?.verdict !== 'green' || verdict.high !== 0 || !tree
+    || anchorIssueBodyFrom(latest.text) !== body) return null;
+  try {
+    const certificate = await loadCertificate({ repo, issue: Number(issue), anchor,
+      documentDigest: reviewDocumentDigest(latest.text), body });
+    if (!certificate || certificate.tree !== tree || certificate.doc !== `docs/reviews/${latest.name}`) return null;
+    const run = gitRunner || ((args) => {
+      const result = spawnSync('git', ['-C', root, ...args], {
+        encoding: 'utf8', timeout: 15000, maxBuffer: 1024 * 1024,
+        env: { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
+          GIT_NO_REPLACE_OBJECTS: '1', GIT_NO_LAZY_FETCH: '1', GIT_ALLOW_PROTOCOL: '' },
+      });
+      if (result.error || result.status !== 0) throw Error('Cannot verify accepted dev ancestry');
+      return result.stdout.trim();
+    });
+    const base = run(['merge-base', head, 'origin/dev']);
+    if (!/^[0-9a-f]{40}$/.test(base) || base === certificate.base) return null;
+    run(['merge-base', '--is-ancestor', certificate.base, base]);
+    run(['merge-base', '--is-ancestor', base, 'origin/dev']);
+    const { counterOnlyTaskRebase, reviewTaskDelta } = await import('./review-task-delta.mjs');
+    const current = (delta || reviewTaskDelta)({ root, base, material: head });
+    if (!counterOnlyTaskRebase(certificate, current)) return null;
+    return { doc: latest.name, round: Number(latest.name.match(/-r(\d+)\.md$/)[1]), tree,
+      verdict: 'green', validation_required: true, role: 'rebase' };
+  } catch { return null; } // unavailable/expired authority or uncertain material: ordinary review
+}
+
 /**
  * Блокирующие раунды по документам: `{ blocking, unread }`.
  *
@@ -796,9 +852,15 @@ if (invokedDirectly) {
       const diff = spawnSync('git', ['diff', '--quiet', tree, head, '--', '.', ':!docs/reviews', ':!legacy/reviews'], { encoding: 'utf8' });
       return diff.status !== 0;
     };
-    const found = reusableGreenVerdict(docs, differs, value('issue-body'));
+    let found = reusableGreenVerdict(docs, differs, value('issue-body'));
+    if (!found && marker === 'CODE-REVIEW' && value('repo')) {
+      const { loadReviewRebaseCertificate } = await import('./review-rebase-certificate.mjs');
+      found = await reusableCounterGreenVerdict(docs, { repo: value('repo'), issue: num,
+        body: value('issue-body'), head, loadCertificate: loadReviewRebaseCertificate });
+    }
     if (!found) { process.stdout.write('reuse=false\n'); process.exit(0); }
     process.stdout.write(`reuse=true\ndoc=${found.doc}\nround=${found.round}\ntree=${found.tree}\n`);
+    if (found.validation_required) process.stdout.write('validation_required=true\nrole=rebase\n');
     process.exit(0);
   }
 
@@ -826,6 +888,25 @@ if (invokedDirectly) {
       usageDetails: argv.some((item) => item.startsWith('--usage-details=')) ? value('usage-details') : undefined,
     };
     const text = readFileSync(path, 'utf8');
+    const certificatePath = value('rebase-certificate');
+    if (certificatePath && anchors.verdict === 'green' && Number(anchors.high) === 0) {
+      try {
+        const { reviewTaskDelta } = await import('./review-task-delta.mjs');
+        const { certificateDigest } = await import('./review-rebase-certificate.mjs');
+        const certificate = { schema: 'houseplan-review-rebase/v1', repo: value('repo'), issue: Number(value('num')),
+          run_id: Number(process.env.GITHUB_RUN_ID), run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+          doc: path.replaceAll('\\', '/'), document_digest: reviewDocumentDigest(text), body: anchors.issueBody,
+          ...reviewTaskDelta({ base: value('base'), material: anchors.sha }), verdict: 'green', high: 0 };
+        if (certificate.tree !== anchors.tree) throw Error('Material tree differs from sealed prepare output');
+        writeFileSync(certificatePath, JSON.stringify(certificate) + '\n');
+        anchors.rebaseCertificate = { run_id: certificate.run_id, run_attempt: certificate.run_attempt,
+          digest: certificateDigest(certificate) };
+      } catch (error) {
+        // Unsupported/stale historical snapshots do not prevent publishing a
+        // review; they simply receive no authority for the new exception.
+        console.error(`::notice::counter rebase certificate unavailable: ${error.message}`);
+      }
+    }
     writeFileSync(path, withMaterialAnchors(text, anchors), 'utf8');
     console.log(`якоря материала дописаны: дерево ${anchors.tree.slice(0, 12) || '—'},`
       + ` ТЗ ${anchors.specs.length}, тело issue ${anchors.issueBody.slice(0, 12) || '—'}`);

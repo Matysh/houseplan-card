@@ -9,8 +9,9 @@
 // отклонит (`scripts/bundle-policy.mjs`). Индекс ревью
 // `docs/reviews/INDEX.md` (#643) — тоже генерируемый: при конфликте он
 // пересобирается по каталогу в дереве остановки (общий помощник
-// `rebase-generated.mjs`, тот же, что у конвейера). Конфликт в любом другом
-// пути — останов с `git rebase --abort`: содержательные конфликты решает автор.
+// `rebase-generated.mjs`, тот же, что у конвейера). Общий помощник также
+// проверяет числовые ячейки browser inventory и Tests в STATUS (#1068).
+// Содержательный конфликт — `git rebase --abort`, его решает автор.
 //
 //   node scripts/rebase-on-dev.mjs            # ребейз текущей ветки
 //   node scripts/rebase-on-dev.mjs --dry-run  # только план, дерево не трогается
@@ -40,7 +41,7 @@ export function splitConflicts(paths) {
 }
 
 export function makeGit(cwd) {
-  return (args, { allowFailure = false, input } = {}) => {
+  return (args, { allowFailure = false, input, trim = true } = {}) => {
     const result = spawnSync('git', args, {
       cwd, encoding: 'utf8', input, stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, GIT_EDITOR: 'true' },
@@ -49,7 +50,7 @@ export function makeGit(cwd) {
     if (result.status !== 0 && !allowFailure) {
       throw new Error(`git ${args.join(' ')} → ${(result.stderr || result.stdout || '').trim()}`);
     }
-    return { ok: result.status === 0, stdout: (result.stdout || '').trim(), stderr: (result.stderr || '').trim() };
+    return { ok: result.status === 0, stdout: trim ? (result.stdout || '').trim() : (result.stdout || ''), stderr: (result.stderr || '').trim() };
   };
 }
 
@@ -102,7 +103,7 @@ export function rebaseOnDev({
   if (dryRun) { log('--dry-run: дерево не тронуто'); return { branch, rebased: false, resolved: [], predicted }; }
 
   // Цикл остановок — общий с конвейером (#643): индекс ревью пересобирается
-  // помощником, бандл — версией dev здесь, всё прочее — отказ с abort.
+  // помощником вместе с проверенными счётчиками, бандл — версией dev здесь.
   const outcome = rebaseRegenerating({
     onto: upstream, cwd, git,
     extra: { match: isGenerated, resolve: (path) => resolveGeneratedConflict(git, path) },

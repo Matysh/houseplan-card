@@ -330,6 +330,7 @@ jobs:
       rebase_note: ${{ steps.rebase.outputs.note }}
       material_sha: ${{ steps.material.outputs.sha }}
       material_tree: ${{ steps.material.outputs.tree }}
+      material_base: ${{ steps.material.outputs.base }}
       material_specs: ${{ steps.material.outputs.specs }}
       material_issue_body: ${{ steps.material.outputs.issue_body }}
       handoff_snapshot: ${{ steps.preflight.outputs.handoff_snapshot }}
@@ -338,6 +339,8 @@ jobs:
       reuse_doc: ${{ steps.reuse.outputs.doc }}
       reuse_round: ${{ steps.reuse.outputs.round }}
       reuse_tree: ${{ steps.reuse.outputs.tree }}
+      reuse_validation_required: ${{ steps.reuse.outputs.validation_required }}
+      reuse_role: ${{ steps.reuse.outputs.role }}
       validate_result: ${{ steps.gate.outputs.result }}
       validate_url: ${{ steps.gate.outputs.url }}
       validated_note: ${{ steps.validated.outputs.note }}
@@ -688,6 +691,7 @@ jobs:
           # В шаге публикации дерево уже сброшено на целевую ветку, и
           # спрашивать его поздно.
           echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+          echo "base=$(git merge-base HEAD origin/dev)" >> "$GITHUB_OUTPUT"
           # ТЗ задачи: блоб переживает и ребейз, и удаление ветки, пока текст
           # где-нибудь достижим. Файлов может не быть (инфраструктурная
           # задача) или быть несколько (разбитое ТЗ) — тогда список пуст либо
@@ -749,9 +753,10 @@ jobs:
       # изменился ровно один файл — его собственный документ r3. Правило узкое:
       # последний документ этапа несёт записанный конвейером вердикт `green`
       # с High 0, и `git diff` между его якорем-деревом и HEAD пуст вне
-      # docs/reviews/**. Любое иное отличие — ребейз, тест, фикстура, скрипт,
-      # ТЗ — даёт полный разбор. Только этап code: материал spec может жить в
-      # теле issue, которого в дереве нет.
+      # docs/reviews/**. #1068 добавляет узкое исключение: trusted artifact
+      # прежней публикации доказывает тот же task delta после нормализации
+      # четырёх проверенных счётчиков STATUS; новый кандидат проходит Validate.
+      # Только code: материал spec может жить в теле issue, которого в дереве нет.
       - name: "Зелёный вердикт прошлого захода применим без ревью (#499)"
         id: reuse
         if: steps.rebase.outputs.conflict != 'true' && steps.rebase.outputs.refused == '' && steps.preflight.outputs.ok == 'true' && needs.guard.outputs.stage == 'code'
@@ -761,10 +766,11 @@ jobs:
           # зелёного вердикта: иначе вызов модели пропускается и находку
           # «ТЗ менялось» некому напечатать (#517 AC6).
           ISSUE_BODY: ${{ steps.material.outputs.issue_body }}
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
           out=$(node "$TOOLS/scripts/review-doc-guard.mjs" --reuse --marker=CODE-REVIEW --num="$NUM" --head=HEAD \
-            --issue-body="${ISSUE_BODY}")
+            --issue-body="${ISSUE_BODY}" --repo="${{ github.repository }}")
           printf '%s\n' "$out"
           printf '%s\n' "$out" >> "$GITHUB_OUTPUT"
           if printf '%s\n' "$out" | grep -qx 'reuse=true'; then
@@ -838,6 +844,7 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           STAGE: ${{ needs.guard.outputs.stage }}
           REUSE: ${{ steps.reuse.outputs.reuse }}
+          REUSE_VALIDATION_REQUIRED: ${{ steps.reuse.outputs.validation_required }}
           BRANCH: ${{ steps.branch.outputs.name }}
           SHA: ${{ steps.material.outputs.sha }}
           MUTANTS: ${{ steps.track.outputs.mutants }}
@@ -847,7 +854,7 @@ jobs:
           GOLDEN: ${{ steps.track.outputs.golden }}
           TOOLS: ${{ steps.tools.outputs.dir }}
         run: |
-          if [ "$STAGE" != "code" ] || [ "$REUSE" = "true" ] || [ -z "$BRANCH" ]; then
+          if [ "$STAGE" != "code" ] || { [ "$REUSE" = "true" ] && [ "$REUSE_VALIDATION_REQUIRED" != "true" ]; } || [ -z "$BRANCH" ]; then
             echo "гейт не применяется: этап $STAGE, reuse=${REUSE:-false}, ветка ${BRANCH:-dev}"
             { echo 'proceed=true'; echo 'result=skipped'; } >> "$GITHUB_OUTPUT"
             exit 0
@@ -1748,6 +1755,7 @@ jobs:
           # После ребейза конвейером — якоря приведённого материала (#515).
           MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
           MATERIAL_TREE: ${{ needs.prepare.outputs.material_tree }}
+          MATERIAL_BASE: ${{ needs.prepare.outputs.material_base }}
           MATERIAL_SPECS: ${{ needs.prepare.outputs.material_specs }}
           MATERIAL_ISSUE_BODY: ${{ needs.prepare.outputs.material_issue_body }}
           # Вердикт из structured_output попадает в блок якорей (#499): по нему
@@ -1826,15 +1834,21 @@ jobs:
             # выводом — через раунд команда из §2.10 не работала. Машина же
             # снимает якоря в момент чтения материала и ошибиться в них не
             # может; блок помечен как машинный, чтобы никто не правил его руками.
-            node "$TOOLS/scripts/review-doc-guard.mjs" --anchor="$doc" \
-              --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE" \
-              --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS" \
-              --issue-body="$MATERIAL_ISSUE_BODY" \
-              --usage="$USAGE" \
-              --usage-details="$USAGE_DETAILS" \
-              --verdict="$verdict" --high="$high" \
-              --route="$route" --criterion="$criterion"
+            certificate_args=()
+            if [ "$STAGE" = code ] && [ "$verdict" = green ] && [ "$high" = 0 ]; then
+              mkdir -p "$RUNNER_TEMP/review-rebase"
+              certificate_args=(--rebase-certificate="$RUNNER_TEMP/review-rebase/certificate.json"
+                --repo="$REPO" --num="$NUM" --base="$MATERIAL_BASE")
+            fi
+            anchor_args=(--anchor="$doc" --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE"
+              --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS" --issue-body="$MATERIAL_ISSUE_BODY"
+              --usage="$USAGE" --usage-details="$USAGE_DETAILS" --verdict="$verdict" --high="$high"
+              --route="$route" --criterion="$criterion")
+            node "$TOOLS/scripts/review-doc-guard.mjs" "${anchor_args[@]}"
             REVIEW_REPORT="$doc" node "$TOOLS/scripts/review-findings-policy.mjs" attach
+            if [ "${#certificate_args[@]}" -gt 0 ]; then
+              node "$TOOLS/scripts/review-doc-guard.mjs" "${anchor_args[@]}" "${certificate_args[@]}"
+            fi
           else
             echo "::warning::$SOURCE не найден — документа для публикации нет"
           fi
@@ -1936,6 +1950,18 @@ jobs:
           fi
           echo "документ опубликован в $target: $doc"
 
+      # Only this trusted publisher can mint the durable counter exception.
+      # Missing/expired artifacts fall back to a normal review; Markdown alone
+      # never grants authority over a rebased material tree.
+      - name: Retain authenticated counter rebase certificate
+        if: steps.ready.outputs.proceed == 'true' && needs.prepare.outputs.reuse != 'true' && needs.prepare.outputs.ship != 'true' && needs.guard.outputs.stage == 'code'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: review-rebase-${{ fromJSON(inputs.source_event || toJSON(github.event)).issue.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/review-rebase/certificate.json
+          if-no-files-found: ignore
+          retention-days: 90
+
       # Материал раунда обязан быть достижим с origin (#413).
       #
       # SPEC-REVIEW-403-r2 объявил материал на `HEAD = 83005c3c`, и тот же SHA
@@ -1983,6 +2009,7 @@ jobs:
           REUSE_DOC: ${{ needs.prepare.outputs.reuse_doc }}
           REUSE_ROUND: ${{ needs.prepare.outputs.reuse_round }}
           REUSE_TREE: ${{ needs.prepare.outputs.reuse_tree }}
+          REUSE_ROLE: ${{ needs.prepare.outputs.reuse_role }}
           SHIP: ${{ needs.prepare.outputs.ship }}
           # #707: строка риска подтверждённого владельцем ship — для пакетного ревью.
           SHIP_RISK: ${{ needs.prepare.outputs.ship_risk }}
@@ -2030,14 +2057,18 @@ jobs:
             gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/ship-merge.md
             green_forward
           elif [ "$REUSE" = "true" ]; then
-            # Модель не вызывалась: вердикт — записанный конвейером зелёный
-            # прошлого захода, дерево вне docs/reviews с тех пор не менялось (#499).
+            # The original verdict and the new candidate are distinct identities.
             verdict=green; high=0
             short_tree=$(printf '%s' "$REUSE_TREE" | cut -c1-12)
+            if [ "$REUSE_ROLE" = rebase ]; then
+              reuse_note="Доверенный artifact публикации связывает прежний green с базой и патчем задачи. После ребейза отличаются только четыре пересчитанных счётчика STATUS в этом патче; содержательные изменения задачи не скрыты. Новый материал прошёл Validate${VALIDATE_URL:+ ($VALIDATE_URL)}, а слияние проверит точного финального кандидата. Входы CI сравниваются независимо: изменившиеся upstream fixtures или код не получают прежний PASS автоматически."
+            else
+              reuse_note="Дерево материала \`${short_tree}\` с захода r${REUSE_ROUND} не изменилось вне документов ревью (проверено git diff)."
+            fi
             gh issue comment "$NUM" --repo "${{ github.repository }}" --body \
               "Вердикт: зелёный · заход r${{ needs.guard.outputs.cycle }} · применён повторно из r${REUSE_ROUND} без вызова модели (#499) · High: 0 · Medium: 0 · Документ: docs/reviews/${REUSE_DOC}
 
-          Дерево материала \`${short_tree}\` с захода r${REUSE_ROUND} не изменилось ни в одном файле вне \`docs/reviews/\` (проверено \`git diff\` по содержимому). Новый документ не публикуется: разбирать нечего. Любое отличие дерева — ребейз, тест, фикстура, ТЗ — запустило бы полный разбор."
+          ${reuse_note} Новый документ и новый вызов модели не нужны."
             green_forward
           else
             # #726: вердикт модели решает скрипт трека командой route — ОДИН вызов:
@@ -2130,6 +2161,7 @@ jobs:
           MATERIAL_SHA: ${{ needs.prepare.outputs.material_sha }}
           # #696: show/ship сливаются по лёгкому Validate на кандидате.
           MATERIAL_BODY: ${{ needs.prepare.outputs.material_issue_body }}
+          REUSE_VALIDATION_REQUIRED: ${{ needs.prepare.outputs.reuse_validation_required }}
           MUTANTS: ${{ needs.prepare.outputs.mutants }}
           # #749/#811: policy, Git writes and CI proof stay in the dev snapshot.
           # Only the accepted candidate's index generator runs from an exported
@@ -2143,7 +2175,7 @@ jobs:
           fi
           node "$TOOLS/scripts/merge-candidate.mjs" --branch="$BRANCH" --material="$MATERIAL_SHA" \
             --issue="$NUM" --repo="${{ github.repository }}" --mutants="${MUTANTS:-false}" \
-            --pending-dir="$RUNNER_TEMP/merge-pending"
+            --pending-dir="$RUNNER_TEMP/merge-pending" --validation-required="${REUSE_VALIDATION_REQUIRED:-false}"
 
       - name: Retain authenticated merge continuation
         if: steps.merge.outputs.action == 'pending'

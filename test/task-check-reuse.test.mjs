@@ -9,6 +9,7 @@ import { canonical } from '../scripts/ci-registry-inputs.mjs';
 import { profilePaths } from '../scripts/ci-profile-paths.mjs';
 import { TASK_CHECK_JOB_NAMES, normalizeTaskCheckScope, taskCheckPlanFromSnapshot, taskCheckPlan,
   taskCheckSnapshot, makeTaskCheckRecord, taskCheckRecordError, verifyTaskCheckClaim } from '../scripts/task-check-reuse.mjs';
+import { statusCounterFixture } from './helpers/status-counter-fixture.mjs';
 
 const sha = '1'.repeat(40), repo = 'Matysh/houseplan-card', now = Date.parse('2026-10-24T20:00:00Z');
 const environment = { node: '22.23.3', platform: 'linux', arch: 'x64', locale: 'en-US', timezone: 'UTC',
@@ -24,6 +25,7 @@ function files() {
     ['scripts/tooling.mjs', 'export const tool = 1;'], ['scripts/browser_selected.mjs', 'export const browser = 1;'],
     ['demo/smoke_a.mjs', 'export const a = 1;'], ['demo/smoke_b.mjs', 'export const b = 1;'],
     ['demo/golden/baselines/fixture.png', 'baseline bytes'],
+    ['demo/fixtures/one.mjs', 'export const fixture = 1;'], ['docs/STATUS.md', statusCounterFixture()],
     ['package-lock.json', '{"version":"1.83.0-beta.2"}'],
     ['scripts/ci-profile-paths.json', JSON.stringify(profilePaths(['test/tool.test.mjs']))],
     ...['validate.yml', 'validate-product.yml', 'validate-tooling.yml'].map(name => ['.github/workflows/' + name, workflow]),
@@ -58,7 +60,7 @@ async function fixture(job = 'browser_selected') {
   return { claim, context };
 }
 
-test('scoped receipts reuse direct tooling and selected evidence after documentation-only Git commits', async t => {
+test('#1068 scoped receipts verify counter-only Git commits and refuse real upstream fixture changes', async t => {
   const root = mkdtempSync(join(tmpdir(), 'hp-task-reuse-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = args => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
@@ -67,12 +69,17 @@ test('scoped receipts reuse direct tooling and selected evidence after documenta
   git(['add', '.']); git(['commit', '-m', 'source']);
   const before = taskCheckSnapshot(root);
   const plans = await Promise.all(['tooling', 'browser_selected'].map(job => taskCheckPlan(root, { job, browserPlan, environment })));
-  mkdirSync(join(root, 'docs/reviews'), { recursive: true }); writeFileSync(join(root, 'docs/reviews/REVIEW.md'), 'review document');
-  git(['add', '.']); git(['commit', '-m', 'review metadata']);
+  writeFileSync(join(root, 'docs/STATUS.md'), statusCounterFixture(11));
+  git(['add', '.']); git(['commit', '-m', 'counter only']);
   const after = taskCheckSnapshot(root);
   assert.notEqual(before.sha, after.sha); assert.notEqual(before.tree, after.tree);
+  assert.equal(git(['diff', '--name-only', before.sha, after.sha]), 'docs/STATUS.md');
+  writeFileSync(join(root, 'docs/STATUS.md'), statusCounterFixture(12));
+  writeFileSync(join(root, 'demo/fixtures/one.mjs'), 'export const fixture = 2;');
+  git(['add', '.']); git(['commit', '-m', 'real fixture and counters']);
+  const changedSha = git(['rev-parse', 'HEAD']);
   for (const [index, job] of ['tooling', 'browser_selected'].entries()) {
-    assert.deepEqual(await taskCheckPlan(root, { job, browserPlan, environment }), plans[index]);
+    assert.deepEqual(await taskCheckPlan(root, { ref: after.sha, job, browserPlan, environment }), plans[index]);
     const { claim, context } = await fixture(job);
     claim.record.sha = before.sha; claim.record.workflow_revision = before.sha;
     context.run.head_sha = before.sha; context.latestRun.head_sha = before.sha;
@@ -85,6 +92,11 @@ test('scoped receipts reuse direct tooling and selected evidence after documenta
     context.sourceSnapshot = taskCheckSnapshot(root, before.sha);
     const verified = await verifyTaskCheckClaim(claim, context);
     assert.equal(verified.accepted, true, verified.reason);
+    context.candidateSnapshot = taskCheckSnapshot(root, changedSha);
+    context.sourceSnapshot = taskCheckSnapshot(root, before.sha);
+    const refused = await verifyTaskCheckClaim(claim, context);
+    assert.equal(refused.accepted, false, 'an old claimed plan cannot conceal substantive fixture bytes: ' + job);
+    assert.match(refused.reason, /actual task inputs\/environment\/recipe differ/);
   }
 });
 

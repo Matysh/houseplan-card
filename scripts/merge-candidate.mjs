@@ -39,6 +39,7 @@ import { readMergeEntry, reconcileEntry, ghApi } from './release-ledger.mjs';
 import { sealContinuation, validMergeValidation } from './continuation-record.mjs';
 import { issueEvents, latestReviewRequest, processRuns, reviewRunsForRequest } from './process-reconcile.mjs';
 import { issueBodyDigest } from './review-doc-guard.mjs';
+import { counterOnlyTaskRebase, reviewTaskDelta } from './review-task-delta.mjs';
 
 export const MAX_ATTEMPTS = 3;
 /** Пути вне patch-id кандидата (#698): документы ревью и то, что ребейз сливает сам. */
@@ -403,6 +404,13 @@ export function realOps({
         return (stdout || '').trim().split(' ')[0] || 'empty';
       } catch (error) { throw safeError(error); }
     },
+    counterOnlyRebase: (oldBase, material, newBase, candidate) => {
+      try {
+        const root = must(git('rev-parse', '--show-toplevel'), 'repository root').trim();
+        return counterOnlyTaskRebase(reviewTaskDelta({ root, base: oldBase, material }),
+          reviewTaskDelta({ root, base: newBase, material: candidate }));
+      } catch { return false; } // malformed, stale or changed generator: ordinary re-review
+    },
     rebaseOnto: (branchTip, onto) => {
       must(git('checkout', '-q', '-B', 'merge-into-dev', branchTip), 'checkout');
       // #643: doc-коммит ветки конфликтует с документами других задач в dev
@@ -544,7 +552,7 @@ export async function mergeCandidate(args) {
   }
 }
 
-async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS, mutants = true, defer = false }) {
+async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_ATTEMPTS, mutants = true, defer = false, validationRequired = false }) {
   ops.fetch('dev', branch);
   const actual = ops.revParse(`origin/${branch}`);
   const reviewedFresh = actual === material
@@ -595,7 +603,7 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
     const devMoved = devNow !== materialBase;
     ops.log(`попытка ${attempt}: dev@${devNow.slice(0, 8)}, база материала ${materialBase.slice(0, 8)}, dev ${devMoved ? 'двигался' : 'на месте'}`);
 
-    if (!devMoved) {
+    if (!devMoved && !validationRequired) {
       const target = ops.freshIndex(tip);
       ops.checkReleaseEntry?.(target);
       const pushed = ops.pushWithLease(target, 'dev', devNow);
@@ -604,10 +612,11 @@ async function mergeAttempts({ branch, material, issue, ops, maxAttempts = MAX_A
       return finish(decision, { candidate: target, devNow, branchTip: tip });
     }
 
-    let candidate = ops.rebaseOnto(tip, 'origin/dev');
+    let candidate = devMoved ? ops.rebaseOnto(tip, 'origin/dev') : tip;
     if (!candidate) return finish(decideMerge({ fresh: true, devMoved: true, conflict: true }), { devNow });
 
-    const patchIdEqual = ops.patchId(materialBase, material) === ops.patchId(devNow, candidate);
+    const patchIdEqual = !devMoved || ops.patchId(materialBase, material) === ops.patchId(devNow, candidate)
+      || ops.counterOnlyRebase?.(materialBase, material, devNow, candidate) === true;
     // #811: the candidate's generator is code, not merely data. Run it only
     // while the green verdict still applies; a changed diff first needs a
     // new review. The index commit is included in the exact Validate SHA.
@@ -786,7 +795,8 @@ else if (isMainModule(import.meta.url)) { // #496: переносимо для W
   };
   const pipelineUrl = process.env.GITHUB_RUN_ID
     ? `${process.env.GITHUB_SERVER_URL || 'https://github.com'}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}` : '';
-  mergeCandidate({ branch, material, issue, ops, mutants, pipelineUrl, defer: Boolean(defer) }).then((r) => {
+  mergeCandidate({ branch, material, issue, ops, mutants, pipelineUrl, defer: Boolean(defer),
+    validationRequired: process.argv.includes('--validation-required=true') }).then((r) => {
     const out = `merged=${r.merged}\nto=${r.to || ''}\naction=${r.action}\ncandidate=${r.candidate}\n`;
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, out);
     process.stdout.write(out);

@@ -4384,6 +4384,19 @@ gate, gets a timeout above the sum of its own waits and says so in a comment.
 
 ## What the review model is allowed to do (#556)
 
+Counter rebase reuse (#1068) avoids a second model round only when the verified
+task delta is unchanged apart from four STATUS Tests counters. The trusted
+publisher retains a green certificate for 90 days; missing, expired or invalid
+provenance falls back to ordinary review. Automatic and author rebases use the
+same counter validation and recalculate from the combined tracked inputs,
+including a clean Git merge of equal increments. Handwritten prose, version,
+date, tags and unsupported generator changes remain outside the exception.
+The resulting candidate still passes Validate; reuse does not suppress checks
+whose actual inputs changed in incoming dev commits. Test this boundary with
+`node --test test/status-counter-equivalence.test.mjs test/status-counter-rebase.test.mjs
+test/review-task-delta.test.mjs test/review-doc-guard.test.mjs test/merge-candidate.test.mjs`.
+These are targeted workflow tests; no full browser/Golden run is required.
+
 The three review entrypoints (`_process.yml`, `_ship-review.yml`,
 `release-review.yml`) explicitly request `claude-sonnet-5` and effort `high`
 (#1063) through matching environment and CLI settings. The model environment

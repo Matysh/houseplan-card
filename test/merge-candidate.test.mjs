@@ -251,6 +251,41 @@ function fakeOps({ base = 'dev0', devTips = ['dev0'], validate = [], leaseReject
   };
 }
 
+test('#1068 counter-only normalized mismatch retains review but validates the exact final candidate', async () => {
+  const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat', indexStale: true,
+    patchIds: { 'dev0..mat': 'raw-old', 'dev1..cand-mat-on-dev1': 'raw-new' } });
+  ops.counterOnlyRebase = (...args) => { ops.calls.push(['counter-equivalence', ...args]); return true; };
+  const result = await mergeCandidate({ branch: 'issue/1068-x', material: 'mat', issue: 1068, ops, mutants: false });
+  assert.equal(result.merged, true);
+  const check = ops.calls.findIndex(call => call[0] === 'validate');
+  const push = ops.calls.findIndex(call => call[0] === 'push' && call[2] === 'dev');
+  assert.ok(check >= 0 && push > check);
+  assert.equal(ops.calls[check][1], 'idx-cand-mat-on-dev1');
+  assert.deepEqual(ops.calls.find(call => call[0] === 'counter-equivalence'),
+    ['counter-equivalence', 'dev0', 'mat', 'dev1', 'cand-mat-on-dev1']);
+});
+
+test('#1068 manually rebased reuse cannot take the unvalidated fast-forward path', async () => {
+  for (const validate of ['green', 'failed']) {
+    const ops = fakeOps({ branchTip: 'mat', material: 'mat', indexStale: true, validate: [validate] });
+    const result = await mergeCandidate({ branch: 'issue/1068-x', material: 'mat', issue: 1068, ops,
+      mutants: false, validationRequired: true });
+    assert.ok(!ops.calls.some(call => call[0] === 'rebase'));
+    assert.equal(ops.calls.find(call => call[0] === 'validate')?.[1], 'idx-mat');
+    assert.equal(result.merged, validate === 'green');
+    assert.equal(ops.calls.some(call => call[0] === 'push' && call[2] === 'dev'), validate === 'green');
+  }
+});
+
+test('#1068 unverified counter mismatch still routes to review without Validate or dev push', async () => {
+  const ops = fakeOps({ devTips: ['dev1'], branchTip: 'mat', material: 'mat',
+    patchIds: { 'dev0..mat': 'raw-old', 'dev1..cand-mat-on-dev1': 'raw-new' } });
+  ops.counterOnlyRebase = () => false;
+  const result = await mergeCandidate({ branch: 'issue/1068-x', material: 'mat', issue: 1068, ops, mutants: false });
+  assert.equal(result.action, 'rereview');
+  assert.ok(!ops.calls.some(call => call[0] === 'validate' || call[0] === 'push' && call[2] === 'dev'));
+});
+
 test('#1044 deferred candidate records the discovered producer without dispatching or pushing dev', async () => {
   const ops = fakeOps({ base: 'dev0', devTips: ['dev1'], branchTip: 'mat', material: 'mat' });
   let captured, reads = 0;

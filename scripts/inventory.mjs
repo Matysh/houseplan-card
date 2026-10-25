@@ -5,21 +5,13 @@
 // which is worse than no number at all — a maintainer reading the snapshot
 // underestimates the coverage that exists (review R5-2). The counts live here
 // now, one command away, and STATUS.md describes the layers instead.
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { statusCounterInventory } from './status-counter-equivalence.mjs';
 import { METRIC_NAMES, collectMetrics, readBaseline } from './monolith-metrics.mjs';
 import { MUTANTS } from './mutation-registry.mjs';
 import {
   BROWSER_GUARD_LIMIT, browserGuardPolicy, readDocumentedBrowserGuards,
 } from './mutation-browser-policy.mjs';
 import { isMainModule } from './spawn-portable.mjs';
-
-const count = (root, dir, match, re) =>
-  readdirSync(join(root, dir))
-    .filter((f) => match.test(f))
-    .reduce((n, f) => n + (readFileSync(join(root, dir, f), 'utf8').match(re) || []).length, 0);
-
-const files = (root, dir, match) => readdirSync(join(root, dir)).filter((f) => match.test(f)).length;
 
 /**
  * Счётчики тестов по слоям. Один источник для этого отчёта и для таблицы
@@ -30,12 +22,7 @@ const files = (root, dir, match) => readdirSync(join(root, dir)).filter((f) => m
  * the Home Assistant harness (AUD-159B7-03).
  */
 export function testInventory(root = process.cwd()) {
-  return [
-    { id: 'node', label: 'Node unit (frontend + tooling)', count: count(root, 'test', /\.test\.mjs$/, /^\s*(test|it)\(/gm) },
-    { id: 'backend-pure', label: 'pure backend (pytest, no HA)', count: count(root, 'tests_backend', /^test_(?!ha_).*\.py$/, /^\s*(?:async\s+)?def test_/gm) },
-    { id: 'backend-ha', label: 'HA-harness backend (CI, py3.13)', count: count(root, 'tests_backend', /^test_ha_.*\.py$/, /^\s*(?:async\s+)?def test_/gm) },
-    { id: 'smokes', label: 'browser smokes (headless chromium)', count: files(root, 'demo', /^smoke_.*\.mjs$/) },
-  ];
+  return statusCounterInventory(root);
 }
 
 if (isMainModule(import.meta.url)) {

@@ -119,7 +119,8 @@ export function mergeReviewedCandidate(p, ops, { secrets = [] } = {}) {
     throw Object.assign(Error(why), { code: 'material-fetch-failed', stage: 'material-fetch' });
   }
   const base = ops.mergeBase(p.material, p.dev);
-  if (ops.patchId(base, p.material) !== ops.patchId(p.dev, p.candidate))
+  if (ops.patchId(base, p.material) !== ops.patchId(p.dev, p.candidate)
+    && ops.counterOnlyRebase?.(base, p.material, p.dev, p.candidate) !== true)
     throw Object.assign(Error('reviewed patch changed; old green cannot authorize this candidate'),
       { code: 'reviewed-patch-changed', stage: 'patch-identity' });
   ops.checkReleaseEntry(p.candidate);

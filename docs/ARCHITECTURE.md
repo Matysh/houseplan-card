@@ -2172,6 +2172,15 @@ This is a local workflow contract, not a new CI or author-identity authority.
 
 ## Review handoff provenance (#904)
 
+Counter rebase equivalence (#1068) is a task-delta comparison across the old
+and accepted new base. `status-counter-equivalence.mjs` validates four Tests
+values against immutable Git blobs with bounded, no-lazy-fetch reads; it never
+loads a task's generator. `review-task-delta.mjs` preserves other patch bytes
+and modes. The trusted publisher certifies a green report and its base/material,
+body and delta identities in a durable artifact. Reentry authenticates that
+artifact before retaining green. It requires final candidate Validate even
+on fast-forward; ordinary proof consumers still invalidate changed inputs.
+
 Review policy (#1063) separates independent code judgement from evidence
 reuse: task and ship batch reviewers trace callers, state, side effects and
 failure paths before comparing author explanations and tests. A valid proof

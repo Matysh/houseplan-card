@@ -16,6 +16,7 @@ import { verifyRegistryBuild, restoreRegistryBuild, runCandidateCommand } from '
 import { artifactTree } from '../scripts/artifact-inventory.mjs';
 import { sourceEquivalenceCommon, sourceEquivalenceJob, snapshotEntries, validateSnapshotPolicy } from '../scripts/ci-registry-equivalence.mjs';
 import { registryApi } from '../scripts/ci-proof-registry.mjs';
+import { statusCounterFixture } from './helpers/status-counter-fixture.mjs';
 
 const git = (root, args) => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
 const environment = { node: '22.23.3', platform: 'linux', arch: 'x64', python: '3.14.5', pins: '1'.repeat(64) };
@@ -183,6 +184,36 @@ test('independent source Git objects authenticate docs inheritance and reject a 
   candidate = identity(root)._snapshot;
   await assert.rejects(() => sourceEquivalenceCommon(candidate, previous, 'exact'), /actual Git input/);
 });
+test('#1068 registry consumers accept counter-only Git inputs for every job and refuse real upstream fixture changes', async t => {
+  const root = repository(t);
+  put(root, 'docs/STATUS.md', statusCounterFixture());
+  put(root, 'demo/fixtures/one.mjs', 'export const fixture = 1;');
+  const sourceSha = commit(root, 'source with counters and fixture'), original = identity(root);
+  put(root, 'docs/STATUS.md', statusCounterFixture(11));
+  commit(root, 'counter only');
+  assert.equal(git(root, ['diff', '--name-only', sourceSha, 'HEAD']), 'docs/STATUS.md');
+  const candidate = identity(root);
+  assert.deepEqual(candidate.keys, original.keys);
+  const common = await sourceEquivalenceCommon(candidate._snapshot, original._snapshot, 'exact');
+  for (const job of REGISTRY_JOBS) {
+    const verified = await sourceEquivalenceJob(candidate._snapshot, original._snapshot,
+      { job, workflow: '.github/workflows/validate-product.yml' }, common);
+    assert.equal(verified.sourceEquivalent, true, job);
+    assert.equal(verified.actualWorkflowRecipe, original.workflowRecipes['validate-product.yml'][job]);
+  }
+  put(root, 'docs/STATUS.md', statusCounterFixture(12));
+  put(root, 'demo/fixtures/one.mjs', 'export const fixture = 2;');
+  commit(root, 'real upstream fixture and counters');
+  const substantive = identity(root);
+  assert.notDeepEqual(substantive.keys, original.keys);
+  await assert.rejects(() => sourceEquivalenceCommon(substantive._snapshot, original._snapshot, 'exact'), /actual Git input/);
+  // Unknown input must not inherit the PASS accepted for the counter-only commit.
+  put(root, 'demo/fixtures/one.mjs', 'export const fixture = 1;');
+  put(root, 'unknown-input.bin', Buffer.from([0, 1, 2]));
+  commit(root, 'unknown actual input beside counters');
+  await assert.rejects(() => sourceEquivalenceCommon(identity(root)._snapshot, original._snapshot, 'exact'), /missing\/unsafe source Git input: unknown-input\.bin/);
+});
+
 test('actual proof/lookup/producer recipes and trust code cannot lie behind identical metadata', async t => {
   const root = repository(t), previous = identity(root)._snapshot;
   const path = '.github/workflows/validate.yml', old = readFileSync(join(root, path), 'utf8');

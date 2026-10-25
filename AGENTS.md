@@ -111,6 +111,11 @@ rebase before review only on `ask` or when
 the branch does not merge cleanly into `dev`. Review checks scope, risks and the
 evidence from executed tests, but does not replace executing them.
 
+Verified recalculation of the four STATUS Tests counters after a rebase can
+retain a green code verdict through a trusted publisher artifact (#1068,
+`PROCESS.md` §2.10/§10.4). It still requires candidate Validate and checks real
+proof inputs; it does not exempt the STATUS document or incoming code changes.
+
 ## Specs
 
 The spec lives in the **issue body**, under a `## ТЗ` heading (owner decision

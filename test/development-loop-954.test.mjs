@@ -16,6 +16,7 @@ import { runnerEnvironment, matchingProducerEnvironment, producerEnvironments } 
 import { buildCiProof, JOB_RULES, requiredCheckIds, resolveJobRules } from '../scripts/ci-proof.mjs';
 import { selectSmokes } from '../scripts/smoke-select.mjs';
 import { localGateEnvironment } from '../scripts/local-gate-environment.mjs';
+import { statusCounterFixture } from './helpers/status-counter-fixture.mjs';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-954-fixture-'));
@@ -97,12 +98,36 @@ test('#960 receipt environment follows Windows key casing while preserving tool 
   assert.notDeepEqual(localGateEnvironment({ Path: 'one' }, 'linux'), localGateEnvironment({ PATH: 'one' }, 'linux'));
 });
 
-test('#954 real schema2 producer survives docs-only SHA, rejects source/env/foreign repository or tampered bytes', t => {
+test('#1068 local receipt restores counter-only commits but refuses counter plus real fixture changes', t => {
+  const { root, put, git } = fixture(t), environment = { PATH: 'fixed' };
+  put('docs/STATUS.md', statusCounterFixture());
+  put('demo/fixtures/one.mjs', 'export const input = 1;');
+  put('test/status.test.mjs', 'import {readFileSync} from "node:fs"; import "../src/a.ts"; readFileSync(new URL("../docs/STATUS.md", import.meta.url));');
+  git('add', '.'); git('commit', '-qm', 'source with generated counters');
+  assert.ok(frontendUnitPlan(root).fresh.includes('test/status.test.mjs'), 'metadata consumers still run fresh');
+  put('dist/a.js', 'built'); put('test-build/a.js', 'compiled');
+  const key = localGateKey(root, environment);
+  sealLocalGate(root, key, 1000);
+  put('docs/STATUS.md', statusCounterFixture(11));
+  git('add', 'docs/STATUS.md'); git('commit', '-qm', 'counter only');
+  assert.equal(git('diff', '--name-only', 'HEAD^', 'HEAD'), 'docs/STATUS.md');
+  put('dist/a.js', 'stale');
+  assert.equal(restoreLocalGate(root, localGateKey(root, environment), 2000), true);
+  assert.equal(readFileSync(join(root, 'dist/a.js'), 'utf8'), 'built');
+  put('docs/STATUS.md', statusCounterFixture(12));
+  put('demo/fixtures/one.mjs', 'export const input = 2;');
+  git('add', 'docs/STATUS.md', 'demo/fixtures/one.mjs'); git('commit', '-qm', 'real fixture and counters');
+  assert.equal(restoreLocalGate(root, localGateKey(root, environment), 2000), false);
+});
+
+test('#954/#1068 real schema2 producer survives counters/docs-only SHA, rejects source/env/foreign repository or tampered bytes', t => {
   const { root, put, git } = fixture(t);
   const producer = mkdtempSync(join(tmpdir(), 'hp-954-producer-')); t.after(() => rmSync(producer, { recursive: true, force: true }));
   for (const n of ['dist', 'test-build']) { mkdirSync(join(producer, n)); writeFileSync(join(producer, n, 'a.js'), n); }
   const repo = 'o/r', environment = { node: '22', imageOS: 'ubuntu', imageVersion: 'one' };
-  put('docs/producer.md', 'source metadata'); git('add', 'docs'); git('commit', '-qm', 'producer');
+  put('docs/producer.md', 'source metadata'); put('docs/STATUS.md', statusCounterFixture());
+  put('demo/fixtures/one.mjs', 'export const input = 1;');
+  git('add', 'docs', 'demo'); git('commit', '-qm', 'producer');
   const sha = git('rev-parse', 'HEAD'), tree = git('rev-parse', 'HEAD^{tree}');
   const proof = { schema: 2, outcome: 'success', reused: false, key: frontendContentKey(root, environment), environment,
     fingerprint: sourceFingerprint(root), sha, tree, run: 11, attempt: 1,
@@ -121,6 +146,14 @@ test('#954 real schema2 producer survives docs-only SHA, rejects source/env/fore
   let downloadCount = 0;
   const restore = (env, consumerBranch = 'issue/954-consumer') => restoreFrontend({ root, repo, api, environment: env || environment, consumerBranch,
     download: (_id, _name, out) => { downloadCount++; cpSync(producer, out, { recursive: true }); } });
+  put('docs/STATUS.md', statusCounterFixture(11)); git('add', 'docs/STATUS.md'); git('commit', '-qm', 'counter only');
+  assert.equal(git('diff', '--name-only', 'HEAD^', 'HEAD'), 'docs/STATUS.md');
+  assert.equal(restore().reused, true, 'actual schema2 consumer accepts its immutable producer after counter-only commit');
+  assert.equal(readFileSync(join(root, 'dist/a.js'), 'utf8'), 'dist');
+  put('docs/STATUS.md', statusCounterFixture(12)); put('demo/fixtures/one.mjs', 'export const input = 2;');
+  git('add', 'docs/STATUS.md', 'demo/fixtures/one.mjs'); git('commit', '-qm', 'real fixture and counters');
+  assert.equal(restore().reused, false, 'a counter update cannot conceal substantive upstream fixture inputs');
+  put('demo/fixtures/one.mjs', 'export const input = 1;'); git('add', 'demo/fixtures/one.mjs'); git('commit', '-qm', 'restore fixture');
   put('docs/reviews/review.md', 'review'); git('add', 'docs'); git('commit', '-qm', 'review');
   assert.equal(restore().reused, true);
   const oldUnitProtocol = readFileSync(join(root, 'scripts/frontend-units.mjs'), 'utf8');
@@ -135,7 +168,8 @@ test('#954 real schema2 producer survives docs-only SHA, rejects source/env/fore
   run.repository.full_name = 'foreign/repo'; assert.equal(restore().reused, false); run.repository.full_name = repo;
   put('src/a.ts', 'export const a=2;'); assert.equal(restore().reused, false); git('restore', 'src/a.ts');
   git('checkout', '-qb', 'rebased', `${sha}^`);
-  put('docs/rebased.md', 'different metadata base'); git('add', 'docs'); git('commit', '-qm', 'rebased equivalent product');
+  put('demo/fixtures/one.mjs', 'export const input = 1;');
+  put('docs/rebased.md', 'different metadata base'); git('add', 'docs', 'demo'); git('commit', '-qm', 'rebased equivalent product');
   assert.equal(restore().reused, false, 'a non-ancestor from another issue cannot inherit trust');
   assert.equal(restore(undefined, run.head_branch).reused, true, 'same issue retains its independently identical product proof after rebase');
   writeFileSync(join(producer, 'dist/a.js'), 'tampered'); assert.equal(restore(undefined, run.head_branch).reused, false);

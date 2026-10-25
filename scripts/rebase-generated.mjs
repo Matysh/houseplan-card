@@ -10,7 +10,8 @@
 // и не «их», а пересборка по дереву, в котором остановился ребейз.
 //
 // Правило одно: остановку разрешает только набор конфликтов, в котором ВСЕ
-// пути — индекс, числовые ячейки browser inventory (#811), данные, где права
+// пути — индекс, проверенные Tests-счётчики STATUS (#1068), числовые ячейки
+// browser inventory (#811), данные, где права
 // сторона dev (`UPSTREAM_WINS`, #698), или пути, которые вызывающий объявил
 // своими (бандл в `rebase-on-dev.mjs`). Хоть один другой путь — `git rebase --abort` и
 // перечень ВСЕХ конфликтующих файлов, индекс в нём тоже: автор видит полную
@@ -39,6 +40,10 @@ import { BROWSER_GUARD_INVENTORY } from './mutation-browser-policy.mjs';
 import {
   refreshBrowserInventory, resolveBrowserInventoryConflict, validateBrowserInventory,
 } from './mutation-browser-rebase.mjs';
+import { STATUS_COUNTER_PATH } from './status-counter-equivalence.mjs';
+import {
+  statusCounterRebaseEligible, resolveStatusCounterConflict, refreshStatusCounters,
+} from './status-counter-rebase.mjs';
 
 export const REVIEWS_INDEX_PATH = 'docs/reviews/INDEX.md';
 /**
@@ -159,14 +164,14 @@ const uniquePaths = (paths) => [...new Set(paths.map((p) => String(p).trim()).fi
 export function planStop(paths, { extra = () => false } = {}) {
   const conflicts = uniquePaths(paths);
   if (!conflicts.length) return { action: 'abort', reason: 'no-conflicts', manual: [], conflicts };
-  const manual = conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && path !== BROWSER_GUARD_INVENTORY
+  const manual = conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && path !== BROWSER_GUARD_INVENTORY && path !== STATUS_COUNTER_PATH
     && !UPSTREAM_WINS.includes(path) && !extra(path));
   if (manual.length) return { action: 'abort', reason: 'manual', manual, conflicts };
   return {
     action: 'resolve',
     index: conflicts.includes(REVIEWS_INDEX_PATH),
     upstream: conflicts.filter((path) => UPSTREAM_WINS.includes(path)),
-    extra: conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && path !== BROWSER_GUARD_INVENTORY && !UPSTREAM_WINS.includes(path)),
+    extra: conflicts.filter((path) => path !== REVIEWS_INDEX_PATH && path !== BROWSER_GUARD_INVENTORY && path !== STATUS_COUNTER_PATH && !UPSTREAM_WINS.includes(path)),
     conflicts,
   };
 }
@@ -245,9 +250,13 @@ export function rebaseRegenerating({
   const inventoryFailure = (error, conflicts = [BROWSER_GUARD_INVENTORY]) => abort({
     reason: 'manual', conflicts, manual: [BROWSER_GUARD_INVENTORY], output: error,
   });
+  const statusFailure = (error, conflicts = [STATUS_COUNTER_PATH]) => abort({
+    reason: 'manual', conflicts, manual: [STATUS_COUNTER_PATH], output: error,
+  });
   try {
     const initialInventory = validateBrowserInventory({ git, cwd });
     if (!initialInventory.ok) return inventoryFailure(initialInventory.error);
+    const statusEligible = statusCounterRebaseEligible({ git, cwd, onto });
     let step = git(['rebase', '--no-autostash', onto], { allowFailure: true });
     while (!step.ok) {
       stops += 1;
@@ -255,6 +264,12 @@ export function rebaseRegenerating({
       const plan = planStop(conflictedPaths(git), { extra: extra?.match });
       if (plan.action === 'abort') {
         return abort({ reason: plan.reason, conflicts: plan.conflicts, manual: plan.manual, output: step.stderr || step.stdout });
+      }
+      if (plan.conflicts.includes(STATUS_COUNTER_PATH)) {
+        if (!statusEligible) return statusFailure('STATUS counters lack verified source snapshots', plan.conflicts);
+        const status = resolveStatusCounterConflict({ git, cwd, env });
+        if (!status.ok) return statusFailure(status.error, plan.conflicts);
+        resolved.push(`${STATUS_COUNTER_PATH} ← verified counter recalculation`);
       }
       if (plan.conflicts.includes(BROWSER_GUARD_INVENTORY)) {
         const inventory = resolveBrowserInventoryConflict({ git, cwd, env });
@@ -285,6 +300,11 @@ export function rebaseRegenerating({
     const inventory = refreshBrowserInventory({ git, cwd });
     if (!inventory.ok) return inventoryFailure(inventory.error);
     if (inventory.changed) resolved.push(`${BROWSER_GUARD_INVENTORY} ← пересчёт чисел`);
+    if (statusEligible) {
+      const status = refreshStatusCounters({ git, cwd });
+      if (!status.ok) return statusFailure(status.error);
+      if (status.changed) resolved.push(`${STATUS_COUNTER_PATH} ← verified counter recalculation`);
+    }
     if (refreshCi && refreshCiGenerated({ git, cwd, env, issue }).changed)
       resolved.push('CI indices ← canonical regeneration');
     return { ok: true, stops, resolved };

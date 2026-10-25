@@ -14,6 +14,7 @@ import { sealContinuation } from '../scripts/continuation-record.mjs';
 import { realOps, sh } from '../scripts/merge-candidate.mjs';
 import { issueBodyDigest } from '../scripts/review-doc-guard.mjs';
 import { mergeReviewedCandidate, resumeMergeContinuation } from '../scripts/workflow-continuation.mjs';
+import { STATUS_COUNTER_BEGIN, STATUS_COUNTER_END, STATUS_COUNTER_POLICY_PATHS } from '../scripts/status-counter-equivalence.mjs';
 
 const repo = 'o/r', issue = 77, branch = 'issue/77-material', body = 'immutable issue';
 const FAKE_TOKEN = `ghs_${'F'.repeat(36)}`;
@@ -32,7 +33,7 @@ const commitAll = (work, message) => { git(work, 'add', '.'); git(work, 'commit'
  * сдвинул документ ревью соседа, слияние перебазировало ветку, добавило
  * индекс (doc-коммит конвейера) и опубликовало кандидата force-push'ем.
  */
-function fixture(t, { tamper = false, material: sealedMaterial } = {}) {
+function fixture(t, { tamper = false, material: sealedMaterial, counters = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'hp-882-'));
   t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
   const bare = join(dir, 'origin.git'), work = join(dir, 'author'), job = join(dir, 'job');
@@ -40,6 +41,18 @@ function fixture(t, { tamper = false, material: sealedMaterial } = {}) {
   for (const [key, value] of [['receive.autogc', 'false'], ['gc.auto', '0'], ['maintenance.auto', 'false']]) git(bare, 'config', key, value);
   execFileSync('git', ['init', '-q', work]);
   git(work, 'remote', 'add', 'origin', bare);
+  const status = n => [STATUS_COUNTER_BEGIN, '| Item | State |', '|---|---|',
+    '| Generated | 2026-10-25 — rerun `node scripts/status-snapshot.mjs` for the current tree |',
+    '| Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |',
+    '| Latest stable tag | `v1.82.0` |', '| Latest prerelease tag | `v1.83.0-beta.2` |',
+    `| Tests | Node unit ${n} · pure backend 0 · HA-harness backend 0 · browser smokes 0 (\`npm run inventory\`) |`, STATUS_COUNTER_END, ''].join('\n');
+  if (counters) {
+    git(work, 'config', 'core.autocrlf', 'false');
+    for (const path of STATUS_COUNTER_POLICY_PATHS)
+      write(work, path, readFileSync(new URL('../' + path, import.meta.url), 'utf8').replace(/\r\n/g, '\n'));
+    for (const path of ['test/.keep', 'tests_backend/.keep', 'demo/.keep']) write(work, path, 'fixture\n');
+    write(work, 'docs/STATUS.md', status(0));
+  }
   write(work, 'a.mjs', 'export const a = 20;\n');
   write(work, 'b.mjs', 'export const b = 1;\n');
   write(work, 'docs/release-ledger/cycle.json', JSON.stringify({ schema: 1, baseStable: 'v1.0.0', targetStable: 'v1.1.0',
@@ -50,16 +63,25 @@ function fixture(t, { tamper = false, material: sealedMaterial } = {}) {
   git(work, 'push', '-q', 'origin', 'dev', 'v1.0.0');
   git(work, 'checkout', '-q', '-b', branch);
   write(work, 'b.mjs', "import { a } from './a.mjs';\nexport const b = a * 2;\n");
+  if (counters) { write(work, 'test/task.test.mjs', "test('task', () => {});\n"); write(work, 'docs/STATUS.md', status(1)); }
   write(work, `docs/release-ledger/v1.0.0/${issue}.json`, JSON.stringify({ schema: 1, issue, baseStable: 'v1.0.0',
     category: 'infra', rationale: 'fixture' }));
   const material = commitAll(work, `material\n\nIssue: #${issue}\nUser-Visible: no`);
   git(work, 'push', '-q', 'origin', branch);
   git(work, 'checkout', '-q', 'dev');
   write(work, 'docs/reviews/CODE-REVIEW-5-r1.md', '# neighbour review\n');
+  if (counters) {
+    write(work, 'test/upstream.test.mjs', "test('upstream', () => {});\n");
+    write(work, 'test/fixtures/accepted-upstream.json', '{"newRuntimeInput":true}\n');
+    write(work, 'docs/STATUS.md', status(1));
+  }
   const dev = commitAll(work, 'docs: review document for #5');
   git(work, 'push', '-q', 'origin', 'dev');
   git(work, 'checkout', '-q', branch);
   git(work, 'rebase', '-q', 'dev');
+  // Both branches independently wrote 1, so Git merges the identical line;
+  // the trusted counter resolver then derives 2 from the combined inputs.
+  if (counters) write(work, 'docs/STATUS.md', status(2));
   if (tamper) write(work, 'b.mjs', "import { a } from './a.mjs';\nexport const b = a * 3;\n");
   write(work, 'docs/reviews/INDEX.md', '# index\n');
   const candidate = commitAll(work, 'docs(reviews): index');
@@ -128,6 +150,24 @@ test('#882 AC1 material on no branch is fetched by SHA; exact candidate goes to 
   // continueWorkflows вызывает именно эту функцию, а не свою копию тела.
   const source = readFileSync(new URL('../scripts/workflow-continuation.mjs', import.meta.url), 'utf8');
   assert.match(source, /merge: \(\) => mergeReviewedCandidate\(p, ops\b/);
+});
+
+test('#1068 event continuation consumes counter-equivalent pending candidate without a second review', async t => {
+  const f = fixture(t, { counters: true });
+  assert.equal(has(f.job, f.material), false, 'fresh continuation starts without old material');
+  const result = await runContinuation(f);
+  assert.equal(result.action, 'merge');
+  assert.equal(result.to, 'S8-merged');
+  assert.equal(f.head('dev'), f.candidate);
+  assert.deepEqual(f.moves, [['S7-code-review', 'S8-merged']]);
+  assert.equal(f.devPushes().length, 1);
+  assert.equal(git(f.job, 'show', `${f.candidate}:test/fixtures/accepted-upstream.json`), '{"newRuntimeInput":true}');
+
+  const changed = fixture(t, { counters: true, tamper: true });
+  const denied = await runContinuation(changed);
+  assert.equal(denied.code, 'reviewed-patch-changed');
+  assert.deepEqual(changed.devPushes(), []);
+  assert.deepEqual(changed.moves, []);
 });
 
 test('#882 AC2 delivered material keeps the old guards: changed patch, moved dev, rejected lease', async t => {
