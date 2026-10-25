@@ -11,6 +11,7 @@ export const MATERIAL = '98baf6d77e28fdc0fbe53d75a715cd4b9d9ba82f';
 export const TOOLS = '5892911a8863249e5649bcc452668d7525d03244';
 export const NATIVE = '4503bfe11a6c7fcc1e0b39b5e0d347c04248f750b03b0977b3ad6b531fe6f358';
 export const BRANCH = 'issue/1082-diagnostic-bootstrap';
+export const CALLER = 'Matysh/houseplan-card/.github/workflows/docs-screenshots.yml@refs/heads/' + BRANCH;
 export const OVERLAY = ['review-failure-diagnostics.mjs', 'review-tool-metadata.mjs'];
 const hash = value => createHash('sha256').update(value).digest('hex');
 const git = (...args) => execFileSync('git', args, { maxBuffer: 24 * 1024 * 1024, timeout: 20000 });
@@ -148,11 +149,22 @@ export function boundInputs(dir) {
     ['policy.json', 4 * 1024 * 1024], ['policy.json.settings.json', 4 * 1024 * 1024]]
     .map(([name, max]) => [name, hash(regular(join(dir, name), max))]));
 }
+export function launchContext(env) {
+  if (env.GITHUB_EVENT_NAME !== 'workflow_dispatch' || env.GITHUB_REF !== `refs/heads/${BRANCH}`
+    || env.GITHUB_WORKFLOW_REF !== CALLER || env.GITHUB_RUN_ATTEMPT !== '1' || !sha(env.GITHUB_SHA))
+    throw new Error('unsupported authentic launch context');
+  return { actualTrigger: 'workflow_dispatch', callerWorkflow: CALLER, workflowSha: env.GITHUB_SHA };
+}
+function launchBindings() {
+  return { ...launchContext(process.env),
+    callerSha256: hash(git('show', `${process.env.GITHUB_SHA}:.github/workflows/docs-screenshots.yml`)),
+    bodySha256: hash(git('show', `${process.env.GITHUB_SHA}:.github/workflows/1082-diagnostic-bootstrap.yml`)) };
+}
 function attest(dir, tools, native) {
   material(); const accepted = assertToolkit(tools);
   const nativeSha256 = hash(regular(native, 512 * 1024 * 1024));
   if (nativeSha256 !== NATIVE) throw new Error('native pin differs');
-  const before = { inputs: boundInputs(dir), acceptedModules: accepted, nativeSha256,
+  const before = { launch: launchBindings(), inputs: boundInputs(dir), acceptedModules: accepted, nativeSha256,
     materialTree: textGit('rev-parse', `${MATERIAL}^{tree}`), toolsTree: textGit('rev-parse', `${TOOLS}:scripts`) };
   const path = join(dir, 'before-model.json'); writePrivate(path, before); emit('digest', hash(regular(path, 64 * 1024)));
 }
@@ -205,7 +217,9 @@ async function finish(dir, tools, native) {
   const env = process.env, output = join(dir, 'public'); mkdirSync(output, { recursive: true });
   const provenance = { schema: 'houseplan-1082-bootstrap-provenance/v1', diagnosticOnly: true, verdictAuthority: false,
     run: /^\d+$/.test(env.GITHUB_RUN_ID ?? '') ? env.GITHUB_RUN_ID : null, attempt: env.GITHUB_RUN_ATTEMPT === '1' ? '1' : null,
-    workflowSha: sha(env.GITHUB_SHA), materialSha: MATERIAL, toolsSha: TOOLS, branch: BRANCH,
+    workflowSha: sha(env.GITHUB_SHA), actualTrigger: fixed(env.GITHUB_EVENT_NAME, ['workflow_dispatch']),
+    callerWorkflow: env.GITHUB_WORKFLOW_REF === CALLER ? CALLER : 'unknown',
+    materialSha: MATERIAL, toolsSha: TOOLS, branch: BRANCH,
     reviewOutcome: fixed(env.REVIEW_OUTCOME, OUTCOMES), auditOutcome: fixed(env.AUDIT_OUTCOME, OUTCOMES),
     collectorOutcome: 'failure', evidenceUnavailable: true, failurePhase: 'run-provenance',
     materialUnchanged: null, toolsUnchanged: null, nativeSha256: null,
@@ -218,7 +232,8 @@ async function finish(dir, tools, native) {
     const thisScript = regular(fileURLToPath(import.meta.url), 256 * 1024);
     const scriptFromCommit = git('show', `${provenance.workflowSha}:scripts/1082-diagnostic-bootstrap.mjs`);
     if (hash(thisScript) !== hash(scriptFromCommit)) throw new Error('orchestration source changed');
-    provenance.orchestrationModules = { scriptSha256: hash(thisScript),
+    const launch = launchBindings();
+    provenance.orchestrationModules = { scriptSha256: hash(thisScript), callerSha256: launch.callerSha256,
       workflowSha256: hash(git('show', `${provenance.workflowSha}:.github/workflows/1082-diagnostic-bootstrap.yml`)) };
     provenance.failurePhase = 'material'; material();
     provenance.materialTree = textGit('rev-parse', `${MATERIAL}^{tree}`); provenance.toolsTree = textGit('rev-parse', `${TOOLS}:scripts`);
@@ -227,7 +242,7 @@ async function finish(dir, tools, native) {
     const beforeBytes = regular(join(dir, 'before-model.json'), 64 * 1024), before = JSON.parse(beforeBytes);
     if (!hex(env.BEFORE_MODEL_DIGEST) || hash(beforeBytes) !== env.BEFORE_MODEL_DIGEST) throw new Error('pre-model bindings changed');
     const inputs = boundInputs(dir);
-    if (!isDeepStrictEqual(before.inputs, inputs) || !isDeepStrictEqual(before.acceptedModules, provenance.acceptedModules)
+    if (!isDeepStrictEqual(before.launch, launch) || !isDeepStrictEqual(before.inputs, inputs) || !isDeepStrictEqual(before.acceptedModules, provenance.acceptedModules)
       || before.materialTree !== provenance.materialTree || before.toolsTree !== provenance.toolsTree || before.nativeSha256 !== NATIVE)
       throw new Error('model input bindings changed');
     provenance.preModelBindings = inputs; provenance.bindingsUnchanged = true;

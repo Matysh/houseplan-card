@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { parse } from 'yaml';
 import { buildFailureCertificate } from '../scripts/review-failure-diagnostics.mjs';
-import { BRANCH, MATERIAL, NATIVE, OVERLAY, TOOLS, boundInputs, projectCertificate, regular, snapshotIssue } from '../scripts/1082-diagnostic-bootstrap.mjs';
+import { BRANCH, CALLER, MATERIAL, NATIVE, OVERLAY, TOOLS, boundInputs, launchContext, projectCertificate, regular, snapshotIssue } from '../scripts/1082-diagnostic-bootstrap.mjs';
 
 const root = new URL('..', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
@@ -28,11 +29,12 @@ function temp(t) {
   t.after(() => rmSync(dir, { recursive: true, force: true })); return dir;
 }
 
-test('one exact author push branch/path/attempt; no official triggers, writable token or retry loop', () => {
-  assert.deepEqual(workflow.on, { push: { branches: [BRANCH], paths: ['.github/workflows/1082-diagnostic-bootstrap.yml'] } });
+test('one explicit-secret reusable body, exact real-dispatch branch/attempt, no automatic push launch or writable token', () => {
+  assert.deepEqual(workflow.on, { workflow_call: { secrets: { CLAUDE_CODE_OAUTH_TOKEN: { required: true } } } });
   assert.deepEqual(workflow.permissions, { contents: 'read' });
   assert.match(workflow.jobs.diagnostic.if, /github\.run_attempt == 1/);
   assert.match(workflow.jobs.diagnostic.if, /refs\/heads\/issue\/1082-diagnostic-bootstrap/);
+  assert.match(workflow.jobs.diagnostic.if, /github\.event_name == 'workflow_dispatch'/);
   assert.equal(workflow.concurrency['cancel-in-progress'], false);
   assert.equal(workflow.jobs.diagnostic['runs-on'], 'ubuntu-24.04');
   assert.equal(steps.filter(row => row.id === 'review').length, 1);
@@ -40,6 +42,32 @@ test('one exact author push branch/path/attempt; no official triggers, writable 
   const material = steps.find(row => row.with?.ref === MATERIAL);
   assert.equal(material.with.path, undefined, 'action and accepted hook must share the immutable root cwd');
   for (const row of steps.filter(row => row.uses?.startsWith('actions/checkout@'))) assert.equal(row.with['persist-credentials'], false);
+});
+
+test('existing carrier preserves every original capture byte/step and dispatch inputs; skips only diagnostic ref', () => {
+  const source = read('.github/workflows/docs-screenshots.yml').replaceAll('\r\n', '\n');
+  const carrier = parse(source);
+  const original = source.split('\n  diagnostic_1082:')[0].trimEnd().replace(
+    "    if: github.ref != 'refs/heads/issue/1082-diagnostic-bootstrap'\n", '') + '\n';
+  // SHA256 of exact original98 carrier (normalized LF). No action code is executed.
+  assert.equal(createHash('sha256').update(original).digest('hex'), '709e9493164ae18abff5853c44c07fa37f3dc2d60e2548aead1ba37aa2b7bc3c');
+  assert.deepEqual(Object.keys(carrier.on), ['workflow_dispatch']);
+  assert.equal(carrier.jobs.capture.if, `github.ref != 'refs/heads/${BRANCH}'`);
+  const diagnostic = carrier.jobs.diagnostic_1082;
+  assert.equal(diagnostic.uses, './.github/workflows/1082-diagnostic-bootstrap.yml');
+  assert.deepEqual(diagnostic.permissions, { contents: 'read' });
+  assert.deepEqual(diagnostic.secrets, { CLAUDE_CODE_OAUTH_TOKEN: '${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}' });
+  assert.match(diagnostic.if, /github\.run_attempt == 1/);
+  assert.match(diagnostic.if, /github\.event_name == 'workflow_dispatch'/);
+});
+
+test('actual caller/event provenance accepts real dispatch and refuses push, wrong ref/caller, missing SHA or rerun', () => {
+  const env = { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: `refs/heads/${BRANCH}`,
+    GITHUB_WORKFLOW_REF: CALLER, GITHUB_RUN_ATTEMPT: '1', GITHUB_SHA: 'a'.repeat(40) };
+  assert.deepEqual(launchContext(env), { actualTrigger: 'workflow_dispatch', callerWorkflow: CALLER, workflowSha: env.GITHUB_SHA });
+  for (const patch of [{ GITHUB_EVENT_NAME: 'push' }, { GITHUB_EVENT_NAME: 'workflow_call' },
+    { GITHUB_REF: 'refs/heads/dev' }, { GITHUB_WORKFLOW_REF: 'other' }, { GITHUB_RUN_ATTEMPT: '2' }, { GITHUB_SHA: '' }])
+    assert.throws(() => launchContext({ ...env, ...patch }), /launch context/);
 });
 
 test('native action/model/effort/turns/settings/allowedTools/schema equal original accepted task configuration', () => {

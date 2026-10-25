@@ -30,6 +30,7 @@ permissions:
 
 jobs:
   capture:
+    if: github.ref != 'refs/heads/issue/1082-diagnostic-bootstrap'
     name: Съёмка и сверка скриншот-индекса
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -153,3 +154,11 @@ jobs:
             docs/images/*.png
             docs/images/screenshots.json
           if-no-files-found: error
+
+  diagnostic_1082:
+    if: github.ref == 'refs/heads/issue/1082-diagnostic-bootstrap' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1
+    permissions:
+      contents: read
+    uses: ./.github/workflows/1082-diagnostic-bootstrap.yml
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

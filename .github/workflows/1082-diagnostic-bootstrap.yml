@@ -2,9 +2,10 @@
 name: 1082 one-shot diagnostic bootstrap
 run-name: '1082 diagnostic-only · ${{ github.sha }}'
 on:
-  push:
-    branches: [issue/1082-diagnostic-bootstrap]
-    paths: [.github/workflows/1082-diagnostic-bootstrap.yml]
+  workflow_call:
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
 permissions:
   contents: read
 concurrency:
@@ -12,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   diagnostic:
-    if: github.repository == 'Matysh/houseplan-card' && github.ref == 'refs/heads/issue/1082-diagnostic-bootstrap' && github.run_attempt == 1
+    if: github.repository == 'Matysh/houseplan-card' && github.ref == 'refs/heads/issue/1082-diagnostic-bootstrap' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
