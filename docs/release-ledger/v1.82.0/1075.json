@@ -11,7 +11,9 @@
   "visual": {
     "schema": 1,
     "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
-    "golden": [],
+    "golden": [
+      {"id":"node-menu-walls-1075","expectation":"new","reason":"New regression frame for the existing node context menu under the Walls tool, including a visible endpoint refusal and absence of Select-only handles. Existing settled appearances receive no pixel-change allowance."}
+    ],
     "smokes": ["smoke_wall_node_delete.mjs", "smoke_editor_command_latency.mjs", "smoke_geometry_history_refusal.mjs", "smoke_floor_geometry_cache.mjs", "smoke_floor_cache_reuse.mjs"]
   }
 }

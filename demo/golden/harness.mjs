@@ -1172,6 +1172,7 @@ export async function prepareGoldenScenario(page, scenario) {
         if (message.type === 'houseplan/config/get') return {
           config: structuredClone(fixture.config), rev: scenario.decorGroupStyle?decorStyleRevision:1,
           can_write: scenario.canWrite !== false,
+          ...(scenario.nodeMenuTool ? { wall_node_move_api: 1, wall_node_delete_api: 1 } : {}),
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
           ...(scenario.directLqi ? { zigbee_lqi_api: 1 } : {}),
           ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
@@ -2858,6 +2859,24 @@ export async function prepareGoldenScenario(page, scenario) {
       !!window.__goldenCard.renderRoot.querySelector(`[data-led-strip][data-marker="${id}"]`)
         && !window.__goldenCard.renderRoot.querySelector(`.dev[data-id="${id}"]`), scenario.revealHiddenLedMarker);
     await page.mouse.move(0, 0);
+  }
+  if (scenario.nodeMenuTool) {
+    await page.waitForFunction(() => !window.__goldenCard._modeTransitionBusy);
+    await page.locator('houseplan-card').locator(`[data-hp="tool"][data-tool="${scenario.nodeMenuTool}"]`).click();
+    const point = await page.evaluate(() => {
+      const svg = window.__goldenCard.renderRoot.querySelector('svg.plan-svg');
+      const p = new DOMPoint(140, 680).matrixTransform(svg.getScreenCTM());
+      return { x: p.x, y: p.y };
+    });
+    await page.mouse.click(point.x, point.y, { button: 'right' });
+    const action = page.locator('houseplan-card').locator('[data-hp="node-context-menu"]:not([inert]) [data-action="node-delete"]');
+    await action.waitFor();
+    if (!await action.isDisabled() || !/two walls/i.test(await action.innerText()))
+      throw Error('Node endpoint must visibly explain its degree refusal under Walls');
+    result.nodeMenu = await page.evaluate(() => ({ tool: window.__goldenCard._tool,
+      handles: window.__goldenCard.renderRoot.querySelectorAll('.hp-node-handle').length }));
+    if (result.nodeMenu.tool !== scenario.nodeMenuTool || result.nodeMenu.handles !== 0)
+      throw Error('Node menu must retain the selected non-Select tool without enabling Move');
   }
   if (scenario.batteryZigbeeOverlap) result.batteryZigbeeOverlap = await prepareBatteryZigbeeOverlap(page);
   if (scenario.zigbeeLed) result.zigbeeLed = await prepareZigbeeLed(page);

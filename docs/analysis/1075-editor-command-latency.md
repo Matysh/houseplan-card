@@ -123,5 +123,17 @@ claim and no global baseline acceptance.
 
 Selected existing Golden checks are `geometry-decor-editor-dark` and
 `furniture-placement-preview-light`, with **no** expected pixel differences.
-The ledger's `visual.golden` is empty because that field grants only explicit
-`change`/`new` allowances; it must not grant either for these unchanged scenes.
+The ledger's `visual.golden` grants only one **new** regression frame,
+`node-menu-walls-1075`, for the menu under Walls with a visible degree refusal
+and no Select-only handles. It grants no change allowance to existing scenes.
+This explicit scope is required by the task browser planner for modified
+unmapped runtime files; it is not global baseline acceptance.
+
+Linux A/B for `geometry-decor-editor-dark` produced the **same** actual PNG
+hash `df8eed05fbf5fa660e499376263fb75573d84a2f216486662a7e471badef9c83`
+on unmodified `f2c2b360` and #1075. Both differ from the accepted global PNG
+by the same 1263 pixels (0.1189%), only around the active Background tab's
+outline. This is pre-existing drift, not a #1075 visual change; neither the
+baseline nor its tolerance is changed here. The existing furniture-placement
+frame passes its accepted baseline. The new node-menu frame remains pending
+normal beta acceptance, never accepted by the task.

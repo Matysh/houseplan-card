@@ -28,7 +28,7 @@ normal fresh demo bundle first. Python:
 The separate authenticated diagnostic `test_ha_editor_command_latency.py -q -s`
 records one cold and five warm apply/inverse samples, delegating every observed
 validator, lock, executor and Store unchanged. See the
-[phase report](testing-notes/1075-editor-command-latency.md) for boundaries and
+[phase report](analysis/1075-editor-command-latency.md) for boundaries and
 before/after results. No private HA plan or production deployment is needed.
 
 ## Background group-style latency (#1071)

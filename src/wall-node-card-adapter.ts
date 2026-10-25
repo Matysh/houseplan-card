@@ -57,8 +57,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   // #843: a writer may apply node history in Plan/Background with any tool;
   // capture and handles additionally require Plan/Select.
   const writer = () => host._canEdit && !host._kiosk && host.isConnected;
-  const planWriter = () => host._mode === 'plan' && writer();
-  const deleteEnabled = () => planWriter() && host.hass.connection?.connected !== false && !callbacks.delete?.blocked();
+  const deleteEnabled = () => host._mode === 'plan' && writer()
+    && host.hass.connection?.connected !== false && !callbacks.delete?.blocked();
   const api = () => host._haWallNodeMoveApi === 1;
   const context = () => {
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),
