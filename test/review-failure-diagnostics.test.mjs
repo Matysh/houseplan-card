@@ -12,11 +12,13 @@ import { traceProblems, toolProblem } from '../scripts/review-execution-policy.m
 import { literalArgv } from '../scripts/review-execution-policy.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from '../scripts/review-tool-metadata.mjs';
 import { REQUIRED_FILES } from '../scripts/review-result-gate.mjs';
+import { CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM, callDigest } from '../scripts/review-call-digest.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const secret = 'ghp_SYNTHETIC_CREDENTIAL_NEVER_PUBLISH_1082';
-const policy = () => ({ schema: 1, root: ROOT, files: [], stage: 'code', kind: 'task', cliVersion: '2.1.295', sha: 'a'.repeat(40) });
+const policy = () => ({ schema: 1, root: ROOT, files: [], stage: 'code', kind: 'task', cliVersion: '2.1.295', sha: 'a'.repeat(40),
+  callDigestAlgorithm: CALL_DIGEST_ALGORITHM });
 const provenance = { run: '123', attempt: '2', issue: '1082', stage: 'code', kind: 'task', materialSha: 'a'.repeat(40), toolsSha: 'b'.repeat(40) };
 function fixture() {
   // Command strings are inert DATA. Neither the collector nor these tests dispatches them.
@@ -25,7 +27,7 @@ function fixture() {
     { type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: call.id, content: secret }] } },
     { type: 'result', subtype: 'success', is_error: false, summary: secret,
       permission_denials: [{ tool_name: call.name, tool_use_id: call.id, tool_input: call.input }] }];
-  const entries = [{ id: call.id, input: hash({ name: call.name, input: call.input }), denied: true }];
+  const entries = [{ id: call.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM, input: callDigest(call.name, call.input), denied: true }];
   return { call, messages, entries, policy: policy(), provenance };
 }
 const cert = row => buildFailureCertificate(row ?? fixture());
@@ -149,27 +151,78 @@ test('#1082 metadata channel observation grants no tool/journal exemption and le
   assert.deepEqual(traceProblems(f.messages, f.entries, f.policy), before);
 });
 
-test('#1082 actual hook shape distinguishes normalization/key-order mismatch without accepting either case', () => {
-  for (const actual of [{ file_path: secret, offset: 1, limit: 10 }, { limit: 10, offset: '1', file_path: secret }]) {
+test('#1082 actual hook shape preserves raw order differences while canonical equality rejects semantic changes', () => {
+  for (const [actual, typeChanged] of [[{ file_path: secret, offset: 1, limit: 10 }, true],
+    [{ limit: 10, offset: '1', file_path: secret }, false]]) {
     const input = { file_path: secret, offset: '1', limit: 10 };
     const call = { type: 'tool_use', id: 'toolu_read', name: 'Read', input };
     const messages = [{ type: 'assistant', message: { content: [call] } },
       { type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: call.id, content: secret }] } },
       { type: 'result', subtype: 'success', is_error: false }];
-    const entries = [{ id: call.id, input: hash({ name: call.name, input: actual }), denied: false,
+    const entries = [{ id: call.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM, input: callDigest(call.name, actual), denied: false,
       diagnostic: reviewToolMetadata(call.name, actual, { files: [], literalArgv }), diagnosticDecision: reviewDecisionMetadata(null) }];
     const before = traceProblems(messages, entries, policy());
-    assert.ok(before.includes('tool call has no matching policy decision'));
+    assert.equal(before.includes('tool call has no matching policy decision'), typeChanged);
     const result = cert({ messages, entries, policy: policy(), provenance });
     const row = result.calls[0];
-    assert.equal(row.journal.inputDigestMatches, false);
+    assert.equal(row.journal.inputDigestMatches, !typeChanged);
+    assert.equal(row.problems.includes('input-digest-mismatch'), typeChanged);
+    assert.equal(row.input.digestAlgorithm, LEGACY_CALL_DIGEST_ALGORITHM);
+    assert.equal(row.callDigest.algorithm.algorithm, CALL_DIGEST_ALGORITHM);
     assert.equal(row.journal.metadataAgreesWithTrace, false);
     assert.equal(row.journal.decisionAgreesWithTrace, true);
     assert.equal(row.journal.reasonAvailable, true);
     assert.deepEqual(row.journal.metadata.fields, reviewToolMetadata('Read', actual).fields);
     assert.ok(!JSON.stringify(result).includes(secret));
-    assert.deepEqual(traceProblems(messages, entries, policy()), before, 'diagnostic comparison never normalizes admission');
+    assert.deepEqual(traceProblems(messages, entries, policy()), before, 'collection never repairs admission or changes its result');
   }
+});
+
+test('#1065 legacy diagnostic hashes stay legacy and recorded ToolSearch refusals never become new-policy allows', () => {
+  const f = fixture(); delete f.policy.callDigestAlgorithm;
+  f.call.name = 'ToolSearch'; f.call.input = { query: secret };
+  f.entries = [{ id: f.call.id, input: hash({ name: f.call.name, input: f.call.input }), denied: true,
+    diagnosticDecision: reviewDecisionMetadata('tool is not permitted by the review execution boundary') }];
+  for (const explicit of [false, true]) {
+    if (explicit) { f.policy.callDigestAlgorithm = LEGACY_CALL_DIGEST_ALGORITHM; f.entries[0].callDigestAlgorithm = LEGACY_CALL_DIGEST_ALGORITHM; }
+    const result = cert(f), row = result.calls[0];
+    assert.equal(row.journal.inputDigestMatches, true);
+    assert.equal(row.journal.denied, true); assert.ok(row.problems.includes('forbidden-request'));
+    assert.equal(row.expected.denied, null); assert.equal(row.expected.semantics, 'legacy-not-re-evaluated');
+    assert.equal(row.journal.decisionAgreesWithTrace, null);
+    assert.equal(row.journal.callDigestAlgorithm.algorithm, LEGACY_CALL_DIGEST_ALGORITHM);
+    assert.equal(row.journal.callDigestAlgorithm.source, explicit ? 'explicit' : 'implicit-legacy');
+    assert.equal(result.verdictAuthority, false); assert.ok(!JSON.stringify(result).includes(secret));
+    assert.ok(traceProblems(f.messages, f.entries, f.policy).includes('unsupported call digest algorithm'));
+  }
+});
+
+test('#1065 old key-order mismatch remains a historical mismatch; new algorithm is never applied retroactively', () => {
+  const f = fixture(); delete f.policy.callDigestAlgorithm;
+  f.call.name = 'Read'; f.call.input = { file_path: secret, offset: 1 };
+  const actual = { offset: 1, file_path: secret };
+  assert.equal(callDigest('Read', actual), callDigest('Read', f.call.input));
+  f.entries = [{ id: f.call.id, input: hash({ name: 'Read', input: actual }), denied: false }];
+  const row = cert(f).calls[0];
+  assert.equal(row.journal.inputDigestMatches, false); assert.ok(row.problems.includes('input-digest-mismatch'));
+  assert.equal(row.callDigest.algorithm.algorithm, LEGACY_CALL_DIGEST_ALGORITHM);
+  assert.equal(row.expected.denied, null);
+});
+
+test('#1065 unknown/mixed/missing marker comparisons stay unavailable without leaking raw marker values', () => {
+  for (const marker of [undefined, LEGACY_CALL_DIGEST_ALGORITHM, secret]) {
+    const f = fixture(); f.entries[0].callDigestAlgorithm = marker;
+    const row = cert(f).calls[0];
+    assert.equal(row.journal.inputDigestMatches, null);
+    assert.ok(row.problems.includes('call-digest-algorithm-unavailable'));
+    assert.ok(!JSON.stringify(row).includes(secret));
+  }
+  const f = fixture(); f.policy.callDigestAlgorithm = secret;
+  const result = cert(f);
+  assert.equal(result.provenance.callDigestAlgorithm.algorithm, 'unknown');
+  assert.equal(result.calls[0].expected.denied, null);
+  assert.equal(result.calls[0].journal.inputDigestMatches, null);
+  assert.ok(!JSON.stringify(result).includes(secret));
 });
 
 test('#1082 untrusted journal diagnostic extras/values are reprojected through finite vocabulary', () => {

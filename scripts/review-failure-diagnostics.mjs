@@ -7,13 +7,14 @@ import { isDeepStrictEqual } from 'node:util';
 import { literalArgv, toolProblem, REVIEW_CLI_VERSION } from './review-execution-policy.mjs';
 import { knownToolName, projectStoredDecision, projectStoredToolMetadata, reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
 import { isMainModule } from './spawn-portable.mjs';
+import { CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM, callDigest, legacyCallDigest } from './review-call-digest.mjs';
 
 export const FAILURE_LIMITS = Object.freeze({ traceBytes: 64 * 1024 * 1024, policyBytes: 4 * 1024 * 1024,
   journalBytes: 2 * 1024 * 1024, calls: 256, journalRows: 2048, denials: 64, certificateBytes: 256 * 1024 });
 const hash = value => createHash('sha256').update(value).digest('hex');
 const digest = value => { try { return hash(JSON.stringify(value) ?? 'undefined'); } catch { return null; } };
 const vocabulary = value => new Set(value.split(' '));
-const REASONS = vocabulary('malformed-tool missing-journal duplicate-journal input-digest-mismatch decision-mismatch forbidden-request missing-result duplicate-result duplicate-tool-id');
+const REASONS = vocabulary('malformed-tool missing-journal duplicate-journal input-digest-mismatch call-digest-algorithm-unavailable invalid-json-tool-call decision-mismatch forbidden-request missing-result duplicate-result duplicate-tool-id');
 // Even a syntactically plausible tool ID/key/name could contain a credential.
 // Correlation therefore uses hashes; only fixed vocabulary reaches the artifact.
 const identity = value => typeof value === 'string' ? digest(value) : null;
@@ -25,18 +26,40 @@ function inputShape(input, policy) {
   const value = reviewToolMetadata(undefined, input, { files: policy?.files, literalArgv });
   return { keys: value.keys, orderedKeyDigests: value.orderedKeyDigests, omittedKeys: value.omittedKeys,
     otherKeyCount: value.otherKeyCount, digest: value.inputDigest, type: value.inputType,
-    fields: value.fields, command: value.command };
+    fields: value.fields, command: value.command, digestAlgorithm: LEGACY_CALL_DIGEST_ALGORITHM };
+}
+
+// Absent markers describe the old wire algorithm only in OLD diagnostics.
+// They never acquire current audit authority or new ToolSearch semantics.
+function algorithmInfo(record, implicitLegacy = false) {
+  const present = record && Object.hasOwn(record, 'callDigestAlgorithm'), value = record?.callDigestAlgorithm;
+  if (value === CALL_DIGEST_ALGORITHM || value === LEGACY_CALL_DIGEST_ALGORITHM)
+    return { algorithm: value, source: 'explicit', unknownMarkerDigest: null };
+  if (!present && implicitLegacy)
+    return { algorithm: LEGACY_CALL_DIGEST_ALGORITHM, source: 'implicit-legacy', unknownMarkerDigest: null };
+  return { algorithm: 'unknown', source: present ? 'unsupported' : 'missing', unknownMarkerDigest: present ? digest(value) : null };
 }
 
 function callSummary(call, entries, results, policy, final, duplicate) {
   const id = call?.id, matches = typeof id === 'string' ? entries.filter(row => row?.id === id) : [];
+  const policyAlgorithm = algorithmInfo(policy, policy?.schema === 1);
+  const journalAlgorithm = algorithmInfo(matches.length === 1 ? matches[0] : null,
+    matches.length === 1 && policyAlgorithm.algorithm === LEGACY_CALL_DIGEST_ALGORITHM);
   let expectedReason = 'policy-unavailable';
   try { if (policy?.schema === 1 && typeof policy.root === 'string' && Array.isArray(policy.files))
-    expectedReason = toolProblem({ tool_name: call?.name, tool_input: call?.input }, policy); }
+    if (policyAlgorithm.algorithm === CALL_DIGEST_ALGORITHM)
+      expectedReason = toolProblem({ tool_name: call?.name, tool_input: call?.input }, policy); }
   catch { expectedReason = 'policy-evaluation-unavailable'; }
   const decisionKnown = !['policy-unavailable', 'policy-evaluation-unavailable'].includes(expectedReason);
   const schemaChannel = call?.name === 'StructuredOutput' && isDeepStrictEqual(call.input, final?.structured_output);
-  const inputDigest = digest({ name: call?.name, input: call?.input });
+  let inputDigest = null;
+  try {
+    if (policyAlgorithm.algorithm === CALL_DIGEST_ALGORITHM) inputDigest = callDigest(call?.name, call?.input);
+    else if (policyAlgorithm.algorithm === LEGACY_CALL_DIGEST_ALGORITHM) inputDigest = legacyCallDigest(call?.name, call?.input);
+  } catch { /* Invalid or unsupported JSON has no digest-comparison authority. */ }
+  const comparable = inputDigest !== null && journalAlgorithm.algorithm !== 'unknown'
+    && journalAlgorithm.algorithm === policyAlgorithm.algorithm;
+  const inputMatches = matches.length === 1 && comparable ? matches[0].input === inputDigest : null;
   const resultCount = results.filter(row => row?.tool_use_id === id).length;
   const actualMetadata = matches.length === 1 ? projectStoredToolMetadata(matches[0].diagnostic) : null;
   const actualDecision = matches.length === 1 ? projectStoredDecision(matches[0].diagnosticDecision) : null;
@@ -46,14 +69,19 @@ function callSummary(call, entries, results, policy, final, duplicate) {
   if (duplicate) reasons.push('duplicate-tool-id');
   if (!matches.length && !schemaChannel) reasons.push('missing-journal');
   if (matches.length > 1) reasons.push('duplicate-journal');
-  if (matches.length === 1 && matches[0].input !== inputDigest) reasons.push('input-digest-mismatch');
+  if (matches.length === 1 && !comparable) reasons.push(inputDigest === null
+    && policyAlgorithm.algorithm === CALL_DIGEST_ALGORITHM ? 'invalid-json-tool-call' : 'call-digest-algorithm-unavailable');
+  if (inputMatches === false) reasons.push('input-digest-mismatch');
   if (decisionKnown && matches.length === 1 && matches[0].denied !== Boolean(expectedReason)) reasons.push('decision-mismatch');
-  if (decisionKnown && expectedReason) reasons.push('forbidden-request');
+  if (decisionKnown && expectedReason || !decisionKnown && inputMatches === true && matches[0].denied === true)
+    reasons.push('forbidden-request');
   if (resultCount !== 1) reasons.push(resultCount ? 'duplicate-result' : 'missing-result');
   return { toolUseIdDigest: identity(id), tool: knownToolName(call?.name), toolNameDigest: identity(call?.name),
-    input: inputShape(call?.input, policy), expected: { denied: decisionKnown ? Boolean(expectedReason) : null,
+    input: inputShape(call?.input, policy), callDigest: { algorithm: policyAlgorithm, digest: inputDigest },
+    expected: { denied: decisionKnown ? Boolean(expectedReason) : null,
+      semantics: decisionKnown ? 'current' : policyAlgorithm.algorithm === LEGACY_CALL_DIGEST_ALGORITHM ? 'legacy-not-re-evaluated' : 'unavailable',
       ...reviewDecisionMetadata(expectedReason) },
-    journal: { count: matches.length, inputDigestMatches: matches.length === 1 ? matches[0].input === inputDigest : null,
+    journal: { count: matches.length, callDigestAlgorithm: journalAlgorithm, inputDigestMatches: inputMatches,
       denied: matches.length === 1 && typeof matches[0].denied === 'boolean' ? matches[0].denied : null,
       reasonAvailable: Boolean(actualDecision), decision: actualDecision, metadata: actualMetadata,
       decisionAgreesWithTrace: decisionKnown && actualDecision ? isDeepStrictEqual(actualDecision, reviewDecisionMetadata(expectedReason)) : null,
@@ -76,6 +104,7 @@ export function buildFailureCertificate({ messages, entries, policy, provenance 
       kind: state(provenance.kind, ['task', 'ship', 'release']), stage: state(provenance.stage, ['spec', 'code', 'ship', 'release']),
       materialSha: sha(provenance.materialSha), policyMaterialSha: sha(policy?.sha), toolsSha: sha(provenance.toolsSha),
       policySchema: policy?.schema === 1 ? 1 : null,
+      callDigestAlgorithm: algorithmInfo(policy, policy?.schema === 1),
       cliVersion: policy?.cliVersion === REVIEW_CLI_VERSION ? REVIEW_CLI_VERSION : null,
       materialMatchesPolicy: sha(provenance.materialSha) && sha(policy?.sha) ? provenance.materialSha === policy.sha : null },
     inputs, limits: FAILURE_LIMITS,

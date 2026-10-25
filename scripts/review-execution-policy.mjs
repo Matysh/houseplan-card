@@ -1,15 +1,14 @@
 // #1065: a tool-call policy, not an OS sandbox for reviewed child programs.
 // Ordinary checks execute unchanged material; ad-hoc shell programs do not.
 import { appendFileSync, existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
+import { CALL_DIGEST_ALGORITHM, callDigest } from './review-call-digest.mjs';
 
-const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export const REVIEW_CLI_VERSION = '2.1.295';
 export const HOOK_TIMEOUT_SECONDS = 30;
 const STARTUP_PROBE = { tool_use_id: 'startup-probe', tool_name: 'Bash', tool_input: {
@@ -29,7 +28,9 @@ const CHECK_SCRIPTS = new Set([
   'inventory.mjs', 'no-new-any.mjs', 'no-new-private-writes.mjs', 'no-render-layout-read.mjs',
   'process-gate.mjs', 'smoke-select.mjs', 'status-snapshot.mjs', 'toolchain-pins.mjs',
 ]);
-const READ_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch', 'TodoWrite']);
+// Native SDK ToolSearch reads a deferred catalog; discovered tool execution is
+// a separate hook call and receives no permission from discovery.
+const READ_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch', 'TodoWrite', 'ToolSearch']);
 const ISSUE_TOOLS = new Set(['mcp__github__add_issue_comment', 'mcp__github__issue_write', 'mcp__github__issue_read']);
 class PolicyRefusal extends Error {}
 
@@ -150,6 +151,7 @@ export function reportProblems(text) {
 
 export function traceProblems(messages, entries, policy, { reportText } = {}) {
   if (!Array.isArray(messages) || !Array.isArray(entries)) return ['execution trace or hook journal is unavailable'];
+  if (policy?.callDigestAlgorithm !== CALL_DIGEST_ALGORITHM) return ['unsupported call digest algorithm'];
   const calls = messages.filter(m => m?.type === 'assistant').flatMap(m => m.message?.content || [])
     .filter(b => b?.type === 'tool_use');
   const results = messages.filter(m => m?.type === 'user').flatMap(m => m.message?.content || [])
@@ -169,8 +171,12 @@ export function traceProblems(messages, entries, policy, { reportText } = {}) {
     // Only that exact channel, bound to the terminal output, is exempt. It
     // cannot turn an unjournalled Bash/Write/MCP call into admitted execution.
     const outputChannel = call.name === 'StructuredOutput' && isDeepStrictEqual(call.input, result?.structured_output);
+    let inputDigest;
+    try { inputDigest = callDigest(call.name, call.input); }
+    catch { problems.push('invalid JSON tool call'); }
     if (!(outputChannel && matching.length === 0) && (matching.length !== 1
-      || matching[0].input !== digest({ name: call.name, input: call.input })
+      || matching[0].callDigestAlgorithm !== CALL_DIGEST_ALGORITHM
+      || !inputDigest || matching[0].input !== inputDigest
       || matching[0].denied !== Boolean(expected))) problems.push('tool call has no matching policy decision');
     if (results.filter(r => r.tool_use_id === call.id).length !== 1) problems.push('tool result is missing or duplicated');
     // A denied call is not evidence that the tool executed. Do not publish a
@@ -196,6 +202,7 @@ if (isMainModule(import.meta.url)) {
       const outputs = [process.env.REVIEW_DOC, process.env.REVIEW_FINDINGS].filter(Boolean).map(p => resolve(p));
       if (!outputs.length || outputs.some(p => !relative(root, p).startsWith('..') || realpathSync(dirname(p)) !== dirname(p))) throw new Error('reports must be outside material');
       const policy = { schema: 1, root, outputs, cliVersion: REVIEW_CLI_VERSION, sha: git('rev-parse', 'HEAD'), kind: process.env.REVIEW_KIND,
+        callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
         stage: process.env.REVIEW_STAGE || 'code', files: git('ls-files').split('\n'), journal: `${policyPath}.jsonl` };
       unchanged(policy);
       writeFileSync(policyPath, JSON.stringify(policy)); writeFileSync(policy.journal, '');
@@ -207,7 +214,8 @@ if (isMainModule(import.meta.url)) {
         throw new PolicyRefusal('prelaunch hook startup probe did not give the expected denial');
       const probe = readFileSync(policy.journal, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line));
       if (probe.length !== 1 || probe[0].id !== STARTUP_PROBE.tool_use_id || probe[0].denied !== true
-        || probe[0].input !== digest({ name: STARTUP_PROBE.tool_name, input: STARTUP_PROBE.tool_input }))
+        || probe[0].callDigestAlgorithm !== CALL_DIGEST_ALGORITHM
+        || probe[0].input !== callDigest(STARTUP_PROBE.tool_name, STARTUP_PROBE.tool_input))
         throw new PolicyRefusal('prelaunch hook probe has no matching policy journal entry');
       writeFileSync(policy.journal, ''); // The probe is not part of a model trace.
     } else if (mode === 'hook') {
@@ -216,9 +224,10 @@ if (isMainModule(import.meta.url)) {
       const policy = JSON.parse(readFileSync(policyPath, 'utf8'));
       const call = JSON.parse(readFileSync(0, 'utf8'));
       unchanged(policy);
+      if (policy.callDigestAlgorithm !== CALL_DIGEST_ALGORITHM) throw new PolicyRefusal('unsupported call digest algorithm');
       const problem = toolProblem(call, policy);
       appendFileSync(policy.journal, JSON.stringify({ id: call.tool_use_id,
-        input: digest({ name: call.tool_name, input: call.tool_input }), denied: Boolean(problem),
+        callDigestAlgorithm: CALL_DIGEST_ALGORITHM, input: callDigest(call.tool_name, call.tool_input), denied: Boolean(problem),
         diagnostic: reviewToolMetadata(call.tool_name, call.tool_input, { files: policy.files, literalArgv }),
         diagnosticDecision: reviewDecisionMetadata(problem) }) + '\n');
       if (problem) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: problem } }));

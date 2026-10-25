@@ -2316,6 +2316,14 @@ This is an accidental-action tool boundary, not OS isolation of reviewed child
 programs or authentication against a hostile same-user process. It does not
 turn static checks or denied requests into execution evidence or mutant caught.
 
+Call equality (#1065 repair) has an explicit `sha256/hp-json-keys-v1` marker in
+policy and journal rows. Its leaf serializer changes only recursive object key
+order, preserving exact call names/values/types/strings/arrays and signed zero;
+unsupported JSON values refuse. Current startup/hook/audit require that marker,
+with no legacy fallback. Exact builtin ToolSearch only reads a deferred catalog;
+each discovered actual tool still passes the existing guard independently.
+Raw shape metadata remains order-sensitive diagnostic evidence, not admission.
+
 Failure diagnostics (#1082) are a separate trusted read-only projection of the
 existing execution trace and private journal. A model/audit failure collects a
 bounded fixed-schema certificate before success-only sealing; an always-run
@@ -2324,3 +2332,6 @@ Tool IDs and unknown names/keys are pseudonymized, argv is represented only by
 finite semantic categories, and payloads/credentials are never copied. Missing,
 malformed and oversized evidence stays explicit. Metadata channels are observed
 without gaining an admission exemption. The diagnostic has no verdict authority.
+Legacy digest comparisons remain labelled and use their original wire algorithm;
+new ToolSearch policy is never applied to old decisions. Unknown/mixed algorithms
+have unavailable comparison, and bound old refusals are retained honestly.

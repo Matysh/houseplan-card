@@ -5792,6 +5792,22 @@ Failures yield no admissible verdict/merge authority; the existing current
 request recovery returns task review without spending a blocking cycle.
 This post-execution publication refusal is distinct from pre-execution denial.
 
+Call binding uses `sha256/hp-json-keys-v1`: a shared pure serializer sorts only
+object keys recursively, retaining the call name, every value/type/key, array
+order and exact strings (including whitespace and NFC/NFD differences). Signed
+zero is explicit (`-0` differs from `0`); unsupported/nonfinite/cyclic/sparse
+non-JSON input is refused without invoking accessors or `toJSON`. Prepare,
+startup probe, hook rows and audit require the same explicit current algorithm;
+missing/mixed/unknown markers cannot acquire CODE authority. This fixes the
+JSON insertion-order sensitivity without claiming that it explains every old
+trace mismatch with hidden string values.
+
+The exact SDK builtin `ToolSearch` is read-only deferred-catalog discovery, not
+execution of a discovered tool and not a missing-journal exemption. Its normal
+hook/journal binding remains required. Each subsequent MCP/business/Bash call
+still receives its own unchanged guard; shell recipes, SDK pin/flags/deadlines,
+report/material checks and forbidden-request refusal are not broadened.
+
 Ordinary tests submit unsafe commands as JSON/string DATA to the unchanged
 hook and feed synthetic SDK/journal/report records to the audit. They never
 execute those commands or a modified guard implementation. The historical
@@ -5857,11 +5873,17 @@ known flags, counts and literal/background shape, never argument values or paths
 Unknown tool names and input keys are hashes/counts. Raw prompts, Write contents,
 tool results, MCP configuration, environment values and transcripts stay private.
 
-`expected.category` is the current unchanged policy's local diagnostic evaluation.
+For an explicitly current call algorithm, `expected.category` is the current
+policy's local diagnostic evaluation. Legacy policy is not re-evaluated with
+new ToolSearch semantics: the expected current decision stays unknown, while
+bound recorded old refusals stay refusals. Missing old markers are explicitly
+`implicit-legacy` and compare only the original JSON.stringify hash; unknown or
+mixed algorithms report unavailable comparison rather than false equality.
 Optional hook-side shape/decision metadata preserves known key order, type and
-bounded numeric/boolean fields, independently of the original exact input hash.
-The collector reprojects that metadata and compares both sides without changing
-admission normalization. Old journals lack these fields: `reasonAvailable`
+bounded numeric/boolean fields, independently of the canonical call digest.
+Those raw shape/order hashes retain their original algorithm: raw metadata may
+differ while canonical call binding matches, without a false call-digest mismatch.
+The collector reprojects that metadata without changing admission. Old journals lack these fields: `reasonAvailable`
 stays false and metadata agreement unknown. No raw reason text is copied.
 Missing policy never becomes a proved forbidden request. Observing
 `server_tool_use`/`tool_reference` metadata grants no tool or missing-journal

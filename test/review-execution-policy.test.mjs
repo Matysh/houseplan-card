@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,19 +9,21 @@ import { parse } from 'yaml';
 import { bashProblem, literalArgv, reportProblems, toolProblem, traceProblems,
   REVIEW_CLI_VERSION, HOOK_TIMEOUT_SECONDS, hookCommand, hookStartupAcceptsDeny, executionSettings } from '../scripts/review-execution-policy.mjs';
 import { reviewResultProblems, sha256, PASSPORT_FIELDS } from '../scripts/review-result-gate.mjs';
+import { CALL_DIGEST_ALGORITHM, callDigest } from '../scripts/review-call-digest.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const outputs = [join(tmpdir(), 'hp-policy-report.md')];
 const policy = { root: resolve(root), stage: 'code', kind: 'task', outputs,
+  callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
   files: ['PROCESS.md', 'AGENTS.md', 'test/review-result-gate.test.mjs', 'scripts/ci-profiles.mjs', 'scripts/mutation-gate.mjs', 'tsconfig.test.json'] };
 const bash = command => ({ tool_name: 'Bash', tool_input: { command } });
-const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const call = (id, name, input) => ({ type: 'tool_use', id, name, input });
 const report = call('report', 'Write', { file_path: outputs[0], content: '# Review\nOrdinary unchanged-input unit checks only.' });
 const trace = calls => [{ type: 'assistant', message: { content: calls } },
   { type: 'user', message: { content: calls.map(c => ({ type: 'tool_result', tool_use_id: c.id, content: 'synthetic observed result' })) } },
   { type: 'result', subtype: 'success' }];
-const journal = calls => calls.map(c => ({ id: c.id, input: hash({ name: c.name, input: c.input }), denied: false }));
+const journal = calls => calls.map(c => ({ id: c.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
+  input: callDigest(c.name, c.input), denied: false }));
 
 test('#1065 native hook settings deny on startup/SDK timeout failures, before any execution', () => {
   const settings = executionSettings('unchanged handler');
@@ -120,6 +121,29 @@ test('#1065 journal binds every call and refuses missing, duplicate, forbidden a
   assert.ok(traceProblems(sdk, journal([report]), policy).length, 'an executable call never inherits the schema-channel exemption');
 });
 
+test('#1065 repair: reordered equal JSON hook input must bind without weakening semantic changes', () => {
+  const command = 'node --test test/review-result-gate.test.mjs';
+  const observed = call('ordered', 'Bash', { command, description: 'ordinary fixture', timeout: 1000 });
+  const hook = { ...observed, input: { command, timeout: 1000, description: 'ordinary fixture' } };
+  assert.deepEqual(traceProblems(trace([observed, report]), journal([hook, report]), policy), []);
+});
+
+test('#1065 repair: builtin ToolSearch discovers a catalog, actual unsafe tools still refuse', () => {
+  assert.equal(toolProblem({ tool_name: 'ToolSearch', tool_input: { query: 'select:mcp__example__unsafe' } }, policy), null);
+  assert.ok(toolProblem({ tool_name: 'mcp__example__unsafe', tool_input: {} }, policy));
+});
+
+test('#1065 current audit refuses missing, mixed and unknown policy/journal digest markers', () => {
+  const calls = [report], records = journal(calls);
+  for (const marker of [undefined, 'unknown', 'sha256/json-stringify-v1']) {
+    assert.ok(traceProblems(trace(calls), records, { ...policy, callDigestAlgorithm: marker }).length);
+    assert.ok(traceProblems(trace(calls), records.map(row => ({ ...row, callDigestAlgorithm: marker })), policy).length);
+  }
+  const changed = { ...report, input: { ...report.input, content: report.input.content + ' ' } };
+  assert.ok(traceProblems(trace([changed]), records, policy).length, 'exact report content remains bound');
+  assert.ok(traceProblems(trace([{ ...report, name: 'Read' }]), records, policy).length, 'call name remains bound');
+});
+
 test('#1065 published historical claim is rejected as report DATA, not reenacted', () => {
   // Claim from accepted 0908d904 CODE-REVIEW-1064-r1.md:72. Copy only its
   // evidence sentence as inert DATA, so a later stable review archive does not
@@ -153,6 +177,7 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
   const path = join(dir, 'policy.json');
   const invoke = (mode, input) => spawnSync(process.execPath, [script, mode, path], { cwd: repo, env, input: JSON.stringify(input), encoding: 'utf8' });
   assert.equal(invoke('prepare').status, 0);
+  assert.equal(JSON.parse(readFileSync(path, 'utf8')).callDigestAlgorithm, CALL_DIGEST_ALGORITHM);
   const settings = JSON.parse(readFileSync(`${path}.settings.json`, 'utf8'));
   assert.equal(settings.hooks.PreToolUse[0].hooks[0].onFailure, 'block');
   assert.equal(settings.hooks.PreToolUse[0].hooks[0].timeout, HOOK_TIMEOUT_SECONDS);
@@ -166,8 +191,12 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
   assert.equal(accepted.status, 0); assert.equal(accepted.stdout, '', 'normal permissions apply to allowed checks');
   assert.equal(JSON.parse(readFileSync(`${path}.jsonl`, 'utf8').split('\n')[0]).denied, true);
   const recorded = JSON.parse(readFileSync(`${path}.jsonl`, 'utf8').split('\n')[0]);
+  assert.equal(recorded.callDigestAlgorithm, CALL_DIGEST_ALGORITHM);
   assert.equal(recorded.diagnostic.schema, 1, 'actual hook keeps optional safe shape metadata');
   assert.equal(recorded.diagnosticDecision.category, 'command-not-allowlisted');
+  assert.equal(invoke('hook', { tool_use_id: 'catalog', tool_name: 'ToolSearch', tool_input: { query: 'select:mcp__example__unsafe' } }).stdout, '');
+  const actualTool = invoke('hook', { tool_use_id: 'actual', tool_name: 'mcp__example__unsafe', tool_input: {} });
+  assert.equal(JSON.parse(actualTool.stdout).hookSpecificOutput.permissionDecision, 'deny', 'catalog discovery never grants execution');
   assert.equal(invoke('audit').status, 1, 'missing execution/report cannot mint PASS');
   assert.match(settings.hooks.PreToolUse[0].hooks[0].command, /^timeout --kill-after=1s 12s .+ \|\| exit 2$/,
     'handler launch/crash/inner deadline refuses before the longer outer hook deadline');
@@ -175,10 +204,14 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
   // Fresh synthetic session: only input records/report DATA; the fixture never
   // runs a patched guard, a mutation CLI or even the proposed test command.
   assert.equal(invoke('prepare').status, 0);
-  const commands = [call('ordinary', 'Bash', { command: 'node --test test/probe.test.mjs' }),
+  const commands = [call('ordinary', 'Bash', { command: 'node --test test/probe.test.mjs', description: 'DATA only', timeout: 1000 }),
+    call('catalog-only', 'ToolSearch', { query: 'select:mcp__example__unsafe' }),
     call('report', 'Write', { file_path: env.REVIEW_DOC, content: '# Ordinary unchanged-input review' })];
-  for (const c of commands) assert.equal(invoke('hook', { tool_use_id: c.id, tool_name: c.name, tool_input: c.input }).stdout, '');
-  writeFileSync(env.REVIEW_DOC, commands[1].input.content);
+  for (const c of commands) {
+    const input = c.name === 'Bash' ? { command: c.input.command, timeout: 1000, description: 'DATA only' } : c.input;
+    assert.equal(invoke('hook', { tool_use_id: c.id, tool_name: c.name, tool_input: input }).stdout, '');
+  }
+  writeFileSync(env.REVIEW_DOC, commands.find(c => c.name === 'Write').input.content);
   const execution = join(dir, 'execution.json'); env.REVIEW_EXECUTION_FILE = execution;
   env.REVIEW_STRUCTURED_OUTPUT = JSON.stringify({ summary: 'ordinary immutable input checks' });
   writeFileSync(execution, JSON.stringify(trace(commands)));
