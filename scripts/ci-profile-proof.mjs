@@ -17,6 +17,9 @@ const proof = { schema: CI_PROOF_SCHEMA, candidate: { sha: process.env.GITHUB_SH
   selection: { frontend: false, integration: false, backend: false, geometry_parity: false },
   requiredChecks: ['preflight'], executedChecks: ['preflight'], reusedChecks: [],
   checks: { preflight: { mode: 'executed', result } }, taskChecks: taskChecksFromNeeds(needs) };
+const { stampRetainedTaskChecks } = await import('./task-check-source.mjs');
+await stampRetainedTaskChecks(proof, { repo: process.env.GITHUB_REPOSITORY,
+  token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN });
 mkdirSync('artifacts/ci-proof', { recursive: true });
 writeFileSync('artifacts/ci-proof/proof.json', JSON.stringify(proof, null, 2) + '\n');
 console.log(`${ciProofArtifactName(run, attempt)}: ${proof.profile} progress, product proof still required`);

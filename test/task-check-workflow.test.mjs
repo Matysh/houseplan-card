@@ -35,11 +35,14 @@ test('#1060 scoped reuse gates the expensive steps while the verifier job still 
 });
 
 test('#1060 scoped receipts use the existing immutable index and cannot publish a reused chain', () => {
-  const direct = { schema: 'houseplan-task-check/v1', job: 'tooling', key: 'a'.repeat(64) };
+  const direct = { schema: 'houseplan-task-check/v1', job: 'tooling', key: 'a'.repeat(64), run: 10, attempt: 2 };
   const reused = { schema: 'houseplan-task-check/v1', job: 'browser_selected', key: 'b'.repeat(64) };
-  const proof = { requiredChecks: ['preflight'], checks: { preflight: { result: 'success' } },
+  const proof = { run: { id: 10, attempt: 2 }, requiredChecks: ['preflight'], checks: { preflight: { result: 'success' } },
     taskChecks: { tooling: { mode: 'executed', record: direct }, browser_selected: { mode: 'reused', record: reused } } };
   assert.deepEqual(registryPublicationRecords(proof), [direct]);
+  proof.run.attempt = 3;
+  assert.deepEqual(registryPublicationRecords(proof), [], 'retained execution never becomes a new producer');
+  proof.run.attempt = 2;
   proof.checks.preflight.result = 'failure';
   assert.deepEqual(registryPublicationRecords(proof), []);
   const tooling = workflow('validate-tooling.yml').jobs.proof;

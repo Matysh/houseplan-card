@@ -132,24 +132,91 @@ export function makeTaskCheckRecord(plan, { repo, run, attempt, sha, workflow, c
   return record;
 }
 
+/** A partial rerun may retain an execution, never rename its source attempt. */
+export function retainedTaskCheck(proof, claim) {
+  const record = claim?.record;
+  return !!record && !!proof?.run && claim?.mode === 'executed' && record.run === proof.run.id
+    && record.sha === proof?.candidate?.sha
+    && record.workflow === '.github/workflows/' + proof?.run?.workflow
+    && positive(record.attempt) && positive(proof.run?.attempt) && record.attempt < proof.run.attempt;
+}
+
+function retainedExecution(record, sourceJobs, currentJobs, sourceRun, currentRun) {
+  const source = sourceJobs.filter(job => job.name === record.jobName);
+  const current = currentJobs.filter(job => job.name === record.jobName);
+  if (source.length !== 1 || current.length !== 1) throw Error('retained source/current job is absent or ambiguous');
+  const projection = (job, attempt) => {
+    const start = Date.parse(job.started_at), end = Date.parse(job.completed_at);
+    if (!positive(job.id) || job.run_id !== record.run || job.run_attempt !== attempt || job.head_sha !== record.sha
+      || job.status !== 'completed' || job.conclusion !== 'success'
+      || !Number.isFinite(start) || !Number.isFinite(end) || end < start
+      || !Array.isArray(job.steps) || !job.steps.length) throw Error('retained job execution is incomplete/red/foreign');
+    const numbers = new Set();
+    const steps = job.steps.map(step => {
+      const a = Date.parse(step.started_at), b = Date.parse(step.completed_at);
+      const skipped = step.conclusion === 'skipped' && step.started_at === null && step.completed_at === null;
+      if (!positive(step.number) || numbers.has(step.number) || typeof step.name !== 'string' || !step.name
+        || step.status !== 'completed' || !['success', 'skipped'].includes(step.conclusion)
+        || !skipped && (!Number.isFinite(a) || !Number.isFinite(b) || b < a || a < start || b > end))
+        throw Error('retained job steps are missing/incomplete/red');
+      numbers.add(step.number);
+      return { number: step.number, name: step.name, status: step.status, conclusion: step.conclusion,
+        started_at: step.started_at, completed_at: step.completed_at };
+    });
+    return { name: job.name, status: job.status, conclusion: job.conclusion,
+      started_at: job.started_at, completed_at: job.completed_at, steps };
+  };
+  const before = projection(source[0], record.attempt), after = projection(current[0], currentRun.run_attempt);
+  const started = Date.parse(sourceRun.run_started_at || sourceRun.created_at);
+  const next = Date.parse(currentRun.run_started_at), stamp = Date.parse(record.created);
+  if (!sameRecord(before, after) || !Number.isFinite(next) || !Number.isFinite(started)
+    || Date.parse(before.started_at) < started - 30000 || Date.parse(before.completed_at) >= next
+    || stamp < Date.parse(before.started_at) || stamp > Date.parse(before.completed_at) + 1000)
+    throw Error('current job is not the exact retained source execution');
+  // GitHub creates new job IDs for retained jobs. Exact stamps/steps, not ID
+  // equality or overall run colour, establish that it did not execute again.
+  return { sourceAttempt: record.attempt, sourceJobId: source[0].id,
+    currentAttempt: currentRun.run_attempt, currentJobId: current[0].id, execution: digest(canonical(before)) };
+}
+
 export async function verifyTaskCheckClaim(claim, { plan, repo, run, latestRun, jobs = [], artifact, proof,
-  candidateSnapshot, sourceSnapshot, companionsGreen = false, now = Date.now(), request = {} } = {}) {
+  candidateSnapshot, sourceSnapshot, companionsGreen = false, now = Date.now(), request = {},
+  consumerProof = null, retainedRun = null, retainedJobs = [], producing = false } = {}) {
   const fail = reason => ({ accepted: false, reason });
   if (!['executed', 'reused'].includes(claim?.mode)) return fail('unknown task claim mode');
   if (claim.mode === 'reused' && (request.full || request.fresh || request.night || request.stable || request.candidate))
     return fail('fresh/full policy forbids task reuse');
   const record = claim.record, malformed = taskCheckRecordError(record);
   if (malformed) return fail(malformed);
+  const retained = retainedTaskCheck(consumerProof, claim);
   if (!sameRecord(taskCheckPlanFields(record), plan) || !sameRecord(claim.plan, plan)) return fail('task claim differs from the required scope/inputs');
   if (record.repo !== repo || run?.repository?.full_name !== repo || run?.head_repository?.full_name !== repo
     || run.path !== record.workflow || !/^(?:dev|main|issue\/[1-9]\d+-[\w-]+)$/.test(run.head_branch || ''))
     return fail('foreign task producer repository/workflow/branch');
-  if (run.status !== 'completed' || run.conclusion !== 'success' || Number(run.id) !== record.run
+  if (run.status !== 'completed' || !retained && run.conclusion !== 'success' || Number(run.id) !== record.run
     || Number(run.run_attempt) !== record.attempt || run.head_sha !== record.sha
     || !['push', 'workflow_dispatch', 'pull_request'].includes(run.event)
-    || latestRun?.status !== 'completed' || latestRun?.conclusion !== 'success'
-    || Number(latestRun.id) !== record.run || Number(latestRun.run_attempt) !== record.attempt || latestRun.head_sha !== record.sha)
+    || !retained && (latestRun?.status !== 'completed' || latestRun?.conclusion !== 'success'
+      || Number(latestRun.id) !== record.run || Number(latestRun.run_attempt) !== record.attempt || latestRun.head_sha !== record.sha))
     return fail('task source attempt is incomplete/red/foreign');
+  let retention;
+  if (retained) {
+    const target = consumerProof.run;
+    const runIdentity = value => value && [value.id, value.run_attempt, value.head_sha, value.path, value.event,
+      value.head_branch, value.repository?.full_name, value.head_repository?.full_name, value.status, value.conclusion];
+    if (consumerProof.candidate.tree !== sourceSnapshot?.tree || !sameRecord(proof?.request || {}, consumerProof.request || {})
+      || !sameRecord(proof?.requiredProfiles || [], consumerProof.requiredProfiles || [])
+      || target.event !== run.event || retainedRun?.id !== record.run || retainedRun.run_attempt !== target.attempt
+      || retainedRun.head_sha !== record.sha || retainedRun.path !== record.workflow || retainedRun.event !== run.event
+      || retainedRun.repository?.full_name !== repo || retainedRun.head_repository?.full_name !== repo
+      || retainedRun.head_branch !== run.head_branch || !sameRecord(runIdentity(retainedRun), runIdentity(latestRun))
+      || !(producing && retainedRun.status === 'in_progress')
+        && (retainedRun.status !== 'completed' || retainedRun.conclusion !== 'success'))
+      return fail('retained source/current attempt, tree or full/fresh policy differs');
+    try { retention = retainedExecution(record, jobs, retainedJobs, run, retainedRun); }
+    catch (error) { return fail(error.message); }
+    if (claim.retained !== undefined && !sameRecord(claim.retained, retention)) return fail('retained job passport differs from authenticated execution');
+  } else if (claim.retained !== undefined) return fail('retained passport has no current-run source');
   const actual = jobs.filter(job => job.name === record.jobName);
   if (actual.length !== 1 || actual[0].status !== 'completed' || actual[0].conclusion !== 'success'
     || actual[0].run_id !== undefined && Number(actual[0].run_id) !== record.run) return fail('actual task execution is absent/incomplete/red');
@@ -159,6 +226,7 @@ export async function verifyTaskCheckClaim(claim, { plan, repo, run, latestRun, 
     || created > produced + 30000) return fail('task source expired or has impossible timestamps');
   if (artifact?.expired !== false || artifact.name !== `ci-proof-${record.run}-${record.attempt}`
     || artifact.workflow_run?.head_sha !== record.sha) return fail('immutable task artifact absent/foreign');
+  if (retained && produced >= Date.parse(retainedRun.run_started_at)) return fail('retained source proof was not published before rerun');
   if (proof?.schema !== 'houseplan-ci-proof/v1' || proof.run?.id !== record.run || proof.run?.attempt !== record.attempt
     || '.github/workflows/' + proof.run?.workflow !== record.workflow || proof.run?.event !== run.event
     || proof.candidate?.sha !== record.sha || !hex(proof.candidate?.tree, 40)
@@ -166,7 +234,8 @@ export async function verifyTaskCheckClaim(claim, { plan, repo, run, latestRun, 
     || sourceSnapshot.sha && sourceSnapshot.sha !== record.sha)
     return fail('task proof belongs to a different source');
   const direct = proof.taskChecks?.[record.job];
-  if (direct?.mode !== 'executed' || !sameRecord(direct.record, record) || !sameRecord(direct.plan, taskCheckPlanFields(record)))
+  if (direct?.mode !== 'executed' || direct.retained !== undefined
+    || !sameRecord(direct.record, record) || !sameRecord(direct.plan, taskCheckPlanFields(record)))
     return fail('task source is inherited or differs from its immutable receipt');
   if (record.workflow === '.github/workflows/validate-product.yml') {
     const profiles = proof.requiredProfiles;
@@ -196,5 +265,7 @@ export async function verifyTaskCheckClaim(claim, { plan, repo, run, latestRun, 
     if (!sameRecord(current, plan) || !sameRecord(previous, taskCheckPlanFields(record)))
       return fail('actual task inputs/environment/recipe differ');
   } catch (error) { return fail('task Git equivalence: ' + error.message); }
-  return { accepted: true, reason: 'direct immutable scoped task execution verified', record };
+  return { accepted: true, reason: retained ? 'authenticated current-run retained execution verified'
+    : 'direct immutable scoped task execution verified', record,
+    ...(retained ? { retained: retention, target: structuredClone(consumerProof.run) } : {}) };
 }

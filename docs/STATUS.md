@@ -20,7 +20,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5541 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
+| Tests | Node unit 5547 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -1181,6 +1181,12 @@ CI proof inheritance (#981) uses the portable orphan ci-proofs index, immutable
 source attempts and actual job outcomes. Frontend is reusable; filesystem/range
 and packaging guards stay fresh. Beta version aliases retain exact assembly,
 while night/stable always execute fresh full coverage.
+
+Retained current-run tooling/browser receipts (#1067) keep the original attempt
+and bind GitHub's new clone ID to its original job through immutable source
+proof and exact execution stamps/steps. Missing provenance fails before proof
+publication; consumers independently verify it. Full/fresh demands and fresh
+range/packaging checks remain intact, and retention creates no new producer.
 
 ## Where the rest lives
 

@@ -1395,6 +1395,7 @@ jobs:
       # потребитель на checkout кандидата пересчитывает всё заново.
       - name: Собрать единый CI proof
         env:
+          GH_TOKEN: ${{ github.token }}
           CANDIDATE_SHA: ${{ github.sha }}
           CANDIDATE_TREE: ${{ steps.candidate.outputs.tree }}
           CI_RUN_ID: ${{ github.run_id }}

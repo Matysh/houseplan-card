@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { taskCheckSource, loadTaskCheckContexts } from '../scripts/task-check-source.mjs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { taskCheckSource, loadTaskCheckContexts, stampRetainedTaskChecks } from '../scripts/task-check-source.mjs';
 import { taskCheckCli, taskCheckEnvironment, controllerSupportsTaskChecks, taskCheckReusePolicy } from '../scripts/task-check-reuse-cli.mjs';
 import { TASK_CHECK_JOB_NAMES, taskCheckPlanFromSnapshot, makeTaskCheckRecord } from '../scripts/task-check-reuse.mjs';
 import { JOB_RULES } from '../scripts/ci-proof.mjs';
@@ -68,8 +71,10 @@ function api(f, { mutate = value => value, unavailable = {} } = {}) {
     if (unavailable[path] === 'transport') throw Error('ordinary source transport reset');
     if (unavailable[path]) return { ok: false, status: unavailable[path] };
     if (path === 'actions/runs/42/attempts/2') value = f.context.run;
+    else if (path === 'actions/runs/42/attempts/3') value = f.context.retainedRun;
     else if (path === 'actions/runs/42') value = f.context.latestRun;
     else if (path === 'actions/runs/42/attempts/2/jobs?per_page=100') value = { total_count: f.context.jobs.length, jobs: f.context.jobs };
+    else if (path === 'actions/runs/42/attempts/3/jobs?per_page=100') value = { total_count: f.context.retainedJobs.length, jobs: f.context.retainedJobs };
     else if (path?.startsWith('actions/runs/42/artifacts?')) value = { total_count: 1, artifacts: [f.context.artifact] };
     else if (path?.startsWith('actions/runs?')) value = { total_count: (f.companions || []).length, workflow_runs: f.companions || [] };
     else if (/^actions\/runs\/5[78]$/.test(path || '')) value = f.companions.find(run => run.id === Number(path.split('/').at(-1)));
@@ -267,4 +272,82 @@ test('#1060 a split browser producer requires exact successful companion attempt
       root: 'missing-local-repo', fetchImpl: network.fetchImpl, now });
     assert.equal(contexts.get(f.job).accepted, !change, contexts.get(f.job).reason);
   }
+});
+
+async function retainedSourceFixture() {
+  const f = await fixture('tooling'), at = ms => new Date(now + ms).toISOString();
+  f.claim.mode = 'executed';
+  f.context.run.conclusion = 'failure';
+  f.context.jobs[0] = { ...f.context.jobs[0], id: 201, run_attempt: 2, head_sha: sha,
+    started_at: at(-50000), completed_at: at(-9000), steps: [
+      { number: 1, name: 'ordinary tooling suite', status: 'completed', conclusion: 'success',
+        started_at: at(-50000), completed_at: at(-9000) },
+    ] };
+  f.context.retainedRun = { ...f.context.run, run_attempt: 3, conclusion: 'success', run_started_at: at(-4000) };
+  f.context.latestRun = { ...f.context.retainedRun };
+  f.context.retainedJobs = [{ ...structuredClone(f.context.jobs[0]), id: 202, run_attempt: 3 }];
+  f.consumer = { ...structuredClone(f.context.proof), taskChecks: { tooling: f.claim },
+    run: { ...f.context.proof.run, attempt: 3 } };
+  f.env.GITHUB_SHA = sha;
+  return f;
+}
+
+test('#1067 producer authenticates retained source and separate clone, then consumer independently verifies the passport', async () => {
+  const f = await retainedSourceFixture(), network = api(f), original = JSON.stringify(f.claim.record);
+  const source = () => taskCheckSource({ repo, token: 'test-token', candidateSha: sha,
+    candidateSnapshot: f.current, root: 'missing-local-repo', fetchImpl: network.fetchImpl, consumerProof: f.consumer });
+  await stampRetainedTaskChecks(f.consumer, { repo, source: source(), now });
+  assert.deepEqual(Object.keys(f.claim.retained).sort(), ['currentAttempt', 'currentJobId', 'execution', 'sourceAttempt', 'sourceJobId']);
+  assert.equal(f.claim.retained.sourceJobId, 201); assert.equal(f.claim.retained.currentJobId, 202);
+  assert.equal(f.claim.record.attempt, 2); assert.equal(f.consumer.run.attempt, 3);
+  assert.equal(JSON.stringify(f.claim.record), original, 'the old direct receipt remains byte-for-byte unchanged');
+  network.calls.length = 0;
+  const contexts = await loadTaskCheckContexts({ proof: f.consumer, repo, source: source(), now });
+  assert.equal(contexts.get('tooling').accepted, true, contexts.get('tooling').reason);
+  assert.ok(network.calls.some(url => url.includes('/attempts/2/jobs?')));
+  assert.ok(network.calls.some(url => url.includes('/attempts/3/jobs?')));
+  assert.ok(network.calls.some(url => url === f.context.artifact.archive_download_url));
+  assert.ok(network.calls.some(url => url.endsWith('/git/commits/' + sha)), 'retained source authenticates its immutable commit');
+  assert.ok(network.calls.some(url => url.endsWith('/git/trees/' + tree + '?recursive=1')), 'retained source reads the authenticated tree');
+  assert.equal(network.calls.some(url => url.includes('/git/trees/' + sha)), false, 'a commit alias is never a tree identity');
+});
+
+test('#1067 retained source needs complete independent API evidence; producer refuses before publication', async () => {
+  for (const mutate of [
+    (v, p) => p.includes('/attempts/3/jobs?') ? { ...v, total_count: 1000 } : v,
+    (v, p) => p.includes('/attempts/2/jobs?') ? { ...v, jobs: [] } : v,
+    (v, p) => p.includes('/attempts/3/jobs?') ? { ...v, jobs: v.jobs.map(j => ({ ...j, conclusion: 'failure' })) } : v,
+    (v, p) => p.includes('/artifacts?') ? { ...v, artifacts: [] } : v,
+  ]) {
+    const f = await retainedSourceFixture(), network = api(f, { mutate });
+    const source = taskCheckSource({ repo, token: 'test-token', candidateSha: sha,
+      candidateSnapshot: f.current, root: 'missing-local-repo', fetchImpl: network.fetchImpl, consumerProof: f.consumer });
+    await assert.rejects(stampRetainedTaskChecks(f.consumer, { repo, source, now }), /retained task receipt:/);
+    assert.equal(f.claim.retained, undefined);
+  }
+  const f = await retainedSourceFixture(); f.consumer.taskChecks.tooling.record.run = 99;
+  await assert.rejects(stampRetainedTaskChecks(f.consumer), /foreign direct task receipt/);
+});
+
+test('#1067 actual proof producer CLI completes adapter loading before writing its passport', t => {
+  const root = mkdtempSync(join(tmpdir(), 'hp-proof-cli-'));
+  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 20 }));
+  const git = (...args) => execFileSync('git', ['-C', root, '-c', 'maintenance.auto=false', ...args],
+    { encoding: 'utf8', stdio: 'pipe' }).trim();
+  git('init', '-b', 'dev'); git('config', 'user.name', 'Fixture'); git('config', 'user.email', 'fixture@example.invalid');
+  mkdirSync(join(root, '.github/workflows'), { recursive: true });
+  writeFileSync(join(root, '.github/workflows/validate.yml'), 'name: Fixture\non: push\njobs: {}\n');
+  mkdirSync(join(root, 'demo/golden/baselines'), { recursive: true });
+  writeFileSync(join(root, 'demo/golden/baselines/baselines-index.json'), '{}\n');
+  git('add', '.'); git('commit', '-m', 'ordinary synthetic proof inputs');
+  const sourceSha = git('rev-parse', 'HEAD'), sourceTree = git('rev-parse', 'HEAD^{tree}');
+  const needs = { preflight: { result: 'success' }, changes: { result: 'success', outputs: {} }, reuse: { result: 'success', outputs: {} } };
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/ci-proof.mjs', import.meta.url)), '--emit=proof.json'],
+    { cwd: root, encoding: 'utf8', timeout: 20000, env: { ...process.env, CANDIDATE_SHA: sourceSha,
+      CANDIDATE_TREE: sourceTree, CI_RUN_ID: '77', CI_RUN_ATTEMPT: '1', CI_EVENT: 'push', NEEDS_JSON: JSON.stringify(needs) } });
+  assert.equal(result.status, 0, result.stderr || String(result.error));
+  const proof = JSON.parse(readFileSync(join(root, 'proof.json'), 'utf8'));
+  assert.deepEqual(proof.candidate, { sha: sourceSha, tree: sourceTree });
+  assert.equal(proof.run.id, 77); assert.equal(proof.run.attempt, 1);
+  assert.deepEqual(proof.taskChecks, {});
 });

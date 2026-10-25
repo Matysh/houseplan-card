@@ -5615,11 +5615,27 @@ local pre-push supplies its real committed snapshot, including unpublished HEAD.
 Tooling and selected browser receipts (#1060) also require a direct successful
 immutable producer: run/attempt, actual completed job, input identity, effective
 recipe, runtime and requested selection/visual intent must match. Documentation
-alone may change; executable dependencies may not. Partial/red/cancelled sources
+alone may change; executable dependencies may not. Cross-run partial/red/cancelled sources
 and recursive receipt chains refuse. Selected evidence never grants full or
 release authority; range/process/filesystem/packaging checks remain fresh. Until
 accepted dev has the new reader, the trusted controller uses a compatible fresh
 fallback rather than accepting unsupported receipt semantics.
+
+Partial reruns of the same run (#1067) retain the original direct receipt's
+attempt, timestamp, plan and runtime. GitHub may assign a new ID to its retained
+job; the passport separately records both job IDs/attempts and a digest of their
+identical execution stamps and steps. Producer and consumer independently verify
+the original immutable proof, exact SHA/tree/workflow, scope/recipe/runtime and
+the original successful job against the authenticated current-attempt clone.
+An unrelated failure in the original attempt does not erase that job's success.
+The retained execution must finish before the new attempt starts. Missing or
+changed provenance, or a failed job, makes the producer fail before upload.
+Full/fresh requests must match the original
+request, whose source must be direct execution. Cross-run reuse rules are not
+relaxed, and retained receipts never publish a new registry producer. Consumers
+also authenticate older unannotated passports; an annotation alone grants nothing.
+The ordinary task-check-reuse/source, ci-proof and task-check-workflow suites
+cover this contract; negative cases change input data, never the implementation.
 
 Remote scoped snapshots (#1074) authenticate `/git/commits/<immutable-sha>`
 against the requested commit and obtain its actual `tree.sha` before requesting

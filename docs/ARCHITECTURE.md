@@ -2280,6 +2280,14 @@ receipt never proves full-matrix coverage, and a controller without the scoped
 validator forces fresh execution. Integration classification uses verified
 green coverage separately from the judged range used by process guards.
 
+Same-run retained jobs (#1067) preserve their original immutable execution
+record and separate original/current-clone job identities. Independent source
+artifact, Git inputs and exact authenticated job stamps/steps bind the clone;
+overall run success is not evidence. Producer sealing can observe its own
+in-progress proof job, while a consumer still requires the completed current
+attempt. Retention neither creates a new registry producer nor waives a changed
+full/fresh request or an originally reused execution.
+
 Sparse registry lookup (#1062) hydrates missing immutable blobs in bounded
 batches. Git reads disable implicit lazy fetch and share the probe deadline,
 so an unavailable object or remote produces fresh execution rather than a
