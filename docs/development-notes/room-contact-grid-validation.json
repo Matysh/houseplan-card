@@ -2,8 +2,8 @@
   "schema": 1,
   "issue": 1061,
   "material": {
-    "source": "d48525db4e1b7d38ef42914a62af6b49fd3936d7",
-    "tree": "8efd49416acb247d222ddb35ed71747be1065eba",
+    "source": "396d9e18ee713f8037813a20610589e0712b692c",
+    "tree": "b1a3953526267f86174f67e559e886d0e22f2ccf",
     "acceptedBase": "0293b3bce6c23833bd3a6edf827a1c4f5a67eb3b",
     "buildSource": "739e35e181bab94d81ce38a6fc5c60d79bcb0c7d",
     "buildInputsUnchangedAfterBuild": true,
@@ -18,7 +18,8 @@
     "originalHostedFit": "E0 crafted trim ordinary RED; independently reproduced source hostedFit now required",
     "originalOpeningDrop": "165 valid central opening removed: pure+authenticated ordinary2RED; db1 requires old ID exactly once and the same partition host only within the new exception",
     "noTrimDrop": "Pure and authenticated positive controls retain the existing ordinary no-trim Drop policy",
-    "fixtureCorrection": "The manual room insertion producer was not complete room-batch evidence; this attribution is explicitly withdrawn in room-contact-grid-producer.json. The new producer uses real _applyWallFaceBatch, promotion/reconcile, history and deferred writer. Node shell transport/render/physical-verdict substitutions remain explicit; public native covers the real projection/physical guard."
+    "fixtureCorrection": "The manual room insertion producer was not complete room-batch evidence; this attribution is explicitly withdrawn in room-contact-grid-producer.json. The new producer uses real _applyWallFaceBatch, promotion/reconcile, history and deferred writer. Node shell transport/render/physical-verdict substitutions remain explicit; public native covers the real projection/physical guard.",
+    "hookCorrection": "The first normal hook on4b6 refused a private stale fixture write and nonterminal page-error handling; the tooling release-doc check also observed local CRLF. Product/build/budgets/unused passed. The smoke now uses the existing public server event and throws on actual reportPageErrors; canonical LF was restored without changing the documentation semantics/test. Original RED is retained; no exemption, bypass or guard change."
   },
   "tests": {
     "initialFreshFocused": {
@@ -48,8 +49,11 @@
     "ruff": "passed",
     "native": {
       "scenarios": 8,
-      "checks": 62,
-      "passed": true
+      "checks": 63,
+      "passed": true,
+      "sourceSha256": "d69bf3fb90d43ba33704207397f4ee2be354e12116d09f3330d3bdf49fe06fb6",
+      "receipt": "artifacts/1061-public-stale-native.log",
+      "staleInput": "Existing __hpTest.setServerConfig event, real authoritative adoption, confirmed changed geometry; no private card writes."
     },
     "requiredSmokeIds": [
       "smoke_resize_pointer_real_plan.mjs",
@@ -67,7 +71,8 @@
       "ids": [],
       "reason": "no golden demand"
     },
-    "scope": "All eight canonical required entries executed: corrected native once after changed fixture inputs; seven unchanged neighbors retain their actual successful invocations. No full local matrix or mutants executed."
+    "scope": "All eight canonical required entries executed: corrected native once after changed fixture inputs; seven unchanged neighbors retain their actual successful invocations. No full local matrix or mutants executed.",
+    "affectedHarnessContracts": 21
   },
   "runtime": {
     "build": {
@@ -135,12 +140,16 @@
     "artifacts/1061-real-batch-ha.log": "eb187b7fe40ed74476ea9355a2c7875ca58b7d38f32ba9dc1918e0718d7cb44c",
     "artifacts/1061-real-batch-model-invariants.log": "23ae6f0be504883c16fbbca592a0e6f31364dfd51d8f7c5d4a6689f2e02211d8",
     "artifacts/1061-real-batch-corpus-update.log": "82e1340e33da933a150ee1d3316a22f96749a7f7ccc69fedf60502a204de5d8f",
-    "artifacts/1061-final-expanded-native.log": "6a95c9c32cf87a0bbca25ded6266a91bc73079c6eb2c8651e01d3363fc60bc75",
     "artifacts/1061-final-neighbors-report.json": "30b2800845655c7bd6b406862d2db906566972ab1b35613e419e37321e94a60b",
     "artifacts/1061-final-build.log": "28ddb23a2bd91cbe98699668d6cab3d9f330be7c0cfcee53e6953b8259a68940",
     "artifacts/1061-measure-final-after999.json": "6dad6513d56fe786ad206b8a9124e29f8c6517140504db4fa9497be48169a284",
     "artifacts/1061-final-readiness.log": "1e1c9b7846232851047df9a8e4fc2e699b4eeb539f1d381dbd83abaf7ed0b90b",
-    "artifacts/1061-final-process.log": "420b76fbbf366a65068d5580efc7cfb96fd430e32c04ac439056d3991cda220a"
+    "artifacts/1061-final-process.log": "420b76fbbf366a65068d5580efc7cfb96fd430e32c04ac439056d3991cda220a",
+    "artifacts/1061-public-stale-native.log": "ba39198534cb92c844f6c38e0fc26f9eef3a56c6b3b0b64d834b1098b8046c70",
+    "artifacts/1061-hook-affected-tests.log": "70bf7266425dd19be39e73ae0afbb91221f3b3fa71d15a95370159a4dca30799",
+    "artifacts/1061-private-write-correction.log": "405ab5e6c0729e6139091dfe6da316ec5ac4b9b36a5974bd8ff6bf6fb0f16d4a",
+    "artifacts/1061-final-normal-push.log": "9528324f327cc5d99c83355cd7a4cc5a9c5d16afc23d3f55367094716177b951",
+    "artifacts/1061-final-normal-push-result.json": "7790ce116e0b7c04e731b4f8557bc343c090654cd5b036a10f59c2a3eb0e40bf"
   },
   "delivery": "This file records source-bound author evidence, not review authority. The mandatory normal hook, exact remote push, active preflight and independent CODE/integration are reported separately on the issue."
 }
