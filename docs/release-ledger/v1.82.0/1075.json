@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "issue": 1075,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Furniture/decor Undo/Redo already exists in stable v1.82.0. Its unconditional wall-model materialization was introduced in fac660980 (#883, 2026-10-14), before the stable tag on 2026-10-21. Remove redundant structural work from that released history workflow without changing its saved result or writer semantics.",
+  "summary": {
+    "ru": "Отмена и повтор размещения и правок мебели/декора не пересчитывают неизменившиеся стены и световые барьеры.",
+    "en": "Furniture/decor Undo and Redo no longer rebuild unchanged walls and light barriers."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [],
+    "smokes": ["smoke_wall_node_delete.mjs", "smoke_editor_command_latency.mjs", "smoke_geometry_history_refusal.mjs", "smoke_floor_geometry_cache.mjs", "smoke_floor_cache_reuse.mjs"]
+  }
+}

@@ -12,6 +12,8 @@
 - Remove a spurious internal stroke at a smooth wall bend without changing
   saved geometry, real openings, free caps or hatching, including PDF output. (#1076)
 
+- Avoid rebuilding unchanged walls and light barriers on furniture/decor
+  Undo/Redo while preserving the same history and saved result. (#1075)
 - Avoid rebuilding unchanged walls and light barriers when applying furniture
   group colour/opacity in Background properties. The toolbar palette remains
   the default style for new objects, not a group editor. (#1071)
@@ -30,7 +32,7 @@
   unavailable sources clear an already shown preview. Ordinary errors loading
   another cleanup retain the valid shown path. The banner's hover feedback
   follows the current pointer modality, including after touch input. (#999)
-- Safely delete an intermediate wall node in Plan/Select: join its two neighbours
+- Safely delete an intermediate wall node with any Plan tool: join its two neighbours
   without moving them, preserve supported openings and undo the whole edit in
   one step. Unsafe nodes explain why deletion is unavailable. Cancelled or stale
   menus cannot send a late delete. A temporary backend failure keeps the plan

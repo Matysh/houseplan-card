@@ -153,8 +153,7 @@ export class WallNodeEditor {
 
   private down(ev: PointerEvent): boolean {
     const ctx = this.port.context(), stage = this.port.stage();
-    if (!ctx.enabled || !stage || !ev.composedPath().includes(stage)) return false;
-    if (this.busy) { ev.preventDefault(); ev.stopImmediatePropagation(); return true; }
+    if (!stage || !ev.composedPath().includes(stage)) return false;
     if (ev.pointerType === 'mouse' && ev.button === 2 && this.deleteMenu && this.port.delete?.context().enabled) {
       const data = this.nodes();
       const hit = data && pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
@@ -163,6 +162,8 @@ export class WallNodeEditor {
       // starts Move or reaches the stage's pan owner.
       ev.preventDefault(); ev.stopImmediatePropagation(); return true;
     }
+    if (!ctx.enabled) return false;
+    if (this.busy) { ev.preventDefault(); ev.stopImmediatePropagation(); return true; }
     if (ev.pointerType !== 'mouse' || ev.button !== 0 || !ev.isPrimary) return false;
     const data = this.nodes(); if (!data) return false;
     const hit = pickWallNode(data.nodes, this.port.screenPoint(ev), this.port.unitsPerPixel());
@@ -331,7 +332,10 @@ export class WallNodeEditor {
   render(live = false): TemplateResult | typeof nothing {
     const ctx = this.port.context();
     if (ctx.enabled && !this.listening) { this.listening = true; this.port.document.defaultView?.addEventListener('pagehide', this.pagehide); }
-    if (!ctx.enabled) { this.cancel(); this.cache = null; return nothing; }
+    if (!ctx.enabled) {
+      if (this.session || !this.port.delete?.context().enabled) this.cancel();
+      return nothing;
+    }
     if (this.session && !this.current(this.session)) this.cancel();
     const data = this.session ? { source: this.session.plan.source, nodes: this.session.plan.nodes } : this.nodes();
     if (!data) return nothing;

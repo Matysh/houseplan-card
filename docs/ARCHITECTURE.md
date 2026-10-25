@@ -20,6 +20,21 @@ roundoff bound, without changing canonical bodies, caches, hit testing or saved
 coordinates. Real holes and disconnected components remain separate. The iso
 projector's existing degeneracy guard already rejects the reported tail.
 
+Editor command latency (#1075) separates node-menu authority (every idle Plan
+tool) from Select-only capture/handles. One immutable opening proof serves the
+chosen command; revision, adoption epoch, writer authority and queued floor
+basis still gate dispatch. Python `prepare_node_delete` shares one canonical
+source with its host proof, materializes only the target of an already-current
+document and retains the complete legacy fallback. Full schema/host/junction
+validation remains; junction baselines require the exact stored revision and
+are published only after durable save.
+
+`decor-history-restore.ts` admits only an actual decor-only history delta on the
+current model, without node/chain/room-reference effects or pending physical
+writes. It retains structural record identities and caches, updates config
+epoch/model/scene, and uses the existing full-config writer. Unknown non-decor
+changes, stairs, transforms and legacy/mixed steps retain strict materialization.
+
 Historical vacuum preview (#999) has one memory-only `VacuumHistory` owner per
 card. Selection, pending Show and immutable shown material are separate; closing
 the settings popup does not retire Show. The lazy settings section uses the

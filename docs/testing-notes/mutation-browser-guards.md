@@ -40,13 +40,13 @@ that transition events alone prove disposal.
 
 | Category | Count | Why a browser is still required |
 | --- | ---: | --- |
-| Performance threshold | 8 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
+| Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 91 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 101 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 59 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 264 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **527 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **528 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -90,6 +90,13 @@ in the end-to-end total; only the measured reductions above are claimed.
 ## Reviewed per-mutant inventory
 
 ### Performance threshold
+
+- `decor-history-rebuilds-physical-walls-1075`
+
+The #1075 native palette/history witness counts actual mounted structural cache
+builds across toolbar and keyboard Undo/Redo and compares physical SVG with a
+cold card. A pure restore helper cannot prove its caller preserves those caches.
+This is frame-work evidence; no hardware-specific timing threshold is raised.
 
 - `decor-colour-rebuilds-physical-walls-1071`
 

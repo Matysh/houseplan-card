@@ -259,6 +259,11 @@ their Walls start. Entering does not write geometry or start a chain.
 If a legacy wall model cannot be safely projected, Select stays usable without
 node handles; it never repairs stored data or relaxes the write preflight.
 
+- Right-click on a structural node opens its existing Delete menu with any
+  idle Plan tool (#1075), without changing that tool or placing an object.
+  Cold non-Select entry also loads the menu; moving nodes and their handles
+  remain Select-only. Active chain, dirty field, dialog, transition and writer
+  guards retain their current meaning; View/kiosk do not gain node input.
 - **Select** also moves wall nodes (#803): a saved endpoint, shared room corner
   or supported T/X intersection has a `grab` cursor; capture uses `grabbing`.
   The 12 CSS-pixel node hit wins there, while dragging a wall body outside it

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import voluptuous as vol
 
 from custom_components.houseplan.junction_limits import validate_junction_limits
 from custom_components.houseplan.validation import (
@@ -15,10 +16,23 @@ from custom_components.houseplan.wall_node_delete import (
     delete_node_space,
     node_delete_candidate,
     node_delete_host_baseline,
+    prepare_node_delete,
 )
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
 CASES = json.loads((Path(__file__).parents[1] / "test/fixtures/1045-wall-node-delete.json").read_text())
+
+
+def test_issue_1075_current_version_does_not_bypass_complete_schema():
+    current = fixture()
+    current["spaces"].append({"id": "other", "title": "Other", "view_box": [0, 0, 1, 1],
+        "wall_segments": [], "rooms": [{"id": "bad", "name": "Bad", "area": None,
+            "poly": [[0, 0], [1, 0], [1, 1], [0, 1]], "wall_ids": ["missing"] * 4}]})
+    frozen = copy.deepcopy(current)
+    prepared = prepare_node_delete(current, "f", {"point": [1, 0]})
+    with pytest.raises(vol.Invalid):
+        CONFIG_SCHEMA(prepared.candidate)
+    assert current == frozen
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda item: item["name"])
@@ -101,3 +115,54 @@ def test_issue_1045_room_corner_and_shared_ownership_inverse():
         for old, new in zip(before["spaces"][0]["rooms"], after["spaces"][0]["rooms"], strict=True):
             assert len(new["poly"]) == len(old["poly"]) - 1
             assert [1, 0] not in new["poly"]
+
+
+def test_issue_1075_current_target_proof_never_materializes_an_unchanged_other_floor(monkeypatch):
+    from custom_components.houseplan import wall_node_delete as kernel
+
+    current = fixture()
+    remote = commit_wall_segment_model({"spaces": [{"id": "other", "title": "Other", "view_box": [0, 0, 1, 1], "rooms": [
+        {"id": "untouched", "name": "Untouched", "area": None,
+         "poly": [[0, 0], [1, 0], [1, 1], [0, 1]], "future": {"keep": True}}
+    ]}]})[0]["spaces"][0]
+    current["spaces"].append(remote)
+    original = copy.deepcopy(current)
+    materialized = []
+    commit = kernel.commit_wall_segment_model
+
+    def observe(config, **kwargs):
+        materialized.append([space["id"] for space in config.get("spaces", [])])
+        return commit(config, **kwargs)
+
+    monkeypatch.setattr(kernel, "commit_wall_segment_model", observe)
+    prepared = prepare_node_delete(current, "f", {"point": [1, 0]})
+    candidate = CONFIG_SCHEMA(prepared.candidate)
+    calls_before_host = copy.deepcopy(materialized)
+    validate_partition_opening_hosts(candidate, prepared.host_baseline(candidate))
+    assert materialized == calls_before_host, "host lineage shares the already prepared source"
+    assert len(materialized) == 2 and all(ids == ["f"] for ids in materialized)
+    inverse = prepare_node_delete(candidate, "f", {"point": [1, 0]}, "undo", current["spaces"][0])
+    validate_partition_opening_hosts(inverse.candidate, inverse.host_baseline(inverse.candidate))
+    assert inverse.candidate == original
+    assert all(ids == ["f"] for ids in materialized)
+    assert current == original and candidate["spaces"][1] == remote
+
+
+def test_issue_1075_legacy_basis_still_materializes_the_full_document(monkeypatch):
+    from custom_components.houseplan import wall_node_delete as kernel
+
+    current = fixture()
+    current["model_version"] = 7
+    current["spaces"].append({"id": "legacy-other", "rooms": [{"id": "r", "poly": [[0, 0], [1, 0], [0, 1]]}]})
+    calls = []
+    commit = kernel.commit_wall_segment_model
+
+    def observe(config, **kwargs):
+        calls.append([space["id"] for space in config.get("spaces", [])])
+        return commit(config, **kwargs)
+
+    monkeypatch.setattr(kernel, "commit_wall_segment_model", observe)
+    prepared = prepare_node_delete(current, "f", {"point": [1, 0]})
+    assert calls[0] == ["f", "legacy-other"]
+    assert prepared.candidate["model_version"] == 10
+    assert prepared.candidate["spaces"][1]["wall_segments"]

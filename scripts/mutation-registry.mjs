@@ -13551,9 +13551,9 @@ const MUTANT_DEFINITIONS = [
     because: 'Undo and Redo are a separate structural writer family; restoring a snapshot '
       + 'without rebuilding v8 references can persist stale room and opening identities (#282)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '      committedCandidate = commitWallSegmentModel(restoredCandidate).config;',
-      replace: '      committedCandidate = restoredCandidate;',
+      file: 'src/houseplan-editor-runtime.ts',
+      find: 'else committedCandidate = commitWallSegmentModel(restoredCandidate).config;',
+      replace: 'else committedCandidate = restoredCandidate;',
     }],
   },
   {
@@ -21555,6 +21555,33 @@ const decorGroup1038Cases = [
       replace:"const touchedOpacity = Object.prototype.hasOwnProperty.call(patch, 'opacity') || Object.prototype.hasOwnProperty.call(patch, 'color');"}]},
 ];
 
+const editorLatency1075Cases = [
+  {id:'decor-history-rebuilds-physical-walls-1075', guard:compiledNodeSmoke('smoke_editor_command_latency'),
+    because:'#1075 AC8: native furniture Undo/Redo must preserve warm structural cache builds and identical cold-reference SVG; a pure helper cannot prove the mounted history caller uses it.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',
+      find:'const decorOnly = !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);',
+      replace:'const decorOnly = false && !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);'}]},
+  {id:'decor-history-physical-delta-ignored-1075',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/decor-history-restore.test.mjs',
+    because:'#1075 AC8: changed walls, stairs, transforms and unknown non-decor fields must retain the strict restore lane.',
+    patches:[{file:'src/decor-history-restore.ts',
+      find:'|| contentFingerprint(withoutDecor(before)) !== contentFingerprint(withoutDecor(target))',replace:'|| false'}]},
+  {id:'node-delete-repeated-opening-proof-1075',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-node-delete-menu.test.mjs',
+    because:'#1075 AC3: an unchanged frozen menu source is proved once, not again when choosing its command.',
+    patches:[{file:'src/wall-node-delete-menu.ts',find:'      void this.write(menu);',replace:'      this.reason(menu); void this.write(menu);'}]},
+  {id:'node-delete-materializes-foreign-floors-1075',
+    guard:'node scripts/backend-test-guard.mjs current_target_proof tests_backend/test_wall_node_delete.py',
+    because:'#1075 AC5: passive accounting of the original materializer must see only the selected current floor, not unchanged foreign floors.',
+    patches:[{file:'custom_components/houseplan/wall_node_delete.py',find:'            return baseline, True',
+      replace:'            return commit_wall_segment_model(current)[0], False'}]},
+  {id:'node-delete-stale-junction-baseline-1075',
+    guard:'node scripts/backend-test-guard.mjs exact_revision_authority tests_backend/test_ha_wall_node_delete.py',
+    because:'#1075 AC6: authenticated writes must recompute a missing/stale junction baseline rather than trusting a different revision.',
+    patches:[{file:'custom_components/houseplan/websocket_api.py',
+      find:'inherited[1] if inherited and inherited[0] == rev else None',replace:'inherited[1] if inherited else None'}]},
+];
+
 const decorStyle1071Cases = [
   {
     id: 'decor-colour-rebuilds-physical-walls-1071',
@@ -21615,7 +21642,7 @@ const roomContact1061Cases = [
   },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases].map((mutant) => ({
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

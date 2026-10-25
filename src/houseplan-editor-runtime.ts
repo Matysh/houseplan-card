@@ -57,6 +57,7 @@ import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './
 import { isGeometryCleanupRefusal, supersedeDeferredWrite } from './config-adoption';
 import type { WallNodeEditor } from './wall-node-editor';
 import { type SpaceGeometryState, nodeHistoryNext } from './geometry-history-state';
+import { restoreDecorOnlyHistory } from './decor-history-restore';
 import { type HistoryApply, historyUnfit, runOrdinaryHistory } from './geometry-history-step';
 import { PhysicalWriteHistory, physicalHistoryChanged, physicalRollbackState } from './physical-write-history';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
@@ -1069,13 +1070,13 @@ export class HouseplanEditorRuntime {
     >();
   }
   private _renderWallNodes(): TemplateResult | typeof nothing {
-    if (this.host._mode !== 'plan' || this.host._tool !== 'select' || !this.host._canEdit || this.host._kiosk) {
+    if (this.host._mode !== 'plan' || !this.host._canEdit || this.host._kiosk) {
       this.nodeMove?.cancel(); return nothing;
     }
     this._loadNodeMove();
     return this.nodeMove?.render() || nothing;
   }
-  /** Select, or a node command of the shared history (#843), loads the node subsystem. */
+    /** Writer-only Plan tools expose node menus; handles still require Select. */
   private _loadNodeMove(): void {
     if (this.nodeMove || this._nodeMoveLoad) return;
     const epoch = this._nodeMoveEpoch;
@@ -2341,7 +2342,10 @@ public _applyGeometryState(
       const target = this._canonicalWallChainHistoryState(state);
       if (target === 'state') return target;
       before = this._geometrySnapshot(target.spaceId);
-      if (!before || !this._restoreGeometryStateLocal(target)) return 'space';
+      if (!before) return 'space';
+      const decorOnly = !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);
+      if (decorOnly) host._cfgEpoch++;
+      else if (!this._restoreGeometryStateLocal(target)) return 'space';
       const restoredCandidate = config;
       const physicalChanged = spacePhysicalGeometryFingerprint(before)
         !== spacePhysicalGeometryFingerprint(target);
@@ -2359,14 +2363,15 @@ public _applyGeometryState(
       if (physicalChanged && verdict(restoredCandidate) === null) return unsafe();
       let committedCandidate: ServerConfig;
       try {
-        committedCandidate = commitWallSegmentModel(restoredCandidate).config;
+        if (decorOnly) committedCandidate = restoredCandidate;
+        else committedCandidate = commitWallSegmentModel(restoredCandidate).config;
       } catch (error) {
         if (!(error instanceof WallSegmentModelError)) throw error;
         return unsafe();
       }
       const strict = physicalChanged ? verdict(committedCandidate) : true;
       if (strict === null) return unsafe();
-      adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
+      if (!decorOnly) adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
       if (physicalChanged) {
         const afterSpace = restoredCandidate.spaces.find((space) => space.id === target.spaceId);
         const pending = host._pendingPhysicalWrites.get(target.spaceId);
@@ -2379,8 +2384,7 @@ public _applyGeometryState(
       this._showGeometrySpace(target.spaceId, !!host._activeWallChainId && host._space === target.spaceId);
       host._modelCache = null;
       host._frame = null;
-      host._regSignature = '';
-      host._maybeRebuildDevices();
+      if (!decorOnly) { host._regSignature = ''; host._maybeRebuildDevices(); }
     } catch {
       // Unexpected: no proof of unfitness. Local changes and the floor go back to the baseline.
       if (before) this._restoreGeometryStateLocal(before);

@@ -51,6 +51,7 @@ test('#1045 chosen action outlives normal menu retirement, sends once and record
   const s = setup(t), original = structuredClone(s.config()); s.open();
   const owner = s.menu.menu; assert.equal(owner.reason, null);
   s.menu.choose(owner);
+  assert.equal(s.validations.length, 1, '#1075 unchanged opening proof is not built a second time');
   assert.equal(s.menu.menu, null); assert.equal(s.current(), true, 'writer guard is the chosen intent, not isOpen');
   assert.equal(s.busy(), true); assert.equal(s.writes.length, 1); assert.equal(s.records.length, 0);
   assert.deepEqual(s.config(), original, 'no optimistic geometry');

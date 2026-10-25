@@ -15,6 +15,22 @@ Flat/2.5D/static Glow and LED, oblique/partition hosts and an exterior source.
 host negatives and the static retained-index case. These are ordinary inputs;
 mutation declarations are checked statically and run only nightly.
 
+## Editor command latency (#1075)
+
+Use `node demo/smoke_wall_node_delete.mjs` for native right-click ownership,
+all Plan tools (including cold non-Select entry), safe delete/inverse and
+stale/permission/field guards. `node demo/smoke_editor_command_latency.mjs`
+uses actual palette placement, keyboard/toolbar history, stored config, SVG
+and cold reload. Its strict oracle is zero unrelated structural cache builds,
+not a hardware-specific frame-time threshold. Prepare test-build and the
+normal fresh demo bundle first. Python:
+`python -m pytest tests_backend/test_wall_node_delete.py tests_backend/test_ha_wall_node_delete.py -q`.
+The separate authenticated diagnostic `test_ha_editor_command_latency.py -q -s`
+records one cold and five warm apply/inverse samples, delegating every observed
+validator, lock, executor and Store unchanged. See the
+[phase report](testing-notes/1075-editor-command-latency.md) for boundaries and
+before/after results. No private HA plan or production deployment is needed.
+
 ## Background group-style latency (#1071)
 
 The sidebar's colour preview was already immediate; confirming it on a dense

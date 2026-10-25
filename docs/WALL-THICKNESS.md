@@ -22,7 +22,13 @@ enlarges join epsilon or changes the physical union. Every genuine area-bearing
 ring, including thin holes, remains in the evenodd path. The exact smooth
 three-partition fixture is shared by unit, native-browser and golden evidence.
 
-### Select node deletion (#1045)
+### Plan node deletion (#1045/#1075)
+
+The native right-click menu is available with every idle Plan tool, including
+before Select has ever been used. It does not change the selected tool or
+enable moving nodes outside Select. Existing chain, Properties field, dialog,
+transition, writer and touch-tail guards remain. One frozen menu source is
+proved once; queued dispatch still checks the exact floor/revision/authority.
 
 A deletion joins two endpoint sections of one physical kind, retaining the
 lexically first existing ID and its orientation. Structural ray valence must
@@ -46,6 +52,12 @@ ACL/CAS/write lock, schema, opening and junction validators. Deletion uses the
 same serialized writer and 50-command history as node movement. Its refused
 inverse preserves both the command and cursor; existing Move refusal semantics
 remain operation-specific.
+
+For a fully materialized current document the server prepares only the selected
+floor and reuses that source for host proof. Legacy documents retain whole-model
+materialization; full-result schema, transition, opening and junction validation
+is not bypassed. Only an exact-revision junction baseline may be reused, and
+the next baseline is published after durable success (#1075).
 
 ### Select node movement (#803)
 

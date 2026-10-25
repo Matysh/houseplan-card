@@ -44,6 +44,12 @@ export const SMOKE_LINKS = [
     because: '#1076: native SVG stroke/fill, real free cap, zoom/pan/reopen and iso projection distinguish a numerical seam from unchanged hatch and preserve ordinary junctions.',
   },
   {
+    files: ['src/decor-history-restore.ts'],
+    symbols: ['_applyGeometryState'],
+    smokes: ['smoke_editor_command_latency.mjs'],
+    because: '#1075 AC7/8: native furniture placement, toolbar/keyboard Undo/Redo and cold reload check saved/painted objects and zero unrelated structural cache builds without naming the restore helper.',
+  },
+  {
     files: ['src/wall-face-graph.ts'],
     smokes: ['smoke_room_contact_grid.mjs','smoke_wall_face_lineage.mjs',
       'smoke_wall_face_room_split.mjs','smoke_wall_face_overlap.mjs','smoke_room_autoclose.mjs'],

@@ -57,6 +57,8 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
   // #843: a writer may apply node history in Plan/Background with any tool;
   // capture and handles additionally require Plan/Select.
   const writer = () => host._canEdit && !host._kiosk && host.isConnected;
+  const planWriter = () => host._mode === 'plan' && writer();
+  const deleteEnabled = () => planWriter() && host.hass.connection?.connected !== false && !callbacks.delete?.blocked();
   const api = () => host._haWallNodeMoveApi === 1;
   const context = () => {
     const result = { enabled: host._mode === 'plan' && host._tool === 'select' && writer(),
@@ -80,9 +82,9 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
       accept: authority,
     } : null);
   };
-  const validate = (space: NodeMoveSpace, before: NodeMoveSpace, supported: boolean): boolean => {
+  const validate = (space: NodeMoveSpace, before: NodeMoveSpace, supported: boolean, deleting = false): boolean => {
     const ctx = context(), authority = host._serverCfg;
-    if (!ctx.enabled || !supported || !authority) { retire(); return false; }
+    if (!(deleting ? deleteEnabled() : ctx.enabled) || !supported || !authority) { retire(); return false; }
     try {
       const [localBefore, localNext] = nodeMoveLocalSpaces(before, space);
       const config = { ...authority, spaces: [localNext] };
@@ -152,12 +154,12 @@ export function createWallNodeEditor<TState extends { nodeMove?: NodeCommandHist
     holds: basis => nodeBasisHolds(host, basis),
     record: (beforeSpace, afterSpace, intent) => recordCommand({ beforeSpace, intent, direction: 'apply' }, afterSpace),
     delete: callbacks.delete ? {
-      context: () => ({ ...context(), enabled: context().enabled && host.hass.connection?.connected !== false && !callbacks.delete!.blocked(),
+      context: () => ({ ...context(), enabled: deleteEnabled(),
         api: host._haWallNodeDeleteApi === 1 }),
       navigation: callbacks.delete.navigation, beforeIntent: callbacks.delete.beforeIntent,
       claim: () => host._configWriteGuard(), epoch: () => nodeAdoptionEpoch(host),
       basis: space => nodeWriteBasis(host, space),
-      validate: (space, before) => validate(space, before, host._haWallNodeDeleteApi === 1),
+      validate: (space, before) => validate(space, before, host._haWallNodeDeleteApi === 1, true),
       write, record: recordCommand,
     } : undefined,
     history: direction => runNodeHistory<TState>({

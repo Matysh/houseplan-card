@@ -46,9 +46,11 @@ The toolbar palette always sets creation defaults, including with a group
 selected; existing objects are edited through Properties. Applying their
 colour/opacity must not rebuild physical walls or light barriers (#1071).
 Structural floor fingerprints exclude decor; complete configuration/history
-fingerprints still include every annotation. Undo may explicitly retire caches
-under its existing conservative restore contract; its resulting walls remain
-identical to a cold card.
+fingerprints still include every annotation. Current-model decor-only Undo/Redo
+also retains unchanged physical records and their caches (#1075). The actual
+before/target snapshots must agree on every other field, without node, chain,
+room-reference effects or pending physical writes. Mixed/legacy steps still
+use the conservative structural restore; resulting walls match a cold card.
 
 The trash tool is **Delete** (#976), with a32px arrow/cross cursor (hotspot2,2)
 also over transparent decor hit shapes. It retains confirmation and named

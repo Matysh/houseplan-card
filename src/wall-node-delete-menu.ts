@@ -120,8 +120,8 @@ export class WallNodeDeleteMenu {
     this.presentation.retire(); this.menu = null; this.intent = menu; this.listen(); this.port.changed();
     const send = (): void => {
       if (this.intent !== menu || !this.current(menu, true) || this.port.busy()) return;
-      const reason = this.reason(menu);
-      if (reason) { this.cancel(); this.port.toast(this.port.text(reason), reason); return; }
+      // Opening already proved this immutable source. current(strict) above
+      // checks its config identity/revision/authority before reusing that proof.
       void this.write(menu);
     };
     if (this.port.beforeIntent(send)) send();

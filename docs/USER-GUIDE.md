@@ -1012,7 +1012,7 @@ of saving an unsupported edit.
 
 #### Deleting a wall node
 
-In the Plan editor with **Select**, right-click an intermediate node and choose
+In the Plan editor with any selected tool, right-click an intermediate node and choose
 **Delete node**. Its two neighbouring sections become one straight wall between
 their unchanged outer endpoints. A safe corner is supported too: the room
 boundary follows the new straight span. A shared wall counts once regardless

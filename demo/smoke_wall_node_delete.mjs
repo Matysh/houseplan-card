@@ -78,7 +78,7 @@ await page.exposeFunction('nodeDeleteWire', async message => {
   server = commitWallSegmentModel({ ...server, spaces }).config;
   return { ok: true, config: clone(server), rev: ++revision };
 });
-const boot = async (options = {}, editor = true) => {
+const boot = async (options = {}, editor = true, select = true) => {
   await page.evaluate(async options => {
     const previous = window.__card, hass = window.__mkHass(), base = hass.callWS.bind(hass);
     const connection = hass.connection, listeners = new Set();
@@ -101,11 +101,13 @@ const boot = async (options = {}, editor = true) => {
   }, options);
   await page.waitForFunction(() => !window.__card._booting && window.__card._model?.some(space => space.id === 'delete-floor'));
   if (!editor) return;
-  await page.evaluate(async () => {
+  await page.evaluate(async select => {
     if (window.__card._space !== 'delete-floor') await window.__hpTest.switchSpace('delete-floor');
-    await window.__hpTest.setMode('plan'); await window.__hpTest.setTool('select');
-  });
-  await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card.renderRoot.querySelector('.hp-node-handle'));
+    await window.__hpTest.setMode('plan');
+    if (select) await window.__hpTest.setTool('select');
+  }, select);
+  await page.waitForFunction(() => !window.__card._modeTransitionBusy && window.__card._editorRuntime.nodeMove);
+  if (select) await card.locator('.hp-node-handle').first().waitFor();
 };
 const card = page.locator('houseplan-card'), menu = card.locator('[data-hp="node-context-menu"]:not([inert])');
 const action = () => menu.locator('[data-action="node-delete"]');
@@ -139,6 +141,44 @@ const emit = async () => {
 };
 
 try {
+  // #1075: cold entry never visits Select. Every tool is chosen through the
+  // same public toolbar/group controls, not by changing private tool state.
+  server = clone(initial);
+  Object.assign(server.spaces[0], { rooms: [], partitions: [], openings: [], wall_segments: [] });
+  await boot({}, true, false);
+  check('delete.tools.cold_entry.is_Walls_not_Select', await page.evaluate(() => window.__card._tool), 'draw');
+  // Ordinary external adoption supplies geometry while the manually selected
+  // Walls tool remains active. This is fixture delivery, not a private mode set.
+  server = clone(initial); revision++; await emit();
+  check('delete.tools.cold_adoption.retains_Walls', await page.evaluate(() => window.__card._tool), 'draw');
+  const tools = [
+    ...['draw', 'column', 'wall-thickness'].map(id => ({ id })),
+    ...['window', 'door', 'passage', 'gate'].map(id => ({ id, group: 'opening' })),
+    ...['merge', 'split', 'resize', 'delroom'].map(id => ({ id, group: 'rooms' })),
+    ...['straight', 'spiral'].map(id => ({ id, group: 'stairs' })),
+  ];
+  for (const tool of tools) {
+    if (tool.group) {
+      await card.locator(`[data-editor-group="${tool.group}"]`).click();
+      await card.locator(`[data-group-item="${tool.id}"]`).click();
+    } else await card.locator(`[data-hp="tool"][data-tool="${tool.id}"]`).click();
+    const selected = await page.evaluate(() => window.__card._tool), before = await state();
+    await open([.4, .3]);
+    check(`delete.tools.${tool.id}.enabled_without_Select`, await action().isEnabled());
+    check(`delete.tools.${tool.id}.no_move_handles`, await card.locator('.hp-node-handle').count(), 0);
+    const moved = await screen([.6, .5]); await page.mouse.move(moved.x, moved.y); await settled();
+    const after = await state();
+    check(`delete.tools.${tool.id}.no_placement_pan_history_or_write`,
+      [after.config, after.history, after.view, after.zoom, after.pan, after.dragging, writes.length],
+      [before.config, before.history, before.view, before.zoom, false, false, 0]);
+    check(`delete.tools.${tool.id}.selected_tool_retained`, await page.evaluate(() => window.__card._tool), selected);
+    await page.keyboard.press('Escape'); await noMenu();
+  }
+  // A real non-Select command still goes through ACK/history, not only the menu.
+  await card.locator('[data-hp="tool"][data-tool="column"]').click();
+  await open([.4, .3]); await action().click(); await settled();
+  check('delete.tools.column.accepts_one_command', [deleteWrites().length, (await state()).history], [1, 1]);
+  await reset();
   await boot();
   const before = await state(), original = clone(server);
   const door = card.locator('[data-hp="opening"][data-id="door"]'), doorBefore = await door.boundingBox();

@@ -3,11 +3,16 @@ from __future__ import annotations
 
 import copy
 import math
+from dataclasses import dataclass
 from typing import Any
 
 from . import wall_node_move as graph
 from .coordinate_canonicalization import canonicalize_config_geometry
-from .wall_segment_model import _wall_key, commit_wall_segment_model
+from .wall_segment_model import (
+    WALL_SEGMENT_MODEL_VERSION,
+    _wall_key,
+    commit_wall_segment_model,
+)
 
 EPS = 1e-9
 
@@ -233,33 +238,87 @@ def delete_node_space(source: dict[str, Any], intent: dict[str, Any]) -> dict[st
     return out
 
 
-def node_delete_candidate(current: dict[str, Any], space_id: str, intent: dict[str, Any],
-                          direction: str = "apply", before_space: dict[str, Any] | None = None) -> dict[str, Any]:
-    baseline, _ = commit_wall_segment_model(current)
+def _materialize_space(config: dict[str, Any], space: dict[str, Any]) -> dict[str, Any]:
+    return commit_wall_segment_model({"model_version": config.get("model_version", 0), "spaces": [space]})[0]["spaces"][0]
+
+
+def _current_basis(current: dict[str, Any], space_id: str) -> tuple[dict[str, Any], bool]:
+    """Local proof only for an already materialized current document.
+
+    Schema/transition validation still judges the complete result at the writer.
+    Legacy carriers retain the old whole-document materialization path.
+    """
+    baseline = canonicalize_config_geometry(copy.deepcopy(current))
+    spaces = baseline.get("spaces") or []
+    if baseline.get("model_version") == WALL_SEGMENT_MODEL_VERSION and all(
+        isinstance(s.get("wall_segments"), list) and "room_drafts" not in s and "open_spans" not in s
+        and all("open_to" not in r and isinstance(r.get("wall_ids"), list) for r in s.get("rooms") or [])
+        for s in spaces
+    ):
+        source = next((s for s in spaces if s.get("id") == space_id), None)
+        if source is not None and _equal(_materialize_space(baseline, source), source):
+            return baseline, True
+    return commit_wall_segment_model(current)[0], False
+
+
+def _replace_space(baseline: dict[str, Any], space_id: str, space: dict[str, Any], local: bool) -> dict[str, Any]:
+    result = copy.deepcopy(baseline)
+    for index, stored in enumerate(result["spaces"]):
+        if stored["id"] == space_id:
+            result["spaces"][index] = _materialize_space(baseline, space) if local else copy.deepcopy(space)
+    return canonicalize_config_geometry(result) if local else commit_wall_segment_model(result)[0]
+
+
+@dataclass(frozen=True)
+class PreparedNodeDelete:
+    """One immutable source shared by the candidate and independent host proof."""
+
+    current: dict[str, Any]
+    candidate: dict[str, Any]
+    space_id: str
+    intent: dict[str, Any]
+    direction: str
+    before_space: dict[str, Any] | None
+
+    def host_baseline(self, checked: dict[str, Any]) -> dict[str, Any]:
+        return _host_baseline(self.current, checked, self.space_id, self.intent, self.direction, self.before_space)
+
+
+def prepare_node_delete(current: dict[str, Any], space_id: str, intent: dict[str, Any],
+                        direction: str = "apply", before_space: dict[str, Any] | None = None) -> PreparedNodeDelete:
+    baseline, local = _current_basis(current, space_id)
     source = next((s for s in baseline.get("spaces", []) if s["id"] == space_id), None)
     if source is None or direction not in {"apply", "undo"}:
         raise NodeDeleteError()
     if direction == "undo":
         if before_space is None or before_space.get("id") != space_id:
             raise NodeDeleteError()
-        proof = copy.deepcopy(baseline)
         forward = delete_node_space(before_space, intent)
-        proof["spaces"] = [forward if s["id"] == space_id else s for s in proof["spaces"]]
-        proof, _ = commit_wall_segment_model(proof)
+        proof = _replace_space(baseline, space_id, forward, local)
         if not _equal(canonicalize_config_geometry(proof), canonicalize_config_geometry(baseline)):
             raise NodeDeleteError()
-        baseline["spaces"] = [copy.deepcopy(before_space) if s["id"] == space_id else s for s in baseline["spaces"]]
+        target = before_space
     else:
-        baseline["spaces"] = [delete_node_space(source, intent) if s["id"] == space_id else s for s in baseline["spaces"]]
-    candidate, _ = commit_wall_segment_model(baseline)
-    return candidate
+        target = delete_node_space(source, intent)
+    return PreparedNodeDelete(baseline, _replace_space(baseline, space_id, target, local), space_id,
+                              copy.deepcopy(intent), direction, copy.deepcopy(before_space))
+
+
+def node_delete_candidate(current: dict[str, Any], space_id: str, intent: dict[str, Any],
+                          direction: str = "apply", before_space: dict[str, Any] | None = None) -> dict[str, Any]:
+    return prepare_node_delete(current, space_id, intent, direction, before_space).candidate
 
 
 def node_delete_host_baseline(current: dict[str, Any], candidate: dict[str, Any], space_id: str,
                               intent: dict[str, Any], direction: str = "apply",
                               before_space: dict[str, Any] | None = None) -> dict[str, Any]:
     """Derive allowed IDs from original carriers, never candidate-supplied IDs."""
-    current, _ = commit_wall_segment_model(current)
+    return _host_baseline(_current_basis(current, space_id)[0], candidate, space_id, intent, direction, before_space)
+
+
+def _host_baseline(current: dict[str, Any], candidate: dict[str, Any], space_id: str,
+                   intent: dict[str, Any], direction: str,
+                   before_space: dict[str, Any] | None) -> dict[str, Any]:
     old_spaces = {s["id"]: s for s in current.get("spaces", [])}
     new_spaces = {s["id"]: s for s in candidate.get("spaces", [])}
     source = before_space if direction == "undo" else old_spaces.get(space_id)

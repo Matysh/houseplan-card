@@ -155,8 +155,7 @@ from .virtual_lights import (
 )
 from .wall_node_delete import (
     NodeDeleteError,
-    node_delete_candidate,
-    node_delete_host_baseline,
+    prepare_node_delete,
 )
 from .wall_node_move import NodeMoveError, node_move_candidate, node_move_host_baseline
 from .wall_segment_model import (
@@ -2255,17 +2254,19 @@ async def ws_wall_node_delete(hass: HomeAssistant, connection, msg: dict[str, An
         previous = data.get("config", {})
 
         def _validate_delete_cpu():
-            candidate = node_delete_candidate(previous, msg["space_id"], msg["intent"],
-                                              msg["direction"], msg.get("before_space"))
+            prepared = prepare_node_delete(previous, msg["space_id"], msg["intent"],
+                                           msg["direction"], msg.get("before_space"))
+            candidate = prepared.candidate
             validate_wall_model_transition(candidate, previous)
             candidate = CONFIG_SCHEMA(candidate)
             validate_opening_passages(candidate, previous)
             # Original carrier IDs authorize the local rehost; candidate IDs
             # do not grant themselves authority. Ordinary strict jambs remain.
-            baseline = node_delete_host_baseline(previous, candidate, msg["space_id"],
-                msg["intent"], msg["direction"], msg.get("before_space"))
+            baseline = prepared.host_baseline(candidate)
             validate_partition_opening_hosts(candidate, baseline)
-            counts = validate_junction_limits(candidate, previous)
+            inherited = rt.junction_baseline
+            counts = validate_junction_limits(candidate, previous, baseline_counts=(
+                inherited[1] if inherited and inherited[0] == rev else None))
             return candidate, counts
 
         try:
