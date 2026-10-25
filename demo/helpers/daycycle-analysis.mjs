@@ -17,8 +17,9 @@ export function analyzeDaycycleSample(sample) {
   if (frames.length !== sample.steps * 2 || frames.some((row, index) =>
     row.step !== Math.floor(index / 2) + 1 || row.raf !== index % 2 + 1
     || !Number.isFinite(row.timestamp) || (row.raf === 2 && (!Array.isArray(row.geometry)
-      || !row.geometry.some(node => node.role === 'plan')
-      || (sample.mode === 'daynight' && !row.geometry.some(node => node.role === 'outline')))))) problems.push('two-rAF observations incomplete');
+      || !row.geometry.some(node => node.role === 'plan' && node.connected === true && node.inRoot === true)
+      || (sample.mode === 'daynight' && !row.geometry.some(node => node.role === 'outline'
+        && node.connected === true && node.inRoot === true)))))) problems.push('two-rAF observations incomplete');
   const viewBoxWrites = role => page.mutations.filter(row => row.role === role && row.attribute === 'viewBox');
   const outline = viewBoxWrites('outline'), plan = viewBoxWrites('plan');
   const alignment = diagnostic.clockAlignment;

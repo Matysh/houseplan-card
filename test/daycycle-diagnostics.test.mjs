@@ -10,7 +10,7 @@ import { pairedMeasurementReport, DAYCYCLE_FIXTURE } from '../demo/helpers/daycy
 function pageFixture() {
   const listeners = new Map(), scheduled = [], marks = new Map();
   let now = 10, observer, writes = 0;
-  const node = attributes => ({ attributes: new Map(Object.entries(attributes)),
+  const node = attributes => ({ isConnected: true, attributes: new Map(Object.entries(attributes)),
     getAttribute(name) { return this.attributes.get(name) ?? null; },
     setAttribute() { writes++; throw new Error('observer cannot write product DOM'); },
     addEventListener(type, fn, options) { assert.equal(options.passive, true); listeners.set(type, fn); },
@@ -19,7 +19,8 @@ function pageFixture() {
     outline = node({ viewBox: '0 0 100 100', 'data-hp-live-viewbox': 'floor' });
   const selectors = new Map([['.stage', stage], ['.hp-paperg', paper], ['.plan-svg', plan], ['.hp-paper-outline-svg', outline]]);
   const context = vm.createContext({
-    window: { __card: { shadowRoot: { querySelector: selector => selectors.get(selector),
+    window: { __card: { shadowRoot: { contains: node => [...selectors.values()].includes(node),
+      querySelector: selector => selectors.get(selector),
       querySelectorAll: () => [plan, outline] } } },
     performance: { now: () => now++, mark: name => marks.set(name, now++),
       getEntriesByName: name => [{ startTime: marks.get(name) }], clearMarks: name => marks.delete(name) },
@@ -55,6 +56,7 @@ test('#1066 page observer retains actual native inputs and DOM values without wr
   assert.equal(data.pointers[0].trusted, true);
   assert.deepEqual(Array.from(data.frames, row => row.raf), [1, 2]);
   assert.equal(data.frames[1].geometry.find(row => row.role === 'outline').attributes.viewBox, '1 2 100 100');
+  assert.equal(data.frames[1].geometry.find(row => row.role === 'outline').connected, true);
   assert.equal(data.mutations[0].oldValue, '0 0 100 100');
   assert.equal(data.mutations[0].valueAtDelivery, '1 2 100 100');
   assert.equal(f.writes, 0);
@@ -176,7 +178,8 @@ const observedReport = () => {
     row.diagnostics = { page: { marker: 'own', markerAt: 1, stoppedAt: 3050, overheadMs: .2,
       pointers: Array.from({ length: 60 }, (_, step) => ({ type: 'pointermove', at: step * 50, buttons: 1, trusted: true })),
       frames: Array.from({ length: 120 }, (_, index) => ({ step: Math.floor(index / 2) + 1,
-        raf: index % 2 + 1, timestamp: index * 25, geometry: [{ role: 'plan' }, { role: 'outline' }] })),
+        raf: index % 2 + 1, timestamp: index * 25,
+        geometry: [{ role: 'plan', connected: true, inRoot: true }, { role: 'outline', connected: true, inRoot: true }] })),
       mutations: Array.from({ length: 30 }, (_, index) => ({ role: 'outline', attribute: 'viewBox', observedAt: index * 100 })),
     }, clockAlignment: { status: 'available', traceOriginMicros: 0 }, rasterCpuClock: 'unavailable',
     layers: { status: 'available', events: [{ layers: [{ layerId: '7', backendNodeId: 9 }] }] },
@@ -205,7 +208,9 @@ test('#1066 observed evidence reports input/refresh clocks and every task withou
 
 test('#1066 absent trust, missing frames/geometry and clock provenance remain incomplete/unknown', () => {
   for (const edit of [r => { r.pointers[0].trusted = false; }, r => r.pointers.pop(),
-    r => r.frames.pop(), r => { r.frames[1].geometry = []; }]) {
+    r => r.frames.pop(), r => { r.frames[1].geometry = []; },
+    r => { r.frames[1].geometry[0].connected = false; },
+    r => { r.frames[1].geometry[1].inRoot = false; }]) {
     const report = observedReport(); edit(report.dayCycleSamples[0].diagnostics.page);
     assert.equal(analyzeDaycycleReport(report).samples[3].status, 'incomplete');
   }

@@ -12,6 +12,7 @@ export function installDaycycleObservation({ marker }) {
   }
   const attributes = ['viewBox', 'transform', 'style', 'width', 'height', 'data-hp-live-viewbox'];
   const geometry = () => [...roles].map(([node, role]) => ({ role,
+    connected: node.isConnected, inRoot: root.contains(node),
     attributes: Object.fromEntries(attributes.map(name => [name, node.getAttribute(name)])) }));
   const data = { schema: 1, clock: 'page performance.now milliseconds', marker,
     installedAt: performance.now(), initial: geometry(), pointers: [], frames: [], mutations: [],

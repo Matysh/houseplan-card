@@ -332,11 +332,7 @@ c._drag = { id, sx, sy }; // private-ok: #NNN состояние жеста, о�
 
 `HP_SMOKE_CHECKS=1 node demo/smoke_<имя>.mjs` печатает в `finish()` список проверок; при переводе смока списки до/после сравнивают построчно.
 #863: LED state delivery наблюдает native active24 и отдельно поздний settled48 внутри браузера, без продления lease.
-Daycycle сохраняет все paired samples/RasterTask/env/SHA, проверяет readiness и прежний ratio≤2; `--report=artifacts/diagnostics/863/<name>.json` сохраняет JSON без перезаписи.
-Наблюдение #1066 сохраняет native input/rAF, фактические DOM-атрибуты камеры/контура,
-LayerTree и GPU/resource metadata; в CI standalone JSON сохраняется и при PASS.
-`node scripts/daycycle-compare.mjs LEFT.json RIGHT.json` сопоставляет неизменённые
-отчёты. Отсутствующие старые поля остаются неизвестными, исходный RED не меняется.
+Daycycle сохраняет все paired samples/RasterTask/env/SHA, проверяет readiness и прежний ratio≤2; `--report=artifacts/diagnostics/863/<name>.json` сохраняет JSON без перезаписи. Наблюдение input/rAF/DOM/layer/GPU и offline-сопоставление #1066: [DEVELOPMENT](DEVELOPMENT.md#daycycle-raster-observations-1066).
 
 ## Локальный набор перед пушем (#343)
 
