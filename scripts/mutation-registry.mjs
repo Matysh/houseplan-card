@@ -21447,6 +21447,17 @@ const decorGroup1038Cases = [
       replace:"const touchedOpacity = Object.prototype.hasOwnProperty.call(patch, 'opacity') || Object.prototype.hasOwnProperty.call(patch, 'color');"}]},
 ];
 
+const decorStyle1071Cases = [
+  {
+    id: 'decor-colour-rebuilds-physical-walls-1071',
+    guard: compiledNodeSmoke('smoke_decor_group_style_cache'),
+    because: '#1071 AC1/2: a native sidebar colour/alpha commit keeps warm structural builds and identical cold-reference walls; annotations never enter masonry keys.',
+    patches: [{file:'src/structural-space-record.ts',
+      find:"key !== 'decor' && !nonStructural.includes(key)",
+      replace:'!nonStructural.includes(key)'}],
+  },
+];
+
 const roomContact1061Cases = [
   {
     id: 'room-face-persists-topology-rounding-1061',
@@ -21496,7 +21507,7 @@ const roomContact1061Cases = [
   },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases].map((mutant) => ({
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

@@ -9,7 +9,6 @@ import type { DevItem, SpaceModel } from './types';
 import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DeviceHitController } from './device-hit-owner';
 import { floorGeometryKeyReader, type FloorKeySource } from './floor-geometry-key';
-import { contentFingerprint } from './visual-continuity';
 import type { HassRenderSnapshot } from './render-invalidation';
 
 interface ContactCard extends FloorKeySource {
@@ -53,20 +52,13 @@ export function contactValueFrameChanged(value:object,renderer:DeviceContactRend
 }
 const wallCache = new WeakMap<object, { key: string; walls: ReturnType<typeof deviceContactWalls>; masonry: ContactMasonry }>();
 const wallKeys = new WeakMap<object, (spaceId: string) => string>();
-// Decor never changes masonry. Keep every other current/model-record field,
-// including unknown compatible inputs, and the reader's epoch/identity rules.
-const withoutDecor = (record: unknown): unknown => record && typeof record === 'object' && !Array.isArray(record)
-  ? Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'decor')) : record;
-const wallFingerprint = (records: unknown): string => contentFingerprint(
-  Array.isArray(records) ? records.map(withoutDecor) : withoutDecor(records),
-);
 export function syncHouseplanDeviceContacts(value: object, renderer: DeviceContactRenderer): void {
   const host = value as ContactCard, space = host._spaceModel();
   if (host._deviceHits.contactGeometry !== renderer.hit) host._deviceHits.contactGeometry = renderer.hit;
   if (!space || host._renderProjection === 'iso') { renderer.clear(); return; }
   const visible = host._spaceDisplayForRender().showBorders || host._markup;
   let keyOf = wallKeys.get(host);
-  if (!keyOf) { keyOf = floorGeometryKeyReader(host, wallFingerprint); wallKeys.set(host, keyOf); }
+  if (!keyOf) { keyOf = floorGeometryKeyReader(host); wallKeys.set(host, keyOf); }
   const key = `${keyOf(space.id)}|${visible}`;
   let wall = wallCache.get(host);
   if (wall?.key !== key) {

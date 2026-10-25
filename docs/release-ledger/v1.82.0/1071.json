@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "issue": 1071,
+  "baseStable": "v1.82.0",
+  "category": "line-fix",
+  "rationale": "Repairs redundant physical-wall/light rebuilds when confirming Background multi-selection styles introduced by #1038 after stable v1.82.0. No new editing operation, configuration field or toolbar behavior.",
+  "summary": {
+    "ru": "Убрано подвисание из-за пересчёта неизменившихся стен при изменении цвета группы мебели через боковые свойства.",
+    "en": "Avoid redundant unchanged-wall rebuilds when applying furniture group styles through sidebar properties."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [],
+    "smokes": ["smoke_decor_group_style_cache.mjs", "smoke_decor_multiselect.mjs", "smoke_floor_geometry_cache.mjs", "smoke_floor_cache_reuse.mjs"]
+  }
+}

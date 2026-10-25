@@ -8,6 +8,7 @@
  */
 import { nothing, svg, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { structuralSpaceRecord } from './structural-space-record';
 import {
   lightPass, resolvedLightSources, selectSpatialGlowSource,
 } from './devices';
@@ -245,16 +246,11 @@ export function resolveGlowCandidates(input: {
   return result;
 }
 
-/** LED emitters do not change masonry; keep both shared-geometry tags aligned. */
+/** LED emitters and decor do not change masonry; keep shared-geometry tags aligned. */
 export function lightGeometryFingerprint(
   rawSpaceConfig: unknown, cellCm: number, gridPitch: number,
 ): string {
-  let geometry = rawSpaceConfig;
-  if (geometry && typeof geometry === 'object' && !Array.isArray(geometry)) {
-    const raw = geometry as Record<string, unknown>;
-    geometry = Object.fromEntries(Object.keys(raw)
-      .filter((key) => key !== 'led_strips').map((key) => [key, raw[key]]));
-  }
+  const geometry = structuralSpaceRecord(rawSpaceConfig, 'led_strips');
   return contentFingerprint([geometry, cellCm, gridPitch]);
 }
 

@@ -27,6 +27,47 @@ const spied = () => {
   return { calls, keyOf };
 };
 
+test('#1071 structural floor keys ignore decor, but generic config/area fingerprints do not', () => {
+  const floor = record('A');
+  const original = structuredClone(floor);
+  const source = { _cfgEpoch: 1, _renderCfg: { spaces: [floor] }, _curSpaceCfg: floor };
+  const reader = floorGeometryKeyReader(source), generic = floorRecordKeyMemo();
+  const key = reader('A'), configHash = contentFingerprint(floor);
+  const areaKey = generic(1, 'area', 'A', floor, floor);
+  for (const decor of [[], [{id:'a',kind:'furniture',color:'#123456',opacity:.3}],
+    [{id:'b',kind:'image',x:.2,y:.3,w:.4,h:.5,asset_id:'different'}],
+    [{id:'c',kind:'text',text:'Live {sensor.example}',x:.9,y:.7}]]) {
+    floor.decor = decor;source._cfgEpoch++;
+    assert.equal(reader('A'),key,'annotations cannot rebuild physical geometry');
+    assert.notEqual(contentFingerprint(floor),configHash,'the durable writer still sees every decor edit');
+    assert.notEqual(generic(source._cfgEpoch,'area','A',floor,floor),areaKey,'the generic memo remains full-record');
+  }
+  delete floor.decor;assert.deepEqual(floor,original,'key derivation never mutates caller data');
+  Object.defineProperty(floor,'decor',{enumerable:true,get(){throw new Error('must not visit annotation data');}});
+  source._cfgEpoch++;
+  assert.equal(reader('A'),key,'excluded data is not traversed or copied');
+});
+
+test('#1071 structural keys retain all non-decor fields and both model/current records', () => {
+  const floor = {...record('A'),future_geometry:{x:1},partitions:[],wall_segments:[],openings:[],
+    wall_columns:[],stairs:[],plan_scale:1,view_box:[0,0,1,1],settings:{},led_strips:[]};
+  const source = { _cfgEpoch: 1, _renderCfg: { spaces: [floor] }, _curSpaceCfg: floor };
+  const reader = floorGeometryKeyReader(source), original = reader('A');
+  for(const field of Object.keys(floor)) {
+    const changed = {...floor,[field]:['changed']};
+    source._curSpaceCfg=changed;source._cfgEpoch++;
+    assert.notEqual(reader('A'),original,`current ${field} must invalidate`);
+    source._curSpaceCfg=floor;source._renderCfg={spaces:[{...changed,id:'A'}]};source._cfgEpoch++;
+    if(field!=='id')assert.notEqual(reader('A'),original,`model ${field} must invalidate`);
+    source._renderCfg={spaces:[floor]};
+  }
+  source._curSpaceCfg=structuredClone(floor);source._cfgEpoch++;
+  const pair=reader('A');source._curSpaceCfg.decor=[{id:'new',color:'#abcdef'}];source._cfgEpoch++;
+  assert.equal(reader('A'),pair,'a distinct preview/current pair retains the annotation projection');
+  source._curSpaceCfg.rooms[0].poly[0][0]+=.01;source._cfgEpoch++;
+  assert.notEqual(reader('A'),pair,'in-place geometry with a new epoch is never stale');
+});
+
 test('#769 record key: one record is fingerprinted alone, two different objects together', () => {
   const { keyOf } = spied();
   const a = record('A');

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Avoid rebuilding unchanged walls and light barriers when applying furniture
+  group colour/opacity in Background properties. The toolbar palette remains
+  the default style for new objects, not a group editor. (#1071)
+
 ## v1.83.0-beta.2 — 2026-10-25
 
 - Create rooms from valid existing off-grid contours without moving their walls.

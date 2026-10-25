@@ -9,8 +9,9 @@
  * ≈0.6 s. A floor's geometry reads only its own config record (rooms, walls,
  * openings, partitions, columns, stairs, `cell_cm`, frame — `spaceModels`)
  * and constants, so the key is a content fingerprint of that record. It is
- * complete by construction: any change of the record is a new key, and an
- * edit of another floor cannot change it.
+ * complete for physical inputs: decor is annotation and is excluded (#1071);
+ * every other record field, including unknown ones, remains significant.
+ * An edit of another floor cannot change it.
  *
  * The geometry reads the model of the floor it is given next to the CURRENT
  * floor's config (`_curSpaceCfg`: walls, openings, `cell_cm`). Both come from
@@ -29,6 +30,7 @@ import { lruRead, lruWrite } from './card-runtime';
 import { lightGeometryFingerprint } from './glow-scene';
 import { roomPoly } from './logic';
 import { contentFingerprint } from './visual-continuity';
+import { structuralSpaceRecord } from './structural-space-record';
 
 /** The card members the key reads; the card passes itself. */
 export interface FloorKeySource {
@@ -77,11 +79,16 @@ export function floorRecordKeyMemo(
   };
 }
 
-/** A reader `spaceId → key`, remembered per epoch and per source record.
+const structuralFingerprint = (records: unknown): string => contentFingerprint(
+  Array.isArray(records) ? records.map(record => structuralSpaceRecord(record)) : structuralSpaceRecord(records),
+);
+
+/** A structural reader `spaceId → key`, excluding only decor by default,
+ * remembered per epoch and per source record.
  * A consumer may fingerprint a narrower, proved-independent projection;
  * both model/current records still enter that projection on a mismatch. */
 export function floorGeometryKeyReader(
-  source: FloorKeySource, fingerprint: (value: unknown) => string = contentFingerprint,
+  source: FloorKeySource, fingerprint: (value: unknown) => string = structuralFingerprint,
 ): (spaceId: string) => string {
   const keyOf = floorRecordKeyMemo(fingerprint);
   return (spaceId) => keyOf(

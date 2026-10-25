@@ -1,5 +1,25 @@
 # Development and deployment
 
+## Background group-style latency (#1071)
+
+The sidebar's colour preview was already immediate; confirming it on a dense
+floor invalidated structural caches because the floor key included decor.
+Do not reroute the toolbar creation palette to selection or mask this with a
+timer. `structural-space-record.ts` removes decor before hashing physical
+inputs; the shared light tag also keeps the prior LED exclusion. All other
+fields, model/current mismatches and epoch rules remain significant. Generic
+configuration fingerprints and history must still include decor.
+
+`demo/smoke_decor_group_style_cache.mjs` seeds a current canonical large-house
+plan, edits through native sidebar inputs, checks actual SVG, stored records,
+one-write/history, cold reload and build counters. It uses test-build only to
+arrange the current wall model before the scenario; run the normal test build
+first. Without this arrangement legacy fixture migration during Undo would be
+mistaken for a colour-edit regression. Timing is diagnostic, not a portable
+threshold: on the author's Windows host the next-frame pause fell from about
+380 ms to 58 ms, while network completion remains independent. The assertion
+is zero unrelated structural rebuilds, not those machine-specific milliseconds.
+
 ## Full-smoke CI capacity (#1064)
 
 The full browser suite keeps three deterministic shards and an independent

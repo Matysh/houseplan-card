@@ -15,7 +15,7 @@ const square = (id, x0, x1) => ({
   poly: [[x0, 0], [x1, 0], [x1, 100], [x0, 100]],
 });
 
-test('light geometry excludes only LED sources and never visits or mutates their data', () => {
+test('light geometry excludes LED sources and decor without visiting or mutating their data', () => {
   const geometry = Object.freeze({
     id: 's', rooms: Object.freeze([square('room', 0, 100)]),
     walls: [], wall_segments: [], openings: [], open_spans: [],
@@ -29,6 +29,15 @@ test('light geometry excludes only LED sources and never visits or mutates their
     get() { throw new Error('LED source data must not enter a masonry hash'); },
   }));
   assert.equal(lightGeometryFingerprint(raw, 5, 20), expected);
+  const annotated = Object.freeze(Object.defineProperty({ ...geometry }, 'decor', {
+    enumerable: true,
+    get() { throw new Error('decor must not enter a masonry hash'); },
+  }));
+  assert.equal(lightGeometryFingerprint(annotated, 5, 20), expected);
+  for (const decor of [[], [{id:'f',kind:'furniture',color:'#123456',opacity:.4}],
+    [{id:'t',kind:'text',text:'Changed',x:.3,y:.4}]]) {
+    assert.equal(lightGeometryFingerprint({ ...geometry, decor }, 5, 20), expected);
+  }
   assert.equal(raw.rooms, geometry.rooms, 'the caller-owned geometry is not cloned or mutated');
   for (const led_strips of [[], [{ id: 'a', points: [[0, 0], [100, 1]] }],
     [{ id: 'b', active: false, entity: 'light.changed', points: [[0, 1]] }]]) {
@@ -36,7 +45,7 @@ test('light geometry excludes only LED sources and never visits or mutates their
   }
   for (const key of Object.keys(geometry)) {
     assert.notEqual(lightGeometryFingerprint({ ...geometry, [key]: ['changed'] }, 5, 20), expected,
-      `all non-LED raw keys still invalidate, including ${key}`);
+      `all non-annotation/source raw keys still invalidate, including ${key}`);
   }
   assert.notEqual(lightGeometryFingerprint(geometry, 10, 20), expected);
   assert.notEqual(lightGeometryFingerprint(geometry, 5, 40), expected);

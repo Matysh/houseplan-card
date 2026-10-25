@@ -20,10 +20,16 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5433 · pure backend 653 · HA-harness backend 555 · browser smokes 443 (`npm run inventory`) |
+| Tests | Node unit 5435 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Background group colour/opacity (#1071) retains its sidebar-only edit contract;
+the toolbar palette remains creation defaults. Structural wall/light keys
+exclude decor without weakening complete configuration fingerprints, epoch
+retirement or Undo/Redo. The dense native witness checks saved/painted members,
+unchanged physical geometry and absence of redundant structural builds.
 
 Counter-only task-delta changes after a rebase (#1068) preserve green code
 review through an authenticated publisher certificate. Only four verified
