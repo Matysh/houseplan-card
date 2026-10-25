@@ -300,6 +300,8 @@ test('#1063 task and ship review keep independent analysis ahead of evidence and
   }
   assert.match(norm(shipPrompt), /не повторяй покрытые проверки/);
   assert.doesNotMatch(shipPrompt, /Исполняй, где дёшево|`npm test`/);
+  assert.match(norm(shipPrompt), /качество и оставшийся заменённый путь оценивай по §2\.7 и §7\.2/);
+  assert.doesNotMatch(norm(shipPrompt), /low — остальное/);
   const task = norm(promptFixture('code', 'ask'));
   assert.ok(task.indexOf('сначала независимо проследи') < task.indexOf('затем сопоставь выводы с авторским'));
   assert.match(task, /бюджет циклов не смягчает находки/);
