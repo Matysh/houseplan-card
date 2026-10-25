@@ -1,16 +1,60 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, writeFileSync, unlinkSync, rmdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { gzipSync } from 'node:zlib';
+import { gzipSync, gunzipSync } from 'node:zlib';
 import { compareDaycycleFiles } from '../scripts/daycycle-compare.mjs';
 import { installDaycycleObservation, observeDaycycleFrames } from '../demo/helpers/daycycle-observation.mjs';
 import { daycycleEnvironment, beginDaycycleLayers, daycycleLayerNodes,
   daycycleTraceObservation } from '../demo/helpers/daycycle-diagnostics.mjs';
 import { analyzeDaycycleReport, compareDaycycleReports } from '../demo/helpers/daycycle-analysis.mjs';
 import { pairedMeasurementReport, DAYCYCLE_FIXTURE } from '../demo/helpers/daycycle-measurement.mjs';
+
+test('#1066 retained archives preserve all measured samples and the original controlled RED', () => {
+  // Read retained evidence only: no browser, replay or new resource experiment.
+  const index = JSON.parse(readFileSync(new URL('../docs/reviews/evidence-1066/index.json', import.meta.url), 'utf8'));
+  const material = 'be5ce50f72fe9a0d9b8311b76ee446821491704d';
+  const tree = '0d75dc999d569afccabd062a0b29775595cf682b';
+  const expected = {
+    'ci.json.gz': { url: new URL('../docs/reviews/evidence-1066/ci.json.gz', import.meta.url),
+      ratio: 1.214589872070187, pass: true, writes: 31, tasks: 682 },
+    'wsl.json.gz': { url: new URL('../docs/reviews/evidence-1066/wsl.json.gz', import.meta.url),
+      ratio: 1.2819604369648656, pass: true, writes: 31, tasks: 682 },
+    'controlled.json.gz': { url: new URL('../docs/reviews/evidence-1066/controlled.json.gz', import.meta.url),
+      ratio: 2.3645784924249464, pass: false, writes: 60, tasks: 1237 },
+  };
+  assert.equal(index.source, material); assert.equal(index.tree, tree);
+  assert.deepEqual(index.reports.map(row => row.file).sort(), Object.keys(expected).sort());
+  const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+  const reports = index.reports.map(entry => {
+    const compressed = readFileSync(expected[entry.file].url), raw = gunzipSync(compressed);
+    assert.equal(compressed.length, entry.gzipBytes); assert.equal(raw.length, entry.rawBytes);
+    assert.equal(digest(compressed), entry.gzipSha256); assert.equal(digest(raw), entry.rawSha256);
+    const report = JSON.parse(raw), summary = analyzeDaycycleReport(report), witness = expected[entry.file];
+    assert.equal(report.materialSha, material); assert.equal(report.materialTree, tree);
+    assert.equal(summary.originalVerdict.measurementValid, true);
+    assert.equal(summary.originalVerdict.ceiling, 2);
+    assert.equal(summary.originalVerdict.ratio, witness.ratio);
+    assert.equal(summary.originalVerdict.rasterRatioWithinBudget, witness.pass);
+    assert.equal(summary.originalVerdict.pairedRatios.length, 3);
+    assert.equal(summary.samples.length, 6);
+    for (const sample of summary.samples) {
+      assert.equal(sample.status, 'observed'); assert.equal(sample.pointerMoves, 60);
+      assert.equal(sample.rafCallbacks, 120); assert.equal(sample.clockAlignment, 'available');
+      if (sample.mode === 'daynight') {
+        assert.equal(sample.outlineViewBoxWrites, witness.writes);
+        assert.equal(sample.planViewBoxWrites, witness.writes); assert.equal(sample.rasterTasks, witness.tasks);
+      }
+    }
+    return report;
+  });
+  for (const report of reports.slice(1)) {
+    assert.ok(Object.values(compareDaycycleReports(reports[0], report).matching).every(Boolean));
+  }
+});
 
 function pageFixture() {
   const listeners = new Map(), scheduled = [], marks = new Map();
