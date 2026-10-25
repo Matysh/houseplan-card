@@ -20,10 +20,16 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.1** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.1` |
-| Tests | Node unit 5393 · pure backend 653 · HA-harness backend 555 · browser smokes 443 (`npm run inventory`) |
+| Tests | Node unit 5395 · pure backend 653 · HA-harness backend 555 · browser smokes 443 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Full-smoke CI capacity (#1064) is bounded at 35 minutes per job after an
+explicit 25-minute cancellation left 18 of 148 scenarios unexecuted with no
+failed child. The complete three-shard corpus, per-child 180-second limit,
+kill-after, failure guards and proof policy remain in force; the old cancelled
+run supplies diagnosis, not a complete green receipt.
 
 Review policy (#1063) pins Sonnet 5 with high effort for task, ship batch and
 release review. Task and ship reviewers trace code and failure paths before

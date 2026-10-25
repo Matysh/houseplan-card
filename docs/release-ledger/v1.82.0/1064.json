@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1064,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Increase only the full-smoke CI job budget from 25 to 35 minutes after run 40158618236/job 121065727842 completed 130 of 148 scenarios without a failure before GitHub cancelled the job at its explicit 25-minute cap. Preserve the full 443-scenario three-shard partition, independent 180-second child timeout and 10-second kill-after, failure/empty guards, selected-browser budget, proof/reuse policy, Golden acceptance and product budgets. The cancelled run remains incomplete; future consumers still require complete green execution. No product or configuration behaviour changes."
+}

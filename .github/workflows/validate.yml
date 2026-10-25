@@ -955,9 +955,9 @@ jobs:
     env:
       CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
     runs-on: ubuntu-24.04
-    # Leave room for the complete native-UI shard; each smoke still has its
-    # independent 180s timeout and every failed scenario fails the whole shard.
-    timeout-minutes: 25
+    # #1064: 130/148 passing scenarios exhausted 25m in run 40158618236.
+    # Bound the complete shard at 35m; each scenario retains its 180s limit.
+    timeout-minutes: 35
     outputs:
       recipe_1: ${{ steps.registry.outputs.recipe_1 }}
       toolchain_1: ${{ steps.registry.outputs.toolchain_1 }}

@@ -1,5 +1,19 @@
 # Development and deployment
 
+## Full-smoke CI capacity (#1064)
+
+The full browser suite keeps three deterministic shards and an independent
+180-second timeout plus 10-second kill-after for each scenario. Its whole-job
+budget is 35 minutes: run `40158618236`, job `121065727842`, completed 130 of
+148 scenarios without a failure before GitHub enforced the former 25-minute
+cap. The measured throughput projects roughly 28–29 minutes for that shard;
+the finite 35-minute budget leaves setup and runtime headroom. It does not
+guarantee completion if every scenario consumes its individual limit. The
+cancelled run remains incomplete, and every existing failure, empty-shard,
+full-coverage and proof check still applies. Selected execution stays separate.
+The workflow tooling test executes the actual shard shell against a small
+synthetic corpus, including a failing child and an empty selected partition.
+
 ## Local vacuum history preview (#999)
 
 `vacuum_history_websocket.py` reads only the public registered Dreame camera;

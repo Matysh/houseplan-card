@@ -40,6 +40,44 @@ const jobsOf = (text) => {
   return { names, needs, chunks };
 };
 
+test('#1064 full shards have a finite 35-minute budget, independent of selected execution', () => {
+  for (const file of ['validate.yml', 'validate-product.yml']) {
+    const { chunks } = jobsOf(read(file));
+    assert.match(chunks.get('smoke'), /^    timeout-minutes: 35$/m, file);
+    assert.match(chunks.get('browser_selected'), /^    timeout-minutes: 50$/m, file);
+    assert.match(chunks.get('smoke'), /fail-fast: false\n\s+matrix:\n\s+shard: \[1, 2, 3\]/, file);
+    assert.match(chunks.get('smoke'), /timeout --kill-after=10s 180s node "\$f"/, file);
+  }
+});
+
+test('#1064 actual full-shard shell partitions every scenario and retains failure/empty guards', (t) => {
+  if (spawnSync(posixCommand('bash'), ['--version']).status !== 0) { t.skip('bash unavailable'); return; }
+  const root = mkdtempSync(join(tmpdir(), 'hp-full-shard-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, 'demo'));
+  const names = Array.from({ length: 7 }, (_, index) => `smoke_1064_${index}`);
+  for (const [index, name] of names.entries()) {
+    writeFileSync(join(root, 'demo', `${name}.mjs`), `process.exit(${index === 0 ? 7 : 0});\n`);
+  }
+  const step = findStep(read('validate.yml'), { name: 'Smoke suite (шард ${{ matrix.shard }} из 3)' });
+  const run = shard => runStep(step, undefined, { cwd: root,
+    env: { ...process.env, SHARD: String(shard), SHARDS: '3' } });
+  const visited = [];
+  for (const shard of [1, 2, 3]) {
+    const result = run(shard);
+    assert.equal(result.status, shard === 1 ? 1 : 0, result.stderr + result.stdout);
+    const observed = [...result.stdout.matchAll(/^(?:ok\s+|FAIL )(smoke_1064_\d+)$/gm)].map(match => match[1]);
+    assert.deepEqual(observed, names.filter((_, index) => index % 3 + 1 === shard),
+      'the failed first child must not suppress later children or move them to another shard');
+    visited.push(...observed);
+  }
+  assert.deepEqual(visited.sort(), names, 'the same full corpus is covered exactly once');
+  for (const name of names.slice(1)) rmSync(join(root, 'demo', `${name}.mjs`));
+  const empty = run(2);
+  assert.notEqual(empty.status, 0, empty.stderr + empty.stdout);
+  assert.match(empty.stdout, /прогнано 0 из 1\nшард пуст/);
+});
+
 test('ни один воркфлоу не зависит от несуществующей job (#336)', () => {
   for (const file of readdirSync(WORKFLOWS).filter((name) => name.endsWith('.yml'))) {
     const { names, needs } = jobsOf(read(file));
