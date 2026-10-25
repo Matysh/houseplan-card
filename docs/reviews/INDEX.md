@@ -1,11 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 105, issue: 52. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 107, issue: 53. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.83.0-beta.1 | [SHIP-REVIEW-v1.83.0-beta.1.md](SHIP-REVIEW-v1.83.0-beta.1.md) | пакетное ревью ship · — | 🟢 зелёный | 0 | 0 | — | — |
 | #1062 | [CODE-REVIEW-1062-r1.md](CODE-REVIEW-1062-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1061 | [SPEC-REVIEW-1061-r1.md](SPEC-REVIEW-1061-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1061 | [CODE-REVIEW-1061-r1.md](CODE-REVIEW-1061-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1060 | [CODE-REVIEW-1060-r1.md](CODE-REVIEW-1060-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | неверный путь фикстуры в документации | `docs/DEVELOPMENT.md` `test/fixtures/smoke-select/historical-plans.json` `test/data/smoke-selection-history.json` `scripts/ci-profile-paths.json` `test/smoke-select.test.mjs` `test/browser-push-plan.test.mjs` |
 | #1059 | [CODE-REVIEW-1059-r1.md](CODE-REVIEW-1059-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1058 | [CODE-REVIEW-1058-r1.md](CODE-REVIEW-1058-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
