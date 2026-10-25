@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "issue": 1061,
+  "beforeMaterial": "739e35e181bab94d81ce38a6fc5c60d79bcb0c7d",
+  "class": "B/C correction only; product A unchanged",
+  "withdrawn": "Original manual face insertion fixture was commit/write/history evidence, not full _applyWallFaceBatch promotion evidence. The focused hidden-obstacle RED belongs to that incomplete fixture producer, not to the successful public native batch.",
+  "correction": "Real face batch, carrier promotion/reconciliation, real history and deferred writer. Native covers the real projection/physical verdict; Node shell boundary substitutions remain explicit.",
+  "after": {
+    "focusedUnit": 42,
+    "authenticatedHA": 17,
+    "invariantStates": 13,
+    "families": [
+      "references",
+      "wall keys",
+      "mixed roles",
+      "hidden obstacles",
+      "physical geometry"
+    ],
+    "oldAcceptedPassportRows": "exact identities, fingerprints and order preserved",
+    "updatedOwnConfigRows": 13
+  },
+  "nativePending": "Repeat only the room smoke because its consumed fixture source bytes changed; seven unchanged neighbors remain valid. No product rebuild needed because build inputs and fingerprint are unchanged.",
+  "receipts": {
+    "artifacts/1061-final-model-invariants.log": "40a023b5f2f4f24733d9994ca190efb30365c03d35a86c31f8a5d1bfe3c4195c",
+    "artifacts/1061-real-batch-producer-first.log": "9eb33ef0bba4dedac2a8757f650793bd0c36d42454a5bc5f3c49fbda1950270e",
+    "artifacts/1061-real-batch-producer-after.log": "6a20096795b21b2ef2ae162968eadfed2a39b6ca61d5cd508cc3dac7cc417110",
+    "artifacts/1061-real-batch-replay.log": "a7f6f76d35450da053bfabeb1dc213db8feab8273db56ab73470fa7396751f18",
+    "artifacts/1061-real-batch-model-invariants.log": "23ae6f0be504883c16fbbca592a0e6f31364dfd51d8f7c5d4a6689f2e02211d8",
+    "artifacts/1061-real-batch-focused.log": "f86c3f662ae66ae0d80d7d59e3accc98ad8977a8d07e9be6e3bce8deee2c0ad3",
+    "artifacts/1061-real-batch-ha.log": "eb187b7fe40ed74476ea9355a2c7875ca58b7d38f32ba9dc1918e0718d7cb44c",
+    "artifacts/1061-real-batch-corpus-update.log": "82e1340e33da933a150ee1d3316a22f96749a7f7ccc69fedf60502a204de5d8f"
+  }
+}

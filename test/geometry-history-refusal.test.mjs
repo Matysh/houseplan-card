@@ -164,9 +164,27 @@ const removed = (direction, name, reason) => `history.removed_${direction}{"name
 test('#1061 existing off-grid faces cross the actual commit/write/history owners separately and sequentially', async () => {
   const { roomSource, graphSources, inheritedY, stableRoomReceiptIds } = await import('./helpers/room-contact-grid.mjs');
   const { buildWallFaceGraph, findWallFaceAtPoint } = await import('../test-build/wall-face-graph.js');
+  const { spaceModels, GRID_PITCH, GRID_STEP_N, NORM_W } = await import('../test-build/space-geometry.js');
+  const { normalizeWallIntervals, degradeWalls } = await import('../test-build/wall-thickness.js');
+  const { spacePhysicalGeometryFingerprint } = await import('../test-build/plan-geometry-preflight.js');
   const receipts = [];
   for (const [clicks,height] of [[[.375],inheritedY], [[.625],inheritedY], [[.375,.625],inheritedY], [[.375],.3125]]) {
   const s = setup({ floors: ['floor'], configInput: roomSource(height) });
+  Object.assign(s.host, {
+    _spaceH: NORM_W, _cellCm: s.spaceOf('floor').cell_cm,
+    _gridPitch: GRID_PITCH, _wallKeyPitch: GRID_STEP_N, _drawWallCm: 20,
+    _spaceModel: () => spaceModels(s.host._serverCfg).find(space => space.id === 'floor'),
+    // No zero-thickness passages or rendered opening projections in this Node shell;
+    // persisted opening data remains real, and the native case covers its projection.
+    _openCuts: () => [], _openingsR: [],
+    _normalizeWalls(walls, cuts) {
+      return degradeWalls(normalizeWallIntervals(this._spaceModel().rooms, walls, cuts,
+        GRID_STEP_N, this._cellCm, GRID_PITCH, NORM_W), this._curSpaceCfg.rooms, GRID_STEP_N, 1,
+      cuts.map(cut => cut.map(value => value / NORM_W)));
+    },
+  });
+  // Retain the live current-space owner across adoption.
+  Object.defineProperty(s.host, '_curSpaceCfg', { get: () => s.spaceOf('floor') });
   const source = clone(s.server.config), candidates = [];
   const oldRoom = clone(s.spaceOf('floor').rooms[0]);
   for (const [i, x] of clicks.entries()) {
@@ -174,10 +192,12 @@ test('#1061 existing off-grid faces cross the actual commit/write/history owners
     const graph = buildWallFaceGraph(graphSources(space), 1000 / 240 * .0002);
     const face = findWallFaceAtPoint(graph, [x * 1000, 150]);
     assert.ok(face);
-    const before = s.runtime._geometrySnapshot('floor');
-    space.rooms.push({ id: `new${i}`, name: 'New', area: null,
-      poly: face.ring.map(point => point.map(value => value / 1000)) });
-    assert.equal(s.runtime._commitPhysicalGeometry('Room', before), true);
+    s.host._wallFaceBatch = { spaceId: 'floor',
+      geometryFingerprint: spacePhysicalGeometryFingerprint(space),
+      decisions: [{ candidate: { ...face, existing: true }, create: true, name: 'New', area: null, settings: null }],
+      activePath: [], activeCms: [], activePartitionIds: [],
+    };
+    s.runtime._applyWallFaceBatch();
     assert.deepEqual(await s.writes(), { armed: true, sets: i + 1 });
     assert.deepEqual(s.spaceOf('floor').rooms[0], oldRoom);
     assert.deepEqual(s.spaceOf('floor').openings,source.spaces[0].openings);

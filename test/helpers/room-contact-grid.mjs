@@ -29,7 +29,7 @@ export function graphSources(space){
     a:p.a.map(n=>n*1000),b:p.b.map(n=>n*1000)}));
 }
 
-/** Compare independently generated UUIDs bijectively; retain identity across all states. */
+/** Compare generated IDs bijectively; retain identity across every state of each recipe. */
 export function stableRoomReceiptIds(records){
   const result=structuredClone(records),ids=new Map();
   for(const row of result)for(const config of [row.source,...row.candidates]){
@@ -41,6 +41,15 @@ export function stableRoomReceiptIds(records){
     for(const wall of space.wall_segments||[])wall.id=ref(wall.id);
     for(const room of space.rooms||[])if(room.wall_ids)room.wall_ids=room.wall_ids.map(ref);
     for(const opening of space.openings||[])if(opening.host?.kind==='wall')opening.host.id=ref(opening.host.id);
+  }
+  for(const row of result){
+    const inherited=new Set(row.source.spaces.flatMap(space=>(space.rooms||[]).map(room=>room.id)));
+    const created=new Map();
+    for(const config of [row.source,...row.candidates])for(const space of config.spaces)
+      for(const room of space.rooms||[])if(!inherited.has(room.id)){
+        if(!created.has(room.id))created.set(room.id,`created-room-${created.size}`);
+        room.id=created.get(room.id);
+      }
   }
   return result;
 }

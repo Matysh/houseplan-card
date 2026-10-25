@@ -5630,3 +5630,17 @@ configs in the two new synthetic #1061 JSON files. Every prior inventory row,
 input fingerprint, identity and document order is compared exactly before the
 additive update. Fresh focused graph/history and corpus checks pass107/107;
 no old baseline entry is replaced to make this addition pass.
+
+A further focused invariant recipe exposed a B producer gap: the original
+room JSON producer inserted a room before the real physical commit, bypassing
+the existing face-batch carrier promotion/reconciliation. Its earlier claim
+as complete batch evidence is withdrawn. The corrected fixture executes the
+real `_applyWallFaceBatch`, history and deferred writer, then reaches the
+authenticated HA config/set/store/reload tests17/17. All thirteen before/after
+states pass reference, wall-key, mixed-role, hidden-obstacle and physical
+invariants. Production ID allocation is not patched; created room IDs use one
+comparison bijection across each independent recipe's states. The Node shell
+substitutes rendering/transport/physical-verdict boundaries as documented in
+the history suite; the public native scenario covers the real presentation
+and physical guard. Only the owned thirteen passport rows are refreshed after
+asserting every accepted row and its order remain exact.
