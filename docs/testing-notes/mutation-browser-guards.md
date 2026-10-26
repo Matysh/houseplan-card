@@ -43,10 +43,10 @@ that transition events alone prove disposal.
 | Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 91 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 104 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 107 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 269 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **538 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **541 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -338,6 +338,15 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 
 - `plan-rotation-pointer-skips-inverse-1070`
 - `plan-rotation-mode-writes-display-camera-1070`
+- `plan-rotation-mobile-ignores-header-height-1070`
+- `plan-rotation-reduced-terminal-keeps-stale-height-1070`
+- `lovelace-rotation-pending-locale-allows-save-1070`
+
+The #1070 mobile witnesses observe native mode navigation and painted header,
+toolbar and stage heights on the same frame, including the zero-duration terminal.
+The Lovelace witness holds actual language-module requests and delivers public
+HA-form events while both real editor hosts are pending. Registered for nightly;
+none of these mutations are executed during development.
 
 - `furniture-release-ignores-pan-1081`
 

@@ -129,6 +129,29 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
   },
   {
+    id: 'plan-rotation-mobile-ignores-header-height-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: actual native mode frames must keep one header/chrome/stage height as the narrow editor gains a row; Node interpolation alone cannot observe responsive DOM height. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'from.stageHeight + from.editorChromeHeight + from.headerHeight - targetChromeHeight - headerHeight);',
+      replace: 'from.stageHeight + from.editorChromeHeight - targetChromeHeight);' }],
+  },
+  {
+    id: 'plan-rotation-reduced-terminal-keeps-stale-height-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: a zero-duration terminal must publish the target header budget before removing inline presentation, without a delayed ResizeObserver refit jump. Requires actual painted browser frames. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'this._hdrH = Math.round(state.to.headerBudget);', replace: '/* stale header budget */' }],
+  },
+  {
+    id: 'lovelace-rotation-pending-locale-allows-save-1070',
+    guard: 'node demo/smoke_lovelace_editor_locale_1070.mjs',
+    because: '#1070: actual cold module requests and pending-locale HA-form events must not save incomplete GUI state; both real editor hosts and their asynchronous readiness/fallback boundary require a browser. Registered only; nightly execution.',
+    patches: ['src/editor.ts', 'src/space-editor.ts'].map(file => ({ file,
+      find: "if (CARD_EDITOR_LANGUAGE_RUNTIME.state(this._lang) === 'pending') return;",
+      replace: '/* pending form event accepted */' })),
+  },
+  {
     id: 'plan-rotation-kiosk-uses-device-1070',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
     because: '#1070 AC6: kiosk orientation comes only from its card configuration. Registered only; nightly execution.',
@@ -5892,8 +5915,8 @@ const MUTANT_DEFINITIONS = [
       + 'window.innerHeight makes the animated stage escape the card at minimum height (#648 AC5)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'from.stageHeight + from.editorChromeHeight - targetChromeHeight',
-      replace: 'innerHeight - targetChromeHeight /* mutant: ignore the fixed card budget */',
+      find: 'from.stageHeight + from.editorChromeHeight + from.headerHeight - targetChromeHeight - headerHeight',
+      replace: 'innerHeight - targetChromeHeight - headerHeight /* mutant: ignore the fixed card budget */',
     }],
   },
   {
