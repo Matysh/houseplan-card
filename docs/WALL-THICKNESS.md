@@ -15,6 +15,13 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 
 ## 1. Model
 
+Paint-only numerical rings (#1076): a nearly collinear boolean hole can have
+negligible fill yet still produce a long SVG/PDF stroke. The path projection
+omits rings within local floating roundoff; it never rounds coordinates,
+enlarges join epsilon or changes the physical union. Every genuine area-bearing
+ring, including thin holes, remains in the evenodd path. The exact smooth
+three-partition fixture is shared by unit, native-browser and golden evidence.
+
 ### Select node deletion (#1045)
 
 A deletion joins two endpoint sections of one physical kind, retaining the

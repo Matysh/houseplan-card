@@ -3,6 +3,7 @@ import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
+import { smoothWallSeamSpace } from '../fixtures/smooth-wall-seam.mjs';
 import { installStaticStability, resetGoldenStability } from './static-stability.mjs';
 export { resetGoldenStability } from './static-stability.mjs';
 import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
@@ -457,6 +458,9 @@ export function prepareGoldenFixture(scenario) {
       });
     }
     fixture.config.spaces.push(space);
+  }
+  if (scenario.smoothWallSeam) {
+    fixture.config.spaces.push({ ...smoothWallSeamSpace(), id: scenario.space });
   }
   if (scenario.junctionArtifacts) {
     fixture.config.spaces.push({

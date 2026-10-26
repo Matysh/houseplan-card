@@ -15,6 +15,7 @@ import { unionWallShellGeometry } from './wall-shell-union';
 import type { wallQuadCovered } from './wall-quad-coverage';
 import { unionClippedWallCornersSequential, subtractWallOpeningCuts } from './wall-geometry-batch';
 import { applyWallLocalReplacements, type WallLocalReplacement } from './wall-local-replacements';
+import { hasPaintableRingArea } from './polygon-paint';
 
 export interface WallEntry {
   key: string;
@@ -3490,7 +3491,7 @@ export function polyclipToPathD(geom: any): string {
   if (!geom) return '';
   let d = '';
   // polyclip Geom: MultiPolygon = Polygon[]; Polygon = Ring[] where ring[0]
-  // is the outer and ring[1..] are holes. We must emit EVERY ring so evenodd
+  // is the outer and ring[1..] are holes. Emit every nondegenerate ring so evenodd
   // fill punches the floor out of the wall body (otherwise a single-room
   // outset fills solid — the whole room looks like hatch).
   for (const poly of geom as any[]) {
@@ -3498,7 +3499,7 @@ export function polyclipToPathD(geom: any): string {
     for (const ring of poly) {
       if (!Array.isArray(ring) || ring.length < 4) continue;
       const pts = ring.slice(0, ring.length - 1);
-      if (pts.length < 3) continue;
+      if (!hasPaintableRingArea(pts)) continue;
       d += (d ? ' ' : '') + polyToPath(pts.map((p: number[]) => [p[0], p[1]]));
     }
   }

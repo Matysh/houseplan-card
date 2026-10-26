@@ -5,6 +5,8 @@
 - Distinguish user-hidden Zigbee markers from devices missing on the plan.
   Showing hidden devices now updates both route endpoints and diagnostics,
   without changing saved visibility or suppressing genuine source errors. (#1077)
+- Remove a spurious internal stroke at a smooth wall bend without changing
+  saved geometry, real openings, free caps or hatching, including PDF output. (#1076)
 
 - Avoid rebuilding unchanged walls and light barriers when applying furniture
   group colour/opacity in Background properties. The toolbar palette remains

@@ -6,6 +6,12 @@ display roster as the overlay; original user-hidden provenance remains on each
 row. Mapping does not invent coordinates for concealed markers or revive invalid
 bindings, and informational visibility details do not mark provider data partial.
 
+Wall paint projection (#1076) omits numerically collinear boolean rings before
+SVG/PDF strokes. `polygon-paint.ts` uses translation-local area and a floating
+roundoff bound, without changing canonical bodies, caches, hit testing or saved
+coordinates. Real holes and disconnected components remain separate. The iso
+projector's existing degeneracy guard already rejects the reported tail.
+
 Historical vacuum preview (#999) has one memory-only `VacuumHistory` owner per
 card. Selection, pending Show and immutable shown material are separate; closing
 the settings popup does not retire Show. The lazy settings section uses the

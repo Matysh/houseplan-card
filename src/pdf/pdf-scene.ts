@@ -4,6 +4,7 @@ import { GENERATED_FURNITURE_ART } from '../furniture-plan-art.generated';
 import { canonicalFurnitureId } from '../furniture-id';
 import { formatArea } from '../area-format';
 import { roomPoly } from '../logic';
+import { hasPaintableRingArea } from '../polygon-paint';
 import {
   floorMinusBodies, geometryAllRings, geometryOuterRings, physicalBodyParts,
   pointInPhysicalGeometry,
@@ -403,7 +404,8 @@ function buildPdfCandidate(
     angle: raster.angle, opacity: raster.opacity,
   });
   for (const component of built.geometry.components) commands.push({
-    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),
+    kind: 'path', rings: geometryAllRings(component.geom)
+      .filter(hasPaintableRingArea).map((ring) => ring.map(pt)),
     fill: WALL, stroke: INK, width: 0.25 * MM,
     hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },
   });

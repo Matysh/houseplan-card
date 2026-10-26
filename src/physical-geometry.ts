@@ -1,6 +1,7 @@
 /** Geometry shared by independent walls and columns. */
 import { difference, intersection, union } from 'polyclip-ts';
 import { polygonArea } from './logic';
+import { hasPaintableRingArea } from './polygon-paint';
 import {
   linearWallBody, linearWallJoinPatches, pairButtEndTrimWedges, wallCmToUnits,
   type LinearWallSegment,
@@ -68,7 +69,7 @@ export function polyclipPathD(geom: any): string {
   const out: string[] = [];
   for (const poly of geom || []) for (const ring of poly || []) {
     const pts = (ring || []).filter((p: any) => Array.isArray(p) && p.length >= 2);
-    if (pts.length < 4) continue;
+    if (pts.length < 4 || !hasPaintableRingArea(pts)) continue;
     out.push(`M ${pts.slice(0, -1).map((p: number[]) => `${p[0]} ${p[1]}`).join(' L ')} Z`);
   }
   return out.join(' ');
@@ -320,7 +321,7 @@ export function geometryPolygonPaths(geom: any): string[] {
     const parts: string[] = [];
     for (const ring of poly || []) {
       const pts = (ring || []).filter((p: any) => Array.isArray(p) && p.length >= 2);
-      if (pts.length < 4) continue;
+      if (pts.length < 4 || !hasPaintableRingArea(pts)) continue;
       parts.push(ringPath(pts.slice(0, -1)));
     }
     if (parts.length) out.push(parts.join(' '));

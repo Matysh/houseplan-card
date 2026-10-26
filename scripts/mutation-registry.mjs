@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'wall-ring-paints-numerical-needle-1076',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/polygon-paint.test.mjs',
+    because: '#1076: the real smooth-wall boolean result must retain its physical body while SVG/PDF projections suppress only its numerical needle. Ordinary negative inputs retain thin holes, free caps and disconnected bodies; execution only nightly.',
+    patches: [{ file: 'src/wall-thickness.ts',
+      find: '      if (!hasPaintableRingArea(pts)) continue;',
+      replace: '      if (pts.length < 3) continue;' }],
+  },
+  {
     id: 'keyboard-connected-wall-detaches-1025',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-nudge.test.mjs',
     because: '#1025 AC2: the ordinary L/T/X/chain matrix must reject a connected source even when its translated candidate would become free. Nightly execution only.',

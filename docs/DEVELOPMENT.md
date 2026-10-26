@@ -1,5 +1,12 @@
 # Development and deployment
 
+`demo/smoke_wall_smooth_joint.mjs` (#1076) checks native `isPointInStroke` and
+fill on the exact reported smooth joint, plus a real free cap, pan/zoom,
+editor, 2.5D and reconstruction after reload. `HP_JOINT_DPR=2` selects a second
+pixel density; the browser version stays pinned. Ordinary unit evidence covers
+SVG/PDF projections and unchanged source geometry. No baseline is accepted by
+this task smoke, and no mutation is executed during development.
+
 ## Background group-style latency (#1071)
 
 The sidebar's colour preview was already immediate; confirming it on a dense

@@ -1,5 +1,10 @@
 # Project status
 
+Smooth wall paint (#1076) suppresses a numerical zero-area union tail in SVG
+and PDF without repairing saved geometry or changing physical joins. Exact
+fixture, genuine thin-hole/free-cap negatives and native stroke/fill evidence
+cover the projection; global baseline acceptance remains a release operation.
+
 > The current state for a resuming session: a generated snapshot, the current
 > cycle and the standing decisions that explain it. Rules are not here — the
 > process is `PROCESS.md`, release mechanics are `docs/DEVELOPMENT.md` › Release,
@@ -20,7 +25,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5577 · pure backend 653 · HA-harness backend 555 · browser smokes 445 (`npm run inventory`) |
+| Tests | Node unit 5580 · pure backend 653 · HA-harness backend 555 · browser smokes 446 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

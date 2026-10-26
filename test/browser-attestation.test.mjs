@@ -241,7 +241,7 @@ test('#827/#942: declared pinned-browser smokes have no environment bypass', () 
     .filter((name) => /^smoke_.*\.mjs$/.test(name))
     .filter((name) => /requirePinnedBrowser\('smoke_/.test(readFileSync(new URL(`../demo/${name}`, import.meta.url), 'utf8')))
     .sort();
-  assert.deepEqual(declaring, ['smoke_device_settings_action.mjs', 'smoke_editor_styles_lazy.mjs', 'smoke_room_co2.mjs', 'smoke_support_diagnostics.mjs', 'smoke_support_feedback.mjs', 'smoke_ui_1051.mjs', 'smoke_zigbee_hidden_placement.mjs', 'smoke_zigbee_incomplete_reasons.mjs', 'smoke_zigbee_led_topology.mjs', 'smoke_zigbee_tooltip_layout.mjs']);
+  assert.deepEqual(declaring, ['smoke_device_settings_action.mjs', 'smoke_editor_styles_lazy.mjs', 'smoke_room_co2.mjs', 'smoke_support_diagnostics.mjs', 'smoke_support_feedback.mjs', 'smoke_ui_1051.mjs', 'smoke_wall_smooth_joint.mjs', 'smoke_zigbee_hidden_placement.mjs', 'smoke_zigbee_incomplete_reasons.mjs', 'smoke_zigbee_led_topology.mjs', 'smoke_zigbee_tooltip_layout.mjs']);
   for (const name of declaring) {
     const source = readFileSync(new URL(`../demo/${name}`, import.meta.url), 'utf8');
     assert.ok(source.indexOf("requirePinnedBrowser('") < source.search(/await launch(?:ColdView)?\(/),

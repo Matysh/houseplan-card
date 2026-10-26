@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "issue": 1076,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already renders independent wall joins and emits every boolean ring as a stroked SVG/PDF path. Suppressing a numerical needle repairs that existing presentation, without a new editing feature or geometry migration.",
+  "summary": {
+    "ru": "Убран лишний внутренний штрих на плавном изгибе стены и в PDF.",
+    "en": "Remove a spurious internal stroke at smooth wall bends and in PDF."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [{
+      "id": "wall-smooth-joint-light",
+      "expectation": "new",
+      "reason": "Exact reported three-wall smooth joint, with normal hatch, external boundary and no numerical internal seam. Existing frames are not accepted or redefined."
+    }],
+    "smokes": ["smoke_wall_smooth_joint.mjs", "smoke_wall_junctions.mjs",
+      "smoke_wall_hatch_density.mjs", "smoke_iso_theme_walls.mjs"]
+  }
+}

@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/polygon-paint.ts'],
+    symbols: ['polyclipToPathD', 'polyclipPathD', 'geometryPolygonPaths'],
+    smokes: ['smoke_wall_smooth_joint.mjs', 'smoke_wall_junctions.mjs',
+      'smoke_wall_hatch_density.mjs', 'smoke_iso_theme_walls.mjs'],
+    because: '#1076: native SVG stroke/fill, real free cap, zoom/pan/reopen and iso projection distinguish a numerical seam from unchanged hatch and preserve ordinary junctions.',
+  },
+  {
     files: ['src/wall-face-graph.ts'],
     smokes: ['smoke_room_contact_grid.mjs','smoke_wall_face_lineage.mjs',
       'smoke_wall_face_room_split.mjs','smoke_wall_face_overlap.mjs','smoke_room_autoclose.mjs'],
