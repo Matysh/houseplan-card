@@ -138,6 +138,8 @@ def canonical_config(config: dict[str, Any]) -> dict[str, Any]:
     Incoming config/set must pass its existing model-downgrade guard first.
     Coordinate-frame migration needs the pair and is deliberately absent here.
     """
+    if not _needs_v1(config):
+        return config
     result = deepcopy(config)
     _scalars_v1(result)
     return result

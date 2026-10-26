@@ -16,7 +16,6 @@ export function sunsetUntil(since, sequence = PUBLISHED_STABLES) {
 const oldBackend = 'View also supports a newer frontend with an older backend; version mismatch does not gate reads. That backend cannot run the new canonical decoder.';
 const unknown = (reason) => ({ kind: 'unproven', reason });
 const stable = (commit, release) => ({ kind: 'stable', commit, release });
-const keep = (reason) => ({ kind: 'keep', reason });
 const source = (path, symbol) => ({ path, symbol });
 const contractProofs = {
   'wall-model-chain': ['tests_backend/test_wall_segment_model.py', 'test/wall-segment-model.test.mjs'],
@@ -41,13 +40,14 @@ const extraSelectors = {
   'content-url': [{ path: ['spaces', '*', 'plan_url'], test: 'old owned static URL' },
     { path: ['markers', '*', 'pdfs', '*', 'url'], test: 'old owned static URL' }],
 };
-const record = (id, fields, oldForm, newForm, anchors, since, migration, reason) => ({
+const record = (id, fields, oldForm, newForm, anchors, since, migration, reason, retire = false) => ({
   id, fields, selectors: [...fields.map((field) => ({ registry: field })), ...(extraSelectors[id] || [])],
   oldForm, newForm, anchors, since, until: sunsetUntil(since),
   provenance: since.kind === 'stable' ? { commit: since.commit, firstStable: since.release }
     : { kind: 'unproven', reason: since.reason },
   migration, proof: contractProofs[id] || ['tests_backend/test_config_migrations.py', 'tests_backend/test_ha_config_migrations.py'],
-  decision: keep(reason),
+  decision: { kind: retire ? 'remove' : 'keep', reason },
+  allInputsCanonical: retire,
 });
 
 export const COMPATIBILITY_BRANCHES = Object.freeze([
@@ -158,10 +158,11 @@ export const COMPATIBILITY_BRANCHES = Object.freeze([
     'Ignored current card option; optional manual cleanup has no visual effect',
     'Outside server Store/import authority. Keep permissive external option; not a runtime action branch.'),
   record('weather-option', ['settings.weather_entity'], 'unused weather entity setting', 'sun geometry/elevation without weather entity',
-    [source('src/houseplan-editor-runtime.ts', '_saveSettingsDialog'), source('custom_components/houseplan/validation.py', 'CONFIG_SCHEMA')],
+    [source('custom_components/houseplan/config_migrations.py', '_scalars_v1'),
+      source('src/houseplan-editor-runtime.ts', '_saveSettingsDialog'), source('custom_components/houseplan/validation.py', 'CONFIG_SCHEMA')],
     stable('2a8302f4d6af58a6f2182bc569e4003b658a1d4d', 'v1.60.2'),
     'v1 weather-option removes only the independently valid bounded obsolete key at load/write/import',
-    'No runtime consumer exists since v1.60.2. Retire the duplicate settings write conversion; older-backend values remain inert in this frontend. Strict stale-input schema is preserved.'),
+    'No runtime consumer exists since v1.60.2. V1 canonicalizes current inputs; older-backend values remain inert in this frontend. The duplicate settings write conversion is retired; strict stale-input schema remains.', true),
   record('unused-vacuum-options', ['markers[].vacuum.room_highlight', 'markers[].vacuum.segment_map'],
     'opaque hidden vacuum options', 'no replacement decision', [source('custom_components/houseplan/validation.py', 'MARKER_SCHEMA')],
     unknown('No supported replacement or product retirement decision has been proven.'),

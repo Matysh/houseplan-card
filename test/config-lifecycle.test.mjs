@@ -42,10 +42,20 @@ test('#1015 real stable deadlines warn only affected branches and never turn kee
   const warnings = lifecycleWarnings(['src/vacuum.ts']);
   assert.deepEqual(warnings.map((item) => [item.id, item.until, item.eligible]), [['vacuum-trail', 'v1.54.2', false]]);
   assert.deepEqual(lifecycleWarnings(['src/houseplan-header.ts']), []);
-  assert.ok(COMPATIBILITY_BRANCHES.every((branch) => !lifecycleState(branch).eligible));
+  assert.deepEqual(COMPATIBILITY_BRANCHES.filter((branch) => lifecycleState(branch).eligible).map((branch) => branch.id), ['weather-option']);
+  assert.equal(lifecycleWarnings(['src/houseplan-editor-runtime.ts']).find((item) => item.id === 'weather-option').eligible, true);
   const invalid = structuredClone(COMPATIBILITY_BRANCHES);
   invalid[0].until.release = 'v1.82.0';
   assert.ok(validateLifecycle(CONFIG_FIELD_REGISTRY, invalid).some((item) => item.includes('invalid two-stable until')));
+});
+
+test('#1015 only proven redundant runtime writers are retired; old-backend readers stay', () => {
+  const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
+  const cleanup = readFileSync(new URL('../src/geometry-cleanup.ts', import.meta.url), 'utf8');
+  const logic = readFileSync(new URL('../src/logic.ts', import.meta.url), 'utf8');
+  assert.ok(!runtime.includes('settings.weather_entity'));
+  assert.ok(!cleanup.includes("marker.display === 'ripple'"));
+  assert.ok(logic.includes("value === 'ripple'"));
 });
 
 test('#1015 current source inventory is complete and orphan/missing/duplicate records fail closed', () => {

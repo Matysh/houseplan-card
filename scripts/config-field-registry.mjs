@@ -328,7 +328,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'settings.weather_entity',
-    enforcedBy: 'houseplan-editor-runtime.ts _saveSettingsDialog: `delete settings.weather_entity` on every save',
+    enforcedBy: 'config_migrations.py v1 weather-option + independent strict CONFIG_SCHEMA',
     selector: { path: ['settings', 'weather_entity'] },
     storage: 'House Plan server config',
     type: 'string | null',
@@ -337,9 +337,9 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     ui: 'removed',
     runtime: 'ignored since sun rays became geometry/elevation-only',
     introduced: 'pre-v1.60.2',
-    status: 'migrate-on-settings-save',
-    migration: 'drop on the next settings save',
-    compatibility: 'backend accepts bounded values so old configs still load',
+    status: 'drop-on-validation',
+    migration: 'canonical v1 server load/write/import drops the bounded inert field; original snapshot retained',
+    compatibility: 'strict stale input remains bounded; duplicate runtime cleanup retired in the v1.83 development line',
   },
   {
     id: 'settings.marker_area_snapshot',
@@ -406,7 +406,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'markers[].display=ripple',
-    enforcedBy: 'logic.ts normalizeDeviceDisplay (read) + editor-runtime _dropLegacySegments on an explicit safe write',
+    enforcedBy: 'logic.ts normalizeDeviceDisplay (older backend read) + config_migrations.py v1 display-ripple',
     selector: { path: ['markers', '*', 'display'], equals: 'ripple' },
     storage: 'House Plan server config',
     type: "legacy enum value 'ripple'",
@@ -416,7 +416,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: "normalizeDeviceDisplay maps it to 'icon_ripple'",
     introduced: 'pre-v1.26.0',
     status: 'deprecated-read',
-    migration: "write 'icon_ripple' when the marker is edited",
+    migration: "canonical v1 server load/write/import stores 'icon_ripple'; duplicate frontend write conversion retired",
     compatibility: 'backend and frontend keep reading it during the declared compatibility window',
   },
   {
@@ -430,7 +430,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: 'fallback only; trail_mode wins',
     introduced: 'legacy vacuum model',
     status: 'deprecated-read',
-    migration: 'convert to trail_mode when vacuum settings are saved or plans are optimized',
+    migration: 'canonical v1 server load/write/import converts to trail_mode; older backend readers remain',
     compatibility: 'read while configs without trail_mode remain supported',
   },
   {
@@ -502,7 +502,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: 'read fallback for plan_scale_x and plan_scale_y',
     introduced: 'pre-v1.58.0',
     status: 'deprecated-read',
-    migration: 'materialize equal plan_scale_x/plan_scale_y on explicit backdrop edit or optimization',
+    migration: 'canonical v1 server load/write/import fills missing axes from the uniform scale, preserving explicit axes',
     compatibility: 'keep reading to preserve old backdrop geometry exactly',
   },
   {
@@ -516,8 +516,8 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: 'projects to data fill none and Glow on unless explicit glow_enabled wins',
     introduced: 'pre-v1.61.0',
     status: 'deprecated-read',
-    migration: "materialize fill_mode:'none' and effective glow_enabled on space edit or explicit optimization",
-    compatibility: 'backend and frontend accept the legacy token indefinitely for old dashboard bundles',
+    migration: "canonical v1 server load/write/import materializes fill_mode:'none' and effective glow_enabled",
+    compatibility: 'strict old token input and older-backend frontend reader remain with explicit keep reason',
   },
   {
     id: 'spaces[].rooms[].settings.fill_mode=glow',
@@ -530,8 +530,8 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: 'projects to inherited data fill and Glow on unless explicit room glow wins',
     introduced: 'legacy/manual config',
     status: 'deprecated-read',
-    migration: 'remove the fill token and materialize effective room glow on room edit or explicit optimization',
-    compatibility: 'backend and frontend accept the legacy token indefinitely',
+    migration: 'canonical v1 server load/write/import removes the fill token and materializes the effective room glow',
+    compatibility: 'strict old token input and older-backend frontend reader remain with explicit keep reason',
   },
   {
     id: 'spaces[].rooms[].settings.temp_min',
@@ -670,7 +670,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: 'read fallback for pixel-identical old rendering',
     introduced: 'legacy decor model',
     status: 'deprecated-read',
-    migration: 'convert to width_cm on object edit or explicit plan optimization',
+    migration: 'canonical v1 server load/write/import converts exact representable widths; unrepresentable subset retained',
     compatibility: 'keep reading until migrated; canonical width_cm always wins',
   },
   {
@@ -684,7 +684,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: 'legacy font multiplier fallback',
     introduced: 'legacy decor text model',
     status: 'deprecated-read',
-    migration: 'convert to size_cm on text edit or explicit plan optimization',
+    migration: 'canonical v1 server load/write/import converts exact representable text sizes; unrepresentable subset retained',
     compatibility: 'keep reading so old labels remain pixel-identical',
   },
   {
@@ -698,7 +698,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     runtime: 'legacy font multiplier fallback; explicit scale wins over size',
     introduced: 'legacy decor text model',
     status: 'deprecated-read',
-    migration: 'convert to size_cm on text edit or explicit plan optimization',
+    migration: 'canonical v1 server load/write/import converts exact representable text sizes; unrepresentable subset retained',
     compatibility: 'keep reading so old labels remain pixel-identical',
   },
   ...['entity', 'attr', 'unit'].map((field) => ({

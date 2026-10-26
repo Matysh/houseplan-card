@@ -25,7 +25,7 @@ finishes an existing `optimize_pending`, then migrates the square coordinate
 frame (including old `geom_pending`) before scalar units. It handles ripple,
 vacuum trail, uniform plan scale, independent Glow and the exactly representable
 decor width/text-size subset; it removes dead segments and an already-seeded
-show_all flag. Explicit current values win. Unrepresentable physical ranges,
+show_all flag and the bounded inert weather setting. Explicit current values win. Unrepresentable physical ranges,
 explicit live-text units/attributes, unseeded discovery and ambiguous structural
 ownership retain their documented readers. Current omissions stay absent;
 current reads inspect selectors without copying all geometry. No geometry model,
@@ -68,6 +68,23 @@ Save the returned `document` as JSON and use ordinary Import on a compatible
 version when reverting/downgrading. This does not restore removed file bytes:
 files and retention are untouched. Never edit `.storage` by hand. Current normal
 exports retain their existing envelope and materialization behavior.
+
+### Removed from the v1.83 development runtime (Unreleased)
+
+The `weather-option` deadline is v1.61.0: its replacement first shipped in the
+published v1.60.2, followed by v1.60.3 and v1.61.0. There has been no runtime
+consumer since that replacement. Canonical v1 now removes its valid bounded
+input before current load/write/import, retaining the original source snapshot.
+The duplicate `_saveSettingsDialog` deletion is retired in a separate cleanup
+commit. An older backend may still hold the inert value; this frontend does not
+interpret it. Strict schema acceptance remains as an independent stale-input
+validator, not a working runtime reader.
+
+The independent duplicate ripple **write conversion** in geometry cleanup is
+also removed. Its read decoder remains for older backends. Other runtime
+readers are kept for the precise reasons in the inventory; a reached deadline
+does not erase an all-input boundary or a non-equivalent value. This section
+describes the development line and does not claim that v1.83 stable is published.
 
 ## Hidden Zigbee placement diagnostics (#1077)
 

@@ -155,11 +155,6 @@ function canonicalColumn(column: AnyRecord): AnyRecord {
  * every record and this is exactly the historical result.
  */
 export function normalizeLegacyGeometryInPlace(config: ServerConfig): void {
-  // «Ripple only» was removed from the UI: keep old configs readable, then
-  // materialise the recognisable icon+activity presentation on any write.
-  for (const marker of config?.markers || []) {
-    if (marker.display === 'ripple') marker.display = 'icon_ripple';
-  }
   for (const sp of config?.spaces || []) {
     const space = sp as AnyRecord;
     delete space.segments;

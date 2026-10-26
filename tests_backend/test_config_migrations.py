@@ -83,8 +83,18 @@ def test_unrepresentable_physical_styles_and_live_links_are_retained_exactly():
 
 def test_current_omission_and_unknown_fields_are_identity():
     config = {"model_version": 10, "spaces": [], "future": {"x": [1, 2]}, "settings": {}}
-    assert m.migrate_pair(config, {}).config == config
+    assert m.migrate_pair(config, {}).config is config
+    assert m.canonical_config(config) is config
     assert m.migrate_pair(config, {}).steps == ()
+
+
+def test_dead_segments_and_room_glow_null_migrate_without_changing_other_settings():
+    config = {"spaces": [{"id": "s", "segments": [{"old": "inert"}],
+        "rooms": [{"id": "r", "settings": {"fill_mode": "glow", "glow": None, "future": [1]}}]}]}
+    result = m.migrate_pair(config, {})
+    assert "segments" not in result.config["spaces"][0]
+    assert result.config["spaces"][0]["rooms"][0]["settings"] == {"glow": True, "future": [1]}
+    assert "segments" in config["spaces"][0]
 
 
 @pytest.mark.parametrize("passport", [{"version": 2}, {"version": True}, {}, [], "1"])

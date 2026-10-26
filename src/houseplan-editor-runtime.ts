@@ -9566,9 +9566,6 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
         else settings.radar.show_live = false;
       }
       settings = writeZigbeeTopologySettings(settings, d.zigbeeTopology);
-      // Old configs may still contain this accepted field, but weather no
-      // longer affects sunlight; saving general settings cleans it up.
-      delete settings.weather_entity;
       const nextConfig = { ...normalizeRoomAppearance(cfg), settings };
       attempt = this.host._adoption.beginOptimistic(cfg, nextConfig);
       this.host._serverCfg = nextConfig;

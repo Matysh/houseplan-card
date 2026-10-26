@@ -1116,7 +1116,7 @@
       "occurrence": 1,
       "kind": "branch",
       "owner": "weather-option",
-      "reason": "Persisted representation: unused weather entity setting. No runtime consumer exists since v1.60.2. Retire the duplicate settings write conversion; older-backend values remain inert in this frontend. Strict stale-input schema is preserved."
+      "reason": "Persisted representation: unused weather entity setting. No runtime consumer exists since v1.60.2. V1 canonicalizes current inputs; older-backend values remain inert in this frontend. The duplicate settings write conversion is retired; strict stale-input schema remains."
     },
     {
       "id": "f1189ffbf12b66d6db25cc62",
@@ -3651,17 +3651,17 @@
     {
       "id": "99e359ec10b25e40d25655ae",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9774,
+      "line": 9771,
       "text": "// HP-1540-04: legacy rectangle rooms (x/y/w/h) are still first-class;",
       "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "Persisted representation: catalogue-less rooms, old drafts, midpoint-only thickness/host evidence. Ambiguous wall ownership and malformed-but-readable old drafts cannot be guessed on load. Keep exact current proof/read paths; canonical walls[] is also a current projection ABI."
     },
     {
       "id": "cafcaae07d11dcf11169b819",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 10359,
+      "line": 10356,
       "text": ": resolvePartitionOpeningCompat(",
       "occurrence": 2,
       "kind": "branch",
