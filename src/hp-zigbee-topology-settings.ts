@@ -303,17 +303,21 @@ export class HpZigbeeTopologySettings extends LitElement {
     return `• ${reason.nodeLabel ? `${reason.nodeLabel}: ` : ''}${text}`;
   }
 
-  private _incompleteDetails(provider: 'zha' | 'z2m', models: Map<string, ZigbeeTopologyDiagnostics>): TemplateResult | typeof nothing {
-    const groups = [...models].filter(([key, model]) => model.loaded && model.partial
+  private _incompleteDetails(provider: 'zha' | 'z2m', models: Map<string, ZigbeeTopologyDiagnostics>, visibility = false): TemplateResult | typeof nothing {
+    const groups = [...models].filter(([key, model]) => model.loaded && (visibility ? model.hidden?.length : model.partial)
       && (provider === 'zha' ? key === 'zha' : key.startsWith('z2m:')));
     if (!groups.length) return nothing;
     const text = groups.map(([key, model]) => [
       ...(provider === 'z2m' ? [this._t('incomplete_source', { source: key.slice(4) })] : []),
-      ...model.reasons.map(reason => this._reasonLine(reason)),
-      ...(model.refreshError ? [this._t('incomplete_refresh_error', { error: this._errorText(model.refreshError) })] : []),
+      ...(visibility ? model.hidden!.map(item => `• ${item.nodeLabel}: ${item.shown
+        ? this._t('placement_hidden_shown')
+        : `${this._t('incomplete_placement_hidden')} ${this._t('placement_hidden_hint')}`}`)
+        : [...model.reasons.map(reason => this._reasonLine(reason)),
+          ...(model.refreshError ? [this._t('incomplete_refresh_error', { error: this._errorText(model.refreshError) })] : [])]),
     ].join('\n')).join('\n\n');
-    return disclosure({ id: `zigbee-incomplete-${provider}`, className: 'incomplete',
-      action: 'zigbee-incomplete-reasons', title: this._t('incomplete_title'),
+    return disclosure({ id: `zigbee-${visibility ? 'visibility' : 'incomplete'}-${provider}`, className: 'incomplete',
+      action: visibility ? 'zigbee-visibility' : 'zigbee-incomplete-reasons',
+      title: this._t(visibility ? 'placement_visibility_title' : 'incomplete_title'),
       content: html`<div class="incomplete-text">${text}</div>` });
   }
 
@@ -338,21 +342,6 @@ export class HpZigbeeTopologySettings extends LitElement {
       current.persistence === 'pending' ? this._t('storage_pending')
         : current.persistence === 'failed' ? this._t('storage_failed') : '',
     ].filter(Boolean).join(' · ');
-  }
-
-  private _visibilityDetails(provider: 'zha' | 'z2m', models: Map<string, ZigbeeTopologyDiagnostics>): TemplateResult | typeof nothing {
-    const groups = [...models].filter(([key, model]) => model.loaded && model.hidden?.length
-      && (provider === 'zha' ? key === provider : key.startsWith(provider + ':')));
-    if (!groups.length) return nothing;
-    const text = groups.map(([key, model]) => [
-      ...(provider === 'z2m' ? [this._t('incomplete_source', { source: key.slice(4) })] : []),
-      ...model.hidden!.map(item => `• ${item.nodeLabel}: ${item.shown
-        ? this._t('placement_hidden_shown')
-        : `${this._t('incomplete_placement_hidden')} ${this._t('placement_hidden_hint')}`}`),
-    ].join('\n')).join('\n\n');
-    return disclosure({ id: `zigbee-visibility-${provider}`, className: 'incomplete placement-visibility',
-      action: 'zigbee-visibility', title: this._t('placement_visibility_title'),
-      content: html`<div class="incomplete-text">${text}</div>` });
   }
 
   private _busy(key: string): boolean {
@@ -467,14 +456,14 @@ export class HpZigbeeTopologySettings extends LitElement {
             <span class="status">${this._status('zha', diagnostics.get('zha')!)}</span>
           </div>
           ${this._incompleteDetails('zha', diagnostics)}
-          ${this._visibilityDetails('zha', diagnostics)}
+          ${this._incompleteDetails('zha', diagnostics, true)}
         </div>
         <div class="provider">
           <div class="provider-title">${this._t('z2m')}</div>
           <div class="warning">${this._t('z2m_warning')}</div>
           ${topics.map(topic => this._z2mRow(topic, mayLoad, false, diagnostics.get(`z2m:${topic}`)!))}
           ${this._incompleteDetails('z2m', diagnostics)}
-          ${this._visibilityDetails('z2m', diagnostics)}
+          ${this._incompleteDetails('z2m', diagnostics, true)}
         </div>
       </div>` : nothing}
     `;
@@ -503,14 +492,14 @@ export class HpZigbeeTopologySettings extends LitElement {
         </button>
       </div>
       ${this._incompleteDetails('zha', diagnostics)}
-      ${this._visibilityDetails('zha', diagnostics)}
+      ${this._incompleteDetails('zha', diagnostics, true)}
     </section>`;
     const z2m = html`<section class="hpf-provider">
       <div class="hpf-sub"><h4>${this._t('z2m')}</h4></div>
       <p class="hpf-hint">${this._t('z2m_duration')}</p>
       ${this._topics().map(topic => this._z2mRow(topic, mayLoad, true, diagnostics.get(`z2m:${topic}`)!))}
       ${this._incompleteDetails('z2m', diagnostics)}
-      ${this._visibilityDetails('z2m', diagnostics)}
+      ${this._incompleteDetails('z2m', diagnostics, true)}
     </section>`;
     return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">${formSections([
       html`<label class="hpf-toggle hpf-noicon">

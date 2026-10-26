@@ -52,9 +52,7 @@ export function describeZigbeeTopology(options: {
   const reasons = new Map<string, ZigbeeDiagnosticReason>();
   const add = (code: ZigbeeDiagnosticCode, nodeKey?: string, detail?: ZigbeeTopologyWarning): void => {
     const key = `${code}\0${nodeKey ?? ''}`;
-    const node = nodeKey ? nodes.get(nodeKey) : undefined;
-    const name = node?.name;
-    const nodeLabel = node ? (name ? `${name} (${node.ieee})` : node.ieee) : nodeKey;
+    const nodeLabel = nodeKey ? label(nodeKey) : undefined;
     const previous = reasons.get(key);
     const stages = [...new Set([...(previous?.failedStages || []), ...(detail?.failedStages || [])])];
     reasons.set(key, { code, ...(nodeKey ? { nodeKey, nodeLabel } : {}),
