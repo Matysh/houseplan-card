@@ -32,7 +32,13 @@ const seed=async decor=>{
     if(window.__card._space!=='group')await window.__hpTest.switchSpace('group');
     await window.__hpTest.setMode('decor');await window.__hpTest.setTool('select');
   },decor);
-  await card.locator('[data-hp="zoom-fit"]').click();await settle();
+  await card.locator('[data-hp="zoom-fit"]').click();
+  // Trusted clicks use measured screen coordinates; fit must finish moving them.
+  await page.waitForFunction(()=>{
+    const c=window.__card;
+    return !c._cameraTransition.active&&!c._modeTransitionBusy&&!c._refitRaf&&!c._pendingRefitSize;
+  },null,{timeout:5000});
+  await settle();
 };
 const point=async(x,y)=>card.locator('.decorlayer').evaluate((el,[x,y])=>{
   const p=new DOMPoint(x*1000,y*1000).matrixTransform(el.getScreenCTM());return{x:p.x,y:p.y};
@@ -222,6 +228,7 @@ try{
     {...rect('b',.58,.32,'#0000ff',.8),fill:true,fill_color:'#445566',fill_opacity:.8}];
   for(const channel of ['hex','opacity']){
     await seed(fills);await select(['a','b']);const start=await state();
+    check(`group.fill.${channel}.selected_input`,start.ids,['a','b']);
     const input=panel.locator(`[data-property="fill"] [data-field="fill-${channel}"]`);
     await input.fill(channel==='hex'?'#ABCDEF':'35');await input.press('Enter');await settle();
     const result=await saved();
