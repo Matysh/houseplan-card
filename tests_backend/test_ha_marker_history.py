@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from homeassistant.auth.const import GROUP_ID_READ_ONLY
 
-from custom_components.houseplan.const import FILES_DIR
+from custom_components.houseplan.const import DOMAIN, FILES_DIR
 from custom_components.houseplan.store import get_data
 from test_ha_marker_copy import _pair, _request, _seed, _send
 
@@ -51,16 +51,29 @@ async def test_delete_restores_marker_tombstone_layout_snapshot_and_led_as_one_p
     saved = await _send(client, {"type": "houseplan/config/set", "config": config, "expected_rev": before[0]["rev"]})
     assert saved["success"], saved
     before = await _pair(client)
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    old_run = {"points": [[11, 12], [21, 22]], "paths": [[[11, 12], [21, 22]]], "revision": "old-cleaning"}
+    recorder.book.data["source"] = {"current": copy.deepcopy(old_run)}
+    await recorder.store.async_save(copy.deepcopy(recorder.book.data))
     deleted = await _send(client, _action(before, "delete", targets=[{"id": "source", "binding": binding}]))
     assert deleted["success"], deleted
     after = await _pair(client)
     assert "source" not in after[1]["layout"]
     assert after[0]["config"]["spaces"][0]["led_strips"][0]["marker"] is None
+    assert "source" not in recorder.book.data
     undo = await _send(client, _action(after, "undo", "operation_1073_undo", token=deleted["result"]["history_token"]))
     assert undo["success"], undo
     restored = await _pair(client)
     assert restored[0]["config"] == before[0]["config"]
     assert restored[1]["layout"] == before[1]["layout"]
+    assert "source" not in recorder.book.data, "Undo restores settings, never the previous runtime cleaning"
+    empty = await _send(client, {"type": "houseplan/trail/get"})
+    assert "source" not in empty["result"]["trails"]
+    # A later current integration value is read as itself, not replaced by history.
+    current_run = {**old_run, "points": [[51, 52], [61, 62]], "paths": [[[51, 52], [61, 62]]], "revision": "current-cleaning"}
+    recorder.book.data["source"] = {"current": current_run}
+    current = await _send(client, {"type": "houseplan/trail/get"})
+    assert current["result"]["trails"]["source"]["current"]["points"] == [[51, 52], [61, 62]]
 
 
 async def test_batch_invalid_member_and_foreign_connection_token_cannot_change_either_half(hass, hass_ws_client):

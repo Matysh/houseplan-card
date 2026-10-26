@@ -19,6 +19,8 @@ await page.evaluate(async()=>{
   const c=window.__card,original=c.hass.callWS;
   window.__structureWrites=[];window.__structureHold=null;window.__structureLose=false;
   c.hass={...c.hass,callWS:async request=>{
+    if(request.type==='houseplan/layout/update'&&window.__structureHoldLayout)
+      await new Promise(resolve=>window.__structureLayoutRelease=resolve);
     if(request.type==='houseplan/marker/copy'||request.type==='houseplan/marker/history'){
       window.__structureWrites.push(structuredClone(request));
       if(window.__structureHold===true)await new Promise(resolve=>window.__structureRelease=resolve);
@@ -66,6 +68,18 @@ await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.dow
 await page.mouse.move(box.x+box.width/2+35,box.y+box.height/2+20,{steps:8});await page.mouse.up();
 await page.evaluate(()=>window.__hpTest.waitForWrites());await settle();
 const moved=await snapshot();check('copy-move-common-history',moved.undo,2);
+// The old optimistic lane paints its first frame while its server reply waits.
+await page.evaluate(()=>window.__structureHoldLayout=true);
+await card.locator('[data-device-position-history="undo"]').click();
+await page.waitForFunction(()=>typeof window.__structureLayoutRelease==='function');
+await page.evaluate(()=>new Promise(requestAnimationFrame));
+const previewBox=await copiedNode.boundingBox();
+check('mixed-optimistic-undo-paints-before-ack',Math.abs(previewBox.x-box.x)<1&&Math.abs(previewBox.y-box.y)<1,true);
+check('mixed-optimistic-undo-server-still-old',(await snapshot()).layout[marker.id],moved.layout[marker.id]);
+check('mixed-optimistic-undo-no-structural-pending',await card.locator('[data-hp="device-structure-pending"]').count(),0);
+await page.evaluate(()=>{window.__structureHoldLayout=false;window.__structureLayoutRelease();});await settle();
+await history('redo');
+check('mixed-optimistic-redo-restores-moved-position',(await snapshot()).layout[marker.id],moved.layout[marker.id]);
 // Open the existing device dialog and its Delete confirmation.
 await copiedNode.click();
 await card.locator('[data-action="marker-delete"]').click();
