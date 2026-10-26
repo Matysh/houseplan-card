@@ -5,12 +5,14 @@ export type DeviceIssueReason = 'machine_care' | 'machine_care_filter' | 'filter
   | 'problem' | 'smoke' | 'gas' | 'carbon_monoxide' | 'moisture' | 'safety' | 'tamper'
   | 'siren' | 'alarm_panel' | 'threshold';
 /** Producer identity is independent from HA entity identity. No external producer yet. */
-export interface DeviceIssueCause { type: 'native' | 'threshold' | 'external'; id: string; level: 'attention' | 'alarm' | 'maintenance' }
+export type DeviceIssueCause = { type: 'native'; id: string; level: 'alarm' | 'maintenance' }
+  | { type: 'threshold' | 'external'; id: string; level: 'attention' | 'alarm' };
 export interface DeviceIssueSignal {
-  severity: 'alarm' | 'attention' | 'maintenance';
+  severity: 'alarm' | 'maintenance';
   reason: DeviceIssueReason;
 }
-export interface ResolvedDeviceIssue extends DeviceIssueSignal {
+export interface ResolvedDeviceIssue extends Omit<DeviceIssueSignal, 'severity'> {
+  severity: 'alarm' | 'attention' | 'maintenance';
   cause?: DeviceIssueCause;
   explanation?: string;
   groupTitle?: string;

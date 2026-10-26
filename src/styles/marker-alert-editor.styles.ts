@@ -23,6 +23,7 @@ export const markerAlertEditorCss = `
 
 .alarm-condition-edit{display:block;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer;}
 .alarm-condition-edit:hover{text-decoration:underline;}
+.alarm-condition > span{white-space:pre-wrap;}
 hp-dialog[data-kind="alarm-constructor"] .body.hpf-form.hpf-settings-form{display:block;padding:20px;}
 [data-settings-section="alarms"] .alarm-create{height:44px;}
 `;
