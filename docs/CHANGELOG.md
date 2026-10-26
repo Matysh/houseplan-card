@@ -27,6 +27,9 @@
   remembering each space on this device. Flat/2.5D, editors, Static and PDF
   follow the orientation while device faces and room captions remain readable;
   kiosk orientation comes from the card's `rotation` setting. (#1070)
+- Load Lovelace form labels with their settings language catalog; ordinary View,
+  read-only and kiosk keep that catalog unloaded. Pending language changes block
+  saving until translated labels or the complete English fallback are ready. (#1070)
 
 - Clear previous furniture, shape and image placement previews after a full
   redraw followed by pointer movement; saved decor remains visible. Losing

@@ -1,9 +1,8 @@
 /** Card configuration editor (Lovelace GUI). */
 import { LitElement, html, nothing, noChange } from 'lit';
-import { langOf, t, type Lang } from './i18n';
+import { langOf, type Lang } from './i18n';
 import { languageOptions } from './i18n/registry';
-import { CARD_EDITOR_LANGUAGE_RUNTIME } from './i18n/card-editor-language';
-import { settingsT } from './i18n/settings';
+import { SETTINGS_LANGUAGE_RUNTIME as CARD_EDITOR_LANGUAGE_RUNTIME, settingsT } from './i18n/settings';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { invalidDefaultFloor, invalidCardRotation, cardRotationOptions, rotationFormValue, rotationConfigValue } from './card-editor-validation';
 
@@ -64,13 +63,13 @@ class HouseplanCardEditor extends LitElement {
     const spaces = this._spaces || [];
     const L = this._lang;
     const floorOptions: { value: string; label: string }[] = [
-      { value: '', label: t(L, 'editor.floor_none') },
+      { value: '', label: settingsT(L, 'editor.floor_none') },
     ];
     const token = this._floorToken;
     if (token) {
       floorOptions.push({
         value: token,
-        label: t(L, 'editor.floor_index', { index: String(this._config?.floor) }),
+        label: settingsT(L, 'editor.floor_index', { index: String(this._config?.floor) }),
       });
     }
     const currentFloor = typeof this._config?.floor === 'string' ? this._config.floor : '';
@@ -101,7 +100,7 @@ class HouseplanCardEditor extends LitElement {
         selector: {
           select: {
             mode: 'dropdown',
-            options: languageOptions(t(L, 'editor.lang_auto'), this._config?.language),
+            options: languageOptions(settingsT(L, 'editor.lang_auto'), this._config?.language),
           },
         },
       },
@@ -124,16 +123,16 @@ class HouseplanCardEditor extends LitElement {
     this._loadSpaces();
     const L = this._lang;
     const labels: Record<string, string> = {
-      title: t(L, 'editor.title'),
-      floor: t(L, 'editor.floor'),
-      default_floor: t(L, 'editor.default_floor'),
-      language: t(L, 'editor.language'),
-      icon_size: t(L, 'editor.icon_size'),
+      title: settingsT(L, 'editor.title'),
+      floor: settingsT(L, 'editor.floor'),
+      default_floor: settingsT(L, 'editor.default_floor'),
+      language: settingsT(L, 'editor.language'),
+      icon_size: settingsT(L, 'editor.icon_size'),
       rotation: settingsT(L, 'editor.rotation'),
-      show_temperature: t(L, 'editor.show_temperature'),
-      live_states: t(L, 'editor.live_states'),
-      kiosk: t(L, 'editor.kiosk'),
-      cycle: t(L, 'editor.cycle'),
+      show_temperature: settingsT(L, 'editor.show_temperature'),
+      live_states: settingsT(L, 'editor.live_states'),
+      kiosk: settingsT(L, 'editor.kiosk'),
+      cycle: settingsT(L, 'editor.cycle'),
     };
     const schema = this._schema;
     const missingDefault = invalidDefaultFloor(
@@ -150,7 +149,7 @@ class HouseplanCardEditor extends LitElement {
       ${form(schema.slice(0, 3))}
       ${missingDefault ? html`<div class="default-floor-error" role="alert"
         style="color:var(--error-color,#db4437);margin:-4px 0 12px;overflow-wrap:anywhere">
-        ${t(L, 'editor.default_floor_missing', { id: missingDefault })}
+        ${settingsT(L, 'editor.default_floor_missing', { id: missingDefault })}
       </div>` : nothing}
       ${form(schema.slice(3))}
       ${invalidCardRotation(this._config) ? html`<div class="card-config-error" role="alert"
@@ -159,6 +158,7 @@ class HouseplanCardEditor extends LitElement {
   }
 
   private _valueChanged(ev: CustomEvent): void {
+    if (CARD_EDITOR_LANGUAGE_RUNTIME.state(this._lang) === 'pending') return;
     const config = { ...this._config, ...ev.detail.value };
     config.rotation = rotationConfigValue(config.rotation);
     if (config.floor === '') delete config.floor;

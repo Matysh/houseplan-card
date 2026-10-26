@@ -1,8 +1,7 @@
 /** Config editor (Lovelace GUI) for houseplan-space-card. */
 import { LitElement, html, nothing, noChange } from 'lit';
-import { langOf, t, type Lang } from './i18n';
-import { CARD_EDITOR_LANGUAGE_RUNTIME } from './i18n/card-editor-language';
-import { settingsT } from './i18n/settings';
+import { langOf, type Lang } from './i18n';
+import { SETTINGS_LANGUAGE_RUNTIME as CARD_EDITOR_LANGUAGE_RUNTIME, settingsT } from './i18n/settings';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { resolveSpaceCardFit } from './space-geometry';
 import { invalidCardRotation, cardRotationOptions, rotationFormValue, rotationConfigValue } from './card-editor-validation';
@@ -51,8 +50,8 @@ class HouseplanSpaceCardEditor extends LitElement {
       {
         name: 'fit',
         selector: { select: { mode: 'dropdown', options: [
-          { value: 'content', label: t(this._lang, 'editor.fit_content') },
-          { value: 'house', label: t(this._lang, 'editor.fit_house') },
+          { value: 'content', label: settingsT(this._lang, 'editor.fit_content') },
+          { value: 'house', label: settingsT(this._lang, 'editor.fit_house') },
         ] } },
       },
       { name: 'show_button', selector: { boolean: {} } },
@@ -75,17 +74,17 @@ class HouseplanSpaceCardEditor extends LitElement {
     this._loadSpaces();
     const L = this._lang;
     const labels: Record<string, string> = {
-      space: t(L, 'editor.space'),
-      title: t(L, 'editor.title'),
+      space: settingsT(L, 'editor.space'),
+      title: settingsT(L, 'editor.title'),
       rotation: settingsT(L, 'editor.rotation'),
-      fit: t(L, 'editor.framing'),
-      show_button: t(L, 'editor.show_button'),
-      button_label: t(L, 'editor.button_label'),
-      button_target: t(L, 'editor.button_target'),
-      icon_size: t(L, 'editor.icon_size'),
-      show_temperature: t(L, 'editor.show_temperature'),
-      live_states: t(L, 'editor.live_states'),
-      light_pools: t(L, 'editor.light_pools'),
+      fit: settingsT(L, 'editor.framing'),
+      show_button: settingsT(L, 'editor.show_button'),
+      button_label: settingsT(L, 'editor.button_label'),
+      button_target: settingsT(L, 'editor.button_target'),
+      icon_size: settingsT(L, 'editor.icon_size'),
+      show_temperature: settingsT(L, 'editor.show_temperature'),
+      live_states: settingsT(L, 'editor.live_states'),
+      light_pools: settingsT(L, 'editor.light_pools'),
     };
     return html`<ha-form
       .hass=${this.hass}
@@ -98,6 +97,7 @@ class HouseplanSpaceCardEditor extends LitElement {
   }
 
   private _valueChanged(ev: CustomEvent): void {
+    if (CARD_EDITOR_LANGUAGE_RUNTIME.state(this._lang) === 'pending') return;
     // `aspect_ratio` was exposed by the editor but never consumed by the
     // square static card. Strip the stale no-op key on the next real edit so
     // the UI cannot keep promising a setting that has no effect.

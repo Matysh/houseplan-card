@@ -6472,6 +6472,7 @@ export class HouseplanCard extends LitElement {
 
   /** Exact finite room geometry in the current camera coordinate system. */
   private _roomFitBounds(room: RoomCfg, space: SpaceModel, rotation: PlanRotation = 0) {
+    if (!room.id || !roomPoly(room)) return null;
     return roomFitPlanBounds({
       room, space, walls: this._spaceWalls, openCuts: this._openCuts(),
       innerFloor: () => this._innerRoomContour(space, room.id!),
