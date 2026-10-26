@@ -261,11 +261,18 @@ try {
       if (path === 'editor') await window.__hpTest.setMode('plan');
       else if (path === 'space') {
         const c = window.__card;
-        c.addEventListener('click', () => {
+        const observeNavigation = event => {
+          // Opening the compact popup is not navigation. Observe the actual
+          // chosen floor's click, just as the wide native tab did before #997.
+          if (!event.composedPath().some(node => node instanceof HTMLElement
+              && node.dataset.id === 'garden'
+              && ['space-tab', 'select-option'].includes(node.dataset.hp))) return;
+          c.removeEventListener('click', observeNavigation);
           // Observe the navigation handler synchronously, before Lit removes
           // the old icon and implicit capture loss could mask missing teardown.
           window.__guideSpaceRetirement = { space: c._space, drag: c._deviceDrag?.id ?? null };
-        }, { once: true });
+        };
+        c.addEventListener('click', observeNavigation);
         await window.__hpTest.switchSpace('garden');
       }
       else window.__card.remove();
