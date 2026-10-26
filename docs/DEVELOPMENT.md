@@ -3571,11 +3571,10 @@ the same synthetic fixture/theme/1440×1100/DPR1, produce identical 9039-pixel
 preview crops (zero pixels differ by more than three channels). Reference
 adapters run only in the reference page; the candidate uses ordinary sources.
 Matched WSL source builds measure Select-only traffic at 21456 B on accepted
-`8b74e788` and 21463 B on this preview fix. Shared import identity changes the
-compressed lazy graph despite no node-controller source change. Under the
-owner's standing measured-small-growth permission recorded above (#1038),
-only the Select ceiling rises by the observed one-byte overage, 21462→21463;
-no reserve, View/editor limit, latency threshold or proof guard changes.
+`8b74e788` and 21458 B on this preview fix, within the unchanged 21462-B cap.
+The earlier Windows build measured 21463 B and had unavailable symlink/jq
+fixtures; its RED receipt remains separate. The complete ext4 Linux gate
+passes without changing byte limits, runtime thresholds or proof guards.
 The new selected Golden scene `decor-preview-handoff-1080` covers the same
 full/live handoff. Global baseline acceptance remains a release operation.
 

@@ -28,8 +28,6 @@ const gzip = extra.reduce((sum, path) => sum + byPath.get(path).gzipBytes, 0);
 // #1045: approved small byte increase to the measured Delete graph, no headroom.
 // #1075 rebased onto accepted dev (2026-10-26) measures 21462 B. The same
 // owner permission adds only the observed 4 B, without reserve or other changes.
-// #1080: measured preview handoff/callback protection changes the shared chunk
-// import identity; the existing small-byte permission adds exactly 1 B, no reserve.
-const budget = 21_463;
+const budget = 21_462;
 assert.ok(gzip <= budget, `${gzip} B gzip exceeds the Select-only ${budget} B budget`);
 console.log(`Select-only node graph: ${gzip} B gzip, budget ${budget}; existing bundle ceilings unchanged`);
