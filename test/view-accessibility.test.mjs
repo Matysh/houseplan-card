@@ -6,7 +6,7 @@ const source = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'u
 
 test('#565 View keeps native space buttons and exposes one current page', () => {
   const card = source('src/houseplan-card.ts');
-  assert.match(card, /<nav class="tabs" aria-label=\$\{this\._t\('nav\.spaces'\)\}/);
+  assert.match(card, /<nav class="tabs[^"\n]*" aria-label=\$\{this\._t\('nav\.spaces'\)\}/);
   assert.match(card, /aria-current=\$\{this\._space === s\.id \? 'page' : nothing\}/);
   assert.doesNotMatch(card, /role="tablist"|role="tab"/);
 });
