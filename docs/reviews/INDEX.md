@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 140, issue: 71. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 141, issue: 72. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -24,6 +24,7 @@
 | #1071 | [SPEC-REVIEW-1071-r2.md](SPEC-REVIEW-1071-r2.md) | spec · r2 | 🟡 жёлтый | 0 | 1 | «sun/light consumers» из Скоупа не достигают заявленного нуля перебора | `src/glow-scene.ts` `src/houseplan-card.ts` `src/live-interaction-runtime.ts` `src/space-render.ts` `src/floor-geometry-key.ts` `src/device-contact-card.ts` `glow-scene.ts` `houseplan-card.ts` |
 | #1071 | [SPEC-REVIEW-1071-r3.md](SPEC-REVIEW-1071-r3.md) | spec · r3 | 🟢 зелёный | 0 | 0 | — | — |
 | #1071 | [CODE-REVIEW-1071-r1.md](CODE-REVIEW-1071-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1070 | [SPEC-REVIEW-1070-r1.md](SPEC-REVIEW-1070-r1.md) | spec · r1 | 🟡 жёлтый | 1 | 0 | — | — |
 | #1069 | [CODE-REVIEW-1069-r1.md](CODE-REVIEW-1069-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1069 | [CODE-REVIEW-1069-r2.md](CODE-REVIEW-1069-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1068 | [CODE-REVIEW-1068-r1.md](CODE-REVIEW-1068-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
