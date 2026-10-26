@@ -18,6 +18,8 @@ import { launch, check, finish, watchPage } from './serve.mjs';
 // The native-button navigation/keyboard contract below is the wide header.
 // Compact phone/card navigation has its own real-input #997 witness.
 const { page, browser } = await launch({ width: 1180, height: 760 });
+await page.addStyleTag({ content: '@media(min-width:1100px){#host{width:1060px!important;max-width:none!important;padding:0!important}}' });
+await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('[data-hp="space-tab"]'));
 const out = {};
 
 const settle = () => page.evaluate(() => new Promise((resolve) =>

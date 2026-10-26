@@ -279,7 +279,12 @@ try {
       await page.waitForFunction(() => !window.__card._slide);
       // A deliberate new press, not a compatibility click from the retired
       // drag, owns return navigation through the shared activation guard.
-      await page.locator('houseplan-card').locator('[data-hp="space-tab"][data-id="f1"]').click();
+      const floorTab = page.locator('houseplan-card [data-hp="space-tab"][data-id="f1"]');
+      if (await floorTab.count()) await floorTab.click();
+      else {
+        await page.locator('houseplan-card [data-hp="space-select"] [data-hp="select-trigger"]').click();
+        await page.locator('houseplan-card [data-hp="select-option"][data-id="f1"]').click();
+      }
       await page.waitForFunction(() => window.__card._space === 'f1' && !window.__card._slide);
     }
     await page.evaluate(async path => {

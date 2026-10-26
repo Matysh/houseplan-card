@@ -6,6 +6,9 @@ import { readFileSync } from 'node:fs';
 import { makeDeviceContactsFixture } from './golden/device-contacts.mjs';
 
 const { page, browser } = await launch({ width: 1400, height: 1000 });
+// Native wide-header hooks remain part of this contract; phone checks retain their own width.
+await page.addStyleTag({ content: '@media(min-width:1100px){#host{width:1060px!important;max-width:none!important;padding:0!important}}' });
+await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('[data-hp="space-tab"]'));
 const out = {};
 try {
   const previewText = '{"format":"houseplan-support-package","version":1}\n';

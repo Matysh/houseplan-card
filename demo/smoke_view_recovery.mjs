@@ -356,7 +356,8 @@ reports.races = await races.page.evaluate(async () => {
   location.hash = '#space=garden';
   window.dispatchEvent(new HashChangeEvent('hashchange'));
   await window.__hpTest.settled();
-  if (card.renderRoot.querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current') !== 'page') {
+  if (card.renderRoot.querySelector('[data-hp="space-select-value"]')?.value !== 'garden'
+      && card.renderRoot.querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current') !== 'page') {
     throw new Error('navigation fixture hash did not select garden');
   }
   el.setConfig({ type: 'custom:houseplan-space-card', space: 'garden', show_button: false });

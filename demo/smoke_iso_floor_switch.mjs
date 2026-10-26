@@ -7,6 +7,9 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 800 }, 1, [], { reducedMotion: 'reduce' });
+// The single-task native tab-click oracle explicitly exercises the wide header.
+await page.addStyleTag({ content: '#host{width:1060px!important;max-width:none!important;padding:0!important}' });
+await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('[data-hp="space-tab"]'));
 const out = await page.evaluate(async () => {
   const card = window.__card;
   const hp = window.__hpTest;

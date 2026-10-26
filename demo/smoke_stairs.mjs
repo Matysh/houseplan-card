@@ -94,8 +94,8 @@ const out = await page.evaluate(async () => {
     dialog?.querySelector('.dialog-action-footer .btn.on')?.click();
     await settled();
   };
-  const activeSpace = () => root().querySelector('[data-hp="space-tab"][aria-current="page"]')
-    ?.getAttribute('data-id');
+  const activeSpace = () => root().querySelector('[data-hp="space-select-value"]')?.value
+    || root().querySelector('[data-hp="space-tab"][aria-current="page"]')?.getAttribute('data-id');
   // #740 AC2: all treads of one stair are a single path whose `M` subpaths
   // count the physical treads — equal intervals closest to 30 cm, ties upward
   // (#683); a straight run draws the inner divisions, a spiral every radius.
@@ -739,8 +739,8 @@ if (focusProbe) {
     for (let guard = 0; card._cameraTransition?.active && guard < 90; guard++)
       await new Promise((resolve) => requestAnimationFrame(resolve));
     await window.__hpTest.settled();
-    return card.renderRoot.querySelector('[data-hp="space-tab"][aria-current="page"]')
-      ?.getAttribute('data-id') === 'garden';
+    return card.renderRoot.querySelector('[data-hp="space-select-value"]')?.value === 'garden'
+      || card.renderRoot.querySelector('[data-hp="space-tab"][aria-current="page"]')?.getAttribute('data-id') === 'garden';
   });
 }
 

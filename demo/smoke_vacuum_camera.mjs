@@ -253,7 +253,8 @@ try {
     location.hash='#space=garden';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
   });
-  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current')==='page',null,{timeout:5000});
+  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp="space-select-value"]')?.value==='garden'
+    ||window.__card.renderRoot.querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current')==='page',null,{timeout:5000});
   await settle();
   out.oldFloorRetired = await page.evaluate(()=>!window.__card.renderRoot.querySelector('.vactrail')&&window.__card._vacRaf===0);
 } finally {

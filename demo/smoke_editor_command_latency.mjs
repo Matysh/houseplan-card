@@ -55,7 +55,7 @@ try {
     for (const space of fixture.spaces) space.decor = [];
     await page.evaluate(async fixture => {
       await window.__hpTest.setServerConfig(() => fixture);
-      window.__card.renderRoot.querySelector('[data-hp="space-tab"]').click();
+      await window.__hpTest.switchSpace(fixture.spaces[0].id);
       await window.__hpTest.setMode('decor');
     }, fixture);
     await card.locator('[data-hp="zoom-fit"]').click();

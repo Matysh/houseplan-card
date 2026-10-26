@@ -15,6 +15,8 @@
 import { launch, checkAll, finish } from './serve.mjs';
 // This hook contract includes the retained wide-header native floor buttons.
 const { page, browser } = await launch({ width: 1180, height: 760 });
+await page.addStyleTag({ content: '#host{width:1060px!important;max-width:none!important;padding:0!important}' });
+await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('[data-hp="space-tab"]'));
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;

@@ -105,7 +105,8 @@ const out = await page.evaluate(async () => {
   // 3) switchSpace — настоящая вкладка пространства.
   await hp.switchSpace('garden');
   o.switchSpace = c._space === 'garden'
-    && sr().querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current') === 'page';
+    && (sr().querySelector('[data-hp="space-select-value"]')?.value === 'garden'
+      || sr().querySelector('[data-hp="space-tab"][data-id="garden"]')?.getAttribute('aria-current') === 'page');
   await hp.switchSpace('f1');
 
   // 8) setLayout: позиция маркера меняется событием раскладки.

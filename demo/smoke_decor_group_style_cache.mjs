@@ -48,7 +48,7 @@ try {
   ];
   await page.evaluate(async config=>{
     await window.__hpTest.setServerConfig(()=>config);
-    const c=window.__card;c.renderRoot.querySelector('[data-hp="space-tab"]').click();
+    const c=window.__card;await window.__hpTest.switchSpace(config.spaces[0].id);
     await window.__hpTest.setMode('decor');await window.__hpTest.setTool('select');
     const call=c.hass.callWS.bind(c.hass);window.__1071Writes=0;
     c.hass={...c.hass,callWS:async message=>{if(message.type==='houseplan/config/set')window.__1071Writes++;return call(message);}};
