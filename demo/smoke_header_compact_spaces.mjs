@@ -159,6 +159,10 @@ try {
       document.body.style.setProperty('--card-background-color', background);
       document.body.style.setProperty('--primary-text-color', foreground);
     }, { background, foreground });
+    await button.evaluate(async element => {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {})));
+    });
     check(`header.theme.${theme}.field-contrast`, (await snapshot()).fieldContrast >= 4.5);
     await button.click();
     check(`header.theme.${theme}.long-option-readable`, await picker.locator(`[data-hp="select-option"][data-id="${floors[1].id}"]`).innerText(), `${floors[1].title}\n✓`);

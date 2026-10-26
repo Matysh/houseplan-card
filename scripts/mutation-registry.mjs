@@ -13263,6 +13263,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'compact-space-select-dark-fallback-in-light-theme',
+    guard: 'node demo/smoke_header_compact_spaces.mjs',
+    because: '#997 AC3: without editor styles, native computed colours must keep the real header field readable in light/dark/custom themes; source tokens alone cannot prove painted contrast.',
+    patches: [{
+      file: 'src/hp-settings-select.ts',
+      find: 'border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,color-mix(in srgb,var(--card-background-color,#202126) 90%,var(--primary-text-color,#e6e7eb)))));',
+      replace: 'border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,#282930)));',
+    }],
+  },
+  {
     id: 'compact-space-navigation-keeps-unaccepted-choice',
     guard: 'node --test test/header-space-select.test.mjs',
     because: '#997 AC2: refused dirty navigation must keep both the actual plan and the displayed field on the accepted floor.',
