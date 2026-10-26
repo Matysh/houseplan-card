@@ -1174,6 +1174,7 @@ export async function prepareGoldenScenario(page, scenario) {
           fixture.config=structuredClone(message.config);return {ok:true,rev:++decorStyleRevision};
         }
         if (message.type === 'zha/devices' && fixture.zhaDevices) return structuredClone(fixture.zhaDevices);
+        if (message.type === 'houseplan/config/get' && scenario.firstSpace === 'no-storage') throw Error('Integration unavailable');
         if (message.type === 'houseplan/config/get') return {
           config: structuredClone(fixture.config), rev: scenario.decorGroupStyle?decorStyleRevision:1,
           can_write: scenario.canWrite !== false,
@@ -1260,7 +1261,8 @@ export async function prepareGoldenScenario(page, scenario) {
         host.replaceChildren(card);
         card.hass = hassFor();
       }
-      await until(() => card._loadOk && card._model?.length === fixture.config.spaces.length);
+      await until(() => (scenario.firstSpace === 'no-storage' ? !card._booting && !card._serverStorage : card._loadOk)
+        && card._model?.length === fixture.config.spaces.length);
       await card.updateComplete;
       const expectedDevices = Object.keys(fixture.devices || {}).length;
       if (expectedDevices && !scenario.emptyPlan)
@@ -2666,7 +2668,7 @@ export async function prepareGoldenScenario(page, scenario) {
           || Math.abs(contentRect.height - cardRect.height) > 1) {
         throw new Error(`golden panel-host shell contract failed: ${scenario.id}`);
       }
-      if (scenario.emptyPlan) {
+      if (scenario.emptyPlan && !scenario.firstSpace) {
         if (!empty || card._model?.length !== 0 || card._canEdit
             || empty.querySelector('button') || card.renderRoot.querySelector('[data-editor-navigation]')
             || card.renderRoot.querySelector('hp-dialog')
@@ -2905,6 +2907,15 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.vacuumHistory) result.vacuumHistory = await prepareVacuumHistoryGolden(page,scenario);
   if (scenario.decorMultiselect) result.decorMultiselect = await prepareDecorMultiselect(page,scenario);
   if (scenario.uiLab1081) result.uiLab1081 = await prepareUiLab1081(page, scenario);
+  if (scenario.emptyPlan) {
+    await page.locator('[data-hp=empty] hp-plan-converter-info a').waitFor();
+    if (scenario.firstSpace === 'floors') await page.locator('hp-dialog[data-kind=import] hp-plan-converter-info a').waitFor();
+    else if (scenario.firstSpace && await page.locator('hp-dialog').count()) {
+      await page.locator('hp-dialog button.close').click();
+      await page.locator('hp-dialog').waitFor({ state: 'detached' });
+    }
+    await page.mouse.move(2, 2);
+  }
   if (scenario.directLqi) {
     for (const [id, lqi] of Object.entries(scenario.directLqi)) {
       const line = page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${id}"] .lqi`);

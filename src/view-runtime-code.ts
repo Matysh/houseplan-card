@@ -1,6 +1,7 @@
 import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { ViewRuntimeCode, assertViewRuntimeFingerprint } from './view-runtime-boundary';
 import { viewRuntimeRetryUrl } from './view-runtime-retry';
+import type { CompactDialogHost } from './compact-dialog-styles';
 import type { LiveRuntime } from './live-interaction-runtime';
 
 export const liveRuntimeCode = new ViewRuntimeCode<object, LiveRuntime>(async attempt => {
@@ -15,4 +16,11 @@ export const zigbeeOverlayCode = new ViewRuntimeCode<object, true>(async attempt
     : await import(/* @vite-ignore */ viewRuntimeRetryUrl('__HOUSEPLAN_ZIGBEE_OVERLAY_RETRY_ASSET__', import.meta.url)) as typeof import('./hp-zigbee-topology-overlay');
   assertViewRuntimeFingerprint(module.ZIGBEE_OVERLAY_FINGERPRINT, ENTRY_BUILD_FINGERPRINT);
   return () => module.installZigbeeTopologyOverlay();
+});
+
+export const converterInfoCode = new ViewRuntimeCode<object, true>(async attempt => {
+  const module = attempt === 0 ? await import('./hp-plan-converter-info')
+    : await import(/* @vite-ignore */ viewRuntimeRetryUrl('__HOUSEPLAN_CONVERTER_INFO_RETRY_ASSET__', import.meta.url)) as typeof import('./hp-plan-converter-info');
+  assertViewRuntimeFingerprint(module.CONVERTER_INFO_FINGERPRINT, ENTRY_BUILD_FINGERPRINT);
+  return host => module.installPlanConverterInfo(host as CompactDialogHost);
 });

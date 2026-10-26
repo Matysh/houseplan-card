@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 93 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 102 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 59 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 266 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **533 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 268 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **535 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -630,6 +630,14 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `first-space-converter-link-target`
+- `first-space-converter-writer-only`
+
+#1020 observes native keyboard navigation to a separate tab without losing
+checked floors, and the real card/lazy component lifecycle without writer/storage
+capability. Browser-only witnesses registered for nightly; no mutant execution
+in task development.
 
 - `decor-preview-keeps-lost-capture-draft-1080`
 

@@ -1,0 +1,7 @@
+{
+  "converter_hint.before_link": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по",
+  "converter_hint.link": "ссылке",
+  "converter_hint.after_link": ".",
+  "converter_hint.supported_formats": "На текущий момент поддерживаются форматы: {formats}.",
+  "converter_hint.list_separator": ", "
+}

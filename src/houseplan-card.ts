@@ -9931,7 +9931,8 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._skipImport();
   }
 
-  private _renderImportDialog(): TemplateResult {
+  private _renderImportDialog(): TemplateResult | typeof nothing {
+    if (this._viewRuntimes.converter.state !== 'ready') return nothing;
     if (this._onboardingRuntime) return this._onboardingRuntime._renderImportDialog();
     return this._editorRuntimeOrThrow()._renderImportDialog();
   }
@@ -10944,6 +10945,7 @@ export class HouseplanCard extends LitElement {
                 </span>` : nothing}
                 </div>`
             : html`<p class="muted">${this._t(this._serverStorage ? 'empty.read_only' : 'empty.install')}</p>`}
+          <hp-plan-converter-info placement="empty" .language=${langOf(this.hass, this._config?.language)}></hp-plan-converter-info>
         </div>
         ${dialogPresence(this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing

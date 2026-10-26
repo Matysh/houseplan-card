@@ -7,7 +7,7 @@ import type { VersionRecoveryController } from './version-recovery';
 import type { LiveRuntime } from './live-interaction-runtime';
 import type { LoadedSummaryPanelRuntime } from './summary-panel-runtime-loaded';
 import type { ZigbeeTopologyHass } from './zigbee-topology-runtime';
-import { liveRuntimeCode, zigbeeOverlayCode } from './view-runtime-code';
+import { liveRuntimeCode, zigbeeOverlayCode, converterInfoCode } from './view-runtime-code';
 import { summaryRuntimeLoader } from './summary-runtime-loader';
 import { ViewRuntimeBoundary, guardedViewRuntimeReload } from './view-runtime-boundary';
 import { zigbeeTopologyOverlayRequested } from './zigbee-topology-overlay-bridge';
@@ -23,6 +23,11 @@ export interface ViewRuntimeHost extends SummaryPreferenceHost {
   readonly _kiosk: boolean;
   readonly narrow: boolean | null;
   readonly hass: ZigbeeTopologyHass & { callWS?: unknown; connection?: unknown };
+  readonly _serverCfg?: Pick<ServerConfig, 'spaces'> | null;
+  readonly _serverStorage?: boolean;
+  readonly _booting?: boolean;
+  readonly _model?: readonly unknown[];
+  readonly _importDialog?: unknown;
   _liveRt: LiveRuntime | null;
   _summary?: LoadedSummaryPanelRuntime;
   _capturedSeq: number;
@@ -53,11 +58,12 @@ export class ViewRuntimes {
   readonly live: ViewRuntimeBoundary<object, LiveRuntime>;
   readonly summary: ViewRuntimeBoundary<unknown, LoadedSummaryPanelRuntime>;
   readonly zigbee: ViewRuntimeBoundary<object, true>;
+  readonly converter: ViewRuntimeBoundary<object, true>;
 
   constructor(private readonly host: ViewRuntimeHost) {
-    const port = <Runtime>(install: (runtime: Runtime) => void) => ({
-      owner: () => host._configWriteContext.claim(),
-      current: (owner: object) => host.isConnected && host._configWriteContext.current(owner, host.hass),
+    const port = <Runtime>(install: (runtime: Runtime) => void, informational = false) => ({
+      owner: () => informational ? host : host._configWriteContext.claim(),
+      current: (owner: object) => host.isConnected && (informational ? owner === host : host._configWriteContext.current(owner, host.hass)),
       install,
       changed: () => {
         if (!host.isConnected) return;
@@ -70,21 +76,23 @@ export class ViewRuntimes {
       if (host.isConnected) runtime.connect();
     }));
     this.zigbee = new ViewRuntimeBoundary(host, zigbeeOverlayCode, port(() => {}));
+    this.converter = new ViewRuntimeBoundary(host, converterInfoCode, port(() => {}, true));
   }
 
   connect(): void {
     this.host._summary?.connect();
-    this.live.connect(); this.summary.connect(); this.zigbee.connect(false);
+    this.live.connect(); this.summary.connect(); this.zigbee.connect(false); this.converter.connect(false);
     this.reconcile();
   }
   disconnect(): void {
-    this.live.disconnect(); this.summary.disconnect(); this.zigbee.disconnect();
+    this.live.disconnect(); this.summary.disconnect(); this.zigbee.disconnect(); this.converter.disconnect();
     this.host._summary?.disconnect();
   }
   reconcile(): void {
     if (this.live.state !== 'ready') void this.live.ensure();
     if (this.summary.state !== 'ready') void this.summary.ensure();
     if (this.zigbee.state !== 'ready' && this.wantsZigbee()) void this.zigbee.ensure();
+    if (this.converter.state !== 'ready' && this.wantsConverter()) void this.converter.ensure();
     this.syncRecovery();
   }
   withLive(run: (runtime: LiveRuntime) => void): void {
@@ -98,6 +106,11 @@ export class ViewRuntimes {
     return zigbeeTopologyOverlayRequested({ hass: host.hass, settings: host._settings,
       view: host._mode === 'view', kiosk: host._kiosk });
   }
+  private wantsConverter(): boolean {
+    const host = this.host;
+    return !host._booting && !!(host._importDialog || host._serverCfg?.spaces.length === 0
+      || host._serverStorage === false && host._model?.length === 0);
+  }
   private failures(): FailedViewRuntime[] {
     const failures: FailedViewRuntime[] = [];
     if (this.live.unavailable) failures.push({ name: 'view.runtime_live', boundary: this.live });
@@ -107,6 +120,7 @@ export class ViewRuntimes {
     if (this.zigbee.unavailable && this.wantsZigbee()) {
       failures.push({ name: 'view.runtime_zigbee', boundary: this.zigbee });
     }
+    if (this.converter.unavailable && this.wantsConverter()) failures.push({ name: 'view.runtime_converter', boundary: this.converter });
     return failures;
   }
   private syncRecovery(): void {

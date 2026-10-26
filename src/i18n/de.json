@@ -1362,5 +1362,6 @@
   "vac.history_banner": "Reinigungsverlauf · {date}",
   "vac.history_hide": "Ausblenden",
   "vac.history_limited": "Begrenzte Anzeige",
-  "vac.history_interrupted": "Reinigung unterbrochen"
+  "vac.history_interrupted": "Reinigung unterbrochen",
+  "view.runtime_converter": "Informationen zur Plankonvertierung"
 }

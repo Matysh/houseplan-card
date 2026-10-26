@@ -19,6 +19,7 @@ const dictionary = {
   ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/support/en.json'), 'utf8')),
   // #600: ленивый словарь диалогов настроек — тот же контракт «ни одного мёртвого ключа».
   ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/settings/en.json'), 'utf8')),
+  ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/converter/en.json'), 'utf8')),
 };
 const dictionaryKeys = Object.keys(dictionary);
 

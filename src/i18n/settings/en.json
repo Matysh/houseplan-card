@@ -184,7 +184,7 @@
   "gs.phase_dusk": "Dusk",
   "gs.phase_night": "Night",
   "gs.daynight_rules": "Day starts at 6° above the horizon; night starts at 6° below it. Between them, twilight is dawn while the Sun rises and dusk while it sets.",
-  "gs.converter_description": "If you have a Sweet Home 3D (.sh3d) or Easy Floorplan (YAML / JSON) plan, convert it to House Plan:",
+  "gs.converter_description": "You can convert plans from {formats} to House Plan:",
   "gs.converter_link": "Convert for House Plan",
   "gs.converter_result": "The result is JSON, which you can upload with Import.",
   "gs.space_overrides": "Spaces with their own values: {names}. Changing the global setting will not affect them.",

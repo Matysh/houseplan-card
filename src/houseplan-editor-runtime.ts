@@ -164,6 +164,7 @@ import { commitPlanOptimization } from './plan-optimize-write';
 import { PlanOptimizationUndo, type UndoHass } from './plan-optimize-undo';
 import { saveSpaceCopy } from './space-copy-runtime';
 import { DeviceCopyEditor } from './device-copy-editor';
+import { renderFloorImportDialog } from './floor-import-dialog';
 import {
   Affine, applyAffine, readVacTelemetry, autoCalibrate, areaCentroid,
   vacCalibrationResidualCm, VAC_CALIBRATION_WARN_CM, FitParams, fitMatrix,
@@ -8460,35 +8461,9 @@ public _skipImport(): void {
   }
 
 public _renderImportDialog(): TemplateResult {
-    const d = this.host._importDialog!;
-    const n = d.floors.filter((f) => f.checked).length;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="import" .title=${this.host._t('import.title')} icon="mdi:home-floor-1"
-      @hp-close=${() => (this.host._importDialog = null)}>
-        <div class="body">
-          <div class="rhint">${this.host._t('import.hint')}</div>
-          ${d.floors.map(
-            (f, i) => html`<label class="floorrow">
-              <input data-hp="field" data-field="import-floor" data-value=${f.id} type="checkbox" .checked=${f.checked}
-                @change=${(e: Event) => {
-                  const floors = [...d.floors];
-                  floors[i] = { ...f, checked: (e.target as HTMLInputElement).checked };
-                  this.host._importDialog = { floors };
-                }} />
-              <span>${f.name}</span>
-              ${f.level != null ? html`<span class="floorlvl">L${f.level}</span>` : nothing}
-            </label>`,
-          )}
-        </div>
-        <div class="row" slot="footer">
-          <button data-hp="action" data-action="import-create-space" class="btn ghost" @click=${() => { this.host._importDialog = null; this._openSpaceDialog('create'); }}>
-            ${this.host._t('import.manual')}
-          </button>
-          <span class="spacer"></span>
-          <button class="btn on" data-hp="dialog-confirm" @click=${() => this._startImport()} ?disabled=${!n}>
-            <ha-icon icon="mdi:import"></ha-icon>${this.host._t('import.start', { n })}
-          </button>
-        </div>
-    </hp-dialog>`;
+    return renderFloorImportDialog(this.host, () => {
+      this.host._importDialog = null; this._openSpaceDialog('create');
+    }, () => this._startImport(), 'import-create-space');
   }
 
 public _openSettingsDialog = (): void => {

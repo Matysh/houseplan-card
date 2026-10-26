@@ -2,6 +2,7 @@ import '../hp-settings-select';
 import { ensureFormKitStyles, type FormKitStyleHost } from './form-kit';
 import { settingsDialogCss } from '../styles/settings-dialogs.styles';
 import { cardDialogFormKitTokens } from '../styles/form-kit.styles';
+import { ensureCompactDialogStyles } from '../compact-dialog-styles';
 
 // The footer is a sibling of the form. Share the same theme tokens at its
 // settings-dialog owner instead of maintaining a second colour palette.
@@ -14,6 +15,7 @@ const sheets = new WeakMap<Document, CSSStyleSheet>();
 /** Settings-only CSS must not enter the separate onboarding graph. */
 export function ensureSettingsDialogStyles(host: FormKitStyleHost): void {
   ensureFormKitStyles(host);
+  ensureCompactDialogStyles(host);
   const root = host.renderRoot as ShadowRoot;
   if (!root || adopted.has(root)) return;
   // Editor-only delegation: leave onboarding and ordinary colour fields alone.

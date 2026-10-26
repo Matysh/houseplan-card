@@ -1,0 +1,7 @@
+{
+  "converter_hint.before_link": "Si vous avez déjà un plan de maison dans un autre format, vous pouvez le convertir grâce à ce",
+  "converter_hint.link": "lien",
+  "converter_hint.after_link": ".",
+  "converter_hint.supported_formats": "Formats actuellement pris en charge : {formats}.",
+  "converter_hint.list_separator": ", "
+}

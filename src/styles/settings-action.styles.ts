@@ -8,6 +8,14 @@ export function settingsInteractiveCss(selector: string): string {
     ${selector}:is(:hover,:focus-visible:not(.hp-dialog-return-focus)){${settingsActionHover}outline:none;text-decoration:none;}`;
 }
 
+/** Text links change ink only, including in a compact dialog or an empty view. */
+export function settingsTextLinkCss(selector: string, accent: string, hover = 'var(--primary-text-color)', duration = '150ms'): string {
+  const enabled = `${selector}:not(:disabled)`;
+  return `${enabled} { color:${accent}; background:transparent; border-color:transparent; box-shadow:none; filter:none; cursor:pointer; transition:color ${duration} ease; }
+  ${enabled}:is(:hover,:focus-visible) { color:${hover}; background:transparent; border-color:transparent; box-shadow:none; filter:none; }
+  @media(prefers-reduced-motion:reduce) { ${selector} { transition:none; } }`;
+}
+
 /** The same controls in card-owned forms and the PDF component's own root. */
 export function settingsActionsCss(selector: string, primary = '.on'): string {
   return `

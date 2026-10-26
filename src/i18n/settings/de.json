@@ -184,7 +184,7 @@
   "gs.phase_dusk": "Abenddämmerung",
   "gs.phase_night": "Nacht",
   "gs.daynight_rules": "Tag ab 6° über dem Horizont, Nacht ab 6° darunter. Dazwischen liegt die Dämmerung: morgens bei steigender, abends bei sinkender Sonne.",
-  "gs.converter_description": "Einen Grundriss aus Sweet Home 3D (.sh3d) oder Easy Floorplan (YAML / JSON) können Sie für House Plan konvertieren:",
+  "gs.converter_description": "Pläne aus {formats} können Sie für House Plan konvertieren:",
   "gs.converter_link": "Für House Plan konvertieren",
   "gs.converter_result": "Das Ergebnis ist JSON, das Sie mit „Importieren“ laden können.",
   "gs.space_overrides": "Bereiche mit eigenen Werten: {names}. Änderungen der globalen Einstellung wirken dort nicht.",

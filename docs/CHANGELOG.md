@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Show the plan converter on an empty installation and below the HA floor list.
+  The floor wizard uses the common compact controls, and converter formats share
+  one source with General settings in all four languages. (#1020)
+
 - Clear previous furniture, shape and image placement previews after a full
   redraw followed by pointer movement; saved decor remains visible. Losing
   pointer capture cancels a rectangle or ellipse draft without saving it. (#1080)

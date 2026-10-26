@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 97;
+export const GOLDEN_MATRIX_VERSION = 98;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -192,6 +192,7 @@ export const OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT = Object.freeze([
   'backup-plan-only-export-desktop-en',
   'optimize-preflight-dialog-dark-en',
   'optimize-preflight-dialog-light-ru',
+
 
 ]);
 
@@ -1532,4 +1533,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode: uiLab1081 === 'space-blocker' ? 'plan' : 'devices',
     theme, language: 'ru', viewport: { width: 390, height: 844 }, ...page,
   }))),
+  ...['empty', 'floors', 'no-storage'].flatMap(firstSpace => ['light', 'dark'].map(theme => ({
+    id: `first-space-${firstSpace}-${theme}`, fixture: 'visual', emptyPlan: true, firstSpace,
+    preloadEditorRuntime: false, mode: 'view', language: 'ru', theme,
+    viewport: { width: 1180, height: 900 }, ...page,
+  }))),
+  ...['light', 'dark'].map(theme => ({ id: `first-space-floors-narrow-${theme}`, fixture: 'visual',
+    emptyPlan: true, firstSpace: 'floors', preloadEditorRuntime: false, mode: 'view', language: 'de', theme,
+    viewport: { width: 390, height: 844 }, ...page })),
 ]);

@@ -1,0 +1,7 @@
+{
+  "converter_hint.before_link": "Wenn Sie bereits einen Hausgrundriss in einem anderen Format haben, können Sie ihn über diesen",
+  "converter_hint.link": "Link",
+  "converter_hint.after_link": " konvertieren.",
+  "converter_hint.supported_formats": "Derzeit unterstützte Formate: {formats}.",
+  "converter_hint.list_separator": ", "
+}

@@ -1,5 +1,14 @@
 # House Plan — complete user guide
 
+### Start with an existing plan
+
+The empty screen and the HA floor selection dialog link to the
+[plan converter](https://houseplan.tech/convert/). It supports Sweet Home 3D
+(.sh3d) and Easy Floorplan (YAML / JSON). The link opens a new tab and preserves
+your selected floors. This information is also available without editing rights
+or the storage integration. It returns when the last space is deleted; creating
+or restoring a space removes the empty-screen hint.
+
 ### Consistent editor actions
 
 A new space always opens Plan and scale with Draw it myself selected. In image

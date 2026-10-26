@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "issue": 1020,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already includes the HA-floor onboarding wizard and the plan converter in General settings. This task makes that existing path discoverable and aligns its existing compact controls; no new persisted model or import action is added.",
+  "summary": {
+    "ru": "Подсказка конвертера на пустом плане и в общем компактном диалоге этажей HA.",
+    "en": "Converter guidance on the empty plan and in the shared compact HA-floor wizard."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "panel-narrow-read-only-empty-light-en",
+        "expectation": "change",
+        "reason": "Passive converter guidance also appears below the existing read-only empty explanation."
+      },
+      {
+        "id": "first-space-empty-light",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "first-space-empty-dark",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "first-space-floors-light",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "first-space-floors-dark",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "first-space-no-storage-light",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "first-space-no-storage-dark",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "first-space-floors-narrow-light",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "first-space-floors-narrow-dark",
+        "expectation": "new",
+        "reason": "Native synthetic first-space guidance and compact floor wizard; task intent only, no baseline acceptance."
+      }
+    ],
+    "smokes": [
+      "smoke_first_space_converter.mjs",
+      "smoke_editor_styles_lazy.mjs",
+      "smoke_lazy_editor_chunk.mjs",
+      "smoke_ha_form_shell_parity.mjs",
+      "smoke_dialog_ui_kit.mjs",
+      "smoke_empty_backup_import.mjs"
+    ]
+  }
+}

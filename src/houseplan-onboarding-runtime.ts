@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { renderFloorImportDialog } from './floor-import-dialog';
 import { renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { SETTINGS_LANGUAGE_RUNTIME } from './i18n/settings';
@@ -337,38 +338,9 @@ export class HouseplanOnboardingRuntime {
   }
 
   public _renderImportDialog(): TemplateResult {
-    const dialog = this.host._importDialog!;
-    const selected = dialog.floors.filter((floor) => floor.checked).length;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="import"
-      .title=${this.host._t('import.title')}
-      icon="mdi:home-floor-1" @hp-close=${() => (this.host._importDialog = null)}>
-        <div class="body">
-          <div class="rhint">${this.host._t('import.hint')}</div>
-          ${dialog.floors.map((floor, index) => html`<label class="floorrow">
-            <input data-hp="field" data-field="import-floor" data-value=${floor.id} type="checkbox" .checked=${floor.checked}
-              @change=${(event: Event) => {
-                const floors = [...dialog.floors];
-                floors[index] = {
-                  ...floor, checked: (event.target as HTMLInputElement).checked,
-                };
-                this.host._importDialog = { floors };
-              }} />
-            <span>${floor.name}</span>
-            ${floor.level != null ? html`<span class="floorlvl">L${floor.level}</span>` : nothing}
-          </label>`)}
-        </div>
-        <div class="row" slot="footer">
-          <button data-hp="action" data-action="import-manual" class="btn ghost" @click=${() => {
-            this.host._importDialog = null;
-            this._openSpaceDialog('create');
-          }}>${this.host._t('import.manual')}</button>
-          <span class="spacer"></span>
-          <button class="btn on" data-hp="dialog-confirm"
-            @click=${() => this._startImport()} ?disabled=${!selected}>
-            <ha-icon icon="mdi:import"></ha-icon>${this.host._t('import.start', { n: selected })}
-          </button>
-        </div>
-    </hp-dialog>`;
+    return renderFloorImportDialog(this.host, () => {
+      this.host._importDialog = null; this._openSpaceDialog('create');
+    }, () => this._startImport());
   }
 
   private _rangeInput(

@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/hp-plan-converter-info.ts', 'src/plan-converter.ts', 'src/floor-import-dialog.ts',
+      'src/compact-dialog-styles.ts', 'src/i18n/converter.ts', 'src/styles/form-kit-tokens.ts'],
+    smokes: ['smoke_first_space_converter.mjs', 'smoke_editor_styles_lazy.mjs',
+      'smoke_lazy_editor_chunk.mjs', 'smoke_ha_form_shell_parity.mjs', 'smoke_dialog_ui_kit.mjs'],
+    because: '#1020: native empty/floor presentations, passive rights/storage access, retained selection and thin lazy boundary.',
+  },
+  {
     files: ['src/furniture-placement-press.ts', 'src/live-viewport.ts', 'src/editors/space-plan-list.ts'],
     symbols: ['liveGridBounds', '_furnMouseCurrent', 'advanceFurniturePlacementPress', 'loadSpacePlanList'],
     smokes: ['smoke_furniture_pan.mjs', 'smoke_ui_lab_grid.mjs', 'smoke_ui_lab_1081.mjs'],

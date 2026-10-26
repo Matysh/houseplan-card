@@ -1362,5 +1362,6 @@
   "vac.history_banner": "Cleaning history · {date}",
   "vac.history_hide": "Hide",
   "vac.history_limited": "Limited display",
-  "vac.history_interrupted": "Cleanup interrupted"
+  "vac.history_interrupted": "Cleanup interrupted",
+  "view.runtime_converter": "Plan converter information"
 }

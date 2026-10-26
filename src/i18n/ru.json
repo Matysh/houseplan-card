@@ -1362,5 +1362,6 @@
   "vac.history_banner": "История уборки · {date}",
   "vac.history_hide": "Скрыть",
   "vac.history_limited": "Показ ограничен",
-  "vac.history_interrupted": "Уборка прервана"
+  "vac.history_interrupted": "Уборка прервана",
+  "view.runtime_converter": "Подсказка о конвертации планов"
 }

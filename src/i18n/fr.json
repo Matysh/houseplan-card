@@ -1362,5 +1362,6 @@
   "vac.history_banner": "Historique de nettoyage · {date}",
   "vac.history_hide": "Masquer",
   "vac.history_limited": "Affichage limité",
-  "vac.history_interrupted": "Nettoyage interrompu"
+  "vac.history_interrupted": "Nettoyage interrompu",
+  "view.runtime_converter": "Informations sur la conversion des plans"
 }

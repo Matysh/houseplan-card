@@ -184,7 +184,7 @@
   "gs.phase_dusk": "Закат",
   "gs.phase_night": "Ночь",
   "gs.daynight_rules": "День — Солнце на 6° над горизонтом или выше. Ночь — на 6° под горизонтом или ниже. Между ними — сумерки: рассвет, когда Солнце поднимается, и закат, когда опускается.",
-  "gs.converter_description": "Если у вас есть план Sweet Home 3D (.sh3d) или Easy Floorplan (YAML / JSON), то вы можете конвертировать его в формат для House Plan:",
+  "gs.converter_description": "Планы {formats} можно конвертировать в формат House Plan:",
   "gs.converter_link": "Конвертировать для House Plan",
   "gs.converter_result": "Результат — JSON, который можно загрузить кнопкой «Импорт».",
   "gs.space_overrides": "Собственные значения пространств: {names}. Изменение общей настройки на них не повлияет.",

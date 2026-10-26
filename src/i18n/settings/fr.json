@@ -184,7 +184,7 @@
   "gs.phase_dusk": "Crépuscule",
   "gs.phase_night": "Nuit",
   "gs.daynight_rules": "Le jour commence à 6° au-dessus de l’horizon, la nuit à 6° en dessous. Entre les deux, le crépuscule est l’aube si le Soleil monte et le soir s’il descend.",
-  "gs.converter_description": "Si vous avez un plan Sweet Home 3D (.sh3d) ou Easy Floorplan (YAML / JSON), vous pouvez le convertir pour House Plan :",
+  "gs.converter_description": "Vous pouvez convertir les plans {formats} au format House Plan :",
   "gs.converter_link": "Convertir pour House Plan",
   "gs.converter_result": "Le résultat est un fichier JSON à charger avec « Importer ».",
   "gs.space_overrides": "Espaces avec leurs propres valeurs : {names}. Les modifications générales ne les affectent pas.",

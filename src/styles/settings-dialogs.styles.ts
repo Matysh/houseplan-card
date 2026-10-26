@@ -3,10 +3,10 @@ import { vacuumSettingsCss } from './vacuum-settings.styles';
 /** Shared, editor-only presentation for the four approved settings forms (#944).
  * Menus are owned by hp-settings-select; its hidden native child holds values only.
  */
-import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHover, settingsActionsCss, settingsInteractiveCss } from './settings-action.styles';
+import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHover, settingsInteractiveCss } from './settings-action.styles';
 export const settingsDialogCss = `
   ${css`
-hp-dialog[settings-layout]{--hp-dialog-wide-width:610px;--hp-dialog-icon-size:40.48px;--hp-settings-help-size:22px;--hp-settings-help-scale:1.06;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12);}
+hp-dialog[settings-layout]{--hp-dialog-wide-width:610px;--hp-dialog-icon-size:40.48px;--hp-settings-help-size:22px;--hp-settings-help-scale:1.06;}
 hp-dialog.danger-confirm-dialog[settings-layout]{--hp-dialog-icon-size:28px;}
 hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-body{gap:12px;}
 hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-object{font-size:14px;line-height:1.45;}
@@ -183,16 +183,11 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:
 hp-dialog[settings-layout]{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}
 .hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn{transition:none!important;animation:none!important;}
 }`.cssText}
-${settingsActionsCss('hp-dialog.ui-dialog .btn')}
 ${settingsInteractiveCss('hp-dialog.ui-dialog *:is(summary:not(.hpf-disclosure > summary),.device-inbox-tabs button,.device-inbox-chips .chip button)')}
 ${css`
-hp-dialog.ui-dialog[compact]{--hp-dialog-wide-width:560px;}
 hp-dialog.ui-dialog.decor-properties-dialog{--hp-dialog-icon-size:28px;}
 hp-dialog.ui-dialog.rules-dialog{--hp-dialog-wide-width:860px;}
 hp-dialog.ui-dialog.device-inbox-dialog{--hp-dialog-wide-width:920px;}
-hp-dialog.ui-dialog *:is(.body,.device-inbox){box-sizing:border-box;min-width:0;max-height:none;overflow:visible;padding:20px;background:var(--hpf-surface);font-size:13px;line-height:1.5;}
-hp-dialog.ui-dialog .row[slot=footer]{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0;padding:12px 16px;border:0;background:var(--hpf-surface);}
-hp-dialog.ui-dialog .row[slot=footer] .spacer{flex:1;}
 hp-dialog.decor-properties-dialog .body.hpf-form{display:flex;flex-direction:column;gap:0;padding:20px;background:var(--hpf-surface);font-size:13px;line-height:normal;--hpf-control-surface:var(--hpf-surface);}
 hp-dialog.decor-properties-dialog .body > label:not(.dfill):not(.hpf-toggle){margin:18px 0 8px;color:var(--primary-text-color);font-size:13px;font-weight:600;line-height:20px;}
 hp-dialog.decor-properties-dialog .body.hpf-form > label:first-child{margin-top:0;}
@@ -211,7 +206,6 @@ hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.su
 hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw):hover{border-color:var(--hpf-accent);}
 hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw):focus{outline:none;border-color:var(--hpf-accent);box-shadow:inset 0 0 0 1px var(--hpf-accent);}
 hp-dialog.ui-dialog *:is([aria-invalid=true],input.bad){border-color:var(--error-color);}
-hp-dialog.ui-dialog input[type=checkbox]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--hpf-accent);cursor:pointer;}
 hp-dialog.ui-dialog .device-inbox{gap:18px;}
 hp-dialog.ui-dialog .device-inbox-filters label{min-height:44px;gap:8px;}
 hp-dialog.ui-dialog .device-inbox-row{padding:14px;gap:12px;border-color:var(--hpf-line);border-radius:7px;}
@@ -222,7 +216,6 @@ hp-dialog.ui-dialog .device-inbox-tabs button[aria-selected=true]{border-color:v
 hp-dialog.ui-dialog .device-inbox-discovery{padding:12px;border-radius:7px;}
 hp-dialog.ui-dialog .device-inbox-discovery > summary{padding:8px;margin:-4px;border:1px solid transparent;border-radius:7px;}
 hp-dialog.ui-dialog .device-inbox-chips .chip button{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:0 0 28px;padding:0;border:1px solid transparent;border-radius:50%;}
-hp-dialog.ui-dialog .rhint{margin:0 0 18px;padding:8px 10px;border-inline-start:3px solid var(--info-color,var(--hpf-accent));background:color-mix(in srgb,var(--info-color,var(--hpf-accent)) 10%,var(--hpf-surface));font-size:12px;line-height:1.5;}
 hp-dialog.ui-dialog .rtest{gap:10px;margin-bottom:18px;flex-wrap:wrap;}
 hp-dialog.ui-dialog .rtest .namein{flex:1 1 280px;}
 hp-dialog.ui-dialog .rrow{display:grid;grid-template-columns:minmax(150px,2fr) minmax(140px,1.4fr) 24px repeat(3,44px);gap:8px;margin:10px 0;}
@@ -251,8 +244,6 @@ hp-dialog.ui-dialog *:is(.supportwarning,.supportstatus,.supportupdate) ha-icon{
 hp-dialog.ui-dialog *:is(.supportpreview,.supportmanual,.supporterror,.supportsuccess){gap:12px;padding:14px;border-radius:7px;font-size:13px;line-height:1.45;}
 hp-dialog.ui-dialog .supportpreview summary{padding:8px 10px;margin-inline:-4px;border:1px solid transparent;border-radius:7px;}
 @media(max-width:680px){
-hp-dialog.ui-dialog *:is(.body,.device-inbox){padding:18px 14px;}
-hp-dialog.ui-dialog .row[slot=footer]{padding:12px 14px;}
 hp-dialog.ui-dialog .rrow{grid-template-columns:minmax(0,1fr) repeat(3,44px);padding-bottom:14px;margin:14px 0;border-bottom:1px solid var(--hpf-line);}
 hp-dialog.ui-dialog .rrow *:is(.rpat,.ricon){grid-column:1 / -1;}
 hp-dialog.ui-dialog.rules-dialog .row[slot=footer] > button:first-child{margin-inline-end:auto;}

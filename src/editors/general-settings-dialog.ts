@@ -1,5 +1,6 @@
 /** Shared settings layout; existing general draft and operations (#948). */
 import { html, nothing, type TemplateResult } from 'lit';
+import { PLAN_CONVERTER, planConverterFormats } from '../plan-converter';
 
 import {
   callout, colorField, colorRow, colorTile, colorTiles, field, footerStatus,
@@ -282,8 +283,8 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
                 ${st('gs.optimize_undo')}
               </button>` : nothing}
           </div>`,
-          html`<div class="hpf-converter"><p class="hpf-hint">${st('gs.converter_description')}</p>
-            <a class="hpf-link" href="https://houseplan.tech/convert/" target="_blank" rel="noopener noreferrer">${st('gs.converter_link')} ↗</a>
+          html`<div class="hpf-converter"><p class="hpf-hint">${st('gs.converter_description', { formats: planConverterFormats() })}</p>
+            <a class="hpf-link" href=${PLAN_CONVERTER.url} target="_blank" rel="noopener noreferrer">${st('gs.converter_link')} ↗</a>
             <p class="hpf-hint">${st('gs.converter_result')}</p></div>`,
           !host._canEdit || host._kiosk ? html`<p class="rhint">${st('gs.optimize_write_required')}</p>` : nothing,
         ]),

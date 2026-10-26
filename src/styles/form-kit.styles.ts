@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { settingsTextLinkCss } from './settings-action.styles';
 /**
  * Общий набор контролов формы (#594, шаг 1 эпика #591).
  *
@@ -395,9 +396,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colorrow > .${p}-colorfield { justify-self: end; }
   .${p}-colorrow > .${p}-labelrow { min-height: 0; }
   .${p}-link:not(.btn) { padding: 5px 0; border: 0 none transparent; background: transparent; box-shadow:none; color: var(${tokens.accent}); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; transition:color 150ms ease; }
-  :is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn)):not(:disabled) { color:var(${tokens.accent}); background:transparent; border-color:transparent; box-shadow:none; filter:none; cursor:pointer; transition:color 150ms ease; }
-  :is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn)):not(:disabled):is(:hover,:focus-visible) { color:var(--primary-text-color); background:transparent; border-color:transparent; box-shadow:none; filter:none; }
-  @media(prefers-reduced-motion:reduce) { :is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn)) { transition:none; } }
+  ${settingsTextLinkCss(`:is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn))`, `var(${tokens.accent})`)}
   .${p}-link:disabled { opacity: .5; cursor: default; }
   .${p}-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .${p}-inline > .${p}-labelrow { flex: 1 1 auto; }
@@ -522,21 +521,4 @@ export function formKitCss(
   return `${sharedCss(options, withSwitch)}\n${extrasCss(options)}\n`;
 }
 
-/**
- * Токены темы для диалогов карточки: у панели свои, у карточки — эти.
- *
- * Канва без темы — на 10 % ближе к тексту, чем карточка: светлая тема даёт
- * серый, тёмная — чуть светлее карточки. HA всегда задаёт свою переменную.
- * (Комментарий здесь, а не в CSS: строка листа уезжает в бандл как есть, #526.)
- */
-export const cardDialogFormKitTokens = `  ${css`hp-dialog .hpf-form {
-    --hpf-surface: var(--card-background-color, #fff);
-    --hpf-line: var(--hp-line, var(--divider-color, #dce5e7));
-    --hpf-accent: var(--hp-accent, var(--primary-color));
-    --hpf-canvas: var(--secondary-background-color, color-mix(in srgb, var(--hpf-surface) 90%, var(--primary-text-color, #000)));
-    --hpf-muted: var(--secondary-text-color, #777);
-    --hpf-tint: color-mix(in srgb, var(--hpf-accent) 10%, var(--hpf-surface));
-    --hpf-tint-line: color-mix(in srgb, var(--hpf-accent) 38%, var(--hpf-surface));
-    --hpf-danger: var(--error-color, #db543d);
-  }`.cssText}
-`;
+export { cardDialogFormKitTokens } from './form-kit-tokens';

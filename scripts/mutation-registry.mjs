@@ -85,6 +85,18 @@ const MUTANT_DEFINITIONS = [
       replace: '      if (false) return;' }],
   },
   {
+    id: 'first-space-converter-link-target',
+    guard: 'node demo/smoke_first_space_converter.mjs',
+    because: '#1020: keyboard activation of the real link must open the converter and preserve floor selection/configuration.',
+    patches: [{ file: 'src/hp-plan-converter-info.ts', find: 'target="_blank"', replace: 'target="_self"' }],
+  },
+  {
+    id: 'first-space-converter-writer-only',
+    guard: 'node demo/smoke_first_space_converter.mjs',
+    because: '#1020: native nonwriter and unavailable-storage cards must show passive information without privileged runtimes.',
+    patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
+  },
+  {
     id: 'decor-preview-keeps-lost-capture-draft-1080',
     guard: 'node demo/smoke_decor_preview_ownership.mjs',
     because: '#1080 AC4: real pointer capture loss must remove a drawn rect/ellipse preview without saving it; Node-only rendering cannot observe the browser capture lifecycle. Registered only; nightly execution.',

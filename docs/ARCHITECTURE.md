@@ -482,6 +482,15 @@ and wall runtime are bundled into the offline page. No source actions are execut
 images are references only, and the existing authenticated HA import remains the
 only writer. See [converter boundaries and deployment](../scripts/sh3d-convert/README.md).
 
+The empty screen and HA floor wizard share a passive `hp-plan-converter-info`
+component (#1020). Its four-language informational namespace and compact dialog
+style adopter load through a fingerprinted View boundary, independent of writer
+permission and storage. It neither imports the settings/editor graph nor writes
+configuration. Both import renderers delegate to `floor-import-dialog.ts`; the
+existing owners retain selection, cancellation and import guards. Compact body,
+checkbox, action/footer and hint rules have one style owner; General settings
+continues its existing layout while using the same URL and format data.
+
 Converter target limits are generated from the real Python numeric declarations;
 they are independent of the more generous source-reader budget. Consumer tests
 exercise the actual space-display/sun/backdrop helpers, not just an extra-key

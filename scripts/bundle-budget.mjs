@@ -432,7 +432,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // lazy. Record the fact, retain the2000-B band and352000-B absolute wall.
 // #1078: shared solar topology and an independent room-setting cache key measure
 //346593 B gzip. Retain the2000-B band and352000-B absolute wall; editor UI is lazy.
-export const INITIAL_VIEW_GZIP_CEILING = 346_593;
+// #1020 matched ca672d96/candidate:348302 ->348614 B (+312).
+// The passive hint boundary preserves the existing eager floor-row CSS contract;
+// carry only its measured task delta, with the2000-B band/352000-B wall unchanged.
+export const INITIAL_VIEW_GZIP_CEILING = 346_905;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -845,7 +848,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // #1073 r2: separate matched f7050434/candidate builds:356892 ->359326 B.
 // Carry only the2434-B task delta (356887 ->359321), preserving the inherited
 // 5-B gap, the2000-B band, initial View limits and all other graph references.
-export const LAZY_EDITOR_GZIP_CEILING = 359_321;
+// #1020: matched ca672d96/candidate builds measure359326 ->361593 B.
+// Carry only the2267-B compact-kit/data extraction delta, preserving the
+// inherited5-B gap,2000-B band and absolute initial View wall. The passive
+// four-language hint has its own lazy boundary; initial View adds312 B.
+export const LAZY_EDITOR_GZIP_CEILING = 361_588;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
