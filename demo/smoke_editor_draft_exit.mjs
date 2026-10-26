@@ -179,7 +179,11 @@ const out = await page.evaluate(async () => {
       reset.click();
     } else if (destination === 'space') {
       const target = c._space === 'draft' ? 'other' : 'draft';
-      root().querySelector(`[data-hp="space-tab"][data-id="${target}"]`).click();
+      const floorSelect = root().querySelector('[data-hp="space-select-value"]');
+      if (floorSelect) {
+        floorSelect.value = target;
+        floorSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      } else root().querySelector(`[data-hp="space-tab"][data-id="${target}"]`).click();
     } else if (destination === 'editor') root().querySelector('[data-hp="editor-close"]').click();
     else await ui.setTool('select');
     await wait(() => !!confirm());

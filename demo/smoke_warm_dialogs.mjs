@@ -324,7 +324,11 @@ const res = await page.evaluate(async () => {
   await c.updateComplete; await sleep(50);
   const otherSpace = c._model.find((sp) => sp.id !== draftSpace)?.id;
   out.hOtherSpaceFixture = !!otherSpace && c._pendingNavMode === 'devices';
-  root(c).querySelector(`[data-hp="space-tab"][data-id="${otherSpace}"]`)?.click();
+  const floorSelect = root(c).querySelector('[data-hp="space-select-value"]');
+  if (floorSelect) {
+    floorSelect.value = otherSpace;
+    floorSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  } else root(c).querySelector(`[data-hp="space-tab"][data-id="${otherSpace}"]`)?.click();
   await waitFor(() => c._loadOk && c._space === otherSpace && !c._warmRevivePending, 3000);
   await sleep(300); await c.updateComplete;
   out.hSpaceSwitchNotRevived = c._space === otherSpace && c._mode === 'view' && !c._markerDialog;

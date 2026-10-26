@@ -90,10 +90,10 @@ await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 out.backToView = (await st()).mode;
 // v1.43.1 editor-action oracle (audit T1), plus the separate default-off #919 eye.
 checkAll(out, {
-  "start": {"mode": "view", "modeTabs": 3, "editBtns": 3, "hiddenToggle": 1, "gears": 2, "markupBar": false, "stageClass": "stage mode-view"},
+  "start": {"mode": "view", "modeTabs": 3, "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": false, "stageClass": "stage mode-view"},
   "viewDragMoved": false,
-  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 3, "hiddenToggle": 1, "gears": 2, "markupBar": true, "stageClass": "stage markup tool-select mode-plan"},
-  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 3, "hiddenToggle": 1, "gears": 2, "markupBar": true, "stageClass": "stage mode-devices"},
+  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": true, "stageClass": "stage markup tool-select mode-plan"},
+  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 3, "hiddenToggle": 1, "gears": 1, "markupBar": true, "stageClass": "stage mode-devices"},
   "backToView": "view",
 });
 await finish(browser, out);

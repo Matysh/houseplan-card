@@ -15,7 +15,9 @@
 // добровольцев и физического Companion в проверке не было.
 import { launch, check, finish, watchPage } from './serve.mjs';
 
-const { page, browser } = await launch();
+// The native-button navigation/keyboard contract below is the wide header.
+// Compact phone/card navigation has its own real-input #997 witness.
+const { page, browser } = await launch({ width: 1180, height: 760 });
 const out = {};
 
 const settle = () => page.evaluate(() => new Promise((resolve) =>

@@ -17,12 +17,14 @@ const res = await page.evaluate(async () => {
   const origRender = c.render.bind(c);
   c.render = (...a) => { try { return origRender(...a); } finally { passBuilds.push(fingerprintBuilds); } }; // private-ok: счётчик сборок отпечатка за проход (#725)
   const startSpace = c._space;
-  const otherTab = [...root.querySelectorAll('[data-hp="space-tab"]')].find((tab) => tab.dataset.id !== startSpace);
-  for (const id of [otherTab?.dataset.id, startSpace]) {
-    root.querySelector(`[data-hp="space-tab"][data-id="${id}"]`)?.click();
+  const choices = root.querySelector('[data-hp="space-select-value"]')?.options
+    || root.querySelectorAll('[data-hp="space-tab"]');
+  const otherId = [...choices].map(choice => choice.value || choice.dataset.id).find(id => id !== startSpace);
+  for (const id of [otherId, startSpace]) {
+    await window.__hpTest.switchSpace(id);
     await c.updateComplete; await frames(); await c.updateComplete;
   }
-  out.floorSwitchRoundTrip = !!otherTab && c._space === startSpace && passBuilds.length >= 2;
+  out.floorSwitchRoundTrip = !!otherId && c._space === startSpace && passBuilds.length >= 2;
   out.fingerprintBuildsPerPass = Math.max(0, ...passBuilds);
   // #306: a hass tick that changes no geometry must not rebuild spaces. The
   // shared zero-wall resolver may run during paint, but must not storm.

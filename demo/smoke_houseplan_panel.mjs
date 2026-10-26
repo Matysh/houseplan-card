@@ -277,7 +277,7 @@ const result = await page.evaluate(async () => {
     panelHostWithoutKiosk: card.panelHost === true && card._config?.kiosk !== true,
     noDuplicateProductTitle: !cardRoot.querySelector('.head > .title')
       && shellRoot.querySelectorAll('.title').length === 1,
-    retainedCardNavigation: !!cardRoot.querySelector('[data-hp="space-tab"]')
+    retainedCardNavigation: !!cardRoot.querySelector('[data-hp="space-tab"],[data-hp="space-select"]')
       && !!cardRoot.querySelector('[data-editor-navigation="plan"]'),
     menuContract: menuEvents === 1 && menuDetail?.bubbles === true && menuDetail?.composed === true,
     menuAccessible: shellRoot.querySelector('.menu').getAttribute('aria-label') === 'Menu'

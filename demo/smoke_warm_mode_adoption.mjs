@@ -261,7 +261,8 @@ const other = await touch.page.evaluate(async () => {
   if (c._pendingNavMode !== 'devices') throw new Error('touch fixture did not adopt a pending editor');
   return c._model.find((space) => space.id !== c._space).id;
 });
-await touch.page.locator(`houseplan-card [data-hp="space-tab"][data-id="${other}"]`).tap();
+await touch.page.locator('houseplan-card [data-hp="space-select"] [data-hp="select-trigger"]').tap();
+await touch.page.locator(`houseplan-card [data-hp="select-option"][data-id="${other}"]`).tap();
 await touch.page.evaluate(() => window.releaseWarmPermission());
 await touch.page.waitForFunction(() => window.__card._loadOk);
 await touch.page.waitForTimeout(350);

@@ -13,7 +13,8 @@
 // ПАДАЕТ на сборке до этих правок: data-hp нет вообще, а data-id есть только
 // у текстовой надписи декора.
 import { launch, checkAll, finish } from './serve.mjs';
-const { page, browser } = await launch();
+// This hook contract includes the retained wide-header native floor buttons.
+const { page, browser } = await launch({ width: 1180, height: 760 });
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;

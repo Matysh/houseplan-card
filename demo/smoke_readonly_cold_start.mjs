@@ -105,7 +105,8 @@ const result = await page.evaluate(async (rawFixture) => {
     const root = card.shadowRoot || card.renderRoot;
     return {
       exactSpace: card._curSpaceCfg?.id || null,
-      activeSpace: root.querySelector('[data-hp="space-tab"].active')?.getAttribute('data-id') || null,
+      activeSpace: root.querySelector('[data-hp="space-select-value"]')?.value
+        || root.querySelector('[data-hp="space-tab"].active')?.getAttribute('data-id') || null,
       rooms: root.querySelectorAll('[data-hp="room"]').length,
       decor: root.querySelectorAll('[data-hp="decor"]').length,
       walls: root.querySelectorAll('.wallbodies .wallbody-fill').length,
