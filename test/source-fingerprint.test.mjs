@@ -9,7 +9,7 @@ import {
 } from '../scripts/source-fingerprint.mjs';
 import { verifyDocsCandidate } from '../scripts/docs-accept.mjs';
 
-test('#999/#1078 edits to consumed capture inputs retire source and visual identities', () => {
+test('#999 edits to consumed history capture inputs retire source and visual identities', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'hp-history-capture-inputs-'));
   try {
     for (const name of ['src', 'demo/helpers', 'demo/golden', 'demo/fixtures', 'test/fixtures/vacuum-history'])

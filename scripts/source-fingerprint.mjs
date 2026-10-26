@@ -23,12 +23,13 @@ const BUILD_INPUTS = [
   'scripts/coverage-maps.mjs',
 ];
 
-// #999/#1078: exact helper/data inputs outside the automatic .mjs module corpus.
-const EXTRA_CAPTURE_INPUTS = [
+// #999: exact historical helper/data inputs outside the automatic .mjs corpus.
+const HISTORY_CAPTURE_INPUTS = [
   'demo/helpers/vacuum-history.mjs',
   'test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json',
-  'demo/fixtures/sun-transparent.json',
 ];
+// #1078: saved canonical solar plans affect rendered pixels too.
+const SOLAR_CAPTURE_INPUTS = ['demo/fixtures/sun-transparent.json'];
 
 /**
  * Файлы, которые исполняются ПОСЛЕ того, как картинка снята (#344).
@@ -100,7 +101,8 @@ const fingerprintFiles = (root) => {
   return [
     ...sourceFiles(resolve(root, 'src')),
     ...deterministicFixtureInputs,
-    ...EXTRA_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
+    ...HISTORY_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
+    ...SOLAR_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
     ...browserArgumentCorpus(root).map((name) => resolve(root, name)),
     ...BUILD_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
   ].sort((a, b) => relative(root, a).localeCompare(relative(root, b)));
