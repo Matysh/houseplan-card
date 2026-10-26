@@ -5660,6 +5660,14 @@ restored dist/test-build inventories. Mismatched tools require fresh execution;
 no CI image/environment is invented. The private local receipt remains a local
 accelerator with fresh range/filesystem guards and grants no CI/review authority.
 
+The real CAS fixture (#1072) reports a bounded, passive `gitOp` trace on assertion
+failure: operation, duration, effective timeout, remaining deadline, safe error
+code/status/signal, JSON validity and actual Node/CPU profile. Paths, argv,
+record contents, stderr and error messages are omitted. Run
+`node --test test/ci-proof-registry.test.mjs`; a successful fixture also prints
+the trace as TAP diagnostics. Neither the 3s fetch cap nor 8s absolute deadline
+is relaxed. Historical failures without such evidence remain unexplained.
+
 Source authentication also compares immutable Git tree objects independently of
 both serialized keys. Product paths, job roots, closed inputs, transitive trust
 code and the computed inventory must match; beta allows only validated mirror

@@ -10,6 +10,7 @@ import { producedRegistryRecords } from '../scripts/ci-registry-records.mjs';
 import { intentPolicy, withinRegistryDeadline } from '../scripts/ci-registry-cli.mjs';
 import { buildCiProof, evaluateCiProof, CI_PROOF_POLICIES, JOB_RULES, resolveJobRules } from '../scripts/ci-proof.mjs';
 import { jobInstanceNames, validateJobs } from '../scripts/workflow-jobs.mjs';
+import { traceRegistryProbe } from './helpers/registry-probe-diagnostics.mjs';
 
 const H = c => c.repeat(64), sha = 'a'.repeat(40), now = Date.parse('2026-10-21T03:00:00Z');
 function fixture(job = 'frontend') {
@@ -263,14 +264,71 @@ test('real orphan registry survives concurrent CAS writers and reads from unrela
   assert.equal(pushes, 2, 'lost CAS is retried against the winning tip');
   git(b, ['checkout', '--orphan', 'issue/981-unrelated', 'refs/remotes/origin/ci-proofs']);
   writeFileSync(join(b, 'README.md'), 'unrelated content\n'); git(b, ['add', 'README.md']); git(b, ['commit', '-m', 'unrelated']);
-  const head = git(b, ['rev-parse', 'HEAD']), store = fetchRegistry(b);
-  for (const expected of [record, second, third]) assert.deepEqual(store.read('frontend', expected.key), expected);
+  const head = git(b, ['rev-parse', 'HEAD']);
+  const probe = traceRegistryProbe(b, { gitOp: (dir, args, opts) => git(dir, args, { maxBuffer: 8 * 1024 * 1024, ...opts }) });
+  for (const expected of [record, second, third]) {
+    const actual = probe.store.read('frontend', expected.key);
+    assert.deepEqual(actual, expected, probe.diagnostic());
+  }
+  t.diagnostic(probe.diagnostic());
   assert.equal(git(b, ['rev-parse', 'HEAD']), head, 'index reads never move the checkout');
   // Corrupt external JSON is an input case, not a code mutation.
   git(b, ['checkout', '-b', 'registry-corrupt-input', 'refs/remotes/origin/ci-proofs']);
   const path = registryPath('frontend', record.key); writeFileSync(join(b, path), '{corrupt JSON');
   git(b, ['add', path]); git(b, ['commit', '-m', 'corrupt fixture input']); git(b, ['push', 'origin', 'HEAD:ci-proofs']);
   assert.equal(fetchRegistry(a).read('frontend', record.key), null);
+});
+
+test('#1072 probe preserves fail-closed fetch errors and reports bounded safe Git evidence', () => {
+  const secret = 'never-log-https://token@example.invalid/private';
+  const probe = traceRegistryProbe(secret, { gitOp() {
+    throw Object.assign(new Error(secret), { code: 'ETIMEDOUT', status: null, signal: 'SIGKILL', stderr: secret });
+  } });
+  assert.equal(probe.store.read('frontend', H('a')), null);
+  const text = probe.diagnostic(), report = JSON.parse(text);
+  assert.equal(text.includes(secret), false);
+  assert.equal(report.tipAvailable, false);
+  assert.equal(report.operations.length, 1);
+  assert.equal(report.operations[0].step, 'fetch');
+  assert.equal(report.operations[0].code, 'ETIMEDOUT');
+  assert.equal(report.operations[0].signal, 'SIGKILL');
+  assert.ok(report.operations[0].timeoutMs > 0 && report.operations[0].timeoutMs <= 3000);
+  assert.ok(report.operations[0].durationMs >= 0);
+  assert.ok(report.environment.availableParallelism > 0);
+});
+
+test('#1072 probe distinguishes successful Git with malformed input from a failed show', () => {
+  for (const malformed of [true, false]) {
+    const probe = traceRegistryProbe('.', { gitOp(_root, args) {
+      if (args[0] === 'fetch') return '';
+      if (args[0] === 'rev-parse') return sha;
+      if (malformed) return '{bad external JSON';
+      throw Object.assign(new Error('private output'), { code: 'private code', status: 128 });
+    } });
+    assert.equal(probe.store.read('frontend', H('a')), null);
+    const report = JSON.parse(probe.diagnostic()), last = report.operations.at(-1);
+    assert.equal(report.tipAvailable, true);
+    assert.equal(last.step, 'show');
+    if (malformed) { assert.equal(last.outcome, 'success'); assert.equal(last.json, 'invalid'); }
+    else { assert.equal(last.outcome, 'error'); assert.equal(last.status, 128); assert.equal(last.code, 'other'); }
+    assert.equal(probe.diagnostic().includes('private'), false);
+  }
+});
+
+test('#1072 probe retains the absolute deadline and bounds its diagnostic history', () => {
+  let calls = 0;
+  const expired = traceRegistryProbe('.', { deadline: Date.now() - 1, gitOp() { calls++; } });
+  assert.equal(expired.store.read('frontend', H('a')), null);
+  assert.equal(calls, 0);
+  assert.ok(JSON.parse(expired.diagnostic()).remainingMs < 0);
+  const record = fixture().record;
+  const probe = traceRegistryProbe('.', { gitOp(_root, args) {
+    return args[0] === 'show' ? JSON.stringify(record) : args[0] === 'rev-parse' ? sha : '';
+  } });
+  for (let i = 0; i < 20; i++) assert.deepEqual(probe.store.read('frontend', record.key), record);
+  const report = JSON.parse(probe.diagnostic());
+  assert.equal(report.operations.length, 16);
+  assert.equal(report.omitted, 6);
 });
 test('proof consumer re-authenticates source instead of believing a reuse claim', () => {
   const f = fixture(), workflow = validateJobs(), needs = {};

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1072,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Adds passive, bounded diagnostics to the real registry CAS fixture while preserving the implementation, timeouts, concurrent writers and fail-closed assertions. No product behavior changes.",
+  "summary": {
+    "ru": "Диагностика CAS-теста показывает конкретный Git-шаг, время и безопасный код ошибки без ослабления проверок.",
+    "en": "CAS fixture diagnostics identify the Git step, timing and safe error code without weakening checks."
+  }
+}

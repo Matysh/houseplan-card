@@ -195,6 +195,7 @@
     "test/helpers/i18n-consumers.mjs",
     "test/helpers/import-closure.mjs",
     "test/helpers/posix-shell.mjs",
+    "test/helpers/registry-probe-diagnostics.mjs",
     "test/helpers/status-counter-fixture.mjs",
     "test/helpers/workflow-step.mjs",
     "test/houseplan-source.mjs",
