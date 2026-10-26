@@ -205,5 +205,17 @@
   "marker.vacuum_documentation_help": "Открывает руководство по настройке пылесоса в новой вкладке.",
   "marker.radar_profile_help": "Профиль определяет формат данных: координаты, расстояния, зоны или присутствие.",
   "marker.radar_room_help": "Цели отображаются в этой комнате. Смена общей комнаты устройства в этом пространстве также изменяет комнату радара.",
-  "marker.radar_remove_target_help": "Удаляет этот слот после сохранения. Сущности Home Assistant останутся."
+  "marker.radar_remove_target_help": "Удаляет этот слот после сохранения. Сущности Home Assistant останутся.",
+  "history.device_delete": "Удаление {name}",
+  "history.device_delete_many": "Удаление устройств ({count})",
+  "history.device_restore_unavailable": "Эту операцию больше нельзя отменить",
+  "history.device_copy": "Копирование {name}",
+  "history.device_structure_conflict": "Не удалось отменить: устройство или связанные данные изменились",
+  "device.delete_pending": "Удаление устройств…",
+  "history.device_undo_pending": "Отмена: {name}…",
+  "history.device_redo_pending": "Повтор: {name}…",
+  "device.copy_pending": "Копирование устройства…",
+  "history.device_unknown": "Сохранение пока не подтверждено. Проверьте результат операции.",
+  "history.device_backend_unavailable": "Для отмены копирования и удаления обновите интеграцию House Plan.",
+  "history.device_check_result": "Проверить результат"
 }

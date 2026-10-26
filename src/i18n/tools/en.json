@@ -205,5 +205,17 @@
   "marker.vacuum_documentation_help": "Open the vacuum setup guide in a new tab.",
   "marker.radar_profile_help": "The profile selects the expected coordinates, distances, zones or presence data.",
   "marker.radar_room_help": "Live targets stay in this room. Changing the device’s room in this space also changes the radar room.",
-  "marker.radar_remove_target_help": "Removes this slot on Save. Home Assistant entities remain."
+  "marker.radar_remove_target_help": "Removes this slot on Save. Home Assistant entities remain.",
+  "history.device_delete": "Delete {name}",
+  "history.device_delete_many": "Delete devices ({count})",
+  "history.device_restore_unavailable": "This operation can no longer be undone",
+  "history.device_copy": "Copy {name}",
+  "history.device_structure_conflict": "Could not undo: the device or related data changed",
+  "device.delete_pending": "Deleting devices…",
+  "history.device_undo_pending": "Undoing: {name}…",
+  "history.device_redo_pending": "Redoing: {name}…",
+  "device.copy_pending": "Copying device…",
+  "history.device_unknown": "Saving is not confirmed yet. Check the result of the operation.",
+  "history.device_backend_unavailable": "Undo for copying and deletion requires an updated House Plan integration.",
+  "history.device_check_result": "Check result"
 }

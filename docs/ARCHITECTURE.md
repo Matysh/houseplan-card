@@ -18,6 +18,34 @@ existing config/revision/binding guards and shared visibility/delete writers.
 Furniture mouse placement extends the existing delayed press and stage camera;
 live grid bounds refresh only on that camera's existing viewBox budget.
 
+Device structural history (#1073) uses the existing Devices `CommandStack`.
+Copy and Delete add one server-confirmed command; their Undo/Redo confirms its
+cursor after the paired write, while placement, visual and LED history retain
+their optimistic preview/rollback. A mixed stack retains its independent
+commands across structural echoes; each command revalidates its source before
+applying. Position-only histories retain the prior foreign-baseline reset.
+
+`marker_history.py` owns keyed per-field deltas, individual control edges,
+related marker/space/strip identities, attachment digests and bounded leases.
+The canonical Store boundary observes identity/ABA changes for every writer,
+including import, restore and Optimize; a successful own paired command excludes
+its own session, and incomplete/rolled-back pairs do not publish an identity
+transition. Connection ownership holds the actual connection identity rather
+than a reusable Python object ID. The existing recoverable pair writer remains
+the only persistence mechanism; no old complete configuration is restored.
+
+Retained command IDs accompany creation, so replacing a full history or its
+Redo branch releases resources only after durable success and never retains a
+51st command. Delta payloads are limited to 8 MiB per session and 16 MiB in all
+sessions, with at most 128 sessions. The 256 bounded outcome receipts per
+session contain only digest/token/revisions: replay reads a fresh coherent
+pair. Attachments remain in place under hash-checked pins, honored by legacy
+cleanup paths; releasing the last pin checks current references and unchanged
+bytes before deletion. Idle leases expire after 24 hours; active Devices
+heartbeats renew them every five minutes. Robot runtime trails are never part
+of a command. A twice-lost response leaves the same action unresolved with an
+explicit Check result control, rather than admitting another structural action.
+
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and
 intersects proven opposite floor intervals before the shared Glow/LED barrier
@@ -436,8 +464,9 @@ locked stored pair, derives incoming additions from marker refs and the source's
 own HA entities, validates the new graph/settings and commits via `_commit_pair`.
 Source availability and writer permission are checked again after executor work.
 No Optimize/migration or full-layout client overwrite is involved. The response
-contains both accepted bodies/revisions. A lost reply triggers reads for the
-same new ID, not another write. Foreign HA replies cannot adopt or retire a
+contains both accepted bodies/revisions. Capability-aware clients resolve a lost
+reply through the same operation ID; older integrations retain readback-only
+compatibility. Foreign HA replies cannot adopt or retire a
 newer command. Uploaded attachments are COPY-prepared with exact name mappings;
 original folders are never cleaned by this command. Failed preparations may
 leave unreferenced staged files under the new ID, not partial visible markers.

@@ -17,6 +17,7 @@
  * the order the host used before the extraction.
  */
 import type { DeviceLayout } from './device-position-history';
+import { retireDeviceBaseline, type DeviceEditorHistoryState } from './device-position-history';
 import type { ServerConfig } from './types';
 import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import { contentFingerprint } from './visual-continuity';
@@ -389,7 +390,10 @@ export interface ConfigAdoptionHostPort {
   _virtualLights: VirtualLightSnapshot;
   _capturedSnapshotVirtual: string;
   _geometryHistory: Clearable;
-  _devicePositionHistory: Clearable;
+  _devicePositionHistory: Clearable & { removeWhere?: (predicate: (command: {
+    before: DeviceEditorHistoryState; after: DeviceEditorHistoryState;
+  }) => boolean) => number; readonly revalidateOnBaseline?: boolean; readonly baselinePinned?: boolean;
+    commands?: () => readonly {before: DeviceEditorHistoryState; after: DeviceEditorHistoryState}[] };
   _pendingPhysicalWrites: Clearable;
   _canOptimizeUndo: boolean;
   _undoKind: 'optimize' | 'import' | null;
@@ -434,7 +438,7 @@ export function adoptStructuralResponses(
       // A genuinely different baseline invalidates local geometry undo. A
       // reconnect echo with identical content deliberately does not.
       host._geometryHistory.clear();
-      host._devicePositionHistory.clear();
+      retireDeviceBaseline(host._devicePositionHistory);
       host._cancelDeviceDrag();
       host._pendingPhysicalWrites.clear();
       host._clearRoomFocus(true);
@@ -446,7 +450,7 @@ export function adoptStructuralResponses(
     },
     () => {
       host._cancelCameraTransition(false);
-      host._devicePositionHistory.clear();
+      retireDeviceBaseline(host._devicePositionHistory);
       host._cancelDeviceDrag();
     });
   if (configChanged) host._seedDecorStyle(adoption.config);

@@ -7,6 +7,8 @@ import type { HouseplanEditorRuntime } from './houseplan-editor-runtime';
 import type { ServerConfig } from './types';
 import type { DeviceInboxRow } from './device-inbox';
 import { inboxT } from './device-inbox-i18n';
+import { langOf } from './i18n';
+import { toolsT } from './i18n/tools';
 
 export interface MarkerDeletionTarget { id: string; binding: string }
 
@@ -34,6 +36,46 @@ async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly
   if (!cfg || !host._canEdit || host._kiosk || !host.isConnected) throw new Error('Delete unavailable');
   const claim = host._configWriteContext.claim();
   const current = () => host.isConnected && host._configWriteContext.current(claim, host.hass);
+  if (host._mode === 'devices' && runtime.deviceStructure.available) {
+    if (host._devicePositionBusy) return;
+    const space = host._space;
+    const applicable = () => current() && host._mode === 'devices' && host._space === space && host._canEdit && !host._kiosk;
+    host._devicePositionBusy = true;
+    const t = (key: 'history.device_delete' | 'history.device_delete_many', vars: Record<string, string | number>) =>
+      toolsT(langOf(host.hass, host._config?.language), key, vars);
+    const name = targets.length === 1 ? t('history.device_delete', { name: host._devices.find(d => d.id === targets[0].id)?.name || host._t('device.fallback') })
+      : t('history.device_delete_many', { count: targets.length });
+    runtime.deviceStructure.status('device.delete_pending');
+    try {
+      await runtime.deviceStructure.settle();
+      if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.flush();
+      await host._writeChain;
+      if (!applicable() || host._dirtyPos.size || host._sentPos.size) throw new Error('Delete unavailable');
+      await runtime.deviceStructure.request({ type: 'houseplan/marker/history', ...runtime.deviceStructure.fields(true), action: 'delete',
+        targets, expected_config_rev: host._cfgRev, expected_layout_rev: host._layoutRev }, async reply => {
+        if (!applicable()) return;
+        await runtime.deviceStructure.adopt(reply);
+        if (!applicable()) return;
+        runtime.deviceStructure.record(reply, name, targets[0].id, space);
+        const removed = new Set(targets.map(target => target.id));
+        if (host._selId && removed.has(host._selId)) host._selId = null;
+        if (host._infoCard && removed.has(host._infoCard.id)) host._closeInfoCard();
+        for (const id of removed) {
+          delete host._defPos[id]; host._dirtyPos.delete(id); host._sentPos.delete(id);
+          const activity = host._activityRt.get(id);
+          if (activity) clearTimeout(activity.timer);
+          host._activityRt.delete(id); host._vacRt.delete(id); delete host._vacSrvTrails[id];
+        }
+      });
+    } finally {
+      if (current()) {
+        host._devicePositionBusy = runtime.deviceStructure.needsResolution;
+        if (!runtime.deviceStructure.needsResolution) runtime.deviceStructure.status(null);
+        else host.requestUpdate();
+      }
+    }
+    return;
+  }
   const { candidate, cleanupIds } = markerDeletionCandidate(cfg, targets);
   const attempt = runtime._stageOptimisticConfig(cfg, runtime._prepareConfigCandidate(candidate));
   const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced);
@@ -90,6 +132,7 @@ const targetForId = (runtime: HouseplanEditorRuntime, id: string): MarkerDeletio
 /** Panel Delete enters the same durable cleanup command without a fabricated dialog draft. */
 export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: string, binding: string): Promise<void> {
   const host = runtime.host;
+  if (host._devicePositionBusy) return;
   const claim = host._configWriteContext.claim();
   const current = () => host.isConnected && host._canEdit && !host._kiosk
     && host._configWriteContext.current(claim, host.hass) && targetForId(runtime, id)?.binding === binding;
@@ -112,7 +155,7 @@ export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: stri
 export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<void> {
   const host = runtime.host;
   const dialog = host._markerDialog;
-  if (!dialog?.devId || dialog.busy || !host._canEdit || host._kiosk) return;
+  if (!dialog?.devId || dialog.busy || host._devicePositionBusy || !host._canEdit || host._kiosk) return;
   const target = targetForId(runtime, dialog.devId);
   if (!target) return;
   const session = dialogSession(host, 'marker');
@@ -155,7 +198,7 @@ export async function deleteInboxSelection(
 ): Promise<void> {
   const host = runtime.host;
   const dialog = host._deviceInbox;
-  if (!dialog || dialog.busy || !host._canEdit || host._kiosk) return;
+  if (!dialog || dialog.busy || host._devicePositionBusy || !host._canEdit || host._kiosk) return;
   const rows = selectedRows();
   if (!rows.length || rows.some((row) => !row.canDelete || !(row.deviceId || row.markerId))) return;
   const signature = inboxDeletionSignature(rows);

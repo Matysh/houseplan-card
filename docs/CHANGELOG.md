@@ -9,6 +9,9 @@
   frames, animated colour pickers, predictable new-space defaults, device menus
   and hidden markers. Furniture clicks place on release while dragging pans;
   the grid covers the incoming edge throughout navigation. (#1081)
+- Undo and Redo now include device copying and deletion in the Devices editor,
+  preserving the same copy ID, placement, settings, links and attachments.
+  Batch deletion is one step; long operations show their pending state. (#1073)
 
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain

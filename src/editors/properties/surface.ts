@@ -181,7 +181,7 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
     </div>
     <footer class="hp-prop-foot"><div class="hp-prop-actions ${model.actions.length === 1 ? 'solo' : ''}">
       ${model.actions.map(action => html`<div class="hp-prop-action-wrap ${action.wide ? 'wide' : ''}"><button data-hp="action" data-action=${`properties-${action.key}`} type="button" class="hp-prop-action ${action.key}"
-          aria-disabled=${String(!!action.disabled)} data-hp-tooltip=${action.disabled ? t(action.disabled) : nothing}
+          aria-disabled=${String(inert || !!action.disabled)} ?disabled=${inert} data-hp-tooltip=${action.disabled ? t(action.disabled) : nothing}
           @click=${() => { if (!action.disabled) port.action(action.key); }}>
           ${propertiesIcon(action.icon)}<span>${t(action.label)}</span></button></div>`)}
       </div><div class="hp-prop-help">${port.decorShortcuts

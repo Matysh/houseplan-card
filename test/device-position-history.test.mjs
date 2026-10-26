@@ -4,7 +4,17 @@ import {
   applyDevicePlacement,
   devicePlacement,
   sameDevicePlacement,
+  devicePositionHistoryMatches,
 } from '../test-build/device-position-history.js';
+
+test('#1073 placement history refuses a changed source/related position but permits refreshed current contact proof', () => {
+  const state={deviceId:'a',spaceId:'f1',placement:{x:.1,y:.2,s:'f1'},related:[{deviceId:'b',spaceId:'f1',placement:null}]};
+  const layout={a:{x:.1,y:.2,s:'f1',contact_basis:{v:1,at:{x:.1,y:.2}}}};
+  assert.equal(devicePositionHistoryMatches(layout,state),true);
+  assert.equal(devicePositionHistoryMatches({a:{...layout.a,x:.9}},state),false);
+  assert.equal(devicePositionHistoryMatches({...layout,b:{x:.3,y:.4,s:'f1'}},state),false);
+  assert.equal(devicePositionHistoryMatches({a:{...layout.a,s:'other'}},state),false);
+});
 
 test('updates only placement and preserves zero and future sibling fields', () => {
   const original = {

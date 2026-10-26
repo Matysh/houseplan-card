@@ -1,4 +1,5 @@
 import {contentFingerprint} from './visual-continuity';
+import {canonicalizeLatticeCoordinate} from './coordinate-canonicalization';
 
 export interface DevicePlacement {
   x: number;
@@ -29,7 +30,24 @@ export interface DeviceVisualState {
   fields: Array<{ key: 'angle' | 'size'; present: boolean; value?: number | null }>;
 }
 
-export type DeviceEditorHistoryState = DevicePositionState | DeviceVisualState;
+export interface DeviceStructureState {
+  kind: 'structure'; token: string; deviceId: string; spaceId: string;
+}
+
+export type DeviceEditorHistoryState = DevicePositionState | DeviceVisualState | DeviceStructureState;
+
+/** Foreign baselines retire optimistic placements; structural deltas revalidate
+ * their own touched data on the server. Fully guarded Devices stacks validate
+ * every command at application, including optimistic position source values. */
+export function retireDeviceBaseline(stack: { clear(): void; removeWhere?: (predicate: (command: {
+  before: DeviceEditorHistoryState; after: DeviceEditorHistoryState;
+}) => boolean) => number; readonly revalidateOnBaseline?: boolean; readonly baselinePinned?: boolean;
+commands?: () => readonly { before: DeviceEditorHistoryState; after: DeviceEditorHistoryState }[] }): void {
+  if (stack.revalidateOnBaseline && (stack.baselinePinned || stack.commands?.().some(command =>
+    'kind' in command.before && command.before.kind === 'structure'))) return;
+  if (stack.removeWhere) stack.removeWhere(command => !('kind' in command.before) || command.before.kind !== 'structure');
+  else stack.clear();
+}
 
 export function deviceVisualFields(
   marker: { angle?: number | null; size?: number | null }, keys: Array<'angle' | 'size'>,
@@ -67,6 +85,18 @@ export function sameDevicePlacement(
   if (left === null || right === null) return left === right;
   return left.x === right.x && left.y === right.y && left.s === right.s
     && contentFingerprint(left.contact_basis)===contentFingerprint(right.contact_basis);
+}
+
+/** The paired contact writer refreshes its own contact proof while restoring
+ * an old placement. That proof is not another user's position edit. */
+export function devicePositionHistoryMatches(layout: DeviceLayout, state: DevicePositionState): boolean {
+  const matches = (id: string, expected: DevicePlacement | null) => {
+    const current = devicePlacement(layout, id);
+    return current === null || expected === null ? current === expected
+      : canonicalizeLatticeCoordinate(current.x) === canonicalizeLatticeCoordinate(expected.x)
+        && canonicalizeLatticeCoordinate(current.y) === canonicalizeLatticeCoordinate(expected.y) && current.s === expected.s;
+  };
+  return matches(state.deviceId, state.placement) && (state.related || []).every(item => matches(item.deviceId, item.placement));
 }
 
 /**

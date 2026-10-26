@@ -78,6 +78,8 @@ from .import_export import (
 from .junction_limits import JunctionLimitError, validate_junction_limits
 from .led_strips import led_strip_link_report, preserve_led_strips
 from .marker_copy import marker_copy_candidate
+from .marker_history import HistoryError
+from .marker_history_websocket import HISTORY_FIELDS
 from .plans import (
     QuotaError,
     check_quota,
@@ -321,6 +323,8 @@ def async_register(hass: HomeAssistant) -> None:
     async_register_radar(hass)
     async_register_zigbee(hass)
     async_register_zigbee_lqi(hass)
+    from .marker_history_websocket import async_register as async_register_marker_history
+    async_register_marker_history(hass)
 
 
 def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | None:
@@ -485,6 +489,7 @@ async def _commit_pair(
     vol.Required("position"): POS_SCHEMA,
     vol.Required("expected_config_rev"): int,
     vol.Required("expected_layout_rev"): int,
+    **HISTORY_FIELDS,
 })
 @websocket_api.async_response
 async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
@@ -500,6 +505,11 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
 
     try:
         async with rt.write_lock:
+            from .marker_history_websocket import copy_begin, copy_prepare, copy_accept, commit_history_pair, replay_pair
+            session, replay = copy_begin(rt, connection, msg)
+            if replay is not None:
+                await replay_pair(hass, connection, msg, rt, replay)
+                return
             resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
             if resolved is None:
                 return
@@ -549,6 +559,10 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
                 return candidate, positions
 
             target, positions = await hass.async_add_executor_job(validate)
+            command = await hass.async_add_executor_job(copy_prepare, rt, hass, previous, layout,
+                target, positions, msg["marker"]["id"]) if session is not None else None
+            if session is not None:
+                rt.marker_history.check_bytes(session, command, msg.get("retained_tokens"))
             # The lock spans validation and the commit. Recheck authority after CPU I/O.
             if not _check_write(hass, connection):
                 connection.send_error(msg["id"], "unauthorized", "Editing permission was lost")
@@ -563,7 +577,12 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
                        "config_rev": cr + 1, "layout_rev": lr + 1, "final_metadata": final_metadata}
             rollback = {"kind": "marker_copy_rollback", "config": previous, "layout": layout,
                         "config_rev": cr, "layout_rev": lr, "final_metadata": original_metadata}
-            await _commit_pair(rt, pending, rollback)
+            await commit_history_pair(rt, session, pending, rollback)
+            result = {"config": target, "layout": positions, "config_rev": cr + 1, "layout_rev": lr + 1}
+            copy_accept(rt, session, msg, command, result)
+    except HistoryError as err:
+        connection.send_error(msg["id"], err.code, "Device history is no longer applicable")
+        return
     except (DuplicateMarkerIdError, MarkerControlError, RadarValidationError) as err:
         connection.send_error(msg["id"], err.code, str(err))
         return
@@ -577,8 +596,7 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
     hass.bus.async_fire("houseplan_config_updated", {"rev": cr + 1})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": lr + 1})
     _refresh_trail_recorder(hass)
-    connection.send_result(msg["id"], {"config": target, "layout": positions,
-                                      "config_rev": cr + 1, "layout_rev": lr + 1})
+    connection.send_result(msg["id"], result)
 
 
 # ---------------- portable backup / transfer ----------------
@@ -1599,6 +1617,8 @@ async def ws_files_cleanup(hass: HomeAssistant, connection, msg: dict[str, Any])
     async with rt.write_lock:
         stored = await rt.config_store.async_load() or {}
         refs = attachment_refs(stored.get("config") or {})
+        if rt.marker_history is not None:
+            refs |= rt.marker_history.refs()
         removed, kept = await hass.async_add_executor_job(
             _drop_unreferenced_marker_files, files_dir, msg["marker_id"], refs,
         )
@@ -1760,6 +1780,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "vacuum_dock_restart_api": 1,
             "vacuum_history_api": 1,
             "device_contact_api": 1,
+            "device_history_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
@@ -2111,7 +2132,8 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # gets a conflict for its trouble (R4-1).
         def _collect() -> None:
             collect_plans(Path(hass.config.path(PLANS_DIR)), data.get("config"), msg["config"])
-            collect_attachments(Path(hass.config.path(FILES_DIR)), data.get("config"), msg["config"])
+            collect_attachments(Path(hass.config.path(FILES_DIR)), data.get("config"), msg["config"],
+                                pinned=rt.marker_history.refs() if rt.marker_history is not None else set())
 
         try:
             await hass.async_add_executor_job(_collect)
@@ -2508,6 +2530,9 @@ async def _forget_deleted_markers(
     from .plans import attachment_refs
 
     refs = attachment_refs(config)
+    rt = get_data(hass)
+    if rt is not None and rt.marker_history is not None:
+        refs |= rt.marker_history.refs()
     files_dir = Path(hass.config.path(FILES_DIR))
 
     def _drop_files() -> None:

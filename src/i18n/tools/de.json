@@ -205,5 +205,17 @@
   "marker.vacuum_documentation_help": "Anleitung zur Staubsaugereinrichtung in einem neuen Tab öffnen.",
   "marker.radar_profile_help": "Das Profil bestimmt das Datenformat: Koordinaten, Entfernungen, Zonen oder Anwesenheit.",
   "marker.radar_room_help": "Live-Ziele bleiben in diesem Raum. Ein anderer Geräteraum in diesem Bereich ändert auch den Radar-Raum.",
-  "marker.radar_remove_target_help": "Entfernt diesen Slot beim Speichern. Home-Assistant-Entitäten bleiben erhalten."
+  "marker.radar_remove_target_help": "Entfernt diesen Slot beim Speichern. Home-Assistant-Entitäten bleiben erhalten.",
+  "history.device_delete": "{name} löschen",
+  "history.device_delete_many": "Geräte löschen ({count})",
+  "history.device_restore_unavailable": "Dieser Vorgang kann nicht mehr rückgängig gemacht werden",
+  "history.device_copy": "{name} kopieren",
+  "history.device_structure_conflict": "Rückgängig nicht möglich: Das Gerät oder zugehörige Daten wurden geändert",
+  "device.delete_pending": "Geräte werden gelöscht…",
+  "history.device_undo_pending": "Rückgängig: {name}…",
+  "history.device_redo_pending": "Wiederholen: {name}…",
+  "device.copy_pending": "Gerät wird kopiert…",
+  "history.device_unknown": "Das Speichern ist noch nicht bestätigt. Prüfen Sie das Ergebnis des Vorgangs.",
+  "history.device_backend_unavailable": "Aktualisieren Sie die House Plan-Integration, um Kopieren und Löschen rückgängig zu machen.",
+  "history.device_check_result": "Ergebnis prüfen"
 }

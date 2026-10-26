@@ -119,3 +119,13 @@ test('#1081 binding status controls menu availability without rewriting the sour
     assert.equal(f.h._devices[0].bindingStatus.kind,kind);assert.equal(f.messages.length,0);
   }
 });
+
+test('#1073 synchronous preparation does not re-hash the complete plan without an asynchronous gap',async()=>{
+  const f=fixture();let checks=0;
+  const unchanged=f.editor.unchanged.bind(f.editor);
+  f.editor.unchanged=(...args)=>{checks++;return unchanged(...args);};
+  f.h.transport=request=>Promise.resolve({config:f.h._serverCfg,layout:f.h._layout,config_rev:6,layout_rev:7});
+  await f.editor.copyDevice(f.h._devices[0]);
+  assert.equal(checks,2,'before command and after queued writes; pure preparation cannot interleave another event');
+  assert.equal(f.messages.length,1);assert.equal(f.adoptions.length,1);
+});

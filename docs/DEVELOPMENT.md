@@ -11,6 +11,37 @@ source/bundle fingerprint. Layer area is a geometric bound, not measured GPU
 allocation; native Windows headless results do not establish every owner's GPU
 performance. Task work never accepts global baselines or executes mutations.
 
+Device history (#1073) is exercised with
+`node demo/smoke_device_structure_history.mjs` (native Copy, all three Delete
+entries, batch, mixed ordering, pending and bounded lost-response recovery) and
+the unchanged `smoke_device_position_history`, `smoke_device_copy` and
+`smoke_device_inbox_delete` scenarios. Pure and real-HA fixtures live in
+`test/device-structure-history.test.mjs`, `tests_backend/test_marker_history.py`
+and `tests_backend/test_ha_marker_history.py`; an unchanged-implementation
+negative case, static registered witness and nightly caught evidence remain
+different kinds of proof.
+
+`node demo/benchmark_device_copy.mjs --root=<separately-built-checkout>
+--output=<json>` runs exactly eight synthetic cases: 2/200 virtual markers
+(plus the fixture's 12 hidden physical markers), 4/60 rooms, an optional
+attachment-migration response and a fixed 0/120ms server delay. Native click
+capture excludes Playwright's menu animation/actionability wait. Baseline
+`8b74e788` and candidate use Windows Node22.23.4/Playwright1.62.0 and actual
+Chromium151.0.7922.34. The saved diagnostic matrix measured baseline
+click-to-request3.6–10.4ms and candidate4.2–9.8ms; ordinary request-to-frame
+sampling includes rAF scheduling noise and is not a production SLA or proof
+of the live HA disk/network bottleneck. The candidate separately records
+queue/preparation/files/server/adoption/paint phases. A unit counter proves
+removal of one redundant complete-plan fingerprint before any asynchronous
+gap; identical retention notifications now send one housekeeping RPC while
+the periodic heartbeat still renews the lease.
+
+Matched source builds of the same baseline/candidate measured
+hostRefs6276→6342, raw dist3520321→3534175B and lazy editor355669→358029B gzip.
+Only the task's own deltas enter the references, retaining the inherited
+21-reference/538-byte/848-gzip-byte gaps and every existing band/absolute
+budget. These numbers do not claim a loading-speed improvement.
+
 `demo/smoke_wall_smooth_joint.mjs` (#1076) checks native `isPointInStroke` and
 fill on the exact reported smooth joint, plus a real free cap, pan/zoom,
 editor, 2.5D and reconstruction after reload. `HP_JOINT_DPR=2` selects a second

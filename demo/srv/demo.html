@@ -114,7 +114,7 @@ const SERVER_LISTENERS={houseplan_config_updated:new Set(),houseplan_layout_upda
 const SERVED={config:0,layout:0};
 const server=createFixtureStore(CFG,LAYOUT,(event,rev)=>{
   for(const cb of SERVER_LISTENERS[event])cb({event_type:event,data:{rev}});
-});
+},{markerHistory:new URLSearchParams(location.search).get('device-history')==='1'});
 window.__servedRevision=SERVED;
 const CONNECTION={subscribeEvents:async(cb,event)=>{
   const listeners=REGISTRY_LISTENERS[event]||SERVER_LISTENERS[event];

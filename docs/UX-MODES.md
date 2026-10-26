@@ -417,13 +417,35 @@ layer you cannot see is a layer you cannot edit.
   (binding, name, icon, size/angle, display as icon / icon + activity / value,
   activity color and size, tap override,
   model/link/description/PDFs, room).
-- The toolbar always keeps position-only Undo/Redo beside Close. One released
+- The toolbar always keeps device Undo/Redo beside Close. One released
   drag is one command; cancellation, no movement and a failed write create no
   command. The independent 50-step session stack also uses `Ctrl/Cmd+Z`,
   `Ctrl/Cmd+Shift+Z` and `Ctrl+Y`. Panel icon size/angle changes share this ordered
-  history with position/LED commands, preserving unrelated marker keys; other
-  marker configuration is not absorbed, nor are
-  lifecycle or Plan/Background edits.
+  history with position/LED and Copy/Delete commands, preserving unrelated
+  marker keys. Unrelated marker configuration edits and Plan/Background edits
+  do not become device-history steps.
+- Copy/Delete (#1073) and their inverse use server-confirmed completion: the
+  history cursor moves only after acceptance. The toolbar retains a visible
+  operation status and disables conflicting actions until the outcome is
+  known; a lost reply is resolved with the same operation identity. Position,
+  size/angle, appearance and LED commands keep their existing optimistic
+  preview, cursor movement and rollback on refusal. One action never skips a
+  refused step to execute the next. Text controls retain native Undo.
+- Delete from the device dialog, Properties and Devices catalogue while this
+  editor is active shares that ordered history; batch Delete is one paired
+  command. Inverse deltas restore the affected marker/tombstone, placement,
+  related control edges, room snapshot, LED binding and attachments while
+  preserving unrelated current fields and geometry. Restored robots consume
+  current telemetry; runtime cleanup paths are never history payloads.
+- Structural commands are scoped to one card/user/connection, with at most
+  50 retained commands and a bounded lease of 24 hours without activity.
+  Identity/ABA, related-data and revision conflicts refuse safely; only an
+  unusable step is retired, preserving independent history. Pruning, clearing
+  or ending the session releases file pins. Collection checks current refs,
+  other pins and unchanged authorized bytes before deleting a released file.
+  An unsupported backend retains ordinary Copy/Delete without claiming new
+  structural Undo. View/kiosk gain no history writer or editor interaction;
+  no persisted config migration or HA registry mutation is introduced.
 - + add device/entity/virtual, the bottom-left "Hide" / "Show" action in an
   existing device dialog (the one hiding mechanism, docs/FILTERING.md),
   👁 "Show hidden" (the same browser-local display choice as the full-card

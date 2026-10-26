@@ -42,6 +42,11 @@ export const SMOKE_LINKS = [
     because: '#1081: both real browser capability lifecycles, shared consumers, native guarded menu commands and compact confirmation must retain the accepted interaction.',
   },
   {
+    files: ['src/device-structure-history.ts', 'src/marker-deletion.ts', 'src/device-position-history.ts'],
+    smokes: ['smoke_device_structure_history.mjs', 'smoke_device_position_history.mjs', 'smoke_device_copy.mjs', 'smoke_device_inbox_delete.mjs'],
+    because: '#1073: real native Copy/Delete entries, confirmed structural cursors, old optimistic placement history, batch restoration, pending/lost replies and legacy capability fallback must preserve one shared history and the persisted fixture pair.',
+  },
+  {
     files:['src/interior-window-light.ts'],
     symbols:['resolveOpeningWallCandidates','isInteriorLightOpeningType'],
     smokes:['smoke_interior_window_light.mjs','smoke_glow.mjs','smoke_glow_fail_dark.mjs',

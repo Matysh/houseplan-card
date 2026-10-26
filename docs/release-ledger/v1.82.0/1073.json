@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1073,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Copy and Delete already exist in stable v1.82.0 (both source paths are present in that tag). Their omission from the Devices editor's existing Undo/Redo stack is repaired without adding another registry or cross-session history. Existing placement/visual/LED confirmation semantics remain unchanged.",
+  "summary": {
+    "ru": "Копирование и удаление устройств можно отменять и повторять вместе с остальными правками редактора, сохраняя настройки и вложения.",
+    "en": "Device copying and deletion can be undone and redone with other editor changes while retaining settings and attachments."
+  }
+}

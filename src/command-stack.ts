@@ -25,8 +25,9 @@ export class CommandStack<T> {
   private _undo: NamedCommand<T>[] = [];
   private _redo: NamedCommand<T>[] = [];
   private _epoch = 0;
+  private _baselinePins = 0;
 
-  public constructor(limit = 50) {
+  public constructor(limit = 50, private readonly changed?: () => void, public readonly revalidateOnBaseline = false) {
     // UX-04 promises a useful 30–50-step history. Fifty is the product
     // default; the floor prevents a future caller from silently weakening it.
     this._limit = Math.max(30, Math.floor(limit));
@@ -37,6 +38,13 @@ export class CommandStack<T> {
   public get undoName(): string | null { return this._undo[this._undo.length - 1]?.name ?? null; }
   public get redoName(): string | null { return this._redo[this._redo.length - 1]?.name ?? null; }
   public get size(): number { return this._undo.length; }
+  public get baselinePinned(): boolean { return this._baselinePins > 0; }
+  public pinBaseline(): () => void {
+    this._baselinePins++;
+    let active = true;
+    return () => { if (active) { active = false; this._baselinePins--; } };
+  }
+
 
   /** Bounded identity snapshot; inspecting it never moves either cursor. */
   public commands(): readonly NamedCommand<T>[] { return [...this._undo, ...this._redo]; }
@@ -57,7 +65,8 @@ export class CommandStack<T> {
     // it must neither exceed capacity nor evict one of those newer commands.
     if (!this._undo.includes(command) && !this._redo.includes(command)
         && this._undo.length + this._redo.length >= this._limit) return;
-    this.removeWhere(item => item === command);
+    this._undo = this._undo.filter(item => item !== command);
+    this._redo = this._redo.filter(item => item !== command);
     const lane = position.lane === 'undo' ? this._undo : this._redo;
     let index = -1;
     for (const anchor of position.anchors.slice(position.index + 1)) {
@@ -79,6 +88,7 @@ export class CommandStack<T> {
     if (this._undo.length > this._limit) this._undo.splice(0, this._undo.length - this._limit);
     // A new branch makes every previously redoable command stale.
     this._redo = [];
+    this.changed?.();
   }
 
   public undo(): NamedCommand<T> | null {
@@ -114,6 +124,7 @@ export class CommandStack<T> {
     const redoSize = this._redo.length;
     this._undo = this._undo.filter((command) => !predicate(command));
     this._redo = this._redo.filter((command) => !predicate(command));
+    this.changed?.();
     return undoSize + redoSize - this._undo.length - this._redo.length;
   }
 
@@ -121,5 +132,6 @@ export class CommandStack<T> {
     this._epoch++;
     this._undo = [];
     this._redo = [];
+    this.changed?.();
   }
 }

@@ -205,5 +205,17 @@
   "marker.vacuum_documentation_help": "Ouvrir le guide de configuration de l’aspirateur dans un nouvel onglet.",
   "marker.radar_profile_help": "Le profil définit le format : coordonnées, distances, zones ou présence.",
   "marker.radar_room_help": "Les cibles restent dans cette pièce. Changer la pièce de l’appareil dans cet espace change aussi celle du radar.",
-  "marker.radar_remove_target_help": "Supprime cet emplacement à l’enregistrement. Les entités Home Assistant restent."
+  "marker.radar_remove_target_help": "Supprime cet emplacement à l’enregistrement. Les entités Home Assistant restent.",
+  "history.device_delete": "Supprimer {name}",
+  "history.device_delete_many": "Supprimer des appareils ({count})",
+  "history.device_restore_unavailable": "Cette opération ne peut plus être annulée",
+  "history.device_copy": "Copier {name}",
+  "history.device_structure_conflict": "Annulation impossible : l’appareil ou les données associées ont changé",
+  "device.delete_pending": "Suppression des appareils…",
+  "history.device_undo_pending": "Annulation : {name}…",
+  "history.device_redo_pending": "Rétablissement : {name}…",
+  "device.copy_pending": "Copie de l’appareil…",
+  "history.device_unknown": "L’enregistrement n’est pas encore confirmé. Vérifiez le résultat de l’opération.",
+  "history.device_backend_unavailable": "Mettez à jour l’intégration House Plan pour annuler la copie et la suppression.",
+  "history.device_check_result": "Vérifier le résultat"
 }

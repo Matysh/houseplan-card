@@ -705,7 +705,7 @@ export class PropertiesEditor {
           picker.resumeHexDraft(suspended.value); this.suspendedColor=null;
         } else if (suspended?.draft!==this.fields.draft) this.suspendedColor=null;
       },
-    }, this.host._editorSecondaryDialogBlocked || !!this.variable);
+    }, this.host._editorSecondaryDialogBlocked || !!this.variable || this.host._devicePositionBusy);
     return html`${view}${dialogPresence(this.renderVariable())}`;
   }
   selection(): TemplateResult | typeof nothing {

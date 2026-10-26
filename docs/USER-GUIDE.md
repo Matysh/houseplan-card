@@ -1599,8 +1599,10 @@ Delete and Hide are different. Delete removes the marker from LQI, climate,
 light, Glow, room cards, actions, live text and other markers' external
 controls; its binding moves to **Available again**. An exact opening contact or
 lock remains a separate binding. Re-adding creates a new position and restores
-saved references without duplicating the opening binding. Marker position,
-attachments and a vacuum trail are deleted with the marker.
+saved references without duplicating the opening binding. The position leaves
+the plan; Devices editor history retains it and attachments while Undo remains
+available. Deletion outside that editor context has no new recovery history.
+The server-side vacuum trail is discarded and starts afresh after restoration.
 
 ### Hidden devices
 
@@ -1712,8 +1714,43 @@ icon**; its existing strip remains with the original.
 Attachments are independent, as are later edits. A changed plan or failed save
 asks you to refresh before retrying; damaged links are never silently discarded.
 Copying itself sends no equipment commands. Escape or an outside click closes
-the menu. No new touch copying gesture is introduced; position Undo is unchanged,
-and a created copy can be removed with the existing delete command.
+the menu. No new touch copying gesture is introduced. Copy and Delete now join
+the device editor's history.
+
+### Undoing device copies and deletions
+
+The **Undo** and **Redo** buttons beside Close, plus `Ctrl/Cmd+Z`,
+`Ctrl/Cmd+Shift+Z` and `Ctrl+Y`, use one ordered 50-step history for Copy,
+Delete, movement, icon size/angle, appearance and LED changes. After Copy,
+Move and Delete, three Undo actions restore the deleted copy, restore its
+previous position and remove the copy itself, in that order. Redo restores
+the same copy. These shortcuts still edit text when a text field has focus.
+
+Copy, Delete and their Undo/Redo complete after the server confirms the save.
+Until then the toolbar shows **Copying device…**, **Deleting devices…**,
+**Undoing: …** or **Redoing: …**; repeated or conflicting actions are disabled.
+A lost reply is resolved before another operation, preventing a duplicate
+copy. A refusal does not advance to another history step. Movement, size,
+angle and LED edits keep their immediate preview and roll it back if saving
+fails.
+
+Delete from device settings, Properties and the Devices catalogue while the
+device editor is active uses the same history. Batch Delete is one atomic
+step for the whole selection. Undo restores the marker's settings and position,
+related links, room assignment, LED bindings and attachments without changing
+the strip's shape. It never creates or deletes an actual HA device or entity.
+Robot settings return, but its cleanup path comes from current data rather
+than an old history step.
+
+Independent changes from another client are retained. If the device or related
+data changed and restoration is unsafe, House Plan explains the refusal and
+removes only the unusable step; other steps keep their order. History belongs
+to the current card, user and connection, is not included in backups and does
+not survive a page reload. A structural step can become unavailable after
+24 hours without activity. Attachments stay available while their command can
+be undone; releasing history never deletes files referenced by the current
+plan or another applicable command. With an older integration, ordinary Copy
+and Delete remain available, but their new Undo support is unavailable.
 
 ### Actions
 

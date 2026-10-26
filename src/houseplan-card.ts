@@ -207,6 +207,8 @@ import {
   type DevicePlacement,
   type DevicePositionState,
   type DeviceEditorHistoryState,
+  retireDeviceBaseline,
+  devicePositionHistoryMatches,
 } from './device-position-history';
 import {
   applyAreaRelocationResolution,
@@ -592,6 +594,8 @@ export class HouseplanCard extends LitElement {
         if (forceHass) this._renderLife.retireHass();
         this._haVacuumDockRestartApi = null;
         this._haVacuumHistoryApi = null;
+        this._haDeviceHistoryApi = null;
+        this._editorRuntime?.deviceStructure.retire();
         this._loadOk = false; this._serverCanWrite = null; this._loadTries = 0;
         this._liveSyncConnection = null;
         this._saveConfigDebounced.cancel(); this._adoption.resetContext();
@@ -1791,7 +1795,7 @@ export class HouseplanCard extends LitElement {
   /** UX-04: one named, 50-step command history for every plan-geometry tool. */
   private _geometryHistory = new CommandStack<SpaceGeometryState>(50);
   /** #74: independent session-local history for manual device placements. */
-  private _devicePositionHistory = new CommandStack<DeviceEditorHistoryState>(50);
+  private _devicePositionHistory = new CommandStack<DeviceEditorHistoryState>(50, () => this._editorRuntime?.deviceStructure.prune(), true);
   private _devicePositionBusy = false;
   /** Wall-thickness tool dialog (docs/WALL-THICKNESS.md). */
   private _wallDialog: {
@@ -2175,6 +2179,7 @@ export class HouseplanCard extends LitElement {
   private _haWallNodeDeleteApi: number | null = null;
   private _haVacuumDockRestartApi: number | null = null;
   private _haVacuumHistoryApi: number | null = null;
+  private _haDeviceHistoryApi: number | null = null;
   private readonly _radarLive = new RadarLiveController(this);
   private _decorAssetSyncToken = 0;
   private _alignDialog: OptimizePlansDialogState | null = null;
@@ -2838,6 +2843,7 @@ export class HouseplanCard extends LitElement {
     this._warmMarker.cancel();
     this._backupImportIntent.cancel(false);
     this._editorRuntime?.backupTransfer.dispose();
+    this._editorRuntime?.deviceStructure.retire(true);
     this._backupImportDialog = null;
     // Stop the independent kiosk timer before any teardown flush can mutate
     // config/layout state or this detached instance can reload the document.
@@ -5056,7 +5062,7 @@ export class HouseplanCard extends LitElement {
       }
       this._adoption.adoptMergedLayout(merged, resp, () => {
         this._cancelDeviceDrag();
-        this._devicePositionHistory.clear();
+        retireDeviceBaseline(this._devicePositionHistory);
       });
       this._canOptimizeUndo = !!resp?.can_optimize_undo;
       this._undoKind = (resp?.undo_kind || null) as any;
@@ -5597,6 +5603,8 @@ export class HouseplanCard extends LitElement {
     const isCurrent = this._layoutIO.guard();
     const ownsPending = this._layoutIO.guard(true);
     const next = direction === 'undo' ? this._devicePositionHistory.peekUndo() : this._devicePositionHistory.peekRedo();
+    if (next && 'kind' in next.before && next.before.kind === 'structure')
+      return this._editorRuntime?.deviceStructure.restore(direction, next);
     const position = next ? this._devicePositionHistory.positionOf(next) : null;
     const command = direction === 'undo'
       ? this._devicePositionHistory.undo()
@@ -5611,6 +5619,14 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._devicePositionStateValid(target) || target.related?.some(s=>!this._devicePositionStateValid(s))) {
       this._devicePositionHistory.clear();
+      this._showToast(this._t('history.device_stale'), 'history.device_stale');
+      this.requestUpdate();
+      return;
+    }
+
+    const from = direction === 'undo' ? command.after : command.before;
+    if ('kind' in from || !devicePositionHistoryMatches(this._layout, from)) {
+      this._devicePositionHistory.removeWhere(item => item === command);
       this._showToast(this._t('history.device_stale'), 'history.device_stale');
       this.requestUpdate();
       return;

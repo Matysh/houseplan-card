@@ -13,12 +13,13 @@ import { toolsT, type ToolsI18nKey } from './i18n/tools';
 import type { DevItem, ServerConfig } from './types';
 import type { DeviceLayout } from './device-position-history';
 import { canonicalizePosition } from './coordinate-canonicalization';
+import type { DeviceStructureHistory } from './device-structure-history';
 
 interface Menu {
   id: string; space: string; context: object; cr: number; lr: number; cfg: string; layout: string;
   x: number; y: number; target: Element | null;
 }
-interface CopyResponse { config: ServerConfig; layout: DeviceLayout; config_rev: number; layout_rev: number }
+interface CopyResponse { config: ServerConfig; layout: DeviceLayout; config_rev: number; layout_rev: number; history_token?: string }
 interface DeviceMenuCommands {
   settings(device: DevItem, current: () => boolean): void;
   visibility(device: DevItem, hidden: boolean): Promise<void>;
@@ -30,9 +31,10 @@ export class DeviceCopyEditor {
   private busy = false;
   private busyContext: object | null = null;
   private operation = 0;
+  public lastProfile: { phases: Record<string, number>; markers: number; files: boolean; outcome: string } | null = null;
   private readonly presentation = new EditorContextMenu(() => this.host.requestUpdate());
   constructor(private readonly host: HouseplanEditorHostPort, private readonly copied?: (id: string, sourceId: string) => void,
-    private readonly commands?: DeviceMenuCommands) {}
+    private readonly commands?: DeviceMenuCommands, private readonly history?: DeviceStructureHistory) {}
   private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host.hass, this.host._config?.language), key); }
   private allowed(): boolean {
     const h = this.host;
@@ -106,6 +108,11 @@ export class DeviceCopyEditor {
     const operation = ++this.operation;
     this.busyContext = m.context;
     this.busy = true; h._devicePositionBusy = true; this.close();
+    this.history?.status('device.copy_pending');
+    const phases: Record<string, number> = {};
+    let phaseStart = performance.now();
+    const phase = (name: string) => { const now = performance.now(); phases[name] = now - phaseStart; phaseStart = now; };
+    this.lastProfile = { phases, markers: h._serverCfg?.markers?.length || 0, files: false, outcome: 'pending' };
     const authority = () => h.isConnected && h._configWriteContext.current(m.context, h.hass);
     const fail = (key: ToolsI18nKey): never => { throw { copyKey: key }; };
     let sent = false;
@@ -114,6 +121,8 @@ export class DeviceCopyEditor {
       id = 'v_' + Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16).padStart(8, '0')).join('');
       if (h._saveConfigDebounced.pending()) h._saveConfigDebounced.flush();
       await h._writeChain;
+      await this.history?.settle();
+      phase('queue');
       if (!this.unchanged(m) || h._dirtyPos.size || h._sentPos.size) fail('device.copy_changed');
       const d = h._devices.find(item => item.id === m.id && item.space === m.space);
       if (!d || (d.bindingStatus && d.bindingStatus.kind !== 'active')) fail('device.copy_changed');
@@ -131,8 +140,13 @@ export class DeviceCopyEditor {
       const position = deviceCopyPosition(footprint(source), h._devices.filter(item => item.space === m.space && !item.hidden && !strips.has(item.id)).map(footprint),
         h._gridPitch, [...strips.values()].map(strip => ({ points: strip.points.map(p => p.map(n => n * 1000)), radius: radius * .12 })));
       if (!position) fail('device.copy_no_space');
+      phase('preparation');
+      let migrated = false;
       for (const [owner, names] of deviceCopyFileGroups(marker)) {
-        if (!this.unchanged(m)) fail('device.copy_changed');
+        this.lastProfile!.files = true;
+        // Preparation is synchronous: no other client/event can interleave
+        // before the first I/O. Re-hash after every actual asynchronous gap.
+        if (migrated && !this.unchanged(m)) fail('device.copy_changed');
         let mapping: Record<string, string>;
         try {
           const result = await h.hass.callWS({ type: 'houseplan/files/migrate', from_id: owner, to_id: id });
@@ -140,17 +154,32 @@ export class DeviceCopyEditor {
           if (!names.every(name => typeof mapping[name] === 'string' && mapping[name])) fail('device.copy_files_failed');
         } catch { fail('device.copy_files_failed'); }
         marker.pdfs = rewriteDeviceCopyFiles(marker.pdfs || [], owner, id, mapping!);
+        migrated = true;
       }
+      phase('files');
       const currentSource = h._devices.find(item => item.id === source.id && item.space === m.space);
-      if (!this.unchanged(m) || !currentSource
+      if ((migrated && !this.unchanged(m)) || !currentSource
           || currentSource.bindingStatus && currentSource.bindingStatus.kind !== 'active') fail('device.copy_changed');
       sent = true;
       const pos = canonicalizePosition({ ...position!, s: m.space });
-      const response: CopyResponse = await h.hass.callWS({ type: 'houseplan/marker/copy',
+      const request = { type: 'houseplan/marker/copy',
+        ...(this.history?.fields(true) || {}),
         position: pos, expected_config_rev: m.cr, expected_layout_rev: m.lr, source_id: source.id,
         source_binding: source.marker?.binding || `${source.bindingKind}:${source.bindingRef}`,
-        marker });
+        marker };
+      const accept = async (response: CopyResponse, recovered = false) => {
+        if (recovered && this.contextCurrent(m)) await this.history?.adopt(response);
+        if (this.contextCurrent(m) && response.config.markers.some(item => item.id === id && !item.removed)) this.history?.record(response,
+          toolsT(langOf(h.hass, h._config?.language), 'history.device_copy', { name }), id, m.space);
+        if (recovered && this.contextCurrent(m) && response.config.markers.some(item => item.id === id && !item.removed)) {
+          h._showToast(this.t('device.copy_created'), 'device.copy_created'); this.copied?.(id, m.id);
+        }
+      };
+      const response: CopyResponse = this.history?.available
+        ? await this.history.request(request, accept) : await h.hass.callWS(request);
+      phase('server');
       if (!authority()) return;
+      if (this.history?.available && !response.config.markers.some(item => item.id === id && !item.removed)) fail('device.copy_changed');
       if (h._cfgRev > response.config_rev || h._layoutRev > response.layout_rev) {
         await Promise.all([h._reloadConfigOnly(true), h._reloadLayoutOnly()]);
       } else {
@@ -159,6 +188,12 @@ export class DeviceCopyEditor {
         h._cfgEpoch++; h._modelCache = null; h._frame = null; h._regSignature = '';
         h._maybeRebuildDevices(); h._cacheSnapshot(); h.requestUpdate();
       }
+      phase('adoption');
+      this.lastProfile!.outcome = 'accepted';
+      const profile = this.lastProfile;
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => {
+        profile.phases.paint = performance.now() - phaseStart;
+      });
       if (this.contextCurrent(m)) {
         const view = h._view;
         if (view && position) {
@@ -171,9 +206,10 @@ export class DeviceCopyEditor {
         this.copied?.(id, m.id);
       }
     } catch (error) {
+      this.lastProfile!.outcome = 'refused-or-unknown';
       if (!authority()) return;
       // A lost reply is ambiguous, not permission to submit a second ID.
-      if (sent) {
+      if (sent && !this.history?.available) {
         try { await Promise.all([h._reloadConfigOnly(true), h._reloadLayoutOnly()]); } catch { /* retain the failure, never retry the write */ }
         if (h._serverCfg?.markers?.some(marker => marker.id === id) && h._layout[id]) {
           if (this.contextCurrent(m)) { h._showToast(this.t('device.copy_created'), 'device.copy_created'); this.copied?.(id, m.id); }
@@ -191,7 +227,11 @@ export class DeviceCopyEditor {
     } finally {
       if (operation === this.operation) {
         this.busy = false; this.busyContext = null;
-        if (authority()) { h._devicePositionBusy = false; h.requestUpdate(); }
+        if (authority()) {
+          h._devicePositionBusy = this.history?.needsResolution || false;
+          if (!this.history?.needsResolution) this.history?.status(null);
+          h.requestUpdate();
+        }
       }
     }
   }

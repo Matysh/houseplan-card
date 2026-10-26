@@ -288,6 +288,7 @@ import {
 import { renderBackdropGuard, renderPlanBackdropGuard, stagePlanFile, uploadPlanFile } from './backdrop-pick'; import { StairEditorRuntime, type StairEditorHostPort } from './stairs-editor';
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePlacement, DeviceEditorHistoryState, DevicePositionState } from './device-position-history';
+import { DeviceStructureHistory } from './device-structure-history';
 import { PropertiesEditor } from './editors/properties/editor';
 import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
 import { DeviceContactMagnet } from './device-contact-snap';
@@ -537,6 +538,7 @@ export interface HouseplanEditorHostPort {
   _haWallNodeDeleteApi: number | null;
   _haVacuumDockRestartApi: number | null;
   _haVacuumHistoryApi: number | null;
+  _haDeviceHistoryApi: number | null;
   _canOptimizeUndo: boolean;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _cancelDevicePressFeedback: () => void;
@@ -882,6 +884,7 @@ export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 export class HouseplanEditorRuntime {
   public readonly keyboardNudge = new KeyboardNudge(this);
   public readonly backupTransfer = new LazyBackupArchiveClient(this.host);
+  public readonly deviceStructure = new DeviceStructureHistory(this.host);
   public readonly deviceCopy = new DeviceCopyEditor(this.host, (id, sourceId) => {
     const selected = this.properties.identity;
     if (!selected || selected.objectId !== sourceId && selected.binding !== sourceId) return;
@@ -900,7 +903,7 @@ export class HouseplanEditorRuntime {
       if (!current()) return;
       await deletePlanDevice(this, device.id, device.marker?.binding ?? (device.bindingKind === 'virtual' ? 'virtual' : `${device.bindingKind}:${device.bindingRef}`));
     },
-  });
+  }, this.deviceStructure);
   public readonly properties = new PropertiesEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
   private readonly catalogMenu = new CatalogContextMenu(this);
@@ -11047,10 +11050,12 @@ public _renderDevicesBar(): TemplateResult {
     const redoName = this.host._devicePositionHistory.redoName;
     const undoTitle = undoName
       ? this.host._t('history.undo_named', { name: undoName })
-      : this.host._t('history.undo_empty');
+      : this.deviceStructure.available ? this.host._t('history.undo_empty')
+        : toolsT(langOf(this.host.hass, this.host._config?.language), 'history.device_backend_unavailable');
     const redoTitle = redoName
       ? this.host._t('history.redo_named', { name: redoName })
-      : this.host._t('history.redo_empty');
+      : this.deviceStructure.available ? this.host._t('history.redo_empty')
+        : toolsT(langOf(this.host.hass, this.host._config?.language), 'history.device_backend_unavailable');
     return html`<div class="editbar devbar" data-hp="toolbar" data-kind="device">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <button class="btn" data-hp="tool" data-tool="add-device" data-editor-tool-intent @click=${() => this._openMarkerDialog()}
@@ -11072,6 +11077,7 @@ public _renderDevicesBar(): TemplateResult {
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this.host._t('devbar.rules')}
         </button>
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
+        ${this.deviceStructure.render()}
       </div>
       <div class="editbar-end">
         <button class="btn ghost" data-hp="device-history" data-action="undo" data-device-position-history="undo"

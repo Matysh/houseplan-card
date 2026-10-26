@@ -25,7 +25,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5626 · pure backend 659 · HA-harness backend 560 · browser smokes 454 (`npm run inventory`) |
+| Tests | Node unit 5628 · pure backend 671 · HA-harness backend 565 · browser smokes 450 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -38,6 +38,13 @@ Accepted UI Lab controls (#1081) share picker lifecycle, singleton selection
 paint, new-space draft defaults and guarded device commands. Mouse furniture
 clicks commit on release; pan/cancel retain no accidental item/history write.
 The grid uses the existing bounded camera exposure and refresh cadence.
+
+Device Copy/Delete history (#1073) shares the existing 50-step Devices stack.
+Structural Undo/Redo waits for a recoverable paired commit; existing motion,
+visual and LED previews retain their accepted optimistic behavior. Connection
+leases retain exact attachment bytes without cloning current vacuum telemetry.
+Compact idempotent outcomes resolve lost replies using the same action ID;
+an unresolved result blocks another command until explicitly checked.
 
 External documentation-link observation (#1083) retains bounded per-request
 redirect/header and connection metadata under the original HEAD/follow/8s/UA

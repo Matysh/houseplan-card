@@ -123,6 +123,9 @@ class HouseplanData:
     # #936: private ZIP sessions; no archive bytes or tokens enter config/export.
     backup_service: Any | None = None
     backup_root: str = ""
+    # #1073: bounded connection-owned marker history; never part of config/export.
+    marker_history: Any | None = None
+    marker_history_owner: Any | None = None
     # #836: frontend fingerprint and dev label, read once at entry setup.
     build_identity: BuildIdentity = UNKNOWN_BUILD
 
@@ -222,6 +225,7 @@ async def async_save_config_state(
     rev: int,
     *,
     previous_rev: int | None = None,
+    observe_history: bool = True,
 ) -> dict[str, Any]:
     """Persist configuration and reconcile dependent operational state.
 
@@ -247,6 +251,9 @@ async def async_save_config_state(
         await zigbee.async_save_config(canonical_config, save_config)
     else:
         await save_config()
+
+    if observe_history and getattr(runtime, "marker_history", None) is not None:
+        runtime.marker_history.observe_identity({}, canonical_config)
 
     lqi = getattr(runtime, "zigbee_lqi", None)
     if lqi is not None:
@@ -394,6 +401,7 @@ async def _async_converge_pair_documents(
                 target_config,
                 config_rev,
                 previous_rev=previous_config_rev,
+                observe_history=False,
             )
         except Exception:
             # A Store write is allowed to fail after its atomic replacement.
@@ -447,6 +455,9 @@ async def _async_converge_pair_documents(
     # with pre-recovery revisions or a pre-recovery layout snapshot.
     config_data = await runtime.config_store.async_load() or {}
     layout_data = await runtime.store.async_load() or {}
+    if getattr(runtime, "marker_history", None) is not None and not str(pending.get("kind", "")).endswith("_rollback"):
+        runtime.marker_history.observe_identity({}, config_data.get("config") or {},
+                                               exclude_session=getattr(runtime, "marker_history_owner", None))
     return ResolvedStorePair(
         config_data=config_data,
         layout_data=layout_data,
@@ -460,6 +471,9 @@ async def async_resolve_pending_pair(runtime: HouseplanData) -> ResolvedStorePai
     layout_data = await runtime.store.async_load() or {}
     pending = _pending_target(layout_data)
     if pending is None:
+        if getattr(runtime, "marker_history", None) is not None:
+            runtime.marker_history.observe_identity({}, config_data.get("config") or {},
+                exclude_session=getattr(runtime, "marker_history_owner", None))
         return ResolvedStorePair(config_data=config_data, layout_data=layout_data)
     return await async_converge_store_pair(
         runtime,

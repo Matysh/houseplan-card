@@ -1,8 +1,13 @@
 // A small wire fixture, not a second backend validator. Payloads are cloned at
 // the boundary so an optimistic client cannot mutate the saved server document.
-export function createFixtureStore(config, layout, emit = () => {}) {
+export function createFixtureStore(config, layout, emit = () => {}, { markerHistory = false } = {}) {
   let cfg = structuredClone(config), positions = structuredClone(layout);
   let configRev = 1, layoutRev = 1;
+  // #1073 is a wire/lifecycle fixture, not the production delta validator.
+  // Real conflict/ACL/file/paired-write behavior is covered by HA tests.
+  const commands = new Map(), receipts = new Map();
+  const pair = () => ({ config: structuredClone(cfg), layout: structuredClone(positions) });
+  const reply = token => ({ ...pair(), config_rev: configRev, layout_rev: layoutRev, ...(token ? { history_token: token } : {}) });
   const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const changed = (kind) => emit(`houseplan_${kind}_updated`, kind === 'config' ? configRev : layoutRev);
   const cas = (message, rev) => {
@@ -21,9 +26,12 @@ export function createFixtureStore(config, layout, emit = () => {}) {
     advanceOptimizer() { return { config_rev: ++configRev, layout_rev: ++layoutRev }; },
     handle(m, registryEntities = []) {
       switch (m.type) {
-        case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true, device_contact_api: 1 };
+        case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true, device_contact_api: 1,
+          ...(markerHistory ? { device_history_api: 1 } : {}) };
         case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev };
         case 'houseplan/marker/copy': {
+          if(markerHistory && receipts.has(m.operation_id))return structuredClone(receipts.get(m.operation_id));
+          const before=pair();
           cas({ expected_rev: m.expected_config_rev }, configRev);
           cas({ expected_rev: m.expected_layout_rev }, layoutRev);
           const target = structuredClone(cfg), marker = structuredClone(m.marker);
@@ -38,7 +46,38 @@ export function createFixtureStore(config, layout, emit = () => {}) {
           target.markers.push(marker);
           cfg = target; positions = { ...positions, [marker.id]: structuredClone(m.position) };
           configRev++; layoutRev++; changed('config'); changed('layout');
-          return { config: structuredClone(cfg), layout: structuredClone(positions), config_rev: configRev, layout_rev: layoutRev };
+          if(markerHistory && m.operation_id) {
+            commands.set(m.operation_id,{before,after:pair()});
+            receipts.set(m.operation_id,reply(m.operation_id));
+          }
+          return reply(markerHistory ? m.operation_id : null);
+        }
+        case 'houseplan/marker/history/retain': {
+          if(!markerHistory)return undefined;
+          for(const token of commands.keys())if(!m.tokens.includes(token))commands.delete(token);
+          return {ok:true};
+        }
+        case 'houseplan/marker/history': {
+          if(!markerHistory)return undefined;
+          if(receipts.has(m.operation_id))return structuredClone(receipts.get(m.operation_id));
+          cas({ expected_rev:m.expected_config_rev },configRev);cas({ expected_rev:m.expected_layout_rev },layoutRev);
+          let token=m.token;
+          if(m.action==='delete') {
+            const before=pair(),ids=new Set(m.targets.map(t=>t.id));
+            cfg=structuredClone(cfg);positions=structuredClone(positions);
+            cfg.markers=cfg.markers.flatMap(marker=>!ids.has(marker.id)?[marker]:marker.binding==='virtual'?[]
+              :[{id:marker.id,binding:marker.binding,removed:true,hidden:true}]);
+            for(const marker of cfg.markers)if(marker.controls)marker.controls=marker.controls.filter(edge=>!ids.has(edge.slice(7)));
+            for(const id of ids) {delete positions[id];if(cfg.settings?.marker_area_snapshot)delete cfg.settings.marker_area_snapshot[id];}
+            for(const space of cfg.spaces)for(const strip of space.led_strips||[])if(ids.has(strip.marker))Object.assign(strip,{marker:null,active:true});
+            token=m.operation_id;commands.set(token,{before,after:pair()});
+          } else {
+            const command=commands.get(token);
+            if(!command)throw Object.assign(new Error('history expired'),{code:'device_history_unavailable'});
+            const target=command[m.action==='undo'?'before':'after'];cfg=structuredClone(target.config);positions=structuredClone(target.layout);
+          }
+          configRev++;layoutRev++;changed('config');changed('layout');
+          const result=reply(token);receipts.set(m.operation_id,result);return structuredClone(result);
         }
         case 'houseplan/config/set': {
           cas(m, configRev);

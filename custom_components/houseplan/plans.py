@@ -135,6 +135,7 @@ def collect_attachments(
     old_cfg: dict[str, Any] | None,
     new_cfg: dict[str, Any],
     now: float | None = None,
+    *, pinned: set[str] | None = None,
 ) -> int:
     """The same commit-scoped rule as `collect_plans`, for marker attachments.
 
@@ -145,7 +146,7 @@ def collect_attachments(
     was never saved: those go after PLAN_ORPHAN_TTL_S. Never raises: it runs
     behind a durable write.
     """
-    new_refs = attachment_refs(new_cfg)
+    new_refs = attachment_refs(new_cfg) | (pinned or set())
     old_refs = attachment_refs(old_cfg)
     # Removing an attachment from a device that still exists is the user saying
     # "drop this one" — a trash button, no promise that anything is kept. A

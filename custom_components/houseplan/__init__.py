@@ -288,7 +288,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
                     n = sweep_upload_temps(files_dir)
                     # same config on both sides: nothing is superseded, so this
                     # only ever collects what the shared rules call abandoned
-                    n += collect_attachments(files_dir, cfg, cfg)
+                    if data.marker_history is not None:
+                        data.marker_history.collect(files_dir, cfg)
+                    n += collect_attachments(files_dir, cfg, cfg,
+                        pinned=data.marker_history.refs() if data.marker_history is not None else set())
                     n += collect_plans(plans_dir, cfg, cfg)
                     return n
 
