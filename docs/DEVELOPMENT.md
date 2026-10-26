@@ -3216,6 +3216,10 @@ JSON configs, exported demo factories and the actual stand CFG; the pre-change
 catalogue order and room/opening references. It cannot auto-accept new configs.
 The same corpus is compared in Python. Incomplete current-model test fixtures
 pin only fresh UUID entropy in each runner; product randomness is unchanged.
+#1015 adds the eleven nested migration-v1 inputs to this passport using the
+accepted `e271b91b4c4419a4650531ff929e6442ac18f67c` wall implementation in a
+separate checkout. All 122 previous entries remain exact; the migration's
+independent geometry, effective-style and unknown-field expectations stay intact.
 Source RED probes, independent negative corpus probes and static mutation
 readiness are distinct from nightly mutant execution. No snapshot/format/gesture
 change and no headless claim of live HA or real-GPU acceptance.

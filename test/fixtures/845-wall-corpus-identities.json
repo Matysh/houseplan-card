@@ -171,6 +171,10 @@
       "configs": 1
     },
     {
+      "file": "test/fixtures/config-lifecycle/migration-v1.json",
+      "configs": 11
+    },
+    {
       "file": "test/fixtures/config-lifecycle/oldest-supported.json",
       "configs": 1
     },
@@ -4591,6 +4595,325 @@
                 "w2",
                 "w3",
                 "w4"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/before/config",
+      "fingerprint": "0b9aff2283765d7fd5ae8996a761c0e2934b80e3a8e8d64f83a81a5535f90ea4",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-b7zxnoscvxhcbjnmv3qp",
+            "wall-xgsdey6wvxixlstyjql2",
+            "wall-a3pxizwbjrc7pet6zy2b",
+            "wall-cip7b5s2ttbghsbpshrn"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-xgsdey6wvxixlstyjql2",
+                "wall-cip7b5s2ttbghsbpshrn",
+                "wall-a3pxizwbjrc7pet6zy2b",
+                "wall-b7zxnoscvxhcbjnmv3qp"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/expected/config",
+      "fingerprint": "fde4bbcd4a5d9608f39c18bdb293a2d03b7daad99e5fba773557bcf381b97224",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-zpwvtodxofoftxwiprni",
+            "wall-czhcysdmuvubkpsvsyav",
+            "wall-rmxmn2dnlloahehxr2rz",
+            "wall-7nsrgw7l6ggkefojnqor"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-czhcysdmuvubkpsvsyav",
+                "wall-7nsrgw7l6ggkefojnqor",
+                "wall-rmxmn2dnlloahehxr2rz",
+                "wall-zpwvtodxofoftxwiprni"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/0/before/config",
+      "fingerprint": "25b8a49bd1830226f329f6c020ff67bb5c3cde8cdd60a817c497e67c7726cbd0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-b7zxnoscvxhcbjnmv3qp",
+            "wall-xgsdey6wvxixlstyjql2",
+            "wall-a3pxizwbjrc7pet6zy2b",
+            "wall-cip7b5s2ttbghsbpshrn"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-xgsdey6wvxixlstyjql2",
+                "wall-cip7b5s2ttbghsbpshrn",
+                "wall-a3pxizwbjrc7pet6zy2b",
+                "wall-b7zxnoscvxhcbjnmv3qp"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/0/olderBackend/config",
+      "fingerprint": "ea671262d9437aebe519018567215dc7e771503dcf12d51ba70170b6ffe33086",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-zpwvtodxofoftxwiprni",
+            "wall-czhcysdmuvubkpsvsyav",
+            "wall-rmxmn2dnlloahehxr2rz",
+            "wall-7nsrgw7l6ggkefojnqor"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-czhcysdmuvubkpsvsyav",
+                "wall-7nsrgw7l6ggkefojnqor",
+                "wall-rmxmn2dnlloahehxr2rz",
+                "wall-zpwvtodxofoftxwiprni"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/0/expected/config",
+      "fingerprint": "452b524aac949acc3c16f215d551709329a04943748c95754b9590ffac15123e",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-zpwvtodxofoftxwiprni",
+            "wall-czhcysdmuvubkpsvsyav",
+            "wall-rmxmn2dnlloahehxr2rz",
+            "wall-7nsrgw7l6ggkefojnqor"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-czhcysdmuvubkpsvsyav",
+                "wall-7nsrgw7l6ggkefojnqor",
+                "wall-rmxmn2dnlloahehxr2rz",
+                "wall-zpwvtodxofoftxwiprni"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/1/before/config",
+      "fingerprint": "6a2639761f4befb1b2ea1028f9e48d56c5044fb90d7facd489d918f9a444a44e",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-b7zxnoscvxhcbjnmv3qp",
+            "wall-xgsdey6wvxixlstyjql2",
+            "wall-a3pxizwbjrc7pet6zy2b",
+            "wall-cip7b5s2ttbghsbpshrn"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-xgsdey6wvxixlstyjql2",
+                "wall-cip7b5s2ttbghsbpshrn",
+                "wall-a3pxizwbjrc7pet6zy2b",
+                "wall-b7zxnoscvxhcbjnmv3qp"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/1/olderBackend/config",
+      "fingerprint": "a2b487c2bd0d06e65b08ad262bcfcfd2c44efab0b471c12a8c0faeabe9d1fa43",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-zpwvtodxofoftxwiprni",
+            "wall-czhcysdmuvubkpsvsyav",
+            "wall-rmxmn2dnlloahehxr2rz",
+            "wall-7nsrgw7l6ggkefojnqor"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-czhcysdmuvubkpsvsyav",
+                "wall-7nsrgw7l6ggkefojnqor",
+                "wall-rmxmn2dnlloahehxr2rz",
+                "wall-zpwvtodxofoftxwiprni"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/1/expected/config",
+      "fingerprint": "835737bb0c8037b2c7ac20fcfd9b924cf8cdee6f1a543453791e1c172831d013",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-zpwvtodxofoftxwiprni",
+            "wall-czhcysdmuvubkpsvsyav",
+            "wall-rmxmn2dnlloahehxr2rz",
+            "wall-7nsrgw7l6ggkefojnqor"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-czhcysdmuvubkpsvsyav",
+                "wall-7nsrgw7l6ggkefojnqor",
+                "wall-rmxmn2dnlloahehxr2rz",
+                "wall-zpwvtodxofoftxwiprni"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/2/before/config",
+      "fingerprint": "468b08b2915b50672afaf9ef2329e3704c83cb8e596747be293eda58b4fb719f",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-b7zxnoscvxhcbjnmv3qp",
+            "wall-xgsdey6wvxixlstyjql2",
+            "wall-a3pxizwbjrc7pet6zy2b",
+            "wall-cip7b5s2ttbghsbpshrn"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-xgsdey6wvxixlstyjql2",
+                "wall-cip7b5s2ttbghsbpshrn",
+                "wall-a3pxizwbjrc7pet6zy2b",
+                "wall-b7zxnoscvxhcbjnmv3qp"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/2/olderBackend/config",
+      "fingerprint": "6491f7c88801cd7bd0b4aa830d526649ce4119026650a7980f9b00ac37ce5eca",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-zpwvtodxofoftxwiprni",
+            "wall-czhcysdmuvubkpsvsyav",
+            "wall-rmxmn2dnlloahehxr2rz",
+            "wall-7nsrgw7l6ggkefojnqor"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-czhcysdmuvubkpsvsyav",
+                "wall-7nsrgw7l6ggkefojnqor",
+                "wall-rmxmn2dnlloahehxr2rz",
+                "wall-zpwvtodxofoftxwiprni"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/config-lifecycle/migration-v1.json/variants/2/expected/config",
+      "fingerprint": "e6b5de144b2a768935bfcb972c275c4da4ed69663e28f9e96aff04965edf8c70",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-zpwvtodxofoftxwiprni",
+            "wall-czhcysdmuvubkpsvsyav",
+            "wall-rmxmn2dnlloahehxr2rz",
+            "wall-7nsrgw7l6ggkefojnqor"
+          ],
+          "rooms": [
+            {
+              "id": "living",
+              "walls": [
+                "wall-czhcysdmuvubkpsvsyav",
+                "wall-7nsrgw7l6ggkefojnqor",
+                "wall-rmxmn2dnlloahehxr2rz",
+                "wall-zpwvtodxofoftxwiprni"
               ]
             }
           ],

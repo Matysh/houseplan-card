@@ -10430,9 +10430,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'custom_components/houseplan/validation.py',
       find: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
+        + '    ),\n    canonical_config,\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
       replace: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    lambda value: value,\n    _config_wall_segment_invariants,\n',
+        + '    ),\n    canonical_config,\n    lambda value: value,\n    _config_wall_segment_invariants,\n',
     }],
   },
   {
