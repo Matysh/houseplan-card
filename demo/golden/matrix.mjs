@@ -1522,4 +1522,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       viewport: { width: 900, height: 700 }, ...page },
   ]),
 
+  ...['device-menu', 'device-confirm', 'new-space', 'grid-pan'].flatMap(uiLab1081 => ['light', 'dark'].map(theme => ({
+    id: `ui-1081-${uiLab1081}-${theme}`, fixture: 'visual', space: 'golden-ui-1081', uiLab1081,
+    mode: uiLab1081 === 'new-space' ? 'plan' : uiLab1081 === 'grid-pan' ? 'decor' : 'devices',
+    theme, language: 'ru', viewport: { width: 1180, height: 900 }, ...page,
+  }))),
+  ...['device-confirm', 'space-blocker'].flatMap(uiLab1081 => ['light', 'dark'].map(theme => ({
+    id: `ui-1081-${uiLab1081}-narrow-${theme}`, fixture: 'visual', space: 'golden-ui-1081', uiLab1081,
+    mode: uiLab1081 === 'space-blocker' ? 'plan' : 'devices',
+    theme, language: 'ru', viewport: { width: 390, height: 844 }, ...page,
+  }))),
 ]);

@@ -1,0 +1,590 @@
+[
+  {
+    "version": "reference",
+    "scenario": "menu",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "menu-light-1440-reference.png",
+    "clip": {
+      "x": 271,
+      "y": 315,
+      "width": 180,
+      "height": 128
+    },
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "menu",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "menu-light-1440-candidate.png",
+    "clip": {
+      "x": 271,
+      "y": 315,
+      "width": 180,
+      "height": 128
+    },
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "confirm",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "confirm-light-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "confirm",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "confirm-light-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "space",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "space-light-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "space",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "space-light-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "picker",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "picker-light-1440-reference.png",
+    "clip": {
+      "x": 829,
+      "y": 278,
+      "width": 292,
+      "height": 532
+    },
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "picker",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "picker-light-1440-candidate.png",
+    "clip": {
+      "x": 829,
+      "y": 278,
+      "width": 292,
+      "height": 532
+    },
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "group",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "group-light-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "group",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "group-light-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "hidden",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "hidden-light-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "hidden",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "hidden-light-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "catalog",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "catalog-light-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "catalog",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "catalog-light-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "blocker",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "blocker-light-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "blocker",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "blocker-light-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "menu",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "menu-dark-1440-reference.png",
+    "clip": {
+      "x": 271,
+      "y": 315,
+      "width": 180,
+      "height": 128
+    },
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "menu",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "menu-dark-1440-candidate.png",
+    "clip": {
+      "x": 271,
+      "y": 315,
+      "width": 180,
+      "height": 128
+    },
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "confirm",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "confirm-dark-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "confirm",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "confirm-dark-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "space",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "space-dark-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "space",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "space-dark-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "picker",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "picker-dark-1440-reference.png",
+    "clip": {
+      "x": 829,
+      "y": 278,
+      "width": 292,
+      "height": 532
+    },
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "picker",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "picker-dark-1440-candidate.png",
+    "clip": {
+      "x": 829,
+      "y": 278,
+      "width": 292,
+      "height": 532
+    },
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "group",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "group-dark-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "group",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "decor",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "group-dark-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "hidden",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "hidden-dark-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "hidden",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "hidden-dark-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "catalog",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "catalog-dark-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "catalog",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "catalog-dark-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "blocker",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "blocker-dark-1440-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "blocker",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "plan",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "dpr": 1
+    },
+    "file": "blocker-dark-1440-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "confirm",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "dpr": 1
+    },
+    "file": "confirm-light-390-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "confirm",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "light",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "dpr": 1
+    },
+    "file": "confirm-light-390-candidate.png",
+    "errors": []
+  },
+  {
+    "version": "reference",
+    "scenario": "confirm",
+    "fingerprint": "3ec51ef595bc62281e65fe3d269eb8635815e0f1e83301cc47f85783508f852d",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "dpr": 1
+    },
+    "file": "confirm-dark-390-reference.png",
+    "errors": []
+  },
+  {
+    "version": "candidate",
+    "scenario": "confirm",
+    "fingerprint": "41737c8d129e63c89328420d311d06dbe113dd71061a5d01c9a06593d1584573",
+    "mode": "devices",
+    "deviceCount": 22,
+    "theme": "dark",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "dpr": 1
+    },
+    "file": "confirm-dark-390-candidate.png",
+    "errors": []
+  }
+]

@@ -329,18 +329,10 @@ const res = await page.evaluate(async () => {
   card._openDeviceInbox();
   await card.updateComplete;
   const hiddenBefore = card._showHidden;
-  const hiddenHelpButton = helpButton('device_inbox.show_hidden.help');
-  hiddenHelpButton?.click();
-  await frame();
-  const hiddenSurface = helpSurface('device_inbox.show_hidden.help');
-  const hiddenBox = hiddenSurface?.getBoundingClientRect();
-  out.party1ShowHiddenHelpIsReadOnly = !!hiddenHelpButton
-    && card._showHidden === hiddenBefore;
-  out.party1ShowHiddenHelpInsideNarrowViewport = !!hiddenBox
-    && hiddenBox.left >= (visualViewport?.offsetLeft || 0)
-    && hiddenBox.top >= (visualViewport?.offsetTop || 0)
-    && hiddenBox.right <= (visualViewport?.offsetLeft || 0) + (visualViewport?.width || innerWidth)
-    && hiddenBox.bottom <= (visualViewport?.offsetTop || 0) + (visualViewport?.height || innerHeight);
+  // #1081/UI-043 retires this duplicate control and its explanatory help.
+  out.removedCatalogHiddenControlAndHelp = !helpButton('device_inbox.show_hidden.help')
+    && !root().querySelector('[data-field="device-catalog-show-all"],.device-inbox-filter-help');
+  out.catalogOpenKeepsLocalHiddenDisplay = card._showHidden === hiddenBefore;
 
   return out;
 });

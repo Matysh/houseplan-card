@@ -106,13 +106,13 @@ try{
   await click('ellipse',true);check('group.ctrl_add',(await state()).ids,['rect','ellipse']);
   check('group.native_singleton_projection_empty',(await state()).native,null);
   check('group.only_individual_outlines',await card.locator('.hp-prop-group-contour').count(),2);
-  check('group.no_group_handles',await card.locator('.hp-prop-group-selection circle,.hp-prop-group-selection .dthandle,.dtframe').count(),0);
+  check('group.no_group_handles',await card.locator('.hp-prop-group-selection .dthandle,.dtframe').count(),0);
   check('group.contours_are_inert',await card.locator('.hp-prop-group-selection').getAttribute('pointer-events'),'none');
   await click('rect',true);check('group.ctrl_remove',(await state()).ids,['ellipse']);
   await click('rect',true);await click('rect');check('group.clean_member_click_collapses',(await state()).ids,['rect']);
   await empty();check('group.empty_click_clear',(await state()).ids,[]);
   await shortcut('a');check('group.ctrl_a_all',(await state()).ids,records().map(x=>x.id));
-  check('group.text_contour_measured',await card.locator('.hp-prop-group-contour[data-decor-selection="text"] rect').count(),1);
+  check('group.text_contour_measured',await card.locator('.hp-prop-group-contour[data-decor-selection="text"] .hp-prop-selection > g > rect:first-of-type').count(),1);
   check('group.text_contour_matches_real_svg_geometry',await card.evaluate(c=>{
     const outline=c.renderRoot.querySelector('.hp-prop-group-contour[data-decor-selection="text"] rect').getBoundingClientRect();
     const texts=[...c.renderRoot.querySelectorAll('.decorlayer text.dtext[data-id="text"]')];

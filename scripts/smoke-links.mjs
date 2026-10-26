@@ -30,6 +30,18 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/furniture-placement-press.ts', 'src/live-viewport.ts', 'src/editors/space-plan-list.ts'],
+    symbols: ['liveGridBounds', '_furnMouseCurrent', 'advanceFurniturePlacementPress', 'loadSpacePlanList'],
+    smokes: ['smoke_furniture_pan.mjs', 'smoke_ui_lab_grid.mjs', 'smoke_ui_lab_1081.mjs'],
+    because: '#1081: native release-versus-pan/cancel, exact presented grid-edge pixels, and session-owned new-space image availability need the real event/render paths.',
+  },
+  {
+    files: ['src/hp-color-opacity.ts', 'src/hp-confirm.ts', 'src/device-copy-editor.ts'],
+    symbols: ['_animatePicker', '_finishPickerClose', 'DeviceMenuCommands', 'device-context-visibility'],
+    smokes: ['smoke_picker_motion.mjs', 'smoke_color_picker.mjs', 'smoke_color_picker_consumers.mjs', 'smoke_device_copy.mjs', 'smoke_ui_lab_1081.mjs'],
+    because: '#1081: both real browser capability lifecycles, shared consumers, native guarded menu commands and compact confirmation must retain the accepted interaction.',
+  },
+  {
     files:['src/interior-window-light.ts'],
     symbols:['resolveOpeningWallCandidates','isInteriorLightOpeningType'],
     smokes:['smoke_interior_window_light.mjs','smoke_glow.mjs','smoke_glow_fail_dark.mjs',

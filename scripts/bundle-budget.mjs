@@ -839,7 +839,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // Exact whole-build facts and owner permission: decor-multiselect-integration.json
 // and issuecomment-6383329349. Refresh the measured reference only; preserve
 // the 2000-B band, initial View split, absolute guards and latency predicates.
-export const LAZY_EDITOR_GZIP_CEILING = 354_821;
+// #1081: measured accepted editor controls, pointer ownership and shared list
+// lifecycle add 2066 B gzip (354821 -> 356887). Exact recalibration only;
+// preserve the 2000-B band, absolute initial-View wall and graph ownership.
+export const LAZY_EDITOR_GZIP_CEILING = 356_887;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

@@ -7,6 +7,7 @@ import {
   liveLayerProjection,
   liveViewBoxText,
   inheritedSceneClip,
+  liveGridBounds,
   paintLiveViewport,
 } from '../test-build/live-viewport.js';
 
@@ -68,9 +69,11 @@ const fakeRoot = () => {
   const floor = node({ viewBox: '0 0 1000 500' });
   const layer = node({});
   const inherited = node({ viewBox: '0 0 1000 500' });
+  const grid = node({});
   return {
-    camera, cameraPeer, floor, layer, inherited,
+    camera, cameraPeer, floor, layer, inherited, grid,
     querySelectorAll: (selector) => {
+      if (selector.includes('data-hp-live-grid')) return [grid];
       if (selector.includes('live-inherited-scene')) return [inherited];
       if (selector.includes('viewbox="camera"')) return [camera, cameraPeer];
       if (selector.includes('viewbox="floor"')) return [floor];
@@ -83,6 +86,22 @@ const fakeRoot = () => {
 
 const frame = (x, y, w = 1000, h = 500) => ({
   view: { x, y, w, h }, floor: { x, y, w, h }, zoom: 1,
+});
+
+test('#1081 grid exposure covers incoming edges and changes only on the existing viewBox budget', () => {
+  const root = fakeRoot(), painted = frame(0, 0);
+  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0 });
+  assert.deepEqual(liveGridBounds(painted.view), { x: -250, y: -125, w: 1500, h: 750 });
+  const writes = root.grid.writes;
+  anchor = paintLiveViewport(root, painted, frame(100, 40), anchor, { now: 20 });
+  assert.equal(root.grid.writes, writes, 'no grid mutation on each lightweight camera move');
+  const bounds = root.grid.attrs;
+  assert.ok(Number(bounds.x) <= 100 && Number(bounds.x) + Number(bounds.width) >= 1100);
+  anchor = paintLiveViewport(root, painted, frame(-700, 150, 500, 250), anchor, { now: 40 });
+  assert.equal(root.grid.attrs.x, '-825'); assert.equal(root.grid.attrs.width, '750');
+  const refreshed = root.grid.writes;
+  paintLiveViewport(root, painted, frame(-700, 150, 500, 250), anchor, { now: 50 });
+  assert.equal(root.grid.writes, refreshed, 'quiet grid writes nothing');
 });
 
 test('#871 passive nested scene inherits one camera and rebases only a bounded paint window', () => {

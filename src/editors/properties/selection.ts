@@ -4,7 +4,7 @@ import { planRect } from '../../space-geometry';
 import type { OpeningDimension } from '../../opening-dimensions';
 import type { PropertiesTarget } from './catalog';
 import { decorPropertiesBox } from './transforms';
-import { renderDecorGroupOutlines, type DecorGroupOutlineContext } from '../decor/group-selection';
+import type { DecorGroupOutlineContext } from '../decor/group-selection';
 
 export interface PropertiesSelectionContext {
   unitPerPx: number; cellCm: number;
@@ -17,7 +17,9 @@ export interface PropertiesSelectionContext {
 export function renderPropertiesSelection(target: PropertiesTarget | null, context: PropertiesSelectionContext): TemplateResult | typeof nothing {
   if (!target || target.kind === 'device') return nothing;
   if (target.kind === 'decor-group') return context.decorGroup
-    ? renderDecorGroupOutlines(target.value, context.decorGroup) : nothing;
+    ? svg`<g class="hp-prop-group-selection" aria-hidden="true" pointer-events="none">${target.value.map(shape =>
+      svg`<g class="hp-prop-group-contour" data-decor-selection=${shape.id}>${renderPropertiesSelection({ ...target, kind: 'decor', value: shape },
+        { ...context, textBox: context.decorGroup!.text(shape), reference: null })}</g>`)}</g>` : nothing;
   const px = context.unitPerPx, half = 4 * px;
   const handle = (x: number, y: number) => svg`<rect x=${x-half} y=${y-half} width=${half*2} height=${half*2} fill="white"></rect>`;
   const tag = (x: number,y: number,text: string) => svg`<g><rect x=${x} y=${y} width=${(text.length*7+22)*px} height=${26*px} rx=${4*px} fill="white" stroke="#9dcfd7" stroke-width="1"></rect>

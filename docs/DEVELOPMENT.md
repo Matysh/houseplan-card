@@ -1,5 +1,16 @@
 # Development and deployment
 
+Accepted UI Lab transfer (#1081) is covered by `smoke_ui_lab_1081`,
+`smoke_picker_motion`, `smoke_furniture_pan` and `smoke_ui_lab_grid` in `demo/`.
+The last uses actual presented edge pixels, retaining its pre-change RED and
+candidate frames. `node demo/benchmark_ui_lab_grid.mjs --baseline=<tree>`
+measures six alternating historical/candidate pairs at 800% zoom and DPR 1/2,
+with complete rAF samples, CDP task/script/layout/style/paint traces, JS heap
+and content-layer geometry. Every baseline tree must carry its exact matching
+source/bundle fingerprint. Layer area is a geometric bound, not measured GPU
+allocation; native Windows headless results do not establish every owner's GPU
+performance. Task work never accepts global baselines or executes mutations.
+
 `demo/smoke_wall_smooth_joint.mjs` (#1076) checks native `isPointInStroke` and
 fill on the exact reported smooth joint, plus a real free cap, pan/zoom,
 editor, 2.5D and reconstruction after reload. `HP_JOINT_DPR=2` selects a second

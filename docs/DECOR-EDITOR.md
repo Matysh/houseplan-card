@@ -25,8 +25,10 @@ An armed idle shape/furniture tool can become Select; an active drawing anchor,
 draft or pointer gesture consumes these shortcuts without changing its state.
 Fields, search, dialogs and the shared colour picker retain their native keys.
 
-The approved variant B paints only individual contours. There is no common
-frame, group handle or hit surface across empty canvas. Compact desktop keeps
+Each selected member reuses the complete singleton frame (#1081), including
+line endpoints and measured text bounds. These painted frames remain inert:
+there is no common frame, individual resize/rotation or group hit surface.
+Compact desktop keeps
 selection and move; the existing wide Properties panel supplies group fields.
 At N>1, geometry, type-specific and individual action fields stay disabled with
 a reason. Arrow keys do not move a hidden singleton. Right/double click explicitly
@@ -98,12 +100,20 @@ architecture at35% opacity here, and regain their normal opacity on leaving.
 | Rectangle | Drag a diagonal; `Shift` makes a square | width × height and area | size, angle, contour, optional independent fill colour/opacity |
 | Oval | Drag its bounding box; `Shift` makes a circle | `R` for a circle, `Rx × Ry` for an oval | bounding size, angle, contour and optional fill |
 | Text | Click to open the text form (§5) | the saved label is selected immediately | content with inline HA variables, colour/opacity, physical size and angle |
-| Furniture | Pick a symbol, then click its centre | wall magnet unless `Shift` is held | signed size, H/V mirror, angle and contour style; corners resize smoothly, four middle handles change one axis, rotation is free/`Shift` 45° |
+| Furniture | Pick a symbol, then click its centre; mouse placement commits on release, dragging pans | wall magnet unless `Shift` is held | signed size, H/V mirror, angle and contour style; corners resize smoothly, four middle handles change one axis, rotation is free/`Shift` 45° |
 | Image | Upload PNG/JPEG/WebP/SVG or pick a stored file, then click its centre (§7) | exact one-shot preview; no wall magnet | opacity, file replacement, signed size, H/V mirror and angle; the whole rotated rectangle is selectable |
 | Erase | Click a decor object; text uses its whole logical bounding box, including spaces between glyphs | confirmation dialog, then atomic removal of the whole object | A miss changes nothing; Undo restores a removed object |
 
 The editor always opens on **Select**. If the space has an image, the Plan
 backdrop tool appears next to Select but is never armed implicitly.
+
+With an armed furniture preview, mouse movement exceeding the existing stage
+threshold of 8 CSS pixels in `abs(dx)+abs(dy)` permanently chooses pan for that
+press, including when it returns to its origin. Pan keeps the selected symbol
+and current preview, adds no decor/history step and uses grabbing. Cancel,
+capture loss, window blur or a space/mode/symbol change retires placement;
+the next deliberate click works normally. Image and touch/pen contracts remain
+on their existing routes (#1081).
 
 Each successful creation replaces the previous single selection, including the
 wide Properties owner and its matching frame (#1047). Drawing tools stay armed;

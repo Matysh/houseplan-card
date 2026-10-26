@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "issue": 1081,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already contains colour pickers, the space form, device copy and live camera/grid. This task polishes and repairs those existing editor interactions; group selection frame changes also polish the current-line #1038 feature. It adds no new major product surface or persisted schema.",
+  "summary": {
+    "ru": "Согласованные элементы редакторов, панорамирование при размещении мебели и непрерывная сетка.",
+    "en": "Consistent editor controls, panning while placing furniture and a continuous grid."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "decor-multiselect-light",
+        "expectation": "change",
+        "reason": "Each selected member now paints exactly the singleton frame instead of an extra shape contour."
+      },
+      {
+        "id": "decor-multiselect-dark",
+        "expectation": "change",
+        "reason": "Each selected member now paints exactly the singleton frame instead of an extra shape contour."
+      },
+      {
+        "id": "decor-group-style-applied-light",
+        "expectation": "change",
+        "reason": "Each selected member now paints exactly the singleton frame instead of an extra shape contour."
+      },
+      {
+        "id": "decor-group-style-applied-dark",
+        "expectation": "change",
+        "reason": "Each selected member now paints exactly the singleton frame instead of an extra shape contour."
+      },
+      {
+        "id": "hidden-devices-view-light",
+        "expectation": "change",
+        "reason": "A shown user-hidden marker paints one grey dot using the existing new-dot geometry."
+      },
+      {
+        "id": "hidden-devices-editor-dark",
+        "expectation": "change",
+        "reason": "A shown user-hidden marker paints one grey dot using the existing new-dot geometry."
+      },
+      {
+        "id": "hidden-devices-iso-dark",
+        "expectation": "change",
+        "reason": "A shown user-hidden marker paints one grey dot using the existing new-dot geometry."
+      },
+      {
+        "id": "device-inbox-desktop-en-light",
+        "expectation": "change",
+        "reason": "The duplicate show-hidden control and its help row are intentionally removed."
+      },
+      {
+        "id": "ui-1081-device-menu-light",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-device-menu-dark",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-device-confirm-light",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-device-confirm-dark",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-new-space-light",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-new-space-dark",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-grid-pan-light",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-grid-pan-dark",
+        "expectation": "new",
+        "reason": "Synthetic native accepted-UI surface for #1081; this records task intent and does not accept global baselines."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-light",
+        "expectation": "new",
+        "reason": "Compact confirmation at 390px, with real Russian text and common dismiss controls."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-dark",
+        "expectation": "new",
+        "reason": "Compact confirmation at 390px, with real Russian text and common dismiss controls."
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-light",
+        "expectation": "new",
+        "reason": "Occupied-space notice and separate destructive action with wrapped Russian text at 390px."
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-dark",
+        "expectation": "new",
+        "reason": "Occupied-space notice and separate destructive action with wrapped Russian text at 390px."
+      }
+    ],
+    "smokes": [
+      "smoke_ui_lab_1081.mjs",
+      "smoke_picker_motion.mjs",
+      "smoke_furniture_pan.mjs",
+      "smoke_ui_lab_grid.mjs",
+      "smoke_decor_multiselect.mjs",
+      "smoke_color_picker.mjs",
+      "smoke_color_picker_consumers.mjs",
+      "smoke_device_copy.mjs",
+      "smoke_hidden_device_toggle.mjs"
+    ]
+  }
+}

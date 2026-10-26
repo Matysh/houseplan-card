@@ -34,6 +34,11 @@ Decor preview ownership (#1080) suppresses only ready live transient counterpart
 after a full host render. Furniture, images and line/shape drafts share this
 handoff; saved decor and geometry history retain their existing owners.
 
+Accepted UI Lab controls (#1081) share picker lifecycle, singleton selection
+paint, new-space draft defaults and guarded device commands. Mouse furniture
+clicks commit on release; pan/cancel retain no accidental item/history write.
+The grid uses the existing bounded camera exposure and refresh cadence.
+
 External documentation-link observation (#1083) retains bounded per-request
 redirect/header and connection metadata under the original HEAD/follow/8s/UA
 contract. Canonical converter links avoid unnecessary redirects. Historic timeout

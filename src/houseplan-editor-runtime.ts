@@ -37,6 +37,10 @@ import { ensureSettingsDialogStyles } from './editors/settings-styles';
 import { renderRoomSettingsDialog } from './editors/room-settings-dialog';
 import { isCo2Entity } from './room-co2';
 import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from './editors/space-dialog-draft';
+import { loadSpacePlanList } from './editors/space-plan-list';
+import { advanceFurniturePlacementPress, type FurniturePlacementPress } from './furniture-placement-press';
+import { liveGridBounds } from './live-viewport';
+import { selectSettingsSection } from './editors/settings-sections';
 import { normalizeRoomAppearance } from './room-appearance';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
 import {
@@ -632,9 +636,7 @@ export interface HouseplanEditorHostPort {
   _furnPalette: { symbol: string; w: number; h: number; } | null;
   _furnCategory: string | null;
   _furnPreviewInput: { raw: [number, number]; free: boolean; } | null;
-  _furnTouchPending: {
-    pid: number; sx: number; sy: number; pointerType: string; cancelled: boolean;
-  } | null;
+  _furnTouchPending: FurniturePlacementPress | null;
   _gearPtCache: WeakMap<number[][], number[]>;
   _geometryHistory: CommandStack<SpaceGeometryState>;
   _getAuthoritativeConfig: (hass?: UndoHass, isCurrent?: () => boolean) => Promise<AuthoritativeConfigResponse>;
@@ -885,6 +887,19 @@ export class HouseplanEditorRuntime {
     if (!selected || selected.objectId !== sourceId && selected.binding !== sourceId) return;
     const device = this.host._devices.find(item => item.id === id);
     if (device) this.properties.selectDevice(device);
+  }, {
+    settings: (device, current) => this._openMarkerDialog(device, () => current()
+      ? this.host._devices.find(item => item.id === device.id && item.space === device.space) || null : null),
+    visibility: async (device, hidden) => {
+      const row = this._deviceInboxRows().find(item => item.deviceId === device.id || item.markerId === device.id);
+      if (row && (hidden ? row.canHide : row.canShow))
+        await writeInboxVisibility(this.host, this._inboxBatchDeps(), [row], hidden, false, true);
+    },
+    remove: async (device, current) => {
+      const { deletePlanDevice } = await import('./marker-deletion');
+      if (!current()) return;
+      await deletePlanDevice(this, device.id, device.marker?.binding ?? (device.bindingKind === 'virtual' ? 'virtual' : `${device.bindingKind}:${device.bindingRef}`));
+    },
   });
   public readonly properties = new PropertiesEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
@@ -953,6 +968,7 @@ export class HouseplanEditorRuntime {
   public readonly optimizePlans: LazyOptimizePlansDialog;
   public readonly optimizationUndo: PlanOptimizationUndo;
   public constructor(public readonly host: HouseplanEditorHostPort) {
+    ensureSettingsDialogStyles(host);
     this.chainExit = new EditorChainExit(request => host._confirmDanger(request), () => host._cancelDangerConfirm());
     // #805: editor-only CSS, adopted at the loader's create() — before install, so before any editor frame.
     if (!adoptEditorStyles(host)) void host.updateComplete.then(() => adoptEditorStyles(host));
@@ -3844,14 +3860,18 @@ public _decorPointerDown(ev: PointerEvent): boolean {
       // must not silently place whatever was chosen last week.
       if (t === 'furniture' ? !this.host._furnPalette : !this.host._decorImagePalette) return false;
       ev.preventDefault();
-      // A mouse has already shown the exact result and keeps the traditional
-      // one-press stamp. Touch/pen has no hover, so commit only after a clean
-      // pointerup; pointercancel, movement and a second contact stay fail-dark.
+      // Furniture mouse release shares the existing stage camera: a click
+      // stamps once, a drag keeps the armed preview. Image and touch contracts
+      // retain their existing routes.
       const pointerType = ev.pointerType || 'mouse';
       if (pointerType === 'mouse') {
-        if (t === 'furniture') this._furnPlace(this._svgPoint(ev), ev.shiftKey, pointerType);
-        else this._decorImagePlace(this._svgPoint(ev), pointerType);
-        return true;
+        if (t === 'image') { this._decorImagePlace(this._svgPoint(ev), pointerType); return true; }
+        const target = this.host._stageEl;
+        try { target?.setPointerCapture(ev.pointerId); } catch { /* Browser may already have retired the pointer. */ }
+        this.host._furnTouchPending = { pid: ev.pointerId, sx: ev.clientX, sy: ev.clientY, pointerType,
+          cancelled: false, mouse: { space: this.host._space, palette: this.host._furnPalette!,
+            claim: this.host._configWriteContext.claim(), target, captured: !!target?.hasPointerCapture(ev.pointerId) } };
+        return false; // The existing stage camera owns a drag; release alone may stamp.
       }
       const pending = this.host._furnTouchPending;
       if (pending && pending.pid !== ev.pointerId) {
@@ -4570,6 +4590,7 @@ public _furnShiftDetach(): void {
   }
 
 public _furnPick(symbol: string): void {
+    this._clearFurniturePreview();
     const d = furnitureDefaultCm(symbol);
     this.host._furnPalette = { symbol, w: d.w, h: d.h };
     this._furnShiftAttach();
@@ -4685,6 +4706,11 @@ public _furnPlace(raw: number[], free = false, pointerType = 'mouse'): void {
   }
 
 public _clearFurniturePreview(): void {
+    if (this.host._furnTouchPending?.mouse) {
+      this.host._pointers.delete(this.host._furnTouchPending.pid);
+      this.host._panStart = null; this.host._panLock = null;
+      this.host._stageEl?.classList.remove('furniture-panning');
+    }
     this.host._furnPreviewInput = null;
     this.host._furnTouchPending = null;
   }
@@ -4694,8 +4720,13 @@ public _clearFurniturePreview(): void {
 public _furnPointerMove(ev: PointerEvent, hoverAllowed: boolean): boolean {
     const pending = this.host._furnTouchPending;
     if (pending?.pid === ev.pointerId) {
-      if (Math.abs(ev.clientX - pending.sx) + Math.abs(ev.clientY - pending.sy) > 8) {
-        pending.cancelled = true;
+      advanceFurniturePlacementPress(pending, ev.clientX, ev.clientY);
+      if (pending.mouse) {
+        if (!this._furnMouseCurrent(pending)) { this._clearFurniturePreview(); return false; }
+        this.host._stageEl?.classList.toggle('furniture-panning', pending.cancelled);
+        const raw = this._svgPoint(ev);
+        this.host._furnPreviewInput = { raw: [raw[0], raw[1]], free: ev.shiftKey };
+        return false;
       }
       this.host._furnPreviewInput = null;
       return true;
@@ -4726,15 +4757,27 @@ public _furnPointerLeave(ev: PointerEvent): void {
 public _furnPointerUp(ev: PointerEvent): boolean {
     const pending = this.host._furnTouchPending;
     if (!pending || pending.pid !== ev.pointerId) return false;
+    advanceFurniturePlacementPress(pending, ev.clientX, ev.clientY);
+    const mouseCurrent = !pending.mouse || this._furnMouseCurrent(pending) && this.host._pointers.size <= 1;
     this.host._furnTouchPending = null;
-    if (!pending.cancelled && this.host._mode === 'decor'
+    this.host._stageEl?.classList.remove('furniture-panning');
+    if (!pending.cancelled && mouseCurrent && this.host._mode === 'decor'
         && ((this.host._decorTool === 'furniture' && this.host._furnPalette)
           || (this.host._decorTool === 'image' && this.host._decorImagePalette))) {
       if (this.host._decorTool === 'furniture')
         this._furnPlace(this._svgPoint(ev), ev.shiftKey, pending.pointerType);
       else this._decorImagePlace(this._svgPoint(ev), pending.pointerType);
     }
-    return true;
+    return !pending.mouse;
+  }
+
+private _furnMouseCurrent(pending: FurniturePlacementPress): boolean {
+    const mouse = pending.mouse;
+    return !!mouse && this.host.isConnected && this.host._canEdit && !this.host._kiosk
+      && this.host._mode === 'decor' && this.host._decorTool === 'furniture'
+      && this.host._space === mouse.space && this.host._furnPalette === mouse.palette
+      && this.host._configWriteContext.current(mouse.claim, this.host.hass)
+      && (!mouse.captured || !!mouse.target?.hasPointerCapture(pending.pid));
   }
 
 public _furnMoveUpdate(ev: PointerEvent): void {
@@ -8041,9 +8084,11 @@ public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
       this.host._spaceDialog = savedSpaceDialogDraft(sp, this.host._imperial, this.host._serverCfg?.settings?.bg_mode, this.host._serverCfg?.settings);
     } else {
       this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);
+      selectSettingsSection(this.host, 'space', 'basics');
     }
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     if (this.host._spaceDialog) rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
+    loadSpacePlanList(this.host);
   }
 
 public async _pickPlanFile(ev: Event): Promise<void> {
@@ -8087,23 +8132,10 @@ public _renderBackdropGuard(): TemplateResult | typeof nothing {
     ) ?? nothing;
   }
 
-public _toggleServerPlans = async (): Promise<void> => {
+public _toggleServerPlans = (): void => {
     const d = this.host._spaceDialog;
-    if (!d) return;
-    if (d.pickSaved) {
-      this.host._spaceDialog = { ...d, pickSaved: false };
-      return;
-    }
-    this.host._spaceDialog = { ...d, pickSaved: true, savedBusy: true };
-    try {
-      const r: any = await this.host.hass.callWS({ type: 'houseplan/plans/list' });
-      const cur = this.host._spaceDialog;
-      if (cur) this.host._spaceDialog = { ...cur, saved: r?.plans || [], savedBusy: false };
-    } catch (e: any) {
-      const cur = this.host._spaceDialog;
-      if (cur) this.host._spaceDialog = { ...cur, saved: [], savedBusy: false };
-      this.host._showToast(this.host._t('toast.plans_list_failed', { err: this.host._errText(e) }), 'toast.plans_list_failed');
-    }
+    if (!d || !d.saved?.length || d.savedBusy) return;
+    this.host._spaceDialog = { ...d, pickSaved: !d.pickSaved };
   };
 
 public _useServerPlan(url: string): void {
@@ -8409,6 +8441,8 @@ public _openNextImport(): void {
     const title = this.host._importQueue.shift();
     if (title === undefined) return;
     this.host._spaceDialog = { ...newSpaceDialogDraft(this.host._imperial), title, customFill: null };
+    selectSettingsSection(this.host, 'space', 'basics');
+    loadSpacePlanList(this.host);
   }
 
 public _skipImport(): void {
@@ -10794,7 +10828,7 @@ public _renderMarkupLayer(vb: number[]): TemplateResult {
       || this.host._wallRepairDiagnostic;
     return svg`
       ${this._gridLevels()
-        ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+        ? svg`<rect data-hp-live-grid x="${liveGridBounds(view).x}" y="${liveGridBounds(view).y}" width="${liveGridBounds(view).w}" height="${liveGridBounds(view).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
         : nothing}
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
       ${this._renderPhysicalEditorLayer()}
@@ -11313,17 +11347,6 @@ public _renderDeviceInbox(): TemplateResult {
                 };
               }} />${this.host._t('device_inbox.show_entities')}
           </label>` : nothing}
-          <span class="device-inbox-filter-help">
-            <label>
-              <input data-hp="field" data-field="device-catalog-show-all" type="checkbox" .checked=${this.host._showAll}
-                @change=${(event: Event) => {
-                  const input = event.target as HTMLInputElement;
-                  this.host._setShowHidden(input.checked);
-                  input.checked = this.host._showAll;
-                }} />${this.host._t('device_inbox.show_hidden')}
-            </label>
-            ${this._help('device_inbox.show_hidden.help')}
-          </span>
         </div>
         ${renderInboxBatchPanel(this.host, this._inboxBatchDeps(), dialog, batch)}
         ${dialog.tab === 'available' ? this._renderDiscoveryFilters(dialog) : nothing}

@@ -452,6 +452,12 @@ wash. `gridLevels(pitch, pxPerUnit, minPx)` (pure, unit tested) picks:
 The grid rectangle also follows the **view**, not the old `view_box`,
 so it is there wherever you pan.
 
+The editor grid paints a bounded 25% beyond each side of that view (#1081).
+The existing 100ms/15% live-camera refresh updates its rectangle together with
+the scene viewBox; intervening moves use the same compositor projection and
+perform no grid/layout/full-render work. This shares the scene exposure limit,
+including at 800% zoom, rather than enlarging the whole plan or GPU layer.
+
 The dots are a **hint, not content** (owner 2026-08-04): at full strength
 they argued with the plan on white paper. `.griddot` is `opacity: 0.35`,
 `.griddot.major` `opacity: 0.5` (styles.ts) — both muted, the CAD

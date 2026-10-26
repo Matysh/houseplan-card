@@ -20,7 +20,7 @@ function fixture(pdfs=[]) {
     _saveConfigDebounced:{pending:()=>false,flush(){}},_writeChain:Promise.resolve(),
     _planHass:{states:{}},_fillColors:{glow_light:{c:'#ffffff'}},_gridPitch:1000/240,
     _pos:()=>({x:300,y:300}),_devicePresentation:()=>({scale:1}),_spaceModelById:()=>({id:'f1',rooms:[]}),
-    requestUpdate(){},_showToast:text=>toasts.push(text),_adoption:{acceptPairWrite:(...args)=>adoptions.push(args)},
+    requestUpdate(){},_t:key=>key,_showToast:text=>toasts.push(text),_adoption:{acceptPairWrite:(...args)=>adoptions.push(args)},
     _maybeRebuildDevices(){},_cacheSnapshot(){},_reloadConfigOnly:async()=>{},_reloadLayoutOnly:async()=>{},_view:null,
   };
   h.hass={connection:{},user:{id:'owner'},callWS:async message=>{
@@ -34,7 +34,7 @@ function fixture(pdfs=[]) {
     // UI-031 keeps the guarded command in the shared presentation's menuitem.
     const find=value=>Array.isArray(value)?value.flatMap(find):value?.values
       ?Array.isArray(value.strings)&&value.strings.join('').includes('role="menuitem"')?[value]:value.values.flatMap(find):[];
-    return find(editor.render())[0].values.find(v=>typeof v==='function');
+    return find(editor.render()).find(item=>item.values.includes('device-copy')).values.find(v=>typeof v==='function');
   };
   return {h,editor,messages,toasts,adoptions,open,action};
 }
@@ -94,5 +94,28 @@ test('#935 invalid graph refusal tells the user to check links rather than blind
     assert.match(f.toasts.at(-1),/control links.*Check the original/);
     assert.equal(f.adoptions.length,0);assert.equal(f.h._serverCfg.markers.length,1);
     assert.equal(f.messages.length,1,'no automatic retry after graph refusal');
+  }
+});
+
+test('#1081 hidden active sources keep their flag while producing one visible copy; invalid bindings remain refused', async () => {
+  const f=fixture();f.h._devices[0].hidden=true;f.h._devices[0].userHidden=true;f.h._devices[0].marker.hidden=true;
+  f.h.transport=()=>({config:f.h._serverCfg,layout:f.h._layout,config_rev:6,layout_rev:7});
+  await f.editor.copyDevice(f.h._devices[0]);
+  assert.equal(f.messages.length,1);assert.equal(f.messages[0].marker.hidden,undefined);
+  assert.equal(f.h._devices[0].marker.hidden,true);assert.equal(f.messages[0].marker.binding,'virtual');
+  for(const kind of ['ha_disabled','orphaned','unverified']) {
+    const bad=fixture();bad.h._devices[0].bindingStatus={kind};
+    await bad.editor.copyDevice(bad.h._devices[0]);
+    assert.equal(bad.messages.length,0,kind);
+  }
+});
+
+test('#1081 binding status controls menu availability without rewriting the source status', () => {
+  for(const kind of ['active','ha_disabled','orphaned','unverified']) {
+    const f=fixture();f.h._devices[0].bindingStatus={kind};f.open();f.editor.render();
+    const items=f.editor.presentation.model.items;
+    assert.deepEqual(items.map(item=>item.key),['settings','copy','visibility','delete']);
+    assert.equal(items[1].disabled,kind!=='active');assert.equal(items[2].disabled,kind!=='active');
+    assert.equal(f.h._devices[0].bindingStatus.kind,kind);assert.equal(f.messages.length,0);
   }
 });

@@ -73,7 +73,7 @@ const open = async id => {
 const copy = async id => { await open(id); await card.locator('[data-hp="device-copy"]').click(); await settled(); };
 const before = await snapshot();
 await open('v_source');
-check('one-menu-item', await card.locator('[role="menuitem"]').count(), 1);
+check('four-ordered-menu-items', await card.locator('[role="menuitem"]').count(), 4);
 check('copy-label', await card.locator('[data-hp="device-copy"]').innerText(), 'Copy device');
 check('menu-inside-viewport', await card.locator('[data-hp="device-context-menu"]').evaluate(el => {
   const r = el.getBoundingClientRect(); return r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight;

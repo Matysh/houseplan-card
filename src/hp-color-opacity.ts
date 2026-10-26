@@ -76,6 +76,10 @@ export class HpColorOpacity extends LitElement {
   public pickerLabels: ColorPickerLabels = DEFAULT_LABELS;
 
   private _open = false;
+  private _closing = false;
+  private _motion: Animation | null = null;
+  private _motionEpoch = 0;
+  private _restoredFocus = false;
   /** Consumers may hold live-derived properties steady while HEX is edited. */
   public get pickerOpen(): boolean { return this._open; }
   private resumedHex: ColorHexDraft | null = null;
@@ -154,6 +158,8 @@ export class HpColorOpacity extends LitElement {
     noFillLabel: { type: String, attribute: 'no-fill-label' },
     pickerLabels: { attribute: false },
     _open: { state: true },
+    _closing: { state: true },
+    _restoredFocus: { state: true },
     _hue: { state: true },
     _saturation: { state: true },
     _value: { state: true },
@@ -215,6 +221,12 @@ export class HpColorOpacity extends LitElement {
       outline: 2px solid var(--primary-color, #03a9f4);
       outline-offset: 2px;
     }
+    .trigger[data-restored-focus]:focus-visible {
+      outline: none;
+      box-shadow: none;
+      border-color: var(--divider-color, #666);
+    }
+    .picker[inert] { pointer-events: none; }
     .swatch {
       display: block;
       width: 100%;
@@ -513,6 +525,7 @@ export class HpColorOpacity extends LitElement {
     super.connectedCallback();
     this._syncFromColor(this.color, false);
     this.ownerDocument.addEventListener('pointerdown', this._outsidePointerDown, true);
+    this.ownerDocument.addEventListener('keydown', this._tabIntent, true);
     this.ownerDocument.addEventListener('scroll', this._queuePickerPosition, true);
     const win = this.ownerDocument.defaultView;
     win?.addEventListener('resize', this._queuePickerPosition);
@@ -524,6 +537,7 @@ export class HpColorOpacity extends LitElement {
 
   disconnectedCallback(): void {
     this.ownerDocument.removeEventListener('pointerdown', this._outsidePointerDown, true);
+    this.ownerDocument.removeEventListener('keydown', this._tabIntent, true);
     this.ownerDocument.removeEventListener('scroll', this._queuePickerPosition, true);
     const win = this.ownerDocument.defaultView;
     win?.removeEventListener('resize', this._queuePickerPosition);
@@ -546,8 +560,8 @@ export class HpColorOpacity extends LitElement {
         this._syncFromColor(normalized, this._open);
       }
     }
-    if (this.disabled && this._open) {
-      this._closePicker();
+    if (this.disabled && (this._open || this._closing)) {
+      this._closePicker(false, 'disconnect');
       return;
     }
     if (!this._open) return;
@@ -588,6 +602,10 @@ export class HpColorOpacity extends LitElement {
     this._closePicker(this._floating.ownsActiveElement(), 'escape');
   };
 
+  private _tabIntent = (event: KeyboardEvent): void => {
+    if (event.key === 'Tab') this._restoredFocus = false;
+  };
+
   private readonly _floating = new FloatingSurfaceController(this, 'color-opacity', this._keyDown);
 
   private async _toggle(): Promise<void> {
@@ -596,6 +614,7 @@ export class HpColorOpacity extends LitElement {
       this._closePicker();
       return;
     }
+    if (this._closing) this._finishPickerClose();
     this._forceFallback = false;
     const resumed = this.resumedHex; this.resumedHex = null;
     this._syncFromColor(this.color, false);
@@ -615,6 +634,7 @@ export class HpColorOpacity extends LitElement {
       this._closePicker();
       return;
     }
+    this._animatePicker(false);
     this._overlayDispose = this._dialog()?.registerOverlay({
       owner: this,
       group: 'transient',
@@ -624,12 +644,30 @@ export class HpColorOpacity extends LitElement {
     }) || null;
   }
 
-  private _closePicker(refocus = false, _reason: HpOverlayCloseReason = 'exclusive'): void {
-    if (!this._open && !this._floating.hasFallback) return;
+  private _closePicker(refocus = false, reason: HpOverlayCloseReason = 'exclusive'): void {
+    if (!this._open && !this._closing && !this._floating.hasFallback) return;
+    const wasOpen = this._open;
     const dispose = this._overlayDispose;
     this._overlayDispose = null;
     dispose?.();
-    const popup = this.renderRoot.querySelector<HTMLElement>('.picker') as any;
+    this._open = false;
+    this._cancelQueuedEmit();
+    this._activePointerId = null;
+    this._restoredFocus = true;
+    if (wasOpen) this.dispatchEvent(new CustomEvent('hp-color-opacity-close', { bubbles: true, composed: true }));
+    if (reason === 'disconnect' || !this.isConnected || this.disabled) this._finishPickerClose();
+    else if (!this._closing) { this._closing = true; this._animatePicker(true); }
+    if (refocus) {
+      this.updateComplete.then(() => {
+        if (!this._open && this.isConnected) this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus({ preventScroll: true });
+      });
+    }
+  }
+
+  private _finishPickerClose(): void {
+    this._motionEpoch++;
+    this._motion?.cancel(); this._motion = null;
+    const popup = this._surface() as (HTMLElement & { hidePopover?: () => void }) | null;
     if (popup?.hidePopover) {
       try {
         if (popup.matches(':popover-open')) popup.hidePopover();
@@ -637,14 +675,32 @@ export class HpColorOpacity extends LitElement {
         /* older engines simply remove the fallback surface on the next render */
       }
     }
-    this._open = false;
-    this._cancelQueuedEmit();
-    this._activePointerId = null;
     this._floating.destroy();
-    this.dispatchEvent(new CustomEvent('hp-color-opacity-close', { bubbles: true, composed: true }));
-    if (refocus) {
-      this.updateComplete.then(() => this.renderRoot.querySelector<HTMLButtonElement>('.trigger')?.focus());
+    this._closing = false;
+  }
+
+  private _animatePicker(closing: boolean): void {
+    const popup = this._surface(), win = this._window();
+    const epoch = ++this._motionEpoch;
+    const current = popup && win?.getComputedStyle(popup);
+    const opacity = current?.opacity || '1', transform = current?.transform || 'none';
+    this._motion?.cancel(); this._motion = null;
+    if (!popup || !win || win.matchMedia('(prefers-reduced-motion: reduce)').matches || !popup.animate) {
+      if (closing) this._finishPickerClose();
+      return;
     }
+    popup.inert = closing;
+    const offset = popup.dataset.side === 'top' ? 'translateY(4px)' : 'translateY(-4px)';
+    const motion = popup.animate(closing
+      ? [{ opacity, transform }, { opacity: 0, transform: offset }]
+      : [{ opacity: 0, transform: offset }, { opacity: 1, transform: 'none' }],
+    { duration: closing ? 120 : 160, easing: closing ? 'ease-in' : 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+    this._motion = motion;
+    void motion.finished.then(() => {
+      if (epoch !== this._motionEpoch) return;
+      if (closing) this._finishPickerClose();
+      else { motion.cancel(); this._motion = null; }
+    }, () => { /* Retired by reopen, detach or a replacement animation. */ });
   }
 
   private _queuePickerPosition = (): void => {
@@ -1030,6 +1086,7 @@ export class HpColorOpacity extends LitElement {
     return html`
       ${this.label && !this.hideLabel ? html`<span class="label">${this.label}</span>` : nothing}
       <button data-hp="field" data-field="colour-open" class=${solid ? 'trigger solid' : 'trigger'} type="button" .disabled=${this.disabled}
+        ?data-restored-focus=${this._restoredFocus}
         aria-label=${this.triggerLabel || title} aria-haspopup="dialog" aria-expanded=${this._open ? 'true' : 'false'}
         data-hp-tooltip=${this.chromeTooltip ? title : nothing}
         title=${this.nativeTooltip && !this.chromeTooltip ? title : nothing} @click=${this._toggle}>
@@ -1038,7 +1095,7 @@ export class HpColorOpacity extends LitElement {
           : `background:${color};opacity:${solid ? 1 : this.showOpacity ? pct / 100 : 1}`}></span>
       </button>
       ${this.readout ? html`<span class="readout" aria-live="polite">${this.readout}</span>` : nothing}
-      ${this._open && !this.disabled && this._supportsPopover() ? this._pickerTemplate(true) : nothing}
+      ${(this._open || this._closing) && !this.disabled && this._supportsPopover() ? this._pickerTemplate(true) : nothing}
     `;
   }
 }

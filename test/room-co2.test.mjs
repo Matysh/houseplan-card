@@ -17,8 +17,8 @@ const hassFor = (state, attributes) => ({
 test('#920 shared space drafts retain legacy source, display, fill and calibration defaults', () => {
   for (const imperial of [false, true]) {
     const created = newSpaceDialogDraft(imperial);
-    assert.equal(created.source, 'file');
-    assert.equal(created.showNames, false); assert.equal(created.displayTouched, false);
+    assert.equal(created.source, 'draw'); // #1081: new dialogs default to manual drawing.
+    assert.equal(created.showNames, true); assert.equal(created.displayTouched, false);
     assert.equal(created.customFill.a, 0); assert.equal(created.labelCo2, false);
     assert.equal(created.tempMinInput, String(created.tempMin));
     const settings = { label_co2: true, label_temp: true, label_hum: true, label_light: true,

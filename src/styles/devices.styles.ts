@@ -107,6 +107,7 @@ export const devicesStyles = css`
       pointer-events: none;
       z-index: 2;
     }
+    .dev .newdot.hiddendot { background: #9e9e9e; }
     .dev {
       position: absolute;
       /* The surface resolves compatibility icon_size units once. The shared

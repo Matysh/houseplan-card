@@ -16,6 +16,7 @@ export interface DeviceFaceOptions {
   surface: 'interactive-plan' | 'preview' | 'static-card';
   newDevice?: boolean;
   newDeviceTitle?: string;
+  hiddenDevice?: boolean;
   disabledTitle?: string;
 }
 
@@ -114,8 +115,8 @@ export function renderDeviceFace(
     ${pulse.reducedMotionIndicator === 'dot'
       ? html`<span class="activity-dot" aria-hidden="true"></span>`
       : nothing}
-    ${options.newDevice
-      ? html`<span class="newdot" title=${options.newDeviceTitle || ''} aria-hidden="true"></span>`
+    ${options.newDevice || options.hiddenDevice
+      ? html`<span class=${options.hiddenDevice ? 'newdot hiddendot' : 'newdot'} title=${options.hiddenDevice ? '' : options.newDeviceTitle || ''} aria-hidden="true"></span>`
       : nothing}
     ${presentation.haDisabled
       ? html`<span class="habadge" title=${options.disabledTitle || ''} aria-hidden="true"><ha-icon icon="mdi:power-plug-off-outline"></ha-icon></span>`

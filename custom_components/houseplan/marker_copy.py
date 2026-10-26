@@ -17,7 +17,7 @@ def marker_copy_candidate(
     marker_id = marker.get("id")
     markers = config.get("markers") or []
     source = next((m for m in markers if m.get("id") == source_id), None)
-    if source and (source.get("removed") or source.get("hidden") or source.get("binding") != binding):
+    if source and (source.get("removed") or source.get("binding") != binding):
         raise vol.Invalid("Source is no longer available")
     if source is None and (binding == "virtual" or source_id != (
         binding[7:] if binding.startswith("device:") else "lg_" + binding[7:]

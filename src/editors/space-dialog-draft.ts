@@ -19,7 +19,7 @@ export function newSpaceDialogDraft(imperial: boolean): SpaceDialogState {
   const cellCm = newSpaceCellCm(imperial);
   return {
     mode: 'create', title: '', planUrl: null, planFile: null,
-    ...initialSpaceDisplayDraft(), hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
+    ...initialSpaceDisplayDraft('draw'), hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
     roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
     nameColor: { ...DEFAULT_NAME_COLOR }, wallFill: { ...DEFAULT_WALL_FILL },
     customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 }, glowEnabled: true, bgColor: null,

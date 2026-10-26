@@ -274,6 +274,8 @@ import {
   roomFitGeometryBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
+import type { FurniturePlacementPress } from './furniture-placement-press';
+import { liveGridBounds } from './live-viewport';
 import { ENTRY_BUILD_FINGERPRINT, EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
@@ -1037,9 +1039,7 @@ export class HouseplanCard extends LitElement {
   private _furnPreviewInput: { raw: [number, number]; free: boolean } | null = null;
   /** Touch/pen has no hover. Delay its one-shot stamp until a clean pointerup
    * so pointercancel or a second contact cannot save accidental geometry. */
-  private _furnTouchPending: {
-    pid: number; sx: number; sy: number; pointerType: string; cancelled: boolean;
-  } | null = null;
+  private _furnTouchPending: FurniturePlacementPress | null = null;
   /** The selected shape's own unrotated frame (text is measured from SVG). */
   private _dtBox: { id: string; x: number; y: number; w: number; h: number } | null = null;
   /**
@@ -2455,6 +2455,7 @@ export class HouseplanCard extends LitElement {
   });
   /** #813: a window that loses focus mid-press may never deliver its release. */
   private readonly _onWindowBlur = (): void => {
+    if (this._furnTouchPending) this._editorRuntime?._clearFurniturePreview();
     if (this._mode === 'view') {
       this._touchClickGuard.interrupt();
       this._interruptViewGesture();
@@ -7147,6 +7148,7 @@ export class HouseplanCard extends LitElement {
         );
         this._viewportGestureDirty = true;
         this._liveVp();
+        if (this._furnTouchPending?.mouse) this._editorRuntime?._furnPointerMove(ev, this._pointerModality.hoverEnabled);
       }
     }
   }
@@ -11046,7 +11048,7 @@ export class HouseplanCard extends LitElement {
                   this._tabDrag?.moved && this._tabDrag.id === s.id ? ' dragging' : ''}${
                   this._tabDrag?.moved && this._tabDrag.targetId === s.id
                     ? ` drop-${this._tabDrag.placement}` : ''}"
-                ?data-reorderable=${this._canReorderTabs}
+                ?data-reorderable=${this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view'}
                 aria-current=${this._space === s.id ? 'page' : nothing}
                 @pointerdown=${(e: PointerEvent) => this._tabPointerDown(e, s.id)}
                 @pointerup=${(e: PointerEvent) => this._tabPointerUp(e)}
@@ -11148,6 +11150,7 @@ export class HouseplanCard extends LitElement {
             if (this._decorDraft?.pid === e.pointerId) this._stagePointerCancel(e);
             if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);
             if (this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);
+            if (this._furnTouchPending?.mouse && this._furnTouchPending.pid === e.pointerId) this._stagePointerCancel(e);
           }}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${renderDayCycleEnvironment(dayCycle, dayCycleWeight, moonLayer(this, this._sunGlobal(), dayCycle))}
@@ -11192,7 +11195,7 @@ export class HouseplanCard extends LitElement {
             ${''/* the grid is a property of the plane, not of a box: it follows
                    the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
             ${this._editing && !this._markup && this._gridLevels()
-              ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+              ? svg`<rect data-hp-live-grid x="${liveGridBounds(view).x}" y="${liveGridBounds(view).y}" width="${liveGridBounds(view).w}" height="${liveGridBounds(view).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && backdropHref
               ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
@@ -12185,6 +12188,7 @@ export class HouseplanCard extends LitElement {
       ${renderDeviceFace(presentation, {
         surface: 'interactive-plan',
         newDevice: this._newIds.has(d.id),
+        hiddenDevice: d.userHidden ?? d.marker?.hidden === true,
         newDeviceTitle: this._t('device.new'),
         disabledTitle: presentation.haDisabled ? ghostLabel : '',
       })}

@@ -220,6 +220,7 @@ const res = await page.evaluate(async () => {
   await settleLive();
   const beforeUnknown = c._decorList.length;
   ev('pointerdown', stageEl(), 300, 300, { pointerType: 'mouse' });
+  ev('pointerup', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;
   out.unknownSymbolFailsDark = !ghost() && c._decorList.length === beforeUnknown
     && c._decorTool === 'furniture';
@@ -234,6 +235,7 @@ const res = await page.evaluate(async () => {
     ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   const committedPreviewStroke = Number(ghost()?.getAttribute('stroke-width'));
   ev('pointerdown', stageEl(), 300, 300, { pointerType: 'mouse' });
+  ev('pointerup', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;
   const sofa = c._decorList.find((s) => s.kind === 'furniture');
   const sofaId = sofa?.id ?? null;
@@ -276,6 +278,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.fieldEditsTheArmedSize = Math.abs((c._furnPalette?.w ?? 0) - 50) < 1e-6;
   ev('pointerdown', stageEl(), 300, 400);
+  ev('pointerup', stageEl(), 300, 400);
   await c.updateComplete;
   const wc = c._decorList.find((s) => s.symbol === 'toilet');
   out.typedSizeIsUsed = near((wc?.w ?? NaN) * 1000, cmToUnits(50), 1e-6)
@@ -303,6 +306,7 @@ const res = await page.evaluate(async () => {
   const thickWallPreview = c._editorRuntime?._furniturePreviewPlacement()
     ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   ev('pointerdown', stageEl(), 300, 140 + wallHalf);
+  ev('pointerup', stageEl(), 300, 140 + wallHalf);
   await c.updateComplete;
   const bed = c._decorList.find((s) => s.symbol === 'bed_double');
   const depth = cmToUnits(200);
@@ -332,6 +336,7 @@ const res = await page.evaluate(async () => {
     && near((exteriorPreview.y + exteriorPreview.h / 2) * 1000, exteriorCentreY, 1e-6)
     && Math.abs(Math.abs(exteriorPreview.angle) - 180) < 1e-6;
   ev('pointerdown', stageEl(), 300, exteriorIntentY);
+  ev('pointerup', stageEl(), 300, exteriorIntentY);
   await c.updateComplete;
   const exteriorChair = c._decorList.find((shape) => shape.symbol === 'chair');
   const exteriorChairId = exteriorChair?.id ?? null;
@@ -357,6 +362,7 @@ const res = await page.evaluate(async () => {
   ev('pointermove', stageEl(), sharedIntentX, 300, { pointerType: 'mouse' });
   await settleLive();
   ev('pointerdown', stageEl(), sharedIntentX, 300);
+  ev('pointerup', stageEl(), sharedIntentX, 300);
   await c.updateComplete;
   const sharedChair = c._decorList.find((s) => s.symbol === 'chair' && s.id !== exteriorChairId);
   const chairDepth = (sharedChair?.h ?? NaN) * 1000;
@@ -382,6 +388,7 @@ const res = await page.evaluate(async () => {
   category('bed')?.click(); await c.updateComplete;
   pick('bed_single'); await c.updateComplete;
   ev('pointerdown', stageEl(), 301.7, 151.3, { shiftKey: true });
+  ev('pointerup', stageEl(), 301.7, 151.3, { shiftKey: true });
   await c.updateComplete;
   const free = c._decorList.find((s) => s.symbol === 'bed_single');
   out.shiftBypassesTheWallMagnet = !!free
@@ -626,6 +633,7 @@ const res = await page.evaluate(async () => {
   out.inertUnderTheStamp = pe(sofaId) === 'none';
   const n0 = c._decorList.length;
   ev('pointerdown', stageEl(), 320, 320);                   // символ НЕ выбран
+  ev('pointerup', stageEl(), 320, 320);                   // символ НЕ выбран
   await c.updateComplete;
   out.noSymbolNoStamp = c._decorList.length === n0;
   out.unarmedCanvasDismissReturnsToSelect = c._decorTool === 'select' && !pal();

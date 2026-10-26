@@ -14,6 +14,18 @@ const face = (rippleColor) => ({
   },
 });
 
+test('#1081 hidden status uses exactly the new-dot geometry and takes priority over new', () => {
+  const flatten = value => value?.strings ? value.strings.map((s,i)=>s+flatten(value.values[i])).join('')
+    : Array.isArray(value)?value.map(flatten).join(''):typeof value==='symbol'?'':String(value??'');
+  for(const isNew of [false,true]) {
+    const html=flatten(renderDeviceFace({...face('#ff0000'),icon:'mdi:lamp'}, {surface:'interactive-plan',newDevice:isNew,hiddenDevice:true}));
+    assert.equal((html.match(/class=newdot hiddendot/g)||[]).length,1);
+    assert.equal((html.match(/newdot/g)||[]).length,1);
+  }
+  const shown=flatten(renderDeviceFace({...face('#ff0000'),icon:'mdi:lamp'}, {surface:'interactive-plan',newDevice:true,hiddenDevice:false}));
+  assert.ok(shown.includes('newdot'));assert.ok(!shown.includes('hiddendot'));
+});
+
 test('device face never emits an arbitrary persisted ripple declaration', () => {
   assert.deepEqual(deviceFaceStyle(face('#12aBcD')), [
     '--ripple-scale:3', '--ripple-color:#12aBcD',

@@ -694,12 +694,6 @@ export const editorDialogsStyles = css`
       --hpf-tint: color-mix(in srgb,var(--hpf-accent) 10%,var(--hpf-surface));
       --hpf-tint-line: color-mix(in srgb,var(--hpf-accent) 38%,var(--hpf-surface));
     }
-    .device-inbox-filter-help {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-1);
-      min-width: 0;
-    }
     /* #618: batch selection lives outside .device-inbox-filters. */
     .device-inbox-batch {
       display: flex;

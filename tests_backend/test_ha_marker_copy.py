@@ -67,6 +67,26 @@ async def _send(client, request):
 
 
 @pytest.mark.parametrize("real", [False, True])
+async def test_issue_1081_hidden_active_source_can_create_visible_virtual_copy(hass, hass_ws_client, real):
+    client, before = await _seed(hass, hass_ws_client, real=real)
+    config = copy.deepcopy(before[0]["config"])
+    config["markers"][0]["hidden"] = True
+    answer = await _send(client, {"type": "houseplan/config/set", "config": config, "expected_rev": before[0]["rev"]})
+    assert answer["success"], answer
+    before = await _pair(client)
+    request = _request(before)
+    request["marker"].pop("hidden", None)
+    answer = await _send(client, request)
+    assert answer["success"], answer
+    after = await _pair(client)
+    source = next(marker for marker in after[0]["config"]["markers"] if marker["id"] == "source")
+    new = next(marker for marker in after[0]["config"]["markers"] if marker["id"] == "v_copy")
+    assert source["hidden"] is True
+    assert new["binding"] == "virtual" and not new.get("hidden")
+    assert after[1]["layout"]["source"] == before[1]["layout"]["source"]
+
+
+@pytest.mark.parametrize("real", [False, True])
 async def test_issue_935_copy_appends_only_its_marker_position_and_incoming_edges(hass, hass_ws_client, real):
     client, before = await _seed(hass, hass_ws_client, real=real)
     events = []

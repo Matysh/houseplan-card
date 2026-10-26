@@ -14,6 +14,7 @@ import { makeBatteryBoardFixture, prepareBatteryBoard, makeBatteryZigbeeFixture,
   prepareBatteryZigbeeOverlap, batteryZigbeeProbe, batteryZigbeeClip } from './device-battery.mjs';
 import { makeZigbeeLedFixture, prepareZigbeeLed } from './zigbee-led.mjs';
 import { addDecorMultiselectFixture, prepareDecorMultiselect } from './decor-multiselect.mjs';
+import { addUiLab1081Fixture, prepareUiLab1081 } from './ui-lab-1081.mjs';
 import { makeDeviceOfflineFixture } from '../fixtures/device-offline.mjs';
 import { prepareDeviceOfflineBoard } from './device-offline.mjs';
 import { makeVacuumHistoryFixture, prepareVacuumHistoryGolden } from './vacuum-history.mjs';
@@ -207,6 +208,7 @@ async function stableEnvironment(page, scenario) {
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
   if (scenario.decorMultiselect) addDecorMultiselectFixture(fixture,scenario);
+  if (scenario.uiLab1081) addUiLab1081Fixture(fixture, scenario);
   if (scenario.uiKit1051) {
     fixture.config.spaces.push({id:scenario.space,title:'UI kit',cell_cm:5,view_box:[0,0,1,1],
       rooms:[{id:'ui-room',name:'Room',poly:[[.1,.1],[.9,.1],[.9,.9],[.1,.9]]}],
@@ -2902,6 +2904,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.zigbeeLed) result.zigbeeLed = await prepareZigbeeLed(page);
   if (scenario.vacuumHistory) result.vacuumHistory = await prepareVacuumHistoryGolden(page,scenario);
   if (scenario.decorMultiselect) result.decorMultiselect = await prepareDecorMultiselect(page,scenario);
+  if (scenario.uiLab1081) result.uiLab1081 = await prepareUiLab1081(page, scenario);
   if (scenario.directLqi) {
     for (const [id, lqi] of Object.entries(scenario.directLqi)) {
       const line = page.locator('houseplan-card').locator(`[data-hp="device"][data-id="${id}"] .lqi`);

@@ -10,6 +10,7 @@ import {
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
 import { newSpaceDialogDraft, savedSpaceDialogDraft, spaceDialogSettings } from './editors/space-dialog-draft';
+import { loadSpacePlanList } from './editors/space-plan-list';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
 // #600: форма и границы шага сетки — из одного модуля с редактором; прежняя
 // локальная копия констант и `strictNumber` нарушала «одно число — один источник».
@@ -56,6 +57,7 @@ export class HouseplanOnboardingRuntime {
     this.host._spaceDialog = newSpaceDialogDraft(this.host._imperial);
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
+    loadSpacePlanList(this.host);
   }
 
   public async _pickPlanFile(ev: Event): Promise<void> {
@@ -84,29 +86,10 @@ export class HouseplanOnboardingRuntime {
     ) ?? nothing;
   }
 
-  public _toggleServerPlans = async (): Promise<void> => {
-    const dialog = this.host._spaceDialog;
-    if (!dialog) return;
-    if (dialog.pickSaved) {
-      this.host._spaceDialog = { ...dialog, pickSaved: false };
-      return;
-    }
-    this.host._spaceDialog = { ...dialog, pickSaved: true, savedBusy: true };
-    try {
-      const response: { plans?: NonNullable<typeof dialog.saved> } = await this.host.hass.callWS({
-        type: 'houseplan/plans/list',
-      });
-      const current = this.host._spaceDialog;
-      if (current) this.host._spaceDialog = {
-        ...current, saved: response?.plans || [], savedBusy: false,
-      };
-    } catch (error: unknown) {
-      const current = this.host._spaceDialog;
-      if (current) this.host._spaceDialog = { ...current, saved: [], savedBusy: false };
-      this.host._showToast(this.host._t('toast.plans_list_failed', {
-        err: this.host._errText(error),
-      }), 'toast.plans_list_failed');
-    }
+  public _toggleServerPlans = (): void => {
+    const d = this.host._spaceDialog;
+    if (!d || !d.saved?.length || d.savedBusy) return;
+    this.host._spaceDialog = { ...d, pickSaved: !d.pickSaved };
   };
 
   public _useServerPlan(url: string): void {
@@ -338,6 +321,7 @@ export class HouseplanOnboardingRuntime {
     this.host._spaceDialog = { ...newSpaceDialogDraft(this.host._imperial), title, customFill: null };
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
+    loadSpacePlanList(this.host);
   }
 
   public _skipImport(): void {

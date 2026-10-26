@@ -1012,6 +1012,7 @@ export const planStyles = css`
     .bdframe .bd-nesw { cursor: nesw-resize; }
     /* the picture itself is the drag target for a move (grab, then grabbing) */
     .stage.mode-decor.bdgrab { cursor: grab; }
+    .stage.mode-decor.furniture-panning, .stage.mode-decor.furniture-panning * { cursor: grabbing !important; }
     .stage.mode-decor.bdgrabbing,
     .stage.mode-decor.bdgrabbing .bdframe .bdhandle { cursor: grabbing; }
     .measurelabel.bdmeasure {

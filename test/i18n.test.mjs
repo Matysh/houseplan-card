@@ -377,10 +377,6 @@ test('issue 86 Party 1 has the exact help inventory and canonical RU/EN copy', (
       'Dashed zero-thickness walls pass Glow and sun rays, while solid ones block them as zero-area barriers. The choice affects every such wall in the space even when its line is hidden in View.',
       'Пунктирные стены нулевой толщины пропускают Glow и солнечные лучи, сплошные блокируют их как барьер нулевой площади. Выбор меняет все такие стены пространства, даже когда их линии скрыты в просмотре.',
     ],
-    'device_inbox.show_hidden.help': [
-      'Shows hidden devices normally in every mode. This browser remembers the choice; saved hidden flags stay unchanged. Home Assistant-disabled devices are not activated.',
-      'Показывает скрытые устройства как обычные во всех режимах. Выбор запоминается в этом браузере; сохранённый флаг скрытия не меняется. Деактивированные в Home Assistant устройства не включаются.',
-    ],
   };
   const calls = [...helpSource.matchAll(/this\._help\('([^']+\.help)'\)/g)]
     .map((match) => match[1]);
@@ -389,7 +385,8 @@ test('issue 86 Party 1 has the exact help inventory and canonical RU/EN copy', (
     assert.equal(en[key], english, `canonical English copy changed for ${key}`);
     assert.equal(ru[key], russian, `canonical Russian copy changed for ${key}`);
   }
-  assert.equal(Object.keys(copy).length, 11);
+  // #1081/UI-043 removes the duplicate catalog visibility control and its help.
+  assert.equal(Object.keys(copy).length, 10);
 });
 
 test('issue 86 removes explanatory hints replaced by contextual help', () => {

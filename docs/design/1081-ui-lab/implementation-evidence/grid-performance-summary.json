@@ -1,0 +1,250 @@
+{
+  "before-dpr1": {
+    "frameMedianMs": {
+      "median": 16.699999999999818,
+      "min": 16.699999999999818,
+      "max": 16.699999999999818
+    },
+    "frameP95Ms": {
+      "median": 16.799999999999727,
+      "min": 16.700000000000273,
+      "max": 16.799999999999955
+    },
+    "taskMs": {
+      "median": 149.07999999999998,
+      "min": 147.457,
+      "max": 156.007
+    },
+    "scriptMs": {
+      "median": 30.700000000000003,
+      "min": 29.802,
+      "max": 31.758000000000003
+    },
+    "layoutMs": {
+      "median": 1.253,
+      "min": 1.194,
+      "max": 1.395
+    },
+    "styleMs": {
+      "median": 9.26,
+      "min": 9.258000000000001,
+      "max": 9.943999999999999
+    },
+    "paintMs": {
+      "median": 12.014,
+      "min": 11.584,
+      "max": 12.827
+    },
+    "heapBefore": {
+      "median": 7782520,
+      "min": 7782396,
+      "max": 7782552
+    },
+    "heapAfter": {
+      "median": 8286264,
+      "min": 8279816,
+      "max": 8289912
+    },
+    "layerMaxArea": {
+      "median": 1411200,
+      "min": 1411200,
+      "max": 1411200
+    },
+    "layerMaxCount": {
+      "median": 5,
+      "min": 5,
+      "max": 5
+    },
+    "viewBoxWrites": {
+      "median": 12,
+      "min": 12,
+      "max": 12
+    }
+  },
+  "after-dpr1": {
+    "frameMedianMs": {
+      "median": 16.699999999999818,
+      "min": 16.699999999999818,
+      "max": 16.699999999999818
+    },
+    "frameP95Ms": {
+      "median": 16.700000000000273,
+      "min": 16.700000000000273,
+      "max": 16.799999999999727
+    },
+    "taskMs": {
+      "median": 145.197,
+      "min": 144.64499999999998,
+      "max": 146.712
+    },
+    "scriptMs": {
+      "median": 29.892,
+      "min": 29.765,
+      "max": 29.915
+    },
+    "layoutMs": {
+      "median": 1.302,
+      "min": 1.238,
+      "max": 1.38
+    },
+    "styleMs": {
+      "median": 9.154,
+      "min": 9.132,
+      "max": 9.549
+    },
+    "paintMs": {
+      "median": 12.047,
+      "min": 12.032,
+      "max": 12.891
+    },
+    "heapBefore": {
+      "median": 7791716,
+      "min": 7771800,
+      "max": 7792172
+    },
+    "heapAfter": {
+      "median": 8285572,
+      "min": 8274124,
+      "max": 8293120
+    },
+    "layerMaxArea": {
+      "median": 1444950,
+      "min": 1444950,
+      "max": 1444950
+    },
+    "layerMaxCount": {
+      "median": 5,
+      "min": 5,
+      "max": 5
+    },
+    "viewBoxWrites": {
+      "median": 12,
+      "min": 11,
+      "max": 12
+    }
+  },
+  "before-dpr2": {
+    "frameMedianMs": {
+      "median": 16.699999999999818,
+      "min": 16.699999999999818,
+      "max": 16.699999999999818
+    },
+    "frameP95Ms": {
+      "median": 16.799999999999727,
+      "min": 16.700000000000273,
+      "max": 16.799999999999727
+    },
+    "taskMs": {
+      "median": 162.186,
+      "min": 147.786,
+      "max": 260.682
+    },
+    "scriptMs": {
+      "median": 34.016999999999996,
+      "min": 30.499,
+      "max": 49.959
+    },
+    "layoutMs": {
+      "median": 1.227,
+      "min": 1.2229999999999999,
+      "max": 1.8860000000000001
+    },
+    "styleMs": {
+      "median": 10.312,
+      "min": 9.588,
+      "max": 15.793999999999999
+    },
+    "paintMs": {
+      "median": 12.275,
+      "min": 11.502,
+      "max": 21.8
+    },
+    "heapBefore": {
+      "median": 7782552,
+      "min": 7782396,
+      "max": 7782568
+    },
+    "heapAfter": {
+      "median": 8280508,
+      "min": 8274412,
+      "max": 8283472
+    },
+    "layerMaxArea": {
+      "median": 1411200,
+      "min": 1411200,
+      "max": 1411200
+    },
+    "layerMaxCount": {
+      "median": 5,
+      "min": 5,
+      "max": 5
+    },
+    "viewBoxWrites": {
+      "median": 11,
+      "min": 11,
+      "max": 12
+    }
+  },
+  "after-dpr2": {
+    "frameMedianMs": {
+      "median": 16.699999999999818,
+      "min": 16.699999999999818,
+      "max": 16.699999999999818
+    },
+    "frameP95Ms": {
+      "median": 16.700000000000273,
+      "min": 16.700000000000273,
+      "max": 16.799999999999955
+    },
+    "taskMs": {
+      "median": 151.755,
+      "min": 150.351,
+      "max": 153.21400000000003
+    },
+    "scriptMs": {
+      "median": 31.511999999999997,
+      "min": 30.793999999999997,
+      "max": 31.613000000000003
+    },
+    "layoutMs": {
+      "median": 1.232,
+      "min": 1.181,
+      "max": 1.531
+    },
+    "styleMs": {
+      "median": 9.758,
+      "min": 9.517,
+      "max": 10.028
+    },
+    "paintMs": {
+      "median": 13.063,
+      "min": 12.556,
+      "max": 13.175
+    },
+    "heapBefore": {
+      "median": 7791808,
+      "min": 7771952,
+      "max": 7792108
+    },
+    "heapAfter": {
+      "median": 8288100,
+      "min": 8268092,
+      "max": 8291860
+    },
+    "layerMaxArea": {
+      "median": 1444950,
+      "min": 1444950,
+      "max": 1444950
+    },
+    "layerMaxCount": {
+      "median": 5,
+      "min": 5,
+      "max": 5
+    },
+    "viewBoxWrites": {
+      "median": 11,
+      "min": 11,
+      "max": 12
+    }
+  }
+}

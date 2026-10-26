@@ -5,6 +5,10 @@
 - Clear previous furniture, shape and image placement previews after a full
   redraw followed by pointer movement; saved decor remains visible. Losing
   pointer capture cancels a rectangle or ellipse draft without saving it. (#1080)
+- Bring the approved editor UI into the shared controls: individual selection
+  frames, animated colour pickers, predictable new-space defaults, device menus
+  and hidden markers. Furniture clicks place on release while dragging pans;
+  the grid covers the incoming edge throughout navigation. (#1081)
 
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain

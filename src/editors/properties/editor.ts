@@ -32,7 +32,6 @@ import { parsePropertiesColor, propertiesColorDraft } from './color-draft';
 import type { DecorShape, DecorStyle } from '../decor/types';
 import type { DecorSelectionPress } from '../decor/group-press';
 import type { SpaceGeometryState } from '../../geometry-history-state';
-import { furnitureGraphic } from '../../furniture';
 import { DecorGroupTextBoxes } from '../decor/group-selection';
 import type { DevItem, Marker, ServerConfig } from '../../types';
 import type { HouseplanEditorRuntime } from '../../houseplan-editor-runtime';
@@ -722,7 +721,7 @@ export class PropertiesEditor {
     const reference = this.reference(target);
     return renderPropertiesSelection(target, { unitPerPx: this.runtime._cssPxToRender(1), cellCm: this.host._cellCm,
       textBox: this.host._dtBox?.id === this.selectedTextId ? this.host._dtBox : null, reference,
-      decorGroup: { text: shape => this.groupText.get(shape), art: symbol => furnitureGraphic(symbol, this.host) },
+      decorGroup: { text: shape => this.groupText.get(shape) },
     });
   }
   /** Called by the existing measureHouseplanDecorText hook after the ordinary decor DOM settles. */

@@ -109,16 +109,16 @@ export async function setInboxSelectionHidden<D extends InboxBatchDialog>(
 /** One Hide/Show transaction for a single row (`batch=false`) or a batch. */
 export async function writeInboxVisibility<D extends InboxBatchDialog>(
   host: InboxBatchHost<D>, deps: InboxBatchDeps,
-  rows: readonly DeviceInboxRow[], hidden: boolean, batch: boolean,
+  rows: readonly DeviceInboxRow[], hidden: boolean, batch: boolean, fromPlan = false,
 ): Promise<void> {
   const dialog = host._deviceInbox;
   const cfg = host._serverCfg;
-  if (!dialog || !cfg || dialog.busy || !rows.length) return;
+  if ((!dialog && !fromPlan) || !cfg || dialog?.busy || !rows.length || host._canEdit === false || host._kiosk) return;
   const previousMarkers = cfg.markers || [];
   const applied = applyInboxVisibility(previousMarkers, rows, hidden, () => `m_${Date.now().toString(36)}`);
   if (!applied.changed) return;
   cfg.markers = applied.markers;
-  host._deviceInbox = {
+  if (dialog) host._deviceInbox = {
     ...dialog,
     busy: batch ? INBOX_BATCH_BUSY : rows[0].key,
     anchor: batch ? dialog.anchor : rows[0].key,

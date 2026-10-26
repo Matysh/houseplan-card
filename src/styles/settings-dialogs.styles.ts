@@ -7,6 +7,9 @@ import{ settingsActionHover, settingsActionTransition, settingsPrimaryActionHove
 export const settingsDialogCss = `
   ${css`
 hp-dialog[settings-layout]{--hp-dialog-wide-width:610px;--hp-dialog-icon-size:40.48px;--hp-settings-help-size:22px;--hp-settings-help-scale:1.06;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12);}
+hp-dialog.danger-confirm-dialog[settings-layout]{--hp-dialog-icon-size:28px;}
+hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-body{gap:12px;}
+hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-object{font-size:14px;line-height:1.45;}
 hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-settings-height:780px;--hp-settings-chrome-height:176px;}
 hp-dialog .hpf-form.hpf-settings-form{display:block;padding:0;background:var(--hpf-surface);--hpf-control-surface:var(--hpf-surface);}
 .hpf-settings-layout{display:grid;grid-template-columns:155px minmax(0,1fr);min-width:0;align-items:start;}
@@ -70,6 +73,9 @@ hp-dialog[settings-layout] .hpf-footer .btn > ha-icon{display:inline-flex;align-
 .hpf-temperature-range .hpf-unit{flex:0 1 96px;min-width:0;}
 .hpf-temperature-range .hpf-label{flex:none;}
 .hpf-plan-image{display:flex;align-items:center;gap:10px;min-height:148px;padding:12px;box-sizing:border-box;background:var(--hpf-canvas);border:1px solid var(--hpf-line);border-radius:7px;}
+.hpf-plan-image:has(> .planname.muted){align-items:flex-end;}
+hp-dialog[data-kind="space"] .hpf-callout:has([data-action="space-delete-devices"]){border-radius:0;}
+hp-dialog[data-kind="space"] [data-action="space-delete-devices"]{display:flex;width:fit-content;max-width:100%;margin-top:12px;white-space:normal;}
 .hpf-plan-image .planprev{width:210px;max-width:60%;height:124px;max-height:none;object-fit:contain;border:0;border-radius:0;padding:0;background:transparent;}
 .hpf-plan-filename{min-width:0;overflow-wrap:anywhere;color:var(--hpf-muted);font-size:13px;}
 .hpf-plan-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}

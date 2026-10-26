@@ -19,6 +19,11 @@ interface Menu {
   x: number; y: number; target: Element | null;
 }
 interface CopyResponse { config: ServerConfig; layout: DeviceLayout; config_rev: number; layout_rev: number }
+interface DeviceMenuCommands {
+  settings(device: DevItem, current: () => boolean): void;
+  visibility(device: DevItem, hidden: boolean): Promise<void>;
+  remove(device: DevItem, current: () => boolean): Promise<void>;
+}
 
 export class DeviceCopyEditor {
   private menu: Menu | null = null;
@@ -26,7 +31,8 @@ export class DeviceCopyEditor {
   private busyContext: object | null = null;
   private operation = 0;
   private readonly presentation = new EditorContextMenu(() => this.host.requestUpdate());
-  constructor(private readonly host: HouseplanEditorHostPort, private readonly copied?: (id: string, sourceId: string) => void) {}
+  constructor(private readonly host: HouseplanEditorHostPort, private readonly copied?: (id: string, sourceId: string) => void,
+    private readonly commands?: DeviceMenuCommands) {}
   private t(key: ToolsI18nKey): string { return toolsT(langOf(this.host.hass, this.host._config?.language), key); }
   private allowed(): boolean {
     const h = this.host;
@@ -53,8 +59,7 @@ export class DeviceCopyEditor {
     event.preventDefault(); event.stopPropagation();
     const h = this.host, current = h._devices.find(d => d.id === source.id && d.space === h._space);
     if (this.busyContext && !h._configWriteContext.owns(this.busyContext)) { this.busy = false; this.operation++; }
-    if (this.busy || h._devicePositionBusy || h._deviceDrag || !current || current.hidden
-        || (current.bindingStatus && current.bindingStatus.kind !== 'active')) return;
+    if (this.busy || h._devicePositionBusy || h._deviceDrag || !current || current.hidden && !h._showAll) return;
     this.close();
     this.menu = { id: current.id, space: h._space, context: h._configWriteContext.claim(), cr: h._cfgRev, lr: h._layoutRev,
       cfg: contentFingerprint(h._serverCfg), layout: contentFingerprint(h._layout),
@@ -65,15 +70,31 @@ export class DeviceCopyEditor {
     let m = this.menu;
     if (m && !this.contextCurrent(m)) { this.close(); m = null; }
     const owner = m;
+    const device = owner && this.host._devices.find(d => d.id === owner.id && d.space === owner.space);
+    const active = !!device && (!device.bindingStatus || device.bindingStatus.kind === 'active');
+    const invoke = (command: keyof DeviceMenuCommands) => {
+      if (!owner || !this.unchanged(owner)) return;
+      const current = this.host._devices.find(d => d.id === owner.id && d.space === owner.space);
+      if (!current) return;
+      this.close();
+      if (command === 'visibility') void this.commands?.visibility(current, !current.hidden);
+      else void this.commands?.[command](current, () => this.unchanged(owner));
+    };
     return this.presentation.render(owner ? { token: owner, hp: 'device-context-menu', anchor: menuPoint(owner.x, owner.y), minWidth: 180,
       returnFocus: owner.target, current: () => this.menu === owner && this.unchanged(owner), close: focus => this.close(focus),
-      items: [{ key: 'copy', hp: 'device-copy', label: this.t('device.copy'), invoke: () => void this.copy(owner) }] } : null);
+      items: [
+        { key: 'settings', action: 'device-context-settings', label: this.t('device.settings'), invoke: () => invoke('settings') },
+        { key: 'copy', hp: 'device-copy', label: this.t('device.copy'), disabled: !active, invoke: () => void this.copy(owner) },
+        { key: 'visibility', action: 'device-context-visibility', label: this.t(device?.hidden ? 'device.show_on_plan' : 'device.hide'),
+          disabled: !active, title: active ? '' : this.host._t('device_inbox.show_disabled'), invoke: () => invoke('visibility') },
+        { key: 'delete', action: 'device-context-delete', label: this.host._t('btn.delete'), invoke: () => invoke('remove') },
+      ] } : null);
   }
   /** Same guarded command as the context menu; no synthetic pointer event. */
   async copyDevice(source: DevItem): Promise<void> {
     const h = this.host;
     if (!this.allowed() || this.busy || h._devicePositionBusy || h._deviceDrag) return;
-    const current = h._devices.find(d => d.id === source.id && d.space === h._space && !d.hidden);
+    const current = h._devices.find(d => d.id === source.id && d.space === h._space);
     if (!current || current.bindingStatus && current.bindingStatus.kind !== 'active') return;
     await this.copy({ id: current.id, space: h._space, context: h._configWriteContext.claim(), cr: h._cfgRev, lr: h._layoutRev,
       cfg: contentFingerprint(h._serverCfg), layout: contentFingerprint(h._layout), x: 0, y: 0, target: null });
@@ -94,7 +115,7 @@ export class DeviceCopyEditor {
       if (h._saveConfigDebounced.pending()) h._saveConfigDebounced.flush();
       await h._writeChain;
       if (!this.unchanged(m) || h._dirtyPos.size || h._sentPos.size) fail('device.copy_changed');
-      const d = h._devices.find(item => item.id === m.id && item.space === m.space && !item.hidden);
+      const d = h._devices.find(item => item.id === m.id && item.space === m.space);
       if (!d || (d.bindingStatus && d.bindingStatus.kind !== 'active')) fail('device.copy_changed');
       const source = d!, config = h._serverCfg!, space = h._spaceModelById(m.space)!;
       const incoming = deviceCopyIncoming(config, source);
@@ -120,7 +141,7 @@ export class DeviceCopyEditor {
         } catch { fail('device.copy_files_failed'); }
         marker.pdfs = rewriteDeviceCopyFiles(marker.pdfs || [], owner, id, mapping!);
       }
-      const currentSource = h._devices.find(item => item.id === source.id && item.space === m.space && !item.hidden);
+      const currentSource = h._devices.find(item => item.id === source.id && item.space === m.space);
       if (!this.unchanged(m) || !currentSource
           || currentSource.bindingStatus && currentSource.bindingStatus.kind !== 'active') fail('device.copy_changed');
       sent = true;

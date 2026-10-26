@@ -288,6 +288,7 @@ function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateRes
           @change=${(e: Event) => port.pickPlanFile(e)} />
       </span>
       <button data-hp="action" data-action="backdrop-server-plans" class="btn ghost" type="button" @click=${() => port.toggleServerPlans()}
+        ?disabled=${!d.saved?.length || d.savedBusy}
         title=${t('space.pick_saved_hint')}>
         <ha-icon icon="mdi:folder-image"></ha-icon>${t('space.pick_saved')}
       </button>`;

@@ -42,11 +42,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 92 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 101 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Paint, cascade and layer composition | 93 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Pointer geometry and trusted interaction | 102 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 59 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 265 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **530 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 266 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **533 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -138,6 +138,13 @@ real Playwright page-error channel.
 #1080 requires actual stale-footprint pixels after a full/live handoff and
 presented-frame ownership; duplicate DOM nodes alone are not the visual defect.
 The definition is registered and statically checked only during development.
+
+- `grid-loses-incoming-pixels-1081`
+
+The #1081 witness checks actual grid ink on the incoming scene edge under native
+pan in all three editors. Pure bounds cannot prove retained raster coverage.
+Registered for nightly; no development-time mutation execution.
+
 
 - `device-own-offline-fades-whole-marker`
 - `device-own-offline-fades-badge-frame`
@@ -330,6 +337,13 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+- `furniture-release-ignores-pan-1081`
+
+The #1081 witness crosses trusted mouse down/move/up, pointer capture and the
+existing stage camera. A return to the origin must remain a drag without an
+item or history write. Registered for nightly; not executed in development.
+
 
 - `node-delete-right-down-starts-pan-1045`
 - `node-delete-pinch-compatibility-opens-menu-1045`
@@ -621,6 +635,13 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 
 #1080 keeps the native capture-loss terminal transition observable: a drawn
 rectangle or ellipse is cancelled without a saved object or retained ghost.
+
+- `picker-exit-remains-interactive-1081`
+
+The #1081 witness observes the actual native-popover and fallback-portal exit
+surface while animated: it must become inert immediately and retire safely
+on reopen/disable/detach. Registered for nightly; not executed in development.
+
 
 - `zigbee-hidden-diagnostics-raw-roster-1077`
   proves that the actual General Settings caller follows the local eye's accepted

@@ -1,5 +1,20 @@
 # House Plan — complete user guide
 
+### Consistent editor actions
+
+A new space always opens Plan and scale with Draw it myself selected. In image
+mode, Already uploaded becomes available when stored images exist. Subsequent
+choices remain in the open draft.
+
+After selecting furniture, click to place it on mouse release. Dragging pans
+the plan and keeps the selected item ready for the next click. Every member of
+a multiple selection has its own frame; moving the selection stays shared.
+
+A device's editor context menu offers settings, copying, Hide or Show on plan,
+and Delete. Revealed user-hidden devices have a grey dot. The eye in the main
+toolbar controls local hidden-device display; the Devices dialog has no
+duplicate switch.
+
 ### Choosing a colour
 
 The Hue, Saturation and Brightness thumbs show the same selected colour.

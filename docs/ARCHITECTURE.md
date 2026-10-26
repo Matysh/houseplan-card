@@ -8,6 +8,16 @@ Frame identity prevents cancelled/disposed callbacks from painting a new action.
 Rectangle/ellipse capture loss delegates to the existing draft cancellation,
 matching Line/backdrop terminal handling without committing geometry.
 
+Accepted editor UI (#1081) keeps one owner per interaction. Colour-picker
+motion retains an inert native/portal surface only through its 120ms exit,
+and retires it on reopen/disable/disconnect. Group frames call the singleton
+Properties painter with measured per-text bounds. New-space defaults are
+created before the dirty baseline; a session-owned plan-list reader updates
+availability without resetting the draft. Device menu commands retain the
+existing config/revision/binding guards and shared visibility/delete writers.
+Furniture mouse placement extends the existing delayed press and stage camera;
+live grid bounds refresh only on that camera's existing viewBox budget.
+
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and
 intersects proven opposite floor intervals before the shared Glow/LED barrier

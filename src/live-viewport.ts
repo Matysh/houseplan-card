@@ -119,6 +119,11 @@ const projectionText = (projection: LiveLayerProjection): string =>
  */
 export const LIVE_SCENE_EXPOSURE_CLIP = 'inset(-25%)';
 
+/** Grid paint uses precisely the bounded exposure allowed to the camera scene. */
+export function liveGridBounds(view: LiveViewBox): LiveViewBox {
+  return { x: view.x - view.w * .25, y: view.y - view.h * .25, w: view.w * 1.5, h: view.h * 1.5 };
+}
+
 /** A passive SVG inherits the HTML camera, including its last Lit basis.
  * Rebase only its paint window, not its viewBox or camera transform (#871).
  * The window is the same 25% scene exposure around the budgeted anchor.
@@ -227,6 +232,13 @@ export function paintLiveViewport(
     }
     for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
       setViewBox(svg, floorBox);
+    }
+    const grid = liveGridBounds(current.view);
+    for (const rect of root.querySelectorAll<SVGElement>('[data-hp-live-grid]')) {
+      for (const [name, value] of [['x', grid.x], ['y', grid.y], ['width', grid.w], ['height', grid.h]] as const) {
+        const text = String(value);
+        if (rect.getAttribute(name) !== text) rect.setAttribute(name, text);
+      }
     }
   }
   // Сцена: от записанного якоря к текущему кадру. Budget refresh делает

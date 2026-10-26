@@ -123,17 +123,18 @@ await page.mouse.up(); await settle();
 check('revealedViewPanDoesNotWritePosition', await page.evaluate(() => window.__hiddenWrites.length), 0);
 check('revealedViewPanDoesNotToggleLamp', await page.evaluate(() => window.__serviceCalls.length), 1);
 
-// The catalogue is a second surface of the same choice, not a second mode.
+// #1081/UI-043: the toolbar owns this choice; the catalog no longer duplicates it.
 await page.evaluate(() => window.__hpTest.setMode('devices')); await settle();
 await card.locator('[data-hp="tool"][data-tool="device-inbox"]').click();
 const catalog = card.locator('[data-kind="device-inbox"]');
 const checkbox = catalog.locator('.device-inbox-filter-help input[type="checkbox"]');
-check('catalogAgreesWithHeader', await checkbox.isChecked());
-await checkbox.uncheck(); await settle();
-checkAll({ catalogOffUpdatesHeader: (await state()).shown === 'false', catalogOffHidesMarker: !(await state()).exists });
-await checkbox.check(); await settle();
-check('catalogOnUpdatesHeader', (await state()).shown, 'true');
+check('catalogDoesNotDuplicateHiddenChoice', await checkbox.count(), 0);
+check('catalogOpeningKeepsHeaderChoice', (await state()).shown, 'true');
 await page.evaluate(() => window.__hpTest.close());
+await toggle();
+checkAll({ toolbarOffUpdatesHeader: (await state()).shown === 'false', toolbarOffHidesMarker: !(await state()).exists });
+await toggle();
+check('toolbarOnUpdatesHeader', (await state()).shown, 'true');
 await card.locator('[data-hp="zoom-fit"]').click(); await settle();
 const positionBefore = await page.evaluate(() => structuredClone(window.__card._layout[window.__hiddenTargets.lamp]));
 const writerStart = await page.evaluate(() => window.__hiddenWrites.length);
