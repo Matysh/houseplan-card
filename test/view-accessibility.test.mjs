@@ -1,14 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { renderHeaderSpaceNavigation } from '../test-build/header-space-select.js';
 
 const source = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 test('#565 View keeps native space buttons and exposes one current page', () => {
-  const card = source('src/houseplan-card.ts');
-  assert.match(card, /<nav class="tabs[^"\n]*" aria-label=\$\{this\._t\('nav\.spaces'\)\}/);
-  assert.match(card, /aria-current=\$\{this\._space === s\.id \? 'page' : nothing\}/);
-  assert.doesNotMatch(card, /role="tablist"|role="tab"/);
+  const noop = () => {};
+  const rendered = renderHeaderSpaceNavigation({
+    spaces: [{ id: 'first', title: 'First' }, { id: 'second', title: 'Second' }], current: 'second',
+    mode: 'view', compact: false, labels: { spaces: 'Floors', configure: 'Configure', add: 'Add' },
+    reorderable: false, drag: null, pick: noop, tabClick: noop, pointerMove: noop,
+    pointerDown: noop, pointerUp: noop, cancelDrag: noop, configure: null, create: null,
+  });
+  const templates = value => Array.isArray(value) ? value.flatMap(templates)
+    : value?.strings ? [value, ...value.values.flatMap(templates)] : [];
+  const binding = (template, attribute) => template.values[
+    template.strings.findIndex(chunk => chunk.endsWith(`${attribute}=`))];
+  assert.match(rendered.strings[0], /<nav class="tabs/);
+  assert.equal(binding(rendered, 'aria-label'), 'Floors');
+  const output = templates(rendered);
+  const buttons = output.filter(template => template.strings.join('').includes('data-hp="space-tab"'));
+  assert.equal(buttons.length, 2);
+  for (const button of buttons) assert.match(button.strings[0], /<button/);
+  assert.deepEqual(buttons.map(button => [binding(button, 'data-space'), binding(button, 'aria-current')]),
+    [['first', Symbol.for('lit-nothing')], ['second', 'page']]);
+  assert.doesNotMatch(output.map(template => template.strings.join('')).join(''), /role="tablist"|role="tab"/);
 });
 
 test('#565 keyboard tooltip has explicit focus ownership and room labels stay untouched', () => {
