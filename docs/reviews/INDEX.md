@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 126, issue: 62. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 127, issue: 63. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -19,6 +19,7 @@
 | #1067 | [SPEC-REVIEW-1067-r1.md](SPEC-REVIEW-1067-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1067 | [CODE-REVIEW-1067-r1.md](CODE-REVIEW-1067-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | — | — |
 | #1067 | [CODE-REVIEW-1067-r3.md](CODE-REVIEW-1067-r3.md) | code · r3 | 🟢 зелёный | 0 | 0 | — | — |
+| #1066 | [CODE-REVIEW-1066-r1.md](CODE-REVIEW-1066-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1065 | [CODE-REVIEW-1065-r1.md](CODE-REVIEW-1065-r1.md) | code · r1 | 🔴 красный | 1 | 0 | PreToolUse-политика Bash пропускает sed с деструктивными флагами/произвольным путём (AC… | `scripts/review-execution-policy.mjs` `test/review-execution-policy.test.mjs` `docs/ARCHITECTURE.md` |
 | #1065 | [CODE-REVIEW-1065-r2.md](CODE-REVIEW-1065-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1064 | [CODE-REVIEW-1064-r1.md](CODE-REVIEW-1064-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
