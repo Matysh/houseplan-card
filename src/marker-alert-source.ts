@@ -26,6 +26,9 @@ const validText = (value: unknown): value is string => typeof value === 'string'
   && [...value].length <= ALERT_TEXT_LIMIT && !/[\r\n]/.test(value);
 const bindingOf = (device: DevItem) => device.marker?.binding
   || (device.virtual ? 'virtual' : `${device.bindingKind}:${device.bindingRef}`);
+const fieldValue = (row: AlertStateRow | undefined, attribute?: string): unknown => attribute === undefined
+  ? row?.state : row?.attributes && Object.prototype.hasOwnProperty.call(row.attributes, attribute)
+    ? row.attributes[attribute] : undefined;
 
 export function markerAlertOwnership(registry: StateSourceHass, device: DevItem, eid: string): StateSourceFailure | null {
   const binding = bindingOf(device);
@@ -37,7 +40,7 @@ export function markerAlertOwnership(registry: StateSourceHass, device: DevItem,
 
 /** State enums are declared HA options. Attribute paths and guessed history do not exist. */
 export function markerAlertValueControl(hass: MarkerAlertHass, eid: string, row: AlertStateRow | undefined, attribute?: string): AlertValueControl {
-  const attrs = row?.attributes, raw = attribute === undefined ? row?.state : attrs?.[attribute];
+  const attrs = row?.attributes, raw = fieldValue(row, attribute);
   const domain = eid.split('.')[0];
   const binary = attribute === undefined && BINARY.has(domain);
   const enumerated = attribute === undefined && (binary || domain === 'select' || domain === 'input_select'
@@ -67,7 +70,7 @@ export function readMarkerAlertSource(hass: MarkerAlertHass, registry: StateSour
   if (markerAlertOwnership(registry, device, rule.entity_id)) return { permitted: false };
   const row = hass.states?.[rule.entity_id];
   const control = markerAlertValueControl(hass, rule.entity_id, row, rule.attribute);
-  let value = rule.attribute === undefined ? row?.state : row?.attributes?.[rule.attribute];
+  let value = fieldValue(row, rule.attribute);
   if (control.kind === 'enum' && (rule.operator !== 'eq' && rule.operator !== 'ne'
       || typeof rule.value !== 'string' || !control.options.some(option => option.value === rule.value))) value = undefined;
   return { permitted: true, value, name: sourceName(registry, rule.entity_id, row),
@@ -84,7 +87,7 @@ export function markerAlertFields(hass: MarkerAlertHass, registry: StateSourceHa
     const row = hass.states?.[eid], name = sourceName(registry, eid, row);
     const append = (attribute?: string) => fields.push({ key: JSON.stringify([eid, attribute ?? null]), entityId: eid,
       ...(attribute !== undefined ? { attribute } : {}), name,
-      value: attribute === undefined ? row?.state : row?.attributes?.[attribute],
+      value: fieldValue(row, attribute),
       unit: attribute === undefined && typeof row?.attributes?.unit_of_measurement === 'string' ? row.attributes.unit_of_measurement : '',
       control: markerAlertValueControl(hass, eid, row, attribute) });
     append();

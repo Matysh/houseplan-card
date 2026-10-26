@@ -10,7 +10,7 @@ export const markerAlertEditorCss = `
     [data-settings-section="alarms"] .alarm-table tr:last-child td {border-bottom:0}
     [data-settings-section="alarms"] .alarm-table .alarm-empty {height:150px;text-align:center;color:var(--secondary-text-color)}
     [data-settings-section="alarms"] .alarm-empty-content {display:grid;justify-items:center;gap:14px}
-    [data-settings-section="alarms"] .alarm-create {min-height:36px;padding:8px 16px}
+    [data-settings-section="alarms"] .alarm-create {padding:8px 16px}
     [data-settings-section="alarms"] .alarm-condition {display:grid;gap:4px}
     [data-settings-section="alarms"] .alarm-condition small {font-size:12px;color:var(--secondary-text-color);overflow-wrap:anywhere}
     [data-settings-section="alarms"] .alarm-remove {display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--error-color,#db4437);cursor:pointer}
@@ -24,6 +24,4 @@ export const markerAlertEditorCss = `
 .alarm-condition-edit{display:block;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer;}
 .alarm-condition-edit:hover{text-decoration:underline;}
 .alarm-condition > span{white-space:pre-wrap;}
-hp-dialog[data-kind="alarm-constructor"] .body.hpf-form.hpf-settings-form{display:block;padding:20px;}
-[data-settings-section="alarms"] .alarm-create{height:44px;}
 `;
