@@ -23,11 +23,11 @@ const BUILD_INPUTS = [
   'scripts/coverage-maps.mjs',
 ];
 
-// #999: these exact files are read by the historical Golden preparation,
-// outside the existing demo/fixtures and demo/golden module directories.
-const HISTORY_CAPTURE_INPUTS = [
+// #999/#1078: exact helper/data inputs outside the automatic .mjs module corpus.
+const EXTRA_CAPTURE_INPUTS = [
   'demo/helpers/vacuum-history.mjs',
   'test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json',
+  'demo/fixtures/sun-transparent.json',
 ];
 
 /**
@@ -100,7 +100,7 @@ const fingerprintFiles = (root) => {
   return [
     ...sourceFiles(resolve(root, 'src')),
     ...deterministicFixtureInputs,
-    ...HISTORY_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
+    ...EXTRA_CAPTURE_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
     ...browserArgumentCorpus(root).map((name) => resolve(root, name)),
     ...BUILD_INPUTS.map((name) => resolve(root, name)).filter(existsSync),
   ].sort((a, b) => relative(root, a).localeCompare(relative(root, b)));

@@ -39,9 +39,11 @@ Room solar access (#1078) is a display-only projection: resolve connectivity
 before excluding rooms, and share it between Flat/2.5D and solar contour barriers.
 Do not filter physical-plan or artificial-light inputs. `test/sun-access.test.mjs`
 and `demo/smoke_sun_transparent.mjs` cover exterior chains, sealed groups, nested
-rooms, Save/Cancel and foreign cache updates. The browser fixture materialises
-real canonical walls/window hosts and captures the completed solar fade, not its
-initial transparent animation frame. Run the new backend validation/transfer
+rooms, Save/Cancel and foreign cache updates. The browser fixture reads saved
+canonical walls/window hosts independently of a compiler output directory. Its
+JSON is part of source/visual identity; a data-change unit rejects stale capture
+identity. Capture waits for the completed solar fade, not its initial transparent
+animation frame. Run the new backend validation/transfer
 cases in the pinned HA venv; non-HA local collection cannot prove transfer.
 Thin-boundary probes stay inside the nearest original face; the ordinary unit
 matrix includes thin and almost-axis enclosing neighbours, internal cycles and

@@ -30,9 +30,9 @@ const out = await page.evaluate(async () => {
   const pristineStatus = statusText();
   o.savedStatusVisible = pristineStatus.length > 0;
 
-  // --- AC1: четыре карточки по §6.1, старой разметки нет --------------------
-  o.fourCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
-    === JSON.stringify(['basics', 'fill', 'sources', 'sizes']);
+  // --- AC1/#1078: отдельная солнечная карточка, старой разметки нет ---------
+  o.fiveCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
+    === JSON.stringify(['basics', 'fill', 'sunlight', 'sources', 'sizes']);
   o.basicsHasNoHeadingButKeepsFields = !q('.hpf-card[data-card="basics"] .hpf-head')
     && !!q('.hpf-card[data-card="basics"] #room-name')
     && !!q('.hpf-card[data-card="basics"] #room-area')

@@ -69,13 +69,13 @@ const res = await page.evaluate(async () => {
   // 5) создание новой комнаты: в диалоге есть секция настроек
   c._setMode('plan'); c._tool = 'draw'; await c.updateComplete;
   c._resetRoomDialogFields(); c._roomDialog = true; c.requestUpdate(); await c.updateComplete;
-  // #594: одна секция «Настройки комнаты» заменена четырьмя карточками-группами.
+  // #594/#1078: пять карточек, включая отдельное солнечное освещение.
   const groups = [...sr().querySelectorAll('hp-dialog .hpf-card')]
     .filter((g) => g.querySelector('.hpf-head h3'));
   // #920: Sources copy is lazy; locate form groups by their stable machine IDs,
   // not by asking the cold View dictionary for an editor-only translation.
   out.createHasGroups = JSON.stringify(groups.map((g) => g.dataset.card))
-    === JSON.stringify(['fill', 'sources', 'sizes'])
+    === JSON.stringify(['fill', 'sunlight', 'sources', 'sizes'])
     && groups.every((g) => !!g.querySelector('.hpf-head h3')?.textContent.trim());
   // #600 (Q4): «Как у пространства» — строка-тумблер, а не радио в списке.
   out.createHasInherit = sr().querySelector('hp-dialog select[name="rfill"]')?.value === ''
@@ -84,8 +84,9 @@ const res = await page.evaluate(async () => {
   // #600 §6.1: у Basics «?» стоит у поля зоны, а не у заголовка карточки.
   const helps = [...sr().querySelectorAll('hp-dialog .hpf-card .hpf-head hp-help'),
     sr().querySelector('hp-dialog select[name="rfill"]')?.closest('.hpf-field')?.querySelector('hp-help'),
-    sr().querySelector('hp-dialog #room-area')?.closest('.hpf-field')?.querySelector('hp-help')].filter(Boolean);
-  out.everyGroupHasHelp = helps.length === 4
+    sr().querySelector('hp-dialog #room-area')?.closest('.hpf-field')?.querySelector('hp-help'),
+    sr().querySelector('hp-dialog .hpf-card[data-card="sunlight"] hp-help')].filter(Boolean);
+  out.everyGroupHasHelp = helps.length === 5
     && helps.every((h) => !!h.text && !!h.ariaLabel);
   // AC5: сегмент источника — настоящая радиогруппа с целью нажатия не меньше 44 px.
   const segLabels = [...sr().querySelectorAll('hp-dialog .hpf-seg label')];

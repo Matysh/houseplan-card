@@ -9,10 +9,10 @@ import {
 } from '../scripts/source-fingerprint.mjs';
 import { verifyDocsCandidate } from '../scripts/docs-accept.mjs';
 
-test('#999 edits to consumed history capture inputs retire source and visual identities', () => {
+test('#999/#1078 edits to consumed capture inputs retire source and visual identities', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'hp-history-capture-inputs-'));
   try {
-    for (const name of ['src', 'demo/helpers', 'demo/golden', 'test/fixtures/vacuum-history'])
+    for (const name of ['src', 'demo/helpers', 'demo/golden', 'demo/fixtures', 'test/fixtures/vacuum-history'])
       mkdirSync(resolve(directory, name), { recursive: true });
     const put = (name, value) => writeFileSync(resolve(directory, name), value);
     put('src/example.ts', 'export const value=1;\n');
@@ -28,6 +28,12 @@ test('#999 edits to consumed history capture inputs retire source and visual ide
     put('demo/helpers/vacuum-history.mjs', "export const record='b';\n");
     assert.notEqual(sourceFingerprint(directory), geometryChanged[0], 'the actual capture selection helper is an input');
     assert.notEqual(visualFingerprint(directory), geometryChanged[1], 'a changed selected record retires visual evidence');
+    const saved='demo/fixtures/sun-transparent.json';
+    put(saved,JSON.stringify({room:{settings:{sun_transparent:true}}}));
+    const lit=[sourceFingerprint(directory),visualFingerprint(directory)];
+    put(saved,JSON.stringify({room:{settings:{sun_transparent:false}}}));
+    assert.notEqual(sourceFingerprint(directory),lit[0],'saved solar classification is an executable capture input');
+    assert.notEqual(visualFingerprint(directory),lit[1],'old frames cannot prove a changed solar fixture');
   } finally { rmSync(directory, {recursive:true, force:true}); }
 });
 
@@ -275,6 +281,7 @@ test('в корпусе настоящего репозитория все canon
   ]);
   assert.ok(corpus.includes('demo/helpers/vacuum-history.mjs'), 'history capture consumes the real UI helper');
   assert.ok(corpus.includes('test/fixtures/vacuum-history/dreame-tasshack-2.0.2.json'), 'history geometry comes from this original-producer fixture');
+  assert.ok(corpus.includes('demo/fixtures/sun-transparent.json'),'saved canonical solar geometry is a capture input');
   assert.ok(corpus.includes('scripts/source-fingerprint.mjs'), 'сам отпечаток остаётся входом сборки');
   assert.ok(corpus.some((file) => file.startsWith('src/')), 'корпус без src был бы пуст по смыслу');
 });
