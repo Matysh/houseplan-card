@@ -11,7 +11,7 @@ import { fieldLifecycle } from './config-compatibility-catalog.mjs';
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
     id:'spaces[].settings.card_font_scale', selector:{path:['spaces','*','settings','card_font_scale']},
-    enforcedBy:'logic.ts spaceDisplayOf + validation.py SPACE_SETTINGS_SCHEMA',
+    enforcedBy:'logic.ts spaceDisplayOf + validation.py SPACE_DISPLAY_SCHEMA',
     storage:'House Plan server config',type:'number 0.5..3',default:'absent (=1)',level:'space',
     ui:'replaced by independent name/readings size',runtime:'fallback for each omitted independent scale',
     introduced:'before #945',status:'deprecated-read',migration:'explicit Space settings Save materializes both independent scales',

@@ -1,8 +1,10 @@
 # Config compatibility inventory (#1015)
 
-Reproduced from source base `ca672d9697e44d46d2c457cae9396c1b8ddb2851` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
+Reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
 Current snapshot: **625 individually classified matching lines**, sha256:`220c327ef2dae82de27d2acde8944f85203533475440ccba96577b9aa6f0cbed`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+
+Captured product trees: src `22655ecb08f00d9b1f6c8381a1a3d3c9c51487cb`; integration `0019b652824aaad42fd0e6f5372cb595e8a41dc7`. These immutable Git trees identify this source snapshot; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
 
 Reproduce with `node scripts/config-compatibility-inventory.mjs --check`; `--scan` prints unclassified current source for deliberate review. A match can name an import or current algorithm without defining an old stored form. The table below classifies those separately; a current optional default is not a forced migration.
 
