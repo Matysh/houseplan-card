@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { saveRoomEdit } from '../test-build/editors/room-save.js';
+import { rememberRoomBaseline, roomDirty } from '../test-build/editors/room-form-state.js';
 
 function fixture(settings = {}) {
   const room = { id:'r1',name:'Living room',area:null,poly:[[0,0],[1,0],[1,1]],settings };
@@ -18,6 +19,23 @@ function fixture(settings = {}) {
   };
   return {host,runtime,original:structuredClone(config),payload:()=>payload};
 }
+
+test('#1078 the room draft is local, dirty on sunlight changes and sparse on accepted save', async()=>{
+  for (const enabled of [true,false]) {
+    const f=fixture({future:{keep:true},sun_transparent:!enabled});
+    f.host._roomSunTransparent=!enabled;
+    rememberRoomBaseline(f.host);
+    assert.equal(roomDirty(f.host),false);
+    f.host._roomSunTransparent=enabled;
+    assert.equal(roomDirty(f.host),true);
+    assert.deepEqual(f.host._serverCfg,f.original,'draft changes never alter the plan before Save');
+    await saveRoomEdit(f.runtime);
+    const settings=f.payload().spaces[0].rooms[0].settings;
+    assert.equal(settings.sun_transparent,enabled ? true : undefined);
+    assert.deepEqual(settings.future,{keep:true});
+    assert.deepEqual(f.host._serverCfg,f.original);
+  }
+});
 
 test('#946 actual Room save preserves unknowns, unavailable sources and independent inheritance',async()=>{
   const f=fixture({future:{x:42},temp_max:24,temp_source:'entity:sensor.missing',co2_source:'entity:sensor.air'});

@@ -14,6 +14,10 @@
 
 - Avoid rebuilding unchanged walls and light barriers on furniture/decor
   Undo/Redo while preserving the same history and saved result. (#1075)
+- Mark terraces and other rooms as letting sunlight through: sunlight can reach
+  ordinary rooms through windows beside an exterior-connected chain, while the
+  marked rooms receive no rays themselves. Works in Flat and 2.5D. (#1078)
+
 - Avoid rebuilding unchanged walls and light barriers when applying furniture
   group colour/opacity in Background properties. The toolbar palette remains
   the default style for new objects, not a group editor. (#1071)

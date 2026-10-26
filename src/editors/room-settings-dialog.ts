@@ -8,7 +8,7 @@ import { roomTempThresholdDraft, strictNumber } from '../space-dialog';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import {
   colorField, colorRow, callout, selectControl, field, fieldGrid, footerStatus, formCard, rangeEnds,
-  rangeLine, segmented, sourcePicker, subsection, textLink, unitInput, formSections,
+  rangeLine, segmented, sourcePicker, subsection, textLink, unitInput, formSections, toggleRow,
 } from './form-kit';
 import { roomDirty, roomProblems } from './room-form-state';
 import { ensureSettingsDialogStyles } from './settings-styles';
@@ -213,6 +213,17 @@ export function renderRoomSettingsDialog(this: HouseplanEditorRuntime): Template
                 </div>`
               : nothing,
         ]),
+        })}
+        ${formCard({
+          id: 'sunlight',
+          title: st('room.sun_section'),
+          body: toggleRow({
+            id: 'room-sun-transparent', title: st('room.sun_transparent'),
+            help: html`<hp-help instant data-help-key="room.sun_transparent_help"
+              .text=${st('room.sun_transparent_help')} .ariaLabel=${st('room.sun_transparent_help_aria')}></hp-help>`,
+            checked: host._roomSunTransparent,
+            onChange: (value) => { host._roomSunTransparent = value; host.requestUpdate(); },
+          }),
         })}
         ${formCard({
           id: 'sources',

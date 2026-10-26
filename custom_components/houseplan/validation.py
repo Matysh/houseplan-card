@@ -1488,6 +1488,7 @@ ROOM_SCHEMA = vol.All(
                         vol.Optional("custom_fill"): vol.Any(None, _CUSTOM_FILL),
                         vol.Optional("name_color"): vol.Any(None, _APPEARANCE_COLOR),
                         vol.Optional("glow"): vol.Any(bool, None),
+                        vol.Optional("sun_transparent"): bool,
                         vol.Optional("temp_source"): vol.Any(str, None),
                         vol.Optional("hum_source"): vol.Any(str, None),
                         vol.Optional("co2_source"): vol.Any(str, None),

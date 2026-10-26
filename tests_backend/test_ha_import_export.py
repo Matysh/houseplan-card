@@ -260,6 +260,34 @@ def test_issue_867_signal_override_survives_export_parse_and_import(tmp_path: Pa
     assert any(marker.get("hide_signal") is value and marker.get("hide_battery") is True for marker in imported["markers"])
 
 
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+@pytest.mark.parametrize("value", [True, False])
+def test_issue1078_room_sunlight_survives_transfer(tmp_path: Path, kind: str, plan_only: bool, value: bool) -> None:
+    config = _config()
+    config["spaces"][0]["rooms"][0].setdefault("settings", {}).update({
+        "sun_transparent": value, "future_sun": {"keep": True},
+    })
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path, plan_only=plan_only)
+    parsed = parse_document(json.dumps(document).encode())
+    assert parsed["payload"]["config"]["spaces"][0]["rooms"][0]["settings"]["sun_transparent"] is value
+    if not plan_only:
+        assert parsed["payload"]["config"]["spaces"][0]["rooms"][0]["settings"]["future_sun"] == {"keep": True}
+    runtime = SimpleNamespace(instance_id="same", import_previews={})
+    current = _config()
+    current["markers"] = []
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": current, "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
+    candidate = get_candidate(runtime, preview["token"], "alice")
+    imported, _layout, _details = prepare_apply(candidate, current, {}, confirm_missing_content=True)
+    assert any(room.get("settings", {}).get("sun_transparent") is value
+        for space in imported["spaces"] for room in space["rooms"])
+    if not plan_only:
+        assert any(room.get("settings", {}).get("future_sun") == {"keep": True}
+            for space in imported["spaces"] for room in space["rooms"])
+
+
 @pytest.mark.parametrize("kind", ["full", "space"])
 @pytest.mark.parametrize("visible", [True, False])
 def test_issue_920_co2_settings_survive_full_and_space_backup(tmp_path: Path, kind: str, visible: bool) -> None:

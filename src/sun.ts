@@ -9,6 +9,7 @@
  */
 import { intersection, type Geom } from 'polyclip-ts';
 import { pointInPolygon, lerpColor } from './logic';
+import { resolveSunAccess, type SunAccess, type SunRoom } from './sun-access';
 
 // ---------------- angles ----------------
 
@@ -226,7 +227,7 @@ export function dayPhase(elevation: number): DayPhase {
 
 // ---------------- exterior walls & windows ----------------
 
-export interface SunRoom { id: string; poly: number[][] }
+export type { SunRoom } from './sun-access';
 /** A window opening in render units: centre, wall angle°, full length. */
 export interface SunWindow { id: string; x: number; y: number; angle: number; length: number }
 
@@ -250,18 +251,24 @@ export function windowWallInfo(
   win: { x: number; y: number; angle: number },
   rooms: SunRoom[],
   probe = 6,
+  access?: SunAccess,
 ): { normal: [number, number]; roomId: string } | null {
+  const solarAccess = rooms.some(r => r.sunTransparent) ? access ?? resolveSunAccess(rooms) : null;
   const rad = (win.angle * Math.PI) / 180;
   // perpendicular to the wall (the wall runs along `angle`)
   const n: [number, number] = [Math.sin(rad), -Math.cos(rad)];
   const roomAt = (side: 1 | -1): SunRoom | null => {
     const p = [win.x + n[0] * probe * side, win.y + n[1] * probe * side];
-    return rooms.find((r) => r.poly.length >= 3 && pointInPolygon(p, r.poly)) || null;
+    const room = solarAccess
+      ? solarAccess.roomAt(p)
+      : rooms.find((r) => r.poly.length >= 3 && pointInPolygon(p, r.poly)) || null;
+    return room && !solarAccess?.outside.has(room.id) ? room : null;
   };
   const plus = roomAt(1);
   const minus = roomAt(-1);
   if (plus && minus) return null; // interior wall (incl. open boundaries)
   if (!plus && !minus) return null; // not on any room's wall
+  if (plus?.sunTransparent || minus?.sunTransparent) return null; // never receive rays
   return plus
     ? { normal: [-n[0], -n[1]], roomId: plus.id! }
     : { normal: n, roomId: minus!.id };
@@ -417,6 +424,7 @@ export function computeSunRays(
   innerByRoom?: Record<string, number[][]>,
   wallDepthByOpening?: Record<string, number>,
   origin: SunRayOrigin = 'inner',
+  access: SunAccess = resolveSunAccess(rooms),
 ): SunRay[] {
   if (!(elevation > 0)) return [];
   const toSun = sunDirOnPlan(azimuth, northDeg);
@@ -425,7 +433,7 @@ export function computeSunRays(
   const out: SunRay[] = [];
   for (const w of windows) {
     if (!(w.length > 0)) continue;
-    const info = windowWallInfo(w, rooms);
+    const info = windowWallInfo(w, rooms, 6, access);
     if (!info || !windowLit(info.normal, toSun, elevation)) continue;
     const room = rooms.find((r) => r.id === info.roomId);
     if (!room) continue;

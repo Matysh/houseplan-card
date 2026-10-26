@@ -35,6 +35,15 @@ writes. It retains structural record identities and caches, updates config
 epoch/model/scene, and uses the existing full-config writer. Unknown non-decor
 changes, stairs, transforms and legacy/mixed steps retain strict materialization.
 
+Sun-only room access (#1078) is resolved by `sun-access.ts` against the complete
+room geometry before any exclusion. Positive common boundary spans connect
+flagged rooms; actual exterior spans seed the flood. Innermost ownership handles
+nested islands independently of room order. Flat and 2.5D share that access fact,
+receiver exclusion and contour-only zero-wall filtering. Independent physical
+obstacles retain their shadows. Canonical masonry, paper, fills and artificial
+lighting are not filtered. The existing floor-content cache key includes the
+sparse room flag, so a saved/foreign change rebuilds sunlight without HA-tick work.
+
 Historical vacuum preview (#999) has one memory-only `VacuumHistory` owner per
 card. Selection, pending Show and immutable shown material are separate; closing
 the settings popup does not retire Show. The lazy settings section uses the

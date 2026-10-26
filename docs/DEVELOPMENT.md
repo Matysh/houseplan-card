@@ -35,6 +35,24 @@ produces a 21,462 B gzip lazy graph. The owner's standing small-byte permission
 raises only its hard ceiling by the measured 4 B (21,458 → 21,462); no reserve,
 initial View or shared-editor budget is added.
 
+Room solar access (#1078) is a display-only projection: resolve connectivity
+before excluding rooms, and share it between Flat/2.5D and solar contour barriers.
+Do not filter physical-plan or artificial-light inputs. `test/sun-access.test.mjs`
+and `demo/smoke_sun_transparent.mjs` cover exterior chains, sealed groups, nested
+rooms, Save/Cancel and foreign cache updates. The browser fixture materialises
+real canonical walls/window hosts and captures the completed solar fade, not its
+initial transparent animation frame. Run the new backend validation/transfer
+cases in the pinned HA venv; non-HA local collection cannot prove transfer.
+Thin-boundary probes stay inside the nearest original face; the ordinary unit
+matrix includes thin and almost-axis enclosing neighbours, internal cycles and
+oblique Flat/2.5D windows. The three `lighting-sun-transparent-*` golden scenes
+observe the real canonical W/R receiver and painted layer. Task capture declares
+them new without accepting baselines. The internal-window smoke additionally
+compares actual Glow/LED clip geometry with both room solar flags enabled.
+History/Optimize and support-package-v2 tests retain the exact boolean through
+their real owners; full/space import retains unknown settings, while plan-only
+and support projections keep their established closed allowlists.
+
 ## Background group-style latency (#1071)
 
 The sidebar's colour preview was already immediate; confirming it on a dense

@@ -11,7 +11,7 @@ import { dialogDirty, forgetDialogBaseline, rememberDialogBaseline, stableKey } 
 
 type RoomDraftHost = Pick<HouseplanEditorHostPort,
   '_nameSel' | '_areaSel' | '_roomFill' | '_roomCustomFill' | '_roomNameColor' | '_roomTempMin' | '_roomTempMax'
-  | '_roomTempSrc' | '_roomHumSrc' | '_roomCo2Src' | '_roomNameScale' | '_roomLabelScale' | '_roomEditId'>;
+  | '_roomTempSrc' | '_roomHumSrc' | '_roomCo2Src' | '_roomSunTransparent' | '_roomNameScale' | '_roomLabelScale' | '_roomEditId'>;
 
 export function roomDraftKey(h: RoomDraftHost): string {
   return stableKey({
@@ -19,6 +19,7 @@ export function roomDraftKey(h: RoomDraftHost): string {
     nameColor: h._roomNameColor,
     tempMin: h._roomTempMin, tempMax: h._roomTempMax, tempSrc: h._roomTempSrc, humSrc: h._roomHumSrc,
     co2Src: h._roomCo2Src,
+    sunTransparent: h._roomSunTransparent === true,
     nameScale: h._roomNameScale, labelScale: h._roomLabelScale,
   });
 }

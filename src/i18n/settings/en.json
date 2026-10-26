@@ -1,4 +1,8 @@
 {
+  "room.sun_section": "Sunlight",
+  "room.sun_transparent": "Lets sunlight through",
+  "room.sun_transparent_help": "This room receives no sun rays. When it or a connected chain of rooms with this option reaches the outside, sunlight can enter ordinary rooms through their windows, even without an exterior window on the chain. An isolated interior group adds no sunlight. Artificial lighting is unchanged.",
+  "room.sun_transparent_help_aria": "Help: rooms that let sunlight through",
   "space.name_color": "Name color",
   "space.name_color.help": "Colour and opacity of room names and the readings below them. Rooms can override this colour.",
   "space.name_color.help.aria": "Help: room caption colour",

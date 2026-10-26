@@ -765,6 +765,7 @@ export interface HouseplanEditorHostPort {
   _roomFill: "" | "none" | "lqi" | "light" | "temp" | "custom";
   _roomHumSrc: string;
   _roomCo2Src: string;
+  _roomSunTransparent: boolean;
   _roomLabelScale: number;
   _roomNameScale: number;
   _roomTempMin: string; _roomTempMax: string; _roomTempSrc: string;
@@ -1164,6 +1165,7 @@ public warmRoomDraft() {
     editId: host._roomEditId, fill: host._roomFill, customFill: host._roomCustomFill, nameColor: host._roomNameColor,
     tempMin: host._roomTempMin, tempMax: host._roomTempMax, tempSrc: host._roomTempSrc,
     humSrc: host._roomHumSrc, co2Src: host._roomCo2Src, srcOpen: host._roomSrcOpen, srcFilter: host._roomSrcFilter,
+    sunTransparent: host._roomSunTransparent,
     nameScale: host._roomNameScale, labelScale: host._roomLabelScale,
     areaSel: host._areaSel, nameSel: host._nameSel,
     pendingSplit: host._pendingSplit, wallFaceBatch: host._wallFaceBatch,
@@ -9893,6 +9895,7 @@ public _resetRoomDialogFields(): void {
     this.host._roomTempSrc = '';
     this.host._roomHumSrc = '';
     this.host._roomCo2Src = '';
+    this.host._roomSunTransparent = false;
     this.host._roomSrcOpen = null;
     this.host._roomSrcFilter = '';
     this.host._roomNameScale = 1;
@@ -9920,6 +9923,7 @@ public _openRoomEdit(r: RoomCfg): void {
     this.host._roomTempSrc = r.settings?.temp_source || '';
     this.host._roomHumSrc = r.settings?.hum_source || '';
     this.host._roomCo2Src = r.settings?.co2_source || '';
+    this.host._roomSunTransparent = r.settings?.sun_transparent === true;
     this.host._roomNameScale = clampScale(r.settings?.name_scale);
     this.host._roomLabelScale = clampScale(r.settings?.label_scale);
     this.host._roomSrcOpen = null;
@@ -9936,6 +9940,7 @@ public _roomSettingsFromDialog(): RoomCfg['settings'] {
     if (this.host._roomTempSrc) st.temp_source = this.host._roomTempSrc;
     if (this.host._roomHumSrc) st.hum_source = this.host._roomHumSrc;
     if (this.host._roomCo2Src) st.co2_source = this.host._roomCo2Src;
+    if (this.host._roomSunTransparent) st.sun_transparent = true;
     applyRoomTempThresholdDraft(st, this.host._roomTempMin, this.host._roomTempMax);
     if (this.host._roomNameScale !== 1) st.name_scale = this.host._roomNameScale;
     if (this.host._roomLabelScale !== 1) st.label_scale = this.host._roomLabelScale;

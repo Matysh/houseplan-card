@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "issue": 1078,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds an opt-in room sunlight contract absent from stable v1.82.0: exterior-connected transparent room chains admit sunlight to ordinary rooms, in Flat and 2.5D. Existing plans remain unchanged.",
+  "summary": {
+    "ru": "Террасы и цепочки комнат могут пропускать солнечный свет в соседние помещения, не получая лучей сами.",
+    "en": "Let terraces and connected room chains pass sunlight to neighbouring rooms without receiving rays themselves."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {"id":"lighting-sun-transparent-chain-flat","expectation":"new","reason":"Exterior-connected flagged chain admits W only into ordinary R; all physical rooms remain visible."},
+      {"id":"lighting-sun-transparent-chain-iso","expectation":"new","reason":"2.5D uses the same canonical W/R receiver with its existing solar wash."},
+      {"id":"lighting-sun-transparent-sealed","expectation":"new","reason":"The ordinary west neighbour seals the flagged chain; no artificial internal street or solar ray appears."}
+    ],
+    "smokes": ["smoke_sun_transparent.mjs", "smoke_sun.mjs", "smoke_iso_sun.mjs", "smoke_room_settings_946.mjs", "smoke_interior_window_light.mjs"]
+  }
+}

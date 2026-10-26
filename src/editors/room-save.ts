@@ -27,6 +27,8 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   // keep a custom colour only with the room's explicit custom fill mode.
   const previous = room.settings || {};
   const next: NonNullable<RoomCfg['settings']> = { ...previous };
+  if (host._roomSunTransparent) next.sun_transparent = true;
+  else delete next.sun_transparent;
   if (!applyRoomTempThresholdDraft(next, host._roomTempMin, host._roomTempMax)) return;
   if (host._roomFill) next.fill_mode = host._roomFill as typeof next.fill_mode;
   else delete next.fill_mode;

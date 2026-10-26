@@ -18,6 +18,18 @@ const expected = JSON.parse(readFileSync(
 ));
 const clone = (value) => structuredClone(value);
 
+test('#1078 canonical room materialization and Optimize preserve the sunlight flag and unknown settings', () => {
+  for (const enabled of [true, false]) {
+    const input = clone(source);
+    input.spaces[0].rooms[0].settings = { sun_transparent: enabled, future_sun: { keep: [true, 4] } };
+    const original = clone(input);
+    const result = optimizePlans(input, {});
+    assert.deepEqual(result.config.spaces[0].rooms.find(r => r.id === input.spaces[0].rooms[0].id).settings,
+      { sun_transparent: enabled, future_sun: { keep: [true, 4] } });
+    assert.deepEqual(input, original, 'the projection must not rewrite the caller');
+  }
+});
+
 const resizeInputs = (space) => ({
   rooms: space.rooms.map((room) => ({
     id: room.id,

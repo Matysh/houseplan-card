@@ -25,7 +25,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5605 · pure backend 656 · HA-harness backend 558 · browser smokes 448 (`npm run inventory`) |
+| Tests | Node unit 5615 · pure backend 659 · HA-harness backend 559 · browser smokes 449 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -55,6 +55,11 @@ and successful raw CI samples without changing the paired performance oracle.
 Missing historical evidence and elapsed-versus-CPU timing limits remain explicit.
 The bounded same-source resource control reproduces 60 viewBox refreshes above
 the 100 ms input cadence versus 31 below it; the historical exact load is unknown.
+
+Room sunlight transparency (#1078) excludes only exterior-connected flagged
+chains from sunlight classification. Flagged rooms receive no rays, isolated
+internal groups create no street, and Flat/2.5D share the same access fact.
+Physical geometry, artificial lighting and sparse legacy defaults are unchanged.
 
 Remote scoped task snapshots (#1074) bind the immutable commit API response to
 its actual tree before reading the tree. Commit aliases are not tree identities;

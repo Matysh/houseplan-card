@@ -339,6 +339,7 @@ ROOM = Object(
                 "custom_fill": nullable(FILL_COLOR),
                 "name_color": nullable(FILL_COLOR),
                 "glow": nullable(BOOL),
+                "sun_transparent": BOOL,
                 **fields("name_scale label_scale temp_min temp_max", nullable(NUMBER)),
                 **fields(
                     "temp_source hum_source co2_source",

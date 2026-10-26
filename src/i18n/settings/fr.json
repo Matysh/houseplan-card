@@ -1,4 +1,8 @@
 {
+  "room.sun_section": "Lumière du soleil",
+  "room.sun_transparent": "Laisse passer le soleil",
+  "room.sun_transparent_help": "Cette pièce ne reçoit aucun rayon dessiné. Si elle ou une chaîne de pièces avec cette option atteint l’extérieur, le soleil peut entrer dans les pièces ordinaires par leurs fenêtres, même sans fenêtre extérieure dans la chaîne. Un groupe intérieur isolé ne crée aucun accès au soleil. L’éclairage artificiel reste inchangé.",
+  "room.sun_transparent_help_aria": "Aide : pièces laissant passer le soleil",
   "space.name_color": "Couleur des noms",
   "space.name_color.help": "Couleur et opacité des noms des pièces et des mesures dessous. Chaque pièce peut remplacer cette couleur.",
   "space.name_color.help.aria": "Aide : couleur des libellés des pièces",

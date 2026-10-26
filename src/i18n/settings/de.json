@@ -1,4 +1,8 @@
 {
+  "room.sun_section": "Sonnenlicht",
+  "room.sun_transparent": "Lässt Sonnenlicht durch",
+  "room.sun_transparent_help": "In diesem Raum werden keine Sonnenstrahlen gezeichnet. Erreicht er oder eine verbundene Kette solcher Räume das Freie, kann Sonnenlicht durch ihre Fenster in normale Räume fallen, auch ohne Außenfenster in der Kette. Eine isolierte innere Gruppe erzeugt keinen Sonnenzugang. Künstliche Beleuchtung bleibt unverändert.",
+  "room.sun_transparent_help_aria": "Hilfe: Räume, die Sonnenlicht durchlassen",
   "space.name_color": "Namensfarbe",
   "space.name_color.help": "Farbe und Deckkraft der Raumnamen und ihrer Messwerte. Räume können diese Farbe überschreiben.",
   "space.name_color.help.aria": "Hilfe: Farbe der Raumbeschriftungen",

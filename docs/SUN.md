@@ -149,6 +149,26 @@ acceptance criteria are in `docs/specs/146-four-phase-sun-background.md`.
 
 ## Window light wedges — `settings.sun_rays`
 
+### Rooms letting sunlight through (#1078)
+
+Room settings include **Lets sunlight through** (`sun_transparent`, default off).
+A flagged room never receives its own window rays. Its positive-length boundary
+with the true exterior gives solar access to its whole adjacent flagged chain;
+windows from that chain into an ordinary room can cast rays without an exterior
+window on the chain. A corner touch or an intervening ordinary room does not
+connect it. A wholly internal isolated group creates no artificial exterior.
+Nested islands use their innermost room ownership. Exterior seeds are determined
+from the full original room plan, before excluding anything.
+
+This is a sunlight-only classification shared by Flat and 2.5D, retaining the
+normal compass, horizon, aperture and receiving-contour rules. Only contour
+zero-wall barriers owned solely by the excluded area lose their solar shadows;
+independent walls and columns keep theirs. Artificial-light barriers, masonry,
+paper, floor area and fills stay unchanged. The room flag is part of the existing
+floor-content sunlight key; unrelated HA ticks perform no topology rebuild.
+
+### Ordinary window rules
+
 Boolean, global + per-space (null = inherit), default OFF.
 
 For every opening of type «window» sitting on an EXTERIOR wall — a

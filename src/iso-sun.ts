@@ -12,6 +12,7 @@ import { svg, nothing, type TemplateResult } from 'lit';
 import { sunDirOnPlan, windowLit, windowWallInfo, type SunRoom, type SunWindow } from './sun';
 import { directionalOccluders, floorMinusBodies, geometryOuterRings } from './physical-geometry';
 import { intersection } from 'polyclip-ts';
+import { resolveSunAccess, type SunAccess } from './sun-access';
 
 /** Lab `min(910, max(215, 408·(0.55 + 1.4·(1 − e/90)^1.6)))` in wall heights. */
 export const ISO_SUN_LENGTH = Object.freeze({ base: 408 / 218.8, min: 215 / 218.8, max: 910 / 218.8 });
@@ -54,6 +55,7 @@ export interface IsoSunBeam {
 }
 
 export interface IsoSunInput {
+  access?: SunAccess;
   rooms: SunRoom[];
   windows: SunWindow[];
   azimuth: number;
@@ -85,9 +87,10 @@ export function computeIsoSunBeams(input: IsoSunInput): IsoSunBeam[] {
   const away: [number, number] = [-toSun[0], -toSun[1]];
   const depth = isoSunDepth(input.elevation, input.wallHeight);
   const out: IsoSunBeam[] = [];
+  const access = input.access ?? resolveSunAccess(input.rooms);
   for (const w of input.windows) {
     if (!(w.length > 0)) continue;
-    const info = windowWallInfo(w, input.rooms);
+    const info = windowWallInfo(w, input.rooms, 6, access);
     if (!info || !windowLit(info.normal, toSun, input.elevation)) continue;
     const room = input.rooms.find((r) => r.id === info.roomId);
     if (!room) continue;

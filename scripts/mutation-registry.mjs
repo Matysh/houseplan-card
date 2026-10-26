@@ -133,6 +133,13 @@ const MUTANT_DEFINITIONS = [
       replace: '      if (pts.length < 3) continue;' }],
   },
   {
+    id:'room-sun-boolean-coercion-1078',
+    guard:'python3 -m pytest tests_backend/test_validation.py -q -k issue1078',
+    because:'#1078 AC1: reject null, numbers, strings and containers rather than coercing the room sunlight flag. Registered only; execution belongs to the nightly workflow.',
+    patches:[{file:'custom_components/houseplan/validation.py',
+      find:'vol.Optional("sun_transparent"): bool,',replace:'vol.Optional("sun_transparent"): vol.Coerce(bool),'}],
+  },
+  {
     id: 'keyboard-connected-wall-detaches-1025',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/editor-nudge.test.mjs',
     because: '#1025 AC2: the ordinary L/T/X/chain matrix must reject a connected source even when its translated candidate would become free. Nightly execution only.',

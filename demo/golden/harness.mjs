@@ -5,6 +5,8 @@ import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matr
 import { readFileSync } from 'node:fs';
 import { makeInteriorWindowFixture } from '../fixtures/interior-window-light.mjs';
 import { prepareInteriorWindowLight } from './interior-window-light.mjs';
+import { makeSunTransparentFixture } from '../fixtures/sun-transparent.mjs';
+import { prepareSunTransparent } from './sun-transparent.mjs';
 import { smoothWallSeamSpace } from '../fixtures/smooth-wall-seam.mjs';
 import { installStaticStability, resetGoldenStability } from './static-stability.mjs';
 export { resetGoldenStability } from './static-stability.mjs';
@@ -72,6 +74,7 @@ const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
   : scenario.interiorWindow ? makeInteriorWindowFixture(scenario.interiorWindow)
+  : scenario.sunTransparent ? makeSunTransparentFixture(scenario.sunTransparent)
   : scenario.zigbeeLed ? makeZigbeeLedFixture()
   : scenario.fixture === 'large'
   ? makeLargeHouseFixture({ includeStairs: false })
@@ -2898,6 +2901,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.interiorWindow) result.interiorWindowLight = await prepareInteriorWindowLight(
     page, fixture.windowLightProbes, !!scenario.interiorWindow.led,
   );
+  if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
   return result;
 }
 

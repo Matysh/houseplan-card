@@ -113,7 +113,7 @@ _SPACE_DISPLAY_FIELDS = (
 )
 _ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly", "wall_ids")
 _ROOM_DISPLAY_FIELDS = (
-    "fill_mode", "custom_fill", "glow", "temp_min", "temp_max", "name_scale", "label_scale", "name_color",
+    "fill_mode", "custom_fill", "glow", "temp_min", "temp_max", "name_scale", "label_scale", "name_color", "sun_transparent",
 )
 _DECOR_COMMON_FIELDS = ("id", "kind", "color", "opacity", "width_cm", "width")
 _DECOR_KIND_FIELDS = {

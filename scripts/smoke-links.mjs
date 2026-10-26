@@ -50,6 +50,11 @@ export const SMOKE_LINKS = [
     because: '#1075 AC7/8: native furniture placement, toolbar/keyboard Undo/Redo and cold reload check saved/painted objects and zero unrelated structural cache builds without naming the restore helper.',
   },
   {
+    files: ['src/sun-access.ts', 'src/sun.ts', 'src/iso-sun.ts', 'src/editors/room-save.ts', 'src/editors/room-settings-dialog.ts'],
+    smokes: ['smoke_sun_transparent.mjs'],
+    because: '#1078: canonical room chains, public toggles and accepted Save/Cancel prove sunlight in Flat/2.5D, isolated-group refusal and foreign cache invalidation without replacing geometry or renderer results.',
+  },
+  {
     files: ['src/wall-face-graph.ts'],
     smokes: ['smoke_room_contact_grid.mjs','smoke_wall_face_lineage.mjs',
       'smoke_wall_face_room_split.mjs','smoke_wall_face_overlap.mjs','smoke_room_autoclose.mjs'],

@@ -2318,6 +2318,14 @@ bug, return N to real north after updating.
 Rays are clipped by the clean room contour, have crisp sides and fade along
 their length. They are visual only and never change HA state.
 
+For a terrace or balcony, open **Room settings → Sunlight** and enable
+**Lets sunlight through**. The marked room receives no window rays of its own;
+windows into ordinary neighbouring rooms can admit sunlight instead. The terrace
+needs no exterior window. Access follows a chain of marked rooms sharing a wall,
+provided at least one has a real exterior wall. An isolated internal group or
+corner contact creates no solar access. The option is off by default, works in
+Flat and 2.5D, and leaves artificial lighting, walls and room fills unchanged.
+
 The background has dawn, day, sunset and night. With `sun.sun`, elevation and
 direction of travel choose the phase; clock fallback uses 05:00–08:00,
 08:00–18:00, 18:00–21:00 and 21:00–05:00. Environment transition lasts 1.1 s

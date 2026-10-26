@@ -8,6 +8,14 @@
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
+    id:'rooms[].settings.sun_transparent', selector:{path:['spaces','*','rooms','*','settings','sun_transparent']},
+    enforcedBy:'validation.py ROOM_SCHEMA + sun-access.ts; #1078',
+    storage:'House Plan server config',type:'boolean',default:'absent (= false)',level:'room',
+    ui:'Room → Sunlight → Lets sunlight through',runtime:'solar exterior connectivity and receiver exclusion only',
+    introduced:'#1078',status:'current',migration:'none; no read-time writes or model bump',
+    compatibility:'full/space/plan-only JSON/ZIP, copies, Optimize/history and closed support projection preserve',
+  },
+  {
     id:'layout.*.contact_basis',selector:{path:['layout','*','contact_basis']},schema:'allow-extra',
     enforcedBy:'contact_basis.py delta validation + device-contact-basis.ts; #1003',
     storage:'House Plan layout',type:'v1 reference {at:{x,y,s},diameter,box:[l,t,r,b],legacy?:boolean}',

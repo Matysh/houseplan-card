@@ -244,7 +244,7 @@ def _space_settings(value: object) -> dict[str, Any]:
 
 
 def _room_settings(ids: _Pseudonyms, value: object) -> dict[str, Any]:
-    out = _copy_keys(value, ("fill_mode", "glow", "name_scale", "label_scale"))
+    out = _copy_keys(value, ("fill_mode", "glow", "name_scale", "label_scale", "sun_transparent"))
     if not isinstance(value, dict):
         return out
     for key in ("custom_fill", "name_color"):

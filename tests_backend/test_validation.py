@@ -26,6 +26,22 @@ _HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
 v = load_pure("hp_validation", Path(_HOUSEPLAN_ROOT) / "validation.py")
 
 
+@pytest.mark.parametrize("value", [True, False])
+def test_issue1078_room_sunlight_is_strict_sparse_and_lossless(value):
+    room = {"id": "terrace", "name": "Terrace", "poly": [[0, 0], [1, 0], [1, 1]],
+            "settings": {"sun_transparent": value, "future": {"keep": True}}}
+    assert v.ROOM_SCHEMA(json.loads(json.dumps(room)))["settings"] == room["settings"]
+    del room["settings"]["sun_transparent"]
+    assert "sun_transparent" not in v.ROOM_SCHEMA(room)["settings"]
+
+
+@pytest.mark.parametrize("value", [None, 0, 1, "true", "false", [], {}])
+def test_issue1078_room_sunlight_rejects_non_boolean_values(value):
+    with pytest.raises(vol.Invalid):
+        v.ROOM_SCHEMA({"id": "terrace", "name": "Terrace", "poly": [[0, 0], [1, 0], [1, 1]],
+                       "settings": {"sun_transparent": value}})
+
+
 @pytest.mark.parametrize("source", [
     None, {"entity_id": "sensor.run"},
     {"entity_id": "sensor.run", "active_states": [" running ", "running", "Washing"], "future": {"v": 3}},

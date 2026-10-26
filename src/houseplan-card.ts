@@ -64,6 +64,7 @@ import {
   rayStops, resolveDayCycle, type DayCycleState,
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
+import { resolveSunAccess, sunBarrierLines } from './sun-access';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import { dayCycleClock, moonLayer, moonSkyState } from './moon-gate';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
@@ -1997,6 +1998,7 @@ export class HouseplanCard extends LitElement {
   private _roomTempMin = ''; private _roomTempMax = ''; private _roomTempSrc = ''; // blank inherits; zero is explicit
   private _roomHumSrc = '';
   private _roomCo2Src = '';
+  private _roomSunTransparent = false;
   private _roomSrcOpen: 'temp' | 'hum' | 'co2' | null = null;
   private _roomSrcFilter = '';
   private _roomNameScale = 1;
@@ -2698,6 +2700,7 @@ export class HouseplanCard extends LitElement {
     _roomTempSrc: { state: true },
     _roomHumSrc: { state: true },
     _roomCo2Src: { state: true },
+    _roomSunTransparent: { state: true },
     _roomSrcOpen: { state: true },
     _roomSrcFilter: { state: true },
     _roomNameScale: { state: true },
@@ -3773,6 +3776,7 @@ export class HouseplanCard extends LitElement {
         this._roomTempMin = r.tempMin || '';
         this._roomTempMax = r.tempMax || ''; this._roomTempSrc = r.tempSrc;
         this._roomHumSrc = r.humSrc; this._roomCo2Src = r.co2Src || '';
+        this._roomSunTransparent = r.sunTransparent === true;
         this._roomSrcOpen = r.srcOpen; this._roomSrcFilter = r.srcFilter;
         this._roomNameScale = r.nameScale; this._roomLabelScale = r.labelScale;
         this._areaSel = r.areaSel; this._nameSel = r.nameSel;
@@ -10015,8 +10019,9 @@ export class HouseplanCard extends LitElement {
   /** Window-light inputs shared by the Flat wedges and the 2.5D soft light (#649). */
   private _sunInputs(space: SpaceModel, zeroWalls: ReturnType<HouseplanCard['_zeroWalls']>, windows: SunWindow[]) {
     const rooms = space.rooms
-      .map((r) => ({ id: r.id || '', poly: roomPoly(r) }))
-      .filter((r): r is { id: string; poly: number[][] } => !!r.id && !!r.poly);
+      .map((r) => ({ id: r.id || '', poly: roomPoly(r), sunTransparent: r.settings?.sun_transparent === true }))
+      .filter((r): r is { id: string; poly: number[][]; sunTransparent: boolean } => !!r.id && !!r.poly);
+    const access = resolveSunAccess(rooms);
     const walls = this._spaceWalls;
     const openCuts = zeroWalls.contour;
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
@@ -10042,10 +10047,11 @@ export class HouseplanCard extends LitElement {
     // counterpart of Glow's visibility barrier and never affects floor area.
     const occluders = [
       ...this._physicalBodiesR(space),
-      ...zeroWalls.barriers.map((line) => [[line[0], line[1]], [line[2], line[3]]]),
+      ...sunBarrierLines(rooms, access, zeroWalls.barriers, zeroWalls.contour)
+        .map((line) => [[line[0], line[1]], [line[2], line[3]]]),
     ];
     return {
-      rooms, windows, occluders,
+      rooms, windows, occluders, access,
       innerByRoom: walls.length ? innerByRoom : undefined,
       wallDepthByOpening: walls.length ? wallDepthByOpening : undefined,
     };
@@ -10114,9 +10120,9 @@ export class HouseplanCard extends LitElement {
     }
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
       this._floorCacheBuilds.sunRays++;
-      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders } = this._sunInputs(space, zeroWalls, windows);
+      const { rooms, innerByRoom, wallDepthByOpening, occluders: sunOccluders, access } = this._sunInputs(space, zeroWalls, windows);
       let rays = computeSunRays(
-        rooms, windows, sun.azimuth, sun.elevation, north!, innerByRoom, wallDepthByOpening, origin,
+        rooms, windows, sun.azimuth, sun.elevation, north!, innerByRoom, wallDepthByOpening, origin, access,
       );
       if (sunOccluders.length) {
         rays = rays.map((ray) => {

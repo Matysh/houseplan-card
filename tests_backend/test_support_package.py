@@ -165,6 +165,46 @@ def test_package_is_canonical_and_preview_hash_describes_exact_bytes():
     assert json.dumps(json.loads(first), ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n" == first.decode()
 
 
+@pytest.mark.parametrize("value", [True, False])
+def test_issue1078_sunlight_survives_private_projection_and_both_wire_validators(value):
+    import copy
+    import importlib.util
+    import sys
+    from pathlib import Path
+    from custom_components.houseplan import support_wire_schema as canonical
+
+    config, layout, _ = _source()
+    config["spaces"][0]["rooms"][0]["settings"].update({
+        "sun_transparent": value, "future_private_sun": "secret-sun-setting",
+    })
+    before = copy.deepcopy(config)
+    raw, _ = build_support_package(
+        config, layout, config_rev=17, layout_rev=24,
+        card_version="1.83.0-beta.2", integration_version="1.83.0-beta.2",
+        home_assistant_version="2026.8.3", runtime=_facts(), namespace="sun1078", package_version=2,
+    )
+    package = json.loads(raw)
+    settings = package["plan_backup"]["config"]["spaces"][0]["rooms"][0]["settings"]
+    assert settings["sun_transparent"] is value
+    assert b"secret-sun-setting" not in raw
+    assert config == before
+    path = Path(__file__).resolve().parents[1] / "scripts/support-relay/hp_relay/support_wire_schema.py"
+    spec = importlib.util.spec_from_file_location("support_wire_sun1078", path)
+    relay = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = relay
+    try:
+        spec.loader.exec_module(relay)
+        for module in (canonical, relay):
+            module.validate_package(package)
+            for invalid in (None, 0, 1, "true", [], {}):
+                bad = copy.deepcopy(package)
+                bad["plan_backup"]["config"]["spaces"][0]["rooms"][0]["settings"]["sun_transparent"] = invalid
+                with pytest.raises(module.WireRejected):
+                    module.validate_package(bad)
+    finally:
+        del sys.modules[spec.name]
+
+
 def test_privacy_projection_never_contains_raw_or_encoded_forbidden_values():
     raw, _, forbidden = _build()
     text = raw.decode()

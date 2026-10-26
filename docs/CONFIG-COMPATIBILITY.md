@@ -7,6 +7,17 @@ is derived from the effective local display roster and retained user intent;
 it never rewrites a marker's hidden flag, HA binding or provider snapshot.
 Rollback restores the former diagnostics without changing saved plans.
 
+## Rooms letting sunlight through (#1078)
+
+Optional `rooms[].settings.sun_transparent` is a strict boolean; absence means
+false, with no inheritance, migration, model bump or write during reads. The
+editor writes only true and removes the key when switched off, retaining unknown
+settings. Full/space/plan-only JSON and ZIP, existing config snapshots/history,
+Optimize and closed support projections preserve it. Space copy keeps its
+existing geometry-only contract (no rooms or room settings are copied).
+The field affects only sunlight, never room geometry or artificial lighting.
+Keep a backup before downgrade if exact sunlight appearance is required.
+
 ## Own offline presentation (#1026)
 
 No persisted fields, model/Store/ZIP versions or migrations change. The own

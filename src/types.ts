@@ -7,6 +7,8 @@ export interface RoomCfg {
   open_to?: string[] | null;
   /** Room-level settings (tier 3 of 4: global > space > ROOM > device). */
   settings?: {
+    /** Sun-only exclusion, propagated through exterior-connected flagged rooms. */
+    sun_transparent?: boolean;
     /** Fill override; unset = inherit the space fill mode. */
     /** `glow` is a permanent legacy read token. */
     fill_mode?: 'none' | 'lqi' | 'light' | 'temp' | 'custom' | 'glow' | null;

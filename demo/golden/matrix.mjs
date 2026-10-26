@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 94;
+export const GOLDEN_MATRIX_VERSION = 95;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -722,6 +722,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     language:'en',theme:'dark',viewport:{width:1100,height:1000},...stage})),
   { id:'lighting-interior-window-iso-dark',interiorWindow:{},fixture:'visual',space:'f1',mode:'view',
     projection:'iso',language:'en',theme:'dark',viewport:{width:1100,height:1000},...stage },
+  ...[
+    ['lighting-sun-transparent-chain-flat',{},'flat'],
+    ['lighting-sun-transparent-chain-iso',{},'iso'],
+    ['lighting-sun-transparent-sealed',{sealed:true},'flat'],
+  ].map(([id,sunTransparent,projection])=>({id,sunTransparent,projection,fixture:'visual',space:'f1',mode:'view',
+    language:'en',theme:'dark',viewport:{width:1100,height:1000},...stage})),
   { id: 'wall-smooth-joint-light', fixture: 'visual', smoothWallSeam: true,
     space: 'golden-smooth-wall', mode: 'view', language: 'en', theme: 'light',
     viewport: { width: 1100, height: 1000 }, zoom: 2, zoomCenter: [-85, 520], ...stage },

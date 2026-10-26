@@ -161,6 +161,22 @@ const undone = name => `history.undone{"name":"${name}"}`;
 const redone = name => `history.redone{"name":"${name}"}`;
 const removed = (direction, name, reason) => `history.removed_${direction}{"name":"${name}","reason":"history.reason_${reason}"}`;
 
+test('#1078 actual snapshots, accepted Undo/Redo and persisted room settings keep exact sunlight values', async () => {
+  const input = { model_version: 10, spaces: [square('f')], markers: [], settings: {} };
+  input.spaces[0].rooms[0].settings = { sun_transparent: true, future_sun: { keep: [4, false] } };
+  const s = setup({ configInput: input });
+  const original = clone(s.spaceOf('f').rooms[0].settings);
+  await s.edit('f', 'Room settings snapshot', space => { space.rooms[0].settings.sun_transparent = false; });
+  const changed = { ...original, sun_transparent: false };
+  assert.deepEqual(s.server.config.spaces[0].rooms[0].settings, changed);
+  s.runtime._undoGeometry(); await s.writes();
+  assert.deepEqual(s.spaceOf('f').rooms[0].settings, original);
+  assert.deepEqual(s.server.config.spaces[0].rooms[0].settings, original);
+  s.runtime._redoGeometry(); await s.writes();
+  assert.deepEqual(s.spaceOf('f').rooms[0].settings, changed);
+  assert.deepEqual(s.server.config.spaces[0].rooms[0].settings, changed);
+});
+
 test('#1061 existing off-grid faces cross the actual commit/write/history owners separately and sequentially', async () => {
   const { roomSource, graphSources, inheritedY, stableRoomReceiptIds } = await import('./helpers/room-contact-grid.mjs');
   const { buildWallFaceGraph, findWallFaceAtPoint } = await import('../test-build/wall-face-graph.js');
