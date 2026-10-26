@@ -54,3 +54,14 @@ moves its baseline3537817→3545294, preserving the inherited275B gap.
 The hint's four-language pack stays independently lazy; compact styles load
 with the existing onboarding owner. Existing
 first-frame floor-row CSS remains eager as required by the #805 budget guard.
+
+## Paired synthetic frames
+
+- light/1440/floors: [reference](implementation-evidence/1020-pair-light-1440-floors-reference.png), [candidate](implementation-evidence/1020-pair-light-1440-floors-candidate.png).
+- light/1440/empty: [reference](implementation-evidence/1020-pair-light-1440-empty-reference.png), [candidate](implementation-evidence/1020-pair-light-1440-empty-candidate.png).
+- light/390/floors: [reference](implementation-evidence/1020-pair-light-390-floors-reference.png), [candidate](implementation-evidence/1020-pair-light-390-floors-candidate.png).
+- light/390/empty: [reference](implementation-evidence/1020-pair-light-390-empty-reference.png), [candidate](implementation-evidence/1020-pair-light-390-empty-candidate.png).
+- dark/1440/floors: [reference](implementation-evidence/1020-pair-dark-1440-floors-reference.png), [candidate](implementation-evidence/1020-pair-dark-1440-floors-candidate.png).
+- dark/1440/empty: [reference](implementation-evidence/1020-pair-dark-1440-empty-reference.png), [candidate](implementation-evidence/1020-pair-dark-1440-empty-candidate.png).
+- dark/390/floors: [reference](implementation-evidence/1020-pair-dark-390-floors-reference.png), [candidate](implementation-evidence/1020-pair-dark-390-floors-candidate.png).
+- dark/390/empty: [reference](implementation-evidence/1020-pair-dark-390-empty-reference.png), [candidate](implementation-evidence/1020-pair-dark-390-empty-candidate.png).

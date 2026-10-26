@@ -1,0 +1,250 @@
+{
+  "referenceCommit": "e6a4edc8902b1954d5bd4949f8043896f1543ed5",
+  "candidateCommit": "d8c12e8f847c4ac149f8e0ccc6a3ddaa4c1b9197",
+  "candidateFingerprint": "2b4f3cf8bd3e9d00e529f7b29c8911aaa62bb87953ea8ac33a74aa01b730c76a",
+  "chromium": "151.0.7922.34",
+  "playwright": "1.62.0",
+  "haFrontend": "20260930.4",
+  "pairs": [
+    {
+      "theme": "light",
+      "width": 1440,
+      "state": "floors",
+      "metrics": {
+        "width": 520,
+        "height": 62.390625,
+        "margin": "20px 0px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "start",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(32, 33, 36)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 172,
+        "total": 1440000,
+        "ratio": 0.00011944444444444444
+      },
+      "reference": "1020-pair-light-1440-floors-reference.png",
+      "candidate": "1020-pair-light-1440-floors-candidate.png"
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "state": "empty",
+      "metrics": {
+        "width": 620,
+        "height": 41.59375,
+        "margin": "24px 386px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "center",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(32, 33, 36)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 0,
+        "total": 1440000,
+        "ratio": 0
+      },
+      "reference": "1020-pair-light-1440-empty-reference.png",
+      "candidate": "1020-pair-light-1440-empty-candidate.png"
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "state": "floors",
+      "metrics": {
+        "width": 350,
+        "height": 83.1875,
+        "margin": "20px 0px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "start",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(32, 33, 36)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 120,
+        "total": 390000,
+        "ratio": 0.0003076923076923077
+      },
+      "reference": "1020-pair-light-390-floors-reference.png",
+      "candidate": "1020-pair-light-390-floors-candidate.png"
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "state": "empty",
+      "metrics": {
+        "width": 342,
+        "height": 83.1875,
+        "margin": "24px 0px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "center",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(32, 33, 36)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 98,
+        "total": 390000,
+        "ratio": 0.0002512820512820513
+      },
+      "reference": "1020-pair-light-390-empty-reference.png",
+      "candidate": "1020-pair-light-390-empty-candidate.png"
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "state": "floors",
+      "metrics": {
+        "width": 520,
+        "height": 62.390625,
+        "margin": "20px 0px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "start",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(228, 228, 231)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 172,
+        "total": 1440000,
+        "ratio": 0.00011944444444444444
+      },
+      "reference": "1020-pair-dark-1440-floors-reference.png",
+      "candidate": "1020-pair-dark-1440-floors-candidate.png"
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "state": "empty",
+      "metrics": {
+        "width": 620,
+        "height": 41.59375,
+        "margin": "24px 386px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "center",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(228, 228, 231)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 0,
+        "total": 1440000,
+        "ratio": 0
+      },
+      "reference": "1020-pair-dark-1440-empty-reference.png",
+      "candidate": "1020-pair-dark-1440-empty-candidate.png"
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "state": "floors",
+      "metrics": {
+        "width": 350,
+        "height": 83.1875,
+        "margin": "20px 0px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "start",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(228, 228, 231)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 120,
+        "total": 390000,
+        "ratio": 0.0003076923076923077
+      },
+      "reference": "1020-pair-dark-390-floors-reference.png",
+      "candidate": "1020-pair-dark-390-floors-candidate.png"
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "state": "empty",
+      "metrics": {
+        "width": 342,
+        "height": 83.1875,
+        "margin": "24px 0px 0px",
+        "font": "13px / 20.8px Roboto, Noto, sans-serif",
+        "alignment": "center",
+        "color": "rgb(224, 138, 0)",
+        "fontLink": "500 12.25px / 19.6px Roboto, Noto, sans-serif",
+        "url": "https://houseplan.tech/convert/",
+        "target": "_blank",
+        "rel": "noopener noreferrer",
+        "text": "Если у вас есть план дома в другом формате, вы можете сконвертировать его по ссылке. На текущий момент поддерживаются форматы: Sweet Home 3D (.sh3d), Easy Floorplan (YAML / JSON)."
+      },
+      "hover": {
+        "background": "rgba(0, 0, 0, 0)",
+        "color": "rgb(228, 228, 231)",
+        "transition": "0.15s"
+      },
+      "diff": {
+        "different": 95,
+        "total": 390000,
+        "ratio": 0.0002435897435897436
+      },
+      "reference": "1020-pair-dark-390-empty-reference.png",
+      "candidate": "1020-pair-dark-390-empty-candidate.png"
+    }
+  ]
+}
