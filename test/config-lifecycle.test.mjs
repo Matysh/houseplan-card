@@ -74,11 +74,23 @@ test('#1015 current source inventory is complete and orphan/missing/duplicate re
 });
 
 test('#1015 task-packet adds scoped lifecycle evidence without changing status/track', () => {
-  const packet = buildPacket({ issue: { number: 1015, title: 'Lifecycle', state: 'OPEN', body: '## ТЗ\nAC1: test' },
+  const input = { issue: { number: 1015, title: 'Lifecycle', state: 'OPEN', body: '## ТЗ\nAC1: test' },
     labels: ['S6-in-progress', 'track:ask'], branch: { name: 'issue/1015-test', tip: 'a'.repeat(40), base: 'b'.repeat(40),
-      changedFiles: ['src/vacuum.ts'], commits: [], ahead: 1, behind: 0, diff: '' } });
+      changedFiles: ['src/vacuum.ts'], commits: [], ahead: 1, behind: 0, diff: '' } };
+  const packet = buildPacket(input);
   assert.equal(packet.status, 'S6-in-progress');
   assert.equal(packet.trackDetail.track, 'ask');
   assert.equal(packet.configLifecycleWarnings[0].id, 'vacuum-trail');
   assert.match(renderPacket(packet), /reached-until v1\.54\.2/);
+  const unavailable = buildPacket({ ...input, publishedReleases: null });
+  assert.deepEqual(unavailable.configLifecycleWarnings, []);
+  assert.match(renderPacket(unavailable), /current published stable could not be proved/);
+  const releases = JSON.parse(readFileSync(new URL('../scripts/config-published-releases.json', import.meta.url))).releases;
+  const future = buildPacket({ ...input, branch: { ...input.branch, changedFiles: ['src/logic.ts'] },
+    publishedReleases: [...releases,
+      { tagName: 'v1.84.1', publishedAt: '2026-11-01' },
+      { tagName: 'v1.90.0', publishedAt: '2026-11-07' },
+      { tagName: 'v1.91.0-beta.1', publishedAt: '2026-11-08' }] });
+  assert.equal(future.configLifecycleWarnings.find(item => item.id === 'space-font-scale').until, 'v1.90.0');
+  assert.match(future.configLifecycleSource, /GitHub published releases; current v1\.90\.0/);
 });

@@ -16,8 +16,10 @@ do not. `until` is the concrete second publication in the recorded release
 sequence, with structured pending when it does not yet exist. Unknown provenance
 or a non-equivalent replacement means explicit keep. Retirement is allowed
 **after** that boundary, only with executed lossless migration and all-input
-proof. Reached-until diagnostics do not grant removal/merge authority. Older
-backend View remains supported, so the new migration alone does not authorize
+proof. Reached-until diagnostics do not grant removal/merge authority.
+Task-packet reads live published releases for affected paths and reports an
+unavailable release basis explicitly, without substituting an old current stable.
+Older backend View remains supported, so the new migration alone does not authorize
 deleting frontend read decoders; the inventory records that boundary.
 
 `config_migrations.py` owns decoder **v1**. The common locked Store fence first

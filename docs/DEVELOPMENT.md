@@ -6207,6 +6207,11 @@ as of2026-10-26 (111, below the200 API query cap). Refresh it from all pages of
 when the stable sequence changes, verifying that the limit did not truncate it.
 Do not infer deadlines from tag arithmetic or a beta. A later release alone
 never changes a keep decision or supplies missing all-input migration proof.
+For an affected branch, task-packet reads the current published GitHub sequence
+(bounded at1000 records, refusing a possibly truncated result) and recomputes
+reached-until diagnostics. An unavailable read is reported explicitly; the old
+snapshot is never silently presented as the current stable. The recorded file
+still provides reproducible field passports and historical provenance.
 
 Canonical v1 fixtures run with
 `python -m pytest tests_backend/test_config_migrations.py tests_backend/test_ha_config_migrations.py -q`.

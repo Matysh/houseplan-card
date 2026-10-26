@@ -33,6 +33,7 @@ import { roleEntry } from './entry-cost.mjs';
 import { parseSourceCommitLog, sourceReplacementWarnings } from './source-replacement.mjs';
 import { selectHandoff } from './review-handoff.mjs';
 import { lifecycleWarnings } from './config-lifecycle.mjs';
+import { COMPATIBILITY_BRANCHES, PUBLISHED_STABLES, publishedStableSequence } from './config-compatibility-catalog.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
@@ -369,6 +370,9 @@ export function buildPacket(inputs) {
     : { computed: true, ...classifyRisk(branch.diff) };
   if (risk.computed && risk.classes.length) risk.consequence = riskConsequence({ track: origin.track, confirmed: origin.confirmed, risk });
   const changedFiles = branch?.changedFiles || [];
+  const lifecycleAffected = COMPATIBILITY_BRANCHES.some(entry => entry.anchors.some(anchor => changedFiles.includes(anchor.path)));
+  const releaseSequence = Object.hasOwn(inputs, 'publishedReleases')
+    ? publishedStableSequence(inputs.publishedReleases || []) : PUBLISHED_STABLES;
   const stage = status === 'S4-spec-review' || status === 'S3-spec' || status === 'S5-ready' ? 'spec' : 'code';
   const verdict = lastVerdict(comments, reviewDocs, stage);
   // ТЗ живёт в теле issue (#517); архивный файл — источник только у задач до
@@ -401,7 +405,10 @@ export function buildPacket(inputs) {
     deferredSmokes: branch?.smokes?.deferred ?? null,
     changelog: branch ? changelogState({ commits: branch.commits || [], changedFiles, risk: risk.computed ? risk : null }) : null,
     sourceReplacementWarnings: sourceReplacementWarnings(branch?.commits || [], branch?.handoff || ''),
-    configLifecycleWarnings: lifecycleWarnings(changedFiles),
+    configLifecycleWarnings: releaseSequence.length ? lifecycleWarnings(changedFiles, { sequence: releaseSequence }) : [],
+    configLifecycleSource: lifecycleAffected ? releaseSequence.length
+      ? `${Object.hasOwn(inputs, 'publishedReleases') ? 'GitHub published releases' : 'recorded release snapshot'}; current ${releaseSequence.at(-1)}`
+      : 'unavailable: current published stable could not be proved; recorded snapshot was not substituted' : null,
     verdict,
     acceptance: acs,
     unverified: unverified.map((a) => a.id),
@@ -454,6 +461,7 @@ export function renderPacket(p) {
   L.push('');
   L.push('## Материал');
   for (const warning of p.sourceReplacementWarnings || []) L.push(`- Предупреждение: ${warning}`);
+  if (p.configLifecycleSource) L.push(`- Config compatibility stable basis: ${p.configLifecycleSource}`);
   for (const warning of p.configLifecycleWarnings || []) L.push(`- Config compatibility: ${warning.message}`);
   if (!p.material) L.push('- ветки issue/NN-* на origin нет — материал не запушен');
   else {
@@ -600,7 +608,16 @@ export function collectInputs({ number, repo = 'Matysh/houseplan-card', cwd = pr
         : runs[0] ? { status: `красный (${runs[0].conclusion})`, url: runs[0].url } : { status: 'прогона нет' };
     } catch { validate = { status: 'неизвестно (gh run list недоступен)' }; }
   }
-  return { issue: view, labels, comments, owner, branch, specs, reviewDocs, specDocs, validate };
+  let publicationInput = {};
+  if (branch && COMPATIBILITY_BRANCHES.some(entry => entry.anchors.some(anchor => branch.changedFiles.includes(anchor.path)))) {
+    try {
+      const publishedReleases = JSON.parse(sh('gh', ['release', 'list', '--repo', repo,
+        '--exclude-drafts', '--exclude-pre-releases', '--limit', '1000', '--json', 'tagName,publishedAt,isDraft,isPrerelease']));
+      if (!Array.isArray(publishedReleases) || publishedReleases.length >= 1000) throw new Error('release history may be truncated');
+      publicationInput = { publishedReleases };
+    } catch { publicationInput = { publishedReleases: null }; }
+  }
+  return { issue: view, labels, comments, owner, branch, specs, reviewDocs, specDocs, validate, ...publicationInput };
 }
 
 if (isMainModule(import.meta.url)) {

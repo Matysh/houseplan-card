@@ -1,7 +1,8 @@
 // #1015. Decisions about persisted representations, not a second task backlog.
 import published from './config-published-releases.json' with { type: 'json' };
 export function publishedStableSequence(releases) {
-  return releases.filter((item) => !item.isDraft && !item.isPrerelease && /^v\d+\.\d+\.\d+$/.test(item.tagName))
+  return releases.filter((item) => !item.isDraft && !item.isPrerelease && /^v\d+\.\d+\.\d+$/.test(item.tagName)
+    && typeof item.publishedAt === 'string' && Number.isFinite(Date.parse(item.publishedAt)))
     .sort((a, b) => a.publishedAt.localeCompare(b.publishedAt)).map((item) => item.tagName);
 }
 export const PUBLISHED_STABLES = Object.freeze(publishedStableSequence(published.releases));
