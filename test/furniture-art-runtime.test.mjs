@@ -38,6 +38,19 @@ const runtime = (loads, extra = {}) => {
   };
 };
 
+test('#1080 delayed artwork does not update a detached preview host or replay after reconnect', async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const r = new FurnitureArtRuntime({ expectedFingerprint: FP, warn: () => {}, load: () => pending });
+  const h = host(); r.art('sofa', h); const loading = r.ensure();
+  h.isConnected = false;
+  release({ GENERATED_FURNITURE_ART: ART, FURNITURE_ART_FINGERPRINT: FP }); await loading;
+  assert.equal(h.updates, 0, 'late artwork must not revive a detached scene');
+  h.isConnected = true;
+  assert.deepEqual(r.art('sofa', h), ART.sofa);
+  await tick(); assert.equal(h.updates, 0, 'the retired notification is not replayed for the new lifecycle');
+});
+
 test('pending until ensure; a successful load installs the artwork and re-renders hosts', async () => {
   const { runtime: r, attempts } = runtime([{ GENERATED_FURNITURE_ART: ART, FURNITURE_ART_FINGERPRINT: FP }]);
   const h = host();

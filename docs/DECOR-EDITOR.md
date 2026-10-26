@@ -13,6 +13,7 @@ host render restores the settled copy and clears the live layer in the same
 turn; the next live frame prepares its actual furniture/image/shape preview
 before hiding only the matching settled transient kind. Saved decor remains
 visible. A cancelled or detached scheduled frame cannot paint a later action.
+Losing native capture cancels a rectangle/ellipse draft without saving it.
 
 ### Multiple selection (#1038)
 

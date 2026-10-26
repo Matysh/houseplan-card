@@ -32,12 +32,16 @@ const pointer = async (type, x, y) => {
 const fullRender = () => page.evaluate(async () => {
   const c = window.__card; c.hass = { ...c.hass }; await c.updateComplete;
 });
-const armFurniture = () => page.evaluate(async () => {
-  const c = window.__card, root = c.renderRoot;
-  root.querySelector('[data-editor-palette="furniture"]').click(); await c.updateComplete;
-  root.querySelector('.furnitem[data-category="sofa"]').click(); await c.updateComplete;
-  root.querySelector('.furnitem[data-symbol="sofa"]').click(); await c.updateComplete;
-});
+const armFurniture = async () => {
+  const card = page.locator('houseplan-card');
+  if (await page.evaluate(() => window.__card._decorTool !== 'furniture'))
+    await card.locator('[data-editor-palette="furniture"]').click();
+  await page.waitForFunction(() => window.__card._decorTool === 'furniture');
+  if (!await card.locator('.furnitem[data-symbol="sofa"]').count())
+    await card.locator('.furnitem[data-category="sofa"]').click();
+  await card.locator('.furnitem[data-symbol="sofa"]').click();
+  await page.evaluate(() => window.__card.updateComplete);
+};
 const screen = async name => {
   const buffer = await page.locator('houseplan-card').screenshot();
   writeFileSync(`${evidence}/${name}.png`, buffer); return buffer;
@@ -57,7 +61,7 @@ try {
     await window.__hpTest.setServerConfig(cfg => {
       cfg.spaces = [{ id: 'preview', title: 'Preview', cell_cm: 5, view_box: [0,0,1,1], rooms: [], decor: [
         { id: 'kept', kind: 'rect', x: .02, y: .02, w: .96, h: .96, color: '#00aa00', fill: false },
-      ] }]; cfg.markers = [];
+      ] }, { id: 'other', title: 'Other', cell_cm: 5, rooms: [], decor: [] }]; cfg.markers = [];
     });
     await window.__hpTest.switchSpace('preview');
     await window.__hpTest.setMode('decor');
@@ -118,6 +122,7 @@ try {
     await fullRender(); await pointer('pointermove', 600, 550);
     check(`preview.${kind}.one-visible-after-full-live`, (await state()).count, 1);
     await page.keyboard.press('Escape'); await page.evaluate(() => window.__card.updateComplete);
+    await page.mouse.up();
     check(`preview.${kind}.cancel.no-ghost`, (await state()).count, 0);
   }
   await page.evaluate(async () => {
@@ -138,6 +143,53 @@ try {
   check('preview.image.one-visible-after-full-live', (await state()).count, 1);
   await page.keyboard.press('Escape'); await page.evaluate(() => window.__card.updateComplete);
   check('preview.image.cancel.no-ghost', (await state()).count, 0);
+  for (const kind of ['rect', 'ellipse']) for (const terminal of ['pointercancel', 'lostpointercapture']) {
+    // The earlier native toolbar cases already cover opening the Shapes menu;
+    // isolate each cancellation at its normal command boundary here.
+    await page.evaluate(async kind => { const c = window.__card;
+      c._editorRuntime._activateDecorTool(kind); await c.updateComplete;
+    }, kind);
+    await pointer('pointerdown', 300, 650); await pointer('pointermove', 450, 750); await fullRender();
+    await page.locator('houseplan-card').locator('.stage').evaluate((stage, terminal) => {
+      if (terminal === 'lostpointercapture') {
+        const owner = [stage, ...stage.querySelectorAll('*')].find(e => e.hasPointerCapture(1));
+        if (!owner) throw new Error('the native draft must own pointer capture');
+        owner.releasePointerCapture(1);
+      }
+      else stage.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, composed: true, pointerId: 1, pointerType: 'mouse' }));
+    }, terminal);
+    // Pointer Events processes a requested release before the next native
+    // pointer event; observing updateComplete alone could precede that event.
+    if (terminal === 'lostpointercapture') await pointer('pointermove', 460, 760);
+    await page.evaluate(() => window.__card.updateComplete);
+    check(`preview.${kind}.${terminal}.no-ghost`, (await state()).count, 0);
+    check(`preview.${kind}.${terminal}.no-write`, (await state()).saved, initial.saved);
+    await page.keyboard.press('Escape'); await page.mouse.up();
+  }
+  await armFurniture(); await pointer('pointermove', 250, 950); await fullRender();
+  await page.locator('houseplan-card').locator('.furnitem[data-symbol="sofa_three_seat"]').click();
+  await page.evaluate(() => window.__card.updateComplete);
+  check('preview.changed-symbol.no-old-art', await page.evaluate(() => [...window.__card.renderRoot.querySelectorAll('.furniture-placement-preview')]
+    .filter(e => getComputedStyle(e).visibility !== 'hidden').every(e => e.dataset.symbol === 'sofa_three_seat')));
+  await page.evaluate(async () => { const c = window.__card; c._editorRuntime._activateDecorTool('rect'); await c.updateComplete; });
+  check('preview.changed-tool.no-ghost', (await state()).count, 0);
+  await page.keyboard.press('Escape');
+  await armFurniture(); await pointer('pointermove', 250, 950); await fullRender();
+  await page.evaluate(async () => { await window.__hpTest.switchSpace('other'); window.__card.requestUpdate(); await window.__card.updateComplete; });
+  check('preview.changed-space.late-full-render.no-ghost', (await state()).count, 0);
+  await page.evaluate(() => window.__hpTest.switchSpace('preview'));
+  await page.evaluate(() => window.__hpTest.setMode('decor'));
+  await armFurniture(); await pointer('pointermove', 250, 950); await fullRender();
+  await page.evaluate(() => window.__hpTest.setMode('view'));
+  check('preview.view.no-editor-ghost', (await state()).count, 0);
+  await page.evaluate(() => window.__hpTest.setMode('decor'));
+  await armFurniture(); await pointer('pointermove', 250, 950); await fullRender();
+  await page.evaluate(async () => { const c = window.__card, parent = c.parentNode, next = c.nextSibling;
+    c.remove(); await new Promise(requestAnimationFrame); parent.insertBefore(c, next);
+    await c.updateComplete; await new Promise(requestAnimationFrame);
+  });
+  check('preview.reconnect.no-retired-ghost', (await state()).count, 0);
+  await page.evaluate(() => window.__hpTest.setMode('decor'));
   await armFurniture();
   await pointer('pointermove', 600, 500);
   await pointer('pointerdown', 600, 500);

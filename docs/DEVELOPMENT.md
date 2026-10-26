@@ -3570,8 +3570,10 @@ The accepted UI-038 reference at `e6a4edc8` and a separate candidate, both with
 the same synthetic fixture/theme/1440×1100/DPR1, produce identical 9039-pixel
 preview crops (zero pixels differ by more than three channels). Reference
 adapters run only in the reference page; the candidate uses ordinary sources.
-Matched WSL source builds measure Select-only traffic at 21456 B on accepted
-`8b74e788` and 21458 B on this preview fix, within the unchanged 21462-B cap.
+Matched initial WSL source builds measure Select-only traffic at 21456 B on
+accepted `8b74e788` and 21458 B on preview ownership checkpoint `dca7b2e2`,
+within the unchanged 21462-B cap. The capture-loss follow-up retains that cap;
+the final handoff records its actual complete-source build.
 The earlier Windows build measured 21463 B and had unavailable symlink/jq
 fixtures; its RED receipt remains separate. The complete ext4 Linux gate
 passes without changing byte limits, runtime thresholds or proof guards.

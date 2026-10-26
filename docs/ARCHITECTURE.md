@@ -5,6 +5,8 @@ live render produces a transient kind, only that kind's settled copy is hidden.
 The existing host-update commit restores settled paint before clearing live
 paint. Saved decor, image readiness and geometry/history owners are untouched.
 Frame identity prevents cancelled/disposed callbacks from painting a new action.
+Rectangle/ellipse capture loss delegates to the existing draft cancellation,
+matching Line/backdrop terminal handling without committing geometry.
 
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and

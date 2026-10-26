@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'decor-preview-keeps-lost-capture-draft-1080',
+    guard: 'node demo/smoke_decor_preview_ownership.mjs',
+    because: '#1080 AC4: real pointer capture loss must remove a drawn rect/ellipse preview without saving it; Node-only rendering cannot observe the browser capture lifecycle. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'if (this._decorDraft?.pid === e.pointerId) this._stagePointerCancel(e);',
+      replace: 'if (false) this._stagePointerCancel(e);' }],
+  },
+  {
     id: 'decor-preview-keeps-settled-footprint-1080',
     guard: 'node demo/smoke_decor_preview_ownership.mjs',
     because: '#1080 AC1/AC2: only real Chromium pixels and presented frames distinguish a stale settled ghost from the current live preview. The unchanged synthetic scene also retains saved decor/history. Registered only; nightly execution.',

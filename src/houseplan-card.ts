@@ -11145,6 +11145,7 @@ export class HouseplanCard extends LitElement {
           @pointerleave=${(e: PointerEvent) => { this._editorRuntime?.properties.clearPlanHover(); this._stagePointerLeave(e); }}
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @lostpointercapture=${(e: PointerEvent) => {
+            if (this._decorDraft?.pid === e.pointerId) this._stagePointerCancel(e);
             if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);
             if (this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);
           }}

@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Clear previous furniture, shape and image placement previews after a full
-  redraw followed by pointer movement; saved decor remains visible. (#1080)
+  redraw followed by pointer movement; saved decor remains visible. Losing
+  pointer capture cancels a rectangle or ellipse draft without saving it. (#1080)
 
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain
