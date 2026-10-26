@@ -1,0 +1,28 @@
+{
+  "issue": 1000,
+  "issueUrl": "https://github.com/Matysh/houseplan-card/issues/1000",
+  "status": "owner-approved-visual-reference",
+  "approvedOn": "2026-10-26",
+  "ownerInstruction": "фиксируй визуал в задачу #1000. Все материалы прикрепи через репозиторий, чтобы мог взять любой агент с любого ПК",
+  "approvalScope": "Visual design and editing flow only; runtime semantics and product implementation remain in the issue.",
+  "baseRepository": "https://github.com/Matysh/houseplan-card.git",
+  "baseBranchAtStart": "dev",
+  "baseCommit": "ebecea6db23aea0531de64d996b68a9b4c7df8ca",
+  "application": "houseplan-offline-ui-lab",
+  "productVersion": "1.83.0-beta.2",
+  "productFingerprint": "8c6c2b81f71abf5393e2988ffc160c4f39b318285b1de4653e748ff8857c8ca5",
+  "frontendVersion": "20260930.4",
+  "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+  "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e",
+  "privateDataset": false,
+  "ui": { "language": "ru", "theme": "dark", "experimentalStylesEnabled": true },
+  "screenshots": [
+    { "path": "screenshots/01-table-empty.png", "state": "Empty table with sidebar separator, plus and Create button" },
+    { "path": "screenshots/02-constructor.png", "state": "Constructor with shared UI kit and dimmed backdrop" },
+    { "path": "screenshots/03-condition-help.png", "state": "Expanded help with draft comparison explanation" },
+    { "path": "screenshots/04-table-example.png", "state": "Illustrative state = on row and delete button" }
+  ],
+  "screenshotExample": { "entityId": "light.lab_ceiling", "attribute": null, "operator": "eq", "value": "on" },
+  "browserSessionExport": "not captured; synthetic fixture is included, prototype rules can be recreated through the UI",
+  "validation": "No tests, smoke suites or product gates were run during the visual iteration, as requested by the owner. Screenshots document the visual only. Portable replay was prepared by reading the existing server API; not executed."
+}

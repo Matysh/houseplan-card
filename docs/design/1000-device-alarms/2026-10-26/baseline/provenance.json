@@ -1,0 +1,10 @@
+{
+  "application": "houseplan-offline-ui-lab",
+  "productVersion": "1.83.0-beta.2",
+  "productCommit": "ebecea6db23aea0531de64d996b68a9b4c7df8ca",
+  "productFingerprint": "8c6c2b81f71abf5393e2988ffc160c4f39b318285b1de4653e748ff8857c8ca5",
+  "frontendVersion": "20260930.4",
+  "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+  "privateDataset": false,
+  "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+}

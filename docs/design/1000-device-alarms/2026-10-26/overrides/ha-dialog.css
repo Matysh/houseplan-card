@@ -1,0 +1,2 @@
+/* Supply the offline HA host token; match hp-dialog's native UI-kit backdrop. */
+:host { --mdc-dialog-scrim-color: rgb(0 0 0 / 0.45); }
