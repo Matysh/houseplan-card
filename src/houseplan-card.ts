@@ -2,7 +2,7 @@ import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
-import { renderHeaderSpaceSelect } from './header-space-select';
+import { renderHeaderSpaceNavigation } from './header-space-select';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -11075,53 +11075,17 @@ export class HouseplanCard extends LitElement {
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}
           </div>`}
-          <nav class="tabs ${compactSpaces ? 'compact-spaces' : ''}" aria-label=${this._t('nav.spaces')} @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
-            ${compactSpaces ? keyed(this._mode, renderHeaderSpaceSelect(
-              navigationSpaces, this._space, this._t('nav.spaces'), id => this._pickSpace(id),
-            )) : navigationSpaces.map(
-              (s) => html`<button
-                data-hp="space-tab" data-space=${s.id} data-id="${s.id}"
-                class="tab ${this._space === s.id ? 'active' : ''}${
-                  this._tabDrag?.moved && this._tabDrag.id === s.id ? ' dragging' : ''}${
-                  this._tabDrag?.moved && this._tabDrag.targetId === s.id
-                    ? ` drop-${this._tabDrag.placement}` : ''}"
-                ?data-reorderable=${this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view'}
-                aria-current=${this._space === s.id ? 'page' : nothing}
-                @pointerdown=${(e: PointerEvent) => this._tabPointerDown(e, s.id)}
-                @pointerup=${(e: PointerEvent) => this._tabPointerUp(e)}
-                @pointercancel=${() => this._endTabDrag()}
-                @click=${() => this._tabClick(s.id)}
-              >
-                <span class="tabtitle">${s.title}</span>${this._norm && this._canEdit
-                  ? html`<ha-icon class="tabedit" icon="mdi:cog-outline"
-                      data-hp="space-settings" data-id=${s.id}
-                      title=${this._t('title.configure_space')}
-                      @click=${(e: Event) => {
-                        e.stopPropagation();
-                        this._openSpaceDialog('edit', s.id);
-                      }}></ha-icon>`
-                  : nothing}
-              </button>`,
-            )}
-            ${compactSpaces && this._norm && this._canEdit ? html`<button
-                class="tab tabedit compact-space-settings" data-hp="space-settings" data-id=${this._space}
-                title=${this._t('title.configure_space')} aria-label=${this._t('title.configure_space')}
-                @click=${() => this._openSpaceDialog('edit', this._space)}>
-                <ha-icon icon="mdi:cog-outline"></ha-icon>
-              </button>` : nothing}
-            ${''/* «Добавить пространство» is a NAVIGATION action, not a plan-editor
-                   tool (owner 2026-08-04): it lives next to the floor names in every
-                   mode, exactly where the per-space gear does. Kiosk is a shop
-                   window — the whole .hdr is display:none there, but the button is
-                   also not RENDERED, so nothing invisible is clickable. */}
-            ${this._canEdit && !this._kiosk && !this._hasFixedFloor
-              ? html`<button class="tab tabadd" data-hp="space-add"
-                  title=${this._t('title.add_space')}
-                  @click=${() => this._openSpaceDialog('create')}>
-                  <ha-icon icon="mdi:plus"></ha-icon>
-                </button>`
-              : nothing}
-          </nav>
+          ${renderHeaderSpaceNavigation({
+            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces,
+            labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
+            reorderable: this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view', drag: this._tabDrag,
+            pick: id => this._pickSpace(id), tabClick: id => this._tabClick(id),
+            pointerMove: event => this._tabPointerMove(event), pointerDown: (event, id) => this._tabPointerDown(event, id),
+            pointerUp: event => this._tabPointerUp(event), cancelDrag: () => this._endTabDrag(),
+            configure: this._norm && this._canEdit ? id => this._openSpaceDialog('edit', id) : null,
+            // Add-space remains navigation in every mode; kiosk and fixed-floor omit it.
+            create: this._canEdit && !this._kiosk && !this._hasFixedFloor ? () => this._openSpaceDialog('create') : null,
+          })}
           ${this._canEdit
             ? html`<div class="modes">
                 ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(

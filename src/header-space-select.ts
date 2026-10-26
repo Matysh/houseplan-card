@@ -1,6 +1,25 @@
-import { html, type TemplateResult } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
+import { keyed } from 'lit/directives/keyed.js';
 
 interface SpaceChoice { id: string; title: string }
+
+interface HeaderSpaceNavigation {
+  spaces: readonly SpaceChoice[];
+  current: string;
+  mode: string;
+  compact: boolean;
+  labels: { spaces: string; configure: string; add: string };
+  reorderable: boolean;
+  drag: { id: string; moved: boolean; targetId: string | null; placement: 'before' | 'after' | null } | null;
+  pick: (id: string) => void;
+  tabClick: (id: string) => void;
+  pointerMove: (event: PointerEvent) => void;
+  pointerDown: (event: PointerEvent, id: string) => void;
+  pointerUp: (event: PointerEvent) => void;
+  cancelDrag: () => void;
+  configure: ((id: string) => void) | null;
+  create: (() => void) | null;
+}
 
 /** Restore the accepted value before the existing navigation/dirty guard runs. */
 export function chooseHeaderSpace(
@@ -22,4 +41,31 @@ export function renderHeaderSpaceSelect(
       ${spaces.map(space => html`<option value=${space.id} ?selected=${space.id === current}>${space.title}</option>`)}
     </select>
   </hp-settings-select>`;
+}
+
+/** One navigation owner for compact selection and the established wide tabs. */
+export function renderHeaderSpaceNavigation(nav: HeaderSpaceNavigation): TemplateResult {
+  const { spaces, current, compact, labels, drag } = nav;
+  return html`<nav class="tabs ${compact ? 'compact-spaces' : ''}" aria-label=${labels.spaces}
+      @pointermove=${nav.pointerMove}>
+    ${compact ? keyed(nav.mode, renderHeaderSpaceSelect(spaces, current, labels.spaces, nav.pick))
+      : spaces.map(space => html`<button data-hp="space-tab" data-space=${space.id} data-id=${space.id}
+          class="tab ${current === space.id ? 'active' : ''}${drag?.moved && drag.id === space.id ? ' dragging' : ''}${
+            drag?.moved && drag.targetId === space.id ? ` drop-${drag.placement}` : ''}"
+          ?data-reorderable=${nav.reorderable}
+          aria-current=${current === space.id ? 'page' : nothing}
+          @pointerdown=${(event: PointerEvent) => nav.pointerDown(event, space.id)}
+          @pointerup=${nav.pointerUp} @pointercancel=${nav.cancelDrag} @click=${() => nav.tabClick(space.id)}>
+        <span class="tabtitle">${space.title}</span>${nav.configure
+          ? html`<ha-icon class="tabedit" icon="mdi:cog-outline" data-hp="space-settings" data-id=${space.id}
+              title=${labels.configure} @click=${(event: Event) => {
+                event.stopPropagation(); nav.configure?.(space.id);
+              }}></ha-icon>` : nothing}
+      </button>`)}
+    ${compact && nav.configure ? html`<button class="tab tabedit compact-space-settings"
+        data-hp="space-settings" data-id=${current} title=${labels.configure} aria-label=${labels.configure}
+        @click=${() => nav.configure?.(current)}><ha-icon icon="mdi:cog-outline"></ha-icon></button>` : nothing}
+    ${nav.create ? html`<button class="tab tabadd" data-hp="space-add" title=${labels.add}
+        @click=${nav.create}><ha-icon icon="mdi:plus"></ha-icon></button>` : nothing}
+  </nav>`;
 }

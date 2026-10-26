@@ -48,9 +48,11 @@ explicit Check result control, rather than admitting another structural action.
 
 Compact header navigation (#997) reuses the existing header observer and lazy
 `hp-settings-select`, independent of the editor graph. `header-space-select.ts`
-restores the accepted native value before requesting the existing `_pickSpace`
-path, so a refused draft handoff cannot display another floor. Public select
-hooks and `aria-controls` let the smoke facade choose through the real popup.
+owns the compact field and established wide-tab presentation, while navigation,
+dirty guards and drag handlers remain with the card. It restores the accepted
+native value before requesting the existing `_pickSpace` path, so a refused
+draft handoff cannot display another floor. Public select hooks and
+`aria-controls` let the smoke facade choose through the real popup.
 
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and
