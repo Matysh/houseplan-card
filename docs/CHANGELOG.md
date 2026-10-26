@@ -12,7 +12,8 @@
 - Undo and Redo now include device copying and deletion in the Devices editor,
   preserving the same copy ID, placement, settings, links and attachments.
   Batch deletion is one step; long operations show their pending state, and a
-  confirmed refusal releases the pending operation. (#1073)
+  confirmed refusal releases the pending operation. Unconfirmed results keep
+  the result check without suggesting another Copy or Delete. (#1073)
 
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain

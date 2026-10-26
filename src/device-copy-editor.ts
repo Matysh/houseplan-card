@@ -208,6 +208,7 @@ export class DeviceCopyEditor {
     } catch (error) {
       this.lastProfile!.outcome = 'refused-or-unknown';
       if (!authority()) return;
+      if (this.history?.needsResolution) return;
       // A lost reply is ambiguous, not permission to submit a second ID.
       if (sent && !this.history?.available) {
         try { await Promise.all([h._reloadConfigOnly(true), h._reloadLayoutOnly()]); } catch { /* retain the failure, never retry the write */ }

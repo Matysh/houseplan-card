@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { nothing } from 'lit';
 import { DeviceCopyEditor } from '../test-build/device-copy-editor.js';
 import { ConfigWriteContext } from '../test-build/config-write-context.js';
+import { CommandStack } from '../test-build/command-stack.js';
+import { DeviceStructureHistory } from '../test-build/device-structure-history.js';
 
 globalThis.window = { innerWidth: 1200, innerHeight: 800, addEventListener() {}, removeEventListener() {} };
 const deferred = () => { let resolve, reject; const promise = new Promise((a,b)=>{resolve=a;reject=b;}); return {promise,resolve,reject}; };
@@ -128,4 +130,16 @@ test('#1073 synchronous preparation does not re-hash the complete plan without a
   await f.editor.copyDevice(f.h._devices[0]);
   assert.equal(checks,2,'before command and after queued writes; pure preparation cannot interleave another event');
   assert.equal(f.messages.length,1);assert.equal(f.adoptions.length,1);
+});
+
+test('#1073 the Copy caller leaves twice-lost results pending without a failure or repeat instruction',async()=>{
+  const f=fixture();f.h._haDeviceHistoryApi=1;f.h._devicePositionHistory=new CommandStack(50);
+  const history=new DeviceStructureHistory(f.h),editor=new DeviceCopyEditor(f.h,undefined,undefined,history);
+  f.h.transport=()=>Promise.reject(new Error('wire reply lost'));
+  await editor.copyDevice(f.h._devices[0]);
+  assert.equal(history.needsResolution,true);assert.equal(f.h._devicePositionBusy,true);
+  assert.match(history.pending,/not confirmed/);assert.deepEqual(f.toasts,[]);
+  const writes=f.messages.filter(row=>row.type==='houseplan/marker/copy');
+  assert.equal(writes.length,2);assert.equal(writes[0].operation_id,writes[1].operation_id);
+  history.retire();
 });

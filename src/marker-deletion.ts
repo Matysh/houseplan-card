@@ -148,7 +148,7 @@ export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: stri
     await commitDeletion(runtime, [{ id, binding }]);
     if (host._configWriteContext.current(claim, host.hass)) host._showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
   } catch (error) {
-    if (current() && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (current() && !runtime.deviceStructure.needsResolution && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }
 
@@ -184,7 +184,7 @@ export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<voi
   } catch (error) {
     if (!current()) return;
     if (host._markerDialog === pending) host._markerDialog = { ...pending, busy: false };
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (!runtime.deviceStructure.needsResolution && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }
 
@@ -228,6 +228,6 @@ export async function deleteInboxSelection(
   } catch (error) {
     if (!current()) return;
     if (host._deviceInbox === pending) host._deviceInbox = { ...pending, busy: undefined };
-    if (!isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
+    if (!runtime.deviceStructure.needsResolution && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');
   }
 }

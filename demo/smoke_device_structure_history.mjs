@@ -41,6 +41,15 @@ const copy=async()=>{
   await card.locator('[data-hp="device-copy"]').click();
 };
 const history=async direction=>{await card.locator(`[data-device-position-history="${direction}"]`).click();await settle();};
+const unknownNotice=async label=>{
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  check(`${label}-unknown-status`,await card.locator('[data-hp="device-structure-pending"]').innerText(),
+    'Saving is not confirmed yet. Check the result of the operation.');
+  const notices=await card.locator('[data-hp="toast"]').evaluateAll(nodes=>nodes.map(node=>({id:node.dataset.id,text:node.textContent})));
+  check(`${label}-no-false-failure-or-raw-exception`,notices.some(notice=>
+    ['device.copy_failed','toast.error','history.device_structure_conflict'].includes(notice.id)
+      || notice.text.includes('controlled lost reply')),false);
+};
 const before=await snapshot();
 await page.evaluate(()=>window.__structureHold=true);
 await copy();await page.waitForFunction(()=>typeof window.__structureRelease==='function');
@@ -122,6 +131,7 @@ check('catalog-undo-restores-positions',[batchUndo.layout.v_source,batchUndo.lay
 const unknownBefore=await snapshot();
 await page.evaluate(()=>window.__structureLose=2);await copy();
 await card.locator('[data-hp="device-structure-reconcile"]').waitFor({state:'visible'});
+await unknownNotice('copy');
 check('unknown-result-no-premature-command',(await snapshot()).undo,unknownBefore.undo);
 check('unknown-result-keeps-conflicting-history-disabled',await card.locator('[data-device-position-history="undo"]').isDisabled(),true);
 await card.locator('[data-hp="device-structure-reconcile"]').click();await settle();
@@ -129,6 +139,34 @@ const reconciled=await snapshot();
 check('explicit-result-check-records-one-command',reconciled.undo,unknownBefore.undo+1);
 check('explicit-result-check-creates-one-copy',reconciled.config.markers.length,unknownBefore.config.markers.length+1);
 check('explicit-result-check-keeps-one-operation-id',await page.evaluate(()=>new Set(window.__structureWrites.slice(-3).map(row=>row.operation_id)).size),1);
+// Each public Delete caller must keep the same unconfirmed-result guidance.
+const unknownCopy=reconciled.config.markers.find(marker=>!unknownBefore.config.markers.some(old=>old.id===marker.id));
+for(const entry of ['properties','dialog','catalog']) {
+  await page.addStyleTag({content:`#host{width:${entry==='dialog'?'800px':'100%'}}`});
+  const beforeDelete=await snapshot();
+  if(entry==='catalog') {
+    await card.locator('[data-hp="tool"][data-tool="device-inbox"]').click();
+    await card.locator('.device-inbox-search').fill(unknownCopy.name);
+    await card.locator(`.device-inbox-row[data-key="virtual:${unknownCopy.id}"] input[type="checkbox"]`).check();
+    await card.locator('.device-inbox-batch-delete').click();
+  } else {
+    await card.locator(`[data-hp="device"][data-id="${unknownCopy.id}"]`).click();
+    await card.locator(`[data-action="${entry==='dialog'?'marker':'properties'}-delete"]`).click();
+  }
+  await page.evaluate(()=>window.__structureLose=2);
+  await card.locator('hp-confirm [data-hp="dialog-confirm"]').click();
+  await card.locator('[data-hp="device-structure-reconcile"]').waitFor({state:'visible'});
+  await unknownNotice(`delete-${entry}`);
+  check(`delete-${entry}-no-premature-command`,(await snapshot()).undo,beforeDelete.undo);
+  if(entry!=='properties')await page.keyboard.press('Escape');
+  await card.locator('[data-hp="device-structure-reconcile"]').click();await settle();
+  const checked=await snapshot();
+  check(`delete-${entry}-check-records-one-command`,checked.undo,beforeDelete.undo+1);
+  check(`delete-${entry}-check-confirms-removal`,checked.config.markers.some(marker=>marker.id===unknownCopy.id),false);
+  check(`delete-${entry}-check-keeps-operation-id`,await page.evaluate(()=>new Set(window.__structureWrites.slice(-3).map(row=>row.operation_id)).size),1);
+  await history('undo');
+  check(`delete-${entry}-undo-restores-exact-marker`,(await snapshot()).config.markers.find(marker=>marker.id===unknownCopy.id),unknownCopy);
+}
 check('all-history-service-free',(await snapshot()).services,before.services);
 mkdirSync('artifacts/1073',{recursive:true});
 writeFileSync('artifacts/1073/copy-profile.json',JSON.stringify(await page.evaluate(()=>window.__card._editorRuntime.deviceCopy.lastProfile),null,2));

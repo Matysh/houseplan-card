@@ -842,7 +842,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // #1081: measured accepted editor controls, pointer ownership and shared list
 // lifecycle add 2066 B gzip (354821 -> 356887). Exact recalibration only;
 // preserve the 2000-B band, absolute initial-View wall and graph ownership.
-export const LAZY_EDITOR_GZIP_CEILING = 356_887;
+// #1073 r2: separate matched f7050434/candidate builds:356892 ->359343 B.
+// Carry only the2451-B task delta (356887 ->359338), preserving the inherited
+// 5-B gap, the2000-B band, initial View limits and all other graph references.
+export const LAZY_EDITOR_GZIP_CEILING = 359_338;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

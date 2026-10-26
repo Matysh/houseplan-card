@@ -178,6 +178,7 @@ export class DeviceStructureHistory {
       });
     } catch (error) {
       if (!this.current(claim)) return;
+      if (this.needsResolution) return;
       const code = (error as { code?: string }).code;
       if (code === 'device_history_conflict' || code === 'device_history_unavailable') {
         h._devicePositionHistory.removeWhere(item => item === command);

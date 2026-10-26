@@ -42,6 +42,16 @@ Only the task's own deltas enter the references, retaining the inherited
 21-reference/538-byte/848-gzip-byte gaps and every existing band/absolute
 budget. These numbers do not claim a loading-speed improvement.
 
+After the accepted UI Kit merge, r2 compares separate Windows Node22.23.4
+builds of `dev@f7050434` and the combined candidate: hostRefs6291→6359,
+raw dist3523543→3538089B, lazy editor356892→359343B gzip. References carry
+only the task's own68/14546/2451 deltas, preserving that dev's1/275/5 gaps
+and every existing band/absolute guard. The guarded four-entry device menu
+and hidden-source eligibility remain accepted behavior. Native twice-lost
+Copy and all three Delete entry points assert the persistent result check,
+no false failure/repeat instruction or raw exception, and same-ID recovery.
+Ordinary definitive refusals still retain their translated failure message.
+
 `demo/smoke_wall_smooth_joint.mjs` (#1076) checks native `isPointInStroke` and
 fill on the exact reported smooth joint, plus a real free cap, pan/zoom,
 editor, 2.5D and reconstruction after reload. `HP_JOINT_DPR=2` selects a second

@@ -104,6 +104,16 @@ test('#1073 a definitive replay refusal resolves unknown outcome and retires onl
   }
 });
 
+test('#1073 a twice-lost structural Undo retains only its unknown status, without a false conflict toast',async()=>{
+  const f=fixture();f.record();const command=f.h._devicePositionHistory.peekUndo();
+  f.h.transport=()=>Promise.reject(new Error('wire reply lost'));
+  await f.history.restore('undo',command);
+  assert.equal(f.history.needsResolution,true);assert.match(f.history.pending,/not confirmed/);
+  assert.equal(f.h._devicePositionBusy,true);assert.deepEqual(f.toasts,[]);
+  assert.equal(f.h._devicePositionHistory.peekUndo(),command);
+  f.history.retire();
+});
+
 test('#1073 user/connection/mode changes during structural confirmation cannot adopt or consume history',async()=>{
   for(const change of [h=>h._mode='view',h=>h._canEdit=false,h=>{h.hass={...h.hass,connection:{}};h._configWriteContext.observe(h.hass);}]) {
     const f=fixture();f.record();const command=f.h._devicePositionHistory.peekUndo(),reply=deferred();

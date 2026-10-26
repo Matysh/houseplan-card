@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'device-history-ambiguous-copy-failure-toast-1073',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-copy-editor.test.mjs',
+    because: '#1073 r2 AC5: the real Copy caller and history controller receive two ordinary lost-reply errors. Its result remains unknown, so no false failure/repeat toast may accompany the persistent result check. Direct caller unit; registered only, nightly execution.',
+    patches: [{ file: 'src/device-copy-editor.ts',
+      find: '      if (this.history?.needsResolution) return;',
+      replace: '      if (false) return;' }],
+  },
+  {
     id: 'decor-preview-keeps-lost-capture-draft-1080',
     guard: 'node demo/smoke_decor_preview_ownership.mjs',
     because: '#1080 AC4: real pointer capture loss must remove a drawn rect/ellipse preview without saving it; Node-only rendering cannot observe the browser capture lifecycle. Registered only; nightly execution.',
