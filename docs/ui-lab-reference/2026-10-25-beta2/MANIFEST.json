@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "preparedOn": "2026-10-26",
+  "baseline": "v1.83.0-beta.2",
+  "baselineCommit": "ef4eac9c3568f7831e43d2b375552954efc8a9b3",
+  "originalAcceptance": "2026-10-25",
+  "purpose": "Cross-PC transport of accepted UI Lab reference; not product implementation",
+  "issues": [
+    1081,
+    1020,
+    1080
+  ],
+  "privateDataIncluded": false,
+  "originalScreenshotsIncluded": false,
+  "syntheticFixture": "demo/ui-lab/fixture.json at pinned baseline",
+  "acceptedCopies": [
+    {
+      "path": "accepted/app.mjs",
+      "sourcePath": "app.mjs"
+    },
+    {
+      "path": "accepted/overrides/color-picker-motion.mjs",
+      "sourcePath": "overrides/color-picker-motion.mjs"
+    },
+    {
+      "path": "accepted/overrides/confirmation-kit.mjs",
+      "sourcePath": "overrides/confirmation-kit.mjs"
+    },
+    {
+      "path": "accepted/overrides/decor-selection-frames.mjs",
+      "sourcePath": "overrides/decor-selection-frames.mjs"
+    },
+    {
+      "path": "accepted/overrides/device-context-actions.mjs",
+      "sourcePath": "overrides/device-context-actions.mjs"
+    },
+    {
+      "path": "accepted/overrides/editor-grid-coverage.mjs",
+      "sourcePath": "overrides/editor-grid-coverage.mjs"
+    },
+    {
+      "path": "accepted/overrides/first-space-converter.mjs",
+      "sourcePath": "overrides/first-space-converter.mjs"
+    },
+    {
+      "path": "accepted/overrides/furniture-placement-pan.mjs",
+      "sourcePath": "overrides/furniture-placement-pan.mjs"
+    },
+    {
+      "path": "accepted/overrides/hidden-device-status.mjs",
+      "sourcePath": "overrides/hidden-device-status.mjs"
+    },
+    {
+      "path": "accepted/overrides/houseplan-card.css",
+      "sourcePath": "overrides/houseplan-card.css"
+    },
+    {
+      "path": "accepted/overrides/hp-dialog.css",
+      "sourcePath": "overrides/hp-dialog.css"
+    },
+    {
+      "path": "accepted/overrides/plan-converter.mjs",
+      "sourcePath": "overrides/plan-converter.mjs"
+    },
+    {
+      "path": "accepted/overrides/space-dialog.mjs",
+      "sourcePath": "overrides/space-dialog.mjs"
+    },
+    {
+      "path": "JOURNAL.md",
+      "sourcePath": "UI-CHANGES-v1.83.0-beta.2-20261025.md"
+    }
+  ],
+  "files": [
+    {
+      "path": "accepted/app.mjs",
+      "bytes": 13083,
+      "sha256": "0a30109d32b382df9bc971eb9ec8793482dbbc46f040b2d2c1827379aaca4c2e"
+    },
+    {
+      "path": "accepted/overrides/color-picker-motion.mjs",
+      "bytes": 3210,
+      "sha256": "15b29564a2dbddf9fa9b196a7d6b08f147e015956edfa97a77ec31c45cd8fd30"
+    },
+    {
+      "path": "accepted/overrides/confirmation-kit.mjs",
+      "bytes": 1537,
+      "sha256": "f745e0e45de3e4720d8696a2dd3de0e7c05cc447b2d894d7c9ef29564282acef"
+    },
+    {
+      "path": "accepted/overrides/decor-selection-frames.mjs",
+      "bytes": 1591,
+      "sha256": "db917dcfa2546ae75526d6304ee5994ca73cc3a55824b56a326517431f059d93"
+    },
+    {
+      "path": "accepted/overrides/device-context-actions.mjs",
+      "bytes": 4509,
+      "sha256": "f859feb928048454b63b6aad8c5bebbd9f41020d6dd48bc6ed73fd4dd0f26e2f"
+    },
+    {
+      "path": "accepted/overrides/editor-grid-coverage.mjs",
+      "bytes": 1857,
+      "sha256": "abc6e37ec32a566f3c05f1ade76fe54927e245d58bfd465330f1fb21c525c0a7"
+    },
+    {
+      "path": "accepted/overrides/first-space-converter.mjs",
+      "bytes": 2668,
+      "sha256": "c8080a0e2d07eb7c715edebdd5a8d7e3051a38fa24125903423c7129c636235f"
+    },
+    {
+      "path": "accepted/overrides/furniture-placement-pan.mjs",
+      "bytes": 3572,
+      "sha256": "b9f5e3a0b73c04ab5931ac56bcee44c9d127ec5333b1c7eae8896eb8032b3067"
+    },
+    {
+      "path": "accepted/overrides/hidden-device-status.mjs",
+      "bytes": 897,
+      "sha256": "5847f4e03fe14ab935ba0207295e909fa7a5b21d40e8fc7ac0f1f92d5af1ba01"
+    },
+    {
+      "path": "accepted/overrides/houseplan-card.css",
+      "bytes": 4462,
+      "sha256": "43081b56ba54dddd73bd9022c9ca7057ae642c2257337559863772174fdee19d"
+    },
+    {
+      "path": "accepted/overrides/hp-dialog.css",
+      "bytes": 338,
+      "sha256": "cc2f5773391a75bb26d306f8113f68740ddd438b68e29595e007e28ac0adecb1"
+    },
+    {
+      "path": "accepted/overrides/plan-converter.mjs",
+      "bytes": 283,
+      "sha256": "35b2c309ebeb2addde8cdd9e2818797ac48e7b7bb9eb8d565264a4fb3e5be310"
+    },
+    {
+      "path": "accepted/overrides/space-dialog.mjs",
+      "bytes": 2688,
+      "sha256": "122779f1daa338aa91fc140dba6dc8a80b4d3a8346997778a1af0a314afa1a7d"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 847,
+      "sha256": "635e957fdb098209b24ae8f7d24f905d8bcba4baae0cdb0ab9251a8df98583fb"
+    },
+    {
+      "path": "install.mjs",
+      "bytes": 1194,
+      "sha256": "c3e8565288c23bb55be82122c25d9b99e66c51a354ef4c9bc98a2031c11b1770"
+    },
+    {
+      "path": "JOURNAL.md",
+      "bytes": 72711,
+      "sha256": "d774c2f8f81d667e9c57d3eaa0bc0368dd36fafe302b8622119bd3f24b2ead1c"
+    },
+    {
+      "path": "prepare-reference.mjs",
+      "bytes": 2197,
+      "sha256": "080e790011d4fa02b45bc7920808dbfaf139dcb73052a6087110e0aee5f579cf"
+    },
+    {
+      "path": "README.md",
+      "bytes": 8111,
+      "sha256": "7bd0efd53009b995d1a2a1396f76cd3fb43cf4a5060d482d30676163eab0084f"
+    },
+    {
+      "path": "reference-theme.css",
+      "bytes": 7580,
+      "sha256": "3645759d9ba001fd74080e6c650cfb7c4caf539cc13c09777398b6524f7354c9"
+    },
+    {
+      "path": "serve-reference.mjs",
+      "bytes": 4769,
+      "sha256": "572dcfd353f270009e03177885ee7d245a77579da4d98f25d5891a548cb511b2"
+    },
+    {
+      "path": "SOURCE-MANIFEST.json",
+      "bytes": 5197,
+      "sha256": "9cc802c7feb8042969f60e806690826f7e43a3445b945ee4aa88265dc8103507"
+    },
+    {
+      "path": "verify-package.mjs",
+      "bytes": 990,
+      "sha256": "abda6e6fe39d31f769841d43b49a91d655e9d297ae34f6631360927be791da5c"
+    }
+  ]
+}

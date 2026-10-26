@@ -1,0 +1,152 @@
+.tabs:not(:has([data-hp="space-tab"] ~ [data-hp="space-tab"]))
+  .tab[data-reorderable]:not(.dragging) {
+  cursor: pointer;
+}
+
+hp-dialog[data-kind="space"] .hpf-plan-image:has(> .planname.muted) {
+  align-items: flex-end;
+}
+
+.stage[data-lab-furniture-panning],
+.stage[data-lab-furniture-panning] * {
+  cursor: grabbing !important;
+}
+
+/* #1080: only one layer may paint the furniture ghost. A full render clears
+   the live root; CSS then hands painting back to the settled layer immediately. */
+.stage.mode-decor:has([data-hp-live-editor] .furniture-placement-preview)
+  .furniture-placement-preview:not([data-hp-live-editor] *) {
+  visibility: hidden;
+}
+
+hp-dialog.danger-confirm-dialog.ui-dialog {
+  --hp-dialog-icon-size: 28px;
+}
+hp-dialog.danger-confirm-dialog.ui-dialog .danger-confirm-body {
+  gap: 12px;
+}
+hp-dialog.danger-confirm-dialog.ui-dialog .danger-confirm-object {
+  font-size: 14px;
+  line-height: 1.45;
+}
+hp-dialog.danger-confirm-dialog.ui-dialog .danger-confirm-footer {
+  border-top: 1px solid var(--hpf-line, var(--divider-color));
+}
+
+/* Hidden devices use the same status-dot geometry as the native new marker.
+   The hidden dot wins when a device has both statuses. */
+.dev[data-lab-hidden-status] > .newdot {
+  display: none;
+}
+.dev[data-lab-hidden-status]::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.12);
+  right: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * -0.12);
+  width: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.34);
+  height: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.34);
+  border-radius: 50%;
+  background: #9e9e9e;
+  border: 2px solid var(--card-background-color, var(--hp-bg));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Plan visibility belongs to the main toolbar, not the device-list filters. */
+hp-dialog.device-inbox-dialog .device-inbox-filter-help:has([data-field="device-catalog-show-all"]) {
+  display: none;
+}
+
+/* Space deletion warning: message first, destructive action on its own row. */
+hp-dialog[data-kind="space"] .hpf-callout:has([data-action="space-delete-devices"]) {
+  border-radius: 0;
+}
+hp-dialog[data-kind="space"] [data-action="space-delete-devices"] {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 12px;
+  white-space: normal;
+}
+
+/* #1020: shared converter hint for the empty screen and HA-floor selection. */
+.lab-plan-converter {
+  --hpf-accent: var(--primary-color, var(--hp-accent));
+  color: var(--secondary-text-color);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.lab-plan-converter a.hpf-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 160ms ease;
+}
+.lab-plan-converter a.hpf-link:is(:hover, :focus-visible) {
+  background: transparent;
+  color: color-mix(in srgb, var(--primary-color) 75%, var(--primary-text-color));
+}
+[data-hp="empty"] > .lab-plan-converter {
+  max-width: 620px;
+  margin: 24px auto 0;
+  text-align: center;
+}
+hp-dialog[data-kind="import"].ui-dialog {
+  --hp-dialog-wide-width: 610px;
+  --hp-dialog-icon-size: 32px;
+}
+hp-dialog[data-kind="import"].ui-dialog .body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 20px;
+}
+hp-dialog[data-kind="import"].ui-dialog .rhint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--secondary-text-color);
+}
+hp-dialog[data-kind="import"].ui-dialog .floorrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+  font-size: 14px;
+  line-height: 24px;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+hp-dialog[data-kind="import"].ui-dialog .floorrow:hover {
+  background: var(--hpf-canvas, var(--secondary-background-color));
+}
+hp-dialog[data-kind="import"].ui-dialog .floorrow input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+hp-dialog[data-kind="import"].ui-dialog .floorlvl {
+  margin-inline-start: auto;
+  color: var(--secondary-text-color);
+}
+hp-dialog[data-kind="import"].ui-dialog .lab-plan-converter {
+  margin: 20px 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-plan-converter a.hpf-link,
+  hp-dialog[data-kind="import"].ui-dialog .floorrow { transition: none; }
+}

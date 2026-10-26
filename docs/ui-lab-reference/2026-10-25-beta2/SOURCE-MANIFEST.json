@@ -1,0 +1,167 @@
+{
+  "acceptedOn": "2026-10-25",
+  "ownerAcceptance": "фиксируй всё, заводи задачу на реализацию всех пунктов, кроме тех, которые относятся к отдельным задачам - по ним обнови эти задачи.",
+  "baseline": "v1.83.0-beta.2",
+  "baselineCommit": "ef4eac9c3568f7831e43d2b375552954efc8a9b3",
+  "scope": "Complete accepted local UI Lab cycle; product implementation filed, not executed",
+  "changes": [
+    "UI-032",
+    "UI-033",
+    "UI-034",
+    "UI-035",
+    "UI-036",
+    "UI-037",
+    "UI-038",
+    "UI-039",
+    "UI-040",
+    "UI-041",
+    "UI-042",
+    "UI-043",
+    "UI-044",
+    "UI-045",
+    "UI-046"
+  ],
+  "superseded": {
+    "UI-033": "UI-042"
+  },
+  "issueAssignments": {
+    "1080": [
+      "UI-038"
+    ],
+    "1020": [
+      "UI-046"
+    ],
+    "1081": [
+      "UI-032",
+      "UI-034",
+      "UI-035",
+      "UI-036",
+      "UI-037",
+      "UI-039",
+      "UI-040",
+      "UI-041",
+      "UI-042",
+      "UI-043",
+      "UI-044",
+      "UI-045"
+    ]
+  },
+  "verification": "Existing checks and limitations are recorded in the journal; no new product test or performance claim at handoff.",
+  "files": [
+    {
+      "path": "app.mjs",
+      "sha256": "0a30109d32b382df9bc971eb9ec8793482dbbc46f040b2d2c1827379aaca4c2e",
+      "bytes": 13083
+    },
+    {
+      "path": "lab-config.json",
+      "sha256": "53a2619e1bcc7211a1c19c6e34893d6c6994053122861ff9ad194b3bdd2d0634",
+      "bytes": 427
+    },
+    {
+      "path": "CURRENT-UI-CYCLE.json",
+      "sha256": "e1e3e495a50806afbf15101cee8c58b67ee0f4eb772b6174bfaec8719b62e0e9",
+      "bytes": 11492
+    },
+    {
+      "path": "BASELINE-v1.83.0-beta.2-20261025.md",
+      "sha256": "c60cb4faa350333bae72843ea2c2dab35e7939dbea77e09900afcd953329f1c8",
+      "bytes": 3363
+    },
+    {
+      "path": "UI-CHANGES-v1.83.0-beta.2-20261025.md",
+      "sha256": "d774c2f8f81d667e9c57d3eaa0bc0368dd36fafe302b8622119bd3f24b2ead1c",
+      "bytes": 72711
+    },
+    {
+      "path": "overrides/houseplan-card.css",
+      "sha256": "43081b56ba54dddd73bd9022c9ca7057ae642c2257337559863772174fdee19d",
+      "bytes": 4462
+    },
+    {
+      "path": "overrides/hp-dialog.css",
+      "sha256": "cc2f5773391a75bb26d306f8113f68740ddd438b68e29595e007e28ac0adecb1",
+      "bytes": 338
+    },
+    {
+      "path": "overrides/plan-converter.mjs",
+      "sha256": "35b2c309ebeb2addde8cdd9e2818797ac48e7b7bb9eb8d565264a4fb3e5be310",
+      "bytes": 283
+    },
+    {
+      "path": "overrides/decor-selection-frames.mjs",
+      "sha256": "db917dcfa2546ae75526d6304ee5994ca73cc3a55824b56a326517431f059d93",
+      "bytes": 1591
+    },
+    {
+      "path": "overrides/color-picker-motion.mjs",
+      "sha256": "15b29564a2dbddf9fa9b196a7d6b08f147e015956edfa97a77ec31c45cd8fd30",
+      "bytes": 3210
+    },
+    {
+      "path": "overrides/space-dialog.mjs",
+      "sha256": "122779f1daa338aa91fc140dba6dc8a80b4d3a8346997778a1af0a314afa1a7d",
+      "bytes": 2688
+    },
+    {
+      "path": "overrides/furniture-placement-pan.mjs",
+      "sha256": "b9f5e3a0b73c04ab5931ac56bcee44c9d127ec5333b1c7eae8896eb8032b3067",
+      "bytes": 3572
+    },
+    {
+      "path": "overrides/device-context-actions.mjs",
+      "sha256": "f859feb928048454b63b6aad8c5bebbd9f41020d6dd48bc6ed73fd4dd0f26e2f",
+      "bytes": 4509
+    },
+    {
+      "path": "overrides/confirmation-kit.mjs",
+      "sha256": "f745e0e45de3e4720d8696a2dd3de0e7c05cc447b2d894d7c9ef29564282acef",
+      "bytes": 1537
+    },
+    {
+      "path": "overrides/hidden-device-status.mjs",
+      "sha256": "5847f4e03fe14ab935ba0207295e909fa7a5b21d40e8fc7ac0f1f92d5af1ba01",
+      "bytes": 897
+    },
+    {
+      "path": "overrides/editor-grid-coverage.mjs",
+      "sha256": "abc6e37ec32a566f3c05f1ade76fe54927e245d58bfd465330f1fb21c525c0a7",
+      "bytes": 1857
+    },
+    {
+      "path": "overrides/first-space-converter.mjs",
+      "sha256": "c8080a0e2d07eb7c715edebdd5a8d7e3051a38fa24125903423c7129c636235f",
+      "bytes": 2668
+    },
+    {
+      "path": "handoff/issue-1081.md",
+      "sha256": "6517f6dd53e27a545d2a77237abc456cb1a19b511110127454ff8afe81699d1e",
+      "bytes": 17411
+    },
+    {
+      "path": "handoff/issue-1020.md",
+      "sha256": "64dccf0c6c87a0f261040f2b92fa2b99c8dd59241e99ae6fc719eba511c2bf12",
+      "bytes": 11001
+    },
+    {
+      "path": "handoff/issue-1080.md",
+      "sha256": "65e838bce899c77d0b5f7457be6f2a36b485063b3a00aaee5e714690029342e1",
+      "bytes": 9281
+    },
+    {
+      "path": "evidence/space-delete-banner-preview-20261025.png",
+      "sha256": "91f731450117409008bf835acd432ef803e63ed67a3e34b8acffc86cdd8a4431",
+      "bytes": 52878
+    },
+    {
+      "path": "evidence/first-space-floors-preview-1020.png",
+      "sha256": "224ef3f7b9300901ddae883df1368c2d2c7355645561dc6f5650ea3de061e27f",
+      "bytes": 35120
+    },
+    {
+      "path": "evidence/first-space-empty-preview-1020.png",
+      "sha256": "81fe964b1f63b7cdcb95f0e0d63e36bbbeae67aa43925020432bd657a9ff3a26",
+      "bytes": 22517
+    }
+  ]
+}
