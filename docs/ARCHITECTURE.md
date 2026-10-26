@@ -41,8 +41,10 @@ flagged rooms; actual exterior spans seed the flood. Innermost ownership handles
 nested islands independently of room order. Flat and 2.5D share that access fact,
 receiver exclusion and contour-only zero-wall filtering. Independent physical
 obstacles retain their shadows. Canonical masonry, paper, fills and artificial
-lighting are not filtered. The existing floor-content cache key includes the
-sparse room flag, so a saved/foreign change rebuilds sunlight without HA-tick work.
+lighting are not filtered. A separate room-setting input moves the sunlight key;
+physical and artificial-light projections omit that flag while durable history
+retains it. A first saved/foreign change rebuilds sunlight without cooling walls
+or floors; unrelated HA ticks perform no topology work.
 
 Historical vacuum preview (#999) has one memory-only `VacuumHistory` owner per
 card. Selection, pending Show and immutable shown material are separate; closing

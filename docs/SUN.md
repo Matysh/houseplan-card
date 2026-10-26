@@ -164,8 +164,11 @@ This is a sunlight-only classification shared by Flat and 2.5D, retaining the
 normal compass, horizon, aperture and receiving-contour rules. Only contour
 zero-wall barriers owned solely by the excluded area lose their solar shadows;
 independent walls and columns keep theirs. Artificial-light barriers, masonry,
-paper, floor area and fills stay unchanged. The room flag is part of the existing
-floor-content sunlight key; unrelated HA ticks perform no topology rebuild.
+paper, floor area and fills stay unchanged. A separate room-setting input moves
+the sunlight key. Physical and artificial-light record projections omit only
+this flag (normalizing an empty room settings object to absence); the saved
+record/history retains it. Even a first flag change keeps physical caches warm.
+Unrelated HA ticks perform no topology rebuild.
 
 ### Ordinary window rules
 

@@ -430,7 +430,9 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // measure341095 ->344467 B (+3372,0.99%). The owner permits a small measured
 // excess where further splitting costs disproportionately; history UI stays
 // lazy. Record the fact, retain the2000-B band and352000-B absolute wall.
-export const INITIAL_VIEW_GZIP_CEILING = 344_490;
+// #1078: shared solar topology and an independent room-setting cache key measure
+//346593 B gzip. Retain the2000-B band and352000-B absolute wall; editor UI is lazy.
+export const INITIAL_VIEW_GZIP_CEILING = 346_593;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

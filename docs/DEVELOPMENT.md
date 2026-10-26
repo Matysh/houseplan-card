@@ -52,6 +52,12 @@ compares actual Glow/LED clip geometry with both room solar flags enabled.
 History/Optimize and support-package-v2 tests retain the exact boolean through
 their real owners; full/space import retains unknown settings, while plan-only
 and support projections keep their established closed allowlists.
+The first false/true room-flag change is checked before any prior toggle can
+populate the physical cache pool. Only the solar build counter may increase;
+wall union, inner contours, clean floor and physical bodies must remain warm.
+The dedicated solar key retains the flag while physical projections omit it;
+the history projection remains complete. Ordinary units retain unknown structural
+settings and the accepted backend/history snapshots still contain exact flags.
 
 ## Background group-style latency (#1071)
 

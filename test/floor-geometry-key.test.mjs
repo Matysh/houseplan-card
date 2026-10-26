@@ -6,7 +6,7 @@ import test from 'node:test';
 
 import {
   floorGeometryKeyReader, floorPoolEntry, floorRecordKeyMemo, openingWallIndexKey, physicalBodiesKey,
-  sunGeometryKey, WALL_UNION_POOL_LIMIT, wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
+  sunGeometryKey, sunRoomSettingsKey, WALL_UNION_POOL_LIMIT, wallUnionKey, wallUnionPoolEntry, writeWallUnionPool,
 } from '../test-build/floor-geometry-key.js';
 import { lightGeometryFingerprint } from '../test-build/glow-scene.js';
 import { computeSunRays } from '../test-build/sun.js';
@@ -16,6 +16,23 @@ import { openingWallIndex } from '../test-build/wall-thickness.js';
 const record = (id, cm = 15) => ({
   id, cell_cm: 5, rooms: [{ id: `${id}1`, poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5]] }],
   walls: [{ key: 'k', cm, a: [0.1, 0.1], b: [0.5, 0.1] }],
+});
+
+test('#1078 solar flags move the solar key without making physical or artificial geometry cold', () => {
+  const floor=record('A'),original=structuredClone(floor);
+  const source={_cfgEpoch:1,_renderCfg:{spaces:[floor]},_curSpaceCfg:floor};
+  const reader=floorGeometryKeyReader(source),physical=reader('A'),light=lightGeometryFingerprint(floor,5,1000);
+  const solar=sunRoomSettingsKey(floor.rooms);
+  for(const enabled of [true,false]) {
+    floor.rooms[0].settings={sun_transparent:enabled};source._cfgEpoch++;
+    assert.equal(reader('A'),physical);
+    assert.equal(lightGeometryFingerprint(floor,5,1000),light);
+    assert.equal(sunRoomSettingsKey(floor.rooms)===solar,!enabled);
+    assert.notEqual(contentFingerprint(floor),contentFingerprint(original),'the durable record/history retains the real flag');
+  }
+  floor.rooms[0].settings.future_physics={keep:true};source._cfgEpoch++;
+  assert.notEqual(reader('A'),physical,'unknown structural settings retain their conservative invalidation');
+  assert.notEqual(lightGeometryFingerprint(floor,5,1000),light);
 });
 
 const spied = () => {

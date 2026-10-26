@@ -28,6 +28,19 @@ try {
   const expected='[["W","R"]]';
   let state=await inspect();out.chainFlat=JSON.stringify(state.flat)===expected&&state.polygons>0;
   await capture('flat-chain');
+  const initialBuilds=state.builds;
+  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{
+    const room=cfg.spaces[0].rooms.find(r=>r.id==='T1');
+    room.settings={...room.settings,sun_transparent:false};
+  }));
+  state=await inspect();
+  out.coldSolarOnlyInvalidation=state.flat.length===0&&state.builds.sunRays>initialBuilds.sunRays&&
+    Object.keys(initialBuilds).filter(key=>!['sunRays','isoSun'].includes(key)).every(
+      key=>state.builds[key]===initialBuilds[key]);
+  await page.evaluate(()=>window.__hpTest.setServerConfig(cfg=>{
+    cfg.spaces[0].rooms.find(r=>r.id==='T1').settings.sun_transparent=true;
+  }));
+  state=await inspect();
   const before=state.builds;
   await page.evaluate(async()=>{const c=window.__card;c.hass={...c.hass,states:{...c.hass.states}};await window.__hpTest.settled();});
   state=await inspect();out.unrelatedTickWarm=state.builds.sunRays===before.sunRays;

@@ -9,8 +9,8 @@
  * ≈0.6 s. A floor's geometry reads only its own config record (rooms, walls,
  * openings, partitions, columns, stairs, `cell_cm`, frame — `spaceModels`)
  * and constants, so the key is a content fingerprint of that record. It is
- * complete for physical inputs: decor is annotation and is excluded (#1071);
- * every other record field, including unknown ones, remains significant.
+ * complete for physical inputs: decor is annotation (#1071) and the room's
+ * sun_transparent flag is solar-only (#1078). Unknown fields remain significant.
  * An edit of another floor cannot change it.
  *
  * The geometry reads the model of the floor it is given next to the CURRENT
@@ -30,7 +30,7 @@ import { lruRead, lruWrite } from './card-runtime';
 import { lightGeometryFingerprint } from './glow-scene';
 import { roomPoly } from './logic';
 import { contentFingerprint } from './visual-continuity';
-import { structuralSpaceRecord } from './structural-space-record';
+import { physicalSpaceRecord } from './structural-space-record';
 
 /** The card members the key reads; the card passes itself. */
 export interface FloorKeySource {
@@ -80,10 +80,10 @@ export function floorRecordKeyMemo(
 }
 
 const structuralFingerprint = (records: unknown): string => contentFingerprint(
-  Array.isArray(records) ? records.map(record => structuralSpaceRecord(record)) : structuralSpaceRecord(records),
+  Array.isArray(records) ? records.map(record => physicalSpaceRecord(record)) : physicalSpaceRecord(records),
 );
 
-/** A structural reader `spaceId → key`, excluding only decor by default,
+/** A structural reader `spaceId → key`, excluding decor and solar-only room flags,
  * remembered per epoch and per source record.
  * A consumer may fingerprint a narrower, proved-independent projection;
  * both model/current records still enter that projection on a mismatch. */
@@ -202,3 +202,7 @@ export const sunGeometryKey = (
   index, bodies, windows.map((w) => `${w.id}:${w.x},${w.y},${w.angle},${w.length}`).join(';'),
   ...sun, zero.style, zero.barriers.join(';'),
 ].join('|');
+
+/** Kept outside the physical floor key: only the solar classification reads it. */
+export const sunRoomSettingsKey = (rooms: readonly { id?: string; settings?: { sun_transparent?: boolean } | null }[]): string =>
+  JSON.stringify(rooms.flatMap(room => room.id && room.settings?.sun_transparent === true ? [room.id] : []).sort());

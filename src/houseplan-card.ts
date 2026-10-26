@@ -313,7 +313,7 @@ import type { DecorShape, DecorStyle } from './editors/decor/types';
 import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
 import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
 import {
-  floorGeometryKeyReader, floorPoolEntry, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, wallUnionKey,
+  floorGeometryKeyReader, floorPoolEntry, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, sunRoomSettingsKey, wallUnionKey,
   wallUnionPoolEntry, writeWallUnionPool, type FloorKeySource, type SunWindow,
 } from './floor-geometry-key';
 import {
@@ -10106,7 +10106,7 @@ export class HouseplanCard extends LitElement {
       .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
     const key = sunGeometryKey(this._openingWallIndexFor(space, zeroWalls.contour).key,
       physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch), windows,
-      [sun.azimuth, sun.elevation, north, origin], zeroWalls);
+      [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms)], zeroWalls);
     const isoSun = this._renderProjection === 'iso' ? this._isoSceneRuntime : null;
     if (isoSun) { // #649 п.2: the 2.5D View paints soft light along the sun instead of the Flat wedges
       const isoKey = `${key}|${this._cellCm}|${[...(this._isoLightFloors ?? [])].join(',')}`;
