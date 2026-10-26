@@ -73,7 +73,7 @@ try {
   await inspect('editor');
   await page.evaluate(() => window.__hpTest.setMode('view'));
   assert.equal(await stored(), before, 'view/editor/zoom/pan do not write plan or revisions');
-  await page.evaluate(() => window.__hpTest.setVolumetricView(true));
+  await page.evaluate(async () => { await window.__hpTest.setVolumetricView(true); });
   await page.waitForFunction(() => window.__card.renderRoot.querySelector('.iso-wall-top'));
   const iso = await page.evaluate(() => [...window.__card.renderRoot.querySelectorAll('.iso-wall-top')]
     .map(path => path.getAttribute('d')));

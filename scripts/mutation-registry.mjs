@@ -4956,12 +4956,12 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: "  for (const component of built.geometry.components) commands.push({\n"
-        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom)\n      .filter(hasPaintableRingArea).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
         + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });',
       replace: "  for (const component of [...built.geometry.components, ...built.geometry.components]) commands.push({\n"
-        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom)\n      .filter(hasPaintableRingArea).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
         + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });',
@@ -5141,12 +5141,12 @@ const MUTANT_DEFINITIONS = [
     }, {
       file: 'src/pdf/pdf-scene.ts',
       find: "  for (const component of built.geometry.components) commands.push({\n"
-        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom)\n      .filter(hasPaintableRingArea).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
         + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });',
       replace: "  for (const component of built.geometry.components) commands.push({\n"
-        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom)\n      .filter(hasPaintableRingArea).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
         + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });\n'
