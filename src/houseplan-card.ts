@@ -11110,7 +11110,7 @@ export class HouseplanCard extends LitElement {
         @contextmenu=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}" style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
-        <div class="head" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
+        <div class="head" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:${this._headerMenu.open ? 'visible' : 'hidden'}` : nothing}>
           ${this.panelHost ? nothing : html`<div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}

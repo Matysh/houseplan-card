@@ -54,6 +54,30 @@ try{
       'View canonical camera restores after a two-row header round trip');
     assert.ok(Math.hypot(...after.point.map((n,i)=>n-before.point[i]))<.1,'restored View has no painted point drift');
   }
-  writeFileSync('artifacts/plan-rotation-1070/phone-mode-trace.json',JSON.stringify(records,null,2));
+  // The existing gear remains usable during a running transition. Its popup
+  // must escape the interpolating header clip and permit a native retarget.
+  await page.setViewportSize({width:390,height:900});await wait();
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  const rapidBefore=await snapshot(),gear=card.locator('[data-hp="header-menu"]');
+  await gear.click();
+  const plan=await card.locator('[data-hp="header-menu-item"][data-id="mode-plan"]').boundingBox();
+  await page.mouse.click(plan.x+plan.width/2,plan.y+plan.height/2);
+  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('ha-card').dataset.hpMode==='plan');
+  const g=await gear.boundingBox();await page.mouse.click(g.x+g.width/2,g.y+g.height/2);
+  const menu=await page.evaluate(()=>{
+    const c=window.__card,s=c.renderRoot,items=[...s.querySelectorAll('[data-hp="header-menu-item"]')];
+    return{busy:c._modeTransitionBusy,overflow:getComputedStyle(s.querySelector('.head')).overflow,
+      hits:items.map(e=>{const r=e.getBoundingClientRect(),actual=s.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{id:e.dataset.id,hit:e===actual||e.contains(actual)};})};
+  });
+  writeFileSync('artifacts/plan-rotation-1070/mid-transition-menu.json',JSON.stringify(menu,null,2));
+  assert.ok(menu.busy,'Menu proof must exercise a running transition');
+  assert.equal(menu.overflow,'visible');assert.ok(menu.hits.length>2&&menu.hits.every(item=>item.hit));
+  await card.locator('[data-hp="header-menu-item"][data-id="mode-decor"]').click();await wait();
+  assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'decor');
+  await card.locator('.head [data-hp="editor-close"]').click();await wait();
+  const rapidAfter=await snapshot();
+  assert.equal(rapidAfter.camera.zoom,rapidBefore.camera.zoom);
+  assert.ok(Object.keys(rapidBefore.camera.view).every(k=>Math.abs(rapidBefore.camera.view[k]-rapidAfter.camera.view[k])<1e-9));
+  writeFileSync('artifacts/plan-rotation-1070/phone-mode-trace.json',JSON.stringify({records,menu},null,2));
   console.log('PASS',records.map(r=>({mode:r.mode,target:r.target,reduced:r.reduced,maxBudgetDelta:r.maxBudgetDelta,head:r.end.head})));
 }finally{await finish(browser);}

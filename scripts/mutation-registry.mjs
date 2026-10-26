@@ -129,6 +129,13 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
   },
   {
+    id: 'plan-rotation-animated-header-clips-menu-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: the real phone gear popup must remain fully hittable during the shared header transition and allow native retargeting; a Node camera model cannot see ancestor clipping. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "overflow:${this._headerMenu.open ? 'visible' : 'hidden'}", replace: 'overflow:hidden' }],
+  },
+  {
     id: 'plan-rotation-mobile-ignores-header-height-1070',
     guard: 'node demo/smoke_plan_rotation_mobile.mjs',
     because: '#1070 AC12: actual native mode frames must keep one header/chrome/stage height as the narrow editor gains a row; Node interpolation alone cannot observe responsive DOM height. Registered only; nightly execution.',
