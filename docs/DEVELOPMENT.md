@@ -5634,6 +5634,28 @@ Tests: `classify-base`, `promotion-range`, `validate-gate`, `merge-candidate` an
 `validate-workflow`. Night/release retain full policy and the v1 proof schema.
 
 
+## External documentation-link observations (#1083)
+
+`node scripts/check-docs.mjs --external --screenshots=warn` retains the original
+HEAD, redirect-follow, user agent and single 8s deadline. `LINK_OBSERVATION`
+records bounded metadata: request IDs, response statuses/redirect paths,
+DNS/TCP/TLS/headers events, elapsed time and safe error categories. There are
+no additional requests, retries, response-body reads, dispatcher changes or
+status/allowlist exceptions. Credentials, query strings, headers and raw errors
+are omitted; at most 64 events and 32 socket subscriptions are retained.
+
+Request events are bound by Undici request identity. Connection/socket events
+are host-filtered observations during the sequential probe, not proof that a
+particular pooled connection belongs to one redirect hop. Missing or clipped
+events are not an established failure phase. Historical server access records
+can prove a response was sent, not that its headers reached the client.
+Later success alone never establishes the cause of an earlier timeout.
+
+Ordinary tests: `node --test test/doc-link-observation.test.mjs
+test/docs-freshness.test.mjs`. The silent local HTTP peer checks the actual
+unchanged 8s budget. Registered negative witnesses are static-only in authoring;
+execution remains a nightly operation.
+
 ## Cross-branch CI proof registry (#981)
 
 `ci-proofs` is an orphan data branch excluded from every validation push entry.

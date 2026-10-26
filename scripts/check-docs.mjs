@@ -7,6 +7,7 @@ import { DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 import { captureScriptFingerprint, visualFingerprint } from './source-fingerprint.mjs';
 import { freshnessSink, screenshotsMode } from './docs-freshness.mjs';
 import { guideParityErrors } from './user-guide-parity.mjs';
+import { observeDocLink } from './doc-link-observation.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // `--external` — внешние ссылки судятся ошибкой; `--external=warn` — только
@@ -243,10 +244,7 @@ if (EXTERNAL) {
   for (const href of [...externalUrls].sort()) {
     const url = new URL(href);
     try {
-      const response = await fetch(url, {
-        method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(8000),
-        headers: { 'user-agent': 'houseplan-docs-check/1' },
-      });
+      const response = await observeDocLink(url, trace => console.log(`LINK_OBSERVATION ${JSON.stringify(trace)}`));
       if (response.status >= 200 && response.status < 400) continue;
       if ([403, 408, 425, 429].includes(response.status) || response.status >= 500) {
         if (transientHosts.has(url.hostname)) {

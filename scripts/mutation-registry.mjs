@@ -77,6 +77,22 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'docs-link-deadline-extended-1083',
+    guard: 'node --test test/doc-link-observation.test.mjs',
+    because: '#1083 AC2: a real silent HTTP peer must hit the original total eight-second deadline; passive diagnostics must not lengthen it. Registered only; nightly execution.',
+    patches: [{ file: 'scripts/doc-link-observation.mjs',
+      find: "method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(8000),",
+      replace: "method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(16000)," }],
+  },
+  {
+    id: 'docs-link-observation-exposes-url-secrets-1083',
+    guard: 'node --test test/doc-link-observation.test.mjs',
+    because: '#1083 AC1: ordinary credential/query/redirect inputs must not enter the bounded diagnostic metadata. Registered only; nightly execution.',
+    patches: [{ file: 'scripts/doc-link-observation.mjs',
+      find: '(url.origin + url.pathname).slice(0, 1024) : null;',
+      replace: 'url.href : null;' }],
+  },
+  {
     id: 'internal-window-contact-controls-glass-1079',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
     because: '#1079 AC1: a closed contact must not close internal glass; the actual visibility and opaque-source tests distinguish glass from a door. Nightly execution only.',
