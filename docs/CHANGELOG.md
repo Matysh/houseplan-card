@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Distinguish user-hidden Zigbee markers from devices missing on the plan.
+  Showing hidden devices now updates both route endpoints and diagnostics,
+  without changing saved visibility or suppressing genuine source errors. (#1077)
+
 - Avoid rebuilding unchanged walls and light barriers when applying furniture
   group colour/opacity in Background properties. The toolbar palette remains
   the default style for new objects, not a group editor. (#1071)

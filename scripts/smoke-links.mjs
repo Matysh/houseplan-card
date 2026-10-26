@@ -161,6 +161,12 @@ export const SMOKE_LINKS = [
     because: '#1005: public provider events and settings controls prove source-scoped reasons and their native footer presentation without importing the model.',
   },
   {
+    files: ['src/hidden-device-visibility.ts', 'src/zigbee-topology.ts', 'src/zigbee-topology-diagnostics.ts',
+      'src/hp-zigbee-topology-settings.ts', 'src/editors/general-settings-dialog.ts'],
+    smokes: ['smoke_zigbee_hidden_placement.mjs'],
+    because: '#1077: the real eye control must update both painted route endpoints and settings visibility reasons without a config write or rescan; raw-roster units cannot prove the caller boundary.',
+  },
+  {
     files: ['src/editors/form-kit.ts', 'src/styles/dialog-composition.styles.ts', 'src/styles/settings-dialogs.styles.ts', 'src/hp-help.ts'],
     smokes: ['smoke_dialog_ui_kit.mjs'],
     because: '#1007: rendered section geometry, conditional omission, preserved draft, independent Help hover/click and disclosures across themes and narrow viewports; a string-level import match does not prove these outcomes.',

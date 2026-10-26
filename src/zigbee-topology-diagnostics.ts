@@ -20,6 +20,8 @@ export interface ZigbeeTopologyDiagnostics {
   hasKnownRoute: boolean;
   reasons: ZigbeeDiagnosticReason[];
   refreshError?: ZigbeeTopologyErrorCode;
+  /** Visibility intent is informational, independent of provider completeness. */
+  hidden?: Array<{ nodeKey: string; nodeLabel: string; shown: boolean }>;
 }
 
 /** Read-only projection of exactly the settings status' existing partial rule. */
@@ -32,13 +34,21 @@ export function describeZigbeeTopology(options: {
   const { current, topology, devices, registry } = options;
   const loaded = current?.obtainedAt !== undefined;
   if (!loaded) return { loaded: false, partial: false, hasKnownRoute: false, reasons: [] };
-  const mapping = topology && registry ? mapTopologyNodes(topology, devices, registry).warnings : [];
+  const placement = topology && registry ? mapTopologyNodes(topology, devices, registry) : undefined;
+  const mapping = placement?.warnings || [];
+  const nodes = new Map(topology?.nodes.map(node => [node.key, node]));
+  const label = (key: string): string => {
+    const node = nodes.get(key);
+    return node ? (node.name ? `${node.name} (${node.ieee})` : node.ieee) : key;
+  };
+  const hidden = [...(placement?.hiddenPlacements || [])].map(([nodeKey, visibility]) =>
+    ({ nodeKey, nodeLabel: label(nodeKey), shown: visibility === 'shown' }));
+  const visibility = hidden.length ? { hidden } : {};
   const routes = topology ? resolveProviderUplinks(topology) : new Map<string, ZigbeeUplink>();
   const hasKnownRoute = [...routes.values()].some(route => route.kind === 'known');
   const partial = !!current?.partial || mapping.length > 0
     || [...routes.values()].some(route => route.kind === 'unknown');
-  if (!partial) return { loaded, partial: false, hasKnownRoute, reasons: [] };
-  const nodes = new Map(topology?.nodes.map(node => [node.key, node]));
+  if (!partial) return { loaded, partial: false, hasKnownRoute, reasons: [], ...visibility };
   const reasons = new Map<string, ZigbeeDiagnosticReason>();
   const add = (code: ZigbeeDiagnosticCode, nodeKey?: string, detail?: ZigbeeTopologyWarning): void => {
     const key = `${code}\0${nodeKey ?? ''}`;
@@ -73,6 +83,6 @@ export function describeZigbeeTopology(options: {
   // An opaque provider flag is still unexplained even if placement has other,
   // independently known issues. Do not silently attribute that flag to them.
   if ((current?.partial && !topology?.warnings.length) || !reasons.size) add('provider_partial');
-  return { loaded, partial, hasKnownRoute, reasons: [...reasons.values()],
+  return { loaded, partial, hasKnownRoute, reasons: [...reasons.values()], ...visibility,
     ...(current?.phase === 'error' && current.error ? { refreshError: current.error } : {}) };
 }

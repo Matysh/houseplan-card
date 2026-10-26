@@ -340,6 +340,21 @@ export class HpZigbeeTopologySettings extends LitElement {
     ].filter(Boolean).join(' · ');
   }
 
+  private _visibilityDetails(provider: 'zha' | 'z2m', models: Map<string, ZigbeeTopologyDiagnostics>): TemplateResult | typeof nothing {
+    const groups = [...models].filter(([key, model]) => model.loaded && model.hidden?.length
+      && (provider === 'zha' ? key === provider : key.startsWith(provider + ':')));
+    if (!groups.length) return nothing;
+    const text = groups.map(([key, model]) => [
+      ...(provider === 'z2m' ? [this._t('incomplete_source', { source: key.slice(4) })] : []),
+      ...model.hidden!.map(item => `• ${item.nodeLabel}: ${item.shown
+        ? this._t('placement_hidden_shown')
+        : `${this._t('incomplete_placement_hidden')} ${this._t('placement_hidden_hint')}`}`),
+    ].join('\n')).join('\n\n');
+    return disclosure({ id: `zigbee-visibility-${provider}`, className: 'incomplete placement-visibility',
+      action: 'zigbee-visibility', title: this._t('placement_visibility_title'),
+      content: html`<div class="incomplete-text">${text}</div>` });
+  }
+
   private _busy(key: string): boolean {
     return this._snapshot.states[key]?.phase === 'loading';
   }
@@ -452,12 +467,14 @@ export class HpZigbeeTopologySettings extends LitElement {
             <span class="status">${this._status('zha', diagnostics.get('zha')!)}</span>
           </div>
           ${this._incompleteDetails('zha', diagnostics)}
+          ${this._visibilityDetails('zha', diagnostics)}
         </div>
         <div class="provider">
           <div class="provider-title">${this._t('z2m')}</div>
           <div class="warning">${this._t('z2m_warning')}</div>
           ${topics.map(topic => this._z2mRow(topic, mayLoad, false, diagnostics.get(`z2m:${topic}`)!))}
           ${this._incompleteDetails('z2m', diagnostics)}
+          ${this._visibilityDetails('z2m', diagnostics)}
         </div>
       </div>` : nothing}
     `;
@@ -486,12 +503,14 @@ export class HpZigbeeTopologySettings extends LitElement {
         </button>
       </div>
       ${this._incompleteDetails('zha', diagnostics)}
+      ${this._visibilityDetails('zha', diagnostics)}
     </section>`;
     const z2m = html`<section class="hpf-provider">
       <div class="hpf-sub"><h4>${this._t('z2m')}</h4></div>
       <p class="hpf-hint">${this._t('z2m_duration')}</p>
       ${this._topics().map(topic => this._z2mRow(topic, mayLoad, true, diagnostics.get(`z2m:${topic}`)!))}
       ${this._incompleteDetails('z2m', diagnostics)}
+      ${this._visibilityDetails('z2m', diagnostics)}
     </section>`;
     return html`<div class="hpf-form hpf-settings-form"><section class="hpf-settings-pane"><div class="hpf-body">${formSections([
       html`<label class="hpf-toggle hpf-noicon">

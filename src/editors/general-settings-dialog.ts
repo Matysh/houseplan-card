@@ -237,7 +237,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         title: st('gs.section_zigbee'),
         body: formSections([
           html`<hp-zigbee-topology-settings embedded .language=${lang} .active=${selectedSettingsSection(host, 'general') === 'zigbee'} .hass=${host.hass} .value=${d.zigbeeTopology}
-          .savedEnabled=${zigbeeTopologySettingsOf(host._settings).enabled} .devices=${host._devices} .registry=${host._haRegistry}
+          .savedEnabled=${zigbeeTopologySettingsOf(host._settings).enabled} .devices=${host._renderDevices} .registry=${host._haRegistry}
           .settingsSession=${dialogSession(host, 'settings')} .settingsBusy=${d.busy} .canPrepareLoad=${canSave}
           .prepareLoad=${async () => {
             const saved = await this._saveSettingsDialog({ keepOpen: true });

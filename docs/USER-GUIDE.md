@@ -514,6 +514,12 @@ device is off or faulty. Missing source details are stated explicitly. A failed
 ZHA refresh is separate from the retained snapshot's incomplete-data reasons.
 Opening the block does not start a scan.
 
+**Marker visibility** separately lists devices hidden by the user. A concealed
+marker is not a missing placement or a Zigbee source error. Use the header eye
+to show eligible hidden devices and their normal direct links; the explanation
+then says the hidden device is currently shown. This changes no saved flags,
+starts no scan and does not suppress genuine source or binding failures.
+
 Moving a real mouse over a mapped Zigbee marker shows
 its parent (end device) or active next hop towards the coordinator (router),
 as reported by the integration. There is at most one outgoing arrow; confirmed

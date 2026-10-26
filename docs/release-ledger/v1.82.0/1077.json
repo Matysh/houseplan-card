@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "issue": 1077,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already has user-hidden markers, the local eye, and Zigbee overlay mapping. Hidden raw rows can be mistaken for absent placement. This task repairs visibility agreement and preserves the independent source/registry/route diagnostics without adding a new setting or scan.",
+  "summary": {
+    "ru": "Диагностика Zigbee различает скрытые и отсутствующие значки; показ скрытых согласован со связями.",
+    "en": "Zigbee diagnostics distinguish hidden and missing markers and follow local hidden-device display."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "zigbee-hidden-child-flat-light",
+        "expectation": "new",
+        "reason": "New case reveals a saved hidden child through the native eye and paints its confirmed link to an existing LED router. No existing baseline change is authorised."
+      }
+    ],
+    "smokes": [
+      "smoke_zigbee_hidden_placement.mjs",
+      "smoke_zigbee_incomplete_reasons.mjs",
+      "smoke_zigbee_led_topology.mjs",
+      "smoke_hidden_device_toggle.mjs"
+    ]
+  }
+}

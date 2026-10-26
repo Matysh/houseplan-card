@@ -1,5 +1,6 @@
 import type { DevItem } from './types';
 import type { HaRegistrySnapshot } from './ha-binding-status';
+import { canRevealUserHidden } from './hidden-device-visibility';
 import {
   normalizeIeee, recordOf, resolveProviderUplinks, suppressUplinkCycles, topologyName,
   type ZigbeeTopology, type ZigbeeTopologyNode, type ZigbeeTopologyWarning, type ZigbeeUplink,
@@ -73,10 +74,12 @@ function drawable(device: DevItem): boolean {
 /** Exact registry binding only; names, models and friendly names are never identities. */
 export function mapTopologyNodes(
   topology: ZigbeeTopology, devices: readonly DevItem[], registry: HaRegistrySnapshot,
-): { placements: Map<string, ZigbeeNodePlacement>; hoverNodes: ZigbeeMappedTopology['hoverNodes']; warnings: ZigbeeTopologyWarning[] } {
+): { placements: Map<string, ZigbeeNodePlacement>; hoverNodes: ZigbeeMappedTopology['hoverNodes']; warnings: ZigbeeTopologyWarning[];
+  hiddenPlacements: Map<string, 'hidden' | 'shown'> } {
   const placements = new Map<string, ZigbeeNodePlacement>();
   const hoverNodes: ZigbeeMappedTopology['hoverNodes'] = new Map();
   const warnings: ZigbeeTopologyWarning[] = [];
+  const hiddenPlacements = new Map<string, 'hidden' | 'shown'>();
   for (const node of topology.nodes) {
     if (node.available === false) { warnings.push({ code: 'provider_scan_failure', nodeKey: node.key }); continue; }
     const deviceIds = deviceIdsForNode(node, registry);
@@ -94,17 +97,29 @@ export function mapTopologyNodes(
     // registry/DOM order. Duplicate device placements remain genuinely ambiguous.
     const representative = physical.length === 1 ? physical[0] : !physical.length ? entities[0] : undefined;
     if (!representative) {
-      warnings.push({ code: physical.length > 1 ? 'ambiguous_placement' : 'unmatched_device', nodeKey: node.key,
-        ...(physical.length > 1 ? {} : { mappingReason: 'placement-missing' as const }) });
+      // User intent is not a missing placement or damaged provider data. Only
+      // positively eligible hidden bindings qualify; lifecycle refusals remain.
+      const hidden = devices.filter(item => item.hidden && !item.virtual && canRevealUserHidden(item)
+        && (item.bindingKind === 'device' && item.bindingRef === deviceId
+          || item.bindingKind === 'entity' && !!item.bindingRef && registry.entities[item.bindingRef]?.device_id === deviceId));
+      const hiddenPhysical = hidden.filter(item => item.bindingKind === 'device');
+      if (!physical.length && hidden.length && hiddenPhysical.length <= 1) {
+        hiddenPlacements.set(node.key, 'hidden');
+        continue;
+      }
+      const ambiguous = physical.length > 1 || hiddenPhysical.length > 1;
+      warnings.push({ code: ambiguous ? 'ambiguous_placement' : 'unmatched_device', nodeKey: node.key,
+        ...(ambiguous ? {} : { mappingReason: 'placement-missing' as const }) });
       continue;
     }
+    if (canRevealUserHidden(representative)) hiddenPlacements.set(node.key, 'shown');
     placements.set(node.key, { markerId: representative.id, space: representative.space });
     for (const alias of [...physical, ...entities]) {
       const nodes = hoverNodes.get(alias.id) || [];
       nodes.push({ nodeKey: node.key, space: alias.space }); hoverNodes.set(alias.id, nodes);
     }
   }
-  return { placements, hoverNodes, warnings };
+  return { placements, hoverNodes, warnings, hiddenPlacements };
 }
 
 /** Cross-provider authority is exact HA ownership, even for an unplaced device. */

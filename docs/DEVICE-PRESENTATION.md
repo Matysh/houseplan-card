@@ -228,6 +228,12 @@ browser/golden — матрица батарей #792, `demo/smoke_device_batter
 
 ## Lifecycle и видимость
 
+Zigbee diagnostics (#1077) consume the effective display roster, retaining the
+original user-hidden provenance. A valid concealed marker is an informational
+visibility fact, not a missing placement/provider error; showing it through the
+local eye enables the normal direct-link endpoints. Removed/disabled/orphaned/
+unverified/virtual rows never gain real Zigbee authority from this preference.
+
 Системная строка LQI и её существующее отражение в tooltip получают effective
 флаг через `signal-visibility.ts` (#876): новое локальное on/off → прежнее
 локальное false → точное YAML false → общее значение → default-on.

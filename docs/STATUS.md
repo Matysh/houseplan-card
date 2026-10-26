@@ -20,10 +20,14 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5570 · pure backend 653 · HA-harness backend 555 · browser smokes 444 (`npm run inventory`) |
+| Tests | Node unit 5577 · pure backend 653 · HA-harness backend 555 · browser smokes 445 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Zigbee hidden placement (#1077) distinguishes existing concealed/shown markers
+from absent placements. The local eye updates both diagnostic text and real
+route endpoints without writes or scans; independent provider failures remain.
 
 Daycycle diagnostics (#1066) retain passive input/rAF/DOM/layer/resource evidence
 and successful raw CI samples without changing the paired performance oracle.

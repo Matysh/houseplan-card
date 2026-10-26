@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 91 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 101 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 59 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 263 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **526 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 264 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **527 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -603,6 +603,11 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `zigbee-hidden-diagnostics-raw-roster-1077`
+  proves that the actual General Settings caller follows the local eye's accepted
+  display roster, while direct routes keep their painted endpoints. Mapper units
+  cannot catch a caller forwarding the raw roster. Registered, not executed during development.
 
 - `vacuum-history-retired-show-adopted-999`
 - `node-delete-disabled-proof-missing-1045`

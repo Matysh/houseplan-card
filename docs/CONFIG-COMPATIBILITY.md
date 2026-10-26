@@ -1,5 +1,12 @@
 # Config compatibility registry
 
+## Hidden Zigbee placement diagnostics (#1077)
+
+No persisted config/layout/cache schema or version changes. Hidden/shown status
+is derived from the effective local display roster and retained user intent;
+it never rewrites a marker's hidden flag, HA binding or provider snapshot.
+Rollback restores the former diagnostics without changing saved plans.
+
 ## Own offline presentation (#1026)
 
 No persisted fields, model/Store/ZIP versions or migrations change. The own

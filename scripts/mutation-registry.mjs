@@ -440,6 +440,14 @@ const MUTANT_DEFINITIONS = [
       replace: '.vactrail path { vector-effect:none !important;'}],
   },
   {
+    id: 'zigbee-hidden-diagnostics-raw-roster-1077',
+    guard: 'node demo/smoke_zigbee_hidden_placement.mjs',
+    because: '#1077 AC1/AC6: the real eye must also update the mounted diagnostic caller; a raw roster falsely keeps a shown marker hidden despite valid painted routes.',
+    patches: [{ file: 'src/editors/general-settings-dialog.ts',
+      find: '.devices=${host._renderDevices} .registry=${host._haRegistry}',
+      replace: '.devices=${host._devices} .registry=${host._haRegistry}' }],
+  },
+  {
     id: 'zigbee-incomplete-details-start-open-1005',
     guard: 'node demo/smoke_zigbee_incomplete_reasons.mjs',
     because: '#1005 AC1: native details must initially hide the technical text and open through trusted mouse/keyboard; this requires mounted Chromium details behaviour.',
