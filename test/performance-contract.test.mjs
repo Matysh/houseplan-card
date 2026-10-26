@@ -309,8 +309,10 @@ test('wall and light geometry reuse bounded caches before structural work', () =
   assert.match(light, /resolveLightBarrierRevision\(\{/);
   const shared = readFileSync(new URL('../src/glow-scene.ts', import.meta.url), 'utf8');
   assert.match(shared, /contentFingerprint\(\[/);
+  // #1079 prepares a missing static opening index without rebuilding masonry.
+  // The retained-index runtime case is covered by interior-window-light.test.
   assert.match(shared,
-    /recutWallBodiesGeometry\(input\.sharedWallGeometry, roomPassages, opaqueBodies\)/);
+    /recutWallBodiesGeometry\(recutBase, roomPassages, opaqueBodies\)/);
   assert.match(light, /lruWrite\(this\._lightBarrierPool, cacheKey, entry, 8\)/);
 });
 
