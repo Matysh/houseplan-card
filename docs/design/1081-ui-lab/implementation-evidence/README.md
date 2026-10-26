@@ -12,6 +12,11 @@ Reference commit: `e6a4edc8902b1954d5bd4949f8043896f1543ed5`, portable package
 22 package files / 14 byte-identical accepted sources. Product fingerprints and
 the zero page-error lists are recorded per scene in `reference-pairs.json`.
 Desktop viewport is 1440×1000. Confirmation also has 390×844 light/dark pairs.
+The paired-capture product source tree is
+`src@b1592b3632503642e9e5393bdcc55fe4eff6b81e`, unchanged in final implementation
+commit `04f31c95ece917ffff0c69555b20fbb5a75d8486`. Subsequent fixture/matrix and
+documentation changes explain the build fingerprint change; the product
+`src` tree is byte-identical.
 Native screenshots omit the cursor, so cursor contracts use computed-style and
 drag assertions rather than a claim about pixels.
 

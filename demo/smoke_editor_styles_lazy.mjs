@@ -594,10 +594,7 @@ try {
     }
     // #1081 starts with Draw. Select the image source through its public UI
     // before asserting the image/saved-plan rows' eager layout contract.
-    const source = card.renderRoot.querySelector('hp-settings-select:has(select[name$="-plan-source"])');
-    source.querySelector('button').click();
-    await source.updateComplete;
-    source.querySelectorAll('[role="option"]')[1].click();
+    card.renderRoot.querySelector('input[name="plansrc"][data-value="file"]').click();
     await window.__hp805.settle(card);
     // Rules shared with onboarding stay eager: its own rows are laid out without the editor.
     const shared = [...card.renderRoot.querySelectorAll('hp-dialog .planrow, hp-dialog .savedplans, hp-dialog .floorrow')];

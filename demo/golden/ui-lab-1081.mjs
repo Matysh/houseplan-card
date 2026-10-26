@@ -7,13 +7,19 @@ export function addUiLab1081Fixture(fixture, scenario) {
 
 export async function prepareUiLab1081(page, scenario) {
   const card = page.locator('houseplan-card');
+  await page.waitForFunction(mode => window.__goldenCard._mode === mode, scenario.mode);
   if (scenario.uiLab1081 === 'new-space') {
     await card.locator('[data-hp="space-add"]').click();
     await card.locator('hp-dialog[data-kind="space"] [data-section="basics"][aria-current="page"]').waitFor();
   } else if (scenario.uiLab1081 === 'space-blocker') {
-    await page.evaluate(id => window.__hpTest.openSpaceDialog('edit', id), scenario.space);
+    // Open through the visible desktop tab gear, then exercise responsive
+    // reflow. The launch facade belongs to the discarded pre-golden card.
+    await page.setViewportSize({ width: 1180, height: 900 });
+    await card.locator(`[data-hp="space-tab"][data-id="${scenario.space}"]`).hover();
+    await card.locator(`[data-hp="space-settings"][data-id="${scenario.space}"]`).click();
     await card.locator('[data-hp="space-delete"]').click();
     await card.locator('[data-action="space-delete-devices"]').waitFor();
+    await page.setViewportSize(scenario.viewport);
   } else if (scenario.uiLab1081 === 'grid-pan') {
     const rect = await card.locator('.stage').boundingBox(), x = rect.x + rect.width * .3, y = rect.y + rect.height * .7;
     await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + rect.width * .22, y + 30, { steps: 8 });
