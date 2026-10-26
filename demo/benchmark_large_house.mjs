@@ -43,6 +43,9 @@ const backdrop = profile === 'large-house-isometric-backdrop-v1';
 const isometric = profile === 'large-house-isometric-v1' || stage3Dense || backdrop;
 const planSnap = profile === 'large-house-plan-snap-v1';
 const interaction = profile === 'large-house-interaction-v1';
+const planRotation = Number(valueArg('rotation') ?? 0);
+if (![0, 90, 180, 270].includes(planRotation) || planRotation !== 0 && !interaction)
+  throw new Error('--rotation must be a quarter turn; nonzero turns require the interaction profile');
 const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
 const requiresIsoStructuralBuildCounter = requiresIsometric
   && readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8')
@@ -146,7 +149,7 @@ try {
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, planRotation,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -380,6 +383,7 @@ try {
       }
       card.setConfig({
         type: 'custom:houseplan-card', title: `Performance baseline ${sample}`, icon_size: 3.4,
+        rotation: planRotation,
       });
       let wsCalls = 0;
       const connection = {
@@ -442,6 +446,8 @@ try {
       await until(() => card._booting === false);
       if (interaction && '_bootSoft' in card) await until(() => card._bootSoft === false);
       await frame();
+      if (planRotation && card.renderRoot.querySelector('.stage')?.getAttribute('data-hp-plan-rotation') !== String(planRotation))
+        throw new Error(`interaction requested ${planRotation} degrees but the painted stage did not adopt it`);
       if (requiresStairs
           && card.renderRoot.querySelectorAll('[data-hp="stair"]').length !== fixture.counts.stairs) {
         throw new Error(`${profile} did not render the bounded maximum stair collection`);
@@ -768,16 +774,15 @@ try {
         timings.panSeriesMs = performance.now() - panStarted;
         interactionLongTasks.panSeries = await panLongTasks.stop();
         const movedViewBox = cameraSvg?.getAttribute('viewBox') || '';
-        const currentView = card._viewOr(card._baseVb());
         const currentDevice = card._devices.find((item) => item.id === device.dataset.id);
         const position = currentDevice ? card._pos(currentDevice) : null;
         const scene = position ? [position.x, position.y] : null;
         const deviceRect = device.getBoundingClientRect();
-        const expectedX = scene ? rect.left + ((scene[0] - currentView.x) / currentView.w) * rect.width : 0;
-        const expectedY = scene ? rect.top + ((scene[1] - currentView.y) / currentView.h) * rect.height : 0;
+        const worldMatrix = card.renderRoot.querySelector('.decorlayer').getScreenCTM();
+        const expected = scene ? new DOMPoint(...scene).matrixTransform(worldMatrix) : null;
         const overlayErrorPx = scene ? Math.hypot(
-          deviceRect.left + deviceRect.width / 2 - expectedX,
-          deviceRect.top + deviceRect.height / 2 - expectedY,
+          deviceRect.left + deviceRect.width / 2 - expected.x,
+          deviceRect.top + deviceRect.height / 2 - expected.y,
         ) : Infinity;
 
         const cameraLongTasks = startLongTaskWindow();
@@ -853,11 +858,12 @@ try {
         await until(() => !card._modeTransitionBusy && card._continuity.state === 'steady');
         for (let index = 0; index < 5; index++) await frame();
         let editorStage = card.renderRoot.querySelector('.stage');
-        let editorRect = editorStage.getBoundingClientRect();
-        let editorView = card._viewOr(card._baseVb());
+        // Cache the actual painted canonical-to-screen basis before each timed
+        // gesture; the same native SVG matrix covers zero and quarter turns.
+        let editorMatrix = card.renderRoot.querySelector('.decorlayer').getScreenCTM();
         const fromScene = (x, y) => ({
-          clientX: editorRect.left + ((x - editorView.x) / editorView.w) * editorRect.width,
-          clientY: editorRect.top + ((y - editorView.y) / editorView.h) * editorRect.height,
+          clientX: editorMatrix.a * x + editorMatrix.c * y + editorMatrix.e,
+          clientY: editorMatrix.b * x + editorMatrix.d * y + editorMatrix.f,
         });
         let editorPartLongTasks = startLongTaskWindow();
         let partStarted = performance.now();
@@ -894,9 +900,7 @@ try {
         if (!resizePlan) throw new Error('interaction resize plan was not created');
         const resizePreflightBefore = physicalPreflightCount;
         const resizePreflightMsBefore = physicalPreflightMs;
-        editorStage = card.renderRoot.querySelector('.stage');
-        editorRect = editorStage.getBoundingClientRect();
-        editorView = card._viewOr(card._baseVb());
+        editorMatrix = card.renderRoot.querySelector('.decorlayer').getScreenCTM();
         // #778: split this part's Long Task into timed phases (see
         // performance/resize-attribution.mjs). The wrappers only time the live
         // move and its callbacks, and they and the frame observer are installed
@@ -973,8 +977,7 @@ try {
           ];
           card._rszMove({
             ...resizeEvent,
-            clientX: editorRect.left + ((target[0] - editorView.x) / editorView.w) * editorRect.width,
-            clientY: editorRect.top + ((target[1] - editorView.y) / editorView.h) * editorRect.height,
+            ...fromScene(target[0], target[1]),
           });
           if ((index + 1) % 10 === 0) await frame();
         }
@@ -1002,15 +1005,12 @@ try {
         for (let index = 0; index < 5; index++) await frame();
         card._dtMeasure();
         await card.updateComplete;
-        editorStage = card.renderRoot.querySelector('.stage');
-        editorRect = editorStage.getBoundingClientRect();
-        editorView = card._viewOr(card._baseVb());
+        editorMatrix = card.renderRoot.querySelector('.decorlayer').getScreenCTM();
         const box = card._decorBoxOf(decorShape);
         const cornerX = box.x + box.w, cornerY = box.y + box.h;
         const decorPointer = (x, y) => ({
           pointerId: 1103, pointerType: 'mouse', shiftKey: false,
-          clientX: editorRect.left + ((x - editorView.x) / editorView.w) * editorRect.width,
-          clientY: editorRect.top + ((y - editorView.y) / editorView.h) * editorRect.height,
+          ...fromScene(x, y),
           stopPropagation: () => undefined, preventDefault: () => undefined,
           currentTarget: null, target: null,
         });
@@ -1344,6 +1344,8 @@ try {
         ? card._effectiveProjection() : null;
       if (requiresIsometric && finalProjection !== 'iso')
         throw new Error(`${profile} ended the sample in Flat fallback`);
+      if (planRotation && card.renderRoot.querySelector('.stage')?.getAttribute('data-hp-plan-rotation') !== String(planRotation))
+        throw new Error('interaction lost its requested quarter turn during the sample');
       const finalStage3 = stage3Dense ? stage3Snapshot(card) : null;
       if (finalStage3) assertStage3Snapshot(finalStage3, 'final warmed state');
 
@@ -1426,7 +1428,7 @@ try {
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, planRotation,
     });
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;
@@ -1474,6 +1476,7 @@ if (interaction) metricNames.splice(2, 0,
 const report = {
   schema: 2,
   profile,
+  planRotation,
   sourceSha,
   generatedAt: new Date().toISOString(),
   buildFingerprint,
