@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 92;
+export const GOLDEN_MATRIX_VERSION = 93;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -713,6 +713,15 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     space: 'golden-wall-junctions', wallJunctions: true, mode: 'view',
     projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  ...[
+    ['lighting-interior-window-dark', {}],
+    ['lighting-interior-window-oblique-dark', { oblique: true }],
+    ['lighting-interior-window-partition-dark', { partition: true }],
+    ['lighting-interior-window-led-dark', { led: true }],
+  ].map(([id, interiorWindow]) => ({id,interiorWindow,fixture:'visual',space:'f1',mode:'view',
+    language:'en',theme:'dark',viewport:{width:1100,height:1000},...stage})),
+  { id:'lighting-interior-window-iso-dark',interiorWindow:{},fixture:'visual',space:'f1',mode:'view',
+    projection:'iso',language:'en',theme:'dark',viewport:{width:1100,height:1000},...stage },
   { id: 'wall-smooth-joint-light', fixture: 'visual', smoothWallSeam: true,
     space: 'golden-smooth-wall', mode: 'view', language: 'en', theme: 'light',
     viewport: { width: 1100, height: 1000 }, zoom: 2, zoomCenter: [-85, 520], ...stage },

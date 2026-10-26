@@ -77,6 +77,38 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'internal-window-contact-controls-glass-1079',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
+    because: '#1079 AC1: a closed contact must not close internal glass; the actual visibility and opaque-source tests distinguish glass from a door. Nightly execution only.',
+    patches: [{file:'src/glow-scene.ts',
+      find:"    if (opening.type === 'window') return [{ opening, amount: 1 }];",
+      replace:"    if (opening.type === 'window') return [{ opening, amount: input.openingAmount(opening) }];"}],
+  },
+  {
+    id: 'internal-window-opens-exterior-remainder-1079',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
+    because: '#1079 AC3/4: a positive interior portion cannot authorize the entire aperture, including its outside remainder or a partition tail. Nightly execution only.',
+    patches: [{file:'src/interior-window-light.ts',
+      find:'  return intervals.map(([lo, hi]) => {',
+      replace:'  return (intervals.length ? [[-opening.rlen / 2, opening.rlen / 2]] : []).map(([lo, hi]) => {'}],
+  },
+  {
+    id: 'internal-window-missing-host-falls-back-1079',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
+    because: '#1079 AC3: missing or ambiguous explicit host identity stays fail-closed even with a plausible floor-to-floor line. Nightly execution only.',
+    patches: [{file:'src/interior-window-light.ts',
+      find:'  if (carriers.length !== 1) return null;',
+      replace:'  if (carriers.length !== 1) return [-half, half];'}],
+  },
+  {
+    id: 'internal-window-static-recut-skips-index-1079',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/interior-window-light.test.mjs',
+    because: '#1079 AC5: retained static masonry without permanent passages needs the same window-proof index for its light recut. The real retained-geometry input otherwise silently closes glass. Nightly execution only.',
+    patches: [{file:'src/glow-scene.ts',
+      find:'    openingIndex: windowIndex, depthUnits: shared.depthUnits, openingPadUnits: shared.openingPadUnits,',
+      replace:'    openingIndex: shared.openingIndex, depthUnits: shared.depthUnits, openingPadUnits: shared.openingPadUnits,'}],
+  },
+  {
     id: 'wall-ring-paints-numerical-needle-1076',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/polygon-paint.test.mjs',
     because: '#1076: the real smooth-wall boolean result must retain its physical body while SVG/PDF projections suppress only its numerical needle. Ordinary negative inputs retain thin holes, free caps and disconnected bodies; execution only nightly.',

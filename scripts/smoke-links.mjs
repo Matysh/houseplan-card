@@ -30,6 +30,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files:['src/interior-window-light.ts'],
+    symbols:['resolveOpeningWallCandidates','isInteriorLightOpeningType'],
+    smokes:['smoke_interior_window_light.mjs','smoke_glow.mjs','smoke_glow_fail_dark.mjs',
+      'smoke_glow_geometry_resilience.mjs','smoke_led_strip_glow.mjs'],
+    because:'#1079: actual lamp off/on pixels and native Glow/LED clips across internal glass in Flat/2.5D/static, exterior-source fail-dark, contact/geometry/cache behavior and existing light lifecycle must agree with the shared physical passage proof.',
+  },
+  {
     files: ['src/polygon-paint.ts'],
     symbols: ['polyclipToPathD', 'polyclipPathD', 'geometryPolygonPaths'],
     smokes: ['smoke_wall_smooth_joint.mjs', 'smoke_wall_junctions.mjs',

@@ -255,6 +255,10 @@
       "configs": 1
     },
     {
+      "file": "demo/fixtures/interior-window-light.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/large-house.mjs",
       "configs": 1
     },
@@ -5410,6 +5414,62 @@
             }
           ],
           "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/interior-window-light.mjs:makeInteriorWindowFixture/config",
+      "fingerprint": "61352b5a383812a87dc223b5b423fa19c365cdc4f0bcf1f272ecd926c24edbe0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-ziwniszv2n45yixd3djx",
+            "wall-zzbcxizt3q5vnwxl4va5",
+            "wall-y467ws4ol6q5rbwexhat",
+            "wall-nufkl3rzpbkcheuvdhez",
+            "wall-ov4jhgqumkgluh2hjnyd",
+            "wall-564cxjflgqcwklnxcm3t",
+            "wall-tfaxzbywpizbz4rm37cb"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-zzbcxizt3q5vnwxl4va5",
+                "wall-nufkl3rzpbkcheuvdhez",
+                "wall-y467ws4ol6q5rbwexhat",
+                "wall-ziwniszv2n45yixd3djx"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-ov4jhgqumkgluh2hjnyd",
+                "wall-tfaxzbywpizbz4rm37cb",
+                "wall-564cxjflgqcwklnxcm3t",
+                "wall-nufkl3rzpbkcheuvdhez"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "inner-glass",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nufkl3rzpbkcheuvdhez"
+              }
+            },
+            {
+              "id": "outer-glass",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ziwniszv2n45yixd3djx"
+              }
+            }
+          ],
           "partitions": []
         }
       ]

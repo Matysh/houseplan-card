@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "issue": 1079,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Stable v1.82.0 deliberately blocks artificial light at every window. Proven internal glass now transmits lamp and LED light, including closed contacts, as a new user-visible light contract rather than an intermediate regression repair.",
+  "summary": {
+    "ru": "Внутренние окна пропускают свет ламп и LED между комнатами, сохраняя естественные тени.",
+    "en": "Internal windows pass lamp and LED light between rooms while preserving physical shadows."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {"id":"lighting-interior-window-dark","expectation":"new","reason":"Closed internal glass passes light into the second room; an exterior window and column retain opaque boundaries and shadow."},
+      {"id":"lighting-interior-window-oblique-dark","expectation":"new","reason":"Oblique window uses physical jamb depth and the same floor-to-floor rule."},
+      {"id":"lighting-interior-window-partition-dark","expectation":"new","reason":"A thick independently hosted window cuts only confirmed physical room-to-room transport."},
+      {"id":"lighting-interior-window-led-dark","expectation":"new","reason":"LED field uses the same internal glass and column shadow."},
+      {"id":"lighting-interior-window-iso-dark","expectation":"new","reason":"2.5D shares the Flat light region through internal glass."}
+    ],
+    "smokes":["smoke_interior_window_light.mjs","smoke_glow.mjs","smoke_glow_fail_dark.mjs",
+      "smoke_glow_geometry_resilience.mjs","smoke_led_strip_glow.mjs"]
+  }
+}

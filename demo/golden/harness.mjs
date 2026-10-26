@@ -3,6 +3,8 @@ import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
+import { makeInteriorWindowFixture } from '../fixtures/interior-window-light.mjs';
+import { prepareInteriorWindowLight } from './interior-window-light.mjs';
 import { smoothWallSeamSpace } from '../fixtures/smooth-wall-seam.mjs';
 import { installStaticStability, resetGoldenStability } from './static-stability.mjs';
 export { resetGoldenStability } from './static-stability.mjs';
@@ -69,6 +71,7 @@ const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
   : scenario.offlineBoard ? makeDeviceOfflineFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
   : scenario.batteryZigbeeOverlap ? makeBatteryZigbeeFixture()
+  : scenario.interiorWindow ? makeInteriorWindowFixture(scenario.interiorWindow)
   : scenario.zigbeeLed ? makeZigbeeLedFixture()
   : scenario.fixture === 'large'
   ? makeLargeHouseFixture({ includeStairs: false })
@@ -2873,6 +2876,9 @@ export async function prepareGoldenScenario(page, scenario) {
       || scenario.id === 'safe-resize-handles-clamp-dark') {
     result.planKeyboardFocus = await preparePlanKeyboardCapture(page, scenario);
   }
+  if (scenario.interiorWindow) result.interiorWindowLight = await prepareInteriorWindowLight(
+    page, fixture.windowLightProbes, !!scenario.interiorWindow.led,
+  );
   return result;
 }
 
