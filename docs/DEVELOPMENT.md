@@ -44,8 +44,8 @@ budget. These numbers do not claim a loading-speed improvement.
 
 After the accepted UI Kit merge, r2 compares separate Windows Node22.23.4
 builds of `dev@f7050434` and the combined candidate: hostRefs6291→6359,
-raw dist3523543→3538089B, lazy editor356892→359343B gzip. References carry
-only the task's own68/14546/2451 deltas, preserving that dev's1/275/5 gaps
+raw dist3523543→3538092B, lazy editor356892→359326B gzip. References carry
+only the task's own68/14549/2434 deltas, preserving that dev's1/275/5 gaps
 and every existing band/absolute guard. The guarded four-entry device menu
 and hidden-source eligibility remain accepted behavior. Native twice-lost
 Copy and all three Delete entry points assert the persistent result check,
@@ -850,7 +850,7 @@ surface. `tray-medium-selection-ru` intentionally changes for UI-019. Task
 visual intent declares these previews; accepting baselines belongs to the beta
 gate. Private UI Lab plans, adapters and screenshots stay outside commits.
 The accepted source is the 2026-10-23 UI cycle on public base
-`cd9c8961eb906a5c1492dedf2e245191de01cba5`, UI-019–028/031; UI-029/030 remain
+`cd9c8961eb906a5c1492dedf2e243491de01cba5`, UI-019–028/031; UI-029/030 remain
 in #998/#999. Prefer owned Lit lifecycle over prototype observers/DOM moves.
 
 CSS producers for subsequent cleanup: `hpf-context-menu` is emitted by
