@@ -344,5 +344,7 @@
   "marker.history_unauthorized": "Der Verlauf erfordert House-Plan-Bearbeitungsrechte außerhalb des Kioskmodus.",
   "marker.history_retired": "Die Anzeige endete, weil sich der Kontext änderte oder eine neue Reinigung begann.",
   "marker.history_interrupted": "Diese Reinigung wurde unterbrochen; der Pfad kann unvollständig sein.",
-  "marker.history_empty_path": "Für diese Reinigung ist kein Pfad aufgezeichnet."
+  "marker.history_empty_path": "Für diese Reinigung ist kein Pfad aufgezeichnet.",
+  "editor.rotation": "Grundrissdrehung",
+  "editor.rotation_invalid": "Die Grundrissdrehung muss 0°, 90°, 180° oder 270° sein."
 }

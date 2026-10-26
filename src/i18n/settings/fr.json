@@ -344,5 +344,7 @@
   "marker.history_unauthorized": "L’historique nécessite les droits de modification House Plan hors mode kiosque.",
   "marker.history_retired": "L’aperçu est terminé : le contexte a changé ou un nouveau nettoyage a commencé.",
   "marker.history_interrupted": "Ce nettoyage a été interrompu ; le trajet peut être incomplet.",
-  "marker.history_empty_path": "Aucun trajet n’est enregistré pour ce nettoyage."
+  "marker.history_empty_path": "Aucun trajet n’est enregistré pour ce nettoyage.",
+  "editor.rotation": "Rotation du plan",
+  "editor.rotation_invalid": "La rotation du plan doit être de 0°, 90°, 180° ou 270°."
 }

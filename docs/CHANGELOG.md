@@ -23,6 +23,10 @@
   conversions resume safely; administrators can export the original snapshot
   through the existing export API for a compatible rollback. Recovery exports
   also preserve an interrupted older coordinate conversion. (#1015)
+- Rotate the displayed plan clockwise or counterclockwise in quarter turns,
+  remembering each space on this device. Flat/2.5D, editors, Static and PDF
+  follow the orientation while device faces and room captions remain readable;
+  kiosk orientation comes from the card's `rotation` setting. (#1070)
 
 - Clear previous furniture, shape and image placement previews after a full
   redraw followed by pointer movement; saved decor remains visible. Losing

@@ -22,6 +22,19 @@ These are unchanged-product checks; mutation execution remains nightly-only.
 
 HA more-info target (#1087): never reuse measurement primary as a functional dialog target. The synthetic thermostat witness retains its old temperature primary while Auto opens climate. More-info selection does not authorize actuation, sibling targets for entity bindings or unreadable/disabled entities. Native coverage: demo/smoke_device_more_info.mjs; pure coverage: test/device-more-info.test.mjs. Optional support wire fields require redeploying the accepted relay schema before the first beta ships them; keep the mirror byte-identical and do not deploy an unreviewed task branch.
 
+Plan quarter turns (#1070) have three production-bundle browser witnesses:
+`smoke_plan_rotation.mjs` (pixels, canonical camera, animated mode transitions,
+sun polygons, configuration and persistence), `smoke_plan_rotation_editors.mjs`
+(native drawing/node/device/decor gestures at 0/90°, keyboard screen axes), and
+`smoke_plan_rotation_touch.mjs` (native View90/kiosk270 pan and pinch). The node
+fixture changes only the wire boundary and uses the existing canonical node
+transaction; the touch input is Chromium's real input path. `test/view-frame`
+and the PDF/ISO/live-viewport tests cover pure matrices, priority, physical-cache
+reuse, front faces, complete page fitting and canonical grid coverage.
+Six named `plan-rotation-*-1070` scenes supply task visual intent; global
+baseline acceptance remains a release-candidate action. Author evidence and
+limitations live in `docs/analysis/1070-plan-quarter-rotation.md`.
+
 Accepted UI Lab transfer (#1081) is covered by `smoke_ui_lab_1081`,
 `smoke_picker_motion`, `smoke_furniture_pan` and `smoke_ui_lab_grid` in `demo/`.
 The last uses actual presented edge pixels, retaining its pre-change RED and

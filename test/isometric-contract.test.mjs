@@ -200,7 +200,7 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
   assert.doesNotMatch(source, /_openingAmt|openingAmount|\.hass|matchMedia|CSS\.supports|theme|hover|focus|selected|sunlight/);
   assert.match(card, /onBuild: \(\) => \{ this\._isoStructuralBuildCount \+= 1; \}/);
   assert.match(source, /projectIsoOpeningStructure\(basis\)/);
-  assert.match(sceneRender, /projectIsoOpening\(basis, amountOf\(opening\)\)/);
+  assert.match(sceneRender, /projectIsoOpening\(basis, amountOf\(opening\), scene\?\.camera\)/);
   assert.match(sceneRender, /lruWrite\(input\.cache, input\.source\.key, value, 8\)/);
   assert.match(card, /data-hp-iso-structural-builds=\$\{iso \? this\._isoStructuralBuildCount : nothing\}/);
   // #724: the overlay caches are keyed by the structural wall geometry itself —
@@ -215,8 +215,9 @@ test('Stage 4 structural cache fingerprints geometry/camera/heights and excludes
 test('show_borders:false keeps the Flat floor plane and removes every volume cue', () => {
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
   assert.match(card, /<svg class="plan-svg"[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
-  // #713: the floor group carries no transform in either branch.
-  assert.match(card, /<g class=\$\{iso \? 'iso-floor-scene' : nothing\}>/);
+  // #1070: the floor plane has only the exact presentation quarter turn;
+  // neither branch adds a second isometric floor projection.
+  assert.match(card, /<g class=\$\{iso \? 'iso-floor-scene' : nothing\} transform=\$\{this\._rotation \? turnMatrix\(this\._rotation\) : nothing\}>/);
   assert.doesNotMatch(card, /isoFloorMatrixCss|unprojectFloorPoint/);
   assert.match(card,
     /\$\{litCache\(iso && isoLayers\?\.structural \? svg`<svg class="iso-shadows-svg"/);
@@ -273,14 +274,16 @@ test('raised footprints participate in global and room fit without entering the 
   assert.match(sceneRender, /placement\.floorScene,\s*\.\.\.placement\.footprint,/);
   assert.match(sceneRender, /const \[halfX, halfY\] = entry\.screenHalfSize/);
   const scene = section(card, 'private _isoScene(', 'private _latchIsoFallback');
-  assert.match(scene, /resolveIsoScene\([\s\S]*?buildIsoOverlayRenderScene|resolveIsoScene\([\s\S]*?_isoOverlayScene/);
-  assert.match(scene, /resolveIsoOverlayFitEnvelope\([\s\S]*?overlayFitEntries/);
-  assert.ok(scene.indexOf('resolveIsoScene') < scene.indexOf('resolveIsoOverlayFitEnvelope'));
+  assert.match(scene, /resolveIsoFitScene\([\s\S]*?overlays:[\s\S]*?_isoOverlayScene/);
+  const fitScene = section(sceneRender, 'export function resolveIsoFitScene', 'const unionRect');
+  assert.match(fitScene, /resolveIsoScene\([\s\S]*?input\.overlays\?\.\(scene\)/);
+  assert.match(fitScene, /resolveIsoOverlayFitEnvelope\([\s\S]*?overlayFitEntries/);
+  assert.ok(fitScene.indexOf('resolveIsoScene') < fitScene.indexOf('resolveIsoOverlayFitEnvelope'));
   const roomFit = section(card, 'private _fitRoom(', '/** «Вписать всё»');
   assert.match(roomFit, /overlayFitEntries/);
   assert.match(roomFit, /ownerId: room\.id/);
   assert.match(roomFit, /resolveIsoOverlayFitEnvelope/);
-  const structural = section(sceneRender, 'export function resolveIsoScene', 'const unionRect');
+  const structural = section(sceneRender, 'export function resolveIsoScene', '/** Lazy orchestration');
   assert.doesNotMatch(structural, /overlayFitEntries|resolveIsoOverlayFitEnvelope|buildIsoOverlayRenderScene/);
 });
 

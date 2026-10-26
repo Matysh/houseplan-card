@@ -11,6 +11,8 @@
     "select-trigger": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
     "select-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
     "select-option": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "rotate-left": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "rotate-right": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
     "vacuum-history": { "elements": ["section"], "since": "1.83.0", "audience": ["test"] },
     "vacuum-history-show": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
     "vacuum-history-hide": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },

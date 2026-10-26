@@ -344,5 +344,7 @@
   "marker.history_unauthorized": "Для истории нужно право редактирования House Plan вне режима киоска.",
   "marker.history_retired": "Просмотр завершён: изменился контекст или началась новая уборка.",
   "marker.history_interrupted": "Уборка была прервана: маршрут может быть неполным.",
-  "marker.history_empty_path": "В выбранной уборке нет записанного пути."
+  "marker.history_empty_path": "В выбранной уборке нет записанного пути.",
+  "editor.rotation": "Поворот плана",
+  "editor.rotation_invalid": "Поворот плана должен быть 0°, 90°, 180° или 270°."
 }

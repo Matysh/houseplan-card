@@ -26,8 +26,11 @@ await loaded(ready => runtime.ledField('disconnect-witness', ready));
 
 function clock() {
   let sequence = 0;
+  const events = new EventTarget();
   const frames = new Map(), timers = new Map();
   const win = {
+    addEventListener: (...args) => events.addEventListener(...args),
+    removeEventListener: (...args) => events.removeEventListener(...args),
     requestAnimationFrame(cb) { const id = ++sequence; frames.set(id, cb); return id; },
     cancelAnimationFrame(id) { frames.delete(id); },
     setTimeout(cb, delay) { const id = ++sequence; timers.set(id, { cb, delay }); return id; },

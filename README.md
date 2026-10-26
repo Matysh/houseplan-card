@@ -178,11 +178,16 @@ Different screens may start on different spaces:
 ```yaml
 type: custom:houseplan-card
 default_floor: ground
+rotation: 90
 ```
 
 All cards share server-side rooms and coordinates. Current mode, viewport and
 selected space remain local to the screen. Revision checks and live sync cover
 concurrent clients, but avoid editing the same object in two browsers at once.
+
+Both card types accept `rotation: 0|90|180|270` (clockwise). The header's rotate
+buttons remember a per-space choice on this device, overriding the card value.
+A kiosk uses only its card value; Static and PDF follow the effective orientation.
 
 ## Detailed documentation
 

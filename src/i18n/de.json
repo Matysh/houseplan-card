@@ -1365,5 +1365,7 @@
   "vac.history_hide": "Ausblenden",
   "vac.history_limited": "Begrenzte Anzeige",
   "vac.history_interrupted": "Reinigung unterbrochen",
+  "title.rotate_left": "Gegen den Uhrzeigersinn drehen",
+  "title.rotate_right": "Im Uhrzeigersinn drehen",
   "view.runtime_converter": "Informationen zur Plankonvertierung"
 }

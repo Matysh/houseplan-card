@@ -53,6 +53,10 @@ export const SELECTORS = Object.freeze({
 
 /** Члены карточки, которые фасад читает (F3). Записей нет ни одной. */
 export const READS = Object.freeze(['_cfgRev', '_layoutRev', '_serverCfg', '_layout',
+  // #1070: readonly observations of state already consumed by the product.
+  // The native controls/gestures remain the only route to changing it.
+  '_rotation', '_zoom', '_view', '_floorCacheBuilds', '_isoStructuralBuildCount',
+  '_sunRaysCache', '_isoSunCache', '_renderProjection',
   '_saveConfigDebounced', '_persistLayout', '_writesPending', '_dirtyPos', '_sentPos', '_writeChain']);
 
 /**
@@ -134,6 +138,15 @@ export function installHpTest(selectors) {
   };
 
   const facade = {
+    /** #1070: read-only camera/cache evidence; never drives a product action. */
+    viewFrameSnapshot() {
+      const c = need('viewFrameSnapshot');
+      return { rotation: c._rotation, camera: { zoom: c._zoom, view: structuredClone(c._view) },
+        floorBuilds: { ...c._floorCacheBuilds }, isoStructuralBuilds: c._isoStructuralBuildCount,
+        sunPolygons: structuredClone(c._sunRaysCache?.rays.map(ray => ray.polys) || []),
+        isoSunPolygons: structuredClone(c._isoSunCache?.beams.map(beam => beam.polys) || []),
+        projection: c._renderProjection, configRevision: c._cfgRev, layoutRevision: c._layoutRev };
+    },
     /** Был ли `__hpTest` на странице ДО установки харнессом — бандл его определять не должен (P2). */
     preinstalled,
     settled,

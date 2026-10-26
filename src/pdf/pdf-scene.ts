@@ -44,6 +44,8 @@ import {
 } from './pdf-writer';
 import { transformSvgPath } from './svg-path';
 import { pdfLocalDate } from './pdf-date';
+import { rotatePdfCommands } from './pdf-layout';
+import { planRotation, type PlanRotation } from '../view-frame';
 
 export interface PdfExportOptions {
   dimensions: boolean;
@@ -75,6 +77,7 @@ export type PdfSharedWallGeometry = Pick<WallBodiesGeometryResult,
   'status' | 'components' | 'roomGeom' | 'openingIndex' | 'multiWallNodes'>;
 
 export interface PdfSceneInput {
+  rotation?: PlanRotation;
   config: ServerConfig;
   rawSpace: PdfRawSpace;
   space: SpaceModel;
@@ -440,7 +443,7 @@ function buildPdfCandidate(
       dash: shape.line_style === 'dashed' ? [3 * MM, 2 * MM] : undefined,
     });
     else if (shape.kind === 'text') commands.push({
-      kind: 'text', ...(() => { const [x, y] = pt([shape.x * NORM_W, shape.y * NORM_W]); return { x, y }; })(),
+      kind: 'text', rotateWithPlan: true, ...(() => { const [x, y] = pt([shape.x * NORM_W, shape.y * NORM_W]); return { x, y }; })(),
       text: shape.text, size: Math.max(6, Number(shape.size_cm || 20) * 10 * MM / scale),
       angle: Number(shape.angle) || 0,
     });
@@ -713,6 +716,7 @@ function buildPdfCandidate(
     minX: margin, minY: fieldTop,
     maxX: pageWidth - margin, maxY: fieldTop + fieldHeight,
   };
+  commands = rotatePdfCommands(commands, planRotation(input.rotation));
   const localSceneBounds = pdfCommandBounds(commands);
   const localField: PdfField = { minX: 0, minY: 0, maxX: planFieldWidth, maxY: fieldHeight };
   const fits = pdfSceneFits(localSceneBounds, localField, 0.5 * MM);
@@ -745,7 +749,7 @@ function buildPdfCandidate(
   if (north !== null) {
     const nx = pageWidth / 2, ny = footerY + 5.5 * MM;
     commands.push({ kind: 'vector',
-      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north }),
+      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north + planRotation(input.rotation) }),
       fill: INK, width: 0, fillRule: 'evenodd' });
     commands.push(
       { kind: 'text', x: nx, y: footerY, text: input.t('pdf.north'), size: 7, align: 'center' });
@@ -769,7 +773,7 @@ function betterPdfCandidate(a: PdfCandidate, b: PdfCandidate): PdfCandidate {
 }
 
 function rawArchitectureCanFit(
-  prepared: PreparedPdfScene, scale: number, landscape: boolean,
+  prepared: PreparedPdfScene, scale: number, landscape: boolean, rotation: PlanRotation = 0,
 ): boolean {
   const pageWidth = (landscape ? 297 : 210) * MM;
   const pageHeight = (landscape ? 210 : 297) * MM;
@@ -777,8 +781,10 @@ function rawArchitectureCanFit(
   const fieldWidth = pageWidth - margin * 2;
   const fieldHeight = pageHeight - margin * 2 - header - footer;
   const pointPerUnit = prepared.cmPerUnit * (10 * MM) / scale;
-  return (prepared.bounds.maxX - prepared.bounds.minX) * pointPerUnit <= fieldWidth + 0.5 * MM
-    && (prepared.bounds.maxY - prepared.bounds.minY) * pointPerUnit <= fieldHeight + 0.5 * MM;
+  const w = prepared.bounds.maxX - prepared.bounds.minX, h = prepared.bounds.maxY - prepared.bounds.minY;
+  const swap = rotation === 90 || rotation === 270;
+  return (swap ? h : w) * pointPerUnit <= fieldWidth + 0.5 * MM
+    && (swap ? w : h) * pointPerUnit <= fieldHeight + 0.5 * MM;
 }
 
 /** Build both A4 orientations from actual annotations and keep the largest standard scale. */
@@ -787,7 +793,7 @@ export function buildPdfPage(input: PdfSceneInput): BuiltPdfPage {
   let lastCandidates: PdfCandidate[] = [];
   for (const scale of PDF_SCALE_SERIES) {
     const candidates = [false, true]
-      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape))
+      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))
       .map((landscape) => buildPdfCandidate(input, prepared, scale, landscape));
     if (!candidates.length) continue;
     const fitting = candidates.filter((candidate) => candidate.fits);

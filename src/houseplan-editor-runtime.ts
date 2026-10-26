@@ -845,6 +845,10 @@ export interface HouseplanEditorHostPort {
   _viewportGestureDirty: boolean;
   _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; w?: number; } | null;
   _viewOr: (vb: number[]) => { x: number; y: number; w: number; h: number; };
+  _framePercent: (point: readonly number[], view: { x: number; y: number; w: number; h: number }) => [number, number];
+  _planScreenDelta: (dx: number, dy: number) => [number, number];
+  readonly _rotation: import('./view-frame').PlanRotation;
+  _planVisibleRect: (view: { x: number; y: number; w: number; h: number }) => { x: number; y: number; w: number; h: number };
   _virtualLights: VirtualLightSnapshot;
   _visibleDeviceSnapshot: RenderDeviceSnapshot | null;
   _wallDialog: { a: number[]; b: number[]; value: string; roomId: string | null; source: WallThickSource; sx: number; sy: number; } | null;
@@ -5589,13 +5593,13 @@ public _wallThickClick(raw: number[]): void {
     this.wallThickSelectionCache = null;
     const view = this.host._viewOr(this.host._baseVb());
     const mx = (hit.a[0] + hit.b[0]) / 2, my = (hit.a[1] + hit.b[1]) / 2;
+    const [sx, sy] = this.host._framePercent([mx, my], view);
     this.host._wallDialog = {
       a: hit.a, b: hit.b,
       value: cmToField(cm, this.host._imperial),
       roomId: hit.roomId,
       source: hit.source,
-      sx: ((mx - view.x) / view.w) * 100,
-      sy: ((my - view.y) / view.h) * 100,
+      sx, sy,
     };
   }
 
@@ -9846,7 +9850,7 @@ public _vacGhostCentre(rooms: VacRoom[]): VacPt {
 public _vacDelta(view: { w: number; h: number }, dxPx: number, dyPx: number): VacPt {
     const st = this.host._stageEl;
     const w = st?.clientWidth || 1, h = st?.clientHeight || 1;
-    return [(dxPx / w) * view.w, (dyPx / h) * view.h];
+    return this.host._planScreenDelta((dxPx / w) * view.w, (dyPx / h) * view.h);
   }
 
 public _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number; h: number }): void {
@@ -10041,8 +10045,9 @@ public _labelMove(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
     const vb = space.vb;
     const rect = stage.getBoundingClientRect();
     const v = this.host._viewOr(vb);
-    const dx = ((ev.clientX - this.host._drag.sx) / rect.width) * v.w;
-    const dy = ((ev.clientY - this.host._drag.sy) / rect.height) * v.h;
+    const [dx, dy] = this.host._planScreenDelta(
+      ((ev.clientX - this.host._drag.sx) / rect.width) * v.w,
+      ((ev.clientY - this.host._drag.sy) / rect.height) * v.h);
     if (Math.abs(ev.clientX - this.host._drag.sx) + Math.abs(ev.clientY - this.host._drag.sy) > 3) this.host._drag.moved = true;
     // DEV-B58-01, and worse than the marker's: this clamped to the space's
     // STORED view_box, which for every existing plan is the old unit square.
@@ -10121,8 +10126,7 @@ public _renderRoomGear(
     const polygon = roomPoly(r);
     const c = preview ? this.roomGear.previewCenter(r, polygon, space.id) : this.roomGear.center(r, polygon, space.id);
     if (!c) return nothing;
-    const left = ((c[0] - view.x) / view.w) * 100;
-    const top = ((c[1] - view.y) / view.h) * 100;
+    const [left, top] = this.host._framePercent(c, view);
     const dragging = this.roomGear.dragging(this.roomGear.key(r.id, space.id));
     return html`<button class="rlgearbtn ${dragging ? 'dragging' : ''}"
       data-hp="room-settings" data-room=${r.id}
@@ -10805,9 +10809,10 @@ public _renderMarkupLayer(vb: number[]): TemplateResult {
       : '';
     const repairPreview = this.host._wallFaceBatch?.candidates[this.host._wallFaceBatch.index]?.repair
       || this.host._wallRepairDiagnostic;
+    const floorView = this.host._planVisibleRect(view);
     return svg`
       ${this._gridLevels()
-        ? svg`<rect data-hp-live-grid x="${liveGridBounds(view).x}" y="${liveGridBounds(view).y}" width="${liveGridBounds(view).w}" height="${liveGridBounds(view).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+        ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
         : nothing}
       ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
       ${this._renderPhysicalEditorLayer()}

@@ -1,9 +1,11 @@
 /** Card configuration editor (Lovelace GUI). */
 import { LitElement, html, nothing, noChange } from 'lit';
 import { langOf, t, type Lang } from './i18n';
-import { LANGUAGE_RUNTIME, languageOptions } from './i18n/registry';
+import { languageOptions } from './i18n/registry';
+import { CARD_EDITOR_LANGUAGE_RUNTIME } from './i18n/card-editor-language';
+import { settingsT } from './i18n/settings';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
-import { invalidDefaultFloor } from './card-editor-validation';
+import { invalidDefaultFloor, invalidCardRotation, cardRotationOptions, rotationFormValue, rotationConfigValue } from './card-editor-validation';
 
 class HouseplanCardEditor extends LitElement {
   public hass?: any;
@@ -51,7 +53,7 @@ class HouseplanCardEditor extends LitElement {
   }
 
   private get _formData(): any {
-    const data = { ...this._config };
+    const data = { ...this._config, rotation: rotationFormValue(this._config?.rotation) };
     const token = this._floorToken;
     if (token) data.floor = token;
     else if (!Object.prototype.hasOwnProperty.call(data, 'floor')) data.floor = '';
@@ -104,6 +106,7 @@ class HouseplanCardEditor extends LitElement {
         },
       },
       { name: 'icon_size', selector: { number: { min: 1, max: 6, step: 0.1, mode: 'box' } } },
+      { name: 'rotation', selector: { select: { mode: 'dropdown', options: cardRotationOptions } } },
       { name: 'show_temperature', selector: { boolean: {} } },
       { name: 'live_states', selector: { boolean: {} } },
       { name: 'kiosk', selector: { boolean: {} } },
@@ -114,7 +117,7 @@ class HouseplanCardEditor extends LitElement {
   protected render() {
     if (!this.hass || !this._config) return nothing;
     const localeGate = languageRenderGate(
-      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+      this, CARD_EDITOR_LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
     );
     if (localeGate === 'cold') return languageLoadingTemplate();
     if (localeGate === 'warm') return noChange;
@@ -126,6 +129,7 @@ class HouseplanCardEditor extends LitElement {
       default_floor: t(L, 'editor.default_floor'),
       language: t(L, 'editor.language'),
       icon_size: t(L, 'editor.icon_size'),
+      rotation: settingsT(L, 'editor.rotation'),
       show_temperature: t(L, 'editor.show_temperature'),
       live_states: t(L, 'editor.live_states'),
       kiosk: t(L, 'editor.kiosk'),
@@ -149,11 +153,14 @@ class HouseplanCardEditor extends LitElement {
         ${t(L, 'editor.default_floor_missing', { id: missingDefault })}
       </div>` : nothing}
       ${form(schema.slice(3))}
+      ${invalidCardRotation(this._config) ? html`<div class="card-config-error" role="alert"
+        style="color:var(--error-color,#db4437)">${settingsT(L, 'editor.rotation_invalid')}</div>` : nothing}
     `;
   }
 
   private _valueChanged(ev: CustomEvent): void {
     const config = { ...this._config, ...ev.detail.value };
+    config.rotation = rotationConfigValue(config.rotation);
     if (config.floor === '') delete config.floor;
     else if (config.floor === this._floorToken) config.floor = this._config?.floor;
     const e = new Event('config-changed', { bubbles: true, composed: true }) as any;

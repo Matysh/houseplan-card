@@ -95,6 +95,26 @@ const buildRawPage = (raw, options, {
   });
 };
 
+test('#1070: complete PDF page follows all four presentation angles and still fits its sheet', () => {
+  const options = { dimensions: true, roomNames: true, decor: true, backdrop: false };
+  const original = buildRawPage(rawSpace, options);
+  assert.deepEqual(buildRawPage(rawSpace, options, { rotation: 0 }), original);
+  const vector = page => {
+    const command = page.commands.find(command => command.kind === 'line'
+      && Math.hypot(command.points[1][0]-command.points[0][0], command.points[1][1]-command.points[0][1]) > 1);
+    const dx = command.points[1][0]-command.points[0][0], dy = command.points[1][1]-command.points[0][1];
+    const length = Math.hypot(dx,dy); return [dx/length,dy/length];
+  };
+  const [x,y] = vector(original), expected = [[x,y],[-y,x],[-x,-y],[y,-x]];
+  for (const [index,rotation] of [0,90,180,270].entries()) {
+    const rotated = buildRawPage(rawSpace, options, { rotation });
+    assert.ok(pdfSceneFits(rotated.sceneBounds, rotated.planField, .5*MM));
+    vector(rotated).forEach((value,axis) => assert.ok(Math.abs(value-expected[index][axis]) < 1e-8));
+    const caption = rotated.commands.find(command => command.kind === 'text' && command.text === 'Кухня');
+    assert.equal(caption.angle || 0, 0, 'room captions remain horizontal');
+  }
+});
+
 const commandBox = (command) => command.rings.flat().reduce((box, [x, y]) => ({
   minX: Math.min(box.minX, x), minY: Math.min(box.minY, y),
   maxX: Math.max(box.maxX, x), maxY: Math.max(box.maxY, y),

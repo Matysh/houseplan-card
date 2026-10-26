@@ -11,6 +11,8 @@ import {
   roomFitCameraTarget,
   roomFitClampFrame,
   roomFitGeometryBounds,
+  roomFitPlanBounds,
+  roomFitPlanTarget,
   roomFitOwnerFromPath,
   roomFitPointBounds,
   validRoomFitBounds,
@@ -21,6 +23,24 @@ const close = (actual, expected, epsilon = 1e-9) => {
   assert.ok(Math.abs(actual - expected) <= epsilon,
     `expected ${actual} to be within ${epsilon} of ${expected}`);
 };
+
+test('#1070 room-fit owner derives turned bounds and returns a canonical camera', () => {
+  const room = { id: 'room', name: 'Room', area: null, poly: [[100,200],[300,200],[300,600],[100,600]] };
+  let innerReads = 0;
+  const input = { room, space: { id: 's', rooms: [room] }, walls: [], openCuts: [],
+    innerFloor: () => { innerReads++; return null; }, borders: false, wallKeyPitch: 1,
+    cellCm: 5, gridPitch: 1000/240, coordinateScale: 1000, projection: 'flat', rotation: 90 };
+  const bounds = roomFitPlanBounds(input);
+  assert.deepEqual(bounds, { x: 400, y: 100, w: 400, h: 200 });
+  assert.equal(innerReads, 0, 'a room without walls does not request wall booleans');
+  assert.equal(roomFitPlanBounds({ ...input, room: { ...room, id: undefined } }), null);
+  const fit = { x: 0, y: 0, w: 1000, h: 1000 };
+  const target = roomFitPlanTarget({ bounds, baseFit: fit, stageWidth: 1000, stageHeight: 1000,
+    minZoom: 1/3, maxZoom: 8, canonicalBase: fit, displayBase: fit, rotation: 90, canonicalFit: fit });
+  close(target.viewBox.x + target.viewBox.w/2, 200);
+  close(target.viewBox.y + target.viewBox.h/2, 400);
+  assert.deepEqual(room.poly, [[100,200],[300,200],[300,600],[100,600]]);
+});
 
 test('#152 point bounds include exact wall vertices and reject malformed geometry', () => {
   assert.deepEqual(roomFitPointBounds([[10, 20], [90, 20], [90, 80], [10, 80]], 2),

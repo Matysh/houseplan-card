@@ -1,5 +1,5 @@
 import {
-  ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint,
+  ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint, isoRotationBasis,
   type IsoCamera, type PlanPoint, type ScenePoint,
 } from './iso-projection';
 
@@ -103,8 +103,8 @@ function topRingPath(points: readonly PlanPoint[], camera: IsoCamera, height: nu
 function visibleNormalY(a: PlanPoint, b: PlanPoint, camera: IsoCamera): number {
   // Normal points to the right of a normalized edge, away from the solid.
   const nx = b[1] - a[1], ny = -(b[0] - a[0]);
-  const rot = camera.rotDeg * Math.PI / 180;
-  return nx * Math.sin(rot) + ny * Math.cos(rot);
+  const [cos, sin] = isoRotationBasis(camera);
+  return nx * sin + ny * cos;
 }
 
 /** Build one top surface and at most one side per canonical ring edge: O(E). */

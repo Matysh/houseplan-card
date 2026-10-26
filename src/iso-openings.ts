@@ -1,5 +1,5 @@
 import {
-  ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint,
+  ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint, isoRotationBasis,
   type IsoCamera, type PlanPoint, type ScenePoint,
 } from './iso-projection';
 import { openingSymbolOffset } from './opening-symbol-placement';
@@ -371,11 +371,11 @@ function projectedSurface(
   metadata: Pick<IsoOpeningSurface, 'jamb' | 'edge'> = {},
 ): IsoOpeningSurface {
   const projected = points.map((value) => projectPlanPoint(value.point, value.z, camera));
-  const rotation = camera.rotDeg * Math.PI / 180;
+  const [cos, sin] = isoRotationBasis(camera);
   const tilt = camera.tiltDeg * Math.PI / 180;
   // #713: depth along the oblique projector (s, 1) of `y' = y − z·s`.
   const cameraDepth = points.reduce((sum, value) => sum
-    + (value.point[0] * Math.sin(rotation) + value.point[1] * Math.cos(rotation))
+    + (value.point[0] * sin + value.point[1] * cos)
       * Math.sin(tilt)
     + value.z, 0) / points.length;
   return Object.freeze({

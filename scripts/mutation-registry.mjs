@@ -129,6 +129,46 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
   },
   {
+    id: 'plan-rotation-kiosk-uses-device-1070',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
+    because: '#1070 AC6: kiosk orientation comes only from its card configuration. Registered only; nightly execution.',
+    patches: [{ file: 'src/view-frame.ts',
+      find: 'return !kiosk && validPlanRotation(deviceValue) ? deviceValue : planRotation(cardValue);',
+      replace: 'return validPlanRotation(deviceValue) ? deviceValue : planRotation(cardValue);' }],
+  },
+  {
+    id: 'plan-rotation-pointer-skips-inverse-1070',
+    guard: compiledNodeSmoke('smoke_plan_rotation_editors'),
+    because: '#1070 AC7: real drawing, node and decor gestures must retain canonical coordinates after turning the presentation. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'return turnPoint([v.x + (sx / w) * v.w, v.y + (sy / h) * v.h], inversePlanRotation(this._rotation));',
+      replace: 'return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];' }],
+  },
+  {
+    id: 'plan-rotation-mode-writes-display-camera-1070',
+    guard: 'node demo/smoke_plan_rotation.mjs',
+    because: '#1070 AC1/AC8: animated transitions must never write a presentation frame into the canonical camera. The native rAF trace observes this with pan and zoom. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;\n    const view = this._cameraView(this._baseVb());",
+      replace: "const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;\n    const view = this._viewOr(this._baseVb());" }],
+  },
+  {
+    id: 'plan-rotation-iso-keeps-zero-side-1070',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
+    because: '#1070 AC9/AC11: four distinct camera-facing edges share one physical build. Registered only; nightly execution.',
+    patches: [{ file: 'src/iso-scene-render.ts',
+      find: 'const camera = isoCameraFor(planRotation(input.rotation));',
+      replace: 'const camera = ISO_CAMERA;' }],
+  },
+  {
+    id: 'plan-rotation-pdf-keeps-zero-1070',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/pdf-scene.test.mjs',
+    because: '#1070 AC10: the complete PDF page must follow rotation before fitting and keep captions readable. Registered only; nightly execution.',
+    patches: [{ file: 'src/pdf/pdf-scene.ts',
+      find: 'commands = rotatePdfCommands(commands, planRotation(input.rotation));',
+      replace: 'commands = rotatePdfCommands(commands, 0);' }],
+  },
+  {
     id: 'decor-preview-keeps-lost-capture-draft-1080',
     guard: 'node demo/smoke_decor_preview_ownership.mjs',
     because: '#1080 AC4: real pointer capture loss must remove a drawn rect/ellipse preview without saving it; Node-only rendering cannot observe the browser capture lifecycle. Registered only; nightly execution.',
@@ -5414,9 +5454,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: '    const candidates = [false, true]\n'
-        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape))',
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))',
       replace: '    const candidates = [pdfBoundsWidth(prepared.bounds) > pdfBoundsHeight(prepared.bounds)]\n'
-        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape))',
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))',
     }],
   },
   {
@@ -5427,7 +5467,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: "    commands.push({ kind: 'vector',\n"
-        + '      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north }),\n'
+        + '      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north + planRotation(input.rotation) }),\n'
         + "      fill: INK, width: 0, fillRule: 'evenodd' });",
       replace: "    commands.push({ kind: 'line', points: [[nx, ny], [nx, ny - 11 * MM]],\n"
         + '      stroke: INK, width: 0.5 * MM });',
@@ -16738,8 +16778,8 @@ const MUTANT_DEFINITIONS = [
       + 'the plan, the decor and every anchor towards the centre again',
     patches: [{
       file: 'src/iso-projection.ts',
-      find: '  const d = camera.xyScale * Math.cos(rot);',
-      replace: '  const d = camera.xyScale * Math.cos(rot) * Math.cos(tilt);',
+      find: '  const d = camera.xyScale * cos;',
+      replace: '  const d = camera.xyScale * cos * Math.cos(tilt);',
     }],
   },
   {
@@ -19837,9 +19877,9 @@ const MUTANT_DEFINITIONS = [
       + 'frame does not depend on the aspect since #713',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    const aspect = scene.frame.w / scene.frame.h; // #713/#725: the fit frame ignores aspect; no layout read in render\n',
-      replace: '    const stageSize = this._stageEl?.getBoundingClientRect?.() ?? null;\n'
-        + '    const aspect = stageSize?.height ? stageSize.width / stageSize.height : scene.frame.w / scene.frame.h;\n',
+      find: '    return runtime.resolveIsoFitScene({\n',
+      replace: '    const stageSize = this._stageEl?.getBoundingClientRect?.() ?? null; void stageSize;\n'
+        + '    return runtime.resolveIsoFitScene({\n',
     }],
   },
   {

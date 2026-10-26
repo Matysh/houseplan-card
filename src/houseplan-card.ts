@@ -270,12 +270,12 @@ import {
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
 import {
-  CameraTransitionController, cameraTargetAtAnchor, sameCameraState,
+  CameraTransitionController, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
 } from './viewport-transition'; import { measuredCardHeaderHeight, settleSoftStageLayout } from './boot-soft-layout';
 import {
-  PlanTapGestureController, roomFitCameraTarget, roomFitClampFrame,
-  roomFitGeometryBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
+  PlanTapGestureController, roomFitPlanTarget, roomFitClampFrame,
+  roomFitPlanBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
 import type { FurniturePlacementPress } from './furniture-placement-press';
@@ -300,8 +300,14 @@ import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
 import {
-  ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, projectedFrame,
+  ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, projectedFrame, isoCameraFor,
 } from './iso-projection';
+import {
+  PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation,
+  turnPoint, turnVector, turnRect, turnMatrix, inversePlanRotation, framePercent, frameStyle,
+  presentationViewport, planZoomTarget, type FrameRect, type PlanRotation,
+} from './view-frame';
+import { renderHomeArrow, renderPlanRotationControls } from './view-frame-view';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
 import type {
@@ -1172,7 +1178,7 @@ export class HouseplanCard extends LitElement {
   private get _doubleFitEnabled(): boolean { return this._mode === 'view' && !this._vacFit && !this._modeTransitionBusy && !this._touchSequenceMultitouch && this._continuity.state === 'steady' && !this._continuity.overlayBlocksInteraction; }
 
   private _cameraState(): CameraState {
-    const view = this._viewOr(this._baseVb());
+    const view = this._cameraView(this._baseVb());
     return { zoom: this._zoom, viewBox: { ...view } };
   }
 
@@ -1278,7 +1284,7 @@ export class HouseplanCard extends LitElement {
     const stage = this._stageEl;
     if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
     const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
-    const view = this._viewOr(this._baseVb());
+    const view = this._cameraView(this._baseVb());
     const paper = this.renderRoot.querySelector('.hp-paper') as SVGElement | null;
     const backdrop = this.renderRoot.querySelector('.hp-backdrop') as SVGElement | null;
     const zoomwrap = this.renderRoot.querySelector('.zoomwrap') as HTMLElement | null;
@@ -2734,6 +2740,8 @@ export class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
+    window.addEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
+    window.addEventListener('storage', this._rotationChanged);
     this._connectedPath = location.pathname;
     this._routeDepartureHandled = false;
     this._configReloadAuthority.observeContext(configReloadContext(this));
@@ -2841,6 +2849,8 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    window.removeEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
+    window.removeEventListener('storage', this._rotationChanged);
     for (const runtime of this._vacRt.values()) {
       if (runtime.livePending) { runtime.gap = true; runtime.livePending.gap = true; }
     }
@@ -3097,10 +3107,11 @@ export class HouseplanCard extends LitElement {
     const selectFurniture = key === 'm' || (!latinLetter && e.code === 'KeyM');
     const redo = mod && ((isZ && e.shiftKey) || isY);
     const undo = mod && isZ && !e.shiftKey;
-    const arrow = e.key === 'ArrowLeft' ? [-this._gridPitch, 0]
+    const screenArrow = e.key === 'ArrowLeft' ? [-this._gridPitch, 0]
       : e.key === 'ArrowRight' ? [this._gridPitch, 0]
         : e.key === 'ArrowUp' ? [0, -this._gridPitch]
           : e.key === 'ArrowDown' ? [0, this._gridPitch] : null;
+    const arrow = screenArrow ? this._planScreenDelta(screenArrow[0], screenArrow[1]) : null;
     if (arrow && this._mode !== 'decor' && this._editorRuntime?.keyboardNudge.handle(e, arrow[0], arrow[1])) {
       e.preventDefault(); return;
     }
@@ -4237,7 +4248,7 @@ export class HouseplanCard extends LitElement {
     if (remember) this._hiddenDevicePreference.set(shown, hiddenDeviceStorage());
     if (shown === this._showHidden) return;
     const view = (remember || this._continuity.hasCompleteFrame) && this._spaceModel()
-      ? { ...this._viewOr(this._baseVb()) } : null;
+      ? { ...this._cameraView(this._baseVb()) } : null;
     this._showHidden = shown;
     // Roster identity invalidates the frame while preserving editor-only growth.
     this._capturedSeq = -1; this._deviceInboxMemo = null;
@@ -6334,20 +6345,15 @@ export class HouseplanCard extends LitElement {
         const point = this._labelPos(room, space.id);
         liveFrame = unionRect(liveFrame, { x: point.x, y: point.y, w: 0, h: 0 }); }
     }
-    const scene = runtime.resolveIsoScene({
-      source, cache: this._isoGeometryCache, cellCm: this._cellCm, liveFrame,
-    });
-    if (!space || !disp.showBorders) return scene;
     const cfgSize = this._config?.icon_size ?? 2.5, iconPct = cfgSize > 8 ? 2.5 : cfgSize;
-    const aspect = scene.frame.w / scene.frame.h; // #713/#725: the fit frame ignores aspect; no layout read in render
-    const overlays = this._isoOverlayScene(
-      space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
-      disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
-      effectiveShowLqi(this._settings, disp.showLqi, this._config?.show_signal));
-    const envelope = overlays && runtime.resolveIsoOverlayFitEnvelope({
-      baseBounds: scene.frame, entries: overlays.entries, targetView: (bounds) =>
-        fitView([bounds.x, bounds.y, bounds.w, bounds.h], aspect) });
-    return envelope ? { ...scene, frame: envelope.bounds, overlayFitEntries: overlays.entries } : scene;
+    return runtime.resolveIsoFitScene({
+      source, cache: this._isoGeometryCache, cellCm: this._cellCm, liveFrame,
+      rotation: this._rotation,
+      overlays: space && disp.showBorders ? (scene) => this._isoOverlayScene(
+        space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
+        disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
+        effectiveShowLqi(this._settings, disp.showLqi, this._config?.show_signal)) : undefined,
+    });
   }
   private _latchIsoFallback(key: string, _ignored: unknown): void {
     if (this._isoFallback.has(key)) return;
@@ -6403,7 +6409,7 @@ export class HouseplanCard extends LitElement {
     if (!runtime || !layers?.structural || !structural) return null;
     return runtime.buildIsoOverlayRenderScene({
       space, devices: devs, openings: this._openingsR, display: disp,
-      structure: structural.geometry,
+      structure: structural.geometry, camera: structural.camera,
       iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
       kioskIconScale: this._mode === 'view' ? this._kioskScale.icon : 1,
       kioskFontScale: this._mode === 'view' ? this._kioskScale.font : 1,
@@ -6431,7 +6437,7 @@ export class HouseplanCard extends LitElement {
         });
         return [frame.x, frame.y, frame.w, frame.h];
       }
-      const frame = scene?.frame ?? this._frameOf().rect;
+      const frame = scene?.canonicalFrame ?? scene?.frame ?? this._frameOf().rect;
       return [frame.x, frame.y, frame.w, frame.h];
     }
     const r = this._frameOf().rect;
@@ -6465,39 +6471,13 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Exact finite room geometry in the current camera coordinate system. */
-  private _roomFitBounds(room: RoomCfg, space: SpaceModel) {
-    const own = roomPoly(room);
-    if (!own || !room.id) return null;
-    const walls = this._spaceWalls;
-    const openCuts = this._openCuts();
-    const united = this._wallUnionGeometry();
-    const floor = walls.length
-      ? (this._innerRoomContour(
-          space, room.id, openCuts, united?.roomGeom, united?.multiWallNodes,
-        ) || own)
-      : own;
-    const disp = this._spaceDisplayForRender();
-    let wall: number[][] = [];
-    if (disp.showBorders && walls.length) {
-      const profile = roomWallProfile(
-        space.rooms, room.id, walls, openCuts,
-        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-      );
-      if (profile) {
-        wall = outsetContour(profile.poly, profile.offsets, united?.multiWallNodes)
-          || profile.poly;
-      }
-    }
-    const projection = this._effectiveProjection();
-    return roomFitGeometryBounds({
-      floor,
-      wall,
-      projection,
-      wallHeight: projection === 'iso' && disp.showBorders
-        ? gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm) : 0,
-      floorDepth: projection === 'iso' && disp.showBorders
-        ? gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, this._cellCm) : 0,
-      padding: disp.showBorders ? gridVisualUnits(1.25, this._cellCm) : 0,
+  private _roomFitBounds(room: RoomCfg, space: SpaceModel, rotation: PlanRotation = 0) {
+    return roomFitPlanBounds({
+      room, space, walls: this._spaceWalls, openCuts: this._openCuts(),
+      innerFloor: () => this._innerRoomContour(space, room.id!),
+      wallNodes: this._wallUnionGeometry()?.multiWallNodes, borders: this._spaceDisplayForRender().showBorders,
+      wallKeyPitch: this._wallKeyPitch, cellCm: this._cellCm, gridPitch: this._gridPitch,
+      coordinateScale: NORM_W, projection: this._effectiveProjection(), rotation,
     });
   }
 
@@ -6511,7 +6491,8 @@ export class HouseplanCard extends LitElement {
       this._clearRoomFocus();
       return false;
     }
-    let bounds = this._roomFitBounds(room, space);
+    const canonicalBounds = this._roomFitBounds(room, space);
+    let bounds = this._rotation ? this._roomFitBounds(room, space, this._rotation) : canonicalBounds;
     if (!bounds) {
       this._clearRoomFocus();
       return false;
@@ -6521,13 +6502,17 @@ export class HouseplanCard extends LitElement {
     if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
     const base = this._baseVb();
     const baseFit = fitView(base, stage.clientWidth / stage.clientHeight);
-    const targetOf = (fitBounds: NonNullable<typeof bounds>) => roomFitCameraTarget({
+    const displayBase = this._displayBase(base);
+    const displayFit = this._rotation ? fitView([displayBase.x, displayBase.y, displayBase.w, displayBase.h], stage.clientWidth / stage.clientHeight) : baseFit;
+    const targetOf = (fitBounds: NonNullable<typeof bounds>) => roomFitPlanTarget({
       bounds: fitBounds,
-      baseFit,
+      baseFit: displayFit,
       stageWidth: stage.clientWidth,
       stageHeight: stage.clientHeight,
       minZoom: HouseplanCard.ZOOM_MIN,
       maxZoom: HouseplanCard.ZOOM_MAX,
+      canonicalBase: { x: base[0], y: base[1], w: base[2], h: base[3] },
+      displayBase, rotation: this._rotation, canonicalFit: baseFit,
     });
     let target = targetOf(bounds);
     const runtime = this._isoSceneRuntime, entries = this._renderIsoScene?.overlayFitEntries;
@@ -6542,7 +6527,7 @@ export class HouseplanCard extends LitElement {
       return false;
     }
     const current = this._cameraState();
-    const clamp = roomFitClampFrame(baseFit, current.viewBox, target.viewBox, bounds);
+    const clamp = roomFitClampFrame(baseFit, current.viewBox, target.viewBox, canonicalBounds || bounds);
     target.viewBox = this._clampView(target.viewBox, clamp);
     if (animate) {
       this._prepareCameraCommand();
@@ -6581,24 +6566,9 @@ export class HouseplanCard extends LitElement {
     </div>`;
   }
 
-  /** "Home is that way" (docs/CANVAS.md §5): the plane has no edges, so it is
-   *  possible to pan until nothing is on screen. One small pointer towards the
-   *  content, one click back to it. */
   private _renderHomeArrow(base = this._baseVb()): TemplateResult | typeof nothing {
-    if (this._booting) return nothing;
-    const v = this._view;
-    if (!v || !v.w || !v.h) return nothing;
-    const f = { x: base[0], y: base[1], w: base[2], h: base[3] };
-    const gone = f.x + f.w <= v.x || f.x >= v.x + v.w || f.y + f.h <= v.y || f.y >= v.y + v.h;
-    if (!gone) return nothing;
-    const ang = Math.atan2((f.y + f.h / 2) - (v.y + v.h / 2), (f.x + f.w / 2) - (v.x + v.w / 2));
-    const left = 50 + Math.cos(ang) * 38;
-    const top = 50 + Math.sin(ang) * 38;
-    return html`<button class="homearrow" title=${this._t('canvas.home_tip')}
-      style="left:${left.toFixed(1)}%;top:${top.toFixed(1)}%"
-      @click=${(e: Event) => { e.stopPropagation(); this._fitAll('home'); }}>
-      <ha-icon icon="mdi:arrow-right-thick" style="transform:rotate(${((ang * 180) / Math.PI).toFixed(1)}deg)"></ha-icon>
-    </button>`;
+    return renderHomeArrow(base, this._booting ? null : this._view, this._rotation,
+      this._t('canvas.home_tip'), () => this._fitAll('home'));
   }
 
   /** Aspect ratio of the scene (width/height, px). */
@@ -6607,10 +6577,49 @@ export class HouseplanCard extends LitElement {
     return s && s.clientHeight ? s.clientWidth / s.clientHeight : vb[2] / vb[3];
   }
 
-  /** Current view with a fallback to the full fit. */
-  private _viewOr(vb: number[]): { x: number; y: number; w: number; h: number } {
+  /** Saved camera numbers always use the unrotated frame. */
+  private _cameraView(vb: number[]): FrameRect {
     return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect(vb));
   }
+
+  private get _rotation() { return devicePlanRotation.get(this._space, this._config?.rotation, this._kiosk); }
+  private readonly _rotationChanged = (event: Event): void => {
+    if (event instanceof StorageEvent) {
+      if (event.key !== PLAN_ROTATION_STORAGE && event.key !== null) return;
+      devicePlanRotation.reload();
+    }
+    this._isoProjectionSnapshot = null;
+    this.requestUpdate();
+  };
+  private _rotatePlan(direction: -1 | 1): void {
+    if (this._kiosk || !this._space) return;
+    this._cancelCameraTransition(false);
+    this._clearRoomFocus(true);
+    devicePlanRotation.set(this._space, stepPlanRotation(this._rotation, direction));
+    window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+  }
+  private _displayBase(vb = this._baseVb()): FrameRect {
+    if (this._effectiveProjection() === 'iso') {
+      if (this._renderIsoScene) return this._renderIsoScene.frame;
+      return projectedFrame({ rect: this._frameOf().rect, wallHeight: 0 }, isoCameraFor(this._rotation));
+    }
+    return turnRect({ x: vb[0], y: vb[1], w: vb[2], h: vb[3] }, this._rotation);
+  }
+  private _presentationView(view: FrameRect, zoom = this._zoom, vb = this._baseVb()): FrameRect {
+    return !this._rotation ? view : presentationViewport(view, vb, this._displayBase(vb), this._rotation, zoom,
+      this._lastValidStageSize, this._modeTransitionVisual);
+  }
+  private _viewOr(vb: number[]): FrameRect { return this._presentationView(this._cameraView(vb), this._zoom, vb); }
+  private _framePercent(point: readonly number[], view: FrameRect, projected = false): [number, number] {
+    return framePercent([point[0], point[1]], view, projected ? 0 : this._rotation);
+  }
+  private _frameStyle(point: readonly number[], view: FrameRect): string {
+    return frameStyle([point[0], point[1]], view, this._rotation);
+  }
+  private _planScreenDelta(dx: number, dy: number): [number, number] {
+    return turnVector([dx, dy], inversePlanRotation(this._rotation));
+  }
+  private _planVisibleRect(view: FrameRect): FrameRect { return turnRect(view, inversePlanRotation(this._rotation)); }
 
   /**
    * Room labels must keep their View screen geometry while the Plan toolbar
@@ -6620,7 +6629,8 @@ export class HouseplanCard extends LitElement {
    */
   private _roomLabelReferenceViewWidth(view: { w: number }): number {
     if (!this._markup) return view.w;
-    const snap = this._viewModeSnap; if (snap?.space === this._space && snap.w) return snap.w * snap.zoom / this._zoom;
+    const snap = this._viewModeSnap; if (snap?.space === this._space && snap.w) return snap.w * snap.zoom / this._zoom
+      * (this._rotation ? view.w / this._cameraView(this._baseVb()).w : 1);
     const stage = this._stageEl;
     const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;
     if (!stage?.clientWidth || !stage.clientHeight) return view.w;
@@ -6635,7 +6645,7 @@ export class HouseplanCard extends LitElement {
     const s = this._stageEl;
     const v = this._viewOr(this._baseVb());
     const w = s?.clientWidth || 1, h = s?.clientHeight || 1;
-    return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];
+    return turnPoint([v.x + (sx / w) * v.w, v.y + (sy / h) * v.h], inversePlanRotation(this._rotation));
   }
 
   /** Zoom limits (docs/CANVAS.md §5): 8x in as before, 3x out — beyond that
@@ -6672,7 +6682,7 @@ export class HouseplanCard extends LitElement {
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
     const w = fit.w / z, h = fit.h / z;
-    const cur = this._viewOr(vb);
+    const cur = this._cameraView(vb);
     const ccx = cx ?? cur.x + cur.w / 2;
     const ccy = cy ?? cur.y + cur.h / 2;
     const next = this._clampView({ x: ccx - w / 2, y: ccy - h / 2, w, h }, fit);
@@ -6861,7 +6871,6 @@ export class HouseplanCard extends LitElement {
     const stage = this._stageEl;
     if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
     const vb = this._baseVb();
-    const fit = fitView(vb, this._stageAspect());
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, newZoom));
     // #396 AC3: the world point under the pointer is read from the SAME state
     // the zoom is accumulated from — the running target. Reading it from the
@@ -6869,13 +6878,8 @@ export class HouseplanCard extends LitElement {
     // 14-16 CSS px away, while spec #82 §10 promises it stays put.
     const anchorFrom = (animated && this._cameraTransition.target)
       || this._cameraState();
-    const target = cameraTargetAtAnchor(
-      anchorFrom, z, fit,
-      stage.clientWidth, stage.clientHeight, sx, sy,
-    );
-    if (!target) return null;
-    target.viewBox = this._clampView(target.viewBox, fit);
-    return { target, fit };
+    return planZoomTarget(anchorFrom, z, vb, this._displayBase(vb), this._rotation,
+      stage.clientWidth, stage.clientHeight, sx, sy, (view, fit) => this._clampView(view, fit));
   }
 
   /** Immediate path for direct pinch: keep the point under the fingers. */
@@ -7054,7 +7058,7 @@ export class HouseplanCard extends LitElement {
     if (this._mode === 'devices' && (ev.target as HTMLElement).closest('.dev')) return;
     if (this._mode === 'decor' && this._decorPointerDown(ev)) return;
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
-    const v = this._viewOr(this._baseVb());
+    const v = this._cameraView(this._baseVb());
     if (this._pointers.size === 1) {
       this._panStart = { sx: ev.clientX, sy: ev.clientY, vx: v.x, vy: v.y };
       this._panLock = null; // undecided until the finger moves
@@ -7191,12 +7195,14 @@ export class HouseplanCard extends LitElement {
       const stage = this._stageEl;
       if (this._panLock === 'pan' && stage) {
         const vb = this._baseVb();
-        const v = this._viewOr(vb);
+        const v = this._cameraView(vb), displayed = this._presentationView(v);
+        const [dx, dy] = this._planScreenDelta(
+          ddx / (stage.clientWidth || 1) * displayed.w, ddy / (stage.clientHeight || 1) * displayed.h);
         const fit = fitView(vb, this._stageAspect());
         this._view = this._clampView(
           {
-            x: this._panStart.vx - (ddx / (stage.clientWidth || 1)) * v.w,
-            y: this._panStart.vy - (ddy / (stage.clientHeight || 1)) * v.h,
+            x: this._panStart.vx - dx,
+            y: this._panStart.vy - dy,
             w: v.w,
             h: v.h,
           },
@@ -7395,8 +7401,8 @@ export class HouseplanCard extends LitElement {
     const vb = this._baseVb();
     const rect = stage.getBoundingClientRect();
     const v = this._viewOr(vb);
-    const dx = ((ev.clientX - drag.sx) / rect.width) * v.w;
-    const dy = ((ev.clientY - drag.sy) / rect.height) * v.h;
+    const [dx, dy] = this._planScreenDelta(
+      ((ev.clientX - drag.sx) / rect.width) * v.w, ((ev.clientY - drag.sy) / rect.height) * v.h);
     if (Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) > 3) {
       drag.moved = true;
       this._viewHold.cancel();
@@ -10399,6 +10405,7 @@ export class HouseplanCard extends LitElement {
     const openCuts = this._openCuts();
     const roomsById = new Map(space.rooms.flatMap((room) => room.id ? [[room.id, room]] : []));
     return runtime.render({
+      rotation: this._rotation,
       config: this._serverCfg,
       rawSpace,
       space,
@@ -11039,6 +11046,7 @@ export class HouseplanCard extends LitElement {
     }
     const isoLayers = isoFrame?.layers ?? null;
     const isoOverlays = isoFrame?.overlays ?? null;
+    const floorView = this._planVisibleRect(view);
     // Background around the plan (view/kiosk; editors keep their own canvas).
     // Both settings dialogs preview their pending value live.
     const stageBg = this._editing ? '' : this._stageBg(disp);
@@ -11126,6 +11134,7 @@ export class HouseplanCard extends LitElement {
           <span class="spacer"></span>
           <div class="header-actions">
           <div class="zoomctl">
+            ${this._kiosk ? nothing : renderPlanRotationControls(key => this._t(key), direction => this._rotatePlan(direction))}
             <button class="btn zb" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
             ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
                    zoom" renamed rather than duplicated. No longer disabled at
@@ -11165,6 +11174,7 @@ export class HouseplanCard extends LitElement {
         </div>
 
         <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._editorRuntime?.backdropGesture.movable ? ' bdgrab' : ''}${this._editorRuntime?.backdropGesture.active ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}${this._safeDayCycleOutline ? ' hp-safe-daycycle-outline' : ''}` : ''}${this._booting ? ' hpboot' : ''}${isoFirstFramePending ? ' hpiso-pending' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
+          data-hp-plan-rotation=${this._rotation}
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${this._modeTransitionBusy}
@@ -11199,7 +11209,7 @@ export class HouseplanCard extends LitElement {
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}
             viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
             preserveAspectRatio="xMidYMid meet">
-            <g class=${iso ? 'iso-floor-scene' : nothing}>
+            <g class=${iso ? 'iso-floor-scene' : nothing} transform=${this._rotation ? turnMatrix(this._rotation) : nothing}>
             ${''/* THE PAPER IS THE ROOMS (docs/DECOR-EDITOR.md §3.3, owner
                    2026-08-04). Opaque shapes stop the scene background —
                    bg_color or the day-cycle environment — from bleeding through the
@@ -11219,7 +11229,7 @@ export class HouseplanCard extends LitElement {
             ${''/* the grid is a property of the plane, not of a box: it follows
                    the VIEW so it is there wherever you pan (docs/CANVAS.md §7) */}
             ${this._editing && !this._markup && this._gridLevels()
-              ? svg`<rect data-hp-live-grid x="${liveGridBounds(view).x}" y="${liveGridBounds(view).y}" width="${liveGridBounds(view).w}" height="${liveGridBounds(view).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
+              ? svg`<rect data-hp-live-grid x="${liveGridBounds(floorView).x}" y="${liveGridBounds(floorView).y}" width="${liveGridBounds(floorView).w}" height="${liveGridBounds(floorView).h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
               : nothing}
             ${space.bg && backdropHref
               ? svg`<image class="hp-backdrop" data-hp="backdrop" href="${backdropHref}" x="${space.bg.x}" y="${space.bg.y}" width="${space.bg.w}" height="${space.bg.h}"
@@ -11466,7 +11476,7 @@ export class HouseplanCard extends LitElement {
                 return !!marker && radarMarkerLiveInSpace(marker, this._space);
               }),
               view,
-              (point) => point,
+              (point) => turnPoint(point, this._rotation),
             )}
             ${keyed(space.id, repeat(devs, (d) => d.id, (d) => this._renderDevice(
               d, view, showLqi, isoOverlays?.devices.get(d.id),
@@ -12101,8 +12111,7 @@ export class HouseplanCard extends LitElement {
       if (!moving || !tele?.pos || !matrix) continue;
       const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
       const point = [cx, cy];
-      const left = ((point[0] - view.x) / view.w) * 100;
-      const top = ((point[1] - view.y) / view.h) * 100;
+      const [left, top] = this._framePercent(point, view);
       const stale = rt && rt.lastTs > 0 && Date.now() - rt.lastTs > VAC_STALE_MS;
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
@@ -12126,7 +12135,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!pucks.length && !trails.length) return nothing;
     return html`
-      ${trails.length ? svg`<svg class="vactrail" data-hp="vacuum-trail" data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
+      ${trails.length ? svg`<svg class="vactrail" data-hp="vacuum-trail" data-hp-live-inherited-scene="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none"><g data-hp-plan-rotation-frame transform=${this._rotation ? turnMatrix(this._rotation) : nothing}>${trails}</g></svg>` : nothing}
       ${pucks}`;
   }
 
@@ -12139,9 +12148,10 @@ export class HouseplanCard extends LitElement {
   ): TemplateResult {
     const pos = this._pos(d);
     const point = isoPlacement?.visualScene ?? [pos.x, pos.y];
-    const left = ((point[0] - view.x) / view.w) * 100;
-    const top = ((point[1] - view.y) / view.h) * 100;
-    const presentation = this._devicePresentation(d, showLqi);
+    const [left, top] = this._framePercent(point, view, !!isoPlacement);
+    const resolved = this._devicePresentation(d, showLqi);
+    const presentation = this._rotation && typeof d.marker?.angle === 'number'
+      ? { ...resolved, angle: resolved.angle + this._rotation } : resolved;
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     const floorLight = this._isoLightFloors?.has(isoPlacement?.owner?.id ?? (this._isoLightFloors.size ? this._spaceModel()?.rooms.find((r) => this._pointInRoom([pos.x, pos.y], r))?.id : '') ?? '') ? 'iso-floor-light' : '';
     if (ghost) return renderIsoTileShadow('dev', d.id, `${deviceThemeClass(this._renderPlanHass)} ${presentation.classes.join(' ')} ${floorLight}`, st.join(';'), renderDeviceShadowFace(presentation));
@@ -12225,8 +12235,9 @@ export class HouseplanCard extends LitElement {
     const face = presentation.haDisabled ? nothing : renderDeviceShadowFace(presentation);
     if (face === nothing) return nothing;
     const pos = this._pos(d), point = iso?.visualScene ?? [pos.x, pos.y];
+    const [left, top] = this._framePercent(point, view, !!iso);
     return html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(this._renderPlanHass)}" data-led-badge=${d.id} aria-hidden="true"
-      style="left:${((point[0] - view.x) / view.w) * 100}%;top:${((point[1] - view.y) / view.h) * 100}%">${face}</div>`;
+      style="left:${left}%;top:${top}%">${face}</div>`;
   }
 
   /**
@@ -12412,8 +12423,7 @@ export class HouseplanCard extends LitElement {
     if (!r.name && !this._markup) return nothing;
     const p = this._labelPos(r, space.id);
     const point = isoPlacement?.visualScene ?? [p.x, p.y];
-    const left = ((point[0] - view.x) / view.w) * 100;
-    const top = ((point[1] - view.y) / view.h) * 100;
+    const [left, top] = this._framePercent(point, view, !!isoPlacement);
     const nameColor = this._roomDialog && this._roomEditId === r.id
       ? roomNameColorOf(disp.nameColor, { settings: { name_color: this._roomNameColor } })
       : roomNameColorOf(disp.nameColor, r);
@@ -12526,7 +12536,7 @@ export class HouseplanCard extends LitElement {
         ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._resize.liveLabels.map((l) => html`<div
             class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
             data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'} data-room=${l.kind === 'area' ? l.roomId : nothing} data-side=${l.kind === 'area' ? l.placement.side : nothing}
-            style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.kind === 'area'
+            style="${this._frameStyle([l.x, l.y], view)};${l.kind === 'area'
               ? `--rsz-label-x:${l.placement.offsetXPx.toFixed(2)}px;--rsz-label-y:${l.placement.offsetYPx.toFixed(2)}px;--rsz-label-tangent:${l.placement.tangentOffsetPx.toFixed(2)}px`
               : ''}">${l.text}</div>`)}</div>`
         : nothing}
@@ -12534,21 +12544,21 @@ export class HouseplanCard extends LitElement {
         ? html`<div class="measurelayer" data-hp-live-layer="camera">${opMeasure.labels.map((l) => html`<div
             class="measurelabel opshoulder ${l.dimension ? 'opdimension' : ''}"
             data-dimension-source=${l.dimension?.source || nothing} data-dimension-room=${l.dimension?.roomId || nothing}
-            style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.dimension
+            style="${this._frameStyle([l.x, l.y], view)};${l.dimension
               ? `--op-label-shift-x:${(l.dimension.labelNormal[0] * 12).toFixed(2)}px;--op-label-shift-y:${(l.dimension.labelNormal[1] * 12).toFixed(2)}px`
               : ''}">${l.text}</div>`)}</div>`
         : nothing}
       ${decorMeasure
         ? html`<div class="measurelayer" data-hp-live-layer="camera"><div class="measurelabel dmeasure ${decorMeasure.on45 ? 'on45' : ''}"
-            style="left:${(((decorMeasure.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((decorMeasure.y - view.y) / view.h) * 100).toFixed(2)}%">${decorMeasure.text}</div></div>`
+            style="${this._frameStyle([decorMeasure.x, decorMeasure.y], view)}">${decorMeasure.text}</div></div>`
         : nothing}
       ${furnLive
         ? html`<div class="measurelayer" data-hp-live-layer="camera">${furnLive.map((l) => html`<div class="measurelabel furnmeasure"
-            style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+            style="${this._frameStyle([l.x, l.y], view)}">${l.text}</div>`)}</div>`
         : nothing}
       ${bdLive
         ? html`<div class="measurelayer" data-hp-live-layer="camera"><div class="measurelabel bdmeasure"
-            style="left:${(((bdLive.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((bdLive.y - view.y) / view.h) * 100).toFixed(2)}%">${bdLive.text}</div></div>`
+            style="${this._frameStyle([bdLive.x, bdLive.y], view)}">${bdLive.text}</div></div>`
         : nothing}
     `;
   }
@@ -12567,8 +12577,7 @@ export class HouseplanCard extends LitElement {
   private _renderMeasureLabel(view: { x: number; y: number; w: number; h: number }): TemplateResult {
     const a = this._measureAnchor!;
     const b = this._cursorPt!;
-    const left = ((b[0] - view.x) / view.w) * 100;
-    const top = ((b[1] - view.y) / view.h) * 100;
+    const [left, top] = this._framePercent(b, view);
     // angle badge: length · angle, both green when the angle is a 45° multiple
     const deg = segmentAngle(a, b);
     const shown = Math.round(deg * 10) / 10;
@@ -12833,8 +12842,7 @@ export class HouseplanCard extends LitElement {
       }, this._cellCm)[0];
       const isoPlacement = isoPlacements?.get(String(o.id));
       const point = isoPlacement?.visualScene ?? floorAnchor;
-      const left = ((point[0] - view.x) / view.w) * 100;
-      const top = ((point[1] - view.y) / view.h) * 100;
+      const [left, top] = this._framePercent(point, view, !!isoPlacement);
       const lockState = `${locked ? 'locked' : known ? 'unlocked' : 'unknown'} ${this._isoLightFloors?.has(isoPlacement?.owner?.id ?? '') ? 'iso-floor-light' : ''}`;
       if (ghost) return renderIsoTileShadow('oplock', String(o.id), `${deviceThemeClass(this._renderPlanHass)} ${lockState}`, `left:${left}%;top:${top}%`, nothing);
       return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${lockState}"

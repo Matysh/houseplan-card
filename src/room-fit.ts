@@ -1,9 +1,49 @@
-import { projectPlanPoint, type PlanPoint } from './iso-projection';
+import { projectPlanPoint, isoCameraFor, ISO_WALL_HEIGHT, ISO_FLOOR_EDGE_HEIGHT, type PlanPoint, type IsoCamera } from './iso-projection';
 import type { CameraState, CameraViewBox } from './viewport-transition';
+import type { RoomCfg, SpaceModel, WallEntry } from './types';
+import { roomPoly } from './logic';
+import { roomWallProfile, outsetContour, type MultiWallNodeMap } from './wall-thickness';
+import { gridVisualUnits } from './grid-scale';
+import { canonicalView, turnRect, type PlanRotation } from './view-frame';
+
+export function roomFitPlanBounds(input: {
+  room: RoomCfg; space: SpaceModel; walls: WallEntry[]; openCuts: number[][];
+  innerFloor(): number[][] | null; wallNodes?: MultiWallNodeMap | null;
+  borders: boolean; wallKeyPitch: number; cellCm: number; gridPitch: number;
+  coordinateScale: number; projection: 'flat' | 'iso'; rotation: PlanRotation;
+}) {
+  const { room, space, walls, openCuts, borders, cellCm, projection, rotation } = input;
+  const own = roomPoly(room);
+  if (!own || !room.id) return null;
+  const floor = walls.length ? input.innerFloor() || own : own;
+  let wall: number[][] = [];
+  if (borders && walls.length) {
+    const profile = roomWallProfile(space.rooms, room.id, walls, openCuts,
+      input.wallKeyPitch, cellCm, input.gridPitch, input.coordinateScale);
+    if (profile) wall = outsetContour(profile.poly, profile.offsets, input.wallNodes) || profile.poly;
+  }
+  const bounds = roomFitGeometryBounds({
+    camera: isoCameraFor(rotation), floor, wall, projection,
+    wallHeight: projection === 'iso' && borders ? gridVisualUnits(ISO_WALL_HEIGHT, cellCm) : 0,
+    floorDepth: projection === 'iso' && borders ? gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, cellCm) : 0,
+    padding: borders ? gridVisualUnits(1.25, cellCm) : 0,
+  });
+  return bounds && projection === 'flat' && rotation ? turnRect(bounds, rotation) : bounds;
+}
+
+export function roomFitPlanTarget(input: RoomFitTargetInput & {
+  canonicalBase: CameraViewBox; displayBase: CameraViewBox; rotation: PlanRotation; canonicalFit: CameraViewBox;
+}) {
+  const target = roomFitCameraTarget(input);
+  if (target) target.viewBox = canonicalView(target.viewBox, input.canonicalBase,
+    input.displayBase, input.rotation, target.zoom, input.canonicalFit);
+  return target;
+}
 
 export interface RoomFitBounds extends CameraViewBox {}
 
 export interface RoomFitGeometry {
+  camera?: Readonly<IsoCamera>;
   floor: readonly (readonly number[])[];
   wall?: readonly (readonly number[])[];
   projection: 'flat' | 'iso';
@@ -407,13 +447,13 @@ export function roomFitGeometryBounds(input: RoomFitGeometry): RoomFitBounds | n
     const points: PlanPoint[] = [];
     for (const point of floor) {
       const plan: PlanPoint = [point[0], point[1]];
-      points.push(projectPlanPoint(plan, 0));
-      if (floorDepth > 0) points.push(projectPlanPoint(plan, -floorDepth));
+      points.push(projectPlanPoint(plan, 0, input.camera));
+      if (floorDepth > 0) points.push(projectPlanPoint(plan, -floorDepth, input.camera));
     }
     for (const point of wall) {
       const plan: PlanPoint = [point[0], point[1]];
-      points.push(projectPlanPoint(plan, 0));
-      if (wallHeight > 0) points.push(projectPlanPoint(plan, wallHeight));
+      points.push(projectPlanPoint(plan, 0, input.camera));
+      if (wallHeight > 0) points.push(projectPlanPoint(plan, wallHeight, input.camera));
     }
     return roomFitPointBounds(points, padding);
   } catch {

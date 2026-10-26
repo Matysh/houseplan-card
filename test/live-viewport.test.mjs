@@ -104,6 +104,15 @@ test('#1081 grid exposure covers incoming edges and changes only on the existing
   assert.equal(root.grid.writes, refreshed, 'quiet grid writes nothing');
 });
 
+test('#1070 rotated viewport refresh keeps the SVG in display coordinates and grid coverage in plan coordinates', () => {
+  const root = fakeRoot();
+  const rotated = { view: { x:500,y:100,w:300,h:600 }, floor: { x:500,y:100,w:300,h:600 },
+    grid: { x:100,y:200,w:600,h:300 }, zoom:1 };
+  paintLiveViewport(root, rotated, rotated, null, { now:0, force:true });
+  assert.equal(root.floor.attrs.viewBox, '500 100 300 600');
+  assert.deepEqual(root.grid.attrs, { x:'-50',y:'125',width:'900',height:'450' });
+});
+
 test('#871 passive nested scene inherits one camera and rebases only a bounded paint window', () => {
   const root=fakeRoot(); const painted=frame(0,0);
   let anchor=paintLiveViewport(root,painted,painted,null,{now:0});

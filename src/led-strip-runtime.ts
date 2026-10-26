@@ -11,6 +11,7 @@
  * while the same wall/door scene still clips the light.
  */
 import { nothing, svg, type TemplateResult } from 'lit';
+import { turnVector, inversePlanRotation, type PlanRotation } from './view-frame';
 import { repeat } from 'lit/directives/repeat.js';
 import {
   resolveGlowCandidates,
@@ -203,6 +204,7 @@ export interface LedHandlers {
 
 /** 2.5D View (ТЗ §7): the stripe raised like a tile, its edge and floor shadow. */
 export interface LedIsoStyle {
+  rotation?: PlanRotation;
   /** Raise of the stripe, plan units: ISO_TILE.lift × D (0.075 D). */
   lift: number;
   /** Visible edge below the raised stripe: ISO_TILE.depth × D (0.1 D). */
@@ -322,7 +324,11 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
       const own = (e: MouseEvent) => nearestOwner(e, view, input).device;
       // 2.5D: an inert floor shadow, the edge swept below the raised body,
       // then the body itself; the field below stays on the floor plane.
-      const lifted = iso ? `translate(0 ${-iso.lift})` : nothing;
+      const shift = (x: number, y: number) => {
+        const [dx, dy] = turnVector([x, y], inversePlanRotation(iso?.rotation || 0));
+        return `translate(${dx} ${dy})`;
+      };
+      const lifted = iso ? shift(0, -iso.lift) : nothing;
       return svg`<g class="led-strip state-${view.state}" data-led-strip="${view.strip.id}"
           data-marker="${dev.id}" data-state="${view.state}" data-closed="${path.closed ? 'true' : 'false'}">
         ${off ? svg`<defs><mask id="${cutout}" maskUnits="userSpaceOnUse" x="${mx}" y="${my}" width="${mw}" height="${mh}">
@@ -334,10 +340,10 @@ export function renderLedStripes(input: LedStripeInput): TemplateResult {
         ${iso ? svg`<path class="led-iso-shadow" d="${d}" fill="none" stroke="black"
           stroke-opacity="${iso.shadow.opacity}" stroke-width="${t}" stroke-linecap="round"
           stroke-linejoin="round" filter="url(#hp-led-iso-shadow)" pointer-events="none"
-          transform="translate(${iso.shadow.dx} ${iso.shadow.dy})"></path>
+          transform=${shift(iso.shadow.dx, iso.shadow.dy)}></path>
           ${[1, 0.5].map((k) => svg`<path class="led-iso-edge" d="${d}" fill="none" stroke="${iso.edge}"
           stroke-width="${t}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"
-          transform="translate(0 ${iso.depth * k})"></path>`)}` : nothing}
+          transform=${shift(0, iso.depth * k)}></path>`)}` : nothing}
         <path class="led-outline" d="${d}" fill="none" stroke="${OUTLINE}" stroke-width="${t}"
           stroke-linecap="round" stroke-linejoin="round"></path>
         </g>
@@ -469,6 +475,7 @@ export function ledFrame(input: LedFrameInput, previous?: LedFrame | null): LedF
 // (ТЗ §13.1). The host is the card itself, read structurally.
 
 export interface LedCardHost {
+  readonly _rotation?: PlanRotation;
   /** A late chunk never re-renders (and re-fills caches of) a disconnected card. */
   isConnected?: boolean;
   _renderDevices: readonly DevItem[];
@@ -598,6 +605,7 @@ export function renderLedLayerFor(
     views: frame.views,
     d,
     iso: iso ? {
+      rotation: host._rotation,
       lift: ISO_TILE.lift * d,
       depth: ISO_TILE.depth * d,
       edge: isoEdgeColor(OUTLINE, theme, lightFloor),

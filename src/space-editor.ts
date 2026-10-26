@@ -1,9 +1,11 @@
 /** Config editor (Lovelace GUI) for houseplan-space-card. */
 import { LitElement, html, nothing, noChange } from 'lit';
 import { langOf, t, type Lang } from './i18n';
-import { LANGUAGE_RUNTIME } from './i18n/registry';
+import { CARD_EDITOR_LANGUAGE_RUNTIME } from './i18n/card-editor-language';
+import { settingsT } from './i18n/settings';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { resolveSpaceCardFit } from './space-geometry';
+import { invalidCardRotation, cardRotationOptions, rotationFormValue, rotationConfigValue } from './card-editor-validation';
 
 class HouseplanSpaceCardEditor extends LitElement {
   public hass?: any;
@@ -45,6 +47,7 @@ class HouseplanSpaceCardEditor extends LitElement {
         ? { name: 'space', selector: { select: { mode: 'dropdown', options: spaces } } }
         : { name: 'space', selector: { text: {} } },
       { name: 'title', selector: { text: {} } },
+      { name: 'rotation', selector: { select: { mode: 'dropdown', options: cardRotationOptions } } },
       {
         name: 'fit',
         selector: { select: { mode: 'dropdown', options: [
@@ -65,7 +68,7 @@ class HouseplanSpaceCardEditor extends LitElement {
   protected render() {
     if (!this.hass || !this._config) return nothing;
     const localeGate = languageRenderGate(
-      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+      this, CARD_EDITOR_LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
     );
     if (localeGate === 'cold') return languageLoadingTemplate();
     if (localeGate === 'warm') return noChange;
@@ -74,6 +77,7 @@ class HouseplanSpaceCardEditor extends LitElement {
     const labels: Record<string, string> = {
       space: t(L, 'editor.space'),
       title: t(L, 'editor.title'),
+      rotation: settingsT(L, 'editor.rotation'),
       fit: t(L, 'editor.framing'),
       show_button: t(L, 'editor.show_button'),
       button_label: t(L, 'editor.button_label'),
@@ -85,11 +89,12 @@ class HouseplanSpaceCardEditor extends LitElement {
     };
     return html`<ha-form
       .hass=${this.hass}
-      .data=${{ ...this._config, fit: resolveSpaceCardFit(this._config.fit) }}
+      .data=${{ ...this._config, fit: resolveSpaceCardFit(this._config.fit), rotation: rotationFormValue(this._config.rotation) }}
       .schema=${this._schema}
       .computeLabel=${(s: any) => labels[s.name] || s.name}
       @value-changed=${this._valueChanged}
-    ></ha-form>`;
+    ></ha-form>${invalidCardRotation(this._config) ? html`<div class="card-config-error" role="alert"
+      style="color:var(--error-color,#db4437)">${settingsT(L, 'editor.rotation_invalid')}</div>` : nothing}`;
   }
 
   private _valueChanged(ev: CustomEvent): void {
@@ -97,6 +102,7 @@ class HouseplanSpaceCardEditor extends LitElement {
     // square static card. Strip the stale no-op key on the next real edit so
     // the UI cannot keep promising a setting that has no effect.
     const config = { ...(this._config || {}), ...ev.detail.value };
+    config.rotation = rotationConfigValue(config.rotation);
     delete config.aspect_ratio;
     const e = new Event('config-changed', { bubbles: true, composed: true }) as any;
     e.detail = { config };

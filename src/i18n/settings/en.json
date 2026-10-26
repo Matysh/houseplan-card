@@ -344,5 +344,7 @@
   "marker.history_unauthorized": "History requires House Plan edit permission outside kiosk mode.",
   "marker.history_retired": "Preview ended because the context changed or a new cleanup started.",
   "marker.history_interrupted": "This cleanup was interrupted; its path may be incomplete.",
-  "marker.history_empty_path": "This cleanup has no recorded path."
+  "marker.history_empty_path": "This cleanup has no recorded path.",
+  "editor.rotation": "Plan rotation",
+  "editor.rotation_invalid": "Plan rotation must be 0°, 90°, 180° or 270°."
 }

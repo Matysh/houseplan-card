@@ -680,6 +680,21 @@ keep their neutral face while the card still explains current causes.
 
 ## 6. Navigation, zoom and input
 
+The two rotate buttons beside the zoom controls turn the plan by 90° in either
+direction, in View and the editors. The choice belongs to this browser and this
+space; it survives reload and takes priority over the card's optional `rotation`
+(`0`, `90`, `180`, `270`, clockwise). Without usable browser storage it still
+works until reload. A kiosk has no header controls and uses only its card value.
+The same setting is available in both Lovelace card editors; invalid values show
+an editor error and are treated as zero when resolving the card default.
+
+Geometry, furniture, decor text, sunlight and custom icon angles follow the
+plan. Ordinary device icons, room readings and editor measurements remain
+screen-facing; a right value badge stays on the right. Pan, pinch, wheel and
+arrow-key nudges keep their screen directions. **Fit all** includes the turned
+bounds. The Static card and PDF use the effective orientation. Rotation never
+changes saved coordinates or other browsers' choices.
+
 The canvas is effectively infinite: objects may be drawn outside the original
 plan square. **Fit all** frames the actual content. The View and kiosk touch
 gestures below are supported; editor touch is best effort, so use a desktop for

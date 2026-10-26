@@ -48,6 +48,7 @@ import {
 import { PresentationLightFrame } from './presentation-light-frame';
 import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace, renderDeviceShadowFace } from './device-face';
+import { turnRect, turnMatrix, framePercent, type PlanRotation } from './view-frame';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import type { DeviceContactFrame } from './device-contact-render';
 import { valueBadgeTitle } from './device-value-badge';
@@ -202,6 +203,7 @@ export interface StaticGlowRuntime {
 }
 
 export interface StaticRenderOpts {
+  rotation?: PlanRotation;
   contactFrame?: (frame: DeviceContactFrame) => void;
   contactPosition?: (id:string,point:{x:number;y:number})=>{x:number;y:number};
   hass: any;
@@ -534,6 +536,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     }
     fr = structuralFrame(structure) || fr;
   }
+  const rotation = o.rotation || 0;
+  fr = turnRect(fr, rotation);
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
   // Missing/transparent data stays empty; light pools never add a uniform base.
@@ -626,8 +630,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const ledBadges = leds.size ? devs.filter((d) => leds.has(d.id)).map((d) => {
     const presentation = presentationOf(d), face = renderDeviceShadowFace(presentation);
     const a = ledAnchor(leds.get(d.id)!.points, NORM_W);
+    const [left, top] = framePercent([a.x, a.y], fr, rotation);
     return face === nothing ? nothing : html`<div class="dev led-badge ${presentation.offline ? 'unavail' : ''} ${deviceThemeClass(planHass)}" data-led-badge=${d.id} aria-hidden="true"
-      style="left:${((a.x - vb[0]) / vb[2]) * 100}%;top:${((a.y - vb[1]) / vb[3]) * 100}%">${face}</div>`;
+      style="left:${left}%;top:${top}%">${face}</div>`;
   }) : nothing;
   // #764: markers and opening symbols are keyed like the rooms above (#745): `.device-core`
   // and `.op-leaf`/`.op-arc` transition, and a positional node animated a stranger's state.
@@ -644,9 +649,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const markers = keyed(space.id, repeat(iconDevs, (d) => d.id, (d) => {
     const authored = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
     const p=o.contactPosition?.(d.id,authored)??authored;
-    const left = ((p.x - vb[0]) / vb[2]) * 100;
-    const top = ((p.y - vb[1]) / vb[3]) * 100;
-    const presentation = presentationOf(d);
+    const [left, top] = framePercent([p.x, p.y], fr, rotation);
+    const resolved = presentationOf(d);
+    const presentation = rotation && typeof d.marker?.angle === 'number'
+      ? { ...resolved, angle: resolved.angle + rotation } : resolved;
     const st = [`left:${left}%`, `top:${top}%`, ...deviceFaceStyle(presentation)];
     const a11yState = deviceA11yState(presentation);
     const deviceAriaLabel = deviceAccessibleLabel([
@@ -685,8 +691,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         .filter((r) => r.name)
         .map((r) => {
           const p = labelPos(r, space.id, o.layout, o.cfg);
-          const left = ((p.x - vb[0]) / vb[2]) * 100;
-          const top = ((p.y - vb[1]) / vb[3]) * 100;
+          const [left, top] = framePercent([p.x, p.y], fr, rotation);
           const nameColor = roomNameColorOf(disp.nameColor, r);
           const op = nameColor.a;
           return html`<div class="roomlabel"
@@ -968,11 +973,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
 
   return html`
     <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
+      data-hp-plan-rotation=${rotation}
       ?inert=${!!o.inert}
       style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a}">
       ${renderDayCycleEnvironment(dayCycle, 1, moonLayer(o.moonHost, o.cfg?.settings, dayCycle))}
       ${moonLayer(o.moonHost, o.cfg?.settings, moonSky, 1)}
       <svg class="hp-static-plan-svg" viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
+        <g transform=${rotation ? turnMatrix(rotation) : nothing}>
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
             width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)">
@@ -1042,6 +1049,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
             </g>`
           : nothing}
         ${hostedOpeningSymbols}
+        </g>
       </svg>
       ${''/* docs/CANVAS.md §6: the same expression as the full card. The
              static card has no zoom, but its frame is the CONTENT now, so a

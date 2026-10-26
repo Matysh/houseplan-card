@@ -1157,6 +1157,7 @@ export async function prepareGoldenScenario(page, scenario) {
       icon_size: Number.isFinite(scenario.iconSize) ? scenario.iconSize : 3.4,
       language: scenario.language || 'en',
       ...(scenario.kiosk ? { kiosk: true } : {}),
+      ...(scenario.rotation !== undefined ? { rotation: scenario.rotation } : {}),
     };
     let decorStyleRevision=1;
     const hassFor = () => ({

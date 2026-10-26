@@ -1365,5 +1365,7 @@
   "vac.history_hide": "Masquer",
   "vac.history_limited": "Affichage limité",
   "vac.history_interrupted": "Nettoyage interrompu",
+  "title.rotate_left": "Tourner dans le sens antihoraire",
+  "title.rotate_right": "Tourner dans le sens horaire",
   "view.runtime_converter": "Informations sur la conversion des plans"
 }

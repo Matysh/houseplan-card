@@ -25,6 +25,16 @@ There is still one entry coordinator, one poller and the same bounded WS format.
 
 HA dialog targets (#1087) are resolved by device-more-info.ts independently of measurement primary, value/activity sources and controls. Auto follows the existing functional device role; explicit own targets are rechecked against current registry and readable state before more-info. A stale binding identity cannot retarget a retained handler. The two HA entry points share this resolver; View right-click keeps the #997 Settings action. Draft serialization/validation stays in the lazy editor graph.
 
+Quarter-turn presentation (#1070) is centralised in `view-frame.ts`: exact
+matrices, bounds, inverse input, browser preference and one HTML anchor route.
+`_cameraView` and every camera/mode transition remain canonical; `_viewOr`
+derives the displayed fit without rewriting stored camera numbers. SVG planes
+share the matrix, while HTML device/room/value faces remain screen-facing.
+2.5D retains one physical source/boolean cache with four projected variants;
+wall faces, opening depth and raised overlays use the same fixed quarter camera.
+Static shares the frame helper and device preference; PDF turns its immutable
+print scene before fitting. No space/layout field or backend write is introduced.
+
 Decor preview handoff (#1080) remains in `live-editor.ts`: after the synchronous
 live render produces a transient kind, only that kind's settled copy is hidden.
 The existing host-update commit restores settled paint before clearing live

@@ -1,5 +1,31 @@
 import type { PdfVectorOp } from './svg-path';
 import { pdfTextBounds, type PdfCommand } from './pdf-writer';
+import { turnPoint, type PlanRotation } from '../view-frame';
+
+/** Rotate the print scene before fitting; page chrome and hatch stay page-facing. */
+export function rotatePdfCommands(commands: readonly PdfCommand[], rotation: PlanRotation): PdfCommand[] {
+  if (!rotation) return [...commands];
+  const point = (value: readonly [number, number]) => turnPoint(value, rotation, [0, 0]);
+  return commands.map((command): PdfCommand => {
+    if (command.kind === 'path') return { ...command, rings: command.rings.map(ring => ring.map(point)) };
+    if (command.kind === 'line') return { ...command, points: command.points.map(point) };
+    if (command.kind === 'vector') return { ...command, ops: command.ops.map(op => {
+      if (op.op === 'M' || op.op === 'L') { const [x, y] = point([op.x, op.y]); return { ...op, x, y }; }
+      if (op.op === 'C') {
+        const [x, y] = point([op.x, op.y]), [x1, y1] = point([op.x1, op.y1]), [x2, y2] = point([op.x2, op.y2]);
+        return { ...op, x, y, x1, y1, x2, y2 };
+      }
+      return op;
+    }) };
+    if (command.kind === 'image') {
+      const [cx, cy] = point([command.x + command.width / 2, command.y + command.height / 2]);
+      return { ...command, x: cx - command.width / 2, y: cy - command.height / 2,
+        angle: (command.angle || 0) + rotation };
+    }
+    const [x, y] = point([command.x, command.y]);
+    return { ...command, x, y, ...(command.rotateWithPlan ? { angle: (command.angle || 0) + rotation } : {}) };
+  });
+}
 
 export interface PdfBounds {
   minX: number;

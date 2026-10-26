@@ -1555,4 +1555,15 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   ...['light', 'dark'].map(theme => ({ id: `first-space-floors-narrow-${theme}`, fixture: 'visual',
     emptyPlan: true, firstSpace: 'floors', preloadEditorRuntime: false, mode: 'view', language: 'de', theme,
     viewport: { width: 390, height: 844 }, ...page })),
+  ...[...([90, 270].map(rotation => ({ projection: 'flat', rotation }))),
+    ...([0, 90, 180, 270].map(rotation => ({ projection: 'iso', rotation })))].map(({ projection, rotation }) => ({
+    id: `plan-rotation-${projection}-${rotation}-1070`, fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', projection, rotation,
+    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
+    markerOverrides: stage3DenseMarkers.map(marker => marker.id === 'golden-light-two' ? { ...marker, angle: 30 } : marker),
+    layoutOverrides: stage3DenseLayout, decorOverride: decorLayerFixture,
+    sunRays: true, northDeg: 90,
+    stateOverrides: { 'sun.sun': { attributes: { azimuth: 270, elevation: 24 } } },
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
+  })),
 ]);

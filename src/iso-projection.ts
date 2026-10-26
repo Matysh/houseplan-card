@@ -1,3 +1,4 @@
+import { quarterBasis, validPlanRotation, type PlanRotation } from './view-frame';
 export type PlanPoint = readonly [number, number];
 export type ScenePoint = readonly [number, number];
 export type IsoAffineMatrix = readonly [number, number, number, number, number, number];
@@ -28,6 +29,18 @@ export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
   origin: Object.freeze([500, 500]) as PlanPoint,
 });
 
+const quarterCameras = new Map<PlanRotation, Readonly<IsoCamera>>([[0, ISO_CAMERA]]);
+export function isoCameraFor(rotation: PlanRotation): Readonly<IsoCamera> {
+  let camera = quarterCameras.get(rotation);
+  if (!camera) { camera = Object.freeze({ ...ISO_CAMERA, rotDeg: rotation }); quarterCameras.set(rotation, camera); }
+  return camera;
+}
+export function isoRotationBasis(camera: IsoCamera): readonly [number, number] {
+  const rotation = (camera.rotDeg % 360 + 360) % 360;
+  return validPlanRotation(rotation) ? quarterBasis(rotation)
+    : [Math.cos(camera.rotDeg * Math.PI / 180), Math.sin(camera.rotDeg * Math.PI / 180)];
+}
+
 export const ISO_WALL_HEIGHT = 84;
 export const ISO_FLOOR_EDGE_HEIGHT = 10;
 /** Low visual lift above the floor; callers scale it with the same grid policy. */
@@ -53,12 +66,12 @@ export function unprojectFloorPoint(
 ): PlanPoint {
   if (!finiteCamera(camera) || !Number.isFinite(point[0]) || !Number.isFinite(point[1]))
     throw new Error('invalid isometric projection input');
-  const rot = camera.rotDeg * Math.PI / 180;
+  const [cos, sin] = isoRotationBasis(camera);
   const rx = (point[0] - camera.origin[0]) / camera.xyScale;
   const ry = (point[1] - camera.origin[1]) / camera.xyScale;
   return [
-    camera.origin[0] + rx * Math.cos(rot) + ry * Math.sin(rot),
-    camera.origin[1] - rx * Math.sin(rot) + ry * Math.cos(rot),
+    camera.origin[0] + rx * cos + ry * sin,
+    camera.origin[1] - rx * sin + ry * cos,
   ];
 }
 
@@ -75,12 +88,12 @@ export function isoPlaneMatrix(
 ): IsoAffineMatrix {
   if (!finiteCamera(camera) || !Number.isFinite(zUnits))
     throw new Error('invalid isometric camera');
-  const rot = camera.rotDeg * Math.PI / 180;
+  const [cos, sin] = isoRotationBasis(camera);
   const tilt = camera.tiltDeg * Math.PI / 180;
-  const a = camera.xyScale * Math.cos(rot);
-  const c = -camera.xyScale * Math.sin(rot);
-  const b = camera.xyScale * Math.sin(rot);
-  const d = camera.xyScale * Math.cos(rot);
+  const a = camera.xyScale * cos;
+  const c = -camera.xyScale * sin;
+  const b = camera.xyScale * sin;
+  const d = camera.xyScale * cos;
   const e = camera.origin[0] - a * camera.origin[0] - c * camera.origin[1];
   const f = camera.origin[1] - b * camera.origin[0] - d * camera.origin[1]
     - zUnits * camera.zScale * Math.sin(tilt);

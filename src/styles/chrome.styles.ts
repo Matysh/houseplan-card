@@ -199,6 +199,10 @@ const chromeCoreStyles = unsafeCSS(css`
       .head > .zoomctl, .head > .modes > .editor-close-slot { flex: none; }
       .header-menu-wrap { display: inline-flex; }
     }
+    @media (max-width: 360px) {
+      .hdr > .head { padding-inline: 2px; gap: 2px; }
+      .head > .header-actions { gap: 2px; }
+    }
     .decorbar .bdhint {
       font-size: var(--fs-s);
       color: var(--hp-muted);
