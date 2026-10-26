@@ -3562,7 +3562,7 @@ release/publish-prerelease dispatch). Never clear a live claim to retry blindly.
 `node demo/smoke_decor_preview_ownership.mjs` checks actual captured pixels in
 the old preview footprint, presented-frame ownership, shape/image neighbours
 and config/history counts. On unchanged dev `8b74e788`, full HA render at A
-followed by live movement to B retained all 1459 preview pixels at A; after the
+followed by native mouse movement to B retained all 1453 preview pixels at A; after the
 fix that crop matches cancellation exactly (zero changed pixels). The captured
 native Chromium is checked against the Playwright pin. This witness does not
 claim a particular GPU/WebView or the furniture-pan gesture owned by #1081.
@@ -3570,6 +3570,12 @@ The accepted UI-038 reference at `e6a4edc8` and a separate candidate, both with
 the same synthetic fixture/theme/1440×1100/DPR1, produce identical 9039-pixel
 preview crops (zero pixels differ by more than three channels). Reference
 adapters run only in the reference page; the candidate uses ordinary sources.
+Matched WSL source builds measure Select-only traffic at 21456 B on accepted
+`8b74e788` and 21463 B on this preview fix. Shared import identity changes the
+compressed lazy graph despite no node-controller source change. Under the
+owner's standing measured-small-growth permission recorded above (#1038),
+only the Select ceiling rises by the observed one-byte overage, 21462→21463;
+no reserve, View/editor limit, latency threshold or proof guard changes.
 The new selected Golden scene `decor-preview-handoff-1080` covers the same
 full/live handoff. Global baseline acceptance remains a release operation.
 

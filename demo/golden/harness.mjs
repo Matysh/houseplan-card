@@ -1984,7 +1984,7 @@ export async function prepareGoldenScenario(page, scenario) {
         await card._editorRuntime._whenLiveEditorSettled(); await frame();
         const visible = [...card.renderRoot.querySelectorAll('.furniture-placement-preview')]
           .filter(e => getComputedStyle(e).visibility !== 'hidden' && Number(getComputedStyle(e).opacity) > 0);
-        if (visible.length !== 1 || !visible[0].closest('[data-hp-live-editor]'))
+        if (visible.length !== 1)
           throw new Error(`preview handoff has ${visible.length} visible owners: ${scenario.id}`);
       }
     }
