@@ -13,10 +13,12 @@ Reference commit: `e6a4edc8902b1954d5bd4949f8043896f1543ed5`, portable package
 the zero page-error lists are recorded per scene in `reference-pairs.json`.
 Desktop viewport is 1440×1000. Confirmation also has 390×844 light/dark pairs.
 The paired-capture product source tree is
-`src@b1592b3632503642e9e5393bdcc55fe4eff6b81e`, unchanged in final implementation
-commit `04f31c95ece917ffff0c69555b20fbb5a75d8486`. Subsequent fixture/matrix and
-documentation changes explain the build fingerprint change; the product
-`src` tree is byte-identical.
+`src@b1592b3632503642e9e5393bdcc55fe4eff6b81e`, byte-identical to the task source before integration. The final task is rebased
+on dev `4d2d18d248c8edf3ffc97eb01e8ccbf86d55bf89` (#1080 merged). Its only
+additional product delta is the accepted `live-editor.ts` preview handoff and
+one stage capture-loss cancellation line from #1080. Task-owned UI code is
+unchanged. The final integrated pan/preview smokes are rerun on this real dev
+base. Fixture/matrix/documentation changes also explain fingerprint changes.
 Native screenshots omit the cursor, so cursor contracts use computed-style and
 drag assertions rather than a claim about pixels.
 
