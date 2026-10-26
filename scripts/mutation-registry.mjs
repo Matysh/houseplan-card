@@ -4733,9 +4733,9 @@ const MUTANT_DEFINITIONS = [
     because: '#565 AC1: the active class is visual only; removing aria-current makes the '
       + 'open space unknowable to assistive technology even though the tab still looks selected',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "                aria-current=${this._space === s.id ? 'page' : nothing}",
-      replace: '                aria-current=${nothing}',
+      file: 'src/header-space-select.ts',
+      find: "          aria-current=${current === space.id ? 'page' : nothing}",
+      replace: '          aria-current=${nothing}',
     }],
   },
   {
@@ -13133,8 +13133,8 @@ const MUTANT_DEFINITIONS = [
     because: '#616 AC1: a household member has no write access — per-tab gears must not render for them at any width',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '                <span class="tabtitle">${s.title}</span>${this._norm && this._canEdit\n',
-      replace: '                <span class="tabtitle">${s.title}</span>${this._norm\n',
+      find: '            configure: this._norm && this._canEdit ? id => this._openSpaceDialog(\'edit\', id) : null,',
+      replace: '            configure: this._norm ? id => this._openSpaceDialog(\'edit\', id) : null,',
     }],
   },
   {
