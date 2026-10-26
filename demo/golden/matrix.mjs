@@ -281,9 +281,6 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
 const LED_STRIPS_OFF = Object.fromEntries(['light.demo_led_strip', 'light.demo_led_strip_wall', 'light.demo_led_strip_corner', 'light.demo_led_strip_loop'].map((id) => [id, { state: 'off' }]));
 
 export const GOLDEN_SCENARIOS = Object.freeze([
-  { id: 'wall-smooth-joint-light', fixture: 'visual', smoothWallSeam: true,
-    space: 'golden-smooth-wall', mode: 'view', language: 'en', theme: 'light',
-    viewport: { width: 1100, height: 1000 }, zoom: 2, zoomCenter: [-85, 520], ...stage },
   ...STAGE6_ACCEPTANCE_SCENARIOS,
   ...['flat', 'iso'].map(projection => ({
     id: `direct-zigbee-lqi-${projection}-dark`, fixture: 'visual',
@@ -716,6 +713,9 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     space: 'golden-wall-junctions', wallJunctions: true, mode: 'view',
     projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'wall-smooth-joint-light', fixture: 'visual', smoothWallSeam: true,
+    space: 'golden-smooth-wall', mode: 'view', language: 'en', theme: 'light',
+    viewport: { width: 1100, height: 1000 }, zoom: 2, zoomCenter: [-85, 520], ...stage },
   { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
     // The shared centre edge is a long 25 cm physical wall. It can contain the
     // complete 90 cm door preset while still proving rotation, centreline

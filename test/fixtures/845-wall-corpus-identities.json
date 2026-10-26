@@ -259,6 +259,10 @@
       "configs": 1
     },
     {
+      "file": "demo/fixtures/smooth-wall-seam.mjs",
+      "configs": 0
+    },
+    {
       "file": "demo/fixtures/v8-draft-regression.mjs",
       "configs": 1
     },
