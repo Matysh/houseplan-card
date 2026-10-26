@@ -4528,15 +4528,15 @@ function compareOpeningSides(a: OpeningWallSide, b: OpeningWallSide): number {
  * merely the closest parallel wall within a whole cell. This keeps detached
  * rooms and double-wall air gaps from becoming a phantom second room.
  */
-export function resolveOpeningWallAssociation(
+export function resolveOpeningWallCandidates(
   index: OpeningWallIndex,
   opening: { x: number; y: number; angle: number; length: number },
   physicalOnly = false,
-): OpeningWallAssociation {
+): OpeningWallSide[] {
   const x = Number(opening?.x), y = Number(opening?.y);
   const angle = Number(opening?.angle), length = Number(opening?.length);
   if (![x, y, angle, length].every(Number.isFinite) || !(length > 0)) {
-    return { negative: null, positive: null };
+    return [];
   }
   const rad = angle * Math.PI / 180;
   const ux = Math.cos(rad), uy = Math.sin(rad);
@@ -4588,8 +4588,19 @@ export function resolveOpeningWallAssociation(
     candidate.coverage = coverage.coverage;
     candidate.full = coverage.full;
   }
+  return [...candidates.values()];
+}
+
+/** Preferred sides for symbols/tunnels; preserve the historical ordering. */
+export function resolveOpeningWallAssociation(
+  index: OpeningWallIndex,
+  opening: { x: number; y: number; angle: number; length: number },
+  physicalOnly = false,
+): OpeningWallAssociation {
+  const candidates = resolveOpeningWallCandidates(index, opening, physicalOnly);
+  const eps = Math.max(1e-9, index.adjacencyEps);
   const pick = (side: -1 | 1): OpeningWallSide | null => {
-    const list = [...candidates.values()].filter((candidate) => (
+    const list = candidates.filter((candidate) => (
       candidate.side === side && candidate.coverage > eps
     ));
     list.sort(compareOpeningSides);

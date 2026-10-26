@@ -40,6 +40,9 @@ every lamp in the space.
   and a positional cover cuts a centre-aligned fraction of the full aperture;
 - saved `passage` openings — always cut through the masonry, so an opening is a
   real gap between two jamb faces and a thick wall's returns narrow the beam;
+- internal window portions joining two proven room floors through a valid
+  physical host. Glass transmits artificial light even with a closed contact;
+  no room flag or additional setting is needed (#1079);
 - every zero-thickness wall when its space uses the **Dashed** style.
 
 The setting is intentionally one semantic switch, not just paint. Missing or
@@ -51,12 +54,17 @@ input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
 
 **Deliberately opaque, although the plan draws an opening there**
 
-- windows: an indoor lamp must not wash the street;
+- exterior, one-sided, unhosted-in-space or invalid window portions: an indoor
+  lamp must not wash the street. A mixed aperture opens only its proven
+  interior intervals; a vertex contact is not an interval;
 - a door, gate or `passage` with no floor behind it. An opening is transparent only where BOTH
   sides are floor; otherwise a front door glows halfway — up to the centreline,
   where the room polygon ends — and the plan shows a lit doorway to nowhere.
 
-The classifier is an explicit `door | gate | passage` allowlist. Door and gate
+The classifier is an explicit `door | gate | passage | window` allowlist.
+Window eligibility alone is not transparency: the structural pass intersects
+unambiguous opposite room-side intervals and validates explicit host identity,
+position and physical masonry. Doors and gates
 state is resolved by the same `openingAmount()` used for their visible symbol:
 binary contacts yield zero or full aperture, finite `current_position` yields
 `clamp(position / 100)`, and `invert` mirrors a known amount. Missing,
@@ -65,20 +73,21 @@ of a fully open door/gate rather than manufacturing a closure. Any unknown
 future opening type remains opaque until its physical semantics are reviewed;
 it never inherits transparency merely by not being a window.
 
-So the light's masonry is cut by passages only and differs on purpose from the
-drawn one.
+Thus the light's masonry has its own proven opening policy and differs on
+purpose from the drawn one.
 
 The rule is identical for a passage hosted by a finished independent wall.
 Only its explicit partition body (plus an exactly collinear covering room wall)
-is cut. Windows remain opaque to indoor Glow, one-sided door/gate/passage cuts
-remain opaque, and an invalid host fails dark. A window hosted by an independent
+is cut. Internal glass follows the same sliced physical cuts, including
+partition hosts; exterior glass and one-sided door/gate/passage cuts remain
+opaque, and an invalid host fails dark. A window hosted by an independent
 wall never becomes a sunlight source; sunlight still belongs to exterior room
 windows.
 
 Source placement follows the same geometry, fail-dark. If the source centre is
-inside an opaque wall body, a window tunnel, or an exterior door/gate opening,
+inside an opaque wall body, an exterior/invalid window tunnel, or an exterior door/gate opening,
 the source produces no Glow at all. It does not light the indoor half of the
-opening. An interior door/gate/saved-passage opening remains a real hole and is therefore a
+opening. An interior glass/door/gate/saved-passage opening remains a real hole and is therefore a
 valid source position. This is an intentional placement rule, not a temporary
 availability state: move the source marker onto the clean room floor to make it
 emit Glow again ([#92](https://github.com/Matysh/houseplan-card/issues/92)).
@@ -148,6 +157,13 @@ couple of hundred pixels on a whole plan). And do not blur per source — one
 pass over the layer costs a fifth of one blurred mask per source.
 
 ## Caching
+
+Window side/host interval proofs run on a structural cache miss, shared by
+Glow and LED in full, static and 2.5D presentations. A static drawing without
+permanent passages can lack a retained opening index; light reuses its window
+proof index for the alternate masonry recut instead of silently skipping cuts.
+Window contact ticks and camera motion do not rebuild these barriers; room,
+host, geometry and opening type remain structural fingerprint inputs.
 
 Barriers are keyed by their geometry fingerprint plus a compact, sorted
 signature of bound interior door/gate opening amounts (quantised to the

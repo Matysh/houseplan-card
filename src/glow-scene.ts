@@ -9,6 +9,7 @@
 import { nothing, svg, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { structuralSpaceRecord } from './structural-space-record';
+import { interiorWindowLightPassages } from './interior-window-light';
 import {
   lightPass, resolvedLightSources, selectSpatialGlowSource,
 } from './devices';
@@ -29,7 +30,7 @@ import {
   type LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
 } from './light-visibility';
 import {
-  recutWallBodiesGeometry, wallBodiesGeometry,
+  openingWallIndex, recutWallBodiesGeometry, wallBodiesGeometry,
   type WallBodiesGeometryResult, type WallEntry,
 } from './wall-thickness';
 import type { DevItem, RoomCfg, SpaceModel } from './types';
@@ -283,6 +284,9 @@ export function resolveLightBarrierRevision(input: {
     polygons.some(({ poly }) => pointInPolygon(point, poly));
   const passageStates = input.openings.flatMap((opening) => {
     if (!isInteriorLightOpeningType(String(opening.type))) return [];
+    // Glass state never changes transport. Host/partial floor coverage is
+    // proven on the structural cache miss below, before making any cut.
+    if (opening.type === 'window') return [{ opening, amount: 1 }];
     const rad = (opening.angle * Math.PI) / 180;
     const nx = -Math.sin(rad);
     const ny = Math.cos(rad);
@@ -329,12 +333,20 @@ export function buildLightBarrierScene(input: {
   const { revision } = input;
   const cacheKey = `${input.space.id}|${revision.fingerprint}`;
   const outlineCuts: number[][] = [...input.zeroWalls.transmissive];
-  const passages = revision.passageStates
+  const hasWindows = revision.passageStates.some(({ opening }) => opening.type === 'window');
+  const windowIndex = hasWindows ? input.sharedWallGeometry?.openingIndex || openingWallIndex(
+    input.space.rooms, [...input.walls], input.zeroWalls.contour,
+    input.wallKeyPitch, input.cellCm, input.gridPitch, input.coordScale,
+  ) : null;
+  const openStates = revision.passageStates
     .filter(({ amount }) => amount > 0)
-    .map(({ opening, amount }) => ({
-      ...opening,
-      rlen: openingLightApertureLength(opening.rlen, amount),
-    }));
+    .flatMap(({ opening, amount }) => opening.type === 'window'
+      ? windowIndex ? interiorWindowLightPassages(opening, input.space, windowIndex)
+        .map(slice => ({ opening: slice, amount: 1 })) : []
+      : [{ opening, amount }]);
+  const passages = openStates.map(({ opening, amount }) => ({
+    ...opening, rlen: openingLightApertureLength(opening.rlen, amount),
+  }));
   const roomPassages = geometryRoomOpeningInputs(
     passages,
     input.space,
@@ -354,16 +366,21 @@ export function buildLightBarrierScene(input: {
       opening.x + dx, opening.y + dy,
     ]);
   }
-  const partitionCuts = revision.passageStates.flatMap(({ opening, amount }) =>
-    amount > 0 && opening.partitionHost
-      ? [scalePartitionOpeningCut(partitionOpeningCut(opening.partitionHost), amount)]
-      : []);
+  const partitionCuts = openStates.flatMap(({ opening, amount }) => opening.partitionHost
+    ? [scalePartitionOpeningCut(partitionOpeningCut(opening.partitionHost), amount)] : []);
   const opaqueBodies = input.physicalBodies(partitionCuts, cacheKey);
   const occluders: LightSegment[] = [];
   const sharedFingerprint = input.sharedWallGeometry?.sourceFingerprint;
-  const recut = input.sharedWallGeometry
+  const shared = input.sharedWallGeometry;
+  // Static drawing may have no permanent passage, hence no retained opening
+  // index. Reuse the window proof index for its alternate light cuts too.
+  const recutBase = shared && windowIndex && !shared.openingIndex ? {
+    status: shared.status, roomGeom: shared.roomGeom, roomComponents: shared.roomComponents,
+    openingIndex: windowIndex, depthUnits: shared.depthUnits, openingPadUnits: shared.openingPadUnits,
+  } : shared;
+  const recut = recutBase
     && sharedFingerprint === revision.geometryFingerprint
-    ? recutWallBodiesGeometry(input.sharedWallGeometry, roomPassages, opaqueBodies)
+    ? recutWallBodiesGeometry(recutBase, roomPassages, opaqueBodies)
     : null;
   const masonry = recut || (input.walls.length || opaqueBodies.length
     ? wallBodiesGeometry(

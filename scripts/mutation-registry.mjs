@@ -11665,8 +11665,8 @@ const MUTANT_DEFINITIONS = [
       + 'непрозрачным; тест одновременно сохраняет fail-dark для неизвестных типов',
     patches: [{
       file: 'src/logic.ts',
-      find: "  return type === 'door' || type === 'gate' || type === 'passage';",
-      replace: "  return type === 'door' || type === 'gate';",
+      find: "  return type === 'door' || type === 'gate' || type === 'passage' || type === 'window';",
+      replace: "  return type === 'door' || type === 'gate' || type === 'window';",
     }],
   },
   {

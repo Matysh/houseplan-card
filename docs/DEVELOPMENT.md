@@ -7,6 +7,14 @@ pixel density; the browser version stays pinned. Ordinary unit evidence covers
 SVG/PDF projections and unchanged source geometry. No baseline is accepted by
 this task smoke, and no mutation is executed during development.
 
+`demo/smoke_interior_window_light.mjs` (#1079) supplies a synthetic two-room
+window, exterior window and column. It checks actual off/on screenshot pixels,
+real SVG clips, closed/open contacts, pan-cache reuse, untouched read state,
+Flat/2.5D/static Glow and LED, oblique/partition hosts and an exterior source.
+`test/interior-window-light.test.mjs` supplies partial/vertex/ambiguous/invalid
+host negatives and the static retained-index case. These are ordinary inputs;
+mutation declarations are checked statically and run only nightly.
+
 ## Background group-style latency (#1071)
 
 The sidebar's colour preview was already immediate; confirming it on a dense

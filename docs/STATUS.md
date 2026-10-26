@@ -30,6 +30,11 @@ Everything computable from the tree and git; regenerate, never edit by hand
 
 ## Current cycle and standing decisions
 
+Internal glass (#1079) transmits artificial Glow/LED only through confirmed
+floor-to-floor host intervals, irrespective of its contact. Exterior/invalid
+parts remain opaque; full/static/2.5D transport shares the same barrier owner.
+No persisted flag or dependency on solar transparency is introduced.
+
 Zigbee hidden placement (#1077) distinguishes existing concealed/shown markers
 from absent placements. The local eye updates both diagnostic text and real
 route endpoints without writes or scans; independent provider failures remain.

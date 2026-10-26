@@ -11,7 +11,7 @@ test('interior light crosses only the explicit physical opening allowlist', () =
   assert.equal(isInteriorLightOpeningType('door'), true);
   assert.equal(isInteriorLightOpeningType('gate'), true);
   assert.equal(isInteriorLightOpeningType('passage'), true);
-  assert.equal(isInteriorLightOpeningType('window'), false);
+  assert.equal(isInteriorLightOpeningType('window'), true, 'eligible glass still needs floor/host proof');
   assert.equal(isInteriorLightOpeningType('future-opening'), false);
 });
 /** Distance the lamp actually reaches at `angleDeg`, per the returned ring. */

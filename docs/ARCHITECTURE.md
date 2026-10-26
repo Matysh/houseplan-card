@@ -1,5 +1,13 @@
 # House Plan architecture
 
+Internal window light (#1079) uses room-side candidates from the canonical
+opening-wall index. `interior-window-light.ts` validates host authority and
+intersects proven opposite floor intervals before the shared Glow/LED barrier
+builder cuts any masonry. Window contact is excluded from aperture state;
+no solar room flag, emitter, persisted field or camera-time classifier is added.
+Static retained masonry borrows that proof index when its drawing had no
+permanent passage index. Symbol-side preference ordering remains unchanged.
+
 Zigbee placement (#1077) reports positive user-hidden placement intent separately
 from provider/registry/route failures. General Settings consumes the same accepted
 display roster as the overlay; original user-hidden provenance remains on each

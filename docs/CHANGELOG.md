@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Artificial lamp and LED light passes through internal windows, including
+  closed glass, with real jamb and column shadows. Exterior windows remain
+  opaque; View, 2.5D and supported Static light share the same rule. (#1079)
+
 - Distinguish user-hidden Zigbee markers from devices missing on the plan.
   Showing hidden devices now updates both route endpoints and diagnostics,
   without changing saved visibility or suppressing genuine source errors. (#1077)

@@ -333,8 +333,8 @@ export function openingAmount(
 
 /** Explicit light allowlist. Unknown future opening types stay fail-dark until
  * their physical semantics are deliberately added and tested. */
-export function isInteriorLightOpeningType(type: string): type is 'door' | 'gate' | 'passage' {
-  return type === 'door' || type === 'gate' || type === 'passage';
+export function isInteriorLightOpeningType(type: string): type is 'door' | 'gate' | 'passage' | 'window' {
+  return type === 'door' || type === 'gate' || type === 'passage' || type === 'window';
 }
 
 export interface OpeningLightStateEntry {

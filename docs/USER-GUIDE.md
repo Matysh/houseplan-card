@@ -1282,6 +1282,12 @@ rebinding updates or closes the card and cancels its old unlock confirmation.
 
 ### Thick walls
 
+Artificial lamp and LED light passes through an internal window between two
+rooms even when its contact reports closed glass. Jambs, walls, columns and
+the light radius still limit the beam. No extra setting is needed. Exterior
+windows and the exterior portion of a mixed aperture remain opaque. View,
+2.5D and supported Static Glow use the same rule.
+
 The opening cuts the full masonry depth and keeps visible jambs. Door, window
 and gate symbols stay centred on the wall; **Opens the other way** mirrors only
 the leaf direction, not the symbol position. Internal light passes through a

@@ -138,7 +138,8 @@ test('shared light revision admits only floor-to-floor architectural passages', 
   });
   assert.deepEqual(
     revision.passageStates.map(({ opening: candidate }) => candidate.id),
-    ['inside-door', 'passage'],
+    // Glass candidates receive their host/interval proof on the structural miss.
+    ['inside-door', 'window', 'passage'],
   );
   assert.equal(revision.passageStates[0].amount, 0.5);
 
