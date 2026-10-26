@@ -13253,6 +13253,26 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'compact-space-navigation-uses-window-width',
+    guard: 'node demo/smoke_header_compact_spaces.mjs',
+    because: '#997 AC1: a narrow dashboard card inside a wide window must use its own header content box, including the exact 1024 px boundary.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'const compact = headerWidth > 0 && headerWidth <= 1024;',
+      replace: 'const compact = window.innerWidth > 0 && window.innerWidth <= 1024;',
+    }],
+  },
+  {
+    id: 'compact-space-navigation-keeps-unaccepted-choice',
+    guard: 'node --test test/header-space-select.test.mjs',
+    because: '#997 AC2: refused dirty navigation must keep both the actual plan and the displayed field on the accepted floor.',
+    patches: [{
+      file: 'src/header-space-select.ts',
+      find: '  select.value = current;\n  pick(requested);',
+      replace: '  void current;\n  pick(requested);',
+    }],
+  },
+  {
     id: 'tab-drag-target-follows-captured-source',
     guard: 'node demo/smoke_space_tab_reorder.mjs',
     because: 'pointer capture keeps pointermove targeted at the held tab; resolving the drop '
