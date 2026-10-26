@@ -11420,8 +11420,8 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       // #814: the key lists its inputs in sunGeometryKey (floor-geometry-key.ts).
-      find: '      [sun.azimuth, sun.elevation, north, origin], zeroWalls);\n',
-      replace: '      [sun.azimuth, sun.elevation, north], zeroWalls); // mutant: the origin is not an input\n',
+      find: '      [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms)], zeroWalls);\n',
+      replace: '      [sun.azimuth, sun.elevation, north, sunRoomSettingsKey(space.rooms)], zeroWalls); // mutant: the origin is not an input\n',
     }],
   },
   {
@@ -20418,8 +20418,8 @@ const MUTANT_DEFINITIONS = [
       + 'another floor\'s edit or a shared setting; only the rendered View with a lit sun counts it',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      [sun.azimuth, sun.elevation, north, origin], zeroWalls);\n',
-      replace: '      [sun.azimuth, sun.elevation, north, origin, this._cfgEpoch], zeroWalls); // mutant: the epoch is back\n',
+      find: '      [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms)], zeroWalls);\n',
+      replace: '      [sun.azimuth, sun.elevation, north, origin, sunRoomSettingsKey(space.rooms), this._cfgEpoch], zeroWalls); // mutant: the epoch is back\n',
     }],
   },
   {
