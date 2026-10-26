@@ -92,6 +92,15 @@
 
 ## Код-ревью
 
+- Persisted compatibility (#1015): проверить since/provenance, конкретный until
+  после двух последующих опубликованных stable (patch да, beta нет), typed
+  pending/keep при неполной дате/замене; полноту всех scan hits. Возраст не
+  заменяет lossless versioned server load/write/import proof, unknown/no-op,
+  CAS/pair recovery и исходный snapshot. Старый backend либо неэквивалентная
+  форма — точный keep; старые backup проходят цепочку. Отдельно сверить actual
+  eligible removals и предупредительный характер packet
+  ([§7.2](../../PROCESS.md#72-шаблоны-комментариев), CONFIG-COMPATIBILITY).
+
 - Независимый поиск дефектов — до авторских выводов: сначала требования issue
   и решения владельца, затем входы, вызывающий код, состояние, инварианты,
   побочные эффекты, результат и отказ изменённых путей. Проверить применимые

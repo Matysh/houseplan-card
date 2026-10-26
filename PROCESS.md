@@ -1001,6 +1001,33 @@ Retention refs не запускают Validate и не становятся mem
 
 ### 7.2 Шаблоны комментариев
 
+**Срок жизни persisted-совместимости (#1015).** Замена старой формы config/layout
+получает стабильный id, selector, старую/новую форму, реальные source anchors,
+`since` с commit и первым опубликованным stable, `until`, migration/proof и
+решение keep/remove в `scripts/config-compatibility-catalog.mjs` и
+`config-field-registry.mjs`. `until` — конец второго **последующего опубликованного
+stable** после первого stable замены; patch считается, prerelease/beta и
+календарь не считаются. Граница вычисляется по фактической последовательности
+публикаций, не как X.Y+2. Достигнутый срок записывается конкретной stable,
+недостающие публикации — typed pending; непроверенная дата/отсутствие полной
+замены — typed keep с причиной. Current/not-applicable также имеет явный until.
+
+Срок сам по себе не разрешает отказ старому backup или удаление reader.
+Снятие возможно **после** границы, при доказанных versioned server load/setup/
+write/import migrations до каждого потребителя, lossless переносе смысла и
+unknown fields, no-op текущих данных и повторной загрузки, CAS/write_lock и
+crash-resumable config/layout pair с исходным snapshot до durable изменения.
+Старые и пропустившие stable копии проходят всю нужную цепочку; decoder может
+остаться только как явно версионированная migration. Geometry model_version
+не служит счётчиком скалярных миграций. Неэквивалентная форма, старый backend
+или непройденная граница требуют точного keep-основания, а не молчаливого TODO.
+Инвентарь учитывает каждый hit ограниченного поиска либо persisted-веткой,
+либо явным non-config/runtime исключением. Автор запускает lifecycle/inventory
+tests; reviewer проверяет реальные proofs и список снятия отдельными commits.
+task-packet лишь предупреждает affected entries о reached-until/eligible,
+никогда не меняет статус, track или право merge. Полный контракт и таблица:
+`docs/CONFIG-COMPATIBILITY.md` и `docs/CONFIG-COMPATIBILITY-INVENTORY.md`.
+
 **Замена прежнего пути (#1014).** Коммит `fix`/`refactor`/`chore`, вводящий новый
 путь, общий примитив или кэш, удаляет заменённый путь в том же коммите. Это
 относится и к `feat`, заменяющему существующее поведение. Если прежний путь

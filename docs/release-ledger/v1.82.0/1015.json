@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1015,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Existing stable plans and backup formats already support the retained representations. This maintenance moves their proven lossless conversions to one recoverable server boundary, adds source inventory/lifetime evidence, and preserves older backend readers and non-equivalent forms without a new user control.",
+  "summary": {
+    "ru": "Старые формы планов безопасно преобразуются на сервере один раз; исходную копию можно получить для совместимого отката.",
+    "en": "Old plan forms upgrade safely once at the server boundary, with their original snapshot available for compatible rollback."
+  }
+}

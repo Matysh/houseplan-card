@@ -1,5 +1,74 @@
 # Config compatibility registry
 
+## Compatibility lifetime and canonical migration (#1015)
+
+Every actual superseded config/layout representation has a stable branch ID,
+selector, old/current forms, source anchors, `since` (introducing commit and
+first **published stable**), `until`, migration/proof and keep/remove decision.
+The field registry carries a typed lifecycle passport even for current fields:
+current/not-applicable never receives a fabricated expiry. The complete
+[inventory](CONFIG-COMPATIBILITY-INVENTORY.md) links every current bounded
+frontend/backend search hit to a branch or an explicit exclusion.
+
+Support lasts through the second subsequently published stable after the first
+stable replacement. Patch versions count; prereleases, betas and elapsed months
+do not. `until` is the concrete second publication in the recorded release
+sequence, with structured pending when it does not yet exist. Unknown provenance
+or a non-equivalent replacement means explicit keep. Retirement is allowed
+**after** that boundary, only with executed lossless migration and all-input
+proof. Reached-until diagnostics do not grant removal/merge authority. Older
+backend View remains supported, so the new migration alone does not authorize
+deleting frontend read decoders; the inventory records that boundary.
+
+`config_migrations.py` owns decoder **v1**. The common locked Store fence first
+finishes an existing `optimize_pending`, then migrates the square coordinate
+frame (including old `geom_pending`) before scalar units. It handles ripple,
+vacuum trail, uniform plan scale, independent Glow and the exactly representable
+decor width/text-size subset; it removes dead segments and an already-seeded
+show_all flag. Explicit current values win. Unrepresentable physical ranges,
+explicit live-text units/attributes, unseeded discovery and ambiguous structural
+ownership retain their documented readers. Current omissions stay absent;
+current reads inspect selectors without copying all geometry. No geometry model,
+Store1.2 or export/archive version is raised for these scalar changes.
+
+The first semantic change saves the exact original config/layout pair in
+`config_migration_backup` metadata **before** either half changes. The target,
+original snapshot, revisions and exact final metadata use the existing durable
+paired intent. Recovery converges before another writer reads CAS revisions;
+events are emitted only after durable completion. A failure retains the source
+or its recoverable intent for retry. Config and layout revisions increase only
+when their respective contents change. Metadata passport `config_migration`
+versions the decoder, preserves unknown siblings and rejects unknown/corrupt
+versions; it is not a wall-model counter. New stale writer inputs still pass
+strict schema and structural downgrade guards before canonical scalar output.
+The source pair is the ordinary Store-loader result; the pre-existing Store1.2
+format hook for implicit background defaults is retained. Current absent
+background mode still means Static and is not an expired representation. V1
+does not reinterpret an invalid current/import background token as old data.
+
+Setup runs this fence before Radar/trail consumers. Config/layout reads and
+ordinary writers share it. JSON/ZIP import decodes the source before schema and
+host proof; preview/revalidation snapshot the already-canonical current pair.
+The existing model8→9→10 import/explicit-edit chain remains separately guarded:
+silently guessing ownership on tolerated read-only geometry is prohibited.
+Unknown fields and an already-current document round-trip without another
+revision increase. Old backups do not require intermediate installations.
+
+An administrator can retrieve the original snapshot using the existing
+read-only WebSocket export command (no new UI mode):
+
+```json
+{"type":"houseplan/export/create","kind":"full","migration_source":true}
+```
+
+It returns the exact original config/layout in the existing v1 portable envelope,
+without current-model materialization or storage writes. Missing/corrupt source
+is a safe error; writer/admin permission is checked again after the worker await.
+Save the returned `document` as JSON and use ordinary Import on a compatible
+version when reverting/downgrading. This does not restore removed file bytes:
+files and retention are untouched. Never edit `.storage` by hand. Current normal
+exports retain their existing envelope and materialization behavior.
+
 ## Hidden Zigbee placement diagnostics (#1077)
 
 No persisted config/layout/cache schema or version changes. Hidden/shown status
@@ -1107,8 +1176,7 @@ local mode and colour in the draft; untouched effective values are never stored.
 
 ## Independent Glow compatibility
 
-The historical space and room token `fill_mode: glow` remains accepted on read
-indefinitely. Runtime projects it into an ordinary inherited data fill plus an
+The historical space and room token `fill_mode: glow` retains its reader for older backends; #1015 canonical server v1 converts it before current use. Runtime projects it into an ordinary inherited data fill plus an
 enabled Glow overlay; explicit `glow_enabled` / room `glow` booleans win until
 their owning form is saved. #945 removes the Space suppression control; an
 ordinary Space Save writes `glow_enabled: true`, while Cancel/read preserve the

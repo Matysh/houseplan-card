@@ -6,6 +6,10 @@
   The floor wizard uses the common compact controls, and converter formats share
   one source with General settings in all four languages. Unavailable guidance
   does not block floor selection or manual creation. (#1020)
+- Upgrade old plan representations once at the server load/import boundary,
+  preserving their appearance, unknown fields and paired revisions. Interrupted
+  conversions resume safely; administrators can export the original snapshot
+  through the existing export API for a compatible rollback. (#1015)
 
 - Clear previous furniture, shape and image placement previews after a full
   redraw followed by pointer movement; saved decor remains visible. Losing

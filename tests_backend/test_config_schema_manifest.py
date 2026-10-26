@@ -61,7 +61,9 @@ def _collect_paths(node, prefix=""):
 def test_issue_33_lifecycle_fixtures_pass_the_schema_losslessly():
     validation = _validation()
     fixtures = REPO / "test" / "fixtures" / "config-lifecycle"
-    dropped_by_design = {"spaces[].aspect", "spaces[].segments"}  # vol.Remove
+    dropped_by_design = {"spaces[].aspect", "spaces[].segments", "settings.weather_entity"}
+    # #1015: the unused weather setting joins explicit retired fields. The
+    # canonical Store proof separately retains its exact original snapshot.
     for name in ("oldest-supported", "current", "future-fields"):
         raw = json.loads((fixtures / f"{name}.json").read_text(encoding="utf-8"))
         validated = validation.CONFIG_SCHEMA(copy.deepcopy(raw))

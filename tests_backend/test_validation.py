@@ -1948,7 +1948,7 @@ def test_decor_text_block_scale_and_angle():
     def cfg(extra):
         return v.CONFIG_SCHEMA({"spaces": [{**base, "decor": [{**txt, **extra}]}]})
 
-    assert cfg({"scale": 1})["spaces"][0]["decor"][0]["scale"] == 1.0
+    assert cfg({"scale": 1})["spaces"][0]["decor"][0]["size_cm"] == pytest.approx(24)
     assert cfg({"size_cm": 24})["spaces"][0]["decor"][0]["size_cm"] == 24.0
     assert cfg({"scale": v.DECOR_TEXT_SCALE_MIN})
     assert cfg({"scale": v.DECOR_TEXT_SCALE_MAX})
@@ -1985,7 +1985,8 @@ def test_decor_furniture():
     # --- accepted, and round-trips unchanged ------------------------------
     assert cfg({})["spaces"][0]["decor"][0] == f
     out = cfg({"angle": 90, "color": "#607d8b", "width": 3})["spaces"][0]["decor"][0]
-    assert out["angle"] == 90 and out["color"] == "#607d8b" and out["width"] == 3.0
+    assert out["angle"] == 90 and out["color"] == "#607d8b" and out["width_cm"] == pytest.approx(3.6)
+    assert "width" not in out
     assert cfg({"angle": -360}) and cfg({"angle": 360}) and cfg({"angle": 12.5})
     mirrored = cfg({"flip_h": True, "flip_v": False})["spaces"][0]["decor"][0]
     assert mirrored["flip_h"] is True and mirrored["flip_v"] is False

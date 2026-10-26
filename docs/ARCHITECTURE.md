@@ -1,5 +1,17 @@
 # House Plan architecture
 
+Config decoder v1 (#1015) sits inside the common Store fence, after pending-pair
+recovery and before config/layout reads, CAS writers and setup consumers. Source
+import runs the same copy-only decoder before schema/host proof. Square-frame
+conversion precedes physical scalar units; ambiguous geometry remains on its
+existing explicit structural model chain. The exact original pair, versioned
+passport and target are durable in the existing paired intent before a half
+moves. Normal readers cannot export the retained original; a read-only admin
+parameter of the existing export endpoint returns its original portable form
+and rechecks ACL after the worker. Current omissions do not trigger writes.
+The machine lifecycle inventory distinguishes reached deadlines from proven
+all-input retirement; old-backend readers remain supported.
+
 Decor preview handoff (#1080) remains in `live-editor.ts`: after the synchronous
 live render produces a transient kind, only that kind's settled copy is hidden.
 The existing host-update commit restores settled paint before clearing live

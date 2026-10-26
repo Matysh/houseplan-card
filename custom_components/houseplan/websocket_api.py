@@ -618,6 +618,7 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
         vol.Optional("plan_only", default=False): bool,
         vol.Optional("card_version", default=""): str,
         vol.Optional("archive", default=False): bool,
+        vol.Optional("migration_source", default=False): bool,
     }
 )
 @websocket_api.async_response
@@ -628,6 +629,35 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
         return
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
+        return
+    if msg.get("migration_source"):
+        from .backup_http import archive_admin
+        from .config_migrations import CONFIG_MIGRATION_BACKUP
+        from .import_export import create_migration_source_export
+
+        if not archive_admin(hass, connection.user):
+            connection.send_error(msg["id"], "unauthorized", "Administrator permission required")
+            return
+        if msg["kind"] != "full" or msg.get("archive") or msg.get("plan_only"):
+            connection.send_error(msg["id"], "invalid_format", "Original migration snapshot requires full JSON")
+            return
+        try:
+            async with rt.write_lock:
+                saved = await rt.store.async_load() or {}
+                snapshot = copy.deepcopy(saved.get(CONFIG_MIGRATION_BACKUP))
+            document, filename = await hass.async_add_executor_job(partial(
+                create_migration_source_export, rt, snapshot,
+                card_version=msg.get("card_version", ""), config_root=Path(hass.config.path(""))))
+            if not _check_write(hass, connection) or not archive_admin(hass, connection.user):
+                connection.send_error(msg["id"], "unauthorized", "Administrator permission was lost")
+                return
+        except ImportFailure as err:
+            connection.send_error(msg["id"], err.code, "Original migration snapshot is unavailable or invalid")
+            return
+        except Exception:  # noqa: BLE001 - never expose stored source data in errors
+            connection.send_error(msg["id"], "invalid_config", "Original migration snapshot is unavailable")
+            return
+        connection.send_result(msg["id"], {"document": document, "filename": filename})
         return
     if msg.get("archive"):
         from .backup_http import archive_admin
@@ -656,8 +686,8 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
         async with rt.write_lock:
             # Copy one coherent pair while writers are excluded, then release
             # the global lock before hashing assets and building the document.
-            config_data = copy.deepcopy(await rt.config_store.async_load() or {})
-            layout_data = copy.deepcopy(await rt.store.async_load() or {})
+            pair = await async_resolve_pending_pair(rt)
+            config_data, layout_data = copy.deepcopy(pair.config_data), copy.deepcopy(pair.layout_data)
         document, filename = await hass.async_add_executor_job(
             partial(
                 create_export,
@@ -751,8 +781,8 @@ async def ws_import_revalidate(hass: HomeAssistant, connection, msg: dict[str, A
                 pair = await async_resolve_pending_pair(rt)
                 config_data, layout_data = pair.config_data, pair.layout_data
             else:
-                config_data = await rt.config_store.async_load() or {}
-                layout_data = await rt.store.async_load() or {}
+                pair = await async_resolve_pending_pair(rt)
+                config_data, layout_data = pair.config_data, pair.layout_data
             try:
                 registry_snapshot = import_registry_snapshot(hass)
             except Exception:  # noqa: BLE001 - summary must not block revalidation
@@ -988,8 +1018,11 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
-    data = await rt.store.async_load() or {}
-    config_data = await rt.config_store.async_load() or {}
+    async with rt.write_lock:
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data, config_data = resolved.layout_data, resolved.config_data
     connection.send_result(
         msg["id"], {
             "layout": project_layout(
@@ -1744,8 +1777,10 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     if rt is None:
         return
     async with rt.write_lock:
-        data = await rt.config_store.async_load() or {}
-        layout_data = await rt.store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data, layout_data = resolved.config_data, resolved.layout_data
         config = normalize_room_appearance({**DEFAULT_CONFIG, **data.get("config", {})})
         config_rev = int(data.get("rev", 0))
         try:
@@ -1814,7 +1849,10 @@ async def ws_virtual_light_toggle(
     if rt is None:
         return
     async with rt.write_lock:
-        data = await rt.config_store.async_load() or {}
+        resolved = await _resolved_write_pair(hass, connection, msg["id"], rt)
+        if resolved is None:
+            return
+        data = resolved.config_data
         config = {**DEFAULT_CONFIG, **data.get("config", {})}
         result = await (
             rt.virtual_lights.async_toggle(

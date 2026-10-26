@@ -6188,3 +6188,29 @@ Ordinary proof: `node --test test/review-failure-diagnostics.test.mjs
 test/review-execution-policy.test.mjs test/model-usage.test.mjs`. Fixtures supply
 inert JSON/command strings to unchanged functions and real collector I/O;
 proposed commands and mutants are never dispatched.
+
+## Maintaining config compatibility evidence (#1015)
+
+`node scripts/config-compatibility-inventory.mjs --check` reproduces the bounded
+case-insensitive `legacy|deprecated|compat|fallback for old` query over frontend
+TypeScript and integration Python. `--scan` prints current unclassified hits.
+Review each new/changed hit, assign a catalog branch or explicit exclusion in
+`scripts/config-compatibility-inventory.json`, then refresh its match digest and
+the published human coverage table. Source-text occurrence IDs survive unrelated
+line insertions; no future hit receives a filename-based default disposition.
+
+`node --test test/config-lifecycle.test.mjs` checks every registry passport,
+source anchor, actual publication deadline and inventory completeness. The
+published-release snapshot records all GitHub non-draft/non-prerelease releases
+as of2026-10-26 (111, below the200 API query cap). Refresh it from all pages of
+`gh release list --exclude-drafts --exclude-pre-releases --limit200 --json tagName,publishedAt,isDraft,isPrerelease`
+when the stable sequence changes, verifying that the limit did not truncate it.
+Do not infer deadlines from tag arithmetic or a beta. A later release alone
+never changes a keep decision or supplies missing all-input migration proof.
+
+Canonical v1 fixtures run with
+`python -m pytest tests_backend/test_config_migrations.py tests_backend/test_ha_config_migrations.py -q`.
+The real HA suites prove Store revisions, original-snapshot export/import, I/O
+failure recovery and ACL; browser fixtures prove observable plan/text/actions
+against the matching synthetic transport, without claiming private HA/GPU proof.
+The normal pre-push gate and strict model/host/CAS validators remain mandatory.

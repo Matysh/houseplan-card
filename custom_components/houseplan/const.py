@@ -1,6 +1,7 @@
 """Constants of the House Plan integration."""
 
 DOMAIN = "houseplan"
+MAX_CONFIG_TEXT = 500  # persisted names/models/IDs; shared strict decoder bound
 STORAGE_KEY = f"{DOMAIN}.layout"
 STORAGE_CONFIG_KEY = f"{DOMAIN}.config"
 STORAGE_VIRTUAL_LIGHTS_KEY = f"{DOMAIN}.virtual_lights"

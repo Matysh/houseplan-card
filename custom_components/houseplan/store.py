@@ -14,6 +14,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .build_identity import UNKNOWN_BUILD, BuildIdentity
+from .config_migrations import (
+    CONFIG_MIGRATION_BACKUP,
+    CONFIG_MIGRATION_PASSPORT,
+    CONFIG_MIGRATION_VERSION,
+    migrate_pair,
+    migration_version,
+)
 from .const import (
     DOMAIN,
     OPTIMIZE_PENDING,
@@ -233,15 +240,15 @@ async def async_save_config_state(
     revision here keeps less common writers (import recovery and undo) on the
     same path as ordinary editor saves without duplicating lifecycle rules.
     """
+    previous = await runtime.config_store.async_load() or {}
     if previous_rev is None:
-        previous = await runtime.config_store.async_load() or {}
         try:
             previous_rev = int(previous.get("rev", 0))
         except (TypeError, ValueError):
             previous_rev = 0
 
     canonical_config = canonicalize_config_geometry(config)
-    payload = {"config": canonical_config, "rev": rev}
+    payload = {**previous, "config": canonical_config, "rev": rev}
 
     async def save_config() -> None:
         await runtime.config_store.async_save(payload)
@@ -394,7 +401,7 @@ async def _async_converge_pair_documents(
             if replace_metadata
             else max(config_rev, target_config_rev)
         )
-        expected_config = {"config": target_config, "rev": config_rev}
+        expected_config = {**config_data, "config": target_config, "rev": config_rev}
         try:
             config_data = await async_save_config_state(
                 runtime,
@@ -466,18 +473,60 @@ async def _async_converge_pair_documents(
 
 
 async def async_resolve_pending_pair(runtime: HouseplanData) -> ResolvedStorePair:
-    """Load a coherent pair, finishing a valid durable intent first."""
+    """One locked load/write fence: recovery, then versioned canonical decode."""
     config_data = await runtime.config_store.async_load() or {}
     layout_data = await runtime.store.async_load() or {}
+    migration_version(layout_data.get(CONFIG_MIGRATION_PASSPORT))
     pending = _pending_target(layout_data)
-    if pending is None:
-        if getattr(runtime, "marker_history", None) is not None:
-            runtime.marker_history.observe_identity({}, config_data.get("config") or {},
-                exclude_session=getattr(runtime, "marker_history_owner", None))
-        return ResolvedStorePair(config_data=config_data, layout_data=layout_data)
-    return await async_converge_store_pair(
-        runtime,
-        pending,
-        config_data=config_data,
-        layout_data=layout_data,
-    )
+    recovered_kind = None
+    if pending is not None:
+        recovered = await async_converge_store_pair(
+            runtime, pending, config_data=config_data, layout_data=layout_data,
+        )
+        config_data, layout_data = recovered.config_data, recovered.layout_data
+        recovered_kind = recovered.recovered_kind
+    config = config_data.get("config")
+    if isinstance(config, dict):
+        migrated = migrate_pair(config, layout_data.get("layout") or {},
+            passport=layout_data.get(CONFIG_MIGRATION_PASSPORT),
+            square_pending=layout_data.get("geom_pending"))
+        config_changed = migrated.config != config
+        layout_changed = migrated.layout != (layout_data.get("layout") or {})
+        if config_changed or layout_changed or "geom_pending" in layout_data:
+            # Stored reads retain their existing tolerant contract (including
+            # historical omitted titles). Strict input schema/host validators
+            # remain at import and write boundaries. This decoder changes only
+            # proven values; applying today's full schema here would drop old
+            # fields or add unrelated defaults before a user edits anything.
+            config_rev = int(config_data.get("rev", 0))
+            layout_rev = int(layout_data.get("rev", 0))
+            metadata = {key: value for key, value in layout_data.items()
+                if key not in {*LAYOUT_STORE_CORE_KEYS, OPTIMIZE_PENDING, "geom_pending"}}
+            metadata.setdefault(CONFIG_MIGRATION_BACKUP, {
+                "version": CONFIG_MIGRATION_VERSION,
+                "config_data": copy.deepcopy(config_data),
+                "layout_data": copy.deepcopy(layout_data),
+            })
+            metadata[CONFIG_MIGRATION_PASSPORT] = {
+                **(layout_data.get(CONFIG_MIGRATION_PASSPORT) or {}),
+                "version": CONFIG_MIGRATION_VERSION, "steps": list(migrated.steps),
+            }
+            target = {
+                "kind": "config_migration", "config": migrated.config,
+                "layout": migrated.layout, "config_rev": config_rev + config_changed,
+                "layout_rev": layout_rev + layout_changed, "final_metadata": metadata,
+            }
+            # The original pair and target are durable before either half can
+            # change. The common resolver resumes this exact intent after a
+            # crash; success is not published while only one half is saved.
+            await async_save_layout_state(runtime, layout_data,
+                layout_data.get("layout") or {}, layout_rev,
+                metadata={**metadata, OPTIMIZE_PENDING: target}, replace_metadata=True)
+            return await async_converge_store_pair(runtime, target,
+                config_data=config_data,
+                layout_data=await runtime.store.async_load() or {})
+    if getattr(runtime, "marker_history", None) is not None:
+        runtime.marker_history.observe_identity({}, config_data.get("config") or {},
+            exclude_session=getattr(runtime, "marker_history_owner", None))
+    return ResolvedStorePair(config_data=config_data, layout_data=layout_data,
+        recovered_kind=recovered_kind)

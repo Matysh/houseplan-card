@@ -23,7 +23,6 @@ from .frontend_registration import (
     async_remove_frontend_registration,
     async_setup_frontend_registration,
 )
-from .geometry_migration import migrate_config, migrate_layout, pending_from_config
 from .panel_registration import (
     async_setup_panel_registration,
     remove_panel_registration,
@@ -33,8 +32,6 @@ from .repairs import async_check_plan_files
 from .store import (
     HouseplanConfigEntry,
     async_resolve_pending_pair,
-    async_save_config_state,
-    async_save_layout_state,
     create_data,
 )
 
@@ -132,19 +129,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     from .zigbee_topology import ZigbeeScanCoordinator
     data.zigbee_coordinator = ZigbeeScanCoordinator(hass, entry)
 
-    from .radar import RadarCoordinator
-    data.radar_coordinator = RadarCoordinator(hass, data)
-    await data.radar_coordinator.async_setup()
-
-    # server-side vacuum trails: the integration records the path itself
-    from .trails import TrailRecorder
-    recorder = TrailRecorder(hass, data)
-    await recorder.async_setup()
-    # setdefault: the CI harness sets entries up without async_setup, so
-    # hass.data[DOMAIN] may not exist yet — a KeyError here failed EVERY
-    # downstream WS test with unknown_error
-    hass.data.setdefault(DOMAIN, {})["trail_recorder"] = recorder
-
     card_path = Path(__file__).parent / "frontend" / "houseplan-card.js"
     plans_path = Path(hass.config.path(PLANS_DIR))
     files_path = Path(hass.config.path(FILES_DIR))
@@ -175,7 +159,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     optimize_revs: tuple[int, int] | None = None
     recovered_import = False
     async with data.write_lock:
-        resolved = await async_resolve_pending_pair(data)
+        try:
+            resolved = await async_resolve_pending_pair(data)
+        except Exception as err:  # noqa: BLE001 - retain the original pair/intent for retry
+            raise ConfigEntryNotReady("House Plan storage migration could not complete; retry setup") from err
         if resolved.recovered_kind is not None:
             optimize_revs = (
                 int(resolved.config_data.get("rev", 0)),
@@ -187,48 +174,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
                 resolved.recovered_kind.replace("_", " "),
             )
 
-    # One-time move to the square canvas (v1.48.0). Coordinates used to be
-    # normalised against a per-space aspect ratio; the canvas is now always
-    # square and a plan is centred inside it. Nothing about the drawing changes
-    # — the box is padded and the numbers re-expressed against it.
-    # The two stores are written independently, and the lock is no transaction:
-    # a crash between the writes used to leave the config in square coordinates
-    # with the layout still in the old ones — permanently, because the config
-    # write had already deleted the `aspect` fields the layout half needed
-    # (HP-1490-01). So the intent is made durable FIRST, in the layout store,
-    # and each half carries its own trigger with its own write: the config half
-    # removes `aspect`, the layout half removes the saved intent. Whatever
-    # half is missing after a crash, the next start finishes exactly it.
-    async with data.write_lock:
-        stored = await data.config_store.async_load() or {}
-        cfg = stored.get("config")
-        lay_stored = await data.store.async_load() or {}
-        layout = lay_stored.get("layout") or {}
-        pending = {
-            str(k): v for k, v in (lay_stored.get("geom_pending") or {}).items()
-        }
-        merged = {**pending, **pending_from_config(cfg)}
-        if merged:
-            lay_rev = int(lay_stored.get("rev", 0))
-            if merged != pending:  # 1. the durable intent, before anything moves
-                await async_save_layout_state(
-                    data, lay_stored, layout, lay_rev,
-                    metadata={"geom_pending": merged}, remove=("geom_pending",),
-                )
-            rev = int(stored.get("rev", 0))
-            if cfg and migrate_config(cfg):  # 2. the config half
-                rev += 1
-                await async_save_config_state(data, cfg, rev, previous_rev=rev - 1)
-            migrate_layout(layout, merged)  # 3. the layout half + intent cleared
-            await async_save_layout_state(
-                data, lay_stored, layout, lay_rev + 1, remove=("geom_pending",)
-            )
-            _LOGGER.info(
-                "House Plan: migrated %s space(s) to the square canvas", len(merged)
-            )
-            # only once both halves are durable — a client refetching on this
-            # event must never see one migrated half and one old one
-            hass.bus.async_fire("houseplan_config_updated", {"rev": rev})
+    from .radar import RadarCoordinator
+    data.radar_coordinator = RadarCoordinator(hass, data)
+    await data.radar_coordinator.async_setup()
+
+    # server-side vacuum trails: the integration records the path itself
+    from .trails import TrailRecorder
+    recorder = TrailRecorder(hass, data)
+    await recorder.async_setup()
+    # setdefault: the CI harness sets entries up without async_setup, so
+    # hass.data[DOMAIN] may not exist yet — a KeyError here failed EVERY
+    # downstream WS test with unknown_error
+    hass.data.setdefault(DOMAIN, {})["trail_recorder"] = recorder
 
     if optimize_revs is not None:
         # Setup-time geometry migration may have advanced either revision

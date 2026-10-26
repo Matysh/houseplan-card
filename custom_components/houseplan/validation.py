@@ -12,6 +12,8 @@ from collections import Counter
 
 import voluptuous as vol
 
+from custom_components.houseplan.config_migrations import canonical_config
+from custom_components.houseplan.const import MAX_CONFIG_TEXT
 from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_lattice_coordinate,
@@ -1356,7 +1358,7 @@ MAX_CONTROLS = 200
 MAX_PDFS = 50
 MAX_KNOWN_DEVICES = 20000
 MAX_MARKER_AREA_SNAPSHOT = MAX_KNOWN_DEVICES
-MAX_TEXT = 500          # names, models, ids
+MAX_TEXT = MAX_CONFIG_TEXT  # names, models, ids; same strict bound at the old-form decoder
 MAX_DESCRIPTION = 4000
 MAX_URL = 2000
 # Comfortably below the WebSocket frame limit (aiohttp's default is 4 MB): a
@@ -2562,6 +2564,7 @@ CONFIG_SCHEMA = vol.All(
         },
         extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading
     ),
+    canonical_config,
     canonicalize_config_geometry,
     _config_wall_segment_invariants,
     # #780: after canonicalisation — shape invariants judge stored numbers;

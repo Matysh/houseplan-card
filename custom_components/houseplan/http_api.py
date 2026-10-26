@@ -61,7 +61,7 @@ from .plans import (
     store_plan_upload,
 )
 from .registry_snapshot import import_registry_snapshot
-from .store import get_data
+from .store import async_resolve_pending_pair, get_data
 from .validation import (
     FILE_EXTENSIONS,
     MAX_FILE_BYTES,
@@ -125,8 +125,8 @@ class HouseplanImportPreviewView(HomeAssistantView):
             # snapshot. Parsing up to 8 MiB, schema validation and space remap
             # are CPU work and apply will revalidate both revisions anyway.
             async with runtime.write_lock:
-                config_data = await runtime.config_store.async_load() or {}
-                layout_data = await runtime.store.async_load() or {}
+                pair = await async_resolve_pending_pair(runtime)
+                config_data, layout_data = pair.config_data, pair.layout_data
             try:
                 registry_snapshot = import_registry_snapshot(hass)
             except Exception:  # noqa: BLE001 - summary must not block a valid backup

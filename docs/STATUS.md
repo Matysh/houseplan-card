@@ -29,7 +29,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5646 · pure backend 672 · HA-harness backend 566 · browser smokes 457 (`npm run inventory`) |
+| Tests | Node unit 5651 · pure backend 679 · HA-harness backend 576 · browser smokes 458 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -39,6 +39,13 @@ ordinary before/after checks. Accepted UI lifecycle/navigation and settled paint
 are reflected in fixtures; information recovery and future-revisit watermark
 witnesses are stronger without changing product code or proof thresholds.
 Static readiness is not reported as a caught mutation; that remains nightly.
+
+Config compatibility (#1015) has a published-stable lifetime and an individually
+classified source inventory. The canonical server fence performs lossless v1
+conversions with an original snapshot and resumable paired revisions; current
+omissions and ambiguous/unrepresentable forms stay intact. Reached-until does
+not authorize deleting older-backend View readers. Normal exports keep their
+format; a read-only admin API parameter returns the original migration snapshot.
 
 Decor preview ownership (#1080) suppresses only ready live transient counterparts
 after a full host render. Furniture, images and line/shape drafts share this

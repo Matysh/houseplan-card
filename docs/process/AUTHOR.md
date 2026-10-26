@@ -278,6 +278,15 @@
 
 ## Хендофф и ожидание вердикта
 
+- Persisted compatibility (#1015): фиксировать since/commit/первый опубликованный
+  stable и until после двух следующих stable; patch считается, beta нет.
+  Непроверенная дата/неэквивалентность — typed keep, недостающие stable — pending.
+  До снятия reader доказать versioned canonical server load/write/import,
+  unknown-field/no-op/CAS/pair recovery и доступный исходный snapshot; старые
+  backup читаются цепочкой. Каждый scan hit учтён; снять только eligible ветки
+  отдельными commits. Packet предупреждает, но не даёт authority
+  ([§7.2](../../PROCESS.md#72-шаблоны-комментариев), CONFIG-COMPATIBILITY).
+
 - `fix`/`refactor`/`chore` с заменой пути, примитива или кэша удаляет прежний
   путь в том же коммите; так же поступает заменяющий поведение `feat`.
   Если путь нужен, в `НЕ сделано`: `оставлен старый путь: файл:символ — причина —

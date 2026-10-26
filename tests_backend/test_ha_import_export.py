@@ -211,7 +211,9 @@ def test_issue_943_legacy_darkness_survives_full_backup_without_forced_migration
         current_config_data={"config": _config(), "rev": 4}, current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path)
     imported, _, _ = prepare_apply(get_candidate(runtime, preview["token"], "alice"), _config(), {}, confirm_missing_content=True)
     assert imported["settings"]["fill_colors"] == config["settings"]["fill_colors"]
-    assert imported["spaces"][0]["settings"] == normalize_room_appearance(config)["spaces"][0]["settings"]
+    expected = normalize_room_appearance(config)["spaces"][0]["settings"]
+    expected["fill_mode"] = "none"  # #1015 retires the alias, preserving explicit Glow false.
+    assert imported["spaces"][0]["settings"] == expected
     assert config == before
 
 
@@ -2687,10 +2689,10 @@ async def _candidate(
     await rt.store.async_save({
         "layout": current_layout, "rev": 1,
         "repair_backup": {"must": "survive-failure"},
-        # The durable geometry-migration intent is ``space_id -> old aspect``.
-        # Keep a valid intent here so rollback preservation can also be proven
-        # safe across the subsequent integration reload.
-        "geom_pending": {"ground": 1.5},
+        # #1015 resolves actual geom_pending before any preview token can be
+        # issued. An unrelated metadata extension still proves exact rollback
+        # preservation; dedicated canonical-boundary tests cover the old intent.
+        "future_metadata": {"ground": 1.5},
     })
     incoming = json.loads(json.dumps(target_config or current_config))
     incoming["spaces"][0]["title"] = "Imported"
@@ -3308,7 +3310,7 @@ async def test_pair_rolls_back_before_reporting_a_persistent_target_failure(
     assert config_data["config"]["spaces"][0]["title"] == "Ground"
     assert layout_data["layout"]["lamp"]["x"] == 0.1
     assert layout_data["repair_backup"] == {"must": "survive-failure"}
-    assert layout_data["geom_pending"] == {"ground": 1.5}
+    assert layout_data["future_metadata"] == {"ground": 1.5}
     assert "optimize_pending" not in layout_data
 
     monkeypatch.setattr(rt.config_store, "async_save", real_save)

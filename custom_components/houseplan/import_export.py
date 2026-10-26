@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 import voluptuous as vol
 
+from .config_migrations import migrate_pair
 from .const import (
     ASSETS_DIR,
     CONTENT_URL,
@@ -69,6 +70,43 @@ from .wall_segment_model import (
 )
 
 FORMAT = "houseplan-export"
+
+
+def create_migration_source_export(runtime: HouseplanData, snapshot: dict[str, Any], *,
+    card_version: str, config_root: Path) -> tuple[dict[str, Any], str]:
+    """Read-only rollback copy: the original pair, in the existing v1 envelope.
+
+    Do not send it through create_export's current-model materialization. A
+    downgrade needs the original representation, not a newly upgraded copy.
+    Validation/dry-run import judge a detached copy and never alter its bytes.
+    """
+    if not isinstance(snapshot, dict) or type(snapshot.get("version")) is not int or snapshot["version"] != 1:
+        raise ImportFailure("invalid_config", "Original migration snapshot is unavailable or invalid")
+    config_data, layout_data = snapshot.get("config_data"), snapshot.get("layout_data")
+    if not isinstance(config_data, dict) or not isinstance(layout_data, dict):
+        raise ImportFailure("invalid_config", "Original migration snapshot is unavailable or invalid")
+    config = _json_copy(config_data.get("config"))
+    layout = _json_copy(layout_data.get("layout") or {})
+    if not isinstance(config, dict) or not isinstance(layout, dict):
+        raise ImportFailure("invalid_config", "Original migration snapshot is unavailable or invalid")
+    model = _stored_model_version(config)
+    document = {
+        "format": FORMAT, "export_version": 1, "kind": "full", "model_version": model,
+        "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "source_fingerprint": source_fingerprint(runtime.instance_id),
+        "card_version": card_version, "integration_version": VERSION,
+        "payload": {"config": config, "layout": layout},
+        "placement_manifest": placement_manifest(config, layout),
+        "content_manifest": content_manifest(config, config_root), "transfer": {},
+    }
+    try:
+        raw = json.dumps(document, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        checked = parse_document(raw)
+        _materialize_import_candidate(checked, {"spaces": [], "markers": [], "settings": {}}, {},
+            duplicate_policy="skip", same_source=True, content=[], confirmation_required=False)
+    except (ValueError, TypeError, vol.Invalid) as err:
+        raise ImportFailure("invalid_config", "Original migration snapshot cannot be imported") from err
+    return document, "houseplan-migration-original.json"
 
 
 def _appearance_config(config: dict[str, Any]) -> dict[str, Any]:
@@ -739,6 +777,9 @@ def parse_document(
         # before an import token can be issued.
         if model > 0:
             config_candidate["model_version"] = model
+        decoded = migrate_pair(config_candidate, _json_copy(payload.get("layout") or {}))
+        config_candidate = decoded.config
+        payload["layout"] = decoded.layout
         # #780: the schema step unbinds strips whose marker is not in the
         # document; count them before it does, for the import summary.
         unbound_led_strips = (

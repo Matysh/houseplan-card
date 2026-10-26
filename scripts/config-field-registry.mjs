@@ -1,3 +1,5 @@
+import { fieldLifecycle } from './config-compatibility-catalog.mjs';
+
 /**
  * Registry of persisted fields that need an explicit compatibility decision.
  *
@@ -7,6 +9,38 @@
  * field whose key is still current but whose old value is compatibility-only.
  */
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
+  {
+    id:'spaces[].settings.card_font_scale', selector:{path:['spaces','*','settings','card_font_scale']},
+    enforcedBy:'logic.ts spaceDisplayOf + validation.py SPACE_SETTINGS_SCHEMA',
+    storage:'House Plan server config',type:'number 0.5..3',default:'absent (=1)',level:'space',
+    ui:'replaced by independent name/readings size',runtime:'fallback for each omitted independent scale',
+    introduced:'before #945',status:'deprecated-read',migration:'explicit Space settings Save materializes both independent scales',
+    compatibility:'retain the old rollback mirror and older-backend reader; optional current omission is meaningful',
+  },
+  {
+    id:'markers[].tap_action=cover', selector:{path:['markers','*','tap_action'],equals:'cover'},
+    enforcedBy:'device-toggle.ts legacy-cover guarded target authority + validation.py MARKER_SCHEMA',
+    storage:'House Plan server config',type:'cover enum',default:'absent (=domain action)',level:'marker',
+    ui:'projected as Toggle',runtime:'historical explicit cover-target service resolution',
+    introduced:'legacy action model',status:'deprecated-read',migration:'none; generic toggle can choose a different entity/service',
+    compatibility:'keep exact explicit action identity until a semantically identical replacement is proved',
+  },
+  {
+    id:'markers[].vacuum.calibration', selector:{path:['markers','*','vacuum','calibration']},
+    enforcedBy:'vacuum-routes.ts + vacuum_routes.py effective route projection',
+    storage:'House Plan server config',type:'map_id→matrix dictionary',default:'absent',level:'vacuum marker',
+    ui:'converted by first routing edit',runtime:'route without an explicit source/space',
+    introduced:'legacy robot mapping',status:'deprecated-read',migration:'whole-dictionary conversion only after exact HA source/space proof',
+    compatibility:'never invent route authority during context-free load/import',
+  },
+  {
+    id:'markers[].use_climate_temp', selector:{path:['markers','*','use_climate_temp']},
+    enforcedBy:'device-value-badge.ts legacySource + validation.py MARKER_SCHEMA',
+    storage:'House Plan server config',type:'boolean',default:'absent',level:'marker',
+    ui:'replaced by explicit value badge source',runtime:'exact climate attribute choice, no fallback to unrelated sensor',
+    introduced:'before configurable badge #90',status:'deprecated-read',migration:'deliberate source edit; old implicit source needs actual HA roster',
+    compatibility:'retain missing-attribute and historical secondary-metric semantics',
+  },
   {
     id:'rooms[].settings.sun_transparent', selector:{path:['spaces','*','rooms','*','settings','sun_transparent']},
     enforcedBy:'validation.py ROOM_SCHEMA + sun-access.ts; #1078',
@@ -751,7 +785,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     migration: 'none: optional array, no model_version bump; orphan links normalise to unbound geometry on write',
     compatibility: 'older clients keep the unknown array; deleting a bound marker unbinds the strip instead of failing',
   },
-]);
+].map((entry) => ({ ...entry, lifecycle: fieldLifecycle(entry) })));
 
 export const CONFIG_FIELD_STATUSES = Object.freeze([
   'current',

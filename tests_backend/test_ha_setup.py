@@ -189,7 +189,7 @@ async def test_square_migration_finishes_after_a_crash_between_the_writes(
     state = {"layout_saves": 0}
 
     async def failing_save(self, data):
-        if self.key == "houseplan.layout" and "geom_pending" not in data:
+        if self.key == "houseplan.layout" and "optimize_pending" not in data:
             state["layout_saves"] += 1
             if state["layout_saves"] == 1:
                 raise OSError("disk full at the worst possible moment")
@@ -207,7 +207,8 @@ async def test_square_migration_finishes_after_a_crash_between_the_writes(
     assert "aspect" not in cfg["spaces"][0], "the config half committed"
     lay = hass_storage["houseplan.layout"]["data"]
     assert lay["layout"]["m"]["y"] == 0.1, "the layout half did NOT commit"
-    assert lay.get("geom_pending") == {"f1": 2.0}, "but the intent is durable"
+    assert lay["optimize_pending"]["kind"] == "config_migration", "but the intent is durable"
+    assert lay["optimize_pending"]["layout"]["m"]["y"] == 0.3
 
     # next start: the store write works again
     monkeypatch.setattr(HouseplanStore, "async_save", real_save)
@@ -220,7 +221,7 @@ async def test_square_migration_finishes_after_a_crash_between_the_writes(
     assert lay["layout"]["m"] == {"s": "f1", "x": 0.1, "y": 0.3}, (
         "the saved intent finished the layout half"
     )
-    assert "geom_pending" not in lay, "and left with the layout write"
+    assert "optimize_pending" not in lay, "and left with the layout write"
     cfg = hass_storage["houseplan.config"]["data"]["config"]
     assert cfg["spaces"][0]["view_box"] == [0.0, 0.0, 1.0, 1.0]
 

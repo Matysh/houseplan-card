@@ -32,6 +32,7 @@ import { CALL_CONTEXT_LINES, selectSmokes, requiredSmokeEntries, declaredTaskSmo
 import { roleEntry } from './entry-cost.mjs';
 import { parseSourceCommitLog, sourceReplacementWarnings } from './source-replacement.mjs';
 import { selectHandoff } from './review-handoff.mjs';
+import { lifecycleWarnings } from './config-lifecycle.mjs';
 
 export const STATUS_LABELS = ['S1-new', 'S2-analysis', 'S3-spec', 'S4-spec-review', 'S5-ready', 'S6-in-progress', 'S7-code-review', 'S8-merged'];
 
@@ -400,6 +401,7 @@ export function buildPacket(inputs) {
     deferredSmokes: branch?.smokes?.deferred ?? null,
     changelog: branch ? changelogState({ commits: branch.commits || [], changedFiles, risk: risk.computed ? risk : null }) : null,
     sourceReplacementWarnings: sourceReplacementWarnings(branch?.commits || [], branch?.handoff || ''),
+    configLifecycleWarnings: lifecycleWarnings(changedFiles),
     verdict,
     acceptance: acs,
     unverified: unverified.map((a) => a.id),
@@ -452,6 +454,7 @@ export function renderPacket(p) {
   L.push('');
   L.push('## Материал');
   for (const warning of p.sourceReplacementWarnings || []) L.push(`- Предупреждение: ${warning}`);
+  for (const warning of p.configLifecycleWarnings || []) L.push(`- Config compatibility: ${warning.message}`);
   if (!p.material) L.push('- ветки issue/NN-* на origin нет — материал не запушен');
   else {
     const m = p.material;
