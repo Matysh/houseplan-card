@@ -323,7 +323,9 @@ def async_register(hass: HomeAssistant) -> None:
     async_register_radar(hass)
     async_register_zigbee(hass)
     async_register_zigbee_lqi(hass)
-    from .marker_history_websocket import async_register as async_register_marker_history
+    from .marker_history_websocket import (
+        async_register as async_register_marker_history,
+    )
     async_register_marker_history(hass)
 
 
@@ -505,7 +507,13 @@ async def ws_marker_copy(hass: HomeAssistant, connection, msg: dict[str, Any]) -
 
     try:
         async with rt.write_lock:
-            from .marker_history_websocket import copy_begin, copy_prepare, copy_accept, commit_history_pair, replay_pair
+            from .marker_history_websocket import (
+                commit_history_pair,
+                copy_accept,
+                copy_begin,
+                copy_prepare,
+                replay_pair,
+            )
             session, replay = copy_begin(rt, connection, msg)
             if replay is not None:
                 await replay_pair(hass, connection, msg, rt, replay)

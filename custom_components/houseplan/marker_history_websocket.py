@@ -8,7 +8,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 
 from .const import DEFAULT_CONFIG, FILES_DIR
-from .marker_history import HistoryError, MarkerHistory, MAX_COMMANDS, delete_candidate
+from .marker_history import MAX_COMMANDS, HistoryError, MarkerHistory, delete_candidate
 from .store import get_data
 from .validation import CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES
 
