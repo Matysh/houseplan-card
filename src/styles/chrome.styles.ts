@@ -173,6 +173,8 @@ const chromeCoreStyles = unsafeCSS(css`
     }
     @media (max-width: 480px) {
       .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }
+      .compact-space-select { min-width: 44px; }
+      .compact-space-select::part(control) { min-width: 44px; padding-inline: 4px; gap: 0; }
       .head > .title, .head > .spacer, .head > .header-action,
       .head > .summary-control, .header-actions > .header-action, .header-actions > .summary-control { display: none; }
       .head > .header-actions { gap: 6px; }
@@ -207,7 +209,10 @@ const chromeCoreStyles = unsafeCSS(css`
     @media (width < 360px) {
       ha-card[data-hp-mode='view'] > .hdr > .head { padding-inline: 0; gap: 0; }
       ha-card[data-hp-mode='view'] .head > .modes { display: none; }
-      ha-card[data-hp-mode='view'] .head > .header-actions { gap: 0; }
+      /* Seven 44px targets, six common 1px strokes: 302px inside a native HA
+         card with 8px outer gutters at 320px. Only stroke borders coincide. */
+      ha-card[data-hp-mode='view'] .head > .header-actions { gap: 0; margin-inline-start: -1px; }
+      ha-card[data-hp-mode='view'] .header-actions > .header-menu-wrap { margin-inline-start: -1px; }
       ha-card:not([data-hp-mode='view']) > .hdr > .head {
         display: grid;
         grid-template-columns: minmax(44px, 1fr) 24px;

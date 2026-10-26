@@ -191,7 +191,7 @@ export class HpSettingsSelect extends LitElement {
     });
   }
   render(): TemplateResult {
-    return html`<slot @slotchange=${this.sync}></slot><button type="button" data-hp="select-trigger" aria-controls=${this.uid} ?disabled=${this.native?.disabled}
+    return html`<slot @slotchange=${this.sync}></slot><button part="control" type="button" data-hp="select-trigger" aria-controls=${this.uid} ?disabled=${this.native?.disabled}
       aria-label=${this.label ? `${this.label}: ${this.native?.selectedOptions[0]?.label || ''}` : nothing} aria-haspopup="listbox" aria-expanded=${String(this._open)}
       @keydown=${(e: KeyboardEvent) => this.keydown(e)} @click=${() => this._open ? this.close(true) : void this.open()}>
       <span part="label">${this.native?.selectedOptions[0]?.label || ''}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5z"/></svg>

@@ -1200,7 +1200,7 @@ public warmRoomDraft() {
 
 /** Natural header height belongs to the loaded editor's mode-layout boundary.
  * Route departure can measure View before Lit has replaced the editor DOM. */
-public _modeHeaderHeight(mode: string): number {
+public _modeHeaderHeight(mode: HouseplanMode): number {
     const root = this.host.renderRoot;
     const card = root.querySelector('ha-card[data-hp-mode]');
     const head = root.querySelector('.hdr > .head') as HTMLElement | null;

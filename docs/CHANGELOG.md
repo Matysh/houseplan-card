@@ -28,7 +28,7 @@
   follow the orientation while device faces and room captions remain readable;
   kiosk orientation comes from the card's `rotation` setting. (#1070)
 - Below 360 px, editors may use two header rows while keeping rotation beside
-  zoom. View keeps one row; its restored camera and the complete header/stage
+  zoom. View keeps one row with 44px targets inside the card borders; its restored camera and the complete header/stage
   height settle together, including reduced motion. (#1070)
 - Load Lovelace form labels with their settings language catalog; ordinary View,
   read-only and kiosk keep that catalog unloaded. Pending language changes block
