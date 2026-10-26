@@ -15,10 +15,23 @@ const snapshot = () => page.evaluate(() => {
   const select = root.querySelector('[data-hp="space-select-value"]');
   const host = root.querySelector('[data-hp="space-select"]');
   const trigger = host?.shadowRoot.querySelector('[data-hp="select-trigger"]');
+  const contrast = () => {
+    if (!trigger) return null;
+    const context = document.createElement('canvas').getContext('2d');
+    const rgb = color => { context.clearRect(0, 0, 1, 1); context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1); return [...context.getImageData(0, 0, 1, 1).data]; };
+    const style = getComputedStyle(trigger), background = rgb(style.backgroundColor), ink = rgb(style.color);
+    const luminance = values => values.slice(0, 3).map(value => value / 255)
+      .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4)
+      .reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index], 0);
+    const a = luminance(background), b = luminance(ink);
+    return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+  };
   return { width: root.querySelector('.hdr').getBoundingClientRect().width,
     compact: shown(host), tabs: root.querySelectorAll('[data-hp="space-tab"]').length,
     value: select?.value, label: trigger?.textContent.trim(), space: c._space,
     fieldHeight: trigger?.getBoundingClientRect().height,
+    fieldContrast: contrast(),
     headerHeight: root.querySelector('.head').getBoundingClientRect().height,
     gear: shown(root.querySelector('[data-hp="space-settings"]')),
     add: shown(root.querySelector('[data-hp="space-add"]')),
@@ -146,6 +159,7 @@ try {
       document.body.style.setProperty('--card-background-color', background);
       document.body.style.setProperty('--primary-text-color', foreground);
     }, { background, foreground });
+    check(`header.theme.${theme}.field-contrast`, (await snapshot()).fieldContrast >= 4.5);
     await button.click();
     check(`header.theme.${theme}.long-option-readable`, await picker.locator(`[data-hp="select-option"][data-id="${floors[1].id}"]`).innerText(), `${floors[1].title}\n✓`);
     await page.keyboard.press('Escape');

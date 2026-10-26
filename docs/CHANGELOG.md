@@ -21,7 +21,8 @@
   the result check without suggesting another Copy or Delete. (#1073)
 - Space tabs fold into a shared UI Kit dropdown at a header width of 1024 px
   or less, keeping floor navigation, settings/add actions and the phone's
-  one-row gear/zoom layout available. (#997)
+  one-row gear/zoom layout available. The field remains readable in light,
+  dark and custom themes without loading editor styles. (#997)
 
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain

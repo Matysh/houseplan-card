@@ -20,13 +20,13 @@ export class HpSettingsSelect extends LitElement {
       clip-path:inset(50%); opacity:0; pointer-events:none; }
     button { box-sizing:border-box; width:100%; min-height:44px; padding:10px 14px;
       display:flex; align-items:center; gap:14px; text-align:start; border:1px solid var(--hpf-line,var(--divider-color,#7776));
-      border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,#282930)));
+      border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,color-mix(in srgb,var(--card-background-color,#202126) 90%,var(--primary-text-color,#e6e7eb)))));
       color:var(--primary-text-color,#e6e7eb); font:inherit; cursor:pointer;
       transition:background 160ms,border-color 160ms; }
     button span { flex:1; min-width:0; overflow-wrap:anywhere; }
     button svg { width:18px; height:18px; flex:none; fill:currentColor; transition:transform 160ms; }
     button[aria-expanded=true] svg { transform:rotate(180deg); }
-    :host([data-pointer-hover]) button:hover { border-color:var(--hpf-accent,var(--primary-color,#03a9f4)); background:var(--hpf-tint,var(--secondary-background-color)); }
+    :host([data-pointer-hover]) button:hover { border-color:var(--hpf-accent,var(--primary-color,#03a9f4)); background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,var(--card-background-color,#202126))); }
     button:focus-visible,.menu:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color,#03a9f4)); outline-offset:2px; }
     button:disabled { opacity:.45; cursor:not-allowed; }
     .menu { position:fixed; inset:auto; margin:0; box-sizing:border-box; z-index:10000;
