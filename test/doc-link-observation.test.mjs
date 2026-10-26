@@ -16,20 +16,26 @@ test('#1083 original HEAD/UA/follow contract survives a genuine redirect and kee
   const seen = [];
   const origin = await server(t, (req, res) => {
     seen.push([req.method, req.headers['user-agent'], req.url]);
-    if (req.url === '/first?private=secret') res.writeHead(308, { location: '/next?private=secret', 'set-cookie': 'private=secret' });
+    if (req.url === '/first?private=secret') res.writeHead(308, { location: '/next/?private=secret', 'set-cookie': 'private=secret' });
+    else if (req.url === '/next/?private=secret') res.writeHead(302, { location: '/localized/?private=secret' });
     else res.writeHead(200, { 'x-private': 'secret' });
     res.end();
   });
   let trace;
   const response = await observeDocLink(origin + '/first?private=secret', value => { trace = value; });
   assert.equal(response.status, 200);
-  assert.deepEqual(seen, [['HEAD', 'houseplan-docs-check/1', '/first?private=secret'], ['HEAD', 'houseplan-docs-check/1', '/next?private=secret']]);
+  assert.deepEqual(seen, [['HEAD', 'houseplan-docs-check/1', '/first?private=secret'],
+    ['HEAD', 'houseplan-docs-check/1', '/next/?private=secret'], ['HEAD', 'houseplan-docs-check/1', '/localized/?private=secret']]);
   assert.equal(trace.timeoutMs, 8000);
-  assert.deepEqual(trace.events.filter(e => e.phase === 'response-headers').map(e => [e.status, e.location]), [[308, origin + '/next'], [200, null]]);
-  assert.deepEqual(trace.events.filter(e => e.phase === 'response-headers').map(e => e.request), [1, 2]);
-  assert.equal(trace.finalUrl, origin + '/next');
+  assert.deepEqual(trace.events.filter(e => e.phase === 'response-headers').map(e => [e.status, e.location]),
+    [[308, origin + '/next/'], [302, origin + '/localized/'], [200, null]]);
+  assert.deepEqual(trace.events.filter(e => e.phase === 'response-headers').map(e => e.request), [1, 2, 3]);
+  assert.equal(trace.finalUrl, origin + '/localized/');
   assert.equal(JSON.stringify(trace).includes('secret'), false);
   assert.equal(JSON.stringify(trace).includes('cookie'), false);
+  let canonicalTrace;
+  assert.equal((await observeDocLink(origin + '/localized/', value => { canonicalTrace = value; })).status, 200);
+  assert.equal(canonicalTrace.events.filter(e => e.phase === 'request').length, 1, 'the canonical target avoids both redirect requests');
 });
 
 test('#1083 dead, broken and invalid TLS-like inputs never become successful observations', async t => {

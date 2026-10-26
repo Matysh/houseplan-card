@@ -3,7 +3,7 @@
   "issue": 1083,
   "baseStable": "v1.82.0",
   "category": "infra",
-  "rationale": "Retains bounded HTTP phase and redirect evidence in documentation-link checks without weakening method, deadline, status handling or allowlist. Diagnostic stage; historical cause is not inferred from later success.",
+  "rationale": "Removes unnecessary converter-link canonicalization redirects and retains bounded HTTP phase evidence without weakening method, deadline, status handling or allowlist. The historical lower network failure is not inferred from later success.",
   "summary": {
     "ru": "Проверка ссылок сохраняет безопасные данные о сетевых этапах и перенаправлениях для расследования тайм-аутов.",
     "en": "Documentation-link checks retain safe network-phase and redirect evidence for timeout diagnosis."

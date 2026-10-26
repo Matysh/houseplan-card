@@ -3349,7 +3349,7 @@ JSON хранит названия, идентификаторы HA и точн�
 
 Если план дома уже нарисован в [Sweet Home 3D](https://www.sweethome3d.com/),
 его не нужно рисовать заново: конвертер на
-[houseplan.tech/convert](https://houseplan.tech/convert) превращает файл
+[houseplan.tech/convert](https://houseplan.tech/convert/) превращает файл
 `.sh3d` в документ импорта — по одному на этаж. Дальше это обычный импорт
 пространства из **Общих настроек → Резервная копия и перенос**.
 

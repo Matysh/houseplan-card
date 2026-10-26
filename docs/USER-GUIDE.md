@@ -2933,7 +2933,7 @@ another Home Assistant instance.
 
 If the home is already drawn in [Sweet Home 3D](https://www.sweethome3d.com/),
 there is no need to draw it again: the converter at
-[houseplan.tech/convert](https://houseplan.tech/convert) turns a `.sh3d` file
+[houseplan.tech/convert](https://houseplan.tech/en/convert/) turns a `.sh3d` file
 into import documents — one per level. From there it is the ordinary space
 import under **Global settings → Backup and transfer**.
 

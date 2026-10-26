@@ -5651,6 +5651,12 @@ events are not an established failure phase. Historical server access records
 can prove a response was sent, not that its headers reached the client.
 Later success alone never establishes the cause of an earlier timeout.
 
+Public guides use the canonical English converter URL and the slash-terminated
+Russian entry. English avoids both legacy redirects; the Russian entry retains
+the site's existing language negotiation and avoids its slash redirect. This
+removes unnecessary setup work within each unchanged deadline; it does not
+establish which lower network layer delayed the historical incident.
+
 Ordinary tests: `node --test test/doc-link-observation.test.mjs
 test/docs-freshness.test.mjs`. The silent local HTTP peer checks the actual
 unchanged 8s budget. Registered negative witnesses are static-only in authoring;
