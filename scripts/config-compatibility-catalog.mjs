@@ -123,7 +123,7 @@ export const COMPATIBILITY_BRANCHES = Object.freeze([
     'Recent additive representation plus older backend reads. Materializing absent optional defaults on every current load would violate no-op; local explicit fields remain authoritative.'),
   record('space-font-scale', ['spaces[].settings.card_font_scale'], 'card_font_scale common multiplier', 'independent card_name_scale/card_label_scale',
     [source('src/logic.ts', 'spaceDisplayOf'), source('custom_components/houseplan/validation.py', 'SPACE_DISPLAY_SCHEMA'), source('src/editors/space-dialog-draft.ts', 'spaceDialogSettings')],
-    unknown('Replacement #945 is recent; no first published stable replacement proven.'),
+    stable('acd2e6685f8e511d8ccbe3a1064d03a983d39a84', 'v1.82.0'),
     'Space settings Save materializes independent fields; retained old key is an explicit rollback mirror',
     'Absent current keys intentionally inherit old value until explicit form Save. Keep read inheritance and rollback mirror; not an orphaned decoder.'),
   record('vacuum-map-calibration', ['markers[].vacuum.calibration'], 'map_id→matrix without source/space', 'explicit versioned map_routes',

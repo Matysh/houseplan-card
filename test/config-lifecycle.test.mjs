@@ -39,6 +39,9 @@ test('#1015 expiry follows two subsequent published stables, including patches a
 
 test('#1015 real stable deadlines warn only affected branches and never turn keep into removal authority', () => {
   assert.equal(PUBLISHED_STABLES.at(-1), 'v1.82.0');
+  const recent = COMPATIBILITY_BRANCHES.find((branch) => branch.id === 'space-font-scale');
+  assert.deepEqual(recent.until, { kind: 'pending', after: 'v1.82.0', count: 2, remaining: 2 });
+  assert.equal(lifecycleState(recent).reached, false);
   const warnings = lifecycleWarnings(['src/vacuum.ts']);
   assert.deepEqual(warnings.map((item) => [item.id, item.until, item.eligible]), [['vacuum-trail', 'v1.54.2', false]]);
   assert.deepEqual(lifecycleWarnings(['src/houseplan-header.ts']), []);
