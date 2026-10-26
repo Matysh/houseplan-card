@@ -269,6 +269,7 @@ test('в корпусе настоящего репозитория все canon
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
     'demo/golden/scene-repaint.mjs',
     'demo/golden/static-stability.mjs',
+    'demo/golden/sun-transparent.mjs',
     'demo/golden/vacuum-history.mjs',
     'demo/golden/zigbee-led.mjs',
   ]);

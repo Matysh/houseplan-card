@@ -267,6 +267,10 @@
       "configs": 0
     },
     {
+      "file": "demo/fixtures/sun-transparent.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/v8-draft-regression.mjs",
       "configs": 1
     },
@@ -6958,6 +6962,102 @@
             "perf-partition-2-18",
             "perf-partition-2-19"
           ]
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/sun-transparent.mjs:makeSunTransparentFixture/config",
+      "fingerprint": "c5b7e4ee48b2fae749e7af03c08629b2c9dda4535b837c1c6947855c626e8cd3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "wall-kx5rayawbj4e2cd7ak5z",
+            "wall-sbh3q34vuhmyrsfhhjyb",
+            "wall-gsxj2zxtmhm7cw2p3wwo",
+            "wall-vh7lqp35lksqvg6vncsn",
+            "wall-aiaxku4prvxcsrzhf3dn",
+            "wall-szhjkq25me3ge4zaq4oz",
+            "wall-i7uvmthn3r47sbt3de3m",
+            "wall-smoimrzyy4rlplkqw3pv",
+            "wall-l4tob2xlppizob3tflzu",
+            "wall-7lsdbw7nmejkoiibwxrl",
+            "wall-4u55fbztud6b2tnfimj5",
+            "wall-vqpl6csbve6mtvm4ruuz",
+            "wall-vztv646k4huxf4wc7yvm",
+            "wall-jimtw3anb6pgp2pbwsz2",
+            "wall-du7rwjn2xytkw3igs6et",
+            "wall-5mt2nyaldbr4qc5nr5r5"
+          ],
+          "rooms": [
+            {
+              "id": "R",
+              "walls": [
+                "wall-vqpl6csbve6mtvm4ruuz",
+                "wall-du7rwjn2xytkw3igs6et",
+                "wall-vztv646k4huxf4wc7yvm",
+                "wall-4u55fbztud6b2tnfimj5"
+              ]
+            },
+            {
+              "id": "T2",
+              "walls": [
+                "wall-l4tob2xlppizob3tflzu",
+                "wall-4u55fbztud6b2tnfimj5",
+                "wall-7lsdbw7nmejkoiibwxrl",
+                "wall-smoimrzyy4rlplkqw3pv"
+              ]
+            },
+            {
+              "id": "T1",
+              "walls": [
+                "wall-vh7lqp35lksqvg6vncsn",
+                "wall-smoimrzyy4rlplkqw3pv",
+                "wall-szhjkq25me3ge4zaq4oz",
+                "wall-gsxj2zxtmhm7cw2p3wwo"
+              ]
+            },
+            {
+              "id": "N",
+              "walls": [
+                "wall-sbh3q34vuhmyrsfhhjyb",
+                "wall-jimtw3anb6pgp2pbwsz2",
+                "wall-vqpl6csbve6mtvm4ruuz",
+                "wall-l4tob2xlppizob3tflzu",
+                "wall-vh7lqp35lksqvg6vncsn",
+                "wall-kx5rayawbj4e2cd7ak5z"
+              ]
+            },
+            {
+              "id": "S",
+              "walls": [
+                "wall-szhjkq25me3ge4zaq4oz",
+                "wall-7lsdbw7nmejkoiibwxrl",
+                "wall-vztv646k4huxf4wc7yvm",
+                "wall-5mt2nyaldbr4qc5nr5r5",
+                "wall-i7uvmthn3r47sbt3de3m",
+                "wall-aiaxku4prvxcsrzhf3dn"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "W",
+              "host": {
+                "kind": "wall",
+                "id": "wall-4u55fbztud6b2tnfimj5"
+              }
+            }
+          ],
+          "partitions": []
+        },
+        {
+          "space": "f2",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
         }
       ]
     },

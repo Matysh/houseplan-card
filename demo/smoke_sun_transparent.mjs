@@ -65,7 +65,7 @@ try {
   await page.evaluate(async()=>{const c=window.__card;c.setConfig({...c._config,kiosk:true,cycle:0});await window.__hpTest.settled();});
   state=await inspect();out.kioskSameWindows=JSON.stringify(state.flat)===expected&&state.polygons>0;
   await page.evaluate(async()=>{const c=window.__card;c.setConfig({...c._config,kiosk:false});await window.__hpTest.settled();});
-  await page.evaluate(()=>window.__hpTest.setVolumetricView(true));
+  await page.evaluate(async()=>{await window.__hpTest.setVolumetricView(true);});
   state=await inspect();out.chainIso=JSON.stringify(state.iso)===expected&&state.polygons>0;
   await capture('iso-chain');
   await page.evaluate(async config=>{config.settings.volumetric_view=true;await window.__hpTest.setServerConfig(config);},fixture(true));
