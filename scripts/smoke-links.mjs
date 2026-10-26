@@ -37,9 +37,9 @@ export const SMOKE_LINKS = [
     because: '#1020: native empty/floor presentations, passive rights/storage access, retained selection and thin lazy boundary.',
   },
   {
-    files: ['custom_components/houseplan/config_migrations.py', 'custom_components/houseplan/store.py'],
+    files: ['src/logic.ts', 'src/space-geometry.ts', 'src/editors/decor/geometry.ts'],
     smokes: ['smoke_config_lifecycle.mjs'],
-    because: '#1015: Python canonicalization is independently verified on the exact shared Store response; native adoption must preserve observed SVG text/stroke/coordinates and the original light action target.',
+    because: '#1015: retained old-backend readers and canonical Store responses must paint equivalent SVG text/stroke/axes/Glow and preserve the original light action target; native effective styles are not imports of these modules.',
   },
   {
     files: ['src/furniture-placement-press.ts', 'src/live-viewport.ts', 'src/editors/space-plan-list.ts'],
