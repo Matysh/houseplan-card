@@ -25,10 +25,14 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5616 · pure backend 659 · HA-harness backend 559 · browser smokes 449 (`npm run inventory`) |
+| Tests | Node unit 5617 · pure backend 659 · HA-harness backend 559 · browser smokes 450 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Decor preview ownership (#1080) suppresses only ready live transient counterparts
+after a full host render. Furniture, images and line/shape drafts share this
+handoff; saved decor and geometry history retain their existing owners.
 
 External documentation-link observation (#1083) retains bounded per-request
 redirect/header and connection metadata under the original HEAD/follow/8s/UA

@@ -77,6 +77,7 @@ interface LiveEditorHost {
 }
 
 const states = new WeakMap<object, LiveEditorState>();
+const decorPreviewSelectors = ['.ddraft', '.furniture-placement-preview', '.decor-image-placement-preview'];
 
 const liveProperties = new Set<PropertyKey>([
   '_cursorPt', '_opMeasure',
@@ -391,6 +392,15 @@ export function paintHouseplanEditor(value: object): void {
     makeTransparent(state, root, '.dtframe, .backdropframe');
   }
   render(svg`${editorTemplate(host)}${host._editorRuntime?.properties?.selection() ?? nothing}`, target);
+  if (host._mode === 'decor') {
+    // Full host renders hand preview ownership back to the settled layer.
+    // Reclaim only the transient kind actually painted by this live frame:
+    // stored decor and a not-yet-ready image remain untouched. Both DOM
+    // operations finish synchronously before the browser presents a frame.
+    for (const selector of decorPreviewSelectors) {
+      if (target.querySelector(selector)) hide(state, root, `.decorlayer ${selector}`);
+    }
+  }
   const htmlTarget = root.querySelector<HTMLElement>('[data-hp-live-editor-html]');
   if (htmlTarget) {
     const view = host._viewOr(host._baseVb());
@@ -403,12 +413,16 @@ export function scheduleHouseplanEditor(value: object): void {
   const state = stateOf(value);
   state.requestedRevision++;
   if (state.raf || typeof requestAnimationFrame !== 'function') return;
-  state.raf = requestAnimationFrame(() => {
+  const frame = requestAnimationFrame(() => {
+    // A retired callback cannot clear or paint a later action's frame after
+    // commit, cancellation or detach/reconnect, even if it was already queued.
+    if (states.get(value) !== state || state.raf !== frame) return;
     state.raf = 0;
     const revision = state.requestedRevision;
     paintHouseplanEditor(value);
     finishRevision(state, revision);
   });
+  state.raf = frame;
 }
 
 /** Await the latest live-editor frame which was scheduled before this call. */

@@ -8,6 +8,12 @@ comments can point at them (`docs/DECOR-EDITOR.md §3.2`).
 
 ## 1. Purpose and invariants
 
+Transient placement/drawing previews have one visible owner (#1080). A full
+host render restores the settled copy and clears the live layer in the same
+turn; the next live frame prepares its actual furniture/image/shape preview
+before hiding only the matching settled transient kind. Saved decor remains
+visible. A cancelled or detached scheduled frame cannot paint a later action.
+
 ### Multiple selection (#1038)
 
 In Select, Ctrl/Cmd+click toggles one current-space decor ID. A clean ordinary

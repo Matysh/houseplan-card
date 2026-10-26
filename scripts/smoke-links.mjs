@@ -786,7 +786,7 @@ export const SMOKE_LINKS = [
       'LiveEditorState', 'finishRevision', 'hoverProperties',
       'routeHouseplanEditorUpdate', 'whenHouseplanEditorSettled',
     ],
-    smokes: ['smoke_furniture.mjs', 'smoke_decor.mjs', 'smoke_decor_text.mjs'],
+    smokes: ['smoke_furniture.mjs', 'smoke_decor.mjs', 'smoke_decor_text.mjs', 'smoke_decor_preview_ownership.mjs'],
     because: 'the #460 production-bundle scenarios consume the internal settlement contract '
       + 'through the lazy editor runtime and prove that furniture hover cleanup, preview/commit '
       + 'parity and decor gestures observe the latest coalesced live-editor frame',

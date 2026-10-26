@@ -1970,6 +1970,23 @@ export async function prepareGoldenScenario(page, scenario) {
           || !preview.closest('.decorlayer') || !previewBeforeWall) {
         throw new Error(`golden furniture placement preview contract is incomplete: ${scenario.id}`);
       }
+      const handoff = scenario.furniturePlacementPreview.handoffPointer;
+      if (handoff) {
+        if (!Array.isArray(handoff) || handoff.length !== 2 || !handoff.every(Number.isFinite))
+          throw new Error(`invalid preview handoff pointer: ${scenario.id}`);
+        card.hass = { ...card.hass }; await card.updateComplete;
+        const next = new DOMPoint(handoff[0] * 1000, handoff[1] * card._spaceH)
+          .matrixTransform(svgRoot.getScreenCTM());
+        stageEl.dispatchEvent(new PointerEvent('pointermove', {
+          bubbles: true, composed: true, pointerId: 993, pointerType: 'mouse',
+          clientX: next.x, clientY: next.y, shiftKey: free,
+        }));
+        await card._editorRuntime._whenLiveEditorSettled(); await frame();
+        const visible = [...card.renderRoot.querySelectorAll('.furniture-placement-preview')]
+          .filter(e => getComputedStyle(e).visibility !== 'hidden' && Number(getComputedStyle(e).opacity) > 0);
+        if (visible.length !== 1 || !visible[0].closest('[data-hp-live-editor]'))
+          throw new Error(`preview handoff has ${visible.length} visible owners: ${scenario.id}`);
+      }
     }
     if (scenario.hoverRoom) {
       const room = card._spaceModel().rooms.find((item) => item.id === scenario.hoverRoom);

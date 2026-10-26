@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 95;
+export const GOLDEN_MATRIX_VERSION = 96;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -857,6 +857,9 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     viewport: { width: 900, height: 820 }, ...page },
   { id: 'furniture-placement-preview-light', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     furniturePlacementPreview: { symbol: 'sofa', widthCm: 180, depthCm: 90, pointer: [0.35, 0.90] },
+    language: 'ru', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'decor-preview-handoff-1080', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
+    furniturePlacementPreview: { symbol: 'sofa', widthCm: 180, depthCm: 90, pointer: [0.35, 0.90], handoffPointer: [0.72, 0.90] },
     language: 'ru', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'furniture-plan-art-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     decorOverride: [

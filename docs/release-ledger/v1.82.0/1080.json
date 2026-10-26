@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "issue": 1080,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already renders decor placement/drawing previews in both settled and live layers; its live-editor suppresses saved move targets but not transient previews. The unchanged current dev reproduces the stale visible footprint. This fixes that released preview workflow without changing stored decor or introducing the separate #1081 pan gesture.",
+  "summary": {
+    "ru": "Превью декора больше не оставляют прежние отпечатки после полной перерисовки и движения указателя.",
+    "en": "Decor placement and drawing previews no longer leave stale footprints after a full redraw followed by pointer movement."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [{ "id": "decor-preview-handoff-1080", "expectation": "new", "reason": "A new regression frame shows the existing furniture preview after a full HA render and a subsequent live move, with no ghost at the previous position. Existing settled scenes have no pixel-change allowance." }],
+    "smokes": ["smoke_decor_preview_ownership.mjs", "smoke_furniture.mjs", "smoke_decor.mjs", "smoke_decor_text.mjs", "smoke_decor_images.mjs"]
+  }
+}

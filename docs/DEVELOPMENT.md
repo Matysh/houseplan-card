@@ -3557,6 +3557,22 @@ release/publish-prerelease dispatch). Never clear a live claim to retry blindly.
   verified local receipt and reruns metadata/range guards. Do not disable the
   hook to avoid a duplicate build.
 
+## Decor preview handoff #1080
+
+`node demo/smoke_decor_preview_ownership.mjs` checks actual captured pixels in
+the old preview footprint, presented-frame ownership, shape/image neighbours
+and config/history counts. On unchanged dev `8b74e788`, full HA render at A
+followed by live movement to B retained all 1459 preview pixels at A; after the
+fix that crop matches cancellation exactly (zero changed pixels). The captured
+native Chromium is checked against the Playwright pin. This witness does not
+claim a particular GPU/WebView or the furniture-pan gesture owned by #1081.
+The accepted UI-038 reference at `e6a4edc8` and a separate candidate, both with
+the same synthetic fixture/theme/1440×1100/DPR1, produce identical 9039-pixel
+preview crops (zero pixels differ by more than three channels). Reference
+adapters run only in the reference page; the candidate uses ordinary sources.
+The new selected Golden scene `decor-preview-handoff-1080` covers the same
+full/live handoff. Global baseline acceptance remains a release operation.
+
 ## Local Windows workstation
 
 Nightly witness repair (#1012) keeps the original 2026-10-22 run's red/escaped

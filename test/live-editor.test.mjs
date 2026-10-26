@@ -9,7 +9,30 @@ import {
   whenHouseplanEditorSettled,
   physicalOpeningIds,
   measureHouseplanDecorText,
+  scheduleHouseplanEditor,
 } from '../test-build/live-editor.js';
+
+test('#1080 a cancelled or detached frame cannot paint or consume a later action', () => {
+  const beforeRaf = globalThis.requestAnimationFrame, beforeCancel = globalThis.cancelAnimationFrame;
+  const callbacks = new Map(); let next = 1;
+  globalThis.requestAnimationFrame = callback => { const id = next++; callbacks.set(id, callback); return id; };
+  globalThis.cancelAnimationFrame = () => {};
+  const host = { isConnected: true, renderRoot: { querySelector: () => null, querySelectorAll: () => [] } };
+  try {
+    scheduleHouseplanEditor(host); const cancelled = callbacks.get(next - 1);
+    commitHouseplanEditor(host);
+    scheduleHouseplanEditor(host);
+    const waiting = whenHouseplanEditorSettled(host);
+    let finished = false; waiting.then(() => { finished = true; });
+    host.renderRoot.querySelector = () => { throw new Error('retired frame queried the current scene'); };
+    cancelled();
+    assert.equal(finished, false);
+    disposeHouseplanEditor(host);
+    const detached = callbacks.get(next - 1);
+    scheduleHouseplanEditor(host);
+    detached();
+  } finally { disposeHouseplanEditor(host); globalThis.requestAnimationFrame = beforeRaf; globalThis.cancelAnimationFrame = beforeCancel; }
+});
 
 test('#1047 text measurement follows Properties while a drawing tool keeps native handles inactive',()=>{
   let selectedTextId='new',queries=[],updates=0;

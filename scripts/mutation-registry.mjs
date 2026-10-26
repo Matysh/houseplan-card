@@ -77,6 +77,14 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'decor-preview-keeps-settled-footprint-1080',
+    guard: 'node demo/smoke_decor_preview_ownership.mjs',
+    because: '#1080 AC1/AC2: only real Chromium pixels and presented frames distinguish a stale settled ghost from the current live preview. The unchanged synthetic scene also retains saved decor/history. Registered only; nightly execution.',
+    patches: [{ file: 'src/live-editor.ts',
+      find: 'if (target.querySelector(selector)) hide(state, root, `.decorlayer ${selector}`);',
+      replace: 'if (target.querySelector(selector)) void selector;' }],
+  },
+  {
     id: 'docs-link-deadline-extended-1083',
     guard: 'node --test test/doc-link-observation.test.mjs',
     because: '#1083 AC2: a real silent HTTP peer must hit the original total eight-second deadline; passive diagnostics must not lengthen it. Registered only; nightly execution.',

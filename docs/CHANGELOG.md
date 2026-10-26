@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Clear previous furniture, shape and image placement previews after a full
+  redraw followed by pointer movement; saved decor remains visible. (#1080)
+
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain
   opaque; View, 2.5D and supported Static light share the same rule. (#1079)
