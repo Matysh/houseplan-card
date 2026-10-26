@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -63,7 +64,15 @@ def _fixture() -> dict:
 
 def test_backend_schemas_apply_the_same_allowlist() -> None:
     fixture = _fixture()
-    assert CONFIG_SCHEMA(fixture["configInput"]) == fixture["configExpected"]
+    assert canonicalize_config_geometry(fixture["configInput"]) == fixture["configExpected"]
+    expected = deepcopy(fixture["configExpected"])
+    # #1015: schema output also retires two superseded representations. Their
+    # explicit canonical axes/font size already win in this independent vector;
+    # every coordinate and opaque/future numeric value must stay exactly as it
+    # was in the shared cross-runtime allowlist fixture.
+    del expected["spaces"][0]["plan_scale"]
+    del next(shape for shape in expected["spaces"][0]["decor"] if shape["kind"] == "text")["scale"]
+    assert CONFIG_SCHEMA(fixture["configInput"]) == expected
     assert LAYOUT_SCHEMA(fixture["layoutInput"]) == fixture["layoutExpected"]
     assert POS_SCHEMA(fixture["layoutInput"]["virtual"]) == fixture["layoutExpected"]["virtual"]
 

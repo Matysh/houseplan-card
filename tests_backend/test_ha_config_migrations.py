@@ -166,6 +166,57 @@ async def test_original_snapshot_exports_exact_pair_read_only_and_reimports_norm
     assert (await runtime.store.async_load())["layout"]["lamp"]["y"] == 0.35
 
 
+@pytest.mark.parametrize("mixed", [False, True])
+async def test_portable_original_completes_old_half_intent_without_double_transform(hass, mixed):
+    from custom_components.houseplan.geometry_migration import migrate_space
+    from custom_components.houseplan.import_export import create_preview
+    from custom_components.houseplan.websocket_api import ws_import_apply
+
+    runtime = await entry_runtime(hass)
+    original = source()
+    original["config"]["markers"][0]["space"] = "s"
+    # The historical writer saved config first, leaving layout + its own
+    # geom_pending intent in the old frame. A second floor may still be old.
+    migrate_space(original["config"]["spaces"][0])
+    layout = {"lamp": {"s": "s", "x": 0.1, "y": 0.2}}
+    pending = {"s": 2}
+    if mixed:
+        original["config"]["spaces"].append({"id": "still", "title": "Still old", "aspect": 0.5,
+            "view_box": [0, 0, 1, 1], "rooms": [], "cell_cm": 5})
+        original["config"]["markers"].append({"id": "second", "binding": "virtual", "space": "still"})
+        layout["second"] = {"s": "still", "x": 0.2, "y": 0.3}
+        pending["still"] = 0.5
+    original_layout = {"layout": layout, "rev": 7, "geom_pending": pending}
+    await runtime.config_store.async_save(original)
+    await runtime.store.async_save(original_layout)
+    async with runtime.write_lock:
+        migrated = await async_resolve_pending_pair(runtime)
+    expected_layout = deepcopy(migrated.layout_data["layout"])
+    before = deepcopy(await runtime.config_store.async_load()), deepcopy(await runtime.store.async_load())
+    exported = Connection()
+    await recovery_export(hass, exported)
+    assert exported.error is None
+    document = exported.result["document"]
+    assert document["payload"]["layout"]["lamp"]["y"] == 0.35
+    assert "aspect" not in document["payload"]["config"]["spaces"][0]
+    if mixed:
+        assert document["payload"]["config"]["spaces"][1]["aspect"] == 0.5
+        assert document["payload"]["layout"]["second"]["x"] == 0.2
+    assert (await runtime.config_store.async_load(), await runtime.store.async_load()) == before
+    raw_backup = before[1][CONFIG_MIGRATION_BACKUP]
+    assert raw_backup["config_data"] == original and raw_backup["layout_data"] == original_layout
+    preview = create_preview(runtime, json.dumps(document).encode(), owner_id=exported.user.id,
+        duplicate_policy="skip", current_config_data=before[0], current_layout_data=before[1],
+        config_root=Path(hass.config.path("")))
+    applied = Connection()
+    await ws_import_apply.__wrapped__(hass, applied, {
+        "id": 2, "token": preview["token"], "expected_config_rev": preview["expected_config_rev"],
+        "expected_layout_rev": preview["expected_layout_rev"], "confirm_missing_content": True,
+    })
+    assert applied.error is None and applied.result["ok"]
+    assert (await runtime.store.async_load())["layout"] == expected_layout
+
+
 @pytest.mark.parametrize("snapshot", [None, {}, {"version": 2},
     {"version": 1, "config_data": {"config": []}, "layout_data": {}}])
 async def test_missing_or_corrupt_source_snapshot_fails_without_store_change(hass, snapshot):
@@ -215,6 +266,21 @@ async def test_native_load_oracle_is_the_real_durable_store_result(hass):
     async with runtime.write_lock:
         reread = await async_resolve_pending_pair(runtime)
     assert reread.config_data == pair.config_data and reread.layout_data == pair.layout_data
+
+
+@pytest.mark.parametrize("case", ["canonical-overrides", "unrepresentable-keeps", "glow-enabled"])
+async def test_native_scalar_variants_are_the_real_server_result(hass, case):
+    fixture = json.loads((Path(__file__).parents[1] / "test/fixtures/config-lifecycle/migration-v1.json").read_text())
+    variant = next(item for item in fixture["variants"] if item["id"] == case)
+    runtime = create_data(hass)
+    await runtime.config_store.async_save({"config": variant["before"]["config"], "rev": 3})
+    await runtime.store.async_save({"layout": variant["before"]["layout"], "rev": 7})
+    async with runtime.write_lock:
+        pair = await async_resolve_pending_pair(runtime)
+        reread = await async_resolve_pending_pair(runtime)
+    assert pair.config_data["config"] == variant["expected"]["config"]
+    assert pair.layout_data["layout"] == variant["expected"]["layout"]
+    assert pair.config_data == reread.config_data and pair.layout_data == reread.layout_data
 
 
 @pytest.mark.parametrize("kind,plan_only,archive", [("full", False, False),

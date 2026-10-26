@@ -7,7 +7,8 @@ conversion precedes physical scalar units; ambiguous geometry remains on its
 existing explicit structural model chain. The exact original pair, versioned
 passport and target are durable in the existing paired intent before a half
 moves. Normal readers cannot export the retained original; a read-only admin
-parameter of the existing export endpoint returns its original portable form
+parameter of the existing export endpoint returns its original logical pair
+after finishing any older half-written square intent on a detached copy
 and rechecks ACL after the worker. Current omissions do not trigger writes.
 The machine lifecycle inventory distinguishes reached deadlines from proven
 all-input retirement; old-backend readers remain supported.

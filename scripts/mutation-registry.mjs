@@ -77,6 +77,38 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'config-source-export-drops-old-frame-intent-1015',
+    guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
+    because: '#1015: ordinary single/mixed-floor half-written geom_pending inputs must export a coherent original logical pair and import without missing or double coordinate conversion. Registered only; nightly execution.',
+    patches: [{ file: 'custom_components/houseplan/import_export.py',
+      find: '    migrate_layout(layout, unfinished_layout)',
+      replace: '    migrate_layout(layout, {})' }],
+  },
+  {
+    id: 'config-source-export-loses-post-await-admin-check-1015',
+    guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
+    because: '#1015: a real export worker may outlive permission; the original snapshot must not enter the response after admin/writer authority is lost. Registered only; nightly execution.',
+    patches: [{ file: 'custom_components/houseplan/websocket_api.py',
+      find: '            if not _check_write(hass, connection) or not archive_admin(hass, connection.user):',
+      replace: '            if False:' }],
+  },
+  {
+    id: 'config-migration-reports-before-durable-pair-1015',
+    guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
+    because: '#1015: the real Store/revision and interruption witnesses require both canonical halves before a successful load; a saved intent alone is not completion. Registered only; nightly execution.',
+    patches: [{ file: 'custom_components/houseplan/store.py',
+      find: '            return await async_converge_store_pair(runtime, target,\n                config_data=config_data,\n                layout_data=await runtime.store.async_load() or {})',
+      replace: '            return ResolvedStorePair(config_data=config_data, layout_data=layout_data)' }],
+  },
+  {
+    id: 'config-migration-widens-independent-text-floor-1015',
+    guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
+    because: '#1015: a corrupt501-character weather input must not be removed before the existing500-character schema bound can reject it. Registered only; nightly execution.',
+    patches: [{ file: 'custom_components/houseplan/const.py',
+      find: 'MAX_CONFIG_TEXT = 500  # persisted names/models/IDs; shared strict decoder bound',
+      replace: 'MAX_CONFIG_TEXT = 501  # deliberately widened floor' }],
+  },
+  {
     id: 'device-history-ambiguous-copy-failure-toast-1073',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-copy-editor.test.mjs',
     because: '#1073 r2 AC5: the real Copy caller and history controller receive two ordinary lost-reply errors. Its result remains unknown, so no false failure/repeat toast may accompany the persistent result check. Direct caller unit; registered only, nightly execution.',

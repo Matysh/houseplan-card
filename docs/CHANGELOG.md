@@ -9,7 +9,8 @@
 - Upgrade old plan representations once at the server load/import boundary,
   preserving their appearance, unknown fields and paired revisions. Interrupted
   conversions resume safely; administrators can export the original snapshot
-  through the existing export API for a compatible rollback. (#1015)
+  through the existing export API for a compatible rollback. Recovery exports
+  also preserve an interrupted older coordinate conversion. (#1015)
 
 - Clear previous furniture, shape and image placement previews after a full
   redraw followed by pointer movement; saved decor remains visible. Losing

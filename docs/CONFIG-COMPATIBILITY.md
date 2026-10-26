@@ -61,8 +61,14 @@ read-only WebSocket export command (no new UI mode):
 {"type":"houseplan/export/create","kind":"full","migration_source":true}
 ```
 
-It returns the exact original config/layout in the existing v1 portable envelope,
-without current-model materialization or storage writes. Missing/corrupt source
+It returns the original **logical pair** in the existing v1 portable envelope,
+without current-model scalar materialization or storage writes. The internal
+raw snapshot remains exact, including an old `geom_pending` intent. If that old
+writer had already squared one config floor but not its layout, export completes
+that saved intent on the detached layout copy. A floor still carrying `aspect`
+keeps its original portable frame, so ordinary Import transforms it exactly once.
+The saved snapshot and current durable pair are never changed by export.
+Missing/corrupt source
 is a safe error; writer/admin permission is checked again after the worker await.
 Save the returned `document` as JSON and use ordinary Import on a compatible
 version when reverting/downgrading. This does not restore removed file bytes:

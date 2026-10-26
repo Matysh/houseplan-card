@@ -36,6 +36,7 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
+from .geometry_migration import migrate_layout, pending_from_config
 from .led_strips import led_strip_link_report, plan_only_strips, unbind_strips
 from .opening_repair import (
     MAX_REPAIR_EXAMPLES,
@@ -74,11 +75,13 @@ FORMAT = "houseplan-export"
 
 def create_migration_source_export(runtime: HouseplanData, snapshot: dict[str, Any], *,
     card_version: str, config_root: Path) -> tuple[dict[str, Any], str]:
-    """Read-only rollback copy: the original pair, in the existing v1 envelope.
+    """Read-only rollback copy: the original logical pair in the v1 envelope.
 
     Do not send it through create_export's current-model materialization. A
     downgrade needs the original representation, not a newly upgraded copy.
-    Validation/dry-run import judge a detached copy and never alter its bytes.
+    An older half-written geometry intent is completed on the detached layout
+    only where config is already square. Raw internal snapshot/current bytes
+    stay untouched; a floor still carrying aspect keeps its old portable frame.
     """
     if not isinstance(snapshot, dict) or type(snapshot.get("version")) is not int or snapshot["version"] != 1:
         raise ImportFailure("invalid_config", "Original migration snapshot is unavailable or invalid")
@@ -89,6 +92,12 @@ def create_migration_source_export(runtime: HouseplanData, snapshot: dict[str, A
     layout = _json_copy(layout_data.get("layout") or {})
     if not isinstance(config, dict) or not isinstance(layout, dict):
         raise ImportFailure("invalid_config", "Original migration snapshot is unavailable or invalid")
+    old_pending = layout_data.get("geom_pending") or {}
+    if not isinstance(old_pending, dict):
+        raise ImportFailure("invalid_config", "Original migration snapshot is unavailable or invalid")
+    old_frames = pending_from_config(config)
+    unfinished_layout = {str(key): value for key, value in old_pending.items() if str(key) not in old_frames}
+    migrate_layout(layout, unfinished_layout)
     model = _stored_model_version(config)
     document = {
         "format": FORMAT, "export_version": 1, "kind": "full", "model_version": model,

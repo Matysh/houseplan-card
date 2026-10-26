@@ -212,5 +212,996 @@
         "y": 0.4
       }
     }
-  }
+  },
+  "variants": [
+    {
+      "id": "canonical-overrides",
+      "before": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "aspect": 2,
+              "cell_cm": 5,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.2
+                    ],
+                    [
+                      0.8,
+                      0.2
+                    ],
+                    [
+                      0.8,
+                      0.8
+                    ],
+                    [
+                      0.1,
+                      0.8
+                    ]
+                  ],
+                  "settings": {
+                    "fill_mode": "glow",
+                    "glow": false
+                  }
+                }
+              ],
+              "plan_scale": 2,
+              "settings": {
+                "fill_mode": "glow",
+                "glow_enabled": false
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.4,
+                  "x2": 0.8,
+                  "y2": 0.4,
+                  "width": 2,
+                  "color": "#112233",
+                  "width_cm": 4
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.2,
+                  "text": "Legacy label",
+                  "size": "l",
+                  "color": "#123456",
+                  "scale": 0.7,
+                  "size_cm": 24
+                }
+              ],
+              "plan_aspect": 2,
+              "plan_scale_x": 3,
+              "plan_scale_y": null
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail": false
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "show_all": false,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            },
+            "weather_entity": "weather.home"
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.3
+          }
+        }
+      },
+      "olderBackend": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "cell_cm": 5,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.65
+                    ],
+                    [
+                      0.1,
+                      0.65
+                    ]
+                  ],
+                  "settings": {
+                    "fill_mode": "glow",
+                    "glow": false
+                  }
+                }
+              ],
+              "settings": {
+                "fill_mode": "glow",
+                "glow_enabled": false
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.45,
+                  "x2": 0.8,
+                  "y2": 0.45,
+                  "color": "#112233",
+                  "width_cm": 4,
+                  "width": 2
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.35,
+                  "text": "Legacy label",
+                  "color": "#123456",
+                  "size_cm": 24,
+                  "size": "l",
+                  "scale": 0.7
+                }
+              ],
+              "plan_scale_x": 3,
+              "plan_scale_y": null,
+              "plan_aspect": 2,
+              "plan_scale": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail": false
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "show_all": false,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            },
+            "weather_entity": "weather.home"
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.4
+          }
+        }
+      },
+      "expected": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "cell_cm": 5,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.65
+                    ],
+                    [
+                      0.1,
+                      0.65
+                    ]
+                  ],
+                  "settings": {
+                    "glow": false
+                  }
+                }
+              ],
+              "settings": {
+                "fill_mode": "none",
+                "glow_enabled": false
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.45,
+                  "x2": 0.8,
+                  "y2": 0.45,
+                  "color": "#112233",
+                  "width_cm": 4
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.35,
+                  "text": "Legacy label",
+                  "color": "#123456",
+                  "size_cm": 24
+                }
+              ],
+              "plan_scale_x": 3,
+              "plan_scale_y": 2,
+              "plan_aspect": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "icon_ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail_mode": "never"
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            }
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.4
+          }
+        }
+      }
+    },
+    {
+      "id": "unrepresentable-keeps",
+      "before": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "aspect": 2,
+              "cell_cm": 1000,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.2
+                    ],
+                    [
+                      0.8,
+                      0.2
+                    ],
+                    [
+                      0.8,
+                      0.8
+                    ],
+                    [
+                      0.1,
+                      0.8
+                    ]
+                  ],
+                  "settings": {
+                    "fill_mode": "glow",
+                    "glow": false
+                  }
+                }
+              ],
+              "plan_scale": 2,
+              "settings": {
+                "fill_mode": "glow",
+                "glow_enabled": false
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.4,
+                  "x2": 0.8,
+                  "y2": 0.4,
+                  "width": 30,
+                  "color": "#112233"
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.2,
+                  "text": "Legacy label",
+                  "size": "l",
+                  "color": "#123456",
+                  "scale": 20
+                }
+              ],
+              "plan_aspect": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail": false
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "show_all": false,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            },
+            "weather_entity": "weather.home"
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.3
+          }
+        }
+      },
+      "olderBackend": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "cell_cm": 1000,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.65
+                    ],
+                    [
+                      0.1,
+                      0.65
+                    ]
+                  ],
+                  "settings": {
+                    "fill_mode": "glow",
+                    "glow": false
+                  }
+                }
+              ],
+              "settings": {
+                "fill_mode": "glow",
+                "glow_enabled": false
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.45,
+                  "x2": 0.8,
+                  "y2": 0.45,
+                  "color": "#112233",
+                  "width": 30
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.35,
+                  "text": "Legacy label",
+                  "color": "#123456",
+                  "scale": 20,
+                  "size": "l"
+                }
+              ],
+              "plan_aspect": 2,
+              "plan_scale": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail": false
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "show_all": false,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            },
+            "weather_entity": "weather.home"
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.4
+          }
+        }
+      },
+      "expected": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "cell_cm": 1000,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.65
+                    ],
+                    [
+                      0.1,
+                      0.65
+                    ]
+                  ],
+                  "settings": {
+                    "glow": false
+                  }
+                }
+              ],
+              "settings": {
+                "fill_mode": "none",
+                "glow_enabled": false
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.45,
+                  "x2": 0.8,
+                  "y2": 0.45,
+                  "color": "#112233",
+                  "width": 30
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.35,
+                  "text": "Legacy label",
+                  "color": "#123456",
+                  "scale": 20,
+                  "size": "l"
+                }
+              ],
+              "plan_scale_x": 2,
+              "plan_scale_y": 2,
+              "plan_aspect": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "icon_ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail_mode": "never"
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            }
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.4
+          }
+        }
+      }
+    },
+    {
+      "id": "glow-enabled",
+      "before": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "aspect": 2,
+              "cell_cm": 5,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.2
+                    ],
+                    [
+                      0.8,
+                      0.2
+                    ],
+                    [
+                      0.8,
+                      0.8
+                    ],
+                    [
+                      0.1,
+                      0.8
+                    ]
+                  ],
+                  "settings": {
+                    "fill_mode": "glow",
+                    "glow": null
+                  }
+                }
+              ],
+              "plan_scale": 2,
+              "settings": {
+                "fill_mode": "glow"
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.4,
+                  "x2": 0.8,
+                  "y2": 0.4,
+                  "width": 2,
+                  "color": "#112233"
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.2,
+                  "text": "Legacy label",
+                  "size": "l",
+                  "color": "#123456"
+                }
+              ],
+              "plan_aspect": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail": false
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "show_all": false,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            },
+            "weather_entity": "weather.home"
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.3
+          }
+        }
+      },
+      "olderBackend": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "cell_cm": 5,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.65
+                    ],
+                    [
+                      0.1,
+                      0.65
+                    ]
+                  ],
+                  "settings": {
+                    "fill_mode": "glow",
+                    "glow": null
+                  }
+                }
+              ],
+              "settings": {
+                "fill_mode": "glow"
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.45,
+                  "x2": 0.8,
+                  "y2": 0.45,
+                  "color": "#112233",
+                  "width": 2
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.35,
+                  "text": "Legacy label",
+                  "color": "#123456",
+                  "size": "l"
+                }
+              ],
+              "plan_aspect": 2,
+              "plan_scale": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail": false
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "show_all": false,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            },
+            "weather_entity": "weather.home"
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.4
+          }
+        }
+      },
+      "expected": {
+        "config": {
+          "spaces": [
+            {
+              "id": "f1",
+              "title": "Lifecycle floor",
+              "view_box": [
+                0,
+                0,
+                1,
+                1
+              ],
+              "cell_cm": 5,
+              "plan_url": "/assets/f1.svg",
+              "rooms": [
+                {
+                  "id": "living",
+                  "name": "Living",
+                  "area": "living_room",
+                  "poly": [
+                    [
+                      0.1,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.35
+                    ],
+                    [
+                      0.8,
+                      0.65
+                    ],
+                    [
+                      0.1,
+                      0.65
+                    ]
+                  ],
+                  "settings": {
+                    "glow": true
+                  }
+                }
+              ],
+              "settings": {
+                "fill_mode": "none",
+                "glow_enabled": true
+              },
+              "decor": [
+                {
+                  "id": "life-line",
+                  "kind": "line",
+                  "x1": 0.1,
+                  "y1": 0.45,
+                  "x2": 0.8,
+                  "y2": 0.45,
+                  "color": "#112233",
+                  "width_cm": 2.4
+                },
+                {
+                  "id": "life-label",
+                  "kind": "text",
+                  "x": 0.25,
+                  "y": 0.35,
+                  "text": "Legacy label",
+                  "color": "#123456",
+                  "size_cm": 36
+                }
+              ],
+              "plan_scale_x": 2,
+              "plan_scale_y": 2,
+              "plan_aspect": 2
+            }
+          ],
+          "markers": [
+            {
+              "id": "d_lamp",
+              "binding": "device:d_lamp",
+              "space": "f1",
+              "name": "Lifecycle lamp",
+              "display": "icon_ripple",
+              "tap_action": "toggle",
+              "vacuum": {
+                "trail_mode": "never"
+              }
+            }
+          ],
+          "settings": {
+            "filter_seeded": true,
+            "future": {
+              "keep": [
+                1,
+                2
+              ]
+            }
+          },
+          "future_root": {
+            "keep": true
+          }
+        },
+        "layout": {
+          "d_lamp": {
+            "s": "f1",
+            "x": 0.3,
+            "y": 0.4
+          }
+        }
+      }
+    }
+  ]
 }
