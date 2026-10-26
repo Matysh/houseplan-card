@@ -13,7 +13,8 @@ import { literalArgv } from '../scripts/review-execution-policy.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from '../scripts/review-tool-metadata.mjs';
 import { REQUIRED_FILES } from '../scripts/review-result-gate.mjs';
 import { LEGACY_CALL_DIGEST_ALGORITHM, CALL_DIGEST_ALGORITHM as JSON_KEYS_ALGORITHM, callDigest as jsonKeysDigest } from '../scripts/review-call-digest.mjs';
-import { NATIVE_CALL_DIGEST_ALGORITHM as CALL_DIGEST_ALGORITHM, nativeCallDigest as callDigest } from '../scripts/review-native-call-digest.mjs';
+import { NATIVE_CALL_DIGEST_ALGORITHM as CALL_DIGEST_ALGORITHM, nativeCallDigest as callDigest,
+  LEGACY_NATIVE_CALL_DIGEST_ALGORITHM, legacyNativeCallDigest } from '../scripts/review-native-call-digest.mjs';
 import { buildReviewCapabilities, REVIEW_MCP_NATIVE_TOOL_NAME } from '../scripts/review-capabilities.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -180,9 +181,9 @@ test('#1082 metadata channel observation grants no tool/journal exemption and le
   assert.deepEqual(traceProblems(f.messages, f.entries, f.policy), before);
 });
 
-test('#1082 actual hook shape preserves raw order differences while canonical equality rejects semantic changes', () => {
-  for (const [actual, typeChanged] of [[{ file_path: secret, offset: 1, limit: 10 }, true],
-    [{ limit: 10, offset: '1', file_path: secret }, false]]) {
+test('#1086 current read binding preserves input differences as metadata without rejecting admitted reads', () => {
+  for (const actual of [{ file_path: secret, offset: 1, limit: 10 },
+    { limit: 10, offset: '1', file_path: secret }, { file_path: `${secret}-other`, offset: 1, limit: 20 }]) {
     const input = { file_path: secret, offset: '1', limit: 10 };
     const call = { type: 'tool_use', id: 'toolu_read', name: 'Read', input };
     const messages = [{ type: 'assistant', message: { content: [call] } },
@@ -191,11 +192,12 @@ test('#1082 actual hook shape preserves raw order differences while canonical eq
     const entries = [{ id: call.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM, input: callDigest(call.name, actual), denied: false,
       diagnostic: reviewToolMetadata(call.name, actual, { files: [], literalArgv }), diagnosticDecision: reviewDecisionMetadata(null) }];
     const before = traceProblems(messages, entries, policy());
-    assert.equal(before.includes('tool call has no matching policy decision'), typeChanged);
+    assert.equal(before.includes('tool call has no matching policy decision'), false);
     const result = cert({ messages, entries, policy: policy(), provenance });
     const row = result.calls[0];
-    assert.equal(row.journal.inputDigestMatches, !typeChanged);
-    assert.equal(row.problems.includes('input-digest-mismatch'), typeChanged);
+    assert.equal(row.journal.inputDigestMatches, true);
+    assert.deepEqual(row.problems, []);
+    assert.equal(row.expected.semantics, 'current');
     assert.equal(row.input.digestAlgorithm, LEGACY_CALL_DIGEST_ALGORITHM);
     assert.equal(row.callDigest.algorithm.algorithm, CALL_DIGEST_ALGORITHM);
     assert.equal(row.journal.metadataAgreesWithTrace, false);
@@ -204,6 +206,76 @@ test('#1082 actual hook shape preserves raw order differences while canonical eq
     assert.deepEqual(row.journal.metadata.fields, reviewToolMetadata('Read', actual).fields);
     assert.ok(!JSON.stringify(result).includes(secret));
     assert.deepEqual(traceProblems(messages, entries, policy()), before, 'collection never repairs admission or changes its result');
+  }
+});
+
+test('#1086 old native Read mismatches remain historical and never acquire current read semantics', () => {
+  const f = fixture();
+  f.policy.callDigestAlgorithm = LEGACY_NATIVE_CALL_DIGEST_ALGORITHM;
+  f.call.name = 'Read'; f.call.input = { file_path: secret, offset: '1', limit: 10 };
+  const actual = { file_path: secret, offset: 1, limit: 10 };
+  f.entries = [{ id: f.call.id, callDigestAlgorithm: LEGACY_NATIVE_CALL_DIGEST_ALGORITHM,
+    input: legacyNativeCallDigest('Read', actual), denied: false,
+    diagnostic: reviewToolMetadata('Read', actual), diagnosticDecision: reviewDecisionMetadata(null) }];
+  const result = cert(f), row = result.calls[0];
+  assert.equal(row.journal.inputDigestMatches, false);
+  assert.deepEqual(row.problems, ['input-digest-mismatch']);
+  assert.equal(row.callDigest.algorithm.algorithm, LEGACY_NATIVE_CALL_DIGEST_ALGORITHM);
+  assert.equal(row.journal.callDigestAlgorithm.algorithm, LEGACY_NATIVE_CALL_DIGEST_ALGORITHM);
+  assert.equal(row.expected.denied, null);
+  assert.equal(row.expected.semantics, 'legacy-not-re-evaluated');
+  assert.equal(row.journal.decisionAgreesWithTrace, null);
+  assert.equal(row.journal.metadataAgreesWithTrace, false);
+  assert.deepEqual(row.journal.metadata.fields, reviewToolMetadata('Read', actual).fields);
+  assert.equal(result.verdictAuthority, false);
+  assert.ok(!JSON.stringify(result).includes(secret));
+  assert.ok(traceProblems(f.messages, f.entries, f.policy).includes('unsupported call digest algorithm'));
+});
+
+test('#1086 old native Grep keeps its historical projection and recorded denial', () => {
+  const f = fixture();
+  f.policy.callDigestAlgorithm = LEGACY_NATIVE_CALL_DIGEST_ALGORITHM;
+  f.call.name = 'Grep'; f.call.input = { pattern: secret, file_path: 'src', '-l': true };
+  const actual = { pattern: secret, path: 'src', output_mode: 'files_with_matches' };
+  f.entries = [{ id: f.call.id, callDigestAlgorithm: LEGACY_NATIVE_CALL_DIGEST_ALGORITHM,
+    input: legacyNativeCallDigest('Grep', actual), denied: true,
+    diagnostic: reviewToolMetadata('Grep', actual) }];
+  const row = cert(f).calls[0];
+  assert.equal(row.journal.inputDigestMatches, true);
+  assert.equal(row.expected.semantics, 'legacy-not-re-evaluated');
+  assert.equal(row.expected.denied, null);
+  assert.equal(row.journal.denied, true);
+  assert.deepEqual(row.problems, ['forbidden-request']);
+  assert.equal(row.journal.metadataAgreesWithTrace, false);
+  assert.ok(!JSON.stringify(row).includes(secret));
+  f.call.input.pattern = `${secret}-other`;
+  const changed = cert(f).calls[0];
+  assert.equal(changed.journal.inputDigestMatches, false);
+  assert.deepEqual(changed.problems, ['input-digest-mismatch']);
+});
+
+test('#1086 current Write and run_check diagnostics still require exact full input binding', t => {
+  const output = join(realpathSync(temp(t)), 'review-report.md');
+  for (const [name, input, actual] of [
+    ['Write', { file_path: output, content: secret }, { file_path: output, content: `${secret}-changed` }],
+    [REVIEW_MCP_NATIVE_TOOL_NAME, { check_id: secret }, { check_id: `${secret}-changed` }],
+  ]) {
+    const f = fixture(); f.call.name = name; f.call.input = input; f.policy.outputs = [output];
+    const expected = toolProblem({ tool_name: name, tool_input: input }, f.policy);
+    assert.equal(expected, null);
+    f.entries = [{ id: f.call.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
+      input: callDigest(name, actual), denied: Boolean(expected), diagnostic: reviewToolMetadata(name, actual),
+      diagnosticDecision: reviewDecisionMetadata(expected) }];
+    const result = cert(f), row = result.calls[0];
+    assert.equal(row.journal.inputDigestMatches, false);
+    assert.ok(row.problems.includes('input-digest-mismatch'));
+    assert.equal(row.expected.semantics, 'current');
+    assert.equal(row.journal.metadataAgreesWithTrace, false);
+    assert.equal(row.journal.decisionAgreesWithTrace, true);
+    assert.equal(result.verdictAuthority, false);
+    assert.ok(!JSON.stringify(result).includes(secret));
+    f.entries[0].input = callDigest(name, input);
+    assert.deepEqual(cert(f).calls[0].problems, []);
   }
 });
 
@@ -264,7 +336,7 @@ test('#1065 closed check metadata reveals only finite vocabulary and hashes, nev
 });
 
 test('#1065 unknown/mixed/missing marker comparisons stay unavailable without leaking raw marker values', () => {
-  for (const marker of [undefined, LEGACY_CALL_DIGEST_ALGORITHM, secret]) {
+  for (const marker of [undefined, LEGACY_CALL_DIGEST_ALGORITHM, LEGACY_NATIVE_CALL_DIGEST_ALGORITHM, secret]) {
     const f = fixture(); f.entries[0].callDigestAlgorithm = marker;
     const row = cert(f).calls[0];
     assert.equal(row.journal.inputDigestMatches, null);

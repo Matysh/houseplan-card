@@ -1,7 +1,49 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CALL_DIGEST_ALGORITHM, callDigest, canonicalCallJson } from '../scripts/review-call-digest.mjs';
-import { NATIVE_CALL_DIGEST_ALGORITHM, nativeCallDigest, projectNativeCallInput } from '../scripts/review-native-call-digest.mjs';
+import { NATIVE_CALL_DIGEST_ALGORITHM, nativeCallDigest as policyDigest,
+  LEGACY_NATIVE_CALL_DIGEST_ALGORITHM, legacyNativeCallDigest as nativeCallDigest,
+  projectNativeCallInput } from '../scripts/review-native-call-digest.mjs';
+import { READ_ONLY_REVIEW_TOOLS } from '../scripts/review-capabilities.mjs';
+
+test('#1086 read authorization binds exact native tool identity, independent of read arguments', () => {
+  assert.equal(NATIVE_CALL_DIGEST_ALGORITHM, 'sha256/hp-review-policy-v2');
+  assert.equal(LEGACY_NATIVE_CALL_DIGEST_ALGORITHM, 'sha256/hp-native-2.1.295-json-v1');
+  const inputs = [{ file_path: 'PROCESS.md' }, { file_path: '/repo/PROCESS.md', offset: 1 },
+    { pattern: 'x', '-l': true }, { pattern: 'x', output_mode: 'files_with_matches' },
+    { query: 'select:mcp__houseplan_review__run_check' }, { unknown: [1, '1', null] }];
+  for (const name of READ_ONLY_REVIEW_TOOLS) {
+    const expected = policyDigest(name, {});
+    for (const input of inputs) assert.equal(policyDigest(name, Object.freeze(input)), expected);
+    for (const other of READ_ONLY_REVIEW_TOOLS.filter(other => other !== name))
+      assert.notEqual(policyDigest(other, {}), expected, 'even another admitted tool needs its own hook decision');
+    assert.notEqual(expected, nativeCallDigest(name, {}), 'historical records cannot gain current authority');
+  }
+});
+
+test('#1086 writes, checks, output and unknown tools retain exact canonical inputs', () => {
+  for (const name of ['Write', 'mcp__houseplan_review__run_check', 'StructuredOutput', 'Bash',
+    'read', 'mcp__example__Read', 'Other']) {
+    const input = { file_path: '/tmp/report.md', content: 'review', check_id: 'unit:test/a.test.mjs', values: [1, 2] };
+    const expected = policyDigest(name, input);
+    assert.equal(policyDigest(name, { values: [1, 2], check_id: input.check_id, content: 'review', file_path: input.file_path }), expected);
+    for (const changed of [{ ...input, file_path: '/tmp/other.md' }, { ...input, content: 'review ' },
+      { ...input, check_id: 'unit:test/b.test.mjs' }, { ...input, values: [2, 1] },
+      { ...input, values: ['1', 2] }, { ...input, extra: false }])
+      assert.notEqual(policyDigest(name, changed), expected);
+    assert.notEqual(policyDigest('Read', input), expected);
+  }
+});
+
+test('#1086 tool-only binding still rejects malformed JSON without callbacks', () => {
+  let invoked = 0;
+  const cyclic = {}; cyclic.self = cyclic;
+  for (const name of [...READ_ONLY_REVIEW_TOOLS, 'Write'])
+    for (const input of [{ get file_path() { invoked++; return 'x'; } },
+      { toJSON() { invoked++; return {}; } }, cyclic, new Array(2), { value: undefined },
+      { value: Infinity }, new Proxy({}, {})]) assert.throws(() => policyDigest(name, input));
+  assert.equal(invoked, 0);
+});
 
 test('#1084 pinned Grep aliases bind to their exact native forms without mutating inputs', () => {
   for (const truth of [true, 'true']) for (const [flag, output_mode] of [['-l', 'files_with_matches'], ['-c', 'count']]) {

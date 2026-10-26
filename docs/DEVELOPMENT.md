@@ -5910,7 +5910,7 @@ Its pre-execution claim is the native SDK contract with these loaded settings;
 it does not cover an externally replaced or disabled hook runtime.
 
 Before sealing any model result, the deterministic audit compares every SDK
-tool-use ID/input digest with the private decision journal and refuses missing,
+tool-use ID/policy-binding digest with the private decision journal and refuses missing,
 truncated, inconsistent or forbidden execution. The material HEAD/tracked diff
 must still match; report bytes equal the final external Write. The SDK's
 nonexecuting StructuredOutput call may have no hook event, but its data must
@@ -5931,20 +5931,32 @@ non-JSON input is refused without invoking accessors or `toJSON`. This fixes the
 JSON insertion-order sensitivity without claiming that it explains every old
 trace mismatch with hidden string values.
 
-Current prepare/startup/hook/audit and fixed-check receipts use the distinct
-`sha256/hp-native-2.1.295-json-v1` binding (#1084). Only exact native Grep is
+The historical `sha256/hp-native-2.1.295-json-v1` binding (#1084) remains for
+diagnostics of its original records. Only exact native Grep is
 projected: nonempty `file_path` aliases `path`; boolean `true` or string `"true"`
 on `-l` / `-c` becomes `output_mode: files_with_matches` / `count`, and on `-r`
 is removed because native search is recursive. Equal canonical/alias pairs
 are redundant; conflicting values or competing output aliases refuse.
 False-like values and unknown keys are retained, not stripped or defaulted.
 The original input is never mutated; other tools, strings, arrays, signed zero,
-report bytes and all unrelated values retain their exact binding. Missing,
-mixed and unknown markers refuse. Diagnostics use each recorded algorithm,
+report bytes and all unrelated values retain their exact binding. Diagnostics use each recorded algorithm,
 keep raw shape metadata, and never repair the historical rejected certificate.
 Source basis: checksum-verified native 2.1.295, `lCt` byte 215618468,
 `mU` byte 215547561 and Grep `coerceInput` byte 215622847; this is source evidence,
 not a new provider execution or retroactive acceptance of #1066.
+
+Current prepare/startup/hook/audit and fixed-check receipts use
+`sha256/hp-review-policy-v2` (#1086). The exact names Read/Grep/Glob/ToolSearch
+bind only the tool name, after JSON validation: their policy admits them
+independently of arguments. SDK normalization of a read path or search options
+therefore cannot invalidate that admission. This does not assert equivalence
+of the requested/read data or establish the quality of the review evidence.
+Every other tool, including Write, run_check and StructuredOutput, binds its
+exact name and complete canonical JSON input. Tool IDs, one-to-one journal and
+result matching, decisions/denials, material/report checks and check receipts
+remain mandatory. Missing, mixed and unknown algorithm markers refuse.
+Raw input metadata remains diagnostic; old records retain their old algorithm
+and never acquire a valid verdict through the new binding.
 
 The exact SDK builtin `ToolSearch` is read-only deferred-catalog discovery, not
 execution of a discovered tool and not a missing-journal exemption. Its normal

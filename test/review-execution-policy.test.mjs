@@ -28,7 +28,7 @@ const trace = calls => [{ type: 'assistant', message: { content: calls } },
 const journal = calls => calls.map(c => ({ id: c.id, callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
   input: callDigest(c.name, c.input), denied: false }));
 
-test('#1084 native Grep projection preserves exact audit identity and all refusal paths', () => {
+test('#1086 read parameter differences preserve audit identity and all refusal paths', () => {
   const grep = call('grep-alias', 'Grep', { pattern: 'needle', path: 'src', '-l': true });
   const calls = [grep, report], messages = trace(calls), rows = journal(calls);
   rows[0].input = callDigest('Grep', { pattern: 'needle', path: 'src', output_mode: 'files_with_matches' });
@@ -39,8 +39,28 @@ test('#1084 native Grep projection preserves exact audit identity and all refusa
   assert.ok(traceProblems(messages, [rows[0], ...rows], policy).length);
   for (const input of [{ ...grep.input, pattern: 'changed' }, { ...grep.input, path: 'other' },
     { ...grep.input, '-l': false }, { ...grep.input, unexpected: true }, { ...grep.input, output_mode: 'count' }])
-    assert.ok(traceProblems(trace([{ ...grep, input }, report]), rows, policy).length);
+    assert.deepEqual(traceProblems(trace([{ ...grep, input }, report]), rows, policy), []);
+  for (const name of ['Read', 'Glob', 'ToolSearch', 'Write', 'mcp__other__Grep'])
+    assert.ok(traceProblems(trace([{ ...grep, name }, report]), rows, policy).length, 'hook identity is never inferred from trace name');
   assert.ok(traceProblems(messages, rows, { ...policy, callDigestAlgorithm: 'sha256/hp-json-keys-v1' }).length);
+});
+
+test('#1086 four Read mismatches do not discard a completed report; missing evidence still refuses', () => {
+  // Synthetic values reproduce the diagnostic shape of run 40290595628; its
+  // private paths are unknown, so these are not a reconstruction of that trace.
+  const reads = ['PROCESS.md', 'AGENTS.md', 'docs/SCOPE.md', 'docs/process/REVIEWER.md']
+    .map((file_path, index) => call(`read-${index}`, 'Read', { file_path }));
+  const calls = [...reads, report], messages = trace(calls);
+  const rows = journal([...reads.map(c => ({ ...c, input: { file_path: resolve(root, c.input.file_path) } })), report]);
+  assert.deepEqual(traceProblems(messages, rows, policy, { reportText: report.input.content }), []);
+  for (const entries of [rows.slice(1), [rows[0], ...rows],
+    [{ ...rows[0], denied: true }, ...rows.slice(1)],
+    [{ ...rows[0], id: 'foreign' }, ...rows.slice(1)],
+    [{ ...rows[0], input: callDigest('Write', reads[0].input) }, ...rows.slice(1)]])
+    assert.ok(traceProblems(messages, entries, policy).length);
+  for (const content of [messages[1].message.content.slice(1),
+    [...messages[1].message.content, messages[1].message.content[0]]])
+    assert.ok(traceProblems([messages[0], { type: 'user', message: { content } }, messages[2]], rows, policy).length);
 });
 
 test('#1065 native hook settings deny on startup/SDK timeout failures, before any execution', () => {
@@ -161,7 +181,7 @@ test('#1065 repair: builtin ToolSearch discovers a catalog, actual unsafe tools 
 
 test('#1065 current audit refuses missing, mixed and unknown policy/journal digest markers', () => {
   const calls = [report], records = journal(calls);
-  for (const marker of [undefined, 'unknown', 'sha256/json-stringify-v1']) {
+  for (const marker of [undefined, 'unknown', 'sha256/json-stringify-v1', 'sha256/hp-native-2.1.295-json-v1']) {
     assert.ok(traceProblems(trace(calls), records, { ...policy, callDigestAlgorithm: marker }).length);
     assert.ok(traceProblems(trace(calls), records.map(row => ({ ...row, callDigestAlgorithm: marker })), policy).length);
   }
@@ -276,7 +296,7 @@ test('#1065 real hook refuses an unsafe request before any protected write or te
     call('catalog-only', 'ToolSearch', { query: 'select:mcp__example__unsafe' }),
     call('report', 'Write', { file_path: env.REVIEW_DOC, content: '# Ordinary unchanged-input review' })];
   for (const c of commands) {
-    const input = c.name === 'Read' ? { file_path: c.input.file_path, limit: 10, offset: 1 } : c.input;
+    const input = c.name === 'Read' ? { file_path: join(repo, c.input.file_path), limit: 10, offset: 1 } : c.input;
     assert.equal(invoke('hook', { tool_use_id: c.id, tool_name: c.name, tool_input: input }).stdout, '');
   }
   writeFileSync(env.REVIEW_DOC, commands.find(c => c.name === 'Write').input.content);

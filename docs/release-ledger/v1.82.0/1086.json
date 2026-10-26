@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1086,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Binds review calls to the inputs that determine their existing admission policy. Read-only tool arguments no longer cause false audit refusals after native normalization; Write, fixed checks and structured output retain complete canonical input binding. Journal identity, decisions, results, material and publication checks remain mandatory. Product behavior is unchanged and historical refusals gain no authority.",
+  "summary": {
+    "ru": "Разрешённое чтение больше не срывает ревью из-за нормализации аргументов native CLI; запись и исполнение сохраняют точную сверку.",
+    "en": "Native read-argument normalization no longer aborts admitted reviews; writes and execution retain exact input checks."
+  }
+}

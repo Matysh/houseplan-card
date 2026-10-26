@@ -25,7 +25,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5598 · pure backend 656 · HA-harness backend 558 · browser smokes 448 (`npm run inventory`) |
+| Tests | Node unit 5605 · pure backend 656 · HA-harness backend 558 · browser smokes 448 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -97,9 +97,12 @@ targeted checks, and full regression remains a beta obligation.
 
 Review execution (#1065) checks requested tools before execution and compares
 the complete SDK trace with its private policy journal before report sealing.
-Pinned native Grep aliases use a separate versioned binding (#1084); unknown
-fields and raw metadata remain, conflicting aliases refuse, and old algorithm
-records are never reinterpreted as accepted results.
+Policy binding #1086 checks the exact tool name for Read/Grep/Glob/ToolSearch,
+whose admission does not depend on arguments. Native read-path/search-option
+normalization no longer invalidates admitted reads; all other tools retain
+complete canonical input binding. IDs, journal/results, decisions, material,
+report and check receipts remain mandatory. Raw metadata and historical Grep
+alias diagnostics (#1084) remain; old refusals never become accepted results.
 Its native catalogue has no generic shell/editor/business MCP; ordinary
 executable oracles use accepted fixed recipes selected only by check_id.
 Complete context and post-seal publication remove the model's GitHub write
@@ -108,8 +111,8 @@ rerunning the model or changing sealed report bytes.
 Canonical patch/run/restore is refused rather than relabelled ordinary input.
 Missing/inconsistent evidence has no verdict authority; the tool boundary is
 not an operating-system sandbox for reviewed child programs.
-Call binding explicitly versions a strict JSON digest that ignores only object
-key order; exact values, types, strings, array order and signed zero stay bound.
+The current binding marker is `sha256/hp-review-policy-v2`; input-sensitive
+calls retain exact values, types, strings, array order and signed zero.
 Builtin ToolSearch reads a catalog only; actual discovered tools retain their
 own guard. Current markers are mandatory; old diagnostics remain legacy and
 never acquire new admission semantics or CODE authority.

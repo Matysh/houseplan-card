@@ -2358,7 +2358,7 @@ validates a fixed `run_check(check_id)` or an external report Write; the manifes
 owns executable/argv/env/cwd. Generic Bash/Edit/Agent and business MCP are absent;
 arbitrary shell programs and
 canonical implementation/guard/limit replacement are not review inputs.
-The private journal stores tool IDs, input digests and decisions, with optional
+The private journal stores tool IDs, policy-binding digests and decisions, with optional
 bounded fixed-vocabulary diagnostic shape metadata (#1082). The SDK's
 nonexecuting StructuredOutput channel is bound to the final structured result;
 it does not gain a shell/file capability when its internal call has no hook.
@@ -2369,15 +2369,17 @@ This is an accidental-action tool boundary, not OS isolation of reviewed child
 programs or authentication against a hostile same-user process. It does not
 turn static checks or denied requests into execution evidence or mutant caught.
 
-Historical call equality (#1065 repair) has an explicit `sha256/hp-json-keys-v1` marker in
-policy and journal rows. Its leaf serializer changes only recursive object key
-order, preserving exact call names/values/types/strings/arrays and signed zero;
-unsupported JSON values refuse. Current startup/hook/audit require the distinct
-`sha256/hp-native-2.1.295-json-v1` marker (#1084). Its pure Grep-only projection
-matches the pinned native aliases; raw inputs and old digests are unchanged.
-Conflicting aliases refuse and unknown fields are retained. Exact builtin ToolSearch only reads a deferred catalog;
-each discovered actual tool still passes the existing guard independently.
+Current startup/hook/audit use `sha256/hp-review-policy-v2` (#1086). Read, Grep,
+Glob and builtin ToolSearch bind the exact tool name: their admission policy
+does not depend on their arguments. This removes argument-normalization failures
+from read-only authorization without treating those arguments as equal evidence.
+All other tools bind the name and complete canonical JSON input, retaining
+values/types/strings/arrays and signed zero; unsupported JSON values refuse.
+Tool IDs, journal cardinality, decisions and results remain checked for every
+call. Each discovered actual tool still passes its own guard independently.
 Raw shape metadata remains order-sensitive diagnostic evidence, not admission.
+The historical `sha256/hp-json-keys-v1` and native Grep alias algorithm (#1084)
+remain only for diagnostics under their original semantics, never new admission.
 
 Trusted context supplies complete bounded source discussions and Git/CI facts;
 release review keeps its independent line scope. The model does not publish

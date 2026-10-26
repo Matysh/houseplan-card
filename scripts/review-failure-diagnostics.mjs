@@ -8,7 +8,7 @@ import { literalArgv, toolProblem, REVIEW_CLI_VERSION } from './review-execution
 import { knownToolName, projectStoredDecision, projectStoredToolMetadata, reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
 import { isMainModule } from './spawn-portable.mjs';
 import { CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM, callDigest, legacyCallDigest } from './review-call-digest.mjs';
-import { NATIVE_CALL_DIGEST_ALGORITHM, nativeCallDigest } from './review-native-call-digest.mjs';
+import { NATIVE_CALL_DIGEST_ALGORITHM, LEGACY_NATIVE_CALL_DIGEST_ALGORITHM, nativeCallDigest, legacyNativeCallDigest } from './review-native-call-digest.mjs';
 import { readReviewCapabilities } from './review-capabilities.mjs';
 
 export const FAILURE_LIMITS = Object.freeze({ traceBytes: 64 * 1024 * 1024, policyBytes: 4 * 1024 * 1024,
@@ -23,6 +23,7 @@ const identity = value => typeof value === 'string' ? digest(value) : null;
 const sha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value) ? value : null;
 const number = value => /^\d{1,16}$/.test(String(value ?? '')) ? String(value) : null;
 const state = (value, values) => values.includes(value) ? value : 'unknown';
+const HISTORICAL_ALGORITHMS = [LEGACY_NATIVE_CALL_DIGEST_ALGORITHM, CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM];
 
 function inputShape(input, policy) {
   const value = reviewToolMetadata(undefined, input, { files: policy?.files, literalArgv });
@@ -35,7 +36,7 @@ function inputShape(input, policy) {
 // They never acquire current audit authority or new ToolSearch semantics.
 function algorithmInfo(record, implicitLegacy = false) {
   const present = record && Object.hasOwn(record, 'callDigestAlgorithm'), value = record?.callDigestAlgorithm;
-  if ([NATIVE_CALL_DIGEST_ALGORITHM, CALL_DIGEST_ALGORITHM, LEGACY_CALL_DIGEST_ALGORITHM].includes(value))
+  if ([NATIVE_CALL_DIGEST_ALGORITHM, ...HISTORICAL_ALGORITHMS].includes(value))
     return { algorithm: value, source: 'explicit', unknownMarkerDigest: null };
   if (!present && implicitLegacy)
     return { algorithm: LEGACY_CALL_DIGEST_ALGORITHM, source: 'implicit-legacy', unknownMarkerDigest: null };
@@ -58,6 +59,7 @@ function callSummary(call, entries, results, policy, final, duplicate) {
   let inputDigest = null;
   try {
     if (policyAlgorithm.algorithm === NATIVE_CALL_DIGEST_ALGORITHM) inputDigest = nativeCallDigest(call?.name, call?.input);
+    else if (policyAlgorithm.algorithm === LEGACY_NATIVE_CALL_DIGEST_ALGORITHM) inputDigest = legacyNativeCallDigest(call?.name, call?.input);
     else if (policyAlgorithm.algorithm === CALL_DIGEST_ALGORITHM) inputDigest = callDigest(call?.name, call?.input);
     else if (policyAlgorithm.algorithm === LEGACY_CALL_DIGEST_ALGORITHM) inputDigest = legacyCallDigest(call?.name, call?.input);
   } catch { /* Invalid or unsupported JSON has no digest-comparison authority. */ }
@@ -74,7 +76,7 @@ function callSummary(call, entries, results, policy, final, duplicate) {
   if (!matches.length && !schemaChannel) reasons.push('missing-journal');
   if (matches.length > 1) reasons.push('duplicate-journal');
   if (matches.length === 1 && !comparable) reasons.push(inputDigest === null
-    && [NATIVE_CALL_DIGEST_ALGORITHM, CALL_DIGEST_ALGORITHM].includes(policyAlgorithm.algorithm) ? 'invalid-json-tool-call' : 'call-digest-algorithm-unavailable');
+    && [NATIVE_CALL_DIGEST_ALGORITHM, LEGACY_NATIVE_CALL_DIGEST_ALGORITHM, CALL_DIGEST_ALGORITHM].includes(policyAlgorithm.algorithm) ? 'invalid-json-tool-call' : 'call-digest-algorithm-unavailable');
   if (inputMatches === false) reasons.push('input-digest-mismatch');
   if (decisionKnown && matches.length === 1 && matches[0].denied !== Boolean(expectedReason)) reasons.push('decision-mismatch');
   if (decisionKnown && expectedReason || !decisionKnown && inputMatches === true && matches[0].denied === true)
@@ -83,7 +85,7 @@ function callSummary(call, entries, results, policy, final, duplicate) {
   return { toolUseIdDigest: identity(id), tool: knownToolName(call?.name), toolNameDigest: identity(call?.name),
     input: inputShape(call?.input, policy), callDigest: { algorithm: policyAlgorithm, digest: inputDigest },
     expected: { denied: decisionKnown ? Boolean(expectedReason) : null,
-      semantics: decisionKnown ? 'current' : policy?.schema === 1 || policyAlgorithm.algorithm === CALL_DIGEST_ALGORITHM ? 'legacy-not-re-evaluated' : 'unavailable',
+      semantics: decisionKnown ? 'current' : policy?.schema === 1 || HISTORICAL_ALGORITHMS.includes(policyAlgorithm.algorithm) ? 'legacy-not-re-evaluated' : 'unavailable',
       ...reviewDecisionMetadata(expectedReason) },
     journal: { count: matches.length, callDigestAlgorithm: journalAlgorithm, inputDigestMatches: inputMatches,
       denied: matches.length === 1 && typeof matches[0].denied === 'boolean' ? matches[0].denied : null,

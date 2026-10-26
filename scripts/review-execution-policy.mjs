@@ -9,7 +9,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
 import { NATIVE_CALL_DIGEST_ALGORITHM as CALL_DIGEST_ALGORITHM, nativeCallDigest as callDigest } from './review-native-call-digest.mjs';
 import { buildReviewCapabilities, readReviewCapabilities, reviewChecksMarkdown,
-  NATIVE_REVIEW_TOOLS, REVIEW_MCP_NATIVE_TOOL_NAME } from './review-capabilities.mjs';
+  READ_ONLY_REVIEW_TOOLS, REVIEW_MCP_NATIVE_TOOL_NAME } from './review-capabilities.mjs';
 import { checkTraceProblems, readCheckExecutionEntries, verifyCheckExecutionFiles } from './review-approved-check.mjs';
 
 export const REVIEW_CLI_VERSION = '2.1.295';
@@ -34,7 +34,7 @@ const CHECK_SCRIPTS = new Set([
 ]);
 // Native SDK ToolSearch reads a deferred catalog; discovered tool execution is
 // a separate hook call and receives no permission from discovery.
-const READ_TOOLS = new Set(NATIVE_REVIEW_TOOLS.filter(name => name !== 'Write'));
+const READ_TOOLS = new Set(READ_ONLY_REVIEW_TOOLS);
 class PolicyRefusal extends Error {}
 
 export function hookCommand({ executable = process.execPath, handler = fileURLToPath(import.meta.url), policyPath }) {

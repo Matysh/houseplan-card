@@ -5,6 +5,9 @@ import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { canonicalCallJson } from './review-call-digest.mjs';
 
 export const CAPABILITIES_SCHEMA = 'houseplan-review-capabilities/v1';
+// These native tools are admitted by name, independent of their read arguments.
+// Keep admission and the post-run authorization binding on the same list.
+export const READ_ONLY_REVIEW_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'ToolSearch']);
 export const NATIVE_REVIEW_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Write', 'ToolSearch']);
 export const REVIEW_MCP_SERVER_NAME = 'houseplan_review';
 export const REVIEW_MCP_TOOL_NAME = 'run_check';

@@ -52,8 +52,11 @@ complete/corrupt/foreign sealed receipts, current/stopped/raced merge requests,
 idempotent diagnostics/redaction at `realOps`, Git beta/stable ancestry and Bash
 parsing. `process-resume`, `proof-loop-856`, `merge-continuation-882`,
 `merge-candidate`, archive and process-digest units retain proof/CAS/lease contracts.
-`review-native-call-digest.test.mjs` covers pinned Grep projection with inert JSON (#1084).
-Policy/diagnostic tests retain denial/result/old-algorithm fences; credentials are synthetic, with no live write API/model calls.
+Review binding fixtures distinguish permitted read-argument normalization from
+exact Write/check/output inputs (#1086), retaining tool identity, journal/result
+cardinality and denial fences. Historical Grep projection (#1084) remains covered
+for diagnostics only. Inputs and credentials are synthetic, with no live write
+API/model calls or mutation execution.
 
 Зелёный тест в этом проекте несколько раз означал «ничего не проверено»:
 смок непрерывности не заметил удаления механизма, который защищает; golden-сцена,
