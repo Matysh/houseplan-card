@@ -30,6 +30,10 @@ records one cold and five warm apply/inverse samples, delegating every observed
 validator, lock, executor and Store unchanged. See the
 [phase report](analysis/1075-editor-command-latency.md) for boundaries and
 before/after results. No private HA plan or production deployment is needed.
+After rebasing onto accepted `dev` on 2026-10-26, the identical node source
+produces a 21,462 B gzip lazy graph. The owner's standing small-byte permission
+raises only its hard ceiling by the measured 4 B (21,458 → 21,462); no reserve,
+initial View or shared-editor budget is added.
 
 ## Background group-style latency (#1071)
 
