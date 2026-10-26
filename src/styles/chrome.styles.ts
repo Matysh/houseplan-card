@@ -13,6 +13,7 @@ const chromeCoreStyles = unsafeCSS(css`
       background: var(--card-background-color, var(--hp-bg));
       border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
     }
+    .hdr > .head { box-sizing: border-box; }
     .tabs {
       display: flex;
       gap: var(--sp-2);
@@ -202,6 +203,16 @@ const chromeCoreStyles = unsafeCSS(css`
     @media (max-width: 360px) {
       .hdr > .head { padding-inline: 2px; gap: 2px; }
       .head > .header-actions { gap: 2px; }
+    }
+    @media (width < 360px) {
+      ha-card[data-hp-mode='view'] > .hdr > .head { padding-inline: 0; gap: 0; }
+      ha-card[data-hp-mode='view'] .head > .modes { display: none; }
+      ha-card[data-hp-mode='view'] .head > .header-actions { gap: 0; }
+      ha-card:not([data-hp-mode='view']) > .hdr > .head {
+        display: grid;
+        grid-template-columns: minmax(44px, 1fr) 24px;
+      }
+      ha-card:not([data-hp-mode='view']) .head > .header-actions { grid-column: 1 / -1; justify-self: end; }
     }
     .decorbar .bdhint {
       font-size: var(--fs-s);

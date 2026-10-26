@@ -1198,6 +1198,26 @@ public warmRoomDraft() {
   };
 }
 
+/** Natural header height belongs to the loaded editor's mode-layout boundary.
+ * Route departure can measure View before Lit has replaced the editor DOM. */
+public _modeHeaderHeight(mode: string): number {
+    const root = this.host.renderRoot;
+    const card = root.querySelector('ha-card[data-hp-mode]');
+    const head = root.querySelector('.hdr > .head') as HTMLElement | null;
+    if (!card || !head) return 0;
+    const previousMode = card.getAttribute('data-hp-mode');
+    const previousHeight = head.style.height;
+    try {
+      card.setAttribute('data-hp-mode', mode);
+      head.style.height = '';
+      return head.getBoundingClientRect().height;
+    } finally {
+      if (previousMode === null) card.removeAttribute('data-hp-mode');
+      else card.setAttribute('data-hp-mode', previousMode);
+      head.style.height = previousHeight;
+    }
+  }
+
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
     if (mode !== this.host._mode && !this.properties.beforeIntent(() => this._setMode(mode, animate))) return;
     this.invalidateEditorNavigation();

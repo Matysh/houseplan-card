@@ -1292,6 +1292,8 @@ export class HouseplanCard extends LitElement {
     const brightness = Number(/brightness\(([^)]+)\)/.exec(filter)?.[1]);
     return {
       presentedMode: mode,
+      headerHeight: this.renderRoot.querySelector('.hdr > .head')?.getBoundingClientRect().height || 0,
+      headerBudget: this._hdrH,
       editorChromeHeight: mode === 'view' ? 0 : chrome?.getBoundingClientRect().height || 0,
       stageWidth: stage.clientWidth,
       stageHeight: stage.clientHeight,
@@ -1349,6 +1351,7 @@ export class HouseplanCard extends LitElement {
     const settledRequest = this._modeTransitionRequest;
     this._view = { ...state.to.viewport.viewBox };
     this._zoom = this._modeTransitionTargetZoom;
+    this._hdrH = Math.round(state.to.headerBudget);
     this._modeTransitionVisual = null;
     this._modeTransitionPreparing = false;
     this._lastValidStageSize = [state.to.stageWidth, state.to.stageHeight];
@@ -1427,7 +1430,9 @@ export class HouseplanCard extends LitElement {
     this._zoom = targetZoom;
     if (from) {
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
-      const targetStageHeight = Math.max(1, from.stageHeight + from.editorChromeHeight);
+      const headerHeight = this._editorRuntime?._modeHeaderHeight('view') ?? from.headerHeight;
+      const targetStageHeight = Math.max(1, from.stageHeight + from.editorChromeHeight + from.headerHeight - headerHeight);
+      this._hdrH = Math.round(from.headerBudget + from.stageHeight - targetStageHeight);
       this._view = this._viewForModeTarget(
         targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
       );
@@ -1465,16 +1470,19 @@ export class HouseplanCard extends LitElement {
       }
       const inner = this.renderRoot.querySelector('.editorchrome-inner') as HTMLElement | null;
       const targetChromeHeight = targetMode === 'view' ? 0 : inner?.scrollHeight || 0;
-      // The hidden frame preserves source sizes; keep the stage + chrome budget
+      const headerHeight = this._editorRuntime?._modeHeaderHeight(targetMode) ?? from.headerHeight;
+      // The hidden frame preserves source sizes; keep the header + stage + chrome budget
       // constant so every RAF moves both edges without a final layout jump.
       const targetStageHeight = Math.max(1,
-        from.stageHeight + from.editorChromeHeight - targetChromeHeight);
+        from.stageHeight + from.editorChromeHeight + from.headerHeight - targetChromeHeight - headerHeight);
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
       const targetView = this._viewForModeTarget(
         targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
       );
       const to: ModeVisualState = {
         presentedMode: targetMode,
+        headerHeight,
+        headerBudget: from.headerBudget + from.stageHeight - targetStageHeight,
         editorChromeHeight: targetChromeHeight,
         stageWidth: targetStageWidth,
         stageHeight: targetStageHeight,
@@ -11102,7 +11110,7 @@ export class HouseplanCard extends LitElement {
         @contextmenu=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}" style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
-        <div class="head">
+        <div class="head" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:hidden` : nothing}>
           ${this.panelHost ? nothing : html`<div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}

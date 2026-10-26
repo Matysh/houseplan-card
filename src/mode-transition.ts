@@ -12,6 +12,9 @@ export interface ViewportPresentation {
 
 export interface ModeVisualState {
   presentedMode: HouseplanMode;
+  headerHeight: number;
+  /** Existing stage offset, including the bounded outer HA header allowance. */
+  headerBudget: number;
   editorChromeHeight: number;
   stageWidth: number;
   stageHeight: number;
@@ -140,6 +143,8 @@ export function interpolateModeVisualState(
   };
   return {
     presentedMode: p < 0.5 ? from.presentedMode : to.presentedMode,
+    headerHeight: lerp(from.headerHeight, to.headerHeight, p),
+    headerBudget: lerp(from.headerBudget, to.headerBudget, p),
     editorChromeHeight: lerp(from.editorChromeHeight, to.editorChromeHeight, p),
     stageWidth,
     stageHeight,
