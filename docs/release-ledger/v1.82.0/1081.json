@@ -24,13 +24,13 @@
       },
       {
         "id": "decor-group-style-applied-light",
-        "expectation": "change",
-        "reason": "Each selected member now paints exactly the singleton frame instead of an extra shape contour."
+        "expectation": "new",
+        "reason": "Pending new #1038 scene has no accepted baseline yet; shared singleton frames are intentionally incorporated before its first acceptance."
       },
       {
         "id": "decor-group-style-applied-dark",
-        "expectation": "change",
-        "reason": "Each selected member now paints exactly the singleton frame instead of an extra shape contour."
+        "expectation": "new",
+        "reason": "Pending new #1038 scene has no accepted baseline yet; shared singleton frames are intentionally incorporated before its first acceptance."
       },
       {
         "id": "hidden-devices-view-light",
