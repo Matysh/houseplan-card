@@ -9931,8 +9931,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._skipImport();
   }
 
-  private _renderImportDialog(): TemplateResult | typeof nothing {
-    if (this._viewRuntimes.converter.state !== 'ready') return nothing;
+  private _renderImportDialog(): TemplateResult {
     if (this._onboardingRuntime) return this._onboardingRuntime._renderImportDialog();
     return this._editorRuntimeOrThrow()._renderImportDialog();
   }

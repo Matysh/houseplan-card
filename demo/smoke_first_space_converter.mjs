@@ -13,6 +13,19 @@ async function start(options = {}) {
   await mountFirstSpace(s.page, options); return s;
 }
 try {
+  {
+    const s = await launchPanelCold(); sessions.push(s);
+    await s.page.route('**/hp-plan-converter-info-*.js', route => route.abort());
+    await mountFirstSpace(s.page, { waitHint: false });
+    await floors(s.page).waitFor();
+    await floors(s.page).locator('input[type=checkbox]').first().uncheck();
+    await floors(s.page).locator('input[type=checkbox]').last().uncheck();
+    assert.ok(await floors(s.page).locator('[data-hp=dialog-confirm]').isDisabled());
+    await floors(s.page).locator('[data-action=import-manual]').click();
+    await s.page.locator('hp-dialog[data-kind=onboarding]').waitFor();
+    assert.equal(await writes(s.page), 0);
+    out.failedHintRetainsFloorWorkflow = true;
+  }
   for (const options of [{ writer: false, admin: false }, { writer: false }, { storage: false },
     { writer: false, kiosk: true }]) {
     const { page, requests } = await start(options);
@@ -24,7 +37,7 @@ try {
     assert.equal(await writes(page), 0);
   }
   out.rightsStorageAndKiosk = true;
-  const { page } = await start();
+  const { page, requests } = await start();
   await floors(page).waitFor();
   const selected = floors(page).locator('input[type=checkbox]');
   await selected.first().uncheck(); await selected.last().uncheck();
@@ -36,6 +49,7 @@ try {
   assert.equal(await anchor.getAttribute('href'), 'https://houseplan.tech/convert/');
   assert.equal(await anchor.getAttribute('target'), '_blank');
   assert.equal(await anchor.getAttribute('rel'), 'noopener noreferrer');
+  assert.ok(!requests.some(url => url.startsWith('https://houseplan.tech/convert/')), 'no converter prefetch');
   await page.context().route('https://houseplan.tech/convert/**', route => route.fulfill({ body: 'Synthetic converter destination' }));
   const popupPromise = page.waitForEvent('popup'); await anchor.focus(); await page.keyboard.press('Enter');
   const popup = await popupPromise; await popup.waitForLoadState();
@@ -43,6 +57,14 @@ try {
   assert.ok(await selected.last().isChecked()); assert.ok(!await selected.first().isChecked());
   assert.equal(await writes(page), before);
   out.nativeLinkRetainsSelection = true;
+  await page.locator('hp-plan-converter-info').evaluateAll(elements => {
+    for (const element of elements) element.formats = [...element.formats, { name: 'Extra format', extensions: ['.extra'] }];
+  });
+  await page.waitForFunction(() => [...window.__card.renderRoot.querySelectorAll('hp-plan-converter-info')]
+    .every(e => e.shadowRoot.querySelector('p').textContent.includes('Extra format (.extra)')));
+  const texts = await page.locator('hp-plan-converter-info p').allTextContents();
+  assert.equal(texts.length, 2); assert.equal(texts[0], texts[1]);
+  out.bothPresentationsProjectFutureFormat = true;
   await floors(page).locator('button.close').click(); await floors(page).waitFor({ state: 'detached' });
   assert.ok(await empty(page).isVisible());
   await page.locator('[data-hp=create-space]').click();

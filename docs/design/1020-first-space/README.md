@@ -8,7 +8,7 @@ Playwright1.62.0/Chromium151.0.7922.34 rev1234, RU and identical viewport, theme
 configuration and pointer state. The candidate used its own built product: no
 reference CSS/DOM adapters were installed in it. The private owner PNGs were not
 used or claimed. Candidate source fingerprint:
-`3ce8b17f4e66dc61656c1f5ef4d1567555a1989db48a1780c72a562f87138118`.
+`2b4f3cf8bd3e9d00e529f7b29c8911aaa62bb87953ea8ac33a74aa01b730c76a`.
 
 Both the empty paragraph and floor paragraph had identical measured text,
 width/height, margins, font, link font/accent, alignment, URL/target/rel and settled
@@ -40,13 +40,17 @@ writes; actual keyboard Enter opens a routed synthetic converter tab while
 checked floors and configuration stay unchanged. It covers cancellation, normal
 backend restore/create/delete-last subscription inputs, all four languages and
 a long extra format supplied through the ordinary component data property at
-320px. Reduced motion removes link transitions. Both runtime floor methods
+320px. Reduced motion removes link transitions. An ordinary aborted hint-module request
+leaves the existing floor checkbox/manual workflow usable. Both runtime floor methods
 delegate to the same renderer and retain their existing guarded callbacks.
 The existing form-kit frozen fixtures remain byte-identical(8/8 tests).
 
-Matched pinned WSL builds on ca672d96:initial348302→348614(+312B),
-lazy editor359326→361593(+2267B), onboarding37792→39075(+1283B).
-Only these task deltas move the corresponding rolling references; absolute
-initial352000B, all2000B bands and the onboarding reference remain unchanged.
-The hint's four-language pack and compact style owner stay lazy. Existing
+Matched pinned WSL builds on ca672d96:initial348302→348584(+282B),
+lazy editor359326→361169(+1843B), onboarding37792→39687(+1895B).
+Only the initial and onboarding task deltas move their rolling references;
+the editor fits its existing band. Absolute initial352000B and all2000B bands
+remain unchanged. Matched raw dist3538092→3545569(+7477B); only that delta
+moves its baseline3537817→3545294, preserving the inherited275B gap.
+The hint's four-language pack stays independently lazy; compact styles load
+with the existing onboarding owner. Existing
 first-frame floor-row CSS remains eager as required by the #805 budget guard.

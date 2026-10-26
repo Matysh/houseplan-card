@@ -432,10 +432,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // lazy. Record the fact, retain the2000-B band and352000-B absolute wall.
 // #1078: shared solar topology and an independent room-setting cache key measure
 //346593 B gzip. Retain the2000-B band and352000-B absolute wall; editor UI is lazy.
-// #1020 matched ca672d96/candidate:348302 ->348614 B (+312).
+// #1020 matched ca672d96/candidate:348302 ->348584 B (+282).
 // The passive hint boundary preserves the existing eager floor-row CSS contract;
 // carry only its measured task delta, with the2000-B band/352000-B wall unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 346_905;
+export const INITIAL_VIEW_GZIP_CEILING = 346_875;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -848,11 +848,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // #1073 r2: separate matched f7050434/candidate builds:356892 ->359326 B.
 // Carry only the2434-B task delta (356887 ->359321), preserving the inherited
 // 5-B gap, the2000-B band, initial View limits and all other graph references.
-// #1020: matched ca672d96/candidate builds measure359326 ->361593 B.
-// Carry only the2267-B compact-kit/data extraction delta, preserving the
-// inherited5-B gap,2000-B band and absolute initial View wall. The passive
-// four-language hint has its own lazy boundary; initial View adds312 B.
-export const LAZY_EDITOR_GZIP_CEILING = 361_588;
+// #1020: shared compact controls/data measure359326 ->361169 B (+1843).
+// This stays inside the existing2000-B band; retain the #1073 reference.
+export const LAZY_EDITOR_GZIP_CEILING = 359_321;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -881,7 +879,10 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #1037: independent caption/wall-body pickers in the shared Space form,
 // legacy projection and lazy translated help. Owner permits minor growth.
 // Pre-rebase measurement35,187 B; retain the larger accepted #1036 ceiling.
-export const LAZY_ONBOARDING_GZIP_CEILING = 37_517;
+// #1020: matched37792 ->39687 B (+1895), compact controls loaded by the
+// existing floor renderer, independent of an optional failed hint import.
+// Carry only that delta, preserving the inherited275-B gap and2000-B band.
+export const LAZY_ONBOARDING_GZIP_CEILING = 39_412;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of

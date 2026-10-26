@@ -1,6 +1,6 @@
 /** One presentation of the existing floor wizard; callers retain write guards. */
 import { html } from 'lit';
-import type { CompactDialogHost } from './compact-dialog-styles';
+import { ensureCompactDialogStyles, type CompactDialogHost } from './compact-dialog-styles';
 import { langOf, type I18nKey } from './i18n';
 
 interface FloorChoice { id: string; name: string; level?: number | null; checked: boolean }
@@ -12,6 +12,7 @@ interface FloorImportHost extends CompactDialogHost {
 }
 export function renderFloorImportDialog(host: FloorImportHost, manual: () => void, start: () => void,
   manualAction: 'import-manual' | 'import-create-space' = 'import-manual') {
+  ensureCompactDialogStyles(host);
   const dialog = host._importDialog!, selected = dialog.floors.filter(floor => floor.checked).length;
   return html`<hp-dialog .hass=${host.hass} data-kind="import" class="ui-dialog" form-shell settings-layout compact wide
     .title=${host._t('import.title')} icon="mdi:home-floor-1" @hp-close=${() => (host._importDialog = null)}>

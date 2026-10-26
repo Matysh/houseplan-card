@@ -1,6 +1,5 @@
 /** Passive, self-contained informational surface. No HA/editor/storage capability. */
 import { LitElement, css, html, unsafeCSS } from 'lit';
-import { ensureCompactDialogStyles, type CompactDialogHost } from './compact-dialog-styles';
 import { converterT } from './i18n/converter';
 import type { Lang } from './i18n/registry';
 import { PLAN_CONVERTER, planConverterFormats, type PlanConverterFormat } from './plan-converter';
@@ -35,8 +34,7 @@ export class HpPlanConverterInfo extends LitElement {
   protected render() { return planConverterHint(this.language, this.formats); }
 }
 
-export function installPlanConverterInfo(host: CompactDialogHost): true {
-  ensureCompactDialogStyles(host);
+export function installPlanConverterInfo(): true {
   if (!customElements.get('hp-plan-converter-info')) customElements.define('hp-plan-converter-info', HpPlanConverterInfo);
   return true;
 }

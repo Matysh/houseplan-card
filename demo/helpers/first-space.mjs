@@ -1,4 +1,5 @@
 /** Synthetic HA transport; every interaction uses the real card and native DOM. */
+import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 export async function mountFirstSpace(page, options = {}) {
   await page.evaluate(async options => {
     const fixture = { config: { model_version: 10, spaces: [], markers: [], settings: {} }, calls: [] };
@@ -26,5 +27,6 @@ export async function mountFirstSpace(page, options = {}) {
     host.replaceChildren(card);
     window.__card = card; window.firstSpaceFixture = fixture;
   }, options);
-  await page.locator('[data-hp=empty] hp-plan-converter-info a').waitFor();
+  await assertFreshDemoBundle(page);
+  if (options.waitHint !== false) await page.locator('[data-hp=empty] hp-plan-converter-info a').waitFor();
 }
