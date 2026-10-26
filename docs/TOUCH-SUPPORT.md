@@ -34,8 +34,11 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 
 - render the plan and current states correctly;
 - on a phone (≤ 480 px) keep the header to one row of at most 56 px — space
-  tabs, zoom and one gear whose menu holds every other header action, each
+  selection, zoom and one gear whose menu holds every other header action, each
   item a 44 px target (#616);
+- use the shared floor dropdown when the actual header is ≤1024 px (#997),
+  retaining touch selection, the current floor, editor dirty guards and the
+  existing phone gear/zoom targets; wider headers retain tabs;
 - support convenient pan, pinch zoom and space switching;
 - treat a linked stair as a floor-navigation target only after a clean tap;
   pan, pinch, long press, swipe and cancellation tails must stay inert;

@@ -202,19 +202,21 @@ await page.evaluate(() => window.__hpTest.setServerConfig((cfg) => {
   return cfg;
 }));
 await size(390);
-const lastId = await page.evaluate(() => [...window.__card.shadowRoot.querySelectorAll('[data-hp="space-tab"]')].at(-1)?.dataset.id);
+const lastId = await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.options[window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]').options.length-1]?.value
+  || [...window.__card.shadowRoot.querySelectorAll('[data-hp="space-tab"]')].at(-1)?.dataset.id);
 await page.evaluate((id) => window.__hpTest.switchSpace(id), lastId);
 await page.waitForTimeout(200);
 const tabVisible = () => page.evaluate(() => {
   const sr = window.__card.shadowRoot;
   const nav = sr.querySelector('.head .tabs').getBoundingClientRect();
-  const tab = sr.querySelector('.head .tab.active').getBoundingClientRect();
+  const tab = (sr.querySelector('[data-hp="space-select"]') || sr.querySelector('.head .tab.active')).getBoundingClientRect();
   return tab.left >= nav.left - 0.5 && tab.right <= nav.right + 0.5;
 });
 const many = await header();
 out.manySpacesOneRow = many.oneRow && many.height <= 56;
 out.activeTabRevealedOnSwitch = await tabVisible();
-const firstId = await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="space-tab"]').dataset.id);
+const firstId = await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.options[0]?.value
+  || window.__card.shadowRoot.querySelector('[data-hp="space-tab"]').dataset.id);
 await page.evaluate((id) => window.__hpTest.switchSpace(id), firstId);
 await page.waitForTimeout(200);
 out.activeTabRevealedBack = await tabVisible();
@@ -244,7 +246,7 @@ await page.evaluate(async () => {
   card.hass = hass;
   window.__card = card;
   const until = Date.now() + 8000;
-  while (Date.now() < until && !card.shadowRoot?.querySelector('[data-hp="space-tab"]')) await new Promise((r) => setTimeout(r, 50));
+  while (Date.now() < until && !card.shadowRoot?.querySelector('[data-hp="space-tab"],[data-hp="space-select"]')) await new Promise((r) => setTimeout(r, 50));
   await new Promise((r) => setTimeout(r, 600));
 });
 for (const width of [390, 320]) {
@@ -267,7 +269,8 @@ for (const width of [390, 320]) {
 // «После загрузки на последнем»: вкладка запомнена, новая карточка открывает
 // её же — и докручивает в видимую область без участия человека.
 await size(390);
-const lastHouseholdId = await page.evaluate(() => [...window.__card.shadowRoot.querySelectorAll('[data-hp="space-tab"]')].at(-1)?.dataset.id);
+const lastHouseholdId = await page.evaluate(() => window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.options[window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]').options.length-1]?.value
+  || [...window.__card.shadowRoot.querySelectorAll('[data-hp="space-tab"]')].at(-1)?.dataset.id);
 await page.evaluate((id) => window.__hpTest.switchSpace(id), lastHouseholdId);
 await page.evaluate(async () => {
   const old = window.__card;
@@ -280,10 +283,11 @@ await page.evaluate(async () => {
   card.hass = hass;
   window.__card = card;
   const until = Date.now() + 8000;
-  while (Date.now() < until && !card.shadowRoot?.querySelector('.head .tab.active')) await new Promise((r) => setTimeout(r, 50));
+  while (Date.now() < until && !card.shadowRoot?.querySelector('.head .tab.active,[data-hp="space-select"]')) await new Promise((r) => setTimeout(r, 50));
   await new Promise((r) => setTimeout(r, 800));
 });
-out.reloadOpensLastSpace = await page.evaluate((id) => window.__card.shadowRoot.querySelector('.head .tab.active')?.dataset.id === id, lastHouseholdId);
+out.reloadOpensLastSpace = await page.evaluate((id) => (window.__card.shadowRoot.querySelector('[data-hp="space-select-value"]')?.value
+  || window.__card.shadowRoot.querySelector('.head .tab.active')?.dataset.id) === id, lastHouseholdId);
 out.activeTabRevealedOnLoad = await tabVisible();
 await size(1400);
 const wide = await header();

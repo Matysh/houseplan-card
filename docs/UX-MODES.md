@@ -42,8 +42,8 @@ title disappears; space tabs, editor navigation, zoom and actions remain (the
 header device count was removed in #647). Dashboard and kiosk behaviour is unchanged.
 
 **Phone header (≤ 480 px window width, #616).** The header is a single row of at
-most 56 px: space tabs (one line, scrolling sideways, the active tab scrolled
-into view; no per-tab gear and no «+»), the zoom cluster, one gear and — for an
+most 56 px: a compact space selector (current floor, no inline gear or «+»),
+the zoom cluster, one gear and — for an
 admin — the editor X slot of #647. The card title is hidden. Everything else is
 an item of the gear's menu, in a fixed order: the three editors (current one
 marked), Configure space, Add space (not with a fixed space), General settings,
@@ -54,6 +54,16 @@ exactly what the button it replaces does and closes the menu; Escape closes it
 and returns focus to the gear; a tap outside only closes it and never reaches
 the plan. A user without write access sees just the summary-panel items. Wider
 windows and kiosk are unchanged.
+
+**Compact space navigation (#997).** At a measured `hp-head` width ≤1024 px,
+the shared UI Kit select replaces the floor tabs in View and editors. It keeps
+the same available spaces/order and calls the existing space-navigation guard.
+The field retains the accepted space while a dirty edit blocks navigation.
+Above a 480 px window, the current-space gear and Add remain adjacent with the
+same writer/pinned rules; below it they stay in the existing gear menu. Wider
+headers retain tabs and their editor-only mouse reorder. The existing header
+observer measures the container; the select loads independently of editor code.
+Leaving its responsive presentation, mode or kiosk detaches the popup owner.
 
 A segmented control in the card header with three tabs; the active one is visually
 highlighted, and edit modes add a colored frame around the stage so the mode is
@@ -242,10 +252,10 @@ keyboard activation and a 44px touch floor; activating it never fits the room.
 The room name remains an independent fit action. Other editors keep a passive
 icon, and kiosk never displays it (#894).
 
-Header in View: space tabs, summary control and zoom cluster. On wider screens
+Header in View: space navigation, summary control and zoom cluster. On wider screens
 the summary control also remains available in editors; the fixed distance from
-the editor group to zoom is half the former gap. On a phone (≤ 480 px): space
-tabs, the editor-close reserve, zoom and one gear whose menu holds the rest.
+the editor group to zoom is half the former gap. On a phone (≤ 480 px): the
+space selector, editor-close reserve, zoom and one gear whose menu holds the rest.
 
 ## Plan — geometry and appearance of the space
 

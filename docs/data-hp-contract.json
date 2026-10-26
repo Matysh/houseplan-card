@@ -6,6 +6,11 @@
     "additionsAreCompatible": true
   },
   "hooks": {
+    "space-select": { "elements": ["hp-settings-select"], "since": "1.83.0", "audience": ["test"] },
+    "space-select-value": { "elements": ["select"], "since": "1.83.0", "audience": ["test"] },
+    "select-trigger": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "select-menu": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
+    "select-option": { "elements": ["div"], "since": "1.83.0", "audience": ["test"] },
     "vacuum-history": { "elements": ["section"], "since": "1.83.0", "audience": ["test"] },
     "vacuum-history-show": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
     "vacuum-history-hide": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
@@ -250,7 +255,7 @@
       "audience": ["test"]
     },
     "space-settings": {
-      "elements": ["ha-icon"],
+      "elements": ["ha-icon", "button"],
       "since": "1.73.0-beta.7",
       "audience": ["test"]
     },

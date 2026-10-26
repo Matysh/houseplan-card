@@ -2,6 +2,7 @@ import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
+import { renderHeaderSpaceSelect } from './header-space-select';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -2072,6 +2073,8 @@ export class HouseplanCard extends LitElement {
   };
   private _roViewport?: ResizeObserver;
   private _roHdr?: ResizeObserver;
+  private _compactSpaces = false;
+  private _spaceSelectLoad: Promise<unknown> | null = null;
   private _onWinResize?: () => void;
   private _hdrH = 118; // measured px above the stage (see the observer in updated())
   /** HP-1552: first-open boot veil. In normal (non-kiosk) mode the stage is
@@ -4399,7 +4402,17 @@ export class HouseplanCard extends LitElement {
     // is the dashboard's business — it scrolls; it is not header.
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     if (hdr && stage && !this._roHdr) {
+      let headerWidth = 0;
       const measure = () => {
+        const compact = headerWidth > 0 && headerWidth <= 1024;
+        if (compact !== this._compactSpaces) {
+          this._compactSpaces = compact;
+          this.requestUpdate();
+        }
+        if (compact && !this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
+          this._spaceSelectLoad = import('./hp-settings-select').then(() => this.requestUpdate())
+            .catch(() => { this._spaceSelectLoad = null; });
+        }
         const t = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight); if (t === null) return;
         // `t` is already an integer. Ignoring a one-pixel delta left the View
         // stage one pixel shorter after an editor collapse and made the fitted
@@ -4421,6 +4434,10 @@ export class HouseplanCard extends LitElement {
       // the browser report "ResizeObserver loop completed with undelivered
       // notifications" — the render it triggers resizes the stage again
       this._roHdr = new ResizeObserver((entries) => {
+        const headerEntry = entries.find((entry) => entry.target === hdr);
+        // The content box matches the CSS container query, including fractional
+        // widths and cards inside transformed dashboard containers.
+        if (headerEntry) headerWidth = headerEntry.contentRect.width;
         if (this._containerOwnedHeight || entries.some((e) => e.target === hdr)) requestAnimationFrame(measure);
       });
       this._roHdr.observe(hdr);
@@ -10957,6 +10974,7 @@ export class HouseplanCard extends LitElement {
     const space = this._spaceModel();
     if (!space) return nothing;
     const navigationSpaces = fixed.kind === 'valid' ? [space] : model;
+    const compactSpaces = this._compactSpaces && !this._kiosk && !!customElements.get('hp-settings-select');
     const vb = space.vb;
     let projection = this._effectiveProjection();
     this._renderProjection = projection;
@@ -11057,8 +11075,10 @@ export class HouseplanCard extends LitElement {
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}
           </div>`}
-          <nav class="tabs" aria-label=${this._t('nav.spaces')} @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
-            ${navigationSpaces.map(
+          <nav class="tabs ${compactSpaces ? 'compact-spaces' : ''}" aria-label=${this._t('nav.spaces')} @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
+            ${compactSpaces ? keyed(this._mode, renderHeaderSpaceSelect(
+              navigationSpaces, this._space, this._t('nav.spaces'), id => this._pickSpace(id),
+            )) : navigationSpaces.map(
               (s) => html`<button
                 data-hp="space-tab" data-space=${s.id} data-id="${s.id}"
                 class="tab ${this._space === s.id ? 'active' : ''}${
@@ -11083,6 +11103,12 @@ export class HouseplanCard extends LitElement {
                   : nothing}
               </button>`,
             )}
+            ${compactSpaces && this._norm && this._canEdit ? html`<button
+                class="tab tabedit compact-space-settings" data-hp="space-settings" data-id=${this._space}
+                title=${this._t('title.configure_space')} aria-label=${this._t('title.configure_space')}
+                @click=${() => this._openSpaceDialog('edit', this._space)}>
+                <ha-icon icon="mdi:cog-outline"></ha-icon>
+              </button>` : nothing}
             ${''/* «Добавить пространство» is a NAVIGATION action, not a plan-editor
                    tool (owner 2026-08-04): it lives next to the floor names in every
                    mode, exactly where the per-space gear does. Kiosk is a shop

@@ -19,6 +19,9 @@
   Batch deletion is one step; long operations show their pending state, and a
   confirmed refusal releases the pending operation. Unconfirmed results keep
   the result check without suggesting another Copy or Delete. (#1073)
+- Space tabs fold into a shared UI Kit dropdown at a header width of 1024 px
+  or less, keeping floor navigation, settings/add actions and the phone's
+  one-row gear/zoom layout available. (#997)
 
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain

@@ -407,21 +407,29 @@ it again after the editor is neutral to return to View.
 
 ### Phone header
 
-At a width of 480 px or less, the header stays on one row: the horizontally
-scrollable space tabs, zoom controls and one **Actions and settings** gear. The
-card title is hidden and the current tab remains visible. The gear contains
+At a width of 480 px or less, the header stays on one row: a compact space
+selector, zoom controls and one **Actions and settings** gear. The card title
+is hidden; the field shows the current floor and the list retains full names
+in the existing order. The gear contains
 **Plan editor**, **Device editor**, **Background editor**, **Configure space**,
 **Add space**, **General settings**, **Save as PDF** and **Help & feedback** for
 an administrator. In View it also contains **Summary panel settings** and the
 local show/hide action for every user. Selecting an item closes the menu;
 Escape or a tap outside only closes it and never activates the plan below. In
 an editor the close button remains in the row, while the editor buttons live
-in the menu. Wider screens keep the regular header; kiosk has no header.
+in the menu. Kiosk has no header.
 
 When the header itself is 1024 px wide or narrower — in the panel that is Home
 Assistant without its sidebar, on a dashboard the card width — the editor
 buttons show only their icons. The name stays in the tooltip and is announced
 by screen readers. Wider than 1024 px the buttons show icon and label.
+
+At the same **1024 px or narrower header width**, a dropdown replaces floor
+tabs. Long names are shortened in the field and shown in full in the list.
+Selection uses the existing navigation and unfinished-edit checks. On windows
+wider than 480 px, the current space's gear and **+** remain beside the field;
+on a phone those commands stay in the existing menu. Permissions and a fixed
+floor keep their existing rules. Wider than 1024 px, ordinary tabs remain.
 
 ### Summary panel
 
@@ -766,7 +774,8 @@ never deletes the server file; deletion always requires an explicit action.
 ### Tab order
 
 Space tabs follow the order in which the spaces were created, and that order can
-be changed: in any editor mode, grab a tab with the mouse and drag it to a new
+be changed: make the header wider than 1024 px, then in any editor mode grab
+a tab with the mouse and drag it to a new
 position. The new order is saved immediately and applies everywhere — the tabs,
 the kiosk swipe between floors and the carousel arrows. While dragging, a thin
 divider shows the exact insertion side; release outside the tab strip to keep

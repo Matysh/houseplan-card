@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "issue": 997,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Polishes floor navigation and the phone header already present in stable v1.82.0. The existing tabs consume too much width; reuse the UI Kit select at an actual header width of 1024 px or less while preserving existing navigation, permissions and wide tabs. No new saved capability or model field.",
+  "summary": {
+    "ru": "На узкой шапке этаж выбирается из компактного списка; настройки, масштаб и обычное переключение сохранены.",
+    "en": "Narrow headers use a compact floor selector while retaining settings, zoom and ordinary navigation."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      { "id": "header-spaces-phone-light-997", "expectation": "new", "reason": "New phone header frame with the existing 44 px UI Kit field, a clipped long floor title and available gear/zoom commands." },
+      { "id": "header-spaces-menu-dark-997", "expectation": "new", "reason": "New dark narrow-card frame with the real shared popup open and full floor names visible within the viewport." }
+    ],
+    "smokes": ["smoke_header_compact_spaces.mjs", "smoke_mobile_view_header.mjs", "smoke_nav_persist.mjs", "smoke_fixed_floor.mjs", "smoke_space_switch_transitions.mjs", "smoke_space_tab_reorder.mjs", "smoke_editor_tabs.mjs", "smoke_settings_select.mjs"]
+  }
+}

@@ -52,6 +52,12 @@ Copy and all three Delete entry points assert the persistent result check,
 no false failure/repeat instruction or raw exception, and same-ID recovery.
 Ordinary definitive refusals still retain their translated failure message.
 
+Header navigation (#997) responds to the measured `hp-head` container, not the
+browser width. Reorder witnesses require a header wider than 1024 px. Use
+`__hpTest.switchSpace` for presentation-independent public UI navigation; it
+clicks the visible tab or shared popup option and waits for the accepted value.
+The narrow field keeps its old value while Properties refuses a draft handoff.
+
 `demo/smoke_wall_smooth_joint.mjs` (#1076) checks native `isPointInStroke` and
 fill on the exact reported smooth joint, plus a real free cap, pan/zoom,
 editor, 2.5D and reconstruction after reload. `HP_JOINT_DPR=2` selects a second

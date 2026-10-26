@@ -24,8 +24,11 @@ const res = await page.evaluate(async () => {
   const fixedId = await mount({ floor: ids[0] });
   out.idWinsEveryInitialSource = fixedId._space === ids[0]
     && fixedId._fixedFloorState().kind === 'valid';
-  out.onlyFixedTab = root(fixedId).querySelectorAll('[data-hp="space-tab"]').length === 1
-    && root(fixedId).querySelector('[data-hp="space-tab"]')?.dataset.id === ids[0]
+  const fixedSelect = root(fixedId).querySelector('[data-hp="space-select-value"]');
+  out.onlyFixedTab = (fixedSelect
+    ? fixedSelect.options.length === 1 && fixedSelect.options[0].value === ids[0] && fixedSelect.value === ids[0]
+    : root(fixedId).querySelectorAll('[data-hp="space-tab"]').length === 1
+      && root(fixedId).querySelector('[data-hp="space-tab"]')?.dataset.id === ids[0])
     && !root(fixedId).querySelector('.tabadd');
   fixedId._pickSpace(ids[1]);
   await fixedId.updateComplete;

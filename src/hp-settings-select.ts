@@ -88,11 +88,11 @@ export class HpSettingsSelect extends LitElement {
   private surface(): HTMLElement | null { return this.floating.surface('.menu', !this.fallback); }
   private menu(popover: boolean): TemplateResult {
     const options = this.options;
-    return html`<div class="menu" role="listbox" tabindex="-1" popover=${popover ? 'manual' : nothing}
+    return html`<div class="menu" role="listbox" id=${this.uid} data-hp="select-menu" tabindex="-1" popover=${popover ? 'manual' : nothing}
       aria-label=${this.label}
       aria-activedescendant=${this._active >= 0 ? `${this.uid}-${this._active}` : nothing}
       @keydown=${(e: KeyboardEvent) => this.keydown(e)}>
-      ${options.map((option, i) => html`<div role="option" id=${`${this.uid}-${i}`}
+      ${options.map((option, i) => html`<div role="option" id=${`${this.uid}-${i}`} data-hp="select-option" data-id=${option.value}
         class=${i === this._active ? 'active' : ''} aria-selected=${String(option.selected)}
         aria-disabled=${String(this.disabled(option))} @click=${() => this.choose(i)}>
         <span>${option.label}</span><b aria-hidden="true">${option.selected ? '✓' : ''}</b>
@@ -191,10 +191,10 @@ export class HpSettingsSelect extends LitElement {
     });
   }
   render(): TemplateResult {
-    return html`<slot @slotchange=${this.sync}></slot><button type="button" ?disabled=${this.native?.disabled}
+    return html`<slot @slotchange=${this.sync}></slot><button type="button" data-hp="select-trigger" aria-controls=${this.uid} ?disabled=${this.native?.disabled}
       aria-label=${this.label ? `${this.label}: ${this.native?.selectedOptions[0]?.label || ''}` : nothing} aria-haspopup="listbox" aria-expanded=${String(this._open)}
       @keydown=${(e: KeyboardEvent) => this.keydown(e)} @click=${() => this._open ? this.close(true) : void this.open()}>
-      <span>${this.native?.selectedOptions[0]?.label || ''}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5z"/></svg>
+      <span part="label">${this.native?.selectedOptions[0]?.label || ''}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5z"/></svg>
     </button>${!this.fallback ? this.menu(true) : nothing}`;
   }
 }

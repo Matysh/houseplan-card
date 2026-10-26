@@ -9,6 +9,14 @@ import {
 import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
+test('#997 compact navigation has a real phone field and desktop popup scene', () => {
+  const scenes = GOLDEN_SCENARIOS.filter(scene => scene.headerSpaces);
+  assert.deepEqual(scenes.map(scene => scene.id), ['header-spaces-phone-light-997', 'header-spaces-menu-dark-997']);
+  assert.deepEqual(scenes.map(scene => scene.headerSpaces.open), [false, true]);
+  assert.ok(scenes.every(scene => scene.capture === 'page' && scene.viewport.width <= 1024));
+  assert.ok(GOLDEN_SCENARIOS.filter(scene => scene.tabDrag).every(scene => scene.viewport.width > 1040));
+});
+
 test('#1071 group-style regression frames confirm furniture colour natively in both themes', () => {
   const scenes=GOLDEN_SCENARIOS.filter(scene=>scene.decorGroupStyle);
   assert.deepEqual(scenes.map(scene=>scene.id),['decor-group-style-applied-light','decor-group-style-applied-dark']);

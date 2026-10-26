@@ -33,6 +33,11 @@ export const SELECTORS = Object.freeze({
   tool: '[data-hp="tool"][data-tool="{tool}"]',
   toast: '[data-hp="toast"]',
   spaceTab: '[data-hp="space-tab"][data-id="{id}"]',
+  spaceSelect: '[data-hp="space-select"]',
+  spaceSelectValue: '[data-hp="space-select-value"]',
+  selectTrigger: '[data-hp="select-trigger"]',
+  selectMenu: '[data-hp="select-menu"]',
+  selectOption: '[data-hp="select-option"][data-id="{id}"]',
   roomSettings: '[data-hp="room-settings"][data-room="{room}"]',
   addDevice: '[data-hp="toolbar"] [data-hp="tool"][data-tool="add-device"]',
   device: '[data-hp="device"][data-id="{id}"]',
@@ -215,11 +220,22 @@ export function installHpTest(selectors) {
     async switchSpace(id) {
       const c = need('switchSpace');
       const tab = find(c, 'spaceTab', { id });
-      if (!tab) throw missing('switchSpace', c, 'spaceTab', { id });
-      tab.click();
+      if (tab) tab.click();
+      else {
+        const select = find(c, 'spaceSelect');
+        const button = select && deepAll(select.shadowRoot || select, sel('selectTrigger'))[0];
+        if (!button) throw missing('switchSpace', c, 'spaceSelect');
+        button.click(); await settled();
+        const menu = deepAll(c.ownerDocument, sel('selectMenu'))
+          .find(element => element.id === button.getAttribute('aria-controls'));
+        const option = menu && deepAll(menu, sel('selectOption', { id }))[0];
+        if (!option) throw missing('switchSpace', c, 'selectOption', { id });
+        option.click();
+      }
       await settled();
-      await waitFor('switchSpace', () => find(c, 'spaceTab', { id })?.getAttribute('aria-current') === 'page',
-        () => `вкладка ${sel('spaceTab', { id })} не стала текущей`);
+      await waitFor('switchSpace', () => find(c, 'spaceTab', { id })?.getAttribute('aria-current') === 'page'
+        || find(c, 'spaceSelectValue')?.value === id,
+        () => `пространство ${id} не стало текущим`);
       await settled();
     },
 

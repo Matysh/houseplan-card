@@ -35,6 +35,11 @@ const chromeCoreStyles = unsafeCSS(css`
       transition: 0.15s;
       font-family: inherit;
     }
+    .tabs.compact-spaces { min-width:0; max-width:350px; padding:0; gap:4px;
+      align-items:center; flex-wrap:nowrap; background:transparent; }
+    .compact-space-select { flex:1 1 180px; width:180px; min-width:0; max-width:254px; }
+    .compact-space-select::part(label) { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .compact-spaces > .tab { min-width:44px; min-height:44px; padding:10px; flex:none; justify-content:center; }
     :host([data-pointer-hover]) .tab:hover {
       color: var(--hp-txt);
     }
@@ -190,6 +195,7 @@ const chromeCoreStyles = unsafeCSS(css`
       .head > .tabs .tab { flex: none; white-space: nowrap; max-width: 100%; }
       .head > .tabs .tabtitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
       .head > .tabs .tabedit, .head > .tabs .tabadd { display: none; }
+      .head > .tabs.compact-spaces { overflow:visible; }
       .head > .zoomctl, .head > .modes > .editor-close-slot { flex: none; }
       .header-menu-wrap { display: inline-flex; }
     }

@@ -46,6 +46,12 @@ heartbeats renew them every five minutes. Robot runtime trails are never part
 of a command. A twice-lost response leaves the same action unresolved with an
 explicit Check result control, rather than admitting another structural action.
 
+Compact header navigation (#997) reuses the existing header observer and lazy
+`hp-settings-select`, independent of the editor graph. `header-space-select.ts`
+restores the accepted native value before requesting the existing `_pickSpace`
+path, so a refused draft handoff cannot display another floor. Public select
+hooks and `aria-controls` let the smoke facade choose through the real popup.
+
 Internal window light (#1079) uses room-side candidates from the canonical
 opening-wall index. `interior-window-light.ts` validates host authority and
 intersects proven opposite floor intervals before the shared Glow/LED barrier

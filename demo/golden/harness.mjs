@@ -1089,6 +1089,12 @@ export async function prepareGoldenScenario(page, scenario) {
   await page.mouse.move(0, 0);
   const fixture = prepareGoldenFixture(scenario);
 
+  if (scenario.headerSpaces) {
+    const active = fixture.config.spaces.find(space => space.id === scenario.space);
+    if (!active) throw new Error(`header-space fixture has no active space: ${scenario.id}`);
+    active.title = scenario.headerSpaces.title;
+  }
+
   const result = await page.evaluate(async ({ fixture, scenario, cardVersion, attemptKey }) => {
     // #512: the displayed version is pinned before any card is created.
     window.__HP_VERSION_OVERRIDE__ = cardVersion;
@@ -2738,6 +2744,36 @@ export async function prepareGoldenScenario(page, scenario) {
       } } : {}),
     };
   }, { fixture, scenario, cardVersion, attemptKey: VERSION_RELOAD_ATTEMPT_KEY });
+  if (scenario.headerSpaces) {
+    await page.waitForFunction(() => !!window.__goldenCard.renderRoot
+      .querySelector('[data-hp="space-select"]')?.shadowRoot?.querySelector('[data-hp="select-trigger"]'));
+    const picker = page.locator('houseplan-card [data-hp="space-select"]');
+    if (scenario.headerSpaces.open) {
+      await picker.locator('[data-hp="select-trigger"]').click();
+      await page.waitForFunction(() => {
+        const menu = window.__goldenCard.renderRoot.querySelector('[data-hp="space-select"]')
+          ?.shadowRoot?.querySelector('[data-hp="select-menu"]');
+        return menu?.classList.contains('visible') && getComputedStyle(menu).opacity === '1';
+      });
+    }
+    result.headerSpaces = await picker.evaluate((host, scenario) => {
+      const field = host.querySelector('select'), root = host.shadowRoot;
+      const button = root.querySelector('[data-hp="select-trigger"]');
+      const bounds = button.getBoundingClientRect(), style = getComputedStyle(button);
+      if (field.value !== scenario.space || !button.textContent.includes(scenario.headerSpaces.title)
+          || Math.abs(bounds.height - 44) > .5 || style.borderRadius !== '8px'
+          || style.visibility !== 'visible' || style.opacity === '0')
+        throw new Error(`compact floor field is not visibly usable: ${scenario.id}`);
+      if (scenario.headerSpaces.open) {
+        const menu = root.querySelector('[data-hp="select-menu"]'), rect = menu.getBoundingClientRect();
+        if (button.getAttribute('aria-expanded') !== 'true' || !menu.classList.contains('visible')
+            || rect.left < 0 || rect.right > innerWidth + 1
+            || ![...menu.querySelectorAll('[role="option"]')].some(option => option.dataset.id === scenario.space))
+          throw new Error(`compact floor menu is not visibly usable: ${scenario.id}`);
+      }
+      return { value: field.value, width: bounds.width, height: bounds.height, open: scenario.headerSpaces.open };
+    }, scenario);
+  }
   if (scenario.tabDrag) {
     const drag = await page.evaluate((placement) => {
       const card = window.__goldenCard;

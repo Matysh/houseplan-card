@@ -1,5 +1,9 @@
 # Project status
 
+Compact floor navigation (#997) uses the actual header width and the shared
+UI Kit select. Existing navigation/dirty guards, fixed-floor and writer rules
+remain authoritative; gear/add stay adjacent above the phone breakpoint.
+
 Smooth wall paint (#1076) suppresses a numerical zero-area union tail in SVG
 and PDF without repairing saved geometry or changing physical joins. Exact
 fixture, genuine thin-hole/free-cap negatives and native stroke/fill evidence
@@ -25,7 +29,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5643 · pure backend 671 · HA-harness backend 566 · browser smokes 456 (`npm run inventory`) |
+| Tests | Node unit 5646 · pure backend 671 · HA-harness backend 566 · browser smokes 457 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

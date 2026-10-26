@@ -54,6 +54,13 @@ export const SMOKE_LINKS = [
     because: '#1073: real native Copy/Delete entries, confirmed structural cursors, old optimistic placement history, batch restoration, pending/lost replies and legacy capability fallback must preserve one shared history and the persisted fixture pair.',
   },
   {
+    files: ['src/header-space-select.ts'],
+    smokes: ['smoke_header_compact_spaces.mjs', 'smoke_mobile_view_header.mjs',
+      'smoke_nav_persist.mjs', 'smoke_fixed_floor.mjs', 'smoke_space_switch_transitions.mjs',
+      'smoke_space_tab_reorder.mjs', 'smoke_editor_tabs.mjs'],
+    because: '#997: actual header width, real floor choices and accepted navigation prove the compact field, dirty refusal, persisted/pinned selection, phone commands and unchanged wide reorder. These browser consequences do not call the render helper; editor_tabs covers mode changes only.',
+  },
+  {
     files:['src/interior-window-light.ts'],
     symbols:['resolveOpeningWallCandidates','isInteriorLightOpeningType'],
     smokes:['smoke_interior_window_light.mjs','smoke_glow.mjs','smoke_glow_fail_dark.mjs',
