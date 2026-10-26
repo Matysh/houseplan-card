@@ -11,7 +11,8 @@
   the grid covers the incoming edge throughout navigation. (#1081)
 - Undo and Redo now include device copying and deletion in the Devices editor,
   preserving the same copy ID, placement, settings, links and attachments.
-  Batch deletion is one step; long operations show their pending state. (#1073)
+  Batch deletion is one step; long operations show their pending state, and a
+  confirmed refusal releases the pending operation. (#1073)
 
 - Artificial lamp and LED light passes through internal windows, including
   closed glass, with real jamb and column shadows. Exterior windows remain

@@ -86,6 +86,24 @@ test('#1073 a twice-lost result remains unresolved and an explicit check recover
   f.history.retire();
 });
 
+test('#1073 a definitive replay refusal resolves unknown outcome and retires only its unavailable token',async()=>{
+  for(const lostReplies of [1,2]) {
+    const f=fixture();f.record();const token=f.reply.history_token;let count=0;
+    f.h._devicePositionHistory.push({name:'Independent',before:{deviceId:'other',spaceId:'f1',placement:null},after:{deviceId:'other',spaceId:'f1',placement:null}});
+    f.h.transport=()=>Promise.reject(++count<=lostReplies?new Error('lost transport'):Object.assign(new Error('expired'),{code:'device_history_unavailable'}));
+    const request={type:'houseplan/marker/history',...f.history.fields(),action:'undo',token};
+    await assert.rejects(f.history.request(request,()=>assert.fail('refused operation accepted')));
+    assert.equal(f.history.needsResolution,lostReplies===2);
+    if(lostReplies===2){f.h._devicePositionBusy=true;await f.history.recover();
+      assert.equal(f.h._devicePositionBusy,false);assert.equal(f.history.pending,null);
+      assert.equal(f.h._devicePositionHistory.size,1);assert.equal(f.h._devicePositionHistory.peekUndo().name,'Independent');}
+    assert.equal(f.history.needsResolution,false);
+    const replays=f.calls.filter(call=>call.type==='houseplan/marker/history');
+    assert.equal(replays.length,lostReplies+1);assert.ok(replays.every(call=>JSON.stringify(call)===JSON.stringify(request)));
+    f.history.retire();
+  }
+});
+
 test('#1073 user/connection/mode changes during structural confirmation cannot adopt or consume history',async()=>{
   for(const change of [h=>h._mode='view',h=>h._canEdit=false,h=>{h.hass={...h.hass,connection:{}};h._configWriteContext.observe(h.hass);}]) {
     const f=fixture();f.record();const command=f.h._devicePositionHistory.peekUndo(),reply=deferred();

@@ -37,7 +37,7 @@ gap; identical retention notifications now send one housekeeping RPC while
 the periodic heartbeat still renews the lease.
 
 Matched source builds of the same baseline/candidate measured
-hostRefs6276→6342, raw dist3520321→3534175B and lazy editor355669→358029B gzip.
+hostRefs6276→6344, raw dist3520321→3534686B and lazy editor355669→358126B gzip.
 Only the task's own deltas enter the references, retaining the inherited
 21-reference/538-byte/848-gzip-byte gaps and every existing band/absolute
 budget. These numbers do not claim a loading-speed improvement.

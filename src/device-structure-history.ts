@@ -94,6 +94,7 @@ export class DeviceStructureHistory {
       this.prune();
       return reply;
     } catch (error) {
+      if ((error as { code?: string }).code) this.unresolved = null;
       if (this.unresolved) this.pending = this.t('history.device_unknown');
       throw error;
     } finally { this.resolving = false; unpin(); }
@@ -101,7 +102,12 @@ export class DeviceStructureHistory {
   async settle(): Promise<void> {
     if (!this.unresolved) return;
     const { request, resolve } = this.unresolved;
-    const reply: DeviceStructureReply = await this.host.hass.callWS(request);
+    let reply: DeviceStructureReply;
+    try { reply = await this.host.hass.callWS(request); }
+    catch (error) {
+      if ((error as { code?: string }).code) this.unresolved = null;
+      throw error;
+    }
     this.unresolved = null;
     await resolve(reply, true);
     this.prune();
@@ -109,9 +115,20 @@ export class DeviceStructureHistory {
   private async recover(): Promise<void> {
     if (!this.needsResolution || !this.context || !this.current(this.context)) return;
     const claim = this.context;
+    const token = this.unresolved?.request.token;
     this.resolving = true; this.host.requestUpdate();
     try { await this.settle(); }
-    catch { /* preserve the unresolved action; Retry never creates another ID */ }
+    catch (error) {
+      // A server refusal resolves the uncertainty; another transport loss does not.
+      if (this.current(claim) && !this.unresolved) {
+        const code = (error as { code?: string }).code;
+        if (token && (code === 'device_history_conflict' || code === 'device_history_unavailable'))
+          this.host._devicePositionHistory.removeWhere(command => 'kind' in command.before
+            && command.before.kind === 'structure' && command.before.token === token);
+        const key = code === 'device_history_unavailable' ? 'history.device_restore_unavailable' : 'history.device_structure_conflict';
+        this.host._showToast(this.t(key), key);
+      }
+    }
     finally {
       this.resolving = false;
       if (this.current(claim)) {
