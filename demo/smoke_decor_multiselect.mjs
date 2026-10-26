@@ -29,7 +29,7 @@ const seed=async decor=>{
       {id:'group',title:'Group',cell_cm:5,view_box:[0,0,1,1],rooms:[],wall_segments:[],decor},
       {id:'other',title:'Other',cell_cm:5,view_box:[0,0,1,1],rooms:[],decor:[{id:'foreign',kind:'text',x:.3,y:.3,text:'Other floor'}]},
     ],markers:[]}));
-    await window.__hpTest.switchSpace('group');
+    if(window.__card._space!=='group')await window.__hpTest.switchSpace('group');
     await window.__hpTest.setMode('decor');await window.__hpTest.setTool('select');
   },decor);
   await card.locator('[data-hp="zoom-fit"]').click();await settle();
