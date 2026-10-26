@@ -99,6 +99,7 @@
     "src/glow-scene.ts",
     "src/houseplan-card.ts",
     "src/houseplan-editor-runtime.ts",
+    "src/i18n/converter/en.json",
     "src/i18n/en.json",
     "src/i18n/settings/en.json",
     "src/i18n/support/en.json",
