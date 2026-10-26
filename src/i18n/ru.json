@@ -1346,5 +1346,6 @@
   "vac.history_interrupted": "Уборка прервана",
   "title.rotate_left": "Повернуть против часовой стрелки",
   "title.rotate_right": "Повернуть по часовой стрелке",
-  "view.runtime_converter": "Подсказка о конвертации планов"
+  "view.runtime_converter": "Подсказка о конвертации планов",
+  "backup.error.invalid_alert_sources": "Некорректные условия тревог устройства."
 }

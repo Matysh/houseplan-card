@@ -1346,5 +1346,6 @@
   "vac.history_interrupted": "Reinigung unterbrochen",
   "title.rotate_left": "Gegen den Uhrzeigersinn drehen",
   "title.rotate_right": "Im Uhrzeigersinn drehen",
-  "view.runtime_converter": "Informationen zur Plankonvertierung"
+  "view.runtime_converter": "Informationen zur Plankonvertierung",
+  "backup.error.invalid_alert_sources": "Ungültige Alarmbedingungen für das Gerät."
 }

@@ -154,6 +154,9 @@ export function renderDeviceFace(
       ${presentation.maintenance ? html`<span class="device-maintenance" aria-hidden="true">
         <ha-icon icon="mdi:wrench-outline"></ha-icon>
       </span>` : nothing}
+      ${presentation.attention ? html`<span class="device-attention" data-with-maintenance=${presentation.maintenance ? 'yes' : 'no'} aria-hidden="true">
+        <ha-icon icon="mdi:alert-outline"></ha-icon>
+      </span>` : nothing}
     </span>
     ${presentation.lqiText != null
       ? html`<span class="${lqiClassName(presentation.valueBadge)}${presentation.lqiBand ? ` band-${presentation.lqiBand}` : ''}"

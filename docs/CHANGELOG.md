@@ -14,6 +14,7 @@
   device removal, provider changes and late callbacks still retire old data. (#1090)
 - Open the thermostat instead of its temperature sensor in HA; optionally choose another own entity for the More Info action and Open in HA button. (#1087)
 - Open the thermostat instead of its temperature sensor in HA; optionally choose another own entity for the More Info action and Open in HA button, with localized selection errors. (#1087)
+- Configure up to three own-device threshold alarms, with Attention/Alarm levels, exact HA state/attribute comparisons and three-second confirmation on both transitions. Marker, preview and reason card share the confirmed causes; native safety and maintenance keep their meaning. (#1000)
 
 - Show the plan converter on an empty installation and below the HA floor list.
   The floor wizard uses the common compact controls, and converter formats share
