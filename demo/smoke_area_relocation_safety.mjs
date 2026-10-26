@@ -115,23 +115,29 @@ const res = await page.evaluate(async () => {
   const pushMove = (id, name, fromX, toX) => {
     const device = c._devices.find((candidate) => candidate.id === id);
     if (!device) return false;
+    const after = { s: device.space, x: toX, y: 0.31 };
+    // Client and fake server must contain command.after, as after a completed move.
+    c._layout = { ...c._layout, [id]: { ...c._layout[id], ...after } }; // private-ok: #1020 complete historical cursor seed, no fixture API for a past move
+    serverLayout = { ...serverLayout, [id]: { ...serverLayout[id], ...after } };
     c._devicePositionHistory.push({
       name,
       before: { deviceId: id, spaceId: device.space,
         placement: { s: device.space, x: fromX, y: 0.31 } },
       after: { deviceId: id, spaceId: device.space,
-        placement: { s: device.space, x: toX, y: 0.31 } },
+        placement: after },
     });
-    return true;
+    const cursor = c._devicePositionHistory.peekUndo()?.after;
+    return !!cursor && samePlacement(c._layout[id], cursor.placement)
+      && samePlacement(serverLayout[id], cursor.placement);
   };
 
   const stableId = 'd_lamp';
   const relocatedId = 'd_light1';
-  const original = { s: 'f1', x: 0.22, y: 0.22 };
-  await installScenario({ id: relocatedId, oldArea: 'living_room', point: original });
+  await installScenario({ id: relocatedId, oldArea: 'living_room', point: { s: 'f1', x: 0.22, y: 0.22 } });
   c._devicePositionHistory.clear();
   const historyFixtureReady = pushMove(stableId, 'Move lamp', 0.28, 0.34)
     && pushMove(relocatedId, 'Move relocating light', 0.22, 0.27);
+  const original = structuredClone(c._layout[relocatedId]);
   rejectConfig = { id: relocatedId, area: 'kitchen', code: null };
   window.__setRegistryArea('device', relocatedId, 'kitchen');
   await settleRelocation();

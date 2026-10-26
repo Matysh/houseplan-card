@@ -57,6 +57,14 @@ first-frame floor-row CSS remains eager as required by the #805 budget guard.
 
 ## Paired synthetic frames
 
+The selected Area-relocation smoke exposed an existing invalid fixture on clean
+ca672d96: lamp layout(.42,.50) disagreed with its manufactured history
+command.after(.34,.31). The accepted #1073 source-match guard correctly refused
+that stale Undo. The fixture now seeds both client and synthetic server at each
+completed command.after and verifies both positions before relocation. Its
+restore, unrelated Undo and other original assertions remain intact; production
+history guards are unchanged. The repaired native Area smoke passes.
+
 - light/1440/floors: [reference](implementation-evidence/1020-pair-light-1440-floors-reference.png), [candidate](implementation-evidence/1020-pair-light-1440-floors-candidate.png).
 - light/1440/empty: [reference](implementation-evidence/1020-pair-light-1440-empty-reference.png), [candidate](implementation-evidence/1020-pair-light-1440-empty-candidate.png).
 - light/390/floors: [reference](implementation-evidence/1020-pair-light-390-floors-reference.png), [candidate](implementation-evidence/1020-pair-light-390-floors-candidate.png).
