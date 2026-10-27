@@ -102,7 +102,7 @@ No timing threshold or structural core limit is raised.
 Run `npm run gate:small -- --smokes` on the candidate. The genuine picker proof
 is part of `smoke_dialog_picker_998.mjs`, not an optional CSS-only check.
 For reference replay, run the published UI-029 server on 8898 and the candidate
-UI Lab on 8899, then `node docs/testing-notes/dialog-pickers-998/compare-reference.mjs`.
+UI Lab on 8899, then `node docs/audits/dialog-pickers-998/compare-reference.mjs`.
 `HP_COMPARE_OUT` optionally chooses a fresh evidence directory. The script
 preserves original themes and records both source-loaded resource identities.
 
