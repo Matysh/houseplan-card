@@ -1161,7 +1161,7 @@ export async function prepareGoldenScenario(page, scenario) {
     window.__goldenPanel = null;
     document.getElementById('golden-pdf-page')?.remove();
     localStorage.clear();
-    const scenarioPath = scenario.panelHost ? '/houseplan' : '/demo.html';
+    const scenarioPath = scenario.panelHost ? scenario.panelKioskUrl || '/houseplan' : '/demo.html';
     history.replaceState(null, '', scenarioPath);
     const host = document.getElementById('host');
     const cardConfig = {
@@ -1267,7 +1267,7 @@ export async function prepareGoldenScenario(page, scenario) {
         await customElements.whenDefined('houseplan-panel');
         const panel = document.createElement('houseplan-panel');
         panel.narrow = scenario.narrow ?? scenario.viewport.width <= 600;
-        panel.route = { path: '/houseplan' };
+        panel.route = { prefix: '/houseplan', path: location.pathname.slice('/houseplan'.length) };
         panel.panel = { component_name: 'houseplan-panel' };
         host.replaceChildren(panel);
         panel.hass = hassFor();
@@ -2710,6 +2710,15 @@ export async function prepareGoldenScenario(page, scenario) {
       const contentRect = content?.getBoundingClientRect();
       const cardRect = card.getBoundingClientRect();
       const stageRect = stage?.getBoundingClientRect();
+      if (card._kiosk !== !!scenario.panelKioskUrl
+          || scenario.panelKioskUrl && (card._editorRuntime || card._onboardingRuntime
+            || [...card.renderRoot.querySelectorAll('[data-hp="mode-tab"]')].some((tab) => tab.getClientRects().length))) {
+        throw new Error(`golden panel route kiosk contract failed: ${scenario.id}`);
+      }
+      if (scenario.panelKioskPosition && (card._space !== fixture.config.spaces[scenario.panelKioskPosition - 1]?.id
+          || !card._hasFixedFloor)) {
+        throw new Error(`golden panel route position failed: ${scenario.id}`);
+      }
       const horizontalOverflow = Math.max(
         0,
         document.documentElement.scrollWidth - document.documentElement.clientWidth,

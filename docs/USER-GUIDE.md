@@ -2627,6 +2627,20 @@ from scratch. See [VACUUM.md](VACUUM.md) for the source and calibration contract
 
 ## 17. Kiosk
 
+The main page needs no separate dashboard. Open `/houseplan/kiosk` for all
+spaces or `/houseplan/kiosk/2` to pin the second space in the visible space
+list. Equivalent links are `/houseplan?hpkiosk=1` and
+`/houseplan?other=keep&hpkiosk=1&hpspace=2`. Positions start at **1** and follow
+the same order as the tabs/dropdown. A missing or invalid position leaves all
+spaces available; this main-page mode does not enable automatic cycling.
+Reordering spaces changes what a position selects. An explicit kiosk path wins
+as a whole over query options: `/houseplan/kiosk/2?hpspace=3&hpkiosk=0` still
+pins the second space. HA chrome remains visible. Exit through `/houseplan`
+without `hpkiosk=1`, or Back. These links do not change stored settings or
+other Lovelace cards.
+
+
+
 ```yaml
 type: custom:houseplan-card
 kiosk: true

@@ -12,6 +12,8 @@
   "include": [
     "src/marker-alert.ts",
     "src/marker-alert-config.ts", "src/marker-alert-runtime.ts", "src/marker-alert-source.ts", "src/marker-alert-view-runtime.ts",
+
+    "src/panel-route-kiosk.ts",
     "src/editors/properties/*.ts",
     "src/houseplan-card.ts", "src/editor-chain-exit.ts", "src/editors/draft-close.ts", "src/view-runtime-boundary.ts", "src/view-runtimes.ts",
     "src/canvas-surface-gestures.ts", "src/wall-thickness-dialog-gesture.ts",

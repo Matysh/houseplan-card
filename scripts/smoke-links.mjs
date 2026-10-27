@@ -46,6 +46,12 @@ export const SMOKE_LINKS = [
     because: '#1093: native hidden/latest HA and alert confirmation, registry retirement and physical-work counters cross the mounted frame boundary.',
   },
   {
+    files: ['src/route-kiosk.ts', 'src/panel-route-kiosk.ts', 'src/houseplan-panel.ts'],
+    symbols: ['routeKiosk', '_fixedFloorState', '_ownsCurrentRoute'],
+    smokes: ['smoke_panel_route_kiosk.mjs'],
+    because: '#1103: cold host URLs, deferred authority, navigation/draft decisions and unchanged WS/read ownership require the real card and router events.',
+  },
+  {
     files: ['src/device-more-info.ts', 'src/marker-more-info-fields.ts', 'src/editors/marker-more-info.ts'],
     symbols: ['_openDeviceMoreInfo'],
     smokes: ['smoke_device_more_info.mjs'],

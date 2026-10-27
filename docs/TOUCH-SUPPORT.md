@@ -1,5 +1,7 @@
 # Touch support policy
 
+The main panel also enters the same kiosk explicitly through /houseplan/kiosk[/N] or root hpkiosk=1/hpspace=N (#1103). Its menu/HA chrome remain available. One-based position pins one space; absent/invalid positions retain all-space swipe behavior. This does not change the input support policy.
+
 Approved by the owner on **2026-08-08**. This document is the source of truth
 for product scope, implementation trade-offs, documentation and release
 acceptance on touch devices.

@@ -1,9 +1,17 @@
 import './houseplan-card';
+import { parseRouteKiosk } from './panel-route-kiosk';
+import type { RouteKiosk } from './route-kiosk';
+
+const sameRouteKiosk = (a: RouteKiosk, b: RouteKiosk): boolean =>
+  a.enabled === b.enabled && a.position === b.position;
+
+interface PanelRoute { prefix?: string; path?: string; }
 
 interface HouseplanCardElement extends HTMLElement {
   hass?: unknown;
   panelHost: boolean;
   narrow: boolean | null;
+  routeKiosk: RouteKiosk;
   setConfig(config: { type: 'custom:houseplan-card' }): void;
 }
 
@@ -22,6 +30,27 @@ export class HouseplanPanel extends HTMLElement {
   private _panel?: unknown;
   private _card?: HouseplanCardElement;
   private _menuButton?: HTMLButtonElement;
+  private _acceptedUrl = '';
+  private _acceptedRoute?: unknown;
+  private _pendingRoute?: { intent: RouteKiosk; url: string; route: unknown };
+  private readonly _onLocationChanged = (): void => {
+    const prefix = new URL(this._acceptedUrl || location.pathname, location.origin).pathname.split('/').slice(0, 2).join('/');
+    if (location.pathname.split('/').slice(0, 2).join('/') !== prefix) return;
+    this.route = { prefix, path: location.pathname.slice(prefix.length) };
+  };
+  private readonly _onRouteApplied = (): void => {
+    const pending = this._pendingRoute;
+    if (!pending || !this._card || !sameRouteKiosk(pending.intent, this._card.routeKiosk)) return;
+    const moved = this._url() !== pending.url;
+    this._route = pending.route;
+    this._acceptedRoute = pending.route;
+    this._acceptedUrl = pending.url;
+    this._pendingRoute = undefined;
+    if (moved) {
+      history.replaceState(history.state, '', this._acceptedUrl);
+      window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: true } }));
+    }
+  };
 
   public constructor() {
     super();
@@ -32,6 +61,14 @@ export class HouseplanPanel extends HTMLElement {
   public connectedCallback(): void {
     this._adoptPreUpgradeProperties();
     this._ensureShell();
+    window.addEventListener('location-changed', this._onLocationChanged);
+    window.addEventListener('popstate', this._onLocationChanged);
+  }
+
+  public disconnectedCallback(): void {
+    window.removeEventListener('location-changed', this._onLocationChanged);
+    window.removeEventListener('popstate', this._onLocationChanged);
+    this._pendingRoute = undefined;
   }
 
   /** Home Assistant creates the panel element and assigns `hass`/`narrow`/
@@ -65,10 +102,30 @@ export class HouseplanPanel extends HTMLElement {
   }
 
   public get route(): unknown { return this._route; }
-  public set route(value: unknown) { this._route = value; }
+  public set route(value: unknown) { this._route = value; this._applyRouteKiosk(); }
 
   public get panel(): unknown { return this._panel; }
   public set panel(value: unknown) { this._panel = value; }
+
+  private _url(): string { return location.pathname + location.search + location.hash; }
+
+  private _applyRouteKiosk(): void {
+    if (!this._card) return;
+    const route = this._route as PanelRoute | undefined;
+    const prefix = route?.prefix || location.pathname.split('/').slice(0, 2).join('/');
+    // The fallback also accepts the older demo's full-path route shape.
+    let path = route?.path ?? location.pathname.slice(prefix.length);
+    if (path === prefix || path.startsWith(prefix + '/')) path = path.slice(prefix.length);
+    const intent = parseRouteKiosk(path, location.search);
+    this._pendingRoute = { intent, url: this._url(), route: this._route };
+    this._card.routeKiosk = intent;
+    if (sameRouteKiosk(intent, this._card.routeKiosk)) this._onRouteApplied();
+    else if (this._acceptedUrl) {
+      // An existing draft decision owns the old page until it resumes this intent.
+      history.replaceState(history.state, '', this._acceptedUrl);
+      this._route = this._acceptedRoute;
+    }
+  }
 
   private _ensureShell(): void {
     if (this._card || !this.shadowRoot) return;
@@ -205,6 +262,9 @@ export class HouseplanPanel extends HTMLElement {
     const card = document.createElement('houseplan-card') as HouseplanCardElement;
     card.panelHost = true;
     card.narrow = this._narrow;
+    card.addEventListener('hp-route-kiosk-applied', this._onRouteApplied);
+    this._card = card;
+    this._applyRouteKiosk();
     card.setConfig({ type: 'custom:houseplan-card' });
     if (this._hass !== undefined) card.hass = this._hass;
     content.append(card);

@@ -25,6 +25,7 @@ function safeHost(overrides = {}) {
     ownerDocument: { defaultView: null },
     isConnected: true,
     _config: { kiosk: true },
+    get _kiosk() { return this._config?.kiosk === true; },
     _hasFixedFloor: false,
     _model: [{ id: 'f1' }, { id: 'f2' }],
     _mode: 'view',
@@ -137,6 +138,21 @@ test('card adapter maps editor state into the kiosk reload guard', () => {
   ]) {
     assert.equal(cardVersionReloadSafetySnapshot(safeHost(overrides)).viewOnly, false);
   }
+});
+
+test('#1103 runtime kiosk uses the same version-reload guards without a saved kiosk option', () => {
+  const routeHost = { _kiosk: true, _config: { cycle: 0 }, _zoom: 2.4 };
+  const snapshot = cardVersionReloadSafetySnapshot(safeHost(routeHost));
+  assert.equal(snapshot.viewOnly, true);
+  assert.equal(snapshot.baseZoom, true);
+  for (const [field, overrides] of [
+    ['viewOnly', { _kiosk: false }], ['viewOnly', { _mode: 'devices' }],
+    ['viewOnly', { _editing: true }], ['initialFrameSettled', { _loading: true }],
+    ['gesturesIdle', { _pointers: pending(1) }], ['surfacesIdle', { _editorSecondaryDialogBlocked: true }],
+    ['configWritesIdle', { _writesPending: 1 }], ['physicalWritesIdle', { _pendingPhysicalWrites: pending(1) }],
+    ['layoutWritesIdle', { _dirtyPos: pending(1) }], ['interactionPauseElapsed', { _cyclePausedUntil: Date.now() + 60000 }],
+    ['baseZoom', { _config: { cycle: 10 } }],
+  ]) assert.equal(cardVersionReloadSafetySnapshot(safeHost({ ...routeHost, ...overrides }))[field], false, field);
 });
 
 test('card adapter maps blocking surfaces into the kiosk reload guard', () => {

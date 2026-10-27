@@ -35,6 +35,9 @@ carries that exact delta and preserves its inherited 23-reference gap. The initi
 ceiling likewise preserves its inherited 457-B excess and unchanged 2000-B band;
 absolute and timing limits stay unchanged. Full asset/source verification and
 measured values are recorded in the #1093 evidence report.
+
+Route kiosk (#1103): node demo/smoke_panel_route_kiosk.mjs exercises cold path/query entry, authoritative order after a stale cache, live reorder/delete/add, unchanged WS/config ownership, Back/Forward, draft Keep/Discard and read-only empty layout. The unchanged baseline fails its three cold kiosk/position/header assertions. Selected captures panel-wide-kiosk-all and panel-narrow-kiosk-fixed cover flat/light and 2.5D/dark DPR2; captures do not accept global baselines.
+
 LQI hot-path regression (#1090): run the real-HA subset
 `python -m pytest tests_backend/test_ha_zigbee_lqi_performance.py tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q -s`.
 The pinned HA 2026.8.3 harness and explicit modern API-contract doubles prove

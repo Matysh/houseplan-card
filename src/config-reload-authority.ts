@@ -1,3 +1,4 @@
+import { presentationRouteOwner } from './route-kiosk';
 /**
  * Ownership for overlapping authoritative config reads (#543).
  *
@@ -190,7 +191,7 @@ export interface ConfigReloadHostPort {
 }
 
 export const configReloadContext = (
-  host: { readonly hass?: unknown },
+  host: { readonly hass?: unknown; readonly panelHost?: boolean },
 ): ConfigReloadContext => {
   const hass = host.hass as {
     readonly connection?: unknown;
@@ -200,7 +201,7 @@ export const configReloadContext = (
   return {
     connection: hass?.connection ?? null,
     userId: typeof userId === 'string' ? userId : null,
-    route: location.pathname,
+    route: presentationRouteOwner(location.pathname, host.panelHost),
   };
 };
 

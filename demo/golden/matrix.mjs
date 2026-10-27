@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 103;
+export const GOLDEN_MATRIX_VERSION = 104;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -317,6 +317,13 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   // #486 AC7: the custom HA panel owns the full viewport. These three focused
   // frames pin its populated View, its Plan-editor chrome and the deliberately
   // inert read-only first-run state without duplicating the card matrix below.
+  { id: 'panel-wide-kiosk-all', fixture: 'visual', space: 'golden-geometry',
+    panelHost: true, panelKioskUrl: '/houseplan/kiosk', preloadEditorRuntime: false,
+    mode: 'view', language: 'en', theme: 'light', viewport: { width: 1280, height: 800 }, ...page },
+  { id: 'panel-narrow-kiosk-fixed', fixture: 'visual', space: 'golden-geometry',
+    panelHost: true, panelKioskUrl: '/houseplan?other=keep&hpkiosk=1&hpspace=1', panelKioskPosition: 1,
+    narrow: true, preloadEditorRuntime: false, projection: 'iso', deviceScaleFactor: 2,
+    mode: 'view', language: 'en', theme: 'dark', viewport: { width: 390, height: 844 }, ...page },
   { id: 'panel-wide-view-light-en', fixture: 'visual', space: 'golden-geometry',
     panelHost: true, mode: 'view', language: 'en', theme: 'light',
     viewport: { width: 1280, height: 800 }, ...page },

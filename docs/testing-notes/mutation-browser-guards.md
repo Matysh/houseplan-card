@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 93 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 276 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **555 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 278 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **557 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 
 
@@ -700,6 +700,15 @@ without a rule it must not load the optional threshold graph. Codec and timer
 units cannot prove the real import boundary or the absence of editor/settings
 chunks. This browser witness is registered for nightly execution; task static
 readiness is execution0/caught unknown.
+- `route-kiosk-empty-admin-onboards`
+
+#1103 observes the first-run empty admin lifecycle; a public URL must keep its
+setup wizard hidden even when backend configuration writing is allowed.
+
+- `panel-route-kiosk-ignored`
+
+#1103 needs the real panel/custom-element boot, visible chrome, deferred roster
+and route/draft lifetime; a parser-only unit cannot prove the host applies intent.
 
 #1087: trusted View input must reach the shared HA target through the actual Lit handler, while right click keeps Settings.
 

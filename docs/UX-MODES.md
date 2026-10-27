@@ -2,6 +2,8 @@
 
 In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
 
+Main sidebar kiosk entry (#1103) accepts /houseplan/kiosk[/N] and the equivalent root hpkiosk=1/hpspace=N query. Explicit path wins entirely; invalid positions mean all spaces. The runtime routeKiosk property shares the existing effective kiosk/fixed-space guards, not persisted settings. View/dirty decisions remain coherent through SPA navigation; no implicit browser fullscreen or HA-chrome changes.
+
 > Approved design for reorganizing all card interactions into three tab-like modes.
 > Driven by the owner's mandate and confirmed by real user feedback
 > ([issue #3](https://github.com/Matysh/houseplan-card/issues/3): *"When moving the

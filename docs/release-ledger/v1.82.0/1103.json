@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "issue": 1103,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "New main-page kiosk URL entry, absent in stable v1.82.0; existing kiosk behavior and strict Lovelace floor configuration are preserved.",
+  "summary": {
+    "ru": "Киоск прямо на основной странице House Plan, с выбором пространства через адрес.",
+    "en": "Main-page kiosk links with optional space selection."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "panel-wide-kiosk-all",
+        "expectation": "new",
+        "reason": "Main panel kiosk via path, full available content and retained HA menu."
+      },
+      {
+        "id": "panel-narrow-kiosk-fixed",
+        "expectation": "new",
+        "reason": "Root query pins a space in the main panel, narrow dark 2.5D at DPR2."
+      }
+    ],
+    "smokes": [
+      "smoke_panel_route_kiosk.mjs",
+      "smoke_houseplan_panel.mjs"
+    ]
+  }
+}

@@ -134,7 +134,8 @@ export function getAuthoritativeCardConfig(
 export interface VersionRecoveryCardPort {
   readonly ownerDocument: Document;
   readonly isConnected: boolean;
-  readonly _config: { kiosk?: boolean; cycle?: number } | null;
+  readonly _config: { cycle?: number } | null;
+  readonly _kiosk: boolean;
   readonly _hasFixedFloor: boolean;
   readonly _model: readonly { readonly id: string }[];
   readonly _mode: string;
@@ -228,7 +229,7 @@ export function cardVersionReloadSafetySnapshot(
   return {
     connected: host.isConnected,
     initialFrameSettled,
-    viewOnly: host._config?.kiosk === true && host._mode === 'view' && !host._editing,
+    viewOnly: host._kiosk && host._mode === 'view' && !host._editing,
     surfacesIdle,
     configWritesIdle: host._writesPending === 0 && !host._saveConfigDebounced.pending(),
     physicalWritesIdle: host._pendingPhysicalWrites.size === 0,
@@ -236,8 +237,8 @@ export function cardVersionReloadSafetySnapshot(
       && host._sentPos.size === 0 && !host._devicePositionBusy,
     gesturesIdle,
     interactionPauseElapsed: Date.now() >= host._cyclePausedUntil,
-    baseZoom: host._zoom <= 1.001 || host._config?.kiosk === true
-      && nonCarouselKiosk(host._config.cycle, host._hasFixedFloor, host._model.length),
+    baseZoom: host._zoom <= 1.001 || host._kiosk
+      && nonCarouselKiosk(host._config?.cycle, host._hasFixedFloor, host._model.length),
   };
 }
 

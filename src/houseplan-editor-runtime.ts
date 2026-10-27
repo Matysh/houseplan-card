@@ -7239,7 +7239,37 @@ public _closeMarkerDialog(): void {
   }
 public _requestMarkerDialogClose(): Promise<boolean> { return requestMarkerClose(this); }
 public _requestRoomDialogClose(): Promise<boolean> { return requestRoomClose(this); }
-public _guardDraftNavigation(navigate: () => void): boolean { return guardDraftNavigation(this, navigate); }
+/** Retire editor-owned dialogs only after their navigation decision. */
+public _retireRouteDialogs(): void {
+    const host = this.host;
+    this.invalidateEditorNavigation();
+    host._vacCalConfirm = null;
+    host._decorEraseConfirm = null;
+    host._rulesDialog = null;
+    host._alignDialog = null;
+    this.backupTransfer.dispose();
+    host._backupImportIntent.cancel(false);
+    host._backupImportDialog = null;
+    host._backupExportDialog = null;
+    if (host._supportDialog?.preview?.token) {
+      void this._discardSupportPreview(host._supportDialog.preview.token);
+    }
+    host._supportDialog = null;
+    host._settingsDialog = null;
+    host._deviceInbox = null;
+    host._deviceInboxReturn = null;
+    host._markerDialog = null;
+    host._openingDialog = null;
+    host._physicalDialog = null;
+    host._wallDialog = null;
+    host._backdropDialog = null;
+    host._decorShapeDialog = null;
+    host._decorTextDialog = null;
+    host._mergeDialog = null;
+    host._roomDialog = false;
+}
+
+public _guardDraftNavigation(navigate: () => void, keep?: () => void): boolean { return guardDraftNavigation(this, navigate, keep); }
 private async _closeMarkerDialogGuarded(): Promise<void> {
     const session = dialogSession(this.host, 'marker');
     if (!await this._radarSetup.discardIfAllowed()) {

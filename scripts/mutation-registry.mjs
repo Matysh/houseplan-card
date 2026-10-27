@@ -6046,6 +6046,26 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'panel-route-kiosk-ignored',
+    guard: 'node demo/smoke_panel_route_kiosk.mjs',
+    because: '#1103: the real cold URL must hide own chrome and select the requested ordered space, not merely set a property.',
+    patches: [{
+      file: 'src/houseplan-panel.ts',
+      find: '    this._card.routeKiosk = intent;',
+      replace: '    this._card.routeKiosk = { enabled: false, position: null }; // mutant: host ignores URL',
+    }],
+  },
+  {
+    id: 'route-kiosk-empty-admin-onboards',
+    guard: 'node demo/smoke_panel_route_kiosk.mjs',
+    because: '#1103: an authenticated administrator in a cold empty kiosk must not acquire the first-run floor wizard through the mounted updated lifecycle.',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      this._canManageConfiguration && !this._kiosk &&\n      this._model.length === 0 &&',
+      replace: '      this._canManageConfiguration &&\n      this._model.length === 0 &&',
+    }],
+  },
+  {
     id: 'panel-ignores-pre-upgrade-properties',
     guard: 'node demo/smoke_houseplan_panel.mjs',
     because: 'HA assigns hass/narrow/route/panel before the top-level-await entry defines the '
@@ -6113,7 +6133,7 @@ const MUTANT_DEFINITIONS = [
       + 'when its versions differ (#462 AC8)',
     patches: [{
       file: 'src/version-recovery-card.ts',
-      find: "    viewOnly: host._config?.kiosk === true && host._mode === 'view' && !host._editing,",
+      find: "    viewOnly: host._kiosk && host._mode === 'view' && !host._editing,",
       replace: '      viewOnly: true,',
     }],
   },
@@ -11966,8 +11986,8 @@ const MUTANT_DEFINITIONS = [
     because: '#875 r1/M1: actual tab/menu DOM handlers must still paint a create hp-dialog '
       + 'on a populated plan with a pending settings import; this crosses lazy runtime and Lit dialog lifecycle.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "if (mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog)) return;",
-      replace: "if (mode === 'create' && (this._backupImportIntent.loading || this._backupImportDialog)) return;" }],
+      find: "if (this._kiosk || mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog)) return;",
+      replace: "if (this._kiosk || mode === 'create' && (this._backupImportIntent.loading || this._backupImportDialog)) return;" }],
   },
   {
     id: 'passage-visible-geometry-door-fallback',

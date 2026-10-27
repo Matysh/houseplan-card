@@ -9,6 +9,8 @@ Physical keys project known paint/text fields out while retaining unknown and st
 
 
 
+Panel kiosk routing (#1103) stays in the thin host: path/query adapters set the runtime routeKiosk intent. The card resolves one-based positions against its own authoritative ordered model, with pending before authority and absent for an invalid URL position. Existing Lovelace floor remains strict. Internal panel paths share one read owner; mode/space transitions still retire presentation context and dirty drafts use the existing decision boundary. The stable panel entry retains its side-effect-only card import; its URL parser has no runtime imports from the card graph.
+
 Config decoder v1 (#1015) sits inside the common Store fence, after pending-pair
 recovery and before config/layout reads, CAS writers and setup consumers. Source
 import runs the same copy-only decoder before schema/host proof. Square-frame

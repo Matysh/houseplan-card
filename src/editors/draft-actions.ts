@@ -58,8 +58,9 @@ export function requestRoomClose(runtime: HouseplanEditorRuntime, after?: () => 
 }
 
 /** Resume only after the current form's own discard decision (#851). */
-export function guardDraftNavigation(runtime: HouseplanEditorRuntime, navigate: () => void): boolean {
-  if (runtime.host._markerDialog) { void requestMarkerClose(runtime, navigate); return false; }
-  if (runtime.host._roomDialog) { void requestRoomClose(runtime, navigate); return false; }
+export function guardDraftNavigation(runtime: HouseplanEditorRuntime, navigate: () => void, keep?: () => void): boolean {
+  const settled = (closed: boolean) => { if (!closed) keep?.(); };
+  if (runtime.host._markerDialog) { void requestMarkerClose(runtime, navigate).then(settled); return false; }
+  if (runtime.host._roomDialog) { void requestRoomClose(runtime, navigate).then(settled); return false; }
   return true;
 }

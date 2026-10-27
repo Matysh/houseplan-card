@@ -88,11 +88,15 @@ import {
 import type { JunctionLimitViolation, JunctionSharedGeometry } from './junction-limits';
 import { ContentSigner } from './signing';
 import {
-  resolveFixedFloor, resolveInitialSpace, settleBestEffort,
+  resolveInitialSpace, settleBestEffort,
   type FixedFloorSelection, type InitialSpaceSelection,
 } from './initial-load';
 import { TouchGestureClickGuard } from './touch-gesture-click-guard';
 import { KioskHoldGesture } from './kiosk-hold';
+import {
+  NO_ROUTE_KIOSK, normalizeRouteKiosk, sameRouteKiosk, resolvePresentationFloor,
+  presentationRouteOwner, type RouteKiosk,
+} from './route-kiosk';
 import { KioskCarousel } from './kiosk-carousel';
 import { acceptTapConfirmation, currentMarkerActionDevice, currentMarkerSettingsDevice, markerSettingsTargetKey, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
 import { ViewHoldGesture } from './view-hold';
@@ -912,6 +916,46 @@ export class HouseplanCard extends LitElement {
   }
   public hass?: any;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
+  private _routeKiosk: RouteKiosk = NO_ROUTE_KIOSK;
+  private _routeKioskPending: RouteKiosk | null = null; private _routeKioskGeneration = 0;
+  public get routeKiosk(): RouteKiosk { return this._routeKiosk; }
+  public set routeKiosk(value: RouteKiosk) {
+    const next = normalizeRouteKiosk(this.panelHost ? value : null);
+    if (sameRouteKiosk(next, this._routeKioskPending ?? this._routeKiosk)) return;
+    const generation = ++this._routeKioskGeneration;
+    if (this._routeKioskPending) this._cancelDangerConfirm();
+    this._routeKioskPending = next;
+    const connection = this.hass?.connection, user = this.hass?.user?.id;
+    const apply = () => {
+      if (generation !== this._routeKioskGeneration
+          || this.hass?.connection !== connection || this.hass?.user?.id !== user) return;
+      const before = this._routeKiosk;
+      this._routeKiosk = next;
+      this._routeKioskPending = null;
+      this._cancelPendingWarmMode();
+      if (this._mode !== 'view') this._setMode('view', false);
+      this._retireRouteDialogs();
+      this._hashApplied = false; this._navApplied = false; this._warmVpArmed = false;
+      const previousSpace = this._space;
+      this._adoptInitialSpace(this._model, this._loadOk);
+      if (previousSpace !== this._space) this._restoreZoom();
+      this.requestUpdate('routeKiosk', before);
+      this.dispatchEvent(new CustomEvent('hp-route-kiosk-applied'));
+    };
+    const attempt = () => {
+      if (generation !== this._routeKioskGeneration) return;
+      if (this._editorRuntime) {
+        if (!this._editorRuntime.properties.beforeIntent(attempt)) return;
+        if (!this._editorRuntime._guardDraftNavigation(attempt, () => {
+          if (generation === this._routeKioskGeneration) this._routeKioskPending = null;
+        })) return;
+        if (this._mode === 'plan' && this._tool === 'draw'
+            && !this._editorRuntime._finishWallChainForNavigation(attempt)) return;
+      }
+      apply();
+    };
+    attempt();
+  }
   private _config?: CardConfig;
 
   /** HA owns the vertical slot in sidebar panel and Sections grid layouts. */
@@ -1128,7 +1172,7 @@ export class HouseplanCard extends LitElement {
 
   /** Legacy alias: markup machinery is active exactly in plan mode. */
   private get _kiosk(): boolean {
-    return !!this._config?.kiosk;
+    return !!this._config?.kiosk || this.panelHost && this._routeKiosk.enabled;
   }
 
   private _showKioskDots(): void {
@@ -1534,7 +1578,7 @@ export class HouseplanCard extends LitElement {
 
   /** An own `floor` property is deliberate, including invalid/null YAML. */
   private get _hasFixedFloor(): boolean {
-    return !!this._config && Object.prototype.hasOwnProperty.call(this._config, 'floor');
+    return this._fixedFloorState().kind !== 'absent';
   }
 
   /**
@@ -1543,23 +1587,9 @@ export class HouseplanCard extends LitElement {
    * positional index until the integration has answered authoritatively.
    */
   private _fixedFloorState(models = this._model, authoritative = this._loadOk): FixedFloorState {
-    const value = this._config?.floor;
-    const selection = resolveFixedFloor({
-      spaceIds: models.map((space) => space.id),
-      hasFloor: this._hasFixedFloor,
-      floor: value,
-    });
-    if (!this._hasFixedFloor || authoritative) return selection;
-    if (typeof value === 'number') {
-      if (selection.kind === 'valid'
-          || selection.kind === 'invalid' && selection.reason === 'out-of-range-index') {
-        return { kind: 'pending', value };
-      }
-      return selection;
-    }
-    if (selection.kind === 'valid') return selection;
-    if (selection.kind === 'invalid' && selection.reason !== 'unknown-id') return selection;
-    return { kind: 'pending', value };
+    return resolvePresentationFloor(this.panelHost ? this._routeKiosk : null,
+      models.map((space) => space.id), authoritative,
+      !!this._config && Object.prototype.hasOwnProperty.call(this._config, 'floor'), this._config?.floor);
   }
 
   /** One boundary for every mutation of the active space. */
@@ -2103,9 +2133,9 @@ export class HouseplanCard extends LitElement {
   private _connectedPath = '';
   private _routeDepartureHandled = false;
   private readonly _onLocationChanged = (): void => {
-    if (this._connectedPath && location.pathname !== this._connectedPath) {
+    if (this._connectedPath && !this._ownsCurrentRoute()) {
       this._leaveCardRoute();
-    } else if (location.pathname === this._connectedPath) {
+    } else if (this._ownsCurrentRoute()) {
       // Some HA routers keep the old view connected but hidden. Returning to
       // it re-arms the guard so a later departure ends the next edit session.
       const returning = this._routeDepartureHandled;
@@ -2117,6 +2147,10 @@ export class HouseplanCard extends LitElement {
       }
     }
   };
+  private _ownsCurrentRoute(): boolean {
+    return presentationRouteOwner(location.pathname, this.panelHost)
+      === presentationRouteOwner(this._connectedPath, this.panelHost);
+  }
   private readonly _touchGestureGuard = {
     capture: true,
     handleEvent: (ev: Event): void => this._guardTouchGesture(ev),
@@ -2218,7 +2252,7 @@ export class HouseplanCard extends LitElement {
       backendVersion: this._haIntegrationVersion,
       frontendBuild: runningBuild(),
       backendBuild: this._haBackendBuild,
-      kiosk: this._config?.kiosk === true,
+      kiosk: this._kiosk === true,
       reducedMotion: this._reducedMotion,
     });
   }
@@ -2912,6 +2946,7 @@ export class HouseplanCard extends LitElement {
     this._spaceModels.clear(); this._modelCache = null;
     window.removeEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
     window.removeEventListener('storage', this._rotationChanged);
+    ++this._routeKioskGeneration; this._routeKioskPending = null;
     for (const runtime of this._vacRt.values()) {
       if (runtime.livePending) { runtime.gap = true; runtime.livePending.gap = true; }
     }
@@ -2944,7 +2979,7 @@ export class HouseplanCard extends LitElement {
     // HA normally changes the route before removing the old Lovelace tree.
     // The explicit event covers routers that keep that tree connected for a
     // beat; this fallback covers a direct remove after history navigation.
-    if (this._connectedPath && location.pathname !== this._connectedPath) {
+    if (this._connectedPath && !this._ownsCurrentRoute()) {
       this._leaveCardRoute();
     }
     window.removeEventListener('location-changed', this._onLocationChanged);
@@ -3456,7 +3491,7 @@ export class HouseplanCard extends LitElement {
       this._navApplied = false;
       this._warmVpArmed = false;
     }
-    if (this._config.kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
+    if (this._kiosk) { this._booting = false; this._bootFading = false; } // kiosk: 100dvh, nothing to settle
     if (!this._hasFixedFloor && config.default_floor) this._commitSpace(config.default_floor, true);
     try {
       this._zoomBySpace = JSON.parse(localStorage.getItem(LS_ZOOM) || '{}') || {};
@@ -3509,7 +3544,7 @@ export class HouseplanCard extends LitElement {
    * glide instead of a snap.
    */
   private _warmAdopt(): void {
-    if (this._config?.kiosk) return;
+    if (this._kiosk) return;
     const key = warmBootKey(this._config);
     if (this._warmKey === key && this._warmSlot) return; // already sitting in it
     if (this._warmSlot) this._warmRelease(); // the config (or the window) changed under us
@@ -3658,14 +3693,14 @@ export class HouseplanCard extends LitElement {
     // atomically without rebuilding its camera through a View -> editor
     // transition. A newer user command invalidates this request through the
     // shared request counter.
-    const restoredMode = vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view';
+    const restoredMode = vp.mode !== 'view' && this._canEdit && !this._kiosk ? vp.mode : 'view';
     this._adoptMode('view');
     // AUD-159B6-04: the memo is the NEWER and MORE SPECIFIC record than the
     // global LS nav — a neighbour card writing `mode=devices` into localStorage
     // must not be replayed over this owner's viewport once can_write answers
     // (it also broke the draft revival, whose guard compares the mode). So the
     // pending intent is REPLACED here, never merely added to.
-    this._pendingNavMode = vp.mode !== 'view' && !this._canEdit && !config.kiosk ? vp.mode : null;
+    this._pendingNavMode = vp.mode !== 'view' && !this._canEdit && !this._kiosk ? vp.mode : null;
     this._zoom = vp.zoom;
     const projection = this._effectiveProjection();
     const sameProjection = projection === vp.projection && this._isoEnabled === vp.activeLabsIso;
@@ -3692,7 +3727,7 @@ export class HouseplanCard extends LitElement {
   /** Merge a patch into this card's warm entry. `create` is false everywhere
    *  but the boot settle: a memo may only be BORN from a settled geometry. */
   private _warmPatch(patch: Partial<WarmEntry>, create = false): void {
-    if (this._config?.kiosk) return;
+    if (this._kiosk) return;
     const k = warmBootKey(this._config);
     // The key carries the window size and the view path: once either changes
     // under a LIVE card, its slot describes a geometry that is no longer on
@@ -3789,7 +3824,7 @@ export class HouseplanCard extends LitElement {
     // previous complete frame. Never pair those fields with the old frame
     // fingerprint in the placement memo; the successful paint barrier writes
     // the coherent snapshot from its completion callback.
-    if (this._booting || this._config?.kiosk || this._continuity.state !== 'steady') return;
+    if (this._booting || this._kiosk || this._continuity.state !== 'steady') return;
     const patch: Partial<WarmEntry> = {
       vp: this._warmViewportState(),
       frameFingerprint: this._continuity.frameFingerprint,
@@ -3956,7 +3991,7 @@ export class HouseplanCard extends LitElement {
       } catch { /* storage unavailable */ }
     }
     if (fixed.kind === 'valid') return { id: fixed.id, source: 'fixed' };
-    if (this._hasFixedFloor) return { id: null, source: 'none' };
+    if (fixed.kind !== 'absent') return { id: null, source: 'none' };
     const recoverySpace = this._recoveryViewport?.space;
     const restoreRecovery = this._kiosk && this._recoveryViewport?.key === this._kioskRecoveryKey()
       && nonCarouselKiosk(this._config?.cycle, false, models.length)
@@ -3987,7 +4022,7 @@ export class HouseplanCard extends LitElement {
   private _candidateBackdrop(config: ServerConfig | null, spaceId = this._space): string {
     const models = spaceModels(config);
     const fixed = this._fixedFloorState(models, true);
-    if (this._hasFixedFloor && fixed.kind !== 'valid') return '';
+    if (fixed.kind !== 'absent' && fixed.kind !== 'valid') return '';
     const preferred = this._initialSpaceSelection(models, true).id
       || (models.some((space) => space.id === spaceId) ? spaceId : models[0]?.id);
     return models.find((space) => space.id === preferred)?.bg?.href || '';
@@ -4422,6 +4457,7 @@ export class HouseplanCard extends LitElement {
       if (!preserveGeometry) this._cfgEpoch++;
       this._renderLife.invalidate();
     }
+    if (this.panelHost && this._routeKiosk.enabled) this._adoptInitialSpace(this._model, this._loadOk);
     this._syncEmptySpaceState();
     // #417: losing the only renderable space while a decision is pending must
     // settle it before render() clears hp-confirm with `nothing`.
@@ -4521,7 +4557,7 @@ export class HouseplanCard extends LitElement {
         // resize with a live card) must not poison the next warm mount —
         // the memo follows the live settled geometry.
         void this.updateComplete.then(() => requestAnimationFrame(() => {
-          if (!ownsHeader() || this._booting || this._config?.kiosk
+          if (!ownsHeader() || this._booting || this._kiosk
               || this._modeTransitionBusy || this._modeTransitionPreparing
               || t !== this._hdrH || stage.clientWidth <= 0 || stage.clientHeight <= 0) return;
           const measured = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight);
@@ -4552,7 +4588,7 @@ export class HouseplanCard extends LitElement {
     if (
       this._serverStorage &&
       this._loadOk &&
-      this._canManageConfiguration &&
+      this._canManageConfiguration && !this._kiosk &&
       this._model.length === 0 &&
       !this._spaceDialog &&
       !this._importDialog &&
@@ -4622,7 +4658,7 @@ export class HouseplanCard extends LitElement {
     if (this._pendingNavMode && (this._serverCanWrite === false || this._kiosk)) {
       this._cancelPendingWarmMode(); return false;
     }
-    if (!this._pendingNavMode || !this._canEdit || this._config?.kiosk) return false;
+    if (!this._pendingNavMode || !this._canEdit || this._kiosk) return false;
     const pendingMode = this._pendingNavMode;
     this._pendingNavMode = null;
     // Loaded and delayed runtimes share the same request/permission checks.
@@ -6864,7 +6900,7 @@ export class HouseplanCard extends LitElement {
     // DEV-B703-01: the page has settled once — the next instance with the
     // same config at the same viewport opens warm (no veil, no wait).
     const settledH = this._stageEl?.clientHeight ?? 0;
-    if (!this._config?.kiosk && settledH > 0) {
+    if (!this._kiosk && settledH > 0) {
       this._warmPatch({ hdrH: this._hdrH, stageH: settledH, vp: this._warmViewportState(),
         ownHdrH: this.renderRoot.querySelector('.hdr')?.getBoundingClientRect().height }, true);
     }
@@ -7886,6 +7922,15 @@ export class HouseplanCard extends LitElement {
     }
   }
 
+  /** Retire presentation-owned UI without invalidating authoritative data. */
+  private _retireRouteDialogs(): void {
+    this._cancelDangerConfirm();
+    this._tapConfirm = null; this._openingInfo = null; this._openingInfoSpace = null;
+    this._closeInfoCard(); this._kioskDialog = false; this._pdfDialog = false;
+    this._spaceDialog = null; this._importDialog = null;
+    this._editorRuntime?._retireRouteDialogs();
+  }
+
   /**
    * A route change is a real departure from the card, unlike a same-route
    * Lovelace remount. End the editing session before its old warm slot can be
@@ -7914,37 +7959,7 @@ export class HouseplanCard extends LitElement {
     this._drawWallField = null;
     // Route departure does not reset the browser-local display preference.
 
-    // A same-element reattach must not render an editor-only modal over View.
-    this._tapConfirm = null;
-    this._vacCalConfirm = null;
-    this._decorEraseConfirm = null;
-    this._openingInfo = null;
-    this._closeInfoCard();
-    this._rulesDialog = null;
-    this._alignDialog = null;
-    this._editorRuntime?.backupTransfer.dispose();
-    this._backupImportIntent.cancel(false);
-    this._backupImportDialog = null;
-    this._backupExportDialog = null;
-    this._pdfDialog = false;
-    if (this._supportDialog?.preview?.token) {
-      void this._editorRuntime?._discardSupportPreview(this._supportDialog.preview.token);
-    }
-    this._supportDialog = null;
-    this._settingsDialog = null;
-    this._deviceInbox = null;
-    this._deviceInboxReturn = null;
-    this._markerDialog = null;
-    this._openingDialog = null;
-    this._physicalDialog = null;
-    this._wallDialog = null;
-    this._backdropDialog = null;
-    this._decorShapeDialog = null;
-    this._decorTextDialog = null;
-    this._mergeDialog = null;
-    this._roomDialog = false;
-    this._spaceDialog = null;
-    this._importDialog = null;
+    this._retireRouteDialogs();
 
     // `_warmPatch()` intentionally refuses to write under a different path,
     // because warmBootKey already belongs to the route we just left. Seal the
@@ -10010,14 +10025,14 @@ export class HouseplanCard extends LitElement {
   }
 
   private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
-    if (mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog)) return;
+    if (this._kiosk || mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog)) return;
     if (this._spaceDialogUsesOnboardingRuntime(mode)) {
       if (this._onboardingRuntime) {
         this._onboardingRuntime._openSpaceDialog(mode, spaceId);
         return;
       }
       void this._ensureOnboardingRuntime().then((ready) => {
-        if (ready && !(mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog))) {
+        if (ready && !this._kiosk && !(mode === 'create' && this._model.length === 0 && (this._backupImportIntent.loading || this._backupImportDialog))) {
           this._spaceRuntimeOrThrow()._openSpaceDialog(mode, spaceId);
         }
       });
@@ -11102,7 +11117,7 @@ export class HouseplanCard extends LitElement {
         <div class="empty" data-hp="empty">
           <ha-icon icon="mdi:floor-plan" class="big"></ha-icon>
           <p>${this._t('empty.no_spaces')}</p>
-          ${this._serverStorage && this._canManageConfiguration
+          ${this._serverStorage && this._canManageConfiguration && !this._kiosk
             ? html`<p class="muted">${this._t('empty.add_first')}</p>
                 <div class="empty-actions">
                 <button class="btn on" data-hp="create-space" ?disabled=${this._backupImportIntent.loading}
