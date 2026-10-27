@@ -128,6 +128,7 @@
       "audience": ["test"],
       "attributes": {
         "data-kind": [
+          "alarm-constructor",
           "backup",
           "confirm",
           "decor",
@@ -1127,6 +1128,12 @@
     "zigbee-topology-"
   ],
   "internalExactValues": [
+    "alarm-add",
+    "alarm-edit",
+    "alarm-remove",
+    "alarm-create",
+    "alarm-cancel",
+    "alarm-ok",
     "archive-summary",
     "backup-recovery",
     "opening-orphan",

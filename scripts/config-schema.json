@@ -13,6 +13,10 @@
     "config.markers[]": {
       "allowExtra": true
     },
+    "config.markers[].alert_sources": {
+      "required": false,
+      "type": "object"
+    },
     "config.markers[].angle": {
       "max": 360,
       "min": -360,

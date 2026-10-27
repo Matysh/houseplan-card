@@ -69,3 +69,15 @@ does not increase them again. This records a feature cost, not acceleration.
 
 The full ordinary pre-push gate and subsequent CI/CODE results are recorded in
 the final issue handoff after execution. No result is inferred here in advance.
+# Full-gate fixture follow-up
+
+The first final pre-push gate found missing B-layer registrations: the emitted
+Voluptuous schema manifest, alert control/dialog hook inventory, help and Golden
+helper counts, the current-feature opaque-read compatibility hit, and controller
+registration on two old geometry test shells. These are updated without changing
+the product fingerprint or the browser/backend results below. The wall corpus
+adds only the alert demo and its non-config contract fixture, using the frozen
+accepted #1070 wall implementation; all 133 previous document records and all 73
+previous inventory entries remain byte-for-byte equal and in their original order.
+The failed run is preserved at `output/1000-final-prepush-r1.log` in the Linux checkout.
+
