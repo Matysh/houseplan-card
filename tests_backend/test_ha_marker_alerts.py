@@ -1,4 +1,4 @@
-"""#1000: real authenticated Store/CAS/copy writers retain definitions only."""
+"""#1000: HA setup and Store/CAS/Copy WS handler retain definitions only."""
 import copy
 
 import pytest
@@ -45,6 +45,37 @@ async def test_issue1000_real_store_copy_and_rebind_preserve_definitions_without
     stale = await _send(client, {"type": "houseplan/config/set", "config": config, "expected_rev": before[0]["rev"]})
     assert stale["error"]["code"] == "conflict"
     assert await _pair(client) == final
+
+
+async def test_issue1000_copy_clears_physical_more_info_target_without_weakening_guard(hass, hass_ws_client):
+    client, before = await _seed(hass, hass_ws_client, real=True)
+    config = copy.deepcopy(before[0]["config"])
+    config["markers"][0].update({"more_info_entity": "switch.source", "alert_sources": _rules()})
+    saved = await _send(client, {"type": "houseplan/config/set", "config": config,
+                               "expected_rev": before[0]["rev"]})
+    assert saved["success"], saved
+    accepted = await _pair(client)
+    events = []
+    hass.bus.async_listen("call_service", lambda event: events.append(event.data))
+
+    retained = _request(accepted)
+    rejected = await _send(client, retained)
+    assert not rejected["success"] and rejected["error"]["code"] == "invalid_more_info_entity"
+    assert await _pair(client) == accepted
+
+    cleaned = copy.deepcopy(retained)
+    del cleaned["marker"]["more_info_entity"]
+    copied = await _send(client, cleaned)
+    assert copied["success"], copied
+    after = await _pair(client)
+    markers = {marker["id"]: marker for marker in after[0]["config"]["markers"]}
+    assert markers["source"] == accepted[0]["config"]["markers"][0]
+    assert "more_info_entity" not in markers["v_copy"]
+    assert markers["source"]["alert_sources"] == markers["v_copy"]["alert_sources"] == _rules()
+    assert markers["v_copy"]["binding"] == "virtual"
+    assert after[0]["rev"] == accepted[0]["rev"] + 1
+    assert after[1]["rev"] == accepted[1]["rev"] + 1
+    assert not events
 
 
 @pytest.mark.parametrize("bad", [None, "opaque", [{"type": "external", "level": "alarm"}],

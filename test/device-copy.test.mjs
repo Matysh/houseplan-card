@@ -27,6 +27,20 @@ test('#935 automatic HA lamp freezes base icon and manual glow, not own binding/
   assert.equal(resolvedLightSources({ states: {} }, [runtime])[0].on, true);
 });
 
+test('#1000 virtual copy clears the physical HA dialog target and retains independent alarm definitions', () => {
+  const alerts = [{ id: 'r1', type: 'threshold', level: 'attention', entity_id: 'light.lamp', operator: 'eq', value: 'on' }];
+  const source = device({ marker: { id: 'lamp', binding: 'entity:light.lamp',
+    more_info_entity: 'light.lamp', light_entity: 'light.lamp', toggle_entity: 'light.lamp', alert_sources: alerts } });
+  const before = structuredClone(source);
+  const copy = virtualDeviceCopy(source, 'v_new', 'Lamp 2', [], hass, '#ffffff');
+  assert.equal(copy.binding, 'virtual');
+  for (const key of ['more_info_entity', 'light_entity', 'toggle_entity']) assert.equal(Object.hasOwn(copy, key), false);
+  assert.deepEqual(copy.alert_sources, alerts);
+  assert.notEqual(copy.alert_sources, source.marker.alert_sources);
+  copy.alert_sources[0].value = 'off';
+  assert.deepEqual(source, before);
+});
+
 test('#935 template preserves nested future settings and explicit external controls independently', () => {
   const marker = { id: 'lamp', binding: 'entity:light.lamp', room_id: 'r1', icon: 'mdi:star',
     controls: ['light.lamp', 'light.other', 'sensor.legacy', 'light.other'],
