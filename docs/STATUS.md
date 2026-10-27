@@ -1,6 +1,6 @@
 # Project status
 
-HA more-info target (#1087) separates the opened entity from displayed measurements. The optional own-entity picker affects the More Info tap and HA footer only; #997 right-click Settings and existing device presentation/control semantics are retained. Task delivery stops in S6 before code review by owner instruction.
+HA more-info target (#1087) separates the opened entity from displayed measurements. The optional own-entity picker affects the More Info tap and HA footer only; #997 right-click Settings and existing device presentation/control semantics are retained.
 
 Compact floor navigation (#997) uses the actual header width and the shared
 UI Kit select. Existing navigation/dirty guards, fixed-floor and writer rules
