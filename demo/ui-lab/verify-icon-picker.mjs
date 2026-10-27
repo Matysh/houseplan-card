@@ -8,7 +8,7 @@ import { createLabServer } from './server.mjs';
 import { attestLaunchedBrowser } from '../../scripts/browser-attestation.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 
-  const { values } = parseArgs({ options: { 'ha-cache': { type: 'string' } } });
+const { values } = parseArgs({ options: { 'ha-cache': { type: 'string' } } });
 const server = createLabServer({ port: 0, ...(values['ha-cache'] ? { haCache: values['ha-cache'] } : {}) });
 server.listen(0, '127.0.0.1'); await once(server, 'listening');
 const origin = `http://127.0.0.1:${server.address().port}`;

@@ -120,3 +120,10 @@ try {
   writeFileSync(new URL('report.json',output),JSON.stringify({rows},null,2));
   console.log(`PASS #998 dialog sweep: ${rows.length} controls`);
 } finally { await fixture.close(); }
+
+// The selected CI smoke includes the genuine MDI component, not only native
+// select wrappers. Acquisition verifies the pinned official wheel before use;
+// the browser fixture itself has no HA connection or external network access.
+const { prepareHa } = await import('./ui-lab/prepare-ha.mjs');
+await prepareHa();
+await import('./ui-lab/verify-icon-picker.mjs');
