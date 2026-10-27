@@ -47,6 +47,30 @@ test('#1000 custom facts respect static/live/hidden/lifecycle policy and unknown
   }
 });
 
+test('#1000 inert external cause uses the same presentation consumer without a producer', () => {
+  const fixture = makeDeviceIssuesFixture(), calls = [];
+  fixture.callService = (...args) => { calls.push(['service', ...args]); };
+  fixture.callWS = (...args) => { calls.push(['ws', ...args]); };
+  const before = structuredClone({ states: fixture.states, device: fixture.device });
+  const threshold = thresholdIssues([observation('threshold')], 'en')[0];
+  /** @type {import('../src/device-issues.ts').ResolvedDeviceIssue} */
+  const external = { ...threshold, cause: { type: 'external', id: 'inert-fixture', level: 'attention' },
+    name: 'External fixture', explanation: 'Inert consumer input', groupTitle: 'Attention' };
+  const project = externalCause => resolveDevicePresentation(fixture, fixture.device,
+    { ...options, alertIssues: [threshold, externalCause] });
+  const attention = project(external);
+  assert.equal(attention.attention, 'Attention'); assert.equal(attention.pulse.kind, 'none');
+  assert.deepEqual(attention.issues.map(issue => issue.cause.type), ['native', 'threshold', 'external']);
+  assert.equal(new Set(attention.issues.map(issue => issue.cause.id)).size, 3);
+  assert.equal(attention.issues.find(issue => issue.cause.type === 'external').explanation, 'Inert consumer input');
+  const alarm = project({ ...external, severity: 'alarm',
+    cause: { ...external.cause, level: 'alarm' }, groupTitle: 'Alarm' });
+  assert.equal(alarm.visual.status, 'alarm'); assert.equal(alarm.pulse.kind, 'alarm');
+  assert.equal(alarm.attention, undefined); assert.equal(alarm.issues.length, 3);
+  assert.deepEqual(calls, [], 'a typed cause is inert presentation data, not an external API or HA action');
+  assert.deepEqual({ states: fixture.states, device: fixture.device }, before);
+});
+
 test('#1000 confirmation timer invalidates real incremental presentation without an HA tick', () => {
   const host = captureHost(oracleFixture()), reuse = new RenderSnapshotReuseWindow();
   const id = host._devices[0].id, key = presentationSnapshotKey(id, false);

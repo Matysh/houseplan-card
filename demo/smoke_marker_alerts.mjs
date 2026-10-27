@@ -92,6 +92,19 @@ try {
   await page.keyboard.press('Escape');await settle();
   out.narrowEscapeKeepsConstructor = await constructor.count()===1&&await narrowControl.locator('button').getAttribute('aria-expanded')==='false';
   await constructor.locator('[data-hp="alarm-cancel"]').click();await dialog.getByRole('button',{name:'Cancel',exact:true}).click();await settle();
+  await page.setViewportSize({width:1280,height:1100});
+  await page.evaluate(()=>window.__hpTest.openMarkerDialog('d_light1'));await settingsSection(dialog,'alarms');
+  const writeCursor=await page.evaluate(()=>window.__hp1000Calls.length);
+  while(await dialog.locator('[data-hp="alarm-remove"]').count()){
+    await dialog.locator('[data-hp="alarm-remove"]').first().click();await settle();
+  }
+  await dialog.locator('[data-hp="dialog-confirm"]').click();await settle();await dialog.waitFor({state:'detached'});
+  out.lastRuleSaveOmitsOptionalField=await page.evaluate(cursor=>{
+    const writes=window.__hp1000Calls.slice(cursor).filter(message=>message.type==='houseplan/config/set');
+    const sent=writes[0]?.config.markers.find(marker=>marker.id==='d_light1');
+    const saved=window.__card._serverCfg.markers.find(marker=>marker.id==='d_light1');
+    return writes.length===1&&!!sent&&!!saved&&!Object.hasOwn(sent,'alert_sources')&&!Object.hasOwn(saved,'alert_sources');
+  },writeCursor);
   out.noHaActions = await page.evaluate(()=>window.__serviceCalls.length===0);
   checkAll(out);
 } catch(error) { console.error(error); out.completed = false; checkAll(out); }

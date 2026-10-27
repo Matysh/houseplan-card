@@ -125,6 +125,22 @@ const MUTANT_DEFINITIONS = [
       replace: 'return Math.max(1, from.stageHeight + from.headerHeight\n    + from.editorChromeHeight - headerHeight - editorChromeHeight);' }],
   },
   {
+    id: 'threshold-cold-view-imports-without-rule-1000',
+    guard: 'node demo/smoke_marker_alert_view.mjs',
+    because: '#1000 AC8: the actual cold Chromium request graph must omit the optional threshold graph without a rule, including readonly View. A pure codec/runtime unit cannot prove that the mounted card gates its import or avoids editor/settings chunks. Registered only; nightly execution.',
+    patches: [{ file: 'src/view-runtimes.ts',
+      find: "if (this.alerts.state !== 'ready' && this.wantsAlerts()) void this.alerts.ensure();",
+      replace: "if (this.alerts.state !== 'ready') void this.alerts.ensure();" }],
+  },
+  {
+    id: 'threshold-writer-skips-alert-validation-1000',
+    guard: 'python3 -m pytest tests_backend/test_ha_marker_alerts.py -q',
+    because: '#1000 AC6: authenticated config/set must reject a new malformed/fourth/external rule before changing either durable Store half or revision. Cheap codec negatives cover values but not this actual writer boundary and its unchanged-pair response. Registered only; nightly execution.',
+    patches: [{ file: 'custom_components/houseplan/validation.py',
+      find: 'if "alert_sources" in marker and (validate_all or old_marker is None',
+      replace: 'if False and (validate_all or old_marker is None' }],
+  },
+  {
     id: 'threshold-constructor-crosses-instance-1000',
     guard: 'node --test test/marker-alert-editor.test.mjs',
     because: '#1000 AC1/AC5: execute the actual rendered OK/Cancel callbacks after reopen; a retired constructor cannot commit the current local draft.',
