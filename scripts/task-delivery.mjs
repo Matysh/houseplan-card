@@ -54,8 +54,8 @@ export function taskDelivery(commit) {
   const issue = issues[0];
   const docs = (commit.files || []).filter(f => new RegExp(`^docs/reviews/SPEC-REVIEW-${issue}-r[1-9]\\d*\\.md$`).test(f));
   const round = /-r([1-9]\d*)\.md$/.exec(docs[0] || '')?.[1];
-  // #950: the publisher has emitted both headings; neither may name another round.
-  const heading = new RegExp(`^# (?:SPEC-REVIEW-${issue}-r${round}|SPEC-REVIEW — issue #${issue}, заход r${round})\\s*$`, 'm');
+  // #950/#1104: published headings stay bound to the exact new SPEC issue/round.
+  const heading = new RegExp(`^# (?:SPEC-REVIEW-${issue}-r${round}|SPEC-REVIEW — issue #${issue}, заход r${round}|SPEC-REVIEW #${issue} — заход r${round})\\s*$`, 'm');
   const findings = provenSpecFindings(commit, docs[0], issue);
   // CODE-REVIEW publication is ordinary evidence attached to implementation.
   if (!phases.length && !docs.length && (commit.files || []).some(f => /\/CODE-REVIEW-/.test(f))) return 'implementation';

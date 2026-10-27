@@ -1,5 +1,18 @@
 # Project status
 
+SPEC delivery compatibility (#1104) recognizes the exact published heading
+`SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
+SPEC filename. Publisher, terminal trailers, paths, machine anchors and real
+material-tree checks retain their authority; historical sealed reports remain intact.
+After CODE r1, the #1104 candidate restores the accepted SPEC1096r2 report and
+accepted INDEX snapshot byte-for-byte from `80349ae3`. This ordinary #1104
+documentation synchronization preserves the original publisher receipt and
+machine anchors and claims no new SPEC delivery. Its own CODE r1 report is
+retained. For the owner's one-time manual #1104 delivery, the combined index is
+generated from all retained reports in the integration candidate going to dev.
+The owner explicitly authorized dev delivery and S8 after the H1 repair;
+CODE r1 remains RED, with no replacement GREEN or repeated CODE round claimed.
+
 HA more-info target (#1087) separates the opened entity from displayed measurements. The optional own-entity picker affects the More Info tap and HA footer only; #997 right-click Settings and existing device presentation/control semantics are retained.
 
 Compact floor navigation (#997) uses the actual header width and the shared

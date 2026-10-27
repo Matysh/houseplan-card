@@ -179,7 +179,10 @@ test('#957 pipeline retains sealed material before any SPEC publication and does
   }
 });
 
-for (const heading of ['# SPEC-REVIEW-2-r1', '# SPEC-REVIEW — issue #2, заход r1'])
+const publishedSpecHeadings = ['# SPEC-REVIEW-2-r1', '# SPEC-REVIEW — issue #2, заход r1',
+  // Exact shape published by SPEC1096r2 in 80349ae3; no historical bytes change.
+  '# SPEC-REVIEW #2 — заход r1'];
+for (const heading of publishedSpecHeadings)
 for (const trailer of [phase, '']) test(`#903/#950 verified ${trailer ? 'v1' : 'legacy'} ${heading} keeps trace without implementation membership`, t => {
   const f = fixture(t); const sha = f.spec({ trailer, heading });
   const result = f.catalogue();
@@ -201,20 +204,25 @@ for (const trailer of [phase, '']) test(`#903/#950 verified ${trailer ? 'v1' : '
   assert.equal(f.run(['status', '--porcelain']), before);
 });
 
-test('#950 both supported SPEC headings must match the exact file issue and round', t => {
+test('#950/#1104 every published SPEC heading must match the exact file issue and round', t => {
   for (const heading of [
     '# SPEC-REVIEW-3-r1', '# SPEC-REVIEW-2-r2',
     '# SPEC-REVIEW — issue #3, заход r1', '# SPEC-REVIEW — issue #2, заход r2',
     '# SPEC-REVIEW — issue #2, заход r01', '# CODE-REVIEW — issue #2, заход r1',
     '# SPEC-REVIEW — issue #2, заход r1 (accepted)',
+    '# SPEC-REVIEW #3 — заход r1', '# SPEC-REVIEW #2 — заход r2',
+    '# SPEC-REVIEW #02 — заход r1', '# SPEC-REVIEW #2 — заход r01',
+    '# SPEC-REVIEW #2 — заход r1 (accepted)', '# CODE-REVIEW #2 — заход r1',
+    '# SPEC-REVIEW #2, заход r1', '# SPEC-REVIEW #2 — round r1',
   ]) {
     const f = fixture(t); f.spec({ heading });
     assert.throws(f.catalogue, /Unproven spec-only/, heading);
   }
 });
 
-test('#950 published heading does not relax publisher, paths, new-file or machine-anchor proof', () => {
-  const document = withMaterialAnchors('# SPEC-REVIEW — issue #2, заход r1\n', {
+for (const heading of publishedSpecHeadings)
+test(`#950/#1104 ${heading} does not relax publisher, paths, new-file or machine-anchor proof`, () => {
+  const document = withMaterialAnchors(`${heading}\n`, {
     sha: 'a'.repeat(40), tree: 'b'.repeat(40), issueBody: 'c'.repeat(64), verdict: 'green', high: 0,
   });
   const valid = { sha: 'd'.repeat(40), message: reviewPublicationMessage(2, 'spec'),
@@ -222,8 +230,12 @@ test('#950 published heading does not relax publisher, paths, new-file or machin
     files: ['docs/reviews/SPEC-REVIEW-2-r1.md', 'docs/reviews/INDEX.md'],
     specDocument: document, specTreeType: 'tree', specStatus: 'A' };
   assert.equal(taskDelivery(valid), 'spec-review');
-  for (const [name, over] of [
+  for (const [name, over, expected = /Unproven spec-only/] of [
     ['foreign publisher', { author: 'someone@example.com' }],
+    ['foreign subject', { message: reviewPublicationMessage(3, 'spec') }],
+    ['duplicate terminal issue', { message: reviewPublicationMessage(2, 'spec') + 'Issue: #2\n' }],
+    ['unknown delivery phase', { message: reviewPublicationMessage(2, 'spec').replace(phase, 'Delivery-Phase: unknown/v1') }, /Unknown\/malformed delivery phase/],
+    ['visible delivery', { message: reviewPublicationMessage(2, 'spec').replace('User-Visible: no', 'User-Visible: yes') }],
     ['extra file', { files: [...valid.files, 'docs/other.md'] }],
     ['unproven sidecar', { files: [...valid.files, 'docs/reviews/findings/2-spec-r1.md'] }],
     ['modified SPEC', { specStatus: 'M' }],
@@ -231,13 +243,14 @@ test('#950 published heading does not relax publisher, paths, new-file or machin
     ['absent tree', { specTreeType: null }],
     ...['Тело issue:', 'Дерево материала:', 'Вердикт конвейера:'].map(anchor =>
       [anchor, { specDocument: document.split('\n').filter(line => !line.includes(anchor)).join('\n') }]),
-  ]) assert.throws(() => taskDelivery({ ...valid, ...over }), /Unproven spec-only/, name);
+  ]) assert.throws(() => taskDelivery({ ...valid, ...over }), expected, name);
 });
 
-test('#950 published heading retains content-bound SPEC companion semantics', t => {
+for (const heading of publishedSpecHeadings)
+test(`#950/#1104 ${heading} retains content-bound SPEC companion semantics`, t => {
   const f = fixture(t), policy = findingsPolicy('[2]', { repo: 'o/r', issue: 2, stage: 'spec', round: 1 });
   const text = findingsHeader(policy) + 'No outside findings.\n';
-  const sha = f.spec({ heading: '# SPEC-REVIEW — issue #2, заход r1',
+  const sha = f.spec({ heading,
     findings: { path: policy.path, text, link: findingsLink(policy, text) } });
   assert.deepEqual(f.catalogue().entries, []);
   assert.deepEqual(f.catalogue().specDeliveries, [{ issue: 2, commit: sha, phase: 'spec-review' }]);
