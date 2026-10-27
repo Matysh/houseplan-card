@@ -170,6 +170,24 @@ floor-physics assertions passed. The full JSON retains raw IO phases and counter
 | small / visible-color | 5.6 | 8.8 | 13.8 | 14.3 | 0.0 |
 | small / visible-title | 5.1 | 9.3 | 13.7 | 13.9 | 0.0 |
 
+## Exact mandatory CI cores
+
+A separate single serial quiet run executed the actual four mandatory wrappers
+on the same final fingerprint. This additionally binds the original 780px RED
+scene to final-source GREEN, rather than treating the full 1200px matrix as an
+identical input. Each wrapper kept its 180-second timeout and all timing/counter
+assertions. There were no retries or discarded samples. [Raw reports and exact
+elapsed/exit receipts](1093-evidence/cores/runs.json).
+
+| Wrapper profile | Host width | Samples | Wall seconds | Exit |
+|---|---:|---:|---:|---:|
+| visible | 780 | 40 | 18.89 | 0 |
+| inactive | 1200 | 40 | 18.83 | 0 |
+| history0 | 780 | 80 | 25.53 | 0 |
+| history320 | 780 | 80 | 52.64 | 0 |
+
+Final matched visible Save (0/320ms fixed delays): delay0: pre-request p95 23.6ms, ACK-to-paint p95 41.2ms, client p95 61.3ms, client max 65.6ms; delay320: pre-request p95 22.0ms, ACK-to-paint p95 38.3ms, client p95 59.2ms, client max 61.8ms. The original baseline on this nonempty 780px input was RED (ACK-to-paint p95 245.2/239.6ms; client p95 324.9/305.2ms).
+
 ## Selected visual and resource evidence
 
 The four ledger scenes were captured with the canonical selected invocation

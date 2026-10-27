@@ -1,0 +1,474 @@
+[
+  {
+    "profile": "visible",
+    "command": "node demo/smoke_selective_invalidation_visible.mjs",
+    "sourceFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+    "elapsedMs": 18889.011121,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "timeoutMs": 180000,
+    "samples": 40,
+    "failures": [],
+    "loads": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "cold": false,
+        "hostWidth": 780,
+        "markers": 200,
+        "hidden": 0,
+        "visible": 120,
+        "contacts": 35,
+        "contactFaces": 2,
+        "wallPaths": 1,
+        "floorBuilds": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "registry": {
+          "devices": 214,
+          "entities": 2890,
+          "states": 1685
+        }
+      }
+    ],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "visible-bg",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 18.09999999962747,
+          "p95": 23.600000001490116,
+          "max": 23.700000001117587
+        },
+        "ackToPaint": {
+          "median": 35.40000000037253,
+          "p95": 41.20000000111759,
+          "max": 41.80000000074506
+        },
+        "client": {
+          "median": 56.19999999925494,
+          "p95": 61.30000000074506,
+          "max": 65.60000000149012
+        },
+        "maxLongTask": 64
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "visible-bg",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 16.700000001117587,
+          "p95": 22,
+          "max": 23.100000001490116
+        },
+        "ackToPaint": {
+          "median": 34,
+          "p95": 38.30000000074506,
+          "max": 39.19999999925494
+        },
+        "client": {
+          "median": 53.80000000074506,
+          "p95": 59.19999999925494,
+          "max": 61.80000000074506
+        },
+        "maxLongTask": 0
+      }
+    ]
+  },
+  {
+    "profile": "inactive",
+    "command": "node demo/smoke_selective_invalidation_inactive.mjs",
+    "sourceFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+    "elapsedMs": 18829.905890999995,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "timeoutMs": 180000,
+    "samples": 40,
+    "failures": [],
+    "loads": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "cold": false,
+        "hostWidth": 1200,
+        "markers": 200,
+        "hidden": 0,
+        "visible": 120,
+        "contacts": 35,
+        "contactFaces": 2,
+        "wallPaths": 1,
+        "floorBuilds": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "registry": {
+          "devices": 214,
+          "entities": 2890,
+          "states": 1685
+        }
+      }
+    ],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "inactive-paint",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 17.199999999254942,
+          "p95": 20.40000000037253,
+          "max": 21.300000000745058
+        },
+        "ackToPaint": {
+          "median": 36.5,
+          "p95": 42,
+          "max": 46.69999999925494
+        },
+        "client": {
+          "median": 54.30000000074506,
+          "p95": 62.20000000111759,
+          "max": 64.29999999888241
+        },
+        "maxLongTask": 63
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "inactive-paint",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 17.199999999254942,
+          "p95": 18.700000001117587,
+          "max": 19.399999998509884
+        },
+        "ackToPaint": {
+          "median": 32,
+          "p95": 35.09999999962747,
+          "max": 38.09999999962747
+        },
+        "client": {
+          "median": 51.09999999962747,
+          "p95": 55.5,
+          "max": 57.59999999962747
+        },
+        "maxLongTask": 0
+      }
+    ]
+  },
+  {
+    "profile": "history0",
+    "command": "node demo/smoke_selective_invalidation_history0.mjs",
+    "sourceFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+    "elapsedMs": 25530.574047000002,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "timeoutMs": 180000,
+    "samples": 80,
+    "failures": [],
+    "loads": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "cold": false,
+        "hostWidth": 780,
+        "markers": 200,
+        "hidden": 0,
+        "visible": 120,
+        "contacts": 35,
+        "contactFaces": 2,
+        "wallPaths": 1,
+        "floorBuilds": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "registry": {
+          "devices": 214,
+          "entities": 2890,
+          "states": 1685
+        }
+      }
+    ],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-copy",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 10.900000000372529,
+          "p95": 12.699999999254942,
+          "max": 17.100000001490116
+        },
+        "ackToPaint": {
+          "median": 74.5,
+          "p95": 81.5,
+          "max": 97.90000000037253
+        },
+        "client": {
+          "median": 87.40000000037253,
+          "p95": 96.39999999850988,
+          "max": 117.80000000074506
+        },
+        "maxLongTask": 113
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-undo",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.700000001117587,
+          "p95": 5.5,
+          "max": 6
+        },
+        "ackToPaint": {
+          "median": 64,
+          "p95": 73.30000000074506,
+          "max": 76.60000000149012
+        },
+        "client": {
+          "median": 70.90000000037253,
+          "p95": 80.5,
+          "max": 84.70000000111759
+        },
+        "maxLongTask": 79
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-redo",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.5,
+          "p95": 5.400000000372529,
+          "max": 5.900000000372529
+        },
+        "ackToPaint": {
+          "median": 62.30000000074506,
+          "p95": 66.09999999962747,
+          "max": 70.69999999925494
+        },
+        "client": {
+          "median": 68.69999999925494,
+          "p95": 72.90000000037253,
+          "max": 78.5
+        },
+        "maxLongTask": 76
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-delete",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 27.800000000745058,
+          "p95": 31.800000000745058,
+          "max": 31.90000000037253
+        },
+        "ackToPaint": {
+          "median": 108.20000000111759,
+          "p95": 121.5,
+          "max": 122.60000000149012
+        },
+        "client": {
+          "median": 139.5,
+          "p95": 156.30000000074506,
+          "max": 157.30000000074506
+        },
+        "maxLongTask": 153
+      }
+    ]
+  },
+  {
+    "profile": "history320",
+    "command": "node demo/smoke_selective_invalidation_history320.mjs",
+    "sourceFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+    "elapsedMs": 52635.960706000005,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "timeoutMs": 180000,
+    "samples": 80,
+    "failures": [],
+    "loads": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "cold": false,
+        "hostWidth": 780,
+        "markers": 200,
+        "hidden": 0,
+        "visible": 120,
+        "contacts": 35,
+        "contactFaces": 2,
+        "wallPaths": 1,
+        "floorBuilds": {
+          "wallUnion": 1,
+          "innerContour": 0,
+          "cleanFloor": 24,
+          "openingWallIndex": 1,
+          "lightBarrier": 0,
+          "glowClip": 0,
+          "physicalBodies": 2,
+          "openingTunnel": 0,
+          "lightPhysicalBodies": 0,
+          "sunRays": 0,
+          "isoSun": 0
+        },
+        "registry": {
+          "devices": 214,
+          "entities": 2890,
+          "states": 1685
+        }
+      }
+    ],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-copy",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 10.799999998882413,
+          "p95": 13.299999998882413,
+          "max": 15.900000000372529
+        },
+        "ackToPaint": {
+          "median": 73,
+          "p95": 82,
+          "max": 97.59999999962747
+        },
+        "client": {
+          "median": 89,
+          "p95": 95.90000000037253,
+          "max": 116.5
+        },
+        "maxLongTask": 96
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-undo",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.5,
+          "p95": 5.299999998882413,
+          "max": 5.699999999254942
+        },
+        "ackToPaint": {
+          "median": 63.5,
+          "p95": 69.09999999962747,
+          "max": 77.40000000037253
+        },
+        "client": {
+          "median": 70.79999999888241,
+          "p95": 76.59999999962747,
+          "max": 85.40000000037253
+        },
+        "maxLongTask": 74
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-redo",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.5,
+          "p95": 5.699999999254942,
+          "max": 5.800000000745058
+        },
+        "ackToPaint": {
+          "median": 63.59999999962747,
+          "p95": 69.5,
+          "max": 71.09999999962747
+        },
+        "client": {
+          "median": 72,
+          "p95": 76.69999999925494,
+          "max": 78.90000000037253
+        },
+        "maxLongTask": 67
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-delete",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 27.40000000037253,
+          "p95": 30.90000000037253,
+          "max": 32.100000001490116
+        },
+        "ackToPaint": {
+          "median": 108.19999999925494,
+          "p95": 120.70000000111759,
+          "max": 136.80000000074506
+        },
+        "client": {
+          "median": 139.10000000149012,
+          "p95": 155.5,
+          "max": 172.2000000011176
+        },
+        "maxLongTask": 130
+      }
+    ]
+  }
+]
