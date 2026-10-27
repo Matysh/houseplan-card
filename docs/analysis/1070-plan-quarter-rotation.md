@@ -164,7 +164,12 @@ The actual unused ISO import was removed. All59 targeted policy/source units
 PASS. The first old-reference test RED, mobile stacking RED and diagnostic
 seed timing RED are retained with the successful bounded repairs. These are
 author verification results; final automatic gate and exact-material CI are
-reported in the issue handoff. No physical tablet/GPU result is claimed.
+reported in the issue handoff. The first full automatic pre-push passed the
+product group and failed two tooling assertions for the single unregistered
+optional native HA verification tool. It is now explicitly classified as an
+externally cached author invocation alongside the existing #609/#870 tools;
+ordinary CI mobile smoke/Golden ownership remains intact. All28 existing
+check-inputs tests and the strict CLI coverage check pass after that repair. No physical tablet/GPU result is claimed.
 
 ## Preserved matched performance series
 
