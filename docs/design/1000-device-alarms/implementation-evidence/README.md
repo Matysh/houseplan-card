@@ -4,6 +4,14 @@ The accepted contract is issue #1000 SPEC r3, body digest
 `88dc3d01d42b45c83ebb8029055c1d1509a2cf41e1e3c3fe425b1640a8f70d5d`.
 This directory records task evidence, not global Golden baseline acceptance.
 
+On 27 October the owner explicitly authorized calibrated initial/core limit
+increases and stopped byte-saving work: [#1000 decision](https://github.com/Matysh/houseplan-card/issues/1000#issuecomment-6440488743),
+[#1070 decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253).
+The approved values are initial absolute387200/calibration352000 and manual core
+reference14660 plus the unchanged50-line band. They will be inherited from
+accepted #1070; rolling2000-byte bands, performance and safety remain unchanged.
+Price snapshots below retain their original historical limits and source identities.
+
 ## Accepted UI and paired replay
 
 The immutable visual package is
@@ -77,7 +85,7 @@ comparison does not accept those baselines or claim their inherited difference
 as a #1000 visual change. The declared task subset and native RGB/state-source/copy
 smokes retain their ordinary checks.
 
-## Cold boundary and matched price
+## Cold boundary and earlier matched price
 
 The [selected Linux run](raw/selected-browser.json) is GREEN: 5 required smokes
 and all 20 declared Golden intents. Its ten new frames are in [golden/](golden/);
@@ -98,7 +106,7 @@ the accepted confirmed frame while the entity's state and saved config remain
 unchanged. Static/unsupported input creates no cause, reattachment confirms
 afresh and a removed rule does not resurrect.
 
-[Latest matched price](raw/matched-latest-price.json) uses actual accepted dev
+[Recorded matched price](raw/matched-latest-price.json) uses then-accepted dev
 `fd62d98eee72b4bdc14d36d80dade7bfe0f48afb`. Its frontend source equals accepted
 #1015 `e2541d6c`; #1090 changes the backend only. The untouched frozen Linux base
 has fingerprint `370afdc52956487de9842dedc19929acc25468c7e18b067f9107b04521f5afbd`;
@@ -106,6 +114,7 @@ the candidate has fingerprint
 `96c4994776476422588abd65856ed2f0ece379c591b438752bd006d23d7f5b51`.
 Both source fingerprints and complete asset topology/SHA checks pass. The earlier
 [accepted #997 comparison](raw/matched997-price.json) remains as history.
+These snapshots precede incoming #1087 and the later copy integration fix.
 
 | Metric | Accepted base | Candidate | Own delta | Reference after task |
 | --- | ---: | ---: | ---: | ---: |
@@ -129,5 +138,13 @@ next must measure its actual combined dev graph.
 
 Full pinned Linux gate/pre-push receipts and final material SHA will be recorded
 before S7. New scenes have explicit task ledger intents; source work does not
-accept generated global baselines or change the 352000-byte absolute wall or
-2000-byte rolling bands.
+accept generated global baselines. The task will inherit the owner-approved
+initial/core limits from actual #1070 S8 and retain the rolling bands.
+
+## Functional integration with accepted #1087
+
+The [separate narrow copy proof](raw/copy-ha-target/README.md) records the actual
+helper and local synthetic HA WebSocket/Store/CAS results. A virtual copy clears
+the source's HA-only dialog target; the source, threshold definitions and strict
+backend guard are preserved. This correction is independent of the limit change
+and makes no byte-saving claim.
