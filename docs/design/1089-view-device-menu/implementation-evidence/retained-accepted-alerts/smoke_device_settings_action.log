@@ -1,0 +1,3864 @@
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-HuK9w8 --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-BBkKiU --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-gPtUHJ --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-G7lbu8 --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Of3GC1 --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-ZUJWpN --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-rTp5Uk --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-d8Hb7L --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-ieqWUU --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-rS1FO6 --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-BArZOa --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-iAHcAX --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-OWUCYb --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-iJDQTP --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-h7D6lm --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-Mua7C0 --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-ExQskz --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-EWN8J8 --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-dMLQPm --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+browser-attestation ok (ok) [smoke_device_settings_action] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-GBfkYz --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+{
+ "material": {
+  "source": null,
+  "fingerprint": "025886a302408a9ce369bf019e576f00496009dfaef992c8d5c55f41efa8830a"
+ },
+ "flat/tap": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "flat/Enter": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   }
+  ],
+  "toast": ""
+ },
+ "flat/Space": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   }
+  ],
+  "toast": ""
+ },
+ "flat/rightSavedNone": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "iso/tap": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "iso/Enter": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   }
+  ],
+  "toast": ""
+ },
+ "iso/Space": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   }
+  ],
+  "toast": ""
+ },
+ "iso/rightSavedNone": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   }
+  ],
+  "toast": ""
+ },
+ "writer:nonAdminStillAllowed": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 1,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "settings",
+       "tap_confirm": true
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      },
+      {
+       "id": "d_temp",
+       "vacuum": null,
+       "binding": "device:d_temp",
+       "name": "Temperature sensor",
+       "icon": null,
+       "display": null,
+       "ripple_color": null,
+       "ripple_size": null,
+       "size": 1.4,
+       "angle": null,
+       "tap_action": "settings",
+       "tap_target": null,
+       "tap_confirm": true,
+       "controls": null,
+       "value_badge": {
+        "enabled": false
+       },
+       "use_climate_temp": null,
+       "glow_radius_cm": null,
+       "model": "TH01",
+       "link": null,
+       "description": null,
+       "pdfs": [],
+       "hidden": false
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_temp": {
+        "binding": "device:d_temp",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": true,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 11
+   }
+  ],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": "Enter",
+    "prevented": true
+   },
+   {
+    "type": "keydown",
+    "trusted": true,
+    "key": " ",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": "Device saved"
+ },
+ "touch/flat": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "touch",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "touch",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "touch/iso": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "touch",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "touch",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "touch",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "touch",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "denied/no-write/en/tap": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": "Device settings require House Plan edit permission and are unavailable in kiosk mode."
+ },
+ "denied/no-write/ru/tap": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": "Настройки устройства доступны пользователю с правом редактирования вне режима киоска."
+ },
+ "denied/kiosk/en/tap": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": "Device settings require House Plan edit permission and are unavailable in kiosk mode."
+ },
+ "denied/kiosk/en/right": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": "Device settings require House Plan edit permission and are unavailable in kiosk mode."
+ },
+ "denied/kiosk/ru/tap": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": "Настройки устройства доступны пользователю с правом редактирования вне режима киоска."
+ },
+ "denied/kiosk/ru/right": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": "Настройки устройства доступны пользователю с правом редактирования вне режима киоска."
+ },
+ "denied/unloaded": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [],
+  "toast": ""
+ },
+ "rebindWithoutSettingsIntent": {
+  "target": null,
+  "visible": false,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 1,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ],
+       "segments": []
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ],
+       "segments": []
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_temp",
+       "binding": "entity:sensor.living_temp",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "size": 1.4,
+       "tap_action": "settings",
+       "tap_confirm": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "settings",
+       "tap_confirm": true
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_temp": {
+        "binding": "entity:sensor.living_temp",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": false,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 5
+   }
+  ],
+  "events": [],
+  "toast": ""
+ },
+ "held/connection:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/user:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/ABA:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/route:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/mode:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/space:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/hidden:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/delete:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/move:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "rebindTimeline": {
+  "beforeSetup": {
+   "at": 1793138566494,
+   "target": null,
+   "visible": false,
+   "mode": "view",
+   "other": false,
+   "feedback": 0,
+   "writes": 0,
+   "services": 0,
+   "moreInfo": 0,
+   "writeMessages": [],
+   "events": [
+    {
+     "type": "pointerup",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    },
+    {
+     "type": "click",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    }
+   ],
+   "toast": ""
+  },
+  "afterPublicRebind": {
+   "at": 1793138566610,
+   "target": null,
+   "visible": false,
+   "mode": "view",
+   "other": false,
+   "feedback": 0,
+   "writes": 1,
+   "services": 0,
+   "moreInfo": 0,
+   "writeMessages": [
+    {
+     "type": "houseplan/config/set",
+     "config": {
+      "spaces": [
+       {
+        "id": "f1",
+        "title": "Ground floor",
+        "plan_url": "/assets/f1.svg",
+        "plan_aspect": 1.25,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "r1",
+          "name": "Living room",
+          "area": "living_room",
+          "poly": [
+           [
+            0.04,
+            0.14
+           ],
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.04,
+            0.58
+           ]
+          ]
+         },
+         {
+          "id": "r2",
+          "name": "Kitchen",
+          "area": "kitchen",
+          "poly": [
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.96,
+            0.14
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.55,
+            0.46
+           ]
+          ]
+         },
+         {
+          "id": "r3",
+          "name": "Bedroom",
+          "area": "bedroom",
+          "poly": [
+           [
+            0.55,
+            0.46
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.96,
+            0.86
+           ],
+           [
+            0.55,
+            0.86
+           ]
+          ]
+         },
+         {
+          "id": "r4",
+          "name": "Hallway",
+          "area": "hallway",
+          "poly": [
+           [
+            0.04,
+            0.58
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.55,
+            0.86
+           ],
+           [
+            0.04,
+            0.86
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       },
+       {
+        "id": "garden",
+        "title": "Garden",
+        "plan_url": "/assets/garden.svg",
+        "plan_aspect": 1.4286,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "g1",
+          "name": "Garden",
+          "area": "garden",
+          "poly": [
+           [
+            0.03,
+            0.178
+           ],
+           [
+            0.97,
+            0.178
+           ],
+           [
+            0.97,
+            0.822
+           ],
+           [
+            0.03,
+            0.822
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       }
+      ],
+      "markers": [
+       {
+        "id": "d_lamp",
+        "binding": "device:d_lamp",
+        "hidden": true
+       },
+       {
+        "id": "d_tv",
+        "binding": "device:d_tv",
+        "hidden": true
+       },
+       {
+        "id": "d_kettle",
+        "binding": "device:d_kettle",
+        "hidden": true
+       },
+       {
+        "id": "d_bedlight",
+        "binding": "device:d_bedlight",
+        "hidden": true
+       },
+       {
+        "id": "d_window",
+        "binding": "device:d_window",
+        "hidden": true
+       },
+       {
+        "id": "d_lock",
+        "binding": "device:d_lock",
+        "hidden": true
+       },
+       {
+        "id": "d_motion",
+        "binding": "device:d_motion",
+        "hidden": true
+       },
+       {
+        "id": "d_mower",
+        "binding": "device:d_mower",
+        "hidden": true
+       },
+       {
+        "id": "d_gate",
+        "binding": "device:d_gate",
+        "hidden": true
+       },
+       {
+        "id": "d_temp",
+        "binding": "entity:sensor.living_temp",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "size": 1.4,
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_light1",
+        "binding": "device:d_light1",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_leak",
+        "binding": "device:d_leak",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        }
+       }
+      ],
+      "settings": {
+       "known_devices": [
+        "d_bedlight",
+        "d_gate",
+        "d_kettle",
+        "d_lamp",
+        "d_leak",
+        "d_light1",
+        "d_lock",
+        "d_motion",
+        "d_mower",
+        "d_temp",
+        "d_tv",
+        "d_window"
+       ],
+       "new_device_ids": [],
+       "filter_seeded": true,
+       "marker_area_snapshot": {
+        "d_light1": {
+         "binding": "device:d_light1",
+         "area": "living_room"
+        },
+        "d_lamp": {
+         "binding": "device:d_lamp",
+         "area": "living_room"
+        },
+        "d_tv": {
+         "binding": "device:d_tv",
+         "area": "living_room"
+        },
+        "d_temp": {
+         "binding": "entity:sensor.living_temp",
+         "area": "living_room"
+        },
+        "d_kettle": {
+         "binding": "device:d_kettle",
+         "area": "kitchen"
+        },
+        "d_leak": {
+         "binding": "device:d_leak",
+         "area": "kitchen"
+        },
+        "d_bedlight": {
+         "binding": "device:d_bedlight",
+         "area": "bedroom"
+        },
+        "d_window": {
+         "binding": "device:d_window",
+         "area": "bedroom"
+        },
+        "d_lock": {
+         "binding": "device:d_lock",
+         "area": "hallway"
+        },
+        "d_motion": {
+         "binding": "device:d_motion",
+         "area": "hallway"
+        },
+        "d_mower": {
+         "binding": "device:d_mower",
+         "area": "garden"
+        },
+        "d_gate": {
+         "binding": "device:d_gate",
+         "area": "garden"
+        }
+       },
+       "volumetric_view": false,
+       "show_device_battery": true,
+       "moon": false
+      }
+     },
+     "expected_rev": 5
+    }
+   ],
+   "events": [
+    {
+     "type": "pointerup",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    },
+    {
+     "type": "click",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    }
+   ],
+   "toast": ""
+  },
+  "afterOldImportRelease": {
+   "at": 1793138566709,
+   "target": null,
+   "visible": false,
+   "mode": "view",
+   "other": false,
+   "feedback": 0,
+   "writes": 1,
+   "services": 0,
+   "moreInfo": 0,
+   "writeMessages": [
+    {
+     "type": "houseplan/config/set",
+     "config": {
+      "spaces": [
+       {
+        "id": "f1",
+        "title": "Ground floor",
+        "plan_url": "/assets/f1.svg",
+        "plan_aspect": 1.25,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "r1",
+          "name": "Living room",
+          "area": "living_room",
+          "poly": [
+           [
+            0.04,
+            0.14
+           ],
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.04,
+            0.58
+           ]
+          ]
+         },
+         {
+          "id": "r2",
+          "name": "Kitchen",
+          "area": "kitchen",
+          "poly": [
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.96,
+            0.14
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.55,
+            0.46
+           ]
+          ]
+         },
+         {
+          "id": "r3",
+          "name": "Bedroom",
+          "area": "bedroom",
+          "poly": [
+           [
+            0.55,
+            0.46
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.96,
+            0.86
+           ],
+           [
+            0.55,
+            0.86
+           ]
+          ]
+         },
+         {
+          "id": "r4",
+          "name": "Hallway",
+          "area": "hallway",
+          "poly": [
+           [
+            0.04,
+            0.58
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.55,
+            0.86
+           ],
+           [
+            0.04,
+            0.86
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       },
+       {
+        "id": "garden",
+        "title": "Garden",
+        "plan_url": "/assets/garden.svg",
+        "plan_aspect": 1.4286,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "g1",
+          "name": "Garden",
+          "area": "garden",
+          "poly": [
+           [
+            0.03,
+            0.178
+           ],
+           [
+            0.97,
+            0.178
+           ],
+           [
+            0.97,
+            0.822
+           ],
+           [
+            0.03,
+            0.822
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       }
+      ],
+      "markers": [
+       {
+        "id": "d_lamp",
+        "binding": "device:d_lamp",
+        "hidden": true
+       },
+       {
+        "id": "d_tv",
+        "binding": "device:d_tv",
+        "hidden": true
+       },
+       {
+        "id": "d_kettle",
+        "binding": "device:d_kettle",
+        "hidden": true
+       },
+       {
+        "id": "d_bedlight",
+        "binding": "device:d_bedlight",
+        "hidden": true
+       },
+       {
+        "id": "d_window",
+        "binding": "device:d_window",
+        "hidden": true
+       },
+       {
+        "id": "d_lock",
+        "binding": "device:d_lock",
+        "hidden": true
+       },
+       {
+        "id": "d_motion",
+        "binding": "device:d_motion",
+        "hidden": true
+       },
+       {
+        "id": "d_mower",
+        "binding": "device:d_mower",
+        "hidden": true
+       },
+       {
+        "id": "d_gate",
+        "binding": "device:d_gate",
+        "hidden": true
+       },
+       {
+        "id": "d_temp",
+        "binding": "entity:sensor.living_temp",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "size": 1.4,
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_light1",
+        "binding": "device:d_light1",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_leak",
+        "binding": "device:d_leak",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        }
+       }
+      ],
+      "settings": {
+       "known_devices": [
+        "d_bedlight",
+        "d_gate",
+        "d_kettle",
+        "d_lamp",
+        "d_leak",
+        "d_light1",
+        "d_lock",
+        "d_motion",
+        "d_mower",
+        "d_temp",
+        "d_tv",
+        "d_window"
+       ],
+       "new_device_ids": [],
+       "filter_seeded": true,
+       "marker_area_snapshot": {
+        "d_light1": {
+         "binding": "device:d_light1",
+         "area": "living_room"
+        },
+        "d_lamp": {
+         "binding": "device:d_lamp",
+         "area": "living_room"
+        },
+        "d_tv": {
+         "binding": "device:d_tv",
+         "area": "living_room"
+        },
+        "d_temp": {
+         "binding": "entity:sensor.living_temp",
+         "area": "living_room"
+        },
+        "d_kettle": {
+         "binding": "device:d_kettle",
+         "area": "kitchen"
+        },
+        "d_leak": {
+         "binding": "device:d_leak",
+         "area": "kitchen"
+        },
+        "d_bedlight": {
+         "binding": "device:d_bedlight",
+         "area": "bedroom"
+        },
+        "d_window": {
+         "binding": "device:d_window",
+         "area": "bedroom"
+        },
+        "d_lock": {
+         "binding": "device:d_lock",
+         "area": "hallway"
+        },
+        "d_motion": {
+         "binding": "device:d_motion",
+         "area": "hallway"
+        },
+        "d_mower": {
+         "binding": "device:d_mower",
+         "area": "garden"
+        },
+        "d_gate": {
+         "binding": "device:d_gate",
+         "area": "garden"
+        }
+       },
+       "volumetric_view": false,
+       "show_device_battery": true,
+       "moon": false
+      }
+     },
+     "expected_rev": 5
+    }
+   ],
+   "events": [
+    {
+     "type": "pointerup",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    },
+    {
+     "type": "click",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    }
+   ],
+   "toast": ""
+  },
+  "beforeFreshInput": {
+   "at": 1793138566826,
+   "target": null,
+   "visible": false,
+   "mode": "view",
+   "other": false,
+   "feedback": 0,
+   "writes": 1,
+   "services": 0,
+   "moreInfo": 0,
+   "writeMessages": [
+    {
+     "type": "houseplan/config/set",
+     "config": {
+      "spaces": [
+       {
+        "id": "f1",
+        "title": "Ground floor",
+        "plan_url": "/assets/f1.svg",
+        "plan_aspect": 1.25,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "r1",
+          "name": "Living room",
+          "area": "living_room",
+          "poly": [
+           [
+            0.04,
+            0.14
+           ],
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.04,
+            0.58
+           ]
+          ]
+         },
+         {
+          "id": "r2",
+          "name": "Kitchen",
+          "area": "kitchen",
+          "poly": [
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.96,
+            0.14
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.55,
+            0.46
+           ]
+          ]
+         },
+         {
+          "id": "r3",
+          "name": "Bedroom",
+          "area": "bedroom",
+          "poly": [
+           [
+            0.55,
+            0.46
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.96,
+            0.86
+           ],
+           [
+            0.55,
+            0.86
+           ]
+          ]
+         },
+         {
+          "id": "r4",
+          "name": "Hallway",
+          "area": "hallway",
+          "poly": [
+           [
+            0.04,
+            0.58
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.55,
+            0.86
+           ],
+           [
+            0.04,
+            0.86
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       },
+       {
+        "id": "garden",
+        "title": "Garden",
+        "plan_url": "/assets/garden.svg",
+        "plan_aspect": 1.4286,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "g1",
+          "name": "Garden",
+          "area": "garden",
+          "poly": [
+           [
+            0.03,
+            0.178
+           ],
+           [
+            0.97,
+            0.178
+           ],
+           [
+            0.97,
+            0.822
+           ],
+           [
+            0.03,
+            0.822
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       }
+      ],
+      "markers": [
+       {
+        "id": "d_lamp",
+        "binding": "device:d_lamp",
+        "hidden": true
+       },
+       {
+        "id": "d_tv",
+        "binding": "device:d_tv",
+        "hidden": true
+       },
+       {
+        "id": "d_kettle",
+        "binding": "device:d_kettle",
+        "hidden": true
+       },
+       {
+        "id": "d_bedlight",
+        "binding": "device:d_bedlight",
+        "hidden": true
+       },
+       {
+        "id": "d_window",
+        "binding": "device:d_window",
+        "hidden": true
+       },
+       {
+        "id": "d_lock",
+        "binding": "device:d_lock",
+        "hidden": true
+       },
+       {
+        "id": "d_motion",
+        "binding": "device:d_motion",
+        "hidden": true
+       },
+       {
+        "id": "d_mower",
+        "binding": "device:d_mower",
+        "hidden": true
+       },
+       {
+        "id": "d_gate",
+        "binding": "device:d_gate",
+        "hidden": true
+       },
+       {
+        "id": "d_temp",
+        "binding": "entity:sensor.living_temp",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "size": 1.4,
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_light1",
+        "binding": "device:d_light1",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_leak",
+        "binding": "device:d_leak",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        }
+       }
+      ],
+      "settings": {
+       "known_devices": [
+        "d_bedlight",
+        "d_gate",
+        "d_kettle",
+        "d_lamp",
+        "d_leak",
+        "d_light1",
+        "d_lock",
+        "d_motion",
+        "d_mower",
+        "d_temp",
+        "d_tv",
+        "d_window"
+       ],
+       "new_device_ids": [],
+       "filter_seeded": true,
+       "marker_area_snapshot": {
+        "d_light1": {
+         "binding": "device:d_light1",
+         "area": "living_room"
+        },
+        "d_lamp": {
+         "binding": "device:d_lamp",
+         "area": "living_room"
+        },
+        "d_tv": {
+         "binding": "device:d_tv",
+         "area": "living_room"
+        },
+        "d_temp": {
+         "binding": "entity:sensor.living_temp",
+         "area": "living_room"
+        },
+        "d_kettle": {
+         "binding": "device:d_kettle",
+         "area": "kitchen"
+        },
+        "d_leak": {
+         "binding": "device:d_leak",
+         "area": "kitchen"
+        },
+        "d_bedlight": {
+         "binding": "device:d_bedlight",
+         "area": "bedroom"
+        },
+        "d_window": {
+         "binding": "device:d_window",
+         "area": "bedroom"
+        },
+        "d_lock": {
+         "binding": "device:d_lock",
+         "area": "hallway"
+        },
+        "d_motion": {
+         "binding": "device:d_motion",
+         "area": "hallway"
+        },
+        "d_mower": {
+         "binding": "device:d_mower",
+         "area": "garden"
+        },
+        "d_gate": {
+         "binding": "device:d_gate",
+         "area": "garden"
+        }
+       },
+       "volumetric_view": false,
+       "show_device_battery": true,
+       "moon": false
+      }
+     },
+     "expected_rev": 5
+    }
+   ],
+   "events": [
+    {
+     "type": "pointerup",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    },
+    {
+     "type": "click",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    }
+   ],
+   "toast": ""
+  },
+  "afterFreshInput": {
+   "at": 1793138566965,
+   "target": "d_temp",
+   "visible": true,
+   "mode": "view",
+   "other": false,
+   "feedback": 0,
+   "writes": 1,
+   "services": 0,
+   "moreInfo": 0,
+   "writeMessages": [
+    {
+     "type": "houseplan/config/set",
+     "config": {
+      "spaces": [
+       {
+        "id": "f1",
+        "title": "Ground floor",
+        "plan_url": "/assets/f1.svg",
+        "plan_aspect": 1.25,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "r1",
+          "name": "Living room",
+          "area": "living_room",
+          "poly": [
+           [
+            0.04,
+            0.14
+           ],
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.04,
+            0.58
+           ]
+          ]
+         },
+         {
+          "id": "r2",
+          "name": "Kitchen",
+          "area": "kitchen",
+          "poly": [
+           [
+            0.55,
+            0.14
+           ],
+           [
+            0.96,
+            0.14
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.55,
+            0.46
+           ]
+          ]
+         },
+         {
+          "id": "r3",
+          "name": "Bedroom",
+          "area": "bedroom",
+          "poly": [
+           [
+            0.55,
+            0.46
+           ],
+           [
+            0.96,
+            0.46
+           ],
+           [
+            0.96,
+            0.86
+           ],
+           [
+            0.55,
+            0.86
+           ]
+          ]
+         },
+         {
+          "id": "r4",
+          "name": "Hallway",
+          "area": "hallway",
+          "poly": [
+           [
+            0.04,
+            0.58
+           ],
+           [
+            0.55,
+            0.58
+           ],
+           [
+            0.55,
+            0.86
+           ],
+           [
+            0.04,
+            0.86
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       },
+       {
+        "id": "garden",
+        "title": "Garden",
+        "plan_url": "/assets/garden.svg",
+        "plan_aspect": 1.4286,
+        "view_box": [
+         0,
+         0,
+         1,
+         1
+        ],
+        "rooms": [
+         {
+          "id": "g1",
+          "name": "Garden",
+          "area": "garden",
+          "poly": [
+           [
+            0.03,
+            0.178
+           ],
+           [
+            0.97,
+            0.178
+           ],
+           [
+            0.97,
+            0.822
+           ],
+           [
+            0.03,
+            0.822
+           ]
+          ]
+         }
+        ],
+        "segments": []
+       }
+      ],
+      "markers": [
+       {
+        "id": "d_lamp",
+        "binding": "device:d_lamp",
+        "hidden": true
+       },
+       {
+        "id": "d_tv",
+        "binding": "device:d_tv",
+        "hidden": true
+       },
+       {
+        "id": "d_kettle",
+        "binding": "device:d_kettle",
+        "hidden": true
+       },
+       {
+        "id": "d_bedlight",
+        "binding": "device:d_bedlight",
+        "hidden": true
+       },
+       {
+        "id": "d_window",
+        "binding": "device:d_window",
+        "hidden": true
+       },
+       {
+        "id": "d_lock",
+        "binding": "device:d_lock",
+        "hidden": true
+       },
+       {
+        "id": "d_motion",
+        "binding": "device:d_motion",
+        "hidden": true
+       },
+       {
+        "id": "d_mower",
+        "binding": "device:d_mower",
+        "hidden": true
+       },
+       {
+        "id": "d_gate",
+        "binding": "device:d_gate",
+        "hidden": true
+       },
+       {
+        "id": "d_temp",
+        "binding": "entity:sensor.living_temp",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "size": 1.4,
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_light1",
+        "binding": "device:d_light1",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        },
+        "tap_action": "settings",
+        "tap_confirm": true
+       },
+       {
+        "id": "d_leak",
+        "binding": "device:d_leak",
+        "space": "f1",
+        "display": "badge",
+        "value_badge": {
+         "enabled": false
+        }
+       }
+      ],
+      "settings": {
+       "known_devices": [
+        "d_bedlight",
+        "d_gate",
+        "d_kettle",
+        "d_lamp",
+        "d_leak",
+        "d_light1",
+        "d_lock",
+        "d_motion",
+        "d_mower",
+        "d_temp",
+        "d_tv",
+        "d_window"
+       ],
+       "new_device_ids": [],
+       "filter_seeded": true,
+       "marker_area_snapshot": {
+        "d_light1": {
+         "binding": "device:d_light1",
+         "area": "living_room"
+        },
+        "d_lamp": {
+         "binding": "device:d_lamp",
+         "area": "living_room"
+        },
+        "d_tv": {
+         "binding": "device:d_tv",
+         "area": "living_room"
+        },
+        "d_temp": {
+         "binding": "entity:sensor.living_temp",
+         "area": "living_room"
+        },
+        "d_kettle": {
+         "binding": "device:d_kettle",
+         "area": "kitchen"
+        },
+        "d_leak": {
+         "binding": "device:d_leak",
+         "area": "kitchen"
+        },
+        "d_bedlight": {
+         "binding": "device:d_bedlight",
+         "area": "bedroom"
+        },
+        "d_window": {
+         "binding": "device:d_window",
+         "area": "bedroom"
+        },
+        "d_lock": {
+         "binding": "device:d_lock",
+         "area": "hallway"
+        },
+        "d_motion": {
+         "binding": "device:d_motion",
+         "area": "hallway"
+        },
+        "d_mower": {
+         "binding": "device:d_mower",
+         "area": "garden"
+        },
+        "d_gate": {
+         "binding": "device:d_gate",
+         "area": "garden"
+        }
+       },
+       "volumetric_view": false,
+       "show_device_battery": true,
+       "moon": false
+      }
+     },
+     "expected_rev": 5
+    }
+   ],
+   "events": [
+    {
+     "type": "pointerup",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    },
+    {
+     "type": "click",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    },
+    {
+     "type": "pointerup",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    },
+    {
+     "type": "click",
+     "trusted": true,
+     "pointerType": "mouse",
+     "prevented": false
+    }
+   ],
+   "toast": ""
+  }
+ },
+ "held/rebind:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 1,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ],
+       "segments": []
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ],
+       "segments": []
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_temp",
+       "binding": "entity:sensor.living_temp",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "size": 1.4,
+       "tap_action": "settings",
+       "tap_confirm": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "settings",
+       "tap_confirm": true
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_temp": {
+        "binding": "entity:sensor.living_temp",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": false,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 5
+   }
+  ],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/permission:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/detach:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "contextmenu",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": true
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/newest:onlyLatestWins": {
+  "target": "d_light1",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "held/newest:freshCurrentIntent": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ },
+ "retry:currentRequest": {
+  "target": "d_temp",
+  "visible": true,
+  "mode": "view",
+  "other": false,
+  "feedback": 0,
+  "writes": 0,
+  "services": 0,
+  "moreInfo": 0,
+  "writeMessages": [],
+  "events": [
+   {
+    "type": "pointerup",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   },
+   {
+    "type": "click",
+    "trusted": true,
+    "pointerType": "mouse",
+    "prevented": false
+   }
+  ],
+  "toast": ""
+ }
+}
+OK

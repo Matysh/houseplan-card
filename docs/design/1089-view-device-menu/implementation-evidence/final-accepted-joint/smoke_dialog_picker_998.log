@@ -1,0 +1,98 @@
+Downloading official HA frontend 20260729.7 (124294469 bytes), only for this explicit diagnostic
+PASS #998 general/1280
+PASS #998 general/390
+PASS #998 space/1280
+PASS #998 space/390
+PASS #998 room/1280
+PASS #998 room/390
+PASS #998 led/1280
+PASS #998 led/390
+PASS #998 climate/1280
+PASS #998 climate/390
+PASS #998 vacuum/1280
+PASS #998 vacuum/390
+PASS #998 radar/1280
+PASS #998 radar/390
+PASS #998 extra physical-column/1280: 1 fields
+PASS #998 extra physical-column/390: 1 fields
+PASS #998 extra stairs-kind-target/1280: 2 fields
+PASS #998 extra stairs-kind-target/390: 2 fields
+PASS #998 extra decor-image/1280: 1 fields
+PASS #998 extra decor-image/390: 1 fields
+PASS #998 extra decor-furniture/1280: 1 fields
+PASS #998 extra decor-furniture/390: 1 fields
+PASS #998 extra properties-variable-attribute/1280: 1 fields
+PASS #998 extra summary-scope-space/1280: 2 fields
+PASS #998 extra summary-scope-space/390: 2 fields
+PASS #998 dialog sweep: 162 controls
+browser-attestation ok (ok) [#998 authentic HA dialog picker] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-eqY4BP --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+PASS UI-029 shared trigger dimensions and triangle
+field paint light mouse {
+  wrapperBorder: 'rgb(33, 33, 33)',
+  wrapperOutline: 'none',
+  outerOutline: 'none',
+  fieldBackground: 'oklab(0.974534 -0.000162184 -0.000198166)',
+  lineDisplay: 'none',
+  fieldBorder: '1px',
+  fieldRadius: '8px',
+  activeInPicker: true,
+  visibleFocus: true
+}
+PASS single focus owner: light/mouse
+field paint light keyboard {
+  wrapperBorder: 'rgb(33, 33, 33)',
+  wrapperOutline: 'none',
+  outerOutline: 'none',
+  fieldBackground: 'rgb(255, 255, 255)',
+  lineDisplay: 'none',
+  fieldBorder: '1px',
+  fieldRadius: '8px',
+  activeInPicker: true,
+  visibleFocus: true
+}
+PASS single focus owner: light/keyboard
+popup paint light {
+  background: 'rgb(255, 255, 255)',
+  borderColor: 'rgb(224, 224, 224)',
+  borderWidth: 1,
+  radius: 10,
+  shadow: 'rgba(0, 0, 0, 0.2) 0px 8px 28px 0px'
+}
+PASS styled popup: light
+field paint dark mouse {
+  wrapperBorder: 'rgb(225, 225, 225)',
+  wrapperOutline: 'none',
+  outerOutline: 'none',
+  fieldBackground: 'oklab(0.226448 0.0000102967 0.00000452995)',
+  lineDisplay: 'none',
+  fieldBorder: '1px',
+  fieldRadius: '8px',
+  activeInPicker: true,
+  visibleFocus: true
+}
+PASS single focus owner: dark/mouse
+field paint dark keyboard {
+  wrapperBorder: 'rgb(225, 225, 225)',
+  wrapperOutline: 'none',
+  outerOutline: 'none',
+  fieldBackground: 'rgb(28, 28, 28)',
+  lineDisplay: 'none',
+  fieldBorder: '1px',
+  fieldRadius: '8px',
+  activeInPicker: true,
+  visibleFocus: true
+}
+PASS single focus owner: dark/keyboard
+popup paint dark {
+  background: 'rgb(28, 28, 28)',
+  borderColor: 'rgb(56, 56, 56)',
+  borderWidth: 1,
+  radius: 10,
+  shadow: 'rgba(0, 0, 0, 0.2) 0px 8px 28px 0px'
+}
+PASS styled popup: dark
+PASS native adaptive picker 390x844
+PASS native adaptive picker 1280x450
+PASS selection and clear retain other dirty fields; no write until Save
+PASS Cancel preserves saved icon; parent close guard remains active
+OK #998 genuine HA: 11 checks; 20260930.4

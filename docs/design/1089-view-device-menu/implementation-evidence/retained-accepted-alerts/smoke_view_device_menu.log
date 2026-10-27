@@ -1,0 +1,1569 @@
+browser-attestation ok (ok) [smoke_view_device_menu] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-HN2c2x --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+{
+ "fingerprint": "025886a302408a9ce369bf019e576f00496009dfaef992c8d5c55f41efa8830a",
+ "pageErrors": [],
+ "receipt": {
+  "writes": [
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "info"
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      },
+      {
+       "id": "d_temp",
+       "vacuum": null,
+       "binding": "device:d_temp",
+       "name": "Menu saved name",
+       "icon": null,
+       "display": null,
+       "ripple_color": null,
+       "ripple_size": null,
+       "size": 1.4,
+       "angle": null,
+       "tap_action": "info",
+       "tap_target": null,
+       "tap_confirm": null,
+       "controls": null,
+       "value_badge": {
+        "enabled": false
+       },
+       "use_climate_temp": null,
+       "glow_radius_cm": null,
+       "model": "TH01",
+       "link": null,
+       "description": null,
+       "pdfs": [],
+       "hidden": false
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_temp": {
+        "binding": "device:d_temp",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": false,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 5
+   },
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "info"
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      },
+      {
+       "id": "d_temp",
+       "vacuum": null,
+       "binding": "device:d_temp",
+       "name": "Menu saved name",
+       "icon": null,
+       "display": null,
+       "ripple_color": null,
+       "ripple_size": null,
+       "size": 1.4,
+       "angle": null,
+       "tap_action": "info",
+       "tap_target": null,
+       "tap_confirm": null,
+       "controls": null,
+       "value_badge": {
+        "enabled": false
+       },
+       "use_climate_temp": null,
+       "glow_radius_cm": null,
+       "model": "TH01",
+       "link": null,
+       "description": null,
+       "pdfs": [],
+       "hidden": true
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_temp": {
+        "binding": "device:d_temp",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": false,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 6
+   },
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "info"
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      },
+      {
+       "id": "d_temp",
+       "vacuum": null,
+       "binding": "device:d_temp",
+       "name": "Menu saved name",
+       "icon": null,
+       "display": null,
+       "ripple_color": null,
+       "ripple_size": null,
+       "size": 1.4,
+       "angle": null,
+       "tap_action": "info",
+       "tap_target": null,
+       "tap_confirm": null,
+       "controls": null,
+       "value_badge": {
+        "enabled": false
+       },
+       "use_climate_temp": null,
+       "glow_radius_cm": null,
+       "model": "TH01",
+       "link": null,
+       "description": null,
+       "pdfs": [],
+       "hidden": true
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_temp": {
+        "binding": "device:d_temp",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": false,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 6
+   },
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "info"
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      },
+      {
+       "id": "d_temp",
+       "vacuum": null,
+       "binding": "device:d_temp",
+       "name": "Menu saved name",
+       "icon": null,
+       "display": null,
+       "ripple_color": null,
+       "ripple_size": null,
+       "size": 1.4,
+       "angle": null,
+       "tap_action": "info",
+       "tap_target": null,
+       "tap_confirm": null,
+       "controls": null,
+       "value_badge": {
+        "enabled": false
+       },
+       "use_climate_temp": null,
+       "glow_radius_cm": null,
+       "model": "TH01",
+       "link": null,
+       "description": null,
+       "pdfs": [],
+       "hidden": false
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_temp": {
+        "binding": "device:d_temp",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": false,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 7
+   },
+   {
+    "type": "houseplan/config/set",
+    "config": {
+     "spaces": [
+      {
+       "id": "f1",
+       "title": "Ground floor",
+       "plan_url": "/assets/f1.svg",
+       "plan_aspect": 1.25,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "r1",
+         "name": "Living room",
+         "area": "living_room",
+         "poly": [
+          [
+           0.04,
+           0.14
+          ],
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.04,
+           0.58
+          ]
+         ]
+        },
+        {
+         "id": "r2",
+         "name": "Kitchen",
+         "area": "kitchen",
+         "poly": [
+          [
+           0.55,
+           0.14
+          ],
+          [
+           0.96,
+           0.14
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.55,
+           0.46
+          ]
+         ]
+        },
+        {
+         "id": "r3",
+         "name": "Bedroom",
+         "area": "bedroom",
+         "poly": [
+          [
+           0.55,
+           0.46
+          ],
+          [
+           0.96,
+           0.46
+          ],
+          [
+           0.96,
+           0.86
+          ],
+          [
+           0.55,
+           0.86
+          ]
+         ]
+        },
+        {
+         "id": "r4",
+         "name": "Hallway",
+         "area": "hallway",
+         "poly": [
+          [
+           0.04,
+           0.58
+          ],
+          [
+           0.55,
+           0.58
+          ],
+          [
+           0.55,
+           0.86
+          ],
+          [
+           0.04,
+           0.86
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "id": "garden",
+       "title": "Garden",
+       "plan_url": "/assets/garden.svg",
+       "plan_aspect": 1.4286,
+       "view_box": [
+        0,
+        0,
+        1,
+        1
+       ],
+       "rooms": [
+        {
+         "id": "g1",
+         "name": "Garden",
+         "area": "garden",
+         "poly": [
+          [
+           0.03,
+           0.178
+          ],
+          [
+           0.97,
+           0.178
+          ],
+          [
+           0.97,
+           0.822
+          ],
+          [
+           0.03,
+           0.822
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "markers": [
+      {
+       "id": "d_lamp",
+       "binding": "device:d_lamp",
+       "hidden": true
+      },
+      {
+       "id": "d_tv",
+       "binding": "device:d_tv",
+       "hidden": true
+      },
+      {
+       "id": "d_kettle",
+       "binding": "device:d_kettle",
+       "hidden": true
+      },
+      {
+       "id": "d_bedlight",
+       "binding": "device:d_bedlight",
+       "hidden": true
+      },
+      {
+       "id": "d_window",
+       "binding": "device:d_window",
+       "hidden": true
+      },
+      {
+       "id": "d_lock",
+       "binding": "device:d_lock",
+       "hidden": true
+      },
+      {
+       "id": "d_motion",
+       "binding": "device:d_motion",
+       "hidden": true
+      },
+      {
+       "id": "d_mower",
+       "binding": "device:d_mower",
+       "hidden": true
+      },
+      {
+       "id": "d_gate",
+       "binding": "device:d_gate",
+       "hidden": true
+      },
+      {
+       "id": "d_light1",
+       "binding": "device:d_light1",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       },
+       "tap_action": "info"
+      },
+      {
+       "id": "d_leak",
+       "binding": "device:d_leak",
+       "space": "f1",
+       "display": "badge",
+       "value_badge": {
+        "enabled": false
+       }
+      },
+      {
+       "id": "d_temp",
+       "binding": "device:d_temp",
+       "removed": true,
+       "hidden": true
+      }
+     ],
+     "settings": {
+      "known_devices": [
+       "d_bedlight",
+       "d_gate",
+       "d_kettle",
+       "d_lamp",
+       "d_leak",
+       "d_light1",
+       "d_lock",
+       "d_motion",
+       "d_mower",
+       "d_temp",
+       "d_tv",
+       "d_window"
+      ],
+      "new_device_ids": [],
+      "filter_seeded": true,
+      "marker_area_snapshot": {
+       "d_light1": {
+        "binding": "device:d_light1",
+        "area": "living_room"
+       },
+       "d_lamp": {
+        "binding": "device:d_lamp",
+        "area": "living_room"
+       },
+       "d_tv": {
+        "binding": "device:d_tv",
+        "area": "living_room"
+       },
+       "d_kettle": {
+        "binding": "device:d_kettle",
+        "area": "kitchen"
+       },
+       "d_leak": {
+        "binding": "device:d_leak",
+        "area": "kitchen"
+       },
+       "d_bedlight": {
+        "binding": "device:d_bedlight",
+        "area": "bedroom"
+       },
+       "d_window": {
+        "binding": "device:d_window",
+        "area": "bedroom"
+       },
+       "d_lock": {
+        "binding": "device:d_lock",
+        "area": "hallway"
+       },
+       "d_motion": {
+        "binding": "device:d_motion",
+        "area": "hallway"
+       },
+       "d_mower": {
+        "binding": "device:d_mower",
+        "area": "garden"
+       },
+       "d_gate": {
+        "binding": "device:d_gate",
+        "area": "garden"
+       }
+      },
+      "volumetric_view": false,
+      "show_device_battery": true,
+      "moon": false
+     }
+    },
+    "expected_rev": 8
+   },
+   {
+    "type": "houseplan/layout/delete",
+    "device_id": "d_temp"
+   },
+   {
+    "type": "houseplan/trail/delete",
+    "marker_id": "d_temp"
+   }
+  ],
+  "services": 0,
+  "ha": [
+   "sensor.living_temp",
+   null
+  ]
+ }
+}
+OK

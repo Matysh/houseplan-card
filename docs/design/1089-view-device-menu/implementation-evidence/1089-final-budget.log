@@ -1,0 +1,13 @@
+initial View: 352904 B gzip (потолок 352447 B +2000, budget 387200 B, headroom 34296 B)
+initial panel: 354426 B gzip
+initial panel-only: 2391 B gzip (budget 8192 B, headroom 5801 B)
+lazy editor: 375012 B gzip (потолок 373073 B +2000)
+lazy onboarding: 44655 B gzip (потолок 43130 B +2000)
+lazy namespace locales: 69991 B gzip (15 chunks, по одному грузится на пространство)
+lazy furniture art: 16937 B gzip (потолок 16937 B +2000)
+lazy locale: 56663 B gzip
+lazy isometric: 12783 B gzip
+lazy PDF: 145133 B gzip
+lazy moon: 11755 B gzip
+lazy LED: 11498 B gzip (потолок 12391 B)
+lazy LED editor: 11088 B gzip (потолок 12391 B)

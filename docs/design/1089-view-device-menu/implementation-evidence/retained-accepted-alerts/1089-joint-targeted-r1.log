@@ -1,0 +1,659 @@
+TAP version 13
+# Subtest: ядра не выросли выше потолка беты больше чем на полосу (\#699)
+ok 1 - ядра не выросли выше потолка беты больше чем на полосу (\#699)
+  ---
+  duration_ms: 8.739711
+  type: 'test'
+  ...
+# Subtest: рост выше полосы становится нарушением с числом
+ok 2 - рост выше полосы становится нарушением с числом
+  ---
+  duration_ms: 0.269603
+  type: 'test'
+  ...
+# Subtest: \#699 уменьшение задачу не красит — потолок опускает бета
+ok 3 - \#699 уменьшение задачу не красит — потолок опускает бета
+  ---
+  duration_ms: 0.096868
+  type: 'test'
+  ...
+# Subtest: \#699 рост в пределах полосы задачу не красит
+ok 4 - \#699 рост в пределах полосы задачу не красит
+  ---
+  duration_ms: 0.099297
+  type: 'test'
+  ...
+# Subtest: \#699 границы включительно: ровно потолок плюс полоса нарушением не считается
+ok 5 - \#699 границы включительно: ровно потолок плюс полоса нарушением не считается
+  ---
+  duration_ms: 0.107112
+  type: 'test'
+  ...
+# Subtest: потолки заданы для двух ядер и ни для чего больше
+ok 6 - потолки заданы для двух ядер и ни для чего больше
+  ---
+  duration_ms: 0.140726
+  type: 'test'
+  ...
+# Subtest: потолки — числа в этом файле, а не вычисление от текущего размера
+ok 7 - потолки — числа в этом файле, а не вычисление от текущего размера
+  ---
+  duration_ms: 0.390965
+  type: 'test'
+  ...
+# Subtest: \#805 AC6 every selector of the lazy dialog sheet belongs to the editor runtime alone
+ok 8 - \#805 AC6 every selector of the lazy dialog sheet belongs to the editor runtime alone
+  ---
+  duration_ms: 1980.694769
+  type: 'test'
+  ...
+# Subtest: \#805 hp-device-preview keeps every rule it renders with: no moved selector reaches its own root
+ok 9 - \#805 hp-device-preview keeps every rule it renders with: no moved selector reaches its own root
+  ---
+  duration_ms: 15.54259
+  type: 'test'
+  ...
+# Subtest: \#805 the contextual tray sheet styles only the tray the editor runtime renders
+ok 10 - \#805 the contextual tray sheet styles only the tray the editor runtime renders
+  ---
+  duration_ms: 16.670321
+  type: 'test'
+  ...
+# Subtest: \#805 AC6 no lazy selector exists in an eager sheet, inside or outside its at-rule
+ok 11 - \#805 AC6 no lazy selector exists in an eager sheet, inside or outside its at-rule
+  ---
+  duration_ms: 46.216824
+  type: 'test'
+  ...
+# Subtest: \#805 AC6 reverse ratchet: the eager dialogs sheet holds no rule that belongs to the editor alone
+ok 12 - \#805 AC6 reverse ratchet: the eager dialogs sheet holds no rule that belongs to the editor alone
+  ---
+  duration_ms: 8.05868
+  type: 'test'
+  ...
+# Subtest: \#805 AC1 the lazy sheets and their adoption live only in the editor runtime graph
+ok 13 - \#805 AC1 the lazy sheets and their adoption live only in the editor runtime graph
+  ---
+  duration_ms: 0.440669
+  type: 'test'
+  ...
+# Subtest: \#936 backup child renders only inside the already styled editor root
+ok 14 - \#936 backup child renders only inside the already styled editor root
+  ---
+  duration_ms: 0.252917
+  type: 'test'
+  ...
+# Subtest: \#805 AC3 adoption: canonical cascade slots, once per root, one sheet object per document
+ok 15 - \#805 AC3 adoption: canonical cascade slots, once per root, one sheet object per document
+  ---
+  duration_ms: 27.369748
+  type: 'test'
+  ...
+# Subtest: \#805 AC3 adoption without adoptedStyleSheets: <style> nodes in the same relative order
+ok 16 - \#805 AC3 adoption without adoptedStyleSheets: <style> nodes in the same relative order
+  ---
+  duration_ms: 0.900531
+  type: 'test'
+  ...
+# Subtest: \#805 adoption waits for a render root instead of guessing one
+ok 17 - \#805 adoption waits for a render root instead of guessing one
+  ---
+  duration_ms: 0.608365
+  type: 'test'
+  ...
+# Subtest: \#997 compact navigation has a real phone field and desktop popup scene
+ok 18 - \#997 compact navigation has a real phone field and desktop popup scene
+  ---
+  duration_ms: 1.677657
+  type: 'test'
+  ...
+# Subtest: \#1071 group-style regression frames confirm furniture colour natively in both themes
+ok 19 - \#1071 group-style regression frames confirm furniture colour natively in both themes
+  ---
+  duration_ms: 2.259824
+  type: 'test'
+  ...
+# Subtest: \#1048 retained-path diagnostics get a distinct dialog scene, not a changed baseline
+ok 20 - \#1048 retained-path diagnostics get a distinct dialog scene, not a changed baseline
+  ---
+  duration_ms: 0.196424
+  type: 'test'
+  ...
+# Subtest: \#1049 selected goldens exercise the live plan and actual pending diagnostic dialog
+ok 21 - \#1049 selected goldens exercise the live plan and actual pending diagnostic dialog
+  ---
+  duration_ms: 0.697619
+  type: 'test'
+  ...
+# Subtest: golden matrix has stable unique ids and bounded comparison thresholds
+ok 22 - golden matrix has stable unique ids and bounded comparison thresholds
+  ---
+  duration_ms: 2.084844
+  type: 'test'
+  ...
+# Subtest: issue 486 golden matrix has exactly the three focused panel-host surfaces
+ok 23 - issue 486 golden matrix has exactly the three focused panel-host surfaces
+  ---
+  duration_ms: 0.61944
+  type: 'test'
+  ...
+# Subtest: issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices
+ok 24 - issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices
+  ---
+  duration_ms: 0.75338
+  type: 'test'
+  ...
+# Subtest: golden matrix covers required geometry, rendering and adaptive surfaces
+ok 25 - golden matrix covers required geometry, rendering and adaptive surfaces
+  ---
+  duration_ms: 0.375434
+  type: 'test'
+  ...
+# Subtest: room-label parity goldens pair View and Plan in light and dark themes
+ok 26 - room-label parity goldens pair View and Plan in light and dark themes
+  ---
+  duration_ms: 1.024168
+  type: 'test'
+  ...
+# Subtest: \#920 CO2 goldens cover Flat and 2.5D with two independent room readings
+ok 27 - \#920 CO2 goldens cover Flat and 2.5D with two independent room readings
+  ---
+  duration_ms: 1.821768
+  type: 'test'
+  ...
+# Subtest: space-tab drop goldens hold both insertion sides in light and dark
+ok 28 - space-tab drop goldens hold both insertion sides in light and dark
+  ---
+  duration_ms: 0.888126
+  type: 'test'
+  ...
+# Subtest: washer lifecycle goldens pair active and idle snapshots of one composite fixture
+ok 29 - washer lifecycle goldens pair active and idle snapshots of one composite fixture
+  ---
+  duration_ms: 0.611663
+  type: 'test'
+  ...
+# Subtest: wall junction goldens cover live L/T previews plus saved flat and isometric bodies
+ok 30 - wall junction goldens cover live L/T previews plus saved flat and isometric bodies
+  ---
+  duration_ms: 1.144583
+  type: 'test'
+  ...
+# Subtest: corner Split golden captures before, thin and thick facade states
+ok 31 - corner Split golden captures before, thin and thick facade states
+  ---
+  duration_ms: 1.167525
+  type: 'test'
+  ...
+# Subtest: issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/virtual
+ok 32 - issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/virtual
+  ---
+  duration_ms: 1.068359
+  type: 'test'
+  ...
+# Subtest: issue 296 golden shows hidden independent-wall diagnostics in both themes
+ok 33 - issue 296 golden shows hidden independent-wall diagnostics in both themes
+  ---
+  duration_ms: 0.633473
+  type: 'test'
+  ...
+# Subtest: filled opening golden has a pixel-level seam detector
+ok 34 - filled opening golden has a pixel-level seam detector
+  ---
+  duration_ms: 0.180702
+  type: 'test'
+  ...
+# Subtest: decor layer goldens pair opaque hover and Glow base with semantic pixels
+ok 35 - decor layer goldens pair opaque hover and Glow base with semantic pixels
+  ---
+  duration_ms: 0.893535
+  type: 'test'
+  ...
+# Subtest: doorway spill golden exposes the opaque-fill failure mode from issue 71
+ok 36 - doorway spill golden exposes the opaque-fill failure mode from issue 71
+  ---
+  duration_ms: 0.248378
+  type: 'test'
+  ...
+# Subtest: stepped exterior PDF golden pins the complete reconstructable dimension chain
+ok 37 - stepped exterior PDF golden pins the complete reconstructable dimension chain
+  ---
+  duration_ms: 0.70189
+  type: 'test'
+  ...
+# Subtest: sun-ray golden requires browser-painted light from a state-only sun entity
+ok 38 - sun-ray golden requires browser-painted light from a state-only sun entity
+  ---
+  duration_ms: 1.137369
+  type: 'test'
+  ...
+# Subtest: vacuum smoothing golden covers current gaps and the previous run
+ok 39 - vacuum smoothing golden covers current gaps and the previous run
+  ---
+  duration_ms: 0.574795
+  type: 'test'
+  ...
+# Subtest: issue \#277 golden pairs safe/disabled handles and an opening clamp in both themes
+ok 40 - issue \#277 golden pairs safe/disabled handles and an opening clamp in both themes
+  ---
+  duration_ms: 0.853539
+  type: 'test'
+  ...
+# Subtest: issue 252 golden matrix covers owner-aware cleanup in both themes and languages
+ok 41 - issue 252 golden matrix covers owner-aware cleanup in both themes and languages
+  ---
+  duration_ms: 0.401412
+  type: 'test'
+  ...
+# Subtest: issue \#197 golden keeps the complete junction fixture in Plan and View
+ok 42 - issue \#197 golden keeps the complete junction fixture in Plan and View
+  ---
+  duration_ms: 0.799151
+  type: 'test'
+  ...
+# Subtest: issues \#278/\#291 golden covers the stored wall-union fixture in both themes
+ok 43 - issues \#278/\#291 golden covers the stored wall-union fixture in both themes
+  ---
+  duration_ms: 0.586503
+  type: 'test'
+  ...
+# Subtest: issue \#249 golden isolates a bounded physical three-ray bevel
+ok 44 - issue \#249 golden isolates a bounded physical three-ray bevel
+  ---
+  duration_ms: 0.507322
+  type: 'test'
+  ...
+# Subtest: every multi-wall golden scene declares its enclosed-hole inventory (\#272)
+ok 45 - every multi-wall golden scene declares its enclosed-hole inventory (\#272)
+  ---
+  duration_ms: 0.247305
+  type: 'test'
+  ...
+# Subtest: issue \#275 golden preflight samples protected strips, not just enclosed holes
+ok 46 - issue \#275 golden preflight samples protected strips, not just enclosed holes
+  ---
+  duration_ms: 0.570976
+  type: 'test'
+  ...
+# Subtest: issue \#258 golden renders the affected persisted key at its T-junction
+ok 47 - issue \#258 golden renders the affected persisted key at its T-junction
+  ---
+  duration_ms: 0.307282
+  type: 'test'
+  ...
+# Subtest: the open color picker golden covers dark mobile and light desktop themes
+ok 48 - the open color picker golden covers dark mobile and light desktop themes
+  ---
+  duration_ms: 0.222193
+  type: 'test'
+  ...
+# Subtest: all newly unified color-picker dialog families have reviewed-golden candidates
+ok 49 - all newly unified color-picker dialog families have reviewed-golden candidates
+  ---
+  duration_ms: 0.14589
+  type: 'test'
+  ...
+# Subtest: value badge golden covers four positions and bottom badge with separate LQI
+ok 50 - value badge golden covers four positions and bottom badge with separate LQI
+  ---
+  duration_ms: 0.390285
+  type: 'test'
+  ...
+# Subtest: explicit cover value-source golden pins the 42 percent value face
+ok 51 - explicit cover value-source golden pins the 42 percent value face
+  ---
+  duration_ms: 0.271989
+  type: 'test'
+  ...
+# Subtest: device icon state-table goldens cover both themes and design facets
+ok 52 - device icon state-table goldens cover both themes and design facets
+  ---
+  duration_ms: 0.623201
+  type: 'test'
+  ...
+# Subtest: Text shell regression goldens isolate a large long value in both themes
+ok 53 - Text shell regression goldens isolate a large long value in both themes
+  ---
+  duration_ms: 0.463593
+  type: 'test'
+  ...
+# Subtest: opening placement golden requires browser-painted preview pixels
+ok 54 - opening placement golden requires browser-painted preview pixels
+  ---
+  duration_ms: 0.201674
+  type: 'test'
+  ...
+# Subtest: diagonal opening golden asserts a real painted 45 degree symbol
+ok 55 - diagonal opening golden asserts a real painted 45 degree symbol
+  ---
+  duration_ms: 0.252974
+  type: 'test'
+  ...
+# Subtest: opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contracts
+ok 56 - opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contracts
+  ---
+  duration_ms: 3.905716
+  type: 'test'
+  ...
+# Subtest: issue 570 Stage 4 reuses the historical iso goldens for visual handoff coverage
+ok 57 - issue 570 Stage 4 reuses the historical iso goldens for visual handoff coverage
+  ---
+  duration_ms: 1.856642
+  type: 'test'
+  ...
+# Subtest: \#673 Stage 6 designer acceptance scenes are canonical golden entries
+ok 58 - \#673 Stage 6 designer acceptance scenes are canonical golden entries
+  ---
+  duration_ms: 0.224562
+  type: 'test'
+  ...
+# Subtest: golden harness applies doorway, state and layout overrides to a cloned fixture
+ok 59 - golden harness applies doorway, state and layout overrides to a cloned fixture
+  ---
+  duration_ms: 0.35244
+  type: 'test'
+  ...
+# Subtest: golden overrides fail closed on misspelled fixture references
+ok 60 - golden overrides fail closed on misspelled fixture references
+  ---
+  duration_ms: 1.425176
+  type: 'test'
+  ...
+# Subtest: a light source paints exactly one region: the floor it can see
+ok 61 - a light source paints exactly one region: the floor it can see
+  ---
+  duration_ms: 716.414542
+  type: 'test'
+  ...
+# Subtest: all destructive editor dialogs use the medium shell and shared responsive footer groups
+ok 62 - all destructive editor dialogs use the medium shell and shared responsive footer groups
+  ---
+  duration_ms: 312.960981
+  type: 'test'
+  ...
+# Subtest: editor tray golden contract covers every adaptive width in English and Russian
+ok 63 - editor tray golden contract covers every adaptive width in English and Russian
+  ---
+  duration_ms: 0.404783
+  type: 'test'
+  ...
+# Subtest: issue 159 goldens cover both palette levels and every plan-art compatibility class
+ok 64 - issue 159 goldens cover both palette levels and every plan-art compatibility class
+  ---
+  duration_ms: 0.206404
+  type: 'test'
+  ...
+# Subtest: issue 606 isolates both corrected drawings and the saved exercise alias
+ok 65 - issue 606 isolates both corrected drawings and the saved exercise alias
+  ---
+  duration_ms: 0.1158
+  type: 'test'
+  ...
+# Subtest: issue 359 has one deterministic light-theme furniture placement preview golden
+ok 66 - issue 359 has one deterministic light-theme furniture placement preview golden
+  ---
+  duration_ms: 0.131666
+  type: 'test'
+  ...
+# Subtest: issue 383 goldens cover every furniture mirror orientation in light and dark themes
+ok 67 - issue 383 goldens cover every furniture mirror orientation in light and dark themes
+  ---
+  duration_ms: 0.225969
+  type: 'test'
+  ...
+# Subtest: device dialog goldens expose the complete light-source controls at desktop and mobile widths
+ok 68 - device dialog goldens expose the complete light-source controls at desktop and mobile widths
+  ---
+  duration_ms: 0.579814
+  type: 'test'
+  ...
+# Subtest: issue \#199 golden candidates cover the blocked Optimize dialog in both themes
+ok 69 - issue \#199 golden candidates cover the blocked Optimize dialog in both themes
+  ---
+  duration_ms: 0.199469
+  type: 'test'
+  ...
+# Subtest: golden harness neutralizes the shared pointer before every scenario
+ok 70 - golden harness neutralizes the shared pointer before every scenario
+  ---
+  duration_ms: 0.438698
+  type: 'test'
+  ...
+# Subtest: toggle-entity dialog goldens cover selected and stale states across themes and widths
+ok 71 - toggle-entity dialog goldens cover selected and stale states across themes and widths
+  ---
+  duration_ms: 0.180926
+  type: 'test'
+  ...
+# Subtest: help affordance golden covers an open text-bearing surface in both themes
+ok 72 - help affordance golden covers an open text-bearing surface in both themes
+  ---
+  duration_ms: 0.189751
+  type: 'test'
+  ...
+# Subtest: issue 86 help goldens render browser zoom 200% in both themes
+ok 73 - issue 86 help goldens render browser zoom 200% in both themes
+  ---
+  duration_ms: 0.465039
+  type: 'test'
+  ...
+# Subtest: issue 43 support dialog has the six reviewed responsive states
+ok 74 - issue 43 support dialog has the six reviewed responsive states
+  ---
+  duration_ms: 0.344589
+  type: 'test'
+  ...
+# Subtest: \#661 AC7 moon scenes: fixed home and clock, moon on, the old day-cycle frames untouched
+ok 75 - \#661 AC7 moon scenes: fixed home and clock, moon on, the old day-cycle frames untouched
+  ---
+  duration_ms: 1.173289
+  type: 'test'
+  ...
+# Subtest: \#718 AC8 static-background moon scenes: the chosen colour, the sky layer, the dialog waits for the line
+ok 76 - \#718 AC8 static-background moon scenes: the chosen colour, the sky layer, the dialog waits for the line
+  ---
+  duration_ms: 1.011354
+  type: 'test'
+  ...
+# Subtest: \#1000 continuous 3000ms activation/removal, noise cancels either candidate
+ok 77 - \#1000 continuous 3000ms activation/removal, noise cancels either candidate
+  ---
+  duration_ms: 1.494952
+  type: 'test'
+  ...
+# Subtest: \#1000 deadline reads the current field rather than a stale true closure
+ok 78 - \#1000 deadline reads the current field rather than a stale true closure
+  ---
+  duration_ms: 0.902612
+  type: 'test'
+  ...
+# Subtest: \#1000 incomparable active source is honest while removal is pending; ownership loss is immediate
+ok 79 - \#1000 incomparable active source is honest while removal is pending; ownership loss is immediate
+  ---
+  duration_ms: 0.316215
+  type: 'test'
+  ...
+# Subtest: \#1000 unchanged updates retain one deadline; changed rule/authority/dispose retire callbacks
+ok 80 - \#1000 unchanged updates retain one deadline; changed rule/authority/dispose retire callbacks
+  ---
+  duration_ms: 0.360719
+  type: 'test'
+  ...
+# Subtest: \#1000 optional projection confirms current selected fields and retires on lost authority
+ok 81 - \#1000 optional projection confirms current selected fields and retires on lost authority
+  ---
+  duration_ms: 8.746739
+  type: 'test'
+  ...
+# Subtest: \#1000 late deadline reads no retired rule, floor, static or disconnected owner
+ok 82 - \#1000 late deadline reads no retired rule, floor, static or disconnected owner
+  ---
+  duration_ms: 0.896632
+  type: 'test'
+  ...
+# Subtest: \#1000 unrelated HA rows/locale do not restart confirmation; reconnect does
+ok 83 - \#1000 unrelated HA rows/locale do not restart confirmation; reconnect does
+  ---
+  duration_ms: 0.467416
+  type: 'test'
+  ...
+# Subtest: \#1000 200 configured devices consume only selected fields on unrelated HA ticks
+ok 84 - \#1000 200 configured devices consume only selected fields on unrelated HA ticks
+  ---
+  duration_ms: 419.578997
+  type: 'test'
+  ...
+# {"devices":200,"rules":600,"unrelatedStates":15000,"p50Ms":3.3417709999999943,"p95Ms":5.843692000000033,"readsPerTick":600,"stateEnumerations":0,"extraSchedules":0}
+# Subtest: \#999 edits to consumed history capture inputs retire source and visual identities
+ok 85 - \#999 edits to consumed history capture inputs retire source and visual identities
+  ---
+  duration_ms: 11.082571
+  type: 'test'
+  ...
+# Subtest: \#896 capture identity follows browser flags and local helper dependencies, before candidate copying
+ok 86 - \#896 capture identity follows browser flags and local helper dependencies, before candidate copying
+  ---
+  duration_ms: 3.672857
+  type: 'test'
+  ...
+# Subtest: source fingerprint is stable across LF and CRLF checkouts
+ok 87 - source fingerprint is stable across LF and CRLF checkouts
+  ---
+  duration_ms: 0.621598
+  type: 'test'
+  ...
+# Subtest: source fingerprint changes with source and build inputs
+ok 88 - source fingerprint changes with source and build inputs
+  ---
+  duration_ms: 0.655842
+  type: 'test'
+  ...
+# Subtest: source fingerprint includes deterministic visual fixtures and golden code
+ok 89 - source fingerprint includes deterministic visual fixtures and golden code
+  ---
+  duration_ms: 0.771488
+  type: 'test'
+  ...
+# Subtest: бамп версии продукта не трогает отпечаток скриншотов, но трогает отпечаток бандла (\#245)
+ok 90 - бамп версии продукта не трогает отпечаток скриншотов, но трогает отпечаток бандла (\#245)
+  ---
+  duration_ms: 0.8717
+  type: 'test'
+  ...
+# Subtest: отпечаток скриншотов не слепнет к правкам src и версиям зависимостей (\#245)
+ok 91 - отпечаток скриншотов не слепнет к правкам src и версиям зависимостей (\#245)
+  ---
+  duration_ms: 0.730886
+  type: 'test'
+  ...
+# Subtest: npm-скрипт не требует пересъёмки, а версия зависимости требует (\#246)
+ok 92 - npm-скрипт не требует пересъёмки, а версия зависимости требует (\#246)
+  ---
+  duration_ms: 1.208188
+  type: 'test'
+  ...
+# Subtest: правка инструмента приёмки не требует ни пересборки, ни пересъёмки (\#344)
+ok 93 - правка инструмента приёмки не требует ни пересборки, ни пересъёмки (\#344)
+  ---
+  duration_ms: 5.91293
+  type: 'test'
+  ...
+# Subtest: файлы, определяющие кадр, из корпуса не выпали (\#344)
+ok 94 - файлы, определяющие кадр, из корпуса не выпали (\#344)
+  ---
+  duration_ms: 6.432022
+  type: 'test'
+  ...
+# Subtest: состав исключения объявлен списком, а не угадывается по имени (\#344)
+ok 95 - состав исключения объявлен списком, а не угадывается по имени (\#344)
+  ---
+  duration_ms: 0.196711
+  type: 'test'
+  ...
+# Subtest: в корпусе настоящего репозитория все canonical golden capture inputs (\#344, \#792, \#881, \#896, \#866, \#1026, \#1038, \#999)
+ok 96 - в корпусе настоящего репозитория все canonical golden capture inputs (\#344, \#792, \#881, \#896, \#866, \#1026, \#1038, \#999)
+  ---
+  duration_ms: 7.544072
+  type: 'test'
+  ...
+# Subtest: \#1089 read-only preserves five ordered rows and refuses writer callbacks
+ok 97 - \#1089 read-only preserves five ordered rows and refuses writer callbacks
+  ---
+  duration_ms: 2.69108
+  type: 'test'
+  ...
+# Subtest: \#1089 card and HA commands are separate, use a fresh target and never run tap_action
+ok 98 - \#1089 card and HA commands are separate, use a fresh target and never run tap_action
+  ---
+  duration_ms: 0.780644
+  type: 'test'
+  ...
+# Subtest: \#1089 hidden-eye uses saved hidden, inactive HA cannot be shown, virtual retains its own card
+ok 99 - \#1089 hidden-eye uses saved hidden, inactive HA cannot be shown, virtual retains its own card
+  ---
+  duration_ms: 0.309747
+  type: 'test'
+  ...
+# Subtest: \#1089 accepted selection survives normal menu close, external retirement cancels held load
+ok 100 - \#1089 accepted selection survives normal menu close, external retirement cancels held load
+  ---
+  duration_ms: 0.49178
+  type: 'test'
+  ...
+# Subtest: \#1089 replaced owner, removed target and revoked write permission cannot dispatch
+ok 101 - \#1089 replaced owner, removed target and revoked write permission cannot dispatch
+  ---
+  duration_ms: 0.502606
+  type: 'test'
+  ...
+# Subtest: \#1089 outside close consumes only its compatibility click until fresh input
+ok 102 - \#1089 outside close consumes only its compatibility click until fresh input
+  ---
+  duration_ms: 0.202959
+  type: 'test'
+  ...
+# Subtest: \#848 AC1/AC2: initial error is visible and ticks never import; one explicit retry has a fresh attempt
+ok 103 - \#848 AC1/AC2: initial error is visible and ticks never import; one explicit retry has a fresh attempt
+  ---
+  duration_ms: 1.545606
+  type: 'test'
+  ...
+# Subtest: \#848 AC2: a mismatched factory is terminal before construction
+ok 104 - \#848 AC2: a mismatched factory is terminal before construction
+  ---
+  duration_ms: 0.253428
+  type: 'test'
+  ...
+# Subtest: \#848 AC6: an explicit in-flight retry retains the error surface until genuine readiness
+ok 105 - \#848 AC6: an explicit in-flight retry retains the error surface until genuine readiness
+  ---
+  duration_ms: 0.362318
+  type: 'test'
+  ...
+# Subtest: \#848 AC4: manual reload uses the existing draft decision and rejects retired decisions
+ok 106 - \#848 AC4: manual reload uses the existing draft decision and rejects retired decisions
+  ---
+  duration_ms: 0.160857
+  type: 'test'
+  ...
+# Subtest: \#848 AC3/AC4: shared import is immutable code, live hosts receive distinct runtimes; warm adoption is synchronous
+ok 107 - \#848 AC3/AC4: shared import is immutable code, live hosts receive distinct runtimes; warm adoption is synchronous
+  ---
+  duration_ms: 0.214843
+  type: 'test'
+  ...
+# Subtest: \#848 AC4: disconnect and HA retirement suppress construction and every late host update
+ok 108 - \#848 AC4: disconnect and HA retirement suppress construction and every late host update
+  ---
+  duration_ms: 0.223663
+  type: 'test'
+  ...
+1..108
+# tests 108
+# suites 0
+# pass 108
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2494.430718
