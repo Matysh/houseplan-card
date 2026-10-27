@@ -12,7 +12,7 @@ reference14660 plus the unchanged50-line band. They will be inherited from
 accepted #1070; rolling2000-byte bands, performance and safety remain unchanged.
 Price snapshots below retain their original historical limits and source identities.
 
-## Accepted UI and paired replay
+## Accepted UI and historical paired replay
 
 The immutable visual package is
 [`9db1e66f34dd95df6d28cabe0f69acfee015d5cd`](https://github.com/Matysh/houseplan-card/tree/9db1e66f34dd95df6d28cabe0f69acfee015d5cd/docs/design/1000-device-alarms/2026-10-26).
@@ -48,24 +48,37 @@ prototype text mentioning room/summary counters is superseded by owner decision
 [6420546189](https://github.com/Matysh/houseplan-card/issues/1000#issuecomment-6420546189).
 No room/summary surface was added.
 
-## Contract to observable checks
+## Contract to observable checks and protective witnesses
 
-| Acceptance | Executable witness |
-| --- | --- |
-| AC1 — local constructor, own sources, typed controls, max three, nested/outer draft | `smoke_marker_alerts.mjs` actual clicks and persisted payload; `marker-alert-editor.test.mjs` actual rendered callbacks for retired form/table/session ownership; backend writer rejection |
-| AC2 — comparisons, raw enum types, unknown data, direct scalar attribute | Shared TS/Python fixture `test/fixtures/marker-alerts.json`; codec/source tests; localized binary label with raw `on`, numeric-looking enum raw `"123"`, disappeared option visible and invalid in the controls smoke |
-| AC3 — continuous 3000 ms on and off, noise, no stale deadline | `marker-alert-runtime.test.mjs` monotonic controlled clock at 2999/3000 ms, cancelled candidates, current deadline read, rule/authority/dispose retirement; View runtime owner and reconnection tests |
-| AC4 — marker, actual preview, grouped reasons, priority | `marker-alert-presentation.test.mjs`, `device-issues.test.mjs`; controls smoke confirms three distinct causes, actual attribute wording, immediate unchanged preview; six Flat/2.5D plus reasons Golden task scenes |
-| AC5 — retired rule/owner, missing/disabled source, rights and lifecycle | Runtime deadline/owner tests, selected reader rejects foreign/disabled/missing before state access; actual form callbacks reject retired owners; cold View checks readonly/kiosk, static mode, reattachment and deleted-rule non-resurrection |
-| AC6 — optional lossless definitions, TS/Python parity, JSON/ZIP/copy/rebind | Shared codec fixture, `test_marker_alerts.py`, actual HA `test_ha_marker_alerts.py`, full/space JSON and ZIP round-trip additions; codec rejects duplicate IDs/fourth rule, no runtime state fields are written; existing device-copy neighbor |
-| AC7 — common cause model, native critical/maintenance policy, no external producer | `marker-alert-presentation.test.mjs` and `device-issues.test.mjs`; future/external data is inert and rejected for a new write; existing native RGB/state-source neighbors |
-| AC8 — selected-field work, optional View graph and lifecycle | `marker-alert-view-runtime.test.mjs` selected read/retired callback tests; `smoke_marker_alert_view.mjs` cold network requests, readonly/kiosk, static/unsupported input, reconnect/removal; volume counter below |
+The table names the ordinary oracle and its negative input or registered witness.
+Execution status and source identity are kept separately below; listing a command
+does not claim that the final combined source has already passed it.
 
-Current native checks: [controls smoke](raw/native-controls.txt) passes all 23
+| Acceptance | Ordinary observable oracle | Negative input / static witness |
+| --- | --- | --- |
+| AC1 — local constructor, own sources, typed controls, max three, nested/outer draft | `node demo/smoke_marker_alerts.mjs`; `node --test test/marker-alert-editor.test.mjs` executes real rendered callbacks | Retired OK/Cancel/table callbacks, lost edit authority and foreign options cannot mutate the draft; duplicate/fourth rule rejected by codec units. `threshold-constructor-crosses-instance-1000` registered, not executed. |
+| AC2 — comparisons, raw enum types, unknown data, direct scalar attribute | `node --test test/marker-alert.test.mjs test/marker-alert-source.test.mjs`; shared `test/fixtures/marker-alerts.json` and pure Python parity | Boolean/null/objects/NaN/Infinity/malformed numeric input and incomparable `ne` reject; Proxy throws on a foreign read; inherited attributes and removed enum options are not substituted. |
+| AC3 — continuous 3000 ms on and off, noise, current deadline | `node --test test/marker-alert-runtime.test.mjs` controlled monotonic clock at 2999/3000 ms, both directions and noise | Inversion cancels either pending transition; changed current value at deadline cannot confirm stale true; retained callback after retirement reads nothing. `threshold-skips-confirmation-1000` registered, not executed. |
+| AC4 — marker, actual preview, grouped reasons, priority | `node --test test/marker-alert-presentation.test.mjs test/device-issues.test.mjs`; controls smoke and six Flat/2.5D plus reasons Golden scenes | Static/live-disabled/orphan/HA-disabled projections suppress custom facts; alarm suppresses competing attention while preserving all cause identities and native critical alarm. No-counter scope is checked by source/diff review, not an invented browser counter proof. |
+| AC5 — retired rule/owner, missing/disabled source, rights and lifecycle | `node --test test/marker-alert-runtime.test.mjs test/marker-alert-view-runtime.test.mjs test/marker-alert-editor.test.mjs`; cold View/controls smoke; HA reader denial | Rule/floor/static/disconnect retirement prevents retained deadline reads; source Proxy forbids foreign reads; stale form/session and changed HA authority cannot commit. `threshold-retains-foreign-owner-1000` registered, not executed. |
+| AC6 — optional lossless definitions, TS/Python parity, JSON/ZIP/copy/rebind | Pure schema/parity tests; `python -m pytest tests_backend/test_ha_marker_alerts.py`; import/export/ZIP additions; actual helper copy suite | New malformed/fourth/external blocks leave both Store halves/revisions unchanged; old future blocks retain previous-aware handling; stale writer and reader reject. `threshold-writer-skips-alert-validation-1000` registered, not executed. Existing controls flow now checks that outer Save after final-rule removal omits the field in the actual request and stored marker; that new browser assertion awaits final replay. |
+| AC7 — common cause model, no external producer | `node --test test/marker-alert-presentation.test.mjs` includes an inert typed external cause through the real common consumer | Threshold/native/external identities coexist; external alarm uses the same priority, attention stays passive; fixture produces no service/WS call or data mutation. Unsupported external configuration remains rejected by shared schema negatives and cold smoke; no #1001 service exists. |
+| AC8 — selected-field work, optional View graph and lifecycle | `node --test test/marker-alert-view-runtime.test.mjs`; `node demo/smoke_marker_alert_view.mjs` actual cold requests and attribute-only update | State Proxy rejects full enumeration/unselected reads, repeated unrelated ticks schedule no extra deadline. No-rule cold View must not import the feature; `threshold-cold-view-imports-without-rule-1000` registered, not executed. |
+
+Historical native checks: [controls smoke](raw/native-controls.txt) passes all 23
 observations; [focused Node run](raw/node-focused.txt) passes 100/100 tests.
 The [native](raw/native-build.txt) and [Linux](raw/linux-build.txt) production builds
 pass with matching source fingerprint. These files do not claim completion of
 the final selected browser plan, full gate or independent CODE review.
+
+The later B preflight adds two static witnesses, the inert external consumer
+case and the final-rule Save assertion without changing product source. On the
+same A tree `52815d5c616d8837c2545ba105bf45cbed126098`, the focused presentation
+suite passes 4/4, including that new external case. Both new registry entries
+pass static `--check`, and the browser inventory membership/count unit passes;
+all five #1000 records remain execution0/caught unknown. These fresh lightweight
+results are in [raw/final-preflight/](raw/final-preflight/). They do not claim a
+new browser, HA, build or final combined-source gate run.
 
 The volume unit uses 200 configured devices, 600 rules and 15000 unrelated HA
 states. An instrumented `states` proxy rejects enumeration and reads outside the
