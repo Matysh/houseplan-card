@@ -29,6 +29,7 @@ from custom_components.houseplan.led_strips import (
     config_led_strip_links,
     preserve_led_strips,
 )
+from custom_components.houseplan.marker_alerts import valid_marker_alerts
 from custom_components.houseplan.partition_promotion import (
     same_partition_wall_promotion,
 )
@@ -1123,6 +1124,11 @@ def validate_marker_value_badges(
             )
             if not valid:
                 raise MarkerControlError("invalid_more_info_entity", "Invalid Home Assistant dialog entity")
+        # Reads retain opaque future blocks; a changed/new block must be valid.
+        if "alert_sources" in marker and (validate_all or old_marker is None
+                or "alert_sources" not in old_marker or marker["alert_sources"] != old_marker["alert_sources"]):
+            if not valid_marker_alerts(marker["alert_sources"]):
+                raise MarkerControlError("invalid_alert_sources", "Invalid device alert conditions")
 
 
 def validate_marker_vacuum_routes(
@@ -2248,6 +2254,7 @@ MARKER_SCHEMA = vol.Schema(
         # are checked by validate_marker_value_badges, without a live registry.
         vol.Optional("state_source"): object,
         vol.Optional("more_info_entity"): object,
+        vol.Optional("alert_sources"): object,
         vol.Optional("use_climate_temp"): vol.Any(bool, None),
         # Per-marker battery indicator override; absence/False keeps global policy.
         vol.Optional("hide_battery"): bool,

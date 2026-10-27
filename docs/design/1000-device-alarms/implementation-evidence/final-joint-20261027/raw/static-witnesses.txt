@@ -1,0 +1,30 @@
+ok   threshold-cold-view-imports-without-rule-1000
+browser guards: 546/200
+WARN browser guards: 546 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=48.3
+ok   threshold-writer-skips-alert-validation-1000
+browser guards: 546/200
+WARN browser guards: 546 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=48.7
+ok   threshold-constructor-crosses-instance-1000
+browser guards: 546/200
+WARN browser guards: 546 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=53.1
+ok   threshold-skips-confirmation-1000
+browser guards: 546/200
+WARN browser guards: 546 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=51.7
+ok   threshold-retains-foreign-owner-1000
+browser guards: 546/200
+WARN browser guards: 546 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=48.9

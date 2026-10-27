@@ -247,13 +247,14 @@ export const devicesStyles = css`
       overflow: visible;
       pointer-events: none;
     }
-    .device-maintenance {
+    .device-maintenance, .device-attention {
       position:absolute; right:calc(100% + var(--device-shell-inset) + var(--device-shell-size) * .12);
       top:50%; transform:translateY(-50%); width:calc(var(--device-shell-size) * .55);
       height:calc(var(--device-shell-size) * .55); color:#F0A00C; pointer-events:none;
       filter:drop-shadow(0 1px 1px rgb(0 0 0 / 65%));
     }
-    .device-maintenance > ha-icon { --mdc-icon-size:calc(var(--device-shell-size) * .55);
+    .device-attention[data-with-maintenance="yes"] { right:calc(100% + var(--device-shell-inset) + var(--device-shell-size) * .79); }
+    .device-maintenance > ha-icon, .device-attention > ha-icon { --mdc-icon-size:calc(var(--device-shell-size) * .55);
       width:100%; height:100%; line-height:0; pointer-events:none; }
     .device-battery[data-state="normal"] { color: #1DC21D; }
     .device-battery[data-state="warning"] { color: #F0A00C; }

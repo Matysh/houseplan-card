@@ -1346,5 +1346,6 @@
   "vac.history_interrupted": "Nettoyage interrompu",
   "title.rotate_left": "Tourner dans le sens antihoraire",
   "title.rotate_right": "Tourner dans le sens horaire",
-  "view.runtime_converter": "Informations sur la conversion des plans"
+  "view.runtime_converter": "Informations sur la conversion des plans",
+  "backup.error.invalid_alert_sources": "Conditions d’alarme de l’appareil non valides."
 }

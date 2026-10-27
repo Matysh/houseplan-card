@@ -1,0 +1,592 @@
+{
+  "schema": 1,
+  "scope": "task",
+  "results": [
+    {
+      "kind": "smoke",
+      "id": "smoke_marker_alerts.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_marker_alert_view.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_rgb_alarm.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_marker_state_source.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_device_copy.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-attention-flat",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "f896beecba83ab487b28746974005114005c6766f225ce867b540095e0b173dd",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-attention-flat",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-attention-iso",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "4ab8291dc21640fba2db7bfbcba43917f5038bf33ad2927d172f6ac043b1b03c",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-attention-iso",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-maintenance-flat",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "86c4ca50bd6cba70e7e0cd9d1858beacd3afb3cf1ec3481f6a16bfa226078057",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-maintenance-flat",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-maintenance-iso",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "3dbd63dd82baae2c38f84b9fd28d3b39b110d2f39003c08234b12185e12560a9",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-maintenance-iso",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-alarm-flat",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "c203e5fd677ff4003a04cb850ce6056076878571de42f23ab564a9a1f17a5409",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-alarm-flat",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-alarm-iso",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "edd3c239534edc67d639b5a3996015fe35c2153a38bd68101d7618e726e34d83",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-alarm-iso",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-reasons",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "7a52fa6701b7387455e3652a1c239bf8eea03a4ee4c98e33cbf9c817c8ac3ba2",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-reasons",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-form-empty",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "f805e55eb761c668cc5a64e52bc35b8db7466b4c952cae2fee2d2baca85dc108",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-form-empty",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-form-numeric",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "5fe3181be3ecab58520aa437e697345e2a5f1d4b5a9c79c108942b1694adceb6",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-form-numeric",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-alert-form-enum",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "9c6ed288900b4d9ea6f9b4d929247b7e0ce41de022b07ec3130401bfe0752820",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "device-alert-form-enum",
+            "expectation": "new",
+            "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance.",
+            "issue": 1000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "vacuum-live-tail-pending-dialog-dark",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "2e46619eccbc5f760436496e80b4a550b285f92587676ae0115c6d7ac68928b6",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "vacuum-live-tail-pending-dialog-dark",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 19719,
+        "diffRatio": 0.0164325
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "vacuum-retained-path-diagnostics-dark",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "8aba9cfbb73519f14b876afa275ee838f79773034e4b0e45bbff14846453670f",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "vacuum-retained-path-diagnostics-dark",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 19719,
+        "diffRatio": 0.0164325
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-state-source-standard-en",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "d9e210c5302f86ab381755fbf8b0e2847afc6057d78035452dc411845fca6e6a",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "device-state-source-standard-en",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 2405,
+        "diffRatio": 0.0016984463276836159
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-state-source-manual-ru",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "7eba5c7aa8bfcc041414420ac24b527a1fcce1ab80f98f5f878c056e1c77f72f",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "device-state-source-manual-ru",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 12050,
+        "diffRatio": 0.008509887005649718
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-state-source-unknown-en",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "3bff5fe650962ce5502eeef7604e80f45064bd6ccaeca3f1e7f7227fc3514561",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "device-state-source-unknown-en",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 11634,
+        "diffRatio": 0.008216101694915254
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-state-source-protected-ru",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "a6906eb120f1d59482fd0702390e9bd5deb215537f0df6979721998b70f19c46",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "device-state-source-protected-ru",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 2408,
+        "diffRatio": 0.0017005649717514125
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-dialog-desktop-en",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "55b58b2dcf6047ba55035d933d1d74ea7dc58dc18ec5ff60e01dfc30acabf710",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "device-dialog-desktop-en",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 13694,
+        "diffRatio": 0.00967090395480226
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-dialog-desktop-de",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "165994c346622b57f3bd438a0fab5d06a7aa80b07d4bad0b98bc37146db99cd3",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "device-dialog-desktop-de",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 3307,
+        "diffRatio": 0.0023354519774011298
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "toggle-entity-dialog-desktop-en",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "4bd691d562d64081a2614f08e26174425a80f8c0e4bd0325eaaa6780fddbcf5b",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "toggle-entity-dialog-desktop-en",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 2616,
+        "diffRatio": 0.0020154083204930663
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "device-help-popover-light-ru",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+          "ci": null
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+        "matrixVersion": 100,
+        "actualSha256": "3dd472f09b752f477f799105974ebd5c9df13075062722810adc5ef0200827e9",
+        "baselineStatus": "different",
+        "intent": [
+          {
+            "id": "device-help-popover-light-ru",
+            "expectation": "change",
+            "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged.",
+            "issue": 1000
+          }
+        ],
+        "differingPixels": 41661,
+        "diffRatio": 0.060907894736842105
+      }
+    }
+  ],
+  "outcome": "success"
+}

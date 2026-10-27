@@ -1102,3 +1102,16 @@ async def test_issue1033_zip_with_a_door_off_its_wall_imports_after_confirmation
     })
     assert undo.error is None, undo.error
     assert (await rt.config_store.async_load())["config"]["spaces"] == before["spaces"]
+
+def test_issue1000_zip_preserves_rule_order_types_and_optional_field(tmp_path: Path):
+    source, target = tmp_path / "source", tmp_path / "target"
+    target.mkdir()
+    document, _ = sample(source)
+    rules = [{"id": "number", "type": "threshold", "level": "alarm", "entity_id": "sensor.co2", "operator": "gt", "value": 1000},
+             {"id": "raw", "type": "threshold", "level": "attention", "entity_id": "select.mode", "operator": "eq", "value": "123"}]
+    document["payload"]["config"]["markers"][0]["alert_sources"] = rules
+    archive = tmp_path / "marker-alerts.zip"
+    build_archive(archive, document, source, {})
+    restored = read_archive(archive, target).document
+    assert restored["payload"]["config"]["markers"][0]["alert_sources"] == rules
+    assert isinstance(restored["payload"]["config"]["markers"][0]["alert_sources"][1]["value"], str)

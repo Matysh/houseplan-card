@@ -683,7 +683,7 @@ export const dialogsStyles = css`
   .device-issues.alarm h3 ha-icon { color:#F0410C; }
   .device-issue { padding:8px 0; overflow-wrap:anywhere; }
   .device-issue + .device-issue { border-top:1px solid var(--divider-color); }
-  .device-issue p { margin:4px 0; font-size:14px; }
+  .device-issue p { margin:4px 0; font-size:14px; white-space:pre-wrap; }
   .device-issue-state { font-size:13px; color:var(--secondary-text-color); }
   .device-issue summary { min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:13px; }
   .device-issue summary::before { content:'▸'; margin-right:8px; }

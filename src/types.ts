@@ -262,6 +262,8 @@ export interface Marker {
   value_source?: ValueBadgeSource | null;
   /** #977 ordinary working/activity, never device actions or light output. */
   state_source?: MarkerStateSource | null;
+  /** #1000: opaque read compatibility; new edits use the closed marker-alert codec. */
+  alert_sources?: unknown;
   /**
    * Climate devices (AC, thermostat) know the room temperature
    * (attributes.current_temperature). Opt-in per marker: show it as a badge

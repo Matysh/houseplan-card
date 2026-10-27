@@ -1,0 +1,14 @@
+{
+  "id": "v_copy",
+  "binding": "virtual",
+  "more_info_entity": "switch.source",
+  "tap_action": "more-info",
+  "name": "Source 2",
+  "icon": "mdi:light-switch",
+  "space": "f1",
+  "area": null,
+  "model": null,
+  "link": null,
+  "description": null,
+  "pdfs": []
+}

@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 92 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 270 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **545 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 271 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **546 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -662,6 +662,14 @@ The #1070 header witness uses the existing LED smoke to observe late updates
 after DOM removal and the original reconnect opacity transition events. Native
 ResizeObserver/rAF and Lit ownership require a browser; registration and ordinary
 PASS do not claim nightly caught execution.
+
+- `threshold-cold-view-imports-without-rule-1000`
+
+#1000 observes actual cold Chromium requests from a mounted readonly card:
+without a rule it must not load the optional threshold graph. Codec and timer
+units cannot prove the real import boundary or the absence of editor/settings
+chunks. This browser witness is registered for nightly execution; task static
+readiness is execution0/caught unknown.
 
 #1087: trusted View input must reach the shared HA target through the actual Lit handler, while right click keeps Settings.
 

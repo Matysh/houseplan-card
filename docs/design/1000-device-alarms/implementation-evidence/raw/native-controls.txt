@@ -1,0 +1,27 @@
+browser-attestation ok (ok) [device threshold controls and confirmed causes] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless) · путь недоступен
+{
+ "emptyTable": true,
+ "defaultAttention": true,
+ "foreignNotOffered": true,
+ "nestedEscapeKeepsOuter": true,
+ "nestedEscapeReturnsFocus": true,
+ "nestedCancelNoWrite": true,
+ "binaryHasNoFreeText": true,
+ "localizedBinaryLabelKeepsRawOption": true,
+ "rawBinarySavedOnlyInOuterDraft": true,
+ "numericLookingEnumStaysString": true,
+ "lostOptionVisibleAndCannotCommit": true,
+ "maximumThree": true,
+ "refusedSaveRetainsUnsavedRules": true,
+ "persistedDefinitionsOnly": true,
+ "confirmedAlarmHasNoCompetingAttention": true,
+ "threeDistinctCauses": true,
+ "attentionIsSeparateGroup": true,
+ "actualAttributeCondition": true,
+ "unchangedPreviewUsesAcceptedReasonsImmediately": true,
+ "outerCancelPreservesSavedRules": true,
+ "narrowDropdownFitsViewport": true,
+ "narrowEscapeKeepsConstructor": true,
+ "noHaActions": true
+}
+OK

@@ -3,10 +3,11 @@ import { ensureFormKitStyles, type FormKitStyleHost } from './form-kit';
 import { settingsDialogCss } from '../styles/settings-dialogs.styles';
 import { cardDialogFormKitTokens } from '../styles/form-kit.styles';
 import { ensureCompactDialogStyles } from '../compact-dialog-styles';
+import { markerAlertEditorCss } from '../styles/marker-alert-editor.styles';
 
 // The footer is a sibling of the form. Share the same theme tokens at its
 // settings-dialog owner instead of maintaining a second colour palette.
-const SETTINGS_DIALOG_CSS = cardDialogFormKitTokens.replace('hp-dialog .hpf-form', 'hp-dialog:is([settings-layout],.danger-confirm-dialog)') + settingsDialogCss;
+const SETTINGS_DIALOG_CSS = cardDialogFormKitTokens.replace('hp-dialog .hpf-form', 'hp-dialog:is([settings-layout],.danger-confirm-dialog)') + settingsDialogCss + markerAlertEditorCss;
 import type { HpColorOpacity } from '../hp-color-opacity';
 
 const adopted = new WeakSet<ShadowRoot>();

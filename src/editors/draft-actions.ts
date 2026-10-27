@@ -33,6 +33,7 @@ export function requestMarkerClose(runtime: HouseplanEditorRuntime, after?: () =
     surface: closeSurface(host.renderRoot, 'marker'),
     close: () => {
       runtime._radarSetup.reset();
+      runtime.markerAlerts.close();
       forgetMarkerBaseline(host);
       finishMarkerDialogClose(host);
       host.requestUpdate();

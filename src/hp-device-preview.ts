@@ -261,7 +261,7 @@ class HpDevicePreview extends LitElement {
       const lqiBottom = shown.scale * (shown.valueBadge?.position === 'bottom' ? 1.55 : 0.95);
       bottom = Math.max(bottom, lqiBottom);
     }
-    if (shown.battery || shown.maintenance) {
+    if (shown.battery || shown.maintenance || shown.attention) {
       // Reserve a conservative full capsule, including uncapped long Text and
       // the old second metric. CSS does the exact placement; this is only the
       // preview camera's safe extent, never marker layout or a DOM measurement.
@@ -305,6 +305,7 @@ class HpDevicePreview extends LitElement {
       };
       const bounds = shown.battery ? withDeviceBatteryBounds(shellBounds, core * 1.26875) : shellBounds;
       if (shown.maintenance) bounds.left = Math.min(bounds.left, shellBounds.left - core * 1.26875 * .67 - 3);
+      if (shown.attention) bounds.left = Math.min(bounds.left, shellBounds.left - core * 1.26875 * (shown.maintenance ? 1.34 : .67) - 3);
       // Existing camera coordinates use 54px compatibility units.
       left = Math.min(left, bounds.left / 54);
       right = Math.max(right, bounds.right / 54);
@@ -336,6 +337,7 @@ class HpDevicePreview extends LitElement {
       this._stateSummary(actual),
       result,
       actual.maintenance ? this._t('device.issues.maintenance_a11y') : '',
+      actual.attention || '',
       actual.valueFullText || '',
       valueBadgeTitle(actual.valueBadge),
       actual.lqiText != null && actual.lqiBand

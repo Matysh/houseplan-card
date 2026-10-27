@@ -2,6 +2,7 @@ import { ENTRY_BUILD_FINGERPRINT } from './editor-runtime-loader';
 import { ViewRuntimeCode, assertViewRuntimeFingerprint } from './view-runtime-boundary';
 import { viewRuntimeRetryUrl } from './view-runtime-retry';
 import type { LiveRuntime } from './live-interaction-runtime';
+import type { MarkerAlertViewRuntime } from './marker-alert-view-runtime';
 
 export const liveRuntimeCode = new ViewRuntimeCode<object, LiveRuntime>(async attempt => {
   const module = attempt === 0 ? await import('./live-interaction-runtime')
@@ -22,4 +23,11 @@ export const converterInfoCode = new ViewRuntimeCode<object, true>(async attempt
     : await import(/* @vite-ignore */ viewRuntimeRetryUrl('__HOUSEPLAN_CONVERTER_INFO_RETRY_ASSET__', import.meta.url)) as typeof import('./hp-plan-converter-info');
   assertViewRuntimeFingerprint(module.CONVERTER_INFO_FINGERPRINT, ENTRY_BUILD_FINGERPRINT);
   return () => module.installPlanConverterInfo();
+});
+
+export const markerAlertCode = new ViewRuntimeCode<object, MarkerAlertViewRuntime>(async attempt => {
+  const module = attempt === 0 ? await import('./marker-alert-view-runtime')
+    : await import(/* @vite-ignore */ viewRuntimeRetryUrl('__HOUSEPLAN_MARKER_ALERT_RETRY_ASSET__', import.meta.url)) as typeof import('./marker-alert-view-runtime');
+  assertViewRuntimeFingerprint(module.MARKER_ALERT_FINGERPRINT, ENTRY_BUILD_FINGERPRINT);
+  return host => new module.MarkerAlertViewRuntime(host);
 });

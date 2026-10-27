@@ -3,12 +3,19 @@ import { isAlarmState } from './logic';
 
 export type DeviceIssueReason = 'machine_care' | 'machine_care_filter' | 'filter_cleaning'
   | 'problem' | 'smoke' | 'gas' | 'carbon_monoxide' | 'moisture' | 'safety' | 'tamper'
-  | 'siren' | 'alarm_panel';
+  | 'siren' | 'alarm_panel' | 'threshold';
+/** Producer identity is independent from HA entity identity. No external producer yet. */
+export type DeviceIssueCause = { type: 'native'; id: string; level: 'alarm' | 'maintenance' }
+  | { type: 'threshold' | 'external'; id: string; level: 'attention' | 'alarm' };
 export interface DeviceIssueSignal {
   severity: 'alarm' | 'maintenance';
   reason: DeviceIssueReason;
 }
-export interface ResolvedDeviceIssue extends DeviceIssueSignal {
+export interface ResolvedDeviceIssue extends Omit<DeviceIssueSignal, 'severity'> {
+  severity: 'alarm' | 'attention' | 'maintenance';
+  cause?: DeviceIssueCause;
+  explanation?: string;
+  groupTitle?: string;
   eid: string;
   name: string;
   state: string;

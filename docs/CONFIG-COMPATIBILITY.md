@@ -98,6 +98,13 @@ describes the development line and does not claim that v1.83 stable is published
 
 Optional markers[].more_info_entity is an entity_id string or null; absence/null is Auto. The editor removes the field on explicit Auto and preserves untouched absence/null or stale historical data. Changed values and full imports validate type, format and binding kind; the backend has no HA registry, so runtime independently proves own-device membership, enabled/readable target and exact entity bindings. Changing binding clears only this override in the draft; changing tap action preserves it for the HA footer button. Full/space JSON/ZIP and ordinary marker history/Optimize retain it. Plan-only carries no markers; virtualized duplicate imports drop this HA reference. Closed support projections pseudonymize it in the shared entity namespace, with matching integration/relay wire schemas. No migration or model bump; older strict backends may reject the new field, so retain a backup before downgrade.
 
+## Device threshold alarms (#1000)
+
+Optional markers[].alert_sources is an ordered array of at most three closed threshold definitions: stable local id, threshold discriminator, attention/alarm level, exact own entity_id, optional single direct attribute, eq/ne/gt/lt/ge/le operator and a finite JSON number or exact string. Absence stays absent; deleting the last rule removes the field. There is no schema/Store/archive version bump or read-time rewrite. New invalid/future/external definitions are rejected; an unchanged opaque previous block retains the established previous-aware writer compatibility and remains inert.
+
+Full/space JSON, ZIP, structural history and copies preserve definitions and raw value types. Plan-only exports and closed support projections omit device rules with the existing marker policy. Rebinding/copying preserves the definition but grants no source authority; virtual, foreign, disabled and missing bindings cannot read an old source. Pending and active confirmation state is per-card memory, never config/layout/history/export. Old strict backends may reject this optional field; remove rules before downgrading if needed. No services are added.
+
+
 ## Hidden Zigbee placement diagnostics (#1077)
 
 No persisted config/layout/cache schema or version changes. Hidden/shown status

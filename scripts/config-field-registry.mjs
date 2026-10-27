@@ -121,6 +121,16 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     compatibility: 'full/space/ZIP round-trip; untouched future blocks lossless; closed support projections omit this field',
   },
   {
+    id: 'markers[].alert_sources',
+    enforcedBy: 'validation.py + marker-alert.ts / marker_alerts.py + shared JSON contract; #1000',
+    selector: { path: ['markers', '*', 'alert_sources'] },
+    storage: 'House Plan server config', type: 'up to 3 threshold rules: local id, level, own entity, optional direct attribute, operator, typed number|string',
+    default: 'absent (= no custom alerts)', level: 'device marker', ui: 'Device settings → Device alerts',
+    runtime: 'owner-checked threshold causes; monotonic 3000ms on/off; no external producer, write or stored active state',
+    introduced: '#1000', status: 'current', migration: 'none; unchanged opaque future blocks retain previous-aware compatibility',
+    compatibility: 'full/space JSON, ZIP and marker copies preserve definitions; rebind/copy grants no old HA authority; closed support projections omit',
+  },
+  {
     id: 'markers[].vacuum.new_run_after_dock',
     enforcedBy: 'validation.py + server trail lifecycle; #940',
     selector: { path: ['markers', '*', 'vacuum', 'new_run_after_dock'] },
