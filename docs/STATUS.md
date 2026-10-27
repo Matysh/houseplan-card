@@ -1,5 +1,11 @@
 # Project status
 
+Dialog pickers (#998) reuse the accepted UI-029 field/menu paint. Native selects
+remain the value source, including onboarding and the remaining editor dialogs.
+The real HA icon picker keeps its adaptive surface and one focus border; its
+mobile Escape belongs to the picker before the parent dialog. No persisted
+settings, actions or option sets change.
+
 SPEC delivery compatibility (#1104) recognizes the exact published heading
 `SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
 SPEC filename. Publisher, terminal trailers, paths, machine anchors and real

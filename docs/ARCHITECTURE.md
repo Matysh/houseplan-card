@@ -889,8 +889,18 @@ value/change and option contract. It owns one accessible animated listbox;
 `FloatingSurfaceController` places it in the native top layer or the dialog's
 portal fallback. Transient overlay registration keeps Escape, outside click,
 section navigation and focus restoration with the existing dialog owner.
-The component is registered by settings styles, not imported into form-kit or
-the separate first-run onboarding graph.
+The component is registered by settings styles and the independent onboarding
+and summary-editor entries (#998); it does not pull the editor graph into View.
+Dialog-only native selectors in decor, stairs, physical elements and variable
+insertion use the same wrapper; inline Properties controls retain their contract.
+
+The marker form's `iconPickerKit` Lit directive adapts only that mounted genuine
+HA icon picker. It adopts UI Kit paint in its known nested roots, waits for HA's
+Lit readiness and observes local child changes. Disconnect removes observers
+and adopted sheets; late completion cannot publish into a retired owner. No
+global shadow-root hook or polling is used. HA still selects desktop popover
+versus narrow/low bottom sheet and owns search, custom values and selection.
+The shared dialog shell yields Escape to either open native picker surface.
 
 Space settings (#945) share the same form with onboarding/import through
 `SpaceFormPort`; only the editor injects section navigation, the shared north

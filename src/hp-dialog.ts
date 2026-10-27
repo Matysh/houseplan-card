@@ -751,10 +751,12 @@ export class HpDialog extends LitElement {
     if (event.key === 'Escape') {
       this._pruneOverlays();
       const overlay = this._overlays[this._overlays.length - 1];
-      // Registered Houseplan overlays retain priority. An HA/native popover
-      // owns its own Escape before the surrounding dialog does.
+      // Registered Houseplan overlays retain priority. HA's adaptive picker
+      // owns Escape in both its desktop popover and narrow/low bottom sheet.
+      // The sheet's public open property is not reflected to an attribute.
       if (!overlay && event.composedPath().some(node => node instanceof Element
-          && node.matches('wa-popover[open], [popover]:popover-open'))) return;
+          && (node.matches('wa-popover[open], [popover]:popover-open')
+            || node.localName === 'ha-bottom-sheet' && (node as HTMLElement & { open?: boolean }).open))) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       if (overlay) {

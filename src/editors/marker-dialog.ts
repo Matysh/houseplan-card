@@ -12,6 +12,7 @@ import { markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker
 import { settingsCopy } from './settings-copy';
 import { renderMarkerStateSource } from './marker-state-source';
 import { renderMarkerMoreInfo } from './marker-more-info';
+import { iconPickerKit } from './ha-icon-picker-kit';
 import { moreInfoDraftInvalid } from '../marker-more-info-fields';
 
 import { resolveDevicePresentation } from '../device-presentation';
@@ -605,7 +606,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
       // Feed the effective icon to HA's picker so its field renders both
       // the glyph and the mdi:* label. autoIcon is presentation-only:
       // untouched dialogs still save d.icon as an empty auto override.
-      ? html`<ha-icon-picker data-hp="field" data-field="marker-icon" id="marker-icon" .hass=${this.host.hass} .value=${d.icon || d.autoIcon}
+      ? html`<ha-icon-picker ${iconPickerKit(st('marker.icon_search'))} data-hp="field" data-field="marker-icon" id="marker-icon" .hass=${this.host.hass} .value=${d.icon || d.autoIcon}
           .placeholder=${d.autoIcon || 'mdi:shape-outline'}
           .fallbackPath=${undefined}
           @value-changed=${(e: CustomEvent<{ value?: string }>) => {

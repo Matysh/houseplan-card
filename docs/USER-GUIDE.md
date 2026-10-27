@@ -1,5 +1,11 @@
 # House Plan — complete user guide
 
+Dialog choices share the same fields and menus, including the device icon picker.
+Search for an icon or enter a custom value in Search. On narrow or short screens,
+Home Assistant opens its native bottom sheet. Escape closes the open list first
+and returns focus to the field; the surrounding settings stay open. Long entity
+names and IDs wrap inside source lists.
+
 ## Choose the Home Assistant dialog for a device
 
 In device settings, open Actions and links and select HA more-info dialog. The Open in Home Assistant field below it offers Auto (the main functional entity, such as the thermostat) and this device’s own entities, with search inside the list. The same selection applies to Open in HA in the device card. Right-click still opens Houseplan settings. Icon activity, displayed values and control targets remain independent. A deleted or disabled explicit target produces a warning instead of silently opening another entity.

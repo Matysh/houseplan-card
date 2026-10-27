@@ -1,5 +1,13 @@
 # Development and deployment
 
+Dialog picker maintenance (#998): `node demo/smoke_dialog_picker_998.mjs` sweeps
+the real dialog fields; `node demo/ui-lab/verify-icon-picker.mjs --ha-cache PATH`
+exercises the genuine pinned HA picker, including its desktop and adaptive
+surfaces. Compare UI-029 in its separate immutable reference checkout at
+`3a559559d68d0475db88d0f26cdf594be784351a`; never load reference overrides into
+the candidate. Form-kit dialog CSS snapshots intentionally record UI-029;
+the independent summary-panel snapshot and retired #1019 selectors stay protected.
+
 LQI hot-path regression (#1090): run the real-HA subset
 `python -m pytest tests_backend/test_ha_zigbee_lqi_performance.py tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q -s`.
 The pinned HA 2026.8.3 harness and explicit modern API-contract doubles prove

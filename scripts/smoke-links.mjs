@@ -266,6 +266,11 @@ export const SMOKE_LINKS = [
     because: '#948: actual native/capability-fallback popup, keyboard, focus, closing animation, live themes and reduced motion are observable only through rendered controls.',
   },
   {
+    files: ['src/editors/ha-icon-picker-kit.ts', 'src/styles/form-kit.styles.ts', 'src/settings-select-control.ts'],
+    smokes: ['smoke_dialog_picker_998.mjs', 'smoke_dialog_modal_recovery.mjs'],
+    because: '#998: shared dialog choices retain native values and Escape ownership, bounds and actual UI Kit fields across the real HA forms; adaptive picker paint has additional authentic UI Lab evidence.',
+  },
+  {
     symbols: ['_roomCo2', 'co2Value', 'co2For', 'co2DeviceValue', 'isCo2Entity', 'renderRoomSource',
       'renderRoomSettingsDialog', 'renderRoomCards', 'roomClimateMap', 'sourceValue'],
     files: ['src/room-co2.ts', 'src/styles/dialogs.styles.ts'],

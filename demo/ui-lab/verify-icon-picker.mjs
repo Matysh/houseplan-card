@@ -1,4 +1,4 @@
-// #988/#995: genuine pinned HA picker in the real marker form; synthetic home only.
+// #998: UI-029 on the genuine pinned HA picker; synthetic home only.
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -8,16 +8,16 @@ import { createLabServer } from './server.mjs';
 import { attestLaunchedBrowser } from '../../scripts/browser-attestation.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 
-const { values } = parseArgs({ options: { 'ha-cache': { type: 'string' } } });
+  const { values } = parseArgs({ options: { 'ha-cache': { type: 'string' } } });
 const server = createLabServer({ port: 0, ...(values['ha-cache'] ? { haCache: values['ha-cache'] } : {}) });
 server.listen(0, '127.0.0.1'); await once(server, 'listening');
 const origin = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
-const output = new URL('../../artifacts/icon-picker-988/', import.meta.url);
+const output = new URL('../../artifacts/dialog-picker-998/', import.meta.url);
 mkdirSync(output, { recursive: true });
 const errors = [], external = [], results = [];
 try {
-  const attestation = await attestLaunchedBrowser(browser, { reason: '#988 authentic HA icon picker' });
+  const attestation = await attestLaunchedBrowser(browser, { reason: '#998 authentic HA dialog picker' });
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
@@ -77,6 +77,18 @@ try {
   const check = async (name, run) => { await run(); results.push(name); console.log(`PASS ${name}`); };
 
   await open();
+  await check('UI-029 shared trigger dimensions and triangle', async () => {
+    const geometry = await picker().evaluate(picker => {
+      const root = picker.shadowRoot.querySelector('ha-generic-picker').shadowRoot;
+      const field = root.querySelector('ha-picker-field').shadowRoot;
+      const item = field.querySelector('ha-combo-box-item');
+      const ordinary = picker.closest('hp-dialog').querySelector('hp-settings-select:has(#marker-display)').shadowRoot.querySelector('button');
+      return { icon: item.getBoundingClientRect().height, ordinary: ordinary.getBoundingClientRect().height,
+        arrow: field.querySelector('.arrow').path, radius: getComputedStyle(item).borderTopLeftRadius };
+    });
+    assert.equal(geometry.icon, 44); assert.equal(geometry.ordinary, 44);
+    assert.equal(geometry.radius, '8px'); assert.equal(geometry.arrow, 'm7 10 5 5 5-5z');
+  });
   for (const theme of ['light', 'dark']) {
     await page.evaluate(theme => {
       document.documentElement.dataset.theme = theme;
@@ -100,16 +112,16 @@ try {
           while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
           return { wrapperBorder: wrapper.borderTopColor, wrapperOutline: wrapper.outlineStyle,
             outerOutline: outer.outlineStyle, fieldBackground: native.backgroundColor,
-            lineColor: line.backgroundColor, lineHeight: parseFloat(line.height),
+            lineDisplay: line.display, fieldBorder: native.borderTopWidth, fieldRadius: native.borderTopLeftRadius,
             activeInPicker: picker.matches(':focus-within'), visibleFocus: !!active?.matches(':focus-visible') };
         });
         console.log('field paint', theme, method, paint);
-        assert.equal(paint.wrapperBorder, 'rgba(0, 0, 0, 0)', 'no second nested wrapper border');
+        assert.equal(paint.fieldBorder, '1px', 'one themed field border');
         assert.equal(paint.wrapperOutline, 'none', 'no second wrapper focus ring');
         assert.equal(paint.outerOutline, 'none', 'outer icon row must not add a second focus ring');
         assert.notEqual(paint.fieldBackground, 'rgba(0, 0, 0, 0)', 'native field retains its themed fill');
-        assert.notEqual(paint.lineColor, 'rgba(0, 0, 0, 0)', 'native field retains its own visible contour');
-        assert.ok(paint.lineHeight >= 2, 'native field paints its own focus indicator');
+        assert.equal(paint.lineDisplay, 'none', 'no second native underline');
+        assert.equal(paint.fieldRadius, '8px', 'accepted UI-029 field radius');
         assert.equal(paint.activeInPicker, true, 'focus stays inside real HA picker');
         if (method === 'keyboard') assert.equal(paint.visibleFocus, true, 'keyboard focus remains visibly indicated');
         await page.mouse.move(2, 2);
@@ -118,6 +130,23 @@ try {
     }
     await check(`styled popup: ${theme}`, async () => {
       await trigger().click();
+      const search = picker().locator('ha-picker-combo-box input');
+      await expect(search).toHaveAttribute('placeholder', 'Поиск');
+      const measureSizes = () => picker().evaluate(picker => {
+        const generic = picker.shadowRoot.querySelector('ha-generic-picker').shadowRoot;
+        const popup = generic.querySelector('wa-popover');
+        const combo = generic.querySelector('ha-picker-combo-box');
+        const input = combo.shadowRoot.querySelector('ha-input-search');
+        const find = root => {
+          for (const node of root.querySelectorAll('*')) {
+            if (node.getAttribute('part')?.split(' ').includes('base')) return node;
+            if (node.shadowRoot) { const found = find(node.shadowRoot); if (found) return found; }
+          }
+        };
+        return { distance: popup.distance, searchHeight: find(input.shadowRoot)?.getBoundingClientRect().height };
+      });
+      await expect.poll(async () => Math.abs((await measureSizes()).searchHeight - 44)).toBeLessThan(.1);
+      assert.equal((await measureSizes()).distance, 7);
       await picker().locator('ha-picker-combo-box input').fill('mdi:fan');
       await expect(picker().locator('ha-picker-combo-box ha-combo-box-item').filter({ hasText: /^\s*mdi:fan\s*$/ }).first()).toBeVisible();
       const paint = await popup().evaluate(popover => {
@@ -134,6 +163,25 @@ try {
       await page.keyboard.press('Escape'); await expect(shell()).toBeVisible();
     });
   }
+  for (const viewport of [{width:390,height:844},{width:1280,height:450}]) {
+    await page.setViewportSize(viewport);
+    await check(`native adaptive picker ${viewport.width}x${viewport.height}`, async () => {
+      await trigger().click();
+      const combo = picker().locator('ha-picker-combo-box');
+      await expect(combo).toBeVisible();
+      await expect(combo.locator('input')).toHaveAttribute('placeholder', 'Поиск');
+      await combo.locator('input').fill('mdi:fan');
+      const option = combo.locator('ha-combo-box-item').filter({hasText:/^\s*mdi:fan\s*$/}).first();
+      await expect(option).toBeVisible();
+      assert.equal(await picker().locator('ha-bottom-sheet').count(), 1, 'native HA adaptive bottom sheet');
+      const overflow = await combo.evaluate(el => el.getBoundingClientRect().right > innerWidth + 1 || el.getBoundingClientRect().left < -1);
+      assert.equal(overflow, false);
+      await page.screenshot({path:new URL(`adaptive-${viewport.width}x${viewport.height}.png`,output).pathname});
+      await page.keyboard.press('Escape'); await expect(shell()).toBeVisible();
+      await expect(combo).not.toBeVisible();
+    });
+  }
+  await page.setViewportSize({width:1280,height:1000});
   await check('selection and clear retain other dirty fields; no write until Save', async () => {
     const before = await page.evaluate(() => JSON.stringify(window.__lab.mock.snapshot()));
     await shell().locator('[data-section-target="basics"]').click();
@@ -164,5 +212,5 @@ try {
   });
   assert.deepEqual(errors, [], 'no browser exception'); assert.deepEqual(external, [], 'no external traffic');
   writeFileSync(new URL('report.json', output), JSON.stringify({ provenance: server.provenance, attestation, results }, null, 2));
-  console.log(`OK #988 genuine HA: ${results.length} checks; ${server.provenance.frontendVersion}`);
+  console.log(`OK #998 genuine HA: ${results.length} checks; ${server.provenance.frontendVersion}`);
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }

@@ -1,5 +1,12 @@
 # Testing
 
+Dialog picker coverage (#998): `demo/smoke_dialog_picker_998.mjs` exercises
+actual form choices, viewport bounds and unchanged values after Escape.
+`demo/ui-lab/verify-icon-picker.mjs` adds the genuine HA picker rather than a
+fallback: field/search paint, keyboard focus, adaptive narrow/low surfaces,
+selection, clear, Save and cancellation. `smoke_dialog_modal_recovery` keeps
+both the nested Escape refusal and ordinary parent close as separate controls.
+
 Действующая инструкция: правила для новых тестов, гейты, локальный набор и
 матрицы релизной проверки. Ручных чек-листов по поверхностям и приложений по
 отдельным issue больше нет (#681, после #634): поведение держат тесты, смоки и

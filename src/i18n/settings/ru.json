@@ -1,4 +1,5 @@
 {
+  "marker.icon_search": "Поиск",
   "marker.more_info_search": "Поиск по имени или entity_id…",
   "marker.more_info_entity": "Открывать в Home Assistant",
   "marker.more_info_auto": "Авто",

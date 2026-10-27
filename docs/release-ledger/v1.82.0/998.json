@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 998,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Dialog selects and sourcePicker already exist in stable v1.82.0 (src/editors/form-kit.ts). This unifies their existing presentation with the accepted UI-029 and fixes source overflow and adaptive nested Escape, without a new stored capability or changed option set.",
+  "summary": {
+    "ru": "Единое оформление списков и выбора иконок в диалогах; длинные источники остаются в пределах окна.",
+    "en": "Consistent dialog dropdowns and icon selection, with long sources kept inside the dialog."
+  }
+}

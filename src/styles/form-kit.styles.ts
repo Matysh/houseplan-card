@@ -449,17 +449,28 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-status { display: flex; align-items: center; gap: 6px; min-width: 0; margin-left: 8px; font-size: .875rem; color: var(${tokens.muted}); }
   .${p}-status > .${p}-link { color: var(--warning-color, #b87940); }
   .${p}-divider { border: 0; border-top: 1px solid var(${tokens.line}); margin: 4px 0; }
-  .${p}-picker { display: grid; gap: 6px; }
-  ${form} .${p}-pick { display: flex; align-items: center; gap: 8px; text-align: left; }
-  ${form} .${p}-pick > b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .${p}-picker { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; gap: 7px; }
+  ${form} .${p}-pick { position: relative; box-sizing: border-box; display: flex; align-items: center; gap: 8px; text-align: start;
+    width: 100%; min-width: 0; min-height: 44px; padding: 10px 46px 10px 14px;
+    border: 1px solid var(${tokens.line}); border-radius: 8px; background: var(--hpf-control-surface, var(${tokens.surface})); background-image: none;
+    color: var(--primary-text-color); font: inherit; line-height: 22px; cursor: pointer; transition: background 160ms, border-color 160ms; }
+  ${form} .${p}-pick > b { font: inherit; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .${p}-pick::after { content: ''; position: absolute; right: 14px; top: calc(50% - 9px); width: 18px; height: 18px;
+    background: currentColor; clip-path: polygon(29.1667% 41.6667%, 50% 62.5%, 70.8333% 41.6667%); transition: transform 160ms; pointer-events: none; }
+  .${p}-pick[aria-expanded=true]::after { transform: rotate(180deg); }
+  ${form} .${p}-pick:not(:disabled):hover { border-color: var(${tokens.accent}); background: var(${tokens.tint}); }
   .${p}-pick-ref { min-width: 0; font-size: .8125rem; color: var(${tokens.muted}); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .${p}-pick-ph { color: var(${tokens.muted}); }
-  .${p}-panel { padding: 8px; border: 1px solid var(${tokens.line}); border-radius: 9px; background: var(${tokens.canvas}); }
-  .${p}-list { display: flex; flex-direction: column; gap: 2px; max-height: 220px; margin-top: 6px; overflow: auto; }
+  .${p}-panel { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 5px; border: 1px solid var(${tokens.line}); border-radius: 10px; background: var(${tokens.surface}); box-shadow: 0 8px 28px #0003; }
+  .${p}-panel .${p}-toolbar { min-width: 0; padding: 5px 5px 8px; }
+  .${p}-panel .${p}-toolbar .${p}-input { width: 100%; min-width: 0; border-radius: 8px; }
+  .${p}-list { display: flex; flex-direction: column; gap: 0; min-width: 0; max-height: 220px; margin-top: 0; overflow: auto; overflow-x: hidden; }
   .${p}${css`-cand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; text-align: left; cursor: pointer; }
   .`.cssText}${p}-cand > small { font-size: .8125rem; color: var(${tokens.muted}); }
-  .${p}-cand:hover { background: var(${tokens.surface}); }
-  .${p}-cand.sel { background: var(${tokens.tint}); color: var(${tokens.accent}); }
+  .${p}-panel .${p}-cand { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 10px 12px; border-radius: 6px; font: inherit; line-height: 20px; overflow-wrap: anywhere; white-space: normal; transition: background-color 160ms, color 160ms; }
+  .${p}-panel .${p}-cand > :is(span, small) { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+  .${p}-cand.sel { background: transparent; color: var(${tokens.accent}); }
+  .${p}-cand:is(:hover, :focus-visible) { background: var(${tokens.tint}); }
   .${p}-cand:focus-visible { outline: 2px solid var(${tokens.accent}); outline-offset: -2px; }
   .${p}-block { display: grid; gap: 15px; }
   .${p}-block.${p}-disabled > :not(.${p}-sub):not(.${p}-callout) { opacity: .45; }
@@ -470,7 +481,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-iconfield { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .${p}-iconfield-control { box-sizing: border-box; display: flex; align-items: center; flex: 1 1 auto; min-width: 0; min-height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); }
-  .${p}-iconfield-control:has(> ha-icon-picker) { border-color: transparent; background: transparent; }
+  .${p}-iconfield-control:has(> ha-icon-picker) { border: 0; background: transparent; }
   .${p}-iconfield-control:focus-within:not(:has(> ha-icon-picker)) { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
   .${p}-iconfield-control > .${p}-input, .${p}-iconfield-control > ha-icon-picker { flex: 1 1 auto; min-width: 0; width: 100%; }
   ${form} .${p}-iconfield-control > .${p}-input { min-height: 42px; height: 42px; border: 0; background: transparent; }
@@ -502,6 +513,10 @@ function extrasCss(options: FormKitCssOptions): string {
   }
   @media (prefers-reduced-motion: reduce) {
     .${p}-toggle > input::after { transition: none; }
+    .${p}-pick, .${p}-pick::after, .${p}-panel .${p}-cand { transition: none; }
+  }
+  @media (max-width: 550px) {
+    ${form} .${p}-pick { font-size: 16px; }
   }
   @media (forced-colors: active) {
     ${form} .${p}-select { appearance: auto; background-image: none; padding-right: 10px; }

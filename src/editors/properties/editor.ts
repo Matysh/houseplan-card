@@ -815,10 +815,10 @@ export class PropertiesEditor {
           onPick: value => { dialog.entity = value; dialog.attribute = ''; dialog.open = false; this.host.requestUpdate(); },
         })}
         <label class="hp-prop-variable-label" for="hp-prop-variable-value">${this.t('value')}</label>
-        <select data-hp="field" data-field="hp-prop-variable-value" id="hp-prop-variable-value" class="hpf-select" .value=${dialog.attribute}
+        <hp-settings-select><select data-hp="field" data-field="hp-prop-variable-value" id="hp-prop-variable-value" class="hpf-select" .value=${dialog.attribute}
           @change=${(e: Event) => { dialog.attribute = (e.target as HTMLSelectElement).value; this.host.requestUpdate(); }}>
           <option value="" ?selected=${!dialog.attribute}>${this.t('state')}</option>${attributes.map(key => html`<option value=${key} ?selected=${dialog.attribute===key}>${key}</option>`)}
-        </select>
+        </select></hp-settings-select>
         <div class="hp-prop-preview"><div>${this.t('preview')}</div><strong>${preview}</strong></div>
         ${text.length > 200 ? html`<p role="alert" class="hp-prop-error">${this.t('text_limit')}</p>` : nothing}
         ${error ? html`<p role="alert" class="hp-prop-error">${this.t(error.key as PropertiesString, error.values)}</p>` : nothing}

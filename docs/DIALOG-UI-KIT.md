@@ -1,6 +1,19 @@
 # Общий UI-кит диалогов
 
 Контракт [#1007](https://github.com/Matysh/houseplan-card/issues/1007).
+
+Дополнение #998 / UI-029: все dialog-select используют `hp-settings-select`
+через `selectControl()` или обёртку над существующим native select. Поле 44 px,
+радиус 8 px, сплошной треугольник; меню с радиусом 10 px. `sourcePicker()`
+использует те же токены и переносит длинные имена/ID внутри доступной ширины.
+Настоящий `ha-icon-picker` получает локальный `iconPickerKit()`; адаптер живёт
+только вместе с конкретным элементом, снимает наблюдателей/стили при отключении.
+HA владеет поиском, custom value, выбором, фокусом и responsive bottom sheet.
+Floating popover имеет зазор 7 px; для bottom sheet зазор неприменим. Внешняя
+обёртка не добавляет рамку. `hp-dialog` отдаёт Escape открытому вложенному
+popover или HA bottom sheet; следующий Escape закрывает родительский диалог.
+Onboarding и summary регистрируют select в собственных lazy entry points.
+
 Переиспользуем существующие Lit-примитивы из src/editors/form-kit.ts. Состояние,
 валидация, сохранение и HA-действия остаются у владельца формы.
 
