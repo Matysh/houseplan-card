@@ -870,7 +870,11 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // the accepted -20 B gap to its363457 reference and the existing2000 B band.
 // #1000 matched accepted455535be:364380 ->371955 (+7575). The typed
 // constructor/common controls stay lazy; preserve the inherited -20 B gap.
-export const LAZY_EDITOR_GZIP_CEILING = 371_975;
+// #1089 on accepted #998:373914 ->375012 B (+1098). Owner permits
+// measured byte growth instead of disproportionate splitting. Carry only
+// this delta, preserving the inherited1939-B gap and2000-B band.
+// https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455534939
+export const LAZY_EDITOR_GZIP_CEILING = 373_073;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

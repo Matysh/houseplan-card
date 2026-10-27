@@ -6434,19 +6434,15 @@ its original source hash/command, and no new capture is claimed after relocation
 The actual full CI-generator import closure now matches accepted dev exactly;
 compatibleCiGenerators and source coverage policy remain intact.
 
-The measured #1089 cost relative to accepted #1070 is +720 B initial gzip,
-+1341 B lazy editor gzip, +10966 B raw bundle and +15 host references. Only the
-last two own deltas enter the rolling monolith reference; absolute byte walls,
-metric bands and timing limits stay unchanged. Recorded rationale:
-https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453010424.
-The owner-authorized editor runtime cap for #1089 is 11898 lines (the observed
-size), with the existing 50-line band; the guarded adapter reuses the existing
-Hide/Delete transactions. Rationale: https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453203632.
-
-After accepted #1000 (`1971591313590ac6132e4849682962a7addd8e7a`), #1089 was
-measured again against the actual accepted-source dist, without rebuilding the
-baseline: initial View +713 B gzip, lazy editor +1314 B, onboarding +2 B,
-all production JS +10961 B and host references +15. Both full bundle topologies,
-asset hashes and source fingerprints were verified. Carry only those own raw/
-host deltas into the accepted references (6456 / 3624423), preserving inherited
-reserve; absolute, gzip, core bands and timing thresholds stay unchanged.
+The final #1089 cost is measured against accepted #998
+(`592c2a5ce85348542e12cf4feddc3a86f08d52dd`), using its verified existing dist:
+initial View +707 B gzip, lazy editor +1098 B, onboarding +9 B, managed bundle
++10971 B and host references +15. Both source fingerprints, complete asset
+hashes and topologies were verified. Carry only the own editor delta into
+373073 B, preserving the inherited1939-B gap and2000-B band; rolling monolith
+references become6456/3630487. Absolute, initial View and timing limits stay
+unchanged. Earlier base measurements remain in the issue history. Rationale:
+https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455534939.
+The owner-authorized editor runtime cap remains11898 lines with a50-line band;
+the final11906-line runtime reuses the existing Hide/Delete transactions.
+Rationale: https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453203632.
