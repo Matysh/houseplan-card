@@ -7,5 +7,27 @@
   "summary": {
     "ru": "Сохранение настроек и маркеров на большом доме стало заметно быстрее: сервер проверяет только то, что изменилось.",
     "en": "Saving settings and markers on a large house is noticeably faster: the server validates only what changed."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "room-label-parity-view-dark",
+        "expectation": "change",
+        "reason": "Existing material inherits the pending #1070 header quarter-turn controls (already declared in #1070). Select this scene to verify room name/wall appearance remains unchanged by #1096; no additional pixel-change allowance and no baseline acceptance."
+      },
+      {
+        "id": "room-label-parity-view-light",
+        "expectation": "change",
+        "reason": "Existing material inherits the pending #1070 header quarter-turn controls (already declared in #1070). Select this scene to verify room name/wall appearance remains unchanged by #1096; no additional pixel-change allowance and no baseline acceptance."
+      },
+      {
+        "id": "room-co2-iso-dark",
+        "expectation": "change",
+        "reason": "Existing material inherits the pending #1070 header quarter-turn controls (already declared in #1070). Select this scene to verify room name/wall appearance remains unchanged by #1096; no additional pixel-change allowance and no baseline acceptance."
+      }
+    ],
+    "smokes": []
   }
 }
