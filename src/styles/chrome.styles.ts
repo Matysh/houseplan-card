@@ -13,7 +13,10 @@ const chromeCoreStyles = unsafeCSS(css`
       background: var(--card-background-color, var(--hp-bg));
       border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
     }
-    .hdr > .head { box-sizing: border-box; }
+    /* Keep the header and its menu above the sibling editor toolbar after
+       animation opacity stops creating a toolbar stacking context. The menu
+       remains anchored by its positioned .header-menu-wrap. */
+    .hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }
     .tabs {
       display: flex;
       gap: var(--sp-2);

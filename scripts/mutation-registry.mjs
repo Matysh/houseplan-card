@@ -145,6 +145,14 @@ const MUTANT_DEFINITIONS = [
     patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
   },
   {
+    id: 'plan-rotation-settled-toolbar-covers-menu-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: after animation opacity returns to one, real header menu centres must retain native pointer ownership above the sibling editor toolbar. This requires actual DOM stacking/hit testing. Registered only; nightly execution.',
+    patches: [{ file: 'src/styles/chrome.styles.ts',
+      find: '.hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }',
+      replace: '.hdr > .head { box-sizing: border-box; }' }],
+  },
+  {
     id: 'plan-rotation-animated-header-clips-menu-1070',
     guard: 'node demo/smoke_plan_rotation_mobile.mjs',
     because: '#1070 AC12: the real phone gear popup must remain fully hittable during the shared header transition and allow native retargeting; a Node camera model cannot see ancestor clipping. Registered only; nightly execution.',

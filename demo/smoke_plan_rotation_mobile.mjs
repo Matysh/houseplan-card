@@ -61,9 +61,13 @@ try{
   const rapidBefore=await snapshot(),gear=card.locator('[data-hp="header-menu"]');
   await gear.click();
   const plan=await card.locator('[data-hp="header-menu-item"][data-id="mode-plan"]').boundingBox();
+  // The 390px one-row gear does not move on mode entry. Measure it before
+  // the first click so a layout/stability round trip cannot consume the animation.
+  const g=await gear.boundingBox();
   await page.mouse.click(plan.x+plan.width/2,plan.y+plan.height/2);
-  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('ha-card').dataset.hpMode==='plan');
-  const g=await gear.boundingBox();await page.mouse.click(g.x+g.width/2,g.y+g.height/2);
+  await page.mouse.click(g.x+g.width/2,g.y+g.height/2);
+  await page.waitForFunction(()=>window.__card._modeTransitionBusy
+    &&window.__card.renderRoot.querySelector('[data-hp="header-menu-item"][data-id="mode-decor"]'));
   const menu=await page.evaluate(()=>{
     const c=window.__card,s=c.renderRoot,items=[...s.querySelectorAll('[data-hp="header-menu-item"]')];
     return{busy:c._modeTransitionBusy,overflow:getComputedStyle(s.querySelector('.head')).overflow,
@@ -72,12 +76,36 @@ try{
   writeFileSync('artifacts/plan-rotation-1070/mid-transition-menu.json',JSON.stringify(menu,null,2));
   assert.ok(menu.busy,'Menu proof must exercise a running transition');
   assert.equal(menu.overflow,'visible');assert.ok(menu.hits.length>2&&menu.hits.every(item=>item.hit));
-  await card.locator('[data-hp="header-menu-item"][data-id="mode-decor"]').click();await wait();
+  // Record the real pointer owner at the observed native hit point. Locator
+  // stability would wait for the animated row to finish instead of retargeting.
+  const retarget = await page.evaluate(()=>{
+    const c=window.__card,s=c.renderRoot,e=s.querySelector('[data-hp="header-menu-item"][data-id="mode-decor"]');
+    const r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=s.elementFromPoint(x,y);
+    if(!(e===hit||e.contains(hit)))throw Error('Native retarget point is intercepted');
+    window.__phoneRetargetInput=null;
+    s.addEventListener('pointerdown',event=>{
+      const owner=event.composedPath().find(item=>item instanceof HTMLElement&&item.matches('[data-hp="header-menu-item"]'));
+      window.__phoneRetargetInput={id:owner?.dataset.id,busy:c._modeTransitionBusy,trusted:event.isTrusted};
+    },{capture:true,once:true});return{x,y};
+  });
+  await page.mouse.click(retarget.x,retarget.y);await wait();
+  const retargetInput=await page.evaluate(()=>window.__phoneRetargetInput);
+  assert.deepEqual(retargetInput,{id:'mode-decor',busy:true,trusted:true});
   assert.equal(await card.locator('ha-card').getAttribute('data-hp-mode'),'decor');
+  // Settling removes opacity's temporary stacking context. Every native menu
+  // centre must still belong to its item, rather than the editor toolbar.
+  await gear.click();
+  const terminalMenu=await page.evaluate(()=>{
+    const c=window.__card,s=c.renderRoot,items=[...s.querySelectorAll('[data-hp="header-menu-item"]')];
+    return{busy:c._modeTransitionBusy,hits:items.map(e=>{const r=e.getBoundingClientRect(),hit=s.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+      return{id:e.dataset.id,hit:e===hit||e.contains(hit)};})};
+  });
+  assert.equal(terminalMenu.busy,false);assert.ok(terminalMenu.hits.length>2&&terminalMenu.hits.every(item=>item.hit));
+  await card.locator('[data-hp="header-menu-item"][data-id="mode-plan"]').click();await wait();
   await card.locator('.head [data-hp="editor-close"]').click();await wait();
   const rapidAfter=await snapshot();
   assert.equal(rapidAfter.camera.zoom,rapidBefore.camera.zoom);
   assert.ok(Object.keys(rapidBefore.camera.view).every(k=>Math.abs(rapidBefore.camera.view[k]-rapidAfter.camera.view[k])<1e-9));
-  writeFileSync('artifacts/plan-rotation-1070/phone-mode-trace.json',JSON.stringify({records,menu},null,2));
+  writeFileSync('artifacts/plan-rotation-1070/phone-mode-trace.json',JSON.stringify({records,menu,retargetInput,terminalMenu},null,2));
   console.log('PASS',records.map(r=>({mode:r.mode,target:r.target,reduced:r.reduced,maxBudgetDelta:r.maxBudgetDelta,head:r.end.head})));
 }finally{await finish(browser);}

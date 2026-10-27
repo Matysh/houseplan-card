@@ -58,6 +58,18 @@ separate. These measured bounds are not inferred from `innerWidth`. Below
 360 px only editors may use two rows. At 360–480 px editors keep one row;
 at 481 px and above the existing desktop wrapping remains.
 
+The final mobile check also caught a real settled stacking defect. While
+animation opacity created a toolbar context, all menu centres hit correctly;
+at opacity1 the later `.editbar-end` and header popup both had z-index2, so
+four menu centres belonged to the toolbar. The header now owns a positioned
+z-index3 context above that sibling. Before/after rectangles for the header,
+menu wrapper, popup, toolbar and end bar are identical; the popup offset parent
+remains `.header-menu-wrap`, and viewport/scroll width remains390 px.
+The guard retains native input, records a trusted `mode-decor` pointerdown
+while the controller is busy, and separately proves all nine menu hits after
+settling before native navigation and camera restoration. The first RED and
+its diagnostic receipts remain preserved; no timeout or animation was relaxed.
+
 ## Loading and evidence boundaries
 
 The two rotation toolbar labels remain in the eager language catalog. Only

@@ -43,10 +43,10 @@ that transition events alone prove disposal.
 | Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 92 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 108 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 269 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **543 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **544 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -347,6 +347,7 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `plan-rotation-pointer-skips-inverse-1070`
 - `plan-rotation-mode-writes-display-camera-1070`
 - `plan-rotation-mobile-ignores-header-height-1070`
+- `plan-rotation-settled-toolbar-covers-menu-1070`
 - `plan-rotation-animated-header-clips-menu-1070`
 - `plan-rotation-reduced-terminal-keeps-stale-height-1070`
 - `lovelace-rotation-pending-locale-allows-save-1070`
