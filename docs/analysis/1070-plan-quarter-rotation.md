@@ -42,6 +42,14 @@ every animation frame, then checks the exact saved canonical camera and the
 same painted world point after View returns. It covers all three editors in
 ordinary and reduced motion with nonzero native zoom and pan.
 
+Viewing the light phone frames also exposed an inherited white close glyph:
+the desktop active-tab colour still applied after the phone hid the highlight.
+That colour now applies only from 481 px; phones retain the normal muted
+palette and the existing 24 px target. The canonical Golden runner decodes the
+actual 320/360 px PNG and requires at least four glyph pixels with contrast
+of three against its painted background. The current light frames have 13
+such pixels, with maximum contrast 3.47; colour-token names alone are not proof.
+
 The native harness declares an external 56 px HA toolbar, the real card's 1 px
 borders and 0/8 px dashboard gutters. The narrowest content width is 302 px
 inside a 304 px card at a 320 px viewport. Seven 44 px View targets fit through
@@ -74,10 +82,16 @@ final matched evidence. Final price/performance compares the current candidate
 with accepted #997 at `e5849080cc01e10349be1c5ec922f8bb4a428094`, using its
 frozen pinned Linux artifact. The accepted artifact measures initial View
 349257 B gzip, lazy editor 362639 B gzip and total raw dist 3550135 B.
-Only measured own feature cost may move a rolling reference, preserving the
-incoming gaps of 1709 B (initial) and 275 B (raw). The 2000 B bands, 352000 B
-initial hard wall and core line cap remain unchanged. Final candidate numbers,
-seven-sample comparisons after one warm-up and their evaluator results are
+The accepted #1088 head `ce51a57e2` changes none of that base's product or
+benchmark/common-harness inputs. The current matching candidate measures
+351333 B initial (+2076), 363605 B editor (+966), 40145 B onboarding (+207),
+and 3564734 B raw (+14599). Its core has 16 additional lines. The initial
+rolling reference carries exactly +2076 to 349624, the editor reference +966
+to 361757, and the raw reference +14599 to 3564459. This preserves the
+incoming gaps of 1709 B (initial), 1848 B (editor) and 275 B (raw).
+The onboarding reference, 2000 B bands, 352000 B initial hard wall and core
+line cap remain unchanged. The measured initial hard-wall reserve is 667 B.
+Seven-sample comparisons after one warm-up and their evaluator results are
 recorded with the published handoff; a diagnostic sample is not readiness.
 
 Native browser input and pinned headless Chromium supply the automatic visual

@@ -348,12 +348,14 @@ const chromeCoreStyles = unsafeCSS(css`
        zone between the tab and its X; the UA ring style is kept. */
     .modetab.active:focus-visible { outline: none; }
     .modetab.active:focus-visible::after { outline: auto; }
-    .modetab.active + .editor-close-slot .closex {
-      color: var(--text-primary-color, #fff);
-      opacity: 0.9;
-    }
-    .modetab.active + .editor-close-slot .closex:focus-visible {
-      outline-color: var(--text-primary-color, #fff);
+    @media (min-width: 481px) {
+      .modetab.active + .editor-close-slot .closex {
+        color: var(--text-primary-color, #fff);
+        opacity: 0.9;
+      }
+      .modetab.active + .editor-close-slot .closex:focus-visible {
+        outline-color: var(--text-primary-color, #fff);
+      }
     }
     /* #993: ≤ 1024 px of header — icon only; the label stays in aria-label and
        the tooltip. The ≤ 480 px window rules above (#616) are unchanged. */

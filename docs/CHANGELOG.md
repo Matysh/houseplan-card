@@ -34,6 +34,8 @@
   quick second choice during the header transition. (#1070)
 - Preserve the saved camera when a native HA editor toolbar has a fractional
   pixel height and View returns to its single-row header. (#1070)
+- Keep the phone's editor-close icon visible on a light card when the desktop
+  active-mode highlight is hidden. (#1070)
 - Load Lovelace form labels with their settings language catalog; ordinary View,
   read-only and kiosk keep that catalog unloaded. Pending language changes block
   saving until translated labels or the complete English fallback are ready. (#1070)

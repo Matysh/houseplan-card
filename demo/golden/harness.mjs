@@ -2794,10 +2794,21 @@ export async function prepareGoldenScenario(page, scenario) {
         if (!rows.some(value => Math.abs(value - y) < 1)) rows.push(y);
       }
       const expectedRows = scenario.mode !== 'view' && innerWidth < 360 ? 2 : 1;
+      const close = head.querySelector('[data-hp="editor-close"]');
+      if (scenario.mode !== 'view') {
+        if (!close) throw Error('phone editor close is missing');
+        const r = close.getBoundingClientRect();
+        if (r.width < 23.99 || r.height < 23.99 || r.x < bounds.x - .1
+            || r.right > bounds.right + .1 || r.y < bounds.y - .1 || r.bottom > bounds.bottom + .1)
+          throw Error('phone editor close is clipped or too small');
+      }
       if (rows.length !== expectedRows || document.documentElement.scrollWidth > innerWidth
           || scenario.mode === 'view' && bounds.height > 56)
         throw Error(`phone header layout is invalid: ${rows.length} rows, height ${bounds.height}`);
-      return { rows: rows.length, height: bounds.height, width: bounds.width };
+      const rect = close?.getBoundingClientRect();
+      return { rows: rows.length, height: bounds.height, width: bounds.width,
+        close: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+          color: getComputedStyle(close).color, opacity: getComputedStyle(close).opacity } : null };
     }, scenario);
   }
   if (scenario.headerSpaces) {

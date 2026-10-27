@@ -109,6 +109,14 @@ const MUTANT_DEFINITIONS = [
       replace: 'MAX_CONFIG_TEXT = 501  # deliberately widened floor' }],
   },
   {
+    id: 'plan-rotation-phone-close-white-on-light-1070',
+    guard: 'node demo/golden/run.mjs --mode=capture --scenario=plan-rotation-phone-editor-320-1070',
+    because: '#1070 AC12: the actual captured light phone header must paint a contrasting close glyph while desktop active-tab colour stays intact. Pixel witness, registered only; nightly execution.',
+    patches: [{ file: 'src/styles/chrome.styles.ts',
+      find: '    @media (min-width: 481px) {\n      .modetab.active + .editor-close-slot .closex {',
+      replace: '    @media (min-width: 0px) {\n      .modetab.active + .editor-close-slot .closex {' }],
+  },
+  {
     id: 'plan-rotation-mode-fractional-height-unquantized-1070',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/mode-transition.test.mjs',
     because: '#1070 AC12: native fractional toolbar height must return to the same integer client-height camera basis. Direct exported-owner unit; registered only, nightly execution.',
