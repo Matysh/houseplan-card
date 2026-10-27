@@ -19,6 +19,7 @@ const choose = async value => {
 };
 const open = async () => {
   await device().click({ button: 'right' });
+  await root.locator('[data-hp="device-context-menu"]:not([inert]) [data-action="view-device-settings"]').click();
   await dialog.waitFor(); await settingsSection(dialog, 'actions'); await settle();
 };
 const save = async () => {

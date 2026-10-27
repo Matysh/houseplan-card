@@ -36,7 +36,8 @@
       "smoke_view_device_menu.mjs",
       "smoke_view_device_menu_lifecycle.mjs",
       "smoke_device_settings_action.mjs",
-      "smoke_device_more_info.mjs"
+      "smoke_device_more_info.mjs",
+      "smoke_view_hold_lifecycle.mjs"
     ],
     "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2"
   }

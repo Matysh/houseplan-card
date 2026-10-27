@@ -22,6 +22,7 @@ const state = (page) => page.evaluate(() => {
     contacts: c._touchContacts.size, view: JSON.stringify(c._view),
     more: window.__holdMoreInfo, services: window.__serviceCalls.length, space: c._space,
     settings: c._markerDialog?.devId ?? null, canEdit: c._canEdit, kiosk: c._kiosk, mode: c._mode,
+    menu: !!c.renderRoot.querySelector('[data-hp="device-context-menu"]:not([inert])'),
   };
 });
 const sameInert = async (page, before, name, ms = 750) => {
@@ -29,6 +30,7 @@ const sameInert = async (page, before, name, ms = 750) => {
   const after = await state(page);
   assert.equal(after.info, null, `${name}: no device card`);
   assert.equal(after.settings, null, `${name}: no settings dialog`);
+  assert.equal(after.menu, false, `${name}: no context menu`);
   assert.equal(after.fired, false, `${name}: no fired hold`);
   assert.equal(after.light, before.light, `${name}: no service`);
   assert.equal(after.more, before.more, `${name}: no more-info`);
@@ -297,7 +299,8 @@ const show = (page, kind) => page.evaluate((mode) => {
     assert.equal(contextBefore.kiosk, false, 'fresh View context is outside kiosk');
     const expectedTarget = await page.locator(DEVICE).getAttribute('data-id');
     const acceptedSettings = async (name) => {
-      // #1050 AC3: a fresh native View context opens current device settings.
+      // #1089: fresh desktop context first opens the shared menu, then Settings.
+      await page.locator('[data-hp="device-context-menu"]:not([inert]) [data-action="view-device-settings"]').click();
       await page.locator(SETTINGS).waitFor({ state: 'attached', timeout: 1600 });
       const accepted = await state(page);
       assert.equal(accepted.settings, expectedTarget, `${name}: current target settings`);
