@@ -6318,9 +6318,9 @@ accepted artifact. No additional cold-owner extraction is made to chase bytes.
 
 
 Matched own-cost accounting after accepted #1087 uses immutable `4c2` and its
-hash-verified source-matching artifact `8e4bf61d`: initial 349915→352016 (+2101),
-editor 363448→364391 (+943), onboarding 40152→40339 (+187), raw 3559455→3574049
-(+14594). Initial/editor/raw references become 351925/364400/3574179, preserving
+hash-verified source-matching artifact `8e4bf61d`: initial 349915→352018 (+2103),
+editor 363448→364390 (+942), onboarding 40152→40333 (+181), raw 3559455→3574082
+(+14627). Initial/editor/raw references become 351927/364399/3574212, preserving
 the incoming gaps 91/-9/-130 B; all 2000 B bands remain. The four useful typed
 presentation ports move 374→378 against reference 372→376, preserving gap 2 and
 band 5. No other coupling reference changes. These are resource measurements,

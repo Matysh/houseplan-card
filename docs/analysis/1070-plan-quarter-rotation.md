@@ -86,18 +86,18 @@ The immutable accepted #1087 checkout is `4c2ac36a0`. Its source fingerprint
 `8e4bf61d` exactly matches the copied accepted-equivalent artifact; every
 manifest asset SHA and topology was verified before the read-only copy.
 The earlier 349824 B issue-comment figure is not used as its actual size.
-The fresh current candidate fingerprint is `1bfebf41`.
+The fresh current candidate fingerprint is `7b533356`.
 
 | Metric | Verified accepted artifact | Candidate | Own delta |
 | --- | ---: | ---: | ---: |
-| initial View gzip | 349915 | 352016 | +2101 |
-| lazy editor gzip | 363448 | 364391 | +943 |
-| onboarding gzip | 40152 | 40339 | +187 |
-| raw dist | 3559455 | 3574049 | +14594 |
+| initial View gzip | 349915 | 352018 | +2103 |
+| lazy editor gzip | 363448 | 364390 | +942 |
+| onboarding gzip | 40152 | 40333 | +181 |
+| raw dist | 3559455 | 3574082 | +14627 |
 | core source lines (trimmed) | 13361 | 13377 | +16 |
 
-Rolling references carry only those measured own costs: initial 349824→351925,
-editor 363457→364400, raw 3559585→3574179. Incoming gaps remain 91, -9 and -130 B,
+Rolling references carry only those measured own costs: initial 349824→351927,
+editor 363457→364399, raw 3559585→3574212. Incoming gaps remain 91, -9 and -130 B,
 respectively; all 2000 B bands remain. The host port has 374 actual members
 against reference 372 in the accepted base. Four useful presentation ports add
 `_framePercent`, `_planScreenDelta`, `_rotation` and `_planVisibleRect`:
@@ -112,7 +112,7 @@ The owner explicitly approved resource-limit increases and stopping byte
 optimization ([decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
 The existing #898 ten-percent rule moves the absolute View wall 352000→387200
 and its reference 320000→352000, and the core cap 13327→14660 with the unchanged
-50-line band (effective 14710). Current own reserve is 35184 B; the observed
+50-line band (effective 14710). Current own reserve is 35182 B; the observed
 combination reserve is 34683 B. Other core caps, performance/security/deadline
 thresholds and independent review authority remain unchanged. No cold seam
 was implemented. The final accepted combined graph is measured again by #1000
@@ -128,7 +128,7 @@ is recorded separately; zero-angle scene geometry gets no change allowance.
 
 The complete timing series below belongs to frozen `55ead817d` / fingerprint `5610671c`
 against accepted #997 e5849080. It is historical author evidence, not a timing
-claim for current `1bfebf41`. Benchmark, common launch and helper inputs are
+claim for current `7b533356`. Benchmark, common launch and helper inputs are
 byte-identical across the subsequent accepted changes. Product inputs are not:
 accepted #1015 removes the retired ripple loop and General-save weather cleanup;
 accepted #1087 adds the more-info target resolver and dialog fields/locales.
@@ -137,6 +137,34 @@ its startup bytes are present in the new graph. This limits reuse of old
 absolute timings. No fresh timings are asserted after those rebases; ordinary
 exact-material CI remains mandatory. The resource-limit and unused-import
 changes add no new runtime behavior. All original RED/GREEN rows remain.
+
+## Final source verification
+
+The accepted #1022 merge `51fde59d` changes none of the frontend/capture/build
+inputs from verified `4c2ac36a0`. Rebase input equivalence was checked before
+reusing the fresh artifact `7b533356` above. On that source fingerprint:
+
+- Native pinned HA:82 layout states and12 camera transitions PASS, including
+  actual accepted floor dropdown and320/359/360/390/480 px boundaries.
+- Mobile smoke:12 ordinary/reduced-motion camera legs, trusted native retarget
+  while busy, nine terminal menu hits and final camera restoration PASS.
+- Both GUI forms:8 cold locale cases and6 pending/fallback cases PASS; ordinary
+  View, read-only and kiosk make zero settings-dictionary requests.
+- All9 own Golden semantic scenes PASS at matrix101. The320/360 px light phone
+  and90/270-degree ISO frames were viewed. No global baseline was accepted.
+- Accepted-base zero-angle Flat and ISO stages are PNG-byte-identical, with
+  zero differing decoded pixels across984×773 px;2015/1884 distinct base
+  colours rule out an empty-stage comparison.
+- Static mutation applicability:1961 definitions,546 browser witnesses and
+ 1081 unique source reads PASS; execution0 and caught status unknown/nightly.
+
+The earlier source-regex tests were corrected from `t` to their real existing
+`settingsT` owner without changing keys, choices, defaults or label checks.
+The actual unused ISO import was removed. All59 targeted policy/source units
+PASS. The first old-reference test RED, mobile stacking RED and diagnostic
+seed timing RED are retained with the successful bounded repairs. These are
+author verification results; final automatic gate and exact-material CI are
+reported in the issue handoff. No physical tablet/GPU result is claimed.
 
 ## Preserved matched performance series
 
