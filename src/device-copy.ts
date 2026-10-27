@@ -37,6 +37,8 @@ export function virtualDeviceCopy(
   };
   delete marker.light_entity;
   delete marker.toggle_entity;
+  // HA dialog selection belongs to the original physical binding.
+  delete marker.more_info_entity;
   delete marker.hidden;
   delete marker.removed;
   for (const value of [marker.value_source, marker.value_badge?.source]) {
