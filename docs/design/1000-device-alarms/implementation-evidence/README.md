@@ -4,6 +4,12 @@ The accepted contract is issue #1000 SPEC r3, body digest
 `88dc3d01d42b45c83ebb8029055c1d1509a2cf41e1e3c3fe425b1640a8f70d5d`.
 This directory records task evidence, not global Golden baseline acceptance.
 
+The final joint source on accepted #1070 is documented in
+[final-joint-20261027](final-joint-20261027/README.md): fresh5smokes/20Golden,
+347 backend cases, paired native HA UI, cold request paths and actual matched
+cost. The earlier captures and prices below remain historical evidence; the
+new record supersedes their pending joint-replay statements.
+
 On 27 October the owner explicitly authorized calibrated initial/core limit
 increases and stopped byte-saving work: [#1000 decision](https://github.com/Matysh/houseplan-card/issues/1000#issuecomment-6440488743),
 [#1070 decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253).
