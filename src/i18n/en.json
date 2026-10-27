@@ -1,4 +1,5 @@
 {
+  "backup.error.invalid_more_info_entity": "The entity for opening in Home Assistant is invalid.",
   "toast.more_info_target_unavailable": "Cannot open the selected entity. Check Open in Home Assistant in the device settings.",
   "backup.error.invalid_state_source": "Invalid icon state source or active states.",
   "marker.preview.state_source_active": "Icon active: {entity} — {state}.",

@@ -6,6 +6,7 @@
   cached ZHA polls retain the same readings without blocking HA on every packet;
   device removal, provider changes and late callbacks still retire old data. (#1090)
 - Open the thermostat instead of its temperature sensor in HA; optionally choose another own entity for the More Info action and Open in HA button. (#1087)
+- Open the thermostat instead of its temperature sensor in HA; optionally choose another own entity for the More Info action and Open in HA button, with localized selection errors. (#1087)
 
 - Show the plan converter on an empty installation and below the HA floor list.
   The floor wizard uses the common compact controls, and converter formats share
