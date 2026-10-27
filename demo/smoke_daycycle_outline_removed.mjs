@@ -18,7 +18,7 @@ try{
   await page.evaluate(async()=>{
     await window.__hpTest.setServerConfig(cfg=>({...cfg,
       settings:{...cfg.settings,bg_mode:'daynight'},
-      spaces:cfg.spaces.map(s=>({...s,settings:{...s.settings,bg_mode:'daynight'}}))}));
+      spaces:cfg.spaces.map(s=>({...s,settings:{...s.settings,bg_mode:'daynight',show_borders:true}}))}));
     const c=window.__card;
     c.hass={...c.hass,states:{...c.hass.states,'sun.sun':{entity_id:'sun.sun',state:'above_horizon',
       attributes:{azimuth:180,elevation:40,rising:false}}}};
@@ -58,4 +58,12 @@ try{
   out.staticKeepsEnvironmentAndPaper=stat.environment&&stat.paper>0;
   out.staticHasNoDecorativeOutline=stat.outline===0&&stat.filters.every(v=>v==='none');
   checkAll(out);await finish(browser,out);
+}catch(error){
+  console.error('Outline smoke state:',await page.evaluate(()=>{
+    const c=window.__card,r=c.renderRoot;
+    return{stage:r.querySelector('.stage')?.className,isoSvg:!!r.querySelector('.iso-overlays-svg'),
+      desired:c._desiredProjection,runtime:c._isoSceneRuntimeLoader?.state,
+      structural:c._serverCfg.spaces.find(s=>s.id===c._space)?.settings};
+  }));
+  throw error;
 }finally{await browser.close();}
