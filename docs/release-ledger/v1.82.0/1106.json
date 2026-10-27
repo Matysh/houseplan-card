@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1106,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Separates the bounded aggregate API history allowance from the unchanged per-response limit in trusted review publication. No product behavior, review authority or release payload changes.",
+  "summary": {
+    "ru": "Публикация ревью читает полную историю API с отдельным суммарным лимитом.",
+    "en": "Review publication reads complete API history under a separate aggregate bound."
+  }
+}
