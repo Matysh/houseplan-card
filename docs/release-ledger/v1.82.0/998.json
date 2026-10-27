@@ -7,5 +7,102 @@
   "summary": {
     "ru": "Единое оформление списков и выбора иконок в диалогах; длинные источники остаются в пределах окна.",
     "en": "Consistent dialog dropdowns and icon selection, with long sources kept inside the dialog."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "device-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "Device dialog dropdowns and state sources adopt accepted UI-029 field/menu geometry, one icon-field border and constrained long source text. Native value/state/selection semantics stay unchanged; genuine HA adaptive picker paint and focus are proved separately by the recorded reference replay."
+      },
+      {
+        "id": "device-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "Device dialog dropdowns and state sources adopt accepted UI-029 field/menu geometry, one icon-field border and constrained long source text. Native value/state/selection semantics stay unchanged; genuine HA adaptive picker paint and focus are proved separately by the recorded reference replay."
+      },
+      {
+        "id": "device-dialog-desktop-de",
+        "expectation": "change",
+        "reason": "Device dialog dropdowns and state sources adopt accepted UI-029 field/menu geometry, one icon-field border and constrained long source text. Native value/state/selection semantics stay unchanged; genuine HA adaptive picker paint and focus are proved separately by the recorded reference replay."
+      },
+      {
+        "id": "device-state-source-standard-en",
+        "expectation": "change",
+        "reason": "Device dialog dropdowns and state sources adopt accepted UI-029 field/menu geometry, one icon-field border and constrained long source text. Native value/state/selection semantics stay unchanged; genuine HA adaptive picker paint and focus are proved separately by the recorded reference replay."
+      },
+      {
+        "id": "device-state-source-manual-ru",
+        "expectation": "change",
+        "reason": "Device dialog dropdowns and state sources adopt accepted UI-029 field/menu geometry, one icon-field border and constrained long source text. Native value/state/selection semantics stay unchanged; genuine HA adaptive picker paint and focus are proved separately by the recorded reference replay."
+      },
+      {
+        "id": "device-state-source-unknown-en",
+        "expectation": "change",
+        "reason": "Device dialog dropdowns and state sources adopt accepted UI-029 field/menu geometry, one icon-field border and constrained long source text. Native value/state/selection semantics stay unchanged; genuine HA adaptive picker paint and focus are proved separately by the recorded reference replay."
+      },
+      {
+        "id": "device-state-source-protected-ru",
+        "expectation": "change",
+        "reason": "Device dialog dropdowns and state sources adopt accepted UI-029 field/menu geometry, one icon-field border and constrained long source text. Native value/state/selection semantics stay unchanged; genuine HA adaptive picker paint and focus are proved separately by the recorded reference replay."
+      },
+      {
+        "id": "room-temperature-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "Shared dialog dropdown presentation follows UI-029, including theme, 44px fields and constrained menus; unchanged adjacent color/help controls are regression context. No plan geometry or room-data change is allowed by #998."
+      },
+      {
+        "id": "room-temperature-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "Shared dialog dropdown presentation follows UI-029, including theme, 44px fields and constrained menus; unchanged adjacent color/help controls are regression context. No plan geometry or room-data change is allowed by #998."
+      },
+      {
+        "id": "settings-help-zoom-200-en-light",
+        "expectation": "change",
+        "reason": "Shared dialog dropdown presentation follows UI-029, including theme, 44px fields and constrained menus; unchanged adjacent color/help controls are regression context. No plan geometry or room-data change is allowed by #998."
+      },
+      {
+        "id": "settings-help-zoom-200-ru-dark",
+        "expectation": "change",
+        "reason": "Shared dialog dropdown presentation follows UI-029, including theme, 44px fields and constrained menus; unchanged adjacent color/help controls are regression context. No plan geometry or room-data change is allowed by #998."
+      },
+      {
+        "id": "space-room-color-popover-desktop-ru",
+        "expectation": "change",
+        "reason": "Shared dialog dropdown presentation follows UI-029, including theme, 44px fields and constrained menus; unchanged adjacent color/help controls are regression context. No plan geometry or room-data change is allowed by #998."
+      },
+      {
+        "id": "first-space-floors-light",
+        "expectation": "new",
+        "reason": "Onboarding registers and renders the shared selector before any editor is loaded, retaining options and native values with the accepted field geometry. Existing #1015/#1070 intent remains separately attributed."
+      },
+      {
+        "id": "first-space-floors-dark",
+        "expectation": "new",
+        "reason": "Onboarding registers and renders the shared selector before any editor is loaded, retaining options and native values with the accepted field geometry. Existing #1015/#1070 intent remains separately attributed."
+      },
+      {
+        "id": "first-space-floors-narrow-dark",
+        "expectation": "new",
+        "reason": "Onboarding registers and renders the shared selector before any editor is loaded, retaining options and native values with the accepted field geometry. Existing #1015/#1070 intent remains separately attributed."
+      },
+      {
+        "id": "decor-color-popover-mobile-ru",
+        "expectation": "change",
+        "reason": "Decor dialog shares the updated form field styling; adjacent native color popup and plan geometry retain their existing behavior. Other decor/physical/stairs/summary choices are covered by the real form sweep."
+      },
+      {
+        "id": "decor-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "Decor dialog shares the updated form field styling; adjacent native color popup and plan geometry retain their existing behavior. Other decor/physical/stairs/summary choices are covered by the real form sweep."
+      }
+    ],
+    "smokes": [
+      "smoke_dialog_picker_998.mjs",
+      "smoke_dialog_modal_recovery.mjs",
+      "smoke_marker_state_source.mjs",
+      "smoke_first_space_converter.mjs"
+    ]
   }
 }
