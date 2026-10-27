@@ -94,6 +94,65 @@ line cap remain unchanged. The measured initial hard-wall reserve is 667 B.
 Seven-sample comparisons after one warm-up and their evaluator results are
 recorded with the published handoff; a diagnostic sample is not readiness.
 
+## Preserved matched performance series
+
+The first complete pinned Linux author series ran on frozen `55ead817d`,
+fingerprint `5610671c`, with the candidate runner and seven measured samples
+after one warm-up on each side. All five runner processes exited zero and kept
+their structural/native-coordinate assertions. Stock JSON budget evaluation:
+
+| Comparison | Result |
+| --- | --- |
+| interaction base0 → candidate0 | RED, ten Long Task limits |
+| interaction base0 → candidate90 | GREEN |
+| isometric base0 → candidate0 | GREEN |
+
+The zero-angle failure is preserved. Candidate sample 0 has first stable render
+5077 ms, space switch 2687 ms, resize 1058 ms and hover 582 ms; its load Long Task
+is 3637 ms. The other six candidate rows have first stable render 2736–2824 ms,
+hover 199–216 ms and no pan Long Task. The base has its own broad spike in
+sample 3: resize 2093 ms, hover 501 ms and total Long Tasks 9555 ms. Its maximum
+Long Task count is 38 against the absolute limit of 18. The candidate median
+first render is 2773.7 ms versus base 2837.6 ms, but its p95 is still RED.
+No host, GC or external-process cause is proved by these rows alone.
+
+The coordinator requested one bounded base0/candidate0 replay with OS telemetry
+after other heavy gates end, with the same 7+1 samples, fixtures, windows and
+thresholds. Both original spikes and all rows remain in the ignored artifacts.
+The single bounded replay completed all 7+1 rows on both sides, with the stock
+evaluator GREEN and no threshold change. Candidate first stable render is
+median 2816.4 ms / p95 2838 ms; Long Tasks are max 1005 ms, p95 count 14 and
+p95 total 2729 ms. It does not replace the first RED series.
+
+The replay's telemetry observed unequal host load: Linux base CPU median 20%
+/ p95 96.08%, candidate median 13.72% / p95 15.49%; Windows p95 is 91.67% /
+36.49%. One external Node PID's cwd was read as the separate
+`hp-1078-sun-transparency-20261025` checkout; no external process was changed.
+Observer wall cost was recorded at 1 Hz (Linux median 2.77/2.09 ms per sample,
+Windows 35.37/29.26 ms). The base again exceeded some absolute limits. This is
+not evidence of a speed-up or proof of the first series' cause. All original and
+replay rows, host telemetry, observer cost and stdout receipt times are retained.
+No further replay is planned. Normative exact-SHA CI remains required; local
+author results do not substitute for the independent CI verdict.
+
+A separate read-only sensitivity compares candidate p95 with the independent
+fastest observed baseline value for each metric, using the published numeric
+predicates unchanged. Those minima may come from different rows; this is not a
+stock gate, an additional AC or a replacement report. All zero-angle time p95
+checks pass that stricter reference; its aggregate Long Task count/total exceed
+11/2576.6 at 14/2729. At 90°, the diagnostic also exceeds the model-ready bound
+by 18.15 ms, resize by 61.2 ms, and the aggregate Long Task min-reference bounds.
+ISO passes the sensitivity. These extrema do not establish a code regression;
+all original rows and the independent stock outcomes remain available.
+
+On the same final fingerprint, the named own browser commands completed:
+`verify_plan_rotation_mobile_1070` (82 native HA states / 12 transitions),
+`smoke_plan_rotation`, `smoke_plan_rotation_editors`,
+`smoke_plan_rotation_touch`, `smoke_plan_rotation_mobile` and
+`smoke_lovelace_editor_locale_1070` all PASS. The editor fixture's compiled
+canonical node owner was rebuilt first. Static mutation applicability is PASS
+for 1949 definitions, with execution 0; caught status remains unknown/nightly.
+
 Native browser input and pinned headless Chromium supply the automatic visual
 and touch evidence; this is not a physical tablet/GPU claim. The editor node
 adapter is a synthetic transport fixture, not execution of the HA Python
