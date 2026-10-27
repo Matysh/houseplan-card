@@ -81,7 +81,13 @@ smokes retain their ordinary checks.
 
 The [selected Linux run](raw/selected-browser.json) is GREEN: 5 required smokes
 and all 20 declared Golden intents. Its ten new frames are in [golden/](golden/);
-their frame hashes and source identity are in the selected report. These task
+their frame hashes and source identity are in the selected report, except the
+three forms refreshed on accepted #1015 after the canonical demo icon-map update:
+[final-forms.json](raw/final-forms.json) records their replacement frame hashes.
+The header/callout bell is now genuinely painted in those synthetic captures,
+matching the native HA reference comparison. The generator added four current
+references, removed five unreferenced entries and changed no existing icon paths.
+These task
 artifacts are separate from accepted global baselines. [Cold network evidence](raw/cold-view.json)
 records the actual requested paths and six observations. The ordinary readonly
 View requests no threshold runtime. Rule-enabled readonly/kiosk View adds two
