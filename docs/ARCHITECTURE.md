@@ -1,5 +1,7 @@
 # House Plan architecture
 
+View device context menu (#1089) has a per-card transient owner behind its own fingerprinted ViewRuntimeBoundary. EditorContextMenu and one idempotent shared stylesheet adopter provide presentation. Accepted command intent survives normal menu close but is revoked by a newer owner, navigation or authority change. Settings uses the existing guarded dialog entry; Hide/Show and Delete reuse the editor transaction with a guard at the queued dispatch boundary. Informational selection does not import the editor runtime.
+
 Config decoder v1 (#1015) sits inside the common Store fence, after pending-pair
 recovery and before config/layout reads, CAS writers and setup consumers. Source
 import runs the same copy-only decoder before schema/host proof. Square-frame

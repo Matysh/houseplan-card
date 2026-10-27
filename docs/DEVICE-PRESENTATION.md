@@ -1,5 +1,7 @@
 # Отображение маркера устройства: таблица решений
 
+In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
+
 ## Home Assistant dialog target (#1087)
 
 The HA dialog target is independent of presentation primary and state/value/badge sources. Auto prefers the already-resolved functional domain (for example climate of a thermostat), then retains the historical primary for passive devices. An optional own more_info_entity overrides only HA opening; exact entity bindings stay exact and virtual bindings gain no HA target. Missing/foreign/disabled/unreadable explicit targets refuse rather than opening a different sensor. Existing unavailable/unknown states can still be opened in HA. Both the More Info tap action and Open in HA footer use one resolver; View right-click remains Settings (#997).

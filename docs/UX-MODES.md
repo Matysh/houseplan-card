@@ -1,5 +1,7 @@
 # UX redesign: three modes (approved 2026-07-21)
 
+In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
+
 > Approved design for reorganizing all card interactions into three tab-like modes.
 > Driven by the owner's mandate and confirmed by real user feedback
 > ([issue #3](https://github.com/Matysh/houseplan-card/issues/3): *"When moving the

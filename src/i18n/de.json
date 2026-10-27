@@ -1346,5 +1346,12 @@
   "vac.history_interrupted": "Reinigung unterbrochen",
   "title.rotate_left": "Gegen den Uhrzeigersinn drehen",
   "title.rotate_right": "Im Uhrzeigersinn drehen",
-  "view.runtime_converter": "Informationen zur Plankonvertierung"
+  "view.runtime_converter": "Informationen zur Plankonvertierung",
+  "view.menu_title": "Gerätemenü",
+  "view.menu_ha": "HA more-info",
+  "view.menu_show": "Im Plan anzeigen",
+  "view.menu_no_ha": "Keine lesbare Home-Assistant-Entität verfügbar.",
+  "view.menu_foreign": "Die Entität gehört zu einem anderen Gerät.",
+  "view.menu_disabled": "Das Gerät oder die Entität ist in Home Assistant deaktiviert.",
+  "view.menu_unverified": "Die Zuordnung in Home Assistant wurde nicht bestätigt."
 }

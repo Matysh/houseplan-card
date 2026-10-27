@@ -1,5 +1,7 @@
 # Development and deployment
 
+The #1089 View-menu owner distinguishes normal selection close from external retirement. Test delayed runtime import, target replacement, queued write and confirmation; the original pointer close consumes its compatibility click, while fresh pointer/keyboard input resets that barrier. Keep common context-menu styles adopted before the first rendered frame and avoid using projected hidden=false as saved visibility.
+
 LQI hot-path regression (#1090): run the real-HA subset
 `python -m pytest tests_backend/test_ha_zigbee_lqi_performance.py tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q -s`.
 The pinned HA 2026.8.3 harness and explicit modern API-contract doubles prove

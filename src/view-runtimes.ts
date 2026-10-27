@@ -7,7 +7,8 @@ import type { VersionRecoveryController } from './version-recovery';
 import type { LiveRuntime } from './live-interaction-runtime';
 import type { LoadedSummaryPanelRuntime } from './summary-panel-runtime-loaded';
 import type { ZigbeeTopologyHass } from './zigbee-topology-runtime';
-import { liveRuntimeCode, zigbeeOverlayCode, converterInfoCode } from './view-runtime-code';
+import { liveRuntimeCode, zigbeeOverlayCode, converterInfoCode, deviceMenuCode } from './view-runtime-code';
+import type { ViewDeviceMenu, ViewDeviceMenuRequest } from './view-device-menu';
 import { summaryRuntimeLoader } from './summary-runtime-loader';
 import { ViewRuntimeBoundary, guardedViewRuntimeReload } from './view-runtime-boundary';
 import { zigbeeTopologyOverlayRequested } from './zigbee-topology-overlay-bridge';
@@ -59,6 +60,8 @@ export class ViewRuntimes {
   readonly summary: ViewRuntimeBoundary<unknown, LoadedSummaryPanelRuntime>;
   readonly zigbee: ViewRuntimeBoundary<object, true>;
   readonly converter: ViewRuntimeBoundary<object, true>;
+  readonly deviceMenu: ViewRuntimeBoundary<object, ViewDeviceMenu>;
+  private menu: ViewDeviceMenu | null = null;
 
   constructor(private readonly host: ViewRuntimeHost) {
     const port = <Runtime>(install: (runtime: Runtime) => void, informational = false) => ({
@@ -71,6 +74,9 @@ export class ViewRuntimes {
       },
     });
     this.live = new ViewRuntimeBoundary(host, liveRuntimeCode, port(runtime => { host._liveRt = runtime; }));
+    this.deviceMenu = new ViewRuntimeBoundary(host, deviceMenuCode, port(runtime => {
+      this.menu?.disconnect(); this.menu = runtime; runtime.connect();
+    }));
     this.summary = new ViewRuntimeBoundary(host, summaryRuntimeLoader, port(runtime => {
       host._summary = runtime; host._capturedSeq = -1;
       if (host.isConnected) runtime.connect();
@@ -80,11 +86,13 @@ export class ViewRuntimes {
   }
 
   connect(): void {
+    this.deviceMenu.connect(false); this.menu?.connect();
     this.host._summary?.connect();
     this.live.connect(); this.summary.connect(); this.zigbee.connect(false); this.converter.connect(false);
     this.reconcile();
   }
   disconnect(): void {
+    this.deviceMenu.disconnect(); this.menu?.disconnect();
     this.live.disconnect(); this.summary.disconnect(); this.zigbee.disconnect(); this.converter.disconnect();
     this.host._summary?.disconnect();
   }
@@ -101,6 +109,11 @@ export class ViewRuntimes {
       if (ready && host.isConnected && host._configWriteContext.current(owner, host.hass) && host._liveRt) run(host._liveRt);
     });
   }
+  openDeviceMenu(request: ViewDeviceMenuRequest): void {
+    this.menu?.close();
+    void this.deviceMenu.ensure().then(ready => { if (ready && request.current()) this.menu?.open(request); });
+  }
+  renderDeviceMenu(): TemplateResult | typeof nothing { return this.menu?.render() ?? nothing; }
   private wantsZigbee(): boolean {
     const host = this.host;
     return zigbeeTopologyOverlayRequested({ hass: host.hass, settings: host._settings,
@@ -113,6 +126,7 @@ export class ViewRuntimes {
   }
   private failures(): FailedViewRuntime[] {
     const failures: FailedViewRuntime[] = [];
+    if (this.deviceMenu.unavailable) failures.push({ name: 'view.menu_title', boundary: this.deviceMenu });
     if (this.live.unavailable) failures.push({ name: 'view.runtime_live', boundary: this.live });
     if (this.summary.unavailable && summaryRecoveryRequested(this.host)) {
       failures.push({ name: 'view.runtime_summary', boundary: this.summary });

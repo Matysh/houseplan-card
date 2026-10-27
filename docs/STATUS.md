@@ -5,6 +5,8 @@ Review publication (#1106) reads complete API history with separate bounds:
 deduplication and the stop on an unknown write outcome retain their authority;
 an oversized or malformed history is never accepted as a partial result.
 
+View device context menu (#1089) is in implementation: shared UI Kit, five commands, independent read-only information and guarded writer operations. Initial typecheck and six owner/permission units pass; browser, visual and full-gate acceptance are still pending. No S8 claim.
+
 SPEC delivery compatibility (#1104) recognizes the exact published heading
 `SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
 SPEC filename. Publisher, terminal trailers, paths, machine anchors and real

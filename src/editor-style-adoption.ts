@@ -21,7 +21,7 @@ import { dialogsStyles } from './styles/dialogs.styles';
 import { editorDialogsStyles } from './styles/editor-dialogs.styles';
 import { editorSecondaryStyles } from './editor-secondary.styles';
 import { propertiesStyles } from './editors/properties/styles';
-import { editorContextMenuStyles } from './editor-context-menu.styles';
+import { adoptEditorContextMenuStyles } from './editor-context-menu-adoption';
 
 export interface EditorStyleHost {
   renderRoot?: DocumentFragment | HTMLElement;
@@ -37,7 +37,6 @@ const flatten = (group: CSSResultGroup): CSSResult[] =>
 
 /** [Lit sheet to follow, editor sheet] in cascade order. */
 const placements = (): Array<[CSSResult, CSSResult]> => [
-  [dialogsStyles, editorContextMenuStyles],
   [dialogsStyles, editorDialogsStyles],
   // Repeated insertion after one anchor is reversed: tray first, properties last.
   [flatten(cardStyles).pop()!, propertiesStyles],
@@ -51,6 +50,7 @@ const placements = (): Array<[CSSResult, CSSResult]> => [
 export function adoptEditorStyles(host: EditorStyleHost): boolean {
   const root = host.renderRoot as ShadowRoot | undefined;
   if (!root) return false;
+  adoptEditorContextMenuStyles(host);
   if (adoptedRoots.has(root)) return true;
   const doc = root.ownerDocument;
   const Sheet = doc.defaultView?.CSSStyleSheet;

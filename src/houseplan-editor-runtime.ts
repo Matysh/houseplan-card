@@ -7403,6 +7403,19 @@ public async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void
     if (row.status.kind !== 'active') return;
     await writeInboxVisibility(this.host, this._inboxBatchDeps(), [row], hidden, false);
   }
+public async _runViewDeviceMenuAction(device: DevItem, command: 'visibility' | 'delete', hidden: boolean, current: () => boolean): Promise<void> {
+    if (!current() || this.host._mode !== 'view' || !this.host._canEdit || this.host._kiosk) return;
+    if (command === 'delete') {
+      const { deletePlanDevice } = await import('./marker-deletion');
+      if (current()) await deletePlanDevice(this, device.id,
+        device.marker?.binding ?? (device.bindingKind === 'virtual' ? 'virtual' : `${device.bindingKind}:${device.bindingRef}`), current);
+      return;
+    }
+    const row = this._deviceInboxRows().find(item => item.deviceId === device.id || item.markerId === device.id);
+    if (!row || !(hidden ? row.canShow : row.canHide) || !current()) return;
+    const deps = this._inboxBatchDeps();
+    await writeInboxVisibility(this.host, { ...deps, saveConfigNow: () => this._saveConfigNow(null, current) }, [row], !hidden, false, true);
+  }
 private _inboxBatchDeps(): InboxBatchDeps {
     return {
       rows: () => this._deviceInboxRows(), saveConfigNow: () => this._saveConfigNow(),

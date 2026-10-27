@@ -1346,5 +1346,12 @@
   "vac.history_interrupted": "Nettoyage interrompu",
   "title.rotate_left": "Tourner dans le sens antihoraire",
   "title.rotate_right": "Tourner dans le sens horaire",
-  "view.runtime_converter": "Informations sur la conversion des plans"
+  "view.runtime_converter": "Informations sur la conversion des plans",
+  "view.menu_title": "Menu de l’appareil",
+  "view.menu_ha": "HA more-info",
+  "view.menu_show": "Afficher sur le plan",
+  "view.menu_no_ha": "Aucune entité Home Assistant lisible n’est disponible.",
+  "view.menu_foreign": "L’entité appartient à un autre appareil.",
+  "view.menu_disabled": "L’appareil ou l’entité est désactivé dans Home Assistant.",
+  "view.menu_unverified": "L’appartenance dans Home Assistant n’a pas été confirmée."
 }

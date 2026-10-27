@@ -30,7 +30,7 @@ export function markerDeletionCandidate(config: ServerConfig, targets: readonly 
 }
 
 /** Throws on config refusal; housekeeping is best effort only after durable success. */
-async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly MarkerDeletionTarget[]): Promise<void> {
+async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly MarkerDeletionTarget[], candidateCurrent?: () => boolean): Promise<void> {
   const host = runtime.host;
   const cfg = host._serverCfg;
   if (!cfg || !host._canEdit || host._kiosk || !host.isConnected) throw new Error('Delete unavailable');
@@ -80,7 +80,7 @@ async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly
   const attempt = runtime._stageOptimisticConfig(cfg, runtime._prepareConfigCandidate(candidate));
   const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced);
   try {
-    await runtime._saveConfigNow(attempt);
+    await runtime._saveConfigNow(attempt, candidateCurrent);
   } catch (error) {
     restoreDeferred(host._rollbackOptimistic(attempt));
     if (current()) { host._regSignature = ''; host._deviceInboxMemo = null; host._maybeRebuildDevices(); }
@@ -130,11 +130,11 @@ const targetForId = (runtime: HouseplanEditorRuntime, id: string): MarkerDeletio
 };
 
 /** Panel Delete enters the same durable cleanup command without a fabricated dialog draft. */
-export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: string, binding: string): Promise<void> {
+export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: string, binding: string, candidateCurrent?: () => boolean): Promise<void> {
   const host = runtime.host;
   if (host._devicePositionBusy) return;
   const claim = host._configWriteContext.claim();
-  const current = () => host.isConnected && host._canEdit && !host._kiosk
+  const current = () => (!candidateCurrent || candidateCurrent()) && host.isConnected && host._canEdit && !host._kiosk
     && host._configWriteContext.current(claim, host.hass) && targetForId(runtime, id)?.binding === binding;
   if (!current()) return;
   const device = host._devices.find(d => d.id === id);
@@ -145,7 +145,7 @@ export async function deletePlanDevice(runtime: HouseplanEditorRuntime, id: stri
   });
   if (!accepted || !current()) return;
   try {
-    await commitDeletion(runtime, [{ id, binding }]);
+    await commitDeletion(runtime, [{ id, binding }], candidateCurrent);
     if (host._configWriteContext.current(claim, host.hass)) host._showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
   } catch (error) {
     if (current() && !runtime.deviceStructure?.needsResolution && !isGeometryCleanupRefusal(error)) host._showToast(host._t('toast.error', { err: host._errText(error) }), 'toast.error');

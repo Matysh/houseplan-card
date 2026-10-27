@@ -650,6 +650,7 @@ export class HouseplanCard extends LitElement {
   private _editorModeRequest = 0;
   private _warmModeRequest = 0;
   private _markerDialogRequest = 0;
+  private _viewDeviceMenuRequest = 0;
   private _settingsDialogRequest = 0;
   private readonly _warmMarker = new WarmMarkerRestore<WarmDialog & { context: object }>({
     allowed: (d) => this.isConnected && d.space === this._space && d.mode === this._mode
@@ -1543,6 +1544,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      ++this._viewDeviceMenuRequest;
       if (!authority) { this._read.invalidate(); this._loading = false;
         if (this._continuity.state !== 'steady') this._beginContinuityCandidate('space', true); }
       this._cancelPendingWarmMode();
@@ -2481,6 +2483,7 @@ export class HouseplanCard extends LitElement {
   });
   /** #813: a window that loses focus mid-press may never deliver its release. */
   private readonly _onWindowBlur = (): void => {
+    ++this._viewDeviceMenuRequest;
     if (this._furnTouchPending) this._editorRuntime?._clearFurniturePreview();
     if (this._mode === 'view') {
       this._touchClickGuard.interrupt();
@@ -2904,7 +2907,7 @@ export class HouseplanCard extends LitElement {
     this._deviceHitScrollUnsub?.(); this._deviceHitScrollUnsub = undefined; this._pinchZoomDirty = false;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
-    this._warmModeRequest = 0; ++this._editorModeRequest; ++this._markerDialogRequest; ++this._settingsDialogRequest;
+    this._warmModeRequest = 0; ++this._editorModeRequest; ++this._markerDialogRequest; ++this._settingsDialogRequest; ++this._viewDeviceMenuRequest;
     if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; } this._viewRuntimes.disconnect();
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
@@ -5880,6 +5883,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _abandonViewInput(): void {
+    ++this._viewDeviceMenuRequest;
     this._touchClickGuard.abandon();
     this._touchContacts.clear();
     this._roomGearTouchNavigation = false;
@@ -5928,14 +5932,27 @@ export class HouseplanCard extends LitElement {
   private _hideDeviceFocusTip(deviceId: string): void { this._liveRt?.deviceBlur(deviceId); }
   private _clearPointerHover(): void { this._liveRt ? this._liveRt.pointerLeave() : this._clearTransientHover(); }
 
-  /** View settings and Devices context menus keep the same screen-space hit owner. */
+  /** View and Devices context menus keep the same screen-space hit owner. */
   private _ctxDevice(ev: MouseEvent, d: DevItem): void {
     d = this._deviceForPointerEvent(ev as PointerEvent, d);
     if (this._mode === 'devices') { this._editorRuntime?.deviceCopy.open(ev, d); return; }
     if (this._mode !== 'view') return;
     ev.preventDefault();
     ev.stopPropagation();
-    this._openMarkerDialog(d, true);
+    if (this._kiosk) { this._openMarkerDialog(d, true); return; }
+    this._interruptViewGesture();
+    const request = ++this._viewDeviceMenuRequest, cardConfig = this._config;
+    const epoch = this._adoption.adoptionEpoch, cr = this._cfgRev, lr = this._layoutRev;
+    const modeRequest = this._editorModeRequest, writer = this._canEdit, authority = this._configWriteGuard();
+    const context = { spaceId: this._space, id: d.id }, binding = markerSettingsTargetKey(d);
+    const camera = JSON.stringify([this._view, this._zoom, this._rotation]);
+    const current = () => request === this._viewDeviceMenuRequest && this.isConnected && this._mode === 'view'
+      && !this._kiosk && this._canEdit === writer && this._loadOk && !this._connectionWasLost && authority()
+      && cardConfig === this._config && modeRequest === this._editorModeRequest
+      && epoch === this._adoption.adoptionEpoch && cr === this._cfgRev && lr === this._layoutRev
+      && camera === JSON.stringify([this._view, this._zoom, this._rotation])
+      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, binding) : null;
+    this._viewRuntimes.openDeviceMenu({ current, target: ev.currentTarget as Element | null, x: ev.clientX, y: ev.clientY });
   }
 
   private _clickDevice(ev: Event, d: DevItem): void {
@@ -7567,6 +7584,7 @@ export class HouseplanCard extends LitElement {
    * only a new pointerdown/keyboard event proves a new deliberate sequence.
    */
   private _guardTouchGesture(ev: Event): void {
+    if (this._viewRuntimes.deviceMenu.state === 'loading' && (ev.type === 'pointerdown' || ev.type === 'keydown')) ++this._viewDeviceMenuRequest;
     if (ev.type === 'keydown') this._deviceDragRetirement.key((ev as KeyboardEvent).key);
     if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
     const rightMouseDown = ev.type === 'pointerdown' && (ev as PointerEvent).pointerType === 'mouse'
@@ -9670,7 +9688,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._findInboxDevice(row);
   }
 
-  private _openMarkerDialog(d?: DevItem, viewSettings = false): void {
+  private _openMarkerDialog(d?: DevItem, viewSettings = false, externalCurrent?: () => boolean): void {
     this._warmMarker.cancel();
     const request = ++this._markerDialogRequest;
     if (!deviceEditorAllowed(this._canEdit, this._kiosk) || viewSettings && !this._loadOk) {
@@ -9682,7 +9700,7 @@ export class HouseplanCard extends LitElement {
     const cardConfig = this._config;
     const epoch = this._adoption.adoptionEpoch, layoutRev = this._layoutRev, authorityCurrent = this._configWriteGuard();
     const context = { spaceId: this._space, id: d?.id ?? '' }, bindingKey = d ? markerSettingsTargetKey(d) : '';
-    const current = (): DevItem | null => request === this._markerDialogRequest && this.isConnected
+    const current = (): DevItem | null => (!externalCurrent || externalCurrent()) && request === this._markerDialogRequest && this.isConnected
       && this._mode === 'view' && modeRequest === this._editorModeRequest
       && (navigation === undefined || navigation === this._editorRuntime?.navigationIntent)
       && this._loadOk && authorityCurrent() && deviceEditorAllowed(this._canEdit, this._kiosk)
@@ -10895,7 +10913,7 @@ export class HouseplanCard extends LitElement {
   /** One stable Lit template site lets a nested `noChange` retain the body
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
-    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
+    return html`${body}${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {

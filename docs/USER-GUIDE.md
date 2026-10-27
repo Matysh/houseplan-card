@@ -1,5 +1,7 @@
 # House Plan — complete user guide
 
+In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
+
 ## Choose the Home Assistant dialog for a device
 
 In device settings, open Actions and links and select HA more-info dialog. The Open in Home Assistant field below it offers Auto (the main functional entity, such as the thermostat) and this device’s own entities, with search inside the list. The same selection applies to Open in HA in the device card. Right-click still opens Houseplan settings. Icon activity, displayed values and control targets remain independent. A deleted or disabled explicit target produces a warning instead of silently opening another entity.
@@ -1817,8 +1819,8 @@ A light defaults to Toggle; other devices default to the House Plan card. An
 unsupported Toggle remains a visible no-op and is never changed into another
 action behind the user's back. **Do nothing** is an explicit saved choice, not
 the default: it keeps the marker's normal appearance, hover, long-press House
-Plan card and the independent right-click settings entry while disabling only
-short activation. Right click opens settings regardless of the saved tap action.
+Plan card and the independent right-click device menu while disabling only
+short activation. Right click opens the device menu regardless of the saved tap action; Settings is its first command.
 
 **Device settings** also works by a short tap, Enter or Space. View keeps the
 same plan and space; closing the dialog returns there. Users without House Plan

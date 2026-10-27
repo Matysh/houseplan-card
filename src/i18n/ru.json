@@ -1346,5 +1346,12 @@
   "vac.history_interrupted": "Уборка прервана",
   "title.rotate_left": "Повернуть против часовой стрелки",
   "title.rotate_right": "Повернуть по часовой стрелке",
-  "view.runtime_converter": "Подсказка о конвертации планов"
+  "view.runtime_converter": "Подсказка о конвертации планов",
+  "view.menu_title": "Меню устройства",
+  "view.menu_ha": "HA more-info",
+  "view.menu_show": "Показать на плане",
+  "view.menu_no_ha": "Нет доступной для чтения сущности Home Assistant.",
+  "view.menu_foreign": "Сущность принадлежит другому устройству.",
+  "view.menu_disabled": "Устройство или сущность отключены в Home Assistant.",
+  "view.menu_unverified": "Принадлежность в Home Assistant не подтверждена."
 }

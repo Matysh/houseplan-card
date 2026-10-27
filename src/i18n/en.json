@@ -1346,5 +1346,12 @@
   "vac.history_interrupted": "Cleanup interrupted",
   "title.rotate_left": "Rotate counterclockwise",
   "title.rotate_right": "Rotate clockwise",
-  "view.runtime_converter": "Plan converter information"
+  "view.runtime_converter": "Plan converter information",
+  "view.menu_title": "Device menu",
+  "view.menu_ha": "HA more-info",
+  "view.menu_show": "Show on plan",
+  "view.menu_no_ha": "No readable Home Assistant entity is available.",
+  "view.menu_foreign": "The entity belongs to another device.",
+  "view.menu_disabled": "The device or entity is disabled in Home Assistant.",
+  "view.menu_unverified": "Home Assistant ownership has not been verified."
 }

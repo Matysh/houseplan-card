@@ -18,6 +18,7 @@ const LED_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_RETRY_ASSET__';
 const LED_FIELD_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_FIELD_RETRY_ASSET__';
 const LED_EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_LED_EDITOR_RETRY_ASSET__';
 export const VIEW_RUNTIME_RETRY_CHUNKS = [
+  { module: '/src/view-device-menu.ts', token: '__HOUSEPLAN_DEVICE_MENU_RETRY_ASSET__' },
   { module: '/src/live-interaction-runtime.ts', token: '__HOUSEPLAN_LIVE_RETRY_ASSET__' },
   { module: '/src/summary-panel-runtime-entry.ts', token: '__HOUSEPLAN_SUMMARY_RETRY_ASSET__' },
   { module: '/src/hp-zigbee-topology-overlay.ts', token: '__HOUSEPLAN_ZIGBEE_OVERLAY_RETRY_ASSET__' },
