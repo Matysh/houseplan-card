@@ -1,0 +1,290 @@
+{
+  "schema": 1,
+  "scope": "task",
+  "results": [
+    {
+      "kind": "smoke",
+      "id": "smoke_daycycle_zoom_layers.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_decor_layer_order.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_detached_authority.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_device_copy.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_device_inbox_delete.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_device_more_info.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_device_position_history.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_device_settings_action.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_device_structure_history.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_dialog_modal_recovery.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_editor_styles_lazy.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_editor_tabs.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_ha_form_shell_parity.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_hide_layers.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_mobile_view_header.mjs",
+      "status": "failed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_mode_transition.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_modes.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_mounted_authority.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_node_history_context.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_static_zoom_sharpness.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_toolbar_stable_width.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_version_recovery.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_view_device_menu.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_view_device_menu_lifecycle.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_view_hold_lifecycle.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_view_recovery.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_view_runtime_dirty_reload.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_view_runtime_kiosk_recovery.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_view_runtime_recovery.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_visual_continuity.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "smoke",
+      "id": "smoke_wall_hatch_density.mjs",
+      "status": "passed"
+    },
+    {
+      "kind": "golden",
+      "id": "view-device-menu-hidden-ru",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+          "ci": {
+            "repository": "Matysh/houseplan-card",
+            "run": 40599426526,
+            "attempt": 1,
+            "sha": "5228e2ff1fbe51ea55f324b056d9f3806246e041"
+          }
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+        "matrixVersion": 103,
+        "actualSha256": "3ba0a32a9d04317bd71bf84c3d0c2b79f1eaef7453ab035dd2c96aa5776e1945",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "view-device-menu-hidden-ru",
+            "expectation": "new",
+            "reason": "Hidden marker temporarily revealed by the eye offers Show on plan in Russian.",
+            "issue": 1089
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "view-device-menu-iso-edge-dark",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+          "ci": {
+            "repository": "Matysh/houseplan-card",
+            "run": 40599426526,
+            "attempt": 1,
+            "sha": "5228e2ff1fbe51ea55f324b056d9f3806246e041"
+          }
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+        "matrixVersion": 103,
+        "actualSha256": "0eccb3b1f364ed79a4866a0252ffdeaacaf2ab70aaf2002cbdc4fd7725c25fcd",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "view-device-menu-iso-edge-dark",
+            "expectation": "new",
+            "reason": "2.5D View menu at the viewport edge remains fully visible.",
+            "issue": 1089
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "view-device-menu-readonly-light-ru",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+          "ci": {
+            "repository": "Matysh/houseplan-card",
+            "run": 40599426526,
+            "attempt": 1,
+            "sha": "5228e2ff1fbe51ea55f324b056d9f3806246e041"
+          }
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+        "matrixVersion": 103,
+        "actualSha256": "254a13edc163a00c5e6797108e07c6f39015d41082d40237a934a5bc6ae6145a",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "view-device-menu-readonly-light-ru",
+            "expectation": "new",
+            "reason": "Russian light theme retains both information commands and three disabled writer commands.",
+            "issue": 1089
+          }
+        ]
+      }
+    },
+    {
+      "kind": "golden",
+      "id": "view-device-menu-writer-dark",
+      "status": "passed",
+      "evidence": {
+        "capture": {
+          "platform": "linux",
+          "arch": "x64",
+          "chromium": "151.0.7922.34",
+          "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+          "ci": {
+            "repository": "Matysh/houseplan-card",
+            "run": 40599426526,
+            "attempt": 1,
+            "sha": "5228e2ff1fbe51ea55f324b056d9f3806246e041"
+          }
+        },
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+        "matrixVersion": 103,
+        "actualSha256": "dfde322005e9818e6450733b6ed82fedd353d049fa8384906d29608dc205464b",
+        "baselineStatus": "missing-baseline",
+        "intent": [
+          {
+            "id": "view-device-menu-writer-dark",
+            "expectation": "new",
+            "reason": "Five shared UI Kit commands on the current View device in dark theme.",
+            "issue": 1089
+          }
+        ]
+      }
+    }
+  ],
+  "outcome": "failure"
+}

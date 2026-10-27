@@ -46,3 +46,11 @@ Owner authorized budget increases rather than byte shaving. Rationale [645553493
 | 12 | RU/EN guide/changelog, subsystem docs and major ledger1089; locale/build/gate | Backend untouched; shared EditorContextMenu and same stylesheet adopted once |
 
 
+
+## Pre-model CI refusal and addressed witness correction
+
+Direct CI [40599426526](https://github.com/Matysh/houseplan-card/actions/runs/40599426526) executed 31 selected connected smokes and four selected Golden frames at published `5228e2ff1fbe51ea55f324b056d9f3806246e041`. Thirty smokes and all four Golden passed; the sole failure was `smoke_mobile_view_header: admin320_rowContent`. The archived JSON report records that failure faithfully. Canonical [40600883113](https://github.com/Matysh/houseplan-card/actions/runs/40600883113) returned S6 before any model invocation ([6455965357](https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455965357)); no CODE verdict or round was consumed.
+
+The old #616 witness required a visible empty 24px mode slot at every mobile width. Accepted #1070 explicitly hides that empty View slot below 360px in `src/styles/chrome.styles.ts` to retain one row and all touch targets. This product CSS is unchanged by #1089. The witness now requires the slot hidden below 360px and visible at its original width from 360px upwards; the exact 360px boundary is tested for both administrator and reader. Its existing one-row <=56px, required content, gear, menu commands, kiosk and behavior checks remain. Six actual action controls (two rotation, three zoom, gear) are additionally required to be visible, at least 44px square and inside the native card at all three widths; a mismatch prints the complete header snapshot.
+
+`1089-header-oracle-r2.log`: corrected complete mobile-header smoke PASS at 390/360/320px. `1089-header-rotation-adjacent-r2.log`: existing native320px `smoke_plan_rotation_mobile` PASS, covering mode transitions and retained camera (its output directory was prepared as for the full rotation suite). Only the smoke witness changed; actual source fingerprint `06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2`, manifest identity and all asset hashes still match the original final joint build. The repeat normal-push gate and CI result belong to the next issue handoff.
