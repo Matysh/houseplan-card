@@ -64,13 +64,14 @@ const styles: Record<string, string> = {
 };
 
 type PickerNode = HTMLElement & { updateComplete?: Promise<unknown>; distance?: number; placeholder?: string; path?: string };
+type KitBinding = { observer: MutationObserver; sheet?: CSSStyleSheet; style?: HTMLStyleElement; closed?: EventListener };
 const selector = 'ha-icon-picker,ha-generic-picker,ha-picker-field,ha-picker-combo-box';
 
 class IconPickerKit extends AsyncDirective {
   private picker?: HTMLElement;
   private search = '';
   private generation = 0;
-  private roots = new Map<ShadowRoot, { observer: MutationObserver; sheet?: CSSStyleSheet; style?: HTMLStyleElement }>();
+  private roots = new Map<ShadowRoot, KitBinding>();
   private pending = new WeakSet<Element>();
   private queued = false;
   render(_search: string): typeof nothing { return nothing; }
@@ -107,7 +108,22 @@ class IconPickerKit extends AsyncDirective {
     if (root) {
       if (!this.roots.has(root)) {
         const observer = new MutationObserver(this.schedule);
-        const binding: { observer: MutationObserver; sheet?: CSSStyleSheet; style?: HTMLStyleElement } = { observer };
+        const binding: KitBinding = { observer };
+        if (node.localName === 'ha-generic-picker') {
+          // The native drawer restores the outer dialog's focus rather than
+          // this picker. Its public close event is after the sheet animation;
+          // wait for HA to retire the combo box, then restore this field.
+          binding.closed = event => {
+            if (event.target !== node || !root.querySelector('ha-bottom-sheet')) return;
+            const generation = this.generation;
+            void Promise.resolve(node.updateComplete).then(() => requestAnimationFrame(() => {
+              if (generation !== this.generation || !this.isConnected || !this.picker?.isConnected
+                  || !this.belongs(node) || root.querySelector('ha-picker-combo-box')) return;
+              root.querySelector('ha-picker-field')?.shadowRoot?.querySelector<HTMLButtonElement>('button#item')?.focus();
+            }));
+          };
+          node.addEventListener('picker-closed', binding.closed);
+        }
         const css = styles[node.localName];
         if (css) {
           const Sheet = node.ownerDocument.defaultView?.CSSStyleSheet;
@@ -140,8 +156,9 @@ class IconPickerKit extends AsyncDirective {
       });
     }
   }
-  private remove(root: ShadowRoot, binding: { observer: MutationObserver; sheet?: CSSStyleSheet; style?: HTMLStyleElement }): void {
+  private remove(root: ShadowRoot, binding: KitBinding): void {
     binding.observer.disconnect();
+    if (binding.closed) root.host.removeEventListener('picker-closed', binding.closed);
     if (binding.sheet) root.adoptedStyleSheets = root.adoptedStyleSheets.filter(sheet => sheet !== binding.sheet);
     binding.style?.remove();
   }

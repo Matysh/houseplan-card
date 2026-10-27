@@ -17891,6 +17891,15 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dialog-icon-picker-loses-local-kit-998',
+    guard: 'node demo/smoke_dialog_picker_998.mjs',
+    because: '#998 AC2: computed dimensions and paint of the genuine HA picker must match the ordinary 44 px choice, triangle and radius; native-only presentation fails this browser witness.',
+    patches: [{ file: 'src/editors/ha-icon-picker-kit.ts',
+      find: '    this.search = search;\n    this.schedule();',
+      replace: '    this.search = search;\n    // Local presentation deliberately omitted by this nightly mutant.',
+    }],
+  },
+  {
     id: 'icon-picker-wrapper-restores-second-border-988',
     guard: 'node demo/smoke_dialog_polish_605.mjs',
     because: '#988 AC2: the authentic picker owns its border; a second wrapper border must remain unpainted without removing fallback focus.',

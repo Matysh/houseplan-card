@@ -3,7 +3,8 @@
 Dialog pickers (#998) reuse the accepted UI-029 field/menu paint. Native selects
 remain the value source, including onboarding and the remaining editor dialogs.
 The real HA icon picker keeps its adaptive surface and one focus border; its
-mobile Escape belongs to the picker before the parent dialog. No persisted
+mobile Escape belongs to the picker before the parent dialog and returns focus
+to its field after the native sheet retires. No persisted
 settings, actions or option sets change.
 
 SPEC delivery compatibility (#1104) recognizes the exact published heading

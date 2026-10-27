@@ -4,7 +4,7 @@
 
 - Unify dialog dropdowns and the genuine HA icon picker with the UI Kit. Long
   device sources stay within the dialog, and Escape closes the adaptive icon
-  picker before its parent form. (#998)
+  picker before its parent form and returns focus to the icon field. (#998)
 
 - Choose the compact floor selector before a warm card first paints, preventing
   a 9px header/stage jump when opening the plan again. (#1092)

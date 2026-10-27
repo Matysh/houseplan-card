@@ -179,6 +179,12 @@ try {
       await page.screenshot({path:new URL(`adaptive-${viewport.width}x${viewport.height}.png`,output).pathname});
       await page.keyboard.press('Escape'); await expect(shell()).toBeVisible();
       await expect(combo).not.toBeVisible();
+      await expect(trigger()).toBeFocused();
+      await trigger().click();
+      await picker().locator('ha-picker-combo-box input').fill('custom:example_houseplan_998');
+      await picker().locator('ha-picker-combo-box ha-combo-box-item').filter({hasText:'custom:example_houseplan_998'}).last().click();
+      await expect(picker()).toHaveJSProperty('value','custom:example_houseplan_998');
+      await expect(trigger()).toBeFocused();
     });
   }
   await page.setViewportSize({width:1280,height:1000});
