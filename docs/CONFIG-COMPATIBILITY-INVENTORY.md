@@ -1,10 +1,10 @@
 # Config compatibility inventory (#1015)
 
-Reproduced from source base `441ff7c9382db1fcdfae49e63958cce6e37ada44` (the #1096 candidate; first taken at `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate). The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
+Initial provenance captured from source base `441ff7c9382db1fcdfae49e63958cce6e37ada44` (the #1096 candidate; first taken at `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate). The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **632 individually classified matching lines**, sha256:`77e0f76a3b248f605f183fd4627a0b62201b29e95f03e74b797235ef50382429`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot (source candidate `8a44a9a7271f16a7fe150133158f367ab0b0e36a`): **633 individually classified matching lines**, sha256:`0c6a3bea287a825aaff07186b9edf68bd21bbf535a2dcc61a057c6b4d55d2ba6`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
 
-Captured product trees: src `979ff825d7f2a6317c76668402790695b7a6da28`; integration `ac6ec47137fbc37ff32d0530b46e3135101033bb`. These immutable Git trees identify this source snapshot; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
+Initially captured product trees: src `979ff825d7f2a6317c76668402790695b7a6da28`; integration `ac6ec47137fbc37ff32d0530b46e3135101033bb`. These immutable Git trees identify the initial provenance, not the later merged candidate; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
 
 Reproduce with `node scripts/config-compatibility-inventory.mjs --check`; `--scan` prints unclassified current source for deliberate review. A match can name an import or current algorithm without defining an old stored form. The table below classifies those separately; a current optional default is not a forced migration.
 
@@ -198,7 +198,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [src/types.ts](../src/types.ts) | 1 | branch:vacuum-map-calibration |
 | [src/types.ts](../src/types.ts) | 1 | branch:vacuum-trail |
 | [src/types.ts](../src/types.ts) | 1 | branch:zero-wall-boundaries |
-| [src/types.ts](../src/types.ts) | 3 | exclusion:current-feature |
+| [src/types.ts](../src/types.ts) | 4 | exclusion:current-feature |
 | [src/vacuum-ecovacs-client.ts](../src/vacuum-ecovacs-client.ts) | 1 | exclusion:provider-api |
 | [src/vacuum-route-edit.ts](../src/vacuum-route-edit.ts) | 2 | branch:vacuum-map-calibration |
 | [src/vacuum-routes.ts](../src/vacuum-routes.ts) | 11 | branch:vacuum-map-calibration |
