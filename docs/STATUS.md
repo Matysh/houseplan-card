@@ -12,7 +12,7 @@ Review publication (#1106) reads complete API history with separate bounds:
 deduplication and the stop on an unknown write outcome retain their authority;
 an oversized or malformed history is never accepted as a partial result.
 
-View device context menu (#1089) uses the shared UI Kit for five commands with independent read-only information and guarded writer operations. The local gate and five selected native browser smokes pass; four new Golden frames were inspected. Evidence is preserved on the accepted #1070 base; final combined checks follow the accepted threshold task #1000. Independent code review is pending.
+View device context menu (#1089) uses the shared UI Kit for five commands with independent read-only information and guarded writer operations. Accepted actions retain their current target across lazy loading, confirmation and queued persistence. Joint evidence with device thresholds and dialog pickers is recorded in `docs/design/1089-view-device-menu/implementation-evidence/`.
 
 Device thresholds (#1000) add up to three optional own-entity conditions with
 Attention/Alarm levels and continuous three-second confirmation in both
@@ -63,12 +63,20 @@ Everything computable from the tree and git; regenerate, never edit by hand
 |---|---|
 | Generated | 2026-10-28 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
-| Latest stable tag | n/a — tags are not available in this checkout |
-| Latest prerelease tag | n/a — tags are not available in this checkout |
-| Tests | Node unit 5723 · pure backend 690 · HA-harness backend 591 · browser smokes 470 (`npm run inventory`) |
+| Latest stable tag | `v1.82.0` |
+| Latest prerelease tag | `v1.83.0-beta.2` |
+| Tests | Node unit 5723 · pure backend 692 · HA-harness backend 604 · browser smokes 470 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Scoped config/set (#1096) validates and canonicalises only the touched spaces
+and markers of a document the same runtime validated whole (an in-memory clean
+stamp every other writer clears); whole-document steps, the stored document,
+revisions, events and error codes are unchanged. State, registry, LQI-scope and
+folder walks run only when the write can use their result. The budget witness
+compares the scoped pass with the full pass in one process on the browser
+large-house fixture; the absolute times are reported, not judged.
 
 Zigbee LQI cost (#1090) is separated into structural refresh and single-source
 value projection for Z2M/ZHA. Native registry/config-entry events invalidate

@@ -10546,8 +10546,8 @@ const MUTANT_DEFINITIONS = [
       + 'Optimize intent even for internal writers which bypass WebSocket schema (#248)',
     patches: [{
       file: 'custom_components/houseplan/store.py',
-      find: '    canonical_config = canonicalize_config_geometry(config)',
-      replace: '    canonical_config = config',
+      find: '        canonical_config = canonicalize_config_geometry(config)',
+      replace: '        canonical_config = config',
     }],
   },
   {
@@ -10584,10 +10584,10 @@ const MUTANT_DEFINITIONS = [
       + 'removing their canonicalisation would let the same ULP noise enter every future writer',
     patches: [{
       file: 'custom_components/houseplan/validation.py',
-      find: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    canonical_config,\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
-      replace: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    canonical_config,\n    lambda value: value,\n    _config_wall_segment_invariants,\n',
+      find: 'CONFIG_SCHEMA = vol.All(\n    CONFIG_TYPE_SCHEMA,\n    canonical_config,\n'
+        + '    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
+      replace: 'CONFIG_SCHEMA = vol.All(\n    CONFIG_TYPE_SCHEMA,\n    canonical_config,\n'
+        + '    lambda value: value,\n    _config_wall_segment_invariants,\n',
     }],
   },
   {
@@ -18418,7 +18418,7 @@ const MUTANT_DEFINITIONS = [
       + 'write-boundary check a crafted client can persist two active markers under one id (#625 AC3)',
     patches: [{
       file: 'custom_components/houseplan/websocket_api.py',
-      find: '            validate_active_marker_ids(msg["config"], data.get("config"))\n',
+      find: '            validate_active_marker_ids(msg["config"], stored_config)\n',
       replace: '            # mutant: config/set skips the active marker id invariant\n',
     }],
   },
@@ -21983,7 +21983,16 @@ const roomContact1061Cases = [
   },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases].map((mutant) => ({
+const scopedAttachment1096Cases = [{
+  id: 'config-noop-scans-attachments-1096',
+  guard: 'python3 -m pytest tests_backend/test_validation.py -q -k issue_1096_noop_write',
+  because: '#1096 AC7: a write without dropped refs must not scan the files root; explicit maintenance still ages staging and respects pins.',
+  patches: [{file: 'custom_components/houseplan/plans.py',
+    find: '    if not can_drop and not sweep_staging:\n        return 0',
+    replace: '    if False:\n        return 0'}],
+}];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

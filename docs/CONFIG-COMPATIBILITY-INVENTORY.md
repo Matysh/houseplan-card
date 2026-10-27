@@ -1,10 +1,10 @@
 # Config compatibility inventory (#1015)
 
-Reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
+Initial provenance captured from source base `441ff7c9382db1fcdfae49e63958cce6e37ada44` (the #1096 candidate; first taken at `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate). The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **625 individually classified matching lines**, sha256:`220c327ef2dae82de27d2acde8944f85203533475440ccba96577b9aa6f0cbed`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot (source candidate `8a44a9a7271f16a7fe150133158f367ab0b0e36a`): **633 individually classified matching lines**, sha256:`0c6a3bea287a825aaff07186b9edf68bd21bbf535a2dcc61a057c6b4d55d2ba6`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
 
-Captured product trees: src `22655ecb08f00d9b1f6c8381a1a3d3c9c51487cb`; integration `0019b652824aaad42fd0e6f5372cb595e8a41dc7`. These immutable Git trees identify this source snapshot; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
+Initially captured product trees: src `979ff825d7f2a6317c76668402790695b7a6da28`; integration `ac6ec47137fbc37ff32d0530b46e3135101033bb`. These immutable Git trees identify the initial provenance, not the later merged candidate; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
 
 Reproduce with `node scripts/config-compatibility-inventory.mjs --check`; `--scan` prints unclassified current source for deliberate review. A match can name an import or current algorithm without defining an old stored form. The table below classifies those separately; a current optional default is not a forced migration.
 
@@ -50,7 +50,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [custom_components/houseplan/frontend_registration.py](../custom_components/houseplan/frontend_registration.py) | 4 | exclusion:transport |
 | [custom_components/houseplan/geometry_migration.py](../custom_components/houseplan/geometry_migration.py) | 1 | branch:square-canvas |
 | [custom_components/houseplan/import_export.py](../custom_components/houseplan/import_export.py) | 8 | exclusion:transport |
-| [custom_components/houseplan/junction_limits.py](../custom_components/houseplan/junction_limits.py) | 3 | branch:wall-model-chain |
+| [custom_components/houseplan/junction_limits.py](../custom_components/houseplan/junction_limits.py) | 4 | branch:wall-model-chain |
 | [custom_components/houseplan/marker_history.py](../custom_components/houseplan/marker_history.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/marker_history_websocket.py](../custom_components/houseplan/marker_history_websocket.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/panel_registration.py](../custom_components/houseplan/panel_registration.py) | 1 | exclusion:transport |
@@ -58,7 +58,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [custom_components/houseplan/radar.py](../custom_components/houseplan/radar.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/radar_validation.py](../custom_components/houseplan/radar_validation.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/repairs.py](../custom_components/houseplan/repairs.py) | 2 | exclusion:current-feature |
-| [custom_components/houseplan/room_appearance.py](../custom_components/houseplan/room_appearance.py) | 4 | branch:room-appearance |
+| [custom_components/houseplan/room_appearance.py](../custom_components/houseplan/room_appearance.py) | 7 | branch:room-appearance |
 | [custom_components/houseplan/store.py](../custom_components/houseplan/store.py) | 2 | exclusion:current-feature |
 | [custom_components/houseplan/store.py](../custom_components/houseplan/store.py) | 2 | exclusion:transport |
 | [custom_components/houseplan/support_config_projection.py](../custom_components/houseplan/support_config_projection.py) | 1 | exclusion:transport |
@@ -73,11 +73,12 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 15 | branch:wall-model-chain |
 | [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 1 | branch:weather-option |
 | [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 1 | branch:zero-wall-boundaries |
-| [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 14 | exclusion:current-feature |
+| [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 16 | exclusion:current-feature |
 | [custom_components/houseplan/wall_node_delete.py](../custom_components/houseplan/wall_node_delete.py) | 1 | branch:wall-model-chain |
 | [custom_components/houseplan/wall_node_move.py](../custom_components/houseplan/wall_node_move.py) | 3 | branch:wall-model-chain |
 | [custom_components/houseplan/wall_segment_model.py](../custom_components/houseplan/wall_segment_model.py) | 33 | branch:wall-model-chain |
 | [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 2 | branch:content-url |
+| [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 1 | branch:room-appearance |
 | [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 5 | exclusion:transport |
 | [src/align-grid.ts](../src/align-grid.ts) | 1 | exclusion:current-feature |
@@ -197,7 +198,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [src/types.ts](../src/types.ts) | 1 | branch:vacuum-map-calibration |
 | [src/types.ts](../src/types.ts) | 1 | branch:vacuum-trail |
 | [src/types.ts](../src/types.ts) | 1 | branch:zero-wall-boundaries |
-| [src/types.ts](../src/types.ts) | 3 | exclusion:current-feature |
+| [src/types.ts](../src/types.ts) | 4 | exclusion:current-feature |
 | [src/vacuum-ecovacs-client.ts](../src/vacuum-ecovacs-client.ts) | 1 | exclusion:provider-api |
 | [src/vacuum-route-edit.ts](../src/vacuum-route-edit.ts) | 2 | branch:vacuum-map-calibration |
 | [src/vacuum-routes.ts](../src/vacuum-routes.ts) | 11 | branch:vacuum-map-calibration |

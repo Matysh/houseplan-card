@@ -379,6 +379,7 @@ def space_violation_counts(spaces: dict[str, dict[str, Any]]) -> dict[str, dict[
 def validate_junction_limits(
     config: dict[str, Any], previous: dict[str, Any] | None = None, *,
     baseline_counts: dict[str, dict[str, int]] | None = None,
+    touched_spaces: set[str] | None = None,
 ) -> dict[str, dict[str, int]]:
     """Refuse a write that ADDS a junction violation; inherit the rest.
 
@@ -396,13 +397,33 @@ def validate_junction_limits(
     the caller caches the counts of the stored document by config_rev, so a
     repeated write does not even touch `previous`. Returns the candidate's
     counts — the value to cache after a successful write.
+
+    `touched_spaces` (#1096, only with `baseline_counts`): an ordinary write
+    judges the spaces it changed; an untouched space equals its stored record,
+    so its candidate counts ARE its baseline counts and are copied, not
+    re-counted. None judges every space, as before.
     """
     if baseline_counts is not None:
         old_counts = baseline_counts
     else:
         old_counts = space_violation_counts(_migrated_spaces(previous))
-    new_spaces = _migrated_spaces(config, side="candidate")
+        touched_spaces = None
     candidate_counts: dict[str, dict[str, int]] = {}
+    if touched_spaces is None:
+        new_spaces = _migrated_spaces(config, side="candidate")
+    else:
+        # Only the touched (and new) spaces go through the migration: on a
+        # legacy document that is the whole cost of this step.
+        judged = []
+        for space in config.get("spaces") or []:
+            if not isinstance(space, dict):
+                continue
+            space_id = str(space.get("id"))
+            if space_id in touched_spaces or space_id not in old_counts:
+                judged.append(space)
+            else:
+                candidate_counts[space_id] = dict(old_counts[space_id])
+        new_spaces = _migrated_spaces({**config, "spaces": judged}, side="candidate")
     for space_id, space in new_spaces.items():
         # A brand-new space has nothing to inherit from — but neither is a
         # first write allowed to arrive already broken.

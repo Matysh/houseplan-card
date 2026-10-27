@@ -98,7 +98,7 @@ from .radar_validation import (
     validate_marker_radars,
 )
 from .registry_snapshot import import_registry_snapshot
-from .room_appearance import normalize_room_appearance
+from .room_appearance import config_appearance_materialized, normalize_room_appearance
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
     HouseplanData,
@@ -135,11 +135,14 @@ from .validation import (
     DuplicateMarkerIdError,
     MarkerControlError,
     OpeningPassageError,
+    OrdinaryWriteScope,
     PartitionOpeningHostError,
     PartitionOpeningJambMarginError,
     WallModelClientOutdatedError,
+    ordinary_write_scope,
     prepare_ordinary_summary_candidate,
     sanitize_filename,
+    summary_panel_entity_ids,
     valid_space_id,
     validate_active_marker_ids,
     validate_marker_controls,
@@ -148,6 +151,7 @@ from .validation import (
     validate_marker_value_badges,
     validate_opening_passages,
     validate_partition_opening_hosts,
+    validate_scoped_candidate,
     validate_wall_model_transition,
 )
 from .virtual_lights import (
@@ -460,6 +464,9 @@ async def _commit_pair(
     restore the old pair; setup will therefore restore, never unexpectedly
     finish an import that was reported as failed.
     """
+    # #1096: a pair writer replaces the stored document outside the ordinary
+    # validation path; `ws_config_set` re-stamps after its own pair commit.
+    rt.schema_clean_rev = None
     try:
         await _persist_pair_intent(rt, pending)
         await _converge_pair(rt, pending)
@@ -1781,7 +1788,11 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         if resolved is None:
             return
         data, layout_data = resolved.config_data, resolved.layout_data
-        config = normalize_room_appearance({**DEFAULT_CONFIG, **data.get("config", {})})
+        config = {**DEFAULT_CONFIG, **data.get("config", {})}
+        # #1096: a document every ordinary write has materialised since #1037
+        # resolves to itself; only a legacy document still needs the copy.
+        if not config_appearance_materialized(config):
+            config = normalize_room_appearance(config)
         config_rev = int(data.get("rev", 0))
         try:
             virtual_lights = await (
@@ -1944,11 +1955,59 @@ def _missing_internal_attachments(
     }
 
 
-def _readable_entity_ids(hass: HomeAssistant, connection) -> set[str]:
-    """Snapshot entities readable by this writer on the event loop."""
+def _changed_summary_entity_ids(config: dict[str, Any], previous: dict[str, Any] | None) -> set[str] | None:
+    """Entity ids the candidate's summary panel references, or None when the
+    panel is unchanged (a candidate without the key inherits the stored panel
+    through `preserve_summary_panel_namespace`, which is also unchanged)."""
+    settings = config.get("settings") if isinstance(config.get("settings"), dict) else {}
+    if "summary_panel" not in settings:
+        return None
+    old_settings = (previous or {}).get("settings") if isinstance((previous or {}).get("settings"), dict) else {}
+    if settings["summary_panel"] == old_settings.get("summary_panel"):
+        return None
+    return summary_panel_entity_ids(settings["summary_panel"])
+
+
+def _radar_changed(config: dict[str, Any], previous: dict[str, Any] | None) -> bool:
+    """Did any marker radar block or the global radar settings change?
+
+    Mirrors what `validate_marker_radars` re-validates; an unchanged radar set
+    never needs registry evidence (#1096).
+    """
+    old_markers = {
+        str(marker.get("id")): marker for marker in (previous or {}).get("markers") or []
+        if isinstance(marker, dict)
+    }
+    for marker in config.get("markers") or []:
+        if not isinstance(marker, dict) or "radar" not in marker or marker.get("radar") is None:
+            continue
+        old = old_markers.get(str(marker.get("id")), {}).get("radar", object())
+        if marker["radar"] != old:
+            return True
+    missing = object()
+    new_settings = config.get("settings") if isinstance(config.get("settings"), dict) else {}
+    old_settings = (previous or {}).get("settings") if isinstance((previous or {}).get("settings"), dict) else {}
+    settings = new_settings.get("radar", missing)
+    return settings is not missing and settings != old_settings.get("radar", missing)
+
+
+def _readable_entity_ids(
+    hass: HomeAssistant, connection, entity_ids: set[str] | None = None,
+) -> set[str]:
+    """Snapshot entities readable by this writer on the event loop.
+
+    `entity_ids` (#1096) limits the snapshot to the entities a summary panel
+    actually references: those are the only ids
+    `validate_summary_panel_references` looks up, so an ordinary write does not
+    walk every state of the installation for them. None keeps the full scan.
+    """
     user = getattr(connection, "user", None)
     readable: set[str] = set()
-    for state in hass.states.async_all():
+    if entity_ids is not None:
+        states = [state for state in (hass.states.get(entity_id) for entity_id in entity_ids) if state is not None]
+    else:
+        states = hass.states.async_all()
+    for state in states:
         try:
             if user and (
                 getattr(user, "is_admin", False)
@@ -2045,43 +2104,68 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # cached by rev, so a repeated write does not re-judge `previous`.
         baseline = rt.junction_baseline
         baseline_counts = baseline[1] if baseline and baseline[0] == current_rev else None
-        readable_entity_ids = _readable_entity_ids(hass, connection)
-
-        radar_registry = radar_registry_evidence(hass)
+        stored_config = data.get("config")
+        # #1096: the loop-side registry/state walks run only when the write
+        # can use their result. The summary validator looks up the entities
+        # its own blocks reference; the radar validator reads the registry
+        # only for a changed radar block (`radar_validation.py`, verified
+        # profile branch). An unchanged panel or radar set never pays for them.
+        summary_entity_ids = _changed_summary_entity_ids(msg["config"], stored_config)
+        readable_entity_ids = (
+            _readable_entity_ids(hass, connection, summary_entity_ids)
+            if summary_entity_ids is not None else set()
+        )
+        radar_registry = radar_registry_evidence(hass) if _radar_changed(msg["config"], stored_config) else None
+        # #1096: the stored document of this rev went through the full schema
+        # of this integration version in this runtime, so an untouched record
+        # equals its own validated form. Every other writer clears the stamp
+        # (`async_save_config_state`, `_commit_pair`) and bumps `rev` besides;
+        # a restart starts without one.
+        scoped_eligible = rt.schema_clean_rev == current_rev and bool(stored_config)
 
         # #780: what the write path will normalise in LED strip links (an
         # orphan becomes unbound, an empty marker.space adopts the strip's
         # space). Reported back so a new client re-reads; old ones ignore it.
         # An older writer omits the field: its stored shapes are kept first
         # (r1 H1), so the report also counts their links.
-        preserve_led_strips(msg["config"], data.get("config"))
+        preserve_led_strips(msg["config"], stored_config)
         led_report = led_strip_link_report(msg["config"])
 
         def _validate_config_cpu():
+            touched: set[str] | None = None
+
             def _normalize(candidate):
-                validate_wall_model_transition(candidate, data.get("config"))
-                return CONFIG_SCHEMA(candidate)
+                nonlocal touched
+                # Judged after the preservation steps of
+                # `prepare_ordinary_summary_candidate`: an older client that
+                # omitted a preserved field is compared on equal terms.
+                scope = (ordinary_write_scope(candidate, stored_config) if scoped_eligible
+                         else OrdinaryWriteScope(set(), set(), "stored document not stamped"))
+                touched = None if scope.full else set(scope.touched_spaces)
+                validate_wall_model_transition(candidate, stored_config, touched=touched)
+                return validate_scoped_candidate(candidate, stored_config, scope)
 
             checked = prepare_ordinary_summary_candidate(
-                msg["config"], data.get("config"), readable_entity_ids, _normalize,
+                msg["config"], stored_config, readable_entity_ids, _normalize,
             )
             msg["config"].clear()
             msg["config"].update(checked)
-            validate_active_marker_ids(msg["config"], data.get("config"))
-            validate_marker_controls(msg["config"], data.get("config"))
-            validate_marker_light_entities(msg["config"], data.get("config"))
+            validate_active_marker_ids(msg["config"], stored_config)
+            validate_marker_controls(msg["config"], stored_config)
+            validate_marker_light_entities(msg["config"], stored_config)
             validate_marker_radars(
-                msg["config"], data.get("config"), registry=radar_registry,
+                msg["config"], stored_config, registry=radar_registry,
             )
-            validate_marker_value_badges(msg["config"], data.get("config"))
-            validate_marker_vacuum_routes(msg["config"], data.get("config"))
-            validate_opening_passages(msg["config"], data.get("config"))
+            validate_marker_value_badges(msg["config"], stored_config)
+            validate_marker_vacuum_routes(msg["config"], stored_config)
+            validate_opening_passages(msg["config"], stored_config)
             validate_partition_opening_hosts(
-                msg["config"], data.get("config"), allow_room_wall_promotion=True,
+                msg["config"], stored_config, allow_room_wall_promotion=True,
             )
             return validate_junction_limits(
-                msg["config"], data.get("config"),
+                msg["config"], stored_config,
                 baseline_counts=baseline_counts,
+                touched_spaces=touched if baseline_counts is not None else None,
             )
         try:
             candidate_counts = await hass.async_add_executor_job(_validate_config_cpu)
@@ -2140,6 +2224,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             if contact_layout is None:
                 await async_save_config_state(
                     rt, msg["config"], new_rev, previous_rev=int(current_rev),
+                    previous=data, canonical=True,
                 )
             else:
                 if not _check_write(hass, connection):
@@ -2164,8 +2249,10 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             connection.send_error(msg["id"], "commit_failed", "Device contact save failed; reload the plan")
             return
         # The candidate just became the stored document: its counts are the
-        # next write's baseline (#330 §4.2).
+        # next write's baseline (#330 §4.2), and it is the validated output of
+        # this version's schema — the next ordinary write may scope (#1096).
         rt.junction_baseline = (int(new_rev), candidate_counts)
+        rt.schema_clean_rev = int(new_rev)
         try:
             await _discard_optimizer_snapshot(rt)
         except Exception:  # noqa: BLE001 — stale backup cleanup is best-effort

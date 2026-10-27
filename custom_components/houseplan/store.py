@@ -121,6 +121,12 @@ class HouseplanData:
     # memory-only, invalidated by a rev mismatch; the previous document is
     # not re-judged on every write. Counts only — documents are never held.
     junction_baseline: tuple[int, dict[str, dict[str, int]]] | None = None
+    # #1096: rev of the stored document that an ordinary config/set of this
+    # runtime validated through the full CONFIG_SCHEMA of this version. The
+    # next ordinary write at that rev may validate only what it touched. Any
+    # other writer bumps the rev and retires the stamp; a restart starts
+    # without one. Memory-only, never serialised.
+    schema_clean_rev: int | None = None
     # Runtime-only #485 authority; never serialized by HouseplanStore.
     radar_coordinator: Any | None = None
     # #912: volatile MQTT jobs own a separate entry-scoped durable map Store.
@@ -233,22 +239,41 @@ async def async_save_config_state(
     *,
     previous_rev: int | None = None,
     observe_history: bool = True,
+    previous: dict[str, Any] | None = None,
+    canonical: bool = False,
 ) -> dict[str, Any]:
     """Persist configuration and reconcile dependent operational state.
 
     Callers already hold ``runtime.write_lock``.  Reading the previous
     revision here keeps less common writers (import recovery and undo) on the
     same path as ordinary editor saves without duplicating lifecycle rules.
+
+    `previous` (#1096): the store payload the caller already loaded under the
+    same lock, so it is not read from disk a second time. `canonical=True`:
+    the caller's `config` is already the output of `canonicalize_config_geometry`
+    (CONFIG_SCHEMA ran on it); it is stored as is instead of being copied and
+    canonicalised again — a no-op by construction.
     """
-    previous = await runtime.config_store.async_load() or {}
+    if previous is None:
+        previous = await runtime.config_store.async_load() or {}
     if previous_rev is None:
         try:
             previous_rev = int(previous.get("rev", 0))
         except (TypeError, ValueError):
             previous_rev = 0
 
-    canonical_config = canonicalize_config_geometry(config)
+    if canonical:
+        # The ordinary write path hands over the output of CONFIG_SCHEMA, which
+        # ran `canonicalize_config_geometry` itself (#1096); the coordinate
+        # write-barrier guard pins that `canonical=True` has that one caller.
+        canonical_config = config
+    else:
+        canonical_config = canonicalize_config_geometry(config)
     payload = {**previous, "config": canonical_config, "rev": rev}
+    # #1096: whatever this writer stores was not validated whole by the
+    # ordinary write path of this runtime; the next ordinary write validates
+    # the whole document again. `ws_config_set` re-stamps after its own commit.
+    runtime.schema_clean_rev = None
 
     async def save_config() -> None:
         await runtime.config_store.async_save(payload)

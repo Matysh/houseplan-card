@@ -248,7 +248,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
                     if data.marker_history is not None:
                         data.marker_history.collect(files_dir, cfg)
                     n += collect_attachments(files_dir, cfg, cfg,
-                        pinned=data.marker_history.refs() if data.marker_history is not None else set())
+                        pinned=data.marker_history.refs() if data.marker_history is not None else set(),
+                        sweep_staging=True)
                     n += collect_plans(plans_dir, cfg, cfg)
                     return n
 
