@@ -1,0 +1,73 @@
+{
+  "base": "fd62d98eee72b4bdc14d36d80dade7bfe0f48afb",
+  "frontendEquivalentBase": "e2541d6c0c59c2286b8ef6eb2ded920edfa71d61",
+  "baseSourceTree": "be03128a1da1312452316f6082603a4fb53b7cbb",
+  "baseFingerprint": "370afdc52956487de9842dedc19929acc25468c7e18b067f9107b04521f5afbd",
+  "candidateHead": "bf8437d372f3c37011dc736e3abc32ba494b65dd",
+  "candidateFingerprint": "96c4994776476422588abd65856ed2f0ece379c591b438752bd006d23d7f5b51",
+  "verification": "source fingerprints and complete dist asset topology/hash verification PASS",
+  "initial": {
+    "before": 349257,
+    "after": 349791,
+    "own": 534,
+    "incomingReference": 347548,
+    "inheritedGap": 1709,
+    "reference": 348082
+  },
+  "editor": {
+    "before": 362610,
+    "after": 370329,
+    "own": 7719,
+    "incomingReference": 360791,
+    "inheritedGap": 1819,
+    "reference": 368510
+  },
+  "onboarding": {
+    "before": 39950,
+    "after": 40619,
+    "own": 669,
+    "reference": 39412,
+    "reason": "Within unchanged2000-B band"
+  },
+  "raw": {
+    "before": 3550038,
+    "after": 3589301,
+    "own": 39263,
+    "incomingReference": 3549860,
+    "inheritedGap": 178,
+    "reference": 3589123
+  },
+  "hostRefs": {
+    "before": 6359,
+    "after": 6442,
+    "own": 83,
+    "incomingReference": 6358,
+    "inheritedGap": 1,
+    "reference": 6441
+  },
+  "baseMetrics": {
+    "delegates": 145,
+    "portMembers": 374,
+    "hostRefs": 6359,
+    "portPrivates": 105,
+    "harnessPrivates": 101,
+    "bundleBytes": 3550038
+  },
+  "candidateMetrics": {
+    "delegates": 145,
+    "portMembers": 376,
+    "hostRefs": 6442,
+    "portPrivates": 106,
+    "harnessPrivates": 101,
+    "bundleBytes": 3589301
+  },
+  "unchangedReferences": {
+    "delegates": 145,
+    "portMembers": 372,
+    "portPrivates": 104,
+    "harnessPrivates": 101
+  },
+  "absoluteInitialWall": 352000,
+  "band": 2000,
+  "combinedScope": "Actual accepted dev only; no unaccepted #1070/#1087 cost is claimed. The next merging branch must measure its actual combined dev graph."
+}

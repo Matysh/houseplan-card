@@ -77,7 +77,7 @@ comparison does not accept those baselines or claim their inherited difference
 as a #1000 visual change. The declared task subset and native RGB/state-source/copy
 smokes retain their ordinary checks.
 
-## Cold boundary and interim matched price
+## Cold boundary and matched price
 
 The [selected Linux run](raw/selected-browser.json) is GREEN: 5 required smokes
 and all 20 declared Golden intents. Its ten new frames are in [golden/](golden/);
@@ -98,30 +98,36 @@ the accepted confirmed frame while the entity's state and saved config remain
 unchanged. Static/unsupported input creates no cause, reattachment confirms
 afresh and a removed rule does not resurrect.
 
-[Matched price](raw/matched997-price.json) compares the frozen accepted #997
-Linux tree with candidate fingerprint
-`ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758`:
+[Latest matched price](raw/matched-latest-price.json) uses actual accepted dev
+`fd62d98eee72b4bdc14d36d80dade7bfe0f48afb`. Its frontend source equals accepted
+#1015 `e2541d6c`; #1090 changes the backend only. The untouched frozen Linux base
+has fingerprint `370afdc52956487de9842dedc19929acc25468c7e18b067f9107b04521f5afbd`;
+the candidate has fingerprint
+`96c4994776476422588abd65856ed2f0ece379c591b438752bd006d23d7f5b51`.
+Both source fingerprints and complete asset topology/SHA checks pass. The earlier
+[accepted #997 comparison](raw/matched997-price.json) remains as history.
 
-| Metric | Accepted #997 | Candidate | Own delta | Reference after task |
+| Metric | Accepted base | Candidate | Own delta | Reference after task |
 | --- | ---: | ---: | ---: | ---: |
-| Initial View gzip | 349257 | 349788 | +531 | 348079 |
-| Lazy editor gzip | 362639 | 370352 | +7713 | 368504 |
-| Lazy onboarding gzip | 39938 | 40611 | +673 | 39412 (unchanged, within band) |
-| All production assets raw | 3550135 | 3589413 | +39278 | 3589138 |
+| Initial View gzip | 349257 | 349791 | +534 | 348082 |
+| Lazy editor gzip | 362610 | 370329 | +7719 | 368510 |
+| Lazy onboarding gzip | 39950 | 40619 | +669 | 39412 (unchanged, within band) |
+| All production assets raw | 3550038 | 3589301 | +39263 | 3589123 |
 | Host references | 6359 | 6442 | +83 | 6441 |
 
 Only measured task deltas raise references that need it. Inherited gaps stay
-1709/1848/275/1 respectively. Delegates, ports, private members and all other
+1709/1819/178/1 respectively, retaining #1015's 29-byte editor and 97-byte raw
+savings inside the incoming gaps. Delegates, ports, private members and all other
 references keep their incoming values. The editor cost is the new typed local
 constructor, shared controls/styles and cause preview; it stays lazy. The
 View producer/codec/clock/wording are an optional feature graph. This is a cost
-record, not a performance improvement. It does not substitute for the final
-combined/latest-dev measurement.
+record, not a performance improvement. This measures the actual accepted graph;
+it makes no claim about unaccepted #1070/#1087 material. Whichever feature merges
+next must measure its actual combined dev graph.
 
 ## Final material still to record
 
-Final combined/latest-dev budget, full pinned Linux gate/pre-push receipts
-and final material SHA will be recorded
+Full pinned Linux gate/pre-push receipts and final material SHA will be recorded
 before S7. New scenes have explicit task ledger intents; source work does not
 accept generated global baselines or change the 352000-byte absolute wall or
 2000-byte rolling bands.
