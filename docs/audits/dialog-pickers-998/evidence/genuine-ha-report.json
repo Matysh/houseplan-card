@@ -1,0 +1,96 @@
+{
+  "provenance": {
+    "application": "houseplan-offline-ui-lab",
+    "productVersion": "1.83.0-beta.2",
+    "productCommit": "89f082eb236078e99610f303d315642da2dc76a5",
+    "productFingerprint": "0d54fd4675b83796cc8560a6dc2ad704094480a05605a1952dd604b35dfc831c",
+    "frontendVersion": "20260930.4",
+    "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+    "privateDataset": false,
+    "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+  },
+  "attestation": {
+    "ok": true,
+    "status": "ok",
+    "expected": {
+      "name": "chromium-headless-shell",
+      "revision": "1234",
+      "version": "151.0.7922.34"
+    },
+    "playwright": {
+      "pinned": "1.62.0",
+      "installed": "1.62.0"
+    },
+    "actual": {
+      "version": "151.0.7922.34",
+      "product": "HeadlessChrome/151.0.7922.34",
+      "mode": "headless-shell",
+      "selectedExecutable": "/home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-3fyomP --remote-debugging-pipe --no-startup-window",
+      "resolvedExecutable": "/home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell"
+    },
+    "problems": []
+  },
+  "results": [
+    "UI-029 shared trigger dimensions and triangle",
+    "single focus owner: light/mouse",
+    "single focus owner: light/keyboard",
+    "styled popup: light",
+    "single focus owner: dark/mouse",
+    "single focus owner: dark/keyboard",
+    "styled popup: dark",
+    "native adaptive picker 390x844",
+    "native adaptive picker 1280x450",
+    "selection and clear retain other dirty fields; no write until Save",
+    "Cancel preserves saved icon; parent close guard remains active"
+  ],
+  "foreignCss": {
+    "provider": {
+      "name": "home-assistant-frontend",
+      "lock": "demo/ui-lab/ha-lock.json",
+      "version": "20260930.4",
+      "sha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8"
+    },
+    "classes": [
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-picker-field",
+        "name": "arrow"
+      },
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-picker-field",
+        "name": "opened"
+      },
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-picker-field",
+        "name": "clear"
+      },
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-generic-picker",
+        "name": "container"
+      },
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-picker-combo-box",
+        "name": "list-wrapper"
+      },
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-picker-combo-box",
+        "name": "combo-box-row"
+      },
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-picker-combo-box",
+        "name": "current-value"
+      },
+      {
+        "file": "src/editors/ha-icon-picker-kit.ts",
+        "component": "ha-picker-combo-box",
+        "name": "selected"
+      }
+    ]
+  }
+}

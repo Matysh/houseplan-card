@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "provider": {
+    "name": "home-assistant-frontend",
+    "lock": "demo/ui-lab/ha-lock.json",
+    "version": "20260930.4",
+    "sha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8"
+  },
+  "consumers": [{
+    "file": "src/editors/ha-icon-picker-kit.ts",
+    "components": {
+      "ha-picker-field": ["arrow", "opened", "clear"],
+      "ha-generic-picker": ["container"],
+      "ha-picker-combo-box": ["list-wrapper", "combo-box-row", "current-value", "selected"]
+    }
+  }]
+}

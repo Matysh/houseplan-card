@@ -5,6 +5,7 @@ import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { SETTINGS_LANGUAGE_RUNTIME } from './i18n/settings';
 import { surfaceLanguageRuntime } from './i18n/namespace-language';
 import './hp-help';
+import './hp-settings-select';
 
 import {
   createEmptySpaceConfig,

@@ -1,5 +1,12 @@
 # Project status
 
+Dialog pickers (#998) reuse the accepted UI-029 field/menu paint. Native selects
+remain the value source, including onboarding and the remaining editor dialogs.
+The real HA icon picker keeps its adaptive surface and one focus border; its
+mobile Escape belongs to the picker before the parent dialog and returns focus
+to its field after the native sheet retires. No persisted
+settings, actions or option sets change.
+
 Review publication (#1106) reads complete API history with separate bounds:
 8 MiB per CLI response, 64 MiB aggregate and at most 100 pages. Authentication,
 deduplication and the stop on an unknown write outcome retain their authority;
@@ -56,7 +63,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5713 · pure backend 692 · HA-harness backend 604 · browser smokes 467 (`npm run inventory`) |
+| Tests | Node unit 5717 · pure backend 692 · HA-harness backend 604 · browser smokes 468 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

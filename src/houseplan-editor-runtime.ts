@@ -5391,7 +5391,7 @@ public _renderDecorTextDialog(): TemplateResult {
           </datalist>
           ${ent ? html`
             <label>${this.host._t('decor.live_attr')}</label>
-            <select data-hp="field" data-field="decor-live-attribute" id="decor-live-attribute" class="namein" .value=${''}
+            <hp-settings-select><select data-hp="field" data-field="decor-live-attribute" id="decor-live-attribute" class="namein" .value=${''}
               @change=${(e: Event) => {
                 const value = (e.target as HTMLSelectElement).value;
                 if (value) this._decorInsertLiveVariable(value === '__state__' ? null : value);
@@ -5401,7 +5401,7 @@ public _renderDecorTextDialog(): TemplateResult {
               ${Object.keys(st?.attributes || {})
                 .filter((a) => !!liveTextToken(ent, a))
                 .map((a) => html`<option value=${a}>${a}</option>`)}
-            </select>
+            </select></hp-settings-select>
           ` : nothing}
         </div>
         <div class="row" slot="footer">
@@ -10968,13 +10968,13 @@ public _renderPhysicalDialog(): TemplateResult {
       @hp-close=${() => (this.host._physicalDialog = null)}>
         <div class="body">
           ${column ? html`<label>${this.host._t('physical.shape')}</label>
-            <select data-hp="field" data-field="physical-shape" class="areasel" @change=${(e: Event) => {
+            <hp-settings-select><select data-hp="field" data-field="physical-shape" class="areasel" @change=${(e: Event) => {
               const shape = (e.target as HTMLSelectElement).value as 'square' | 'circle';
               this.host._physicalDialog = { ...d, shape };
             }}>
               <option value="square" ?selected=${d.shape === 'square'}>${this.host._t('physical.square')}</option>
               <option value="circle" ?selected=${d.shape === 'circle'}>${this.host._t('physical.circle')}</option>
-            </select>` : nothing}
+            </select></hp-settings-select>` : nothing}
           <label>${this.host._t(column
             ? d.shape === 'circle' ? 'physical.diameter' : 'physical.side'
             : 'wallthick.field')}</label>

@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import './hp-settings-select';
 import type { SummaryPanelConfig, SummaryPanelSource } from './types';
 import {
   type SummaryDraftProblem, type SummaryPanelLocalPreferences,
@@ -146,7 +147,7 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
               ${fieldProblem(`${bp}.title`)
                 ? html`<div class="summary-problem error summary-block-title-error">${problemText(fieldProblem(`${bp}.title`))}</div>` : nothing}
               <div class="summary-scope">
-                <select .value=${block.scope.type} ?disabled=${dialog.busy}
+                <hp-settings-select><select .value=${block.scope.type} ?disabled=${dialog.busy}
                   aria-label=${t('summary.scope')}
                   @change=${(event: Event) => context.mutate((draft) => {
                     draft.blocks[bi].scope = (event.target as HTMLSelectElement).value === 'space'
@@ -154,8 +155,8 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                   })}>
                   <option value="all" ?selected=${block.scope.type === 'all'}>${t('summary.scope_all')}</option>
                   <option value="space" ?selected=${block.scope.type === 'space'}>${t('summary.scope_space')}</option>
-                </select>
-                ${block.scope.type === 'space' ? html`<select .value=${block.scope.space_id}
+                </select></hp-settings-select>
+                ${block.scope.type === 'space' ? html`<hp-settings-select><select .value=${block.scope.space_id}
                   ?disabled=${dialog.busy} aria-label=${t('summary.scope_space')}
                   data-summary-error=${String(dialog.attempted && firstError?.path === `${bp}.scope`)}
                   aria-invalid=${scopeProblem?.kind === 'error' ? 'true' : 'false'}
@@ -167,7 +168,7 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                     ? html`<option value=${block.scope.space_id} selected>${block.scope.space_id}</option>` : nothing}
                 ${host._model.map((space) => html`<option value=${space.id}
                     ?selected=${space.id === block.scope.space_id}>${space.title}</option>`)}
-                </select>` : nothing}
+                </select></hp-settings-select>` : nothing}
               </div>
               ${scopeProblem
                 ? html`<div class="summary-problem summary-scope-problem ${scopeProblem.kind}">${problemText(scopeProblem)}</div>` : nothing}

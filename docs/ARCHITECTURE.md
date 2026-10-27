@@ -710,10 +710,12 @@ failures feed the existing `VersionRecoveryController` safety timer/session clai
 without inventing a version mismatch or another reload budget.
 
 Composite form focus (#870) belongs either to the native form-kit wrapper or
-the authentic HA picker, never both. The picker is styled through its public
-host contract; its private shadow DOM and event handlers remain untouched.
-The settings sheet adds no outer icon-row focus ring (#995). HA owns its themed
-fill/contour; the text fallback retains the form-kit wrapper's border and focus.
+the authentic HA picker, never both. The settings sheet adds no outer icon-row
+focus ring (#995). The #998 local adapter supplies UI-029 paint to the pinned
+HA component's known nested roots; it leaves native event handlers intact and
+uses public close/focus APIs. Its foreign class vocabulary is separately
+validated against genuine HA DOM. The text fallback retains the form-kit
+wrapper's border and focus.
 
 Stable release prose (#840) has separate authored RU/EN histories in
 `docs/changelog_user_stable_{ru,en}.md`. `user-stable-changelog.mjs` extracts a
@@ -892,8 +894,22 @@ value/change and option contract. It owns one accessible animated listbox;
 `FloatingSurfaceController` places it in the native top layer or the dialog's
 portal fallback. Transient overlay registration keeps Escape, outside click,
 section navigation and focus restoration with the existing dialog owner.
-The component is registered by settings styles, not imported into form-kit or
-the separate first-run onboarding graph.
+The component is registered by settings styles and the independent onboarding
+and summary-editor entries (#998); it does not pull the editor graph into View.
+Dialog-only native selectors in decor, stairs, physical elements and variable
+insertion use the same wrapper; inline Properties controls retain their contract.
+
+The marker form's `iconPickerKit` Lit directive adapts only that mounted genuine
+HA icon picker. It adopts UI Kit paint in its known nested roots, waits for HA's
+Lit readiness and observes local child changes. Disconnect removes observers
+and adopted sheets; late completion cannot publish into a retired owner. No
+global shadow-root hook or polling is used. HA still selects desktop popover
+versus narrow/low bottom sheet and owns search, custom values and selection.
+The shared dialog shell yields Escape to either open native picker surface.
+After the adaptive sheet's public `picker-closed` event and HA's render, the
+adapter restores focus to the field; its generation/connection guards prevent
+a retired owner or a newly opened picker from taking focus.
+The call uses HA's public field `focus()` delegation across its nested roots.
 
 Space settings (#945) share the same form with onboarding/import through
 `SpaceFormPort`; only the editor injects section navigation, the shared north

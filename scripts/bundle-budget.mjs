@@ -902,7 +902,11 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // #1020: matched37792 ->39687 B (+1895), compact controls loaded by the
 // existing floor renderer, independent of an optional failed hint import.
 // Carry only that delta, preserving the inherited275-B gap and2000-B band.
-export const LAZY_ONBOARDING_GZIP_CEILING = 39_412;
+// #998, owner permits byte-budget increases (2026-10-27): cold onboarding now
+// registers the shared select instead of leaving native controls unupgraded.
+// Matched accepted #1070 dist40339 ->44057 (+3718 B). Carry only that measured
+// cost:39412 ->43130, retaining the inherited927-B gap and2000-B band.
+export const LAZY_ONBOARDING_GZIP_CEILING = 43_130;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of

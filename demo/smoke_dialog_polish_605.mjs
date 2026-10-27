@@ -184,7 +184,7 @@ const icon = await page.evaluate(async () => {
     && style.getPropertyValue('--ha-color-border-neutral-loud').trim() === style.getPropertyValue('--hpf-line').trim()
     && style.getPropertyValue('--ha-color-form-background').trim() === style.getPropertyValue('--hpf-canvas').trim();
   const haWrapperHasNoBorderPaint = !!picker
-    && getComputedStyle(picker.parentElement).borderTopColor === 'rgba(0, 0, 0, 0)';
+    && parseFloat(getComputedStyle(picker.parentElement).borderTopWidth) === 0;
   const iconValue = c._markerDialog.icon;
   picker?.dispatchEvent(new CustomEvent('value-changed', { detail: { value: 'mdi:home' } }));
   await refresh();

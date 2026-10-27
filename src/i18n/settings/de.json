@@ -1,4 +1,5 @@
 {
+  "marker.icon_search": "Suchen",
   "marker.more_info_search": "Nach Name oder entity_id suchen…",
   "marker.more_info_entity": "In Home Assistant öffnen",
   "marker.more_info_auto": "Auto",

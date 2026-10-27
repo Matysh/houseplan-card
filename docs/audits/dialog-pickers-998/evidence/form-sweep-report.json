@@ -1,0 +1,1136 @@
+{
+  "rows": [
+    {
+      "name": "general",
+      "section": "display",
+      "width": 1280,
+      "field": "gs-device-battery",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "plan",
+      "width": 1280,
+      "field": "gs-bg-mode",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "display",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "display",
+      "width": 390,
+      "field": "gs-device-battery",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "plan",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "plan",
+      "width": 390,
+      "field": "gs-bg-mode",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "fills",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "sun",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "zigbee",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "general",
+      "section": "data",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "basics",
+      "width": 1280,
+      "field": "space-plan-source",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "appearance",
+      "width": 1280,
+      "field": "space-zero-wall-style",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "appearance",
+      "width": 1280,
+      "field": "space-fill-mode",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "room-cards",
+      "width": 1280,
+      "field": "space-battery-mode",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "room-cards",
+      "width": 1280,
+      "field": "space-show-lqi",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "sun",
+      "width": 1280,
+      "field": "space-bg-mode",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "sun",
+      "width": 1280,
+      "field": "space-sun-rays",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "sun",
+      "width": 1280,
+      "field": "space-north-mode",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "basics",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "basics",
+      "width": 390,
+      "field": "space-plan-source",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "appearance",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "appearance",
+      "width": 390,
+      "field": "space-zero-wall-style",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "appearance",
+      "width": 390,
+      "field": "space-fill-mode",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "room-cards",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "room-cards",
+      "width": 390,
+      "field": "space-battery-mode",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "room-cards",
+      "width": 390,
+      "field": "space-show-lqi",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "sun",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "sun",
+      "width": 390,
+      "field": "space-bg-mode",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "sun",
+      "width": 390,
+      "field": "space-sun-rays",
+      "disabled": false
+    },
+    {
+      "name": "space",
+      "section": "sun",
+      "width": 390,
+      "field": "space-north-mode",
+      "disabled": false
+    },
+    {
+      "name": "room",
+      "section": null,
+      "width": 1280,
+      "field": "room-area",
+      "disabled": false
+    },
+    {
+      "name": "room",
+      "section": null,
+      "width": 1280,
+      "field": "rfill",
+      "disabled": false
+    },
+    {
+      "name": "room",
+      "section": null,
+      "width": 1280,
+      "field": "room-name-color-mode",
+      "disabled": false
+    },
+    {
+      "name": "room",
+      "section": null,
+      "width": 390,
+      "field": "room-area",
+      "disabled": false
+    },
+    {
+      "name": "room",
+      "section": null,
+      "width": 390,
+      "field": "rfill",
+      "disabled": false
+    },
+    {
+      "name": "room",
+      "section": null,
+      "width": 390,
+      "field": "room-name-color-mode",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "basics",
+      "width": 1280,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "actions",
+      "width": 1280,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "actions",
+      "width": 1280,
+      "field": "marker-toggle-entity",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "light",
+      "width": 1280,
+      "field": "marker-light-entity",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "basics",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "basics",
+      "width": 390,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "appearance",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "actions",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "actions",
+      "width": 390,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "actions",
+      "width": 390,
+      "field": "marker-toggle-entity",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "light",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "light",
+      "width": 390,
+      "field": "marker-light-entity",
+      "disabled": false
+    },
+    {
+      "name": "led",
+      "section": "details",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "basics",
+      "width": 1280,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-value-source",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "actions",
+      "width": 1280,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "basics",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "basics",
+      "width": 390,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "appearance",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-value-source",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "actions",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "actions",
+      "width": 390,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "light",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "climate",
+      "section": "details",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "basics",
+      "width": 1280,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-value-source",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "actions",
+      "width": 1280,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 1280,
+      "field": "vacuum-trail-mode",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 1280,
+      "field": "vacuum-history-record",
+      "disabled": true
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 1280,
+      "field": "vacuum-map-action",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 1280,
+      "field": "vacuum-map-action",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "basics",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "basics",
+      "width": 390,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "appearance",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-value-source",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "actions",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "actions",
+      "width": 390,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "light",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "details",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 390,
+      "field": "vacuum-trail-mode",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 390,
+      "field": "vacuum-history-record",
+      "disabled": true
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 390,
+      "field": "vacuum-map-action",
+      "disabled": false
+    },
+    {
+      "name": "vacuum",
+      "section": "vacuum",
+      "width": 390,
+      "field": "vacuum-map-action",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "basics",
+      "width": 1280,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "appearance",
+      "width": 1280,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "actions",
+      "width": 1280,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-profile",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-room",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-x-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-y-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-x-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-y-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-slot-presence",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-x-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-y-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-x-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-y-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-slot-presence",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-occupancy-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-count-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-availability-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 1280,
+      "field": "radar-unit",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "basics",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "basics",
+      "width": 390,
+      "field": "marker-room",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "appearance",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-display",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "appearance",
+      "width": 390,
+      "field": "marker-value-badge-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "actions",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "actions",
+      "width": 390,
+      "field": "marker-tap-action",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "light",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "details",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "settings-section",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-profile",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-room",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-x-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-y-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-x-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-y-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-slot-presence",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-x-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-y-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-x-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-y-sign",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-slot-presence",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-occupancy-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-count-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-availability-source",
+      "disabled": false
+    },
+    {
+      "name": "radar",
+      "section": "radar",
+      "width": 390,
+      "field": "radar-unit",
+      "disabled": false
+    },
+    {
+      "name": "physical-column",
+      "width": 1280,
+      "field": "physical-shape",
+      "value": "square",
+      "disabled": false,
+      "alternate": "circle",
+      "restored": true
+    },
+    {
+      "name": "physical-column",
+      "width": 390,
+      "field": "physical-shape",
+      "value": "square",
+      "disabled": false,
+      "alternate": "circle",
+      "restored": true
+    },
+    {
+      "name": "stairs-kind-target",
+      "width": 1280,
+      "field": "select-0",
+      "value": "straight",
+      "disabled": false,
+      "alternate": "spiral",
+      "restored": true
+    },
+    {
+      "name": "stairs-kind-target",
+      "width": 1280,
+      "field": "select-1",
+      "value": "f1",
+      "disabled": false,
+      "alternate": "",
+      "restored": true
+    },
+    {
+      "name": "stairs-kind-target",
+      "width": 390,
+      "field": "select-0",
+      "value": "straight",
+      "disabled": false,
+      "alternate": "spiral",
+      "restored": true
+    },
+    {
+      "name": "stairs-kind-target",
+      "width": 390,
+      "field": "select-1",
+      "value": "f1",
+      "disabled": false,
+      "alternate": "",
+      "restored": true
+    },
+    {
+      "name": "decor-image",
+      "width": 1280,
+      "field": "decor-asset",
+      "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "disabled": false,
+      "alternate": null,
+      "restored": true
+    },
+    {
+      "name": "decor-image",
+      "width": 390,
+      "field": "decor-asset",
+      "value": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "disabled": false,
+      "alternate": null,
+      "restored": true
+    },
+    {
+      "name": "decor-furniture",
+      "width": 1280,
+      "field": "decor-symbol",
+      "value": "sofa",
+      "disabled": false,
+      "alternate": "ac",
+      "restored": true
+    },
+    {
+      "name": "decor-furniture",
+      "width": 390,
+      "field": "decor-symbol",
+      "value": "sofa",
+      "disabled": false,
+      "alternate": "ac",
+      "restored": true
+    },
+    {
+      "name": "properties-variable-attribute",
+      "width": 1280,
+      "field": "hp-prop-variable-value",
+      "value": "",
+      "disabled": false,
+      "alternate": "device_class",
+      "restored": true
+    },
+    {
+      "name": "summary-scope-space",
+      "width": 1280,
+      "field": "Где показывать блок",
+      "value": "space",
+      "disabled": false,
+      "alternate": "all",
+      "restored": true
+    },
+    {
+      "name": "summary-scope-space",
+      "width": 1280,
+      "field": "Определённое пространство",
+      "value": "picker-998",
+      "disabled": false,
+      "alternate": "f1",
+      "restored": true
+    },
+    {
+      "name": "summary-scope-space",
+      "width": 390,
+      "field": "Где показывать блок",
+      "value": "space",
+      "disabled": false,
+      "alternate": "all",
+      "restored": true
+    },
+    {
+      "name": "summary-scope-space",
+      "width": 390,
+      "field": "Определённое пространство",
+      "value": "picker-998",
+      "disabled": false,
+      "alternate": "f1",
+      "restored": true
+    },
+    {
+      "name": "excluded-surfaces",
+      "exercised": false,
+      "surfaces": [
+        "inline Properties selects",
+        "print",
+        "backup",
+        "icon rules"
+      ],
+      "reason": "Not opened by this extra select sweep; no select coverage claimed."
+    },
+    {
+      "name": "print-svg",
+      "width": 1280,
+      "field": "export-format"
+    },
+    {
+      "name": "print-svg",
+      "width": 1280,
+      "field": "export-background"
+    },
+    {
+      "name": "print-svg",
+      "width": 390,
+      "field": "export-format"
+    },
+    {
+      "name": "print-svg",
+      "width": 390,
+      "field": "export-background"
+    }
+  ]
+}
