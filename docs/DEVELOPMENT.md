@@ -6419,3 +6419,11 @@ https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453010424.
 The owner-authorized editor runtime cap for #1089 is 11898 lines (the observed
 size), with the existing 50-line band; the guarded adapter reuses the existing
 Hide/Delete transactions. Rationale: https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453203632.
+
+After accepted #1000 (`1971591313590ac6132e4849682962a7addd8e7a`), #1089 was
+measured again against the actual accepted-source dist, without rebuilding the
+baseline: initial View +713 B gzip, lazy editor +1314 B, onboarding +2 B,
+all production JS +10961 B and host references +15. Both full bundle topologies,
+asset hashes and source fingerprints were verified. Carry only those own raw/
+host deltas into the accepted references (6456 / 3624423), preserving inherited
+reserve; absolute, gzip, core bands and timing thresholds stay unchanged.
