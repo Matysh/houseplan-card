@@ -77,22 +77,35 @@ two new controls. Page-scene intent records that shared header delta; scene
 geometry at zero receives no pixel-change allowance. The demo icon inventory
 is regenerated with the stock generator so the new MDI controls are painted.
 
-The archived f705 prices and timing reports predate accepted #997 and are not
-final matched evidence. Final price/performance compares the current candidate
-with accepted #997 at `e5849080cc01e10349be1c5ec922f8bb4a428094`, using its
-frozen pinned Linux artifact. The accepted artifact measures initial View
-349257 B gzip, lazy editor 362639 B gzip and total raw dist 3550135 B.
-The accepted #1088 head `ce51a57e2` changes none of that base's product or
-benchmark/common-harness inputs. The current matching candidate measures
-351333 B initial (+2076), 363605 B editor (+966), 40145 B onboarding (+207),
-and 3564734 B raw (+14599). Its core has 16 additional lines. The initial
-rolling reference carries exactly +2076 to 349624, the editor reference +966
-to 361757, and the raw reference +14599 to 3564459. This preserves the
-incoming gaps of 1709 B (initial), 1848 B (editor) and 275 B (raw).
-The onboarding reference, 2000 B bands, 352000 B initial hard wall and core
-line cap remain unchanged. The measured initial hard-wall reserve is 667 B.
-Seven-sample comparisons after one warm-up and their evaluator results are
-recorded with the published handoff; a diagnostic sample is not readiness.
+The archived f705 prices and timing reports predate accepted #997. The complete
+timing series below compares frozen `55ead817d` with accepted #997 at
+`e5849080cc01e10349be1c5ec922f8bb4a428094`; #1088 changes none of its product or
+benchmark/common-harness inputs.
+
+The final whole-build price uses accepted #1015's pinned Linux artifact,
+verified byte hashes and exact fingerprint against immutable `e2541d6c0` source.
+The subsequent `fd62` #1090 change is backend-only. Accepted #1015 removes only
+the retired ripple-display loop and weather cleanup on General-settings save
+from the frontend. The large-house fixture has no ripple display and its
+settings measurement only opens/closes the dialog; benchmark/common harness
+and the quarter-turn implementation are unchanged. No further timed replay is
+claimed for this rebase; ordinary exact-material CI remains required.
+
+| Graph | Accepted base | Candidate | Own delta |
+| --- | ---: | ---: | ---: |
+| initial View gzip | 349257 | 351345 | +2088 |
+| lazy editor gzip | 362610 | 363545 | +935 |
+| onboarding gzip | 39950 | 40150 | +200 |
+| raw dist | 3550038 | 3564627 | +14589 |
+
+The candidate fingerprint is `90aeb135`; the verified base is `370afdc5`.
+Its core has 16 additional lines. The initial rolling reference carries exactly
++2088 to 349636, the editor reference +935 to 361726, and the raw reference
++14589 to 3564449. This preserves the incoming accepted-base gaps of 1709 B
+(initial), 1819 B (editor) and 178 B (raw). The onboarding reference, 2000 B
+bands, 352000 B initial hard wall and core line cap remain unchanged. The
+measured initial hard-wall reserve is 655 B. A sum of task deltas does not prove
+the eventual graph with #1000; that actual combined graph must be measured.
 
 ## Preserved matched performance series
 
@@ -145,7 +158,7 @@ by 18.15 ms, resize by 61.2 ms, and the aggregate Long Task min-reference bounds
 ISO passes the sensitivity. These extrema do not establish a code regression;
 all original rows and the independent stock outcomes remain available.
 
-On the same final fingerprint, the named own browser commands completed:
+On that frozen timing fingerprint, the named own browser commands completed:
 `verify_plan_rotation_mobile_1070` (82 native HA states / 12 transitions),
 `smoke_plan_rotation`, `smoke_plan_rotation_editors`,
 `smoke_plan_rotation_touch`, `smoke_plan_rotation_mobile` and

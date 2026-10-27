@@ -600,17 +600,17 @@
       {
         "id": "plan-rotation-phone-view-320-1070",
         "expectation": "new",
-        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+        "reason": "New 320px quarter-turn View frame: one header row ≤56px with all seven floor/rotation/zoom/gear targets ≥44px; the empty mode slot is absent. Native HA card borders and gutters are verified separately."
       },
       {
         "id": "plan-rotation-phone-editor-320-1070",
         "expectation": "new",
-        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+        "reason": "New approved narrow editor frame below 360px: two header rows keep the five rotation/zoom targets together, with floor/gear and the existing 24px close accessible. The captured light close glyph must contrast; no stage geometry change is accepted."
       },
       {
         "id": "plan-rotation-phone-editor-360-1070",
         "expectation": "new",
-        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+        "reason": "New 360px boundary frame preserves the one-row phone editor with 44px navigation controls and the existing 24px close. The actual light close glyph is checked in captured pixels; two rows are permitted only below 360px."
       }
     ],
     "smokes": [
