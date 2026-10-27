@@ -22,6 +22,7 @@ export const VIEW_RUNTIME_RETRY_CHUNKS = [
   { module: '/src/summary-panel-runtime-entry.ts', token: '__HOUSEPLAN_SUMMARY_RETRY_ASSET__' },
   { module: '/src/hp-zigbee-topology-overlay.ts', token: '__HOUSEPLAN_ZIGBEE_OVERLAY_RETRY_ASSET__' },
   { module: '/src/hp-plan-converter-info.ts', token: '__HOUSEPLAN_CONVERTER_INFO_RETRY_ASSET__' },
+  { module: '/src/marker-alert-view-runtime.ts', token: '__HOUSEPLAN_MARKER_ALERT_RETRY_ASSET__' },
 ];
 
 /**
