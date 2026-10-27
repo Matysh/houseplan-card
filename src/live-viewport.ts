@@ -8,6 +8,7 @@ export interface LiveViewBox {
 interface LiveViewportFrame {
   view: LiveViewBox;
   floor: LiveViewBox;
+  grid?: LiveViewBox;
   zoom: number;
 }
 
@@ -37,6 +38,7 @@ interface LiveViewportHost {
   _viewOr: (viewBox: number[]) => LiveViewBox;
   _baseVb: () => number[];
   _floorView: (view: LiveViewBox) => LiveViewBox;
+  _planVisibleRect?: (view: LiveViewBox) => LiveViewBox;
   _zoom: number;
   renderRoot: ParentNode;
 }
@@ -224,7 +226,7 @@ export function paintLiveViewport(
     for (const svg of root.querySelectorAll<SVGElement>('[data-hp-live-viewbox="floor"]')) {
       setViewBox(svg, floorBox);
     }
-    const grid = liveGridBounds(current.view);
+    const grid = liveGridBounds(current.grid || current.view);
     for (const rect of root.querySelectorAll<SVGElement>('[data-hp-live-grid]')) {
       for (const [name, value] of [['x', grid.x], ['y', grid.y], ['width', grid.w], ['height', grid.h]] as const) {
         const text = String(value);
@@ -283,7 +285,8 @@ export function paintLiveViewport(
 
 const frameOf = (host: LiveViewportHost): LiveViewportFrame => {
   const view = host._viewOr(host._baseVb());
-  return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom };
+  return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom,
+    ...(host._planVisibleRect ? { grid: host._planVisibleRect(view) } : {}) };
 };
 
 /** Coalesce camera input into one lightweight paint per animation frame. */

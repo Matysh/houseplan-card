@@ -13,6 +13,10 @@ const chromeCoreStyles = unsafeCSS(css`
       background: var(--card-background-color, var(--hp-bg));
       border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
     }
+    /* Keep the header and its menu above the sibling editor toolbar after
+       animation opacity stops creating a toolbar stacking context. The menu
+       remains anchored by its positioned .header-menu-wrap. */
+    .hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }
     .tabs {
       display: flex;
       gap: var(--sp-2);
@@ -172,6 +176,8 @@ const chromeCoreStyles = unsafeCSS(css`
     }
     @media (max-width: 480px) {
       .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }
+      .compact-space-select { min-width: 44px; }
+      .compact-space-select::part(control) { min-width: 44px; padding-inline: 4px; gap: 0; }
       .head > .title, .head > .spacer, .head > .header-action,
       .head > .summary-control, .header-actions > .header-action, .header-actions > .summary-control { display: none; }
       .head > .header-actions { gap: 6px; }
@@ -198,6 +204,23 @@ const chromeCoreStyles = unsafeCSS(css`
       .head > .tabs.compact-spaces { overflow:visible; }
       .head > .zoomctl, .head > .modes > .editor-close-slot { flex: none; }
       .header-menu-wrap { display: inline-flex; }
+    }
+    @media (max-width: 360px) {
+      .hdr > .head { padding-inline: 2px; gap: 2px; }
+      .head > .header-actions { gap: 2px; }
+    }
+    @media (width < 360px) {
+      ha-card[data-hp-mode='view'] > .hdr > .head { padding-inline: 0; gap: 0; }
+      ha-card[data-hp-mode='view'] .head > .modes { display: none; }
+      /* Seven 44px targets, six common 1px strokes: 302px inside a native HA
+         card with 8px outer gutters at 320px. Only stroke borders coincide. */
+      ha-card[data-hp-mode='view'] .head > .header-actions { gap: 0; margin-inline-start: -1px; }
+      ha-card[data-hp-mode='view'] .header-actions > .header-menu-wrap { margin-inline-start: -1px; }
+      ha-card:not([data-hp-mode='view']) > .hdr > .head {
+        display: grid;
+        grid-template-columns: minmax(44px, 1fr) 24px;
+      }
+      ha-card:not([data-hp-mode='view']) .head > .header-actions { grid-column: 1 / -1; justify-self: end; }
     }
     .decorbar .bdhint {
       font-size: var(--fs-s);
@@ -328,12 +351,14 @@ const chromeCoreStyles = unsafeCSS(css`
        zone between the tab and its X; the UA ring style is kept. */
     .modetab.active:focus-visible { outline: none; }
     .modetab.active:focus-visible::after { outline: auto; }
-    .modetab.active + .editor-close-slot .closex {
-      color: var(--text-primary-color, #fff);
-      opacity: 0.9;
-    }
-    .modetab.active + .editor-close-slot .closex:focus-visible {
-      outline-color: var(--text-primary-color, #fff);
+    @media (min-width: 481px) {
+      .modetab.active + .editor-close-slot .closex {
+        color: var(--text-primary-color, #fff);
+        opacity: 0.9;
+      }
+      .modetab.active + .editor-close-slot .closex:focus-visible {
+        outline-color: var(--text-primary-color, #fff);
+      }
     }
     /* #993: ≤ 1024 px of header — icon only; the label stays in aria-label and
        the tooltip. The ≤ 480 px window rules above (#616) are unchanged. */

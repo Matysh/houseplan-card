@@ -25,6 +25,27 @@ There is still one entry coordinator, one poller and the same bounded WS format.
 
 HA dialog targets (#1087) are resolved by device-more-info.ts independently of measurement primary, value/activity sources and controls. Auto follows the existing functional device role; explicit own targets are rechecked against current registry and readable state before more-info. A stale binding identity cannot retarget a retained handler. The two HA entry points share this resolver; View right-click keeps the #997 Settings action. Draft serialization/validation stays in the lazy editor graph.
 
+Quarter-turn presentation (#1070) is centralised in `view-frame.ts`: exact
+matrices, bounds, inverse input, browser preference and one HTML anchor route.
+`_cameraView` and every camera/mode transition remain canonical; `_viewOr`
+derives the displayed fit without rewriting stored camera numbers. SVG planes
+share the matrix, while HTML device/room/value faces remain screen-facing.
+2.5D retains one physical source/boolean cache with four projected variants;
+wall faces, opening depth and raised overlays use the same fixed quarter camera.
+Static shares the frame helper and device preference; PDF turns its immutable
+print scene before fitting. No space/layout field or backend write is introduced.
+
+The existing mode controller also owns the narrow header height and its total
+stage offset. The loaded editor runtime measures the natural target header;
+ordinary View needs no new runtime import. `modeStageHeight` quantizes the
+endpoint to the stage's integer `clientHeight` basis, so fractional HA toolbar
+text heights cannot change the restored canonical camera. The terminal publishes
+the target header budget before removing inline presentation, including reduced
+motion. An open gear menu escapes the temporary header clip for quick retargets.
+The shared select's `control` part permits compact padding without changing its
+default settings layout; six common 1px strokes retain seven complete 44px View
+targets in 302px of actual native HA card content.
+
 Decor preview handoff (#1080) remains in `live-editor.ts`: after the synchronous
 live render produces a transient kind, only that kind's settled copy is hidden.
 The existing host-update commit restores settled paint before clearing live

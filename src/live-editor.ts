@@ -10,6 +10,7 @@ import {
   type WallEdgeBody,
 } from './wall-thickness';
 import { NORM_W } from './space-geometry';
+import { framePercent } from './view-frame';
 
 interface LiveEditorState {
   raf: number;
@@ -46,6 +47,7 @@ interface LiveEditorHost {
   _liveEditorPaintCount: number;
   _baseVb: () => number[];
   _viewOr: (viewBox: number[]) => { x: number; y: number; w: number; h: number };
+  _framePercent?: (point: readonly number[], view: { x: number; y: number; w: number; h: number }) => [number, number];
   _spaceDisplayForRender: () => SpaceDisplay;
   _renderWallBodies: (display: unknown) => unknown;
   _renderResizeMeasurements: () => unknown;
@@ -321,8 +323,10 @@ const paintDevice = (host: LiveEditorHost, root: ParentNode, id = host._deviceDr
   // #713: the 2.5D floor is the Flat plane, and editors are Flat anyway.
   const position = host._livePos(device);
   const view = host._viewOr(host._baseVb());
-  element.style.left = `${((position.x - view.x) / view.w) * 100}%`;
-  element.style.top = `${((position.y - view.y) / view.h) * 100}%`;
+  const [left, top] = host._framePercent?.([position.x, position.y], view)
+    ?? framePercent([position.x, position.y], view);
+  element.style.left = `${left}%`;
+  element.style.top = `${top}%`;
   host._deviceContacts?.move(id, position.x, position.y);
 };
 

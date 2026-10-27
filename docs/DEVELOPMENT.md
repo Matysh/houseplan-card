@@ -22,6 +22,33 @@ These are unchanged-product checks; mutation execution remains nightly-only.
 
 HA more-info target (#1087): never reuse measurement primary as a functional dialog target. The synthetic thermostat witness retains its old temperature primary while Auto opens climate. More-info selection does not authorize actuation, sibling targets for entity bindings or unreadable/disabled entities. Native coverage: demo/smoke_device_more_info.mjs; pure coverage: test/device-more-info.test.mjs. Optional support wire fields require redeploying the accepted relay schema before the first beta ships them; keep the mirror byte-identical and do not deploy an unreviewed task branch.
 
+Plan quarter turns (#1070) have production-bundle browser witnesses:
+`smoke_plan_rotation.mjs` (pixels, canonical camera, animated mode transitions,
+sun polygons, configuration and persistence), `smoke_plan_rotation_editors.mjs`
+(native drawing/node/device/decor gestures at 0/90°, keyboard screen axes), and
+`smoke_plan_rotation_touch.mjs` (native View90/kiosk270 pan and pinch). The node
+fixture changes only the wire boundary and uses the existing canonical node
+transaction; the touch input is Chromium's real input path. `test/view-frame`
+and the PDF/ISO/live-viewport tests cover pure matrices, priority, physical-cache
+reuse, front faces, complete page fitting and canonical grid coverage.
+`smoke_plan_rotation_mobile.mjs` observes native ordinary/reduced mode frames
+and a quick gear retarget. Native HA toolbar text may have fractional CSS height;
+camera endpoints must use the same integer client-height basis as the settled
+stage, rather than rely on a later ResizeObserver refit.
+
+For actual HA card borders and explicitly measured dashboard gutters, build and
+run `node scripts/dev/verify-plan-rotation-mobile-1070.mjs --ha-cache=<prepared-cache>`.
+It uses the standard offline UI Lab's pinned HA elements and synthetic fixture,
+with a declared external 56px toolbar and 0/8px gutters. All phone widths,
+control rectangles, common border strokes, centre hits, dropdown focus and
+animated/reduced camera endpoints are recorded in ignored author artifacts.
+The optional HA-cache proof supplements the normal CI smokes; no real HA
+connection or product CSS adapter is involved.
+
+Named `plan-rotation-*-1070` scenes supply task visual intent; global
+baseline acceptance remains a release-candidate action. Author evidence and
+limitations live in `docs/analysis/1070-plan-quarter-rotation.md`.
+
 Accepted UI Lab transfer (#1081) is covered by `smoke_ui_lab_1081`,
 `smoke_picker_motion`, `smoke_furniture_pan` and `smoke_ui_lab_grid` in `demo/`.
 The last uses actual presented edge pixels, retaining its pre-change RED and
@@ -6294,3 +6321,112 @@ The real HA suites prove Store revisions, original-snapshot export/import, I/O
 failure recovery and ACL; browser fixtures prove observable plan/text/actions
 against the matching synthetic transport, without claiming private HA/GPU proof.
 The normal pre-push gate and strict model/host/CAS validators remain mandatory.
+
+## Resource-budget recalibration for rotation and device alerts (#1070/#1000)
+
+The owner explicitly decided on 2026-10-27: «не надо тратить ресурсы на гонку
+за байтами, разрешаю повышение лимитов» ([decision in #1070](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
+The local build-only combination of the accepted #1087 base, rotation `8b543651`
+and alerts `bddb4938` measures 352517 B initial View gzip and 13381 core lines.
+It exceeds the former 352000 B wall by 517 B and 13327+50 core allowance by 4.
+This diagnostic combination is not an accepted or published product revision.
+
+Apply the existing #898 ten-percent rule to those two resource limits:
+`INITIAL_VIEW_RECALIBRATION_GZIP_BYTES` becomes 352000 and
+`INITIAL_VIEW_GZIP_BUDGET` becomes 387200. The `houseplan-card.ts` cap becomes
+`ceil(13327 *1.1) =14660`; the unchanged 50-line band gives 14710.
+Other core caps, the 2000 B rolling size bands, performance budgets, deadlines,
+security checks and review authority keep their existing values. Rolling
+references still carry only the measured own delta against a verified immutable
+accepted artifact. No additional cold-owner extraction is made to chase bytes.
+
+
+Matched own-cost accounting after accepted #1087 uses immutable `4c2` and its
+hash-verified source-matching artifact `8e4bf61d`: initial 349915→352018 (+2103),
+editor 363448→364390 (+942), onboarding 40152→40333 (+181), raw 3559455→3574082
+(+14627). Initial/editor/raw references become 351927/364399/3574212, preserving
+the incoming gaps 91/-9/-130 B; all 2000 B bands remain. The four useful typed
+presentation ports move 374→378 against reference 372→376, preserving gap 2 and
+band 5. No other coupling reference changes. These are resource measurements,
+not evidence of loading speed or the future accepted alerts combination.
+
+
+The later #1070 observer-only repair keeps the exact d375 product source tree
+and build inputs. Two capture-harness readiness selectors change the global
+fingerprint to0d3a1df9; local native82/12 proof stays explicitly bound to7b.
+Matched actual initial352013/editor364386/onboarding40343/raw3574092 carry
+own deltas2098/938/191/14637 into references351922/364395/raw3574222, preserving
+accepted gaps91/-9/-130 and all existing bands. This is fingerprint salt and
+fixture ownership accounting, not a performance improvement or byte chase.
+
+
+## Rotation integration after accepted #1092
+
+The actual accepted base d9d0d812 removes the obsolete outline SVG and fixes
+first-paint header measurement/compact-picker readiness. The rotation branch
+keeps that removal, all primary presentation planes and the merged native
+helpers. Fresh joint native82/12, all five own smokes, three affected neighbours,
+outline-removal guard, nine own Golden scenes, retained-path scene and matched
+Flat/ISO zero-stage checks pass on fingerprint7ee5e787. These replace earlier
+runtime-equivalence arguments as current evidence; no new benchmark was run.
+
+The single pinned Linux Node22.23.2 baseline build c890e4a0 is immutable and
+fully asset-hash/topology verified. Matched initial349536→351600 (+2064),
+editor363437→364355 (+918), onboarding40156→40323 (+167), raw3557327→3571863
+(+14536). References351888/364375/raw3574121 preserve inherited gaps
+-288/-20/-2258 B, including the inherited raw shrink;2000 B bands remain.
+Port374→378/ref372→376 retains gap2/band5; other metrics have no own reference
+change and no unused violation. Absolute387200 and core14660+50 retain the
+owner's explicit resource recalibration. No #1092-only exception is borrowed.
+
+
+### Rotation header callback ownership
+
+The later exact-f031 ordinary CI passed122/122 Golden and60/61 smokes; the
+LED lifecycle smoke found an unretired header measurement rAF after disconnect.
+The header callback now requires its concrete current observer lease plus a
+connected matching stage before any delayed side effect. The unchanged LED
+smoke passes all three former failures; a native queued-frame author witness
+also covers same-element reconnect, and fresh native82/12/mobile/cache-counter
+checks pass on658770cd. No Glow/CSS observer,500ms transition,750ms deadline or
+one-pixel height behavior was changed. Earlier RED receipts remain preserved.
+
+The same frozen accepted d9 artifact gives initial349536→351632 (+2096),
+editor363437→364380 (+943), onboarding40156→40339 (+183), raw3557327→3571911
+(+14584). References351920/364400/raw3574169 retain inherited -288/-20/-2258 B
+gaps and all2000 B bands; port378/ref376 retains gap2/band5. Current core13381
+is within the owner's14660+50 cap. This measured lifecycle correction does not
+reopen byte optimization or change any other resource/performance threshold.
+
+
+### Large successful CI proof input (#1070)
+
+After61 selected smokes and122 Golden cases succeeded, the final proof job
+could not launch bash: its single NEEDS_JSON environment entry was224630 UTF-8
+bytes (224618-byte JSON), beyond Linux's131072-byte individual exec entry.
+The complete task receipt134215 B and browser plan72735 B remain necessary;
+minification alone is insufficient. The canonical proof step now uses a custom
+shell `node scripts/ci-proof.mjs --emit=... --needs-file={0}` with the exact JSON
+as its runner-written temporary data file. JSON is read, never executed or
+interpolated into shell/JS code. No heredoc or large action input is introduced.
+
+The shared optional file reader rejects missing/corrupt/empty/duplicate/mixed
+sources and never falls back from a selected file. Existing env callers remain
+compatible only without a file option. Main/product use the file; the small
+tooling workflow retains legacy env, keeping the trusted generator unchanged.
+The actual cold fast-producer file path emits the same typed proof as before.
+All schema, job/identity/correlation, environment and outcome validation stays.
+The100-test targeted suite includes >224618 B real CLI input, full retained
+payload, inert $()/backticks/newline/Unicode and negative/foreign cases. The
+original red run/artifact remains preserved; a new ordinary exact-SHA CI is
+required, and no success is assembled by hand. Product/render input658770cd
+and all native82/12/functional evidence remain unchanged by this B/C repair.
+
+
+The supplemental native-HA author utility lives in the existing class-B local
+utility route scripts/dev/verify-plan-rotation-mobile-1070.mjs. Its former demo
+entry and one-off check-inputs declaration are removed. Only four relative
+imports change and resolve to the same modules; the executed82/12 proof keeps
+its original source hash/command, and no new capture is claimed after relocation.
+The actual full CI-generator import closure now matches accepted dev exactly;
+compatibleCiGenerators and source coverage policy remain intact.

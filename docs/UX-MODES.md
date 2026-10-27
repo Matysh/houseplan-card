@@ -41,9 +41,9 @@ full card used on dashboards. In panel-host mode only the duplicated product
 title disappears; space tabs, editor navigation, zoom and actions remain (the
 header device count was removed in #647). Dashboard and kiosk behaviour is unchanged.
 
-**Phone header (≤ 480 px window width, #616).** The header is a single row of at
+**Phone header (≤ 480 px window width, #616/#1070).** View keeps a single row of at
 most 56 px: a compact space selector (current floor, no inline gear or «+»),
-the zoom cluster, one gear and — for an
+the rotation/zoom cluster, one gear and — for an
 admin — the editor X slot of #647. The card title is hidden. Everything else is
 an item of the gear's menu, in a fixed order: the three editors (current one
 marked), Configure space, Add space (not with a fixed space), General settings,
@@ -53,7 +53,16 @@ switch). An item does
 exactly what the button it replaces does and closes the menu; Escape closes it
 and returns focus to the gear; a tap outside only closes it and never reaches
 the plan. A user without write access sees just the summary-panel items. Wider
-windows and kiosk are unchanged.
+windows retain their responsive wrapping; kiosk has no header.
+
+Below a 360 px browser viewport, Plan, Devices and Background may use two
+header rows. The five rotation/zoom targets remain together and at least 44 px;
+the floor and gear remain 44 px, and the existing editor close remains 24 px.
+View removes its empty mode slot at this width. At 360–480 px editors retain one
+row; at 481 px and wider the established desktop wrapping applies. Shared 1px
+stroke borders retain the full 44px target rectangles inside a native HA card.
+The existing mode controller owns header, toolbar and stage height together,
+including the reduced-motion terminal and quick navigation through the gear.
 
 **Compact space navigation (#997).** At a measured `hp-head` width ≤1024 px,
 the shared UI Kit select replaces the floor tabs in View and editors. It keeps

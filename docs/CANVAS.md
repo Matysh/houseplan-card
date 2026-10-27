@@ -697,7 +697,26 @@ editing never performs it implicitly.
 
 ## What is deliberately NOT done
 
-* No new stored field. The frame is derived every time; there is
+### Quarter-turn presentation (#1070)
+
+`view-frame.ts` owns exact 0/90/180/270 matrices, inverse vectors, display bounds
+and HTML anchor percentages. The saved camera remains in the unrotated frame;
+`_cameraView` reads it, while `_viewOr` derives a presentation view. Rotating does
+not write camera numbers, canonical geometry, config or layout. Native pointer
+points and screen deltas use the inverse basis; keyboard arrows share it.
+All mode-transition viewport states remain canonical, including intermediate
+frames. The presentation renderer derives their current scale from that same
+canonical viewport rather than a terminal zoom value.
+
+The per-browser `houseplan_card_rotation_v1` map stores one choice per space,
+with a shared memory fallback and guarded reads/writes. Outside kiosk the
+priority is device choice, card `rotation`, zero. Kiosk ignores device choices.
+Quarter turns swap the fit dimensions; no repeated transform is accumulated.
+SVG geometry has one plane transform and HTML screen-facing roots use the same
+point helper. The #1081 grid keeps its existing exposure/refresh budget, with
+coverage expressed in canonical plan coordinates inside the rotated plane.
+
+* No new stored space/layout field. The frame is derived every time; there is
   nothing to migrate, nothing to keep in sync, nothing to corrupt.
 * `view_box` is still WRITTEN as `[0,0,1,1]` on space creation and is
   still required by the schema — removing a required field is a

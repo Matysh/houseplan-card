@@ -3,6 +3,7 @@ import { html, nothing, svg, type TemplateResult } from 'lit';
 import type { HouseplanEditorRuntime } from '../houseplan-editor-runtime';
 import { applyAffine, fitMatrix, readVacTelemetry, type Pt, type VacTelemetry } from '../vacuum';
 import type { VacuumMapPreview } from '../vacuum-ecovacs-client';
+import { turnMatrix } from '../view-frame';
 
 export function vacuumFitBounds(tele: VacTelemetry | null, preview?: VacuumMapPreview, rectanglesOnly = false): number[] | null {
   const image = preview?.bounds || tele?.mapBounds;
@@ -42,7 +43,7 @@ export function renderVacuumFitOverlay(
       .map(([x, y]) => applyAffine(matrix, x, y));
     const [x, y] = applyAffine(matrix, room.cx, room.cy);
     geometry.push(svg`<polygon points=${corners.map(point => point.map(n => n.toFixed(1)).join(',')).join(' ')}></polygon>
-      <text x=${x.toFixed(1)} y=${y.toFixed(1)}>${room.name}</text>`);
+      <text x=${x.toFixed(1)} y=${y.toFixed(1)} transform=${host._rotation ? `rotate(${-host._rotation} ${x.toFixed(1)} ${y.toFixed(1)})` : nothing}>${room.name}</text>`);
   }
   if (tele?.pos) {
     const [x, y] = applyAffine(matrix, tele.pos.x, tele.pos.y);
@@ -64,5 +65,5 @@ export function renderVacuumFitOverlay(
     @pointerdown=${(event: PointerEvent) => runtime._vacFitPointer(event, view)}
     @pointermove=${(event: PointerEvent) => runtime._vacFitPointer(event, view)}
     @pointerup=${(event: PointerEvent) => runtime._vacFitPointer(event, view)}
-    @pointercancel=${(event: PointerEvent) => runtime._vacFitPointer(event, view)}>${geometry}</svg>`;
+    @pointercancel=${(event: PointerEvent) => runtime._vacFitPointer(event, view)}><g transform=${host._rotation ? turnMatrix(host._rotation) : nothing}>${geometry}</g></svg>`;
 }

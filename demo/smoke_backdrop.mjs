@@ -512,20 +512,23 @@ const stat = await page.evaluate(async () => {
   const root = card.renderRoot.querySelector('.hp-static-stage svg');
   const im = root.querySelector('image');
   const a = (n) => Number(im.getAttribute(n));
-  const kids = [...root.children];
-  const idx = (sel) => kids.findIndex((n) => n.matches(sel) || n.querySelector?.(sel));
+  // Paper and the exact backdrop image share one presentation plane. #1070
+  // adds that plane below the SVG root; compare its real sibling paint order.
+  const plane = im.parentElement;
+  const kids = [...plane.children];
+  const idx = (sel) => kids.findIndex((n) => n.matches(sel));
   return {
     rect: { x: a('x'), y: a('y'), w: a('width'), h: a('height') },
     papers: root.querySelectorAll('.hp-paper').length,
     imageSizedPaper: [...root.querySelectorAll('.hp-paper')].some((p) => p.tagName === 'rect'
       && Math.abs(Number(p.getAttribute('width')) - a('width')) < 1e-6),
-    iPaper: idx('.hp-paper'), iImage: idx('image'),
+    iPaper: idx('.hp-paperg'), iImage: kids.indexOf(im),
   };
 });
 check('static_card_applies_the_transform', stat.rect, { x: 1500, y: 1600, w: 500, h: 400 });
 check('static_card_papers_the_rooms', stat.papers, 4);
 check('static_card_has_no_picture_paper', stat.imageSizedPaper, false);
-check('static_card_draws_the_picture_on_the_paper', stat.iImage > stat.iPaper, true);
+check('static_card_draws_the_picture_on_the_paper', stat.iPaper >= 0 && stat.iImage > stat.iPaper, true);
 
 await restore();
 

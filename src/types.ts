@@ -438,6 +438,8 @@ export interface DevItem {
 }
 
 export interface CardConfig {
+  /** Clockwise presentation quarter turn; persisted plan geometry is unchanged. */
+  rotation?: number;
   type: string;
   title?: string;
   floor?: string | number;

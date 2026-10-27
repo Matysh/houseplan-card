@@ -9,12 +9,13 @@ import { ISO_ICON_SCALE } from './iso-tiles';
 // #649 п.2: the 2.5D light lives in this lazy graph; Flat never loads it.
 export { computeIsoSunBeams, renderIsoSunWash } from './iso-sun';
 import { nothing, svg, type TemplateResult } from 'lit';
-import { clampScale, islandsOf, roomPoly, type SpaceDisplay } from './logic';
+import { clampScale, fitView, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT,
   ISO_RAISED_OVERLAY_HEIGHT, ISO_WALL_HEIGHT,
-  projectedFrame, type PlanPoint, type ScenePoint,
+  projectedFrame, isoCameraFor, type PlanPoint, type ScenePoint, type IsoCamera,
 } from './iso-projection';
+import { planRotation, type PlanRotation } from './view-frame';
 import {
   buildIsoFloorGeometry, buildIsoWallGeometry, isoGeometryFingerprint,
   type IsoFloorGeometry, type IsoWallFace, type IsoWallGeometry, type IsoWallTopFace,
@@ -385,6 +386,8 @@ export type IsoSceneCacheEntry = {
 export type IsoRenderScene = IsoSceneCacheEntry & {
   key: string;
   frame: Rect;
+  camera: Readonly<IsoCamera>;
+  canonicalFrame?: Rect;
   /** Presentation-only metadata; never stored in the structural LRU. */
   overlayFitEntries?: readonly IsoOverlayRenderEntry[];
 };
@@ -398,6 +401,12 @@ export type IsoStructuralSource = {
     openingSurfaces: readonly IsoOpeningRenderSurface[];
   };
 };
+
+// Physical booleans and opening bases belong to the floor, not its viewing
+// side. Four cheap projected variants share this one immutable physical build.
+type IsoPhysicalScene = ReturnType<IsoStructuralSource['build']>;
+const isoPhysicalScenes = new WeakMap<IsoSceneCacheEntry, IsoPhysicalScene>();
+const isoProjectedScenes = new WeakMap<IsoSceneCacheEntry, Map<number, IsoSceneCacheEntry>>();
 
 export type IsoSourceOpening = {
   id: string;
@@ -574,9 +583,12 @@ export interface ResolveIsoSceneInput {
   cache: Map<string, IsoSceneCacheEntry>;
   cellCm: number;
   liveFrame: Rect;
+  /** Only the four fixed production cameras; arbitrary projection parameters are not a cache input. */
+  rotation?: PlanRotation;
 }
 
 export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
+  const camera = isoCameraFor(planRotation(input.rotation));
   const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);
   const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);
   const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);
@@ -590,7 +602,28 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
       openings: structural.openings,
       openingSurfaces: structural.openingSurfaces,
     };
+    isoPhysicalScenes.set(value, structural);
     lruWrite(input.cache, input.source.key, value, 8);
+  }
+  if (camera.rotDeg !== ISO_CAMERA.rotDeg) {
+    let projections = isoProjectedScenes.get(value);
+    if (!projections) { projections = new Map(); isoProjectedScenes.set(value, projections); }
+    let projected = projections.get(camera.rotDeg);
+    if (!projected) {
+      const physical = isoPhysicalScenes.get(value);
+      if (!physical) throw new Error('missing physical isometric source');
+      projected = {
+        geometry: buildIsoWallGeometry(physical.walls, camera, wallHeight),
+        floor: buildIsoFloorGeometry(physical.floor, floorEdgeHeight, camera),
+        openings: physical.openings,
+        openingSurfaces: Object.freeze(physical.openings.flatMap(basis =>
+          projectIsoOpeningStructure(basis, camera).map(surface => Object.freeze({
+            ...surface, id: basis.id, sourceIndex: basis.sourceIndex, type: basis.type,
+          })))),
+      };
+      projections.set(camera.rotDeg, projected);
+    }
+    value = projected;
   }
   const openingFrame = isoOpeningBounds(value.openings);
   const structuralFrame = openingFrame ? unionRect(input.liveFrame, openingFrame) : input.liveFrame;
@@ -600,8 +633,26 @@ export function resolveIsoScene(input: ResolveIsoSceneInput): IsoRenderScene {
     openingHeight: wallHeight,
     floorDepth: floorEdgeHeight,
     raisedHeight,
-  });
-  return { key: input.source.key, ...value, frame };
+  }, camera);
+  return { key: input.source.key, ...value, frame, camera };
+}
+
+/** Lazy orchestration of canonical/active fit; the eager card supplies only its frame inputs. */
+export function resolveIsoFitScene(input: ResolveIsoSceneInput & {
+  overlays?: (scene: IsoRenderScene) => IsoOverlayRenderScene | null;
+}): IsoRenderScene {
+  const canonical = resolveIsoScene({ ...input, rotation: 0 });
+  const active = input.rotation ? resolveIsoScene(input) : canonical;
+  const fitScene = (scene: IsoRenderScene): IsoRenderScene => {
+    const aspect = scene.frame.w / scene.frame.h, overlays = input.overlays?.(scene);
+    const envelope = overlays && resolveIsoOverlayFitEnvelope({
+      baseBounds: scene.frame, entries: overlays.entries,
+      targetView: bounds => fitView([bounds.x,bounds.y,bounds.w,bounds.h], aspect),
+    });
+    return envelope ? { ...scene, frame: envelope.bounds, overlayFitEntries: overlays.entries } : scene;
+  };
+  const base = fitScene(canonical);
+  return active === canonical ? base : { ...fitScene(active), canonicalFrame: base.frame };
 }
 
 const unionRect = (a: Rect, b: Rect): Rect => {
@@ -675,6 +726,7 @@ export function resolveIsoOverlayFitEnvelope(
 }
 
 export interface IsoOverlaySceneInput {
+  camera?: Readonly<IsoCamera>;
   space: SpaceModel;
   devices: readonly DevItem[];
   openings: readonly RenderOpening[];
@@ -758,6 +810,7 @@ export function isoOverlayRooms(space: SpaceModel): readonly IsoOverlayRoomRow[]
 
 /** Build the one-frame mapping from immutable floor anchors to raised visuals. */
 export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOverlayRenderScene {
+  const cameraSignature = JSON.stringify(input.camera || ISO_CAMERA);
   const roomRows = isoOverlayRooms(input.space);
   const rooms = roomRows.map((row) => row.overlayRoom);
   // #713: device tiles and lock badges stand on the wall-top plane, one common
@@ -793,7 +846,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     // reuses the immutable placement and Lit keeps the raised SVG subtree.
     const signature = [floorAnchor[0], floorAnchor[1],
       footprintHalfSize[0], footprintHalfSize[1],
-      preferredRoomId || '', wallHeight, visualOffset,
+      preferredRoomId || '', wallHeight, visualOffset, cameraSignature,
     ].join('|');
     const cached = lruRead(placements!, cacheKey);
     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
@@ -818,6 +871,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       showBorders: true,
       footprintHalfSize,
       visualOffset,
+      camera: input.camera,
     });
     lruWrite(placements!, cacheKey, { signature, placement }, ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
     return placement;
@@ -1024,7 +1078,7 @@ export function resolveIsoOpeningPanels(
   if (!layers.panels || !scene) return [];
   const panels = scene.openings.flatMap((basis) => {
     const opening = openings[basis.sourceIndex];
-    return opening ? projectIsoOpening(basis, amountOf(opening)) : [];
+    return opening ? projectIsoOpening(basis, amountOf(opening), scene?.camera) : [];
   });
   return panels.sort((a, b) => a.depth - b.depth
     || a.sourceIndex - b.sourceIndex || a.leaf - b.leaf);

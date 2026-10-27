@@ -40,6 +40,14 @@ websocket traffic change. Its dedicated budget retains every original timing,
 heap and cache ceiling and adds the measured pointer series plus a one-entry
 snap-geometry cache cap. Exact-SHA Linux output is the only gate evidence.
 
+For #1070, that interaction profile also accepts `--rotation=90` (or 180/270).
+It configures the real card, checks the painted stage adopted and retained the
+angle, and uses the native SVG world matrix for canonical editor input and the
+SVG/HTML alignment oracle. The matrix is captured outside each timed gesture.
+Default rotation stays zero; nonzero rotation is rejected for other profiles.
+Compare base/candidate zero and candidate90 with the same runner and existing
+budgets; a one-sample diagnostic is not final gate evidence.
+
 Issue #451 adds `large-house-interaction-v1`. It dispatches 120 real
 device/room/free-background hover moves, four 20-move pans, pinch/wheel camera input, three editor
 drag series and 30 unrelated HA snapshots. It also injects relevant snapshots

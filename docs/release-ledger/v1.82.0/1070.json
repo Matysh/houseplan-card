@@ -1,0 +1,639 @@
+{
+  "schema": 1,
+  "issue": 1070,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds a new presentation-only plan orientation workflow: per-space device choices, card/kiosk configuration and exact clockwise/counterclockwise quarter turns across Flat, 2.5D, editors, Static and PDF. Canonical space/layout storage and geometry are unchanged.",
+  "summary": {
+    "ru": "Поворот плана на 90° в обе стороны с запоминанием на устройстве, настройкой киоска и согласованными редакторами и экспортом.",
+    "en": "Turn the plan in either direction by 90°, with device-local choices, kiosk configuration and matching editors and exports."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "plan-rotation-flat-90-1070",
+        "expectation": "new",
+        "reason": "New clockwise quarter-turn frame with horizontal device/room faces, a right value badge, plan-relative icon angle/decor text, sunlight and a lock opening."
+      },
+      {
+        "id": "plan-rotation-flat-270-1070",
+        "expectation": "new",
+        "reason": "New counterclockwise quarter-turn frame of the same canonical geometry and screen-facing overlays."
+      },
+      {
+        "id": "plan-rotation-iso-0-1070",
+        "expectation": "new",
+        "reason": "New explicit zero-side reference of the complete quarter-turn fixture; existing zero-angle scenes have no pixel-change allowance."
+      },
+      {
+        "id": "plan-rotation-iso-90-1070",
+        "expectation": "new",
+        "reason": "New 2.5D camera side with correct projected walls/openings and screen-up raised overlays."
+      },
+      {
+        "id": "plan-rotation-iso-180-1070",
+        "expectation": "new",
+        "reason": "New opposite 2.5D camera side; canonical physical geometry and sunlight are reused."
+      },
+      {
+        "id": "plan-rotation-iso-270-1070",
+        "expectation": "new",
+        "reason": "New fourth 2.5D side with projection/depth ordering and readable room/device faces."
+      },
+      {
+        "id": "panel-wide-view-light-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "panel-wide-plan-editor-dark-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "panel-narrow-read-only-empty-light-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "version-mismatch-desktop-dark-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "version-mismatch-touch-light-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "pdf-export-geometry-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "pdf-export-polish-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "pdf-export-stepped-dimensions-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "vacuum-history-seconds-narrow",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "vacuum-history-dst-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "vacuum-live-tail-pending-dialog-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "vacuum-retained-path-diagnostics-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-label-parity-view-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-co2-flat-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-co2-iso-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-label-parity-plan-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-label-parity-view-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-label-parity-plan-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "geometry-plan-editor-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "safe-resize-handles-clamp-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "safe-resize-handles-clamp-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "space-tab-drop-before-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "space-tab-drop-after-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "plan-snap-endpoint-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "plan-snap-line-gaps-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "wall-junctions-plan-preview-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "wall-junctions-plan-t-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "junction-patch-resilience-plan-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "opening-placement-door-thick-wall-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "opening-placement-passage-thick-wall-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "opening-placement-passage-thick-wall-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "geometry-devices-editor-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-inbox-desktop-en-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "css-migration-rules-invalid-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-inbox-desktop-ru-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-inbox-narrow-ru-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "geometry-decor-editor-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "node-menu-walls-1075",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "tray-wide-selection-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "tray-wide-tool-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "tray-medium-group-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "tray-medium-selection-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "decor-multiselect-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "decor-multiselect-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "decor-group-style-applied-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "decor-group-style-applied-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "tray-narrow-palette-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "furniture-categories-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "furniture-variants-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "furniture-variants-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "tray-narrow-tool-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-state-source-standard-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-state-source-manual-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-state-source-unknown-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-state-source-protected-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-dialog-desktop-de",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-temperature-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-temperature-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "room-discard-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "german-view-mobile-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "toggle-entity-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "toggle-entity-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-help-popover-light-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "decor-color-popover-mobile-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "decor-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "general-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "settings-help-zoom-200-en-light",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "settings-help-zoom-200-ru-dark",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "support-desktop-empty-light-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "support-desktop-preview-dark-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "support-phone-validation-light-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "support-phone-success-dark-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "support-relay-error-light-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "support-tablet-preview-dark-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-ripple-color-popover-mobile-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "space-room-color-popover-desktop-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "backup-full-preview-desktop-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "backup-plan-only-export-desktop-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "backup-space-preview-mobile-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "optimize-preflight-dialog-dark-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "optimize-preflight-dialog-light-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "optimize-orphan-references-dark-en",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "optimize-orphan-references-light-ru",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "card-editor-invalid-default-floor-light-en",
+        "expectation": "change",
+        "reason": "Both card editors now expose the validated four-angle orientation field; existing invalid-value errors remain visible."
+      },
+      {
+        "id": "card-editor-invalid-default-floor-dark-ru",
+        "expectation": "change",
+        "reason": "Both card editors now expose the validated four-angle orientation field; existing invalid-value errors remain visible."
+      },
+      {
+        "id": "device-issues-maintenance-card",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "device-issues-alarm-card",
+        "expectation": "change",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-device-menu-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-device-menu-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-device-confirm-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-device-confirm-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-new-space-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-new-space-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-grid-pan-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-grid-pan-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "header-spaces-phone-light-997",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "header-spaces-menu-dark-997",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-empty-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-empty-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-floors-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-floors-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-no-storage-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-no-storage-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-floors-narrow-light",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "first-space-floors-narrow-dark",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "plan-rotation-phone-view-320-1070",
+        "expectation": "new",
+        "reason": "New 320px quarter-turn View frame: one header row ≤56px with all seven floor/rotation/zoom/gear targets ≥44px; the empty mode slot is absent. Native HA card borders and gutters are verified separately."
+      },
+      {
+        "id": "plan-rotation-phone-editor-320-1070",
+        "expectation": "new",
+        "reason": "New approved narrow editor frame below 360px: two header rows keep the five rotation/zoom targets together, with floor/gear and the existing 24px close accessible. The captured light close glyph must contrast; no stage geometry change is accepted."
+      },
+      {
+        "id": "plan-rotation-phone-editor-360-1070",
+        "expectation": "new",
+        "reason": "New 360px boundary frame preserves the one-row phone editor with 44px navigation controls and the existing 24px close. The actual light close glyph is checked in captured pixels; two rows are permitted only below 360px."
+      },
+      {
+        "id": "more-info-dialog-desktop-en",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "more-info-dialog-mobile-ru",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      }
+    ],
+    "smokes": [
+      "smoke_plan_rotation.mjs",
+      "smoke_plan_rotation_editors.mjs",
+      "smoke_plan_rotation_touch.mjs",
+      "smoke_isometric_contract.mjs",
+      "smoke_isometric_live_touch.mjs",
+      "smoke_pdf_export.mjs",
+      "smoke_space_card.mjs",
+      "smoke_sun.mjs",
+      "smoke_furniture_pan.mjs",
+      "smoke_ui_lab_grid.mjs"
+    ]
+  }
+}

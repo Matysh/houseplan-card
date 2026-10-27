@@ -231,7 +231,7 @@ test('space card exposes one explicit default-off visual-editor flag', () => {
   assert.match(card, /light_pools: false/);
   assert.match(card, /lightPools: this\._config\.light_pools === true/);
   assert.match(editor, /name: 'light_pools', selector: \{ boolean: \{\} \}/);
-  assert.match(editor, /light_pools: t\(L, 'editor\.light_pools'\)/);
+  assert.match(editor, /light_pools: settingsT\(L, 'editor\.light_pools'\)/);
 });
 
 test('#850 AC4(а): the architectural fingerprint is computed once per raw floor record, epoch and scale', async () => {

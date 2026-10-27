@@ -11,11 +11,13 @@ import type { HpColorOpacity } from '../hp-color-opacity';
 import { svgDefaults, type ExportRequest, type SvgExportOptions } from './export-options';
 import type { SvgViewSource } from './svg-snapshot';
 import { normalizeHexColor } from '../color-picker';
+import type { PlanRotation } from '../view-frame';
 
 export interface PdfAssetReference { url: string; mime: string; }
 export interface PdfDialogHass { localize?: (key: string) => string | undefined; }
 
 export interface PdfDialogContext {
+  rotation?: PlanRotation;
   config: ServerConfig;
   rawSpace: PdfRawSpace;
   space: SpaceModel;

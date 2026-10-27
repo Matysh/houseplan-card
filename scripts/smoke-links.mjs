@@ -834,6 +834,18 @@ export const SMOKE_LINKS = [
       + 'parity and decor gestures observe the latest coalesced live-editor frame',
   },
   {
+    symbols: ['PlanRotationPreference', 'effectivePlanRotation', 'presentationView', 'canonicalView',
+      'framePercent', '_rotatePlan', '_planScreenDelta', '_framePercent', '_modeHeaderHeight', '_prepareModeTransition', '_settleModeTransition'],
+    smokes: ['smoke_plan_rotation.mjs', 'smoke_plan_rotation_editors.mjs', 'smoke_plan_rotation_touch.mjs', 'smoke_plan_rotation_mobile.mjs'],
+    because: '#1070 native controls, pixels, animated mode frames and mouse/touch input prove the shared '
+      + 'presentation frame, per-browser persistence, kiosk priority and canonical editor coordinates',
+  },
+  {
+    symbols: ['rotationConfigValue', 'CARD_EDITOR_LANGUAGE_RUNTIME'],
+    smokes: ['smoke_lovelace_editor_locale_1070.mjs'],
+    because: '#1070 cold and failed locale requests prove complete Lovelace labels and the pending form-save barrier in both actual hosts',
+  },
+  {
     symbols: [
       'renderZigbeeTopologyOverlay', 'resolveTopologyHover', 'mapTopologyNodes',
       'readZhaTopology', 'refreshZ2mTopology', 'zigbeeTopologySettingsOf',

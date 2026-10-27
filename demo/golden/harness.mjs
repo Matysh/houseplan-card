@@ -1157,6 +1157,7 @@ export async function prepareGoldenScenario(page, scenario) {
       icon_size: Number.isFinite(scenario.iconSize) ? scenario.iconSize : 3.4,
       language: scenario.language || 'en',
       ...(scenario.kiosk ? { kiosk: true } : {}),
+      ...(scenario.rotation !== undefined ? { rotation: scenario.rotation } : {}),
     };
     let decorStyleRevision=1;
     const hassFor = () => ({
@@ -2627,8 +2628,8 @@ export async function prepareGoldenScenario(page, scenario) {
         || !card.renderRoot.querySelector('.vactrail .hybrid line.tip'))
         throw new Error(`golden live-tail contract is incomplete: ${scenario.id}`);
     } else if (scenario.vacuumTrail) {
-      await until(() => !!card.renderRoot.querySelector('.vactrail > path.core'));
-      const currentCore = card.renderRoot.querySelector('.vactrail > path.core');
+      await until(() => !!card.renderRoot.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core'));
+      const currentCore = card.renderRoot.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core');
       const previousCore = card.renderRoot.querySelector('.vactrail .prev path.core');
       const currentD = currentCore?.getAttribute('d') || '';
       const previousD = previousCore?.getAttribute('d') || '';
@@ -2760,6 +2761,56 @@ export async function prepareGoldenScenario(page, scenario) {
       } } : {}),
     };
   }, { fixture, scenario, cardVersion, attemptKey: VERSION_RELOAD_ATTEMPT_KEY });
+  if (scenario.rotation !== undefined) {
+    result.rotation = await page.evaluate((expected) => {
+      const root = window.__goldenCard.renderRoot;
+      const layer = root.querySelector('.decorlayer'), matrix = layer?.getScreenCTM();
+      if (!matrix || !layer.children.length) throw Error('rotation frame has no painted decor');
+      const a = new DOMPoint(0, 0).matrixTransform(matrix);
+      const b = new DOMPoint(100, 0).matrixTransform(matrix);
+      const length = Math.hypot(b.x - a.x, b.y - a.y);
+      const direction = [(b.x - a.x) / length, (b.y - a.y) / length];
+      const axis = {0: [1, 0], 90: [0, 1], 180: [-1, 0], 270: [0, -1]}[expected];
+      if (!(length > 1) || direction.some((value, i) => Math.abs(value - axis[i]) > .001))
+        throw Error(`painted plan axis does not follow ${expected}: ${direction}`);
+      return { expected, direction, length };
+    }, scenario.rotation);
+  }
+  if (scenario.id.startsWith('plan-rotation-phone-')) {
+    result.phoneHeader = await page.evaluate((scenario) => {
+      const root = window.__goldenCard.renderRoot, head = root.querySelector('.head');
+      const bounds = head.getBoundingClientRect();
+      const floor = root.querySelector('[data-hp="space-select"]')?.shadowRoot
+        ?.querySelector('[data-hp="select-trigger"]');
+      const targets = [floor, ...head.querySelectorAll('.zoomctl button'),
+        head.querySelector('[data-hp="header-menu"]')];
+      if (targets.length !== 7 || targets.some(target => !target)) throw Error('phone header controls are missing');
+      const rows = [];
+      for (const target of targets) {
+        const r = target.getBoundingClientRect(), y = r.y + r.height / 2;
+        if (r.width < 43.99 || r.height < 43.99 || r.x < bounds.x - .1
+            || r.right > bounds.right + .1 || r.y < bounds.y - .1 || r.bottom > bounds.bottom + .1)
+          throw Error(`phone target is clipped or too small: ${target.dataset.hp}`);
+        if (!rows.some(value => Math.abs(value - y) < 1)) rows.push(y);
+      }
+      const expectedRows = scenario.mode !== 'view' && innerWidth < 360 ? 2 : 1;
+      const close = head.querySelector('[data-hp="editor-close"]');
+      if (scenario.mode !== 'view') {
+        if (!close) throw Error('phone editor close is missing');
+        const r = close.getBoundingClientRect();
+        if (r.width < 23.99 || r.height < 23.99 || r.x < bounds.x - .1
+            || r.right > bounds.right + .1 || r.y < bounds.y - .1 || r.bottom > bounds.bottom + .1)
+          throw Error('phone editor close is clipped or too small');
+      }
+      if (rows.length !== expectedRows || document.documentElement.scrollWidth > innerWidth
+          || scenario.mode === 'view' && bounds.height > 56)
+        throw Error(`phone header layout is invalid: ${rows.length} rows, height ${bounds.height}`);
+      const rect = close?.getBoundingClientRect();
+      return { rows: rows.length, height: bounds.height, width: bounds.width,
+        close: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+          color: getComputedStyle(close).color, opacity: getComputedStyle(close).opacity } : null };
+    }, scenario);
+  }
   if (scenario.headerSpaces) {
     await page.waitForFunction(() => !!window.__goldenCard.renderRoot
       .querySelector('[data-hp="space-select"]')?.shadowRoot?.querySelector('[data-hp="select-trigger"]'));

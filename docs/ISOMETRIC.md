@@ -73,8 +73,9 @@ way»): the floor is not transformed at all, and a height moves a point straight
 up the screen.
 
 ```text
-rotDeg=0, tiltDeg=20, xyScale=1, zScale=1, origin=[500,500]
-screen(x, y, z) = (x, y − z·sin 20°)        floor (z = 0): the Flat plane
+rotDeg=0|90|180|270, tiltDeg=20, xyScale=1, zScale=1, origin=[500,500]
+screen(x, y, z) = R(rotDeg)(x,y) − (0, z·sin 20°)
+at rotDeg=0: screen(x,y,z) = (x, y − z·sin 20°)
 wallHeight=84 scale-aware visual units → the wall top rises 0.342·H on screen
 ```
 
@@ -243,16 +244,26 @@ differences instead of strokes; window frame/glass borders remain.
 
 ## Camera and overlay placement
 
-The projection is the fixed vertical oblique one above: rotation 0, the
+The projection is the fixed vertical oblique one above: one exact quarter turn, the
 `[500,500]` pivot, a scale-aware 84-unit wall height rising `0.342·H` straight
-up. Floor SVG, wall/opening projection, inverse hit mapping (the identity on the
+up. Floor SVG, wall/opening projection, inverse hit mapping (the identity at zero on the
 floor), invisible overlay footprints and fit bounds share that one affine
 authority. `isoPlaneMatrix()` (`src/iso-projection.ts`) is that authority; the
-floor plane matrix is the identity.
+floor plane matrix is the identity at zero and an exact table-based quarter-turn
+matrix otherwise. `isoCameraFor` supplies the four immutable production cameras.
+
+The physical source key remains independent of the chosen side (#1070): the
+existing boolean walls/floor/opening bases are built once, with projected
+geometry variants cached separately for the four angles. Side visibility,
+opening camera depth, floor edges and raised overlay positions all receive the
+same camera. Canonical sunlight polygons and physical body caches are reused.
+The render scene carries its canonical zero-side bounds separately from active
+projected bounds, so a turn does not rewrite the saved camera. LED lift/edge and
+shadow offsets remain screen-up after the plane turn.
 
 **Placement (#713, owner's variant B).** Device tiles and opening-lock badges
 keep their canonical floor anchors and stand on the wall-top plane: every one of
-them is drawn at its Flat position shifted straight up by the same `H·sin 20°`.
+them is drawn at its turned Flat position shifted straight up by the same `H·sin 20°`.
 There is no placement search, no rigid clusters and no per-marker vector; tiles
 may meet wall bodies and each other, and the overlapping pairs are the Flat ones
 (scaled by the 1.12 tile). Room names with their metrics row stay on the floor
@@ -271,7 +282,8 @@ that search, and [#714](https://github.com/Matysh/houseplan-card/issues/714)
 removed it together with its constants and nudge fields.
 
 Vertical openings are ordered along the oblique projector: a face's
-`cameraDepth` is the mean of `s·y + z` over its corners (`s = sin 20°`).
+`cameraDepth` is the mean of `s·(x·sin r + y·cos r) + z` over its corners
+(`s = sin 20°`, `r` is the exact chosen quarter turn).
 
 **Fit.** Home and room fit (#152) project floor vertices at floor and floor-edge
 depth and boundary-wall vertices at floor and wall-top height; the overlay fit

@@ -109,6 +109,22 @@ const MUTANT_DEFINITIONS = [
       replace: 'MAX_CONFIG_TEXT = 501  # deliberately widened floor' }],
   },
   {
+    id: 'plan-rotation-phone-close-white-on-light-1070',
+    guard: 'node demo/golden/run.mjs --mode=capture --scenario=plan-rotation-phone-editor-320-1070',
+    because: '#1070 AC12: the actual captured light phone header must paint a contrasting close glyph while desktop active-tab colour stays intact. Pixel witness, registered only; nightly execution.',
+    patches: [{ file: 'src/styles/chrome.styles.ts',
+      find: '    @media (min-width: 481px) {\n      .modetab.active + .editor-close-slot .closex {',
+      replace: '    @media (min-width: 0px) {\n      .modetab.active + .editor-close-slot .closex {' }],
+  },
+  {
+    id: 'plan-rotation-mode-fractional-height-unquantized-1070',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/mode-transition.test.mjs',
+    because: '#1070 AC12: native fractional toolbar height must return to the same integer client-height camera basis. Direct exported-owner unit; registered only, nightly execution.',
+    patches: [{ file: 'src/mode-transition.ts',
+      find: 'return Math.max(1, Math.round(from.stageHeight + from.headerHeight\n    + from.editorChromeHeight - headerHeight - editorChromeHeight));',
+      replace: 'return Math.max(1, from.stageHeight + from.headerHeight\n    + from.editorChromeHeight - headerHeight - editorChromeHeight);' }],
+  },
+  {
     id: 'device-history-ambiguous-copy-failure-toast-1073',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-copy-editor.test.mjs',
     because: '#1073 r2 AC5: the real Copy caller and history controller receive two ordinary lost-reply errors. Its result remains unknown, so no false failure/repeat toast may accompany the persistent result check. Direct caller unit; registered only, nightly execution.',
@@ -127,6 +143,91 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_first_space_converter.mjs',
     because: '#1020/#1088: without HA write transport the informational boundary must honestly show a failed import and recover through its native Retry button. Custom-element presence alone cannot prove ownership because module evaluation can upgrade it even when the boundary drops completion.',
     patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
+  },
+  {
+    id: 'plan-rotation-settled-toolbar-covers-menu-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: after animation opacity returns to one, real header menu centres must retain native pointer ownership above the sibling editor toolbar. This requires actual DOM stacking/hit testing. Registered only; nightly execution.',
+    patches: [{ file: 'src/styles/chrome.styles.ts',
+      find: '.hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }',
+      replace: '.hdr > .head { box-sizing: border-box; }' }],
+  },
+  {
+    id: 'plan-rotation-animated-header-clips-menu-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: the real phone gear popup must remain fully hittable during the shared header transition and allow native retargeting; a Node camera model cannot see ancestor clipping. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "overflow:${this._headerMenu.open ? 'visible' : 'hidden'}", replace: 'overflow:hidden' }],
+  },
+  {
+    id: 'plan-rotation-stale-header-observer-1070',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#1070: native ResizeObserver/rAF work must not publish header state after disconnect and recreate Glow entry leases before reconnect. Real Lit/DOM lifecycle and opacity transition events require the browser. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'if (!ownsHeader()) return;', replace: '/* stale header observer accepted */' }],
+  },
+  {
+    id: 'plan-rotation-mobile-ignores-header-height-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: actual native mode frames must keep one header/chrome/stage height as the narrow editor gains a row; Node interpolation alone cannot observe responsive DOM height. Registered only; nightly execution.',
+    patches: [{ file: 'src/mode-transition.ts',
+      find: 'return Math.max(1, Math.round(from.stageHeight + from.headerHeight\n    + from.editorChromeHeight - headerHeight - editorChromeHeight));',
+      replace: 'return Math.max(1, Math.round(from.stageHeight + from.editorChromeHeight - editorChromeHeight));' }],
+  },
+  {
+    id: 'plan-rotation-reduced-terminal-keeps-stale-height-1070',
+    guard: 'node demo/smoke_plan_rotation_mobile.mjs',
+    because: '#1070 AC12: a zero-duration terminal must publish the target header budget before removing inline presentation, without a delayed ResizeObserver refit jump. Requires actual painted browser frames. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'this._hdrH = Math.round(state.to.headerBudget);', replace: '/* stale header budget */' }],
+  },
+  {
+    id: 'lovelace-rotation-pending-locale-allows-save-1070',
+    guard: 'node demo/smoke_lovelace_editor_locale_1070.mjs',
+    because: '#1070: actual cold module requests and pending-locale HA-form events must not save incomplete GUI state; both real editor hosts and their asynchronous readiness/fallback boundary require a browser. Registered only; nightly execution.',
+    patches: ['src/editor.ts', 'src/space-editor.ts'].map(file => ({ file,
+      find: "if (CARD_EDITOR_LANGUAGE_RUNTIME.state(this._lang) === 'pending') return;",
+      replace: '/* pending form event accepted */' })),
+  },
+  {
+    id: 'plan-rotation-kiosk-uses-device-1070',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
+    because: '#1070 AC6: kiosk orientation comes only from its card configuration. Registered only; nightly execution.',
+    patches: [{ file: 'src/view-frame.ts',
+      find: 'return !kiosk && validPlanRotation(deviceValue) ? deviceValue : planRotation(cardValue);',
+      replace: 'return validPlanRotation(deviceValue) ? deviceValue : planRotation(cardValue);' }],
+  },
+  {
+    id: 'plan-rotation-pointer-skips-inverse-1070',
+    guard: compiledNodeSmoke('smoke_plan_rotation_editors'),
+    because: '#1070 AC7: real drawing, node and decor gestures must retain canonical coordinates after turning the presentation. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'return turnPoint([v.x + (sx / w) * v.w, v.y + (sy / h) * v.h], inversePlanRotation(this._rotation));',
+      replace: 'return [v.x + (sx / w) * v.w, v.y + (sy / h) * v.h];' }],
+  },
+  {
+    id: 'plan-rotation-mode-writes-display-camera-1070',
+    guard: 'node demo/smoke_plan_rotation.mjs',
+    because: '#1070 AC1/AC8: animated transitions must never write a presentation frame into the canonical camera. The native rAF trace observes this with pan and zoom. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: "const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;\n    const view = this._cameraView(this._baseVb());",
+      replace: "const chrome = this.renderRoot.querySelector('.editorchrome') as HTMLElement | null;\n    const view = this._viewOr(this._baseVb());" }],
+  },
+  {
+    id: 'plan-rotation-iso-keeps-zero-side-1070',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/view-frame.test.mjs',
+    because: '#1070 AC9/AC11: four distinct camera-facing edges share one physical build. Registered only; nightly execution.',
+    patches: [{ file: 'src/iso-scene-render.ts',
+      find: 'const camera = isoCameraFor(planRotation(input.rotation));',
+      replace: 'const camera = ISO_CAMERA;' }],
+  },
+  {
+    id: 'plan-rotation-pdf-keeps-zero-1070',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/pdf-scene.test.mjs',
+    because: '#1070 AC10: the complete PDF page must follow rotation before fitting and keep captions readable. Registered only; nightly execution.',
+    patches: [{ file: 'src/pdf/pdf-scene.ts',
+      find: 'commands = rotatePdfCommands(commands, planRotation(input.rotation));',
+      replace: 'commands = rotatePdfCommands(commands, 0);' }],
   },
   {
     id: 'decor-preview-keeps-lost-capture-draft-1080',
@@ -5414,9 +5515,9 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: '    const candidates = [false, true]\n'
-        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape))',
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))',
       replace: '    const candidates = [pdfBoundsWidth(prepared.bounds) > pdfBoundsHeight(prepared.bounds)]\n'
-        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape))',
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape, planRotation(input.rotation)))',
     }],
   },
   {
@@ -5427,7 +5528,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
       find: "    commands.push({ kind: 'vector',\n"
-        + '      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north }),\n'
+        + '      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north + planRotation(input.rotation) }),\n'
         + "      fill: INK, width: 0, fillRule: 'evenodd' });",
       replace: "    commands.push({ kind: 'line', points: [[nx, ny], [nx, ny - 11 * MM]],\n"
         + '      stroke: INK, width: 0.5 * MM });',
@@ -5852,8 +5953,8 @@ const MUTANT_DEFINITIONS = [
       + 'window.innerHeight makes the animated stage escape the card at minimum height (#648 AC5)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'from.stageHeight + from.editorChromeHeight - targetChromeHeight',
-      replace: 'innerHeight - targetChromeHeight /* mutant: ignore the fixed card budget */',
+      find: 'const targetStageHeight = modeStageHeight(from, headerHeight, targetChromeHeight);',
+      replace: 'const targetStageHeight = Math.max(1, innerHeight - targetChromeHeight - headerHeight); /* mutant: ignore the fixed card budget */',
     }],
   },
   {
@@ -16738,8 +16839,8 @@ const MUTANT_DEFINITIONS = [
       + 'the plan, the decor and every anchor towards the centre again',
     patches: [{
       file: 'src/iso-projection.ts',
-      find: '  const d = camera.xyScale * Math.cos(rot);',
-      replace: '  const d = camera.xyScale * Math.cos(rot) * Math.cos(tilt);',
+      find: '  const d = camera.xyScale * cos;',
+      replace: '  const d = camera.xyScale * cos * Math.cos(tilt);',
     }],
   },
   {
@@ -19837,9 +19938,9 @@ const MUTANT_DEFINITIONS = [
       + 'frame does not depend on the aspect since #713',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    const aspect = scene.frame.w / scene.frame.h; // #713/#725: the fit frame ignores aspect; no layout read in render\n',
-      replace: '    const stageSize = this._stageEl?.getBoundingClientRect?.() ?? null;\n'
-        + '    const aspect = stageSize?.height ? stageSize.width / stageSize.height : scene.frame.w / scene.frame.h;\n',
+      find: '    return runtime.resolveIsoFitScene({\n',
+      replace: '    const stageSize = this._stageEl?.getBoundingClientRect?.() ?? null; void stageSize;\n'
+        + '    return runtime.resolveIsoFitScene({\n',
     }],
   },
   {

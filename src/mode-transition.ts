@@ -12,6 +12,9 @@ export interface ViewportPresentation {
 
 export interface ModeVisualState {
   presentedMode: HouseplanMode;
+  headerHeight: number;
+  /** Existing stage offset, including the bounded outer HA header allowance. */
+  headerBudget: number;
   editorChromeHeight: number;
   stageWidth: number;
   stageHeight: number;
@@ -37,6 +40,16 @@ export interface ModeTransitionState {
   startedAt: number;
   duration: number;
   targetMode: HouseplanMode;
+}
+
+/** Camera endpoints use the same integer client-height basis as the settled
+ * stage. Native HA toolbar text can contribute fractional CSS pixels. */
+export function modeStageHeight(
+  from: Pick<ModeVisualState, 'stageHeight' | 'headerHeight' | 'editorChromeHeight'>,
+  headerHeight: number, editorChromeHeight = 0,
+): number {
+  return Math.max(1, Math.round(from.stageHeight + from.headerHeight
+    + from.editorChromeHeight - headerHeight - editorChromeHeight));
 }
 
 export interface ModeTransitionHooks {
@@ -140,6 +153,8 @@ export function interpolateModeVisualState(
   };
   return {
     presentedMode: p < 0.5 ? from.presentedMode : to.presentedMode,
+    headerHeight: lerp(from.headerHeight, to.headerHeight, p),
+    headerBudget: lerp(from.headerBudget, to.headerBudget, p),
     editorChromeHeight: lerp(from.editorChromeHeight, to.editorChromeHeight, p),
     stageWidth,
     stageHeight,

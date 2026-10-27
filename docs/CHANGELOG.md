@@ -13,6 +13,7 @@
 - Remove the subtle decorative outline glow in Follow the sun mode; keep the
   changing background, opaque room paper and plan navigation. (#1092)
 
+- Header menus remain clickable above the editor toolbar after animated mobile mode changes. (#1070)
 - Avoid repeated full registry work on Zigbee signal updates. Z2M messages and
   cached ZHA polls retain the same readings without blocking HA on every packet;
   device removal, provider changes and late callbacks still retire old data. (#1090)
@@ -28,6 +29,22 @@
   conversions resume safely; administrators can export the original snapshot
   through the existing export API for a compatible rollback. Recovery exports
   also preserve an interrupted older coordinate conversion. (#1015)
+- Rotate the displayed plan clockwise or counterclockwise in quarter turns,
+  remembering each space on this device. Flat/2.5D, editors, Static and PDF
+  follow the orientation while device faces and room captions remain readable;
+  kiosk orientation comes from the card's `rotation` setting. (#1070)
+- Below 360 px, editors may use two header rows while keeping rotation beside
+  zoom. View keeps one row with 44px targets inside the card borders; its restored camera and the complete header/stage
+  height settle together, including reduced motion. (#1070)
+- Keep the phone actions menu usable while changing editor mode, including a
+  quick second choice during the header transition. (#1070)
+- Preserve the saved camera when a native HA editor toolbar has a fractional
+  pixel height and View returns to its single-row header. (#1070)
+- Keep the phone's editor-close icon visible on a light card when the desktop
+  active-mode highlight is hidden. (#1070)
+- Load Lovelace form labels with their settings language catalog; ordinary View,
+  read-only and kiosk keep that catalog unloaded. Pending language changes block
+  saving until translated labels or the complete English fallback are ready. (#1070)
 
 - Clear previous furniture, shape and image placement previews after a full
   redraw followed by pointer movement; saved decor remains visible. Losing

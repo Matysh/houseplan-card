@@ -153,6 +153,12 @@ test('#980 the actual fast-proof CLI works in a cold scripts-only checkout witho
     } });
     const proof = JSON.parse(readFileSync(join(root, 'artifacts/ci-proof/proof.json'), 'utf8'));
     assert.equal(proof.profile, profile); assert.equal(proof.checks.preflight.result, 'success');
+    writeFileSync(join(root, 'runner needs.json'), JSON.stringify({ preflight: { result: 'success' } }));
+    execFileSync(process.execPath, ['scripts/ci-profile-proof.mjs', '--needs-file=' + join(root, 'runner needs.json')],
+      { cwd: root, encoding: 'utf8', env: { ...process.env, CI_WORKFLOW: `validate-${profile}.yml`, CI_RESULT: 'success',
+        GITHUB_SHA: sha, GITHUB_RUN_ID: '9', GITHUB_RUN_ATTEMPT: '1', GITHUB_EVENT_NAME: 'push' } });
+    assert.deepEqual(JSON.parse(readFileSync(join(root, 'artifacts/ci-proof/proof.json'), 'utf8')), proof,
+      'the shared optional file reader does not change either fast producer wire proof');
     assert.equal(evaluateCiProof({ run: { id: 9, head_sha: sha, status: 'completed', conclusion: 'success', path: `.github/workflows/validate-${profile}.yml` }, proof,
       candidate: { sha }, policy: CI_PROOF_POLICIES.mergeLight }).status, 'stale');
   }

@@ -4,7 +4,10 @@ import { getConfig } from '../test-build/config-store.js';
 
 const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 const previousLocation = Object.getOwnPropertyDescriptor(globalThis, 'location');
-globalThis.window = { customCards: [], setTimeout, clearTimeout };
+const events = new EventTarget();
+globalThis.window = { customCards: [], setTimeout, clearTimeout,
+  addEventListener: (...args) => events.addEventListener(...args),
+  removeEventListener: (...args) => events.removeEventListener(...args) };
 globalThis.location = { origin: 'http://static-card.test' };
 after(() => {
   if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow);

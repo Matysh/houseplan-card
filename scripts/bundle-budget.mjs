@@ -50,8 +50,13 @@ import { NAMESPACE_LOCALE_CHUNKS } from './bundle-manifest.mjs';
 // #898, owner decision 2026-10-14: ceilings with less than 10 % headroom grow
 // by 10 %. The wall becomes 320000 x 1.1 = 352000 B; the reference of the
 // 5-10 % rule becomes the previous wall (an owner decision, not a measurement).
-export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 320_000;
-export const INITIAL_VIEW_GZIP_BUDGET = 352_000;
+// #1070/#1000, explicit owner decision 2026-10-27: stop byte-budget chasing.
+// The measured combined candidate is 352517 B gzip, beyond the former wall.
+// Apply the existing #898 +10% rule: previous wall352000 ->387200; only this
+// resource wall changes. Rolling references retain actual own cost and bands.
+// https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253
+export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 352_000;
+export const INITIAL_VIEW_GZIP_BUDGET = 387_200;
 export const INITIAL_PANEL_ONLY_GZIP_BUDGET = 8 * 1024;
 
 /**
@@ -439,7 +444,9 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // Carry only this task delta and preserve the inherited1709-B gap,2000-B band
 // and352000-B absolute wall; the merged graph is measured rather than summed.
 // #1087: own HA dialog resolver adds 567 B over accepted dev; preserve the band and absolute wall.
-export const INITIAL_VIEW_GZIP_CEILING = 349_824;
+// #1070 matched verified d9 artifact:349536 ->351632 (+2096); carry only
+// own cost over349824, retaining the accepted -288 B gap and2000 B band.
+export const INITIAL_VIEW_GZIP_CEILING = 351_920;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -857,7 +864,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // #997 on the same accepted base:361169 ->362639 B (+1470).
 // Carry its own delta only; retain the inherited1848-B gap and2000-B band.
 // #1087: standard own-entity picker, sparse draft/save and four locales; +818 B over accepted dev.
-export const LAZY_EDITOR_GZIP_CEILING = 363_457;
+// #1070 matched verified d9 artifact:363437 ->364380 (+943), preserving
+// the accepted -20 B gap to its363457 reference and the existing2000 B band.
+export const LAZY_EDITOR_GZIP_CEILING = 364_400;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

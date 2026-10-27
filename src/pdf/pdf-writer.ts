@@ -25,7 +25,7 @@ export type PdfCommand =
   | { kind: 'vector'; ops: readonly PdfVectorOp[]; fill?: PdfColor; stroke?: PdfColor;
       width: number; fillRule?: PdfFillRule }
   | { kind: 'text'; x: number; y: number; text: string; size: number;
-      color?: PdfColor; angle?: number; align?: 'left' | 'center' | 'right' }
+      color?: PdfColor; angle?: number; align?: 'left' | 'center' | 'right'; rotateWithPlan?: boolean }
   | { kind: 'image'; imageId: string; x: number; y: number; width: number; height: number;
       opacity?: number; angle?: number };
 

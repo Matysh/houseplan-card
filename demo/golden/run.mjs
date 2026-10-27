@@ -36,6 +36,33 @@ mkdirSync(diffRoot, { recursive: true });
 
 const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');
 
+async function inspectPhoneClosePixels(page, png, rect) {
+  return page.evaluate(async ({ base64, rect }) => {
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+    const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0); image.close();
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const luminance = (x, y) => {
+      const at = (y * canvas.width + x) * 4;
+      return [0, 1, 2].map(i => pixels[at + i] / 255)
+        .map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)
+        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+    };
+    const background = luminance(Math.round(rect.x + 2), Math.round(rect.y + 2));
+    let painted = 0, maxContrast = 1;
+    for (let y = Math.ceil(rect.y + 2); y < Math.floor(rect.y + rect.height - 2); y++)
+      for (let x = Math.ceil(rect.x + 2); x < Math.floor(rect.x + rect.width - 2); x++) {
+        const value = luminance(x, y);
+        const contrast = (Math.max(value, background) + .05) / (Math.min(value, background) + .05);
+        if (contrast >= 3) painted++;
+        maxContrast = Math.max(maxContrast, contrast);
+      }
+    if (painted < 4) throw Error(`phone editor close has no contrasting painted glyph: ${painted}, ${maxContrast}`);
+    return { painted, maxContrast, background, rect };
+  }, { base64: png.toString('base64'), rect });
+}
+
 async function renderPdfGoldenPage(page, semanticContract = null) {
   const downloadPromise = page.waitForEvent('download');
   await page.evaluate(async () => {
@@ -1020,6 +1047,8 @@ try {
         scale: 'css',
       };
       const actual = await captureGoldenFrame(page, scenario, screenshotOptions);
+      if (result.runtime.phoneHeader?.close)
+        result.phoneClosePixels = await inspectPhoneClosePixels(page, actual, result.runtime.phoneHeader.close);
       const actualPath = resolve(actualRoot, `${scenario.id}.png`);
       writeFileSync(actualPath, actual);
       result.actualSha256 = sha256(actual);

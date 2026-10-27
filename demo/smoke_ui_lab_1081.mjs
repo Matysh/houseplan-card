@@ -79,6 +79,8 @@ try {
   check('catalog.duplicate_hidden_control_removed', await card.locator('[data-field="device-catalog-show-all"]').count(), 0);
   await close();
   await headerWidth(1200, false);
+  await page.waitForFunction(() => window.__card.renderRoot.querySelector('.hdr').getBoundingClientRect().width > 1024
+    && window.__card.renderRoot.querySelectorAll('[data-hp="space-tab"]').length === 2);
   for (const mode of ['plan', 'devices', 'decor', 'view']) {
     await page.evaluate(mode => window.__hpTest.setMode(mode), mode);
     check(`${mode}.space_cursor`, await card.locator('[data-hp="space-tab"]').first().evaluate(element => getComputedStyle(element).cursor), mode === 'view' ? 'pointer' : 'grab');

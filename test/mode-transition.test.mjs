@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ModeTransitionController,
+  modeStageHeight,
   interpolateModeVisualState,
   viewBoxFromViewport,
   viewportFromViewBox,
@@ -9,6 +10,8 @@ import {
 
 const endpoint = (mode, chrome, stageHeight, viewBox, opacity = mode === 'view' ? 0 : 1) => ({
   presentedMode: mode,
+  headerHeight: 55,
+  headerBudget: 55 + chrome,
   editorChromeHeight: chrome,
   stageWidth: 800,
   stageHeight,
@@ -46,6 +49,26 @@ test('one interpolation owns chrome, stage, camera, colors and content fade', ()
   assert.ok(mid.sceneBrightness > 0.9 && mid.sceneBrightness < 1);
   assert.ok(mid.toolbarContentOpacity > 0 && mid.toolbarContentOpacity < 1);
   assert.match(mid.stageColor, /^rgba\(/);
+});
+
+test('one-row View and two-row editor keep one total height through the shared timeline', () => {
+  const from = endpoint('view', 0, 745, { x: 100, y: 40, w: 600, h: 558.75 });
+  const to = { ...endpoint('decor', 120, 579, { x: 130, y: 70, w: 500, h: 361.875 }), headerHeight: 101, headerBudget: 221 };
+  for (const progress of [0, .01, .1, .5, .9, .99, 1]) {
+    const value = interpolateModeVisualState(from, to, progress);
+    assert.ok(Math.abs(value.headerHeight + value.editorChromeHeight + value.stageHeight - 800) < 1e-9);
+    assert.ok(Math.abs(value.headerBudget + value.stageHeight - 800) < 1e-9);
+    assert.ok(Math.abs(value.viewport.viewBox.w / value.viewport.viewBox.h - value.stageWidth / value.stageHeight) < 1e-12);
+  }
+  assert.equal(interpolateModeVisualState(from, to, 1).headerHeight, 101);
+});
+
+test('fractional native toolbar height preserves the settled client-height camera basis', () => {
+  const view = { stageHeight: 836, headerHeight: 55, editorChromeHeight: 0 };
+  const editor = { stageHeight: modeStageHeight(view, 101, 212.3125), headerHeight: 101, editorChromeHeight: 212.3125 };
+  assert.equal(editor.stageHeight, 578);
+  assert.equal(modeStageHeight(editor, 55), view.stageHeight);
+  assert.equal(modeStageHeight(view, 101, 10000), 1);
 });
 
 test('controller is deterministic, settles exactly and leaves no scheduled frame', () => {

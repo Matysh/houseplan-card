@@ -30,7 +30,8 @@ export function syncVacuumTips(root: ParentNode): boolean {
   let paired = false;
   for (const svg of root.querySelectorAll<SVGSVGElement>('.vactrail')) {
     if (!svg.isConnected) continue;
-    const matrix = svg.getScreenCTM();
+    const plane = svg.querySelector?.<SVGGraphicsElement>('[data-hp-plan-rotation-frame]') || svg;
+    const matrix = plane.getScreenCTM();
     const centres = new Map<string, readonly [number, number] | null>();
     for (const line of svg.querySelectorAll<SVGLineElement>('line.tip[data-mid]')) {
       const mid = line.getAttribute('data-mid')!;

@@ -40,7 +40,13 @@ assets leave the dialog open rather than silently creating a partial file. A
 retired space/config/access context cannot complete an old SVG download. The
 file is named `houseplan-<space-name>-<YYYY-MM-DD>.svg`.
 
-The remaining sections describe the unchanged **PDF** mode.
+The remaining sections describe **PDF** mode.
+
+The effective per-space quarter-turn orientation also applies to PDF (#1070).
+The print scene is rotated before sheet/scale fitting; architecture, rasters and
+decor text follow the plan while room captions remain horizontal. Page chrome
+and the page-anchored hatch stay readable; the compass includes the plan turn.
+The export remains flat and read-only even when the source View is 2.5D.
 
 The compact560px settings shell (#976) shares action/header styling, a single
 body scroller and accepted-close animation/focus behavior. Busy generation
