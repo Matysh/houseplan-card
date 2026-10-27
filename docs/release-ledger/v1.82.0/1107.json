@@ -3,7 +3,7 @@
   "issue": 1107,
   "baseStable": "v1.82.0",
   "category": "infra",
-  "rationale": "Removes the pre-existing shorter duplicate #1087 bullet from both technical changelogs while preserving the complete entry, including localized selection errors. The accepted dev base ec9f6c60 already contains both copies; this issue delivers the two-line documentation cleanup, with no product behavior change relative to v1.82.0.",
+  "rationale": "Removes the pre-existing shorter duplicate #1087 bullet from both technical changelogs while preserving the complete entry, including localized selection errors. The accepted dev base ec9f6c60 already contains both copies. This B/C infrastructure delivery also regenerates the CI registry inventory to register its new release-ledger file, preserving the existing inventory contract without changing CI policy. The changelog cleanup and generated inventory bookkeeping leave product runtime behavior unchanged relative to v1.82.0.",
   "summary": {
     "ru": "Удалён повтор записи #1087 в технических списках изменений.",
     "en": "Removed the duplicate #1087 entry from the technical changelogs."
