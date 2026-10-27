@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Choose the compact floor selector before a warm card first paints, preventing
+  a 9px header/stage jump when opening the plan again. (#1092)
+
+- Remove the subtle decorative outline glow in Follow the sun mode; keep the
+  changing background, opaque room paper and plan navigation. (#1092)
+
 - Avoid repeated full registry work on Zigbee signal updates. Z2M messages and
   cached ZHA polls retain the same readings without blocking HA on every packet;
   device removal, provider changes and late callbacks still retire old data. (#1090)

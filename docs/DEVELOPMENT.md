@@ -3858,7 +3858,30 @@ git config core.fsmonitor true
 git config core.untrackedCache true
 ```
 
+## Header first-frame regression (#1092)
+
+Two selected checks failed identically on clean pre-task dev: the UI Lab
+fixture assumed a wide floor tab despite its 780px demo host, and the warm
+summary smoke observed 138→147px header changes. The UI Lab check now explicitly
+uses both 1200px tabs and a 780px compact selector. The product seeds exact
+content-box width before the first paint and measures height after the chosen
+navigation renders. The existing per-frame and real-resize checks remain
+unchanged. No timing or geometry tolerances were raised.
+
+The warm-mode adoption smoke also calls the public navigation facade immediately
+after remount, while its server permission is deliberately held. `switchSpace`
+waits for a rendered tab or compact trigger before interacting; it never releases
+that permission or waits for the editor. Camera, first-frame, touch and stale
+adoption assertions stay unchanged.
+
 ## Daycycle raster observations (#1066)
+
+#1092 removes the auxiliary paper-outline SVG, its three drop-shadows and
+its exclusive overflow exception. Outline absence is now an expected
+renderer observation, including after camera movement; the main plan opacity
+layer and exposure bounds remain. The before/after comparison keeps the same
+three paired pans, 60 steps and ratio ceiling below. Summed elapsed RasterTask
+time is diagnostic raster work, not physical FPS, thread CPU or input latency.
 
 `smoke_daycycle_raster.mjs --report=artifacts/diagnostics/863/<own-name>.json`
 retains all six raw samples, native pointer deliveries, the existing two rAF

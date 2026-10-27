@@ -44,9 +44,6 @@ export interface DayCyclePalette {
   horizon: string;
   sun: string;
   vignette: string;
-  outlineNear: string;
-  outlineMid: string;
-  outlineFar: string;
 }
 
 /** Exact visual tokens approved in issue #146. One table feeds every surface. */
@@ -56,29 +53,21 @@ export const DAY_CYCLE_PALETTES: Readonly<Record<DayCyclePhase, Readonly<DayCycl
       top: '#aabdd1', bottom: '#e8c8b7',
       horizon: 'rgba(255,201,156,.56)', sun: 'rgba(255,188,125,.78)',
       vignette: 'rgba(65,72,99,.21)',
-      outlineNear: 'rgba(74,57,61,.25)', outlineMid: 'rgba(255,238,224,.40)',
-      outlineFar: 'rgba(255,224,202,.18)',
     }),
     day: Object.freeze({
       top: '#dce9ef', bottom: '#cbdce3',
       horizon: 'rgba(255,245,220,.45)', sun: 'rgba(255,239,190,.72)',
       vignette: 'rgba(65,91,105,.16)',
-      outlineNear: 'rgba(45,62,71,.28)', outlineMid: 'rgba(255,255,255,.42)',
-      outlineFar: 'rgba(255,255,255,.20)',
     }),
     dusk: Object.freeze({
       top: '#48536c', bottom: '#9a7380',
       horizon: 'rgba(242,156,114,.34)', sun: 'rgba(255,167,113,.55)',
       vignette: 'rgba(20,26,44,.39)',
-      outlineNear: 'rgba(238,219,225,.40)', outlineMid: 'rgba(229,207,218,.26)',
-      outlineFar: 'rgba(215,190,205,.12)',
     }),
     night: Object.freeze({
       top: '#111a27', bottom: '#1f2f3e',
       horizon: 'rgba(79,120,151,.16)', sun: 'rgba(169,208,231,0)',
       vignette: 'rgba(3,8,14,.58)',
-      outlineNear: 'rgba(218,238,249,.56)', outlineMid: 'rgba(174,215,238,.30)',
-      outlineFar: 'rgba(136,194,226,.14)',
     }),
   });
 

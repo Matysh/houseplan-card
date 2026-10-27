@@ -136,22 +136,13 @@ export function inheritedSceneClip(painted: LiveViewBox, anchor: LiveViewBox): s
   return `inset(${y - h * .25}% ${100 - x - w * 1.25}% ${100 - y - h * 1.25}% ${x - w * .25}%)`;
 }
 
-/** A scene marked so is clipped to its own box and never exposed (#689). */
-const SCENE_OVERFLOW_ATTRIBUTE = 'data-hp-live-overflow';
-
-const exposesOverflow = (
-  layer: ElementCSSInlineStyle,
-  options: { exposeSceneOverflow?: boolean },
-): boolean => options.exposeSceneOverflow === true
-  && (layer as unknown as Element).getAttribute?.(SCENE_OVERFLOW_ATTRIBUTE) !== 'clip';
-
 const setLayerProjection = (
   layer: ElementCSSInlineStyle,
   projection: LiveLayerProjection | null,
   options: { exposeSceneOverflow?: boolean } = {},
 ): void => {
   const style = layer.style;
-  const expose = exposesOverflow(layer, options);
+  const expose = options.exposeSceneOverflow === true;
   if (!projection) {
     // #544: the SVG viewport may be opened only while it is being projected.
     // `.stage` remains the outer clip, while removing these inline values

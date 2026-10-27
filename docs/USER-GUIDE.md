@@ -2403,8 +2403,8 @@ Flat and 2.5D, and leaves artificial lighting, walls and room fills unchanged.
 The background has dawn, day, sunset and night. With `sun.sun`, elevation and
 direction of travel choose the phase; clock fallback uses 05:00–08:00,
 08:00–18:00, 18:00–21:00 and 21:00–05:00. Environment transition lasts 1.1 s
-or is immediate with reduced motion. Only the area around the plan and its
-outer translucent outline change: rooms, fill, Glow, markers, labels, decor,
+or is immediate with reduced motion. Only the area around the plan changes;
+the decorative paper-outline glow has been removed. Rooms, fill, Glow, markers, labels, decor,
 backdrop, vacuum, hover and window rays are not recoloured. Full card, kiosk and
 static card share the phase; editors keep their normal background. New installs
 and spaces default to Follow the sun; upgrades/imports preserve their existing

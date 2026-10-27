@@ -3,6 +3,17 @@ import { keyed } from 'lit/directives/keyed.js';
 
 interface SpaceChoice { id: string; title: string }
 
+/** CSS pixels, without transform scaling or clientWidth's integer rounding. */
+export function headerContentWidth(style: Pick<CSSStyleDeclaration,
+  'width' | 'boxSizing' | 'paddingLeft' | 'paddingRight' | 'borderLeftWidth' | 'borderRightWidth'>): number {
+  const width = Number.parseFloat(style.width);
+  if (!Number.isFinite(width)) return 0;
+  const inset = style.boxSizing === 'border-box'
+    ? [style.paddingLeft, style.paddingRight, style.borderLeftWidth, style.borderRightWidth]
+      .reduce((sum, value) => sum + (Number.parseFloat(value) || 0), 0) : 0;
+  return Math.max(0, width - inset);
+}
+
 interface HeaderSpaceNavigation {
   spaces: readonly SpaceChoice[];
   current: string;

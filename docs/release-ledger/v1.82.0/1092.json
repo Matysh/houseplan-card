@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "issue": 1092,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "The decorative paper outline exists in stable v1.82.0. Remove this weak visual effect and its rendering work by owner decision; preserve the environment and opaque paper. Its isolated share of the reported slowdown is not established, and no numerical speedup is promised. The owner also approved the two demonstrated pre-existing CI blockers: adapt the floor-navigation smoke to actual container widths and preserve warm header geometry before the first frame. The compact selector was introduced in the current beta line by #997, absent from v1.82.0: its first-frame polish is line-fix and is intentionally excluded from the stable summary. The primary outline removal retains stable-fix classification and milestone.",
+  "summary": {
+    "ru": "Убрано слабое декоративное свечение контура подложки в солнечном фоне.",
+    "en": "Remove the subtle decorative paper-outline glow from the sun-following background."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "day-cycle-dawn-dark",
+        "expectation": "change",
+        "reason": "Remove only the decorative paper-outline glow; keep the phase environment and opaque plan."
+      },
+      {
+        "id": "day-cycle-day-dark",
+        "expectation": "change",
+        "reason": "Remove only the decorative paper-outline glow; keep the phase environment and opaque plan."
+      },
+      {
+        "id": "day-cycle-dusk-dark",
+        "expectation": "change",
+        "reason": "Remove only the decorative paper-outline glow; keep the phase environment and opaque plan."
+      },
+      {
+        "id": "day-cycle-night-dark",
+        "expectation": "change",
+        "reason": "Remove only the decorative paper-outline glow; keep the phase environment and opaque plan."
+      }
+    ],
+    "smokes": [
+      "smoke_daycycle_outline_removed.mjs",
+      "smoke_summary_warm_attach.mjs",
+      "smoke_ui_lab_1081.mjs"
+    ]
+  }
+}

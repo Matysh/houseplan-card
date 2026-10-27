@@ -29,7 +29,7 @@ export const FROZEN_TEXT_ANCHOR_TESTS = [
   'furniture-stroke-contract.test.mjs', 'furniture-transform-contract.test.mjs', 'golden-matrix.test.mjs',
   'houseplan-panel.test.mjs', 'hp-dialog-contract.test.mjs', 'i18n.test.mjs', 'isometric-contract.test.mjs',
   'junction-limits.test.mjs', 'mutation-gate.test.mjs', 'native-select-contract.test.mjs', 'near-axis.test.mjs',
-  'open-passage-contract.test.mjs', 'optional-space-model-contract.test.mjs', 'paper-scene-contract.test.mjs',
+  'open-passage-contract.test.mjs', 'optional-space-model-contract.test.mjs',
   'performance-contract.test.mjs', 'process-gate.test.mjs', 'rebase-on-dev.test.mjs', 'release-contract.test.mjs',
   'render-device-snapshot.test.mjs', 'resize-production-path.test.mjs', 'review-doc-guard.test.mjs',
   'room-temperature-renderers.test.mjs', 'source-fingerprint.test.mjs', 'summary-panel.test.mjs',

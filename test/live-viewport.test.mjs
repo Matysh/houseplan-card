@@ -300,18 +300,3 @@ test('#689 AC3: exposure is bounded by a clip that leaves together with it', () 
     assert.ok(scene.styleRemovals.includes('clip-path'));
   }
 });
-
-test('#689 AC3: a scene marked clip is projected but never exposed', () => {
-  const root = fakeRoot();
-  root.floor.attrs['data-hp-live-overflow'] = 'clip';
-  const painted = frame(0, 0);
-  let anchor = paintLiveViewport(root, painted, painted, null, { now: 0, keepSceneLayer: true });
-  anchor = paintLiveViewport(root, painted, frame(10, 0), anchor, { now: 10, keepSceneLayer: true });
-  assert.match(root.floor.style.transform, /^translate\(-1%,0%\) scale\(1,1\)$/, 'it still follows the gesture');
-  assert.equal(root.floor.style.overflow, undefined, 'the filtered outline is never opened');
-  assert.equal(root.floor.style.clipPath, undefined);
-  assert.equal(root.camera.style.clipPath, LIVE_SCENE_EXPOSURE_CLIP, 'unmarked scenes are still exposed');
-  paintLiveViewport(root, painted, painted, anchor, { now: 20, force: true });
-  assert.equal(root.floor.style.transform, undefined);
-  assert.equal(root.floor.styleRemovals.includes('overflow'), false, 'nothing to remove, nothing written');
-});

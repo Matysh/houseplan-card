@@ -209,8 +209,8 @@ const out = {
   gestureLayersWithinBudget: within(zoomingIn, stage, 1.5) && within(navigating, stage, 1.5),
   settledLayersWithinBudget: [zoomedIn, buttons, pinched, reloaded, navigated]
     .every((snap) => within(snap, stage, 1)),
-  outlineClippedToItsBox: zoomedIn.state.outlineOverflow === 'hidden'
-    && navigating.state.outlineInline === '|' && navigated.state.outlineInline === '|',
+  decorativeOutlineRemoved: [zoomingIn, zoomedIn, buttons, pinched, reloaded, navigating, navigated]
+    .every(snap => snap.state.outlineOverflow === null && snap.state.outlineInline === null),
   idleScenesKeepNoClip: [zoomedIn, buttons, pinched, reloaded, navigated].every((snap) => snap.state.sceneClips.every((clip) => clip === '')),
   capturedFrames: nearWhite.length >= 3,
   // A white/transparent frame covers the stage; white glyphs of 800 % device

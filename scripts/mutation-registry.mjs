@@ -7600,35 +7600,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'daycycle-outline-promoted-on-inner-paper',
-    guard: 'node demo/smoke_daycycle_layer_budget.mjs',
-    because: '#582: if camera movement fails to demote the inner paper group, a 4700x4200 '
-      + 'floor keeps texture-sized overlap layers and HA Companion loses tiles',
-    patches: [{
-      file: 'src/styles/plan.styles.ts',
-      find: '    .stage.daycycle.hp-safe-daycycle-outline .hp-paperg {\n'
-        + '      filter: none;\n'
-        + '      will-change: auto;\n',
-      replace: '    .stage.daycycle.hp-safe-daycycle-outline .hp-paperg {\n'
-        + '      will-change: filter;\n',
-    }],
-  },
-  {
-    id: 'daycycle-static-outline-promoted-on-inner-paper',
-    guard: 'node demo/smoke_daycycle_layer_budget.mjs',
-    because: '#582 contract item 6: the static card has no gesture that could later demote '
-      + 'a coordinate-sized filtered paper group, so it must start with the bounded sibling',
-    patches: [{
-      file: 'src/styles/plan.styles.ts',
-      find: '    .hp-static-stage.daycycle .hp-paperg {\n'
-        + '      filter: none;\n'
-        + '      will-change: auto;\n'
-        + '      transition: none;\n',
-      replace: '    .hp-static-stage.daycycle .hp-paperg {\n'
-        + '      will-change: filter;\n',
-    }],
-  },
-  {
     id: 'daycycle-programmatic-camera-skips-safe-outline',
     guard: 'node demo/smoke_smooth_zoom.mjs',
     because: '#582: double-tap, fit, room focus, wheel and button zoom animate the same '
@@ -7638,18 +7609,6 @@ const MUTANT_DEFINITIONS = [
       find: '    this._activateSafeDayCycleOutline();\n'
         + '    this._cameraTransitionFit = { ...fit };\n',
       replace: '    this._cameraTransitionFit = { ...fit };\n',
-    }],
-  },
-  {
-    id: 'daycycle-outline-not-promoted',
-    guard: 'node demo/smoke_daycycle_raster.mjs',
-    because: 'the day-cycle outline is a triple drop-shadow over the whole sheet; without its own '
-      + 'compositing layer every repaint of the plan re-runs three blur passes, and a demo-stand '
-      + 'pan costs fifteen times the rasterization of a static background (#532 AC1/AC2)',
-    patches: [{
-      file: 'src/styles/plan.styles.ts',
-      find: '      will-change: filter;\n',
-      replace: '',
     }],
   },
   {
@@ -8466,18 +8425,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'daycycle-outline-overflow-visible',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/daycycle-layers.test.mjs',
-    because: '#689 K3: an unclipped filtered outline covers the whole paper at the current '
-      + 'zoom (12.8x the stage at ~460 %, far more at 800 %) and navigation flashes white',
-    patches: [{
-      file: 'src/styles/plan.styles.ts',
-      find: '    .stage .hp-paper-outline-svg { overflow: hidden; }\n',
-      replace: '    .stage .hp-paper-outline-svg { overflow: visible; }\n',
-    }],
-  },
-  {
     id: 'live-exposure-unbounded',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/live-viewport.test.mjs',
@@ -8489,18 +8436,6 @@ const MUTANT_DEFINITIONS = [
         + '    style.clipPath = LIVE_SCENE_EXPOSURE_CLIP;\n'
         + '  }\n',
       replace: '',
-    }],
-  },
-  {
-    id: 'live-exposure-opens-clipped-scene',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/live-viewport.test.mjs',
-    because: '#689 K3: the filtered day/night outline must never be opened by a gesture: its '
-      + 'filter layer precedes any clip-path and would again span the whole paper',
-    patches: [{
-      file: 'src/live-viewport.ts',
-      find: "  && (layer as unknown as Element).getAttribute?.(SCENE_OVERFLOW_ATTRIBUTE) !== 'clip';",
-      replace: '  && true;',
     }],
   },
   {
@@ -17919,6 +17854,16 @@ const MUTANT_DEFINITIONS = [
       find: '      const warm = this.code.create(this.host);',
       replace: '      const warm: Runtime | null = null;',
     }],
+  },
+  {
+    id: 'compact-header-width-arrives-after-first-frame-1092',
+    guard: 'node demo/smoke_summary_warm_attach.mjs',
+    because: '#1092: the browser must choose compact navigation before a warm card first paints; '
+      + 'deferring width to ResizeObserver exposes a 9px header/stage jump even with the summary runtime warm. '
+      + 'Only actual Lit/ResizeObserver/rAF ordering can prove this first-frame invariant.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '      let headerWidth = headerContentWidth(getComputedStyle(hdr));',
+      replace: '      let headerWidth = 0;' }],
   },
   {
     id: 'dev-mutants-requested-again',

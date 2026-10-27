@@ -1,25 +1,7 @@
-// Стоимость растеризации дневного цикла — свидетель #532.
-//
-// Владелец: «в Firefox план тормозит; со статичным цветом фона тормоза
-// пропадают». Профиль подтвердил: наш JS спал 89 % времени, а в GPU-процессе
-// на кадр уезжало 23 МБ текстур. Виновником оказалась не сцена плана, а
-// тройной drop-shadow внешнего контура. После #582 alpha-силуэт живёт в
-// отдельном stage-sized SVG: это по-прежнему собственный промотированный слой,
-// но уже не координатно огромная внутренняя .hp-paperg.
-//
-// Смок проверяет две вещи, и вторая — не время, а ОТНОШЕНИЕ: абсолютные
-// миллисекунды зависят от машины и раннера. Три пары замеров идут в одном
-// процессе, на одной странице и чередуют static/daynight; медиана парных
-// отношений отбрасывает единичный шум соседних mutation-шардов, не ослабляя
-// бюджет.
-//
-// Замер аналитики на панораме демо-стенда: 7.9 без подсказки, 0.26 с ней.
-// Порог 2.0 стоит примерно посередине по логарифму и даёт запас в обе стороны.
-//
-// Движок здесь Chromium — он же движок CI и golden. Приговор по Gecko даёт
-// профиль Firefox с машины владельца: подсказка это совет движку, и Gecko
-// вправе отклонить её по бюджету памяти (layout.css.will-change.budget).
-// Смок нужен не вместо того профиля, а чтобы правку нельзя было молча снять.
+// #1092 removes the decorative outline; keep the same paired panorama,
+// raw traces and ratio ceiling as the #532/#863 observations. This now guards
+// an unfiltered paper and the independent safe main-plan layer. Historical
+// outline measurements remain in prior reports; elapsed RasterTask is not CPU.
 import { launch, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { attestLaunchedBrowser } from '../scripts/browser-attestation.mjs';
 import { PAN_STEPS, SAMPLE_ROUNDS, DAYCYCLE_FIXTURE, pairedMeasurementReport } from './helpers/daycycle-measurement.mjs';
@@ -62,13 +44,13 @@ const setBackground = async (mode) => {
     card.requestUpdate();
     await card.updateComplete;
   }, mode);
-  // Переход фильтра длится 1100 мс: замер до его конца мерил бы анимацию.
+  // Переход окружения длится 1100 мс: ждём завершения анимации.
   await page.waitForTimeout(1400);
   await page.waitForFunction(mode => {
     const card = window.__card, root = card.shadowRoot;
     const stage = root.querySelector('.stage'), paper = root.querySelector('.hp-paperg');
     return !!paper && stage.classList.contains('daycycle') === (mode === 'daynight')
-      && !!root.querySelector('.hp-paper-outline-svg') === (mode === 'daynight')
+      && !root.querySelector('.hp-paper-outline-svg')
       && !card._cameraTransition.active
       && [paper, root.querySelector('.hp-paper-outline-svg')].filter(Boolean)
         .every(node => node.getAnimations().every(a => a.playState !== 'running'));
@@ -108,7 +90,7 @@ const stageBox = () => page.evaluate(() => {
 const measurePan = async (round, order) => {
   const readyStyle = await outlineStyle();
   const ready = { mode: currentMode, ok: readyStyle?.daycycle === (currentMode === 'daynight')
-    && readyStyle?.outlinePresent === (currentMode === 'daynight'), style: readyStyle };
+    && readyStyle?.outlinePresent === false, style: readyStyle };
   const box = await stageBox();
   const marker = `hp-daycycle-${currentMode}-${round}-${order}`;
   await page.evaluate(installDaycycleObservation, { marker });
@@ -164,15 +146,13 @@ const measurePan = async (round, order) => {
 
 const out = {};
 
-// 1. Подсказка стоит там и только там, где стоит фильтр.
+// 1. Ни исходный, ни уже перемещённый план не создаёт старый контур.
 await setBackground('daynight');
 const dayStyle = await outlineStyle();
 out.dayCycleClassOn = dayStyle?.daycycle === true;
-out.dayCycleOutlinePresent = dayStyle?.outlinePresent === true;
-out.idleUsesHistoricalPaperFilter = dayStyle?.safe === false
-  && dayStyle?.outlineVisibility === 'hidden'
-  && /drop-shadow/.test(dayStyle?.paperFilter || '')
-  && /filter/.test(dayStyle?.paperWillChange || '');
+out.dayCycleOutlineRemoved = dayStyle?.outlinePresent === false;
+out.idlePaperUnfiltered = dayStyle?.paperFilter === 'none'
+  && !/filter/.test(dayStyle?.paperWillChange || '');
 
 await setBackground('static');
 const staticStyle = await outlineStyle();
@@ -196,10 +176,9 @@ for (let round = 0; round < SAMPLE_ROUNDS; round += 1) {
   dayCycleSamples.push(await measurePan(round, round * 2 + 1));
   if (round < SAMPLE_ROUNDS - 1) await setBackground('static');
 }
-out.cameraUsesSafeOutline = safeDayStyle?.safe === true
-  && safeDayStyle?.outlineVisibility === 'visible';
-out.dayCycleOutlineFiltered = /drop-shadow/.test(safeDayStyle?.filter || '');
-out.dayCycleOutlinePromoted = /filter/.test(safeDayStyle?.willChange || '');
+out.cameraKeepsSafePlanLayer = safeDayStyle?.safe === true;
+out.dayCycleOutlineRemainsAbsent = safeDayStyle?.outlinePresent === false;
+out.dayCycleOutlineNotPromoted = !/filter/.test(safeDayStyle?.willChange || '');
 out.dayCyclePaperStaysUnfiltered = (safeDayStyle?.paperFilter || 'none') === 'none'
   && !/filter/.test(safeDayStyle?.paperWillChange || '');
 // #689: the explicit scene layer is an opacity hint; a transform hint would

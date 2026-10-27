@@ -29,7 +29,7 @@ import { DEFAULT_ICON_RULES, compileIconRules } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
 import { moonLayer, moonSkyState, type MoonHost } from './moon-gate';
-import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
+import { renderDayCycleEnvironment } from './day-cycle-render';
 import type { DevItem, OpeningCfg, ServerConfig } from './types';
 import { floorMinusBodies, physicalBodyParts, polyclipPathD } from './physical-geometry';
 import {
@@ -969,14 +969,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   return html`
     <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
       ?inert=${!!o.inert}
-      style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
+      style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a}">
       ${renderDayCycleEnvironment(dayCycle, 1, moonLayer(o.moonHost, o.cfg?.settings, dayCycle))}
       ${moonLayer(o.moonHost, o.cfg?.settings, moonSky, 1)}
-      ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
-          viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}"
-          preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
-          ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
-        </svg>` : nothing}
       <svg class="hp-static-plan-svg" viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
           <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
