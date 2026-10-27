@@ -219,12 +219,19 @@ export function installHpTest(selectors) {
 
     async switchSpace(id) {
       const c = need('switchSpace');
-      const tab = find(c, 'spaceTab', { id });
-      if (tab) tab.click();
-      else {
+      // A remounted card can finish its first Lit update before the compact
+      // control's shadow root is ready. Wait for the actual user entrypoint;
+      // permission delivery may intentionally remain pending in the caller.
+      const control = await waitFor('switchSpace', () => {
+        const tab = find(c, 'spaceTab', { id });
+        if (tab) return { tab };
         const select = find(c, 'spaceSelect');
         const button = select && deepAll(select.shadowRoot || select, sel('selectTrigger'))[0];
-        if (!button) throw missing('switchSpace', c, 'spaceSelect');
+        return button ? { button } : null;
+      }, () => `навигация для пространства ${id} не отрисована (режим ${mode(c)})`);
+      if (control.tab) control.tab.click();
+      else {
+        const button = control.button;
         button.click(); await settled();
         const menu = deepAll(c.ownerDocument, sel('selectMenu'))
           .find(element => element.id === button.getAttribute('aria-controls'));

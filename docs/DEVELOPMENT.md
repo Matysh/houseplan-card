@@ -3868,6 +3868,12 @@ content-box width before the first paint and measures height after the chosen
 navigation renders. The existing per-frame and real-resize checks remain
 unchanged. No timing or geometry tolerances were raised.
 
+The warm-mode adoption smoke also calls the public navigation facade immediately
+after remount, while its server permission is deliberately held. `switchSpace`
+waits for a rendered tab or compact trigger before interacting; it never releases
+that permission or waits for the editor. Camera, first-frame, touch and stale
+adoption assertions stay unchanged.
+
 ## Daycycle raster observations (#1066)
 
 #1092 removes the auxiliary paper-outline SVG, its three drop-shadows and
