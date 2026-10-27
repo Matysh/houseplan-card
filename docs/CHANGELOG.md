@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Avoid repeated full registry work on Zigbee signal updates. Z2M messages and
+  cached ZHA polls retain the same readings without blocking HA on every packet;
+  device removal, provider changes and late callbacks still retire old data. (#1090)
+
 - Show the plan converter on an empty installation and below the HA floor list.
   The floor wizard uses the common compact controls, and converter formats share
   one source with General settings in all four languages. Unavailable guidance

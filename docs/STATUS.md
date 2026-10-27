@@ -29,10 +29,15 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5651 · pure backend 680 · HA-harness backend 578 · browser smokes 458 (`npm run inventory`) |
+| Tests | Node unit 5651 · pure backend 681 · HA-harness backend 583 · browser smokes 458 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Zigbee LQI cost (#1090) is separated into structural refresh and single-source
+value projection for Z2M/ZHA. Native registry/config-entry events invalidate
+authority, the ZHA poll remains passive, and unchanged packets do not rebuild
+bindings. Current API-contract doubles are not a real HA 2026.10 attestation.
 
 Nightly guard repair (#1088) retains exact historical failure evidence and
 ordinary before/after checks. Accepted UI lifecycle/navigation and settled paint

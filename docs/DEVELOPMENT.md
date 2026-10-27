@@ -1,5 +1,15 @@
 # Development and deployment
 
+LQI hot-path regression (#1090): run the real-HA subset
+`python -m pytest tests_backend/test_ha_zigbee_lqi_performance.py tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q -s`.
+The pinned HA 2026.8.3 harness and explicit modern API-contract doubles prove
+different things; neither is reported as a real HA 2026.10 run. Native entry
+disable keeps its radio reload fake but exercises HA's entry/device authority.
+The fixed 200-radio workload records full passes, loop lag and synthetic HTTP
+timing; the deterministic gate is operation counts and correct snapshots, not
+machine-dependent milliseconds. Setup-time bulk registry creation is excluded.
+See [dated evidence](analysis/1090-lqi-event-loop-2026-10-27.md).
+
 Nightly guard maintenance (#1088) follows the accepted furniture release event,
 compact space navigation and catalog labels. Settled picker raster checks await
 the real finite entrance animation; their RGB tolerances do not change. The

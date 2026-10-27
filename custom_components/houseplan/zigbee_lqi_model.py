@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from collections.abc import Mapping
 from typing import Any
 
 MAX_DEVICES = 1500
@@ -77,14 +78,30 @@ def inventory_of(payload: object) -> dict[str, str] | None:
     return result
 
 
-def represented_devices(config: dict, devices: dict, entities: dict) -> set[str]:
+def device_entries(registry):
+    """2024.6 exposes a mapping; current HA exposes an entry collection."""
+    devices = registry.devices
+    return devices.values() if isinstance(devices, Mapping) else devices
+
+
+def config_entry_ids(device):
+    """Only old/composite entries need the supported multi-entry surface."""
+    if getattr(device, "is_composite_device", False):
+        return device.config_entries
+    entry_id = getattr(device, "config_entry_id", ...)
+    if entry_id is not ...:
+        return {entry_id} if entry_id is not None else set()
+    return device.config_entries
+
+
+def represented_devices(config: dict, registry, entities: dict) -> set[str]:
     """Read scope includes hidden markers and bound room inventories, never neighbours."""
     scope: set[str] = set()
     areas = {room.get("area") for space in config.get("spaces", []) if isinstance(space, dict)
              for room in space.get("rooms", []) if isinstance(room, dict) and room.get("area")}
-    for key, device in devices.items():
+    for device in device_entries(registry):
         if device.area_id in areas and getattr(device, "disabled_by", None) is None:
-            scope.add(key)
+            scope.add(device.id)
     for entity in entities.values():
         if entity.area_id in areas and entity.device_id and getattr(entity, "disabled_by", None) is None:
             scope.add(entity.device_id)
@@ -99,4 +116,5 @@ def represented_devices(config: dict, devices: dict, entities: dict) -> set[str]
             scope.add(reference)
         elif kind == "entity" and (entity := entities.get(reference)) is not None and getattr(entity, "disabled_by", None) is None:
             scope.add(entity.device_id)
-    return {key for key in scope if key in devices and getattr(devices[key], "disabled_by", None) is None}
+    return {key for key in scope if (device := registry.async_get(key)) is not None
+            and getattr(device, "disabled_by", None) is None}

@@ -13,6 +13,16 @@ and rechecks ACL after the worker. Current omissions do not trigger writes.
 The machine lifecycle inventory distinguishes reached deadlines from proven
 all-input retirement; old-backend readers remain supported.
 
+LQI value updates (#1090) project one accepted source row. Registry/config-entry,
+configuration and provider-identity events own structural invalidation; native
+registry events retire affected rows even during an unrelated held subscribe.
+The existing 30-second ZHA memory cycle compares gateway/membership and updates
+values without rebuilding an unchanged represented scope. A refresh generation
+fences its post-await availability publication. Registry iteration adapts the
+legacy mapping and current entry collection; modern ordinary entries use
+config_entry_id, while old/composite entries retain their supported set API.
+There is still one entry coordinator, one poller and the same bounded WS format.
+
 Decor preview handoff (#1080) remains in `live-editor.ts`: after the synchronous
 live render produces a transient kind, only that kind's settled copy is hidden.
 The existing host-update commit restores settled paint before clearing live

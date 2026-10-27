@@ -1,10 +1,13 @@
 """Strict ordinary negative inputs; no mutations of the implementation."""
 import json
+from types import SimpleNamespace
 
 import pytest
 
 from custom_components.houseplan.zigbee_lqi_model import (
     MAX_INVENTORY_BYTES,
+    config_entry_ids,
+    device_entries,
     inventory_of,
     lqi_number,
     registry_ieee,
@@ -36,3 +39,16 @@ def test_other_mqtt_integrations_cannot_claim_a_z2m_radio_from_a_bare_ieee():
     assert registry_ieee("mqtt", "another_0000000000000001") is None
     assert registry_ieee("mqtt", "zigbee2mqtt_0x0000000000000001") == "0000000000000001"
     assert registry_ieee("zha", "00:00:00:00:00:00:00:01") == "0000000000000001"
+
+
+def test_registry_api_legacy_mapping_modern_collection_and_composite_entry():
+    legacy = SimpleNamespace(id="old", config_entries={"a", "b"})
+    modern = SimpleNamespace(id="new", config_entry_id="c")
+    composite = SimpleNamespace(id="composite", is_composite_device=True,
+                                config_entry_id=None, config_entries={"d", "e"})
+    assert config_entry_ids(legacy) == {"a", "b"}
+    assert config_entry_ids(modern) == {"c"}
+    assert config_entry_ids(composite) == {"d", "e"}
+    assert config_entry_ids(SimpleNamespace(config_entry_id=None)) == set()
+    assert list(device_entries(SimpleNamespace(devices={"old": legacy}))) == [legacy]
+    assert list(device_entries(SimpleNamespace(devices=[modern, composite]))) == [modern, composite]

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 1090,
+  "baseStable": "v1.82.0",
+  "category": "line-fix",
+  "introducedBy": 1029,
+  "rationale": "Repairs repeated registry/projection work in the direct Z2M/ZHA LQI feed introduced by #1029 after v1.82.0. Existing readings, scope, fallback and storage remain compatible; this is not a new major feature or an older stable fix."
+}
