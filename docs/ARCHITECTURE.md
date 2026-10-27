@@ -904,6 +904,7 @@ The shared dialog shell yields Escape to either open native picker surface.
 After the adaptive sheet's public `picker-closed` event and HA's render, the
 adapter restores focus to the field; its generation/connection guards prevent
 a retired owner or a newly opened picker from taking focus.
+The call uses HA's public field `focus()` delegation across its nested roots.
 
 Space settings (#945) share the same form with onboarding/import through
 `SpaceFormPort`; only the editor injects section navigation, the shared north

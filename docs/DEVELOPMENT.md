@@ -9,6 +9,12 @@ the candidate. Form-kit dialog CSS snapshots intentionally record UI-029;
 the independent summary-panel snapshot and retired #1019 selectors stay protected.
 The selected smoke also prepares the verified HA wheel and runs that genuine
 picker proof in CI; adaptive Escape and custom selection assert returned focus.
+The owner permitted byte/core budget increases for this batch. Against the
+accepted #1070 build, #998 adds 24 B initial gzip, 1745 B editor gzip and
+3718 B onboarding gzip (the shared select's previously missing registration).
+The onboarding reference carries only that delta, retaining its 927 B inherited
+gap and 2000 B band. The generated JS resource baseline moves from 3574169 to
+3580235 bytes. Timing limits and structural core limits are unchanged.
 
 LQI hot-path regression (#1090): run the real-HA subset
 `python -m pytest tests_backend/test_ha_zigbee_lqi_performance.py tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q -s`.
@@ -767,6 +773,13 @@ a consumer. Unknown CSS recipes or unsupported native CSS nesting fail explicitl
 instead of silently omitting definitions. The legacy #805 graph-ownership token
 index stays separate from this stricter consumer index; it answers a different
 question. Both ownership and `styles-diff` now share the lexical parser.
+
+Foreign HA shadow classes (#998) have separate file/component/class provenance
+in `scripts/css-foreign.json`, pinned to the verified official HA wheel. They
+never become global local producers. A stale pin, unused entry or undeclared
+class remains an error. The genuine picker smoke observes every declared class
+on the named real HA component; it rejects missing or wrong-provider witnesses.
+This is required alongside the visual assertions, not a substitute for them.
 
 ## Parallel path diagnostic (#1018)
 

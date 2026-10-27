@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeCssSources } from './css-source.mjs';
 import { cssTokens, parseCss, selectorClasses } from './css-lex.mjs';
+import { foreignCssScope } from './css-foreign.mjs';
 
 const animationKeywords = new Set(('none initial inherit unset revert revert-layer ease ease-in ease-out ease-in-out linear step-start step-end '
   + 'infinite normal reverse alternate alternate-reverse forwards backwards both running paused auto replace add accumulate').split(' '));
@@ -56,6 +57,7 @@ function definitionSite(sheet, name) {
 
 export function scanCssOrphans(root = process.cwd()) {
   const source = analyzeCssSources(root), diagnostics = [...source.diagnostics];
+  const foreign = foreignCssScope(root);
   const definitions = [], keyframes = [], animations = [...source.animations], variables = new Map(source.variables);
   for (const sheet of source.css) {
     let rules;
@@ -69,7 +71,8 @@ export function scanCssOrphans(root = process.cwd()) {
         for (const token of selectorClasses(selector)) {
           const location = definitionSite(sheet, token.name);
           definitions.push({ ...location, ...token, selector });
-          if (token.positive && !source.classes.has(token.name)) diagnostics.push({ ...location,
+          const external = token.positive && foreign.accept(location.file, token.name);
+          if (token.positive && !external && !source.classes.has(token.name)) diagnostics.push({ ...location,
             kind: 'class', name: token.name, selector, branch: token.branch,
             message: 'No actual class producer (positive selector token; not a whole-rule deadness claim)' });
         }
@@ -87,6 +90,8 @@ export function scanCssOrphans(root = process.cwd()) {
     }
   }
   const animationTokens = new Set(animations.flatMap(({ value, nameOnly }) => animationNames(value, nameOnly, variables)));
+  const foreignProvenance = foreign.finish();
+  diagnostics.push(...foreign.diagnostics);
   for (const frame of keyframes) if (!animationTokens.has(frame.name)) diagnostics.push({ ...frame,
     kind: 'keyframes', message: 'No animation declaration or reachable programmatic assignment' });
   // Repeated composition roots are allowed; repeated diagnostics add no proof.
@@ -95,7 +100,7 @@ export function scanCssOrphans(root = process.cwd()) {
     return [JSON.stringify(identity), row];
   })).values()];
   return { diagnostics: unique(diagnostics), dynamic: unique(source.dynamic), definitions: unique(definitions),
-    keyframes: unique(keyframes), consumers: [...source.classes].sort(),
+    keyframes: unique(keyframes), consumers: [...source.classes].sort(), foreign: foreignProvenance,
     sheets: source.css.map(({ file, line, owner }) => ({ file, line, owner })),
     metrics: { files: source.sources.length, sheets: source.css.length, classConsumers: source.classes.size, keyframes: keyframes.length } };
 }

@@ -7,6 +7,7 @@ import { chromium, expect } from 'playwright/test';
 import { createLabServer } from './server.mjs';
 import { attestLaunchedBrowser } from '../../scripts/browser-attestation.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
+import { createForeignCssWitness } from '../helpers/foreign-css-witness.mjs';
 
 const { values } = parseArgs({ options: { 'ha-cache': { type: 'string' } } });
 const server = createLabServer({ port: 0, ...(values['ha-cache'] ? { haCache: values['ha-cache'] } : {}) });
@@ -16,6 +17,7 @@ const browser = await chromium.launch();
 const output = new URL('../../artifacts/dialog-picker-998/', import.meta.url);
 mkdirSync(output, { recursive: true });
 const errors = [], external = [], results = [];
+const cssWitness = createForeignCssWitness(server.provenance);
 try {
   const attestation = await attestLaunchedBrowser(browser, { reason: '#998 authentic HA dialog picker' });
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
@@ -77,6 +79,7 @@ try {
   const check = async (name, run) => { await run(); results.push(name); console.log(`PASS ${name}`); };
 
   await open();
+  await cssWitness.observe(picker());
   await check('UI-029 shared trigger dimensions and triangle', async () => {
     const geometry = await picker().evaluate(picker => {
       const root = picker.shadowRoot.querySelector('ha-generic-picker').shadowRoot;
@@ -147,8 +150,11 @@ try {
       });
       await expect.poll(async () => Math.abs((await measureSizes()).searchHeight - 44)).toBeLessThan(.1);
       assert.equal((await measureSizes()).distance, 7);
+      await cssWitness.observe(picker());
       await picker().locator('ha-picker-combo-box input').fill('mdi:fan');
       await expect(picker().locator('ha-picker-combo-box ha-combo-box-item').filter({ hasText: /^\s*mdi:fan\s*$/ }).first()).toBeVisible();
+      await search.press('ArrowDown');
+      await cssWitness.observe(picker());
       const paint = await popup().evaluate(popover => {
         const body = getComputedStyle(popover.shadowRoot.querySelector('[part="body"]'));
         return { background: body.backgroundColor, borderColor: body.borderTopColor,
@@ -182,7 +188,9 @@ try {
       await expect(trigger()).toBeFocused();
       await trigger().click();
       await picker().locator('ha-picker-combo-box input').fill('custom:example_houseplan_998');
-      await picker().locator('ha-picker-combo-box ha-combo-box-item').filter({hasText:'custom:example_houseplan_998'}).last().click();
+      const custom=picker().locator('ha-picker-combo-box ha-combo-box-item').filter({hasText:'custom:example_houseplan_998'}).last();
+      await expect(custom).toBeVisible();await cssWitness.observe(picker());
+      await custom.click();
       await expect(picker()).toHaveJSProperty('value','custom:example_houseplan_998');
       await expect(trigger()).toBeFocused();
     });
@@ -217,6 +225,7 @@ try {
     await shell().locator('button.close').click(); await expect(shell()).toHaveCount(0);
   });
   assert.deepEqual(errors, [], 'no browser exception'); assert.deepEqual(external, [], 'no external traffic');
-  writeFileSync(new URL('report.json', output), JSON.stringify({ provenance: server.provenance, attestation, results }, null, 2));
+  const foreignCss = cssWitness.assertComplete();
+  writeFileSync(new URL('report.json', output), JSON.stringify({ provenance: server.provenance, attestation, results, foreignCss }, null, 2));
   console.log(`OK #998 genuine HA: ${results.length} checks; ${server.provenance.frontendVersion}`);
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }

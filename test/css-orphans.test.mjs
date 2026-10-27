@@ -8,6 +8,7 @@ import { classesOf, parseCss, parseRules, selectorClasses, splitSelectors } from
 import { cssOfSource } from '../scripts/css-source.mjs';
 import { scanCssOrphans } from '../scripts/css-orphans.mjs';
 import { parallelSteps, summarize } from '../scripts/gate-small.mjs';
+import { loadForeignCss, assertForeignCssWitness } from '../scripts/css-foreign.mjs';
 
 const template = text => String.fromCharCode(96) + text + String.fromCharCode(96);
 function fixture(source, run) {
@@ -18,6 +19,65 @@ function fixture(source, run) {
   try { return run(root); } finally { rmSync(root, { recursive: true, force: true }); }
 }
 const names = (result, kind) => result.diagnostics.filter(row => row.kind === kind).map(row => row.name);
+
+function foreignFixture(root, change = () => {}) {
+  const sha256 = 'a'.repeat(64), version = '20260930.4';
+  const contract = { schema: 1, provider: { name: 'home-assistant-frontend', lock: 'demo/ui-lab/ha-lock.json', version, sha256 },
+    consumers: [{ file: 'src/view.ts', components: { 'ha-picker-field': ['foreign'] } }] };
+  const pin = { version, sha256 };
+  change(contract, pin);
+  mkdirSync(join(root, 'scripts'), { recursive: true }); mkdirSync(join(root, 'demo/ui-lab'), { recursive: true });
+  writeFileSync(join(root, 'scripts/css-foreign.json'), JSON.stringify(contract));
+  writeFileSync(join(root, 'demo/ui-lab/ha-lock.json'), JSON.stringify(pin));
+  return contract;
+}
+
+test('foreign class provenance applies only to its declared source file, never a global producer', () => fixture({
+  'view.ts': 'const css=null;const s=css' + template('.foreign,.unknown{color:red}') + ';',
+  'other.ts': 'const css=null;const s=css' + template('.foreign{color:red}') + ';',
+}, root => {
+  foreignFixture(root);
+  const result = scanCssOrphans(root);
+  assert.deepEqual(result.diagnostics.map(row => [row.file,row.name]).sort(), [['src/other.ts','foreign'],['src/view.ts','unknown']]);
+  assert.equal(result.consumers.includes('foreign'), false);
+  assert.deepEqual(result.foreign.consumers, [{file:'src/view.ts',component:'ha-picker-field',name:'foreign'}]);
+}));
+
+test('foreign contract rejects changed pins, malformed vocabulary, wrong paths and unknown schema keys', () => {
+  const cases = [
+    ['version drift', (c,p) => { p.version = '20261001.1'; }],
+    ['wheel drift', (c,p) => { p.sha256 = 'b'.repeat(64); }],
+    ['unknown schema key', c => { c.allowAll = true; }],
+    ['wildcard', c => { c.consumers[0].components['ha-picker-field'] = ['foreign*']; }],
+    ['duplicate class', c => { c.consumers[0].components['ha-other'] = ['foreign']; }],
+    ['missing source', c => { c.consumers[0].file = 'src/missing.ts'; }],
+    ['path escape', c => { c.consumers[0].file = 'src/../view.ts'; }],
+    ['arbitrary pin', c => { c.provider.lock = 'other.json'; }],
+    ['empty vocabulary', c => { c.consumers[0].components = {}; }],
+  ];
+  for (const [label, change] of cases) fixture('const css=null;const s=css' + template('.foreign{color:red}') + ';', root => {
+    foreignFixture(root, change);
+    const result = scanCssOrphans(root);
+    assert.ok(result.diagnostics.some(row => row.kind === 'foreign-css'), label);
+    assert.deepEqual(names(result,'class'), ['foreign'], label + ' must not grant provenance');
+  });
+});
+
+test('removed or only-negative foreign selectors leave a failing stale contract', () => {
+  for (const css of ['.other{color:red}', ':not(.foreign){color:red}']) fixture('const css=null;const s=css' + template(css) + ';', root => {
+    foreignFixture(root);
+    assert.ok(scanCssOrphans(root).diagnostics.some(row => row.kind === 'foreign-css' && /Unused/.test(row.message)));
+  });
+});
+
+test('genuine foreign witness rejects missing classes, wrong component ownership and dependency drift', () => fixture('const value=1;', root => {
+  foreignFixture(root);
+  const contract = loadForeignCss(root), provenance = {frontendVersion:contract.provider.version,frontendWheelSha256:contract.provider.sha256};
+  assert.doesNotThrow(() => assertForeignCssWitness(contract, provenance, [{component:'ha-picker-field',name:'foreign'}]));
+  for (const rows of [[], [{component:'ha-other',name:'foreign'}], [{component:'ha-picker-field',name:'other'}]])
+    assert.throws(() => assertForeignCssWitness(contract, provenance, rows), /Missing genuine HA class witnesses/);
+  assert.throws(() => assertForeignCssWitness(contract, {...provenance,frontendVersion:'new'}, [{component:'ha-picker-field',name:'foreign'}]), /provider differs/);
+}));
 
 test('lexical offsets, quoted punctuation, escapes, Unicode and nested scopes', () => {
   const text = '/* .comment */ @media (width > 10px) { @supports(display:grid) {'

@@ -49,7 +49,7 @@ const styles: Record<string, string> = {
     ha-input-search:hover::part(wa-base),ha-input-search:focus-within::part(wa-base){border-color:var(--hpf-accent,var(--primary-color));outline:none;box-shadow:none;}
     ha-input-search::part(wa-input){min-width:0;margin-inline:8px;padding:0;font:inherit;color:var(--primary-text-color);}
     ha-input-search::part(wa-input)::placeholder{color:var(--secondary-text-color);}
-    .list-wrapper,lit-virtualizer,.plain-list{min-width:0;max-width:100%;overflow-x:hidden;}
+    .list-wrapper,lit-virtualizer{min-width:0;max-width:100%;overflow-x:hidden;}
     .combo-box-row{min-width:0;border-radius:6px;min-height:44px;transition:background-color 160ms,color 160ms;}
     .combo-box-row.current-value{color:var(--hpf-accent,var(--primary-color));background:transparent;}
     .combo-box-row:is(:hover,.selected){background:var(--hpf-tint);}
@@ -119,12 +119,14 @@ class IconPickerKit extends AsyncDirective {
             void Promise.resolve(node.updateComplete).then(() => requestAnimationFrame(() => {
               if (generation !== this.generation || !this.isConnected || !this.picker?.isConnected
                   || !this.belongs(node) || root.querySelector('ha-picker-combo-box')) return;
-              root.querySelector('ha-picker-field')?.shadowRoot?.querySelector<HTMLButtonElement>('button#item')?.focus();
+              root.querySelector<HTMLElement>('ha-picker-field')?.focus();
             }));
           };
           node.addEventListener('picker-closed', binding.closed);
         }
-        const css = styles[node.localName];
+        const css = node.localName === 'ha-picker-field' ? styles['ha-picker-field']
+          : node.localName === 'ha-generic-picker' ? styles['ha-generic-picker']
+          : node.localName === 'ha-picker-combo-box' ? styles['ha-picker-combo-box'] : '';
         if (css) {
           const Sheet = node.ownerDocument.defaultView?.CSSStyleSheet;
           if (Sheet && 'adoptedStyleSheets' in root) {

@@ -114,7 +114,7 @@ try {
       rows.push({name:'print-svg',width,field:await select.locator('select').getAttribute('name')});
     }
   }
-  await print.locator('[data-hp=dialog-cancel]').click();
+  await print.locator('[data-hp=dialog-cancel]').first().click();
   await expect(print).toHaveCount(0);
   await fixture.assertClean();
   writeFileSync(new URL('report.json',output),JSON.stringify({rows},null,2));
