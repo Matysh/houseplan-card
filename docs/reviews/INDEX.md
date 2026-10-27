@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 170, issue: 81. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 174, issue: 82. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -126,6 +126,10 @@
 | #1025 | [SPEC-REVIEW-1025-r1.md](SPEC-REVIEW-1025-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1025 | [CODE-REVIEW-1025-r1.md](CODE-REVIEW-1025-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | классификация release-ledger вероятно неверна | `docs/release-ledger/v1.82.0/1025.json` `1003.json` `1035.json` `1049.json` `docs/release-ledger/v1.82.0/1003.json` |
 | #1025 | [CODE-REVIEW-1025-r2.md](CODE-REVIEW-1025-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #1022 | [SPEC-REVIEW-1022-r1.md](SPEC-REVIEW-1022-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 0 | — | — |
+| #1022 | [SPEC-REVIEW-1022-r2.md](SPEC-REVIEW-1022-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | остаточная формулировка в преамбуле issue (вне ## ТЗ) не обновлена вслед за M1 | `SPEC-REVIEW-1022-r1.md` |
+| #1022 | [CODE-REVIEW-1022-r1.md](CODE-REVIEW-1022-r1.md) | code · r1 | 🟡 жёлтый | 0 | 0 | трек show занижен против собственного ТЗ, маршрут route: reclassify, критерий ux-contract | `scripts/sh3d-convert/picture.mjs` `scripts/sh3d-convert/easy-style.mjs` `docs/USER-GUIDE.ru.md` |
+| #1022 | [CODE-REVIEW-1022-r2.md](CODE-REVIEW-1022-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | не образует цикла | `SPEC-REVIEW-1022-r2.md` |
 | #1021 | [CODE-REVIEW-1021-r1.md](CODE-REVIEW-1021-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1020 | [SPEC-REVIEW-1020-r1.md](SPEC-REVIEW-1020-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | Medium, в скоупе задачи: поведение абзаца-подсказки не описано для пустого экрана без к… | — |
 | #1020 | [SPEC-REVIEW-1020-r2.md](SPEC-REVIEW-1020-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
