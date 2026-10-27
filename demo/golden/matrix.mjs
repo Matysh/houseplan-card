@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 102;
+export const GOLDEN_MATRIX_VERSION = 103;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1538,6 +1538,17 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   ...['light', 'dark'].map(theme => ({ id: `device-offline-${theme}`, fixture: 'visual', offlineBoard: true,
     space: 'golden-offline', mode: 'view', fillMode: 'none', iconSize: 6, language: 'en', theme,
     viewport: { width: 1100, height: 1100 }, ...stage })),
+  ...['attention', 'maintenance', 'alarm'].flatMap(deviceAlerts => ['flat', 'iso'].map(projection => ({
+    id: `device-alert-${deviceAlerts}-${projection}`, deviceAlerts, fixture: 'visual', projection,
+    space: 'golden-lighting', mode: 'view', iconSize: 5, language: 'ru', theme: 'dark',
+    viewport: { width: 900, height: 700 }, ...stage,
+  }))),
+  { id: 'device-alert-reasons', deviceAlerts: 'alarm', alertCard: true, fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', iconSize: 5, language: 'ru', theme: 'dark',
+    viewport: { width: 900, height: 950 }, ...page },
+  ...['empty', 'numeric', 'enum'].map(alertForm => ({ id: `device-alert-form-${alertForm}`,
+    deviceAlerts: 'form', alertForm, fixture: 'visual', space: 'golden-lighting', mode: 'devices',
+    iconSize: 5, language: 'ru', theme: 'light', viewport: { width: alertForm === 'enum' ? 390 : 1280, height: 1000 }, ...page })),
   ...['maintenance', 'alarm'].flatMap(deviceIssues => [
     { id: `device-issues-${deviceIssues}-plan`, deviceIssues, fixture: 'visual',
       space: 'golden-lighting', mode: 'view', iconSize: 5, language: 'ru', theme: 'dark',

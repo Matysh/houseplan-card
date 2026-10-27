@@ -1,0 +1,197 @@
+{
+  "commit": "9db1e66f34dd95df6d28cabe0f69acfee015d5cd",
+  "files": [
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/README.md",
+      "bytes": 12373,
+      "sha256": "3a1243e032069ac768e282e102829b95940a998d24ae09e79e718e5bc969a11b",
+      "gitBlob": "471e491b1f458e05f4c0743fc374bf8b7d7b3831",
+      "worktreeSha256": "3a1243e032069ac768e282e102829b95940a998d24ae09e79e718e5bc969a11b",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/baseline/README.md",
+      "bytes": 2004,
+      "sha256": "16d4ae64309c418c9cbf0b1a6786cd75d6a5a36a5e56762cc61df2950909b6b9",
+      "gitBlob": "d8a4ba5d566f8f0545099e62970d5d96a57e6ba0",
+      "worktreeSha256": "16d4ae64309c418c9cbf0b1a6786cd75d6a5a36a5e56762cc61df2950909b6b9",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/baseline/fixture.json",
+      "bytes": 53952,
+      "sha256": "6149d5c764527f660f21cc15411e5a2d5b8637e2add5275fb517f1907296b7ce",
+      "gitBlob": "7d105c6c7522c522b8d40469f32f82e6d99f3957",
+      "worktreeSha256": "6149d5c764527f660f21cc15411e5a2d5b8637e2add5275fb517f1907296b7ce",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/baseline/provenance.json",
+      "bytes": 448,
+      "sha256": "53b80196c522581a8a78ef2987c98e0384e2f801e63ea66f4922200056bfb4b5",
+      "gitBlob": "87ea162e4634a4a439db0155ce9d7137341aecb4",
+      "worktreeSha256": "253e440aea5f307f62fce15ced12633db72cc840342e890a94ce880d0858efbd",
+      "checkoutLineEndings": "CRLF checkout of LF Git blob"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/baseline/screen.png",
+      "bytes": 54820,
+      "sha256": "de8e7e45b59e5bcd9016a83db1001a3b06c729afdcbe0f4b3cfa8abe6d2ff3e5",
+      "gitBlob": "0c94e68d16101bcac655368d4683d0bde3fd8b2b",
+      "worktreeSha256": "de8e7e45b59e5bcd9016a83db1001a3b06c729afdcbe0f4b3cfa8abe6d2ff3e5",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/fixture.json",
+      "bytes": 53952,
+      "sha256": "6149d5c764527f660f21cc15411e5a2d5b8637e2add5275fb517f1907296b7ce",
+      "gitBlob": "7d105c6c7522c522b8d40469f32f82e6d99f3957",
+      "worktreeSha256": "6149d5c764527f660f21cc15411e5a2d5b8637e2add5275fb517f1907296b7ce",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/README.md",
+      "bytes": 1592,
+      "sha256": "165c9e5404a574ed5e101907a99eec5a986e32d75f3875dbd387cb5746084652",
+      "gitBlob": "d63b3f13a5fa4a1d8cdb8864442a2a5a7e65d41c",
+      "worktreeSha256": "165c9e5404a574ed5e101907a99eec5a986e32d75f3875dbd387cb5746084652",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/alarm-outcome-plain.png",
+      "bytes": 52150,
+      "sha256": "aba5cc16d873278344a59e241316d79f8d55e412ef6326c9cb654803f6f2e18f",
+      "gitBlob": "d494f773111172016e4a7ab7f9d89e67bbc2eca6",
+      "worktreeSha256": "aba5cc16d873278344a59e241316d79f8d55e412ef6326c9cb654803f6f2e18f",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/alarm-outcome.png",
+      "bytes": 79840,
+      "sha256": "34312759bb080cb5dabd225cd8ca578a8ac641d24620c846257d379cee22eeae",
+      "gitBlob": "ec93c68ad3e5b79d3d7b78ead7002e932648438b",
+      "worktreeSha256": "34312759bb080cb5dabd225cd8ca578a8ac641d24620c846257d379cee22eeae",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/condition-help.png",
+      "bytes": 90910,
+      "sha256": "454d328173042b811da2e5a93f71ab737497dd23cabe35a9c7eda6a8f4a76178",
+      "gitBlob": "4a50016a6bdadf50c2d8b71de024be6db753514f",
+      "worktreeSha256": "454d328173042b811da2e5a93f71ab737497dd23cabe35a9c7eda6a8f4a76178",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/constructor-ui-kit.png",
+      "bytes": 71586,
+      "sha256": "317491b8baf24968ae04e839450b3f39610310a10244001e7536d33a9b790431",
+      "gitBlob": "c1d876772a1a9c0db13619e4fe408de6a46ff040",
+      "worktreeSha256": "317491b8baf24968ae04e839450b3f39610310a10244001e7536d33a9b790431",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/constructor.png",
+      "bytes": 70220,
+      "sha256": "6c22afc33e472827602bd89f8fdadff4d386eccd4b4aeb25700b4aebbc10fa09",
+      "gitBlob": "4b7d85d0983c9861a097fa276bef3161032edf2b",
+      "worktreeSha256": "6c22afc33e472827602bd89f8fdadff4d386eccd4b4aeb25700b4aebbc10fa09",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/dialog-backdrop.png",
+      "bytes": 61970,
+      "sha256": "d08b7ea428ea518e0381be78a1788cf2b2dc3da9e54ed8be08c76fc87cf89128",
+      "gitBlob": "1e25698b3c3e0b2433170a1b2709ab6d751c96b0",
+      "worktreeSha256": "d08b7ea428ea518e0381be78a1788cf2b2dc3da9e54ed8be08c76fc87cf89128",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/intent.json",
+      "bytes": 1599,
+      "sha256": "1fd2e010209016bb623b500a387645ecb3e171793bcb4444948fcd6ea7fac7a5",
+      "gitBlob": "0e7c2514f90d1751ee6885db53637af23ab4199d",
+      "worktreeSha256": "1fd2e010209016bb623b500a387645ecb3e171793bcb4444948fcd6ea7fac7a5",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/table-create.png",
+      "bytes": 62997,
+      "sha256": "f48bf6d9bcef668dc5421b0888871f4919c3c6b71685cf20311168e85af18a89",
+      "gitBlob": "36a09d588cf01e30a93863ddb542ace411856cf6",
+      "worktreeSha256": "f48bf6d9bcef668dc5421b0888871f4919c3c6b71685cf20311168e85af18a89",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/history/table.png",
+      "bytes": 61785,
+      "sha256": "37e50352225ecb8c7e41943f061a5a4c90f8befc2af735db4435b47eb14f78ac",
+      "gitBlob": "17d5dfb3e3a1edbca68fb97ddc3df2b1676eb0de",
+      "worktreeSha256": "37e50352225ecb8c7e41943f061a5a4c90f8befc2af735db4435b47eb14f78ac",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/overrides/ha-dialog.css",
+      "bytes": 137,
+      "sha256": "8e581dd219352be1d475aaf21af6343ea7b35c43371db87ecef1f858b799fc95",
+      "gitBlob": "f431346fdd3f2b35d30e37a665b96ee4bf6aedd7",
+      "worktreeSha256": "8e581dd219352be1d475aaf21af6343ea7b35c43371db87ecef1f858b799fc95",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/prototype.mjs",
+      "bytes": 16126,
+      "sha256": "f39c3c47f04e51056b50afb71d3771713eebcf91b25d4f5b6eb61bdccb528185",
+      "gitBlob": "8661ab1ae33f10dc2fdd1a2b27b66ba101f43573",
+      "worktreeSha256": "f39c3c47f04e51056b50afb71d3771713eebcf91b25d4f5b6eb61bdccb528185",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/provenance.json",
+      "bytes": 2097,
+      "sha256": "8bebb782fd2ec75044b5aca8541467f101065627f3d06cee10e233dba393a79e",
+      "gitBlob": "d2ac7c6f83b8bc09fde2bdc6fd8e951c295b2d0c",
+      "worktreeSha256": "8bebb782fd2ec75044b5aca8541467f101065627f3d06cee10e233dba393a79e",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/replay.mjs",
+      "bytes": 2805,
+      "sha256": "d501a0f166979d3fb1ff34f8ef290e01f614d40d309cebb2e89eea1e183b2ed8",
+      "gitBlob": "bb9eba59808ae0fecc6903b531433f15c1c0e2cc",
+      "worktreeSha256": "d501a0f166979d3fb1ff34f8ef290e01f614d40d309cebb2e89eea1e183b2ed8",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/screenshots/01-table-empty.png",
+      "bytes": 73400,
+      "sha256": "efdfb76b91ee8aa35a32d366d06c98847abf42ab42c194c8c30314c5cd2bd01a",
+      "gitBlob": "29be725aebadf4d863b72efb793d8d3512bdf276",
+      "worktreeSha256": "efdfb76b91ee8aa35a32d366d06c98847abf42ab42c194c8c30314c5cd2bd01a",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/screenshots/02-constructor.png",
+      "bytes": 69372,
+      "sha256": "53c7340a433eab1ccc164907e35d613bb3d83c3ee4f3d7e5d08100a6a46e03cb",
+      "gitBlob": "311678aeccb48ad52d1ddd8737e896420a54f333",
+      "worktreeSha256": "53c7340a433eab1ccc164907e35d613bb3d83c3ee4f3d7e5d08100a6a46e03cb",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/screenshots/03-condition-help.png",
+      "bytes": 81089,
+      "sha256": "60f3c21ae4948edff3bfef0f78bebb7d15bf1f091a305a43b00805df7d3e1833",
+      "gitBlob": "5c334762153403cdfe99f8c88907dde2d4536264",
+      "worktreeSha256": "60f3c21ae4948edff3bfef0f78bebb7d15bf1f091a305a43b00805df7d3e1833",
+      "checkoutLineEndings": "exact"
+    },
+    {
+      "path": "docs/design/1000-device-alarms/2026-10-26/screenshots/04-table-example.png",
+      "bytes": 74013,
+      "sha256": "cb628088a855c8aa52d660cbc611db255b048eb15b1735f4fd08c5eed8eb113e",
+      "gitBlob": "ab6c40d5ca8b38991d9a620ca81baa0c3d80208b",
+      "worktreeSha256": "cb628088a855c8aa52d660cbc611db255b048eb15b1735f4fd08c5eed8eb113e",
+      "checkoutLineEndings": "exact"
+    }
+  ]
+}

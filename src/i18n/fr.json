@@ -1353,5 +1353,6 @@
   "view.menu_no_ha": "Aucune entité Home Assistant lisible n’est disponible.",
   "view.menu_foreign": "L’entité appartient à un autre appareil.",
   "view.menu_disabled": "L’appareil ou l’entité est désactivé dans Home Assistant.",
-  "view.menu_unverified": "L’appartenance dans Home Assistant n’a pas été confirmée."
+  "view.menu_unverified": "L’appartenance dans Home Assistant n’a pas été confirmée.",
+  "backup.error.invalid_alert_sources": "Conditions d’alarme de l’appareil non valides."
 }

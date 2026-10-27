@@ -14,14 +14,14 @@ export function renderDeviceIssues(
     ? html`<section class="device-issues alarm" role="status"><h3>${translate('device.issues.alarm_title')}</h3>
         <p>${translate('device.issues.unknown_reason')}</p></section>` : nothing;
   return html`<div class="device-issue-groups" aria-live="polite">
-    ${(['alarm', 'maintenance'] as const).map(severity => {
+    ${(['alarm', 'attention', 'maintenance'] as const).map(severity => {
       const group = issues.filter(issue => issue.severity === severity);
       return group.length ? html`<section class="device-issues ${severity}" data-severity=${severity}>
-        <h3><ha-icon icon=${severity === 'alarm' ? 'mdi:alert-circle-outline' : 'mdi:wrench-outline'}></ha-icon>
-          ${translate(severity === 'alarm' ? 'device.issues.alarm_title' : 'device.issues.maintenance_title')}</h3>
-        ${repeat(group, issue => issue.eid, issue => html`<article class="device-issue" data-source=${issue.eid}>
+        <h3><ha-icon icon=${severity === 'alarm' ? 'mdi:alert-circle-outline' : severity === 'attention' ? 'mdi:alert-outline' : 'mdi:wrench-outline'}></ha-icon>
+          ${severity === 'attention' ? group[0].groupTitle : translate(severity === 'alarm' ? 'device.issues.alarm_title' : 'device.issues.maintenance_title')}</h3>
+        ${repeat(group, issue => issue.cause?.id || issue.eid, issue => html`<article class="device-issue" data-source=${issue.eid} data-cause=${issue.cause?.id || issue.eid}>
           <strong>${issue.name}</strong>
-          <p>${translate(`device.issues.${issue.reason}`)}</p>
+          <p>${issue.explanation || translate(`device.issues.${issue.reason}` as I18nKey)}</p>
           <span class="device-issue-state">${issue.stateText || issue.state}</span>
           <details><summary>${translate('device.issues.details')}</summary>
             <code>${issue.eid}</code><code>${issue.state}${issue.deviceClass ? ` · ${issue.deviceClass}` : ''}</code>

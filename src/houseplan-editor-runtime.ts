@@ -291,6 +291,7 @@ import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePlacement, DeviceEditorHistoryState, DevicePositionState } from './device-position-history';
 import { DeviceStructureHistory } from './device-structure-history';
 import { PropertiesEditor } from './editors/properties/editor';
+import { MarkerAlertsEditor } from './editors/marker-alerts';
 import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
 import { DeviceContactMagnet } from './device-contact-snap';
 import type { DeviceContactRenderer } from './device-contact-render';
@@ -491,6 +492,8 @@ interface DeviceInboxDialogState {
 
 export interface HouseplanEditorHostPort {
   readonly _configWriteContext: import('./config-write-context').ConfigWriteContext;
+  readonly _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
+  readonly _connectionWasLost: boolean;
   /** #780: the LED tool lives in its own lazy chunk; the card owns its loader. */
   _ledEditor: import('./led-strip-editor').LedStripEditor | null;
   _ledButton(): TemplateResult;
@@ -675,7 +678,7 @@ export interface HouseplanEditorHostPort {
   _layout: DeviceLayout;
   readonly _layoutRev: number;
   _logicalViewCenter: () => { x: number; y: number; } | null;
-  _markerDialog: { moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: { alertSources?: Marker['alert_sources']; moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -911,6 +914,7 @@ export class HouseplanEditorRuntime {
     },
   }, this.deviceStructure);
   public readonly properties = new PropertiesEditor(this);
+  public readonly markerAlerts = new MarkerAlertsEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
   private readonly catalogMenu = new CatalogContextMenu(this);
   public readonly decorLine = new DecorLineDrawing({
@@ -943,7 +947,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -7227,6 +7231,7 @@ public _openDeviceInbox(): void {
   }
 
 public _closeMarkerDialog(): void {
+    this.markerAlerts.close();
     if (this._radarSetup.isDirty()) { void this._closeMarkerDialogGuarded(); return; }
     this._radarSetup.reset();
     forgetMarkerBaseline(this.host);
@@ -7572,6 +7577,7 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
         valueSource: marker?.value_source || null,
         stateSource: marker?.state_source, stateSourceTouched: false,
         moreInfoEntity: marker?.more_info_entity, moreInfoTouched: false,
+        alertSources: marker?.alert_sources === undefined ? undefined : JSON.parse(JSON.stringify(marker.alert_sources)),
         valueSourceTouched: false,
         originalHasValueSource: hasValueSource,
         originalValueSource: marker?.value_source,
@@ -7926,6 +7932,7 @@ public async _saveMarker(): Promise<void> {
         ...this._markerValueSourceFields(dlg),
         ...markerStateSourceFields(dlg),
         ...markerMoreInfoFields(dlg),
+        ...(dlg.alertSources === undefined ? {} : { alert_sources: dlg.alertSources }),
         use_climate_temp: dlg.useClimateTemp ? true : null,
         ...markerBatteryFields(dlg.hideBattery),
         ...markerSignalFields(dlg.hideSignal),
@@ -11488,6 +11495,7 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
       ...this._markerValueSourceFields(d),
       ...markerStateSourceFields(d),
       ...markerMoreInfoFields(d),
+      ...(d.alertSources === undefined ? {} : { alert_sources: d.alertSources }),
       use_climate_temp: d.useClimateTemp ? true : null,
       ...markerBatteryFields(d.hideBattery),
       ...markerSignalFields(d.hideSignal),

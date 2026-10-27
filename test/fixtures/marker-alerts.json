@@ -1,0 +1,27 @@
+{
+  "rule": {"id":"co2","type":"threshold","level":"attention","entity_id":"sensor.co2","operator":"gt","value":1000},
+  "cases": [
+    {"name":"numeric boundary","patch":{},"valid":true},
+    {"name":"zero alarm","patch":{"level":"alarm","value":0},"valid":true},
+    {"name":"negative direct attribute","patch":{"attribute":"current_temperature","operator":"le","value":-1.5},"valid":true},
+    {"name":"numeric-looking enum stays text","patch":{"operator":"eq","value":"123"},"valid":true},
+    {"name":"explicit unavailable string","patch":{"operator":"ne","value":"unavailable"},"valid":true},
+    {"name":"exact spaces preserved","patch":{"operator":"eq","value":" Wash "},"valid":true},
+    {"name":"external producer not accepted from config","patch":{"type":"external"},"valid":false},
+    {"name":"unknown level","patch":{"level":"maintenance"},"valid":false},
+    {"name":"unknown operator","patch":{"operator":"contains"},"valid":false},
+    {"name":"order cannot compare text","patch":{"value":"1000"},"valid":false},
+    {"name":"boolean not number","patch":{"value":true},"valid":false},
+    {"name":"null not number","patch":{"value":null},"valid":false},
+    {"name":"array not scalar","patch":{"value":[1000]},"valid":false},
+    {"name":"empty text","patch":{"operator":"eq","value":""},"valid":false},
+    {"name":"multiline operand","patch":{"operator":"eq","value":"on\noff"},"valid":false},
+    {"name":"empty attribute","patch":{"attribute":" "},"valid":false},
+    {"name":"attribute not object path","patch":{"attribute":["nested","value"]},"valid":false},
+    {"name":"literal direct dotted key","patch":{"attribute":"literal.key"},"valid":true},
+    {"name":"malformed entity","patch":{"entity_id":"sensor.co2.other"},"valid":false},
+    {"name":"entity missing","patch":{},"remove":["entity_id"],"valid":false},
+    {"name":"stable local ID required","patch":{"id":""},"valid":false},
+    {"name":"closed future config shape","patch":{"authority":"trusted"},"valid":false}
+  ]
+}

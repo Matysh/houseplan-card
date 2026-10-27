@@ -3309,3 +3309,11 @@ integration support the same feedback API; their release numbers may
 temporarily differ during a normal HACS update. Update an old or incompatible
 side. Retention and deletion details are in
 [SUPPORT-PRIVACY.md](SUPPORT-PRIVACY.md).
+
+### Device threshold alarms
+
+Open **Device settings → Device alarms → Create**. Add up to three conditions using an entity owned by that device or one direct numeric/text attribute. Choose a comparison and **Attention** or **Alarm** level (Attention by default). Binary/enumerated states use the HA dropdown: translated labels retain their original saved values. Enter complete finite numbers with a decimal dot or comma, without units. Text is exact and case/space sensitive; ordered comparisons require a number.
+
+Nested **OK** changes only the device draft; outer **Save** persists it. Nested **Cancel/Escape** leaves the original draft unchanged. Deleting the last rule removes the optional block. An unavailable or foreign saved link remains visible with a reason and never substitutes a similarly named source.
+
+Activation and removal each require three continuous seconds. Missing/incomparable values cannot activate a condition. Attention is a passive yellow triangle to the left; Alarm uses the existing red indication. The device card and actual preview retain every cause, separately from maintenance. Native critical alarms retain priority. Static modes and disabled live states create no custom live clock; reconnect starts confirmation afresh. This feature adds no room/summary counters or HA actions.

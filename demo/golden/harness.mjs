@@ -1,5 +1,7 @@
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
+import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
+import { prepareMarkerAlerts } from './marker-alerts.mjs';
 import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
@@ -59,7 +61,7 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.deviceIssues ? (() => {
+const fixtureFor = (scenario) => scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
   const fixture = makeVisualMatrixFixture(), sample = makeDeviceIssuesFixture();
   fixture.devices = sample.devices; fixture.entities = sample.entities; fixture.states = sample.states;
   fixture.devices.appliance.area_id = 'golden_light_left';
@@ -2942,6 +2944,7 @@ export async function prepareGoldenScenario(page, scenario) {
     if (!point) throw new Error(`golden hover stair missing: ${scenario.hoverStair}`);
     await page.mouse.move(point.x, point.y);
   }
+  if (scenario.deviceAlerts) result.markerAlerts = await prepareMarkerAlerts(page, scenario);
   if (scenario.deviceIssues) {
     const alarm = scenario.deviceIssues === 'alarm';
     const face = page.locator('[data-hp="device"][data-id="appliance"]');

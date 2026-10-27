@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: \#935 copy names always fill the first hole from two, including hidden names and numbered sources
+ok 1 - \#935 copy names always fill the first hole from two, including hidden names and numbered sources
+  ---
+  duration_ms: 1.050132
+  type: 'test'
+  ...
+# Subtest: \#935 automatic HA lamp freezes base icon and manual glow, not own binding/state
+ok 2 - \#935 automatic HA lamp freezes base icon and manual glow, not own binding/state
+  ---
+  duration_ms: 2.249875
+  type: 'test'
+  ...
+# Subtest: \#1000 virtual copy clears the physical HA dialog target and retains independent alarm definitions
+ok 3 - \#1000 virtual copy clears the physical HA dialog target and retains independent alarm definitions
+  ---
+  duration_ms: 0.581636
+  type: 'test'
+  ...
+# Subtest: \#935 template preserves nested future settings and explicit external controls independently
+ok 4 - \#935 template preserves nested future settings and explicit external controls independently
+  ---
+  duration_ms: 0.50606
+  type: 'test'
+  ...
+# Subtest: \#935 incoming marker/entity edges include hidden controllers but never shared external targets or own self refs
+ok 5 - \#935 incoming marker/entity edges include hidden controllers but never shared external targets or own self refs
+  ---
+  duration_ms: 0.464027
+  type: 'test'
+  ...
+# Subtest: \#935 unavailable HA light has safe fallback and virtual copies retain stored modes
+ok 6 - \#935 unavailable HA light has safe fallback and virtual copies retain stored modes
+  ---
+  duration_ms: 0.272689
+  type: 'test'
+  ...
+# Subtest: \#935 placement is adjacent and nonoverlapping outside room/unit square; supports LED obstacles and finite refusal
+ok 7 - \#935 placement is adjacent and nonoverlapping outside room/unit square; supports LED obstacles and finite refusal
+  ---
+  duration_ms: 0.699395
+  type: 'test'
+  ...
+# Subtest: \#935 internal attachment mapping is exact, independent and never rewrites external URLs
+ok 8 - \#935 internal attachment mapping is exact, independent and never rewrites external URLs
+  ---
+  duration_ms: 0.626913
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 106.792466

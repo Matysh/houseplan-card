@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "issue": 1000,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds optional user-configured threshold definitions and Attention/Alarm levels absent from stable v1.82.0; no migration or external service is added.",
+  "summary": {
+    "ru": "Пороговые тревоги устройства, уровни внимания/тревоги и общие подтверждённые причины.",
+    "en": "Device threshold alarms, Attention/Alarm levels and shared confirmed causes."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "device-alert-attention-flat",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-attention-iso",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-maintenance-flat",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-maintenance-iso",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-alarm-flat",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-alarm-iso",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-reasons",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-form-empty",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-form-numeric",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "device-alert-form-enum",
+        "expectation": "new",
+        "reason": "New A1000-attention-r2 level/cause or accepted9db1e66f constructor/table scene; task intent only, no baseline acceptance."
+      },
+      {
+        "id": "vacuum-live-tail-pending-dialog-dark",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "vacuum-retained-path-diagnostics-dark",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "device-state-source-standard-en",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "device-state-source-manual-ru",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "device-state-source-unknown-en",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "device-state-source-protected-ru",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "device-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "device-dialog-desktop-de",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "toggle-entity-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      },
+      {
+        "id": "device-help-popover-light-ru",
+        "expectation": "change",
+        "reason": "Existing wide Device settings navigation now includes the Device alarms section after its separator; existing field behavior remains unchanged."
+      }
+    ],
+    "smokes": [
+      "smoke_marker_alerts.mjs",
+      "smoke_marker_alert_view.mjs",
+      "smoke_rgb_alarm.mjs",
+      "smoke_marker_state_source.mjs",
+      "smoke_device_copy.mjs"
+    ]
+  }
+}

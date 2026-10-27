@@ -93,6 +93,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           batteryLowOnly: deviceBatteryModeOf(this.host._settings, this.host._serverCfg?.spaces.find(space => space.id === previewDevice.space)?.settings) === 'low',
           designPreview: true,
           activityRuntime: this.host._activityRt.get(previewDevice.id),
+          alertIssues: this.markerAlerts.previewIssues(),
           lightDevices: previewLightDevices,
           registryHass: this.host._fullRegistryHass,
           reducedMotion: this.host._reducedMotion,
@@ -917,6 +918,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             {id:'actions',title:st('marker.section_actions'),body:tap},
             {id:'light',title:st('marker.section_light'),body:light},
             {id:'details',title:st('marker.section_details'),body:details},
+            {id:'alarms',title:st('marker.alerts.section'),body:this.markerAlerts.renderSection(),specialized:true},
             ...(previewDevice && this.host._isVacDev(previewDevice) ? [{id:'vacuum',title:st('marker.section_vacuum'),body:html`${this._renderVacSection(d)}`,specialized:true}] : []),
             ...(automaticRadar ? [{id:'radar',title:st('marker.section_radar'),body:this._renderRadarSection(d,radarDevice,'main'),specialized:true}] : []),
           ],st('dialog.section'),owner)}
@@ -953,5 +955,5 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             </button>
           </div>
         </div>
-    </hp-dialog>`;
+    </hp-dialog>${this.markerAlerts.renderConstructor()}`;
   }

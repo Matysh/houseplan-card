@@ -1353,5 +1353,6 @@
   "view.menu_no_ha": "Keine lesbare Home-Assistant-Entität verfügbar.",
   "view.menu_foreign": "Die Entität gehört zu einem anderen Gerät.",
   "view.menu_disabled": "Das Gerät oder die Entität ist in Home Assistant deaktiviert.",
-  "view.menu_unverified": "Die Zuordnung in Home Assistant wurde nicht bestätigt."
+  "view.menu_unverified": "Die Zuordnung in Home Assistant wurde nicht bestätigt.",
+  "backup.error.invalid_alert_sources": "Ungültige Alarmbedingungen für das Gerät."
 }

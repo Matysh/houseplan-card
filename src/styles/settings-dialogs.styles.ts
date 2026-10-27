@@ -11,7 +11,9 @@ hp-dialog.danger-confirm-dialog[settings-layout]{--hp-dialog-icon-size:28px;}
 hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-body{gap:12px;}
 hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-object{font-size:14px;line-height:1.45;}
 hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-settings-height:780px;--hp-settings-chrome-height:176px;}
-hp-dialog .hpf-form.hpf-settings-form{display:block;padding:0;background:var(--hpf-surface);--hpf-control-surface:var(--hpf-surface);}
+hp-dialog .hpf-form.hpf-settings-form{display:block;background:var(--hpf-surface);--hpf-control-surface:var(--hpf-surface);}
+/* The flat compact constructor keeps padding from the shared compact shell. */
+hp-dialog:not([data-kind=alarm-constructor]) .hpf-form.hpf-settings-form{padding:0;}
 .hpf-settings-layout{display:grid;grid-template-columns:155px minmax(0,1fr);min-width:0;align-items:start;}
 .hpf-settings-nav{position:sticky;top:0;display:grid;gap:4px;padding:13px 8px;min-width:0;}
 .hpf-settings-nav button{min-height:38px;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:var(--primary-text-color);font:inherit;font-size:12px;line-height:1.35;text-align:start;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:background 160ms ease,color 160ms ease;}

@@ -7,8 +7,10 @@ import type { VersionRecoveryController } from './version-recovery';
 import type { LiveRuntime } from './live-interaction-runtime';
 import type { LoadedSummaryPanelRuntime } from './summary-panel-runtime-loaded';
 import type { ZigbeeTopologyHass } from './zigbee-topology-runtime';
-import { liveRuntimeCode, zigbeeOverlayCode, converterInfoCode, deviceMenuCode } from './view-runtime-code';
+import { liveRuntimeCode, zigbeeOverlayCode, converterInfoCode, deviceMenuCode, markerAlertCode } from './view-runtime-code';
 import type { ViewDeviceMenu, ViewDeviceMenuRequest } from './view-device-menu';
+import type { MarkerAlertViewRuntime } from './marker-alert-view-runtime';
+import type { Marker } from './types';
 import { summaryRuntimeLoader } from './summary-runtime-loader';
 import { ViewRuntimeBoundary, guardedViewRuntimeReload } from './view-runtime-boundary';
 import { zigbeeTopologyOverlayRequested } from './zigbee-topology-overlay-bridge';
@@ -32,6 +34,8 @@ export interface ViewRuntimeHost extends SummaryPreferenceHost {
   _liveRt: LiveRuntime | null;
   _summary?: LoadedSummaryPanelRuntime;
   _capturedSeq: number;
+  readonly _markers: readonly Marker[];
+  _alerts?: MarkerAlertViewRuntime;
   readonly _editorRuntime?: { _guardDraftNavigation(resume: () => void): boolean } | null;
   _reloadDocument(automatic?: boolean): void;
   _t(key: I18nKey): string;
@@ -62,6 +66,7 @@ export class ViewRuntimes {
   readonly converter: ViewRuntimeBoundary<object, true>;
   readonly deviceMenu: ViewRuntimeBoundary<object, ViewDeviceMenu>;
   private menu: ViewDeviceMenu | null = null;
+  readonly alerts: ViewRuntimeBoundary<object, MarkerAlertViewRuntime>;
 
   constructor(private readonly host: ViewRuntimeHost) {
     const port = <Runtime>(install: (runtime: Runtime) => void, informational = false) => ({
@@ -83,24 +88,31 @@ export class ViewRuntimes {
     }));
     this.zigbee = new ViewRuntimeBoundary(host, zigbeeOverlayCode, port(() => {}));
     this.converter = new ViewRuntimeBoundary(host, converterInfoCode, port(() => {}, true));
+    this.alerts = new ViewRuntimeBoundary(host, markerAlertCode, port(runtime => {
+      host._alerts?.disconnect(); host._alerts = runtime; runtime.connect();
+    }));
   }
 
   connect(): void {
     this.deviceMenu.connect(false); this.menu?.connect();
     this.host._summary?.connect();
     this.live.connect(); this.summary.connect(); this.zigbee.connect(false); this.converter.connect(false);
+    this.alerts.connect(false); this.host._alerts?.connect();
     this.reconcile();
   }
   disconnect(): void {
     this.deviceMenu.disconnect(); this.menu?.disconnect();
     this.live.disconnect(); this.summary.disconnect(); this.zigbee.disconnect(); this.converter.disconnect();
     this.host._summary?.disconnect();
+    this.alerts.disconnect(); this.host._alerts?.disconnect();
   }
   reconcile(): void {
     if (this.live.state !== 'ready') void this.live.ensure();
     if (this.summary.state !== 'ready') void this.summary.ensure();
     if (this.zigbee.state !== 'ready' && this.wantsZigbee()) void this.zigbee.ensure();
     if (this.converter.state !== 'ready' && this.wantsConverter()) void this.converter.ensure();
+    if (this.alerts.state !== 'ready' && this.wantsAlerts()) void this.alerts.ensure();
+    this.host._alerts?.reconcile();
     this.syncRecovery();
   }
   withLive(run: (runtime: LiveRuntime) => void): void {
@@ -124,6 +136,11 @@ export class ViewRuntimes {
     return !host._booting && !!(host._importDialog || host._serverCfg?.spaces.length === 0
       || host._serverStorage === false && host._model?.length === 0);
   }
+  private wantsAlerts(): boolean {
+    // Presence is the import boundary. The sole strict codec lives inside the
+    // optional graph; unsupported input never creates a producer or a timer.
+    return this.host._markers.some(marker => !marker.removed && Array.isArray(marker.alert_sources) && marker.alert_sources.length > 0);
+  }
   private failures(): FailedViewRuntime[] {
     const failures: FailedViewRuntime[] = [];
     if (this.deviceMenu.unavailable) failures.push({ name: 'view.menu_title', boundary: this.deviceMenu });
@@ -135,6 +152,7 @@ export class ViewRuntimes {
       failures.push({ name: 'view.runtime_zigbee', boundary: this.zigbee });
     }
     if (this.converter.unavailable && this.wantsConverter()) failures.push({ name: 'view.runtime_converter', boundary: this.converter });
+    if (this.alerts.unavailable && this.wantsAlerts()) failures.push({ name: 'device.issues.alarm_title', boundary: this.alerts });
     return failures;
   }
   private syncRecovery(): void {

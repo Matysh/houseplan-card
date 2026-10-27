@@ -11,11 +11,15 @@
   changing background, opaque room paper and plan navigation. (#1092)
 
 - Header menus remain clickable above the editor toolbar after animated mobile mode changes. (#1070)
+- Keep virtual copying available for a device with a chosen Home Assistant dialog
+  target. The copy clears that HA-only target while preserving alarm definitions
+  and leaving the source device unchanged. (#1000)
 - Avoid repeated full registry work on Zigbee signal updates. Z2M messages and
   cached ZHA polls retain the same readings without blocking HA on every packet;
   device removal, provider changes and late callbacks still retire old data. (#1090)
 - Open the thermostat instead of its temperature sensor in HA; optionally choose another own entity for the More Info action and Open in HA button. (#1087)
 - Open the thermostat instead of its temperature sensor in HA; optionally choose another own entity for the More Info action and Open in HA button, with localized selection errors. (#1087)
+- Configure up to three own-device threshold alarms, with Attention/Alarm levels, exact HA state/attribute comparisons and three-second confirmation on both transitions. Marker, preview and reason card share the confirmed causes; native safety and maintenance keep their meaning. The compact constructor uses common UI Kit controls and HA state choices and keeps changes local until the device is saved. (#1000)
 
 - Show the plan converter on an empty installation and below the HA floor list.
   The floor wizard uses the common compact controls, and converter formats share

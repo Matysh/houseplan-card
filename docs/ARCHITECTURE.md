@@ -48,6 +48,9 @@ The shared select's `control` part permits compact padding without changing its
 default settings layout; six common 1px strokes retain seven complete 44px View
 targets in 302px of actual native HA card content.
 
+Threshold alarms (#1000) use marker-alert-config/marker-alert for the strict persisted codec/comparator, marker-alert-runtime for monotonic confirmation and marker-alert-source for canonical ownership before selected state access. marker-alert-view-runtime is an optional View boundary with per-card lifecycle; its version invalidates snapshot reuse. Native and threshold causes share device-issues identity/levels and the existing reason renderer. MarkerAlertsEditor lives in the existing lazy editor graph, with a nested local constructor and an outer marker draft; it never writes HA or demo storage.
+
+
 Decor preview handoff (#1080) remains in `live-editor.ts`: after the synchronous
 live render produces a transient kind, only that kind's settled copy is hidden.
 The existing host-update commit restores settled paint before clearing live

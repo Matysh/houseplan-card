@@ -642,6 +642,7 @@ export class HouseplanCard extends LitElement {
 
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
   private _liveRt: import('./live-interaction-runtime').LiveRuntime | null = null;
+  private _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
   public _onboardingRuntime: import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime | null = null;
   private _editorRuntimeLoadingVisible = false;
   /** #39: pending large-backdrop decision; set only by the lazy pick flow. */
@@ -2240,6 +2241,7 @@ export class HouseplanCard extends LitElement {
   private _deviceInboxReturn: DeviceInboxDialogState | null = null;
   private _deviceInboxMemo: { key: string; rows: DeviceInboxRow[] } | null = null;
   private _markerDialog: {
+    alertSources?: Marker['alert_sources'];
     vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle;
     devId?: string;      // the icon being edited (if any)
     /**
@@ -12203,6 +12205,7 @@ export class HouseplanCard extends LitElement {
       presentation.pulse.kind !== 'none'
         ? this._t((`marker.pulse_a11y_${presentation.pulse.reason}`) as I18nKey) : '',
       presentation.maintenance ? this._t('device.issues.maintenance_a11y') : '',
+      presentation.attention || '',
       presentation.valueFullText || presentation.valueText || '',
       valueBadgeTitle(presentation.valueBadge),
       presentation.lqiText != null && presentation.lqiBand

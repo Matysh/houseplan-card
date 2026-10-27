@@ -6,6 +6,15 @@ In ordinary View, right-click a device to choose Device settings, HA more-info, 
 
 The HA dialog target is independent of presentation primary and state/value/badge sources. Auto prefers the already-resolved functional domain (for example climate of a thermostat), then retains the historical primary for passive devices. An optional own more_info_entity overrides only HA opening; exact entity bindings stay exact and virtual bindings gain no HA target. Missing/foreign/disabled/unreadable explicit targets refuse rather than opening a different sensor. Existing unavailable/unknown states can still be opened in HA. The More Info tap action, Open in HA footer and #1089 View menu HA command use one resolver.
 
+## Custom threshold causes (#1000)
+
+An optional View chunk owns the strict codec, selected-field reader, monotonic confirmation clock and cause wording. The initial bridge checks only presence of a potential alert_sources array; unsupported input creates no producer/timer. Ordinary plans make no alert-chunk request. Each exact rule confirms both activation and removal continuously for 3000 ms, using one earliest-deadline scheduler. The callback rechecks the current card/HA generation, rule, marker placement/binding and canonical entity ownership before reading a selected field. Unknown/incomparable data cancels activation and starts removal; an existing cause shows unavailable current value during that interval. Retired authority/definition disappears immediately. Reconnect and reattach confirm afresh.
+
+Native/threshold/future external cause identities are independent of entity_id. Only native and threshold producers exist. Native maintenance classification remains unchanged. Threshold alarm joins the existing red alarm priority/pulse; native critical alarms always retain priority. Attention has its own passive alert-outline, 55% shell size, #F0A00C, left gap12% shell. If a native wrench is visible it keeps its nearest slot and attention occupies the next slot left. Alarm suppresses the extra attention glyph while all causes remain in separate Alarm/Attention/Maintenance reason groups. No room/summary counter is added.
+
+The same confirmed cause projection feeds Flat, 2.5D, reason card and actual preview. An unchanged preview can use the accepted confirmed frame immediately; unsaved/new rules confirm locally without writing. A timer transition invalidates the immutable snapshot and its incremental presentation version even without an HA tick. Static modes and live_states:false create no custom live clock; lifecycle/hidden/offline and existing native policy are preserved.
+
+
 ## Own availability (#1026)
 
 `device-own-availability.ts` resolves one runtime fact from the existing active

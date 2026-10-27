@@ -1,0 +1,31 @@
+Static readiness on B eeca80d16; no mutation execution.
+ok   threshold-cold-view-imports-without-rule-1000
+browser guards: 539/200
+WARN browser guards: 539 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=196.1
+ok   threshold-writer-skips-alert-validation-1000
+browser guards: 539/200
+WARN browser guards: 539 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=194.8
+ok   threshold-constructor-crosses-instance-1000
+browser guards: 539/200
+WARN browser guards: 539 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=185.0
+ok   threshold-skips-confirmation-1000
+browser guards: 539/200
+WARN browser guards: 539 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=199.0
+ok   threshold-retains-foreign-owner-1000
+browser guards: 539/200
+WARN browser guards: 539 при ориентире 200 — каждый сверх ориентира держится своей строкой обоснования в реестре
+предупреждений mutation registry: 1
+static-readiness: definitions=1 unique-source-reads=3 execution=0 caught=unknown (nightly only)
+plan-metrics: guard-input requests=0, computations=0, cache-hits=0, unique-guards=0, source-reads=0, duration-ms=190.4
