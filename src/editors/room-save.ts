@@ -2,7 +2,7 @@ import type { HouseplanEditorHostPort, HouseplanEditorRuntime } from '../housepl
 import type { RoomCfg, ServerConfig } from '../types';
 import { isGeometryCleanupRefusal, supersedeDeferredWrite } from '../config-adoption';
 import { applyRoomTempThresholdDraft } from '../space-dialog';
-import { dialogSession } from './dialog-baseline';
+import { acceptSavedDialogExit, dialogSession } from './dialog-baseline';
 import { forgetRoomBaseline, roomDraftKey } from './room-form-state';
 
 const saving = new WeakMap<object, object | undefined>();
@@ -17,6 +17,7 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   const cfg = host._serverCfg;
   if (!cfg) return;
   const owner = dialogSession(host, 'room'), savedDraft = roomDraftKey(host);
+  const contextCurrent = host._configWriteGuard?.() ?? (() => true);
   const spaceId = host._space, roomId = host._roomEditId;
   const candidate = JSON.parse(JSON.stringify(cfg)) as ServerConfig;
   const room = candidate.spaces.find(space => space.id === spaceId)?.rooms.find(room => room.id === roomId);
@@ -56,9 +57,11 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
   host.requestUpdate();
   const restoreDeferred = supersedeDeferredWrite(host._saveConfigDebounced);
   try {
-    await runtime._saveConfigNow(attempt);
+    await runtime._saveConfigNow(attempt, contextCurrent, contextCurrent);
+    if (!contextCurrent()) return;
     if (host.isConnected && host._roomDialog && dialogSession(host, 'room') === owner
       && host._space === spaceId && host._roomEditId === roomId && roomDraftKey(host) === savedDraft) {
+      acceptSavedDialogExit(host, 'room', owner);
       forgetRoomBaseline(host);
       host._roomDialog = false;
       host._roomEditId = null;
@@ -67,6 +70,7 @@ export async function saveRoomEdit(runtime: HouseplanEditorRuntime): Promise<voi
     }
     host._showToast(host._t('toast.room_updated'), 'toast.room_updated');
   } catch (error) {
+    if (!contextCurrent()) return;
     restoreDeferred(host._rollbackOptimistic(attempt));
     host._regSignature = '';
     host._maybeRebuildDevices();

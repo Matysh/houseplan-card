@@ -1,6 +1,13 @@
 # House Plan architecture
 
+
 View device context menu (#1089) has a per-card transient owner behind its own fingerprinted ViewRuntimeBoundary. EditorContextMenu and one idempotent shared stylesheet adopter provide presentation. Accepted command intent survives normal menu close but is revoked by a newer owner, navigation or authority change. Settings uses the existing guarded dialog entry; Hide/Show and Delete reuse the editor transaction with a guard at the queued dispatch boundary. Informational selection does not import the editor runtime.
+
+## Derived consumer ownership (#1093)
+
+Physical keys project known paint/text fields out while retaining unknown and structural semantics; wire/history fingerprints stay complete. DemandSpaceModels keeps at most eight physical floor models per card, lending cheap metadata until a real consumer asks for geometry. DeviceRosterStateKey observes registry/config and state metadata dependencies; value ticks refresh the affected immutable presentation rows. Room/decor projection follows effective visible/preview/tooltip demand and retains hidden sources of active aggregates. Hidden document/route intake still adopts authority and data, but defers visual producers/chunks/imports. Per-device confirmed alert issues invalidate only their dependent faces; hidden confirmation observations retain continuous history without visual deadlines. Successful same-owner Save ACK retires its dialog paint; refusals and replacement owners retain existing protocols. DOM replacement retires both header/viewport resize observer leases. See [the source and measurement audit](analysis/1093-selective-invalidation-2026-10-28.md).
+
+
 
 Config decoder v1 (#1015) sits inside the common Store fence, after pending-pair
 recovery and before config/layout reads, CAS writers and setup consumers. Source
@@ -48,7 +55,7 @@ The shared select's `control` part permits compact padding without changing its
 default settings layout; six common 1px strokes retain seven complete 44px View
 targets in 302px of actual native HA card content.
 
-Threshold alarms (#1000) use marker-alert-config/marker-alert for the strict persisted codec/comparator, marker-alert-runtime for monotonic confirmation and marker-alert-source for canonical ownership before selected state access. marker-alert-view-runtime is an optional View boundary with per-card lifecycle; its version invalidates snapshot reuse. Native and threshold causes share device-issues identity/levels and the existing reason renderer. MarkerAlertsEditor lives in the existing lazy editor graph, with a nested local constructor and an outer marker draft; it never writes HA or demo storage.
+Threshold alarms (#1000) use marker-alert-config/marker-alert for the strict persisted codec/comparator, marker-alert-runtime for monotonic confirmation and marker-alert-source for canonical ownership before selected state access. marker-alert-view-runtime is an optional View boundary with per-card lifecycle; its per-device confirmed issues invalidate the corresponding snapshot presentations. Native and threshold causes share device-issues identity/levels and the existing reason renderer. MarkerAlertsEditor lives in the existing lazy editor graph, with a nested local constructor and an outer marker draft; it never writes HA or demo storage.
 
 
 Decor preview handoff (#1080) remains in `live-editor.ts`: after the synchronous

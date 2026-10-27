@@ -1,6 +1,13 @@
 # Отображение маркера устройства: таблица решений
 
+
 In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
+
+## Effective consumer dependencies (#1093)
+
+Only current-floor demanded faces are resolved; hidden/off-floor light controllers and room aggregate sources remain in the coherent HA projection when a visible consumer reads them. Per-device metadata, effective battery overrides, activity and confirmed alert issues drive incremental face invalidation; equivalent roster clones and unrelated paint revisions do not reset all faces. Registry removal/disable, source metadata and authority changes fail open to current roster/ownership checks. Hidden confirmation clocks keep authoritative condition edges, suspend visual deadlines, and consume elapsed confirmation on reveal; route/card/HA retirement still discards the owner. Hidden decor sources are captured again before reveal, including pending display previews.
+
+
 
 ## Home Assistant dialog target (#1087)
 

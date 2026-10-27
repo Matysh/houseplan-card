@@ -27,14 +27,20 @@ import type { VacuumRuntimeSource } from './vacuum-runtime-source';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { PresentationLightFrame } from './presentation-light-frame';
 import type { DevItem, Marker, SpaceModel } from './types';
+import { snapshotDeviceDemand } from './render-snapshot-demand';
+import type { SnapshotConsumerDemand } from './render-snapshot-consumers';
 
 /** The card members a capture reads; the card passes itself. */
 export interface RenderSnapshotHost {
+  _snapshotConsumerDemand?(): SnapshotConsumerDemand;
   _alerts?: Pick<import('./marker-alert-view-runtime').MarkerAlertViewRuntime, 'version' | 'issuesForDevice'>;
   hass: any; // any-ok: the HA object as the card received it
   _planHass: any; // any-ok: active-registry projection of the card
   _fullRegistryHass: any; // any-ok: full-registry projection of the card
   _hassSequence: number;
+  _space?: string;
+  _mode?: string;
+  _showAll?: boolean;
   _cfgEpoch: number;
   _devices: readonly DevItem[];
   /** Optional full-card display projection; the canonical roster stays untouched. */
@@ -107,6 +113,11 @@ export function captureRenderDeviceSnapshot(
   host: RenderSnapshotHost, reuse?: RenderSnapshotReuse | null,
 ): RenderDeviceSnapshot {
   const devices = host._displayDevices || host._devices;
+  const consumerDemand = host._snapshotConsumerDemand?.();
+  const showGhosts = host._mode === 'devices' && host._showAll === true;
+  const dependencyDevices = snapshotDeviceDemand(devices, host._space, showGhosts);
+  const visibleDevices = host._space === undefined ? devices : devices.filter(device => device.space === host._space
+    && (!device.hidden || showGhosts) && !device.marker?.removed);
   // One plan-wide graph/index per capture; reuse observes consumed source keys
   // separately from structural topology and recorded HA state rows.
   const planLightSources = resolvedLightSources(
@@ -117,11 +128,14 @@ export function captureRenderDeviceSnapshot(
   const planHass = window?.hass || host._planHass;
   const registryHass = window?.registry || host._fullRegistryHass;
   const presentations = new Map<string, ResolvedDevicePresentation>();
-  const showBattery = showDeviceBatteryOf(host._settings) || (host._serverCfg?.spaces || []).some(space => showDeviceBatteryOf(host._settings, space.settings));
+  const showBattery = visibleDevices.some(device => showDeviceBatteryOf(host._settings,
+    host._serverCfg?.spaces?.find(space => space.id === device.space)?.settings));
   const batteryContext = showBattery ? createDeviceBatteryContext(planHass, registryHass) : undefined;
   const signalContext = createDeviceSignalContext(planHass, registryHass);
+  // These consumers read bindings and room metadata, not scaled polygons.
+  const sourceSpaces = (host._serverCfg?.spaces ?? host._model).filter(space => host._space === undefined || space.id === host._space);
   const ledMarkerIds = showBattery
-    ? new Set(host._model.flatMap((space) => [...ledStripsByMarker(space).keys()])) : new Set<string>();
+    ? new Set(sourceSpaces.flatMap((space) => [...ledStripsByMarker(space).keys()])) : new Set<string>();
   const facts = new Map<string, unknown>();
   const entityIds = new Set<string>(['sun.sun']); for (const id of host._summary?.entityIds() || []) entityIds.add(id);
   if (host._vacFit?.source) entityIds.add(host._vacFit.source);
@@ -135,21 +149,24 @@ export function captureRenderDeviceSnapshot(
     if (kind === 'device') deviceIds.add(reference);
     else if (kind === 'entity') entityIds.add(reference);
   };
-  for (const space of host._model) for (const room of space.rooms) {
-    if (room.area) areaIds.add(room.area);
-    addSource(room.settings?.temp_source);
-    addSource(room.settings?.hum_source);
-    addSource(room.settings?.co2_source);
+  if (consumerDemand) {
+    for (const area of consumerDemand.areas) areaIds.add(area);
+    for (const source of consumerDemand.sources) addSource(source);
+  } else for (const space of sourceSpaces) for (const room of space.rooms || []) {
+      if (room.area) areaIds.add(room.area);
+      addSource(room.settings?.temp_source);
+      addSource(room.settings?.hum_source);
+      addSource(room.settings?.co2_source);
   }
-  for (const rawSpace of host._serverCfg?.spaces || []) for (const opening of rawSpace.openings || []) {
+  for (const rawSpace of sourceSpaces) for (const opening of ('openings' in rawSpace ? rawSpace.openings : []) || []) {
     for (const entityId of openingEntityReferences(opening)) entityIds.add(entityId);
   }
   // Inline HA variables on the decorative layer are part of the painted
   // frame too. Capture both the current token format and the legacy
   // one-entity fields so a reconnect cannot update a label ahead of the
   // rooms, devices and light layers around it.
-  for (const rawSpace of host._serverCfg?.spaces || []) {
-    for (const shape of rawSpace.decor || []) {
+  for (const rawSpace of consumerDemand?.decor === false ? [] : sourceSpaces) {
+    for (const shape of ('decor' in rawSpace ? rawSpace.decor : []) || []) {
       if (shape.kind !== 'text') continue;
       for (const match of String(shape.text || '').matchAll(/\{([^{}\r\n]+)\}/g)) {
         const reference = liveTextReference(match[1]);
@@ -167,7 +184,7 @@ export function captureRenderDeviceSnapshot(
       ));
     }
   }
-  for (const device of devices) {
+  for (const device of visibleDevices) {
     const spaceSettings = host._serverCfg?.spaces?.find(space => space.id === device.space)?.settings;
     const mode = deviceBatteryModeOf(host._settings, spaceSettings);
     for (const showLqi of [false, true]) {
@@ -206,10 +223,10 @@ export function captureRenderDeviceSnapshot(
   }
   const snapshot = createRenderDeviceSnapshot({
     sourceSequence: host._hassSequence, hass: planHass,
-    devices, presentations,
+    devices, dependencyDevices, presentations,
     positions: renderDeviceSnapshotPositions(
       host._model.length > 0,
-      devices,
+      visibleDevices,
       (device) => host._livePos(device),
     ),
     facts,

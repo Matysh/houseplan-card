@@ -37,6 +37,37 @@ test('#1000 optional projection confirms current selected fields and retires on 
   assert.equal(f.runtime.forDevice('d').length, 0, 'foreign authority cannot expose an old frame even before reconcile');
 });
 
+test('#1093 hidden document keeps threshold history without timers or visual publication', () => {
+  const f=fixture();f.host.ownerDocument={visibilityState:'visible'};f.runtime.connect();
+  f.advance(1000);f.host.ownerDocument.visibilityState='hidden';f.runtime.reconcile();
+  assert.equal(f.queue.size,0);const changes=f.changes();
+  f.advance(4000);f.runtime.reconcile();
+  assert.equal(f.runtime.forDevice('d').length,1,'latest continuous source remains authoritative');
+  assert.equal(f.changes(),changes);assert.equal(f.queue.size,0);
+  f.host.ownerDocument.visibilityState='visible';f.runtime.reconcile();
+  assert.equal(f.runtime.forDevice('d')[0].value,'1200');assert.equal(f.queue.size,0);
+});
+
+test('#1093 inactive floor and hidden marker have no alert deadline; reveal retains elapsed confirmation', () => {
+  const f=fixture();f.host._space='other';f.runtime.connect();assert.equal(f.queue.size,0);
+  const changes=f.changes();f.advance(4000);f.runtime.reconcile();assert.equal(f.changes(),changes);
+  f.host._space='floor';f.runtime.reconcile();assert.equal(f.runtime.forDevice('d').length,1);
+  f.runtime.disconnect();f.host._devices[0].hidden=true;f.runtime.connect();assert.equal(f.queue.size,0);
+  f.advance(8000);f.host._displayDevices=[{...f.host._devices[0],hidden:false}];f.runtime.reconcile();
+  assert.equal(f.runtime.forDevice('d').length,1);assert.equal(f.queue.size,0);
+});
+
+test('#1093 hidden authority reads only its selected source and rejects a removed parent before state access', () => {
+  const f=fixture();f.host.ownerDocument={visibilityState:'hidden'};
+  f.host._haRegistry={authoritative:true,entities:{'sensor.co2':{device_id:'d'}},devices:{d:{id:'d'}}};
+  Object.defineProperty(f.host,'_planHass',{get(){throw Error('hidden producer built the all-state render projection');}});
+  Object.defineProperty(f.host,'_fullRegistryHass',{get(){throw Error('hidden producer reached the render projection alias');}});
+  f.runtime.connect();assert.equal(f.queue.size,0);f.advance(4000);f.runtime.reconcile();
+  assert.equal(f.runtime.forDevice('d').length,1);
+  delete f.host._haRegistry.devices.d;const reads=f.reads();f.runtime.reconcile();
+  assert.equal(f.runtime.forDevice('d').length,0);assert.equal(f.reads(),reads);
+});
+
 test('#1000 late deadline reads no retired rule, floor, static or disconnected owner', () => {
   for (const retire of [f => { f.marker.alert_sources = []; }, f => { f.marker.space = 'other'; },
     f => { f.marker.display = 'static_icon'; }, f => { f.host._config.live_states = false; },

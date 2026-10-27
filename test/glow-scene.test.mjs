@@ -18,12 +18,14 @@ const square = (id, x0, x1) => ({
 test('light geometry excludes LED sources and decor without visiting or mutating their data', () => {
   const geometry = Object.freeze({
     id: 's', rooms: Object.freeze([square('room', 0, 100)]),
-    walls: [], wall_segments: [], openings: [], open_spans: [],
-    partitions: [], wall_columns: [], wall_style: 'zero',
+    wall_segments: [], openings: [], open_spans: [],
+    wall_columns: [], wall_style: 'zero',
     future_geometry_key: { x: 1 },
   });
   const expected = contentFingerprint([geometry, 5, 20]);
   assert.equal(lightGeometryFingerprint(geometry, 5, 20), expected);
+  assert.equal(lightGeometryFingerprint({ ...geometry, walls: [], partitions: [] }, 5, 20), expected,
+    '#1093 empty legacy collections and their canonical absence have the same physical meaning');
   const raw = Object.freeze(Object.defineProperty({ ...geometry }, 'led_strips', {
     enumerable: true,
     get() { throw new Error('LED source data must not enter a masonry hash'); },

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { browserPushPlan, browserPlanExecution, goldenConnections } from '../scripts/browser-push-plan.mjs';
+import { browserPushPlan, browserPlanExecution, goldenConnections, SELECTIVE_INVALIDATION_CORE } from '../scripts/browser-push-plan.mjs';
 import { taskCiPlan, readTaskDemand } from '../scripts/task-ci-plan.mjs';
 import { validateSelectedPlan, selectedGoldenPassed, runSelected } from '../scripts/browser-selected.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
@@ -14,6 +14,7 @@ import { selectSmokeConnections } from '../scripts/smoke-select.mjs';
 import historical from './data/smoke-selection-history.json' with { type: 'json' };
 
 const empty = { direct: [], registered: [], unproven: false, noExecutableDiff: true };
+const withCore = ids => [...new Set([...ids, ...SELECTIVE_INVALIDATION_CORE])].sort();
 const make = (options) => browserPushPlan({ files: [], diffText: '', corpus: ['src/known.ts', 'demo/golden/device-battery.mjs'],
   smokeSelection: empty, pendingVisual: { golden: [] }, ...options });
 
@@ -42,7 +43,8 @@ test('#1060 historical mandatory scope reaches CI unchanged on every task track'
     for (const track of ['ship', 'show', 'ask']) {
       const plan = make({ files: sample.parsed.files, labels: [`track:${track}`], smokeSelection,
         visualIntent: { golden: [], smokes: sample.declaredSmokes } });
-      assert.deepEqual(plan.smoke.ids, sample.afterIds, `#${sample.issue} ${track}`);
+      const expected = sample.parsed.files.some(file => file.startsWith('src/')) ? withCore(sample.afterIds) : sample.afterIds;
+      assert.deepEqual(plan.smoke.ids, expected, `#${sample.issue} ${track}`);
       assert.equal(plan.scope, 'task');
     }
   }
@@ -57,7 +59,7 @@ test('#1060 every track excludes weak inference while preserving explicit scope 
     const input = { files: ['src/known.ts', 'demo/smoke_hide_layers.mjs'], labels: [`track:${track}`],
       smokeSelection: selection, visualIntent: { golden: [], smokes: ['smoke_static_zoom_sharpness.mjs'] } };
     const plan = make(input);
-    assert.deepEqual(plan.smoke.ids, ['smoke_decor.mjs', 'smoke_hide_layers.mjs', 'smoke_mode_transition.mjs', 'smoke_static_zoom_sharpness.mjs']);
+    assert.deepEqual(plan.smoke.ids, withCore(['smoke_decor.mjs', 'smoke_hide_layers.mjs', 'smoke_mode_transition.mjs', 'smoke_static_zoom_sharpness.mjs']));
     assert.deepEqual(plan.smoke.deferred.smokes, ['smoke_modes.mjs']);
     const explicitWeak = make({ ...input, visualIntent: { golden: [], smokes: ['smoke_modes.mjs'] } });
     assert.ok(explicitWeak.smoke.ids.includes('smoke_modes.mjs'));
@@ -92,11 +94,13 @@ test('#1044 ordinary tasks use smoke-select; uncertainty gets the bounded minimu
   const known = make({ files: ['src/known.ts'], smokeSelection: {
     ...empty, direct: [{ smoke: 'smoke_modes.mjs', strong: true }], noExecutableDiff: false,
   } });
-  assert.equal(known.smoke.mode, 'selected'); assert.deepEqual(known.smoke.ids, ['smoke_modes.mjs']);
+  assert.equal(known.smoke.mode, 'selected'); assert.deepEqual(known.smoke.ids, withCore(['smoke_modes.mjs']));
   for (const selection of [{ ...empty, noExecutableDiff: false }, { ...empty, unproven: true }]) {
     const fallback = make({ files: ['src/known.ts'], smokeSelection: selection });
     assert.equal(fallback.smoke.mode, 'selected'); assert.equal(fallback.golden.mode, 'none');
-    assert.ok(fallback.smoke.ids.length > 0 && fallback.smoke.ids.length < 10);
+    assert.ok(SELECTIVE_INVALIDATION_CORE.every(id => fallback.smoke.ids.includes(id)));
+    const visual = fallback.smoke.ids.filter(id => !SELECTIVE_INVALIDATION_CORE.includes(id));
+    assert.ok(visual.length > 0 && visual.length < 10);
   }
 });
 
@@ -128,7 +132,7 @@ test('#1044 task intent selects its scenes and carries earlier pending changes o
         { id: other, issue: 1042, expectation: 'change', reason: 'Unrelated pending scene' }] } });
     assert.equal(plan.scope, 'task'); assert.equal(plan.golden.mode, 'selected');
     assert.deepEqual(plan.golden.ids, [id]); assert.deepEqual(plan.golden.intent.map(item => item.issue), [1043, 1044]);
-    assert.deepEqual(plan.smoke.ids, ['smoke_modes.mjs']);
+    assert.deepEqual(plan.smoke.ids, withCore(['smoke_modes.mjs']));
   }
   assert.throws(() => make({ files: ['src/known.ts'], render: true,
     visualIntent: { ...intent, golden: [{ ...intent.golden[0], id: 'nonexistent' }] } }), /Unknown declared/);
@@ -206,4 +210,52 @@ test('#1044 task proof accepts exact selected execution for S7; full release sti
     needs: { ...needs, browser_selected: { result: 'skipped' } } });
   assert.equal(missing.browserPlan.executed.golden.result, 'skipped');
   assert.equal(evaluateCiProof({ ...context, proof: missing, policy: CI_PROOF_POLICIES.reviewLight }).status, 'failed');
+});
+
+test('#1093 timing core is mandatory across frontend tracks and gate/fixture edits', () => {
+  for (const track of ['ship', 'show', 'ask']) for (const file of [
+    'src/unconnected.ts', 'src/i18n/ru.json', 'assets/marker.svg', 'rollup.config.mjs', 'package-lock.json',
+    'demo/benchmark_selective_invalidation.mjs', 'demo/fixtures/selective-invalidation.mjs',
+    'demo/helpers/selective-invalidation-paint.mjs', 'demo/helpers/selective-invalidation-history.mjs',
+    ...SELECTIVE_INVALIDATION_CORE.map(id => `demo/${id}`),
+  ]) {
+    const plan = make({ files: [file], labels: [`track:${track}`] });
+    assert.equal(plan.smoke.mode, 'selected');
+    assert.ok(SELECTIVE_INVALIDATION_CORE.every(id => plan.smoke.ids.includes(id)), `${track}: ${file}`);
+    assert.equal(plan.smoke.ids.length, new Set(plan.smoke.ids).size);
+  }
+  for (const file of ['docs/STATUS.md', 'tests_backend/test_config.py', 'custom_components/houseplan/plans.py']) {
+    assert.equal(make({ files: [file] }).smoke.mode, 'none', file);
+  }
+});
+
+test('#1093 a red core propagates through the selected runner without a complete-matrix claim', () => {
+  const plan = make({ files: ['src/unconnected.ts'] }), calls = [];
+  const result = runSelected(plan, { run(args) {
+    calls.push(args[0]);
+    return { status: args[0].endsWith(SELECTIVE_INVALIDATION_CORE[0]) ? 1 : 0 };
+  }, log() {} });
+  assert.deepEqual(calls, [...SELECTIVE_INVALIDATION_CORE].sort().map(id => `demo/${id}`));
+  assert.equal(result.outcome, 'failure'); assert.equal(result.scope, 'task');
+});
+
+test('#1093 missing or red mandatory timing execution cannot pass the existing S7 proof', () => {
+  const plan = make({ files: ['src/unconnected.ts'] }), sha = 'a'.repeat(40), tree = 'b'.repeat(40);
+  const needs = { preflight: { result: 'success' }, reuse: { result: 'success' },
+    changes: { result: 'success', outputs: { browser_plan: JSON.stringify(plan) } },
+    browser_selected: { result: 'success' } };
+  const proof = buildCiProof({ candidateSha: sha, candidateTree: tree, runId: 3, attempt: 1, event: 'push', needs });
+  const jobs = ['preflight', 'changes', 'reuse'].map(id => ({ name: JOB_RULES[id][0].name, conclusion: 'success' }));
+  const context = { proof, candidate: { sha, tree }, policy: CI_PROOF_POLICIES.reviewLight,
+    run: { id: 3, run_attempt: 1, head_sha: sha, status: 'completed', conclusion: 'success', event: 'push' },
+    jobs: [...jobs, { name: UNCONSUMED_JOBS.browser_selected, conclusion: 'success' }] };
+  assert.equal(evaluateCiProof(context).status, 'green');
+  for (const id of SELECTIVE_INVALIDATION_CORE) {
+    const missing = structuredClone(proof);
+    missing.browserPlan.executed.smoke.ids = missing.browserPlan.executed.smoke.ids.filter(value => value !== id);
+    assert.equal(evaluateCiProof({ ...context, proof: missing }).status, 'failed', id);
+  }
+  const red = structuredClone(proof); red.browserPlan.executed.smoke.result = 'failure';
+  assert.equal(evaluateCiProof({ ...context, proof: red }).status, 'failed');
+  assert.equal(evaluateCiProof({ ...context, jobs }).status, 'failed');
 });

@@ -79,7 +79,7 @@ export function floorRecordKeyMemo(
   };
 }
 
-const structuralFingerprint = (records: unknown): string => contentFingerprint(
+export const physicalFloorFingerprint = (records: unknown): string => contentFingerprint(
   Array.isArray(records) ? records.map(record => physicalSpaceRecord(record)) : physicalSpaceRecord(records),
 );
 
@@ -88,7 +88,7 @@ const structuralFingerprint = (records: unknown): string => contentFingerprint(
  * A consumer may fingerprint a narrower, proved-independent projection;
  * both model/current records still enter that projection on a mismatch. */
 export function floorGeometryKeyReader(
-  source: FloorKeySource, fingerprint: (value: unknown) => string = structuralFingerprint,
+  source: FloorKeySource, fingerprint: (value: unknown) => string = physicalFloorFingerprint,
 ): (spaceId: string) => string {
   const keyOf = floorRecordKeyMemo(fingerprint);
   return (spaceId) => keyOf(

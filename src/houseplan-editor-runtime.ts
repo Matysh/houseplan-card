@@ -156,7 +156,7 @@ import { openMoonStatus } from './editors/moon-status';
 import { globalSignalVisibleOf, writeGlobalSignalVisibility } from './signal-visibility';
 import { forgetRoomBaseline, rememberRoomBaseline } from './editors/room-form-state';
 import { roomSaveBusy, saveRoomEdit } from './editors/room-save';
-import { dialogSession } from './editors/dialog-baseline';
+import { acceptSavedDialogExit, dialogSession } from './editors/dialog-baseline';
 import { guardDraftNavigation, requestMarkerClose, requestRoomClose } from './editors/draft-actions';
 import { EditorChainExit, finishWallChainForNavigation } from './editor-chain-exit';
 import { forgetMarkerBaseline, rememberMarkerBaseline, rememberMarkerRadarRemoval } from './editors/marker-form-state';
@@ -8281,6 +8281,9 @@ public _renderServerPlans(d: NonNullable<typeof this.host._spaceDialog>): Templa
 public async _saveSpaceDialog(): Promise<void> {
     const d = this.host._spaceDialog;
     if (!d || d.busy || !d.title.trim()) return;
+    const owner = dialogSession(this.host, 'space');
+    const contextCurrent = this.host._configWriteGuard?.() ?? (() => true);
+    const ownsDialog = () => !!this.host._spaceDialog && dialogSession(this.host, 'space') === owner;
     if (spaceDialogProblems(d, 'space-dialog', this.host._imperial).length) return;
     if (d.source === 'file' && !d.planFile && !d.planUrl) {
       this.host._showToast(this.host._t('toast.plan_required'), 'toast.plan_required');
@@ -8318,6 +8321,8 @@ public async _saveSpaceDialog(): Promise<void> {
         pickedAspect = (await this.host._aspectJob) || null;
       }
 
+      // Upload/aspect work may outlive a route, account or replaced form.
+      if (!contextCurrent() || !ownsDialog()) return;
       // from here on: no awaits until the save, so `sp` cannot be orphaned
       const cfg = this.host._serverCfg!;
       let sp: any;
@@ -8360,11 +8365,14 @@ public async _saveSpaceDialog(): Promise<void> {
       // file inside the same locked transaction that accepted this config
       // (review R3-1). A cleanup driven from the client could not be ordered
       // against another client's commit and deleted its freshly saved plan.
-      await this._saveConfigNow();
-      this.host._spaceDialog = null;
-      if (d.mode === 'create') this.host._commitSpace(sp.id);
+      await this._saveConfigNow(null, contextCurrent, contextCurrent);
+      if (!contextCurrent()) return;
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
+      if (!ownsDialog()) return;
+      acceptSavedDialogExit(this.host, 'space', owner);
+      this.host._spaceDialog = null;
+      if (d.mode === 'create') this.host._commitSpace(sp.id);
       if (this.host._importQueue.length) {
         // floors-import wizard: proceed to the next floor
         this._openNextImport();
@@ -8395,6 +8403,7 @@ public async _saveSpaceDialog(): Promise<void> {
         }
       }
     } catch (e: any) {
+      if (!contextCurrent()) return;
       // The dialog edits the reactive config optimistically before config/set.
       // A rejected create used to leave that unsaved space on screen; the next
       // delete then flushed the same malformed write and repeated its error.
@@ -8403,11 +8412,12 @@ public async _saveSpaceDialog(): Promise<void> {
       // A lost response is safe too: if the server did commit, config/get
       // returns it.
       if (e?.code !== 'conflict') await this.host._reloadConfigOnly(true);
+      if (!contextCurrent()) return;
       // audit L3: the dialog may have been closed (Esc) while the save was
       // in flight — spreading null yields a truthy husk and the renderer
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
-      if (this.host._spaceDialog) this.host._spaceDialog = { ...this.host._spaceDialog, busy: false };
+      if (ownsDialog()) this.host._spaceDialog = { ...this.host._spaceDialog!, busy: false };
       if (!isGeometryCleanupRefusal(e)) this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }), 'toast.error');
     }
   }
@@ -8493,6 +8503,7 @@ public _openNextImport(): void {
     const title = this.host._importQueue.shift();
     if (title === undefined) return;
     this.host._spaceDialog = { ...newSpaceDialogDraft(this.host._imperial), title, customFill: null };
+    rememberSpaceDialogBaseline(this.host, this.host._spaceDialog);
     selectSettingsSection(this.host, 'space', 'basics');
     loadSpacePlanList(this.host);
   }
@@ -9577,6 +9588,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
     if (!d || d.busy || !this.host._canEdit || this.host._kiosk) return false;
     if (generalProblems(d).length) return false;
     const owner = dialogSession(this.host, 'settings');
+    const contextCurrent = this.host._configWriteGuard?.() ?? (() => true);
     const connection = this.host.hass?.connection || this.host.hass;
     const user = this.host.hass?.user?.id;
     this.host._settingsDialog = { ...d, busy: true };
@@ -9617,7 +9629,8 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
       const nextConfig = { ...normalizeRoomAppearance(cfg), settings };
       attempt = this.host._adoption.beginOptimistic(cfg, nextConfig);
       this.host._serverCfg = nextConfig;
-      await this._saveConfigNow(attempt);
+      await this._saveConfigNow(attempt, contextCurrent, contextCurrent);
+      if (!contextCurrent()) return false;
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
       const current = !!this.host._settingsDialog && dialogSession(this.host, 'settings') === owner
         && (this.host.hass?.connection || this.host.hass) === connection && this.host.hass?.user?.id === user;
@@ -9625,13 +9638,17 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
         if (options.keepOpen) {
           acceptGeneralBaseline(this.host, d, owner);
           this.host._settingsDialog = { ...this.host._settingsDialog!, busy: false };
-        } else this.host._settingsDialog = null;
+        } else {
+          acceptSavedDialogExit(this.host, 'settings', owner);
+          this.host._settingsDialog = null;
+        }
       }
       this.host.requestUpdate();
       this.host._showToast(this.host._t('gs.saved'), 'gs.saved');
       return current && this.host._canEdit && !this.host._kiosk;
     } catch (e: any) {
       // Esc may close the dialog in flight; the toast must still fire (audit L3).
+      if (!contextCurrent()) return false;
       // Never overwrite an authoritative conflict reload or newer edit (#439).
       if (attempt) this.host._rollbackOptimistic(attempt);
       if (this.host._settingsDialog && dialogSession(this.host, 'settings') === owner)

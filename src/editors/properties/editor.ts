@@ -1,3 +1,4 @@
+import { waitForPriorConfigWrite } from '../../prior-config-write';
 import { html, nothing, type TemplateResult } from 'lit';
 import { dialogPresence } from '../../dialog-presence';
 import { langOf } from '../../i18n';
@@ -361,7 +362,7 @@ export class PropertiesEditor {
     const authority = this.commandAuthority(), identity = this.identity, receipt = {};
     this.handoff = receipt;
     void this.fields.finishThen(async () => {
-      await this.host._writeChain;
+      await waitForPriorConfigWrite(this.host);
       if (this.handoff !== receipt || this.identity !== identity
         || !this.host._configWriteContext.current(authority, this.host.hass)) return;
       this.handoff = null;
@@ -528,7 +529,7 @@ export class PropertiesEditor {
   private async commit(identity: PropertiesIdentity, field: string, value: unknown, _before: unknown, current: () => boolean): Promise<PropertiesCommit> {
     const host = this.host;
     if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.flush();
-    try { await host._writeChain; } catch { return failure('save_error'); }
+    try { await waitForPriorConfigWrite(host); } catch { return failure('save_error'); }
     if (!current() || !this.allowed) return failure('external_change');
     const target = this.target(identity);
     if (!target || this.field(identity, field)?.mode) return failure('external_change');

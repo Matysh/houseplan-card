@@ -1,5 +1,10 @@
 # Sun on the plan — the spec (source of truth)
 
+## Demand and invalidation (#1093)
+
+North, sun-ray and room transparency changes remain solar-consumer inputs and do not invalidate wall/contact physics merely by changing the common config epoch. Existing disabled-layer guards continue to prevent solar work; active lighting and hidden sources of a shown effect remain dependencies. Hidden document/route transitions retire visual work and reveal consumes the latest accepted inputs.
+
+
 Status: window rays approved 2026-08-03 and shipped in v1.56.0; the
 four-phase background was replaced by the owner-approved #146 contract in
 2026-08. The current background contract below supersedes the retained legacy

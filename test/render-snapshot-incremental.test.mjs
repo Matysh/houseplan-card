@@ -14,6 +14,7 @@ import { captureRenderDeviceSnapshot } from '../test-build/render-snapshot-captu
 import { RenderSnapshotReuseWindow } from '../test-build/render-snapshot-reuse.js';
 import { presentationSnapshotKey } from '../test-build/render-device-snapshot.js';
 import { HiddenDeviceRoster } from '../test-build/hidden-device-visibility.js';
+import { thresholdIssues } from '../test-build/marker-alert-presentation.js';
 
 /** A comparable projection of a snapshot: maps become entry lists, the capture time is dropped. */
 const plain = (snapshot) => ({
@@ -26,6 +27,58 @@ const plain = (snapshot) => ({
   facts: [...snapshot.facts],
   entityIds: snapshot.entityIds,
   geometry: snapshot.geometry,
+});
+
+test('#1093 one marker presentation edit preserves unrelated faces and fresh immutable roster', () => {
+  const host=captureHost(oracleFixture()),reuse=new RenderSnapshotReuseWindow();
+  const first=captureRenderDeviceSnapshot(host,reuse), before=reuse.stats.presentations;
+  const id=host._devices[0].id, other=host._devices[1].id;
+  host._devices[0].name='Changed one marker';
+  const next=captureRenderDeviceSnapshot(host,reuse);
+  assert.deepEqual(plain(next),plain(captureRenderDeviceSnapshot(host,null)));
+  assert.equal(reuse.stats.presentations-before,2,'only both projections of the changed device');
+  assert.equal(next.presentations.get(presentationSnapshotKey(other,false)),first.presentations.get(presentationSnapshotKey(other,false)));
+  assert.notEqual(next.devices.find(d=>d.id===id),first.devices.find(d=>d.id===id));
+  assert.notEqual(first.devices.find(d=>d.id===id).name,'Changed one marker','previous frame remains immutable');
+});
+
+test('#1093 one threshold change invalidates its face, not unrelated presentations', () => {
+  const host=captureHost(oracleFixture()),reuse=new RenderSnapshotReuseWindow();
+  const id=host._devices[0].id,other=host._devices[1].id;let rows=[];
+  host._alerts={version:0,issuesForDevice:current=>current===id?thresholdIssues(rows,'en'):[]};
+  const first=captureRenderDeviceSnapshot(host,reuse),before=reuse.stats.presentations;
+  rows=[{key:'test/r1',identity:'test',rule:{id:'r1',type:'threshold',entity_id:'sensor.co2',level:'attention',operator:'gt',value:1000},
+    value:1200,comparable:true,name:'CO2',unit:'ppm'}];host._alerts.version++;
+  const next=captureRenderDeviceSnapshot(host,reuse);
+  assert.equal(reuse.stats.presentations-before,2);
+  assert.equal(next.presentations.get(presentationSnapshotKey(other,false)),first.presentations.get(presentationSnapshotKey(other,false)));
+  assert.deepEqual(plain(next),plain(captureRenderDeviceSnapshot(host,null)));
+});
+
+test('#1093 inherited battery updates only consumers whose effective policy changes', () => {
+  const fixture=oracleFixture();
+  fixture.config.spaces[0].settings={...fixture.config.spaces[0].settings,show_device_battery_mode:'off'};
+  const host=captureHost(fixture),reuse=new RenderSnapshotReuseWindow();
+  const first=captureRenderDeviceSnapshot(host,reuse), before=reuse.stats.presentations;
+  const fixed=host._devices.find(d=>d.space===fixture.config.spaces[0].id);
+  const inherited=host._devices.filter(d=>d.space!==fixture.config.spaces[0].id);
+  assert.ok(fixed&&inherited.length);
+  host._settings.show_device_battery=false;
+  const next=captureRenderDeviceSnapshot(host,reuse);
+  assert.deepEqual(plain(next),plain(captureRenderDeviceSnapshot(host,null)));
+  assert.equal(reuse.stats.presentations-before,inherited.length*2);
+  assert.equal(next.presentations.get(presentationSnapshotKey(fixed.id,false)),first.presentations.get(presentationSnapshotKey(fixed.id,false)));
+});
+
+test('#1093 current-floor hidden faces remain dormant until an editor actually paints ghosts', () => {
+  const host=captureHost(oracleFixture()),reuse=new RenderSnapshotReuseWindow();
+  const hidden=host._devices[0];host._space=hidden.space;host._mode='view';hidden.hidden=true;
+  const first=captureRenderDeviceSnapshot(host,reuse);
+  assert.equal(first.presentations.has(presentationSnapshotKey(hidden.id,false)),false);
+  host._mode='devices';host._showAll=true;
+  const next=captureRenderDeviceSnapshot(host,reuse);
+  assert.equal(next.presentations.has(presentationSnapshotKey(hidden.id,false)),true);
+  assert.deepEqual(plain(next),plain(captureRenderDeviceSnapshot(host,null)));
 });
 
 test('#1026 diagnostic-only own ticks and registry ownership match complete snapshots', () => {
@@ -270,6 +323,28 @@ test('#850 AC3: a plan sensor tick rebuilds two presentations; S1b on another fl
   }
 });
 
+test('#1093 paint, equivalent config/layout clones and epoch changes keep faces but refresh snapshot authority', () => {
+  const host=captureHost(oracleFixture()),reuse=new RenderSnapshotReuseWindow();
+  captureRenderDeviceSnapshot(host,reuse);
+  for(const change of [
+    ()=>{host._cfgEpoch++;},
+    ()=>{host._layout=structuredClone(host._layout);},
+    ()=>{host._serverCfg=structuredClone(host._serverCfg);},
+    ()=>{host._serverCfg.spaces[0].settings={...host._serverCfg.spaces[0].settings,bg_mode:'static',name_color:{c:'#abcdef',a:.5}};},
+  ]) {
+    const before={...reuse.stats};change();host._hassSequence++;
+    const snapshot=captureRenderDeviceSnapshot(host,reuse);
+    assert.equal(reuse.stats.presentations,before.presentations,'unrelated paint does not resolve faces');
+    assert.equal(snapshot.geometry,host._cfgEpoch,'fresh coherent geometry identity is published');
+    assert.deepEqual(plain(snapshot),plain(captureRenderDeviceSnapshot(host,null)));
+  }
+  host._serverCfg.spaces[0].rooms[0].settings={temp_source:'entity:sensor.new_temperature'};
+  const before=reuse.stats.full;
+  const changed=captureRenderDeviceSnapshot(host,reuse);
+  assert.equal(reuse.stats.full,before+1,'a changed room source refreshes projected registry selectors');
+  assert.deepEqual(plain(changed),plain(captureRenderDeviceSnapshot(host,null)));
+});
+
 test('#850 AC3: a structural change rebuilds every presentation or everything; disconnect forgets the window', () => {
   const host = captureHost(oracleFixture());
   const reuse = new RenderSnapshotReuseWindow();
@@ -281,11 +356,9 @@ test('#850 AC3: a structural change rebuilds every presentation or everything; d
     ['card config', () => { host._config = { ...host._config, show_temperature: false }; }, 'refreshed'],
     ['reduced motion', () => { host._reducedMotion = !host._reducedMotion; }, 'refreshed'],
     ['manual lights', () => { host._virtualLights = { rev: 9, configRev: 0, off: new Set(['perf-virtual-a']) }; }, 'refreshed'],
-    ['config epoch', () => { host._cfgEpoch++; }, 'full'],
-    ['layout', () => { host._layout = { ...host._layout }; }, 'full'],
-    ['settings', () => { host._serverCfg = { ...host._serverCfg, settings: { show_device_battery: false } }; }, 'full'],
+    ['settings', () => { host._serverCfg = { ...host._serverCfg, settings: { show_device_battery: false } }; }, 'incremental'],
     ['registry', () => { host.hass = { ...host.hass, entities: { ...host.hass.entities } }; host.rebuildRoster(); }, 'full'],
-    ['roster', () => { host.rebuildRoster(); }, 'full'],
+    ['equivalent roster', () => { host.rebuildRoster(); }, 'incremental'],
   ]) {
     const previous = captureRenderDeviceSnapshot(host, reuse);
     const before = { ...reuse.stats };
@@ -293,7 +366,7 @@ test('#850 AC3: a structural change rebuilds every presentation or everything; d
     host._hassSequence++;
     const next = captureRenderDeviceSnapshot(host, reuse);
     assert.equal(reuse.stats[tier], before[tier] + 1, `${label}: ${tier}`);
-    assert.equal(reuse.stats.presentations - before.presentations, all, `${label} resolves every presentation once`);
+    assert.equal(reuse.stats.presentations - before.presentations, label === 'equivalent roster' ? 0 : all, `${label} resolves only changed presentations`);
     assert.deepEqual(plain(next), plain(captureRenderDeviceSnapshot(host, null)), `${label}: equals complete`);
     if (tier === 'refreshed') {
       // A new clone memo (the old one would collect every rebuilt presentation)

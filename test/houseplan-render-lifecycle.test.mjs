@@ -1,10 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { RenderLifecycle } from '../test-build/houseplan-render-lifecycle.js';
+import { RenderLifecycle, intakeHass } from '../test-build/houseplan-render-lifecycle.js';
 import { LiveRuntime } from '../test-build/live-interaction-runtime.js';
 
 const row = (state = 'off') => ({ entity_id: 'light.plan', state, attributes: {} });
+test('#1093 hidden intake retains authority and transport without derived work', () => {
+  const calls = [];
+  const host = {
+    ownerDocument: { visibilityState: 'hidden' }, _hassSequence: 0,
+    _continuity: { note: () => calls.push('continuity') },
+    _ensureHaRegistryAuthority: () => calls.push('authority'),
+    _planHassMemo: { hass: {} }, _hookConnection: () => calls.push('connection'),
+    _loadOk: false, _loading: false, _loadTries: 0,
+    _loadFromServer: () => calls.push('load'),
+    _maybeRebuildDevices: () => calls.push('roster'),
+    _vacTick: () => calls.push('vacuum'), _activityTick: () => calls.push('activity'),
+  };
+  intakeHass(host);
+  assert.deepEqual(calls, ['continuity', 'authority', 'connection', 'load']);
+  assert.equal(host._hassSequence, 1); assert.equal(host._planHassMemo.hass, null);
+  calls.length = 0; host.ownerDocument.visibilityState = 'visible';
+  intakeHass(host);
+  assert.deepEqual(calls, ['continuity', 'authority', 'connection', 'load', 'roster', 'vacuum', 'activity']);
+});
 const base = () => {
   const connection = {};
   const entities = {};

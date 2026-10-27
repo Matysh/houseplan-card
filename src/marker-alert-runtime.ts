@@ -10,6 +10,8 @@ export interface AlertObservation {
   /** Marker/binding/space identity; unrelated HA/locale/render changes do not replace it. */
   identity: string;
   rule: MarkerThresholdAlert;
+  /** Hidden consumers retain event history but do not schedule visual deadlines. */
+  demanded?: boolean;
   /** Rechecks current authority/membership before reading the selected field. */
   read(): AlertRead;
 }
@@ -102,7 +104,7 @@ export class ConfirmedMarkerAlerts {
 
   private schedule(): void {
     let due: number | null = null;
-    for (const entry of this.entries.values()) if (entry.pending !== null) {
+    for (const entry of this.entries.values()) if (entry.pending !== null && entry.observation.demanded !== false) {
       const deadline = entry.since + ALERT_CONFIRM_MS;
       if (due === null || deadline < due) due = deadline;
     }
@@ -115,7 +117,8 @@ export class ConfirmedMarkerAlerts {
       if (epoch !== this.epoch || this.retired) return;
       this.timer = null; this.due = null;
       const before = JSON.stringify(this.snapshot()), now = this.clock.now();
-      for (const entry of this.entries.values()) if (entry.pending !== null && entry.since + ALERT_CONFIRM_MS <= now) this.advance(entry);
+      for (const entry of this.entries.values()) if (entry.pending !== null && entry.observation.demanded !== false
+          && entry.since + ALERT_CONFIRM_MS <= now) this.advance(entry);
       this.schedule();
       if (JSON.stringify(this.snapshot()) !== before) this.changed();
     }, Math.max(0, due - this.clock.now()));

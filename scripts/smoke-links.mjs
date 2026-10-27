@@ -30,6 +30,22 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/floor-geometry-key.ts', 'src/structural-space-record.ts', 'src/render-snapshot-capture.ts',
+      'src/render-snapshot-reuse.ts', 'src/render-device-snapshot.ts', 'src/houseplan-render-lifecycle.ts',
+      'src/device-copy-editor.ts', 'src/device-structure-history.ts', 'src/marker-deletion.ts',
+      'src/prior-config-write.ts', 'src/editors/dialog-baseline.ts', 'src/editors/room-save.ts'],
+    smokes: ['smoke_selective_invalidation_visible.mjs', 'smoke_selective_invalidation_inactive.mjs',
+      'smoke_selective_invalidation_history0.mjs', 'smoke_selective_invalidation_history320.mjs',
+      'smoke_selective_invalidation.mjs', 'smoke_selective_invalidation_authority.mjs'],
+    because: '#1093: trusted input, persisted ACK-to-paint timings and real unchanged-physics counters need the native benchmark, not lexical imports.',
+  },
+  {
+    files: ['src/marker-alert-runtime.ts', 'src/marker-alert-view-runtime.ts', 'src/render-snapshot-consumers.ts',
+      'src/demand-space-models.ts', 'src/device-roster-state-key.ts'],
+    smokes: ['smoke_selective_invalidation.mjs'],
+    because: '#1093: native hidden/latest HA and alert confirmation, registry retirement and physical-work counters cross the mounted frame boundary.',
+  },
+  {
     files: ['src/device-more-info.ts', 'src/marker-more-info-fields.ts', 'src/editors/marker-more-info.ts'],
     symbols: ['_openDeviceMoreInfo'],
     smokes: ['smoke_device_more_info.mjs'],

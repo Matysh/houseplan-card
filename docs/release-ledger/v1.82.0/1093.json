@@ -1,0 +1,38 @@
+{
+  "issue": 1093,
+  "summary": {
+    "en": "Appearance changes and marker operations update the plan faster without rebuilding unchanged floors.",
+    "ru": "Изменения оформления и операции с маркерами быстрее отражаются на плане без повторного расчёта неизменных этажей."
+  },
+  "rationale": "Stable v1.82.0 physicalFloorFingerprint hashes visual settings and ordinary config adoption invalidates broad derived scopes. The change projects proven paint-independent geometry, reuses effective per-consumer dependencies and defers hidden visual work while preserving authority, persisted formats, physical algorithms and live hidden-source dependencies.",
+  "schema": 1,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "visual": {
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "room-label-parity-view-light",
+        "reason": "Existing inherited #1070/#997 header changes; #1093 requires identical latest room/text output after selective capture, no additional pixel delta or baseline acceptance.",
+        "expectation": "change"
+      },
+      {
+        "id": "room-label-parity-view-dark",
+        "reason": "Existing inherited #1070/#997 header changes; verify dark room labels and paint with current source demand, no new visual design.",
+        "expectation": "change"
+      },
+      {
+        "id": "room-co2-iso-dark",
+        "reason": "Existing inherited #1070/#997 header changes; verify demanded CO2 metrics and isometric frame coherency, no additional pixel delta.",
+        "expectation": "change"
+      },
+      {
+        "id": "large-house-zoom-250-dark",
+        "reason": "Existing inherited header changes; dense zoomed device/contact scene must preserve visible placement and paint despite scoped snapshot reuse. No baseline acceptance.",
+        "expectation": "change"
+      }
+    ],
+    "smokes": [],
+    "schema": 1
+  }
+}

@@ -43,6 +43,10 @@ import type { ResolvedDevicePresentation } from './device-presentation';
 import { PresentationLightFrame } from './presentation-light-frame';
 import type { DevItem } from './types';
 import { directSignalReadings } from './device-signal-runtime';
+import { openingEntityReferences } from './logic';
+import type { RoomCfg } from './types';
+import { deviceBatteryModeOf } from './device-battery-settings';
+import { ledStripsByMarker } from './led-strip-gate';
 
 /** A recorded iteration of the states map: the device depends on every row. */
 const EVERY_ROW = '\u0000*';
@@ -77,6 +81,8 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
   private reading: Set<string> | null = null;
   private raw: Readonly<Record<string, unknown>> = {};
   private open = false;
+  private deviceKeys = new Map<string, string>();
+  private changedDevices = new Set<string>();
 
   public begin(host: RenderSnapshotHost, lightSources: unknown, devices: readonly DevItem[] = host._devices): RenderSnapshotWindow {
     if (this.open) this.reset();
@@ -85,19 +91,35 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     const frame = lightSources instanceof PresentationLightFrame ? lightSources : null;
     const hass = host._planHass, registry = host._fullRegistryHass;
     const now = Date.now();
+    const spaces = host._serverCfg?.spaces ?? host._model;
+    const consumerDemand = host._snapshotConsumerDemand?.();
+    const batteryModes = new Map(spaces.map(space => [space.id, deviceBatteryModeOf(host._settings,
+      'settings' in space ? space.settings : undefined)]));
+    const ledMarkers = new Map(spaces.map(space => [space.id, ledStripsByMarker(space)]));
+    const deviceKeys = new Map(devices.map(device => [device.id, JSON.stringify([device,
+      batteryModes.get(device.space) ?? deviceBatteryModeOf(host._settings), ledMarkers.get(device.space)?.has(device.id),
+      host._alerts?.issuesForDevice(device.id)])]));
+    this.changedDevices = new Set([...deviceKeys].filter(([id, key]) => this.deviceKeys.get(id) !== key).map(([id]) => id));
+    const rosterChanged = this.changedDevices.size > 0 || deviceKeys.size !== this.deviceKeys.size;
+    this.deviceKeys = deviceKeys;
     const sources: unknown[] = [
-      hass?.entities, hass?.devices, registry?.entities, registry?.devices, devices, host._layout,
-      host._cfgEpoch, host._serverCfg, host._serverCfg?.settings, host._model, host._vacFit?.source,
+      host._space, host._mode, host._showAll,
+      host.hass?.connection, host.hass?.user,
+      hass?.entities, hass?.devices, registry?.entities, registry?.devices, host._vacFit?.source,
       [...host._summary?.entityIds() || []].join('\n'),
       // The card's own records keep their identity through an edit in place
       // (a marker's `vacuum.trail_mode` with no epoch, the stored settings); a
       // complete capture read them anew, so their content is a source too
       // (fail-open, ТЗ п.2). The card config's content is a presentation input.
-      JSON.stringify([devices, host._serverCfg?.settings,
-        host._serverCfg?.spaces?.map(space => [space.id,space.settings?.show_device_battery_mode])]),
+      JSON.stringify(spaces.filter(space => host._space === undefined || space.id === host._space).map(space => [space.id,
+          consumerDemand || space.rooms?.map((room: RoomCfg) => [room.area, room.settings?.temp_source,
+            room.settings?.hum_source, room.settings?.co2_source]),
+          'openings' in space ? space.openings?.map(openingEntityReferences) : undefined,
+          consumerDemand?.decor !== false && 'decor' in space ? space.decor?.map((shape: { id?:string; kind?:string; text?:unknown; entity?:unknown }) =>
+            shape.kind === 'text' ? [shape.id, shape.text, shape.entity] : null) : undefined])),
     ];
     const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, frame?.topology,
-      host._reducedMotion, host._showHidden === true, directSignalReadings(hass), host._alerts?.version];
+      host._reducedMotion, host._showHidden === true, directSignalReadings(hass)];
     for (const name of Object.keys(host.hass || {}).sort()) if (name !== 'states') inputs.push(name, host.hass[name]);
     for (const [id, runtime] of host._activityRt) {
       const expires = runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS;
@@ -119,7 +141,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     if (!kept) {
       this.previous = null;
       this.memo = new WeakMap();
-    } else if (!reusable) {
+    } else if (!reusable || rosterChanged) {
       this.memo = this.lend(host, devices);
     }
     // The raw HA rows: the active projection holds the same row objects or,
@@ -136,7 +158,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     }
     return {
       hass: this.track(hass), registry: this.track(registry), memo: this.memo,
-      previous: kept ? this.previous : null,
+      previous: kept && !rosterChanged ? this.previous : null,
     };
   }
 
@@ -147,7 +169,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     const deps = this.deps.get(id);
     const lightDeps = this.lightDeps.get(id);
     const kept = this.built.get(key);
-    if (!this.fresh.has(id) && this.changed && deps && lightDeps && kept
+    if (!this.fresh.has(id) && !this.changedDevices.has(id) && this.changed && deps && lightDeps && kept
         && !deps.has(EVERY_ROW) && ![...deps].some((row) => this.changed!.has(row))
         && ![...lightDeps].some((source) => this.changedLights.has(source))) return kept;
     if (!this.fresh.has(id)) {
@@ -169,6 +191,12 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     this.open = false;
     this.changed = null;
     this.previous = snapshot;
+    const live = new Set(snapshot.devices.map(device => device.id));
+    for (const id of this.deps.keys()) if (!live.has(id)) {
+      this.deps.delete(id); this.lightDeps.delete(id);
+      this.built.delete(presentationSnapshotKey(id, false));
+      this.built.delete(presentationSnapshotKey(id, true));
+    }
     this.rows.clear();
     for (const deps of this.deps.values()) for (const id of deps) this.rows.set(id, this.raw[id]);
   }
@@ -188,6 +216,7 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     this.changed = null;
     this.reading = null;
     this.raw = {};
+    this.deviceKeys.clear(); this.changedDevices.clear();
   }
 
   /**
@@ -204,8 +233,16 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
     const pair = (source: unknown, clone: unknown): void => {
       if (source && typeof source === 'object' && clone) memo.set(source, clone);
     };
-    pair(devices, previous.devices);
-    devices.forEach((device, index) => pair(device, previous.devices[index]));
+    const prior = new Map(previous.devices.map(device => [device.id, device]));
+    if (!this.changedDevices.size && devices.length === previous.devices.length
+      && devices.every((device, index) => device.id === previous.devices[index].id)) pair(devices, previous.devices);
+    for (const device of devices) if (!this.changedDevices.has(device.id)) {
+      pair(device, prior.get(device.id));
+      for (const showLqi of [false, true]) {
+        const key = presentationSnapshotKey(device.id, showLqi);
+        pair(this.built.get(key), previous.presentations.get(key));
+      }
+    }
     for (const [id, row] of Object.entries(previous.hass.states)) if (!id.startsWith('camera.')) pair(this.raw[id], row);
     for (const [id, row] of Object.entries(previous.hass.devices)) pair(host._planHass?.devices?.[id], row);
     return memo;

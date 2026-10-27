@@ -385,7 +385,7 @@ export const CHECKS = {
   },
   performance_smoke: {
     entries: ['demo/benchmark_glow.mjs', 'demo/benchmark_large_house.mjs', 'demo/benchmark_junction_limits.mjs',
-      'demo/benchmark_wall_draw_click.mjs', 'demo/performance/compare.mjs'],
+      'demo/benchmark_wall_draw_click.mjs', 'demo/benchmark_selective_invalidation.mjs', 'demo/performance/compare.mjs'],
     roots: [...BUILD_INPUTS, 'demo/performance/**', ...BROWSER_PROTOCOL, ...REUSE_PROTOCOL, ...WORKFLOW],
     reuse: true,
   },

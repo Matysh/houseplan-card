@@ -1,0 +1,58 @@
+{
+  "schema": 2,
+  "mode": "capture",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+    "ci": null
+  },
+  "generatedAt": "2026-10-27T23:23:43.139Z",
+  "matrixVersion": 103,
+  "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+  "chromium": "151.0.7922.34",
+  "baselineManifest": {
+    "present": true,
+    "valid": false,
+    "matrixVersion": 90,
+    "chromium": "151.0.7922.34"
+  },
+  "results": [
+    {
+      "id": "large-house-zoom-250-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0005
+      },
+      "status": "passed",
+      "actualSha256": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
+      "runtime": {
+        "space": "perf-floor-1",
+        "mode": "view",
+        "devices": 200,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/hp-view-menu-1089/artifacts/golden/actual/large-house-zoom-250-dark.png",
+      "baseline": "/home/matysh/hp-view-menu-1089/demo/golden/baselines/large-house-zoom-250-dark.png",
+      "baselineSha256": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1108,
+        784
+      ],
+      "baselineSize": [
+        1108,
+        784
+      ],
+      "differingPixels": 0,
+      "diffRatio": 0,
+      "maxObservedDelta": 0,
+      "passed": true
+    }
+  ]
+}

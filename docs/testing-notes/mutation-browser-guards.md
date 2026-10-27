@@ -40,13 +40,15 @@ that transition events alone prove disposal.
 
 | Category | Count | Why a browser is still required |
 | --- | ---: | --- |
-| Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
+| Performance threshold | 11 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 93 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 273 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **550 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 276 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **555 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+
+
 
 ## Measured effect
 
@@ -90,6 +92,9 @@ in the end-to-end total; only the measured reductions above are claimed.
 ## Reviewed per-mutant inventory
 
 ### Performance threshold
+
+- `paint-save-retains-accepted-exit-1093`
+- `paired-history-rebuilds-floor-1093`
 
 - `decor-history-rebuilds-physical-walls-1075`
 
@@ -666,6 +671,7 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 
 ### Custom-element and HA browser lifecycle
 
+
 - `view-menu-forgets-generation-1089`
 - `view-menu-info-opens-wrong-target-1089`
 
@@ -673,6 +679,12 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 and dispatches real menu rows to distinguish the HA event from the mounted local
 card. These cross the lazy boundary and Lit owner. Static checks run locally;
 execution and caught results remain nightly.
+
+- `replaced-stage-keeps-old-resize-observer-1093`
+
+- `pending-config-refusal-allows-paired-write-1093`
+- `late-room-save-closes-new-owner-1093`
+
 
 - `plan-rotation-stale-header-observer-1070`
 

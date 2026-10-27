@@ -242,8 +242,12 @@ const settings = await page.evaluate(async () => {
     pickerInputP95Under50ms: inputP95 <= 50,
     metrics: { openP95Ms: openP95, inputP95Ms: inputP95, samples: inputSamples.length },
     editorTouchTargets: [...actionTargets, ...switchTargets].every((target) => {
-      const box = target.getBoundingClientRect();
-      return box.width >= 44 && box.height >= 44;
+      // #998 retains the native select as a hidden value source. Measure the
+      // actual shared-picker button, keeping the original 44px target bound.
+      const painted = target.matches('hp-settings-select > select')
+        ? target.parentElement.shadowRoot?.querySelector('button') : target;
+      const box = painted?.getBoundingClientRect();
+      return !!box && box.width >= 44 && box.height >= 44;
     }),
   };
   cancel?.click();
@@ -318,8 +322,10 @@ const responsiveForm = async ({ width, language, dark, canWrite, kiosk }) => {
     const result = {
       noHorizontalOverflow: editor.scrollWidth <= editor.clientWidth + 1,
       controlsInsideViewport: controls.length >= 3 && controls.every((control) => {
-        const box = control.getBoundingClientRect();
-        return box.left >= -1 && box.right <= innerWidth + 1 && box.width >= 44 && box.height >= 44;
+        const painted = control.matches('hp-settings-select > select')
+          ? control.parentElement.shadowRoot?.querySelector('button') : control;
+        const box = painted?.getBoundingClientRect();
+        return !!box && box.left >= -1 && box.right <= innerWidth + 1 && box.width >= 44 && box.height >= 44;
       }),
       footerReachable: !!footer && footer.getBoundingClientRect().left >= -1
         && footer.getBoundingClientRect().right <= innerWidth + 1,

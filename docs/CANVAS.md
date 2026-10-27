@@ -1,5 +1,10 @@
 # Infinite canvas — the spec (source of truth)
 
+## Consumer-scoped floor reuse (#1093)
+
+Navigation/registry metadata does not eagerly scale hidden floor polygons. Per-card physical models are demanded lazily, bounded to eight floor identities, and invalidated by actual geometry rather than paint/title revisions. First show uses the latest coherent accepted floor; live preview and stored model remain distinct keys. A replaced mounted stage retires its old viewport/header resize observers before rebinding, and queued old callbacks cannot refit the new surface.
+
+
 Status: approved by the owner 2026-08-03, **shipped in v1.57.0**.
 Scope decisions final: there is no "plan size" any more, the canvas
 is conceptually unbounded, storage does not change, and the

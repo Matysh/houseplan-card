@@ -1,5 +1,10 @@
 # Wall thickness — the spec
 
+## Paint-independent physical keys (#1093)
+
+Known background, room/name/wall paint, label/display and solar presentation settings are excluded from the physical record projection only. Unknown compatible fields and wall/room/opening/body/cell/transform semantics stay significant; the complete storage/history record is unchanged. Demand-based floor models preserve physical reuse across equivalent ACK clones and unrelated floor edits. Positive structural and model/preview tests still require fresh wall/contact geometry when those inputs change.
+
+
 Visual reference:
 [docs/assets/wall-thickness-reference.png](assets/wall-thickness-reference.png)
 (look at wall bodies only).

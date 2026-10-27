@@ -1,3 +1,4 @@
+import { waitForPriorConfigWrite } from './prior-config-write';
 /** Confirmed structural commands share the existing Devices CommandStack. */
 import { html, nothing } from 'lit';
 import type { HouseplanEditorHostPort } from './houseplan-editor-runtime';
@@ -163,7 +164,7 @@ export class DeviceStructureHistory {
       await this.settle();
       if (!this.current(claim) || h._space !== space) return;
       if (h._saveConfigDebounced.pending()) h._saveConfigDebounced.flush();
-      await h._writeChain;
+      await waitForPriorConfigWrite(h);
       if (!this.current(claim) || h._space !== space || h._dirtyPos.size || h._sentPos.size) return;
       await this.request({ type: 'houseplan/marker/history', ...this.fields(), action: direction, token: state.token,
         expected_config_rev: h._cfgRev, expected_layout_rev: h._layoutRev }, async reply => {

@@ -75,6 +75,8 @@ export class RenderLifecycle {
 
 /** Operational work that must survive a deliberately skipped visual update. */
 interface HassIntakeHost {
+  ownerDocument?: { visibilityState?: string };
+  _routeDepartureHandled?: boolean;
   _hassSequence: number;
   _renderSnapshotAt: number;
   _continuity: { note: (reason: string) => void };
@@ -88,6 +90,7 @@ interface HassIntakeHost {
   _maybeRebuildDevices: () => void;
   _vacTick: () => void;
   _activityTick: () => void;
+  _alerts?: { reconcile(): void };
 }
 
 export function intakeHass(value: object): void {
@@ -102,6 +105,11 @@ export function intakeHass(value: object): void {
   if (host._planHassMemo) host._planHassMemo.hass = null;
   host._hookConnection();
   if (!host._loadOk && !host._loading && host._loadTries < 8) host._loadFromServer();
+  // Existing threshold confirmation keeps authoritative condition edges while
+  // hidden; its demand policy suspends timers and visual publication separately.
+  host._alerts?.reconcile();
+  // Keep authority/transport live, coalesce visual activity until the next show.
+  if (host.ownerDocument?.visibilityState === 'hidden' || host._routeDepartureHandled) return;
   host._maybeRebuildDevices();
   host._vacTick();
   host._activityTick();

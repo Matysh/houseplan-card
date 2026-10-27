@@ -206,7 +206,7 @@ const MUTANT_DEFINITIONS = [
     id: 'first-space-converter-writer-only',
     guard: 'node demo/smoke_first_space_converter.mjs',
     because: '#1020/#1088: without HA write transport the informational boundary must honestly show a failed import and recover through its native Retry button. Custom-element presence alone cannot prove ownership because module evaluation can upgrade it even when the boundary drops completion.',
-    patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
+    patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true, () => this.wantsConverter())', replace: 'port(() => {}, false, () => this.wantsConverter())' }],
   },
   {
     id: 'plan-rotation-settled-toolbar-covers-menu-1070',
@@ -1820,8 +1820,8 @@ const MUTANT_DEFINITIONS = [
     guard: compiledNodeSmoke('smoke_editor_guides_lifecycle'),
     because: '#893 AC3: actual queued native input and previously painted frames cross the shared mounted lifecycle delivery; retired tails must produce no layout/history/service/DOM effects.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: "    if (signal.kind === 'hidden') {\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      this._cancelDeviceDrag();",
-      replace: "    if (signal.kind === 'hidden') {\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      // mutant: unfinished device preview survives background" }],
+      find: "    if (signal.kind === 'hidden') {\n      for (const runtime of this._activityRt.values()) clearTimeout(runtime.timer);\n      this._activityRt.clear();\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      this._cancelDeviceDrag();",
+      replace: "    if (signal.kind === 'hidden') {\n      for (const runtime of this._activityRt.values()) clearTimeout(runtime.timer);\n      this._activityRt.clear();\n      this._vacHistory.suspend();\n      this._abandonViewInput();\n      // mutant: unfinished device preview survives background" }],
   },
   {
     id: 'space-device-drag-survives-navigation',
@@ -21227,8 +21227,8 @@ const MUTANT_DEFINITIONS = [
       + 'and presentations stay stale (smoke_vacuum: previous run and resting integration path lost)',
     patches: [{
       file: 'src/render-snapshot-reuse.ts',
-      find: '      JSON.stringify([devices, host._serverCfg?.settings,\n        host._serverCfg?.spaces?.map(space => [space.id,space.settings?.show_device_battery_mode])]),\n',
-      replace: '',
+      find: 'JSON.stringify([device,\n',
+      replace: 'JSON.stringify([device.id,\n',
     }],
   },
   {
@@ -21983,7 +21983,33 @@ const roomContact1061Cases = [
   },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases].map((mutant) => ({
+const selectiveInvalidation1093Cases = [
+  {id:'retired-summary-owner-blocks-fresh-metrics-1093',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/summary-panel-runtime.test.mjs',
+    because:'#1093 AC5: held old-owner timer and actual deferred import must not keep the new visible owner pending after reconnect; deterministic callback ordering observes fresh values without an unrelated HA tick.',
+    patches:[{file:'src/summary-panel-runtime-loaded.ts',find:'    this.metricsRefresh = 0;\n    this.metricsLoad = null;',replace:'    // Retain the retired owner scheduling latches.'}]},
+  {id:'replaced-stage-keeps-old-resize-observer-1093', guard:compiledNodeSmoke('smoke_selective_invalidation'),
+    because:'#1093 AC11: a real mounted HA reload replaces stage DOM; subsequent native CSS widths must switch compact navigation and preserve current viewport sizing. A pure width helper cannot prove observer ownership.',
+    patches:[{file:'src/houseplan-card.ts',find:'    if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {',replace:'    if (false) {'}]},
+  {id:'paint-save-retains-accepted-exit-1093', guard:compiledNodeSmoke('smoke_selective_invalidation_visible'),
+    because:'#1093 AC10: only real native pointer-to-visible-paint samples detect the retained 180ms successful-close animation; unit state equality cannot establish the browser time budget.',
+    patches:[{file:'src/editors/dialog-baseline.ts',find:'  return !accepted || (!!owner && owner !== accepted);',replace:'  return true;'}]},
+  {id:'paired-history-rebuilds-floor-1093', guard:compiledNodeSmoke('smoke_selective_invalidation_history0'),
+    because:'#1093 AC9/10: native Copy/Undo/Redo/Delete on a dense contact scene must retain unchanged physical geometry and meet real input-to-paint limits.',
+    patches:[{file:'src/demand-space-models.ts',find:'        if (previous?.key === key) resolved = previous.model;',replace:'        if (false && previous?.key === key) resolved = previous!.model;'}]},
+  {id:'pending-config-refusal-allows-paired-write-1093', guard:compiledNodeSmoke('smoke_selective_invalidation'),
+    because:'#1093 AC8/9: a trusted Copy while a native Properties save is held/refused must send no paired WS, while the later fresh intent succeeds; the mounted command routing is essential.',
+    patches:[{file:'src/prior-config-write.ts',find:'  catch (error) { if (pending) throw error; }',replace:'  catch (error) { void error; void pending; }'}]},
+  {id:'late-room-save-closes-new-owner-1093', guard:compiledNodeSmoke('smoke_selective_invalidation_authority'),
+    because:'#1093 AC8: actual native Save, discard, foreign identity reload and reopened room must survive the late old ACK without toast/adoption/closure on its replacement.',
+    patches:[{file:'src/editors/room-save.ts',find:"    if (!contextCurrent()) return;\n    if (host.isConnected && host._roomDialog && dialogSession(host, 'room') === owner\n      && host._space === spaceId && host._roomEditId === roomId && roomDraftKey(host) === savedDraft) {",replace:'    if (host.isConnected && host._roomDialog) {'}]},
+  {id:'hidden-alert-schedules-visual-deadline-1093',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/marker-alert-runtime.test.mjs',
+    because:'#1093 AC5: the fake clock observes exact pending timers while authoritative hidden condition edges retain their continuous confirmation history.',
+    patches:[{file:'src/marker-alert-runtime.ts',find:'if (entry.pending !== null && entry.observation.demanded !== false) {',replace:'if (entry.pending !== null) {'}]},
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

@@ -710,7 +710,7 @@ font rendering, animations and caret are deterministic. The separate CI job
 captures review candidates until the first baseline is accepted; after that it
 automatically runs blocking verification. Review and accept the
 `golden-images` CI artifact rather than treating a developer OS raster as the
-canonical set. Global baselines are accepted before beta, never by task previews.
+canonical set. Global baselines are accepted before beta, never by task previews. Native timing uses four mandatory selected cores and the full small/large/cold/DPR2 beta matrix; see [the shared gate and threshold contract](analysis/1093-selective-invalidation-2026-10-28.md).
 
 ## Large-house performance gate
 

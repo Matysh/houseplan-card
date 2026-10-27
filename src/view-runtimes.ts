@@ -10,7 +10,7 @@ import type { ZigbeeTopologyHass } from './zigbee-topology-runtime';
 import { liveRuntimeCode, zigbeeOverlayCode, converterInfoCode, deviceMenuCode, markerAlertCode } from './view-runtime-code';
 import type { ViewDeviceMenu, ViewDeviceMenuRequest } from './view-device-menu';
 import type { MarkerAlertViewRuntime } from './marker-alert-view-runtime';
-import type { Marker } from './types';
+import type { Marker, DevItem } from './types';
 import { summaryRuntimeLoader } from './summary-runtime-loader';
 import { ViewRuntimeBoundary, guardedViewRuntimeReload } from './view-runtime-boundary';
 import { zigbeeTopologyOverlayRequested } from './zigbee-topology-overlay-bridge';
@@ -35,6 +35,10 @@ export interface ViewRuntimeHost extends SummaryPreferenceHost {
   _summary?: LoadedSummaryPanelRuntime;
   _capturedSeq: number;
   readonly _markers: readonly Marker[];
+  readonly _space?: string;
+  readonly _showAll?: boolean;
+  readonly _devices?: readonly DevItem[];
+  readonly _displayDevices?: readonly DevItem[];
   _alerts?: MarkerAlertViewRuntime;
   readonly _editorRuntime?: { _guardDraftNavigation(resume: () => void): boolean } | null;
   _reloadDocument(automatic?: boolean): void;
@@ -60,6 +64,7 @@ interface FailedViewRuntime {
 }
 
 export class ViewRuntimes {
+  private active = false;
   readonly live: ViewRuntimeBoundary<object, LiveRuntime>;
   readonly summary: ViewRuntimeBoundary<unknown, LoadedSummaryPanelRuntime>;
   readonly zigbee: ViewRuntimeBoundary<object, true>;
@@ -69,9 +74,10 @@ export class ViewRuntimes {
   readonly alerts: ViewRuntimeBoundary<object, MarkerAlertViewRuntime>;
 
   constructor(private readonly host: ViewRuntimeHost) {
-    const port = <Runtime>(install: (runtime: Runtime) => void, informational = false) => ({
+    const port = <Runtime>(install: (runtime: Runtime) => void, informational = false, demanded = () => true) => ({
       owner: () => informational ? host : host._configWriteContext.claim(),
-      current: (owner: object) => host.isConnected && (informational ? owner === host : host._configWriteContext.current(owner, host.hass)),
+      current: (owner: object) => this.active && host.isConnected && host.ownerDocument.visibilityState !== 'hidden' && demanded()
+        && (informational ? owner === host : host._configWriteContext.current(owner, host.hass)),
       install,
       changed: () => {
         if (!host.isConnected) return;
@@ -86,27 +92,30 @@ export class ViewRuntimes {
       host._summary = runtime; host._capturedSeq = -1;
       if (host.isConnected) runtime.connect();
     }));
-    this.zigbee = new ViewRuntimeBoundary(host, zigbeeOverlayCode, port(() => {}));
-    this.converter = new ViewRuntimeBoundary(host, converterInfoCode, port(() => {}, true));
+    this.zigbee = new ViewRuntimeBoundary(host, zigbeeOverlayCode, port(() => {}, false, () => this.wantsZigbee()));
+    this.converter = new ViewRuntimeBoundary(host, converterInfoCode, port(() => {}, true, () => this.wantsConverter()));
     this.alerts = new ViewRuntimeBoundary(host, markerAlertCode, port(runtime => {
       host._alerts?.disconnect(); host._alerts = runtime; runtime.connect();
-    }));
+    }, false, () => this.wantsAlerts()));
   }
 
   connect(): void {
+    this.active = true;
     this.deviceMenu.connect(false); this.menu?.connect();
     this.host._summary?.connect();
-    this.live.connect(); this.summary.connect(); this.zigbee.connect(false); this.converter.connect(false);
+    this.live.connect(false); this.summary.connect(false); this.zigbee.connect(false); this.converter.connect(false);
     this.alerts.connect(false); this.host._alerts?.connect();
     this.reconcile();
   }
   disconnect(): void {
+    this.active = false;
     this.deviceMenu.disconnect(); this.menu?.disconnect();
     this.live.disconnect(); this.summary.disconnect(); this.zigbee.disconnect(); this.converter.disconnect();
     this.host._summary?.disconnect();
     this.alerts.disconnect(); this.host._alerts?.disconnect();
   }
   reconcile(): void {
+    if (!this.active || this.host.ownerDocument.visibilityState === 'hidden') return;
     if (this.live.state !== 'ready') void this.live.ensure();
     if (this.summary.state !== 'ready') void this.summary.ensure();
     if (this.zigbee.state !== 'ready' && this.wantsZigbee()) void this.zigbee.ensure();
@@ -115,10 +124,21 @@ export class ViewRuntimes {
     this.host._alerts?.reconcile();
     this.syncRecovery();
   }
+  visibility(hidden: boolean): void {
+    if (!this.active) return;
+    const boundaries = [this.live, this.summary, this.zigbee, this.converter, this.alerts, this.deviceMenu];
+    for (const boundary of boundaries) {
+      if (hidden) boundary.disconnect(); else boundary.connect(false);
+    }
+    if (hidden) this.menu?.disconnect(); else this.menu?.connect();
+    this.host._alerts?.reconcile();
+    if (!hidden) this.reconcile();
+  }
   withLive(run: (runtime: LiveRuntime) => void): void {
     const host = this.host, owner = host._configWriteContext.claim();
     void this.live.ensure().then(ready => {
-      if (ready && host.isConnected && host._configWriteContext.current(owner, host.hass) && host._liveRt) run(host._liveRt);
+      if (ready && this.active && host.isConnected && host.ownerDocument.visibilityState !== 'hidden'
+          && host._configWriteContext.current(owner, host.hass) && host._liveRt) run(host._liveRt);
     });
   }
   openDeviceMenu(request: ViewDeviceMenuRequest): void {
@@ -139,7 +159,11 @@ export class ViewRuntimes {
   private wantsAlerts(): boolean {
     // Presence is the import boundary. The sole strict codec lives inside the
     // optional graph; unsupported input never creates a producer or a timer.
-    return this.host._markers.some(marker => !marker.removed && Array.isArray(marker.alert_sources) && marker.alert_sources.length > 0);
+    const host = this.host, devices = host._displayDevices || host._devices;
+    return host._markers.some(marker => !marker.removed && Array.isArray(marker.alert_sources) && marker.alert_sources.length > 0
+      && (!devices || devices.some(device => device.id === marker.id
+        && (host._space === undefined || device.space === host._space)
+        && (!device.hidden || host._mode === 'devices' && host._showAll === true))));
   }
   private failures(): FailedViewRuntime[] {
     const failures: FailedViewRuntime[] = [];

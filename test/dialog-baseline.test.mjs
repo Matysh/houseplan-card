@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  acceptSavedDialogExit,
+  animateDialogExit,
+  dialogSession,
   dialogBaseline,
   dialogDirty,
   forgetDialogBaseline,
@@ -11,6 +14,24 @@ import {
   stableKey,
   warmDialogBaseline,
 } from '../test-build/editors/dialog-baseline.js';
+
+test('#1093 only the acknowledged current form skips retained exit paint', () => {
+  const host = {};
+  assert.equal(animateDialogExit(host, 'space'), true);
+  assert.equal(acceptSavedDialogExit(host, 'space', undefined), false);
+  rememberDialogBaseline(host, 'space', 'first');
+  const old = dialogSession(host, 'space');
+  assert.equal(animateDialogExit(host, 'space'), true); // pending/refused: no acceptance
+  rememberDialogBaseline(host, 'space', 'replacement');
+  assert.equal(acceptSavedDialogExit(host, 'space', old), false);
+  assert.equal(animateDialogExit(host, 'space'), true);
+  assert.equal(acceptSavedDialogExit(host, 'space', dialogSession(host, 'space')), true);
+  assert.equal(animateDialogExit(host, 'space'), false);
+  forgetDialogBaseline(host, 'space');
+  assert.equal(animateDialogExit(host, 'space'), false,'saved room cleanup retains accepted exit cause');
+  rememberDialogBaseline(host, 'space', 'next');
+  assert.equal(animateDialogExit(host, 'space'), true);
+});
 import {
   forgetSpaceDialogBaseline, rememberSpaceDialogBaseline, spaceDialogDirty, spaceDialogDraftKey,
 } from '../test-build/editors/space-form-state.js';

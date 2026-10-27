@@ -1,0 +1,54 @@
+{
+  "base": {
+    "head": "5228e2ff1fbe51ea55f324b056d9f3806246e041",
+    "fingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+    "initial": 352904,
+    "editor": 375012,
+    "onboarding": 44655,
+    "assets": 73,
+    "delegates": 145,
+    "portMembers": 380,
+    "hostRefs": 6479,
+    "portPrivates": 106,
+    "harnessPrivates": 101,
+    "bundleBytes": 3630487
+  },
+  "candidate": {
+    "head": "5228e2ff1fbe51ea55f324b056d9f3806246e041",
+    "fingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+    "initial": 356448,
+    "editor": 375159,
+    "onboarding": 44619,
+    "assets": 73,
+    "delegates": 145,
+    "portMembers": 380,
+    "hostRefs": 6526,
+    "portPrivates": 105,
+    "harnessPrivates": 101,
+    "bundleBytes": 3644033
+  },
+  "delta": {
+    "initial": 3544,
+    "editor": 147,
+    "onboarding": -36,
+    "hostRefs": 47,
+    "bundleBytes": 13546
+  },
+  "incomingReference": {
+    "delegates": 145,
+    "portMembers": 376,
+    "hostRefs": 6456,
+    "portPrivates": 104,
+    "harnessPrivates": 101,
+    "bundleBytes": 3630487
+  },
+  "proposedReference": {
+    "delegates": 145,
+    "portMembers": 376,
+    "hostRefs": 6503,
+    "portPrivates": 104,
+    "harnessPrivates": 101,
+    "bundleBytes": 3644033
+  },
+  "verification": "Both source fingerprints and full manifest asset trees verified. Base is frozen1089; actual S8 source identity is required before handoff."
+}

@@ -1,0 +1,59 @@
+{
+  "schema": 2,
+  "mode": "capture",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+    "ci": null
+  },
+  "generatedAt": "2026-10-27T23:23:33.881Z",
+  "matrixVersion": 103,
+  "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+  "chromium": "151.0.7922.34",
+  "baselineManifest": {
+    "present": true,
+    "valid": false,
+    "matrixVersion": 90,
+    "chromium": "151.0.7922.34"
+  },
+  "results": [
+    {
+      "id": "room-label-parity-view-light",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "cd45d5674f9addbd2d44d8174e7f89bc2117bea376bb45bbc98ddba5a1f0f42b",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/hp-view-menu-1089/artifacts/golden/actual/room-label-parity-view-light.png",
+      "baseline": "/home/matysh/hp-view-menu-1089/demo/golden/baselines/room-label-parity-view-light.png",
+      "baselineSha256": "482fa4ac012d81e25bffc7c3d7911e8bdf1b39d71c9aedb4e748f6bbdc7c5de7",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1000,
+        900
+      ],
+      "baselineSize": [
+        1000,
+        900
+      ],
+      "differingPixels": 88848,
+      "diffRatio": 0.09872,
+      "maxObservedDelta": 244,
+      "passed": false,
+      "diff": "/home/matysh/hp-view-menu-1089/artifacts/golden/diff/room-label-parity-view-light.png"
+    }
+  ]
+}

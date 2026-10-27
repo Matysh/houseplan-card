@@ -1,0 +1,32 @@
+{
+  "baseHead": "81d3235156065f07ce618bc74c85bcb623e475f5",
+  "baseFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+  "candidateFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+  "mode": "canonical selected capture; no global baseline acceptance",
+  "comparisons": [
+    {
+      "scenario": "large-house-zoom-250-dark",
+      "candidateSha256": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
+      "baseSha256": "b60cb412c91ff0b822c1c63415352f26c902643474d959e0189631bfe6a8ed5e",
+      "identical": true
+    },
+    {
+      "scenario": "room-co2-iso-dark",
+      "candidateSha256": "64edfd317c6ab25bd0d3b67b3d01bf724f60286d7897686ac94f972cb9222fea",
+      "baseSha256": "64edfd317c6ab25bd0d3b67b3d01bf724f60286d7897686ac94f972cb9222fea",
+      "identical": true
+    },
+    {
+      "scenario": "room-label-parity-view-dark",
+      "candidateSha256": "cf0a0f2dd1faf4b6b541c33a8b16fa06c0eec81d8bae173abed62e90c19b4d6e",
+      "baseSha256": "cf0a0f2dd1faf4b6b541c33a8b16fa06c0eec81d8bae173abed62e90c19b4d6e",
+      "identical": true
+    },
+    {
+      "scenario": "room-label-parity-view-light",
+      "candidateSha256": "cd45d5674f9addbd2d44d8174e7f89bc2117bea376bb45bbc98ddba5a1f0f42b",
+      "baseSha256": "cd45d5674f9addbd2d44d8174e7f89bc2117bea376bb45bbc98ddba5a1f0f42b",
+      "identical": true
+    }
+  ]
+}

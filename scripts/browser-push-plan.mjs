@@ -6,6 +6,18 @@ import { fingerprintCorpus, postCaptureInputs } from './source-fingerprint.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 import { readTaskVisualIntent, readPendingVisualIntents } from './task-visual-intent.mjs';
 import { readTaskIntent } from './task-intent.mjs';
+import { BUILD_INPUTS, globToRegExp } from './check-inputs.mjs';
+
+export const SELECTIVE_INVALIDATION_CORE = Object.freeze([
+  'smoke_selective_invalidation_visible.mjs', 'smoke_selective_invalidation_inactive.mjs',
+  'smoke_selective_invalidation_history0.mjs', 'smoke_selective_invalidation_history320.mjs',
+]);
+
+// #1093: a declared/connected smoke cannot replace the mandatory timing core.
+const frontendInputs = [...BUILD_INPUTS, 'assets/**'].map(globToRegExp);
+const needsInvalidationCore = files => files.some(file => frontendInputs.some(pattern => pattern.test(file))
+  || /^demo\/(?:benchmark_selective_invalidation\.mjs|smoke_selective_invalidation(?:_[\w-]+)?\.mjs)$/.test(file)
+  || /^demo\/(?:fixtures|helpers)\/selective-invalidation[\w-]*\.mjs$/.test(file));
 
 export function goldenConnections(scenarios = GOLDEN_SCENARIOS) {
   return {
@@ -56,7 +68,8 @@ export function browserPushPlan({ files, diffText, labels = [], render = false, 
   const harnessChanged = files.some(f => /^demo\//.test(f) && !/^demo\/smoke_/.test(f)
     && !/^demo\/(golden|docs|stand)\//.test(f));
   const fallback = unknownSource || harnessChanged ? VISUAL_MINIMUM : [];
-  const ids = [...new Set([...selected, ...changedSmokes, ...declaredSmokes, ...fallback])].sort();
+  const core = needsInvalidationCore(files) ? SELECTIVE_INVALIDATION_CORE : [];
+  const ids = [...new Set([...selected, ...changedSmokes, ...declaredSmokes, ...fallback, ...core])].sort();
   for (const id of ids) if (!allSmokes.has(id)) throw Error(`Unknown selected smoke: ${id}; update the task smoke connection`);
   const smoke = ids.length ? { mode: 'selected', ids,
     reason: fallback.length ? 'connected smokes and bounded visual minimum' : 'smoke-select, changed entries and task intent',

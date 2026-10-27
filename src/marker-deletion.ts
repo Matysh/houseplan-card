@@ -1,3 +1,4 @@
+import { waitForPriorConfigWrite } from './prior-config-write';
 /** #930: one candidate and post-commit cleanup for single and catalog Delete. */
 import { deletePlanMarkerRecords, removeMarkerControlReferences } from './devices';
 import { removeMarkerAreaSnapshots } from './device-area-relocation';
@@ -49,7 +50,7 @@ async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly
     try {
       await runtime.deviceStructure.settle();
       if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.flush();
-      await host._writeChain;
+      await waitForPriorConfigWrite(host);
       if (!applicable() || host._dirtyPos.size || host._sentPos.size) throw new Error('Delete unavailable');
       await runtime.deviceStructure.request({ type: 'houseplan/marker/history', ...runtime.deviceStructure.fields(true), action: 'delete',
         targets, expected_config_rev: host._cfgRev, expected_layout_rev: host._layoutRev }, async reply => {

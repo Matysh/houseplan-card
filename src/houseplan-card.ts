@@ -3,6 +3,9 @@ import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
 import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-select';
+import { DeviceRosterStateKey } from './device-roster-state-key';
+import { DemandSpaceModels } from './demand-space-models';
+import { snapshotConsumerDemand, type SnapshotConsumerDemand } from './render-snapshot-consumers';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -289,7 +292,7 @@ import {
   type DecorTool, type MarkupTool, type WarmDialog, type WarmDialogKind,
   type WarmEntry, type WarmViewport,
 } from './card-runtime';
-import { restoreWarmDialogBaseline, warmDialogBaseline } from './editors/dialog-baseline';
+import { animateDialogExit, restoreWarmDialogBaseline, warmDialogBaseline } from './editors/dialog-baseline';
 import { deviceEditorAllowed, roomAreaAffordance } from './device-editor-access';
 
 // Chromium records a FAILED module in the page module map permanently — a
@@ -591,6 +594,20 @@ export class HouseplanCard extends LitElement {
     new LazyChromeTooltips(this, () => this._mode === 'view' ? `view:${this._space}`
       : `${this._editorSecondaryContextId}:${JSON.stringify(this._editorRuntime?.properties.identity)}`);
   }
+  private _hiddenRenderDeferred = false;
+  private _hiddenRenderChanges = new Map<PropertyKey, unknown>();
+
+  protected shouldUpdate(changed: PropertyValues): boolean {
+    if (this.ownerDocument.visibilityState !== 'hidden' && !this._routeDepartureHandled) return true;
+    this._hiddenRenderDeferred = true;
+    for (const [name, previous] of changed) if (!this._hiddenRenderChanges.has(name))
+      this._hiddenRenderChanges.set(name, previous);
+    // Authority and transport intake are never contingent on a painted frame.
+    if (changed.has('hass') && this.hass) this._renderLife.intake(this.hass, () => intakeHass(this));
+    else this._alerts?.reconcile();
+    return false;
+  }
+
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     let forceHass = false;
     if (name === 'hass') {
@@ -624,6 +641,12 @@ export class HouseplanCard extends LitElement {
       // A foreign HA retires the accepted document even while detached. Keep
       // its new read intent independently of Lit/visual snapshot deduplication.
       if (authorityChanged) this._read.defer();
+    }
+    if ((this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) && this._hiddenRenderChanges) {
+      this._hiddenRenderDeferred = true;
+      if (name !== undefined && !this._hiddenRenderChanges.has(name)) this._hiddenRenderChanges.set(name, oldValue);
+      if (name === 'hass' && this.hass && this._renderLife) this._renderLife.intake(this.hass, () => intakeHass(this));
+      return;
     }
     if (name === 'hass' && this.hass && this._liveRt && !forceHass) {
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
@@ -943,6 +966,9 @@ export class HouseplanCard extends LitElement {
   private _undoKind: 'optimize' | 'import' | null = null;
   private _devices: DevItem[] = [];
   private _regSignature = '';
+  private _deviceBuildKey = '';
+  private readonly _deviceRosterState = new DeviceRosterStateKey();
+  private _deviceBuildOwner: unknown;
   private _defPos: Record<string, { x: number; y: number }> = {};
   private _newSyncKey = '';
   /** Saved positions temporarily superseded by authoritative HA Area truth. */
@@ -2082,7 +2108,13 @@ export class HouseplanCard extends LitElement {
     } else if (location.pathname === this._connectedPath) {
       // Some HA routers keep the old view connected but hidden. Returning to
       // it re-arms the guard so a later departure ends the next edit session.
+      const returning = this._routeDepartureHandled;
       this._routeDepartureHandled = false;
+      if (returning) {
+        this._viewRuntimes.connect();
+        if (this.ownerDocument.visibilityState !== 'hidden') this._pageVisibility({kind:'visible',token:0,at:Date.now(),hiddenFor:0,long:false});
+        this.requestUpdate();
+      }
     }
   };
   private readonly _touchGestureGuard = {
@@ -2091,6 +2123,7 @@ export class HouseplanCard extends LitElement {
   };
   private _roViewport?: ResizeObserver;
   private _roHdr?: ResizeObserver;
+  private _resizeTargets?: { stage: HTMLElement | null; header: HTMLElement | null };
   private _compactSpaces = false;
   private _spaceSelectLoad: Promise<unknown> | null = null;
   private _onWinResize?: () => void;
@@ -2398,6 +2431,7 @@ export class HouseplanCard extends LitElement {
   private _candidateDeviceSnapshot: RenderDeviceSnapshot | null = null;
   private _stagedToken = -1;
   private _capturedSeq = -1;
+  private _capturedSnapshotDemand = '';
   private _capturedSnapshotDevices: readonly DevItem[] | null = null;
   private _capturedSnapshotLayout: Record<string, { x: number; y: number; s?: string; k?: number }> | null = null;
   private _capturedSnapshotActivity = '';
@@ -2418,9 +2452,13 @@ export class HouseplanCard extends LitElement {
   }
 
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
+    if (this._routeDepartureHandled && signal.kind !== 'hidden') return;
     this._continuity.visibility(signal);
+    this._viewRuntimes.visibility(signal.kind === 'hidden');
     this._dayCycleVisibility(signal); this._summary?.visibility(signal.kind);
     if (signal.kind === 'hidden') {
+      for (const runtime of this._activityRt.values()) clearTimeout(runtime.timer);
+      this._activityRt.clear();
       this._vacHistory.suspend();
       this._abandonViewInput();
       this._cancelDeviceDrag();
@@ -2442,6 +2480,13 @@ export class HouseplanCard extends LitElement {
       return;
     }
     this._vacJumpOnce = true;
+    if (this._hiddenRenderDeferred) {
+      this._hiddenRenderDeferred = false;
+      this._renderLife.retireHass();
+      for (const [name, previous] of this._hiddenRenderChanges) super.requestUpdate(name, previous);
+      this._hiddenRenderChanges.clear();
+      super.requestUpdate('hass', undefined, { hasChanged: () => true });
+    }
     if (!this._vacRaf && this.renderRoot.querySelector('.vactrail line.tip')) this._vacRafLoop();
     this._syncRadarLive();
     if (!signal.long) {
@@ -2863,6 +2908,8 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._deviceRosterState.clear();
+    this._spaceModels.clear(); this._modelCache = null;
     window.removeEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
     window.removeEventListener('storage', this._rotationChanged);
     for (const runtime of this._vacRt.values()) {
@@ -2983,6 +3030,7 @@ export class HouseplanCard extends LitElement {
     this._roViewport = undefined;
     this._roHdr?.disconnect();
     this._roHdr = undefined;
+    this._resizeTargets = undefined;
     if (this._onWinResize) {
       window.removeEventListener('resize', this._onWinResize);
       this._onWinResize = undefined;
@@ -4100,6 +4148,7 @@ export class HouseplanCard extends LitElement {
   private _cfgEpochPreservedConfig: ServerConfig | null = null;
   private _terminalFrame: 0 | 1 | 2 = 0; // 1=restored cancel, 2=deferred HA
   private _modelCache: { key: string; model: SpaceModel[] } | null = null;
+  private readonly _spaceModels = new DemandSpaceModels();
   private readonly _cfgPass = new ConfigFingerprintPass(); // #725: one fingerprint per willUpdate→render pass
   private _emptySpaceStateActive = false;
   private _decorSnapCache: {
@@ -4162,10 +4211,7 @@ export class HouseplanCard extends LitElement {
     // would freeze BEFORE the signature arrives and the plan would never load
     // (bug found 2026-07-27). _display() is called at render time instead.
     const cfg = this._renderCfg!;
-    return spaceModels(cfg).map((m, i) => {
-      const raw = (cfg.spaces[i] as any)?.plan_url;
-      return m.bg && raw ? { ...m, bg: { ...m.bg, href: raw } } : m;
-    });
+    return this._spaceModels.read(cfg);
   }
 
   private _spaceModel(): SpaceModel | undefined {
@@ -4389,6 +4435,7 @@ export class HouseplanCard extends LitElement {
       this._renderLife.observe(changed.get('hass') as HassRenderSnapshot | null | undefined, this.hass,
         snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
     }
+    if (changed.has('_space')) this._syncActivityRuntime();
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
     }
@@ -4413,11 +4460,23 @@ export class HouseplanCard extends LitElement {
     // Decor selection cannot exist before the lazy editor runtime is ready.
     if (this._editorRuntime) this._dtMeasure();
     const stage = this._stageEl;
+    const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
+    // A mounted authority reload can replace the stage without disconnecting
+    // the card. Retire the old element lease before binding the new surface.
+    if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {
+      this._roViewport?.disconnect(); this._roViewport = undefined;
+      this._roHdr?.disconnect(); this._roHdr = undefined;
+      if (this._onWinResize) window.removeEventListener('resize', this._onWinResize);
+      this._onWinResize = undefined;
+      this._resizeTargets = { stage, header: hdr };
+    }
     if (stage && !this._roViewport) {
-      this._roViewport = new ResizeObserver(() => {
+      const ownsViewport = () => this.isConnected && this._roViewport === observer && stage === this._stageEl;
+      const observer = this._roViewport = new ResizeObserver(() => {
+        if (!ownsViewport()) return;
         this._invalidateDeviceHitGeometry();
         this._refitView();
-        requestAnimationFrame(() => this._summary?.resized());
+        requestAnimationFrame(() => { if (ownsViewport()) this._summary?.resized(); });
       });
       this._roViewport.observe(stage);
     }
@@ -4431,7 +4490,6 @@ export class HouseplanCard extends LitElement {
     // put anything tall before the card and the "header budget" swallowed the
     // whole viewport, leaving a 0px stage (HP-1500-02). Content above the card
     // is the dashboard's business — it scrolls; it is not header.
-    const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     if (hdr && stage && !this._roHdr) {
       // Seed the same content-box width before the first paint, including on a
       // warm remount; waiting for ResizeObserver first paints the wide tabs.
@@ -4875,7 +4933,9 @@ export class HouseplanCard extends LitElement {
           && (runtime.expiresAt || runtime.flashTs + ACTIVITY_WINDOW_MS) > now ? 1 : 0}`)
       .join('|');
     const virtualFingerprint = virtualLightFingerprint(this._virtualLights);
+    const demand = JSON.stringify([this._space, this._mode, [...this._summary?.entityIds() || []], this._snapshotConsumerDemand()]);
     if (this._capturedSeq === this._hassSequence
+        && this._capturedSnapshotDemand === demand
         && this._capturedSnapshotDevices === this._displayDevices
         && this._capturedSnapshotLayout === this._layout
         && this._capturedSnapshotConfigEpoch === this._cfgEpoch
@@ -4886,6 +4946,7 @@ export class HouseplanCard extends LitElement {
     // #850: the live runtime lends its reuse window (render-snapshot-reuse.ts).
     const snapshot = captureRenderDeviceSnapshot(this as never, this._liveRt?.capture);
     this._capturedSeq = this._hassSequence;
+    this._capturedSnapshotDemand = demand;
     this._capturedSnapshotDevices = this._displayDevices;
     this._capturedSnapshotLayout = this._layout;
     this._capturedSnapshotActivity = activity;
@@ -5167,22 +5228,37 @@ export class HouseplanCard extends LitElement {
   // ================= devices from the registries =================
 
   private _maybeRebuildDevices(createdRooms?: readonly CreatedAreaRoom[]): void {
+    if ((this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) && !createdRooms?.length) {
+      this._regSignature = '';
+      return;
+    }
     const h = this.hass;
     if (!h?.devices || !h?.entities || !h?.areas) return;
     const registry = this._haRegistry;
     const sig =
       haRegistryBuildSignature(h, registry) + ':' + Object.keys(h.areas).length + ':' +
       (this._norm ? 'n' : 'l') + ':' + langOf(h, this._config?.language);
-    if (sig === this._regSignature && this._devices.length) return;
+    const sameStateMetadata = this._deviceRosterState.matches(h);
+    if (sig === this._regSignature && this._devices.length && sameStateMetadata) return;
     this._regSignature = sig;
+    // Writers may request a rebuild after any config ACK. Only roster inputs
+    // can make it necessary; ordinary HA ticks still take the O(1) path above.
+    const areaToSpace = this._norm && this._serverCfg
+      ? Object.fromEntries(this._serverCfg.spaces.flatMap(space =>
+        (space.rooms || []).filter((room: RoomCfg) => room.area).map((room: RoomCfg) => [room.area, space.id])))
+      : Object.fromEntries(Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]));
+    const settings = this._settings;
+    const buildKey = JSON.stringify([sig, this._markers, areaToSpace, this._serverCfg?.spaces[0]?.id,
+      settings.group_lights, settings.filter_seeded, settings.show_all, settings.exclude_integrations, settings.icon_rules]);
+    const reuseRoster = sameStateMetadata && this._deviceBuildKey === buildKey && this._deviceBuildOwner === h.connection && this._devices.length;
+    this._deviceBuildKey = buildKey;
+    this._deviceBuildOwner = h.connection;
     const previousDevices = this._devices;
     const before = new Map(this._devices.map((d) => [d.id, d.bindingStatus?.kind || 'active']));
-    this._devices = buildDevices({
-      hass: h,
+    if (!reuseRoster) this._devices = this._deviceRosterState.capture(h, observed => buildDevices({
+      hass: observed,
       registry,
-      areaToSpace: Object.fromEntries(
-        Object.entries(this._areaToSpace).map(([a, v]) => [a, v.space]),
-      ),
+      areaToSpace,
       markers: this._markers,
       settings: this._settings,
       excluded: this._excluded,
@@ -5190,11 +5266,12 @@ export class HouseplanCard extends LitElement {
       firstSpaceId: this._model[0]?.id || '',
       loc: (k) => this._t(k),
       iconRules: this._iconRules,
-    });
+    }));
     const savedBindings = this._markers
       .filter((marker) => !marker.removed && marker.binding !== 'virtual')
       .map((marker) => marker.binding).sort();
-    const bindingCacheKey = registry.revision + ':' + savedBindings.join('|');
+    const bindingCacheKey = registry.revision + ':' + savedBindings.map(binding =>
+      binding + (binding.startsWith('entity:') ? ':' + !!h.states?.[binding.slice(7)] : '')).join('|');
     if (registry.authoritative && bindingCacheKey !== this._haBindingCacheKey) {
       const statuses = new Map<string, HaBindingStatus>();
       for (const binding of savedBindings) {
@@ -5479,10 +5556,11 @@ export class HouseplanCard extends LitElement {
     return { x: r.x ?? 0, y: r.y ?? 0, w: r.w ?? 0, h: r.h ?? 0 };
   }
 
-  private _defaultPositions(): Record<string, { x: number; y: number }> {
+  private _defaultPositions(spaceId = this._space): Record<string, { x: number; y: number }> {
     const map: Record<string, { x: number; y: number }> = {};
     const iconPct = this._config?.icon_size ?? 2.5;
     for (const s of this._model) {
+      if (s.id !== spaceId) continue;
       // docs/CANVAS.md §6: the icon's RENDER-unit footprint follows the plan's
       // own size — NORM_W for anything inside the old square (identical to
       // before), proportionally more for a plan several canvases wide.
@@ -5539,6 +5617,7 @@ export class HouseplanCard extends LitElement {
         return { x: saved.x, y: saved.y };
       }
     }
+    if (!this._defPos[d.id]) Object.assign(this._defPos, this._defaultPositions(d.space));
     if (this._defPos[d.id]) return this._defPos[d.id];
     if (!s) return { x: NORM_W / 2, y: NORM_W / 2 };
     // the middle of what IS drawn, not of a canvas that has no edges any more
@@ -7816,6 +7895,8 @@ export class HouseplanCard extends LitElement {
   private _leaveCardRoute(): void {
     if (this._routeDepartureHandled) return;
     this._routeDepartureHandled = true;
+    this._viewRuntimes.disconnect();
+    this._pageVisibility({kind:'hidden',token:0,at:Date.now(),hiddenFor:0,long:false});
     this._cancelPendingWarmMode();
     this._configReloadAuthority.invalidateLifecycle();
     this._read.invalidate(); this._loading = false;
@@ -9233,6 +9314,16 @@ export class HouseplanCard extends LitElement {
       if (room.id) byId.set(room.id, resolved);
     }
     return { byRoom, byId };
+  }
+
+  /** Use the painted draft and current mode to retain only demanded HA rows. */
+  private _snapshotConsumerDemand(): SnapshotConsumerDemand {
+    return snapshotConsumerDemand({
+      spaceId: this._space, rooms: this._curSpaceCfg?.rooms || this._spaceModel()?.rooms || [], markers: this._markers,
+      display: this._spaceDisplayForRender(), mode: this._mode, markup: this._markup,
+      tooltip: showRoomTooltipOf(this._settings),
+      roomPreview: this._roomDialog ? { id: this._roomEditId, fill: this._roomFill } : undefined,
+    });
   }
 
   /** Pending space-dialog values projected through the production resolver. */
@@ -11032,7 +11123,7 @@ export class HouseplanCard extends LitElement {
         </div>
         ${dialogPresence(this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
-          : nothing)}
+          : nothing, animateDialogExit(this, 'space'))}
         ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
         ${dialogPresence(this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing)}
         <div data-hp="toast-portal"></div>
@@ -11554,7 +11645,7 @@ export class HouseplanCard extends LitElement {
         ${dialogPresence(this._editorRuntime?.deviceCopy.render())}
         ${this._editorRuntime?.decorOrder.render()}
         ${this._editorRuntime?.nodeMove?.renderMenu()}
-        ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing)}
+        ${dialogPresence(this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing, animateDialogExit(this, 'room'))}
         ${dialogPresence(this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing)}
         ${dialogPresence(this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing)}
         ${dialogPresence(this._physicalDialog ? this._editorRuntime ? this._renderPhysicalDialog() : nothing : nothing)}
@@ -11568,7 +11659,7 @@ export class HouseplanCard extends LitElement {
         ${dialogPresence(this._editorRuntime?.stairs.dialogOpen ? this._editorRuntime.stairs.renderDialog() : nothing)}
         ${dialogPresence(this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
-          : nothing)}
+          : nothing, animateDialogExit(this, 'space'))}
         ${dialogPresence(this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing)}
         ${dialogPresence(this._warmMarker.render((key) => this._t(key)))}
         ${dialogPresence(this._markerDialog && (this._mode !== 'view' || deviceEditorAllowed(this._canEdit, this._kiosk))
@@ -11600,7 +11691,7 @@ export class HouseplanCard extends LitElement {
         </hp-dialog>` : nothing : nothing)}
         ${dialogPresence(this._infoCard ? this._renderInfoCard() : nothing)}
         ${dialogPresence(this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing)}
-        ${dialogPresence(this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing)}
+        ${dialogPresence(this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing, animateDialogExit(this, 'settings'))}
         ${dialogPresence(this._supportDialog ? this._editorRuntime ? this._renderSupportDialog() : nothing : nothing)}
         ${dialogPresence(this._pdfDialog ? this._renderPdfDialog() : nothing)}
         ${dialogPresence(this._alignDialog && this._editorRuntime ? this._editorRuntime.optimizePlans.render() : nothing)}
@@ -11781,6 +11872,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stampActivity(id: string, kind: 'event' | 'transition', sources?: string): void {
+    if (this.ownerDocument.visibilityState === 'hidden') return;
     let rt = this._activityRt.get(id);
     if (!rt) {
       rt = createFiniteActivityRuntime(sources || '', []);
@@ -11801,7 +11893,7 @@ export class HouseplanCard extends LitElement {
    */
   private _syncActivityRuntime(): Map<string, { samples: EntityVisualSample[]; sourceKey: string }> {
     const snapshots = new Map<string, { samples: EntityVisualSample[]; sourceKey: string }>();
-    if (!this.hass) return snapshots;
+    if (!this.hass || this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) return snapshots;
     if (this._config?.live_states === false) {
       for (const runtime of this._activityRt.values()) clearTimeout(runtime.timer);
       this._activityRt.clear();
@@ -11812,7 +11904,7 @@ export class HouseplanCard extends LitElement {
       this._planHass, this._displayDevices, null, this._virtualLights,
     );
     for (const d of this._displayDevices) {
-      if (d.hidden) continue;
+      if (d.hidden || d.space !== this._space) continue;
       // Alarm/continuous semantics are resolved from the current samples and
       // need no finite history. Keep that history only while its display mode
       // can actually show it, so a later mode change cannot replay old edges.
@@ -11846,10 +11938,10 @@ export class HouseplanCard extends LitElement {
    * unknown/unavailable establish a baseline and never fake a detection.
    */
   private _activityTick(): void {
-    if (!this.hass) return;
+    if (!this.hass || this.ownerDocument.visibilityState === 'hidden' || this._routeDepartureHandled) return;
     const snapshots = this._syncActivityRuntime();
     for (const d of this._displayDevices) {
-      if (d.hidden) continue;
+      if (d.hidden || d.space !== this._space) continue;
       if (normalizeDeviceDisplay(d.marker?.display) !== 'icon_ripple') continue;
       const snapshot = snapshots.get(d.id) || this._activitySnapshot(d);
       const { samples, sourceKey } = snapshot;

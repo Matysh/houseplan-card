@@ -39,6 +39,10 @@ async function retire(page, kind) {
   else if (kind === 'detach') await page.evaluate(() => window.__card.remove());
   else if (kind === 'newest') await marker(page, 'd_light1').click({ button: 'right' });
   else if (kind === 'blur' || kind === 'pagehide') await page.evaluate(kind => window.dispatchEvent(new Event(kind)), kind);
+  else if (kind === 'visibility') await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
   else if (kind === 'user' || kind === 'connection') await page.evaluate(kind => {
     const c = window.__card, original = c.hass;
     c.hass = { ...original, user: kind === 'user' ? { ...original.user, id: 'new-menu-user' } : original.user,
@@ -47,7 +51,7 @@ async function retire(page, kind) {
   await settled(page);
 }
 try {
-  for (const kind of onlyRetry ? [] : ['permission', 'space', 'hidden', 'rebind', 'detach', 'newest', 'blur', 'pagehide', 'user', 'connection']) {
+  for (const kind of onlyRetry ? [] : ['permission', 'space', 'hidden', 'rebind', 'detach', 'newest', 'blur', 'pagehide', 'user', 'connection', 'visibility']) {
     const { page, browser } = await setup(); let release;
     const hold = new Promise(resolve => { release = resolve; });
     await page.route(`**/${chunk}*`, async route => { await hold; await route.fallback(); });
@@ -67,6 +71,19 @@ try {
       } else check(`held/${kind}:retired menu absent`, await menu(page).count(), 0);
       check(`held/${kind}:no late write or service`, await page.evaluate(n => window.__menuLife.writes.length === n
         && window.__menuLife.services.length === 0, before));
+      if (kind === 'visibility') {
+        const reveal = async () => {
+          await page.evaluate(() => { delete document.visibilityState; document.dispatchEvent(new Event('visibilitychange')); });
+          await settled(page);
+        };
+        await reveal();
+        check('visibility:held retired menu does not revive', await menu(page).count(), 0);
+        await open(page); // Cached code can serve a new trusted visible request.
+        await retire(page, 'visibility'); await reveal();
+        check('visibility:already loaded menu retires too', await menu(page).count(), 0);
+        await open(page);
+        check('visibility:fresh native request remains usable', await menu(page).count(), 1);
+      }
       report.cases.push(`held/${kind}`);
     } finally { release(); await browser.close(); }
   }

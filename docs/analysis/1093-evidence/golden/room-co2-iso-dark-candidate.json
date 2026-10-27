@@ -1,0 +1,59 @@
+{
+  "schema": 2,
+  "mode": "capture",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+    "ci": null
+  },
+  "generatedAt": "2026-10-27T23:22:22.893Z",
+  "matrixVersion": 103,
+  "buildFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+  "chromium": "151.0.7922.34",
+  "baselineManifest": {
+    "present": true,
+    "valid": false,
+    "matrixVersion": 90,
+    "chromium": "151.0.7922.34"
+  },
+  "results": [
+    {
+      "id": "room-co2-iso-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "64edfd317c6ab25bd0d3b67b3d01bf724f60286d7897686ac94f972cb9222fea",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/golden/actual/room-co2-iso-dark.png",
+      "baseline": "/home/matysh/hp-1093-selective-invalidation-20261027/demo/golden/baselines/room-co2-iso-dark.png",
+      "baselineSha256": "ac426ac8e76c6def861cf0d3f86dd32f9f98a0ef4ca2a10164aea9de259676ae",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1000,
+        900
+      ],
+      "baselineSize": [
+        1000,
+        900
+      ],
+      "differingPixels": 69092,
+      "diffRatio": 0.07676888888888889,
+      "maxObservedDelta": 243,
+      "passed": false,
+      "diff": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/golden/diff/room-co2-iso-dark.png"
+    }
+  ]
+}

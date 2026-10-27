@@ -104,23 +104,27 @@ export class ViewRuntimeBoundary<Host, Runtime> {
     const generation = ++this.generation;
     this.owner = owner;
     const current = () => this.active && this.generation === generation && this.port.current(owner);
+    const abandoned = (): false => {
+      if (this.generation === generation) { this.value = 'idle'; this.pending = null; }
+      return false;
+    };
     const failed = (error: unknown): false => {
       if (current()) {
         this.terminal = error instanceof ViewRuntimeFingerprintMismatch;
         this.value = 'error'; this.pending = null; this.port.changed();
-      }
+      } else return abandoned();
       return false;
     };
     try {
       const warm = this.code.create(this.host);
       if (warm !== null) {
-        if (!current()) return Promise.resolve(false);
+        if (!current()) return Promise.resolve(abandoned());
         this.port.install(warm); this.value = 'ready'; this.port.changed();
         return Promise.resolve(true);
       }
       this.value = 'loading'; this.port.changed();
       this.pending = this.code.ensure(attempt).then(factory => {
-        if (!current()) return false;
+        if (!current()) return abandoned();
         this.port.install(factory(this.host));
         this.value = 'ready'; this.pending = null; this.port.changed();
         return true;

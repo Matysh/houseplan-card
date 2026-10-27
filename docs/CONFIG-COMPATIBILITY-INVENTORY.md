@@ -1,10 +1,10 @@
 # Config compatibility inventory (#1015)
 
-Reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
+Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **625 individually classified matching lines**, sha256:`220c327ef2dae82de27d2acde8944f85203533475440ccba96577b9aa6f0cbed`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot: **628 individually classified matching lines**, sha256:`45f4056f7d160fcb4838170e546c9d507a5b3208164eab1e2f5887b2c499b2c9`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
 
-Captured product trees: src `22655ecb08f00d9b1f6c8381a1a3d3c9c51487cb`; integration `0019b652824aaad42fd0e6f5372cb595e8a41dc7`. These immutable Git trees identify this source snapshot; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
+Historical #1015 captured product trees: src `22655ecb08f00d9b1f6c8381a1a3d3c9c51487cb`; integration `0019b652824aaad42fd0e6f5372cb595e8a41dc7`. These immutable Git trees identify the original capture; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
 
 Reproduce with `node scripts/config-compatibility-inventory.mjs --check`; `--scan` prints unclassified current source for deliberate review. A match can name an import or current algorithm without defining an old stored form. The table below classifies those separately; a current optional default is not a forced migration.
 
@@ -180,7 +180,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [src/space-reference-repair.ts](../src/space-reference-repair.ts) | 6 | branch:layout-owner-repair |
 | [src/space-render.ts](../src/space-render.ts) | 3 | exclusion:current-feature |
 | [src/stairs.ts](../src/stairs.ts) | 1 | exclusion:current-feature |
-| [src/structural-space-record.ts](../src/structural-space-record.ts) | 1 | exclusion:current-feature |
+| [src/structural-space-record.ts](../src/structural-space-record.ts) | 3 | exclusion:current-feature |
 | [src/styles/devices.styles.ts](../src/styles/devices.styles.ts) | 2 | exclusion:provider-api |
 | [src/summary-panel-host.ts](../src/summary-panel-host.ts) | 1 | exclusion:current-feature |
 | [src/summary-panel-runtime-loaded.ts](../src/summary-panel-runtime-loaded.ts) | 5 | exclusion:session-state |
@@ -197,7 +197,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [src/types.ts](../src/types.ts) | 1 | branch:vacuum-map-calibration |
 | [src/types.ts](../src/types.ts) | 1 | branch:vacuum-trail |
 | [src/types.ts](../src/types.ts) | 1 | branch:zero-wall-boundaries |
-| [src/types.ts](../src/types.ts) | 3 | exclusion:current-feature |
+| [src/types.ts](../src/types.ts) | 4 | exclusion:current-feature |
 | [src/vacuum-ecovacs-client.ts](../src/vacuum-ecovacs-client.ts) | 1 | exclusion:provider-api |
 | [src/vacuum-route-edit.ts](../src/vacuum-route-edit.ts) | 2 | branch:vacuum-map-calibration |
 | [src/vacuum-routes.ts](../src/vacuum-routes.ts) | 11 | branch:vacuum-map-calibration |

@@ -14,6 +14,20 @@ const fixture = code => {
     replace: () => { owner = {}; }, disconnect: () => { connected = false; boundary.disconnect(); } };
 };
 
+test('#1093 demand disappearing during import prevents installation and permits latest-demand show', async () => {
+  const pending=deferred();let demanded=true,installed=0,imports=0;
+  const code=new ViewRuntimeCode(()=>{imports++;return pending.promise;});
+  const owner={},boundary=new ViewRuntimeBoundary({},code,{owner:()=>owner,current:()=>demanded,
+    install:()=>installed++,changed:()=>{}});
+  boundary.connect(false);
+  const result=boundary.ensure();demanded=false;
+  pending.resolve(()=>({}));assert.equal(await result,false);
+  assert.equal(installed,0);assert.equal(boundary.state,'idle');
+  assert.equal(await boundary.ensure(),false,'hidden demand does not start optional work');
+  demanded=true;assert.equal(await boundary.ensure(),true);
+  assert.equal(installed,1);assert.equal(imports,1,'return uses code but creates only the current owner runtime');
+});
+
 test('#848 AC1/AC2: initial error is visible and ticks never import; one explicit retry has a fresh attempt', async () => {
   const attempts = [];
   const code = new ViewRuntimeCode(async attempt => { attempts.push(attempt); throw Error('root404'); });

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { saveRoomEdit } from '../test-build/editors/room-save.js';
 import { rememberRoomBaseline, roomDirty } from '../test-build/editors/room-form-state.js';
+import { animateDialogExit } from '../test-build/editors/dialog-baseline.js';
 
 function fixture(settings = {}) {
   const room = { id:'r1',name:'Living room',area:null,poly:[[0,0],[1,0],[1,1]],settings };
@@ -12,13 +13,33 @@ function fixture(settings = {}) {
     _roomTempMin:'',_roomTempMax:'24',_roomTempSrc:'entity:sensor.missing',_roomHumSrc:'',
     _roomCo2Src:'entity:sensor.air',_roomNameScale:1.1,_roomLabelScale:.9,
     _saveConfigDebounced:{pending:()=>false},_maybeRebuildDevices(){},requestUpdate(){},
-    _showToast(){},_t:key=>key,
+    _showToast(){},_t:key=>key,_errText:String,
   };
   const runtime = { host,_stageOptimisticConfig:(base,candidate)=>({base,candidate}),
     _saveConfigNow:async attempt=>{payload=attempt.candidate;},
   };
   return {host,runtime,original:structuredClone(config),payload:()=>payload};
 }
+
+test('#1093 deferred ACK never closes a room early or retires a replacement owner', async()=>{
+  for(const scenario of ['accepted','replacement','context','refused']){
+    const f=fixture();rememberRoomBaseline(f.host);
+    let current=true,release,reject,rollbacks=0;
+    f.host._configWriteGuard=()=>()=>current;
+    f.host._rollbackOptimistic=()=>{rollbacks++;return false;};
+    f.runtime._saveConfigNow=()=>new Promise((resolve,fail)=>{release=resolve;reject=fail;});
+    const pending=saveRoomEdit(f.runtime);
+    assert.equal(f.host._roomDialog,true);
+    assert.equal(animateDialogExit(f.host,'room'),true);
+    if(scenario==='replacement')rememberRoomBaseline(f.host);
+    if(scenario==='context')current=false;
+    if(scenario==='refused')reject(new Error('refused'));else release();
+    await pending;
+    assert.equal(f.host._roomDialog,scenario!=='accepted',scenario);
+    assert.equal(animateDialogExit(f.host,'room'),scenario!=='accepted',scenario);
+    assert.equal(rollbacks,scenario==='refused'?1:0);
+  }
+});
 
 test('#1078 the room draft is local, dirty on sunlight changes and sparse on accepted save', async()=>{
   for (const enabled of [true,false]) {

@@ -1,3 +1,4 @@
+import { waitForPriorConfigWrite } from './prior-config-write';
 /** Devices-only command/menu, deliberately outside the initial View graph (#935). */
 import { nothing, type TemplateResult } from 'lit';
 import { EditorContextMenu, menuPoint } from './editor-context-menu';
@@ -120,7 +121,7 @@ export class DeviceCopyEditor {
       // getRandomValues also works on ordinary HTTP HA installations.
       id = 'v_' + Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16).padStart(8, '0')).join('');
       if (h._saveConfigDebounced.pending()) h._saveConfigDebounced.flush();
-      await h._writeChain;
+      await waitForPriorConfigWrite(h);
       await this.history?.settle();
       phase('queue');
       if (!this.unchanged(m) || h._dirtyPos.size || h._sentPos.size) fail('device.copy_changed');

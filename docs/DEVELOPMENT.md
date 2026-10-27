@@ -1,6 +1,9 @@
 # Development and deployment
 
+
 The #1089 View-menu owner distinguishes normal selection close from external retirement. Test delayed runtime import, target replacement, queued write and confirmation; the original pointer close consumes its compatibility click, while fresh pointer/keyboard input resets that barrier. Keep common context-menu styles adopted before the first rendered frame and avoid using projected hidden=false as saved visibility.
+
+
 
 Dialog picker maintenance (#998): `node demo/smoke_dialog_picker_998.mjs` sweeps
 the real dialog fields; `node demo/ui-lab/verify-icon-picker.mjs --ha-cache PATH`
@@ -18,6 +21,20 @@ The onboarding reference carries only that delta, retaining its 927 B inherited
 gap and 2000 B band. The generated JS resource baseline moves from 3574169 to
 3580235 bytes. Timing limits and structural core limits are unchanged.
 
+## Selective invalidation verification (#1093)
+
+Use the shared `node demo/benchmark_selective_invalidation.mjs --profile=full --output=artifacts/performance-smoke/selective-invalidation.json` before S7 and beta. It asserts native Save/Copy/history timings, coherent readback, real physical counters, cold saves and DPR siblings on nonempty synthetic small/large scenes. Only the declared 0/320 ms fixture delay is subtracted. Keep raw baseline RED and final source-matched GREEN separately; `--iterations=1` is an explicitly marked correctness probe, never timing acceptance. The four bounded core wrappers are mandatory selected-browser inputs for frontend/build and gate/fixture changes. Do not interpret ignored JSON existence, a historical bundle or a missing core job as PASS. [Audit and current evidence](analysis/1093-selective-invalidation-2026-10-28.md).
+
+
+
+The owner authorized the measured #1093 resource increase over frozen #1089:
+initial View 352904→356448 B gzip (+3544), lazy editor +147 B, onboarding −36 B,
+and generated JS +13546 B. Dependency tracking and owner/demand fences are
+required before optional imports. Host references increase by 47; the baseline
+carries that exact delta and preserves its inherited 23-reference gap. The initial
+ceiling likewise preserves its inherited 457-B excess and unchanged 2000-B band;
+absolute and timing limits stay unchanged. Full asset/source verification and
+measured values are recorded in the #1093 evidence report.
 LQI hot-path regression (#1090): run the real-HA subset
 `python -m pytest tests_backend/test_ha_zigbee_lqi_performance.py tests_backend/test_ha_zigbee_lqi.py tests_backend/test_zigbee_lqi_model.py -q -s`.
 The pinned HA 2026.8.3 harness and explicit modern API-contract doubles prove

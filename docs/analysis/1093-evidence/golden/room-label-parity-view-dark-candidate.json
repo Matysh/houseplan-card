@@ -1,0 +1,59 @@
+{
+  "schema": 2,
+  "mode": "capture",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+    "ci": null
+  },
+  "generatedAt": "2026-10-27T23:22:19.972Z",
+  "matrixVersion": 103,
+  "buildFingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+  "chromium": "151.0.7922.34",
+  "baselineManifest": {
+    "present": true,
+    "valid": false,
+    "matrixVersion": 90,
+    "chromium": "151.0.7922.34"
+  },
+  "results": [
+    {
+      "id": "room-label-parity-view-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "different",
+      "actualSha256": "cf0a0f2dd1faf4b6b541c33a8b16fa06c0eec81d8bae173abed62e90c19b4d6e",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      },
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/golden/actual/room-label-parity-view-dark.png",
+      "baseline": "/home/matysh/hp-1093-selective-invalidation-20261027/demo/golden/baselines/room-label-parity-view-dark.png",
+      "baselineSha256": "75815e9fc5a7b04d096739bf0c3af11725d95533391344a5a1112df7b0803e8f",
+      "dimensionsMatch": true,
+      "actualSize": [
+        1000,
+        900
+      ],
+      "baselineSize": [
+        1000,
+        900
+      ],
+      "differingPixels": 98125,
+      "diffRatio": 0.10902777777777778,
+      "maxObservedDelta": 243,
+      "passed": false,
+      "diff": "/home/matysh/hp-1093-selective-invalidation-20261027/artifacts/golden/diff/room-label-parity-view-dark.png"
+    }
+  ]
+}

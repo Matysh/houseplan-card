@@ -13,8 +13,25 @@ export type DialogKind = 'space' | 'settings' | 'room' | 'marker';
 
 const baselines = new WeakMap<object, Map<DialogKind, string>>();
 const sessions = new WeakMap<object, Map<DialogKind, object>>();
+const savedExits = new WeakMap<object, Map<DialogKind, object>>();
+
+/** Only a reliable ACK belonging to this still-open form may skip exit paint. */
+export function acceptSavedDialogExit(host: object, kind: DialogKind, owner: object | undefined): boolean {
+  if (!owner || dialogSession(host, kind) !== owner) return false;
+  const accepted = savedExits.get(host) ?? new Map<DialogKind, object>();
+  accepted.set(kind, owner);
+  savedExits.set(host, accepted);
+  return true;
+}
+
+export function animateDialogExit(host: object, kind: DialogKind): boolean {
+  const owner = dialogSession(host, kind);
+  const accepted = savedExits.get(host)?.get(kind);
+  return !accepted || (!!owner && owner !== accepted);
+}
 
 export function rememberDialogBaseline(host: object, kind: DialogKind, key: string): void {
+  savedExits.get(host)?.delete(kind);
   const map = baselines.get(host) ?? new Map<DialogKind, string>();
   map.set(kind, key);
   baselines.set(host, map);

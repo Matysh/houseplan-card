@@ -123,6 +123,7 @@ export function createRenderDeviceSnapshot(options: {
   sourceSequence: number;
   hass: any;
   devices: readonly DevItem[];
+  dependencyDevices?: readonly DevItem[];
   presentations: ReadonlyMap<string, ResolvedDevicePresentation>;
   positions?: ReadonlyMap<string, { x: number; y: number }>;
   facts?: ReadonlyMap<string, unknown>;
@@ -155,7 +156,7 @@ export function createRenderDeviceSnapshot(options: {
   const batteryContext = options.showBattery !== false
     ? options.batteryContext || createDeviceBatteryContext(options.hass) : undefined;
   const signalContext = options.signalContext || createDeviceSignalContext(options.hass);
-  for (const device of options.devices) {
+  for (const device of options.dependencyDevices || options.devices) {
     // Independent of battery and room membership, including missing own rows.
     for (const entityId of deviceSignalEntityIds(device, signalContext)) entityIds.add(entityId);
     // Entity-bound markers need their physical siblings even if the registry

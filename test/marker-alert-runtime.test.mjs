@@ -28,6 +28,24 @@ test('#1000 continuous 3000ms activation/removal, noise cancels either candidate
   assert.equal(f.queue.size, 0);
 });
 
+test('#1093 hidden confirmation keeps continuous source history without a deadline timer', () => {
+  const f=fixture();f.update();const stale=[...f.queue.values()][0].callback;
+  f.advance(1000);f.observation.demanded=false;f.update();
+  assert.equal(f.queue.size,0);const reads=f.stats().reads;stale();assert.equal(f.stats().reads,reads);
+  f.advance(5000);assert.equal(f.runtime.snapshot().length,0);
+  f.observation.demanded=true;f.update();assert.equal(f.runtime.snapshot().length,1);
+  assert.equal(f.queue.size,0,'show uses the elapsed continuous observation, no replay timer');
+});
+
+test('#1093 hidden condition changes restart the same 3000ms rule before reveal', () => {
+  const f=fixture();f.observation.demanded=false;f.update();
+  f.advance(2000);f.state.value=0;f.update();
+  f.advance(2500);f.state.value=1100;f.update();assert.equal(f.queue.size,0);
+  f.advance(5000);f.observation.demanded=true;f.update();
+  assert.equal(f.runtime.snapshot().length,0);assert.equal([...f.queue.values()][0].due,5500);
+  f.advance(5500);assert.equal(f.runtime.snapshot().length,1);
+});
+
 test('#1000 deadline reads the current field rather than a stale true closure', () => {
   const f = fixture(); f.update(); f.state.value = 0; f.advance(3000);
   assert.equal(f.runtime.snapshot().length, 0); assert.equal(f.queue.size, 0);

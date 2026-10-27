@@ -12,10 +12,45 @@ import { lightGeometryFingerprint } from '../test-build/glow-scene.js';
 import { computeSunRays } from '../test-build/sun.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
 import { openingWallIndex } from '../test-build/wall-thickness.js';
+import { physicalSpaceRecord, structuralSpaceRecord } from '../test-build/structural-space-record.js';
 
 const record = (id, cm = 15) => ({
   id, cell_cm: 5, rooms: [{ id: `${id}1`, poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5]] }],
   walls: [{ key: 'k', cm, a: [0.1, 0.1], b: [0.5, 0.1] }],
+});
+
+test('#1093 canonical ACK omission of empty legacy collections preserves physics', () => {
+  const before = { id:'A', rooms:[], walls:[], partitions:[] }, after={id:'A',rooms:[]};
+  assert.deepEqual(physicalSpaceRecord(before), physicalSpaceRecord(after));
+  assert.notDeepEqual(structuralSpaceRecord(before), structuralSpaceRecord(after), 'history remains complete');
+  assert.notDeepEqual(physicalSpaceRecord({...after,partitions:[{id:'p'}]}),physicalSpaceRecord(after));
+  assert.deepEqual(physicalSpaceRecord({...after,plan_url:null,plan_aspect:null,zero_wall_style:'dashed'}),physicalSpaceRecord(after));
+  for(const positive of [{plan_url:'/plan.svg'},{plan_aspect:2},{zero_wall_style:'solid'}])
+    assert.notDeepEqual(physicalSpaceRecord({...after,...positive}),physicalSpaceRecord(after));
+});
+
+test('#1093 physical keys exclude known display dependencies and retain unknown/structural values', () => {
+  const base=record('A'), key=contentFingerprint(physicalSpaceRecord(base));
+  for(const field of ['bg_mode','bg_color','room_color','room_opacity','name_color','wall_fill',
+    'show_names','show_borders','hide_decor','hide_openings','fill_mode','custom_fill','glow_enabled',
+    'temp_min','temp_max','card_name_scale','card_label_scale','label_temp','label_hum','label_co2',
+    'label_lqi','label_light','north_deg','sun_rays','sun_transparent','sun_ray_origin','show_lqi',
+    'show_lqi_mode','show_device_battery_mode','glow','temp_source','hum_source','co2_source','name_scale','label_scale']) {
+    for(const value of [null,false,0,'different',{c:'#123456',a:.7}]) {
+      const changed={...base,settings:{[field]:value},rooms:base.rooms.map(r=>({...r,settings:{[field]:value}}))};
+      assert.equal(contentFingerprint(physicalSpaceRecord(changed)),key,field);
+      assert.notEqual(contentFingerprint(structuralSpaceRecord(changed)),contentFingerprint(structuralSpaceRecord(base)),
+        'history remains complete');
+    }
+  }
+  assert.equal(contentFingerprint(physicalSpaceRecord({...base,title:'Name',rooms:base.rooms.map(r=>({...r,name:'Room',area:'ha-area'}))})),key);
+  const keys=[undefined,null,false,0].map(value=>contentFingerprint(physicalSpaceRecord({...base,
+    settings:value===undefined?{}:{future_physics:value}})));
+  assert.equal(new Set(keys).size,4,'unknown fields distinguish absent/null/false/zero');
+  for(const field of ['cell_cm','view_box','zero_wall_style','plan_scale','wall_segments','partitions','wall_columns','openings','stairs'])
+    assert.notEqual(contentFingerprint(physicalSpaceRecord({...base,[field]:'changed'})),key,field);
+  assert.notEqual(contentFingerprint(physicalSpaceRecord({...base,settings:null})),key,'explicit null remains conservative');
+  assert.deepEqual(base,record('A'),'projection does not mutate source');
 });
 
 test('#1078 solar flags move the solar key without making physical or artificial geometry cold', () => {

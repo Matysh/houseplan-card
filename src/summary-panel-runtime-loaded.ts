@@ -27,7 +27,7 @@ import { stableSummaryPlacementSlot, summaryPreferenceKey } from './summary-pane
 import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
 } from './summary-panel-picker';
-import { floorRecordKeyMemo } from './floor-geometry-key';
+import { floorRecordKeyMemo, physicalFloorFingerprint } from './floor-geometry-key';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -99,7 +99,7 @@ export class LoadedSummaryPanelRuntime {
    */
   private readonly areaFloors = new Map<string, number | null>();
   /** #769: the floor record key, one fingerprint per floor and epoch (test seam). */
-  private areaKeys = floorRecordKeyMemo();
+  private areaKeys = floorRecordKeyMemo(physicalFloorFingerprint);
   private storageUnavailable = false;
   private clockContext = '';
   private editorRenderer: SummaryPanelEditorRenderer | null = null;
@@ -125,8 +125,11 @@ export class LoadedSummaryPanelRuntime {
 
   public get dialogOpen(): boolean { return !!this.dialog; }
 
-  /** Entity rows that can affect any supported saved summary-panel frame. */
-  public entityIds(): readonly string[] { return summaryPanelEntityIds(this.config().config); }
+  /** Only mounted consumers subscribe; opening/switching forces a new capture. */
+  public entityIds(): readonly string[] {
+    if (this.dialog) return summaryPanelEntityIds(this.dialog.draft);
+    return [...new Set(this.demandedValues().flatMap(value => value.source.type === 'entity' ? [value.source.entity_id] : []))];
+  }
 
   /** Read existing state only: do not load metrics or schedule an aggregate. */
   public supportFacts(): Record<string, unknown> {
@@ -417,6 +420,10 @@ export class LoadedSummaryPanelRuntime {
   private resetLifecycle(): void {
     this.presentation.reset();
     this.lifecycleGeneration++;
+    // Retired callbacks keep their generation, but must not hold the next
+    // owner's scheduling/import latch while its first frame is pending.
+    this.metricsRefresh = 0;
+    this.metricsLoad = null;
     this.dialog = null;
     this.entityIndex = null;
     this.deviceMemo = null;
@@ -744,12 +751,29 @@ export class LoadedSummaryPanelRuntime {
 
   /** Свежи ли мемо-агрегаты для текущей конфигурации и реестра. */
   /** @internal — читается рендером и тестами (#509). */
-  public metricsFresh(): boolean {
-    return !!this.deviceMemo && !!this.areaMemo
+  public metricsFresh(demand = { devices: true, area: true }): boolean {
+    return (!demand.devices || !!this.deviceMemo
       && this.deviceMemo.cfgEpoch === this.host._cfgEpoch
       && this.deviceMemo.layoutRev === this.host._layoutRev
-      && this.deviceMemo.registryRev === this.host._haRegistry.revision
-      && this.areaMemo.cfgEpoch === this.host._cfgEpoch;
+      && this.deviceMemo.registryRev === this.host._haRegistry.revision)
+      && (!demand.area || !!this.areaMemo && this.areaMemo.cfgEpoch === this.host._cfgEpoch);
+  }
+
+  private demandedValues(): readonly SummaryPanelValue[] {
+    const config = this.config().config;
+    if (!this.connected || !this.host.isConnected || !config
+        || this.host.ownerDocument.visibilityState === 'hidden'
+        || !effectiveSummaryVisible({view:this.host._mode === 'view', localShow:this.local.show,
+          showOnMobile:config.show_on_mobile,narrow:this.host.narrow,fits:this.layout().fits})) return [];
+    return visibleSummaryBlocks(config, this.host._space).flatMap(block => block.values);
+  }
+
+  private metricDemand(): { devices: boolean; area: boolean } {
+    const values = this.demandedValues();
+    return {
+      devices: values.some(value => value.source.type === 'system' && value.source.key === 'device_count'),
+      area: values.some(value => value.source.type === 'system' && value.source.key === 'total_area'),
+    };
   }
 
   /**
@@ -762,17 +786,19 @@ export class LoadedSummaryPanelRuntime {
    * на экране до прихода нового — прыжка «значение → скелет → значение» нет.
    */
   private scheduleMetrics(): void {
-    if (this.metricsRefresh || !this.metricsModule || this.metricsFresh()) return;
+    if (this.metricsRefresh || !this.metricsModule || this.metricsFresh(this.metricDemand())) return;
     const generation = this.lifecycleGeneration;
     const view = typeof window === 'undefined' ? undefined : window;
     const run = () => {
-      this.metricsRefresh = 0;
       if (!this.current(generation)) return;
+      this.metricsRefresh = 0;
+      const demand = this.metricDemand();
+      if (!demand.devices && !demand.area) { this.areaSteps = null; return; }
       // Порциями по комнате с бюджетом на кадр: полный обход большого дома —
       // полторы секунды непрерывной работы, и вне кадра он всё равно
       // «подвешивал» бы интерфейс (#509). Каждая порция короче кадра, между
       // порциями браузер обрабатывает ввод и рисует.
-      const done = this.advanceMetrics(SUMMARY_METRICS_FRAME_BUDGET_MS);
+      const done = this.advanceMetrics(SUMMARY_METRICS_FRAME_BUDGET_MS, demand);
       this.host.requestUpdate();
       if (!done) this.scheduleMetrics();
     };
@@ -790,10 +816,11 @@ export class LoadedSummaryPanelRuntime {
    * Один шаг фонового расчёта: работает не дольше бюджета, возвращает `true`,
    * когда считать больше нечего (#509).
    */
-  public advanceMetrics(budgetMs = SUMMARY_METRICS_FRAME_BUDGET_MS): boolean {
+  public advanceMetrics(budgetMs = SUMMARY_METRICS_FRAME_BUDGET_MS, demand = { devices: true, area: true }): boolean {
     const module = this.metricsModule;
     if (!module) return true;
-    this.computeDeviceCount();
+    if (demand.devices) this.computeDeviceCount();
+    if (!demand.area) { this.areaSteps = null; return true; }
     if (!this.host._serverCfg) {
       this.areaMemo = { cfgEpoch: this.host._cfgEpoch, value: null };
       return true;
@@ -888,13 +915,14 @@ export class LoadedSummaryPanelRuntime {
   }
 
   private ensureMetrics(): void {
-    if (this.metricsModule || this.metricsLoad) return;
+    if (this.metricsModule || this.metricsLoad || !this.demandedValues().length) return;
     const generation = this.lifecycleGeneration;
-    this.metricsLoad = import('./summary-panel-metrics');
-    void this.metricsLoad.then((module) => {
+    const pending = this.metricsLoad = import('./summary-panel-metrics');
+    void pending.then((module) => {
+      if (!this.current(generation) || !this.demandedValues().length) return;
       this.metricsModule = module;
-      if (this.current(generation)) this.host.requestUpdate();
-    }).catch(() => undefined).finally(() => { this.metricsLoad = null; });
+      this.host.requestUpdate();
+    }).catch(() => undefined).finally(() => { if (this.metricsLoad === pending) this.metricsLoad = null; });
   }
 
   /** Render-time layout from the last measurement: no style or layout read (#725). */

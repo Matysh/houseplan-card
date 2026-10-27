@@ -337,6 +337,92 @@ test('#493 late reload and confirmation completions stay outside a new lifecycle
   }
 });
 
+test('#1093 summary computes only demanded aggregate and drops hidden pending work', () => {
+  const browser=installBrowserGlobals();
+  try {
+    const host=hostFixture(),runtime=new LoadedSummaryPanelRuntime(host);
+    const values=[{id:'count',label:'Count',source:{type:'system',key:'device_count'}},
+      {id:'area',label:'Area',source:{type:'system',key:'total_area'}}];
+    host._settings.summary_panel={version:1,title:'Summary',show_on_mobile:true,
+      blocks:[{id:'count',title:'Count',visible:true,scope:{type:'all'},values:[values[0]]},
+        {id:'area',title:'Area',visible:false,scope:{type:'all'},values:[values[1]]}]};
+    runtime.connect();runtime.local.show=true;
+    runtime.stage={width:1200,height:900,minimumHeight:162,controlTop:0,safeLeft:0,safeRight:0,safeTop:0,safeBottom:0};
+    let devices=0,rooms=0;
+    runtime.metricsModule={representedHaDeviceIds:()=>{devices++;return new Set(['device']);},
+      cleanFloorAreaSteps:function*(){rooms++;yield;rooms++;return 12;}};
+    assert.deepEqual(runtime.metricDemand(),{devices:true,area:false});
+    runtime.advanceMetrics(-1,runtime.metricDemand());
+    assert.equal(devices,1);assert.equal(rooms,0,'hidden area does not start floor geometry');
+    host._settings.summary_panel.blocks[1].visible=true;
+    assert.equal(runtime.advanceMetrics(-1,runtime.metricDemand()),false);
+    assert.equal(rooms,1,'visible area is a real positive consumer');
+    host.ownerDocument.visibilityState='hidden';
+    assert.deepEqual(runtime.metricDemand(),{devices:false,area:false});
+    runtime.advanceMetrics(-1,runtime.metricDemand());
+    assert.equal(runtime.areaSteps,null,'retire old continuation when demand disappears');
+    assert.equal(rooms,1);
+    host.ownerDocument.visibilityState='visible';host._cfgEpoch++;
+    runtime.advanceMetrics(Infinity,runtime.metricDemand());
+    assert.equal(runtime.areaMemo.cfgEpoch,host._cfgEpoch,'show calculates latest revision');
+    assert.equal(rooms,3,'old partial generator was not resumed');
+    runtime.disconnect();assert.deepEqual(runtime.metricDemand(),{devices:false,area:false});
+  } finally {browser.restore();}
+});
+
+const showAggregate = (runtime, host) => {
+  host._settings.summary_panel = { version: 1, title: 'Summary', show_on_mobile: true,
+    blocks: [{ id: 'count', title: 'Count', visible: true, scope: { type: 'all' },
+      values: [{ id: 'count', label: 'Count', source: { type: 'system', key: 'device_count' } }] }] };
+  runtime.local.show = true;
+  runtime.stage = { width: 1200, height: 900, minimumHeight: 162, controlTop: 0,
+    safeLeft: 0, safeRight: 0, safeTop: 0, safeBottom: 0 };
+};
+
+test('#1093 a retired aggregate callback cannot starve or clear the new owner work', () => {
+  const browser = installBrowserGlobals(), previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const callbacks = new Map(); let nextId = 0;
+  Object.defineProperty(globalThis, 'window', { configurable: true,
+    value: { setTimeout: callback => { callbacks.set(++nextId, callback); return nextId; } } });
+  try {
+    const host = hostFixture(), runtime = new LoadedSummaryPanelRuntime(host);
+    runtime.connect(); showAggregate(runtime, host);
+    let computations = 0;
+    runtime.metricsModule = { representedHaDeviceIds: () => { computations++; return new Set(['device']); } };
+    runtime.scheduleMetrics(); const retired = runtime.metricsRefresh;
+    runtime.disconnect(); runtime.connect(); showAggregate(runtime, host);
+    runtime.scheduleMetrics(); const current = runtime.metricsRefresh;
+    assert.notEqual(current, retired, 'the new visible owner must schedule its own work');
+    callbacks.get(retired)();
+    assert.equal(computations, 0, 'retired callbacks do not compute');
+    assert.equal(runtime.metricsRefresh, current, 'retired callbacks cannot clear the new latch');
+    callbacks.get(current)();
+    assert.equal(computations, 1);
+    assert.equal(runtime.deviceMemo.value, 1, 'new owner completes without an unrelated HA tick');
+    runtime.disconnect();
+  } finally {
+    if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow); else delete globalThis.window;
+    browser.restore();
+  }
+});
+
+test('#1093 an in-flight metrics import does not strand a reconnected visible owner', async () => {
+  const browser = installBrowserGlobals();
+  try {
+    const host = hostFixture(), runtime = new LoadedSummaryPanelRuntime(host);
+    runtime.connect(); showAggregate(runtime, host);
+    runtime.ensureMetrics(); const retired = runtime.metricsLoad;
+    assert.ok(retired);
+    runtime.disconnect(); runtime.connect(); showAggregate(runtime, host);
+    runtime.ensureMetrics(); const current = runtime.metricsLoad;
+    assert.notEqual(current, retired, 'the new owner gets its own import continuation');
+    await Promise.all([retired, current]);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.ok(runtime.metricsModule, 'current visible owner installs metrics without an unrelated HA tick');
+    runtime.disconnect();
+  } finally { browser.restore(); }
+});
+
 test('#509 AC1/AC2/AC9: значение показывает скелет до готовности, ошибку — только для недоступного источника', () => {
   const browser = installBrowserGlobals();
   try {

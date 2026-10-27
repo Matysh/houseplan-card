@@ -43,7 +43,7 @@ export default {
         '/src/wall-end-align.ts', '/src/wall-merge.ts', '/src/coincident-partitions.ts',
         '/src/device-contact-collision.ts', '/src/device-inbox-i18n.ts',
         // #1045: the node Select boundary uses the same menu as the runtime.
-        '/src/editor-context-menu.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
+        '/src/editor-context-menu.ts', '/src/prior-config-write.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
     },
     format: 'es',
     sourcemap: DIAGNOSTIC_COVERAGE ? 'hidden' : false,
