@@ -2,6 +2,13 @@
 
 Baseline: `455535be9da51e0eef11ceccd1b9545a39875425`; current integration base: frozen #1089 `5228e2ff1fbe51ea55f324b056d9f3806246e041`, containing accepted #998/#1000/#1107. Synthetic fixtures only. The final timing matrix runs on this joint source; S7 still requires actual #1089 acceptance and an identical product/input fingerprint.
 This report records measured results separately from remaining acceptance work.
+Accepted backend #1096 was subsequently merged from dev
+`bffa1b7cd2c9c3499c35b0288bbdeeda6091748e`; recomputed frontend fingerprint
+remained exactly `21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a`.
+The combined compatibility inventory has 635 exact classified matches. Two old
+mutation anchors were relocated to the same full-schema canonicalization and
+config/set marker-ID checks after the backend refactor; their guards and failure
+semantics are unchanged, and no mutants were executed.
 
 ## Measured diagnosis
 
@@ -230,7 +237,7 @@ substitute or dependency for those checks.
 Actual accepted joint-source identity and full normal pre-push remain required
 before S7. Selected Golden proof and release documentation are complete;
 generated CI inventory is refreshed with the final source/test set.
-Static mutation readiness is GREEN: 1974 definitions, 555 classified browser
+Static mutation readiness is GREEN: 1975 definitions, 555 classified browser
 witnesses; execution=0 and caught status intentionally unknown until nightly.
 No result in this author report asserts S7/S8. The first full local gate exposed
 four bookkeeping/witness failures: the new fixture was absent from the complete
@@ -240,4 +247,7 @@ and the testing guide exceeded its documentation bound. Existing 134 corpus
 entries remain identical, the fingerprint test retains structural negatives and
 adds an explicit empty/absent positive, exact compatibility coverage is updated,
 and the guide links this complete audit. All 17 focused tests then passed.
+The subsequent normal pre-push full gate passed in 289 seconds with zero failed
+steps. Publication remained correctly refused by the separate process gate while
+the frozen #1089 commits were not yet accepted in dev; no bypass was attempted.
 Mounted resize ownership: the native small-scene matrix exposed a real stale observer lease. A public HA authority reload replaced the stage without disconnecting the card; the old stage was detached, and changing actual header width to900/1300px left compact state unchanged. Source fix retires/rebinds header+viewport observers when their DOM targets change and fences queued old callbacks. Raw before/after: artifacts/1093/header-stage-red.json and header-stage-green.json. The corrected native combined smoke and full one-iteration correctness matrix pass (86 samples, no failures); this is explicitly a correctness probe, not the 20-run timing acceptance.

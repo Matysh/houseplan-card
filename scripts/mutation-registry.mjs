@@ -10584,10 +10584,10 @@ const MUTANT_DEFINITIONS = [
       + 'removing their canonicalisation would let the same ULP noise enter every future writer',
     patches: [{
       file: 'custom_components/houseplan/validation.py',
-      find: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    canonical_config,\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
-      replace: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    canonical_config,\n    lambda value: value,\n    _config_wall_segment_invariants,\n',
+      find: 'CONFIG_SCHEMA = vol.All(\n    CONFIG_TYPE_SCHEMA,\n'
+        + '    canonical_config,\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n',
+      replace: 'CONFIG_SCHEMA = vol.All(\n    CONFIG_TYPE_SCHEMA,\n'
+        + '    canonical_config,\n    lambda value: value,\n    _config_wall_segment_invariants,\n',
     }],
   },
   {
@@ -18418,7 +18418,7 @@ const MUTANT_DEFINITIONS = [
       + 'write-boundary check a crafted client can persist two active markers under one id (#625 AC3)',
     patches: [{
       file: 'custom_components/houseplan/websocket_api.py',
-      find: '            validate_active_marker_ids(msg["config"], data.get("config"))\n',
+      find: '            validate_active_marker_ids(msg["config"], stored_config)\n',
       replace: '            # mutant: config/set skips the active marker id invariant\n',
     }],
   },
