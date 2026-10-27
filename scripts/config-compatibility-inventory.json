@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "220c327ef2dae82de27d2acde8944f85203533475440ccba96577b9aa6f0cbed",
+  "matchesSha256": "effc172afd613492dafe18debaf6d0cfe1710248fdc9e2975e3bdae3a4d4cacb",
   "hits": [
     {
       "id": "7d34f2627cf92c5fbca93eda",
@@ -5237,6 +5237,16 @@
       "kind": "branch",
       "owner": "marker-value-presentation",
       "reason": "Persisted representation: implicit temperature/humidity source + secondary metric. A second old metric and implicit primary resolution are observable. Preserve until explicit user choice; lossless total replacement does not exist."
+    },
+    {
+      "id": "35c4a88a5481ad31f103d884",
+      "path": "src/types.ts",
+      "line": 265,
+      "text": "/** #1000: opaque read compatibility; new edits use the closed marker-alert codec. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "#1000 current alert_sources field accepts opaque reads but validates changed writes; no superseded representation or migration exists."
     },
     {
       "id": "21c5c7717349640a9d87b61b",

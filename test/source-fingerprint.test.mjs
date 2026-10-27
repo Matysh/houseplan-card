@@ -272,6 +272,7 @@ test('в корпусе настоящего репозитория все canon
     'demo/golden/device-battery.mjs', 'demo/golden/device-contacts.mjs',
     'demo/golden/device-offline.mjs', 'demo/golden/harness.mjs',
     'demo/golden/interior-window-light.mjs',
+    'demo/golden/marker-alerts.mjs',
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
     'demo/golden/scene-repaint.mjs',
     'demo/golden/static-stability.mjs',

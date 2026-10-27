@@ -65,6 +65,8 @@ Named `plan-rotation-*-1070` scenes supply task visual intent; global
 baseline acceptance remains a release-candidate action. Author evidence and
 limitations live in `docs/analysis/1070-plan-quarter-rotation.md`.
 
+Threshold alarms (#1000) are checked by marker-alert* Node suites, tests_backend/test_marker_alerts.py and test_ha_marker_alerts.py plus the JSON/ZIP contract cases. Run node demo/smoke_marker_alerts.mjs for actual nested controls and node demo/smoke_marker_alert_view.mjs for cold requests, rights and lifecycle. New device-alert-* scenes are task visual intents; source work does not accept global Golden baselines. The monotonic clock is controlled only in unit tests; browser scenes wait for real confirmed production frames.
+
 Accepted UI Lab transfer (#1081) is covered by `smoke_ui_lab_1081`,
 `smoke_picker_motion`, `smoke_furniture_pan` and `smoke_ui_lab_grid` in `demo/`.
 The last uses actual presented edge pixels, retaining its pre-change RED and

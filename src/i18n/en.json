@@ -1346,5 +1346,6 @@
   "vac.history_interrupted": "Cleanup interrupted",
   "title.rotate_left": "Rotate counterclockwise",
   "title.rotate_right": "Rotate clockwise",
-  "view.runtime_converter": "Plan converter information"
+  "view.runtime_converter": "Plan converter information",
+  "backup.error.invalid_alert_sources": "Invalid device alarm conditions."
 }

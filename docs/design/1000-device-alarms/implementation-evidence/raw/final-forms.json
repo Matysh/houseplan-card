@@ -1,0 +1,49 @@
+{
+  "base": "e2541d6c0c59c2286b8ef6eb2ded920edfa71d61",
+  "fixtureHead": "3c96fd85f",
+  "iconsSha256": "8da21c96ad3ba0bcf0ab8fddf6a784609e3a108a8c491b705767999db0826d2b",
+  "results": [
+    {
+      "id": "device-alert-form-empty",
+      "actualSha256": "f805e55eb761c668cc5a64e52bc35b8db7466b4c952cae2fee2d2baca85dc108",
+      "status": "missing-baseline",
+      "matrixVersion": 100,
+      "capture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "96c4994776476422588abd65856ed2f0ece379c591b438752bd006d23d7f5b51",
+        "ci": null
+      },
+      "chromium": "151.0.7922.34"
+    },
+    {
+      "id": "device-alert-form-numeric",
+      "actualSha256": "2fb4d4f9cd2c63a88546a3f00270c5ec8d3be5fcd367dbc3d65f3adca8281530",
+      "status": "missing-baseline",
+      "matrixVersion": 100,
+      "capture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "96c4994776476422588abd65856ed2f0ece379c591b438752bd006d23d7f5b51",
+        "ci": null
+      },
+      "chromium": "151.0.7922.34"
+    },
+    {
+      "id": "device-alert-form-enum",
+      "actualSha256": "b542191903ed8279bafcfcf53da8307e76914db2157ad0f13a7ae4644c9970e4",
+      "status": "missing-baseline",
+      "matrixVersion": 100,
+      "capture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "96c4994776476422588abd65856ed2f0ece379c591b438752bd006d23d7f5b51",
+        "ci": null
+      },
+      "chromium": "151.0.7922.34"
+    }
+  ]
+}

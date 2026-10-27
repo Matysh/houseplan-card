@@ -63,6 +63,8 @@ function setup({ floors = ['f', 'g'], configInput } = {}) {
   const stage = { getBoundingClientRect: () => ({ left: 0, top: 0 }), removeAttribute() {} };
   const root = { ownerDocument: document, querySelectorAll: () => [], querySelector: selector => selector === '.stage' ? stage : null };
   const host = {
+    // This geometry shell registers Lit controllers; alert forms are never opened.
+    addController() {},
     get _serverCfg() { return adoption.config; }, set _serverCfg(next) { adoption.stageLocalConfig(next); },
     get _cfgRev() { return adoption.configRev; }, _adoption: adoption,
     _configWriteContext: context,

@@ -1,0 +1,34 @@
+TAP version 13
+# Subtest: \#1000 threshold/native identities and levels preserve all causes of one entity
+ok 1 - \#1000 threshold/native identities and levels preserve all causes of one entity
+  ---
+  duration_ms: 31.655093
+  type: 'test'
+  ...
+# Subtest: \#1000 custom facts respect static/live/hidden/lifecycle policy and unknown value is honest
+ok 2 - \#1000 custom facts respect static/live/hidden/lifecycle policy and unknown value is honest
+  ---
+  duration_ms: 8.560909
+  type: 'test'
+  ...
+# Subtest: \#1000 inert external cause uses the same presentation consumer without a producer
+ok 3 - \#1000 inert external cause uses the same presentation consumer without a producer
+  ---
+  duration_ms: 3.808474
+  type: 'test'
+  ...
+# Subtest: \#1000 confirmation timer invalidates real incremental presentation without an HA tick
+ok 4 - \#1000 confirmation timer invalidates real incremental presentation without an HA tick
+  ---
+  duration_ms: 155.821166
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 316.925563

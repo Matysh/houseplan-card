@@ -195,6 +195,10 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/marker-alerts.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/optimize-storage-roundtrip.json",
       "configs": 2
     },
@@ -264,6 +268,10 @@
     },
     {
       "file": "demo/fixtures/large-house.mjs",
+      "configs": 1
+    },
+    {
+      "file": "demo/fixtures/marker-alerts.mjs",
       "configs": 1
     },
     {
@@ -7284,6 +7292,179 @@
             "perf-partition-2-17",
             "perf-partition-2-18",
             "perf-partition-2-19"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/marker-alerts.mjs:makeMarkerAlertsFixture/config",
+      "fingerprint": "941f7846238322fc29f1ecf3d2d7bfd7e36517b384e0ca423fce6f48fb23ec81",
+      "ok": true,
+      "identity": [
+        {
+          "space": "golden-geometry",
+          "catalogue": [
+            "wall-234wojzxcmub2itpixmi",
+            "wall-4xqim4uuxt2hyi4fhrko",
+            "wall-f36sijjyusy7axuflnak",
+            "wall-ho2pudi6xixfy4arlrfr",
+            "wall-tnbeif2wbwiyr6jicbmv",
+            "wall-y3aen57adebtt6s2slvu",
+            "wall-izxhkrx3naqu33unzfb4",
+            "wall-jpr7xmfel3obl54g7bxd",
+            "wall-yylsmsx5pmmwkz7irprk",
+            "wall-y4pcrvfw3sb5myiywcxs",
+            "wall-gberlzbc5ksacvvuznpd",
+            "wall-6p3anhzhdjqjpmzdioan",
+            "wall-qnwfauwva5cvmpylpkcr",
+            "wall-yxvqj3kax7emfggpmfhq",
+            "wall-nq7yhcebrw5xz6wdiocu",
+            "wall-cvrzo4bz2442fy3yhpre",
+            "wall-6keyaycibpqabuvyzqsi",
+            "wall-twi5ghx7cqgu4hwnt6nw"
+          ],
+          "rooms": [
+            {
+              "id": "geo-nw",
+              "walls": [
+                "wall-4xqim4uuxt2hyi4fhrko",
+                "wall-y3aen57adebtt6s2slvu",
+                "wall-jpr7xmfel3obl54g7bxd",
+                "wall-yylsmsx5pmmwkz7irprk",
+                "wall-ho2pudi6xixfy4arlrfr",
+                "wall-234wojzxcmub2itpixmi"
+              ]
+            },
+            {
+              "id": "geo-ne",
+              "walls": [
+                "wall-izxhkrx3naqu33unzfb4",
+                "wall-6keyaycibpqabuvyzqsi",
+                "wall-gberlzbc5ksacvvuznpd",
+                "wall-yylsmsx5pmmwkz7irprk",
+                "wall-jpr7xmfel3obl54g7bxd",
+                "wall-y3aen57adebtt6s2slvu"
+              ]
+            },
+            {
+              "id": "geo-sw",
+              "walls": [
+                "wall-ho2pudi6xixfy4arlrfr",
+                "wall-y4pcrvfw3sb5myiywcxs",
+                "wall-tnbeif2wbwiyr6jicbmv",
+                "wall-f36sijjyusy7axuflnak"
+              ]
+            },
+            {
+              "id": "geo-se",
+              "walls": [
+                "wall-gberlzbc5ksacvvuznpd",
+                "wall-twi5ghx7cqgu4hwnt6nw",
+                "wall-6p3anhzhdjqjpmzdioan",
+                "wall-y4pcrvfw3sb5myiywcxs"
+              ]
+            },
+            {
+              "id": "geo-nested",
+              "walls": [
+                "wall-nq7yhcebrw5xz6wdiocu",
+                "wall-cvrzo4bz2442fy3yhpre",
+                "wall-yxvqj3kax7emfggpmfhq",
+                "wall-qnwfauwva5cvmpylpkcr"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "geo-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-4xqim4uuxt2hyi4fhrko"
+              }
+            },
+            {
+              "id": "geo-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-yylsmsx5pmmwkz7irprk"
+              }
+            },
+            {
+              "id": "geo-gate",
+              "host": {
+                "kind": "wall",
+                "id": "wall-6p3anhzhdjqjpmzdioan"
+              }
+            },
+            {
+              "id": "geo-diagonal-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-nq7yhcebrw5xz6wdiocu"
+              }
+            }
+          ],
+          "partitions": [
+            "geo-partition-h",
+            "geo-partition-v"
+          ]
+        },
+        {
+          "space": "golden-lighting",
+          "catalogue": [
+            "wall-yelrzrqcufu3yvswihmt",
+            "wall-sl7eewmku44wdzltoxsn",
+            "wall-y6omndwig3vfx5ysy7ga",
+            "wall-c7epzaor4sw4zyr2tarl",
+            "wall-skh5bxslmjjwi2yx34fm",
+            "wall-cldcpera6bj22trb2qrr",
+            "wall-cebm26jxie4vzdhyvgom"
+          ],
+          "rooms": [
+            {
+              "id": "light-left",
+              "walls": [
+                "wall-sl7eewmku44wdzltoxsn",
+                "wall-c7epzaor4sw4zyr2tarl",
+                "wall-y6omndwig3vfx5ysy7ga",
+                "wall-yelrzrqcufu3yvswihmt"
+              ]
+            },
+            {
+              "id": "light-right",
+              "walls": [
+                "wall-skh5bxslmjjwi2yx34fm",
+                "wall-cebm26jxie4vzdhyvgom",
+                "wall-cldcpera6bj22trb2qrr",
+                "wall-c7epzaor4sw4zyr2tarl"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "light-window",
+              "host": {
+                "kind": "wall",
+                "id": "wall-sl7eewmku44wdzltoxsn"
+              }
+            },
+            {
+              "id": "light-door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-c7epzaor4sw4zyr2tarl"
+              }
+            },
+            {
+              "id": "light-gate",
+              "host": {
+                "kind": "wall",
+                "id": "wall-cldcpera6bj22trb2qrr"
+              }
+            }
+          ],
+          "partitions": [
+            "light-partition"
           ]
         }
       ]

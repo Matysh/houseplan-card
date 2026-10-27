@@ -30,6 +30,7 @@ import type { DevItem, Marker, SpaceModel } from './types';
 
 /** The card members a capture reads; the card passes itself. */
 export interface RenderSnapshotHost {
+  _alerts?: Pick<import('./marker-alert-view-runtime').MarkerAlertViewRuntime, 'version' | 'issuesForDevice'>;
   hass: any; // any-ok: the HA object as the card received it
   _planHass: any; // any-ok: active-registry projection of the card
   _fullRegistryHass: any; // any-ok: full-registry projection of the card
@@ -82,7 +83,7 @@ export interface RenderSnapshotReuse {
  * disagree. `options` adds what differs: battery, light graph, registry.
  */
 export function presentDevice(
-  host: Pick<RenderSnapshotHost, '_config' | '_activityRt' | '_reducedMotion' | '_showHidden'>,
+  host: Pick<RenderSnapshotHost, '_config' | '_activityRt' | '_reducedMotion' | '_showHidden' | '_alerts'>,
   hass: any, device: DevItem, showLqi: boolean, // any-ok: the card's HA projection
   options: Omit<ResolvePresentationOptions, 'liveStates' | 'showTemperature' | 'showSignal'>,
 ): ResolvedDevicePresentation {
@@ -97,6 +98,7 @@ export function presentDevice(
     sourceDetails: false,
     reducedMotion: host._reducedMotion,
     showUserHidden: host._showHidden === true,
+    alertIssues: host._alerts?.issuesForDevice(device.id),
     ...options,
   });
 }

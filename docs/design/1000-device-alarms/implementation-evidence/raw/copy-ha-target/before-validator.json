@@ -1,0 +1,8 @@
+{
+  "base": "4c2ac36a0a634431ea2fc8a7f0390cbb983dcd97",
+  "beforeValid": true,
+  "copyPreservesMoreInfoTarget": "switch.source",
+  "copyBinding": "virtual",
+  "copyValidation": "rejected",
+  "errorCode": "invalid_more_info_entity"
+}

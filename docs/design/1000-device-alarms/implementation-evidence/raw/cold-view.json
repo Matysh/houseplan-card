@@ -1,0 +1,222 @@
+{
+  "buildFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+  "observations": {
+    "ordinaryViewHasNoAlertRequest": true,
+    "readonlyAndKioskConfirmWithoutEditorOrWrites": true,
+    "attributeOnlyTickReachesConfirmedFrameWithoutWrite": true,
+    "reattachConfirmsAfresh": true,
+    "removedRuleDoesNotResurrect": true,
+    "staticAndUnsupportedInputHaveNoCause": true
+  },
+  "cases": [
+    {
+      "options": {
+        "rules": false,
+        "writer": false
+      },
+      "requestedPaths": [
+        "/assets/houseplan-card.js",
+        "/assets/houseplan-assets/open-spans-9QyN4wWw.js",
+        "/assets/houseplan-assets/lit-element-opH1IWyz.js",
+        "/assets/houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "/assets/houseplan-assets/live-interaction-runtime-sUMO8gfv.js",
+        "/assets/houseplan-assets/summary-panel-runtime-entry-Do1DX_Ss.js",
+        "/assets/f1.svg",
+        "/assets/houseplan-assets/hp-settings-select-YWyTZGP1.js",
+        "/assets/houseplan-assets/live-tip-placement-JRZ2pmlB.js",
+        "/assets/houseplan-assets/floating-surface-CZ_uyR-O.js",
+        "/assets/houseplan-assets/device-contact-geometry-EWhtQWIZ.js",
+        "/assets/houseplan-assets/device-contact-scene-C_jlT9Ub.js",
+        "/assets/houseplan-assets/device-contact-floor-Cf3P5Qw1.js",
+        "/assets/houseplan-assets/device-contact-basis-CstUQI0D.js",
+        "/assets/houseplan-assets/editor-shared-CJwLcMHb.js",
+        "/assets/houseplan-assets/codepoint-order-zcnOlb64.js",
+        "/assets/houseplan-assets/namespace-language-QJbP24M0.js",
+        "/assets/houseplan-assets/form-kit.styles-jVy_X2Dx.js",
+        "/assets/houseplan-assets/summary-shared-CisaEM65.js",
+        "/assets/houseplan-assets/settings-action.styles-COPRmRwt.js",
+        "/assets/houseplan-assets/floating-surface-controller-DNB7igVw.js"
+      ]
+    },
+    {
+      "options": {
+        "writer": false
+      },
+      "requestedPaths": [
+        "/assets/houseplan-card.js",
+        "/assets/houseplan-assets/open-spans-9QyN4wWw.js",
+        "/assets/houseplan-assets/lit-element-opH1IWyz.js",
+        "/assets/houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "/assets/houseplan-assets/live-interaction-runtime-sUMO8gfv.js",
+        "/assets/houseplan-assets/summary-panel-runtime-entry-Do1DX_Ss.js",
+        "/assets/houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+        "/assets/f1.svg",
+        "/assets/houseplan-assets/hp-settings-select-YWyTZGP1.js",
+        "/assets/houseplan-assets/live-tip-placement-JRZ2pmlB.js",
+        "/assets/houseplan-assets/floating-surface-CZ_uyR-O.js",
+        "/assets/houseplan-assets/device-contact-geometry-EWhtQWIZ.js",
+        "/assets/houseplan-assets/device-contact-scene-C_jlT9Ub.js",
+        "/assets/houseplan-assets/device-contact-floor-Cf3P5Qw1.js",
+        "/assets/houseplan-assets/device-contact-basis-CstUQI0D.js",
+        "/assets/houseplan-assets/editor-shared-CJwLcMHb.js",
+        "/assets/houseplan-assets/codepoint-order-zcnOlb64.js",
+        "/assets/houseplan-assets/namespace-language-QJbP24M0.js",
+        "/assets/houseplan-assets/form-kit.styles-jVy_X2Dx.js",
+        "/assets/houseplan-assets/summary-shared-CisaEM65.js",
+        "/assets/houseplan-assets/settings-action.styles-COPRmRwt.js",
+        "/assets/houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+        "/assets/houseplan-assets/floating-surface-controller-DNB7igVw.js"
+      ]
+    },
+    {
+      "options": {
+        "writer": false,
+        "kiosk": true
+      },
+      "requestedPaths": [
+        "/assets/houseplan-card.js",
+        "/assets/houseplan-assets/open-spans-9QyN4wWw.js",
+        "/assets/houseplan-assets/lit-element-opH1IWyz.js",
+        "/assets/houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "/assets/houseplan-assets/live-interaction-runtime-sUMO8gfv.js",
+        "/assets/houseplan-assets/summary-panel-runtime-entry-Do1DX_Ss.js",
+        "/assets/houseplan-assets/hp-plan-converter-info-BhhMiit3.js",
+        "/assets/houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+        "/assets/f1.svg",
+        "/assets/houseplan-assets/live-tip-placement-JRZ2pmlB.js",
+        "/assets/houseplan-assets/floating-surface-CZ_uyR-O.js",
+        "/assets/houseplan-assets/device-contact-geometry-EWhtQWIZ.js",
+        "/assets/houseplan-assets/device-contact-scene-C_jlT9Ub.js",
+        "/assets/houseplan-assets/device-contact-floor-Cf3P5Qw1.js",
+        "/assets/houseplan-assets/device-contact-basis-CstUQI0D.js",
+        "/assets/houseplan-assets/editor-shared-CJwLcMHb.js",
+        "/assets/houseplan-assets/codepoint-order-zcnOlb64.js",
+        "/assets/houseplan-assets/namespace-language-QJbP24M0.js",
+        "/assets/houseplan-assets/form-kit.styles-jVy_X2Dx.js",
+        "/assets/houseplan-assets/summary-shared-CisaEM65.js",
+        "/assets/houseplan-assets/settings-action.styles-COPRmRwt.js",
+        "/assets/houseplan-assets/plan-converter-BJqpkL6I.js",
+        "/assets/houseplan-assets/marker-alert-presentation-BLKggxEZ.js"
+      ]
+    },
+    {
+      "options": {
+        "writer": false,
+        "attribute": true
+      },
+      "requestedPaths": [
+        "/assets/houseplan-card.js",
+        "/assets/houseplan-assets/open-spans-9QyN4wWw.js",
+        "/assets/houseplan-assets/lit-element-opH1IWyz.js",
+        "/assets/houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "/assets/houseplan-assets/live-interaction-runtime-sUMO8gfv.js",
+        "/assets/houseplan-assets/summary-panel-runtime-entry-Do1DX_Ss.js",
+        "/assets/houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+        "/assets/f1.svg",
+        "/assets/houseplan-assets/hp-settings-select-YWyTZGP1.js",
+        "/assets/houseplan-assets/live-tip-placement-JRZ2pmlB.js",
+        "/assets/houseplan-assets/floating-surface-CZ_uyR-O.js",
+        "/assets/houseplan-assets/device-contact-geometry-EWhtQWIZ.js",
+        "/assets/houseplan-assets/device-contact-scene-C_jlT9Ub.js",
+        "/assets/houseplan-assets/device-contact-floor-Cf3P5Qw1.js",
+        "/assets/houseplan-assets/device-contact-basis-CstUQI0D.js",
+        "/assets/houseplan-assets/editor-shared-CJwLcMHb.js",
+        "/assets/houseplan-assets/codepoint-order-zcnOlb64.js",
+        "/assets/houseplan-assets/namespace-language-QJbP24M0.js",
+        "/assets/houseplan-assets/form-kit.styles-jVy_X2Dx.js",
+        "/assets/houseplan-assets/summary-shared-CisaEM65.js",
+        "/assets/houseplan-assets/settings-action.styles-COPRmRwt.js",
+        "/assets/houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+        "/assets/houseplan-assets/floating-surface-controller-DNB7igVw.js"
+      ]
+    },
+    {
+      "options": {},
+      "requestedPaths": [
+        "/assets/houseplan-card.js",
+        "/assets/houseplan-assets/open-spans-9QyN4wWw.js",
+        "/assets/houseplan-assets/lit-element-opH1IWyz.js",
+        "/assets/houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "/assets/houseplan-assets/live-interaction-runtime-sUMO8gfv.js",
+        "/assets/houseplan-assets/summary-panel-runtime-entry-Do1DX_Ss.js",
+        "/assets/houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+        "/assets/f1.svg",
+        "/assets/houseplan-assets/hp-settings-select-YWyTZGP1.js",
+        "/assets/houseplan-assets/live-tip-placement-JRZ2pmlB.js",
+        "/assets/houseplan-assets/floating-surface-CZ_uyR-O.js",
+        "/assets/houseplan-assets/device-contact-geometry-EWhtQWIZ.js",
+        "/assets/houseplan-assets/device-contact-scene-C_jlT9Ub.js",
+        "/assets/houseplan-assets/device-contact-floor-Cf3P5Qw1.js",
+        "/assets/houseplan-assets/device-contact-basis-CstUQI0D.js",
+        "/assets/houseplan-assets/editor-shared-CJwLcMHb.js",
+        "/assets/houseplan-assets/codepoint-order-zcnOlb64.js",
+        "/assets/houseplan-assets/namespace-language-QJbP24M0.js",
+        "/assets/houseplan-assets/form-kit.styles-jVy_X2Dx.js",
+        "/assets/houseplan-assets/summary-shared-CisaEM65.js",
+        "/assets/houseplan-assets/settings-action.styles-COPRmRwt.js",
+        "/assets/houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+        "/assets/houseplan-assets/floating-surface-controller-DNB7igVw.js"
+      ]
+    },
+    {
+      "options": {
+        "static": true
+      },
+      "requestedPaths": [
+        "/assets/houseplan-card.js",
+        "/assets/houseplan-assets/open-spans-9QyN4wWw.js",
+        "/assets/houseplan-assets/lit-element-opH1IWyz.js",
+        "/assets/houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "/assets/houseplan-assets/live-interaction-runtime-sUMO8gfv.js",
+        "/assets/houseplan-assets/summary-panel-runtime-entry-Do1DX_Ss.js",
+        "/assets/houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+        "/assets/f1.svg",
+        "/assets/houseplan-assets/hp-settings-select-YWyTZGP1.js",
+        "/assets/houseplan-assets/live-tip-placement-JRZ2pmlB.js",
+        "/assets/houseplan-assets/floating-surface-CZ_uyR-O.js",
+        "/assets/houseplan-assets/device-contact-geometry-EWhtQWIZ.js",
+        "/assets/houseplan-assets/device-contact-scene-C_jlT9Ub.js",
+        "/assets/houseplan-assets/device-contact-floor-Cf3P5Qw1.js",
+        "/assets/houseplan-assets/device-contact-basis-CstUQI0D.js",
+        "/assets/houseplan-assets/editor-shared-CJwLcMHb.js",
+        "/assets/houseplan-assets/codepoint-order-zcnOlb64.js",
+        "/assets/houseplan-assets/namespace-language-QJbP24M0.js",
+        "/assets/houseplan-assets/form-kit.styles-jVy_X2Dx.js",
+        "/assets/houseplan-assets/summary-shared-CisaEM65.js",
+        "/assets/houseplan-assets/settings-action.styles-COPRmRwt.js",
+        "/assets/houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+        "/assets/houseplan-assets/floating-surface-controller-DNB7igVw.js"
+      ]
+    },
+    {
+      "options": {
+        "invalid": true
+      },
+      "requestedPaths": [
+        "/assets/houseplan-card.js",
+        "/assets/houseplan-assets/open-spans-9QyN4wWw.js",
+        "/assets/houseplan-assets/lit-element-opH1IWyz.js",
+        "/assets/houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "/assets/houseplan-assets/live-interaction-runtime-sUMO8gfv.js",
+        "/assets/houseplan-assets/summary-panel-runtime-entry-Do1DX_Ss.js",
+        "/assets/houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+        "/assets/f1.svg",
+        "/assets/houseplan-assets/hp-settings-select-YWyTZGP1.js",
+        "/assets/houseplan-assets/live-tip-placement-JRZ2pmlB.js",
+        "/assets/houseplan-assets/floating-surface-CZ_uyR-O.js",
+        "/assets/houseplan-assets/device-contact-geometry-EWhtQWIZ.js",
+        "/assets/houseplan-assets/device-contact-scene-C_jlT9Ub.js",
+        "/assets/houseplan-assets/device-contact-floor-Cf3P5Qw1.js",
+        "/assets/houseplan-assets/device-contact-basis-CstUQI0D.js",
+        "/assets/houseplan-assets/editor-shared-CJwLcMHb.js",
+        "/assets/houseplan-assets/codepoint-order-zcnOlb64.js",
+        "/assets/houseplan-assets/namespace-language-QJbP24M0.js",
+        "/assets/houseplan-assets/form-kit.styles-jVy_X2Dx.js",
+        "/assets/houseplan-assets/summary-shared-CisaEM65.js",
+        "/assets/houseplan-assets/settings-action.styles-COPRmRwt.js",
+        "/assets/houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+        "/assets/houseplan-assets/floating-surface-controller-DNB7igVw.js"
+      ]
+    }
+  ]
+}

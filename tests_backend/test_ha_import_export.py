@@ -3762,3 +3762,16 @@ def test_issue1033_a_forged_repair_report_in_the_file_is_ignored(tmp_path: Path)
     _, response, _candidate = _preview(tmp_path, clean)
     assert response["preview"]["opening_repairs"]["detached"] == 0
     assert response["preview"]["confirmation_required"] is False
+
+@pytest.mark.parametrize("kind,plan_only", [("full", False), ("space", False), ("space", True)])
+def test_issue1000_alert_definitions_full_space_json_and_plan_only(tmp_path: Path, kind: str, plan_only: bool) -> None:
+    config = _config()
+    rules = [{"id": "a", "type": "threshold", "level": "attention", "entity_id": "sensor.co2", "operator": "gt", "value": 1000}]
+    config["markers"][0]["alert_sources"] = rules
+    document, _ = create_export(SimpleNamespace(instance_id="same"), {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3}, kind=kind, space_id="ground" if kind == "space" else None,
+        plan_only=plan_only, card_version="review", config_root=tmp_path)
+    parsed = parse_document(json.dumps(document).encode())
+    markers = parsed["payload"]["config"]["markers"]
+    assert markers == [] if plan_only else markers[0]["alert_sources"] == rules
+    assert "pending" not in json.dumps(parsed) and "active_since" not in json.dumps(parsed)

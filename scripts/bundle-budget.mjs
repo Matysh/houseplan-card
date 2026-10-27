@@ -446,7 +446,9 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #1087: own HA dialog resolver adds 567 B over accepted dev; preserve the band and absolute wall.
 // #1070 matched verified d9 artifact:349536 ->351632 (+2096); carry only
 // own cost over349824, retaining the accepted -288 B gap and2000 B band.
-export const INITIAL_VIEW_GZIP_CEILING = 351_920;
+// #1000 matched accepted455535be:351632 ->352159 (+527). Preserve its
+// -288 B gap; optional threshold graph, unchanged2000 band/387200 wall.
+export const INITIAL_VIEW_GZIP_CEILING = 352_447;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -866,7 +868,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // #1087: standard own-entity picker, sparse draft/save and four locales; +818 B over accepted dev.
 // #1070 matched verified d9 artifact:363437 ->364380 (+943), preserving
 // the accepted -20 B gap to its363457 reference and the existing2000 B band.
-export const LAZY_EDITOR_GZIP_CEILING = 364_400;
+// #1000 matched accepted455535be:364380 ->371955 (+7575). The typed
+// constructor/common controls stay lazy; preserve the inherited -20 B gap.
+export const LAZY_EDITOR_GZIP_CEILING = 371_975;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

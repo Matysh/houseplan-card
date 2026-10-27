@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: \#659/\#699/\#767: browser guard inventory IDs, category counts and total match the registry
+ok 1 - \#659/\#699/\#767: browser guard inventory IDs, category counts and total match the registry
+  ---
+  duration_ms: 26.1979
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 820.6831

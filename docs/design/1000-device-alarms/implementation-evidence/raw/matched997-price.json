@@ -1,0 +1,85 @@
+{
+  "base": "e5849080cc01e10349be1c5ec922f8bb4a428094",
+  "baseFingerprint": "c0565792f0afbdb78700f5fa21f440fa463c2dc0e1a41e84b39d84c7585e19cc",
+  "candidateHead": "dac80868c444ce8e710c93fc3f416ddab885bbcc",
+  "candidateFingerprint": "ee6347de0795348808df3725b46f38b569f0817de2c8718d6023faa25d37a758",
+  "scope": "Interim accepted997 matched proof; joint/latest-dev remains required before S7",
+  "initial": {
+    "before": 349257,
+    "after": 349788,
+    "own": 531,
+    "incomingReference": 347548,
+    "reference": 348079,
+    "inheritedGap": 1709
+  },
+  "editor": {
+    "before": 362639,
+    "after": 370352,
+    "own": 7713,
+    "incomingReference": 360791,
+    "reference": 368504,
+    "inheritedGap": 1848
+  },
+  "onboarding": {
+    "before": 39938,
+    "after": 40611,
+    "own": 673,
+    "reference": 39412,
+    "reason": "Remains within unchanged2000-B band"
+  },
+  "raw": {
+    "before": 3550135,
+    "after": 3589413,
+    "own": 39278,
+    "incomingReference": 3549860,
+    "reference": 3589138,
+    "inheritedGap": 275
+  },
+  "hostRefs": {
+    "before": 6359,
+    "after": 6442,
+    "own": 83,
+    "incomingReference": 6358,
+    "reference": 6441,
+    "inheritedGap": 1
+  },
+  "unchangedReferences": {
+    "delegates": 145,
+    "portMembers": 372,
+    "portPrivates": 104,
+    "harnessPrivates": 101
+  },
+  "band": 2000,
+  "absoluteInitialWall": 352000,
+  "coldAdditionalRequests": [
+    {
+      "request": "/assets/houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+      "path": "houseplan-assets/marker-alert-view-runtime-BEI8n8Pv.js",
+      "sha256": "211125beafc51247d1adb893d3e7853838ec1ad1377cf6a52af89c618d270c94",
+      "rawBytes": 2523,
+      "gzipBytes": 1149,
+      "isEntry": false,
+      "imports": [
+        "houseplan-assets/houseplan-card-CFhJGLHU.js",
+        "houseplan-assets/lit-element-opH1IWyz.js",
+        "houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+        "houseplan-assets/open-spans-9QyN4wWw.js"
+      ],
+      "dynamicImports": []
+    },
+    {
+      "request": "/assets/houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+      "path": "houseplan-assets/marker-alert-presentation-BLKggxEZ.js",
+      "sha256": "9a2fe43d2603f51fa04f99ed5930ce635d6ece49b11b8da60394a504c0b56e2a",
+      "rawBytes": 8012,
+      "gzipBytes": 3208,
+      "isEntry": false,
+      "imports": [
+        "houseplan-assets/houseplan-card-CFhJGLHU.js"
+      ],
+      "dynamicImports": []
+    }
+  ],
+  "coldAdditionalKnownGzipBytes": 4357,
+  "coldAdditionalKnownRawBytes": 10535
+}

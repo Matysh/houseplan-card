@@ -145,6 +145,7 @@ export interface PresentationActivityRuntime {
 }
 
 export interface ResolvePresentationOptions {
+  alertIssues?: readonly ResolvedDeviceIssue[];
   liveStates: boolean;
   showTemperature: boolean;
   showSignal: boolean;
@@ -209,6 +210,7 @@ export interface ResolvedDevicePresentation {
   /** Active causes from this same accepted frame, including diagnostic rows. */
   issues: ResolvedDeviceIssue[];
   maintenance: boolean;
+  attention?: string;
   lqiText: string | null;
   /** System tooltip text ignores only the local plan-line opt-out. */
   lqiTipText: string | null;
@@ -466,7 +468,8 @@ export function resolvePresentationSources(
     if (!signal) continue;
     const source = known.get(eid) || sourceOf(visualHass, eid, 'device_role');
     issues.push({ eid, name: source.name, state: source.state, stateText: source.stateText,
-      integrationDomain: source.integrationDomain, deviceClass, ...signal });
+      integrationDomain: source.integrationDomain, deviceClass, ...signal,
+      cause: { type: 'native', id: eid, level: signal.severity } });
   }
   issues.sort((a, b) => a.eid.localeCompare(b.eid));
   const nativeSamples = [...visualSources, ...criticalSources].map(source => source.sample);
@@ -757,7 +760,11 @@ export function resolveDevicePresentation(
     : orphaned ? 'orphaned' : 'active';
   const userHidden = (d.userHidden === true || d.marker?.hidden === true)
     && !(options.showUserHidden && canRevealUserHidden(d));
-  const combined = combineVisualSamples(sources.samples);
+  const customIssues = options.liveStates && !neutralFace && !haDisabled && !orphaned
+    ? options.alertIssues || [] : [];
+  const ordinary = combineVisualSamples(sources.samples);
+  const combined = customIssues.some(issue => issue.severity === 'alarm')
+    ? { ...ordinary, status: 'alarm' as const } : ordinary;
   const lockSource = sources.visualSources.find((source) => source.eid.startsWith('lock.'));
   const lockState: DeviceLockState = lockSource
     ? ['unlocked', 'open'].includes(lockSource.state.toLowerCase())
@@ -930,7 +937,9 @@ export function resolveDevicePresentation(
     humText: hum == null ? null : String(hum),
     valueBadge,
     battery,
-    issues: effectiveHidden || haDisabled || orphaned ? [] : sources.issues,
+    issues: effectiveHidden || haDisabled || orphaned ? [] : customIssues.length ? [...sources.issues, ...customIssues] : sources.issues,
+    attention: !effectiveHidden && !policy.bindingUnavailable && visual.status !== 'alarm'
+      ? customIssues.find(issue => issue.severity === 'attention')?.groupTitle : undefined,
     maintenance: !neutralFace && !effectiveHidden && !policy.bindingUnavailable
       && visual.status !== 'alarm' && sources.issues.some(issue => issue.severity === 'maintenance'),
     lqiText: !showMarkerSignalOf(d.marker) || lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'

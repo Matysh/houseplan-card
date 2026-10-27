@@ -12,6 +12,13 @@ Review publication (#1106) reads complete API history with separate bounds:
 deduplication and the stop on an unknown write outcome retain their authority;
 an oversized or malformed history is never accepted as a partial result.
 
+Device thresholds (#1000) add up to three optional own-entity conditions with
+Attention/Alarm levels and continuous three-second confirmation in both
+directions. The common cause model feeds existing markers, previews and reason
+cards; no room/summary counters or external automation services are added.
+The combined source includes accepted plan rotation #1070; final task evidence
+and measured feature cost are in `docs/design/1000-device-alarms/implementation-evidence/final-joint-20261027/`.
+
 SPEC delivery compatibility (#1104) recognizes the exact published heading
 `SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
 SPEC filename. Publisher, terminal trailers, paths, machine anchors and real
@@ -56,7 +63,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5696 · pure backend 687 · HA-harness backend 585 · browser smokes 466 (`npm run inventory`) |
+| Tests | Node unit 5717 · pure backend 690 · HA-harness backend 591 · browser smokes 468 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

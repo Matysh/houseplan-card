@@ -1,0 +1,742 @@
+[
+  {
+    "theme": "light",
+    "width": 1440,
+    "diff": {
+      "different": 0,
+      "total": 118404,
+      "ratio": 0
+    },
+    "reference": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 414,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 414,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-empty": {
+          "width": 414,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(114, 114, 114)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 560,
+          "height": 476,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "20px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 520,
+          "height": 276.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 486,
+          "height": 44,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 560,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 16px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-light-1440-reference",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "ebecea6db23aea0531de64d996b68a9b4c7df8ca",
+        "productFingerprint": "8c6c2b81f71abf5393e2988ffc160c4f39b318285b1de4653e748ff8857c8ca5",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    },
+    "candidate": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 414,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 414,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-empty": {
+          "width": 414,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(114, 114, 114)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 560,
+          "height": 548.625,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "20px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 520,
+          "height": 375.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 486,
+          "height": 44,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 560,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 16px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-light-1440-candidate",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "d345c1b47ebc83ff9adbff63a2cab8ff2811a56d",
+        "productFingerprint": "06fc68c0edb07b8500a62236ea75611718d018e85162ed4d6a376735ed3f9dad",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    }
+  },
+  {
+    "theme": "light",
+    "width": 390,
+    "diff": {
+      "different": 0,
+      "total": 103532,
+      "ratio": 0
+    },
+    "reference": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 362,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 362,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-empty": {
+          "width": 362,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(114, 114, 114)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 390,
+          "height": 607.75,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "18px 14px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 362,
+          "height": 375.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 332,
+          "height": 46,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 390,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 14px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-light-390-reference",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "ebecea6db23aea0531de64d996b68a9b4c7df8ca",
+        "productFingerprint": "8c6c2b81f71abf5393e2988ffc160c4f39b318285b1de4653e748ff8857c8ca5",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    },
+    "candidate": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 362,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 362,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(33, 33, 33)"
+        },
+        ".alarm-empty": {
+          "width": 362,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(114, 114, 114)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 390,
+          "height": 664,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "18px 14px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 362,
+          "height": 476.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 332,
+          "height": 46,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 390,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 14px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-light-390-candidate",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "d345c1b47ebc83ff9adbff63a2cab8ff2811a56d",
+        "productFingerprint": "06fc68c0edb07b8500a62236ea75611718d018e85162ed4d6a376735ed3f9dad",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    }
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "diff": {
+      "different": 0,
+      "total": 118404,
+      "ratio": 0
+    },
+    "reference": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 414,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 414,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-empty": {
+          "width": 414,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(155, 155, 155)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 560,
+          "height": 476,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "20px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 520,
+          "height": 276.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 486,
+          "height": 44,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 560,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 16px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-dark-1440-reference",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "ebecea6db23aea0531de64d996b68a9b4c7df8ca",
+        "productFingerprint": "8c6c2b81f71abf5393e2988ffc160c4f39b318285b1de4653e748ff8857c8ca5",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    },
+    "candidate": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 414,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 414,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-empty": {
+          "width": 414,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(155, 155, 155)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 560,
+          "height": 548.625,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "20px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 520,
+          "height": 375.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 486,
+          "height": 44,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 560,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 16px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-dark-1440-candidate",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "d345c1b47ebc83ff9adbff63a2cab8ff2811a56d",
+        "productFingerprint": "06fc68c0edb07b8500a62236ea75611718d018e85162ed4d6a376735ed3f9dad",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    }
+  },
+  {
+    "theme": "dark",
+    "width": 390,
+    "diff": {
+      "different": 0,
+      "total": 103532,
+      "ratio": 0
+    },
+    "reference": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 362,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 362,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-empty": {
+          "width": 362,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(155, 155, 155)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 390,
+          "height": 607.75,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "18px 14px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 362,
+          "height": 375.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 332,
+          "height": 46,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 390,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 14px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-dark-390-reference",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "ebecea6db23aea0531de64d996b68a9b4c7df8ca",
+        "productFingerprint": "8c6c2b81f71abf5393e2988ffc160c4f39b318285b1de4653e748ff8857c8ca5",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    },
+    "candidate": {
+      "metric": {
+        ".alarm-heading": {
+          "width": 362,
+          "height": 59,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px 0px 18px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-add": {
+          "width": 40,
+          "height": 40,
+          "font": "13.3333px Arial",
+          "padding": "0px",
+          "radius": "8px",
+          "color": "rgb(3, 169, 244)"
+        },
+        ".alarm-table": {
+          "width": 362,
+          "height": 209,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px",
+          "color": "rgb(225, 225, 225)"
+        },
+        ".alarm-empty": {
+          "width": 362,
+          "height": 174.5,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px",
+          "radius": "0px",
+          "color": "rgb(155, 155, 155)"
+        },
+        ".alarm-create": {
+          "width": 84.609375,
+          "height": 44,
+          "font": "13px Roboto, Arial, sans-serif",
+          "padding": "8px 16px",
+          "radius": "8px",
+          "color": "rgb(255, 255, 255)"
+        }
+      },
+      "shell": {
+        "body": {
+          "width": 390,
+          "height": 664,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "18px 14px",
+          "radius": "0px"
+        },
+        "card": {
+          "width": 362,
+          "height": 476.125,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "11px"
+        },
+        "source": {
+          "width": 332,
+          "height": 46,
+          "font": "13px / 19.5px Roboto, Arial, sans-serif",
+          "padding": "0px",
+          "radius": "0px"
+        },
+        "footer": {
+          "width": 390,
+          "height": 68,
+          "font": "14px Roboto, Arial, sans-serif",
+          "padding": "12px 14px",
+          "radius": "0px"
+        },
+        "help": true,
+        "authentic": true,
+        "overflow": false
+      },
+      "base": "output/1000-pair-dark-390-candidate",
+      "provenance": {
+        "application": "houseplan-offline-ui-lab",
+        "productVersion": "1.83.0-beta.2",
+        "productCommit": "d345c1b47ebc83ff9adbff63a2cab8ff2811a56d",
+        "productFingerprint": "06fc68c0edb07b8500a62236ea75611718d018e85162ed4d6a376735ed3f9dad",
+        "frontendVersion": "20260930.4",
+        "frontendWheelSha256": "05c207fb6ce6720d1782766b54a67acdf4bab83f133a562204b972d062862fc8",
+        "privateDataset": false,
+        "datasetId": "synthetic-f2f801104e8d4a28dbd70b2e"
+      }
+    }
+  }
+]
