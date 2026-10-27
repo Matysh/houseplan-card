@@ -31,7 +31,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5677 · pure backend 687 · HA-harness backend 585 · browser smokes 459 (`npm run inventory`) |
+| Tests | Node unit 5673 · pure backend 687 · HA-harness backend 585 · browser smokes 460 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -1306,3 +1306,7 @@ Room settings #946 use the compact v4 form, shared controls and a single inherit
 
 
 Device settings #947 use the shared five-section shell with real picker/presentation and hardware-only Radar eligibility. Removing a saved legacy profile remains an undoable draft operation. Current acceptance is read from the issue labels; the combined beta remains pending.
+
+Follow the sun #1092 no longer creates a decorative paper-outline SVG or triple
+drop-shadow. Opaque room paper, the environment and the independent main-plan
+camera-opacity safeguard remain; current acceptance is read from issue labels.

@@ -179,11 +179,8 @@ const res = await page.evaluate(async () => {
   const staticOutline = st.querySelector(':scope > .hp-paper-outline-svg');
   const staticPaper = staticPlan?.querySelector('.hp-paperg');
   out.staticCardLayersStayOrdered = !!staticPlan
-    && !!staticOutline
+    && !staticOutline
     && !!staticPaper
-    && /drop-shadow/.test(getComputedStyle(staticOutline).filter)
-    && getComputedStyle(staticOutline).willChange.includes('filter')
-    && getComputedStyle(staticOutline).zIndex === '0'
     && getComputedStyle(staticPaper).filter === 'none'
     && !getComputedStyle(staticPaper).willChange.includes('filter')
     && getComputedStyle(staticPlan).zIndex === '1'

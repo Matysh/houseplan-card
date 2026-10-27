@@ -3860,6 +3860,13 @@ git config core.untrackedCache true
 
 ## Daycycle raster observations (#1066)
 
+#1092 removes the auxiliary paper-outline SVG, its three drop-shadows and
+its exclusive overflow exception. Outline absence is now an expected
+renderer observation, including after camera movement; the main plan opacity
+layer and exposure bounds remain. The before/after comparison keeps the same
+three paired pans, 60 steps and ratio ceiling below. Summed elapsed RasterTask
+time is diagnostic raster work, not physical FPS, thread CPU or input latency.
+
 `smoke_daycycle_raster.mjs --report=artifacts/diagnostics/863/<own-name>.json`
 retains all six raw samples, native pointer deliveries, the existing two rAF
 callbacks per step, actual viewBox/transform/style attributes and mutation

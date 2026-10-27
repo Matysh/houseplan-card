@@ -6,17 +6,6 @@ import {
 
 const PHASES: readonly DayCyclePhase[] = ['dawn', 'day', 'dusk', 'night'];
 
-/** CSS variables owned by the stage rather than copied into its plan tree. */
-export function dayCycleStageVars(state: DayCycleState | null): string {
-  if (!state) return '';
-  const palette = DAY_CYCLE_PALETTES[state.phase];
-  return [
-    `--hp-day-cycle-outline-near:${palette.outlineNear}`,
-    `--hp-day-cycle-outline-mid:${palette.outlineMid}`,
-    `--hp-day-cycle-outline-far:${palette.outlineFar}`,
-  ].join(';');
-}
-
 /**
  * Four constant layers make gradient changes genuinely cross-fade in CSS. The
  * moon (#661) comes last: above the gradients and the sun glow, still inside

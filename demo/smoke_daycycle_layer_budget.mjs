@@ -321,7 +321,6 @@ const staticLayers = await describeContentLayers();
 
 const checks = {};
 const outlineLayers = active.layers.filter((layer) => layer.className.includes('hp-paper-outline-svg'));
-const outlineLayer = outlineLayers[0];
 const settledPlanLayer = settled.layers.find((layer) => layer.className.includes('plan-svg'));
 const oversized = active.layers.filter((layer) => layer.width > 4096 || layer.height > 4096);
 const activePixels = active.layers.reduce((sum, layer) => sum + layer.pixels, 0);
@@ -329,24 +328,18 @@ const screenPixels = active.stage.width * active.stage.height;
 const staticOutlineLayers = staticLayers.filter(
   (layer) => layer.className.includes('hp-paper-outline-svg'),
 );
-const staticOutlineLayer = staticOutlineLayers[0];
 const staticOversized = staticLayers.filter(
   (layer) => layer.width > 4096 || layer.height > 4096,
 );
 
 checks.largeCoordinateFixture = active.stage.paper?.bbox?.[0] > 4096
   && active.stage.paper?.bbox?.[1] > 4000;
-checks.separateFilteredOutline = !!active.stage.outline
-  && /drop-shadow/.test(active.stage.outline.filter)
-  && active.stage.outline.pointerEvents === 'none'
-  && active.stage.outline.visibility === 'visible';
+checks.decorativeOutlineRemoved = active.stage.outline === null;
 checks.cameraActivatesSafeFallback = active.stage.safe === true;
-checks.oneOutlineLayerOnly = outlineLayers.length === 1;
+checks.noOutlineCompositorLayer = outlineLayers.length === 0;
 checks.visiblePaperUnfiltered = active.stage.paper?.filter === 'none'
   && !/filter/.test(active.stage.paper?.willChange || '');
-checks.outlineLayerIsStageBounded = !!outlineLayer
-  && outlineLayer.width <= active.stage.width * 1.5 + 64
-  && outlineLayer.height <= active.stage.height * 1.5 + 64;
+
 checks.no4096ContentLayer = oversized.length === 0;
 // Browser chrome/root layers add a small constant. The broken graph measured
 // 78.7M px against a ~0.6M px stage; the fixed graph must stay screen-order.
@@ -380,18 +373,12 @@ const framesInsideGesture = pinchFrameMetrics.filter(
 checks.capturedPresentedPinchFrames = framesInsideGesture.length >= 3;
 checks.presentedFramesHaveNoWhiteTile = framesInsideGesture.length > 0
   && pinchFrameMetrics.every(hasFill);
-checks.staticCardUsesSeparateFilteredOutline = staticStage.outlinePresent
-  && staticStage.outlineVisibility === 'visible'
-  && /drop-shadow/.test(staticStage.outlineFilter)
-  && /filter/.test(staticStage.outlineWillChange)
-  && staticStage.outlineZ === '0'
+checks.staticCardOutlineRemoved = !staticStage.outlinePresent
   && staticStage.planZ === '1';
 checks.staticCardPaperStaysUnfiltered = staticStage.paperFilter === 'none'
   && !/filter/.test(staticStage.paperWillChange);
-checks.staticCardHasOneOutlineLayer = staticOutlineLayers.length === 1;
-checks.staticCardOutlineLayerIsStageBounded = !!staticOutlineLayer
-  && staticOutlineLayer.width <= staticStage.width * 1.5 + 64
-  && staticOutlineLayer.height <= staticStage.height * 1.5 + 64;
+checks.staticCardHasNoOutlineLayer = staticOutlineLayers.length === 0;
+
 checks.staticCardHasNo4096ContentLayer = staticOversized.length === 0;
 checks.moonAddsNoCompositedLayer = moonLayers.length === nightLayers.length
   && !moonLayers.some((layer) => layer.className.includes('hp-moon'));

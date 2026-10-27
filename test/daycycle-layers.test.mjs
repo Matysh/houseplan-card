@@ -54,11 +54,3 @@ test('#689 K1: the safe day/night scene keeps an explicit layer via an opacity h
     .map(([, d]) => d);
   assert.ok(decls.some((d) => d['will-change'] === 'opacity'), 'the #582 explicit layer must stay');
 });
-
-test('#689 K3: the full card clips its filtered outline to its own box', () => {
-  const clip = RULES.filter(([sels]) => sels.includes('.stage .hp-paper-outline-svg')).map(([, d]) => d);
-  assert.ok(clip.some((d) => d.overflow === 'hidden'), '.stage .hp-paper-outline-svg must be overflow: hidden');
-  const opened = touching((s) => /^\.stage\b/.test(s) && /\.hp-paper-outline-svg\b/.test(s))
-    .filter(([, d]) => d.overflow === 'visible');
-  assert.deepEqual(opened.map(([sels]) => sels.join(', ')), []);
-});

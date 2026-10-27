@@ -81,42 +81,20 @@ The public setting remains a two-value selector. `static` uses `bg_color`.
   05:00→13:00→21:00 fallback arc. It has zero visible opacity at night.
 - Four constant environment layers cross-fade for exactly 1100 ms with
   `cubic-bezier(.22,.61,.36,1)`. Reduced motion disables the transition.
-- The zero-offset outline starts on the grouped paper footprint, preserving the
-  historical single-SVG alpha composition exactly. On the first pan or pinch,
-  the card instance switches to an exact pointer-inert copy in a sibling SVG
-  behind the visible plan. The filter and `will-change: filter` then belong to
-  that stage-sized root, while the inner `.hp-paperg` becomes unfiltered: a
-  1 cm/grid-point plan may span more than 4096 local SVG units without moving a
-  coordinate-sized filter layer. The sibling follows the same live viewport as
-  the visible plan for that and every later gesture. Without its own promoted
-  layer every repaint of the plan re-ran
-  three blur passes over the whole sheet. Measured in headless
-  Chromium (CDP tracing, summed `RasterTask`) on a demo-stand pan, that cost
-  about fifteen times the rasterization of a static background; the owner's
-  Firefox profile that opened #532 showed the same cause as 23 MB of texture
-  uploads per frame and about nine frames per second, without a comparable
-  ratio of its own. A static background creates no outline sibling and carries
-  neither the filter nor the hint. The non-interactive static space card uses
-  the same stage-sized day-cycle outline from its first frame because it has no
-  camera gesture that could activate a fallback later (#582).
-- The sibling stays stage-sized at every zoom (#689). The full card clips it to
-  its own box (`.stage .hp-paper-outline-svg { overflow: hidden }`) and marks it
-  `data-hp-live-overflow="clip"`, so a gesture never exposes it either: a filter
-  layer precedes any `clip-path`, and an open outline spanned the whole paper
-  at the current zoom — 12.8× the stage at ~460 % and hundreds of MB at 800 % ×
-  DPR 2, which made navigation flash white. Its glow may be missing on an
-  incoming edge for at most one budgeted `viewBox` refresh. The visible scene
-  keeps the explicit layer #582 requires, but through `will-change: opacity`:
-  a `will-change: transform` hint froze its raster scale, so after zooming from
-  100 % to 800 % the plan showed the stretched 100 % raster while a page opened
-  at 800 % was sharp. Both were verified by the owner in Chrome 152;
-  `demo/smoke_daycycle_zoom_layers.mjs` measures the layers and the hint.
-- Only the environment and the zero-offset alpha-aware outline outside the
-  grouped plan-paper footprint change. The plan, paper, floors, room fills,
+- The decorative paper outline and its three drop-shadows are removed (#1092),
+  in full Flat/2.5D View, kiosk and the static space card, both before and after
+  camera movement. This supersedes the outline clauses of the original
+  background specification. The opaque room paper remains unchanged.
+- The main plan keeps its independent explicit compositor layer after the
+  first camera movement through `will-change: opacity` (#689). A transform
+  hint would freeze its raster scale and blur zoomed geometry; the historical
+  `hp-safe-daycycle-outline` class now names only this camera-opacity safeguard.
+  `demo/smoke_daycycle_zoom_layers.mjs` still checks its layer and sharpness hint.
+- Only the environment outside the grouped plan-paper footprint changes. The plan, paper, floors, room fills,
   Glow/spill, devices, labels, decor/backdrop, vacuum, hover, and window rays
   are never dimmed, tinted, faded, blended, or otherwise phase-filtered.
 - Full View, kiosk, and `houseplan-space-card` share the same pure resolver,
-  palette, outline, and clock lifecycle. Plan/Devices/Decor editors remain
+  palette and clock lifecycle. Plan/Devices/Decor editors remain
   static.
 - The background is independent of `north_deg`. North remains required only
   for direction-dependent window rays.

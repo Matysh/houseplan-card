@@ -66,7 +66,7 @@ import {
   rayRimEdges, rimStops, rimPeakAlpha, RIM_COLOR, type SunRayOrigin,
 } from './sun';
 import { resolveSunAccess, sunBarrierLines } from './sun-access';
-import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
+import { renderDayCycleEnvironment } from './day-cycle-render';
 import { dayCycleClock, moonLayer, moonSkyState } from './moon-gate';
 import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import {
@@ -11162,7 +11162,7 @@ export class HouseplanCard extends LitElement {
           data-hp-iso-stage=${iso ? '4' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           data-hp-iso-readiness=${this._isoFirstFrame.readiness(this._desiredProjection, projection, !!this._isoSceneRuntime) ?? nothing}
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._containerOwnedHeight ? 'auto' : this._kiosk ? '100dvh' : this._bootSoft && this._warmVp && this._warmSlot?.stageH ? `${this._warmSlot.stageH}px` : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${disp.wallFill.c};--wall-fill-op:${disp.wallFill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${iso ? `;${isoWallMaterialVars(disp.wallFill.c)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @contextmenu=${this._mode === 'decor' ? (e: MouseEvent) => this._editorRuntime?.decorOrder.open(e) : nothing}
@@ -11188,12 +11188,6 @@ export class HouseplanCard extends LitElement {
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${isoFrame?.underlay ?? nothing}
-            </svg>` : nothing}
-          ${dayCycle && paperShapes.length ? svg`<svg class="hp-paper-outline-svg"
-              data-hp-live-viewbox=${iso ? 'camera' : 'floor'} data-hp-live-overflow="clip"
-              viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
-              preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
-              ${renderPaperShapes(paperShapes, 'hp-paper-outline-shapes')}
             </svg>` : nothing}
           <svg class="plan-svg" data-hp="stage" data-grid-step=${this._gridPitch} data-hp-layer="plan"
             data-hp-live-viewbox=${iso ? 'camera' : 'floor'}

@@ -1061,10 +1061,10 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
 7. **One four-phase environment resolver.** `resolveDayCycle()` (`src/sun.ts`)
    and `src/day-cycle-render.ts` serve View, kiosk and the space card; plan
    content is never phase-filtered (`SUN.md` › Current four-phase background).
-   The stage-sized outline root owns the triple drop-shadow and
-   `will-change: filter`; its child is only the exact paper alpha silhouette,
-   and the plan root gets an explicit stage-sized transform layer so Chromium
-   never rediscovers it as an implicit overlap layer (#532, #582).
+   The decorative paper-outline SVG and its triple drop-shadow are removed
+   (#1092); opaque room paper and the environment remain. The main plan keeps
+   its independent explicit opacity layer after camera movement (#689),
+   avoiding an implicit overlap layer without freezing its raster scale.
 
 ## Coordinate system
 
@@ -2129,13 +2129,12 @@ covers the incoming edge, even with the pointer held still (#544); HTML layers
 never do. The exposure is bounded by an inline `clip-path: inset(-25%)`
 (`LIVE_SCENE_EXPOSURE_CLIP`) set and removed with it — beyond the 15 % refresh
 threshold, but never the whole plan: unbounded, a promoted scene grew with
-zoom² and at 800 % × DPR 2 exhausted GPU memory (white frames, #689). A scene
-marked `data-hp-live-overflow="clip"` — the filtered day-cycle outline — is
-projected but never exposed. From the first live paint to the terminal commit a scene SVG stays in
+zoom² and at 800 % × DPR 2 exhausted GPU memory (white frames, #689).
+From the first live paint to the terminal commit a scene SVG stays in
 one compositor lifecycle: a refresh or Lit frame may replace its anchor but never
 demote/re-promote it — HA Companion WebView shows that as a blank frame (#579).
-The day-cycle paper outline joins these roots before the first camera move; the
-static card uses its stage-sized form from the first frame (#582, Key decision 7).
+The clipped-outline SVG and its exclusive exposure exception are removed (#1092).
+The main Flat scene retains its floor projection and the same bounded exposure.
 Unchanged values are never rewritten, so idle frames stay byte-identical;
 `commitHouseplanViewport` removes the transforms and forces the final `viewBox`.
 
