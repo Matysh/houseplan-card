@@ -1,5 +1,10 @@
 # Project status
 
+SPEC delivery compatibility (#1104) recognizes the exact published heading
+`SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
+SPEC filename. Publisher, terminal trailers, paths, machine anchors and real
+material-tree checks retain their authority; historical sealed reports remain intact.
+
 HA more-info target (#1087) separates the opened entity from displayed measurements. The optional own-entity picker affects the More Info tap and HA footer only; #997 right-click Settings and existing device presentation/control semantics are retained.
 
 Compact floor navigation (#997) uses the actual header width and the shared

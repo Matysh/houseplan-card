@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1104,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Recognizes the exact historical SPEC heading already published by the trusted reviewer, preserving filename-bound issue/round, publisher, terminal trailers, exact delivery paths, new-file status, machine anchors, retained tree and digest-bound findings checks. No product behavior, history or sealed review bytes change.",
+  "summary": {
+    "ru": "Историческая форма заголовка SPEC распознаётся без ослабления проверки подлинности доставки.",
+    "en": "Recognize a published SPEC heading while retaining strict delivery provenance checks."
+  }
+}
