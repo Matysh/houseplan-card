@@ -95,7 +95,7 @@ const CAPS = {
   // Splitting another gesture owner solely for 49 lines beyond the prior
   // 11735+50 band would add disproportionate complexity. The owner permits
   // this exact observed cost; keep CORE_BAND50 and the other core cap.
-  // #1089, owner permits measured cap increases rather than byte/line chasing:
+  // #1089, owner permits explicit finite cap increases rather than byte/line chasing:
   // existing Hide/Delete transactions gain the guarded View command adapter.
   // Actual runtime is 11898 lines; retain the finite cap and CORE_BAND50.
   'src/houseplan-editor-runtime.ts': 11898,
