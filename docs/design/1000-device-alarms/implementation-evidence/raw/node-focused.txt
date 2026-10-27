@@ -1,0 +1,611 @@
+TAP version 13
+# Subtest: \#972 AC1: all 55 supplied states yield only a passive service reminder while powered off
+ok 1 - \#972 AC1: all 55 supplied states yield only a passive service reminder while powered off
+  ---
+  duration_ms: 30.2908
+  type: 'test'
+  ...
+# Subtest: \#972 AC2: only exact service semantics can lower a problem alarm
+ok 2 - \#972 AC2: only exact service semantics can lower a problem alarm
+  ---
+  duration_ms: 1.0989
+  type: 'test'
+  ...
+# Subtest: \#972 AC3/6: all concurrent sources deduplicate and alarms outrank maintenance
+ok 3 - \#972 AC3/6: all concurrent sources deduplicate and alarms outrank maintenance
+  ---
+  duration_ms: 34.191
+  type: 'test'
+  ...
+# Subtest: \#972 AC6: display policies and lifecycle do not revive a hidden or unavailable marker
+ok 4 - \#972 AC6: display policies and lifecycle do not revive a hidden or unavailable marker
+  ---
+  duration_ms: 32.4193
+  type: 'test'
+  ...
+# Subtest: \#972 AC6: a reminder preserves genuine work, presence and open states
+ok 5 - \#972 AC6: a reminder preserves genuine work, presence and open states
+  ---
+  duration_ms: 4.3012
+  type: 'test'
+  ...
+# Subtest: \#972 AC5: accepted incremental snapshots equal a full capture across states, metadata and binding changes
+ok 6 - \#972 AC5: accepted incremental snapshots equal a full capture across states, metadata and binding changes
+  ---
+  duration_ms: 1820.0061
+  type: 'test'
+  ...
+# Subtest: \#997 compact navigation has a real phone field and desktop popup scene
+ok 7 - \#997 compact navigation has a real phone field and desktop popup scene
+  ---
+  duration_ms: 3.8172
+  type: 'test'
+  ...
+# Subtest: \#1071 group-style regression frames confirm furniture colour natively in both themes
+ok 8 - \#1071 group-style regression frames confirm furniture colour natively in both themes
+  ---
+  duration_ms: 5.9108
+  type: 'test'
+  ...
+# Subtest: \#1048 retained-path diagnostics get a distinct dialog scene, not a changed baseline
+ok 9 - \#1048 retained-path diagnostics get a distinct dialog scene, not a changed baseline
+  ---
+  duration_ms: 0.5143
+  type: 'test'
+  ...
+# Subtest: \#1049 selected goldens exercise the live plan and actual pending diagnostic dialog
+ok 10 - \#1049 selected goldens exercise the live plan and actual pending diagnostic dialog
+  ---
+  duration_ms: 3.3659
+  type: 'test'
+  ...
+# Subtest: golden matrix has stable unique ids and bounded comparison thresholds
+ok 11 - golden matrix has stable unique ids and bounded comparison thresholds
+  ---
+  duration_ms: 3.8003
+  type: 'test'
+  ...
+# Subtest: issue 486 golden matrix has exactly the three focused panel-host surfaces
+ok 12 - issue 486 golden matrix has exactly the three focused panel-host surfaces
+  ---
+  duration_ms: 1.2844
+  type: 'test'
+  ...
+# Subtest: issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices
+ok 13 - issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices
+  ---
+  duration_ms: 2.3651
+  type: 'test'
+  ...
+# Subtest: golden matrix covers required geometry, rendering and adaptive surfaces
+ok 14 - golden matrix covers required geometry, rendering and adaptive surfaces
+  ---
+  duration_ms: 1.2807
+  type: 'test'
+  ...
+# Subtest: room-label parity goldens pair View and Plan in light and dark themes
+ok 15 - room-label parity goldens pair View and Plan in light and dark themes
+  ---
+  duration_ms: 3.1072
+  type: 'test'
+  ...
+# Subtest: \#920 CO2 goldens cover Flat and 2.5D with two independent room readings
+ok 16 - \#920 CO2 goldens cover Flat and 2.5D with two independent room readings
+  ---
+  duration_ms: 4.1396
+  type: 'test'
+  ...
+# Subtest: space-tab drop goldens hold both insertion sides in light and dark
+ok 17 - space-tab drop goldens hold both insertion sides in light and dark
+  ---
+  duration_ms: 1.9332
+  type: 'test'
+  ...
+# Subtest: washer lifecycle goldens pair active and idle snapshots of one composite fixture
+ok 18 - washer lifecycle goldens pair active and idle snapshots of one composite fixture
+  ---
+  duration_ms: 1.0288
+  type: 'test'
+  ...
+# Subtest: wall junction goldens cover live L/T previews plus saved flat and isometric bodies
+ok 19 - wall junction goldens cover live L/T previews plus saved flat and isometric bodies
+  ---
+  duration_ms: 2.3022
+  type: 'test'
+  ...
+# Subtest: corner Split golden captures before, thin and thick facade states
+ok 20 - corner Split golden captures before, thin and thick facade states
+  ---
+  duration_ms: 2.4117
+  type: 'test'
+  ...
+# Subtest: issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/virtual
+ok 21 - issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/virtual
+  ---
+  duration_ms: 1.9356
+  type: 'test'
+  ...
+# Subtest: issue 296 golden shows hidden independent-wall diagnostics in both themes
+ok 22 - issue 296 golden shows hidden independent-wall diagnostics in both themes
+  ---
+  duration_ms: 1.0872
+  type: 'test'
+  ...
+# Subtest: filled opening golden has a pixel-level seam detector
+ok 23 - filled opening golden has a pixel-level seam detector
+  ---
+  duration_ms: 0.275
+  type: 'test'
+  ...
+# Subtest: decor layer goldens pair opaque hover and Glow base with semantic pixels
+ok 24 - decor layer goldens pair opaque hover and Glow base with semantic pixels
+  ---
+  duration_ms: 1.4594
+  type: 'test'
+  ...
+# Subtest: doorway spill golden exposes the opaque-fill failure mode from issue 71
+ok 25 - doorway spill golden exposes the opaque-fill failure mode from issue 71
+  ---
+  duration_ms: 0.4118
+  type: 'test'
+  ...
+# Subtest: stepped exterior PDF golden pins the complete reconstructable dimension chain
+ok 26 - stepped exterior PDF golden pins the complete reconstructable dimension chain
+  ---
+  duration_ms: 0.8928
+  type: 'test'
+  ...
+# Subtest: sun-ray golden requires browser-painted light from a state-only sun entity
+ok 27 - sun-ray golden requires browser-painted light from a state-only sun entity
+  ---
+  duration_ms: 1.9183
+  type: 'test'
+  ...
+# Subtest: vacuum smoothing golden covers current gaps and the previous run
+ok 28 - vacuum smoothing golden covers current gaps and the previous run
+  ---
+  duration_ms: 0.9848
+  type: 'test'
+  ...
+# Subtest: issue \#277 golden pairs safe/disabled handles and an opening clamp in both themes
+ok 29 - issue \#277 golden pairs safe/disabled handles and an opening clamp in both themes
+  ---
+  duration_ms: 1.4269
+  type: 'test'
+  ...
+# Subtest: issue 252 golden matrix covers owner-aware cleanup in both themes and languages
+ok 30 - issue 252 golden matrix covers owner-aware cleanup in both themes and languages
+  ---
+  duration_ms: 0.6835
+  type: 'test'
+  ...
+# Subtest: issue \#197 golden keeps the complete junction fixture in Plan and View
+ok 31 - issue \#197 golden keeps the complete junction fixture in Plan and View
+  ---
+  duration_ms: 1.8921
+  type: 'test'
+  ...
+# Subtest: issues \#278/\#291 golden covers the stored wall-union fixture in both themes
+ok 32 - issues \#278/\#291 golden covers the stored wall-union fixture in both themes
+  ---
+  duration_ms: 1.5454
+  type: 'test'
+  ...
+# Subtest: issue \#249 golden isolates a bounded physical three-ray bevel
+ok 33 - issue \#249 golden isolates a bounded physical three-ray bevel
+  ---
+  duration_ms: 1.0469
+  type: 'test'
+  ...
+# Subtest: every multi-wall golden scene declares its enclosed-hole inventory (\#272)
+ok 34 - every multi-wall golden scene declares its enclosed-hole inventory (\#272)
+  ---
+  duration_ms: 0.5342
+  type: 'test'
+  ...
+# Subtest: issue \#275 golden preflight samples protected strips, not just enclosed holes
+ok 35 - issue \#275 golden preflight samples protected strips, not just enclosed holes
+  ---
+  duration_ms: 1.6967
+  type: 'test'
+  ...
+# Subtest: issue \#258 golden renders the affected persisted key at its T-junction
+ok 36 - issue \#258 golden renders the affected persisted key at its T-junction
+  ---
+  duration_ms: 0.9113
+  type: 'test'
+  ...
+# Subtest: the open color picker golden covers dark mobile and light desktop themes
+ok 37 - the open color picker golden covers dark mobile and light desktop themes
+  ---
+  duration_ms: 0.4487
+  type: 'test'
+  ...
+# Subtest: all newly unified color-picker dialog families have reviewed-golden candidates
+ok 38 - all newly unified color-picker dialog families have reviewed-golden candidates
+  ---
+  duration_ms: 0.3896
+  type: 'test'
+  ...
+# Subtest: value badge golden covers four positions and bottom badge with separate LQI
+ok 39 - value badge golden covers four positions and bottom badge with separate LQI
+  ---
+  duration_ms: 1.2482
+  type: 'test'
+  ...
+# Subtest: explicit cover value-source golden pins the 42 percent value face
+ok 40 - explicit cover value-source golden pins the 42 percent value face
+  ---
+  duration_ms: 0.8859
+  type: 'test'
+  ...
+# Subtest: device icon state-table goldens cover both themes and design facets
+ok 41 - device icon state-table goldens cover both themes and design facets
+  ---
+  duration_ms: 2.2389
+  type: 'test'
+  ...
+# Subtest: Text shell regression goldens isolate a large long value in both themes
+ok 42 - Text shell regression goldens isolate a large long value in both themes
+  ---
+  duration_ms: 1.1867
+  type: 'test'
+  ...
+# Subtest: opening placement golden requires browser-painted preview pixels
+ok 43 - opening placement golden requires browser-painted preview pixels
+  ---
+  duration_ms: 0.5003
+  type: 'test'
+  ...
+# Subtest: diagonal opening golden asserts a real painted 45 degree symbol
+ok 44 - diagonal opening golden asserts a real painted 45 degree symbol
+  ---
+  duration_ms: 3.636
+  type: 'test'
+  ...
+# Subtest: opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contracts
+ok 45 - opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contracts
+  ---
+  duration_ms: 2.2711
+  type: 'test'
+  ...
+# Subtest: issue 570 Stage 4 reuses the historical iso goldens for visual handoff coverage
+ok 46 - issue 570 Stage 4 reuses the historical iso goldens for visual handoff coverage
+  ---
+  duration_ms: 4.494
+  type: 'test'
+  ...
+# Subtest: \#673 Stage 6 designer acceptance scenes are canonical golden entries
+ok 47 - \#673 Stage 6 designer acceptance scenes are canonical golden entries
+  ---
+  duration_ms: 0.5739
+  type: 'test'
+  ...
+# Subtest: golden harness applies doorway, state and layout overrides to a cloned fixture
+ok 48 - golden harness applies doorway, state and layout overrides to a cloned fixture
+  ---
+  duration_ms: 0.8031
+  type: 'test'
+  ...
+# Subtest: golden overrides fail closed on misspelled fixture references
+ok 49 - golden overrides fail closed on misspelled fixture references
+  ---
+  duration_ms: 3.3746
+  type: 'test'
+  ...
+# Subtest: a light source paints exactly one region: the floor it can see
+ok 50 - a light source paints exactly one region: the floor it can see
+  ---
+  duration_ms: 942.6643
+  type: 'test'
+  ...
+# Subtest: all destructive editor dialogs use the medium shell and shared responsive footer groups
+ok 51 - all destructive editor dialogs use the medium shell and shared responsive footer groups
+  ---
+  duration_ms: 492.8612
+  type: 'test'
+  ...
+# Subtest: editor tray golden contract covers every adaptive width in English and Russian
+ok 52 - editor tray golden contract covers every adaptive width in English and Russian
+  ---
+  duration_ms: 1.0751
+  type: 'test'
+  ...
+# Subtest: issue 159 goldens cover both palette levels and every plan-art compatibility class
+ok 53 - issue 159 goldens cover both palette levels and every plan-art compatibility class
+  ---
+  duration_ms: 0.6988
+  type: 'test'
+  ...
+# Subtest: issue 606 isolates both corrected drawings and the saved exercise alias
+ok 54 - issue 606 isolates both corrected drawings and the saved exercise alias
+  ---
+  duration_ms: 0.5527
+  type: 'test'
+  ...
+# Subtest: issue 359 has one deterministic light-theme furniture placement preview golden
+ok 55 - issue 359 has one deterministic light-theme furniture placement preview golden
+  ---
+  duration_ms: 0.3126
+  type: 'test'
+  ...
+# Subtest: issue 383 goldens cover every furniture mirror orientation in light and dark themes
+ok 56 - issue 383 goldens cover every furniture mirror orientation in light and dark themes
+  ---
+  duration_ms: 0.4752
+  type: 'test'
+  ...
+# Subtest: device dialog goldens expose the complete light-source controls at desktop and mobile widths
+ok 57 - device dialog goldens expose the complete light-source controls at desktop and mobile widths
+  ---
+  duration_ms: 1.4438
+  type: 'test'
+  ...
+# Subtest: issue \#199 golden candidates cover the blocked Optimize dialog in both themes
+ok 58 - issue \#199 golden candidates cover the blocked Optimize dialog in both themes
+  ---
+  duration_ms: 0.6783
+  type: 'test'
+  ...
+# Subtest: golden harness neutralizes the shared pointer before every scenario
+ok 59 - golden harness neutralizes the shared pointer before every scenario
+  ---
+  duration_ms: 1.1569
+  type: 'test'
+  ...
+# Subtest: toggle-entity dialog goldens cover selected and stale states across themes and widths
+ok 60 - toggle-entity dialog goldens cover selected and stale states across themes and widths
+  ---
+  duration_ms: 0.5219
+  type: 'test'
+  ...
+# Subtest: help affordance golden covers an open text-bearing surface in both themes
+ok 61 - help affordance golden covers an open text-bearing surface in both themes
+  ---
+  duration_ms: 0.3581
+  type: 'test'
+  ...
+# Subtest: issue 86 help goldens render browser zoom 200% in both themes
+ok 62 - issue 86 help goldens render browser zoom 200% in both themes
+  ---
+  duration_ms: 0.3446
+  type: 'test'
+  ...
+# Subtest: issue 43 support dialog has the six reviewed responsive states
+ok 63 - issue 43 support dialog has the six reviewed responsive states
+  ---
+  duration_ms: 0.6457
+  type: 'test'
+  ...
+# Subtest: \#661 AC7 moon scenes: fixed home and clock, moon on, the old day-cycle frames untouched
+ok 64 - \#661 AC7 moon scenes: fixed home and clock, moon on, the old day-cycle frames untouched
+  ---
+  duration_ms: 1.9677
+  type: 'test'
+  ...
+# Subtest: \#718 AC8 static-background moon scenes: the chosen colour, the sky layer, the dialog waits for the line
+ok 65 - \#718 AC8 static-background moon scenes: the chosen colour, the sky layer, the dialog waits for the line
+  ---
+  duration_ms: 2.5657
+  type: 'test'
+  ...
+# Subtest: \#1000 retired constructor OK/Cancel cannot mutate or close a newly opened draft
+ok 66 - \#1000 retired constructor OK/Cancel cannot mutate or close a newly opened draft
+  ---
+  duration_ms: 12.7393
+  type: 'test'
+  ...
+# Subtest: \#1000 table actions retain outer session and current authority, not a later reopened marker
+ok 67 - \#1000 table actions retain outer session and current authority, not a later reopened marker
+  ---
+  duration_ms: 5.4843
+  type: 'test'
+  ...
+# Subtest: \#1000 threshold/native identities and levels preserve all causes of one entity
+ok 68 - \#1000 threshold/native identities and levels preserve all causes of one entity
+  ---
+  duration_ms: 50.1722
+  type: 'test'
+  ...
+# Subtest: \#1000 custom facts respect static/live/hidden/lifecycle policy and unknown value is honest
+ok 69 - \#1000 custom facts respect static/live/hidden/lifecycle policy and unknown value is honest
+  ---
+  duration_ms: 17.4182
+  type: 'test'
+  ...
+# Subtest: \#1000 confirmation timer invalidates real incremental presentation without an HA tick
+ok 70 - \#1000 confirmation timer invalidates real incremental presentation without an HA tick
+  ---
+  duration_ms: 477.4776
+  type: 'test'
+  ...
+# Subtest: \#1000 continuous 3000ms activation/removal, noise cancels either candidate
+ok 71 - \#1000 continuous 3000ms activation/removal, noise cancels either candidate
+  ---
+  duration_ms: 6.1947
+  type: 'test'
+  ...
+# Subtest: \#1000 deadline reads the current field rather than a stale true closure
+ok 72 - \#1000 deadline reads the current field rather than a stale true closure
+  ---
+  duration_ms: 0.7754
+  type: 'test'
+  ...
+# Subtest: \#1000 incomparable active source is honest while removal is pending; ownership loss is immediate
+ok 73 - \#1000 incomparable active source is honest while removal is pending; ownership loss is immediate
+  ---
+  duration_ms: 0.6783
+  type: 'test'
+  ...
+# Subtest: \#1000 unchanged updates retain one deadline; changed rule/authority/dispose retire callbacks
+ok 74 - \#1000 unchanged updates retain one deadline; changed rule/authority/dispose retire callbacks
+  ---
+  duration_ms: 1.1669
+  type: 'test'
+  ...
+# Subtest: \#1000 own index precedes every state/name read; exact and virtual cannot borrow siblings
+ok 75 - \#1000 own index precedes every state/name read; exact and virtual cannot borrow siblings
+  ---
+  duration_ms: 2.4678
+  type: 'test'
+  ...
+# Subtest: \#1000 known state controls retain raw HA strings and exclude malformed options
+ok 76 - \#1000 known state controls retain raw HA strings and exclude malformed options
+  ---
+  duration_ms: 2.6502
+  type: 'test'
+  ...
+# Subtest: \#1000 field inventory is own scalars only; dotted keys stay one direct attribute
+ok 77 - \#1000 field inventory is own scalars only; dotted keys stay one direct attribute
+  ---
+  duration_ms: 1.7977
+  type: 'test'
+  ...
+# Subtest: \#1000 optional projection confirms current selected fields and retires on lost authority
+ok 78 - \#1000 optional projection confirms current selected fields and retires on lost authority
+  ---
+  duration_ms: 7.3353
+  type: 'test'
+  ...
+# Subtest: \#1000 late deadline reads no retired rule, floor, static or disconnected owner
+ok 79 - \#1000 late deadline reads no retired rule, floor, static or disconnected owner
+  ---
+  duration_ms: 3.2163
+  type: 'test'
+  ...
+# Subtest: \#1000 unrelated HA rows/locale do not restart confirmation; reconnect does
+ok 80 - \#1000 unrelated HA rows/locale do not restart confirmation; reconnect does
+  ---
+  duration_ms: 2.9676
+  type: 'test'
+  ...
+# Subtest: \#1000 200 configured devices consume only selected fields on unrelated HA ticks
+ok 81 - \#1000 200 configured devices consume only selected fields on unrelated HA ticks
+  ---
+  duration_ms: 1060.6277
+  type: 'test'
+  ...
+# {"devices":200,"rules":600,"unrelatedStates":15000,"p50Ms":9.688100000000077,"p95Ms":15.548999999999978,"readsPerTick":600,"stateEnumerations":0,"extraSchedules":0}
+# Subtest: \#1000 shared TS/Python persisted contract rejects malformed new edits
+ok 82 - \#1000 shared TS/Python persisted contract rejects malformed new edits
+  ---
+  duration_ms: 5.4604
+  type: 'test'
+  ...
+# Subtest: \#1000 finite full numbers, manual text and raw enum retain their distinct types
+ok 83 - \#1000 finite full numbers, manual text and raw enum retain their distinct types
+  ---
+  duration_ms: 0.855
+  type: 'test'
+  ...
+# Subtest: \#1000 six comparisons use exact boundaries and incomparable ne never activates
+ok 84 - \#1000 six comparisons use exact boundaries and incomparable ne never activates
+  ---
+  duration_ms: 0.8872
+  type: 'test'
+  ...
+# Subtest: \#977 normalizer exact states, limits, reserved values and lossless future fields
+ok 85 - \#977 normalizer exact states, limits, reserved values and lossless future fields
+  ---
+  duration_ms: 4.3747
+  type: 'test'
+  ...
+# Subtest: \#977 own-device candidates never borrow controls/via_device/name, entity siblings need proof
+ok 86 - \#977 own-device candidates never borrow controls/via_device/name, entity siblings need proof
+  ---
+  duration_ms: 1.497
+  type: 'test'
+  ...
+# Subtest: \#977 Auto is identical; manual nonmatch wins over active Power and missing never falls back
+ok 87 - \#977 Auto is identical; manual nonmatch wins over active Power and missing never falls back
+  ---
+  duration_ms: 14.4427
+  type: 'test'
+  ...
+# Subtest: \#977 foreign/disabled/virtual sources are not read, even from imported config
+ok 88 - \#977 foreign/disabled/virtual sources are not read, even from imported config
+  ---
+  duration_ms: 1.7971
+  type: 'test'
+  ...
+# Subtest: \#977 standard domain/class/attribute/lifecycle semantics, native offline and protected roles
+ok 89 - \#977 standard domain/class/attribute/lifecycle semantics, native offline and protected roles
+  ---
+  duration_ms: 9.913
+  type: 'test'
+  ...
+# Subtest: \#977 alarms, static, live off and RGB/actions/values/battery stay independent
+ok 90 - \#977 alarms, static, live off and RGB/actions/values/battery stay independent
+  ---
+  duration_ms: 4.2055
+  type: 'test'
+  ...
+# Subtest: \#977 source signature fences old short events; initial observations never fabricate edges
+ok 91 - \#977 source signature fences old short events; initial observations never fabricate edges
+  ---
+  duration_ms: 1.5416
+  type: 'test'
+  ...
+# Subtest: \#977 chosen diagnostic outside d.entities: state/attrs/registry-only ticks match full capture
+ok 92 - \#977 chosen diagnostic outside d.entities: state/attrs/registry-only ticks match full capture
+  ---
+  duration_ms: 410.2704
+  type: 'test'
+  ...
+# Subtest: \#1026 diagnostic-only own ticks and registry ownership match complete snapshots
+ok 93 - \#1026 diagnostic-only own ticks and registry ownership match complete snapshots
+  ---
+  duration_ms: 1077.2034
+  type: 'test'
+  ...
+# Subtest: \#920 an explicit CO2 source outside every room remains in the immutable live snapshot
+ok 94 - \#920 an explicit CO2 source outside every room remains in the immutable live snapshot
+  ---
+  duration_ms: 176.9431
+  type: 'test'
+  ...
+# Subtest: \#919 local reveal invalidates reuse, preserves raw intent and follows live updates like a complete capture
+ok 95 - \#919 local reveal invalidates reuse, preserves raw intent and follows live updates like a complete capture
+  ---
+  duration_ms: 1212.7871
+  type: 'test'
+  ...
+# Subtest: \#850 AC3: 250 random ticks — the incremental snapshot equals a complete rebuild after every tick
+ok 96 - \#850 AC3: 250 random ticks — the incremental snapshot equals a complete rebuild after every tick
+  ---
+  duration_ms: 15877.358
+  type: 'test'
+  ...
+# Subtest: \#850 AC3: a plan sensor tick rebuilds two presentations; S1b on another floor as well
+ok 97 - \#850 AC3: a plan sensor tick rebuilds two presentations; S1b on another floor as well
+  ---
+  duration_ms: 161.1525
+  type: 'test'
+  ...
+# Subtest: \#850 AC3: a structural change rebuilds every presentation or everything; disconnect forgets the window
+ok 98 - \#850 AC3: a structural change rebuilds every presentation or everything; disconnect forgets the window
+  ---
+  duration_ms: 1059.0867
+  type: 'test'
+  ...
+# Subtest: \#850 AC3: an in-place edit of a marker record, the stored settings or the card config is an input
+ok 99 - \#850 AC3: an in-place edit of a marker record, the stored settings or the card config is an input
+  ---
+  duration_ms: 480.4666
+  type: 'test'
+  ...
+# Subtest: \#850 AC3: a row read only through the battery context or a badge is still an input
+ok 100 - \#850 AC3: a row read only through the battery context or a badge is still an input
+  ---
+  duration_ms: 244.539
+  type: 'test'
+  ...
+1..100
+# tests 100
+# suites 0
+# pass 100
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20744.7597

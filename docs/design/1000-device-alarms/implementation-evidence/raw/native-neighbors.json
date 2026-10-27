@@ -1,0 +1,36 @@
+{
+  "base": "e5849080cc01e10349be1c5ec922f8bb4a428094",
+  "baseFingerprint": "c0565792f0afbdb78700f5fa21f440fa463c2dc0e1a41e84b39d84c7585e19cc",
+  "candidateHead": "dac80868c444ce8e710c93fc3f416ddab885bbcc",
+  "candidateFingerprint": "8b84aa3b375b7cd2ae822042eee8ce69e21b581648a4af005ca93c6e584dffb1",
+  "results": [
+    {
+      "id": "device-issues-maintenance-plan",
+      "baseSha256": "25ac9c28cca52e2ecd7aa0233b49177af691f2e223687602f8af24c12f961da1",
+      "candidateSha256": "25ac9c28cca52e2ecd7aa0233b49177af691f2e223687602f8af24c12f961da1",
+      "identical": true,
+      "baseGlobalBaselineStatus": "different"
+    },
+    {
+      "id": "device-issues-maintenance-card",
+      "baseSha256": "9fa33e62d6e59cfd6b2e7cb6903d6a4d63d10e94afca6f793241702ad2c5952b",
+      "candidateSha256": "9fa33e62d6e59cfd6b2e7cb6903d6a4d63d10e94afca6f793241702ad2c5952b",
+      "identical": true,
+      "baseGlobalBaselineStatus": "different"
+    },
+    {
+      "id": "device-issues-alarm-plan",
+      "baseSha256": "c203e5fd677ff4003a04cb850ce6056076878571de42f23ab564a9a1f17a5409",
+      "candidateSha256": "c203e5fd677ff4003a04cb850ce6056076878571de42f23ab564a9a1f17a5409",
+      "identical": true,
+      "baseGlobalBaselineStatus": "different"
+    },
+    {
+      "id": "device-issues-alarm-card",
+      "baseSha256": "339091f36616eecd4e142c692d313c5d24389e78d87bfba30923b7e5ea69b406",
+      "candidateSha256": "339091f36616eecd4e142c692d313c5d24389e78d87bfba30923b7e5ea69b406",
+      "identical": true,
+      "baseGlobalBaselineStatus": "different"
+    }
+  ]
+}
