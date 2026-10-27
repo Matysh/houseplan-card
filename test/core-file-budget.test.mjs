@@ -63,7 +63,11 @@ const CAPS = {
   // UI live in leaf modules;15 host lifecycle/render/capability seams remain.
   // Actual gate was5 lines above13272+50. Owner permits this observed small
   // cost instead of disproportionate splitting; retain CORE_BAND50.
-  'src/houseplan-card.ts': 13327,
+  // #1070/#1000, explicit owner decision2026-10-27: measured joint13381
+  // exceeds the previous13327+50. Apply existing #898 +10% (ceil=14660),
+  // retaining CORE_BAND50 and every other core cap; no source golfing.
+  // https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253
+  'src/houseplan-card.ts': 14660,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.

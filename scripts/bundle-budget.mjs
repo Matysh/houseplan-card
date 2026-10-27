@@ -50,8 +50,13 @@ import { NAMESPACE_LOCALE_CHUNKS } from './bundle-manifest.mjs';
 // #898, owner decision 2026-10-14: ceilings with less than 10 % headroom grow
 // by 10 %. The wall becomes 320000 x 1.1 = 352000 B; the reference of the
 // 5-10 % rule becomes the previous wall (an owner decision, not a measurement).
-export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 320_000;
-export const INITIAL_VIEW_GZIP_BUDGET = 352_000;
+// #1070/#1000, explicit owner decision 2026-10-27: stop byte-budget chasing.
+// The measured combined candidate is 352517 B gzip, beyond the former wall.
+// Apply the existing #898 +10% rule: previous wall352000 ->387200; only this
+// resource wall changes. Rolling references retain actual own cost and bands.
+// https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253
+export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 352_000;
+export const INITIAL_VIEW_GZIP_BUDGET = 387_200;
 export const INITIAL_PANEL_ONLY_GZIP_BUDGET = 8 * 1024;
 
 /**
