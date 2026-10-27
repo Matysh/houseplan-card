@@ -30,6 +30,12 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/device-more-info.ts', 'src/marker-more-info-fields.ts', 'src/editors/marker-more-info.ts'],
+    symbols: ['_openDeviceMoreInfo'],
+    smokes: ['smoke_device_more_info.mjs'],
+    because: '#1087: native HA dialog events, exact form persistence and picker Escape/width cannot be inferred from pure imports.',
+  },
+  {
     files: ['src/hp-plan-converter-info.ts', 'src/plan-converter.ts', 'src/floor-import-dialog.ts',
       'src/compact-dialog-styles.ts', 'src/i18n/converter.ts', 'src/styles/form-kit-tokens.ts'],
     smokes: ['smoke_first_space_converter.mjs', 'smoke_editor_styles_lazy.mjs',

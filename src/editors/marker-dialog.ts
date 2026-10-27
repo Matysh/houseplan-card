@@ -11,6 +11,8 @@ import { dialogSession } from './dialog-baseline';
 import { markerDirty, markerProblems, restoreMarkerRadarRemoval } from './marker-form-state';
 import { settingsCopy } from './settings-copy';
 import { renderMarkerStateSource } from './marker-state-source';
+import { renderMarkerMoreInfo } from './marker-more-info';
+import { moreInfoDraftInvalid } from '../marker-more-info-fields';
 
 import { resolveDevicePresentation } from '../device-presentation';
 import { effectiveShowLqi } from '../signal-visibility';
@@ -169,7 +171,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
      * калибровка радара, привязка не выбрана или не подтверждена реестром)
      * остаются; привязка и радиус теперь ещё и названы словами под полем. */
     const edit = !!d.devId;
-    const problems = markerProblems(d, effectiveTapAction);
+    const problems = markerProblems(d, effectiveTapAction, moreInfoDraftInvalid(d, this.host._planHass, this.host._fullRegistryHass));
     const problemFor = (fieldId: string) => problems.find((p) => p.field === fieldId);
     const dirty = markerDirty(this.host, d);
     const bindingUnverified = d.bindingMode === 'ha' && !d.devId && bindingStatus?.kind !== 'active';
@@ -230,6 +232,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             }
             const next = {
               ...d, binding: value, bindingOpen: false,
+              moreInfoEntity: null, moreInfoTouched: true, moreInfoOpen: false, moreInfoFilter: '',
               controls: persistedExternalControls(
                 value, d.controls, this.host._bindingEntities(value),
               ),
@@ -280,6 +283,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
                 // virtual; the reset below is therefore always legitimate.
                 const next = {
                   ...d, bindingMode: 'virtual' as const, binding: 'virtual', bindingOpen: false,
+                  moreInfoEntity: null, moreInfoTouched: true, moreInfoOpen: false, moreInfoFilter: '',
                   controls: persistedExternalControls('virtual', d.controls),
                   autoIcon: this.host._autoIconForBinding('virtual'),
                   ...radarAfterBindingChange(d.radar, d.radarTouched, d.radarRemove),
@@ -423,6 +427,12 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               <span class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</span>`
             : undefined,
         }),
+          effectiveTapAction === 'more-info' ? renderMarkerMoreInfo({
+            draft: d, device: previewDevice, hass: this.host._planHass, registry: this.host._fullRegistryHass,
+            t: st, emptyText: t('marker.nothing_found'),
+            error: problemFor('marker-more-info-entity') ? st('marker.more_info_invalid') : undefined,
+            change: draft => { this.host._markerDialog = draft; },
+          }) : nothing,
           toggleEntityField,
           runTargetField,
           effectiveTapAction === 'run' || effectiveTapAction === 'toggle'

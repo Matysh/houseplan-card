@@ -496,7 +496,7 @@ MARKER = Object(
         "glow_color": nullable(Object({"c": COLOR, "bri": nullable(NUMBER)})),
         "icon": re.compile(r"mdi:[a-z0-9-]{1,80}\Z"),
         **fields(
-            "space room_id area light_entity toggle_entity tap_target", REF_OR_NULL
+            "space room_id area light_entity toggle_entity tap_target more_info_entity", REF_OR_NULL
         ),
         "controls": nullable(
             Array(nullable(Choice((Reference("entity"), Reference("marker_ref")))))

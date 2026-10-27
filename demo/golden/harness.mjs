@@ -2172,7 +2172,7 @@ export async function prepareGoldenScenario(page, scenario) {
       card._openMarkerDialog(device);
       await card.updateComplete;
       const settings = card.renderRoot.querySelector('hp-dialog');
-      const target = scenario.vacuumRetained || scenario.vacuumLive ? 'vacuum' : scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity ? 'actions' : 'basics';
+      const target = scenario.vacuumRetained || scenario.vacuumLive ? 'vacuum' : scenario.deviceStateSource ? 'appearance' : scenario.deviceLightControls ? 'light' : scenario.deviceToggleEntity || scenario.deviceMoreInfo ? 'actions' : 'basics';
       const navigation = settings?.querySelector(`[data-section-target="${target}"]`);
       if (!navigation) throw new Error(`golden device settings section missing: ${target}`);
       navigation.click();
@@ -2233,6 +2233,22 @@ export async function prepareGoldenScenario(page, scenario) {
         const visibleRadius = radius.getBoundingClientRect();
         if (visibleRole.top < visibleBody.top - 1 || visibleRadius.bottom > visibleBody.bottom + 1)
           throw new Error('golden viewport does not show the complete device light-source controls');
+      }
+      if (scenario.deviceMoreInfo) {
+        const button = settings?.querySelector('#marker-more-info-entity');
+        if (!button) throw new Error('more-info target picker missing');
+        button.scrollIntoView({ block: 'center' });
+        button.click(); await card.updateComplete; await frame();
+        const picker = settings.querySelector('[data-more-info-target]');
+        const panel = picker?.querySelector('.hpf-panel');
+        const selected = picker?.querySelector('[role="option"][aria-selected="true"]');
+        const rect = panel?.getBoundingClientRect();
+        const surface = settings.shadowRoot?.querySelector('.surface')?.getBoundingClientRect();
+        if (button.getAttribute('aria-expanded') !== 'true' || !picker?.querySelector('input')
+            || selected?.getAttribute('data-value') !== 'switch.golden_washer_child_lock'
+            || !rect || rect.width < 100 || !surface || rect.left < surface.left - 1 || rect.right > surface.right + 1
+            || picker.scrollWidth > picker.clientWidth + 1)
+          throw new Error('more-info picker selection/search or visible width is wrong');
       }
       if (scenario.deviceStateSource) {
         const select = settings?.querySelector('#marker-state-source');

@@ -138,6 +138,10 @@
       "required": false,
       "type": "str"
     },
+    "config.markers[].more_info_entity": {
+      "required": false,
+      "type": "object"
+    },
     "config.markers[].name": {
       "maxLength": 500,
       "nullable": true,

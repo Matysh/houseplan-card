@@ -326,6 +326,7 @@ def extend_config_projection(config: dict, projected: dict, ids: DiagnosticIds) 
                 "room_id": "room",
                 "light_entity": "entity",
                 "toggle_entity": "entity",
+                "more_info_entity": "entity",
                 "tap_target": "entity",
             },
         )

@@ -45,8 +45,8 @@ that transition events alone prove disposal.
 | Paint, cascade and layer composition | 94 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 102 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 60 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 268 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **537 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 269 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **538 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -632,6 +632,11 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+#1087: trusted View input must reach the shared HA target through the actual Lit handler, while right click keeps Settings.
+
+- `more-info-tap-opens-measurement-1087`
+
 
 - `first-space-converter-link-target`
 - `first-space-converter-writer-only`

@@ -1,4 +1,5 @@
 {
+  "toast.more_info_target_unavailable": "Impossible d’ouvrir l’entité sélectionnée. Vérifiez Ouvrir dans Home Assistant dans les paramètres de l’appareil.",
   "backup.error.invalid_state_source": "Source d’état de l’icône ou états actifs non valides.",
   "marker.preview.state_source_active": "Icône active : {entity} — {state}.",
   "marker.preview.state_source_inactive": "Icône inactive : {entity} — {state}.",

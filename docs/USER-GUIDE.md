@@ -1,5 +1,9 @@
 # House Plan — complete user guide
 
+## Choose the Home Assistant dialog for a device
+
+In device settings, open Actions and links and select HA more-info dialog. The Open in Home Assistant field below it offers Auto (the main functional entity, such as the thermostat) and this device’s own entities, with search inside the list. The same selection applies to Open in HA in the device card. Right-click still opens Houseplan settings. Icon activity, displayed values and control targets remain independent. A deleted or disabled explicit target produces a warning instead of silently opening another entity.
+
 ### Start with an existing plan
 
 The empty screen and the HA floor selection dialog link to the

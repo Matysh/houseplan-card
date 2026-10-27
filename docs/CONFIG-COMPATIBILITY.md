@@ -94,6 +94,10 @@ readers are kept for the precise reasons in the inventory; a reached deadline
 does not erase an all-input boundary or a non-equivalent value. This section
 describes the development line and does not claim that v1.83 stable is published.
 
+## Device HA dialog entity (#1087)
+
+Optional markers[].more_info_entity is an entity_id string or null; absence/null is Auto. The editor removes the field on explicit Auto and preserves untouched absence/null or stale historical data. Changed values and full imports validate type, format and binding kind; the backend has no HA registry, so runtime independently proves own-device membership, enabled/readable target and exact entity bindings. Changing binding clears only this override in the draft; changing tap action preserves it for the HA footer button. Full/space JSON/ZIP and ordinary marker history/Optimize retain it. Plan-only carries no markers; virtualized duplicate imports drop this HA reference. Closed support projections pseudonymize it in the shared entity namespace, with matching integration/relay wire schemas. No migration or model bump; older strict backends may reject the new field, so retain a backup before downgrade.
+
 ## Hidden Zigbee placement diagnostics (#1077)
 
 No persisted config/layout/cache schema or version changes. Hidden/shown status

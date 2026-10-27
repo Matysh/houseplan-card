@@ -42,6 +42,15 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     compatibility:'retain missing-attribute and historical secondary-metric semantics',
   },
   {
+    id: 'markers[].more_info_entity', selector: { path: ['markers', '*', 'more_info_entity'] },
+    enforcedBy: 'validation.py + device-more-info.ts; #1087',
+    storage: 'House Plan server config', type: 'string | null', default: 'absent (= Auto)', level: 'device marker',
+    ui: 'Actions and links → More Info → Open in Home Assistant',
+    runtime: 'exact own HA dialog target; independent of icon/value/controls; stale explicit selection fails closed',
+    introduced: '#1087', status: 'current', migration: 'none; Auto stays sparse and reads never write',
+    compatibility: 'full/space JSON/ZIP, Optimize/history retain; plan-only excludes markers; support pseudonymizes the entity ref',
+  },
+  {
     id:'rooms[].settings.sun_transparent', selector:{path:['spaces','*','rooms','*','settings','sun_transparent']},
     enforcedBy:'validation.py ROOM_SCHEMA + sun-access.ts; #1078',
     storage:'House Plan server config',type:'boolean',default:'absent (= false)',level:'room',

@@ -1,4 +1,13 @@
 {
+  "marker.more_info_search": "Nach Name oder entity_id suchen…",
+  "marker.more_info_entity": "In Home Assistant öffnen",
+  "marker.more_info_auto": "Auto",
+  "marker.more_info_none": "Keine geeignete Entität",
+  "marker.more_info_help": "Auto öffnet die Hauptentität des Geräts, etwa den Thermostat. Sie können eine andere Entität dieses Geräts auswählen. Die Auswahl gilt für die More-Info-Tippaktion und die Schaltfläche In HA öffnen; Symbol und Wert bleiben unabhängig.",
+  "marker.more_info_help.aria": "Hilfe: in Home Assistant öffnen",
+  "marker.more_info_missing": "Die ausgewählte Entität ist nicht mehr verfügbar. Wählen Sie eine andere Entität oder Auto.",
+  "marker.more_info_virtual": "Wählen Sie ein Home-Assistant-Gerät oder eine Entität.",
+  "marker.more_info_invalid": "Wählen Sie eine verfügbare Entität dieses Geräts oder Auto.",
   "room.sun_section": "Sonnenlicht",
   "room.sun_transparent": "Lässt Sonnenlicht durch",
   "room.sun_transparent_help": "In diesem Raum werden keine Sonnenstrahlen gezeichnet. Erreicht er oder eine verbundene Kette solcher Räume das Freie, kann Sonnenlicht durch ihre Fenster in normale Räume fallen, auch ohne Außenfenster in der Kette. Eine isolierte innere Gruppe erzeugt keinen Sonnenzugang. Künstliche Beleuchtung bleibt unverändert.",

@@ -1,5 +1,7 @@
 # Project status
 
+HA more-info target (#1087) separates the opened entity from displayed measurements. The optional own-entity picker affects the More Info tap and HA footer only; #997 right-click Settings and existing device presentation/control semantics are retained. Task delivery stops in S6 before code review by owner instruction.
+
 Compact floor navigation (#997) uses the actual header width and the shared
 UI Kit select. Existing navigation/dirty guards, fixed-floor and writer rules
 remain authoritative; gear/add stay adjacent above the phone breakpoint.
@@ -29,7 +31,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5651 · pure backend 681 · HA-harness backend 583 · browser smokes 458 (`npm run inventory`) |
+| Tests | Node unit 5660 · pure backend 686 · HA-harness backend 584 · browser smokes 459 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

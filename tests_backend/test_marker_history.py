@@ -38,6 +38,19 @@ def test_delete_undo_redo_restores_exact_presence_tombstone_snapshots_layout_led
     assert service.candidate(command, restored, True, tmp_path) == after
 
 
+def test_issue1087_delete_undo_redo_keeps_the_exact_optional_ha_dialog_target(tmp_path):
+    before = _before()
+    before["config"]["markers"][0]["more_info_entity"] = "climate.floor"
+    config, layout = delete_candidate(before["config"], before["layout"], [{"id": "lamp", "binding": "device:lamp"}])
+    after = {"config": config, "layout": layout}
+    service = MarkerHistory()
+    command = service.prepare(before, after, {"lamp"}, tmp_path)
+    restored = service.candidate(command, after, False, tmp_path)
+    assert restored["config"]["markers"][0]["more_info_entity"] == "climate.floor"
+    command.after = False
+    assert service.candidate(command, restored, True, tmp_path) == after
+
+
 def test_control_edges_and_unrelated_fields_merge_without_replacing_foreign_data(tmp_path):
     service, command, before, after = _command(tmp_path)
     controller = next(item for item in after["config"]["markers"] if item["id"] == "other")

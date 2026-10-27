@@ -135,7 +135,7 @@ export function isTempEntity(hass: any, eid: string): boolean {
  * is a role order, not an entity-list order: an auxiliary switch may never
  * outrank the vacuum/climate/cover/etc. entity it configures.
  */
-const DEVICE_STATE_DOMAINS = [
+export const DEVICE_STATE_DOMAINS = [
   'vacuum', 'lawn_mower', 'climate', 'media_player', 'light', 'cover', 'lock', 'valve',
   'alarm_control_panel', 'water_heater', 'fan', 'humidifier',
   'siren', 'camera', 'remote',

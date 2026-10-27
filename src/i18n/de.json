@@ -1,4 +1,5 @@
 {
+  "toast.more_info_target_unavailable": "Die ausgewählte Entität kann nicht geöffnet werden. Prüfen Sie In Home Assistant öffnen in den Geräteeinstellungen.",
   "backup.error.invalid_state_source": "Ungültige Symbolzustandsquelle oder aktive Zustände.",
   "marker.preview.state_source_active": "Symbol aktiv: {entity} — {state}.",
   "marker.preview.state_source_inactive": "Symbol inaktiv: {entity} — {state}.",

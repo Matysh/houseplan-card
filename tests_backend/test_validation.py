@@ -26,6 +26,39 @@ _HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
 v = load_pure("hp_validation", Path(_HOUSEPLAN_ROOT) / "validation.py")
 
 
+@pytest.mark.parametrize("value", [None, "climate.floor", "sensor.floor_temperature"])
+def test_issue1087_more_info_target_is_sparse_and_validates_new_writes(value):
+    config = {"spaces": [], "markers": [{"id": "m", "binding": "device:floor", "more_info_entity": value}]}
+    validated = v.CONFIG_SCHEMA(json.loads(json.dumps(config)))
+    v.validate_marker_value_badges(validated, validate_all=True)
+    assert validated["markers"][0]["more_info_entity"] == value
+    del config["markers"][0]["more_info_entity"]
+    assert "more_info_entity" not in v.CONFIG_SCHEMA(config)["markers"][0]
+
+
+@pytest.mark.parametrize("value", [True, 7, [], {}, "", "no entity", "climate.bad-name"])
+def test_issue1087_bad_changed_target_rejected_untouched_old_data_preserved(value):
+    config = {"spaces": [], "markers": [{"id": "m", "binding": "device:floor", "more_info_entity": value}]}
+    with pytest.raises(v.MarkerControlError, match="Home Assistant dialog"):
+        v.validate_marker_value_badges(config, validate_all=True)
+    v.validate_marker_value_badges(config, previous=json.loads(json.dumps(config)))
+    assert v.CONFIG_SCHEMA(config)["markers"][0]["more_info_entity"] == value
+
+
+@pytest.mark.parametrize("binding,entity_id,valid", [
+    ("entity:climate.floor", "climate.floor", True),
+    ("entity:climate.floor", "sensor.floor_temperature", False),
+    ("virtual", "climate.floor", False),
+])
+def test_issue1087_exact_or_virtual_binding_cannot_save_a_foreign_target(binding, entity_id, valid):
+    config = {"spaces": [], "markers": [{"id": "m", "binding": binding, "more_info_entity": entity_id}]}
+    if valid:
+        v.validate_marker_value_badges(config, validate_all=True)
+    else:
+        with pytest.raises(v.MarkerControlError, match="Home Assistant dialog"):
+            v.validate_marker_value_badges(config, validate_all=True)
+
+
 @pytest.mark.parametrize("value", [True, False])
 def test_issue1078_room_sunlight_is_strict_sparse_and_lossless(value):
     room = {"id": "terrace", "name": "Terrace", "poly": [[0, 0], [1, 0], [1, 1]],

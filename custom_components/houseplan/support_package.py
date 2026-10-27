@@ -395,7 +395,7 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
         out["space"] = ids.get("space", marker.get("space"))
     if marker.get("room_id"):
         out["room_id"] = ids.get("room", marker.get("room_id"))
-    for key in ("light_entity", "toggle_entity", "tap_target"):
+    for key in ("light_entity", "toggle_entity", "tap_target", "more_info_entity"):
         if marker.get(key):
             out[key] = _entity_ref(ids, marker.get(key))
     controls = marker.get("controls")

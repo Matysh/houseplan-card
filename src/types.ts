@@ -198,6 +198,8 @@ export interface Marker {
   /** Per-device override. `cover` is legacy read/import compatibility only;
    * the current editor writes `toggle`. */
   tap_action?: string | null;
+  /** Own HA entity opened by all device more-info entry points. Absence is Auto. */
+  more_info_entity?: string | null;
   /** 'run' target: automation./script./scene. entity id. */
   tap_target?: string | null;
   /** Ask before toggle/run — accidental-tap guard (owner's spec). */

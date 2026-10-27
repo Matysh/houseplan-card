@@ -1,4 +1,13 @@
 {
+  "marker.more_info_search": "Search name or entity_id…",
+  "marker.more_info_entity": "Open in Home Assistant",
+  "marker.more_info_auto": "Auto",
+  "marker.more_info_none": "No suitable entity",
+  "marker.more_info_help": "Auto opens the main functional entity, such as the thermostat. You can choose another entity of this device. This selection applies to the More Info tap action and the Open in HA button; icon and value display stay independent.",
+  "marker.more_info_help.aria": "Help: opening in Home Assistant",
+  "marker.more_info_missing": "The selected entity is no longer available. Choose another entity or Auto.",
+  "marker.more_info_virtual": "Choose a Home Assistant device or entity.",
+  "marker.more_info_invalid": "Choose an available entity of this device or Auto.",
   "room.sun_section": "Sunlight",
   "room.sun_transparent": "Lets sunlight through",
   "room.sun_transparent_help": "This room receives no sun rays. When it or a connected chain of rooms with this option reaches the outside, sunlight can enter ordinary rooms through their windows, even without an exterior window on the chain. An isolated interior group adds no sunlight. Artificial lighting is unchanged.",

@@ -18,6 +18,16 @@ const expected = JSON.parse(readFileSync(
 ));
 const clone = (value) => structuredClone(value);
 
+test('#1087 Optimize preserves manual HA dialog targets without editing the caller', () => {
+  const input = clone(source);
+  input.markers = [{ id: 'floor', binding: 'device:floor', space: input.spaces[0].id,
+    more_info_entity: 'climate.floor', value_source: { kind: 'entity_state', entity_id: 'sensor.floor_temperature' } }];
+  const original = clone(input);
+  const result = optimizePlans(input, {});
+  assert.deepEqual(result.config.markers, original.markers);
+  assert.deepEqual(input, original);
+});
+
 test('#1078 canonical room materialization and Optimize preserve the sunlight flag and unknown settings', () => {
   for (const enabled of [true, false]) {
     const input = clone(source);

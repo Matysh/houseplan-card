@@ -129,6 +129,24 @@ def _build(namespace: str = "test"):
     return raw, summary, forbidden
 
 
+@pytest.mark.parametrize("version", [1, 2])
+def test_issue1087_more_info_entity_uses_the_same_private_entity_namespace(version):
+    config, layout, _ = _source()
+    config["markers"][0]["more_info_entity"] = "sensor.secret_temperature"
+    raw, _ = build_support_package(
+        config, layout, config_rev=17, layout_rev=24, card_version="1.83.0-beta.2",
+        integration_version="1.83.0-beta.2", home_assistant_version="2026.8.0",
+        runtime=_facts(), repairs=[], namespace="moreinfo", package_version=version,
+    )
+    package = json.loads(raw)
+    marker = package["plan_backup"]["config"]["markers"][0]
+    assert marker["more_info_entity"].startswith("entity-moreinfo-")
+    assert "sensor.secret_temperature" not in raw.decode()
+    from custom_components.houseplan.support_wire_schema import validate_package
+    if version == 2:
+        validate_package(package)
+
+
 def test_issue_836_dev_label_is_a_separate_section_and_release_bytes_are_unchanged():
     """К8: `build` only with a dev label; without it the package bytes are the same."""
     import copy

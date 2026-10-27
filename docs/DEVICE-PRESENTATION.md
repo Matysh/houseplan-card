@@ -1,5 +1,9 @@
 # Отображение маркера устройства: таблица решений
 
+## Home Assistant dialog target (#1087)
+
+The HA dialog target is independent of presentation primary and state/value/badge sources. Auto prefers the already-resolved functional domain (for example climate of a thermostat), then retains the historical primary for passive devices. An optional own more_info_entity overrides only HA opening; exact entity bindings stay exact and virtual bindings gain no HA target. Missing/foreign/disabled/unreadable explicit targets refuse rather than opening a different sensor. Existing unavailable/unknown states can still be opened in HA. Both the More Info tap action and Open in HA footer use one resolver; View right-click remains Settings (#997).
+
 ## Own availability (#1026)
 
 `device-own-availability.ts` resolves one runtime fact from the existing active

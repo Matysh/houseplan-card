@@ -1,4 +1,13 @@
 {
+  "marker.more_info_search": "Rechercher un nom ou entity_id…",
+  "marker.more_info_entity": "Ouvrir dans Home Assistant",
+  "marker.more_info_auto": "Auto",
+  "marker.more_info_none": "Aucune entité adaptée",
+  "marker.more_info_help": "Auto ouvre l’entité principale de l’appareil, par exemple le thermostat. Vous pouvez choisir une autre entité de cet appareil. Ce choix s’applique à l’action More Info et au bouton Ouvrir dans HA ; l’icône et la valeur restent indépendantes.",
+  "marker.more_info_help.aria": "Aide : ouverture dans Home Assistant",
+  "marker.more_info_missing": "L’entité sélectionnée n’est plus disponible. Choisissez une autre entité ou Auto.",
+  "marker.more_info_virtual": "Choisissez un appareil ou une entité Home Assistant.",
+  "marker.more_info_invalid": "Choisissez une entité disponible de cet appareil ou Auto.",
   "room.sun_section": "Lumière du soleil",
   "room.sun_transparent": "Laisse passer le soleil",
   "room.sun_transparent_help": "Cette pièce ne reçoit aucun rayon dessiné. Si elle ou une chaîne de pièces avec cette option atteint l’extérieur, le soleil peut entrer dans les pièces ordinaires par leurs fenêtres, même sans fenêtre extérieure dans la chaîne. Un groupe intérieur isolé ne crée aucun accès au soleil. L’éclairage artificiel reste inchangé.",

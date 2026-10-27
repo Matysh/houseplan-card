@@ -222,7 +222,7 @@ const markerDraft = (patch = {}) => ({
 
 test('#631 marker dialog: exactly the declared transient keys are ignored, Touched/original are not', () => {
   assert.deepEqual([...MARKER_DIALOG_TRANSIENT_KEYS].sort(), [
-    'autoIcon', 'bindingFilter', 'bindingOpen', 'busy', 'controlsFilter', 'runFilter', 'stateSourceFilter', 'stateSourceOpen', 'tapHintAnnouncement', 'uploadId',
+    'autoIcon', 'bindingFilter', 'bindingOpen', 'busy', 'controlsFilter', 'moreInfoFilter', 'moreInfoOpen', 'runFilter', 'stateSourceFilter', 'stateSourceOpen', 'tapHintAnnouncement', 'uploadId',
   ]);
   const host = {};
   const base = markerDraft();
@@ -231,13 +231,15 @@ test('#631 marker dialog: exactly the declared transient keys are ignored, Touch
   const transient = {
     bindingOpen: true, bindingFilter: 'kit', runFilter: 'scr', controlsFilter: 'x', busy: true,
     tapHintAnnouncement: 'hint', uploadId: 7, autoIcon: 'mdi:lightbulb',
-    stateSourceOpen: true, stateSourceFilter: 'Laundry',
+    stateSourceOpen: true, stateSourceFilter: 'Laundry', moreInfoOpen: true, moreInfoFilter: 'floor',
   };
   for (const [k, v] of Object.entries(transient)) {
     assert.equal(markerDirty(host, markerDraft({ [k]: v })), false, k);
   }
   assert.equal(markerDirty(host, markerDraft({ valueBadgeTouched: true })), true);
   assert.equal(markerDirty(host, markerDraft({ stateSourceTouched: true })), true);
+  assert.equal(markerDirty(host, markerDraft({ moreInfoTouched: true })), true);
+  assert.equal(markerDirty(host, markerDraft({ moreInfoEntity: 'climate.floor' })), true);
   assert.equal(markerDirty(host, markerDraft({ stateSource: { entity_id: 'sensor.run' } })), true);
   assert.equal(markerDirty(host, markerDraft({ hideBattery: true })), true);
   assert.equal(markerDirty(host, markerDraft({ originalBinding: 'light.hall' })), true);

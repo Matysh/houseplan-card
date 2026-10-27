@@ -37,7 +37,7 @@ export function restoreMarkerRadarRemoval(host: object, d: MarkerDialogDraft): M
 }
 
 export const MARKER_DIALOG_TRANSIENT_KEYS: ReadonlySet<string> = new Set([
-  'bindingOpen', 'bindingFilter', 'stateSourceOpen', 'stateSourceFilter', 'runFilter', 'controlsFilter', 'busy', 'tapHintAnnouncement', 'uploadId', 'autoIcon',
+  'bindingOpen', 'bindingFilter', 'moreInfoOpen', 'moreInfoFilter', 'stateSourceOpen', 'stateSourceFilter', 'runFilter', 'controlsFilter', 'busy', 'tapHintAnnouncement', 'uploadId', 'autoIcon',
 ]);
 
 export function markerDraftKey(d: MarkerDialogDraft): string {
@@ -61,7 +61,7 @@ export function markerDirty(host: object, d: MarkerDialogDraft): boolean {
 export interface MarkerProblem {
   field: string;
   message: 'marker.error_binding' | 'marker.error_virtual_name'
-    | 'marker.error_run_target' | 'marker.error_value_badge_source' | 'marker.state_source_states_invalid';
+    | 'marker.more_info_invalid' | 'marker.error_run_target' | 'marker.error_value_badge_source' | 'marker.state_source_states_invalid';
 }
 
 /**
@@ -71,8 +71,9 @@ export interface MarkerProblem {
  * значение при сохранении молча становится «общим радиусом» (`null`), и К10
  * закрытым списком других условий не называет.
  */
-export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction): MarkerProblem[] {
+export function markerProblems(d: MarkerDialogDraft, effectiveTapAction = d.tapAction, moreInfoInvalid = false): MarkerProblem[] {
   const problems: MarkerProblem[] = [];
+  if (moreInfoInvalid) problems.push({ field: 'marker-more-info-entity', message: 'marker.more_info_invalid' });
   if (d.stateSourceTouched && d.stateSource != null && !normalizeMarkerStateSource(d.stateSource)) {
     problems.push({ field: 'marker-state-source-states', message: 'marker.state_source_states_invalid' });
   }

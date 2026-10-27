@@ -1713,6 +1713,31 @@ def test_export_copies_toggle_entity_literal(tmp_path: Path, kind: str) -> None:
     assert marker["toggle_entity"] == "switch.channel_2"
 
 
+@pytest.mark.parametrize("kind", ["full", "space"])
+def test_issue1087_more_info_target_survives_real_transfer_and_virtual_copy_strips_it(tmp_path: Path, kind: str) -> None:
+    config = _config()
+    config["markers"][0].update(binding="device:floor", more_info_entity="climate.floor")
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    document, _ = create_export(
+        runtime, {"config": config}, {"layout": {}}, kind=kind,
+        space_id="ground" if kind == "space" else None,
+        card_version="1.83.0-beta.2", config_root=tmp_path,
+    )
+    assert document["payload"]["config"]["markers"][0]["more_info_entity"] == "climate.floor"
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    restored, _, _ = prepare_apply(candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False)
+    assert restored["markers"][0]["more_info_entity"] == "climate.floor"
+    if kind == "space":
+        virtual, _, _ = build_space_merge(document, config, {}, "virtual")
+        assert virtual["markers"][-1]["binding"] == "virtual"
+        assert "more_info_entity" not in virtual["markers"][-1]
+
+
 def test_space_import_remaps_owned_ids_and_duplicate_policy(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
     document["payload"]["config"]["markers"][0]["toggle_entity"] = "switch.channel_2"

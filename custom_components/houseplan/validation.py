@@ -1077,6 +1077,21 @@ def validate_marker_value_badges(
             if not valid:
                 raise MarkerControlError("invalid_state_source", "Invalid icon state source or active states")
 
+        more_info = marker.get("more_info_entity")
+        old_more_info = (old_marker or {}).get("more_info_entity")
+        if more_info is not None and (
+            validate_all or more_info != old_more_info
+            or marker.get("binding") != (old_marker or {}).get("binding")
+        ):
+            binding = marker.get("binding", "")
+            valid = isinstance(more_info, str) and bool(_CONTROL_ENTITY_ID_RE.fullmatch(more_info))
+            valid = valid and (
+                binding.startswith("device:") and bool(binding[7:])
+                or binding.startswith("entity:") and binding[7:] == more_info
+            )
+            if not valid:
+                raise MarkerControlError("invalid_more_info_entity", "Invalid Home Assistant dialog entity")
+
 
 def validate_marker_vacuum_routes(
     config: dict, previous: dict | None = None, *, validate_all: bool = False,
@@ -2200,6 +2215,7 @@ MARKER_SCHEMA = vol.Schema(
         # Structural reads preserve opaque legacy/future data; changed writes
         # are checked by validate_marker_value_badges, without a live registry.
         vol.Optional("state_source"): object,
+        vol.Optional("more_info_entity"): object,
         vol.Optional("use_climate_temp"): vol.Any(bool, None),
         # Per-marker battery indicator override; absence/False keeps global policy.
         vol.Optional("hide_battery"): bool,

@@ -20,6 +20,8 @@ unit includes a future revisit as well as a distinct future endpoint. Exact
 incident and ordinary evidence: [2026-10-27 report](analysis/1088-nightly-guard-repair-2026-10-27.md).
 These are unchanged-product checks; mutation execution remains nightly-only.
 
+HA more-info target (#1087): never reuse measurement primary as a functional dialog target. The synthetic thermostat witness retains its old temperature primary while Auto opens climate. More-info selection does not authorize actuation, sibling targets for entity bindings or unreadable/disabled entities. Native coverage: demo/smoke_device_more_info.mjs; pure coverage: test/device-more-info.test.mjs. Optional support wire fields require redeploying the accepted relay schema before the first beta ships them; keep the mirror byte-identical and do not deploy an unreviewed task branch.
+
 Accepted UI Lab transfer (#1081) is covered by `smoke_ui_lab_1081`,
 `smoke_picker_motion`, `smoke_furniture_pan` and `smoke_ui_lab_grid` in `demo/`.
 The last uses actual presented edge pixels, retaining its pre-change RED and

@@ -299,6 +299,7 @@ import { contactConfigPatch } from './device-contact-write';
 import { positionableIconMarkers } from './device-icon-roster';
 import { ledStripsByMarker } from './led-strip-gate';
 import { markerStateSourceFields, normalizeMarkerStateSource } from './marker-state-source';
+import { markerMoreInfoFields, moreInfoDraftInvalid } from './marker-more-info-fields';
 import { vacuumTrailWriteFields } from './vacuum-trail-style';
 import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { contentFingerprint } from './visual-continuity';
@@ -674,7 +675,7 @@ export interface HouseplanEditorHostPort {
   _layout: DeviceLayout;
   readonly _layoutRev: number;
   _logicalViewCenter: () => { x: number; y: number; } | null;
-  _markerDialog: { vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: { moreInfoEntity?: Marker['more_info_entity']; moreInfoTouched?: boolean; moreInfoOpen?: boolean; moreInfoFilter?: string; vacuumTrail?: import('./vacuum-trail-style').VacuumTrailStyle; stateSourceOpen?: boolean; stateSourceFilter?: string; stateSource?: Marker['state_source']; stateSourceTouched?: boolean; devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; hideBattery: boolean; hideSignal: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; radar: RadarEditorDraft | null; radarEligible: boolean; radarTouched: boolean; radarRemove: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -7533,6 +7534,7 @@ public _openMarkerDialog(d?: DevItem, currentTarget?: () => DevItem | null): voi
         originalValueBadge: marker?.value_badge,
         valueSource: marker?.value_source || null,
         stateSource: marker?.state_source, stateSourceTouched: false,
+        moreInfoEntity: marker?.more_info_entity, moreInfoTouched: false,
         valueSourceTouched: false,
         originalHasValueSource: hasValueSource,
         originalValueSource: marker?.value_source,
@@ -7768,6 +7770,7 @@ public _markerToggleEntityFields(
 public async _saveMarker(): Promise<void> {
     const dlg = this.host._markerDialog;
     if (!dlg || dlg.busy) return;
+    if (moreInfoDraftInvalid(dlg, this.host._planHass, this.host._fullRegistryHass)) return;
       if (dlg.stateSourceTouched && dlg.stateSource != null && !normalizeMarkerStateSource(dlg.stateSource)) return;
     const effectiveTapAction = this._effectiveMarkerTapAction(dlg);
     if (dlg.bindingMode === 'ha' && (!dlg.binding || dlg.binding === 'virtual')) return;
@@ -7885,6 +7888,7 @@ public async _saveMarker(): Promise<void> {
         ...this._markerValueBadgeFields(dlg),
         ...this._markerValueSourceFields(dlg),
         ...markerStateSourceFields(dlg),
+        ...markerMoreInfoFields(dlg),
         use_climate_temp: dlg.useClimateTemp ? true : null,
         ...markerBatteryFields(dlg.hideBattery),
         ...markerSignalFields(dlg.hideSignal),
@@ -11445,6 +11449,7 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
       ...this._markerValueBadgeFields(d),
       ...this._markerValueSourceFields(d),
       ...markerStateSourceFields(d),
+      ...markerMoreInfoFields(d),
       use_climate_temp: d.useClimateTemp ? true : null,
       ...markerBatteryFields(d.hideBattery),
       ...markerSignalFields(d.hideSignal),

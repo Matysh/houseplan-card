@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 99;
+export const GOLDEN_MATRIX_VERSION = 100;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -1334,6 +1334,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'german-view-mobile-light', fixture: 'visual', space: 'golden-geometry',
     mode: 'view', language: 'de', theme: 'light',
     viewport: { width: 390, height: 900 }, ...page },
+  ...[
+    ['more-info-dialog-desktop-en', 'en', 'light', 1100],
+    ['more-info-dialog-mobile-ru', 'ru', 'dark', 360],
+  ].map(([id, language, theme, width]) => ({ id, fixture: 'visual', applianceLifecycle: true,
+    space: 'golden-appliance', dialog: 'device', deviceId: 'golden-washer', deviceMoreInfo: true,
+    markerOverrides: [{ id: 'golden-washer', binding: 'device:golden-washer', tap_action: 'more-info',
+      more_info_entity: 'switch.golden_washer_child_lock' }],
+    language, theme, viewport: { width, height: 1000 }, ...page })),
   { id: 'toggle-entity-dialog-desktop-en', fixture: 'visual', applianceLifecycle: true,
     space: 'golden-appliance', dialog: 'device', deviceId: 'golden-washer',
     deviceToggleEntity: 'selected', markerOverrides: [{

@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "issue": 1087,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already opens HA device dialogs, but a thermometer auto-icon can target a measurement instead of the functional thermostat. Fix that existing behavior and offer an explicit own-entity target, preserving presentation and control actions.",
+  "summary": {
+    "ru": "Правильное открытие термостатов и выбор сущности для диалога HA.",
+    "en": "Correct thermostat dialogs and an explicit own-entity target for HA opening."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [
+      {
+        "id": "more-info-dialog-desktop-en",
+        "expectation": "new",
+        "reason": "Own-entity picker below More Info, with internal search and actual saved selection."
+      },
+      {
+        "id": "more-info-dialog-mobile-ru",
+        "expectation": "new",
+        "reason": "The same standard picker and long entity names fit a 360px device dialog."
+      }
+    ],
+    "smokes": [
+      "smoke_device_more_info.mjs"
+    ]
+  }
+}

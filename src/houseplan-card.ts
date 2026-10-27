@@ -132,6 +132,7 @@ import {
   toggleIntentName, toggleOperation, unavailableToggleTargetNames, type ResolvedToggleIntent,
   type ResolvedToggleTarget, type ToggleNextEffect,
 } from './device-toggle';
+import { resolveDeviceMoreInfoTarget } from './device-more-info';
 import {
   applyVirtualLightEvent, reconcileVirtualLightSnapshot, virtualLightFingerprint,
   virtualLightSnapshot, virtualLightWire, type VirtualLightSnapshot,
@@ -2247,6 +2248,10 @@ export class HouseplanCard extends LitElement {
     stateSourceTouched?: boolean;
     stateSourceOpen?: boolean;
     stateSourceFilter?: string;
+    moreInfoEntity?: Marker['more_info_entity'];
+    moreInfoTouched?: boolean;
+    moreInfoOpen?: boolean;
+    moreInfoFilter?: string;
     rippleColor: string; // '' = live/semantic automatic activity colour
     rippleSize: number;  // in icon diameters; package default 1.5
     size: number;        // icon size multiplier
@@ -5779,6 +5784,18 @@ export class HouseplanCard extends LitElement {
     return false;
   }
 
+  private _openDeviceMoreInfo(device: DevItem): void {
+    const current = this._devices.find(item => item.id === device.id);
+    if (!current || current.bindingKind !== device.bindingKind || current.bindingRef !== device.bindingRef) {
+      this._showToast(this._t('toast.tap_target_changed'), 'toast.tap_target_changed'); return;
+    }
+    if (!this._deviceBindingActive(current)) return;
+    const target = resolveDeviceMoreInfoTarget(this.hass, this._fullRegistryHass, current);
+    if (target.entityId) this._openMoreInfo(target.entityId);
+    else if (target.explicit) this._showToast(this._t('toast.more_info_target_unavailable'), 'toast.more_info_target_unavailable');
+    else this._infoCard = current;
+  }
+
   private _openMoreInfo(entityId?: string): void {
     if (!entityId) {
       this._showToast(this._t('toast.no_entity'), 'toast.no_entity');
@@ -6039,8 +6056,8 @@ export class HouseplanCard extends LitElement {
       });
       return;
     }
-    if (action === 'more-info' && actionDevice.primary) {
-      this._openMoreInfo(actionDevice.primary);
+    if (action === 'more-info') {
+      this._openDeviceMoreInfo(actionDevice);
       return;
     }
     this._infoCard = actionDevice;
@@ -13183,8 +13200,8 @@ export class HouseplanCard extends LitElement {
           ${deviceEditorAllowed(this._canEdit, this._kiosk) ? html`<button class="btn" @click=${() => { const dd = d; this._closeInfoCard(); this._openMarkerDialog(dd); }}>
             <ha-icon icon="mdi:pencil"></ha-icon>${this._t('btn.edit')}
           </button>` : nothing}
-          ${d.primary
-            ? html`<button class="btn" @click=${() => { const p = d.primary; this._closeInfoCard(); this._openMoreInfo(p); }}>
+          ${d.primary || d.marker?.more_info_entity
+            ? html`<button class="btn" @click=${() => { this._closeInfoCard(); this._openDeviceMoreInfo(d); }}>
                 <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}
               </button>`
             : nothing}
