@@ -6300,18 +6300,28 @@ The normal pre-push gate and strict model/host/CAS validators remain mandatory.
 
 ## Resource-budget recalibration for rotation and device alerts (#1070/#1000)
 
-The owner explicitly decided on2026-10-27: «не надо тратить ресурсы на гонку
+The owner explicitly decided on 2026-10-27: «не надо тратить ресурсы на гонку
 за байтами, разрешаю повышение лимитов» ([decision in #1070](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
-The local build-only combination of the accepted #1087 base, rotation8b543651
-and alertsbddb4938 measures352517 B initial View gzip and13381 core lines.
-It exceeds the former352000 B wall by517 B and13327+50 core allowance by4.
+The local build-only combination of the accepted #1087 base, rotation `8b543651`
+and alerts `bddb4938` measures 352517 B initial View gzip and 13381 core lines.
+It exceeds the former 352000 B wall by 517 B and 13327+50 core allowance by 4.
 This diagnostic combination is not an accepted or published product revision.
 
 Apply the existing #898 ten-percent rule to those two resource limits:
-`INITIAL_VIEW_RECALIBRATION_GZIP_BYTES` becomes352000 and
-`INITIAL_VIEW_GZIP_BUDGET` becomes387200. The `houseplan-card.ts` cap becomes
-`ceil(13327 *1.1) =14660`; the unchanged50-line band gives14710.
-Other core caps, the2000 B rolling size bands, performance budgets, deadlines,
+`INITIAL_VIEW_RECALIBRATION_GZIP_BYTES` becomes 352000 and
+`INITIAL_VIEW_GZIP_BUDGET` becomes 387200. The `houseplan-card.ts` cap becomes
+`ceil(13327 *1.1) =14660`; the unchanged 50-line band gives 14710.
+Other core caps, the 2000 B rolling size bands, performance budgets, deadlines,
 security checks and review authority keep their existing values. Rolling
 references still carry only the measured own delta against a verified immutable
 accepted artifact. No additional cold-owner extraction is made to chase bytes.
+
+
+Matched own-cost accounting after accepted #1087 uses immutable `4c2` and its
+hash-verified source-matching artifact `8e4bf61d`: initial 349915→352016 (+2101),
+editor 363448→364391 (+943), onboarding 40152→40339 (+187), raw 3559455→3574049
+(+14594). Initial/editor/raw references become 351925/364400/3574179, preserving
+the incoming gaps 91/-9/-130 B; all 2000 B bands remain. The four useful typed
+presentation ports move 374→378 against reference 372→376, preserving gap 2 and
+band 5. No other coupling reference changes. These are resource measurements,
+not evidence of loading speed or the future accepted alerts combination.

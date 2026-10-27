@@ -68,44 +68,63 @@ fallback. Its HA-form fixture verifies the public schema/computeLabel/value
 event contract, not native HA widget painting. Cold ordinary View, read-only
 and kiosk must not request the settings dictionary.
 
-## Historical comparison boundary
+## Current matched resource cost and owner decision
 
-The actual f705 zero-angle comparison has byte-identical ISO stage PNGs and
-zero differing decoded pixels throughout the flat stage (y≥118, 1000×900
-page). Its4264 changed page pixels are confined to the header's intentional
-two new controls. Page-scene intent records that shared header delta; scene
-geometry at zero receives no pixel-change allowance. The demo icon inventory
-is regenerated with the stock generator so the new MDI controls are painted.
+The immutable accepted #1087 checkout is `4c2ac36a0`. Its source fingerprint
+`8e4bf61d` exactly matches the copied accepted-equivalent artifact; every
+manifest asset SHA and topology was verified before the read-only copy.
+The earlier 349824 B issue-comment figure is not used as its actual size.
+The fresh current candidate fingerprint is `1bfebf41`.
 
-The archived f705 prices and timing reports predate accepted #997. The complete
-timing series below compares frozen `55ead817d` with accepted #997 at
-`e5849080cc01e10349be1c5ec922f8bb4a428094`; #1088 changes none of its product or
-benchmark/common-harness inputs.
-
-The final whole-build price uses accepted #1015's pinned Linux artifact,
-verified byte hashes and exact fingerprint against immutable `e2541d6c0` source.
-The subsequent `fd62` #1090 change is backend-only. Accepted #1015 removes only
-the retired ripple-display loop and weather cleanup on General-settings save
-from the frontend. The large-house fixture has no ripple display and its
-settings measurement only opens/closes the dialog; benchmark/common harness
-and the quarter-turn implementation are unchanged. No further timed replay is
-claimed for this rebase; ordinary exact-material CI remains required.
-
-| Graph | Accepted base | Candidate | Own delta |
+| Metric | Verified accepted artifact | Candidate | Own delta |
 | --- | ---: | ---: | ---: |
-| initial View gzip | 349257 | 351345 | +2088 |
-| lazy editor gzip | 362610 | 363545 | +935 |
-| onboarding gzip | 39950 | 40150 | +200 |
-| raw dist | 3550038 | 3564627 | +14589 |
+| initial View gzip | 349915 | 352016 | +2101 |
+| lazy editor gzip | 363448 | 364391 | +943 |
+| onboarding gzip | 40152 | 40339 | +187 |
+| raw dist | 3559455 | 3574049 | +14594 |
+| core source lines (trimmed) | 13361 | 13377 | +16 |
 
-The candidate fingerprint is `90aeb135`; the verified base is `370afdc5`.
-Its core has 16 additional lines. The initial rolling reference carries exactly
-+2088 to 349636, the editor reference +935 to 361726, and the raw reference
-+14589 to 3564449. This preserves the incoming accepted-base gaps of 1709 B
-(initial), 1819 B (editor) and 178 B (raw). The onboarding reference, 2000 B
-bands, 352000 B initial hard wall and core line cap remain unchanged. The
-measured initial hard-wall reserve is 655 B. A sum of task deltas does not prove
-the eventual graph with #1000; that actual combined graph must be measured.
+Rolling references carry only those measured own costs: initial 349824→351925,
+editor 363457→364400, raw 3559585→3574179. Incoming gaps remain 91, -9 and -130 B,
+respectively; all 2000 B bands remain. The host port has 374 actual members
+against reference 372 in the accepted base. Four useful presentation ports add
+`_framePercent`, `_planScreenDelta`, `_rotation` and `_planVisibleRect`:
+378 actual against 376 reference retains the incoming gap 2 and band 5.
+The four alias reads of `_rotation` in the vacuum overlay remain intact.
+Other static references and the onboarding reference remain unchanged.
+
+A separate diagnostic build combining this rotation source with the immutable
+alerts candidate `bddb4938` and accepted #1087 measured 352517 B initial gzip and
+13381 core lines. It is not an accepted or published product revision.
+The owner explicitly approved resource-limit increases and stopping byte
+optimization ([decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
+The existing #898 ten-percent rule moves the absolute View wall 352000→387200
+and its reference 320000→352000, and the core cap 13327→14660 with the unchanged
+50-line band (effective 14710). Current own reserve is 35184 B; the observed
+combination reserve is 34683 B. Other core caps, performance/security/deadline
+thresholds and independent review authority remain unchanged. No cold seam
+was implemented. The final accepted combined graph is measured again by #1000
+after the actual #1070 merge; summed feature deltas do not substitute for it.
+
+## Historical pixel and timing boundary
+
+The earlier f705 zero-angle comparison has byte-identical ISO stage PNGs and
+zero differing decoded flat-stage pixels; page differences are confined to
+the two intentional header controls. The demo icon inventory is regenerated
+with the stock generator. The current accepted-base flat/ISO stage comparison
+is recorded separately; zero-angle scene geometry gets no change allowance.
+
+The complete timing series below belongs to frozen `55ead817d` / fingerprint `5610671c`
+against accepted #997 e5849080. It is historical author evidence, not a timing
+claim for current `1bfebf41`. Benchmark, common launch and helper inputs are
+byte-identical across the subsequent accepted changes. Product inputs are not:
+accepted #1015 removes the retired ripple loop and General-save weather cleanup;
+accepted #1087 adds the more-info target resolver and dialog fields/locales.
+The stock large-house measurements do not invoke that new target action, but
+its startup bytes are present in the new graph. This limits reuse of old
+absolute timings. No fresh timings are asserted after those rebases; ordinary
+exact-material CI remains mandatory. The resource-limit and unused-import
+changes add no new runtime behavior. All original RED/GREEN rows remain.
 
 ## Preserved matched performance series
 

@@ -611,6 +611,16 @@
         "id": "plan-rotation-phone-editor-360-1070",
         "expectation": "new",
         "reason": "New 360px boundary frame preserves the one-row phone editor with 44px navigation controls and the existing 24px close. The actual light close glyph is checked in captured pixels; two rows are permitted only below 360px."
+      },
+      {
+        "id": "more-info-dialog-desktop-en",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
+      },
+      {
+        "id": "more-info-dialog-mobile-ru",
+        "expectation": "new",
+        "reason": "The shared card header intentionally gains two accessible quarter-turn controls in View and editors. Existing zero-angle plan geometry receives no change allowance; separately pending feature intent remains in its owning ledger."
       }
     ],
     "smokes": [
