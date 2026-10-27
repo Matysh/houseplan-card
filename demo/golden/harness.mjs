@@ -18,6 +18,7 @@ import { addUiLab1081Fixture, prepareUiLab1081 } from './ui-lab-1081.mjs';
 import { makeDeviceOfflineFixture } from '../fixtures/device-offline.mjs';
 import { prepareDeviceOfflineBoard } from './device-offline.mjs';
 import { makeVacuumHistoryFixture, prepareVacuumHistoryGolden } from './vacuum-history.mjs';
+import { prepareViewDeviceMenu } from './view-device-menu.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -3010,6 +3011,7 @@ export async function prepareGoldenScenario(page, scenario) {
   if (scenario.vacuumHistory) result.vacuumHistory = await prepareVacuumHistoryGolden(page,scenario);
   if (scenario.decorMultiselect) result.decorMultiselect = await prepareDecorMultiselect(page,scenario);
   if (scenario.uiLab1081) result.uiLab1081 = await prepareUiLab1081(page, scenario);
+  if (scenario.viewDeviceMenu) result.viewDeviceMenu = await prepareViewDeviceMenu(page, scenario);
   if (scenario.emptyPlan) {
     await page.locator('[data-hp=empty] hp-plan-converter-info a').waitFor();
     if (scenario.firstSpace === 'floors') await page.locator('hp-dialog[data-kind=import] hp-plan-converter-info a').waitFor();

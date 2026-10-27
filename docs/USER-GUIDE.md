@@ -4,7 +4,7 @@ In ordinary View, right-click a device to choose Device settings, HA more-info, 
 
 ## Choose the Home Assistant dialog for a device
 
-In device settings, open Actions and links and select HA more-info dialog. The Open in Home Assistant field below it offers Auto (the main functional entity, such as the thermostat) and this device’s own entities, with search inside the list. The same selection applies to Open in HA in the device card. Right-click still opens Houseplan settings. Icon activity, displayed values and control targets remain independent. A deleted or disabled explicit target produces a warning instead of silently opening another entity.
+In device settings, open Actions and links and select HA more-info dialog. The Open in Home Assistant field below it offers Auto (the main functional entity, such as the thermostat) and this device’s own entities, with search inside the list. The same selection applies to Open in HA in the device card. Right-click opens the five-command menu; its HA more-info command uses the same target and Settings is its first row. Icon activity, displayed values and control targets remain independent. A deleted or disabled explicit target produces a warning instead of silently opening another entity.
 
 ### Start with an existing plan
 
@@ -1725,7 +1725,7 @@ layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy
 |---|---|---|
 | Short click/tap | Configured action | Select in Properties on wide cards (≥960 px); open marker settings on narrow cards |
 | Hold 600 ms | House Plan device card | No device control |
-| Right click | Device settings for a writer outside kiosk; otherwise a permission hint | “Copy device” menu |
+| Right click | Five-command device menu; read-only keeps information commands, kiosk keeps its permission hint | “Copy device” menu |
 
 A cancelled press, a release beside the marker or window focus loss neither
 opens a card later nor switches the device. After returning from the background,

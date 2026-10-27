@@ -114,8 +114,13 @@ wait before the next single tap or long press. A later real mouse pointerdown or
 keyboard context-menu key is likewise fresh intent and preserves the desktop
 context-menu contract.
 
-The optional Device settings short-tap action and View right click (#1050)
-open the same existing dialog only for a House Plan writer outside kiosk.
+The optional Device settings short-tap action (#1050) opens the existing dialog
+only for a House Plan writer outside kiosk. View right click (#1089) first opens
+the shared five-command device menu; its Settings command has the same guard.
+Read-only users retain the two information commands; kiosk retains the previous
+right-click refusal and never opens this menu. A real desktop context-menu key
+uses the same menu, while an outside closing click cannot activate the device
+under it. A fresh pointer or key works immediately after that consumed tail.
 Touch long press remains informational; pinch/cancel compatibility tails never
 become a settings entry. Opening settings does not enable stage editor tools,
 and editing within the dialog retains the existing desktop-first guarantee.

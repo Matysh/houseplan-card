@@ -4,7 +4,7 @@ In ordinary View, right-click a device to choose Device settings, HA more-info, 
 
 ## Home Assistant dialog target (#1087)
 
-The HA dialog target is independent of presentation primary and state/value/badge sources. Auto prefers the already-resolved functional domain (for example climate of a thermostat), then retains the historical primary for passive devices. An optional own more_info_entity overrides only HA opening; exact entity bindings stay exact and virtual bindings gain no HA target. Missing/foreign/disabled/unreadable explicit targets refuse rather than opening a different sensor. Existing unavailable/unknown states can still be opened in HA. Both the More Info tap action and Open in HA footer use one resolver; View right-click remains Settings (#997).
+The HA dialog target is independent of presentation primary and state/value/badge sources. Auto prefers the already-resolved functional domain (for example climate of a thermostat), then retains the historical primary for passive devices. An optional own more_info_entity overrides only HA opening; exact entity bindings stay exact and virtual bindings gain no HA target. Missing/foreign/disabled/unreadable explicit targets refuse rather than opening a different sensor. Existing unavailable/unknown states can still be opened in HA. The More Info tap action, Open in HA footer and #1089 View menu HA command use one resolver.
 
 ## Own availability (#1026)
 

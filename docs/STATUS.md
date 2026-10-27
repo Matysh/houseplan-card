@@ -5,7 +5,7 @@ Review publication (#1106) reads complete API history with separate bounds:
 deduplication and the stop on an unknown write outcome retain their authority;
 an oversized or malformed history is never accepted as a partial result.
 
-View device context menu (#1089) is in implementation: shared UI Kit, five commands, independent read-only information and guarded writer operations. Initial typecheck and six owner/permission units pass; browser, visual and full-gate acceptance are still pending. No S8 claim.
+View device context menu (#1089) is in implementation: shared UI Kit, five commands, independent read-only information and guarded writer operations. Initial typecheck and six owner/permission units pass. Native command and Settings regression smokes pass; held-import, stale-confirmation and outside-tail checks pass. Selected visual capture and final full-gate acceptance are in progress. No S8 claim.
 
 SPEC delivery compatibility (#1104) recognizes the exact published heading
 `SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
@@ -20,7 +20,7 @@ generated from all retained reports in the integration candidate going to dev.
 The owner explicitly authorized dev delivery and S8 after the H1 repair;
 CODE r1 remains RED, with no replacement GREEN or repeated CODE round claimed.
 
-HA more-info target (#1087) separates the opened entity from displayed measurements. The optional own-entity picker affects the More Info tap and HA footer only; #997 right-click Settings and existing device presentation/control semantics are retained.
+HA more-info target (#1087) separates the opened entity from displayed measurements. The optional own-entity picker affects HA entry through the More Info tap, HA footer and #1089 menu; existing device presentation/control semantics are retained.
 
 Compact floor navigation (#997) uses the actual header width and the shared
 UI Kit select. Existing navigation/dirty guards, fixed-floor and writer rules

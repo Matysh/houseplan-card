@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "issue": 1089,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Adds a View device context menu with five existing commands, permission-aware rows and lazy shared UI Kit presentation. Replaces the previous immediate settings right click without changing persisted configuration or HA APIs.",
+  "summary": {
+    "ru": "Контекстное меню устройства в просмотре: настройки, HA more-info, карточка, скрытие и удаление с проверкой прав.",
+    "en": "View device context menu for settings, HA more-info, device card, hide/show and guarded deletion."
+  },
+  "visual": {
+    "schema": 1,
+    "golden": [
+      {
+        "id": "view-device-menu-writer-dark",
+        "expectation": "new",
+        "reason": "Five shared UI Kit commands on the current View device in dark theme."
+      },
+      {
+        "id": "view-device-menu-readonly-light-ru",
+        "expectation": "new",
+        "reason": "Russian light theme retains both information commands and three disabled writer commands."
+      },
+      {
+        "id": "view-device-menu-iso-edge-dark",
+        "expectation": "new",
+        "reason": "2.5D View menu at the viewport edge remains fully visible."
+      },
+      {
+        "id": "view-device-menu-hidden-ru",
+        "expectation": "new",
+        "reason": "Hidden marker temporarily revealed by the eye offers Show on plan in Russian."
+      }
+    ],
+    "smokes": [
+      "smoke_view_device_menu.mjs",
+      "smoke_view_device_menu_lifecycle.mjs",
+      "smoke_device_settings_action.mjs",
+      "smoke_device_more_info.mjs"
+    ],
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2"
+  }
+}

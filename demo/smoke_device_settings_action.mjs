@@ -63,6 +63,11 @@ async function input(page, kind, id = 'd_temp') {
     await target.focus(); await page.keyboard.press(kind);
   } else if (kind === 'touch') await target.locator('.device-core').tap();
   else await target.locator('.device-core').click(kind === 'right' ? { button: 'right' } : {});
+  if (kind === 'right' && await page.evaluate(() => !window.__card._kiosk && window.__card._loadOk)) {
+    const settings = page.locator('[data-hp="device-context-menu"]:not([inert]) [data-action="view-device-settings"]');
+    await settings.waitFor({ state: 'visible' });
+    if (await settings.isEnabled()) await settings.click();
+  }
   await settled(page);
 }
 async function receipt(page) {
@@ -197,6 +202,12 @@ for (const denial of ['no-write', 'kiosk', 'unloaded']) {
       for (const kind of ['tap', 'right']) {
         await input(page, kind);
         const text = language === 'ru' ? DENIED_RU : DENIED;
+        if (denial === 'no-write' && kind === 'right') {
+          const settings = page.locator('[data-action="view-device-settings"]');
+          check(`denied/menu/${language}:disabledWithReason`, await settings.isDisabled() && await settings.getAttribute('title') === text);
+          check(`denied/menu/${language}:noEditorOrWrite`, !(await receipt(page)).visible && session.requests.length === 0);
+          await page.keyboard.press('Escape'); await settled(page); continue;
+        }
         await page.waitForFunction(text => window.__hpTest.toast()?.textContent?.trim() === text, text);
         const state = await receipt(page); out[`denied/${denial}/${language}/${kind}`] = state;
         check(`denied/${denial}/${language}/${kind}:exactToastNoOtherAction`, state.toast === text && !state.visible && !state.other

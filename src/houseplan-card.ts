@@ -1234,6 +1234,7 @@ export class HouseplanCard extends LitElement {
    *  short structural transition first so two controllers never write `_view`
    *  in the same frame. */
   private _prepareCameraCommand(): void {
+    ++this._viewDeviceMenuRequest;
     this._bootSoftCancel(); if (this._modeTransitionBusy) this._cancelModeTransition(true);
     if (this._tool === 'opening') {
       this._cursorPt = null;
@@ -2810,6 +2811,7 @@ export class HouseplanCard extends LitElement {
     window.addEventListener('keydown', this._deviceAltHandler);
     window.addEventListener('keyup', this._deviceAltHandler);
     window.addEventListener('blur', this._onWindowBlur);
+    window.addEventListener('pagehide', this._onWindowBlur);
     window.addEventListener('pointerup', this._onViewPointerTerminal, true);
     window.addEventListener('pointercancel', this._onViewPointerTerminal, true);
     window.addEventListener('lostpointercapture', this._onViewPointerTerminal, true);
@@ -2918,6 +2920,7 @@ export class HouseplanCard extends LitElement {
     window.removeEventListener('keyup', this._deviceAltHandler);
     this._deviceContacts?.clear();
     window.removeEventListener('blur', this._onWindowBlur);
+    window.removeEventListener('pagehide', this._onWindowBlur);
     window.removeEventListener('pointerup', this._onViewPointerTerminal, true);
     window.removeEventListener('pointercancel', this._onViewPointerTerminal, true);
     window.removeEventListener('lostpointercapture', this._onViewPointerTerminal, true);
@@ -5945,12 +5948,10 @@ export class HouseplanCard extends LitElement {
     const epoch = this._adoption.adoptionEpoch, cr = this._cfgRev, lr = this._layoutRev;
     const modeRequest = this._editorModeRequest, writer = this._canEdit, authority = this._configWriteGuard();
     const context = { spaceId: this._space, id: d.id }, binding = markerSettingsTargetKey(d);
-    const camera = JSON.stringify([this._view, this._zoom, this._rotation]);
     const current = () => request === this._viewDeviceMenuRequest && this.isConnected && this._mode === 'view'
       && !this._kiosk && this._canEdit === writer && this._loadOk && !this._connectionWasLost && authority()
       && cardConfig === this._config && modeRequest === this._editorModeRequest
       && epoch === this._adoption.adoptionEpoch && cr === this._cfgRev && lr === this._layoutRev
-      && camera === JSON.stringify([this._view, this._zoom, this._rotation])
       ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, binding) : null;
     this._viewRuntimes.openDeviceMenu({ current, target: ev.currentTarget as Element | null, x: ev.clientX, y: ev.clientY });
   }
@@ -6621,6 +6622,7 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   };
   private _rotatePlan(direction: -1 | 1): void {
+    ++this._viewDeviceMenuRequest;
     if (this._kiosk || !this._space) return;
     this._cancelCameraTransition(false);
     this._clearRoomFocus(true);
@@ -6913,6 +6915,7 @@ export class HouseplanCard extends LitElement {
 
   /** Immediate path for direct pinch: keep the point under the fingers. */
   private _zoomAt(sx: number, sy: number, newZoom: number): void {
+    ++this._viewDeviceMenuRequest;
     this._clearRoomFocus();
     if (this._cameraTransition.active) this._cancelCameraTransition(false);
     const result = this._cameraTargetAt(sx, sy, newZoom);
@@ -7089,6 +7092,7 @@ export class HouseplanCard extends LitElement {
     this._pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     const v = this._cameraView(this._baseVb());
     if (this._pointers.size === 1) {
+      ++this._viewDeviceMenuRequest;
       this._panStart = { sx: ev.clientX, sy: ev.clientY, vx: v.x, vy: v.y };
       this._panLock = null; // undecided until the finger moves
       this._suppressClick = false;
@@ -7878,6 +7882,7 @@ export class HouseplanCard extends LitElement {
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true, warm = false): void {
     if (!warm) this._cancelPendingWarmMode();
     if (mode !== this._mode) {
+      ++this._viewDeviceMenuRequest;
       this._clearRoomFocus(true);
       this._cancelDangerConfirm();
       this._resetDeviceHitState();

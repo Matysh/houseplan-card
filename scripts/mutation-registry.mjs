@@ -77,6 +77,30 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'view-menu-forgets-generation-1089',
+    guard: 'node demo/smoke_view_device_menu_lifecycle.mjs',
+    because: '#1089 AC7: a held real View module must not open a stale menu after blur/pagehide or a newer owner. Static registration only; execution belongs to nightly.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'const current = () => request === this._viewDeviceMenuRequest && this.isConnected',
+      replace: 'const current = () => this.isConnected' }],
+  },
+  {
+    id: 'view-menu-outside-click-leaks-1089',
+    guard: 'node demo/smoke_view_device_menu_lifecycle.mjs',
+    because: '#1089 AC8: a native outside close must consume the compatibility click, while a separate fresh pointer immediately works.',
+    patches: [{ file: 'src/view-device-menu.ts',
+      find: 'this.closingPointer = null; event.preventDefault(); event.stopImmediatePropagation();',
+      replace: 'this.closingPointer = null;' }],
+  },
+  {
+    id: 'view-menu-info-opens-wrong-target-1089',
+    guard: 'node demo/smoke_view_device_menu.mjs',
+    because: '#1089 AC3/AC4: the menu must separate exact HA more-info from the local card; neither command may silently substitute the other.',
+    patches: [{ file: 'src/view-device-menu.ts',
+      find: "if (command === 'ha') { if (current()) this.host._openMoreInfo(ha.entityId!); return; }",
+      replace: "if (command === 'ha') { if (current()) this.host._infoCard = owner.current(); return; }" }],
+  },
+  {
     id: 'config-source-export-drops-old-frame-intent-1015',
     guard: 'python3 -m pytest tests_backend/test_ha_config_migrations.py -q',
     because: '#1015: ordinary single/mixed-floor half-written geom_pending inputs must export a coherent original logical pair and import without missing or double coordinate conversion. Registered only; nightly execution.',
@@ -2397,7 +2421,7 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_device_settings_action.mjs',
     because: '#1050 AC5: a trusted View input held across the real content-hashed browser import must not open a dialog after HA/user ABA, navigation, target, permission or detach retirement. Pure target tests do not exercise the mounted Lit owner, actual module delivery and deferred runtime consumer together.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '    const current = (): DevItem | null => request === this._markerDialogRequest && this.isConnected\n      && this._mode === \'view\' && modeRequest === this._editorModeRequest\n      && (navigation === undefined || navigation === this._editorRuntime?.navigationIntent)\n      && this._loadOk && authorityCurrent() && deviceEditorAllowed(this._canEdit, this._kiosk)\n      && cardConfig === this._config\n      && epoch === this._adoption.adoptionEpoch && layoutRev === this._layoutRev && !this._otherDialogsBlocked\n      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey) : null;',
+      find: '    const current = (): DevItem | null => (!externalCurrent || externalCurrent()) && request === this._markerDialogRequest && this.isConnected\n      && this._mode === \'view\' && modeRequest === this._editorModeRequest\n      && (navigation === undefined || navigation === this._editorRuntime?.navigationIntent)\n      && this._loadOk && authorityCurrent() && deviceEditorAllowed(this._canEdit, this._kiosk)\n      && cardConfig === this._config\n      && epoch === this._adoption.adoptionEpoch && layoutRev === this._layoutRev && !this._otherDialogsBlocked\n      ? currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey) : null;',
       replace: '    const current = (): DevItem | null => currentMarkerSettingsDevice(this._displayDevices, this._space, context, bindingKey);' }],
   },
   {

@@ -25,7 +25,7 @@ legacy mapping and current entry collection; modern ordinary entries use
 config_entry_id, while old/composite entries retain their supported set API.
 There is still one entry coordinator, one poller and the same bounded WS format.
 
-HA dialog targets (#1087) are resolved by device-more-info.ts independently of measurement primary, value/activity sources and controls. Auto follows the existing functional device role; explicit own targets are rechecked against current registry and readable state before more-info. A stale binding identity cannot retarget a retained handler. The two HA entry points share this resolver; View right-click keeps the #997 Settings action. Draft serialization/validation stays in the lazy editor graph.
+HA dialog targets (#1087) are resolved by device-more-info.ts independently of measurement primary, value/activity sources and controls. Auto follows the existing functional device role; explicit own targets are rechecked against current registry and readable state before more-info. A stale binding identity cannot retarget a retained handler. The More Info tap, HA footer and #1089 View menu HA command share this resolver. Draft serialization/validation stays in the lazy editor graph.
 
 Quarter-turn presentation (#1070) is centralised in `view-frame.ts`: exact
 matrices, bounds, inverse input, browser preference and one HTML anchor route.

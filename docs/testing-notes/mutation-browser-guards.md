@@ -43,10 +43,10 @@ that transition events alone prove disposal.
 | Performance threshold | 9 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 92 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
-| Pointer geometry and trusted interaction | 109 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
+| Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 270 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **545 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 272 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **548 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -343,6 +343,11 @@ cold View is unchanged and no source-level check sees the unstyled editor.
 - `zigbee-topology-unknown-outline-ignores-plan-zoom`
 
 ### Pointer geometry and trusted interaction
+
+- `view-menu-outside-click-leaks-1089`
+
+#1089 must observe the browser compatibility click after a native outside
+pointer closes the common menu; a pure callback cannot prove that event tail.
 
 - `plan-rotation-pointer-skips-inverse-1070`
 - `plan-rotation-mode-writes-display-camera-1070`
@@ -655,6 +660,14 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `view-menu-forgets-generation-1089`
+- `view-menu-info-opens-wrong-target-1089`
+
+#1089 holds the actual View module delivery through public authority changes,
+and dispatches real menu rows to distinguish the HA event from the mounted local
+card. These cross the lazy boundary and Lit owner. Static checks run locally;
+execution and caught results remain nightly.
 
 - `plan-rotation-stale-header-observer-1070`
 

@@ -278,6 +278,7 @@ test('в корпусе настоящего репозитория все canon
     'demo/golden/sun-transparent.mjs',
     'demo/golden/ui-lab-1081.mjs',
     'demo/golden/vacuum-history.mjs',
+    'demo/golden/view-device-menu.mjs',
     'demo/golden/zigbee-led.mjs',
   ]);
   assert.ok(corpus.includes('demo/helpers/vacuum-history.mjs'), 'history capture consumes the real UI helper');
