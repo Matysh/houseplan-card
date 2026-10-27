@@ -1792,8 +1792,8 @@ jobs:
           REQUEST_MUTANTS: ${{ inputs.mutants }}
           REGISTRY_PLAN: ${{ needs.reuse.outputs.plan }}
           CI_PYTHON_VERSION: ${{ needs.reuse.outputs.python_version }}
-          NEEDS_JSON: ${{ toJSON(needs) }}
-        run: node scripts/ci-proof.mjs --emit=artifacts/ci-proof/proof.json
+        shell: node scripts/ci-proof.mjs --emit=artifacts/ci-proof/proof.json --needs-file={0}
+        run: ${{ toJSON(needs) }}
       - name: Опубликовать proof точной попытки
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:

@@ -2,12 +2,12 @@
 // A fast docs/tooling result is explicitly progress, never product authority.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { CI_PROOF_SCHEMA, ciProofArtifactName, taskChecksFromNeeds } from './ci-proof.mjs';
+import { CI_PROOF_SCHEMA, ciProofArtifactName, taskChecksFromNeeds, readNeedsInput } from './ci-proof.mjs';
 import { ciWorkflow, CI_WORKFLOWS } from './ci-workflows.mjs';
 
 const workflow = ciWorkflow(process.env.CI_WORKFLOW);
 if (!['docs', 'tooling'].includes(CI_WORKFLOWS[workflow])) throw Error('fast proof needs a registered non-product profile');
-const needs = JSON.parse(process.env.NEEDS_JSON || '{}');
+const needs = readNeedsInput();
 const result = process.env.CI_RESULT || Object.values(needs).every(j => ['success', 'skipped'].includes(j.result)) && 'success' || 'failure';
 const run = Number(process.env.GITHUB_RUN_ID), attempt = Number(process.env.GITHUB_RUN_ATTEMPT);
 const proof = { schema: CI_PROOF_SCHEMA, candidate: { sha: process.env.GITHUB_SHA,

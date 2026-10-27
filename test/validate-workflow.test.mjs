@@ -675,7 +675,9 @@ test('#541: Validate всегда публикует proof точной попы
   assert.match(proof, /CI_RUN_ATTEMPT: \$\{\{ github\.run_attempt \}\}/);
   assert.match(proof, /REQUEST_FULL: \$\{\{ inputs\.full \}\}/);
   assert.match(proof, /REQUEST_MUTANTS: \$\{\{ inputs\.mutants \}\}/);
-  assert.match(proof, /NEEDS_JSON: \$\{\{ toJSON\(needs\) \}\}/);
+  assert.doesNotMatch(proof, /NEEDS_JSON:/, 'large needs are data in the runner file, never an environment entry');
+  assert.match(proof, /shell: node scripts\/ci-proof\.mjs --emit=artifacts\/ci-proof\/proof\.json --needs-file=\{0\}/);
+  assert.match(proof, /run: \$\{\{ toJSON\(needs\) \}\}/);
   assert.match(proof, /name: ci-proof-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
 
   const reuse = workflow.slice(workflow.indexOf('\n  reuse:\n'), workflow.indexOf('\n  hacs:\n'));

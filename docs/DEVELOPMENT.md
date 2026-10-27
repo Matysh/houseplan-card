@@ -37,7 +37,7 @@ camera endpoints must use the same integer client-height basis as the settled
 stage, rather than rely on a later ResizeObserver refit.
 
 For actual HA card borders and explicitly measured dashboard gutters, build and
-run `node demo/verify_plan_rotation_mobile_1070.mjs --ha-cache=<prepared-cache>`.
+run `node scripts/dev/verify-plan-rotation-mobile-1070.mjs --ha-cache=<prepared-cache>`.
 It uses the standard offline UI Lab's pinned HA elements and synthetic fixture,
 with a declared external 56px toolbar and 0/8px gutters. All phone widths,
 control rectangles, common border strokes, centre hits, dropdown focus and
@@ -6373,3 +6373,36 @@ editor363437→364380 (+943), onboarding40156→40339 (+183), raw3557327→35719
 gaps and all2000 B bands; port378/ref376 retains gap2/band5. Current core13381
 is within the owner's14660+50 cap. This measured lifecycle correction does not
 reopen byte optimization or change any other resource/performance threshold.
+
+
+### Large successful CI proof input (#1070)
+
+After61 selected smokes and122 Golden cases succeeded, the final proof job
+could not launch bash: its single NEEDS_JSON environment entry was224630 UTF-8
+bytes (224618-byte JSON), beyond Linux's131072-byte individual exec entry.
+The complete task receipt134215 B and browser plan72735 B remain necessary;
+minification alone is insufficient. The canonical proof step now uses a custom
+shell `node scripts/ci-proof.mjs --emit=... --needs-file={0}` with the exact JSON
+as its runner-written temporary data file. JSON is read, never executed or
+interpolated into shell/JS code. No heredoc or large action input is introduced.
+
+The shared optional file reader rejects missing/corrupt/empty/duplicate/mixed
+sources and never falls back from a selected file. Existing env callers remain
+compatible only without a file option. Main/product use the file; the small
+tooling workflow retains legacy env, keeping the trusted generator unchanged.
+The actual cold fast-producer file path emits the same typed proof as before.
+All schema, job/identity/correlation, environment and outcome validation stays.
+The100-test targeted suite includes >224618 B real CLI input, full retained
+payload, inert $()/backticks/newline/Unicode and negative/foreign cases. The
+original red run/artifact remains preserved; a new ordinary exact-SHA CI is
+required, and no success is assembled by hand. Product/render input658770cd
+and all native82/12/functional evidence remain unchanged by this B/C repair.
+
+
+The supplemental native-HA author utility lives in the existing class-B local
+utility route scripts/dev/verify-plan-rotation-mobile-1070.mjs. Its former demo
+entry and one-off check-inputs declaration are removed. Only four relative
+imports change and resolve to the same modules; the executed82/12 proof keeps
+its original source hash/command, and no new capture is claimed after relocation.
+The actual full CI-generator import closure now matches accepted dev exactly;
+compatibleCiGenerators and source coverage policy remain intact.

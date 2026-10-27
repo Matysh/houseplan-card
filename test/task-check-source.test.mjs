@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +9,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { taskCheckSource, loadTaskCheckContexts, stampRetainedTaskChecks } from '../scripts/task-check-source.mjs';
 import { taskCheckCli, taskCheckEnvironment, controllerSupportsTaskChecks, taskCheckReusePolicy } from '../scripts/task-check-reuse-cli.mjs';
 import { TASK_CHECK_JOB_NAMES, taskCheckPlanFromSnapshot, makeTaskCheckRecord } from '../scripts/task-check-reuse.mjs';
-import { JOB_RULES } from '../scripts/ci-proof.mjs';
+import { JOB_RULES, readNeedsInput } from '../scripts/ci-proof.mjs';
 
 const sha = 'a'.repeat(40), candidateSha = 'b'.repeat(40), tree = 'c'.repeat(40);
 const now = Date.parse('2026-10-24T19:00:00Z'), repo = 'owner/repo';
@@ -329,7 +329,7 @@ test('#1067 retained source needs complete independent API evidence; producer re
   await assert.rejects(stampRetainedTaskChecks(f.consumer), /foreign direct task receipt/);
 });
 
-test('#1067 actual proof producer CLI completes adapter loading before writing its passport', t => {
+function proofCliFixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'hp-proof-cli-'));
   t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 20 }));
   const git = (...args) => execFileSync('git', ['-C', root, '-c', 'maintenance.auto=false', ...args],
@@ -341,6 +341,11 @@ test('#1067 actual proof producer CLI completes adapter loading before writing i
   writeFileSync(join(root, 'demo/golden/baselines/baselines-index.json'), '{}\n');
   git('add', '.'); git('commit', '-m', 'ordinary synthetic proof inputs');
   const sourceSha = git('rev-parse', 'HEAD'), sourceTree = git('rev-parse', 'HEAD^{tree}');
+  return { root, sourceSha, sourceTree };
+}
+
+test('#1067 actual proof producer CLI completes adapter loading before writing its passport', t => {
+  const { root, sourceSha, sourceTree } = proofCliFixture(t);
   const needs = { preflight: { result: 'success' }, changes: { result: 'success', outputs: {} }, reuse: { result: 'success', outputs: {} } };
   const result = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/ci-proof.mjs', import.meta.url)), '--emit=proof.json'],
     { cwd: root, encoding: 'utf8', timeout: 20000, env: { ...process.env, CANDIDATE_SHA: sourceSha,
@@ -350,4 +355,69 @@ test('#1067 actual proof producer CLI completes adapter loading before writing i
   assert.deepEqual(proof.candidate, { sha: sourceSha, tree: sourceTree });
   assert.equal(proof.run.id, 77); assert.equal(proof.run.attempt, 1);
   assert.deepEqual(proof.taskChecks, {});
+});
+
+
+test('#1070 file needs preserve oversized typed JSON and executable-looking text as data', async t => {
+  const { root } = proofCliFixture(t), f = await fixture();
+  const text = '$(touch must-not-run) `touch must-not-run` "quotes" \\ path\nЮникод 中文 ' + 'x'.repeat(230000);
+  const needs = { changes: { outputs: { browser_plan: JSON.stringify({ ...browserPlan, reason: text }) } },
+    browser_selected: { result: 'success', outputs: { task_check: JSON.stringify(f.claim) } } };
+  const raw = JSON.stringify(needs, null, 2), file = join(root, 'needs data.json');
+  assert.ok(Buffer.byteLength(raw, 'utf8') > 224618, 'larger than the observed failed environment entry');
+  writeFileSync(file, raw);
+  assert.deepEqual(readNeedsInput(['--needs-file=' + file], {}), needs);
+  assert.deepEqual(readNeedsInput([], { NEEDS_JSON: JSON.stringify(needs) }), needs, 'legacy env parsing retains its exact contract');
+  assert.equal(existsSync(join(root, 'must-not-run')), false);
+});
+
+test('#1070 actual producer reads the runner-style data file and rejects missing or ambiguous inputs', t => {
+  const { root, sourceSha, sourceTree } = proofCliFixture(t);
+  const env = { ...process.env, CANDIDATE_SHA: sourceSha, CANDIDATE_TREE: sourceTree,
+    CI_RUN_ID: '77', CI_RUN_ATTEMPT: '1', CI_EVENT: 'push' };
+  delete env.NEEDS_JSON;
+  const text = '$(touch must-not-run) `touch must-not-run` "quotes" \\ path\nЮникод 中文 ' + 'x'.repeat(230000);
+  const plan = { ...browserPlan, reason: text };
+  const needs = { preflight: { result: 'success' }, changes: { result: 'success', outputs: { browser_plan: JSON.stringify(plan) } },
+    reuse: { result: 'success', outputs: {} }, browser_selected: { result: 'success', outputs: {} } };
+  const file = join(root, 'runner temporary needs.json'), raw = JSON.stringify(needs, null, 2);
+  assert.ok(Buffer.byteLength(raw, 'utf8') > 224618);
+  writeFileSync(file, raw);
+  const produce = (args, output, extra = {}) => spawnSync(process.execPath,
+    [fileURLToPath(new URL('../scripts/ci-proof.mjs', import.meta.url)), '--emit=' + output, ...args],
+    { cwd: root, encoding: 'utf8', timeout: 20000, env: { ...env, ...extra } });
+  const result = produce(['--needs-file=' + file], 'large-proof.json');
+  assert.equal(result.status, 0, result.stderr || String(result.error));
+  const proof = JSON.parse(readFileSync(join(root, 'large-proof.json'), 'utf8'));
+  assert.deepEqual(proof.candidate, { sha: sourceSha, tree: sourceTree });
+  assert.deepEqual(proof.browserPlan.planned, { ...plan, scope: 'push', coverageScope: 'task' });
+  assert.equal(proof.browserPlan.executed.smoke.result, 'success');
+  assert.equal(existsSync(join(root, 'must-not-run')), false, 'the JSON file is never interpreted as a shell or JS script');
+  const corrupt = join(root, 'corrupt.json'), empty = join(root, 'empty.json');
+  writeFileSync(corrupt, '{'); writeFileSync(empty, '');
+  for (const [index, args, extra, message] of [
+    [0, ['--needs-file=' + join(root, 'missing.json')], {}, /ENOENT/],
+    [1, ['--needs-file=' + corrupt], {}, /JSON|Unexpected|Expected/],
+    [2, ['--needs-file=' + empty], {}, /JSON|Unexpected/],
+    [3, ['--needs-file='], {}, /nonempty path/],
+    [4, ['--needs-file'], {}, /nonempty path/],
+    [5, ['--needs-file=' + file, '--needs-file=' + file], {}, /duplicate/],
+    [6, ['--needs-file=' + file], { NEEDS_JSON: '{}' }, /ambiguous/],
+    [7, ['--needs-file=' + file], { NEEDS_JSON: '' }, /ambiguous/],
+    [8, ['--needs-file=   '], {}, /nonempty path/],
+  ]) {
+    const output = `refused-${index}.json`, result = produce(args, output, extra);
+    assert.notEqual(result.status, 0, `invalid file source ${index} must fail closed`);
+    assert.match(result.stderr, message);
+    assert.equal(existsSync(join(root, output)), false, 'input refusal cannot write a replacement proof');
+  }
+  needs.preflight.result = 'failure'; writeFileSync(file, JSON.stringify(needs));
+  assert.equal(produce(['--needs-file=' + file], 'red-proof.json').status, 0);
+  assert.equal(JSON.parse(readFileSync(join(root, 'red-proof.json'), 'utf8')).checks.preflight.result, 'failure');
+  needs.browser_selected.outputs.task_check = JSON.stringify({ mode: 'executed', record: { job: 'browser_selected',
+    run: 999, attempt: 1, sha: sourceSha, workflow: '.github/workflows/validate.yml' }, plan: {} });
+  writeFileSync(file, JSON.stringify(needs));
+  const foreign = produce(['--needs-file=' + file], 'foreign-proof.json');
+  assert.notEqual(foreign.status, 0); assert.match(foreign.stderr, /foreign direct task receipt/);
+  assert.equal(existsSync(join(root, 'foreign-proof.json')), false);
 });

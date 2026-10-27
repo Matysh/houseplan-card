@@ -22,7 +22,7 @@ SVG plane transforms and HTML anchor percentages share `view-frame.ts`.
 | AC9 | Four distinct camera-facing physical edges in unit and four new 2.5D Golden angles. The zero-side geometry object is reused after four turns. |
 | AC10 | Static DOM/effective preference smoke; complete PDF page direction, fit and horizontal captions unit, plus pure raster/text/Bezier transform tests and ordinary PDF export smoke. |
 | AC11 | Actual floor/sun/body and ISO structural build counters are unchanged by turning; unit physical source is built once for all four views. |
-| AC12 | `smoke_plan_rotation_mobile` checks ordinary/reduced-motion 320 px editor round trips and rapid native menu retargeting. `verify_plan_rotation_mobile_1070` repeats layout at 320/359/360/390/480 px with official pinned HA components, 0/8 px dashboard gutters and the accepted #997 floor dropdown; all five rotation/zoom targets, floor and gear are at least 44 px, the existing editor close is 24 px, native centres hit, and no content is clipped or scrolls horizontally. View stays one row of at most 56 px after every editor close. |
+| AC12 | `smoke_plan_rotation_mobile` checks ordinary/reduced-motion 320 px editor round trips and rapid native menu retargeting. `scripts/dev/verify-plan-rotation-mobile-1070.mjs` repeats layout at 320/359/360/390/480 px with official pinned HA components, 0/8 px dashboard gutters and the accepted #997 floor dropdown; all five rotation/zoom targets, floor and gear are at least 44 px, the existing editor close is 24 px, native centres hit, and no content is clipped or scrolls horizontally. View stays one row of at most 56 px after every editor close. |
 
 The animated-mode author audit found and corrected one coordinate-boundary
 mistake before handoff: the mode controller must read `_cameraView`, never the
@@ -317,7 +317,7 @@ ISO passes the sensitivity. These extrema do not establish a code regression;
 all original rows and the independent stock outcomes remain available.
 
 On that frozen timing fingerprint, the named own browser commands completed:
-`verify_plan_rotation_mobile_1070` (82 native HA states / 12 transitions),
+`scripts/dev/verify-plan-rotation-mobile-1070.mjs` (82 native HA states / 12 transitions),
 `smoke_plan_rotation`, `smoke_plan_rotation_editors`,
 `smoke_plan_rotation_touch`, `smoke_plan_rotation_mobile` and
 `smoke_lovelace_editor_locale_1070` all PASS. The editor fixture's compiled
@@ -334,3 +334,59 @@ and checked for applicability only; execution belongs to nightly.
 
 Final commands, artifact hashes, performance and gate results are recorded in
 the issue handoff on the published material.
+
+
+## Large CI proof input transport
+
+The exact7644a48ce ordinary push ran all61 selected smokes (including the
+unchanged LED lifecycle case) and122 Golden scenes successfully on runtime
+fingerprint658770cd. All122 PNG hashes were checked and six contact sheets
+viewed. Browser artifact12742328687 has archive digest
+`sha256:6ef15945c82f3dd0e116034e87653e49a69d05bf1d2898fef674454dc95e355b`.
+The overall product run40520416859 still failed: its final proof job122256860941
+could not start bash because NEEDS_JSON contained224618 UTF-8 bytes, above the
+Linux131072-byte individual argument/environment limit. Minification would
+still be223963 bytes. The largest leaves were the complete134215-byte task
+receipt and72735-byte browser plan; neither may be truncated or omitted.
+
+The canonical proof step now uses GitHub's custom-shell temporary-file contract:
+`node scripts/ci-proof.mjs --emit=... --needs-file={0}` reads the JSON run body
+as data. The runner writes that body to its own file; no shell, heredoc, native
+action input or JavaScript source interpolates the JSON. See
+[GitHub's custom-shell contract](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#custom-shell).
+The optional file reader is shared with the fast emitter and leaves the old
+environment path available only when no file source is selected. Missing,
+corrupt or empty files, blank/missing paths, duplicate options and mixed
+sources fail closed without fallback or a replacement proof. Schema, jobs,
+identity, correlation, environments, validators and outcome rules are unchanged.
+
+The trusted CI generator remains byte-for-byte unchanged. Only canonical
+validate and its generated product profile select the file transport; the
+small tooling workflow retains its supported legacy environment invocation.
+Real cold fast-producer CLI tests cover the same shared optional file reader
+and require identical typed output. This avoids changing the trusted generator
+before its own acceptance or weakening compatibleCiGenerators.
+
+The targeted suite passes100 tests: real producer file input larger than the
+observed224618-byte failure, full payload equality, literal newline/Unicode/
+quotes/$()/backticks remaining inert, invalid inputs refusing, and existing
+failed/foreign proof checks. The original small environment CLI test remains.
+The header lease fence also has one registered browser witness,
+`plan-rotation-stale-header-observer-1070`, bound to the existing LED smoke.
+Static readiness passes1958 definitions/545 browser guards/1080 unique source
+reads; execution0, caught unknown/nightly. The200 guideline is unchanged.
+This is author verification, not a manually assembled GREEN CI or CODE verdict.
+
+
+The optional native-HA author utility now lives at the genuine existing local
+utility route `scripts/dev/verify-plan-rotation-mobile-1070.mjs` (class B).
+The former demo entry is removed, not aliased, and its one-off NOT_AN_INPUT
+addition is removed: check-inputs and the complete trusted generator closure
+match accepted dev again. Existing `scripts/dev/**` ownership already describes
+these local utilities; no exclusion or fake CI consumer is introduced.
+Only four import specifiers change, resolving to exactly the same files; all
+driver statements and validators are unchanged. The original helper source,
+SHA256, executed command and82/12 native receipt are preserved separately.
+This utility remains a distinct author-native AC12 witness for the complete
+five-width/gutter matrix, not a claim that the ordinary320px smoke duplicates
+it or that CI executes external HA-cache proof. No extra capture is performed.

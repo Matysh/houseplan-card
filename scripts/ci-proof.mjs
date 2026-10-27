@@ -793,6 +793,17 @@ export async function loadGithubProofContext({
     ...(reviewedRun !== undefined ? { reviewedRun } : {}) };
 }
 
+/** Read the runner's temporary data file without executing or interpolating JSON. */
+export function readNeedsInput(args = process.argv.slice(2), env = process.env) {
+  const files = args.filter(arg => arg === '--needs-file' || arg.startsWith('--needs-file='));
+  if (files.length > 1) throw Error('duplicate --needs-file source');
+  if (!files.length) return JSON.parse(env.NEEDS_JSON || '{}');
+  const file = files[0].slice('--needs-file='.length);
+  if (!files[0].startsWith('--needs-file=') || !file.trim()) throw Error('--needs-file requires a nonempty path');
+  if (Object.hasOwn(env, 'NEEDS_JSON')) throw Error('ambiguous needs sources: --needs-file and NEEDS_JSON');
+  return JSON.parse(readFileSync(resolve(file), 'utf8'));
+}
+
 async function main() {
   const value = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
   const marker = value('marker');
@@ -803,7 +814,7 @@ async function main() {
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, output);
     process.stdout.write(output);
   } else if (emit) {
-    const needs = JSON.parse(process.env.NEEDS_JSON || '{}');
+    const needs = readNeedsInput();
     const registry = process.env.REGISTRY_PLAN ? JSON.parse(process.env.REGISTRY_PLAN) : null;
     const reuseOutputs = needs?.reuse?.outputs || {};
     const evidence = localEvidence(process.cwd(), {
@@ -848,7 +859,7 @@ async function main() {
       + ` · reviewed run ${evidence.baselines.reviewedRun || 'none'}`
       + ` · reviewed local ${evidence.baselines.reviewedLocal?.slice(0, 12) || 'none'}`);
   } else {
-    console.error('usage: ci-proof.mjs --emit=<proof.json> | --marker=<.reuse-marker>');
+    console.error('usage: ci-proof.mjs --emit=<proof.json> [--needs-file=<json>] | --marker=<.reuse-marker>');
     process.exitCode = 2;
   }
 }

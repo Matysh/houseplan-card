@@ -160,6 +160,13 @@ const MUTANT_DEFINITIONS = [
       find: "overflow:${this._headerMenu.open ? 'visible' : 'hidden'}", replace: 'overflow:hidden' }],
   },
   {
+    id: 'plan-rotation-stale-header-observer-1070',
+    guard: 'node demo/smoke_led_strip_glow.mjs',
+    because: '#1070: native ResizeObserver/rAF work must not publish header state after disconnect and recreate Glow entry leases before reconnect. Real Lit/DOM lifecycle and opacity transition events require the browser. Registered only; nightly execution.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: 'if (!ownsHeader()) return;', replace: '/* stale header observer accepted */' }],
+  },
+  {
     id: 'plan-rotation-mobile-ignores-header-height-1070',
     guard: 'node demo/smoke_plan_rotation_mobile.mjs',
     because: '#1070 AC12: actual native mode frames must keep one header/chrome/stage height as the narrow editor gains a row; Node interpolation alone cannot observe responsive DOM height. Registered only; nightly execution.',
