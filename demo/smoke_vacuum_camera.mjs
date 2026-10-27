@@ -59,7 +59,7 @@ try {
   }
   await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('.vactrail line.tip.core').length===2);
   out.sourceVariantsAndPrevious = await page.evaluate(() => {
-    const r=window.__card.renderRoot, paths=[...r.querySelectorAll('.vactrail > path.core')];
+    const r=window.__card.renderRoot, paths=[...r.querySelectorAll('.vactrail > [data-hp-plan-rotation-frame] > path.core')];
     return paths.length===3 && !!r.querySelector('.vactrail g.prev path.core')
       && paths.some(p=>(p.getAttribute('d').match(/M /g)||[]).length===2);
   });
