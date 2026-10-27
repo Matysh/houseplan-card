@@ -69,6 +69,23 @@ per-space skip. Only the touched (and new) spaces go through the migration now.
 
 ## Witnesses
 
+AC7 completion, 2026-10-28: the initial implementation still listed the files
+root during a settings-only write. The strengthened real-WS `Path.iterdir`
+witness was RED on `38754da2` for exactly that root read. Ordinary collection
+now returns before any directory read when no references were dropped. The
+existing startup and daily maintenance callback explicitly requests staging
+collection; TTL, fresh-upload protection, pinned history references and
+preservation of rejected/live-device uploads remain unchanged. Actual reference
+removal still deletes its superseded file. The timing table above is the earlier
+measurement, including its then-present 1.5 ms root sweep; it is not a new timing
+claim for this correction.
+
+The stricter WS witness also checks a refused write and a real plan/attachment
+replacement. The pure maintenance witness checks no-op zero scans, expired
+staging and streaming temporary removal, fresh staging, pinned staging and a
+live-device orphan. Existing startup, periodic and concurrent-write sweep tests
+exercise the explicit production maintenance caller.
+
 `tests_backend/test_ha_config_set_scoped.py`: AC1 corpus equality (small v10
 house and large-house: settings, marker, decor, wall, new/removed space, LED
 links across spaces, `bg_mode`, `model_version`, legacy previous without

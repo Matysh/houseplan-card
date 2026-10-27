@@ -106,7 +106,7 @@ async def test_panel_registration_runs_after_repair_and_initial_housekeeping(
 
     monkeypatch.setattr(integration, "async_check_plan_files", check_plan_files)
     monkeypatch.setattr(integration, "sweep_upload_temps", sweep_uploads)
-    monkeypatch.setattr(integration, "collect_attachments", lambda *_: 0)
+    monkeypatch.setattr(integration, "collect_attachments", lambda *_args, **_kwargs: 0)
     monkeypatch.setattr(integration, "collect_plans", lambda *_: 0)
     monkeypatch.setattr(integration, "async_setup_panel_registration", setup_panel)
 

@@ -135,7 +135,7 @@ def collect_attachments(
     old_cfg: dict[str, Any] | None,
     new_cfg: dict[str, Any],
     now: float | None = None,
-    *, pinned: set[str] | None = None,
+    *, pinned: set[str] | None = None, sweep_staging: bool = False,
 ) -> int:
     """The same commit-scoped rule as `collect_plans`, for marker attachments.
 
@@ -143,11 +143,15 @@ def collect_attachments(
     still exists, was removed on purpose — the dialog has a trash button and
     promises nothing. It goes. Everything else is kept, except a staging folder
     (`up_*`), which by construction only ever holds an upload from a dialog that
-    was never saved: those go after PLAN_ORPHAN_TTL_S. Never raises: it runs
-    behind a durable write.
+    was never saved: those go after PLAN_ORPHAN_TTL_S. The existing startup/daily
+    maintenance explicitly requests that sweep; a write with no dropped refs
+    performs no directory reads. Never raises: it runs behind a durable write.
     """
     new_refs = attachment_refs(new_cfg) | (pinned or set())
     old_refs = attachment_refs(old_cfg)
+    can_drop = bool(old_refs - new_refs)
+    if not can_drop and not sweep_staging:
+        return 0
     # Removing an attachment from a device that still exists is the user saying
     # "drop this one" — a trash button, no promise that anything is kept. A
     # device that is GONE is a different transition, and its files follow the
@@ -158,10 +162,7 @@ def collect_attachments(
     # rule is exactly right there even on the timer.
     now_s = time.time() if now is None else now
     staging_cutoff = now_s - PLAN_ORPHAN_TTL_S
-    # #1096: a device folder can lose a file only when the commit dropped a
-    # reference; a commit that dropped none has nothing to find inside device
-    # folders, so they are not entered. Staging folders still age out below.
-    can_drop = bool(old_refs - new_refs)
+    # #1096: maintenance ages staging only; device folders require a dropped ref.
     removed = 0
     try:
         folders = sorted(p for p in files_dir.iterdir() if p.is_dir()) if files_dir.is_dir() else []

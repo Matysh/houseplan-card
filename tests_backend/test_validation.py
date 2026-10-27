@@ -1510,9 +1510,37 @@ def test_collect_attachments_removes_the_empty_folder_and_never_raises(tmp_path)
     f.write_bytes(b"x")
     old = time.time() - const.PLAN_ORPHAN_TTL_S - 60
     os.utime(f, (old, old))
-    assert plans.collect_attachments(files, {}, {}) == 1
+    assert plans.collect_attachments(files, {}, {}, sweep_staging=True) == 1
     assert not (files / "up_x").exists(), "the staging folder goes with its last file"
     assert plans.collect_attachments(tmp_path / "nope", {}, {}) == 0
+
+
+def test_issue_1096_noop_write_does_not_scan_but_maintenance_keeps_ttl_and_pins(tmp_path, monkeypatch):
+    import os
+    import time
+    from pathlib import Path
+
+    now = time.time()
+    for owner, age in [("up_old", const.PLAN_ORPHAN_TTL_S + 60), ("up_fresh", 0),
+                       ("up_pinned", const.PLAN_ORPHAN_TTL_S + 60), ("m_live", const.SCHEDULED_GRACE_S * 2)]:
+        folder = tmp_path / owner
+        folder.mkdir()
+        item = folder / "manual.pdf"
+        item.write_bytes(b"x")
+        os.utime(item, (now - age, now - age))
+    temporary = tmp_path / (plans.TMP_PREFIX + "abandoned")
+    temporary.write_bytes(b"x")
+    os.utime(temporary, (now - const.PLAN_ORPHAN_TTL_S - 60,) * 2)
+    cfg = {"markers": [{"id": "m_live", "pdfs": []}]}
+    with monkeypatch.context() as guard:
+        guard.setattr(Path, "iterdir", lambda _: pytest.fail("no refs dropped: no directory scan"))
+        assert plans.collect_attachments(tmp_path, cfg, cfg, now) == 0
+    assert plans.collect_attachments(tmp_path, cfg, cfg, now,
+        pinned={"up_pinned/manual.pdf"}, sweep_staging=True) == 2
+    assert not (tmp_path / "up_old").exists()
+    assert not temporary.exists()
+    for owner in ["up_fresh", "up_pinned", "m_live"]:
+        assert (tmp_path / owner / "manual.pdf").is_file()
 
 
 def test_inner_collection_limits():
@@ -1656,13 +1684,13 @@ def test_attachment_collection_matrix(tmp_path):
     assert collect(d, cfg(("m2", ["manual.pdf"])), cfg()) == 0
     assert (d / "m2" / "manual.pdf").is_file()
     # and the scheduled pass, later, agrees
-    assert collect(d, cfg(), cfg()) == 0
+    assert collect(d, cfg(), cfg(), sweep_staging=True) == 0
     assert (d / "m2" / "manual.pdf").is_file()
 
     # 3. a dialog that was never saved, in its own staging folder
     d = case("staging")
     seed(d, "up_x", "manual.pdf", age=const.PLAN_ORPHAN_TTL_S + 60)
-    assert collect(d, cfg(), cfg()) == 1
+    assert collect(d, cfg(), cfg(), sweep_staging=True) == 1
     assert not (d / "up_x").exists()
 
     # 4. an upload into a live device's folder whose save was rejected: kept,
@@ -1671,7 +1699,7 @@ def test_attachment_collection_matrix(tmp_path):
     seed(d, "m3", "current.pdf")
     seed(d, "m3", "rejected.pdf", age=const.SCHEDULED_GRACE_S + 60)
     live = cfg(("m3", ["current.pdf"]))
-    assert collect(d, live, live) == 0
+    assert collect(d, live, live, sweep_staging=True) == 0
     assert (d / "m3" / "current.pdf").is_file()
     assert (d / "m3" / "rejected.pdf").is_file()
 
@@ -1695,7 +1723,7 @@ def test_only_a_staging_folder_ages_out(tmp_path):
         os.utime(path, (when, when))
 
     cfg = {"markers": [{"id": "m1", "pdfs": []}]}
-    assert plans.collect_attachments(files, cfg, cfg) == 1
+    assert plans.collect_attachments(files, cfg, cfg, sweep_staging=True) == 1
     assert (files / "m1" / "ancient.pdf").is_file(), "age alone is never a reason"
     assert not (files / "up_abandoned").exists(), "a cancelled dialog goes after an hour"
 

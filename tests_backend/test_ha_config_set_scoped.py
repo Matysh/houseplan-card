@@ -702,16 +702,23 @@ async def test_issue_1096_file_collection_lists_only_what_a_commit_can_drop(hass
     def exists(name: str) -> bool:
         return (plans_dir / name).is_file() if name.endswith(".png") else (files_dir / "m1" / name).is_file()
 
-    # Nothing replaced or dropped: the plans directory and the device folder
-    # are not entered (the files root is listed for the staging-folder sweep).
+    # Nothing replaced or dropped: neither root nor any device folder is read.
     listed.clear()
     stored = await _stored(client)
     candidate = copy.deepcopy(stored["config"])
     candidate["settings"]["show_room_tooltip"] = True
     assert (await _write(client, candidate, stored["rev"]))["success"]
-    assert str(plans_dir) not in listed and str(files_dir / "m1") not in listed, listed
+    assert str(plans_dir) not in listed and str(files_dir) not in listed and str(files_dir / "m1") not in listed, listed
     for name in ("a.tok.png", "a.new.png", "a.reject.png", "manual.pdf", "extra.pdf"):
         assert await hass.async_add_executor_job(exists, name), name
+
+    listed.clear()
+    stored = await _stored(client)
+    refused = copy.deepcopy(stored["config"])
+    refused["spaces"][0]["title"] = 5
+    assert not (await _write(client, refused, stored["rev"]))["success"]
+    assert str(files_dir) not in listed and str(plans_dir) not in listed
+    assert await hass.async_add_executor_job(exists, "manual.pdf")
 
     # A replaced plan: the superseded file goes, the others stay, as before.
     listed.clear()

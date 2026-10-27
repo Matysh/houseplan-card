@@ -1779,8 +1779,11 @@ still recognised in stored config but no longer served
   (`hass.states.get` per id, no `async_all`), the radar registry only for a
   changed radar block or `settings.radar`, the LQI scope only when room areas,
   active marker bindings or Z2M base topics changed, plan/attachment folders
-  only when the commit replaced a plan or dropped an attachment (the `files`
-  root is still listed for the `up_*` staging sweep). The document is
+  only when the commit replaced a plan or dropped an attachment. With no
+  dropped attachment refs, even the `files` root is not read. Startup/daily
+  maintenance explicitly requests `sweep_staging=True`; the existing TTL,
+  pinned history refs, fresh uploads and live-device file preservation remain
+  authoritative. The document is
   canonicalised once (`async_save_config_state(..., canonical=True,
   previous=…)` stores the validated document without re-reading the store);
   `config/get` copies and resolves room appearance only for a legacy document
