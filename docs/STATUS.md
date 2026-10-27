@@ -1,5 +1,10 @@
 # Project status
 
+Review publication (#1106) reads complete API history with separate bounds:
+8 MiB per CLI response, 64 MiB aggregate and at most 100 pages. Authentication,
+deduplication and the stop on an unknown write outcome retain their authority;
+an oversized or malformed history is never accepted as a partial result.
+
 SPEC delivery compatibility (#1104) recognizes the exact published heading
 `SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
 SPEC filename. Publisher, terminal trailers, paths, machine anchors and real
@@ -44,7 +49,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5688 · pure backend 688 · HA-harness backend 598 · browser smokes 465 (`npm run inventory`) |
+| Tests | Node unit 5692 · pure backend 688 · HA-harness backend 598 · browser smokes 465 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
