@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ModeTransitionController,
+  modeStageHeight,
   interpolateModeVisualState,
   viewBoxFromViewport,
   viewportFromViewBox,
@@ -60,6 +61,14 @@ test('one-row View and two-row editor keep one total height through the shared t
     assert.ok(Math.abs(value.viewport.viewBox.w / value.viewport.viewBox.h - value.stageWidth / value.stageHeight) < 1e-12);
   }
   assert.equal(interpolateModeVisualState(from, to, 1).headerHeight, 101);
+});
+
+test('fractional native toolbar height preserves the settled client-height camera basis', () => {
+  const view = { stageHeight: 836, headerHeight: 55, editorChromeHeight: 0 };
+  const editor = { stageHeight: modeStageHeight(view, 101, 212.3125), headerHeight: 101, editorChromeHeight: 212.3125 };
+  assert.equal(editor.stageHeight, 578);
+  assert.equal(modeStageHeight(editor, 55), view.stageHeight);
+  assert.equal(modeStageHeight(view, 101, 10000), 1);
 });
 
 test('controller is deterministic, settles exactly and leaves no scheduled frame', () => {

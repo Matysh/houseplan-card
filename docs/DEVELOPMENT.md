@@ -22,7 +22,7 @@ These are unchanged-product checks; mutation execution remains nightly-only.
 
 HA more-info target (#1087): never reuse measurement primary as a functional dialog target. The synthetic thermostat witness retains its old temperature primary while Auto opens climate. More-info selection does not authorize actuation, sibling targets for entity bindings or unreadable/disabled entities. Native coverage: demo/smoke_device_more_info.mjs; pure coverage: test/device-more-info.test.mjs. Optional support wire fields require redeploying the accepted relay schema before the first beta ships them; keep the mirror byte-identical and do not deploy an unreviewed task branch.
 
-Plan quarter turns (#1070) have three production-bundle browser witnesses:
+Plan quarter turns (#1070) have production-bundle browser witnesses:
 `smoke_plan_rotation.mjs` (pixels, canonical camera, animated mode transitions,
 sun polygons, configuration and persistence), `smoke_plan_rotation_editors.mjs`
 (native drawing/node/device/decor gestures at 0/90°, keyboard screen axes), and
@@ -31,7 +31,21 @@ fixture changes only the wire boundary and uses the existing canonical node
 transaction; the touch input is Chromium's real input path. `test/view-frame`
 and the PDF/ISO/live-viewport tests cover pure matrices, priority, physical-cache
 reuse, front faces, complete page fitting and canonical grid coverage.
-Six named `plan-rotation-*-1070` scenes supply task visual intent; global
+`smoke_plan_rotation_mobile.mjs` observes native ordinary/reduced mode frames
+and a quick gear retarget. Native HA toolbar text may have fractional CSS height;
+camera endpoints must use the same integer client-height basis as the settled
+stage, rather than rely on a later ResizeObserver refit.
+
+For actual HA card borders and explicitly measured dashboard gutters, build and
+run `node demo/verify_plan_rotation_mobile_1070.mjs --ha-cache=<prepared-cache>`.
+It uses the standard offline UI Lab's pinned HA elements and synthetic fixture,
+with a declared external 56px toolbar and 0/8px gutters. All phone widths,
+control rectangles, common border strokes, centre hits, dropdown focus and
+animated/reduced camera endpoints are recorded in ignored author artifacts.
+The optional HA-cache proof supplements the normal CI smokes; no real HA
+connection or product CSS adapter is involved.
+
+Named `plan-rotation-*-1070` scenes supply task visual intent; global
 baseline acceptance remains a release-candidate action. Author evidence and
 limitations live in `docs/analysis/1070-plan-quarter-rotation.md`.
 

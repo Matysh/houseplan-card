@@ -266,7 +266,7 @@ import {
 } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
-  ModeTransitionController, viewportFromViewBox,
+  ModeTransitionController, viewportFromViewBox, modeStageHeight,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
 import {
@@ -1431,7 +1431,7 @@ export class HouseplanCard extends LitElement {
     if (from) {
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
       const headerHeight = this._editorRuntime?._modeHeaderHeight('view') ?? from.headerHeight;
-      const targetStageHeight = Math.max(1, from.stageHeight + from.editorChromeHeight + from.headerHeight - headerHeight);
+      const targetStageHeight = modeStageHeight(from, headerHeight);
       this._hdrH = Math.round(from.headerBudget + from.stageHeight - targetStageHeight);
       this._view = this._viewForModeTarget(
         targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,
@@ -1473,8 +1473,7 @@ export class HouseplanCard extends LitElement {
       const headerHeight = this._editorRuntime?._modeHeaderHeight(targetMode) ?? from.headerHeight;
       // The hidden frame preserves source sizes; keep the header + stage + chrome budget
       // constant so every RAF moves both edges without a final layout jump.
-      const targetStageHeight = Math.max(1,
-        from.stageHeight + from.editorChromeHeight + from.headerHeight - targetChromeHeight - headerHeight);
+      const targetStageHeight = modeStageHeight(from, headerHeight, targetChromeHeight);
       const targetStageWidth = this._stageEl?.clientWidth || from.stageWidth;
       const targetView = this._viewForModeTarget(
         targetZoom, targetCenterX, targetCenterY, targetStageWidth, targetStageHeight,

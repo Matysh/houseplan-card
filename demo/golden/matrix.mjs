@@ -1566,4 +1566,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     stateOverrides: { 'sun.sun': { attributes: { azimuth: 270, elevation: 24 } } },
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage,
   })),
+  ...[
+    { id: 'plan-rotation-phone-view-320-1070', mode: 'view', width: 320 },
+    { id: 'plan-rotation-phone-editor-320-1070', mode: 'plan', width: 320 },
+    { id: 'plan-rotation-phone-editor-360-1070', mode: 'plan', width: 360 },
+  ].map(({ id, mode, width }) => ({
+    id, mode, fixture: 'visual', space: 'golden-geometry', rotation: 90,
+    theme: 'light', language: 'en', viewport: { width, height: 844 }, ...page,
+  })),
 ]);

@@ -42,6 +42,16 @@ export interface ModeTransitionState {
   targetMode: HouseplanMode;
 }
 
+/** Camera endpoints use the same integer client-height basis as the settled
+ * stage. Native HA toolbar text can contribute fractional CSS pixels. */
+export function modeStageHeight(
+  from: Pick<ModeVisualState, 'stageHeight' | 'headerHeight' | 'editorChromeHeight'>,
+  headerHeight: number, editorChromeHeight = 0,
+): number {
+  return Math.max(1, Math.round(from.stageHeight + from.headerHeight
+    + from.editorChromeHeight - headerHeight - editorChromeHeight));
+}
+
 export interface ModeTransitionHooks {
   frame: (state: ModeTransitionState) => void;
   settled: (state: ModeTransitionState) => void;

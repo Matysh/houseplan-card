@@ -411,7 +411,7 @@ it again after the editor is neutral to return to View.
 
 ### Phone header
 
-At a width of 480 px or less, the header stays on one row: a compact space
+At a width of 480 px or less, View keeps one header row: a compact space
 selector, zoom controls and one **Actions and settings** gear. The card title
 is hidden; the field shows the current floor and the list retains full names
 in the existing order. The gear contains
@@ -422,6 +422,11 @@ local show/hide action for every user. Selecting an item closes the menu;
 Escape or a tap outside only closes it and never activates the plan below. In
 an editor the close button remains in the row, while the editor buttons live
 in the menu. Kiosk has no header.
+
+If the browser window is narrower than 360 px, an editor may use two header rows.
+Both rotation buttons remain beside zoom, and the floor selector, actions gear
+and close button stay accessible. View still uses one row. From 360–480 px the
+editors keep one row; wider windows retain the regular responsive layout.
 
 When the header itself is 1024 px wide or narrower — in the panel that is Home
 Assistant without its sidebar, on a dashboard the card width — the editor
