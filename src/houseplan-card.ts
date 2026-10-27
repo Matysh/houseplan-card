@@ -2,7 +2,7 @@ import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
-import { renderHeaderSpaceNavigation } from './header-space-select';
+import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-select';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -4407,12 +4407,18 @@ export class HouseplanCard extends LitElement {
     // is the dashboard's business — it scrolls; it is not header.
     const hdr = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
     if (hdr && stage && !this._roHdr) {
-      let headerWidth = 0;
+      // Seed the same content-box width before the first paint, including on a
+      // warm remount; waiting for ResizeObserver first paints the wide tabs.
+      let headerWidth = headerContentWidth(getComputedStyle(hdr));
       const measure = () => {
         const compact = headerWidth > 0 && headerWidth <= 1024;
         if (compact !== this._compactSpaces) {
           this._compactSpaces = compact;
           this.requestUpdate();
+          // Measure the chosen navigation, never bill its retired predecessor
+          // against the stage or overwrite a correct warm header memo with it.
+          void this.updateComplete.then(() => { if (this.isConnected) measure(); });
+          return;
         }
         if (compact && !this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
           this._spaceSelectLoad = import('./hp-settings-select').then(() => this.requestUpdate())

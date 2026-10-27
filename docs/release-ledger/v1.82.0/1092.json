@@ -3,10 +3,10 @@
   "issue": 1092,
   "baseStable": "v1.82.0",
   "category": "stable-fix",
-  "rationale": "The decorative paper outline exists in stable v1.82.0. Remove this weak visual effect and its rendering work by owner decision; preserve the environment and opaque paper. Its isolated share of the reported slowdown is not established, and no numerical speedup is promised.",
+  "rationale": "The decorative paper outline exists in stable v1.82.0. Remove this weak visual effect and its rendering work by owner decision; preserve the environment and opaque paper. Its isolated share of the reported slowdown is not established, and no numerical speedup is promised. The owner also approved the two demonstrated pre-existing CI blockers: adapt the floor-navigation smoke to actual container widths and preserve warm header geometry before the first frame.",
   "summary": {
-    "ru": "Убрано слабое декоративное свечение контура подложки в солнечном фоне.",
-    "en": "Remove the subtle decorative paper-outline glow from the sun-following background."
+    "ru": "Убрано декоративное свечение контура и исправлен скачок шапки при повторном открытии плана.",
+    "en": "Remove the decorative outline glow and prevent header jumps when reopening the plan."
   },
   "visual": {
     "schema": 1,
@@ -34,7 +34,9 @@
       }
     ],
     "smokes": [
-      "smoke_daycycle_outline_removed.mjs"
+      "smoke_daycycle_outline_removed.mjs",
+      "smoke_summary_warm_attach.mjs",
+      "smoke_ui_lab_1081.mjs"
     ]
   }
 }

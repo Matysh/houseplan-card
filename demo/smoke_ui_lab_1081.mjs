@@ -5,6 +5,13 @@ const { page, browser } = await launch({ width: 1400, height: 1000 }, 1, [], { r
 const card = page.locator('houseplan-card');
 const settle = () => page.evaluate(async () => { await window.__hpTest.waitForWrites(); await window.__hpTest.settled(); });
 const saved = () => page.evaluate(async () => (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config);
+const headerWidth = async (width, compact) => {
+  // The demo host is 780px even on a wide viewport. Exercise both actual
+  // container widths rather than assuming window width selects the tabs.
+  await page.locator('#host').evaluate((host, value) => { host.style.width = `${value}px`; }, width);
+  await card.locator(`[data-hp="${compact ? 'space-select' : 'space-tab'}"]`).first().waitFor();
+  await settle();
+};
 const imageSource = async dialog => {
   const select = dialog.locator('hp-settings-select:has(select[name="space-plan-source"])');
   await select.locator('button').click(); await select.getByRole('option', { name: 'Use a floor-plan image' }).click();
@@ -71,9 +78,17 @@ try {
   await page.evaluate(async () => { await window.__hpTest.setTool('device-inbox'); });
   check('catalog.duplicate_hidden_control_removed', await card.locator('[data-field="device-catalog-show-all"]').count(), 0);
   await close();
+  await headerWidth(1200, false);
   for (const mode of ['plan', 'devices', 'decor', 'view']) {
     await page.evaluate(mode => window.__hpTest.setMode(mode), mode);
     check(`${mode}.space_cursor`, await card.locator('[data-hp="space-tab"]').first().evaluate(element => getComputedStyle(element).cursor), mode === 'view' ? 'pointer' : 'grab');
+  }
+  await headerWidth(780, true);
+  for (const mode of ['plan', 'devices', 'decor', 'view']) {
+    await page.evaluate(mode => window.__hpTest.setMode(mode), mode);
+    check(`${mode}.compact_has_no_reorder_tabs`, await card.locator('[data-hp="space-tab"]').count(), 0);
+    check(`${mode}.compact_space_cursor`, await card.locator('[data-hp="space-select"] [data-hp="select-trigger"]')
+      .evaluate(element => getComputedStyle(element).cursor), 'pointer');
   }
   await page.evaluate(async () => { await window.__hpTest.setMode('plan'); await window.__hpTest.openSpaceDialog('edit', 'ui'); });
   await dialog.locator('[data-hp="space-delete"]').click();
@@ -84,6 +99,7 @@ try {
   check('space.blocker_does_not_delete', (await saved()).spaces.length, 2);
   await close();
   await page.evaluate(() => window.__hpTest.setServerConfig(config => ({ ...config, spaces: config.spaces.slice(0, 1) })));
+  await headerWidth(1200, false);
   for (const mode of ['plan', 'devices', 'decor', 'view']) {
     await page.evaluate(mode => window.__hpTest.setMode(mode), mode);
     check(`${mode}.single_space_cursor`, await card.locator('[data-hp="space-tab"]').first().evaluate(element => getComputedStyle(element).cursor), 'pointer');

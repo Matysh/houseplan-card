@@ -44,9 +44,9 @@ that transition events alone prove disposal.
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 91 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 102 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 60 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 269 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **535 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **536 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -541,6 +541,10 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 - `wall-draw-rejection-rollback-skipped`
 
 ### Responsive DOM layout
+
+- `compact-header-width-arrives-after-first-frame-1092`
+  The compact navigation must be selected before the first visible warm frame;
+  actual Lit, ResizeObserver and rAF ordering proves the header/stage remain stable.
 
 - `decor-group-text-outline-width-discarded-1038`
 - `decor-group-text-measure-scans-unselected-1038`

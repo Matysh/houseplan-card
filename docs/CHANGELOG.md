@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Choose the compact floor selector before a warm card first paints, preventing
+  a 9px header/stage jump when opening the plan again. (#1092)
+
 - Remove the subtle decorative outline glow in Follow the sun mode; keep the
   changing background, opaque room paper and plan navigation. (#1092)
 

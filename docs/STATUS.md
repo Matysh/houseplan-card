@@ -31,7 +31,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5673 · pure backend 687 · HA-harness backend 585 · browser smokes 460 (`npm run inventory`) |
+| Tests | Node unit 5674 · pure backend 687 · HA-harness backend 585 · browser smokes 460 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
@@ -1310,3 +1310,6 @@ Device settings #947 use the shared five-section shell with real picker/presenta
 Follow the sun #1092 no longer creates a decorative paper-outline SVG or triple
 drop-shadow. Opaque room paper, the environment and the independent main-plan
 camera-opacity safeguard remain; current acceptance is read from issue labels.
+
+#1092 also chooses compact floor navigation before the first header measurement
+on a warm mount. Existing first-frame geometry and real-resize guards stay strict.

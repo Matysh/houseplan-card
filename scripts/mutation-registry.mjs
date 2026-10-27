@@ -17856,6 +17856,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'compact-header-width-arrives-after-first-frame-1092',
+    guard: 'node demo/smoke_summary_warm_attach.mjs',
+    because: '#1092: the browser must choose compact navigation before a warm card first paints; '
+      + 'deferring width to ResizeObserver exposes a 9px header/stage jump even with the summary runtime warm. '
+      + 'Only actual Lit/ResizeObserver/rAF ordering can prove this first-frame invariant.',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '      let headerWidth = headerContentWidth(getComputedStyle(hdr));',
+      replace: '      let headerWidth = 0;' }],
+  },
+  {
     id: 'dev-mutants-requested-again',
     guard: 'node --test --test-name-pattern="#709" test/classify-changes.test.mjs',
     because: '#709 (owner, 2026-09-29): mutants check the tests, not the product; Validate runs no diff '

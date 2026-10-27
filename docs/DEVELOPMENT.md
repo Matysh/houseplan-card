@@ -3858,6 +3858,16 @@ git config core.fsmonitor true
 git config core.untrackedCache true
 ```
 
+## Header first-frame regression (#1092)
+
+Two selected checks failed identically on clean pre-task dev: the UI Lab
+fixture assumed a wide floor tab despite its 780px demo host, and the warm
+summary smoke observed 138→147px header changes. The UI Lab check now explicitly
+uses both 1200px tabs and a 780px compact selector. The product seeds exact
+content-box width before the first paint and measures height after the chosen
+navigation renders. The existing per-frame and real-resize checks remain
+unchanged. No timing or geometry tolerances were raised.
+
 ## Daycycle raster observations (#1066)
 
 #1092 removes the auxiliary paper-outline SVG, its three drop-shadows and

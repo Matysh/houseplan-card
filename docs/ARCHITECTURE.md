@@ -1058,6 +1058,12 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
    to the existing trigger. Owners must identity-check their current dialog before
    closing so a retired form cannot be revived. Search and candidate rendering
    remain inline; no new floating component or saved field is introduced.
+The responsive floor navigation seeds its content-box width from computed CSS
+before the first paint (#1092), retaining fractional CSS pixels in transformed
+containers. If navigation changes, the first header-height measurement waits
+for that Lit update; it never overwrites a correct warm memo with the retired
+wide-tab height. ResizeObserver still owns subsequent actual width changes.
+
 7. **One four-phase environment resolver.** `resolveDayCycle()` (`src/sun.ts`)
    and `src/day-cycle-render.ts` serve View, kiosk and the space card; plan
    content is never phase-filtered (`SUN.md` › Current four-phase background).
