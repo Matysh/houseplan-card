@@ -3,6 +3,10 @@
 ## Unreleased
 
 - In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. Viewport resize repositions it; explicit camera/navigation changes retire the old command. (#1089)
+- Unify dialog dropdowns and the genuine HA icon picker with the UI Kit. Long
+  device sources stay within the dialog, and Escape closes the adaptive icon
+  picker before its parent form and returns focus to the icon field through
+  Home Assistant's native focus API. (#998)
 
 - Choose the compact floor selector before a warm card first paints, preventing
   a 9px header/stage jump when opening the plan again. (#1092)

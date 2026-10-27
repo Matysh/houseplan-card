@@ -46,7 +46,7 @@ that transition events alone prove disposal.
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 61 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 273 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **549 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **550 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 ## Measured effect
 
@@ -225,6 +225,11 @@ observe these pixels or transforms. These witnesses are declared, not executed
 during development.
 
 - `icon-picker-wrapper-restores-second-border-988`
+- `dialog-icon-picker-loses-local-kit-998`
+
+#998 observes the genuine HA field's computed 44 px height, 8 px radius and
+accepted triangle beside an ordinary select. The adapter being mounted is not
+an oracle; its actual browser presentation is. Registered for nightly execution.
 
 #988 observes the computed border paint around a genuine-picker host; CSS
 matching alone cannot tell whether the wrapper and HA paint two contours.

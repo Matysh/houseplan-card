@@ -23,6 +23,17 @@ try {
     assert.ok(await floors(s.page).locator('[data-hp=dialog-confirm]').isDisabled());
     await floors(s.page).locator('[data-action=import-manual]').click();
     await s.page.locator('hp-dialog[data-kind=onboarding]').waitFor();
+    // #998: first-install onboarding registers the shared select without the
+    // full editor having been opened earlier in this browser.
+    const choice=s.page.locator('hp-dialog[data-kind=onboarding] hp-settings-select').filter({visible:true}).first();
+    const trigger=choice.locator('[data-hp=select-trigger]');
+    await trigger.waitFor();
+    const dimensions=await trigger.evaluate(el=>({height:el.getBoundingClientRect().height,radius:getComputedStyle(el).borderTopLeftRadius}));
+    assert.deepEqual(dimensions,{height:44,radius:'8px'});
+    await trigger.click();await choice.locator('[role=listbox]').waitFor();
+    await s.page.keyboard.press('Escape');
+    assert.ok(await s.page.locator('hp-dialog[data-kind=onboarding]').isVisible());
+    assert.equal(await trigger.getAttribute('aria-expanded'),'false');
     assert.equal(await writes(s.page), 0);
     out.failedHintRetainsFloorWorkflow = true;
   }

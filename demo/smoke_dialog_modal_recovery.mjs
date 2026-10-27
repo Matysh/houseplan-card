@@ -322,6 +322,14 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
   const childEscape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true, cancelable: true });
   popover.querySelector('input').dispatchEvent(childEscape);
   const childEscapeKeepsOwner = pickerCloseCount === 0 && !childEscape.defaultPrevented;
+  const sheet = document.createElement('ha-bottom-sheet');
+  sheet.open = true;
+  sheet.innerHTML = '<input aria-label="Adaptive picker search">';
+  picker.shadowRoot.append(sheet);
+  const sheetEscape = new KeyboardEvent('keydown', {key:'Escape',bubbles:true,composed:true,cancelable:true});
+  sheet.querySelector('input').dispatchEvent(sheetEscape);
+  const adaptiveEscapeKeepsOwner = pickerCloseCount === 0 && !sheetEscape.defaultPrevented;
+  sheet.remove();
   popover.removeAttribute('open');
   const ownerEscape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true, cancelable: true });
   popover.querySelector('input').dispatchEvent(ownerEscape);
@@ -382,6 +390,7 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
     newOrdinaryUsesExactlyOneHaShell: newOrdinaryUsesOneHaShell,
     childHideKeepsOwner,
     childEscapeKeepsOwner,
+    adaptiveEscapeKeepsOwner,
     ownerEscapeStillCloses,
     ownerHideStillCloses,
     rejectedHaCloseReopensSameShell,

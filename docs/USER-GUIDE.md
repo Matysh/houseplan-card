@@ -2,6 +2,12 @@
 
 In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
 
+Dialog choices share the same fields and menus, including the device icon picker.
+Search for an icon or enter a custom value in Search. On narrow or short screens,
+Home Assistant opens its native bottom sheet. Escape closes the open list first
+and returns focus to the field; the surrounding settings stay open. Long entity
+names and IDs wrap inside source lists.
+
 ## Choose the Home Assistant dialog for a device
 
 In device settings, open Actions and links and select HA more-info dialog. The Open in Home Assistant field below it offers Auto (the main functional entity, such as the thermostat) and this device’s own entities, with search inside the list. The same selection applies to Open in HA in the device card. Right-click opens the five-command menu; its HA more-info command uses the same target and Settings is its first row. Icon activity, displayed values and control targets remain independent. A deleted or disabled explicit target produces a warning instead of silently opening another entity.

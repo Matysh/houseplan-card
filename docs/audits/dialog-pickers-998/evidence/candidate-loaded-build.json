@@ -1,0 +1,26 @@
+{
+  "fingerprint": "0d54fd4675b83796cc8560a6dc2ad704094480a05605a1952dd604b35dfc831c",
+  "assets": [
+    "http://127.0.0.1:8899/assets/houseplan-panel.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/lit-element-B_1lOTsK.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/open-spans-DZckrw_B.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/houseplan-card-Xpo9Lrpo.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/live-interaction-runtime-DVNocH7I.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/summary-panel-runtime-entry-BhaEcuKK.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/furniture-plan-art.generated-COdR0Ky_.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/form-kit.styles-CSbKImE-.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/summary-shared-DeiwZyxO.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/settings-action.styles-BI1f7rzz.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/live-tip-placement-DT80wRrV.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/floating-surface-BdDXcYrq.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/device-contact-scene-C-Jt7zXz.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/device-contact-geometry-CG6ZQ-ki.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/device-contact-floor-pyFGP6Vd.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/device-contact-basis-BjnUVfCf.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/editor-shared-BUDnNUIu.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/namespace-language-CB_HaWNs.js",
+    "http://127.0.0.1:8899/assets/houseplan-assets/codepoint-order-B-WEOsj8.js",
+    "http://127.0.0.1:8899/overrides/houseplan-card.css",
+    "http://127.0.0.1:8899/overrides/houseplan-panel.css"
+  ]
+}

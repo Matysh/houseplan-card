@@ -457,13 +457,13 @@ export class DecorImageEditor<Snapshot> {
               </optgroup>`)}
             </select></hp-settings-select>` : dialog.kind === 'image' ? html`
             <label>${this.host._t('decor.image_asset')}</label>
-            <select data-hp="field" data-field="decor-asset" class=${inputClass} .value=${dialog.assetId || ''}
+            <hp-settings-select><select data-hp="field" data-field="decor-asset" class=${inputClass} .value=${dialog.assetId || ''}
               @change=${(event: Event) => (this.host._decorShapeDialog = {
                 ...dialog, assetId: (event.target as HTMLSelectElement).value,
               })}>
               ${this.host._decorAssetCatalog.map((asset) => html`<option value=${asset.asset_id}
                 ?selected=${asset.asset_id === dialog.assetId}>${asset.name}</option>`)}
-            </select>
+            </select></hp-settings-select>
             ${selectedImage ? html`<div class="imagepropertypreview">
               <img src=${this.host._display(selectedImage.url)} alt=${selectedImage.name} />
               <span>${selectedImage.name}</span>

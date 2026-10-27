@@ -625,7 +625,7 @@ export class StairEditorRuntime {
       @hp-close=${() => this.closeDialog()}>
       <div class="body">
         <label>${this.owner._t('stairs.type')}</label>
-        <select class="areasel"
+        <hp-settings-select><select class="areasel"
           @change=${(event: Event) => {
             const kind = (event.target as HTMLSelectElement).value as Stair['kind'];
             const converted = convertStairKind(current, kind);
@@ -640,7 +640,7 @@ export class StairEditorRuntime {
           }}>
           <option value="straight" ?selected=${dialog.kind === 'straight'}>${this.owner._t('stairs.straight')}</option>
           <option value="spiral" ?selected=${dialog.kind === 'spiral'}>${this.owner._t('stairs.spiral')}</option>
-        </select>
+        </select></hp-settings-select>
         ${dialog.kind === 'straight'
           ? html`${field('length', 'stairs.length')}${field('width', 'stairs.width')}`
           : field('radius', 'stairs.radius')}
@@ -668,14 +668,14 @@ export class StairEditorRuntime {
               direction: value as Stair['direction'],
             })}>${this.owner._t(key)}</button>`)}</div>
         <label>${this.owner._t('stairs.target')}</label>
-        <select class="areasel"
+        <hp-settings-select><select class="areasel"
           @change=${(event: Event) => this.updateDialog({
             targetSpaceId: (event.target as HTMLSelectElement).value,
           })}>
           <option value="" ?selected=${dialog.targetSpaceId === ''}>${this.owner._t('stairs.no_target')}</option>
           ${this.owner._model.filter((item) => item.id !== this.owner._space).map((item) => html`
             <option value=${item.id} ?selected=${dialog.targetSpaceId === item.id}>${item.title}</option>`)}
-        </select>
+        </select></hp-settings-select>
         ${targetState !== 'active' ? html`<p class="hint warn">${this.owner._t(
           targetState === 'fixed' ? 'stairs.fixed_floor' : 'stairs.target_warning',
         )}</p>` : nothing}

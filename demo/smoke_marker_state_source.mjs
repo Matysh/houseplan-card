@@ -34,6 +34,10 @@ const state = async value => {
 };
 const captureLayouts = async () => {
   await mkdir('demo/out/activity-preview-979', { recursive: true });
+  const longId = 'binary_sensor.hp998_' + 'long_identifier_'.repeat(12);
+  await page.evaluate(id => window.__addRegistryEntity(id, null, 'off', 'demo',
+    {device_id:'d_light1',entity_category:'diagnostic',name:'998 '+ 'Очень длинный источник состояния '.repeat(12)},
+    {device_class:'running'}),longId);
   await page.evaluate(() => window.__addRegistryEntity('binary_sensor.hp977_work', null, 'washing', 'demo',
     { device_id: 'd_light1', entity_category: 'diagnostic',
       name: 'Washing machine programme / Выполнение программы стиральной машины — extended diagnostic name' },
@@ -91,7 +95,19 @@ const captureLayouts = async () => {
         && node.querySelectorAll('[role="option"]').length === 2;
     });
     await sourcePicker().screenshot({ path: `demo/out/activity-preview-979/source-360-${language}.png` });
+    for (const query of ['998 Очень длинный',longId]) {
+      await search().fill(query);
+      const own=sourcePicker().getByRole('option').filter({hasText:longId});
+      await own.waitFor();
+      out[`longSource998${language}${query===longId?'Id':'Name'}`] = await sourcePicker().evaluate(node=>{
+        const panel=node.querySelector('.hpf-panel'), r=panel.getBoundingClientRect();
+        return r.left>=0&&r.right<=innerWidth&&panel.scrollWidth<=panel.clientWidth+1
+          && [...panel.querySelectorAll('.hpf-cand')].every(el=>el.scrollWidth<=el.clientWidth+1);
+      });
+    }
     await search().focus(); await page.keyboard.press('Escape');
+    out[`longSource998Escape${language}`] = await dialog.isVisible()
+      && await dialog.locator('#marker-state-source').evaluate(el=>el.getRootNode().activeElement===el);
   }
   await page.setViewportSize({ width: 1280, height: 1100 });
   await page.evaluate(() => window.__card.setConfig({ ...window.__card._config, language: 'en' }));
