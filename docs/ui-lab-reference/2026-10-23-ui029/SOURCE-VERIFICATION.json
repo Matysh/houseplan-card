@@ -1,0 +1,45 @@
+{
+  "id": "UI-029",
+  "status": "accepted",
+  "acceptedOn": "2026-10-23",
+  "issue": "https://github.com/Matysh/houseplan-card/issues/998",
+  "ownerDecision": "Отлично, теперь всё ок. Фиксируй эту версию в журнале и в #998.",
+  "baseline": "v1.83.0-beta.1",
+  "runtimeUnchanged": true,
+  "checks": {
+    "fieldHeight": 44,
+    "fieldRadius": 8,
+    "mdiMenuGap": 7,
+    "mdiPlaceholder": "Поиск",
+    "sourceWidthDesktop": 414,
+    "sourceScrollWidthDesktop": 414,
+    "sourceWidthMobile": 362,
+    "sourceScrollWidthMobile": 362,
+    "mobileViewportWidth": 390,
+    "mdiSearch": true,
+    "sourceSearch": true,
+    "escapePreservesDialog": true,
+    "pageErrors": 0
+  },
+  "limitations": [
+    "Проверены основные поля настроек устройства на изолированной странице Chromium UI Lab; полный продуктовый pipeline не запускался.",
+    "Обход остальных диалогов и проверка в настоящем HA добавлены в #998 как будущая работа исполнителя.",
+    "Открытый MDI до и после снят с разными поисковыми запросами; сравнивать оболочку, а не содержимое списка.",
+    "Светлый мобильный кадр показывает закрытые поля; раскрытый MDI в светлой мобильной теме отдельно не принимался."
+  ],
+  "files": {
+    "app.mjs": "69c7be1ce34b586ae655a216ff2167212108aee3d13b8a420fb4522657633382",
+    "check-998.mjs": "8da111ef234af13d4b0805bf7542a23e50aac2f1d72eda0c0a501507f5c3272e",
+    "device-picker-kit.mjs": "a2f5f48f4ba123cae489acf6f5e461811180f96db49ff7a825f49b4b4036aba7",
+    "ha-bootstrap.mjs": "1b72dee6e264213c41c6b18c1496446199ad949fad2c6f6bdad5562b4a1c8151",
+    "houseplan-card.css": "386677fe1175189951237a8d128698a03d2e6454e389b1ed8299f7571a0b763e",
+    "issue998-after.png": "cdc69f0d1fcb3b68d6b80e0a55c82e64edbe6b9bb6b15aab89d92dc7ecd31af7",
+    "issue998-approved-body.md": "1ef52856b8180e6481ddaa7d9a29207e82897bddafc95712c64fc89f1c1fc771",
+    "issue998-before.png": "54ef6cfcbbe52f32a24fcfb82afcda361f1ce4f8f0185f88ad715839594de4b5",
+    "issue998-light-mobile.png": "1e1b207d9b7d046bfefc1c1d04c58e83352949cc5bd5a51b7e213391618799e9",
+    "issue998-mdi-after.png": "1b0c59f39ee3002b60a07faeaab1872d136ffc6a0a48f63fa5431bbc76e5c94e",
+    "issue998-mobile-after.png": "74e38c9a99ceda32babf476ee352ef7b14ae9e3ae47bac57170075807ae5b3ed",
+    "issue998-picker-before-open.png": "fbf481220943c311ced7300f2a105767766ce49e3c172b74b1024591d29c888e",
+    "issue998-source-after.png": "1a62cc54d094e167b1ba5dd649f398d96a9c85fcc15e55186773174108b36ff8"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "issue": 998,
+  "change": "UI-029",
+  "acceptedOn": "2026-10-23",
+  "publishedOn": "2026-10-27",
+  "baseline": "v1.83.0-beta.1",
+  "baselineCommit": "cd9c8961eb906a5c1492dedf2e245191de01cba5",
+  "privateDataIncluded": false,
+  "originalScreenshotsIncluded": false,
+  "acceptedFiles": [
+    "app.mjs",
+    "device-picker-kit.mjs",
+    "ha-bootstrap.mjs",
+    "houseplan-card.css",
+    "issue998-approved-body.md"
+  ],
+  "files": [
+    {
+      "path": "accepted/app.mjs",
+      "bytes": 12824,
+      "sha256": "69c7be1ce34b586ae655a216ff2167212108aee3d13b8a420fb4522657633382"
+    },
+    {
+      "path": "accepted/device-picker-kit.mjs",
+      "bytes": 5724,
+      "sha256": "a2f5f48f4ba123cae489acf6f5e461811180f96db49ff7a825f49b4b4036aba7"
+    },
+    {
+      "path": "accepted/ha-bootstrap.mjs",
+      "bytes": 2725,
+      "sha256": "1b72dee6e264213c41c6b18c1496446199ad949fad2c6f6bdad5562b4a1c8151"
+    },
+    {
+      "path": "accepted/houseplan-card.css",
+      "bytes": 15422,
+      "sha256": "386677fe1175189951237a8d128698a03d2e6454e389b1ed8299f7571a0b763e"
+    },
+    {
+      "path": "accepted/issue998-approved-body.md",
+      "bytes": 11365,
+      "sha256": "1ef52856b8180e6481ddaa7d9a29207e82897bddafc95712c64fc89f1c1fc771"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 825,
+      "sha256": "4f44e8209833dfa91294e03151ad042fab5ac785400b3a01db4b4d4458d1e628"
+    },
+    {
+      "path": "install.mjs",
+      "bytes": 1141,
+      "sha256": "990b99c8e650ebf3c89a4d8c0065d732ad32e146ebc779f9f4ad587611a57570"
+    },
+    {
+      "path": "JOURNAL-CYCLE.md",
+      "bytes": 60707,
+      "sha256": "23a6ddc7584f830a3060c9622d1713abf0f5c9562ac31fdfae458019f9c54a32"
+    },
+    {
+      "path": "JOURNAL-UI029.md",
+      "bytes": 5999,
+      "sha256": "59bf3480ce2662f1cdb5d951f804449af062ba6d4602fe96bb346399fc74e34e"
+    },
+    {
+      "path": "prepare-reference.mjs",
+      "bytes": 2197,
+      "sha256": "ed1d0e5a86e5d342d97ac5ce6c398c6120058bd3a44e13fe0249e1891c9746dd"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7578,
+      "sha256": "7c56a60f423952f712fd27e60a59c15dad7a16377b4601b2c9d6196d2754e84e"
+    },
+    {
+      "path": "reference-theme.css",
+      "bytes": 7580,
+      "sha256": "3645759d9ba001fd74080e6c650cfb7c4caf539cc13c09777398b6524f7354c9"
+    },
+    {
+      "path": "runtime/overrides/houseplan-card.css",
+      "bytes": 3374,
+      "sha256": "445f57d9faab4b36275c2caf6236b5059c162b12690afbb1ba00c0192280bc63"
+    },
+    {
+      "path": "serve-reference.mjs",
+      "bytes": 2848,
+      "sha256": "e4771bbed111050848cecf0bcb80cff7b15c91e205d129a38e9e5c74e4b2c6ca"
+    },
+    {
+      "path": "SOURCE-VERIFICATION.json",
+      "bytes": 2837,
+      "sha256": "0ea3eaa4b9a2039447db0abf876f472c7dbb25622f9f7fc73bace1543cdecb91"
+    },
+    {
+      "path": "verify-package.mjs",
+      "bytes": 1393,
+      "sha256": "1a8e22f6a8d8244ecfc1b20620add2ecf383193ae6866af0e548ab1b3d48deb6"
+    }
+  ]
+}

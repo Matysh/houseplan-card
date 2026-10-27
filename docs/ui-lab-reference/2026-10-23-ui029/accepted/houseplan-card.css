@@ -1,0 +1,278 @@
+/* UI-019: native decor selection actions, layout only; published runtime unchanged. */
+.editor-secondary:has(.decor-selection-actions) {
+  display: grid;
+  align-items: stretch;
+  gap: 12px;
+  width: 352px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+}
+.editor-secondary:has(.decor-selection-actions) .editor-context-label {
+  display: block;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  color: var(--primary-text-color);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.editor-secondary:has(.decor-selection-actions) .editor-secondary-content {
+  display: block;
+  overflow: visible;
+  width: 100%;
+}
+.editor-secondary-content > .decor-selection-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+.editor-secondary.kind-selection .decor-selection-actions .decor-order-pair { display: contents; }
+.decor-selection-actions [data-action="decor-front"] { grid-area: 1 / 1; }
+.decor-selection-actions [data-action="decor-back"] { grid-area: 1 / 2; }
+.decor-selection-actions [data-action="decor-properties"] { grid-area: 2 / 1; }
+.decor-selection-actions [data-action="decor-delete"] { grid-area: 2 / 2; }
+/* settingsActionsCss from the published UI kit, scoped to this popup. */
+.editor-secondary .decor-selection-actions .btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--hpf-action-height,44px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--hpf-line,var(--divider-color));
+  border-radius: var(--hpf-action-radius,7px);
+  background: transparent;
+  color: var(--primary-text-color);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transition: background 160ms ease,color 160ms ease,border-color 160ms ease,box-shadow 160ms ease;
+}
+.editor-secondary .decor-selection-actions .btn:not(:disabled) { cursor: pointer; }
+.editor-secondary .decor-selection-actions .btn:not(:disabled):is(:hover,:focus-visible) {
+  background: var(--hpf-tint,color-mix(in srgb,var(--primary-color) 10%,transparent));
+  color: var(--hpf-accent,var(--primary-color));
+  border-color: var(--hpf-accent,var(--primary-color));
+  box-shadow: 0 0 0 1px var(--hpf-tint-line,var(--primary-color));
+  filter: brightness(1.08);
+  outline: none;
+}
+.editor-secondary .decor-selection-actions .btn.danger {
+  color: var(--error-color);
+  border-color: var(--error-color);
+}
+.editor-secondary .decor-selection-actions .btn.danger:not(:disabled):is(:hover,:focus-visible) {
+  background: color-mix(in srgb,var(--error-color) 10%,transparent);
+  color: var(--error-color);
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 1px color-mix(in srgb,var(--error-color) 38%,transparent);
+}
+.editor-secondary .decor-selection-actions .btn:disabled { cursor: not-allowed; opacity: .5; }
+.editor-secondary .decor-selection-actions .btn ha-icon { margin: 0; flex: none; --mdc-icon-size: 20px; }
+@media (prefers-reduced-motion:reduce) {
+  .editor-secondary .decor-selection-actions .btn { transition: none; }
+}
+
+
+/* Pending preview: furniture properties. UI Kit classes use existing product styles. */
+hp-dialog[data-lab-decor-properties] .body.hpf-form {
+  display:flex; flex-direction:column; gap:0; padding:20px;
+  background:var(--card-background-color); font-size:13px;
+  --hpf-control-surface:var(--card-background-color);
+}
+hp-dialog[data-lab-decor-properties] .body.hpf-form > label:not(.dfill) {
+  margin:18px 0 8px; color:var(--primary-text-color); font-size:13px; font-weight:600; line-height:20px;
+}
+hp-dialog[data-lab-decor-properties] .body.hpf-form > label:first-child { margin-top:0; }
+hp-dialog[data-lab-decor-properties] .body.hpf-form .hpf-input {
+  box-sizing:border-box; width:100%; min-width:0; height:44px; min-height:44px;
+  padding:10px 12px; border:1px solid var(--hpf-line,var(--divider-color)); border-radius:7px;
+  background:var(--card-background-color); color:var(--primary-text-color); font:inherit; font-size:14px;
+  transition:border-color 160ms ease; cursor:text;
+}
+hp-dialog[data-lab-decor-properties] .body.hpf-form .hpf-input:hover { border-color:var(--secondary-text-color); }
+hp-dialog[data-lab-decor-properties] .body.hpf-form .hpf-input:focus { border-color:var(--primary-color); outline:none; }
+hp-dialog[data-lab-decor-properties] .body.hpf-form .hpf-input[aria-invalid=true] { border-color:var(--error-color); }
+hp-dialog[data-lab-decor-properties] .colorrow { display:flex; align-items:center; gap:8px; }
+hp-dialog[data-lab-decor-properties] .colorrow > input { flex:1; width:0; }
+hp-dialog[data-lab-decor-properties] .colorrow > span { flex:none; color:var(--secondary-text-color); }
+hp-dialog[data-lab-decor-properties] hp-settings-select { font-size:14px; }
+hp-dialog[data-lab-decor-properties] hp-color-opacity { margin:18px 0 0; min-height:44px; font-size:13px; color:var(--primary-text-color); }
+hp-dialog[data-lab-decor-properties] .body.hpf-form > label.dfill.hpf-toggle {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  min-height:44px; padding:0; margin:12px 0 0; color:var(--primary-text-color); font-size:13px;
+  font-weight:400; cursor:pointer;
+}
+hp-dialog[data-lab-decor-properties] label.dfill > input { order:1; flex:none; }
+hp-dialog[data-lab-decor-properties] .row[slot=footer] {
+  display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:12px 16px;
+  margin:0; border-top:1px solid var(--hpf-line,var(--divider-color)); background:var(--card-background-color);
+}
+hp-dialog[data-lab-decor-properties] .row[slot=footer] .spacer { display:none; }
+
+/* settingsActionsCss from the published UI kit, scoped to this popup. */
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--hpf-action-height,44px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--hpf-line,var(--divider-color));
+  border-radius: var(--hpf-action-radius,7px);
+  background: transparent;
+  color: var(--primary-text-color);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transition: background 160ms ease,color 160ms ease,border-color 160ms ease,box-shadow 160ms ease;
+}
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn:not(:disabled) { cursor: pointer; }
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn:not(:disabled):is(:hover,:focus-visible) {
+  background: var(--hpf-tint,color-mix(in srgb,var(--primary-color) 10%,transparent));
+  color: var(--hpf-accent,var(--primary-color));
+  border-color: var(--hpf-accent,var(--primary-color));
+  box-shadow: 0 0 0 1px var(--hpf-tint-line,var(--primary-color));
+  filter: brightness(1.08);
+  outline: none;
+}
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn.danger {
+  color: var(--error-color);
+  border-color: var(--error-color);
+}
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn.danger:not(:disabled):is(:hover,:focus-visible) {
+  background: color-mix(in srgb,var(--error-color) 10%,transparent);
+  color: var(--error-color);
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 1px color-mix(in srgb,var(--error-color) 38%,transparent);
+}
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn:disabled { cursor: not-allowed; opacity: .5; }
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn ha-icon { margin: 0; flex: none; --mdc-icon-size: 20px; }
+@media (prefers-reduced-motion:reduce) {
+  hp-dialog[data-lab-decor-properties] [slot=footer] .btn { transition: none; }
+}
+
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn.primary { background:var(--primary-color); color:var(--text-primary-color); border-color:var(--primary-color); }
+hp-dialog[data-lab-decor-properties] [slot=footer] .btn.primary:not(:disabled):is(:hover,:focus-visible) { background:color-mix(in srgb,var(--primary-color) 90%,#000); color:var(--text-primary-color); }
+
+/* Pending sidebar preview: editable text inside the existing compound colour field. */
+.hp-properties .hpf-colorfield[data-lab-inline-color] {
+  display:grid;grid-template-columns:24px minmax(56px,1fr) 28px 8px;gap:2px;
+  align-items:center;padding-inline:4px;cursor:default;
+}
+.hp-properties [data-lab-inline-color] > [hidden] { display:none; }
+.hp-properties [data-lab-inline-color] > input {
+  box-sizing:border-box;min-width:0;width:100%;height:28px;margin:0;padding:3px 2px;
+  border:0;border-radius:4px;background:transparent;color:var(--primary-text-color);
+  font:inherit;font-size:12px;line-height:20px;font-variant-numeric:tabular-nums;cursor:text;outline:none;
+}
+.hp-properties [data-lab-inline-color] > input:hover {background:color-mix(in srgb,var(--primary-color) 8%,transparent);}
+.hp-properties [data-lab-inline-color]:focus-within {border-color:var(--primary-color);}
+.hp-properties [data-lab-inline-color] > input[aria-invalid=true] {box-shadow:inset 0 -2px var(--error-color);}
+.hp-properties [data-lab-inline-color] > input.lab-inline-alpha {text-align:right;appearance:textfield;}
+.hp-properties .lab-inline-alpha::-webkit-inner-spin-button {appearance:none;}
+.hp-properties .lab-inline-unit {font-size:12px;color:var(--secondary-text-color);}
+
+/* UI-025 accepted: keep visibility/virtual walls first, then reorder colours. */
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-sections > .hpf-section {
+  margin-block-start:var(--hpf-section-space,18px);
+  padding-block-start:var(--hpf-section-space,18px);
+  border-block-start:1px solid var(--hpf-line,var(--divider-color));
+}
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-section:has(#space-show-borders) {
+  order:-7;margin-block-start:0;padding-block-start:0;border-block-start:0;
+}
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-section:has([name=space-zero-wall-style]) {order:-6;}
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-section:has([data-field=space-name-color]) {order:-5;}
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-section:has([data-field=space-border-color]) {order:-4;}
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-section:has([data-field=space-wall-fill]) {order:-3;}
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-section:has([name=space-fill-mode]) {order:-2;}
+hp-dialog[data-kind=space] [data-card=appearance] .hpf-section:has([data-field=space-fill-color]) {order:-1;}
+
+/* UI-026 accepted: device selection uses the existing blue hover face. */
+:host .stage.mode-devices .dev.sel[data-selected=true] {
+  --device-face-bg:#0C82F0;
+  --device-face-fg:light-dark(#fff,#252525);
+  --device-shell-stroke:var(--device-shell-base-stroke);
+  --device-ring-width:0px;
+}
+:host .stage.mode-devices .dev.sel .device-core {
+  background:var(--device-face-bg);color:light-dark(#fff,#252525);outline:none;
+}
+/* The native keyboard-focus rule sets the inherited foreground blue. Keep the
+   selected face's own foreground contrasting for mouse and keyboard alike. */
+:host .stage.mode-devices .dev.sel.theme-light .device-core {color:#fff;}
+:host .stage.mode-devices .dev.sel.theme-dark .device-core {color:#252525;}
+:host .stage.mode-devices .hp-prop-selection:has(> circle[fill="#078a9e12"]) {display:none;}
+
+/* UI-027 accepted: preserve decor's own contour without selection glow. */
+:host .stage.mode-decor .decorlayer .dsel {filter:none;}
+
+/* UI-028 accepted: empty canvas uses default, wall geometry uses pointer. */
+:host .stage.mode-plan.markup.tool-select {cursor:default;}
+:host .stage.mode-plan.markup.tool-select .wallbody {
+  pointer-events:all;cursor:pointer;
+}
+:host .stage.mode-plan.markup.tool-select :is(.zero-wall,.room-outline) {
+  pointer-events:stroke;cursor:pointer;
+}
+
+/* UI-029 accepted (#998): all device source pickers share settings-select paint. */
+:host hp-dialog[data-kind=marker] .hpf-iconfield-control:has(ha-icon-picker) {border:0;min-height:44px;background:transparent;}
+:host hp-dialog[data-kind=marker] :is(.hpf-field,.hpf-picker,.hpf-panel,.hpf-toolbar,.hpf-list) {min-width:0;max-width:100%;box-sizing:border-box;}
+:host hp-dialog[data-kind=marker] .hpf-picker {width:100%;grid-template-columns:minmax(0,1fr);}
+:host hp-dialog[data-kind=marker] .hpf-pick {
+  position:relative;box-sizing:border-box;width:100%;min-width:0;min-height:44px;height:auto;
+  display:flex;align-items:center;gap:8px;padding:10px 46px 10px 14px;
+  border:1px solid var(--hpf-line,var(--divider-color));border-radius:8px;
+  background:var(--hpf-control-surface,var(--hpf-surface,var(--card-background-color)));
+  color:var(--primary-text-color);font:inherit;line-height:22px;cursor:pointer;
+  transition:background 160ms,border-color 160ms;
+}
+:host hp-dialog[data-kind=marker] .hpf-pick > b {font:inherit;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+:host hp-dialog[data-kind=marker] .hpf-pick::after {
+  content:'';position:absolute;right:14px;top:calc(50% - 9px);width:18px;height:18px;
+  background:currentColor;clip-path:polygon(29.1667% 41.6667%,50% 62.5%,70.8333% 41.6667%);
+  transition:transform 160ms;pointer-events:none;
+}
+:host hp-dialog[data-kind=marker] .hpf-pick[aria-expanded=true]::after {transform:rotate(180deg);}
+:host hp-dialog[data-kind=marker] .hpf-pick:not(:disabled):hover {border-color:var(--hpf-accent);background:var(--hpf-tint);}
+:host hp-dialog[data-kind=marker] .hpf-pick:focus-visible {outline:2px solid var(--hpf-accent);outline-offset:2px;}
+:host hp-dialog[data-kind=marker] .hpf-picker .hpf-panel {
+  padding:5px;border:1px solid var(--hpf-line);border-radius:10px;background:var(--hpf-surface);
+  box-shadow:0 8px 28px #0003;animation:lab-picker-reveal 160ms ease;
+}
+:host hp-dialog[data-kind=marker] .hpf-panel .hpf-toolbar {padding:5px 5px 8px;}
+:host hp-dialog[data-kind=marker] .hpf-panel .hpf-toolbar .hpf-input {width:100%;min-width:0;}
+:host hp-dialog[data-kind=marker] .hpf-panel .hpf-list {overflow-x:hidden;margin-top:0;gap:0;}
+:host hp-dialog[data-kind=marker] .hpf-panel .hpf-cand {
+  box-sizing:border-box;min-width:0;max-width:100%;padding:10px 12px;border-radius:6px;
+  font:inherit;line-height:20px;overflow-wrap:anywhere;white-space:normal;
+  transition:background-color 160ms,color 160ms;
+}
+:host hp-dialog[data-kind=marker] .hpf-panel .hpf-cand > :is(span,small) {max-width:100%;min-width:0;overflow-wrap:anywhere;white-space:normal;}
+:host hp-dialog[data-kind=marker] .hpf-panel .hpf-cand.sel {background:transparent;color:var(--hpf-accent);}
+:host hp-dialog[data-kind=marker] .hpf-panel .hpf-cand:is(:hover,:focus-visible) {background:var(--hpf-tint);}
+@keyframes lab-picker-reveal {from {opacity:0;transform:translateY(-5px);}to {opacity:1;transform:none;}}
+@media(prefers-reduced-motion:reduce) {
+  :host hp-dialog[data-kind=marker] .hpf-pick,:host hp-dialog[data-kind=marker] .hpf-pick::after,
+  :host hp-dialog[data-kind=marker] .hpf-panel .hpf-cand {transition:none;}
+  :host hp-dialog[data-kind=marker] .hpf-picker .hpf-panel {animation:none;}
+}
+
+@media(max-width:550px) {
+  :host hp-dialog[data-kind=marker] .hpf-pick {font-size:16px;}
+}
