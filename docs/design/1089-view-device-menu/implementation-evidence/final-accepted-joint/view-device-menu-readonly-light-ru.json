@@ -1,0 +1,69 @@
+{
+  "schema": 2,
+  "mode": "capture",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+    "ci": null
+  },
+  "generatedAt": "2026-10-27T22:54:00.724Z",
+  "matrixVersion": 103,
+  "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+  "chromium": "151.0.7922.34",
+  "baselineManifest": {
+    "present": true,
+    "valid": false,
+    "matrixVersion": 90,
+    "chromium": "151.0.7922.34"
+  },
+  "results": [
+    {
+      "id": "view-device-menu-readonly-light-ru",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "254a13edc163a00c5e6797108e07c6f39015d41082d40237a934a5bc6ae6145a",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "viewDeviceMenu": {
+          "text": [
+            "Настройки устройства",
+            "HA more-info",
+            "Карточка устройства",
+            "Скрыть",
+            "Удалить"
+          ],
+          "disabled": [
+            true,
+            false,
+            false,
+            true,
+            true
+          ],
+          "bounds": {
+            "left": 374,
+            "top": 629,
+            "right": 554,
+            "bottom": 789
+          },
+          "fits": true,
+          "horizontalOverflow": false,
+          "styled": true
+        }
+      },
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/hp-view-menu-1089/artifacts/golden/actual/view-device-menu-readonly-light-ru.png",
+      "baseline": "/home/matysh/hp-view-menu-1089/demo/golden/baselines/view-device-menu-readonly-light-ru.png"
+    }
+  ]
+}

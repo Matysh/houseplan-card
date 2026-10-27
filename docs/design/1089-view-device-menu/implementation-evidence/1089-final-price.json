@@ -1,0 +1,59 @@
+{
+  "acceptedBase": "592c2a5ce85348542e12cf4feddc3a86f08d52dd",
+  "verifiedBaseCorpusFiles": 555,
+  "baseSourceDifference": "",
+  "base": {
+    "head": "debd56b21ba950ddae3f6c3a6815c9d39ae0a319",
+    "fingerprint": "1a10a7918a8b831774826f1889290fee5667851b3e30e4b288b2c7bc4cc1fc57",
+    "manifestSha256": "a4845ad53ee7121c539679296a9066658281bd8811d2e423c7606041c0632130",
+    "verifiedAssets": 71,
+    "initial": 352197,
+    "editor": 373914,
+    "onboarding": 44646,
+    "raw": 3619516,
+    "hostRefs": 6464,
+    "core": {
+      "src/houseplan-card.ts": 13385,
+      "src/houseplan-editor-runtime.ts": 11893
+    }
+  },
+  "candidate": {
+    "head": "1c3f917bfd7a2e3a3c015dd864c4a7ae08e74532",
+    "fingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+    "manifestSha256": "9cfb08fdca35f7df4dd043e4784ea04d92d7b63292fc09371c8757cd6ed96da1",
+    "verifiedAssets": 73,
+    "initial": 352904,
+    "editor": 375012,
+    "onboarding": 44655,
+    "raw": 3630487,
+    "hostRefs": 6479,
+    "core": {
+      "src/houseplan-card.ts": 13408,
+      "src/houseplan-editor-runtime.ts": 11906
+    }
+  },
+  "delta": {
+    "initial": 707,
+    "editor": 1098,
+    "onboarding": 9,
+    "raw": 10971,
+    "hostRefs": 15
+  },
+  "incomingReference": {
+    "delegates": 145,
+    "portMembers": 376,
+    "hostRefs": 6441,
+    "portPrivates": 104,
+    "harnessPrivates": 101,
+    "bundleBytes": 3619516
+  },
+  "proposedReference": {
+    "delegates": 145,
+    "portMembers": 376,
+    "hostRefs": 6456,
+    "portPrivates": 104,
+    "harnessPrivates": 101,
+    "bundleBytes": 3630487
+  },
+  "verification": "Both full bundle topologies and every manifest asset SHA verified; source fingerprints match; accepted base source corpus identical."
+}

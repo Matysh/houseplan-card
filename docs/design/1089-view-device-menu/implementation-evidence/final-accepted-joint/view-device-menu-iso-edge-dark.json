@@ -1,0 +1,69 @@
+{
+  "schema": 2,
+  "mode": "capture",
+  "capture": {
+    "platform": "linux",
+    "arch": "x64",
+    "chromium": "151.0.7922.34",
+    "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+    "ci": null
+  },
+  "generatedAt": "2026-10-27T22:54:03.722Z",
+  "matrixVersion": 103,
+  "buildFingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+  "chromium": "151.0.7922.34",
+  "baselineManifest": {
+    "present": true,
+    "valid": false,
+    "matrixVersion": 90,
+    "chromium": "151.0.7922.34"
+  },
+  "results": [
+    {
+      "id": "view-device-menu-iso-edge-dark",
+      "threshold": {
+        "maxChannelDelta": 10,
+        "maxDiffRatio": 0.0008
+      },
+      "status": "missing-baseline",
+      "actualSha256": "0eccb3b1f364ed79a4866a0252ffdeaacaf2ab70aaf2002cbdc4fd7725c25fcd",
+      "runtime": {
+        "space": "golden-lighting",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "viewDeviceMenu": {
+          "text": [
+            "Device settings",
+            "HA more-info",
+            "Device card",
+            "Hide",
+            "Delete"
+          ],
+          "disabled": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "bounds": {
+            "left": 397,
+            "top": 307,
+            "right": 577,
+            "bottom": 467
+          },
+          "fits": true,
+          "horizontalOverflow": false,
+          "styled": true
+        }
+      },
+      "deviceScaleFactor": 1,
+      "actual": "/home/matysh/hp-view-menu-1089/artifacts/golden/actual/view-device-menu-iso-edge-dark.png",
+      "baseline": "/home/matysh/hp-view-menu-1089/demo/golden/baselines/view-device-menu-iso-edge-dark.png"
+    }
+  ]
+}
