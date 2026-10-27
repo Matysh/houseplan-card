@@ -233,6 +233,81 @@ def test_shared_additive_glow_fixture_matches_backend_schema():
     assert len(validated_layout) == 60
 
 
+def _node_fixture_config(module_name):
+    script = (
+        f"import * as fixture from './demo/fixtures/{module_name}.mjs';"
+        "const make=fixture.makeLargeHouseFixture||fixture.makeVisualMatrixFixture;"
+        "process.stdout.write(JSON.stringify(make()));"
+    )
+    result = subprocess.run(["node", "--input-type=module", "--eval", script],
+                            cwd=_ROOT, check=True, capture_output=True, text=True)
+    return json.loads(result.stdout)["config"]
+
+
+def _idempotence_corpus():
+    """Stored documents of every shape the ordinary write path stores."""
+    root = os.path.dirname(os.path.dirname(__file__))
+    with open(os.path.join(root, "test", "fixtures", "glow", "additive-pools.json"), encoding="utf-8") as handle:
+        glow = json.load(handle)["config"]
+    legacy_selectors = {
+        "spaces": [{"id": "f", "title": "F", "view_box": [0, 0, 2, 1], "aspect": 2, "rooms": [
+            {"id": "r", "name": "R", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]], "settings": {"fill_mode": "glow"}}],
+            "decor": [{"id": "t", "kind": "text", "x": 0.2, "y": 0.2, "text": "hi", "size": "l"}]}],
+        "markers": [{"id": "m", "binding": "virtual", "space": "f", "display": "ripple"}],
+        "settings": {"weather_entity": "weather.home", "filter_seeded": True, "show_all": False},
+    }
+    led = {
+        "spaces": [{"id": "f", "title": "F", "view_box": [0, 0, 2, 1], "rooms": [], "plan_url": None,
+                    "led_strips": [{"id": "led", "marker": "m", "points": [[0.1, 0.1], [0.5, 0.1]]},
+                                   {"id": "orphan", "marker": "gone", "points": [[0.1, 0.3], [0.5, 0.3]]}]},
+                   {"id": "g", "title": "G", "view_box": [0, 0, 1, 1], "rooms": [], "settings": {"bg_color": "#112233"}}],
+        "markers": [{"id": "m", "binding": "virtual"}],
+        "settings": {"bg_mode": "static"},
+    }
+    return {
+        "large-house": _node_fixture_config("large-house"),
+        "visual-matrix": _node_fixture_config("visual-matrix"),
+        "glow-additive-pools": glow,
+        "legacy-selectors": legacy_selectors,
+        "led-links-and-display": led,
+        "stairs": {"spaces": [_stair_space([{
+            "id": "s", "kind": "straight", "x": 0.3, "y": 0.3, "angle": 0, "direction": "forward",
+            "length": 0.2, "width": 0.1, "target_space_id": None}])]},
+    }
+
+
+@pytest.mark.parametrize("name", sorted(_idempotence_corpus()))
+def test_issue_1096_config_schema_is_idempotent_on_its_own_output(name):
+    """#1096 AC9: `CONFIG_SCHEMA(stored) == stored` for every stored document.
+
+    The scoped ordinary write (`validate_scoped_candidate`) relies on it: a
+    space or marker record that equals its stored record is its own validated
+    form, so it is not re-validated. Every step of CONFIG_SCHEMA is idempotent
+    on its own output — the list below is the schema, and a new step must be
+    added here with that property (docs/DEVELOPMENT.md):
+      CONFIG_TYPE_SCHEMA             defaults and coercions settle on the first pass
+      canonical_config               a migrated document has no legacy selectors
+      canonicalize_config_geometry   lattice/scalar rounding is a projection
+      _config_wall_segment_invariants a check, returns its input
+      config_led_strip_links         unbound/adopted links are already normal
+      normalize_space_display        hide_openings/bg_mode are already normal
+    """
+    assert tuple(v.CONFIG_SCHEMA.validators) == (
+        v.CONFIG_TYPE_SCHEMA, v.canonical_config, v.canonicalize_config_geometry,
+        v._config_wall_segment_invariants, v.config_led_strip_links, v.normalize_space_display,
+    ), "a new CONFIG_SCHEMA step: confirm it is idempotent and list it here (#1096)"
+    source = _idempotence_corpus()[name]
+    stored = v.CONFIG_SCHEMA(json.loads(json.dumps(source)))
+    if name == "legacy-selectors":
+        assert v.needs_canonical_config(source) and not v.needs_canonical_config(stored)
+    again = v.CONFIG_SCHEMA(json.loads(json.dumps(stored)))
+    assert again == stored
+    # Record by record too: the scoped write judges spaces and markers one at a time.
+    for key in ("spaces", "markers"):
+        for before, after in zip(stored.get(key) or [], again.get(key) or [], strict=True):
+            assert after == before
+
+
 def _load_pure(name):
     """Load one pure module of the integration without importing the package.
 
@@ -1435,9 +1510,37 @@ def test_collect_attachments_removes_the_empty_folder_and_never_raises(tmp_path)
     f.write_bytes(b"x")
     old = time.time() - const.PLAN_ORPHAN_TTL_S - 60
     os.utime(f, (old, old))
-    assert plans.collect_attachments(files, {}, {}) == 1
+    assert plans.collect_attachments(files, {}, {}, sweep_staging=True) == 1
     assert not (files / "up_x").exists(), "the staging folder goes with its last file"
     assert plans.collect_attachments(tmp_path / "nope", {}, {}) == 0
+
+
+def test_issue_1096_noop_write_does_not_scan_but_maintenance_keeps_ttl_and_pins(tmp_path, monkeypatch):
+    import os
+    import time
+    from pathlib import Path
+
+    now = time.time()
+    for owner, age in [("up_old", const.PLAN_ORPHAN_TTL_S + 60), ("up_fresh", 0),
+                       ("up_pinned", const.PLAN_ORPHAN_TTL_S + 60), ("m_live", const.SCHEDULED_GRACE_S * 2)]:
+        folder = tmp_path / owner
+        folder.mkdir()
+        item = folder / "manual.pdf"
+        item.write_bytes(b"x")
+        os.utime(item, (now - age, now - age))
+    temporary = tmp_path / (plans.TMP_PREFIX + "abandoned")
+    temporary.write_bytes(b"x")
+    os.utime(temporary, (now - const.PLAN_ORPHAN_TTL_S - 60,) * 2)
+    cfg = {"markers": [{"id": "m_live", "pdfs": []}]}
+    with monkeypatch.context() as guard:
+        guard.setattr(Path, "iterdir", lambda _: pytest.fail("no refs dropped: no directory scan"))
+        assert plans.collect_attachments(tmp_path, cfg, cfg, now) == 0
+    assert plans.collect_attachments(tmp_path, cfg, cfg, now,
+        pinned={"up_pinned/manual.pdf"}, sweep_staging=True) == 2
+    assert not (tmp_path / "up_old").exists()
+    assert not temporary.exists()
+    for owner in ["up_fresh", "up_pinned", "m_live"]:
+        assert (tmp_path / owner / "manual.pdf").is_file()
 
 
 def test_inner_collection_limits():
@@ -1581,13 +1684,13 @@ def test_attachment_collection_matrix(tmp_path):
     assert collect(d, cfg(("m2", ["manual.pdf"])), cfg()) == 0
     assert (d / "m2" / "manual.pdf").is_file()
     # and the scheduled pass, later, agrees
-    assert collect(d, cfg(), cfg()) == 0
+    assert collect(d, cfg(), cfg(), sweep_staging=True) == 0
     assert (d / "m2" / "manual.pdf").is_file()
 
     # 3. a dialog that was never saved, in its own staging folder
     d = case("staging")
     seed(d, "up_x", "manual.pdf", age=const.PLAN_ORPHAN_TTL_S + 60)
-    assert collect(d, cfg(), cfg()) == 1
+    assert collect(d, cfg(), cfg(), sweep_staging=True) == 1
     assert not (d / "up_x").exists()
 
     # 4. an upload into a live device's folder whose save was rejected: kept,
@@ -1596,7 +1699,7 @@ def test_attachment_collection_matrix(tmp_path):
     seed(d, "m3", "current.pdf")
     seed(d, "m3", "rejected.pdf", age=const.SCHEDULED_GRACE_S + 60)
     live = cfg(("m3", ["current.pdf"]))
-    assert collect(d, live, live) == 0
+    assert collect(d, live, live, sweep_staging=True) == 0
     assert (d / "m3" / "current.pdf").is_file()
     assert (d / "m3" / "rejected.pdf").is_file()
 
@@ -1620,7 +1723,7 @@ def test_only_a_staging_folder_ages_out(tmp_path):
         os.utime(path, (when, when))
 
     cfg = {"markers": [{"id": "m1", "pdfs": []}]}
-    assert plans.collect_attachments(files, cfg, cfg) == 1
+    assert plans.collect_attachments(files, cfg, cfg, sweep_staging=True) == 1
     assert (files / "m1" / "ancient.pdf").is_file(), "age alone is never a reason"
     assert not (files / "up_abandoned").exists(), "a cancelled dialog goes after an hour"
 

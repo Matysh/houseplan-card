@@ -2,7 +2,7 @@
 
 Historical #1015 provenance: reproduced from source base `e271b91b4c4419a4650531ff929e6442ac18f67c` plus the #1015 candidate. The bounded case-insensitive query is `legacy|deprecated|compat|fallback for old` over `src/**/*.ts` and `custom_components/houseplan/**/*.py`. The historical223 matches are not the current count.
 
-Current snapshot: **628 individually classified matching lines**, sha256:`45f4056f7d160fcb4838170e546c9d507a5b3208164eab1e2f5887b2c499b2c9`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
+Current snapshot: **635 individually classified matching lines**, sha256:`7ec9f7bfb923c572f2dd4baa1e41ad93b7049b20b7c394d0a62d90a775a451b5`. Each exact source hit, occurrence, stable content ID and disposition is in [the machine inventory](../scripts/config-compatibility-inventory.json). Line numbers are informational; text/occurrence IDs survive unrelated line insertions. New, missing, changed or duplicate hits fail the test; no filename catchall assigns future matches.
 
 Historical #1015 captured product trees: src `22655ecb08f00d9b1f6c8381a1a3d3c9c51487cb`; integration `0019b652824aaad42fd0e6f5372cb595e8a41dc7`. These immutable Git trees identify the original capture; ongoing completeness is checked against exact source-match IDs, so an unrelated edit does not expire unchanged matches.
 
@@ -50,7 +50,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [custom_components/houseplan/frontend_registration.py](../custom_components/houseplan/frontend_registration.py) | 4 | exclusion:transport |
 | [custom_components/houseplan/geometry_migration.py](../custom_components/houseplan/geometry_migration.py) | 1 | branch:square-canvas |
 | [custom_components/houseplan/import_export.py](../custom_components/houseplan/import_export.py) | 8 | exclusion:transport |
-| [custom_components/houseplan/junction_limits.py](../custom_components/houseplan/junction_limits.py) | 3 | branch:wall-model-chain |
+| [custom_components/houseplan/junction_limits.py](../custom_components/houseplan/junction_limits.py) | 4 | branch:wall-model-chain |
 | [custom_components/houseplan/marker_history.py](../custom_components/houseplan/marker_history.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/marker_history_websocket.py](../custom_components/houseplan/marker_history_websocket.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/panel_registration.py](../custom_components/houseplan/panel_registration.py) | 1 | exclusion:transport |
@@ -58,7 +58,7 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [custom_components/houseplan/radar.py](../custom_components/houseplan/radar.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/radar_validation.py](../custom_components/houseplan/radar_validation.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/repairs.py](../custom_components/houseplan/repairs.py) | 2 | exclusion:current-feature |
-| [custom_components/houseplan/room_appearance.py](../custom_components/houseplan/room_appearance.py) | 4 | branch:room-appearance |
+| [custom_components/houseplan/room_appearance.py](../custom_components/houseplan/room_appearance.py) | 7 | branch:room-appearance |
 | [custom_components/houseplan/store.py](../custom_components/houseplan/store.py) | 2 | exclusion:current-feature |
 | [custom_components/houseplan/store.py](../custom_components/houseplan/store.py) | 2 | exclusion:transport |
 | [custom_components/houseplan/support_config_projection.py](../custom_components/houseplan/support_config_projection.py) | 1 | exclusion:transport |
@@ -73,11 +73,12 @@ Every row has a typed since/until and provenance. Unproven means **keep**, with 
 | [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 15 | branch:wall-model-chain |
 | [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 1 | branch:weather-option |
 | [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 1 | branch:zero-wall-boundaries |
-| [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 14 | exclusion:current-feature |
+| [custom_components/houseplan/validation.py](../custom_components/houseplan/validation.py) | 16 | exclusion:current-feature |
 | [custom_components/houseplan/wall_node_delete.py](../custom_components/houseplan/wall_node_delete.py) | 1 | branch:wall-model-chain |
 | [custom_components/houseplan/wall_node_move.py](../custom_components/houseplan/wall_node_move.py) | 3 | branch:wall-model-chain |
 | [custom_components/houseplan/wall_segment_model.py](../custom_components/houseplan/wall_segment_model.py) | 33 | branch:wall-model-chain |
 | [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 2 | branch:content-url |
+| [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 1 | branch:room-appearance |
 | [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 1 | exclusion:current-feature |
 | [custom_components/houseplan/websocket_api.py](../custom_components/houseplan/websocket_api.py) | 5 | exclusion:transport |
 | [src/align-grid.ts](../src/align-grid.ts) | 1 | exclusion:current-feature |

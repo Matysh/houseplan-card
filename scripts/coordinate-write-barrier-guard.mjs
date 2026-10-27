@@ -111,6 +111,25 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   if (!/canonical_config = canonicalize_config_geometry\(config\)/.test(store)) {
     errors.push('backend async_save_config_state bypasses lattice canonicalization');
   }
+  // #1096: `canonical=True` lets one caller store a document CONFIG_SCHEMA
+  // already canonicalised. Only the ordinary config/set may say so, and only
+  // next to the validated candidate it hands over.
+  const canonicalCallers = pythonFiles.filter((name) => name !== 'store.py'
+    && /canonical=True/.test(readFileSync(resolve(componentRoot, name), 'utf8')));
+  if (canonicalCallers.join(',') !== 'websocket_api.py') {
+    errors.push(`backend canonical=True writer inventory: ${canonicalCallers.join(',') || 'none'}`);
+  } else {
+    const api = readFileSync(resolve(componentRoot, 'websocket_api.py'), 'utf8');
+    const canonicalWrites = occurrences(api, 'canonical=True');
+    if (canonicalWrites.length !== 1) errors.push(`backend canonical=True call inventory: ${canonicalWrites.length}`);
+    for (const index of canonicalWrites) {
+      const window = api.slice(Math.max(0, index - 6000), index);
+      if (!/validate_scoped_candidate\(candidate, stored_config, scope\)/.test(window)
+        || !/msg\["config"\]\.update\(checked\)/.test(window)) {
+        errors.push('backend canonical=True write is not the validated ordinary candidate');
+      }
+    }
+  }
   if (occurrences(store, 'runtime.store.async_save(').length !== 1
     || occurrences(store, 'runtime.config_store.async_save(').length !== 1) {
     errors.push('backend central Store writer inventory changed');

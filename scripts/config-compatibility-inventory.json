@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "45f4056f7d160fcb4838170e546c9d507a5b3208164eab1e2f5887b2c499b2c9",
+  "matchesSha256": "7ec9f7bfb923c572f2dd4baa1e41ad93b7049b20b7c394d0a62d90a775a451b5",
   "hits": [
     {
       "id": "7d34f2627cf92c5fbca93eda",
@@ -231,8 +231,18 @@
     {
       "id": "807420a2d77adea449b1ec06",
       "path": "custom_components/houseplan/junction_limits.py",
-      "line": 391,
+      "line": 392,
       "text": "A LEGACY document still goes through `commit_wall_segment_model` first,",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "wall-model-chain",
+      "reason": "Persisted representation: catalogue-less rooms, old drafts, midpoint-only thickness/host evidence. Ambiguous wall ownership and malformed-but-readable old drafts cannot be guessed on load. Keep exact current proof/read paths; canonical walls[] is also a current projection ABI."
+    },
+    {
+      "id": "a0eae451544c0c91c0abfeb8",
+      "path": "custom_components/houseplan/junction_limits.py",
+      "line": 416,
+      "text": "# legacy document that is the whole cost of this step.",
       "occurrence": 1,
       "kind": "branch",
       "owner": "wall-model-chain",
@@ -271,7 +281,7 @@
     {
       "id": "4bc7a7b4506552bcb7887d8c",
       "path": "custom_components/houseplan/plans.py",
-      "line": 315,
+      "line": 322,
       "text": "The single writer behind both transports — the HTTP view and the legacy",
       "occurrence": 1,
       "kind": "exclusion",
@@ -329,10 +339,20 @@
       "reason": "Persisted representation: global wall fill / coupled room caption colour. Recent additive representation plus older backend reads. Materializing absent optional defaults on every current load would violate no-op; local explicit fields remain authoritative."
     },
     {
-      "id": "be7093349f054b1c34431ebb",
+      "id": "6b4c48e72d259a57c34a16d3",
       "path": "custom_components/houseplan/room_appearance.py",
-      "line": 20,
-      "text": "\"\"\"Resolve legacy values on a detached copy, without revisions or writes.\"\"\"",
+      "line": 33,
+      "text": "\"\"\"The two materialised fields of ONE space, by the single legacy rule.",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "room-appearance",
+      "reason": "Persisted representation: global wall fill / coupled room caption colour. Recent additive representation plus older backend reads. Materializing absent optional defaults on every current load would violate no-op; local explicit fields remain authoritative."
+    },
+    {
+      "id": "a189dc2c688f3fb4e39247c1",
+      "path": "custom_components/houseplan/room_appearance.py",
+      "line": 36,
+      "text": "this so a legacy space (saved before #1037, fields absent) resolves to the",
       "occurrence": 1,
       "kind": "branch",
       "owner": "room-appearance",
@@ -341,7 +361,7 @@
     {
       "id": "bdf8724a7669cfd3c0bb7cde",
       "path": "custom_components/houseplan/room_appearance.py",
-      "line": 24,
+      "line": 41,
       "text": "legacy_wall = _color(palette.get(\"wall_fill\"), {\"c\": \"#ffffff\", \"a\": 1})",
       "occurrence": 1,
       "kind": "branch",
@@ -349,10 +369,30 @@
       "reason": "Persisted representation: global wall fill / coupled room caption colour. Recent additive representation plus older backend reads. Materializing absent optional defaults on every current load would violate no-op; local explicit fields remain authoritative."
     },
     {
-      "id": "33c8f245ff8dc719e3b2cad1",
+      "id": "d07058669a7349837a1efe77",
       "path": "custom_components/houseplan/room_appearance.py",
-      "line": 33,
-      "text": "settings.setdefault(\"wall_fill\", deepcopy(legacy_wall))",
+      "line": 49,
+      "text": "\"wall_fill\": deepcopy(settings[\"wall_fill\"]) if \"wall_fill\" in settings else legacy_wall,",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "room-appearance",
+      "reason": "Persisted representation: global wall fill / coupled room caption colour. Recent additive representation plus older backend reads. Materializing absent optional defaults on every current load would violate no-op; local explicit fields remain authoritative."
+    },
+    {
+      "id": "be7093349f054b1c34431ebb",
+      "path": "custom_components/houseplan/room_appearance.py",
+      "line": 63,
+      "text": "\"\"\"Resolve legacy values on a detached copy, without revisions or writes.\"\"\"",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "room-appearance",
+      "reason": "Persisted representation: global wall fill / coupled room caption colour. Recent additive representation plus older backend reads. Materializing absent optional defaults on every current load would violate no-op; local explicit fields remain authoritative."
+    },
+    {
+      "id": "370aaaf65e7b74081a42335e",
+      "path": "custom_components/houseplan/room_appearance.py",
+      "line": 76,
+      "text": "materialised previous space hands its fields over directly; a legacy one",
       "occurrence": 1,
       "kind": "branch",
       "owner": "room-appearance",
@@ -381,7 +421,7 @@
     {
       "id": "92b365a3392679080b42aabd",
       "path": "custom_components/houseplan/store.py",
-      "line": 271,
+      "line": 296,
       "text": "# the next read and fails safe to the compatibility default (all on).",
       "occurrence": 1,
       "kind": "exclusion",
@@ -391,7 +431,7 @@
     {
       "id": "27ca44035c04146614a524e8",
       "path": "custom_components/houseplan/store.py",
-      "line": 321,
+      "line": 346,
       "text": "\"\"\"Converge legacy pairs, or one fenced ZIP files/cache/config/layout unit.\"\"\"",
       "occurrence": 1,
       "kind": "exclusion",
@@ -741,7 +781,7 @@
     {
       "id": "3b3caa9a887ec4e18cb9b1bc",
       "path": "custom_components/houseplan/validation.py",
-      "line": 96,
+      "line": 99,
       "text": "\"\"\"Reject new active-id ambiguity without stranding legacy documents.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -751,7 +791,7 @@
     {
       "id": "e499e18e0a86c5f06269b727",
       "path": "custom_components/houseplan/validation.py",
-      "line": 101,
+      "line": 104,
       "text": "``validate_all=True`` because they have no local legacy group to preserve.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -761,7 +801,7 @@
     {
       "id": "1bd99b20479c8f9a64a169bb",
       "path": "custom_components/houseplan/validation.py",
-      "line": 128,
+      "line": 131,
       "text": "# of regexing an English sentence; the legacy \"space=..;..\" format is",
       "occurrence": 1,
       "kind": "exclusion",
@@ -771,7 +811,7 @@
     {
       "id": "61b705eecd508f4632c12637",
       "path": "custom_components/houseplan/validation.py",
-      "line": 166,
+      "line": 169,
       "text": "def _legacy_wall_model_projection(config: dict) -> dict:",
       "occurrence": 1,
       "kind": "branch",
@@ -781,7 +821,7 @@
     {
       "id": "71c2ce7c255d2369445ccca7",
       "path": "custom_components/houseplan/validation.py",
-      "line": 185,
+      "line": 188,
       "text": "\"\"\"Legacy geometry whose edit must also update the v8 contour catalogue.",
       "occurrence": 1,
       "kind": "branch",
@@ -791,7 +831,7 @@
     {
       "id": "287b9e7a3ef1c108ce44c6c2",
       "path": "custom_components/houseplan/validation.py",
-      "line": 216,
+      "line": 219,
       "text": "\"\"\"Hydrate only v8 identity fields after an exact legacy round-trip.\"\"\"",
       "occurrence": 1,
       "kind": "branch",
@@ -801,7 +841,7 @@
     {
       "id": "4f908ef1246fb40495479bf3",
       "path": "custom_components/houseplan/validation.py",
-      "line": 275,
+      "line": 308,
       "text": "# does not have it; legacy left in storage is not a stale writer and is",
       "occurrence": 1,
       "kind": "branch",
@@ -811,7 +851,7 @@
     {
       "id": "55c7b462be1c3a905e984c23",
       "path": "custom_components/houseplan/validation.py",
-      "line": 278,
+      "line": 311,
       "text": "f\"stored model={old_model}; submitted legacy room_drafts model={new_model}\"",
       "occurrence": 1,
       "kind": "branch",
@@ -821,7 +861,7 @@
     {
       "id": "f6ec97efe81f5f9adc97cd17",
       "path": "custom_components/houseplan/validation.py",
-      "line": 306,
+      "line": 338,
       "text": "# first write of a newer client legitimately drops legacy projection",
       "occurrence": 1,
       "kind": "exclusion",
@@ -831,7 +871,7 @@
     {
       "id": "8538c29e9aeac441d2c9ff37",
       "path": "custom_components/houseplan/validation.py",
-      "line": 792,
+      "line": 824,
       "text": "\"\"\"Validate hosted-opening write deltas without rejecting legacy reads.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -841,7 +881,7 @@
     {
       "id": "395ca53ac6c3ab33b5480f6c",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1108,
+      "line": 1140,
       "text": "Change-aware like the badge validator above (#162): an untouched legacy or",
       "occurrence": 1,
       "kind": "exclusion",
@@ -851,7 +891,7 @@
     {
       "id": "4aa5179ae93c9bb8c22e923d",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1340,
+      "line": 1372,
       "text": "# New appearance entries are strict but preserve compatible future siblings.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -861,7 +901,7 @@
     {
       "id": "ee70c41959987d571c22f379",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1360,
+      "line": 1392,
       "text": "_LEGACY_MAX_ROOM_DRAFTS = 200",
       "occurrence": 1,
       "kind": "branch",
@@ -871,7 +911,7 @@
     {
       "id": "7d1de74563c645164bc3446f",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1361,
+      "line": 1393,
       "text": "_LEGACY_MAX_DRAFT_SEGMENTS = 2000",
       "occurrence": 1,
       "kind": "branch",
@@ -881,7 +921,7 @@
     {
       "id": "2d0a174b2571f743ca831bbe",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1364,
+      "line": 1396,
       "text": "# Open (virtual) wall stretches, legacy/docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.",
       "occurrence": 1,
       "kind": "branch",
@@ -891,7 +931,7 @@
     {
       "id": "648400d8b116f08dde9f2428",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1604,
+      "line": 1636,
       "text": "# and unit bounds below apply only to legacy beta.9 link fields, which remain",
       "occurrence": 1,
       "kind": "branch",
@@ -901,7 +941,7 @@
     {
       "id": "34c7c2a9546b3ee33d8790ff",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1661,
+      "line": 1693,
       "text": "# legacy font size ('s'|'m'|'l'). The dialog no longer offers it",
       "occurrence": 1,
       "kind": "branch",
@@ -911,7 +951,7 @@
     {
       "id": "2f3b3deb008da29c2b09b028",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1666,
+      "line": 1698,
       "text": "# Canonical physical font size plus the legacy scale. Both are",
       "occurrence": 1,
       "kind": "branch",
@@ -921,7 +961,7 @@
     {
       "id": "834503c5078bc03ebae74bf0",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1674,
+      "line": 1706,
       "text": "# Legacy one-value link (beta.9 and earlier). New labels store",
       "occurrence": 1,
       "kind": "branch",
@@ -931,7 +971,7 @@
     {
       "id": "3b6fabc3cbd7e53ae0bdc86c",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1676,
+      "line": 1708,
       "text": "# these stay accepted solely for backward compatibility.",
       "occurrence": 1,
       "kind": "branch",
@@ -941,7 +981,7 @@
     {
       "id": "9566c9e13cd0dfe69b4fcd2a",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1770,
+      "line": 1802,
       "text": "# key remains the compatibility lookup; endpoints preserve a",
       "occurrence": 1,
       "kind": "branch",
@@ -951,7 +991,7 @@
     {
       "id": "9ad30ef6f7902ec37a803dd7",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1801,
+      "line": 1833,
       "text": "def _legacy_room_draft_segments(value: dict) -> dict:",
       "occurrence": 1,
       "kind": "branch",
@@ -961,7 +1001,7 @@
     {
       "id": "0b1a2b7016f6106139c1919b",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1810,
+      "line": 1842,
       "text": "_LEGACY_ROOM_DRAFT_SCHEMA = vol.All(",
       "occurrence": 1,
       "kind": "branch",
@@ -971,7 +1011,7 @@
     {
       "id": "a6eee2a70e337a71f293880b",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1826,
+      "line": 1858,
       "text": "_legacy_room_draft_segments,",
       "occurrence": 1,
       "kind": "branch",
@@ -981,7 +1021,7 @@
     {
       "id": "bd2400c13cdd9750a59f707a",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1972,
+      "line": 2004,
       "text": "if draft_segments > _LEGACY_MAX_DRAFT_SEGMENTS:",
       "occurrence": 1,
       "kind": "exclusion",
@@ -991,7 +1031,7 @@
     {
       "id": "af9224c3d4133969cdc724c4",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2033,
+      "line": 2065,
       "text": "# uniform field remains a read-compatible fallback for both axes.",
       "occurrence": 1,
       "kind": "branch",
@@ -1001,7 +1041,7 @@
     {
       "id": "cec0a7ca1010c652f95f13ae",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2079,
+      "line": 2111,
       "text": "[_LEGACY_ROOM_DRAFT_SCHEMA], vol.Length(max=_LEGACY_MAX_ROOM_DRAFTS)",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1011,7 +1051,7 @@
     {
       "id": "a55d628b6c69b08029a5e119",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2089,
+      "line": 2121,
       "text": "# validates exactly as before, and the legacy `rooms[].open_to` index",
       "occurrence": 1,
       "kind": "branch",
@@ -1021,7 +1061,7 @@
     {
       "id": "96cdadd6c68b1b8fc4c02358",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2094,
+      "line": 2126,
       "text": "# Legacy: walls are derived from room outlines since v1.19.0 — a line has no",
       "occurrence": 1,
       "kind": "branch",
@@ -1031,7 +1071,7 @@
     {
       "id": "cd84e10d4023a594118c3fcb",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2098,
+      "line": 2130,
       "text": "# (HP-1454-05): relying on a modern client to strip an unbounded legacy",
       "occurrence": 1,
       "kind": "branch",
@@ -1041,7 +1081,7 @@
     {
       "id": "f7f4562f45702f4fb93995ea",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2155,
+      "line": 2187,
       "text": "# change-aware and must not reject untouched legacy data.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1051,7 +1091,7 @@
     {
       "id": "d5bca5021d4467a40af39e3c",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2221,
+      "line": 2253,
       "text": "# Structural reads preserve opaque legacy/future data; changed writes",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1061,7 +1101,7 @@
     {
       "id": "09e78890f0e717e886c42e8e",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2267,
+      "line": 2299,
       "text": "raise vol.Invalid(\"v9 config must not contain legacy open boundaries\")",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1071,7 +1111,7 @@
     {
       "id": "3fced10c8e5ee64bbbb226ac",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2306,
+      "line": 2338,
       "text": "raise vol.Invalid(\"wall compatibility projection requires exact endpoints\")",
       "occurrence": 1,
       "kind": "branch",
@@ -1081,7 +1121,7 @@
     {
       "id": "c4ff5f12c19ac278fa89a7b6",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2309,
+      "line": 2341,
       "text": "raise vol.Invalid(\"wall compatibility projection must be unique\")",
       "occurrence": 1,
       "kind": "branch",
@@ -1091,7 +1131,7 @@
     {
       "id": "f3c1c8106500a9ba785f5a7e",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2312,
+      "line": 2344,
       "text": "raise vol.Invalid(\"wall compatibility projection must match wall_segments\")",
       "occurrence": 1,
       "kind": "branch",
@@ -1101,7 +1141,7 @@
     {
       "id": "29eec53da2dc3046bb3d2172",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2447,
+      "line": 2494,
       "text": "\"\"\"Only newly introduced broken refs fail; stable-id legacy refs warn in UI.\"\"\"",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1111,7 +1151,7 @@
     {
       "id": "746c5d4814c63d93ca1ba72a",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2557,
+      "line": 2612,
       "text": "# legacy field so an existing stored config can still load; the",
       "occurrence": 1,
       "kind": "branch",
@@ -1121,8 +1161,28 @@
     {
       "id": "f1189ffbf12b66d6db25cc62",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2588,
+      "line": 2643,
       "text": "extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+    },
+    {
+      "id": "56eb2895ac18880a493ecab9",
+      "path": "custom_components/houseplan/validation.py",
+      "line": 2726,
+      "text": "return OrdinaryWriteScope(set(), set(), \"legacy selectors\")",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "current-feature",
+      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
+    },
+    {
+      "id": "5dd11c0d6be4232a7d847ef1",
+      "path": "custom_components/houseplan/validation.py",
+      "line": 2777,
+      "text": "# `canonical_config` ran as a no-op: a document with legacy selectors is a",
       "occurrence": 1,
       "kind": "exclusion",
       "owner": "current-feature",
@@ -1501,7 +1561,7 @@
     {
       "id": "901a3675f5d3c1959c0b88d0",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 174,
+      "line": 178,
       "text": "\"\"\"Log one low-noise diagnostic per legacy write command.\"\"\"",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1511,7 +1571,7 @@
     {
       "id": "1c3a35c5815af265d42c7aa5",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 437,
+      "line": 441,
       "text": "raise  # Preserve legacy callers; ZIP must also survive lost intent ACKs.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1521,7 +1581,7 @@
     {
       "id": "a84ab341afd915288a91f447",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 1003,
+      "line": 1010,
       "text": "only a legacy naming convention, however; an explicit real marker remains",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1529,9 +1589,19 @@
       "reason": "Existing JSON/ZIP/HTTP/error response/old-client protocol compatibility; no persisted config selector."
     },
     {
+      "id": "130ff95239f4d95f0167b4af",
+      "path": "custom_components/houseplan/websocket_api.py",
+      "line": 1793,
+      "text": "# resolves to itself; only a legacy document still needs the copy.",
+      "occurrence": 1,
+      "kind": "branch",
+      "owner": "room-appearance",
+      "reason": "Persisted representation: global wall fill / coupled room caption colour. Recent additive representation plus older backend reads. Materializing absent optional defaults on every current load would violate no-op; local explicit fields remain authoritative."
+    },
+    {
       "id": "c116337cce571bde8065deff",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 1795,
+      "line": 1806,
       "text": "# operational store. Compatibility/default on is the safe frame.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1541,7 +1611,7 @@
     {
       "id": "4c42c7652e5e69c9728970a9",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 1886,
+      "line": 1897,
       "text": "Only `/api/houseplan/content/plans/_/<name>` and the legacy static path",
       "occurrence": 1,
       "kind": "branch",
@@ -1551,7 +1621,7 @@
     {
       "id": "63c7f6c5ef4747e5a3cc0d15",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 2039,
+      "line": 2098,
       "text": "# write so an unrelated edit can still round-trip a legacy broken ref.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1561,7 +1631,7 @@
     {
       "id": "b630a503fcf42662259896fd",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 2105,
+      "line": 2189,
       "text": "# legacy urls are not ours to check and are left alone.",
       "occurrence": 1,
       "kind": "branch",
@@ -1571,7 +1641,7 @@
     {
       "id": "65899cbe10a7d387638a204d",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 2829,
+      "line": 2916,
       "text": "# rule exactly as in config/set: repairing a legacy plan that",
       "occurrence": 1,
       "kind": "exclusion",
