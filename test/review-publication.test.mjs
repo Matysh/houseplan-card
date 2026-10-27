@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { publicationPlan, publishReview, verifyReviewPublication, assertNoReviewPublication,
-  publicationReference, publicationReceiptFromDocument, readPublicationArtifact } from '../scripts/review-publication.mjs';
+  publicationReference, publicationReceiptFromDocument, readPublicationArtifact, realOps } from '../scripts/review-publication.mjs';
 import { findingsPolicy, outsideFindingsProblems } from '../scripts/review-findings-policy.mjs';
 import { PASSPORT_FIELDS, sha256 } from '../scripts/review-result-gate.mjs';
 
@@ -195,4 +196,87 @@ test('#1065 publication reads one bounded regular-file snapshot and refuses syml
     symlinkSync(join(dir, 'verdict.json'), join(dir, 'review-document.md'));
     assert.throws(() => readPublicationArtifact(dir), /non-file|canonical/);
   }
+});
+
+test('#1106 real pagination finds the existing publication beyond 8 MiB without duplicate writes', async () => {
+  const plan = fixture().plan(), m = memory();
+  const original = await publishReview(plan, m.ops);
+  const older = Array.from({ length: 200 }, (_, n) => ({ id: n + 1000, number: n + 2000,
+    title: `Older unrelated issue ${n}`, body: 'x'.repeat(48000), user: { id: 99 } }));
+  const history = [...older, ...m.issues], issuePages = [];
+  assert.ok(Buffer.byteLength(JSON.stringify(history)) > 8 * 1024 * 1024);
+  const ops = realOps(identity.repo, (command, args, options) => {
+    assert.equal(command, 'gh');
+    assert.equal(options.maxBuffer, 8 * 1024 * 1024, 'per-response cap is unchanged');
+    assert.equal(args[3], 'GET', 'reconciliation must not write another finding or comment');
+    const endpoint = args[1];
+    if (endpoint === 'user') return JSON.stringify(m.actor);
+    const url = new URL(endpoint, 'https://api.github.com/');
+    assert.equal(url.searchParams.get('per_page'), '100');
+    const page = Number(url.searchParams.get('page'));
+    if (url.pathname.endsWith('/comments')) return JSON.stringify(m.comments.slice((page - 1) * 100, page * 100));
+    assert.equal(url.pathname, '/repos/owner/repo/issues');
+    assert.equal(url.searchParams.get('state'), 'all', 'closed history remains in reconciliation');
+    issuePages.push(page);
+    return JSON.stringify(history.slice((page - 1) * 100, page * 100));
+  });
+  const receipt = await publishReview(plan, ops);
+  assert.deepEqual(receipt, original);
+  assert.deepEqual(issuePages, [1, 2, 3, 1, 2, 3], 'reconciliation and receipt verification read the late matching issue');
+  assert.equal(await verifyReviewPublication(receipt, ops), true);
+  assert.deepEqual(m.writes, ['comment', 'issue', 'comment']);
+});
+
+function sizedPage(bytes, count = 100) {
+  const rows = Array.from({ length: count }, () => ({ body: '' }));
+  rows[0].body = 'x'.repeat(bytes - Buffer.byteLength(JSON.stringify(rows)));
+  return JSON.stringify(rows);
+}
+
+test('#1106 aggregate accepts exactly 64 MiB and refuses the next byte without partial history', () => {
+  const full = sizedPage(7 * 1024 * 1024), last = sizedPage(1024 * 1024, 1);
+  for (const extra of [0, 1]) {
+    let calls = 0;
+    const ops = realOps(identity.repo, (_command, args) => {
+      const page = Number(new URL(args[1], 'https://api.github.com/').searchParams.get('page'));
+      calls++;
+      return page < 10 ? full : extra ? sizedPage(1024 * 1024 + extra, 1) : last;
+    });
+    if (extra) assert.throws(() => ops.issues(), /API pagination exceeds its aggregate bound/);
+    else assert.equal(ops.issues().length, 901);
+    assert.equal(calls, 10, 'bounded traversal ends at the final page or the first overflow');
+  }
+});
+
+test('#1106 malformed page and excessive page count fail closed instead of returning a prefix', () => {
+  for (const bad of ['{}', 'null', '"page"', '{broken']) {
+    let calls = 0;
+    const ops = realOps(identity.repo, () => ++calls === 1 ? JSON.stringify(Array(100).fill({})) : bad);
+    assert.throws(() => ops.comments(1065), /API pagination shape|API operation failed/);
+    assert.equal(calls, 2);
+  }
+  let pages = 0;
+  const ops = realOps(identity.repo, () => { pages++; return JSON.stringify(Array(100).fill({})); });
+  assert.throws(() => ops.issues(), /API pagination bound exceeded/);
+  assert.equal(pages, 100);
+});
+
+test('#1106 real CLI buffer keeps the 8 MiB response cap and does not retry unknown writes', () => {
+  let calls = 0;
+  const oversized = realOps(identity.repo, (_command, _args, options) => {
+    calls++;
+    assert.equal(options.maxBuffer, 8 * 1024 * 1024);
+    // Real child output exercises execFileSync's unchanged response limit.
+    return execFileSync(process.execPath, ['-e', 'process.stdout.write("x".repeat(9 * 1024 * 1024))'], options);
+  });
+  assert.throws(() => oversized.issues(), /API operation failed or write outcome unknown/);
+  assert.equal(calls, 1);
+  const uncertain = realOps(identity.repo, (_command, args, options) => {
+    assert.equal(args[3], 'POST');
+    assert.deepEqual(JSON.parse(options.input), { body: 'pending' });
+    calls++;
+    throw Error('transport lost response after write');
+  });
+  assert.throws(() => uncertain.createComment(1065, 'pending'), /reconcile before retry/);
+  assert.equal(calls, 2);
 });

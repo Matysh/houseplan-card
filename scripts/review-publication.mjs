@@ -218,13 +218,17 @@ export function readPublicationArtifact(directory) {
   return { files: Object.keys(data), read: name => data[name] };
 }
 
-function realOps(repo) {
+const API_RESPONSE_BYTES = 8 * 1024 * 1024;
+const API_HISTORY_BYTES = 64 * 1024 * 1024;
+
+// Inject only the CLI transport for tests; pagination and its bounds stay real.
+export function realOps(repo, run = execFileSync) {
   const api = (endpoint, method = 'GET', payload) => {
     try {
       const args = ['api', endpoint, '--method', method];
       if (payload) args.push('--input', '-');
-      return JSON.parse(execFileSync('gh', args, { input: payload ? JSON.stringify(payload) : undefined,
-        encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }));
+      return JSON.parse(run('gh', args, { input: payload ? JSON.stringify(payload) : undefined,
+        encoding: 'utf8', maxBuffer: API_RESPONSE_BYTES }));
     } catch { fail('API operation failed or write outcome unknown; reconcile before retry'); }
   };
   const pages = endpoint => {
@@ -233,7 +237,9 @@ function realOps(repo) {
       const rows = api(`${endpoint}${endpoint.includes('?') ? '&' : '?'}per_page=100&page=${page}`);
       if (!Array.isArray(rows)) fail('API pagination shape');
       bytes += Buffer.byteLength(JSON.stringify(rows));
-      if (bytes > 8 * 1024 * 1024) fail('API pagination exceeds its aggregate bound');
+      // Full repository history is larger than one response. Keep a separate
+      // aggregate bound without truncating the history used for reconciliation.
+      if (bytes > API_HISTORY_BYTES) fail('API pagination exceeds its aggregate bound');
       out.push(...rows);
       if (rows.length < 100) return out;
     }
