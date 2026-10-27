@@ -4428,18 +4428,22 @@ export class HouseplanCard extends LitElement {
       // Seed the same content-box width before the first paint, including on a
       // warm remount; waiting for ResizeObserver first paints the wide tabs.
       let headerWidth = headerContentWidth(getComputedStyle(hdr));
+      // A queued old frame may outlive disconnect and even the same-element
+      // reconnect. Only this observer lease may measure or publish its memo.
+      const ownsHeader = () => this.isConnected && this._roHdr === observer && stage === this._stageEl;
       const measure = () => {
+        if (!ownsHeader()) return;
         const compact = headerWidth > 0 && headerWidth <= 1024;
         if (compact !== this._compactSpaces) {
           this._compactSpaces = compact;
           this.requestUpdate();
           // Measure the chosen navigation, never bill its retired predecessor
           // against the stage or overwrite a correct warm header memo with it.
-          void this.updateComplete.then(() => { if (this.isConnected) measure(); });
+          void this.updateComplete.then(() => { if (ownsHeader()) measure(); });
           return;
         }
         if (compact && !this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
-          this._spaceSelectLoad = import('./hp-settings-select').then(() => this.requestUpdate())
+          this._spaceSelectLoad = import('./hp-settings-select').then(() => { if (ownsHeader()) this.requestUpdate(); })
             .catch(() => { this._spaceSelectLoad = null; });
         }
         const t = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight); if (t === null) return;
@@ -4451,7 +4455,7 @@ export class HouseplanCard extends LitElement {
         // resize with a live card) must not poison the next warm mount —
         // the memo follows the live settled geometry.
         void this.updateComplete.then(() => requestAnimationFrame(() => {
-          if (!this.isConnected || stage !== this._stageEl || this._booting || this._config?.kiosk
+          if (!ownsHeader() || this._booting || this._config?.kiosk
               || this._modeTransitionBusy || this._modeTransitionPreparing
               || t !== this._hdrH || stage.clientWidth <= 0 || stage.clientHeight <= 0) return;
           const measured = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight);
@@ -4462,7 +4466,7 @@ export class HouseplanCard extends LitElement {
       // a frame later: setting state straight from the observer callback makes
       // the browser report "ResizeObserver loop completed with undelivered
       // notifications" — the render it triggers resizes the stage again
-      this._roHdr = new ResizeObserver((entries) => {
+      const observer = this._roHdr = new ResizeObserver((entries) => {
         const headerEntry = entries.find((entry) => entry.target === hdr);
         // The content box matches the CSS container query, including fractional
         // widths and cards inside transformed dashboard containers.
