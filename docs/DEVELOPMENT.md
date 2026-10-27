@@ -6408,3 +6408,9 @@ imports change and resolve to the same modules; the executed82/12 proof keeps
 its original source hash/command, and no new capture is claimed after relocation.
 The actual full CI-generator import closure now matches accepted dev exactly;
 compatibleCiGenerators and source coverage policy remain intact.
+
+The measured #1089 cost relative to accepted #1070 is +720 B initial gzip,
++1341 B lazy editor gzip, +10966 B raw bundle and +15 host references. Only the
+last two own deltas enter the rolling monolith reference; absolute byte walls,
+metric bands and timing limits stay unchanged. Recorded rationale:
+https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453010424.

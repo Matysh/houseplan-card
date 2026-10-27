@@ -5,7 +5,7 @@ Review publication (#1106) reads complete API history with separate bounds:
 deduplication and the stop on an unknown write outcome retain their authority;
 an oversized or malformed history is never accepted as a partial result.
 
-View device context menu (#1089) is in implementation: shared UI Kit, five commands, independent read-only information and guarded writer operations. Initial typecheck and six owner/permission units pass. Native command and Settings regression smokes pass; held-import, stale-confirmation and outside-tail checks pass. Selected visual capture and final full-gate acceptance are in progress. No S8 claim.
+View device context menu (#1089) is in implementation: shared UI Kit, five commands, independent read-only information and guarded writer operations. Initial typecheck and six owner/permission units pass. Native command and Settings regression smokes pass; held-import, stale-confirmation and outside-tail checks pass. Four selected visual frames, HA-target regression and native touch lifecycle pass; final full-gate acceptance is pending. No S8 claim.
 
 SPEC delivery compatibility (#1104) recognizes the exact published heading
 `SPEC-REVIEW #NN — заход rN`, with issue and round still bound to the sole new
@@ -51,7 +51,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5692 · pure backend 687 · HA-harness backend 585 · browser smokes 465 (`npm run inventory`) |
+| Tests | Node unit 5694 · pure backend 687 · HA-harness backend 585 · browser smokes 467 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
