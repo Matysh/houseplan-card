@@ -26,7 +26,7 @@ try {
     assert.equal(await writes(s.page), 0);
     out.failedHintRetainsFloorWorkflow = true;
   }
-  for (const options of [{ writer: false, admin: false }, { writer: false }, { storage: false },
+  for (const options of [{ writer: false, admin: false }, { writer: false }, { storage: false }, { transport: false },
     { writer: false, kiosk: true }]) {
     const { page, requests } = await start(options);
     assert.equal(await page.locator('[data-hp=create-space], [data-hp=import-backup]').count(), 0);
@@ -37,6 +37,26 @@ try {
     assert.equal(await writes(page), 0);
   }
   out.rightsStorageAndKiosk = true;
+  {
+    // A registered custom element can upgrade even when its boundary never
+    // becomes ready. Exercise the observable recovery path, not merely its
+    // presence: informational retry must work without a writable HA context.
+    const s = await launchPanelCold(); sessions.push(s);
+    const attempts = [];
+    await s.page.route('**/hp-plan-converter-info-*.js*', route => {
+      const query = new URL(route.request().url()).search; attempts.push(query);
+      return query ? route.fallback() : route.fulfill({ status: 404, body: 'ordinary unavailable information module' });
+    });
+    await mountFirstSpace(s.page, { transport: false, waitHint: false });
+    const notice = s.page.locator('[data-hp="view-runtime-notice"]');
+    await notice.locator('[data-hp="view-runtime-retry"]').click();
+    await empty(s.page).locator('a').waitFor();
+    await notice.waitFor({ state: 'detached' });
+    assert.equal(attempts.length, 2);
+    assert.equal(attempts[0], ''); assert.ok(attempts[1]);
+    assert.equal(await writes(s.page), 0);
+    out.informationalRecoveryWithoutWriteTransport = true;
+  }
   const { page, requests } = await start();
   await floors(page).waitFor();
   const selected = floors(page).locator('input[type=checkbox]');

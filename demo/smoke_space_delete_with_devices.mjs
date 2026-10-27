@@ -173,6 +173,7 @@ const pass = (viewport) => page.evaluate(async ({ full }) => {
   const writes = () => [...structural, ...calls.filter((call) => call.type === 'houseplan/space/delete')];
 
   // ---- AC1: the block scrolls the warning into view and focuses it --------
+  await hp.switchSpace('f1');
   await hp.openSpaceDialog('edit', 'f1');
   await settle();
   result.dialogOpensWithoutWarning = !!footerDelete() && !warning();
@@ -303,6 +304,7 @@ const pass = (viewport) => page.evaluate(async ({ full }) => {
   // ---- AC5: a space without devices keeps the old request and copy --------
   calls.length = 0;
   structural.length = 0;
+  await hp.switchSpace('attic');
   await hp.openSpaceDialog('edit', 'attic');
   await settle();
   footerDelete().click();

@@ -20,6 +20,7 @@ export async function mountFirstSpace(page, options = {}) {
       if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
       return original(message);
     };
+    if (options.transport === false) delete hass.callWS;
     await import('/assets/houseplan-card.js');
     const card = document.createElement('houseplan-card');
     card.setConfig({ type: 'custom:houseplan-card', kiosk: !!options.kiosk }); card.hass = hass;

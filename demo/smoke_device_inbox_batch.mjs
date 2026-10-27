@@ -92,10 +92,12 @@ const out = await page.evaluate(async () => {
     && !byTab.readd?.batch && byTab.readd?.boxes === 0
     && byTab.hidden?.batch === true;
   await click(tabButton(0));
-  // smoke_hidden_flag takes the LAST checkbox in .device-inbox-filters.
+  // Batch selection stays separate from the actual New-only filter. #1081
+  // removed the obsolete help wrapper, not the filter or its native label.
   const filterBoxes = [...root().querySelectorAll('.device-inbox-filters input[type="checkbox"]')];
   result.batchLivesOutsideFilters = !root().querySelector('.device-inbox-filters .device-inbox-batch')
-    && !!filterBoxes.at(-1)?.closest('.device-inbox-filter-help');
+    && filterBoxes.length === 1 && filterBoxes[0].dataset.field === 'device-catalog-new'
+    && !!filterBoxes[0].closest('label');
 
   // ---- AC8: selecting is read-only -----------------------------------------
   const before = snapshot();

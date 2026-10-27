@@ -128,9 +128,9 @@ export async function wallthickSelectionScenario(page) {
   await page.locator('[data-hp="tool"][data-tool="select"]').filter({ visible: true }).click(); await settle();
   check('911 AC4 tool switch clears selected indication', await page.locator('.wallthick-selected').count(), 0);
   await opening(450, 150);
-  await page.locator('[data-hp="space-tab"][data-id="other"]').filter({ visible: true }).click(); await settle();
+  await page.evaluate(() => window.__hpTest.switchSpace('other')); await settle();
   check('911 AC4 floor switch clears selected indication', await page.locator('.wallthick-selected').count(), 0);
-  await page.locator('[data-hp="space-tab"][data-id="selection"]').filter({ visible: true }).click(); await settle();
+  await page.evaluate(() => window.__hpTest.switchSpace('selection')); await settle();
   await opening(450, 150);
   await page.locator('[data-hp="editor-close"]').filter({ visible: true }).first().click(); await settle();
   check('911 AC4 View has no selected indication', await page.locator('.wallthick-selected').count(), 0);

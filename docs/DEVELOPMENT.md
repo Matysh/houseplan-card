@@ -1,5 +1,15 @@
 # Development and deployment
 
+Nightly guard maintenance (#1088) follows the accepted furniture release event,
+compact space navigation and catalog labels. Settled picker raster checks await
+the real finite entrance animation; their RGB tolerances do not change. The
+View recovery fixture finishes the independent header-selector import while
+keeping both measured View imports physically held. The information-module
+guard exercises real 404/Retry without write transport, and the vacuum watermark
+unit includes a future revisit as well as a distinct future endpoint. Exact
+incident and ordinary evidence: [2026-10-27 report](analysis/1088-nightly-guard-repair-2026-10-27.md).
+These are unchanged-product checks; mutation execution remains nightly-only.
+
 Accepted UI Lab transfer (#1081) is covered by `smoke_ui_lab_1081`,
 `smoke_picker_motion`, `smoke_furniture_pan` and `smoke_ui_lab_grid` in `demo/`.
 The last uses actual presented edge pixels, retaining its pre-change RED and

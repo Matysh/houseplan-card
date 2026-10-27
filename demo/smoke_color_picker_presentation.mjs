@@ -11,6 +11,11 @@ const near = (a, b, tolerance = 3) => a.every((n, i) => Math.abs(n - b[i]) <= to
 const rgb = hex => hex.match(/\w\w/g).map(n => parseInt(n, 16));
 const settle = () => page.evaluate(async () => {
   await window.__picker.updateComplete;
+  // #1081 gives this surface a real entrance animation. A settled raster
+  // oracle must observe its completed paint, not disable motion or loosen RGB.
+  await Promise.all(window.__picker._surface().getAnimations({ subtree: true })
+    .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
+    .map(animation => animation.finished.catch(() => {})));
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 });
 

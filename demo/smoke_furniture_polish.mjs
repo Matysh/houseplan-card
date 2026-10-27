@@ -66,6 +66,10 @@ const out = await page.evaluate(async () => {
     bubbles: true, composed: true, pointerType: 'mouse', pointerId: 8,
     clientX: cx, clientY: cy, button: 2, buttons: 2,
   }));
+  stage.dispatchEvent(new PointerEvent('pointerup', {
+    bubbles: true, composed: true, pointerType: 'mouse', pointerId: 8,
+    clientX: cx, clientY: cy, button: 2, buttons: 0,
+  }));
   await c.updateComplete; await sleep(50);
   out.rightClickPlacesNothing = c._decorList.length === beforeCount
     && !!c._furnPalette;
@@ -74,6 +78,11 @@ const out = await page.evaluate(async () => {
   stage.dispatchEvent(new PointerEvent('pointerdown', {
     bubbles: true, composed: true, pointerType: 'mouse', pointerId: 9,
     clientX: cx, clientY: cy, button: 0, buttons: 1,
+  }));
+  out.leftDownDoesNotPlace = c._decorList.length === beforeCount;
+  stage.dispatchEvent(new PointerEvent('pointerup', {
+    bubbles: true, composed: true, pointerType: 'mouse', pointerId: 9,
+    clientX: cx, clientY: cy, button: 0, buttons: 0,
   }));
   await c.updateComplete; await sleep(50);
   out.leftClickPlaces = c._decorList.length === beforeCount + 1;

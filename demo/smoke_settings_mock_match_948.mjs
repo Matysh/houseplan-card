@@ -60,8 +60,9 @@ await dialog.locator('.hpf-footer [data-hp=dialog-cancel]').click();await dialog
 await page.evaluate(()=>window.__hpTest.setMode('devices'));
 await page.locator('[data-hp=tool][data-tool=device-inbox]').filter({visible:true}).first().click();
 const inbox=page.locator('hp-dialog[data-kind=device-inbox]');
-// #976 deliberately aligns the catalogue with the shared compact instant help.
-output.catalogueUsesSharedHelpSize=await inbox.locator('hp-help').filter({visible:true}).first().locator('.trigger').evaluate(el=>getComputedStyle(el).width==='22px');
+// #1081 intentionally removed the catalogue's old help wrapper. Observe its
+// real labelled filter rather than waiting for an element no longer designed.
+output.catalogueFilterIsLabelled=await inbox.locator('[data-field="device-catalog-new"]').evaluate(el=>!!el.closest('label')&&el.closest('label').textContent.trim().length>0);
 // #1012: the catalogue is now intentionally compact. A real unscoped public
 // control still needs its default 32px target; compact tokens must not leak.
 await page.evaluate(()=>{const help=document.createElement('hp-help');help.id='unscoped-help-1012';help.text='Unscoped help';help.ariaLabel='Help';document.body.append(help);});

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "issue": 1088,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repairs the ordinary guards and two insufficient mutation witnesses from the exact 2026-10-27 nightly material without changing product behavior, budgets, pixel tolerances, failure policy or mutation execution rules. Actual caught status remains a scheduled-nightly obligation.",
+  "summary": {
+    "ru": "Ночные проверки согласованы с принятым интерфейсом; усилены свидетели информационной загрузки и watermark пути пылесоса.",
+    "en": "Nightly guards follow the accepted UI; informational loading and vacuum-path watermark witnesses are strengthened."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "golden": [],
+    "smokes": [
+      "smoke_color_picker_presentation.mjs", "smoke_decor.mjs",
+      "smoke_device_inbox_batch.mjs", "smoke_furniture_polish.mjs",
+      "smoke_settings_mock_match_948.mjs", "smoke_space_delete_with_devices.mjs",
+      "smoke_view_runtime_recovery.mjs", "smoke_wall_guide_ownership.mjs",
+      "smoke_wallthick_standalone.mjs", "smoke_first_space_converter.mjs"
+    ]
+  }
+}

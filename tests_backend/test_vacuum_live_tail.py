@@ -26,6 +26,18 @@ def test_only_unique_covered_prefix_is_replaced_newer_samples_survive():
     assert project_live(run["_live_tail"]) == live, "read cannot consume later observations"
 
 
+def test_only_unique_covered_prefix_ignores_a_future_revisit_when_proving_the_join():
+    run = {}
+    for stamp, x in enumerate([0, 10, 20, 10, 30]):
+        append_live(run, x, 0, stamp * 1000, (x, 0), False)
+    # The native request covered the first visit to 10 only. The later visit
+    # must neither make that old join ambiguous nor be consumed by this reply.
+    acknowledge_live(run, [10, 0], (10, 0), 1500)
+    samples = project_live(run["_live_tail"])["paths"][0]
+    assert [sample[0] for sample in samples] == [10, 20, 10, 30]
+    assert [sample[2] for sample in samples] == [1000, 2000, 3000, 4000]
+
+
 def test_ambiguous_revisit_or_missing_metric_never_guesses_a_join():
     run = {}
     for i, x in enumerate([0, 10, 20, 10, 30]):

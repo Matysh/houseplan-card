@@ -93,7 +93,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'first-space-converter-writer-only',
     guard: 'node demo/smoke_first_space_converter.mjs',
-    because: '#1020: native nonwriter and unavailable-storage cards must show passive information without privileged runtimes.',
+    because: '#1020/#1088: without HA write transport the informational boundary must honestly show a failed import and recover through its native Retry button. Custom-element presence alone cannot prove ownership because module evaluation can upgrade it even when the boundary drops completion.',
     patches: [{ file: 'src/view-runtimes.ts', find: 'port(() => {}, true)', replace: 'port(() => {})' }],
   },
   {
@@ -18932,8 +18932,8 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'settings-help-size-leaks-into-catalogue-948',
     guard: 'node demo/smoke_settings_mock_match_948.mjs',
-    because: '#948 AC1/#976/#1012: settings and catalogue intentionally share 22px compact help, while an unscoped public hp-help keeps its 32px default. '
-      + 'The historical id now guards that remaining scope boundary through actual computed custom-element dimensions; a pure unit cannot observe inherited CSS.',
+    because: '#948 AC1/#976/#1012/#1088: settings help is compact at 22px while unscoped public hp-help keeps its 32px default. The approved catalogue no longer has the old help control. '
+      + 'The historical id guards the remaining scope boundary through actual computed custom-element dimensions; a pure unit cannot observe inherited CSS.',
     patches: [{
       file: 'src/hp-help.ts',
       find: '    .trigger {\n      width: var(--hp-settings-help-size,32px);',
@@ -21444,7 +21444,7 @@ const vacuumLive1049Cases = [
       find:'if finite(live.get("since")) and stamp < live["since"]:',replace:'if False:'}]},
   {id:'vacuum-live-future-prefix-consumed-1049',
     guard:'node scripts/backend-test-guard.mjs only_unique_covered_prefix tests_backend/test_vacuum_live_tail.py',
-    because:'#1049 AC2: a late native response cannot consume observations newer than its request-start watermark.',
+    because:'#1049 AC2/#1088: a future revisit must not make the uniquely covered old endpoint ambiguous; the old prefix is replaced while all post-request samples survive. The independent prefix watermark also blocks future consumption, so a distinct future endpoint alone cannot witness this filter.',
     patches:[{file:'custom_components/houseplan/vacuum_live_tail.py',
       find:'sample[2] <= read_started and len(sample) == 5',replace:'len(sample) == 5'}]},
   {id:'vacuum-live-ambiguous-prefix-consumed-1049',

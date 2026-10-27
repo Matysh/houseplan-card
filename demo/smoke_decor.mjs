@@ -124,6 +124,12 @@ const res = await page.evaluate(async () => {
     pointerType: 'mouse', clientX: furniturePoint?.x || 0, clientY: furniturePoint?.y || 0,
     button: 0, isPrimary: true, shiftKey: true,
   }));
+  out.furnitureDownThroughDeviceCoreDoesNotPlace = c._decorList.length === decorBeforeDeviceProbe.length;
+  stage?.dispatchEvent(new PointerEvent('pointerup', {
+    bubbles: true, composed: true, cancelable: true, pointerId: 365,
+    pointerType: 'mouse', clientX: furniturePoint?.x || 0, clientY: furniturePoint?.y || 0,
+    button: 0, buttons: 0, isPrimary: true, shiftKey: true,
+  }));
   await c.updateComplete;
   out.furniturePlacesThroughDeviceCore = c._decorList.length === decorBeforeDeviceProbe.length + 1
     && c._decorList.some((shape) => shape.kind === 'furniture' && shape.symbol === 'chair');

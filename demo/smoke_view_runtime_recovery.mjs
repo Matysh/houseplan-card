@@ -211,6 +211,14 @@ try {
   });
   await pending.page.waitForFunction(() => window.__retiredCard._loadOk && window.__card._loadOk);
   await pending.page.waitForFunction(() => ['live', 'summary'].every(name => window.__card._viewRuntimes[name].state === 'loading'));
+  // #997 independently imports the compact header selector. Complete that
+  // ordinary visible-header dependency before measuring ONLY the held View
+  // imports. Their requests remain physically blocked throughout this setup.
+  await pending.page.waitForFunction(() => !!customElements.get('hp-settings-select'));
+  await pending.page.evaluate(async () => {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await window.__retiredCard.updateComplete;
+  });
   await pending.page.evaluate(async () => {
     const old = window.__retiredCard; old.remove();
     // Finish the render already queued by the initial header measurement.

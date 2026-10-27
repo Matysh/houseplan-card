@@ -91,6 +91,8 @@ for (const { axis, cm, zoom, theme } of cases) {
         groups: new Set(lines.map(n => n.closest('.alignguides'))).size };
     });
     const at = await screen(first); await page.mouse.click(at.x, at.y); await frames();
+    const anchor = await page.evaluate(() => window.__card._path.map(point => [...point]));
+    assert.equal(anchor.length, 1, 'the first click arms exactly one actual snapped anchor');
     const aim = await screen(target);
     await page.mouse.move(aim.x + (horizontal ? 4 : 0), aim.y + (horizontal ? 0 : 4), { steps: 4 }); await frames();
     const preview = await inspect(), label = `${axis}, ${cm}cm, ${theme}, ${zoom}`;
@@ -128,10 +130,15 @@ for (const { axis, cm, zoom, theme } of cases) {
     const beforeWrites = writes.length;
     await page.mouse.click(aim.x + (horizontal ? 4 : 0), aim.y + (horizontal ? 0 : 4)); await frames();
     for (let i = 0; i < 200 && writes.length === beforeWrites; i++) await page.waitForTimeout(25);
+    // The adaptive grid may snap the first click differently after pinch.
+    // Identify the new segment by its observed anchor; its far endpoint is
+    // still judged against the independent, fixed alignment target above.
     const saved = server.spaces[0].partitions.find(w => w.id !== 'reference'
-      && Math.hypot(w.a[0] - first[0], w.a[1] - first[1]) < 1e-6);
+      && Math.hypot(w.a[0] - anchor[0][0] / 1000, w.a[1] - anchor[0][1] / 1000) < 1e-6);
     check(`${label}: accepted wall endpoint equals the exact preview`, saved?.b, final.cursor?.map(x => x / 1000));
-    check(`${label}: save actually reached HA`, writes.length > 0);
+    check(`${label}: save actually reached HA`, writes.length > beforeWrites);
+    if (!saved) console.error('guide acceptance diagnostics', { label, anchor, first,
+      writes: writes.length - beforeWrites, partitions: server.spaces[0].partitions });
     // Third corner enables the accepted contour-closure endpoint owner.
     if (zoom === 1) {
     const third = horizontal ? [end, 0.5] : [0.5, end];
