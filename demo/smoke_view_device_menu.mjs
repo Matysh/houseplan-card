@@ -18,10 +18,13 @@ try {
   await installBatteryFixture(page);
   await page.evaluate(() => {
     const c = window.__card, ws = c.hass.callWS, service = c.hass.callService;
-    const state = window.__menuTest = { writer: true, writes: [], services: [], ha: [] };
+    const state = window.__menuTest = { writer: true, rejectNext: false, writes: [], services: [], ha: [] };
     document.addEventListener('hass-more-info', event => state.ha.push(event.detail.entityId));
     c.hass = { ...c.hass, callWS: async message => {
       if (/\/(set|update|delete|copy|toggle)$/.test(message.type)) state.writes.push(structuredClone(message));
+      if (message.type === 'houseplan/config/set' && state.rejectNext) {
+        state.rejectNext = false; throw new Error('Deliberate View menu persistence refusal');
+      }
       const reply = await ws(message);
       return message.type === 'houseplan/config/get' ? { ...reply, can_write: state.writer } : reply;
     }, callService: async (...args) => { state.services.push(args); return service(...args); } };
@@ -64,6 +67,13 @@ try {
   const beforeDelete = (await writes()).writes.length;
   await page.keyboard.press('Escape'); await confirm.waitFor({ state: 'detached' });
   check('cancel Delete writes nothing', (await writes()).writes.length, beforeDelete);
+  await page.evaluate(() => { window.__menuTest.rejectNext = true; });
+  await open(); await action('visibility').click(); await page.evaluate(() => window.__hpTest.waitForWrites()); await settled();
+  check('refused Hide rolls back the visible marker and saved flag', await page.evaluate(async () => {
+    const cfg = (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config;
+    return !window.__menuTest.rejectNext && !cfg.markers.find(m => m.id === 'd_temp').hidden
+      && !!window.__card.renderRoot.querySelector('[data-hp="device"][data-id="d_temp"]');
+  }));
   await open(); await action('visibility').click(); await settled(); await page.evaluate(() => window.__hpTest.waitForWrites());
   check('Hide stores only selected marker', await page.evaluate(async () => {
     const cfg = (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config;
