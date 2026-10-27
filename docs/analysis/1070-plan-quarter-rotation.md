@@ -30,6 +30,39 @@ presentation `_viewOr`. The rAF envelope trace now covers that boundary. The
 combined accepted base includes #1080, #1081 and #997; grid coverage remains on its original
 100 ms/15% viewport refresh budget, in inverse-rotated plan coordinates.
 
+## Current joined verification on accepted #1092
+
+The final rebase keeps #1092's removal of the decorative outline SVG, its
+CSS-content-width header measurement and the actual compact-picker readiness
+helper. Both SVG conflicts were resolved by keeping the accepted deletion and
+the primary quarter-turn presentation planes. UI-042 uses one accepted wide-host
+setup plus measured header/two-tab readiness; both compact branches and all
+original cursor oracles remain. No #1092-specific process exception is applied.
+
+All of the following execute on fingerprint `7ee5e787` and actual base `d9d0d812`:
+
+- Official pinned native HA:82 layout states and12 camera transitions PASS.
+  This is a fresh joint author capture after the header/helper changes.
+- All five own rotation/editor/touch/mobile/locale smokes PASS, including live
+  physical floor/sun/body counter equality across four orientations.
+- Backdrop, UI-1081 and vacuum-camera neighbours PASS. The accepted outline-
+  removal ordinary guard passes, so the retired SVG is not resurrected.
+- All nine own Golden scenes and the repaired retained-path scene PASS. The
+  current320px light editor, Flat90 and ISO270 frames were viewed; no baseline
+  was accepted or new capture made solely for those inspections.
+- Flat and ISO zero-angle stages match the new accepted d9 artifact exactly:
+  PNG bytes identical and zero decoded pixel delta across984×773 px, with
+ 2015/1884 distinct base colours.
+- Static applicability1957 definitions/544 browser witnesses/1080 source reads
+  PASS, execution0 and caught unknown/nightly. Generated inventories are current.
+
+The dedicated baseline was built once and frozen after source fingerprint,
+manifest topology and every asset SHA passed. Current raw/AST deltas are above.
+Earlier7b/0d3 results below are historical; current native/Golden/render claims
+come from the new joint source. Final ordinary gate/CI are linked in the issue
+handoff, followed by independent CODE review; these author checks are not a
+review verdict.
+
 ## Native HA height and input boundary
 
 The official HA toolbar can have a fractional height (212.3125 px in the
@@ -82,41 +115,40 @@ and kiosk must not request the settings dictionary.
 
 ## Current matched resource cost and owner decision
 
-The immutable accepted #1087 checkout is `4c2ac36a0`. Its source fingerprint
-`8e4bf61d` exactly matches the copied accepted-equivalent artifact; every
-manifest asset SHA and topology was verified before the read-only copy.
-The earlier 349824 B issue-comment figure is not used as its actual size.
-The fresh current candidate fingerprint is `0d3a1df9`.
+The accepted integration base is #1092 at `d9d0d812`. Its source/capture inputs
+match the reviewed6cc material; only review/SPEC documents differ. A dedicated
+immutable checkout was built once with Linux Node22.23.2 and locked packages.
+Its fingerprint `c890e4a0`, manifest topology and every asset SHA were verified.
+The candidate fingerprint is `7ee5e787`, including the merged shared helper.
 
-| Metric | Verified accepted artifact | Candidate | Own delta |
+| Metric | Verified accepted d9 artifact | Candidate | Own delta |
 | --- | ---: | ---: | ---: |
-| initial View gzip | 349915 | 352013 | +2098 |
-| lazy editor gzip | 363448 | 364386 | +938 |
-| onboarding gzip | 40152 | 40343 | +191 |
-| raw dist | 3559455 | 3574092 | +14637 |
+| initial View gzip | 349536 | 351600 | +2064 |
+| lazy editor gzip | 363437 | 364355 | +918 |
+| onboarding gzip | 40156 | 40323 | +167 |
+| raw dist | 3557327 | 3571863 | +14536 |
 | core source lines (trimmed) | 13361 | 13377 | +16 |
 
-Rolling references carry only those measured own costs: initial 349824→351922,
-editor 363457→364395, raw 3559585→3574222. Incoming gaps remain 91, -9 and -130 B,
-respectively; all 2000 B bands remain. The host port has 374 actual members
-against reference 372 in the accepted base. Four useful presentation ports add
+Rolling references carry only measured own cost: initial349824→351888,
+editor363457→364375, raw3559585→3574121. Incoming gaps remain -288, -20 and
+-2258 B respectively; the inherited raw shrink is retained, not silently
+recentered. All2000 B bands remain. The host port has374 actual members against
+reference372 in the accepted base. Four useful presentation ports add
 `_framePercent`, `_planScreenDelta`, `_rotation` and `_planVisibleRect`:
-378 actual against 376 reference retains the incoming gap 2 and band 5.
-The four alias reads of `_rotation` in the vacuum overlay remain intact.
-Other static references and the onboarding reference remain unchanged.
+378 actual against376 reference preserves gap2 and band5. Other static
+references and the onboarding reference are unchanged; unused violations are0.
 
-A separate diagnostic build combining this rotation source with the immutable
-alerts candidate `bddb4938` and accepted #1087 measured 352517 B initial gzip and
-13381 core lines. It is not an accepted or published product revision.
-The owner explicitly approved resource-limit increases and stopping byte
-optimization ([decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
-The existing #898 ten-percent rule moves the absolute View wall 352000→387200
-and its reference 320000→352000, and the core cap 13327→14660 with the unchanged
-50-line band (effective 14710). Current own reserve is 35187 B; the observed
-combination reserve is 34683 B. Other core caps, performance/security/deadline
-thresholds and independent review authority remain unchanged. No cold seam
-was implemented. The final accepted combined graph is measured again by #1000
-after the actual #1070 merge; summed feature deltas do not substitute for it.
+Before accepted #1092, a separate build-only diagnostic combined rotation8b
+with immutable alertsbddb4938 on accepted #1087:352517 B initial gzip and13381
+core lines. It was not an accepted or published combination. The owner
+explicitly approved resource-limit increases and stopping byte optimization
+([decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
+The existing #898 ten-percent rule moves the absolute View wall352000→387200
+and its reference320000→352000, and the core cap13327→14660 with unchanged
+50-line band (effective14710). Current own headroom is35600 B. Other core caps,
+performance/security/deadline thresholds and independent review authority stay
+unchanged. No cold seam was implemented. #1000 measures its actual accepted
+combination after the #1070 merge; summed feature deltas never replace it.
 
 ## Historical pixel and timing boundary
 
@@ -128,8 +160,8 @@ is recorded separately; zero-angle scene geometry gets no change allowance.
 
 The complete timing series below belongs to frozen `55ead817d` / fingerprint `5610671c`
 against accepted #997 e5849080. It is historical author evidence, not a timing
-claim for current `7b533356`. Benchmark, common launch and helper inputs are
-byte-identical across the subsequent accepted changes. Product inputs are not:
+claim for current `7b533356`. Through the pre-#1092 checkpoint, benchmark, common launch and helper inputs
+were byte-identical across those accepted changes. Product inputs are not:
 accepted #1015 removes the retired ripple loop and General-save weather cleanup;
 accepted #1087 adds the more-info target resolver and dialog fields/locales.
 The stock large-house measurements do not invoke that new target action, but
@@ -138,7 +170,7 @@ absolute timings. No fresh timings are asserted after those rebases; ordinary
 exact-material CI remains mandatory. The resource-limit and unused-import
 changes add no new runtime behavior. All original RED/GREEN rows remain.
 
-## Final source verification
+## Earlier verification before accepted #1092
 
 The accepted #1022 merge `51fde59d` changes none of the frontend/capture/build
 inputs from verified `4c2ac36a0`. Rebase input equivalence was checked before
@@ -182,14 +214,14 @@ current vacuum paths stay direct children of the explicit rotation frame,
 separate from previous paths; UI-042 receives an actual1200px fixture host and
 waits for two wide tabs, retaining every grab/pointer assertion.
 
-The source tree remains exactly `dbbdbbb0bc1a44617a6116c7c1376012dca7189f`.
+That observer-repair checkpoint retained exactly `dbbdbbb0bc1a44617a6116c7c1376012dca7189f`.
 Build configuration and deterministic fixtures also match d375. Native HA
 verification imports the UI-lab server, browser attestation, bundle freshness
 and hp-test helper, with no Golden-harness import. Its82/12 author proof remains
 on7b, with unchanged reachable product inputs; it is not called a fresh0d3
 capture. The common Golden harness changed two readiness selectors, so the
-conservative full build/capture fingerprint is now0d3a1df9. The19-commit local
-ask rebase onto docs-only7af retains product source. The old published d375
+conservative full build/capture fingerprint was0d3a1df9 at that checkpoint. That19-commit local
+ask rebase onto docs-only7af retained product source. The old published d375
 material, failed CI report/artifact12733048625 and full logs remain preserved.
 
 On the new fingerprint, exactly three complete ordinary smokes passed:

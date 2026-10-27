@@ -6334,3 +6334,23 @@ Matched actual initial352013/editor364386/onboarding40343/raw3574092 carry
 own deltas2098/938/191/14637 into references351922/364395/raw3574222, preserving
 accepted gaps91/-9/-130 and all existing bands. This is fingerprint salt and
 fixture ownership accounting, not a performance improvement or byte chase.
+
+
+## Rotation integration after accepted #1092
+
+The actual accepted base d9d0d812 removes the obsolete outline SVG and fixes
+first-paint header measurement/compact-picker readiness. The rotation branch
+keeps that removal, all primary presentation planes and the merged native
+helpers. Fresh joint native82/12, all five own smokes, three affected neighbours,
+outline-removal guard, nine own Golden scenes, retained-path scene and matched
+Flat/ISO zero-stage checks pass on fingerprint7ee5e787. These replace earlier
+runtime-equivalence arguments as current evidence; no new benchmark was run.
+
+The single pinned Linux Node22.23.2 baseline build c890e4a0 is immutable and
+fully asset-hash/topology verified. Matched initial349536→351600 (+2064),
+editor363437→364355 (+918), onboarding40156→40323 (+167), raw3557327→3571863
+(+14536). References351888/364375/raw3574121 preserve inherited gaps
+-288/-20/-2258 B, including the inherited raw shrink;2000 B bands remain.
+Port374→378/ref372→376 retains gap2/band5; other metrics have no own reference
+change and no unused violation. Absolute387200 and core14660+50 retain the
+owner's explicit resource recalibration. No #1092-only exception is borrowed.
