@@ -628,8 +628,9 @@ hold and context-menu handlers stay independent.
 
 `settings` is a local UI action (#1050), not a Toggle/Run intent. Short pointer
 and keyboard activation enter the existing marker dialog before service binding
-or confirmation checks; View right click uses the same entry independently of
-the saved action. The shared dialog request owns lazy loading, current writer/
+or confirmation checks. In ordinary View, right click first opens the device
+menu; its Settings command uses the same guarded dialog entry independently of
+the saved tap action. The shared dialog request owns lazy loading, current writer/
 kiosk/loaded authority, navigation retirement and exact current marker binding.
 No service or successful-command press feedback is created. Denial shows the
 localized permission hint without loading the editor or opening another card.

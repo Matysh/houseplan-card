@@ -1822,7 +1822,7 @@ the default: it keeps the marker's normal appearance, hover, long-press House
 Plan card and the independent right-click device menu while disabling only
 short activation. Right click opens the device menu regardless of the saved tap action; Settings is its first command.
 
-**Device settings** also works by a short tap, Enter or Space. View keeps the
+When **Device settings** is the saved tap action, a short tap, Enter or Space opens it. View keeps the
 same plan and space; closing the dialog returns there. Users without House Plan
 edit permission and everyone in kiosk see a permission hint; no settings,
 information card or HA more-info opens. HA admin status alone does not replace
