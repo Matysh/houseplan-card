@@ -68,7 +68,10 @@ try {
   await page.keyboard.press('Escape'); await confirm.waitFor({ state: 'detached' });
   check('cancel Delete writes nothing', (await writes()).writes.length, beforeDelete);
   await page.evaluate(() => { window.__menuTest.rejectNext = true; });
-  await open(); await action('visibility').click(); await page.evaluate(() => window.__hpTest.waitForWrites()); await settled();
+  await open(); await action('visibility').click();
+  const refusal = await page.evaluate(() => window.__hpTest.waitForWrites().then(() => null, error => error.message));
+  check('refused Hide observes the actual rejected writer', refusal, 'Deliberate View menu persistence refusal');
+  await settled();
   check('refused Hide rolls back the visible marker and saved flag', await page.evaluate(async () => {
     const cfg = (await window.__card.hass.callWS({ type: 'houseplan/config/get' })).config;
     return !window.__menuTest.rejectNext && !cfg.markers.find(m => m.id === 'd_temp').hidden
