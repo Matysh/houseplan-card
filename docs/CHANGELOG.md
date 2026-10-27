@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Save settings and device edits on a large house faster: the server validates
+  and canonicalises only the floors and devices the save changed, and walks
+  states, registries and plan folders only when the save can use the result.
+  Stored documents, revisions, events and errors are unchanged. (#1096)
+
 - Choose the compact floor selector before a warm card first paints, preventing
   a 9px header/stage jump when opening the plan again. (#1092)
 

@@ -158,6 +158,10 @@ def collect_attachments(
     # rule is exactly right there even on the timer.
     now_s = time.time() if now is None else now
     staging_cutoff = now_s - PLAN_ORPHAN_TTL_S
+    # #1096: a device folder can lose a file only when the commit dropped a
+    # reference; a commit that dropped none has nothing to find inside device
+    # folders, so they are not entered. Staging folders still age out below.
+    can_drop = bool(old_refs - new_refs)
     removed = 0
     try:
         folders = sorted(p for p in files_dir.iterdir() if p.is_dir()) if files_dir.is_dir() else []
@@ -169,6 +173,8 @@ def collect_attachments(
         # A staging folder only ever holds an upload from a dialog that was never
         # saved — unambiguous, so an hour is right, and no device owns it.
         staging = folder.name.startswith("up_")
+        if not staging and not can_drop:
+            continue
         try:
             items = sorted(p for p in folder.iterdir() if p.is_file())
         except OSError:
@@ -417,6 +423,10 @@ def collect_plans(
         name for space, name in old_by_space.items()
         if new_by_space.get(space) and new_by_space[space] != name
     }
+    if not replaced:
+        # #1096: nothing was superseded, so no file can qualify below; the
+        # directory walk only ever served the `replaced` branch.
+        return 0
     removed = 0
     try:
         items = sorted(plans_dir.iterdir()) if plans_dir.is_dir() else []

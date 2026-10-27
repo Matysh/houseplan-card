@@ -94,6 +94,26 @@ def config_entry_ids(device):
     return device.config_entries
 
 
+def lqi_scope_key(config: dict) -> tuple:
+    """Everything the coordinator reads of a saved config (#1096): the inputs
+    of `represented_devices` — bound room areas and the bindings of active
+    markers, order-independent — plus the Z2M base topics of the topology
+    settings. Two configs with the same key keep the same scope, bindings and
+    retained topics against the same registries."""
+    areas = {room.get("area") for space in config.get("spaces", []) if isinstance(space, dict)
+             for room in space.get("rooms", []) if isinstance(room, dict) and room.get("area")}
+    bindings = {marker.get("binding") for marker in config.get("markers", [])
+                if isinstance(marker, dict) and marker.get("removed") is not True
+                and isinstance(marker.get("binding"), str)}
+    topology = (config.get("settings") or {}).get("zigbee_topology") or {}
+    topics = topology.get("z2m_base_topics") if isinstance(topology, dict) else None
+    return (
+        tuple(sorted(str(area) for area in areas)),
+        tuple(sorted(bindings)),
+        tuple(str(topic) for topic in topics) if isinstance(topics, list) else None,
+    )
+
+
 def represented_devices(config: dict, registry, entities: dict) -> set[str]:
     """Read scope includes hidden markers and bound room inventories, never neighbours."""
     scope: set[str] = set()

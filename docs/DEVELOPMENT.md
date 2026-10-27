@@ -95,6 +95,30 @@ Flat/2.5D/static Glow and LED, oblique/partition hosts and an exterior source.
 host negatives and the static retained-index case. These are ordinary inputs;
 mutation declarations are checked statically and run only nightly.
 
+## Scoped config/set (#1096)
+
+An ordinary `config/set` validates only the spaces and markers it touched
+(`validation.validate_scoped_candidate`, ARCHITECTURE.md › Integration WS API
+› *Scoped ordinary write*). Two rules keep that sound. **A new `CONFIG_SCHEMA`
+step** must be idempotent on its own output and is listed in
+`test_issue_1096_config_schema_is_idempotent_on_its_own_output`
+(`tests_backend/test_validation.py`), which pins the step tuple; a step that
+reads more than one space or marker at once (links, totals, cross-space
+references) goes into the "whole document" group of `validate_scoped_candidate`,
+never into the per-record projection. **A new per-record validator** on the
+write path gets its own counter case in
+`tests_backend/test_ha_config_set_scoped.py` (AC1 corpus: the scoped result
+must equal `CONFIG_SCHEMA(candidate)`; AC2: floors of 1, 2 and 4 rooms, so a
+count names the floors). Any writer that stores a configuration outside
+`ws_config_set` must clear `HouseplanData.schema_clean_rev`
+(`async_save_config_state` and `_commit_pair` already do); never set the stamp
+elsewhere. Run `python -m pytest tests_backend/test_ha_config_set_scoped.py
+tests_backend/test_validation.py -q` in the pinned HA venv; the budget case
+(`-k budget -s`) prints the measured phases on the browser large-house
+fixture — the [phase report](analysis/1096-config-set-scoped.md) holds the
+accepted numbers. The large-house fixture is a legacy (pre-v8) document, so a
+floor edit there also pays its wall-model migration in the junction step.
+
 ## Editor command latency (#1075)
 
 Use `node demo/smoke_wall_node_delete.mjs` for native right-click ownership,

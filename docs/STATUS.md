@@ -31,10 +31,18 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.2** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5674 · pure backend 687 · HA-harness backend 585 · browser smokes 460 (`npm run inventory`) |
+| Tests | Node unit 5674 · pure backend 688 · HA-harness backend 598 · browser smokes 460 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
+
+Scoped config/set (#1096) validates and canonicalises only the touched spaces
+and markers of a document the same runtime validated whole (an in-memory clean
+stamp every other writer clears); whole-document steps, the stored document,
+revisions, events and error codes are unchanged. State, registry, LQI-scope and
+folder walks run only when the write can use their result. The budget witness
+compares the scoped pass with the full pass in one process on the browser
+large-house fixture; the absolute times are reported, not judged.
 
 Zigbee LQI cost (#1090) is separated into structural refresh and single-source
 value projection for Z2M/ZHA. Native registry/config-entry events invalidate

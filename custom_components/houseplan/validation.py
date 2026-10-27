@@ -12,7 +12,10 @@ from collections import Counter
 
 import voluptuous as vol
 
-from custom_components.houseplan.config_migrations import canonical_config
+from custom_components.houseplan.config_migrations import (
+    canonical_config,
+    needs_canonical_config,
+)
 from custom_components.houseplan.const import MAX_CONFIG_TEXT
 from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_config_geometry,
@@ -30,7 +33,7 @@ from custom_components.houseplan.partition_promotion import (
     same_partition_wall_promotion,
 )
 from custom_components.houseplan.room_appearance import (
-    normalize_room_appearance,
+    materialize_space_appearance,
     preserve_space_appearance,
 )
 from custom_components.houseplan.vacuum_routes import validate_marker_routes
@@ -244,8 +247,38 @@ def _restore_wall_model_fields(config: dict, previous: dict) -> None:
                 opening["host"] = copy.deepcopy(old_host)
 
 
-def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
-    """Do not let omission of model_version bypass v8 semantic validation."""
+def _projection_differs(config: dict, previous: dict, projection, touched: set[str] | None) -> bool:
+    """`projection(config) != projection(previous)` without projecting untouched spaces.
+
+    The projections are per-space lists in document order, so two documents
+    differ exactly when their space id order differs or a touched space's
+    projection differs; an untouched space equals its stored record and so
+    does its projection (#1096). `touched is None` keeps the whole comparison.
+    """
+    if touched is None:
+        return projection(config) != projection(previous)
+    new_spaces = [s for s in config.get("spaces") or [] if isinstance(s, dict)]
+    old_spaces = [s for s in previous.get("spaces") or [] if isinstance(s, dict)]
+    if [s.get("id") for s in new_spaces] != [s.get("id") for s in old_spaces]:
+        return True
+    for new_space, old_space in zip(new_spaces, old_spaces, strict=True):
+        key = str(new_space.get("id"))
+        if key not in touched and new_space.get("id") is not None:
+            continue
+        if projection({"spaces": [new_space]}) != projection({"spaces": [old_space]}):
+            return True
+    return False
+
+
+def validate_wall_model_transition(
+    config: dict, previous: dict | None, *, touched: set[str] | None = None,
+) -> None:
+    """Do not let omission of model_version bypass v8 semantic validation.
+
+    `touched` (#1096): ids of the spaces an ordinary write changed; the
+    catalogue projections are then compared for those spaces only, with the
+    same verdict as the whole-document comparison.
+    """
     try:
         old_model = int((previous or {}).get("model_version", 0))
         new_model = int(config.get("model_version", 0))
@@ -276,9 +309,8 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
         raise WallModelClientOutdatedError(
             f"stored model={old_model}; submitted legacy room_drafts model={new_model}"
         )
-    contour_geometry_changed = (
-        _catalog_coupled_wall_geometry_projection(config)
-        != _catalog_coupled_wall_geometry_projection(previous)
+    contour_geometry_changed = _projection_differs(
+        config, previous, _catalog_coupled_wall_geometry_projection, touched,
     )
     if old_model >= 8 and new_model < 8:
         if not contour_geometry_changed:
@@ -305,7 +337,7 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
         # first write of a newer client legitimately drops legacy projection
         # fields (an orphan open_span/open_to) without touching the catalogue;
         # treating that as "outdated" wedged every structural write forever.
-        if _wall_catalog_projection(config) == _wall_catalog_projection(previous):
+        if not _projection_differs(config, previous, _wall_catalog_projection, touched):
             raise WallModelClientOutdatedError(
                 f"stored model={old_model}; unchanged wall catalogue"
             )
@@ -2434,6 +2466,21 @@ def preserve_summary_panel_namespace(config: dict, previous: dict | None) -> Non
         new_settings["summary_panel"] = copy.deepcopy(old_settings["summary_panel"])
 
 
+def summary_panel_entity_ids(panel: object) -> set[str]:
+    """Entity ids a summary panel's value blocks reference (#1096)."""
+    ids: set[str] = set()
+    if not isinstance(panel, dict):
+        return ids
+    for block in panel.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        for item in block.get("values") or []:
+            source = item.get("source") if isinstance(item, dict) else None
+            if isinstance(source, dict) and source.get("type") == "entity" and isinstance(source.get("entity_id"), str):
+                ids.add(source["entity_id"])
+    return ids
+
+
 def validate_summary_panel_references(
     config: dict, previous: dict | None, readable_entity_ids: set[str]
 ) -> None:
@@ -2485,7 +2532,12 @@ def prepare_ordinary_summary_candidate(
     preserve_summary_panel_namespace(candidate, previous)
     preserve_led_strips(candidate, previous)
     preserve_space_appearance(candidate, previous)
-    checked = normalize_room_appearance(normalize(candidate))
+    checked = normalize(candidate)
+    # The schema returned a fresh document: materialise in place instead of
+    # copying it once more (#1096). Present fields stay as `setdefault` kept them.
+    general = checked.get("settings") or {}
+    for space in checked.get("spaces") or []:
+        materialize_space_appearance(space, general)
     validate_summary_panel_references(checked, previous, readable_entity_ids)
     return checked
 
@@ -2507,8 +2559,11 @@ def normalize_space_display(config: dict) -> dict:
     return config
 
 
-CONFIG_SCHEMA = vol.All(
-    vol.Schema(
+# #1096: the type schema is its own object so the scoped ordinary write can run
+# it over a projection (touched spaces/markers only) and compose the remaining
+# whole-document steps itself. `CONFIG_SCHEMA` below is unchanged for every
+# other caller: the same schema followed by the same steps in the same order.
+CONFIG_TYPE_SCHEMA = vol.Schema(
         {
             vol.Optional("model_version"): vol.All(
                 vol.Coerce(int), vol.Range(min=0, max=1_000_000)
@@ -2579,7 +2634,10 @@ CONFIG_SCHEMA = vol.All(
             ),
         },
         extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading
-    ),
+)
+
+CONFIG_SCHEMA = vol.All(
+    CONFIG_TYPE_SCHEMA,
     canonical_config,
     canonicalize_config_geometry,
     _config_wall_segment_invariants,
@@ -2588,3 +2646,141 @@ CONFIG_SCHEMA = vol.All(
     config_led_strip_links,
     normalize_space_display,
 )
+
+
+# ---------- #1096: scoped ordinary write ----------
+#
+# An ordinary `config/set` validates and canonicalises only what the write
+# touched. The stored document already is the output of this very schema
+# (every ordinary write stores `CONFIG_SCHEMA(candidate)`, and the schema is
+# idempotent on its own output — `test_config_schema_is_idempotent`), so a
+# space or marker record that equals its stored record IS its own validated
+# form. Per-record steps run for touched records only; every step that reads
+# more than one record runs on the merged whole document, exactly as before.
+#
+# Steps and where they run in the scoped pass:
+#   CONFIG_TYPE_SCHEMA            top level + settings whole; SPACE_SCHEMA and
+#                                 MARKER_SCHEMA for touched records only
+#   canonical_config              whole merged document (selector scan)
+#   canonicalize_config_geometry  touched spaces only (per space)
+#   _config_wall_segment_invariants touched spaces only (per space + model_version)
+#   config_led_strip_links        whole merged document (marker ↔ strip, cross-space)
+#   normalize_space_display       whole merged document (reads global bg_mode)
+# Adding a step to CONFIG_SCHEMA that reads several spaces or markers at once
+# must add it to the "whole document" group here — docs/DEVELOPMENT.md, #1096.
+
+_RECORD_CAPS = vol.Schema({
+    vol.Required("spaces"): vol.Length(max=MAX_SPACES),
+    vol.Required("markers"): vol.Length(max=MAX_MARKERS),
+})
+
+
+class OrdinaryWriteScope:
+    """What an ordinary write touched, judged after the preservation steps."""
+
+    __slots__ = ("touched_spaces", "touched_markers", "full_reason")
+
+    def __init__(self, touched_spaces: set[str], touched_markers: set[str], full_reason: str | None) -> None:
+        self.touched_spaces = touched_spaces
+        self.touched_markers = touched_markers
+        self.full_reason = full_reason
+
+    @property
+    def full(self) -> bool:
+        return self.full_reason is not None
+
+
+def _record_key(record: object) -> str | None:
+    return str(record.get("id")) if isinstance(record, dict) and record.get("id") is not None else None
+
+
+def ordinary_write_scope(candidate: dict, stored: dict | None) -> OrdinaryWriteScope:
+    """Touched spaces/markers of `candidate` against `stored`, or why the
+    whole document must be validated.
+
+    Full pass when: no stored document; `model_version` differs (every
+    per-space invariant reads it); global `settings.bg_mode` differs
+    (`normalize_space_display` reads it for every space). Records without an
+    id are always touched. Removed records are not "touched" — the steps that
+    care about them read the whole merged document.
+    """
+    if not isinstance(stored, dict) or not stored:
+        return OrdinaryWriteScope(set(), set(), "no stored document")
+    if (not isinstance(candidate.get("spaces"), list) or not isinstance(candidate.get("markers", []), list)
+            or not isinstance(candidate.get("settings", {}), dict)):
+        # The type schema words the refusal of a malformed top level.
+        return OrdinaryWriteScope(set(), set(), "malformed top level")
+    if candidate.get("model_version") != stored.get("model_version"):
+        return OrdinaryWriteScope(set(), set(), "model_version differs")
+    if ((candidate.get("settings") or {}).get("bg_mode")
+            != (stored.get("settings") or {}).get("bg_mode")):
+        return OrdinaryWriteScope(set(), set(), "global bg_mode differs")
+    if needs_canonical_config(candidate) or needs_canonical_config(stored):
+        return OrdinaryWriteScope(set(), set(), "legacy selectors")
+    old_spaces = {_record_key(s): s for s in stored.get("spaces") or [] if _record_key(s)}
+    old_markers = {_record_key(m): m for m in stored.get("markers") or [] if _record_key(m)}
+    touched_spaces: set[str] = set()
+    for space in candidate.get("spaces") or []:
+        key = _record_key(space)
+        if key is None or old_spaces.get(key) != space:
+            touched_spaces.add(key if key is not None else "")
+    touched_markers: set[str] = set()
+    for marker in candidate.get("markers") or []:
+        key = _record_key(marker)
+        if key is None or old_markers.get(key) != marker:
+            touched_markers.add(key if key is not None else "")
+    return OrdinaryWriteScope(touched_spaces, touched_markers, None)
+
+
+def validate_scoped_candidate(candidate: dict, stored: dict, scope: OrdinaryWriteScope) -> dict:
+    """`CONFIG_SCHEMA(candidate)` with per-record work for touched records only.
+
+    Returns a new document equal to what `CONFIG_SCHEMA(candidate)` returns
+    (`test_scoped_candidate_equals_config_schema`). Untouched records come from
+    the candidate itself — equal to the stored record by definition of the
+    scope — so the stored objects are never aliased or mutated.
+    """
+    if scope.full:
+        return CONFIG_SCHEMA(candidate)
+    all_spaces = candidate.get("spaces") or []
+    all_markers = candidate.get("markers") or []
+    is_touched_space = [(_record_key(s) is None) or (_record_key(s) in scope.touched_spaces) for s in all_spaces]
+    is_touched_marker = [(_record_key(m) is None) or (_record_key(m) in scope.touched_markers) for m in all_markers]
+    head = {key: value for key, value in candidate.items() if key not in ("spaces", "markers")}
+    head["spaces"] = [s for s, touched in zip(all_spaces, is_touched_space, strict=True) if touched]
+    head["markers"] = [m for m, touched in zip(all_markers, is_touched_marker, strict=True) if touched]
+    document_index = {
+        "spaces": [index for index, touched in enumerate(is_touched_space) if touched],
+        "markers": [index for index, touched in enumerate(is_touched_marker) if touched],
+    }
+    try:
+        checked = CONFIG_TYPE_SCHEMA(head)
+    except vol.Invalid as err:
+        # The error names the record by its index in the whole document, as
+        # the full pass does, not by its index in the projection.
+        for error in (err.errors if isinstance(err, vol.MultipleInvalid) else [err]):
+            path = error.path
+            if len(path) >= 2 and path[0] in document_index and isinstance(path[1], int) \
+                    and path[1] < len(document_index[path[0]]):
+                path[1] = document_index[path[0]][path[1]]
+        raise
+    # The list caps judge the whole document, not the projection; after the
+    # records, as in the type schema, and worded by the same dict schema.
+    _RECORD_CAPS({"spaces": all_spaces, "markers": all_markers})
+    # `canonical_config` ran as a no-op: a document with legacy selectors is a
+    # full pass (`ordinary_write_scope`), so the step order of CONFIG_SCHEMA
+    # (migrate, then canonicalise) is preserved without a whole-document copy.
+    # Per-space steps on the touched projection only.
+    projection = canonicalize_config_geometry({
+        **({"model_version": checked["model_version"]} if "model_version" in checked else {}),
+        "spaces": checked["spaces"],
+    })
+    _config_wall_segment_invariants(projection)
+    touched_iter = iter(projection["spaces"])
+    marker_iter = iter(checked["markers"])
+    merged = dict(checked)
+    merged["spaces"] = [next(touched_iter) if touched else s for s, touched in zip(all_spaces, is_touched_space, strict=True)]
+    merged["markers"] = [next(marker_iter) if touched else m for m, touched in zip(all_markers, is_touched_marker, strict=True)]
+    # Whole-document steps, in CONFIG_SCHEMA order.
+    merged = config_led_strip_links(merged)
+    return normalize_space_display(merged)

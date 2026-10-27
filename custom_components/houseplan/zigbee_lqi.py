@@ -18,6 +18,7 @@ from .zigbee_lqi_model import (
     MAX_DEVICES,
     MAX_SNAPSHOT_BYTES,
     config_entry_ids,
+    lqi_scope_key,
     registry_ieee,
     represented_devices,
 )
@@ -50,10 +51,14 @@ class ZigbeeLqiCoordinator:
         self._zha_entry = None
         self._zha_devices: dict = {}
         self._zha_available = False
+        # #1096: what `represented_devices` read of the last applied config;
+        # None until setup so the first save after setup always rebuilds.
+        self._scope_key = None
         self.z2m = Z2mLqiReader(hass, self.request_refresh, self._z2m_value, self._z2m_removed)
 
     async def async_setup(self, config):
         self.config = config
+        self._scope_key = lqi_scope_key(config)
         self.z2m.retain_topics(self._topics())
         @callback
         def registry_changed(event):
@@ -92,7 +97,14 @@ class ZigbeeLqiCoordinator:
         self.request_refresh(structural=False)
 
     async def async_config_saved(self, config):
+        # #1096: `represented_devices` reads only room areas and active marker
+        # bindings of the config (plus the registries). A save that changed
+        # neither keeps the scope, bindings and rows: no registry walk.
+        scope_key = lqi_scope_key(config)
         self.config = config
+        if scope_key == self._scope_key:
+            return
+        self._scope_key = scope_key
         # Retire read authority now; the asynchronous transport refresh cannot
         # leave devices from a removed plan visible in a WS snapshot.
         devices = dr.async_get(self.hass)

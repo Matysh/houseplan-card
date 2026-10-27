@@ -145,6 +145,11 @@ def canonical_config(config: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def needs_canonical_config(config: dict[str, Any]) -> bool:
+    """Public selector scan: True when `canonical_config` would copy and migrate (#1096)."""
+    return _needs_v1(config)
+
+
 def _needs_v1(config: dict[str, Any]) -> bool:
     """Inspect selectors only; current reads never deepcopy plan geometry."""
     settings = config.get("settings") or {}

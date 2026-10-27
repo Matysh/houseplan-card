@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1096,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 runs the whole geometric validation pipeline, a full state/registry walk and a second canonicalisation on every ordinary config/set, whatever the write touched. The server now validates and canonicalises only the touched spaces and markers of a document it validated itself, and walks states, the registry, the LQI scope and the file folders only when the write can use the result. The stored document, protocol, revisions, events and error codes are unchanged.",
+  "summary": {
+    "ru": "Сохранение настроек и маркеров на большом доме стало заметно быстрее: сервер проверяет только то, что изменилось.",
+    "en": "Saving settings and markers on a large house is noticeably faster: the server validates only what changed."
+  }
+}

@@ -1732,6 +1732,38 @@ still recognised in stored config but no longer served
 - *Validation is the server's.* Schema/semantic checks run in the executor
   under the lock; the browser never parses an import. Frontend preflight
   (`src/plan-geometry-preflight.ts`) only avoids doomed calls.
+- *Scoped ordinary write* (#1096). `config/set` compares the candidate with
+  the stored document record by record (`==`, after the preservation steps
+  for the summary panel, LED shapes and room appearance) and runs the
+  per-record steps — `SPACE_SCHEMA`, geometry canonicalisation, wall-segment
+  invariants, junction counting (`validate_junction_limits` copies the
+  baseline counts of untouched spaces) — for the touched spaces and markers
+  only; every step that reads more than one record (top level and
+  `settings`, `canonical_config`, LED strip links, `normalize_space_display`,
+  the marker validators, passages, hosts, summary references, the
+  wall-model transition guard) still runs on the whole merged document, in
+  the order of `CONFIG_SCHEMA`. The result equals `CONFIG_SCHEMA(candidate)`
+  (`tests_backend/test_ha_config_set_scoped.py`). The scoped pass is allowed
+  only under the **clean stamp**: `HouseplanData.schema_clean_rev` holds the
+  rev whose document an ordinary `config/set` of this runtime validated
+  through the full schema (`CONFIG_SCHEMA(stored) == stored`, pinned by
+  `test_issue_1096_config_schema_is_idempotent_on_its_own_output`). The stamp
+  lives in memory only; every other writer (`async_save_config_state`,
+  `_commit_pair`: Optimize, import, restore, copy, space delete, migration on
+  read) clears it, a restart starts without it, and a refused write leaves it
+  as it was. A full pass also runs when `model_version` or the global
+  `bg_mode` differs or either document still carries legacy selectors. The
+  loop-side walks are conditional too: readable entities are looked up only
+  for a changed summary panel and only for the entities it references
+  (`hass.states.get` per id, no `async_all`), the radar registry only for a
+  changed radar block or `settings.radar`, the LQI scope only when room areas,
+  active marker bindings or Z2M base topics changed, plan/attachment folders
+  only when the commit replaced a plan or dropped an attachment (the `files`
+  root is still listed for the `up_*` staging sweep). The document is
+  canonicalised once (`async_save_config_state(..., canonical=True,
+  previous=…)` stores the validated document without re-reading the store);
+  `config/get` copies and resolves room appearance only for a legacy document
+  whose spaces lack `name_color`/`wall_fill`.
 - *Files* (`SCOPE.md` › Standing rule): uploads claim a fresh name
   (`reserve_filename`, `O_EXCL`), plans are copy-on-write
   `<space>.<token>.<ext>` (a space id cannot contain `.`), and `check_quota`
