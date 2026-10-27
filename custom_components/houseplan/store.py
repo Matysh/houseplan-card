@@ -262,7 +262,13 @@ async def async_save_config_state(
         except (TypeError, ValueError):
             previous_rev = 0
 
-    canonical_config = config if canonical else canonicalize_config_geometry(config)
+    if canonical:
+        # The ordinary write path hands over the output of CONFIG_SCHEMA, which
+        # ran `canonicalize_config_geometry` itself (#1096); the coordinate
+        # write-barrier guard pins that `canonical=True` has that one caller.
+        canonical_config = config
+    else:
+        canonical_config = canonicalize_config_geometry(config)
     payload = {**previous, "config": canonical_config, "rev": rev}
     # #1096: whatever this writer stores was not validated whole by the
     # ordinary write path of this runtime; the next ordinary write validates

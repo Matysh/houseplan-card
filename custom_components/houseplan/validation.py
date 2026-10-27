@@ -2653,7 +2653,7 @@ CONFIG_SCHEMA = vol.All(
 # An ordinary `config/set` validates and canonicalises only what the write
 # touched. The stored document already is the output of this very schema
 # (every ordinary write stores `CONFIG_SCHEMA(candidate)`, and the schema is
-# idempotent on its own output — `test_config_schema_is_idempotent`), so a
+# idempotent on its own output — `test_issue_1096_config_schema_is_idempotent_on_its_own_output`), so a
 # space or marker record that equals its stored record IS its own validated
 # form. Per-record steps run for touched records only; every step that reads
 # more than one record runs on the merged whole document, exactly as before.
@@ -2736,7 +2736,7 @@ def validate_scoped_candidate(candidate: dict, stored: dict, scope: OrdinaryWrit
     """`CONFIG_SCHEMA(candidate)` with per-record work for touched records only.
 
     Returns a new document equal to what `CONFIG_SCHEMA(candidate)` returns
-    (`test_scoped_candidate_equals_config_schema`). Untouched records come from
+    (`test_issue_1096_scoped_candidate_equals_config_schema`). Untouched records come from
     the candidate itself — equal to the stored record by definition of the
     scope — so the stored objects are never aliased or mutated.
     """

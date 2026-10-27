@@ -53,6 +53,25 @@ test('the canonical config writer cannot drop its expected revision (#340)', () 
     writeFileSync(contactPath, withoutCanonicalization);
     assert.ok(checkCoordinateWriteBarriers(fixtureRoot)
       .includes('frontend contact layout/set bypasses the canonical boundary'));
+    writeFileSync(contactPath, contacts);
+    // #1096: a second writer that claims its document is already canonical is
+    // reported, and so is the ordinary write when the claim moves away from the
+    // validated candidate.
+    const radarPath = resolve(fixtureRoot, 'custom_components/houseplan/radar_websocket.py');
+    const radar = readFileSync(radarPath, 'utf8');
+    writeFileSync(radarPath, `${radar}\n# await async_save_config_state(rt, cfg, rev, canonical=True)\n`);
+    assert.ok(checkCoordinateWriteBarriers(fixtureRoot)
+      .includes('backend canonical=True writer inventory: radar_websocket.py,websocket_api.py'));
+    writeFileSync(radarPath, radar);
+    const apiPath = resolve(fixtureRoot, 'custom_components/houseplan/websocket_api.py');
+    const api = readFileSync(apiPath, 'utf8');
+    const moved = api.replace('previous=data, canonical=True,', 'previous=data,')
+      .replace('await async_save_config_state(rt, candidate, new_rev, previous_rev=rev)',
+        'await async_save_config_state(rt, candidate, new_rev, previous_rev=rev, canonical=True)');
+    assert.notEqual(moved, api, 'fixture must move the canonical claim to another writer');
+    writeFileSync(apiPath, moved);
+    assert.ok(checkCoordinateWriteBarriers(fixtureRoot)
+      .includes('backend canonical=True write is not the validated ordinary candidate'));
   } finally {
     rmSync(fixtureRoot, { recursive: true, force: true });
   }
