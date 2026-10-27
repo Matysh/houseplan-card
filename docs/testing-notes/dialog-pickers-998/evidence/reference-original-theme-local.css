@@ -1,0 +1,67 @@
+/* Unmodified official HA 20260930.4 foundation tokens. */
+html{--ha-border-width-sm:1px;--ha-border-width-md:2px;--ha-border-width-lg:3px;--ha-border-radius-sm:4px;--ha-border-radius-md:8px;--ha-border-radius-lg:12px;--ha-border-radius-xl:16px;--ha-border-radius-2xl:20px;--ha-border-radius-3xl:24px;--ha-border-radius-4xl:28px;--ha-border-radius-5xl:32px;--ha-border-radius-6xl:36px;--ha-border-radius-pill:9999px;--ha-border-radius-circle:50%;--ha-border-radius-square:0;--ha-space-1:4px;--ha-space-2:8px;--ha-space-3:12px;--ha-space-4:16px;--ha-space-5:20px;--ha-space-6:24px;--ha-space-7:28px;--ha-space-8:32px;--ha-space-9:36px;--ha-space-10:40px;--ha-space-11:44px;--ha-space-12:48px;--ha-space-13:52px;--ha-space-14:56px;--ha-space-15:60px;--ha-space-16:64px;--ha-space-17:68px;--ha-space-18:72px;--ha-space-19:76px;--ha-space-20:80px;--ha-animation-duration-none:1ms;--ha-animation-duration-instant:75ms;--ha-animation-duration-fast:.15s;--ha-animation-duration-normal:.25s;--ha-animation-duration-slow:.35s}@media (prefers-reduced-motion:reduce){html{--ha-animation-duration-none:1ms;--ha-animation-duration-instant:1ms;--ha-animation-duration-fast:1ms;--ha-animation-duration-normal:1ms;--ha-animation-duration-slow:1ms}}
+
+@font-face { font-family:Roboto; font-style:normal; font-weight:400; font-display:swap; src:url('/static/fonts/roboto/Roboto-Regular.woff2') format('woff2'); }
+@font-face { font-family:Roboto; font-style:normal; font-weight:500 900; font-display:swap; src:url('/static/fonts/roboto/Roboto-Medium.woff2') format('woff2'); }
+:root {
+  color-scheme:dark;
+  --safe-width:100vw; --safe-height:100dvh; --safe-area-inset-top:0px; --safe-area-inset-bottom:0px; --safe-area-inset-left:0px; --safe-area-inset-right:0px;
+  --primary-color:rgb(224,138,0); --accent-color:rgb(224,138,0); --mdc-theme-primary:rgb(224,138,0);
+  --primary-text-color:rgb(228,228,231); --secondary-text-color:rgb(138,140,153);
+  --card-background-color:rgb(35,36,43); --ha-card-background:rgb(35,36,43);
+  --divider-color:rgb(16,18,21); --primary-background-color:rgb(16,18,21); --secondary-background-color:rgb(28,29,33);
+  --app-header-background-color:rgb(16,18,21); --app-header-text-color:rgb(228,228,231);
+  --text-primary-color:#fff; --disabled-text-color:#73747e; --error-color:rgb(255,97,116);
+  --warning-color:rgb(224,138,0); --success-color:rgb(32,126,71); --header-height:56px; --mdc-icon-size:24px;
+  --ha-font-family-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+  --ha-font-family-heading:var(--ha-font-family-body); --ha-font-family-code:var(--ha-font-family-body);
+  --ha-font-weight-body:400; --ha-font-weight-normal:400; --ha-font-weight-medium:600; --ha-font-weight-bold:600; --ha-font-weight-heading:600; --ha-font-weight-action:600;
+  --ha-font-size-scale:1; --ha-font-size-xs:10px; --ha-font-size-s:12px; --ha-font-size-m:14px; --ha-font-size-l:15px; --ha-font-size-xl:20px; --ha-font-size-2xl:24px; --ha-font-size-3xl:28px;
+  --mdc-typography-font-family:var(--ha-font-family-body); --mdc-typography-body1-font-family:var(--ha-font-family-body); --mdc-typography-button-font-family:var(--ha-font-family-body); --mdc-typography-button-font-weight:600;
+  --ha-dialog-border-radius:20px; --ha-dialog-scrim-backdrop-filter:brightness(68%);
+  --ha-color-form-background:rgb(46,48,56); --ha-color-form-background-hover:rgb(46,48,56); --ha-color-form-background-disabled:rgba(37,37,40,.5);
+  --ha-color-text-primary:rgb(240,243,255); --ha-color-text-secondary:#b3b3b3; --ha-color-text-disabled:#73747e;
+  --ha-color-fill-neutral-quiet-resting:rgb(35,36,43); --ha-color-fill-neutral-quiet-hover:rgb(46,48,56); --ha-color-fill-neutral-normal-resting:rgb(28,29,33);
+  --ha-color-fill-primary-loud-resting:rgb(224,138,0); --ha-color-fill-primary-loud-hover:#ad6b00; --ha-color-on-primary-loud:rgb(240,243,255);
+  --ha-color-fill-primary-normal-resting:rgba(224,138,0,.15); --ha-color-fill-primary-normal-hover:rgba(224,138,0,.25); --ha-color-on-primary-normal:#ffaf2e;
+  --ha-color-fill-disabled-loud-resting:rgba(158,158,158,.22); --ha-color-on-disabled-loud:rgba(158,158,158,.55);
+  --ha-color-fill-danger-loud-resting:rgb(255,97,116); --ha-color-on-danger-loud:rgb(240,243,255);
+  --ha-color-surface-default:#3f3f3f; --ha-color-surface-low:#262626; --ha-color-surface-lower:#000; --ha-color-on-surface-default:#f0f0f0;
+}
+:root[data-theme="light"] { color-scheme:light; --primary-text-color:#202124; --secondary-text-color:#65717a; --card-background-color:#fff; --ha-card-background:#fff; --divider-color:#e1e5e9; --primary-background-color:#f2f4f6; --secondary-background-color:#f6f7f9; --app-header-background-color:#fff; --app-header-text-color:#202124; --ha-color-text-primary:#202124; --ha-color-text-secondary:#65717a; --ha-color-form-background:#f5f6f8; --ha-color-form-background-hover:#eef0f3; --ha-color-fill-neutral-quiet-resting:#fff; --ha-color-fill-neutral-quiet-hover:#f4f5f7; --ha-color-on-surface-default:#202124; --ha-color-surface-default:#fff; --ha-color-surface-low:#f6f7f9; }
+html,body { margin:0; height:100%; overflow:hidden; background:var(--primary-background-color); color:var(--primary-text-color); font:14px Roboto,Noto,sans-serif; }
+#product { height:100%; min-height:0; }
+houseplan-panel { display:block; width:100%; }
+
+/* Computed values read from the owner's live HA UI on 2026-10-19.
+   No source theme or HA preferences are written. */
+:root:not([data-theme="light"]) {
+  --primary-color: rgb(224, 138, 0); --accent-color: rgb(224, 138, 0);
+  --primary-text-color: rgb(228, 228, 231); --secondary-text-color: rgb(138, 140, 153);
+  --card-background-color: rgb(35, 36, 43); --divider-color: rgb(16, 18, 21);
+  --primary-background-color: rgb(16, 18, 21); --secondary-background-color: rgb(28, 29, 33);
+  --error-color: rgb(234, 114, 135); --ha-card-border-radius: 20px;
+  --ha-color-border-primary-normal: hsl(from rgb(224, 138, 0) h s calc(l * 1.45));
+  --ha-color-fill-neutral-quiet-hover: rgb(46, 48, 56);
+  --ha-color-fill-neutral-quiet-resting: rgb(35, 36, 43);
+  --ha-color-fill-primary-loud-resting: rgb(224, 138, 0);
+  --ha-color-fill-primary-loud-hover: hsl(from rgb(224, 138, 0) h s calc(l * 0.70));
+  --ha-color-fill-primary-normal-resting: rgba(224, 138, 0, 0.15);
+  --ha-color-fill-primary-normal-hover: rgba(224, 138, 0, 0.25);
+  --ha-color-on-primary-loud: rgb(240, 243, 255);
+  --ha-color-on-primary-normal: hsl(from rgb(224, 138, 0) h s calc(l * 1.30));
+  --ha-color-form-background: rgb(46, 48, 56);
+  --ha-color-text-primary: rgb(240, 243, 255);
+  --ha-color-text-secondary: color-mix(in srgb, rgb(158, 158, 158) 40%, white);
+  --ha-card-border: none; --ha-card-border-width: 0;
+  --ha-card-border-color: rgba(0,0,0,0); --ha-color-focus: hsl(from rgb(158,158,158) h s calc(l * 1.30));
+  --state-active-color: rgb(224,138,0); --state-inactive-color: rgb(138,140,153);
+  --state-light-active-color: rgb(255,211,99); --state-binary_sensor-active-color: rgb(255,211,99);
+  --state-fan-active-color: rgb(0,188,212); --state-media_player-active-color: rgb(3,169,244);
+  --state-sensor-battery-high-color: rgb(32,126,71); --state-sensor-battery-medium-color: rgb(224,138,0);
+  --ha-color-on-disabled-loud: rgba(158,158,158,.55);
+  --ha-color-text-disabled: hsl(from rgb(158,158,158) h s calc(l * 1.30));
+  --wa-color-surface-default: rgb(35,36,43); --wa-color-brand-border-loud: rgb(224,138,0);
+  --wa-color-brand-fill-normal: rgba(224,138,0,.15);
+  --wa-color-brand-on-normal: hsl(from rgb(224,138,0) h s calc(l * 1.30));
+}

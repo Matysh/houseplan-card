@@ -1,6 +1,7 @@
 // #998: actual form sweep. Native selectors remain value sources; UI Kit owns
 // presentation, keyboard dismissal and viewport bounds in each dialog.
 import assert from 'node:assert/strict';
+import { watchPage, reportPageErrors } from './serve.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchHaDialogFixture, applyHaDialogTypography } from './helpers/ha-dialog-fixture.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
@@ -13,6 +14,7 @@ import { runExtraPickerSweep } from './helpers/dialog-picker-extra-998.mjs';
 
 const fixture = await launchHaDialogFixture({ authentic: true, viewport: {width:1280,height:1000} });
 const {page} = fixture, rows = [];
+watchPage(page);
 const output = new URL('../artifacts/dialog-picker-998-sweep/', import.meta.url);
 mkdirSync(output, {recursive:true});
 const settle = () => page.evaluate(() => window.__hpTest.settled());
@@ -117,9 +119,14 @@ try {
   await print.locator('[data-hp=dialog-cancel]').first().click();
   await expect(print).toHaveCount(0);
   await fixture.assertClean();
+  if (await reportPageErrors()) throw new Error('Uncaught browser exception in dialog sweep');
   writeFileSync(new URL('report.json',output),JSON.stringify({rows},null,2));
   console.log(`PASS #998 dialog sweep: ${rows.length} controls`);
-} finally { await fixture.close(); }
+} finally {
+  await reportPageErrors();
+  await fixture.close();
+  if (await reportPageErrors()) throw new Error('Late browser exception in dialog sweep');
+}
 
 // The selected CI smoke includes the genuine MDI component, not only native
 // select wrappers. Acquisition verifies the pinned official wheel before use;

@@ -1,5 +1,6 @@
 // #998: UI-029 on the genuine pinned HA picker; synthetic home only.
 import assert from 'node:assert/strict';
+import { watchPage, reportPageErrors } from '../serve.mjs';
 import { once } from 'node:events';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
@@ -26,7 +27,7 @@ try {
     if (url.origin === origin || ['data:', 'blob:'].includes(url.protocol)) return route.continue();
     external.push(url.origin + url.pathname); return route.abort();
   });
-  const page = await context.newPage();
+  const page = watchPage(await context.newPage());
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(origin);
   await page.waitForFunction(() => window.__lab?.card?._devices?.length > 0);
@@ -154,6 +155,7 @@ try {
       await picker().locator('ha-picker-combo-box input').fill('mdi:fan');
       await expect(picker().locator('ha-picker-combo-box ha-combo-box-item').filter({ hasText: /^\s*mdi:fan\s*$/ }).first()).toBeVisible();
       await search.press('ArrowDown');
+      await expect(picker().locator('ha-picker-combo-box .combo-box-row.selected').first()).toBeVisible();
       await cssWitness.observe(picker());
       const paint = await popup().evaluate(popover => {
         const body = getComputedStyle(popover.shadowRoot.querySelector('[part="body"]'));
@@ -224,8 +226,9 @@ try {
     await open(); assert.equal(await picker().evaluate(element => element.value), 'mdi:fan');
     await shell().locator('button.close').click(); await expect(shell()).toHaveCount(0);
   });
+  assert.equal(await reportPageErrors(), false, 'no late browser exception');
   assert.deepEqual(errors, [], 'no browser exception'); assert.deepEqual(external, [], 'no external traffic');
   const foreignCss = cssWitness.assertComplete();
   writeFileSync(new URL('report.json', output), JSON.stringify({ provenance: server.provenance, attestation, results, foreignCss }, null, 2));
   console.log(`OK #998 genuine HA: ${results.length} checks; ${server.provenance.frontendVersion}`);
-} finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }
+} finally { await reportPageErrors(); await browser.close(); await reportPageErrors(); await new Promise(resolve => server.close(resolve)); }
