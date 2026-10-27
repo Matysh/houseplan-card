@@ -6325,3 +6325,12 @@ the incoming gaps 91/-9/-130 B; all 2000 B bands remain. The four useful typed
 presentation ports move 374→378 against reference 372→376, preserving gap 2 and
 band 5. No other coupling reference changes. These are resource measurements,
 not evidence of loading speed or the future accepted alerts combination.
+
+
+The later #1070 observer-only repair keeps the exact d375 product source tree
+and build inputs. Two capture-harness readiness selectors change the global
+fingerprint to0d3a1df9; local native82/12 proof stays explicitly bound to7b.
+Matched actual initial352013/editor364386/onboarding40343/raw3574092 carry
+own deltas2098/938/191/14637 into references351922/364395/raw3574222, preserving
+accepted gaps91/-9/-130 and all existing bands. This is fingerprint salt and
+fixture ownership accounting, not a performance improvement or byte chase.

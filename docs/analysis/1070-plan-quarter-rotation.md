@@ -86,18 +86,18 @@ The immutable accepted #1087 checkout is `4c2ac36a0`. Its source fingerprint
 `8e4bf61d` exactly matches the copied accepted-equivalent artifact; every
 manifest asset SHA and topology was verified before the read-only copy.
 The earlier 349824 B issue-comment figure is not used as its actual size.
-The fresh current candidate fingerprint is `7b533356`.
+The fresh current candidate fingerprint is `0d3a1df9`.
 
 | Metric | Verified accepted artifact | Candidate | Own delta |
 | --- | ---: | ---: | ---: |
-| initial View gzip | 349915 | 352018 | +2103 |
-| lazy editor gzip | 363448 | 364390 | +942 |
-| onboarding gzip | 40152 | 40333 | +181 |
-| raw dist | 3559455 | 3574082 | +14627 |
+| initial View gzip | 349915 | 352013 | +2098 |
+| lazy editor gzip | 363448 | 364386 | +938 |
+| onboarding gzip | 40152 | 40343 | +191 |
+| raw dist | 3559455 | 3574092 | +14637 |
 | core source lines (trimmed) | 13361 | 13377 | +16 |
 
-Rolling references carry only those measured own costs: initial 349824→351927,
-editor 363457→364399, raw 3559585→3574212. Incoming gaps remain 91, -9 and -130 B,
+Rolling references carry only those measured own costs: initial 349824→351922,
+editor 363457→364395, raw 3559585→3574222. Incoming gaps remain 91, -9 and -130 B,
 respectively; all 2000 B bands remain. The host port has 374 actual members
 against reference 372 in the accepted base. Four useful presentation ports add
 `_framePercent`, `_planScreenDelta`, `_rotation` and `_planVisibleRect`:
@@ -112,7 +112,7 @@ The owner explicitly approved resource-limit increases and stopping byte
 optimization ([decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
 The existing #898 ten-percent rule moves the absolute View wall 352000→387200
 and its reference 320000→352000, and the core cap 13327→14660 with the unchanged
-50-line band (effective 14710). Current own reserve is 35182 B; the observed
+50-line band (effective 14710). Current own reserve is 35187 B; the observed
 combination reserve is 34683 B. Other core caps, performance/security/deadline
 thresholds and independent review authority remain unchanged. No cold seam
 was implemented. The final accepted combined graph is measured again by #1000
@@ -170,6 +170,34 @@ optional native HA verification tool. It is now explicitly classified as an
 externally cached author invocation alongside the existing #609/#870 tools;
 ordinary CI mobile smoke/Golden ownership remains intact. All28 existing
 check-inputs tests and the strict CLI coverage check pass after that repair. No physical tablet/GPU result is claimed.
+
+## Observer repair after ordinary CI
+
+The first ordinary push CI on d37523f09/fingerprint7b533356 passed61/65 smoke
+and121/122 Golden cases; CODE review had not started. All nine own scenes and
+the direct rotation cache-counter smoke passed. The four failed observers
+were repaired without changing product source, deadlines or baseline images:
+Static paper/backdrop order now uses their exact common SVG presentation plane;
+current vacuum paths stay direct children of the explicit rotation frame,
+separate from previous paths; UI-042 receives an actual1200px fixture host and
+waits for two wide tabs, retaining every grab/pointer assertion.
+
+The source tree remains exactly `dbbdbbb0bc1a44617a6116c7c1376012dca7189f`.
+Build configuration and deterministic fixtures also match d375. Native HA
+verification imports the UI-lab server, browser attestation, bundle freshness
+and hp-test helper, with no Golden-harness import. Its82/12 author proof remains
+on7b, with unchanged reachable product inputs; it is not called a fresh0d3
+capture. The common Golden harness changed two readiness selectors, so the
+conservative full build/capture fingerprint is now0d3a1df9. The19-commit local
+ask rebase onto docs-only7af retains product source. The old published d375
+material, failed CI report/artifact12733048625 and full logs remain preserved.
+
+On the new fingerprint, exactly three complete ordinary smokes passed:
+`smoke_backdrop`28.3s, `smoke_ui_lab_1081`5.7s and `smoke_vacuum_camera`17.3s.
+The targeted `vacuum-retained-path-diagnostics-dark` capture passed3.3s with
+all shape/style/retained-diagnostics oracles intact. New exact-material ordinary
+CI remains required. Measured fingerprint salt changes are recorded once,
+without byte optimization or another benchmark series.
 
 ## Preserved matched performance series
 
