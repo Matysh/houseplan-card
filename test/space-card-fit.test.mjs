@@ -20,9 +20,9 @@ test('space-card public config normalises and projects the framing policy once',
 test('space-card visual editor offers only localised content and house choices', () => {
   const editor = readFileSync(new URL('../src/space-editor.ts', import.meta.url), 'utf8');
   assert.match(editor, /name: 'fit'/);
-  assert.match(editor, /value: 'content', label: t\(this\._lang, 'editor\.fit_content'\)/);
-  assert.match(editor, /value: 'house', label: t\(this\._lang, 'editor\.fit_house'\)/);
-  assert.match(editor, /fit: t\(L, 'editor\.framing'\)/);
+  assert.match(editor, /value: 'content', label: settingsT\(this\._lang, 'editor\.fit_content'\)/);
+  assert.match(editor, /value: 'house', label: settingsT\(this\._lang, 'editor\.fit_house'\)/);
+  assert.match(editor, /fit: settingsT\(L, 'editor\.framing'\)/);
   assert.match(editor, /fit: resolveSpaceCardFit\(this\._config\.fit\)/);
   assert.doesNotMatch(editor, /value: 'cover'/);
 });

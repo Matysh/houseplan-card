@@ -300,7 +300,7 @@ import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
 import {
-  ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, projectedFrame, isoCameraFor,
+  ISO_WALL_HEIGHT, projectedFrame, isoCameraFor,
 } from './iso-projection';
 import {
   PLAN_ROTATION_EVENT, PLAN_ROTATION_STORAGE, devicePlanRotation, stepPlanRotation,
