@@ -34,6 +34,7 @@ elements:
       left: 90%
       top: 8%
       color: white
+      font-size: 20px
   - type: state-label
     entity: climate.hall
     attribute: current_temperature
@@ -78,7 +79,7 @@ elements:
   - type: service-button
     title: Movie scene
     service: scene.turn_on
-    target:
+    service_data:
       entity_id: scene.movie
     style:
       left: 80%
@@ -103,3 +104,31 @@ elements:
     style:
       left: 101%
       top: 5%
+  - type: icon
+    title: Night script
+    icon: mdi:play
+    tap_action:
+      action: call-service
+      service: script.night
+      confirmation: true
+    style:
+      left: 31.125%
+      top: 72.75%
+  - type: service-button
+    title: Morning automation
+    service: automation.trigger
+    service_data:
+      entity_id: automation.morning
+    style:
+      left: 42.125%
+      top: 13.75%
+  - type: state-icon
+    entity: light.edge_a
+    style:
+      left: 0%
+      top: 100%
+  - type: state-icon
+    entity: light.edge_b
+    style:
+      left: 100%
+      top: 0%

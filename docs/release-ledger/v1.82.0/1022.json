@@ -3,7 +3,7 @@
   "issue": 1022,
   "baseStable": "v1.82.0",
   "category": "major",
-  "rationale": "Adds a third external migration path: one Home Assistant picture-elements card becomes a House Plan space with the backdrop reference and devices, value badges and live labels at the card's percentage positions, with image proportions measured locally and a loss report before download. Serves administrators moving the most common community floorplan; tooling-class implementation deployed with the converter site, as #937.",
+  "rationale": "Author classification renewed for the implementation of accepted SPEC r2, rather than inherited from the early placeholder. Adds the third external migration path relative to v1.82.0: a local one-card picture-elements conversion with backdrop references, exact percentage positions, live labels and existing bounded Toggle/Run actions for bound/virtual markers. Includes manual/measured dimension ownership and an explicit per-element loss/count report. Standalone tooling serves administrator migration (J4); no card/backend/protocol growth, website deployment or release is included.",
   "summary": {
     "ru": "Внешний конвертер переносит карточку picture-elements: подложка ссылкой, устройства и подписи на своих местах, потери перечислены до скачивания.",
     "en": "The external converter brings a picture-elements card into House Plan: backdrop reference, devices and labels at their positions, losses listed before download."

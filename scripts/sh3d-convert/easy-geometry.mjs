@@ -20,12 +20,14 @@ export function numberAt(value, path, fallback) {
 
 export function makeIds(prefix) {
   const used = new Set();
+  const nextSuffix = new Map();
   return (kind, original, index = 0) => {
     const stem = String(original ?? index).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 35) || String(index);
     const base = `${prefix}-${kind}-${stem}`;
-    let value = base, suffix = 1;
+    let value = base, suffix = nextSuffix.get(base) || 1;
     while (used.has(value)) value = `${base}-${suffix++}`;
     used.add(value);
+    nextSuffix.set(base, suffix);
     return value;
   };
 }

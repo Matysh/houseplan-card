@@ -194,8 +194,11 @@
 - The external plan converter accepts a Home Assistant `picture-elements`
   card: the image becomes the backdrop reference and the state icons, badges
   and labels become devices and live text at the same positions. The page
-  measures the image file locally or takes the size typed in; everything it
-  cannot carry is listed before download. (#1022)
+  measures the image file locally or takes the size typed in. Entityless icons
+  and service buttons retain supported exact Run actions and confirmation;
+  unsupported actions become safe information/no-op. Confirmation on information
+  or no-op actions is reported as inactive. Loss codes, source indexes
+  and transferred/partial/skipped counts are shown before download. (#1022)
 - Show a waxing moon lit on the right and a waning moon on the left, keeping
   the north-up surface drawing unchanged across all backgrounds and cards. (#1006)
 - Give each vacuum its own path colour and transparency, with a thin unoutlined

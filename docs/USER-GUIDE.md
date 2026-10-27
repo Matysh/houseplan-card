@@ -3065,8 +3065,15 @@ The card has no geometry, so what transfers is the backdrop (a reference, as
 for Easy Floorplan) and the elements at their positions: `state-icon` and
 `icon` with an entity become devices, `state-badge` a device with its value
 badge, `state-label` live text with prefix and suffix; `title` becomes the
-device name, `tap_action` toggle / more-info / none transfer, other actions
-become “show information”. Rooms, walls, Area bindings and the scale do not
+device name. Entityless `icon` and `service-button` become virtual markers.
+More-info / none and own-entity Toggle are retained; lock/alarm remain inert.
+One exact `automation.trigger`, `script.turn_on` or `scene.turn_on` target
+without other parameters becomes Run; plain `script.<name>` runs that same
+script. Confirmation applies to Toggle/Run, with custom text/exemptions reported
+as loss. For info/none the stored flag is inactive and this is reported too.
+Other actions fall back to information for bound devices or none for virtual
+markers, with a report code. Legacy `service-button` reads
+`service`/`service_data`, not `tap_action`. Rooms, walls, Area bindings and the scale do not
 exist in the source: trace the rooms and set the scale in the editor afterwards
 — the devices stay where they are.
 
@@ -3075,8 +3082,14 @@ the image proportions: choose the image file (only its width and height are
 read, the file goes nowhere) or type the size in pixels. Without it the
 conversion does not start. Not transferred, each named in the report:
 `conditional` layers, `image` elements and state-dependent image swapping (use
-glow for lights), `service-button`, custom cards, CSS other than `left`/`top`,
-hold and double-tap actions, positions in pixels or outside the image.
+glow for lights), custom cards, CSS other than `left`/`top` percentages and
+literal text colour/px size,
+hold and double-tap actions, numeric positions without `%`, pixels or positions
+outside the image. Separate static `image` is skipped too; the card backdrop
+is handled separately. The report counts transferred, partial and skipped
+elements and gives each loss a stable code, source index and available ID.
+Fractional positions survive import without grid snapping. YAML and image
+files stay local; stale image completion cannot replace newer input.
 
 ### Storage locations
 

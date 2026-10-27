@@ -60,10 +60,13 @@ test('#1022 percentages of the image become the same fractions of the backdrop, 
 
 test('#1022 image proportions are never guessed', () => {
   assert.throws(() => convertPicture(card([{ type: 'state-icon', entity: 'light.a', ...at(1, 1) }]), fixed), error => error.code === 'picture_aspect_required');
-  for (const options of [{ imageWidth: 10, imageHeight: 1000 }, { imageWidth: 100 }, { aspect: 0 }, { aspect: 'x' }, { aspect: Infinity }])
+  for (const options of [{ imageWidth: 10, imageHeight: 1000 }, { imageWidth: 100 }, { aspect: 0 }, { aspect: 'x' }, { aspect: Infinity },
+    { imageWidth: 0, imageHeight: 1000 }, { imageWidth: -1600, imageHeight: 1000 },
+    { imageWidth: NaN, imageHeight: 1000 }, { imageWidth: 1600, imageHeight: Infinity }])
     assert.throws(() => pictureCanvas(options), error => error.code === 'picture_invalid_aspect', JSON.stringify(options));
   assert.deepEqual(pictureCanvas({ aspect: 2 }), { width: 1000, height: 500, measured: false });
-  assert.deepEqual(pictureCanvas({ imageWidth: 800, imageHeight: 600 }), { width: 800, height: 600, measured: true });
+  assert.deepEqual(pictureCanvas({ imageWidth: 800, imageHeight: 600 }), { width: 800, height: 600, measured: false });
+  assert.deepEqual(pictureCanvas({ imageWidth: 800, imageHeight: 600, imageMeasured: true }), { width: 800, height: 600, measured: true });
   const { report } = convertPicture(card([{ type: 'state-icon', entity: 'light.a', ...at(1, 1) }]), { ...fixed, aspect: 2 });
   assert.deepEqual(report.items.find(item => item.code === 'picture_size_aspect'), { code: 'picture_size_aspect', width: 1000, height: 500 });
   assert.ok(report.items.some(item => item.code === 'scale_default' && item.cmPerUnit === 1));
@@ -123,10 +126,10 @@ test('#1022 every element that cannot be carried is named once in the report, no
   const ids = ['lock-d', 'conditional', 'light-h', 'scene', 'icon', 'binary-sensor-g', 'binary-sensor-h', 'binary-sensor-i', 'light-s', 'light-m', 'not-an-entity', 'light-ok', 'light-centered']
     .map(stem => `picture-1-element-${stem}`);
   assert.deepEqual(codes(ids[0]), ['element_custom_skipped']);
-  assert.deepEqual(notes.find(note => note.id === ids[1]), { code: 'element_conditional_skipped', id: ids[1], count: 2 });
+  assert.equal(notes.find(note => note.id === ids[1]).count, 2);
   assert.deepEqual(codes(ids[2]), ['element_image_skipped']);
-  assert.deepEqual(notes.find(note => note.id === ids[3]), { code: 'element_type_skipped', id: ids[3], type: 'service-button' });
-  assert.deepEqual(codes(ids[4]), ['element_type_skipped'], 'a decorative icon without entity is not a device');
+  assert.deepEqual(codes(ids[3]), ['action_fallback_none']);
+  assert.deepEqual(codes(ids[4]), [], 'an entityless icon is a virtual device with explicit none');
   assert.deepEqual(codes(ids[5]), ['element_position_unsupported']);
   assert.deepEqual(codes(ids[6]), ['element_position_unsupported']);
   assert.deepEqual(codes(ids[7]), ['element_position_missing']);
@@ -134,10 +137,12 @@ test('#1022 every element that cannot be carried is named once in the report, no
   assert.deepEqual(codes(ids[10]), ['binding_virtualized']);
   assert.deepEqual(codes(ids[11]).sort(), ['element_state_color_skipped', 'element_style_skipped', 'element_transform_ignored']);
   assert.equal(notes.find(note => note.id === ids[11] && note.code === 'element_style_skipped').fields, 'filter, --mdc-icon-size');
-  assert.deepEqual(codes(ids[12]), [], 'numeric percentages and the default centring transform are the ordinary case');
+  assert.deepEqual(codes(ids[12]), ['element_position_unsupported'], 'a number is CSS pixels, never implicitly percent');
   const { markers } = document.payload.config;
-  assert.deepEqual(markers.map(marker => marker.binding), ['virtual', 'entity:light.ok', 'entity:light.centered']);
-  assert.equal(markers[0].name, 'Device');
+  assert.deepEqual(markers.map(marker => marker.binding), ['virtual', 'virtual', 'virtual', 'entity:light.ok']);
+  assert.equal(markers[0].name, 'Scene');
+  assert.equal(markers[0].tap_action, 'none');
+  assert.equal(markers[1].tap_action, 'none');
   assert.ok(report.items.some(item => item.code === 'picture_card_fields_skipped' && item.fields === 'camera_image, dark_mode_image'));
   assert.ok(report.items.some(item => item.code === 'source_fields_unsupported' && item.fields === 'weird'));
   assert.throws(() => convertPicture(card([{ type: 'image', ...at(1, 1) }, { type: 'state-icon', entity: 'x.y' }]), measured),
@@ -167,7 +172,8 @@ test('#1022 every report code and refusal has text on the page in both languages
   for (const code of ['picture_compatibility', 'picture_size_measured', 'picture_size_aspect', 'picture_card_fields_skipped', 'picture_lights_hint',
     'element_position_missing', 'element_position_unsupported', 'element_position_outside', 'element_transform_ignored', 'element_style_skipped',
     'element_state_color_skipped', 'element_type_skipped', 'element_custom_skipped', 'element_conditional_skipped', 'element_image_skipped',
-    'state_label_as_text', 'label_actions_skipped'])
+    'state_label_as_text', 'label_actions_skipped', 'picture_counts', 'picture_limits', 'picture_size_manual', 'action_fallback_none',
+    'button_tap_action_skipped', 'confirmation_simplified', 'confirmation_inactive', 'action_fields_skipped', 'element_field_skipped', 'element_font_size_skipped'])
     for (const language of ['ru', 'en']) assert.ok(TEXT[language][`note.${code}`], `${language}: note.${code}`);
   for (const code of ['picture_not_card', 'picture_no_image', 'picture_no_elements', 'picture_invalid_element', 'picture_aspect_required',
     'picture_invalid_aspect', 'picture_nothing_to_convert'])

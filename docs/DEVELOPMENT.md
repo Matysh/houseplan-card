@@ -2280,7 +2280,7 @@ test/commit-provenance.test.mjs` (real Git, real commit-msg and npm entrypoint).
 
 ## External converter (#937)
 
-`scripts/sh3d-convert/README.md` owns the two-source converter build, fixture
+`scripts/sh3d-convert/README.md` owns the three-source converter build, fixture
 provenance, limits and separate-site deployment/rollback. Build with
 `node scripts/sh3d-convert/build-page.mjs`; `--check` also checks the generated
 canonical wall runtime. It is not a card bundle and adds no YAML parser to the
@@ -2288,6 +2288,18 @@ HACS frontend. Run the named Node, pure/HA backend and offline browser commands
 from that README before handing it off. Deploy the accepted payload only to the
 existing `/convert/index.html`, preserving the site's extra analytics wrapper,
 with a timestamped backup and digest check. No stand restart or release tag.
+
+#1022 adds the local picture-elements path and per-source loss/count report.
+Its `test_ha_picture_elements_convert.py` imports the emitted fixture through
+real authenticated HA apply, then full/space/plan-only JSON and full ZIP paths;
+actions and image-relative fractional positions are independent oracles.
+The offline browser smoke covers the actual compiled page in RU/EN, dimensions
+from a local PNG versus manual input, CLI identity at the same explicit clock,
+and delayed bitmap ownership/disposal. Native service-button semantics come
+from HA's legacy element: only service/service_data supplies its tap, never
+tap_action. Standalone HTML stays tracked; this task does not deploy it or
+alter the card/backend/import protocol. The source/golden report includes the
+accepted virtual Run contract, not the earlier skipped-button prototype.
 
 The #941 URL regression is covered by ordinary negative inputs (signed/unknown
 queries and fragments) and a full conversion asserting no sensitive URL in the

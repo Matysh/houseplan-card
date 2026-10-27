@@ -155,42 +155,50 @@ function applyLanguage(next) {
 }
 
 /** Image proportions for picture-elements: measured from a local file or typed. Never fetched. */
-const pictureSize = { width: null, height: null, measured: false, unreadable: false };
-function renderPictureSize() {
+const pictureSize = { width: null, height: null, measured: false, unreadable: false, pending: false };
+function renderPictureSize(force = false) {
   const status = document.getElementById('picture-size-status');
   if (!status) return;
-  const { width, height, measured, unreadable } = pictureSize;
+  const { width, height, measured, unreadable, pending } = pictureSize;
+  document.getElementById('convert-paste').disabled = pending;
   for (const key of ['width', 'height']) {
     const input = document.getElementById(`picture-${key}`);
-    if (document.activeElement !== input) input.value = pictureSize[key] ?? '';
+    if (force || document.activeElement !== input) input.value = pictureSize[key] ?? '';
     input.classList.toggle('measured', measured && pictureSize[key] !== null);
   }
-  status.textContent = unreadable ? t('picture.size.unreadable')
+  status.textContent = pending ? t('picture.size.reading') : unreadable ? t('picture.size.unreadable')
     : width && height ? t(measured ? 'picture.size.measured' : 'picture.size.manual', { width, height }) : t('picture.size.missing');
 }
 function pictureOptions() {
-  const { width, height } = pictureSize;
-  return width && height ? { imageWidth: width, imageHeight: height } : {};
+  const { width, height, measured } = pictureSize;
+  return width && height ? { imageWidth: width, imageHeight: height, imageMeasured: measured } : {};
 }
 async function measureImage(file) {
   if (!file) return;
   invalidate();
+  const token = generation;
   pictureSize.unreadable = false;
+  pictureSize.pending = true; renderPictureSize();
+  let bitmap;
   try {
+    if (file.size > MAX_FILE_BYTES) throw new Error('image too large');
     // createImageBitmap decodes the local file in memory; nothing is uploaded or requested.
-    const bitmap = await createImageBitmap(file);
+    bitmap = await createImageBitmap(file);
+    if (token !== generation) return;
+    pictureSize.pending = false;
     pictureSize.width = bitmap.width; pictureSize.height = bitmap.height; pictureSize.measured = true;
-    bitmap.close?.();
   } catch {
+    if (token !== generation) return;
+    pictureSize.pending = false;
     pictureSize.width = null; pictureSize.height = null; pictureSize.measured = false; pictureSize.unreadable = true;
-  }
-  renderPictureSize();
+  } finally { bitmap?.close?.(); }
+  renderPictureSize(true);
 }
 function typedSize(key) {
   const value = Number(document.getElementById(`picture-${key}`).value);
-  pictureSize[key] = Number.isInteger(value) && value > 0 ? value : null;
+  pictureSize[key] = Number.isFinite(value) && value > 0 ? value : null;
   pictureSize.measured = false; pictureSize.unreadable = false;
-  invalidate(); renderPictureSize();
+  invalidate();
 }
 
 function convertText(text, sourceFormat) {
@@ -203,6 +211,7 @@ let generation = 0;
 const format = () => document.getElementById('format').value;
 function invalidate() {
   generation++; lastResult = null;
+  pictureSize.pending = false; renderPictureSize();
   show('result', false); show('error', false); show('busy', false);
   document.getElementById('levels').replaceChildren();
 }
@@ -218,11 +227,14 @@ const show = (id, visible) => {
   document.getElementById(id).hidden = !visible;
 };
 
-function noteText(note) {
+function noteText(note, codes = false) {
   const key = `note.${note.code}`;
   const known = TEXT[lang][key] || TEXT.en[key];
   const values = note.reason ? { ...note, reason: t(`code.${note.reason}`) } : note;
-  return known ? fill(known, values) : `${note.code}: ${JSON.stringify(note)}`;
+  const text = known ? fill(known, values) : `${note.code}: ${JSON.stringify(note)}`;
+  return Number.isInteger(note.sourceIndex)
+    ? `${text} [${note.code}; #${note.sourceIndex + 1}${note.sourceId ? `; id=${note.sourceId}` : ''}]`
+    : codes ? `${text} [${note.code}${note.id ? `; id=${note.id}` : ''}]` : text;
 }
 
 function download(name, document_) {
@@ -241,6 +253,7 @@ function download(name, document_) {
 function renderResult(result) {
   lastResult = result;
   const { documents, report, stem } = result;
+  const picture = report.levels.some(level => Array.isArray(level.elements));
   const host = document.getElementById('levels');
   host.textContent = '';
   let downloadIndex = 0;
@@ -248,7 +261,7 @@ function renderResult(result) {
     const card = element('div', 'level');
     card.append(element('h3', null, level.title || level.id || '—'));
     if (level.skipped) {
-      card.append(element('p', 'muted', t('result.skipped')));
+      card.append(element('p', 'muted', t(picture ? 'result.picture_skipped' : 'result.skipped')));
     } else {
       const stats = element('p', 'stats');
       stats.textContent = [
@@ -271,13 +284,13 @@ function renderResult(result) {
     if (notes.length) {
       card.append(element('h4', 'notes-title', t('result.notes')));
       const list = element('ul', 'notes');
-      for (const note of notes) list.append(element('li', null, noteText(note)));
+      for (const note of notes) list.append(element('li', null, noteText(note, picture)));
       card.append(list);
     }
     host.append(card);
   }
   const shared = element('ul', 'notes');
-  for (const item of report.items) shared.append(element('li', null, noteText(item)));
+  for (const item of report.items) shared.append(element('li', null, noteText(item, picture)));
   document.getElementById('shared-notes').replaceChildren(shared);
   show('result', true);
   show('error', false);
@@ -363,7 +376,9 @@ export function mount() {
   }
   zone.addEventListener('drop', (raw) => {
     raw.preventDefault();
-    handleFile(raw.dataTransfer?.files?.[0]);
+    const file = raw.dataTransfer?.files?.[0];
+    if (format() === 'picture' && file?.type.startsWith('image/')) measureImage(file);
+    else handleFile(file);
   });
   for (const node of document.querySelectorAll('[data-lang]')) {
     node.addEventListener('click', () => applyLanguage(node.dataset.lang));

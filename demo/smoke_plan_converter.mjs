@@ -6,6 +6,7 @@ import { chromium } from 'playwright';
 import { enforcePinnedBrowser, requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
 import { convertEasy, TOOL_VERSION } from '../scripts/sh3d-convert/easy.mjs';
 import { watchPage, finish } from './serve.mjs';
+import { exercisePictureConverter } from './helpers/picture-converter.mjs';
 
 requirePinnedBrowser('#937 external offline converter artifact');
 const root = path => fileURLToPath(new URL(`../scripts/sh3d-convert/${path}`, import.meta.url));
@@ -93,6 +94,7 @@ try {
   await page.setViewportSize({ width: 360, height: 800 });
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   await page.screenshot({ path: root('.build/easy-page.png'), fullPage: true });
+  await exercisePictureConverter(page, root);
   assert.deepEqual(requests, [], 'offline artifact must not request anything over the network');
   console.log('PASS #937: SH3D + Easy file/paste, YAML, download parity, source/input races, stale click, RU/EN, offline, 360px form');
 } finally { await finish(browser, { converterArtifact: true }); }

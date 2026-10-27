@@ -16,13 +16,30 @@ support for an older backend just because it can read export-v2 envelopes.
   an entire dashboard. Nonempty `floors` wins over legacy arrays. A shared frame
   and cm/unit coefficient preserve offsets and proportions across floors.
 - picture-elements (#1022) accepts one `type: picture-elements` card object:
-  the `image` becomes the backdrop reference and `state-icon` / `icon` (with an
-  entity) / `state-badge` / `state-label` elements become markers and live text
+  the `image` becomes the backdrop reference and `state-icon` / `icon` /
+  `service-button` / `state-badge` / `state-label` become markers and live text
   at `left`/`top` percentages of the image. Positions need the image
-  proportions: the caller measures the file locally (`imageWidth`/`imageHeight`)
-  or passes `aspect`; nothing is guessed. No rooms, walls or scale (1 cm/unit,
-  `scale_default`). `conditional`, `image`, `service-button`, custom cards,
-  px positions and CSS other than left/top are reported, never approximated.
+  proportions: the caller supplies `imageWidth`/`imageHeight` (with
+  `imageMeasured:true` only for actual file measurement), or `aspect`; nothing
+  is guessed. No rooms, walls or scale (1 cm/unit, `scale_default`). Entityless
+  icons/buttons are virtual. The native default is information even for lights.
+  Own-entity Toggle retains the runtime secure lock/alarm no-op. Exact single
+  automation.trigger / script.turn_on / scene.turn_on, and a named script
+  service without payload, map to existing Run; confirmation applies to
+  Toggle/Run, with custom text/exemptions reported as loss. The stored flag on
+  info/none is inactive and explicitly reported. Legacy service-button reads only
+  service/service_data. Unsupported/broad/payload/foreign actions become
+  explicit none for virtual markers or info for bound ones, never new commands.
+  `conditional`, every separate `image` (static or stateful), custom cards,
+  missing/numeric/px/outside positions and unsupported CSS are reported.
+  Literal text colours and px font sizes within model limits are retained.
+  Per-element source indexes/available IDs, stable loss codes and
+  transferred/partial/skipped counts appear before download. Pending image
+  decodes check the page generation and always close their bitmap; conversion
+  waits for the selected image, while manual edits and newer sources win.
+  A committed measurement refreshes both visible fields, including a focused
+  field left active during a drop. Repeated IDs keep deterministic names without repeated
+  collision scans, including the 2000-element input boundary.
 - Scale: median ordinary single-swing door -> 90 cm; otherwise median known
   furniture dimension ratios; otherwise 1 cm/unit. It is an estimate, not a
   physical measurement. There is no mandatory calibration step; the user can
@@ -75,29 +92,37 @@ Run from the repository root after normal `npm ci`:
 node scripts/sh3d-convert/build-page.mjs
 node scripts/sh3d-convert/build-page.mjs --check
 npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
-node --test test/sh3d-convert*.test.mjs test/easy-floorplan-*.test.mjs test/converter*.test.mjs
-.venv-backend/bin/python -m pytest tests_backend/test_sh3d_convert.py tests_backend/test_easy_floorplan_convert.py tests_backend/test_ha_sh3d_convert.py tests_backend/test_ha_easy_floorplan_convert.py -q
+node --test test/sh3d-convert*.test.mjs test/easy-floorplan-*.test.mjs test/picture-elements-*.test.mjs test/converter*.test.mjs
+.venv-backend/bin/python -m pytest tests_backend/test_sh3d_convert.py tests_backend/test_easy_floorplan_convert.py tests_backend/test_picture_elements_convert.py tests_backend/test_ha_sh3d_convert.py tests_backend/test_ha_easy_floorplan_convert.py tests_backend/test_ha_picture_elements_convert.py -q
 node demo/smoke_plan_converter.mjs
 ```
 
 The browser smoke attests the actually launched pinned browser. It exercises
 the real artifact via file URL with blocked network, not a development wrapper.
-It covers both formats, YAML paste, downloads/core parity, delayed input races,
+It covers all three formats, YAML/JSON, downloads/CLI parity with the same
+explicit clock metadata, manual/measured image proportions, delayed local image
+completion and source/input races,
 retained stale click closures, RU/EN and a 360px form. It does not claim a physical
 GPU observation. Full HA apply/export runs in the Linux harness, not pure Python
 or native Windows. Ordinary negative inputs are the cheap protective witnesses;
 there is no claim of an executed mutant run.
 
-CLI uses the same core; `--format easy|sh3d` is optional (extension detection):
+CLI uses the same core. `--format easy|sh3d|picture` is explicit for picture-elements
+(the default extension detector remains compatible with the two old formats):
 
 ```sh
 node scripts/sh3d-convert/cli.mjs input.yaml --out /tmp/converted
 node scripts/sh3d-convert/cli.mjs input.sh3d --out /tmp/converted
+node scripts/sh3d-convert/cli.mjs --format picture --width 1600 --height 1000 card.yaml --out /tmp/converted
 ```
 
 `--now` pins envelope time (default epoch in CLI); `--report` prints the report
 instead of the documents. Golden JSON is generated by this CLI into `golden/`;
 these are semantic import fixtures, **not** visual golden-image baselines.
+`--aspect 1.6` is the alternative to `--width`/`--height`; neither mode fetches
+the referenced image. Full/space JSON and full ZIP retain actions/fractional
+positions; the existing plan-only privacy projection intentionally drops HA
+bindings/actions/live reads. No import/transport protocol is changed.
 The Node tests require output identity and the Python tests use the actual
 schema/preview/apply/export, retaining independent physical/topology assertions.
 

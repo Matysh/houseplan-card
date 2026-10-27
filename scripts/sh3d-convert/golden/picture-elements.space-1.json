@@ -28,7 +28,7 @@
               "x": 0.7666666666666667,
               "y": 0.325,
               "text": "Outside {sensor.outdoor_temperature} °C",
-              "size_cm": 16,
+              "size_cm": 20,
               "angle": 0,
               "color": "#ffffff"
             },
@@ -75,7 +75,7 @@
           "id": "picture-1-element-switch-kitchen-kettle",
           "binding": "entity:switch.kitchen_kettle",
           "space": "picture-1",
-          "tap_action": "toggle",
+          "tap_action": "info",
           "display": "badge",
           "size": 1,
           "angle": 0,
@@ -120,10 +120,42 @@
           "icon": "mdi:cctv"
         },
         {
+          "id": "picture-1-element-decorative-icon",
+          "binding": "virtual",
+          "space": "picture-1",
+          "tap_action": "none",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "name": "Decorative icon",
+          "icon": "mdi:information"
+        },
+        {
+          "id": "picture-1-element-movie-scene",
+          "binding": "virtual",
+          "space": "picture-1",
+          "tap_action": "run",
+          "tap_target": "scene.movie",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "name": "Movie scene"
+        },
+        {
           "id": "picture-1-element-not-an-entity",
           "binding": "virtual",
           "space": "picture-1",
-          "tap_action": "info",
+          "tap_action": "none",
           "display": "badge",
           "size": 1,
           "angle": 0,
@@ -133,6 +165,68 @@
             "position": "bottom"
           },
           "name": "Device"
+        },
+        {
+          "id": "picture-1-element-night-script",
+          "binding": "virtual",
+          "space": "picture-1",
+          "tap_action": "run",
+          "tap_target": "script.night",
+          "tap_confirm": true,
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "name": "Night script",
+          "icon": "mdi:play"
+        },
+        {
+          "id": "picture-1-element-morning-automation",
+          "binding": "virtual",
+          "space": "picture-1",
+          "tap_action": "run",
+          "tap_target": "automation.morning",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          },
+          "name": "Morning automation"
+        },
+        {
+          "id": "picture-1-element-light-edge-a",
+          "binding": "entity:light.edge_a",
+          "space": "picture-1",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          }
+        },
+        {
+          "id": "picture-1-element-light-edge-b",
+          "binding": "entity:light.edge_b",
+          "space": "picture-1",
+          "tap_action": "info",
+          "display": "badge",
+          "size": 1,
+          "angle": 0,
+          "is_light": false,
+          "value_badge": {
+            "enabled": false,
+            "position": "bottom"
+          }
         }
       ]
     },
@@ -157,10 +251,40 @@
         "x": 0.2,
         "y": 0.6875
       },
+      "picture-1-element-decorative-icon": {
+        "s": "picture-1",
+        "x": 0.233333333,
+        "y": 0.333333333
+      },
+      "picture-1-element-movie-scene": {
+        "s": "picture-1",
+        "x": 0.7,
+        "y": 0.625
+      },
       "picture-1-element-not-an-entity": {
         "s": "picture-1",
         "x": 0.633333333,
         "y": 0.583333333
+      },
+      "picture-1-element-night-script": {
+        "s": "picture-1",
+        "x": 0.374166667,
+        "y": 0.594791667
+      },
+      "picture-1-element-morning-automation": {
+        "s": "picture-1",
+        "x": 0.4475,
+        "y": 0.348958333
+      },
+      "picture-1-element-light-edge-a": {
+        "s": "picture-1",
+        "x": 0.166666667,
+        "y": 0.708333333
+      },
+      "picture-1-element-light-edge-b": {
+        "s": "picture-1",
+        "x": 0.833333333,
+        "y": 0.291666667
       }
     }
   },
@@ -202,12 +326,66 @@
       "icon": "mdi:cctv"
     },
     {
+      "layout_id": "picture-1-element-decorative-icon",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-decorative-icon",
+      "binding": "virtual",
+      "label": "Decorative icon",
+      "icon": "mdi:information"
+    },
+    {
+      "layout_id": "picture-1-element-movie-scene",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-movie-scene",
+      "binding": "virtual",
+      "label": "Movie scene",
+      "icon": null
+    },
+    {
       "layout_id": "picture-1-element-not-an-entity",
       "space_id": "picture-1",
       "owner": "marker",
       "owner_id": "picture-1-element-not-an-entity",
       "binding": "virtual",
       "label": "Device",
+      "icon": null
+    },
+    {
+      "layout_id": "picture-1-element-night-script",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-night-script",
+      "binding": "virtual",
+      "label": "Night script",
+      "icon": "mdi:play"
+    },
+    {
+      "layout_id": "picture-1-element-morning-automation",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-morning-automation",
+      "binding": "virtual",
+      "label": "Morning automation",
+      "icon": null
+    },
+    {
+      "layout_id": "picture-1-element-light-edge-a",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-light-edge-a",
+      "binding": "entity:light.edge_a",
+      "label": null,
+      "icon": null
+    },
+    {
+      "layout_id": "picture-1-element-light-edge-b",
+      "space_id": "picture-1",
+      "owner": "marker",
+      "owner_id": "picture-1-element-light-edge-b",
+      "binding": "entity:light.edge_b",
+      "label": null,
       "icon": null
     }
   ],

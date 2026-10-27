@@ -7,79 +7,242 @@
         {
           "code": "element_style_skipped",
           "id": "picture-1-element-switch-kitchen-kettle",
-          "fields": "--mdc-icon-size"
+          "fields": "--mdc-icon-size",
+          "sourceIndex": 1
         },
         {
           "code": "secondary_actions_skipped",
-          "id": "picture-1-element-switch-kitchen-kettle"
+          "id": "picture-1-element-switch-kitchen-kettle",
+          "sourceIndex": 1
+        },
+        {
+          "code": "label_actions_skipped",
+          "id": "picture-1-element-sensor-outdoor-temperature",
+          "sourceIndex": 3
         },
         {
           "code": "state_label_as_text",
-          "id": "picture-1-element-sensor-outdoor-temperature"
+          "id": "picture-1-element-sensor-outdoor-temperature",
+          "sourceIndex": 3
+        },
+        {
+          "code": "text_metrics_approximate",
+          "id": "picture-1-element-sensor-outdoor-temperature",
+          "sourceIndex": 3
         },
         {
           "code": "element_transform_ignored",
-          "id": "picture-1-element-climate-hall"
+          "id": "picture-1-element-climate-hall",
+          "sourceIndex": 4
+        },
+        {
+          "code": "label_actions_skipped",
+          "id": "picture-1-element-climate-hall",
+          "sourceIndex": 4
         },
         {
           "code": "state_label_as_text",
-          "id": "picture-1-element-climate-hall"
+          "id": "picture-1-element-climate-hall",
+          "sourceIndex": 4
+        },
+        {
+          "code": "text_metrics_approximate",
+          "id": "picture-1-element-climate-hall",
+          "sourceIndex": 4
         },
         {
           "code": "action_fallback_info",
-          "id": "picture-1-element-camera-porch"
-        },
-        {
-          "code": "element_type_skipped",
-          "id": "picture-1-element-decorative-icon",
-          "type": "icon"
+          "id": "picture-1-element-camera-porch",
+          "sourceIndex": 5
         },
         {
           "code": "element_image_skipped",
-          "id": "picture-1-element-light-hall"
+          "id": "picture-1-element-light-hall",
+          "sourceIndex": 7
         },
         {
           "code": "element_conditional_skipped",
           "id": "picture-1-element-conditional",
-          "count": 1
-        },
-        {
-          "code": "element_type_skipped",
-          "id": "picture-1-element-movie-scene",
-          "type": "service-button"
+          "count": 1,
+          "sourceIndex": 8
         },
         {
           "code": "element_custom_skipped",
           "id": "picture-1-element-lock-front-door",
-          "type": "custom:button-card"
+          "type": "custom:button-card",
+          "sourceIndex": 10
         },
         {
           "code": "element_position_unsupported",
-          "id": "picture-1-element-binary-sensor-garage"
+          "id": "picture-1-element-binary-sensor-garage",
+          "sourceIndex": 11
         },
         {
           "code": "binding_virtualized",
-          "id": "picture-1-element-not-an-entity"
+          "id": "picture-1-element-not-an-entity",
+          "sourceIndex": 12
         },
         {
           "code": "element_position_outside",
-          "id": "picture-1-element-light-stairs"
+          "id": "picture-1-element-light-stairs",
+          "sourceIndex": 13
         },
         {
           "code": "picture_lights_hint",
-          "count": 1
+          "count": 3
         },
         {
           "code": "image_external_reference",
           "id": "main"
         }
       ],
+      "elements": [
+        {
+          "id": "picture-1-element-living-room-light",
+          "sourceIndex": 0,
+          "status": "transferred",
+          "codes": []
+        },
+        {
+          "id": "picture-1-element-switch-kitchen-kettle",
+          "sourceIndex": 1,
+          "status": "partial",
+          "codes": [
+            "element_style_skipped",
+            "secondary_actions_skipped"
+          ]
+        },
+        {
+          "id": "picture-1-element-sensor-living-temperature",
+          "sourceIndex": 2,
+          "status": "transferred",
+          "codes": []
+        },
+        {
+          "id": "picture-1-element-sensor-outdoor-temperature",
+          "sourceIndex": 3,
+          "status": "partial",
+          "codes": [
+            "label_actions_skipped",
+            "state_label_as_text",
+            "text_metrics_approximate"
+          ]
+        },
+        {
+          "id": "picture-1-element-climate-hall",
+          "sourceIndex": 4,
+          "status": "partial",
+          "codes": [
+            "element_transform_ignored",
+            "label_actions_skipped",
+            "state_label_as_text",
+            "text_metrics_approximate"
+          ]
+        },
+        {
+          "id": "picture-1-element-camera-porch",
+          "sourceIndex": 5,
+          "status": "partial",
+          "codes": [
+            "action_fallback_info"
+          ]
+        },
+        {
+          "id": "picture-1-element-decorative-icon",
+          "sourceIndex": 6,
+          "status": "transferred",
+          "codes": []
+        },
+        {
+          "id": "picture-1-element-light-hall",
+          "sourceIndex": 7,
+          "status": "skipped",
+          "codes": [
+            "element_image_skipped"
+          ]
+        },
+        {
+          "id": "picture-1-element-conditional",
+          "sourceIndex": 8,
+          "status": "skipped",
+          "codes": [
+            "element_conditional_skipped"
+          ]
+        },
+        {
+          "id": "picture-1-element-movie-scene",
+          "sourceIndex": 9,
+          "status": "transferred",
+          "codes": []
+        },
+        {
+          "id": "picture-1-element-lock-front-door",
+          "sourceIndex": 10,
+          "status": "skipped",
+          "codes": [
+            "element_custom_skipped"
+          ]
+        },
+        {
+          "id": "picture-1-element-binary-sensor-garage",
+          "sourceIndex": 11,
+          "status": "skipped",
+          "codes": [
+            "element_position_unsupported"
+          ]
+        },
+        {
+          "id": "picture-1-element-not-an-entity",
+          "sourceIndex": 12,
+          "status": "partial",
+          "codes": [
+            "binding_virtualized"
+          ]
+        },
+        {
+          "id": "picture-1-element-light-stairs",
+          "sourceIndex": 13,
+          "status": "skipped",
+          "codes": [
+            "element_position_outside"
+          ]
+        },
+        {
+          "id": "picture-1-element-night-script",
+          "sourceIndex": 14,
+          "status": "transferred",
+          "codes": []
+        },
+        {
+          "id": "picture-1-element-morning-automation",
+          "sourceIndex": 15,
+          "status": "transferred",
+          "codes": []
+        },
+        {
+          "id": "picture-1-element-light-edge-a",
+          "sourceIndex": 16,
+          "status": "transferred",
+          "codes": []
+        },
+        {
+          "id": "picture-1-element-light-edge-b",
+          "sourceIndex": 17,
+          "status": "transferred",
+          "codes": []
+        }
+      ],
+      "counts": {
+        "transferred": 8,
+        "partial": 5,
+        "skipped": 5
+      },
       "spaceId": "picture-1",
       "cellCm": 10,
       "rooms": 0,
       "walls": 0,
       "openings": 0,
-      "devices": 5,
+      "devices": 11,
       "decor": 2
     }
   ],
@@ -93,9 +256,18 @@
       "code": "picture_compatibility"
     },
     {
-      "code": "picture_size_measured",
+      "code": "picture_limits"
+    },
+    {
+      "code": "picture_size_manual",
       "width": 1600,
       "height": 1000
+    },
+    {
+      "code": "picture_counts",
+      "transferred": 8,
+      "partial": 5,
+      "skipped": 5
     }
   ],
   "toolVersion": "plan-convert 0.2",

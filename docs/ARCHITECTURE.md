@@ -507,10 +507,15 @@ File COPY and uploads share `upload_lock` and the same existing store quotas,
 so concurrent duplication cannot spend the same remaining slot twice.
 
 External plan migration (#937) is isolated in `scripts/sh3d-convert/`, not a
-Lovelace runtime dependency. Both readers emit the current space envelope through
+Lovelace runtime dependency. All three readers emit the current space envelope through
 a generated tool-only bundle of the canonical wall writer. SH3D retains physical
 units and plan-only privacy; Easy Floorplan carries explicit compatible content
-and manifests, with an automatic estimated common scale. The bounded YAML parser
+and manifests, with an automatic estimated common scale. Picture-elements adds
+backdrop-centred percentage placement, live state/attribute text and exact
+existing Toggle/Run intents; unsupported actions become reported info/none.
+Image proportions come only from local dimensions or explicit input; stale
+dimension reads are fenced by the page generation. Per-element source indexes,
+loss codes and transferred/partial/skipped counts precede download. The bounded YAML parser
 and wall runtime are bundled into the offline page. No source actions are executed,
 images are references only, and the existing authenticated HA import remains the
 only writer. See [converter boundaries and deployment](../scripts/sh3d-convert/README.md).
