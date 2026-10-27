@@ -43,6 +43,7 @@
     "demo/golden/sun-transparent.mjs",
     "demo/golden/ui-lab-1081.mjs",
     "demo/golden/vacuum-history.mjs",
+    "demo/golden/view-device-menu.mjs",
     "demo/golden/zigbee-led.mjs",
     "demo/grid-scale-static-fixture.mjs",
     "demo/guard/guard_report_page_errors.mjs",

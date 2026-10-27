@@ -6414,3 +6414,6 @@ The measured #1089 cost relative to accepted #1070 is +720 B initial gzip,
 last two own deltas enter the rolling monolith reference; absolute byte walls,
 metric bands and timing limits stay unchanged. Recorded rationale:
 https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453010424.
+The owner-authorized editor runtime cap for #1089 is 11898 lines (the observed
+size), with the existing 50-line band; the guarded adapter reuses the existing
+Hide/Delete transactions. Rationale: https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453203632.

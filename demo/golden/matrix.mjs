@@ -282,6 +282,7 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
 const LED_STRIPS_OFF = Object.fromEntries(['light.demo_led_strip', 'light.demo_led_strip_wall', 'light.demo_led_strip_corner', 'light.demo_led_strip_loop'].map((id) => [id, { state: 'off' }]));
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  ...STAGE6_ACCEPTANCE_SCENARIOS,
   ...[
     { id: 'view-device-menu-writer-dark', viewDeviceMenu: 'writer', theme: 'dark', language: 'en' },
     { id: 'view-device-menu-readonly-light-ru', viewDeviceMenu: 'readonly', theme: 'light', language: 'ru', canWrite: false },
@@ -292,7 +293,6 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       markerOverrides: [{ id: 'golden-light-two', binding: 'device:golden-light-two', space: 'golden-lighting', hidden: true }] },
   ].map(scene => ({ fixture: 'visual', space: 'golden-lighting', mode: 'view', preloadEditorRuntime: false,
     viewport: { width: 1000, height: 800 }, ...page, ...scene })),
-  ...STAGE6_ACCEPTANCE_SCENARIOS,
   ...['flat', 'iso'].map(projection => ({
     id: `direct-zigbee-lqi-${projection}-dark`, fixture: 'visual',
     space: 'golden-lighting', mode: 'view', projection,
