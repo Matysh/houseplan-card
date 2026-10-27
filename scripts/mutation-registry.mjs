@@ -2012,8 +2012,8 @@ const MUTANT_DEFINITIONS = [
     "patches": [
       {
         "file": "src/houseplan-card.ts",
-        "find": "  private _abandonViewInput(): void {\n    this._touchClickGuard.abandon();\n    this._touchContacts.clear();",
-        "replace": "  private _abandonViewInput(): void {\n    this._touchClickGuard.interrupt();\n    // mutant: retain physical contacts"
+        "find": "  private _abandonViewInput(): void {\n    ++this._viewDeviceMenuRequest;\n    this._touchClickGuard.abandon();\n    this._touchContacts.clear();",
+        "replace": "  private _abandonViewInput(): void {\n    ++this._viewDeviceMenuRequest;\n    this._touchClickGuard.interrupt();\n    // mutant: retain physical contacts"
       }
     ]
   },
@@ -2024,8 +2024,8 @@ const MUTANT_DEFINITIONS = [
     "patches": [
       {
         "file": "src/houseplan-card.ts",
-        "find": "  private _abandonViewInput(): void {\n    this._touchClickGuard.abandon();",
-        "replace": "  private _abandonViewInput(): void {\n    this._touchClickGuard.reset();"
+        "find": "  private _abandonViewInput(): void {\n    ++this._viewDeviceMenuRequest;\n    this._touchClickGuard.abandon();",
+        "replace": "  private _abandonViewInput(): void {\n    ++this._viewDeviceMenuRequest;\n    this._touchClickGuard.reset();"
       }
     ]
   },
@@ -7596,8 +7596,8 @@ const MUTANT_DEFINITIONS = [
       + 'forever (#402)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;",
-      replace: '    return html`${body}${this._viewRuntimes.render()}${this._renderVersionBanner()}`;',
+      find: "    return html`${body}${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;",
+      replace: '    return html`${body}${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}`;',
     }],
   },
   {
