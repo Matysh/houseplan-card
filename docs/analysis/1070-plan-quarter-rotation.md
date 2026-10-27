@@ -30,7 +30,7 @@ presentation `_viewOr`. The rAF envelope trace now covers that boundary. The
 combined accepted base includes #1080, #1081 and #997; grid coverage remains on its original
 100 ms/15% viewport refresh budget, in inverse-rotated plan coordinates.
 
-## Current joined verification on accepted #1092
+## Joined verification on accepted #1092 before lifecycle correction
 
 The final rebase keeps #1092's removal of the decorative outline SVG, its
 CSS-content-width header measurement and the actual compact-picker readiness
@@ -39,7 +39,7 @@ the primary quarter-turn presentation planes. UI-042 uses one accepted wide-host
 setup plus measured header/two-tab readiness; both compact branches and all
 original cursor oracles remain. No #1092-specific process exception is applied.
 
-All of the following execute on fingerprint `7ee5e787` and actual base `d9d0d812`:
+All of the following executed on fingerprint `7ee5e787` and actual base `d9d0d812`:
 
 - Official pinned native HA:82 layout states and12 camera transitions PASS.
   This is a fresh joint author capture after the header/helper changes.
@@ -58,10 +58,44 @@ All of the following execute on fingerprint `7ee5e787` and actual base `d9d0d812
 
 The dedicated baseline was built once and frozen after source fingerprint,
 manifest topology and every asset SHA passed. Current raw/AST deltas are above.
-Earlier7b/0d3 results below are historical; current native/Golden/render claims
-come from the new joint source. Final ordinary gate/CI are linked in the issue
+Earlier7b/0d3 results below are historical. The following lifecycle correction
+refreshes native/header and direct counter observations on its new source; the
+7ee Golden/render results remain explicitly attributed to that earlier input. Final ordinary gate/CI are linked in the issue
 handoff, followed by independent CODE review; these author checks are not a
 review verdict.
+
+## Current header measurement lifecycle correction
+
+Ordinary exact-f031 CI40514259428 passed60/61 smokes and all122 Golden cases
+on7ee, including all nine rotation scenes and the cache-counter smoke. One LED
+smoke exposed a real header lifecycle leak: an already queued ResizeObserver or
+window-resize rAF ran after disconnect, measured detached zero rects and wrote
+`_hdrH`. The raw stack identifies that header closure. The resulting detached
+Lit render also recreated ordinary Glow entry state before reconnect, which
+then had no opacity transitionrun/end. Neither assertion nor deadline changed.
+
+The header closure now checks its concrete observer lease, connected state and
+stage identity before measuring or publishing delayed widget-readiness/warm
+memo work. The observer is assigned before its first measurement. No height
+formula, one-pixel rule, Glow owner, CSS transition or test observer was changed.
+The unchanged complete LED smoke passes47.8s, including disconnected[0,0] and
+all main/static reconnect run/end events with the original500/750ms contract.
+
+An additional ignored author probe forwards native RO/rAF callbacks unchanged
+and remounts the same DOM element after a real header-width observation. Its
+old native frame is delivered while connected on the SAME stage after observer
+generation3 has been replaced by6. The wide two-tab header never republishes the
+old compact width. This exercises the reason an isConnected-only fence would
+be insufficient; it adds no public test API or private product-state write.
+
+On current fingerprint658770cd, fresh pinned native HA proof passes82 layout
+states and12 camera transitions; mobile round trips and the direct rotation
+cache-counter smoke also pass. The new320px editor and360px View PNGs were
+visually checked. Earlier7ee native files remain in a separate preserved author
+snapshot. All122 earlier CI PNG hashes were checked and six contact sheets
+viewed; their passing Golden status does not make the overall RED CI green.
+No manual nine-scene recapture or new performance benchmark was run. The next
+ordinary exact-material CI is required before independent CODE handoff.
 
 ## Native HA height and input boundary
 
@@ -119,18 +153,18 @@ The accepted integration base is #1092 at `d9d0d812`. Its source/capture inputs
 match the reviewed6cc material; only review/SPEC documents differ. A dedicated
 immutable checkout was built once with Linux Node22.23.2 and locked packages.
 Its fingerprint `c890e4a0`, manifest topology and every asset SHA were verified.
-The candidate fingerprint is `7ee5e787`, including the merged shared helper.
+The candidate fingerprint is `658770cd`, including the merged shared helper.
 
 | Metric | Verified accepted d9 artifact | Candidate | Own delta |
 | --- | ---: | ---: | ---: |
-| initial View gzip | 349536 | 351600 | +2064 |
-| lazy editor gzip | 363437 | 364355 | +918 |
-| onboarding gzip | 40156 | 40323 | +167 |
-| raw dist | 3557327 | 3571863 | +14536 |
-| core source lines (trimmed) | 13361 | 13377 | +16 |
+| initial View gzip | 349536 | 351632 | +2096 |
+| lazy editor gzip | 363437 | 364380 | +943 |
+| onboarding gzip | 40156 | 40339 | +183 |
+| raw dist | 3557327 | 3571911 | +14584 |
+| core source lines (trimmed) | 13361 | 13381 |  +20 |
 
-Rolling references carry only measured own cost: initial349824→351888,
-editor363457→364375, raw3559585→3574121. Incoming gaps remain -288, -20 and
+Rolling references carry only measured own cost: initial349824→351920,
+editor363457→364400, raw3559585→3574169. Incoming gaps remain -288, -20 and
 -2258 B respectively; the inherited raw shrink is retained, not silently
 recentered. All2000 B bands remain. The host port has374 actual members against
 reference372 in the accepted base. Four useful presentation ports add
@@ -145,7 +179,7 @@ explicitly approved resource-limit increases and stopping byte optimization
 ([decision](https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253)).
 The existing #898 ten-percent rule moves the absolute View wall352000→387200
 and its reference320000→352000, and the core cap13327→14660 with unchanged
-50-line band (effective14710). Current own headroom is35600 B. Other core caps,
+50-line band (effective14710). Current own headroom is35568 B. Other core caps,
 performance/security/deadline thresholds and independent review authority stay
 unchanged. No cold seam was implemented. #1000 measures its actual accepted
 combination after the #1070 merge; summed feature deltas never replace it.

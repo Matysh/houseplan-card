@@ -6354,3 +6354,22 @@ editor363437→364355 (+918), onboarding40156→40323 (+167), raw3557327→35718
 Port374→378/ref372→376 retains gap2/band5; other metrics have no own reference
 change and no unused violation. Absolute387200 and core14660+50 retain the
 owner's explicit resource recalibration. No #1092-only exception is borrowed.
+
+
+### Rotation header callback ownership
+
+The later exact-f031 ordinary CI passed122/122 Golden and60/61 smokes; the
+LED lifecycle smoke found an unretired header measurement rAF after disconnect.
+The header callback now requires its concrete current observer lease plus a
+connected matching stage before any delayed side effect. The unchanged LED
+smoke passes all three former failures; a native queued-frame author witness
+also covers same-element reconnect, and fresh native82/12/mobile/cache-counter
+checks pass on658770cd. No Glow/CSS observer,500ms transition,750ms deadline or
+one-pixel height behavior was changed. Earlier RED receipts remain preserved.
+
+The same frozen accepted d9 artifact gives initial349536→351632 (+2096),
+editor363437→364380 (+943), onboarding40156→40339 (+183), raw3557327→3571911
+(+14584). References351920/364400/raw3574169 retain inherited -288/-20/-2258 B
+gaps and all2000 B bands; port378/ref376 retains gap2/band5. Current core13381
+is within the owner's14660+50 cap. This measured lifecycle correction does not
+reopen byte optimization or change any other resource/performance threshold.
