@@ -6735,3 +6735,13 @@ loopback interrupted-body recovery, terminal HTTP and JSON failures, exact body
 bounds, actual CLI diagnostic retention before any gh/git command, cancelled/
 foreign/failed producers, uncertain delivery, old material fetch and stale CAS.
 No public workflow is rerun merely to produce this failure witness.
+
+#1113 resource accounting (29.10.2026): the accepted502 frontend/build corpus
+(569 paths) equals the frozen5bad donor. The matched candidate costs+21527 raw
+dist bytes including the manifest, +1737 initial View gzip and+3395 lazy editor
+gzip; hostRefs+43 and portMembers+2. These own deltas alone carry their existing
+references under the owner's resource-limit authorization. Inherited raw1431B,
+initial1412B, editor1055B, hostRefs24 and portMembers2 gaps, all bands and the
+absolute initial wall remain unchanged. The pure URL parser stays in the thin
+panel leaf: importing a named parser from the shared card resolver violates the
+stable panel side-effect import contract and is not a budget remedy.

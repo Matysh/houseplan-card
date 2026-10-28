@@ -148,7 +148,7 @@ import {
   roomTempThresholdDraft, roomTempThresholdInputValues, strictNumber, type SpaceDialogState,
 } from './space-dialog';
 import { rememberSpaceDialogBaseline, spaceDialogProblems } from './editors/space-form-state';
-import { acceptGeneralBaseline, generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
+import { acceptGeneralBaseline, forgetGeneralBaseline, generalProblems, moonDraftOf, rememberGeneralBaseline, writeMoonSetting } from './editors/general-form-state';
 import {
   deviceBatteryModeOf, markerBatteryFields, writeDeviceBatterySetting, type DeviceBatteryMode,
 } from './device-battery-settings';
@@ -292,6 +292,7 @@ import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePlacement, DeviceEditorHistoryState, DevicePositionState } from './device-position-history';
 import { DeviceStructureHistory } from './device-structure-history';
 import { PropertiesEditor } from './editors/properties/editor';
+import { ExternalScreensEditor } from './editors/external-screens';
 import { MarkerAlertsEditor } from './editors/marker-alerts';
 import { SpacingMagnet, spacingMarkers, spacingRows } from './device-spacing'; // #873
 import { DeviceContactMagnet } from './device-contact-snap';
@@ -496,6 +497,7 @@ export interface HouseplanEditorHostPort {
   readonly _configWriteContext: import('./config-write-context').ConfigWriteContext;
   readonly _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
   readonly _connectionWasLost: boolean;
+  readonly panelHost: boolean;
   /** #780: the LED tool lives in its own lazy chunk; the card owns its loader. */
   _ledEditor: import('./led-strip-editor').LedStripEditor | null;
   _ledButton(): TemplateResult;
@@ -546,6 +548,7 @@ export interface HouseplanEditorHostPort {
   _haVacuumDockRestartApi: number | null;
   _haVacuumHistoryApi: number | null;
   _haDeviceHistoryApi: number | null;
+  _haExternalScreensApi: number | null;
   _canOptimizeUndo: boolean;
   _cancelCameraTransition(commitTarget?: boolean, keepPresented?: boolean): void;
   _cancelDevicePressFeedback: () => void;
@@ -796,9 +799,9 @@ export interface HouseplanEditorHostPort {
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
-  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; show_lqi?: boolean; show_device_battery?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
+  _settings: { external_screens?: unknown; exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; show_lqi?: boolean; show_device_battery?: boolean; moon?: boolean; sun_ray_origin?: SunRayOrigin; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; radar?: { version?: 1; show_live?: boolean; [key: string]: unknown }; };
   _terminalFrame: 0 | 1 | 2;
-  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showLqi: boolean; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean; } | null;
+  _settingsDialog: { colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null; northDeg: number | null; northDegInput: string; bgMode: "static" | "daynight"; sunRays: boolean; sunRayOrigin: SunRayOrigin; showRoomTooltip: boolean; showLqi: boolean; deviceBattery: DeviceBatteryMode; zigbeeTopology: ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; externalScreens?: unknown; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -918,6 +921,7 @@ export class HouseplanEditorRuntime {
     },
   }, this.deviceStructure);
   public readonly properties = new PropertiesEditor(this);
+  public readonly externalScreens = new ExternalScreensEditor(this);
   public readonly markerAlerts = new MarkerAlertsEditor(this);
   public readonly decorOrder = new DecorOrderEditor(this);
   private readonly catalogMenu = new CatalogContextMenu(this);
@@ -951,7 +955,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._cancelOpeningDrag(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -7324,6 +7328,7 @@ public _openDeviceInbox(): void {
   }
 
 public _closeMarkerDialog(): void {
+    this.externalScreens.close();
     this.markerAlerts.close();
     if (this._radarSetup.isDirty()) { void this._closeMarkerDialogGuarded(); return; }
     this._radarSetup.reset();
@@ -8670,6 +8675,7 @@ public _openSettingsDialog = (): void => {
       showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
       deviceBattery: deviceBatteryModeOf(this.host._settings),
       showLqi: globalSignalVisibleOf(this.host._settings),
+      externalScreens: this.host._settings.external_screens === undefined ? undefined : structuredClone(this.host._settings.external_screens),
     };
     // #600 К10: снимок на момент открытия — от него считается «есть изменения».
     rememberGeneralBaseline(this.host, this.host._settingsDialog);
@@ -9749,6 +9755,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
         else settings.radar.show_live = false;
       }
       settings = writeZigbeeTopologySettings(settings, d.zigbeeTopology);
+      if (d.externalScreens !== undefined) settings.external_screens = structuredClone(d.externalScreens);
       const nextConfig = { ...normalizeRoomAppearance(cfg), settings };
       attempt = this.host._adoption.beginOptimistic(cfg, nextConfig);
       this.host._serverCfg = nextConfig;
@@ -9762,7 +9769,7 @@ public _updateDecorStyle(next: DecorStyle, immediate = false): void {
           acceptGeneralBaseline(this.host, d, owner);
           this.host._settingsDialog = { ...this.host._settingsDialog!, busy: false };
         } else {
-          acceptSavedDialogExit(this.host, 'settings', owner);
+          forgetGeneralBaseline(this.host); // #1113 approved Save uses the shared animated exit.
           this.host._settingsDialog = null;
         }
       }

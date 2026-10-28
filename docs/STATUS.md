@@ -8,6 +8,8 @@ Native runner fixture (#1115) observes its owned descendant's actual exit within
 
 Dreame history (#1117) accepts an absent/null historical map slot only with a unique same-source native-proven saved-map route. Known slots and typed identities remain strict; ambiguous routes are refused before calibration selection. No Store, live matcher, API or UI changes.
 
+- #1113: external-screen profiles in General settings; main-panel hpprofile/URL precedence, shared local addresses and bounded live profile-only adoption. Validation evidence is recorded in the issue handoff.
+
 Geometry history (#1100) restores snapshots through content keys without clearing other floors' pools. Eligible stairs/backdrop steps retain physical record identities; strict physical history shares exact candidate verdicts and preserves legacy migration, refusals and outbound revalidation of negative boundaries.
 
 Task Golden checks (#1114) explicitly select unchanged scenes with byte-identical/zero-pixel evidence, separate from pending change/new intent and baseline acceptance.
@@ -111,7 +113,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5841 · pure backend 701 · HA-harness backend 608 · browser smokes 479 (`npm run inventory`) |
+| Tests | Node unit 5855 · pure backend 710 · HA-harness backend 608 · browser smokes 480 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

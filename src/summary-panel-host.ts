@@ -56,6 +56,7 @@ export interface SummaryPanelHost extends Node {
   _writesPending: number;
   _writeChain: Promise<void>;
   _kiosk: boolean;
+  readonly _externalScreen?: import('./external-screens').ResolvedScreen;
   _kioskScale: { icon: number; font: number };
   _haSummaryPanelApi: number | null;
   _canManageConfiguration: boolean;

@@ -112,9 +112,10 @@ const REGISTRY_LISTENERS={device_registry_updated:new Set(),entity_registry_upda
 // through __pushServerConfig/__pushServerLayout (test facade setServerConfig/setLayout).
 const SERVER_LISTENERS={houseplan_config_updated:new Set(),houseplan_layout_updated:new Set()};
 const SERVED={config:0,layout:0};
-const server=createFixtureStore(CFG,LAYOUT,(event,rev)=>{
-  for(const cb of SERVER_LISTENERS[event])cb({event_type:event,data:{rev}});
-},{markerHistory:new URLSearchParams(location.search).get('device-history')==='1'});
+const server=createFixtureStore(CFG,LAYOUT,(event,rev,extra)=>{
+  if(extra?.external_screens_update)SERVED.config=rev; // This revision was served in the bounded event.
+  for(const cb of SERVER_LISTENERS[event])cb({event_type:event,data:{rev,...extra}});
+},{markerHistory:new URLSearchParams(location.search).get('device-history')==='1',externalScreens:new URLSearchParams(location.search).get('external-screens')==='1'});
 window.__servedRevision=SERVED;
 const CONNECTION={subscribeEvents:async(cb,event)=>{
   const listeners=REGISTRY_LISTENERS[event]||SERVER_LISTENERS[event];

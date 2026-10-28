@@ -123,6 +123,8 @@ export class LoadedSummaryPanelRuntime {
 
   public constructor(host: unknown) { this.host = host as SummaryPanelHost; }
 
+  private get effectiveShow(): boolean { return this.host._externalScreen?.summary ?? this.local.show; }
+
   public get dialogOpen(): boolean { return !!this.dialog; }
 
   /** Only mounted consumers subscribe; opening/switching forces a new capture. */
@@ -283,15 +285,15 @@ export class LoadedSummaryPanelRuntime {
     const toggleTitle = this.toggleTitle();
     return [
       { id: 'summary-settings', glyph: summaryIcon('settings'), label: this.t('summary.settings'), run: () => void this.openDialog() },
-      { id: 'summary-toggle', glyph: summaryIcon('sidebar'), label: toggleTitle, pressed: this.local.show,
-        run: () => this.saveLocal({ show: !this.local.show }) },
+      { id: 'summary-toggle', glyph: summaryIcon('sidebar'), label: toggleTitle, pressed: this.effectiveShow,
+        run: () => this.saveLocal({ show: !this.effectiveShow }) },
     ];
   }
 
   private toggleTitle(): string {
     const resolved = this.config();
     const layout = this.layout();
-    const temporaryReason = this.local.show && (
+    const temporaryReason = this.effectiveShow && (
       resolved.unsupported ? this.t('summary.unsupported_schema')
         : !resolved.config?.show_on_mobile && this.host.narrow === true
         ? this.t('summary.hidden_mobile')
@@ -299,11 +301,11 @@ export class LoadedSummaryPanelRuntime {
           ? this.t('summary.hidden_narrow_unknown')
           : !layout.fits ? this.t('summary.hidden_small') : ''
     );
-    return temporaryReason || this.t(this.local.show ? 'summary.hide' : 'summary.show');
+    return temporaryReason || this.t(this.effectiveShow ? 'summary.hide' : 'summary.show');
   }
 
   public renderControls(kiosk = false): TemplateResult | typeof nothing {
-    if (kiosk && this.host._mode !== 'view') return nothing;
+    if (kiosk && (this.host._mode !== 'view' || this.host._externalScreen?.controls === false)) return nothing;
     const toggleTitle = this.toggleTitle();
     const stop = (event: Event) => event.stopPropagation();
     return html`<div class="summary-control ${kiosk ? 'kiosk' : ''}" role="group"
@@ -313,12 +315,12 @@ export class LoadedSummaryPanelRuntime {
           data-hp-tooltip=${this.t('summary.settings')} aria-label=${this.t('summary.settings')}>
         ${summaryIcon('settings')}
       </button>
-      <button type="button" data-hp="summary-toggle" class=${this.local.show ? 'on' : ''}
-        aria-pressed=${this.local.show ? 'true' : 'false'}
+      ${kiosk && this.host._externalScreen?.summary !== undefined ? nothing : html`<button type="button" data-hp="summary-toggle" class=${this.effectiveShow ? 'on' : ''}
+        aria-pressed=${this.effectiveShow ? 'true' : 'false'}
           data-hp-tooltip=${toggleTitle} aria-label=${toggleTitle}
-        @click=${() => this.saveLocal({ show: !this.local.show })}>
+        @click=${() => this.saveLocal({ show: !this.effectiveShow })}>
         ${summaryIcon('sidebar')}
-      </button>
+      </button>`}
     </div>`;
   }
 
@@ -763,7 +765,7 @@ export class LoadedSummaryPanelRuntime {
     const config = this.config().config;
     if (!this.connected || !this.host.isConnected || !config
         || this.host.ownerDocument.visibilityState === 'hidden'
-        || !effectiveSummaryVisible({view:this.host._mode === 'view', localShow:this.local.show,
+        || !effectiveSummaryVisible({view:this.host._mode === 'view', localShow:this.effectiveShow,
           showOnMobile:config.show_on_mobile,narrow:this.host.narrow,fits:this.layout().fits})) return [];
     return visibleSummaryBlocks(config, this.host._space).flatMap(block => block.values);
   }
@@ -938,7 +940,7 @@ export class LoadedSummaryPanelRuntime {
         view: true, localShow: true, showOnMobile: config.show_on_mobile,
         narrow: this.host.narrow, fits: true,
       });
-    this.presentation.sync(eligible && this.local.show, layout.side,
+    this.presentation.sync(eligible && this.effectiveShow, layout.side,
       immediate || !eligible || this.host.ownerDocument.visibilityState === 'hidden');
   }
 
@@ -1005,7 +1007,7 @@ export class LoadedSummaryPanelRuntime {
     const config = this.config().config;
     if (this.host.ownerDocument.visibilityState === 'hidden' || !config) return false;
     if (!effectiveSummaryVisible({
-      view: this.host._mode === 'view', localShow: this.local.show,
+      view: this.host._mode === 'view', localShow: this.effectiveShow,
       showOnMobile: config.show_on_mobile, narrow: this.host.narrow, fits: this.layout().fits,
     })) return false;
     return visibleSummaryBlocks(config, this.host._space).some((block) => block.values.some(

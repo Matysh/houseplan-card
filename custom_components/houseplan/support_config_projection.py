@@ -302,6 +302,22 @@ def extend_config_projection(config: dict, projected: dict, ids: DiagnosticIds) 
     )
     if "summary_panel" in settings:
         safe_settings["summary_panel"] = _summary(settings["summary_panel"], ids)
+    if "external_screens" in settings:
+        screens = settings["external_screens"]
+        if isinstance(screens, dict) and type(screens.get("version")) is int and screens["version"] == 1:
+            rows = []
+            for row in screens.get("screens", []):
+                if not isinstance(row, dict):
+                    continue
+                safe = _scalars(row, numbers=("id", "rotation", "cycle", "idle", "icon_scale", "font_scale"), booleans=("controls",))
+                for key in ("summary", "hidden_devices"):
+                    if row.get(key) in ("local", "show", "hide"):
+                        safe[key] = row[key]
+                safe["space"] = ids.get("space", row["space"]) if row.get("space") else None
+                rows.append(safe)
+            safe_settings["external_screens"] = {"version": 1, "next_id": screens.get("next_id"), "screens": rows}
+        else:
+            safe_settings["external_screens"] = {"status": "unsupported_version"}
     if isinstance(settings.get("exclude_integrations"), list):
         safe_settings["exclude_integrations"] = [
             ids.get("integration", item) for item in settings["exclude_integrations"]

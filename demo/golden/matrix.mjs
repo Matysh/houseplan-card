@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 104;
+export const GOLDEN_MATRIX_VERSION = 105;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -282,6 +282,17 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
 const LED_STRIPS_OFF = Object.fromEntries(['light.demo_led_strip', 'light.demo_led_strip_wall', 'light.demo_led_strip_corner', 'light.demo_led_strip_loop'].map((id) => [id, { state: 'off' }]));
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  ...['empty','list','constructor'].flatMap(externalScreens => ['light','dark'].map(theme => ({
+    id:`settings-external-screens-${externalScreens}-${theme}`, fixture:'visual', space:'golden-geometry',
+    externalScreens, mode:'view', language:'ru', theme, viewport:{width:1280,height:920}, ...page,
+  }))),
+  ...[
+    {id:'panel-kiosk-profile-rotated-90',screenRotation:90},
+    {id:'panel-kiosk-profile-summary-on',screenSummary:true},
+    {id:'panel-kiosk-profile-no-controls',screenSummary:true,screenControls:false},
+  ].map(profile => ({...profile,fixture:'visual',space:'golden-geometry',externalScreens:'list',
+    panelHost:true,panelKioskUrl:'/houseplan?hpprofile=1',preloadEditorRuntime:false,
+    mode:'view',language:'ru',theme:'dark',viewport:{width:1280,height:920},...page})),
   ...STAGE6_ACCEPTANCE_SCENARIOS,
   ...[
     { id: 'view-device-menu-writer-dark', viewDeviceMenu: 'writer', theme: 'dark', language: 'en' },

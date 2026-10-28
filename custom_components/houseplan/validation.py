@@ -2473,6 +2473,117 @@ def preserve_summary_panel_namespace(config: dict, previous: dict | None) -> Non
         new_settings["summary_panel"] = copy.deepcopy(old_settings["summary_panel"])
 
 
+
+# #1113: screen numbers are links, not reusable list positions.
+def _screen_int(value: object) -> int:
+    if type(value) is not int or value < 1 or value > 9007199254740991:
+        raise vol.Invalid("screen number must be a positive safe integer")
+    return value
+
+
+def _screen_seconds(value: object) -> int:
+    if type(value) is not int or not 0 <= value <= 3600:
+        raise vol.Invalid("screen interval must be an integer from 0 to 3600")
+    return value
+
+
+def _screen_scale(value: object) -> float | None:
+    if value is None:
+        return None
+    if type(value) not in (int, float) or not math.isfinite(value) or not .5 <= value <= 3 or abs(value * 20 - round(value * 20)) > 1e-8:
+        raise vol.Invalid("screen scale must use steps of 0.05 from 0.5 to 3")
+    return value
+
+
+def _screen_rotation(value: object) -> int:
+    if type(value) is not int or value not in (0, 90, 180, 270):
+        raise vol.Invalid("screen rotation must be a quarter turn")
+    return value
+
+
+def _external_screen_invariants(value: dict) -> dict:
+    ids = [screen["id"] for screen in value["screens"]]
+    if len(ids) != len(set(ids)):
+        raise vol.Invalid("screen ids must be unique")
+    if any(item >= value["next_id"] for item in ids):
+        raise vol.Invalid("screen ids must precede next_id")
+    return value
+
+
+_EXTERNAL_SCREEN_SCHEMA = vol.Schema({
+    vol.Required("id"): _screen_int,
+    vol.Required("space"): vol.Any(None, _NONEMPTY_TEXT),
+    vol.Required("rotation"): _screen_rotation,
+    vol.Required("cycle"): _screen_seconds,
+    vol.Required("idle"): _screen_seconds,
+    vol.Required("summary"): vol.In(("local", "show", "hide")),
+    vol.Required("hidden_devices"): vol.In(("local", "show", "hide")),
+    vol.Required("icon_scale"): _screen_scale,
+    vol.Required("font_scale"): _screen_scale,
+    vol.Required("controls"): bool,
+}, extra=vol.ALLOW_EXTRA)
+EXTERNAL_SCREENS_SCHEMA = vol.All(vol.Schema({
+    vol.Required("version"): vol.All(_screen_int, vol.Equal(1)),
+    vol.Required("next_id"): _screen_int,
+    vol.Required("screens"): vol.All([_EXTERNAL_SCREEN_SCHEMA], vol.Length(max=20)),
+}, extra=vol.ALLOW_EXTRA), _external_screen_invariants)
+
+
+def _future_external_screens(value: object) -> dict:
+    if not isinstance(value, dict) or type(value.get("version")) is not int or value["version"] <= 1:
+        raise vol.Invalid("unsupported external screens version")
+    if len(json.dumps(value, separators=(",", ":"), ensure_ascii=False)) > 128 * 1024:
+        raise vol.Invalid("external screens are too large")
+    return value
+
+
+EXTERNAL_SCREENS_WIRE_SCHEMA = vol.Any(EXTERNAL_SCREENS_SCHEMA, _future_external_screens)
+
+
+def external_screens_config_event(previous: dict, current: dict, base_rev: int, rev: int) -> dict:
+    """Add a bounded screen-only delta; old and mixed writers retain normal reload."""
+    event = {"rev": rev}
+    old_settings, settings = previous.get("settings") or {}, current.get("settings") or {}
+    if rev != base_rev + 1 or "external_screens" not in settings or old_settings.get("external_screens") == settings["external_screens"]:
+        return event
+    before = {**previous, "settings": {k: v for k, v in old_settings.items() if k != "external_screens"}}
+    after = {**current, "settings": {k: v for k, v in settings.items() if k != "external_screens"}}
+    if before == after:
+        event["external_screens_update"] = {"version": 1, "base_rev": base_rev,
+                                            "value": copy.deepcopy(settings["external_screens"])}
+    return event
+
+
+def preserve_external_screens_namespace(config: dict, previous: dict | None) -> None:
+    old = (previous or {}).get("settings") or {}
+    if "external_screens" not in old:
+        return
+    settings = config.get("settings")
+    if not isinstance(settings, dict):
+        settings = {}
+        config["settings"] = settings
+    if "external_screens" not in settings:
+        settings["external_screens"] = copy.deepcopy(old["external_screens"])
+
+
+def validate_external_screens_references(config: dict, previous: dict | None) -> None:
+    value = (config.get("settings") or {}).get("external_screens")
+    if not isinstance(value, dict) or value.get("version") != 1:
+        return
+    old = ((previous or {}).get("settings") or {}).get("external_screens")
+    old = old if isinstance(old, dict) and old.get("version") == 1 else {}
+    if value["next_id"] < old.get("next_id", 1):
+        raise vol.Invalid("external screen next_id cannot decrease")
+    old_rows = {row["id"]: row for row in old.get("screens", [])}
+    spaces = {space["id"] for space in config.get("spaces", [])}
+    for screen in value["screens"]:
+        before = old_rows.get(screen["id"])
+        if before is None and screen["id"] < old.get("next_id", 1):
+            raise vol.Invalid("external screen number cannot be reused")
+        if screen != before and screen["space"] is not None and screen["space"] not in spaces:
+            raise vol.Invalid("new or changed external screen space must exist")
+
+
 def summary_panel_entity_ids(panel: object) -> set[str]:
     """Entity ids a summary panel's value blocks reference (#1096)."""
     ids: set[str] = set()
@@ -2537,6 +2648,7 @@ def prepare_ordinary_summary_candidate(
     space an older writer sent without the field (#780).
     """
     preserve_summary_panel_namespace(candidate, previous)
+    preserve_external_screens_namespace(candidate, previous)
     preserve_led_strips(candidate, previous)
     preserve_space_appearance(candidate, previous)
     checked = normalize(candidate)
@@ -2546,6 +2658,7 @@ def prepare_ordinary_summary_candidate(
     for space in checked.get("spaces") or []:
         materialize_space_appearance(space, general)
     validate_summary_panel_references(checked, previous, readable_entity_ids)
+    validate_external_screens_references(checked, previous)
     return checked
 
 
@@ -2607,6 +2720,7 @@ CONFIG_TYPE_SCHEMA = vol.Schema(
                     # #661: the moon on the "Follow the Sun" background; absent/false = off.
                     vol.Optional("moon"): bool,
                     vol.Optional("summary_panel"): SUMMARY_PANEL_WIRE_SCHEMA,
+                    vol.Optional("external_screens"): EXTERNAL_SCREENS_WIRE_SCHEMA,
                     vol.Optional("radar"): vol.Schema({}, extra=vol.ALLOW_EXTRA),
                     # Removed from the UI/runtime in 2026-08-08. Keep accepting the
                     # legacy field so an existing stored config can still load; the

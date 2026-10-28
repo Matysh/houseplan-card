@@ -30,9 +30,10 @@ const out = await page.evaluate(async () => {
   o.batteryDefaultAllInDisplay = d0.deviceBattery === 'all' && batterySelect()?.value === 'all'
     && batteryField?.closest('.hpf-card')?.dataset.card === 'display'
     && batteryField.querySelectorAll('option').length === 3 && !batteryField.querySelector('.hpf-hint');
-  // --- AC1: семь карточек по §5.1, старой разметки нет ----------------------
-  o.sixCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
-    === JSON.stringify(['display', 'plan', 'fills', 'sun', 'zigbee', 'data']);
+  // #1113 adds the approved External screens section before maintenance.
+  // --- AC1: seven cards; legacy controls and assertions stay unchanged. ----
+  o.sevenCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
+    === JSON.stringify(['display', 'plan', 'fills', 'sun', 'zigbee', 'external-screens', 'data']);
   o.noLegacyMarkup = qa('.rhint, .srcrow, .dispsection, fieldset, .gsrow, .colorrow, .helpfieldlabel, select.areasel').length === 0;
   o.namedSelects = qa('select[name]').length === 2 && qa('select[name]').every(el => el.getAttribute('aria-label'))
     && qa('input[type="radio"][name="gs-sun-ray-origin"]').length === 2;

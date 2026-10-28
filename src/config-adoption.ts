@@ -1,3 +1,4 @@
+import { externalScreenOnlyCandidate } from './external-screens';
 /**
  * Config/layout adoption boundary (#500).
  *
@@ -430,6 +431,7 @@ export function adoptStructuralResponses(
   host: ConfigAdoptionHostPort,
   cfgResp: AuthoritativeConfigResponse | null | undefined,
   layResp?: LayoutResponse | null,
+  screenEvent = false,
 ): { configChanged: boolean; layoutChanged: boolean } {
   const adoption = host._adoption;
   const hadConfig = !!adoption.config;
@@ -455,7 +457,7 @@ export function adoptStructuralResponses(
     });
   if (configChanged) host._seedDecorStyle(adoption.config);
   if (cfgResp && ('virtual_lights' in cfgResp || 'config' in cfgResp)) {
-    const nextVirtualLights = adoptVirtualLightServerSnapshot(
+    const nextVirtualLights = screenEvent ? { ...host._virtualLights, configRev: adoption.configRev } : adoptVirtualLightServerSnapshot(
       host._virtualLights,
       cfgResp.virtual_lights as VirtualLightWireSnapshot | null | undefined,
       adoption.configRev,
@@ -467,8 +469,9 @@ export function adoptStructuralResponses(
     }
   }
 
+  // A durable ordinary profile write invalidates the one-deep Optimize/Import undo.
   host._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
-  host._adoptConfigCapabilities(cfgResp);
+  if (!screenEvent) host._adoptConfigCapabilities(cfgResp);
   host._undoKind = (cfgResp?.undo_kind || layResp?.undo_kind || null) as 'optimize' | 'import' | null;
   if (typeof cfgResp?.can_write === 'boolean') host._serverCanWrite = cfgResp.can_write;
   if (configChanged) host._continuity.note('config-candidate', { configRev: adoption.configRev });
@@ -478,7 +481,7 @@ export function adoptStructuralResponses(
 
 export type AdoptionReason =
   | 'structural-response' | 'config-reload' | 'summary-recovery'
-  | 'space-delete' | 'optimize-undo' | 'import-apply';
+  | 'space-delete' | 'optimize-undo' | 'import-apply' | 'external-screens-event';
 
 export interface GatedAdoptionInput {
   cfgResp?: AuthoritativeConfigResponse | null;
@@ -490,7 +493,7 @@ export interface GatedAdoptionInput {
    * `post-write` — a path that just completed its own paired write and
    * re-reads; the sequence ends at adoption, the caller keeps its own tail.
    */
-  profile: 'reload' | 'post-write';
+  profile: 'reload' | 'post-write' | 'screen-event';
   /** Runs once the gate passed, before adoption (connection flags of the initial load). */
   beforeAdopt?: () => void;
   /**
@@ -534,6 +537,10 @@ export async function adoptAuthoritativeGated(
   const { cfgResp, layResp } = input;
   const adoption = host._adoption;
   const candidateConfig = configOf(cfgResp);
+  const screenEvent = input.profile === 'screen-event';
+  if (screenEvent && (layResp != null || cfgResp?.rev !== adoption.configRev + 1
+    || input.reason !== 'external-screens-event'
+    || !externalScreenOnlyCandidate(adoption.config, candidateConfig))) return { status: 'superseded' };
   const structuralChanged = (cfgResp != null
       && contentFingerprint(candidateConfig) !== adoption.currentConfigFingerprint())
     || (layResp != null && contentFingerprint(layResp.layout ?? {}) !== adoption.currentLayoutFingerprint());
@@ -555,8 +562,8 @@ export async function adoptAuthoritativeGated(
   }
   input.beforeAdopt?.();
   const visibleSpace = host._space;
-  adoptStructuralResponses(host, cfgResp, layResp);
-  if (input.profile === 'reload') {
+  adoptStructuralResponses(host, cfgResp, layResp, screenEvent);
+  if (input.profile === 'reload' || screenEvent) {
     void host._syncDecorAssets(candidateConfig).catch(() => undefined);
     host._adoptInitialSpace(host._model, true);
     host._resumePendingNavMode();

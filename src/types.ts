@@ -359,6 +359,7 @@ export interface ServerConfig {
     zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] };
     /** Read-only grouped values shown over the plan (#437). */
     summary_panel?: SummaryPanelConfig;
+    external_screens?: unknown;
     radar?: {
       version?: 1;
       show_live?: boolean;

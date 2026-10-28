@@ -10,10 +10,10 @@ export async function createMockHa(notify) {
   try { saved = loadSession(localStorage, identity); }
   catch (error) { notify(`Сессия не загружена: ${error.message}. Исходная запись сохранена.`); }
   const listeners = new Map();
-  const emit = (type, rev) => queueMicrotask(() => {
-    for (const fn of listeners.get(type) || []) fn({ event_type: type, data: { rev } });
+  const emit = (type, rev, extra) => queueMicrotask(() => {
+    for (const fn of listeners.get(type) || []) fn({ event_type: type, data: { rev, ...extra } });
   });
-  const store = createFixtureStore(saved?.config || fixture.config, saved?.layout || fixture.layout, emit);
+  const store = createFixtureStore(saved?.config || fixture.config, saved?.layout || fixture.layout, emit, { externalScreens: true });
   const runtime = { ...fixture, states: saved?.states || fixture.states };
   const virtualOff = new Set(saved?.virtualLightsOff || fixture.virtualLightsOff || []);
   let virtualRev = 0;
@@ -86,7 +86,7 @@ export async function createMockHa(notify) {
       }
       const result = store.handle(message, Object.values(runtime.entities));
       if (result !== undefined) {
-        if (type === 'houseplan/config/get') return { ...result, integration_version: provenance.productVersion, decor_assets_api: 1, summary_panel_api: 1, wall_node_move_api: 1, radar_stage1_api: 1, zigbee_scan_api: 1, zigbee_maps_api: 1, virtual_lights: { rev: virtualRev, config_rev: store.configRev, off: [...virtualOff] } };
+        if (type === 'houseplan/config/get') return { ...result, integration_version: provenance.productVersion, decor_assets_api: 1, summary_panel_api: 1, external_screens_api: 1, wall_node_move_api: 1, radar_stage1_api: 1, zigbee_scan_api: 1, zigbee_maps_api: 1, virtual_lights: { rev: virtualRev, config_rev: store.configRev, off: [...virtualOff] } };
         if (type !== 'houseplan/layout/get') persist();
         return result;
       }

@@ -143,6 +143,7 @@ from .validation import (
     prepare_ordinary_summary_candidate,
     sanitize_filename,
     summary_panel_entity_ids,
+    external_screens_config_event,
     valid_space_id,
     validate_active_marker_ids,
     validate_marker_controls,
@@ -1837,6 +1838,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "device_history_api": 1,
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
+            "external_screens_api": 1,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
             **({"zigbee_scan_api": 1, "zigbee_maps_api": 1} if rt.zigbee_coordinator is not None
                and not rt.zigbee_coordinator.closed else {}),
@@ -2277,7 +2279,8 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # Keep it under write_lock: a later config/set must not resurrect a
         # marker between this commit and the ownership decision (#335).
         await _purge_trail_recorder(hass, msg["config"])
-    hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
+    hass.bus.async_fire("houseplan_config_updated", external_screens_config_event(
+        data.get("config") or DEFAULT_CONFIG, msg["config"], int(current_rev), int(new_rev)))
     if contact_layout is not None:
         hass.bus.async_fire("houseplan_layout_updated", {"rev": next_layout_rev})
     _refresh_trail_recorder(hass)

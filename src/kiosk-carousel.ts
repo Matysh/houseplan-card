@@ -5,6 +5,7 @@ export interface KioskCarouselState {
   readonly connected: boolean;
   /** Zero unless kiosk has >1 spaces and no fixed floor. */
   readonly intervalMs: number;
+  readonly idleMs?: number;
   readonly pausedUntil: number;
   readonly gesturesIdle: boolean;
   readonly surfacesIdle: boolean;
@@ -34,6 +35,7 @@ export class KioskCarousel {
   private interval: number | undefined;
   private deadline: number | undefined;
   private intervalMs = 0;
+  private idleMs = 0;
   private deadlineUntil = 0;
   private handledUntil = 0;
   private surfaceHeld = false;
@@ -46,16 +48,21 @@ export class KioskCarousel {
   /** Also mirrors the existing #462 pause when there is no active carousel. */
   interact(): void {
     this.port.pause(Math.max(this.port.state().pausedUntil,
-      this.clock.now() + KIOSK_INTERACTION_PAUSE_MS));
+      this.clock.now() + (this.port.state().intervalMs <= 0 && (this.port.state().idleMs ?? 0) > 0 ? this.port.state().idleMs! : KIOSK_INTERACTION_PAUSE_MS)));
     this.sync();
   }
 
   sync(): void {
     let state = this.port.state();
+    const idle = state.connected && state.intervalMs <= 0 ? state.idleMs ?? 0 : 0;
+    if (idle !== this.idleMs) {
+      this.idleMs = idle;
+      if (idle > 0) { this.port.pause(this.clock.now() + idle); state = this.port.state(); }
+    }
     const closed = this.surfaceHeld && state.surfacesIdle;
     this.surfaceHeld = !state.surfacesIdle;
-    if (closed && state.connected && state.intervalMs > 0) {
-      this.port.pause(this.clock.now() + KIOSK_INTERACTION_PAUSE_MS);
+    if (closed && state.connected && (state.intervalMs > 0 || idle > 0)) {
+      this.port.pause(this.clock.now() + (idle || KIOSK_INTERACTION_PAUSE_MS));
       state = this.port.state();
     }
     const ms = state.connected ? state.intervalMs : 0;
@@ -69,7 +76,7 @@ export class KioskCarousel {
         }, ms);
       }
     }
-    if (ms <= 0) { this.clearDeadline(); return; }
+    if (ms <= 0 && idle <= 0) { this.clearDeadline(); return; }
     if (state.pausedUntil <= this.handledUntil) return;
     if (this.deadline !== undefined && this.deadlineUntil === state.pausedUntil) return;
     this.clearDeadline();
@@ -81,7 +88,7 @@ export class KioskCarousel {
     this.deadline = this.clock.setTimeout(() => {
       this.deadline = undefined;
       const current = this.port.state();
-      if (generation !== this.generation || !current.connected || current.intervalMs <= 0
+      if (generation !== this.generation || !current.connected || (current.intervalMs <= 0 && (current.idleMs ?? 0) <= 0)
         || this.clock.now() < current.pausedUntil || !current.gesturesIdle
         || !current.surfacesIdle) return;
       this.handledUntil = current.pausedUntil;
@@ -113,6 +120,7 @@ export class KioskCarousel {
   dispose(): void {
     this.clearTimers();
     this.intervalMs = 0;
+    this.idleMs = 0;
   }
 
   private clearDeadline(): void {

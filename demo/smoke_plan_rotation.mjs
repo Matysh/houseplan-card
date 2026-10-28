@@ -183,6 +183,28 @@ try {
     const c = document.getElementById('rotation-kiosk'); c.setConfig({type:'custom:houseplan-card',floor:'f1',kiosk:true,rotation:45}); await c.updateComplete;
   });
   check('invalid kiosk rotation renders safely at zero', await page.locator('#rotation-kiosk .stage').getAttribute('data-hp-plan-rotation') === '0');
+  // #1113: exercise the profile through the real card/route input, keeping the
+  // pre-existing Lovelace and browser-persistence assertions above and below.
+  await page.evaluate(async () => {
+    await window.__hpTest.setServerConfig(cfg => {
+      cfg.settings.external_screens = { version: 1, next_id: 2, screens: [{ id: 1,
+        space: 'f1', rotation: 90, cycle: 0, idle: 0, summary: 'local', hidden_devices: 'local',
+        icon_scale: null, font_scale: null, controls: true }] }; return cfg;
+    });
+    const c = document.getElementById('rotation-kiosk'); c.panelHost = true;
+    c.routeKiosk = { enabled: true, position: null, profile: 1 };
+    c.setConfig({ type: 'custom:houseplan-card' });
+  });
+  await page.waitForFunction(() => document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')?.dataset.hpPlanRotation === '90');
+  await page.locator('#rotation-kiosk .stage').dispatchEvent('dblclick', { clientX: 5, clientY: 5 });
+  await page.waitForFunction(() => { const c = document.getElementById('rotation-kiosk'); return c._zoom === 1 && !c._cameraTransition.active; });
+  check('profile quarter-turn paints and fit-all settles at the rotated base',
+    await page.locator('#rotation-kiosk .stage').getAttribute('data-hp-plan-rotation') === '90');
+  await page.evaluate(() => { document.getElementById('rotation-kiosk').routeKiosk = {
+    enabled: true, position: null, profile: 1, overrides: { rotation: 270 } }; });
+  await page.waitForFunction(() => document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')?.dataset.hpPlanRotation === '270');
+  check('explicit URL rotation overrides the profile without changing the ordinary browser choice',
+    await page.evaluate(() => window.__card._rotation === 90));
   await page.reload();
   await page.waitForFunction(() => window.__card?._booting === false);
   await installHpTestOnPage(page); await wait();

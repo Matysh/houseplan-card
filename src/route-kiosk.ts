@@ -1,3 +1,4 @@
+import type { ScreenOverrides } from './external-screens';
 import { resolveFixedFloor, type FixedFloorSelection } from './initial-load';
 
 /** A host's presentation intent, never part of the persisted card config. */
@@ -5,6 +6,8 @@ export interface RouteKiosk {
   readonly enabled: boolean;
   /** One-based position in the ordinary visible space list; null means all. */
   readonly position: number | null;
+  readonly profile?: number | null;
+  readonly overrides?: ScreenOverrides;
 }
 
 export const NO_ROUTE_KIOSK: RouteKiosk = Object.freeze({ enabled: false, position: null });
@@ -13,11 +16,14 @@ export function normalizeRouteKiosk(value?: RouteKiosk | null): RouteKiosk {
   if (value?.enabled !== true) return NO_ROUTE_KIOSK;
   const position = value.position;
   return { enabled: true, position: typeof position === 'number'
-    && Number.isSafeInteger(position) && position > 0 ? position : null };
+    && Number.isSafeInteger(position) && position > 0 ? position : null,
+    ...(typeof value.profile === 'number' && Number.isSafeInteger(value.profile) && value.profile > 0 ? { profile: value.profile } : {}),
+    ...(value.overrides ? { overrides: { ...value.overrides } } : {}) };
 }
 
 export function sameRouteKiosk(a: RouteKiosk, b: RouteKiosk): boolean {
-  return a.enabled === b.enabled && a.position === b.position;
+  return a.enabled === b.enabled && a.position === b.position && a.profile === b.profile
+    && JSON.stringify(a.overrides ?? {}) === JSON.stringify(b.overrides ?? {});
 }
 
 export type RouteFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
@@ -51,4 +57,10 @@ export function resolvePresentationFloor(
 /** HA custom panels own their first path segment, including internal pages. */
 export function presentationRouteOwner(path: string, panelHost = false): string {
   return panelHost ? /^\/[^/]+/.exec(path)?.[0] ?? path : path;
+}
+
+/** Settings opened in Lovelace still link to the integration's registered main panel. */
+export function externalScreenPath(path: string, panelHost: boolean, id: number): string {
+  const owner = panelHost ? presentationRouteOwner(path, true) : '/houseplan';
+  return `${owner && owner !== '/' ? owner : '/houseplan'}?hpprofile=${id}`;
 }

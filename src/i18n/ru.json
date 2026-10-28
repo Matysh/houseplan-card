@@ -1354,5 +1354,6 @@
   "view.menu_foreign": "Сущность принадлежит другому устройству.",
   "view.menu_disabled": "Устройство или сущность отключены в Home Assistant.",
   "view.menu_unverified": "Принадлежность в Home Assistant не подтверждена.",
-  "backup.error.invalid_alert_sources": "Некорректные условия тревог устройства."
+  "backup.error.invalid_alert_sources": "Некорректные условия тревог устройства.",
+  "kiosk.profile_locked": "Задано профилем экрана или ссылкой"
 }

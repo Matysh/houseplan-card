@@ -3337,3 +3337,13 @@ Open **Device settings → Device alarms → Create**. Add up to three condition
 Nested **OK** changes only the device draft; outer **Save** persists it. Nested **Cancel/Escape** leaves the original draft unchanged. Deleting the last rule removes the optional block. An unavailable or foreign saved link remains visible with a reason and never substitutes a similarly named source.
 
 Activation and removal each require three continuous seconds. Missing/incomparable values cannot activate a condition. Attention is a passive yellow triangle to the left; Alarm uses the existing red indication. The device card and actual preview retain every cause, separately from maintenance. Native critical alarms retain priority. Static modes and disabled live states create no custom live clock; reconnect starts confirmation afresh. This feature adds no room/summary counters or HA actions.
+
+### External screens: a separate television or tablet view
+
+Use **General settings → External screens → Create** on a desktop. Choose one/all spaces, rotation, auto-advance, idle Fit all, summary/hidden devices, icon/text scales and overlay controls. **OK** changes the outer draft; **Save** applies it and closes with the shared animation. A save failure leaves the form open. Click **Screen N** to edit; deletion never reuses its number. Up to20 profiles are allowed. Copy produces your installation's complete URL.
+
+Open `/houseplan?hpprofile=1` on the screen: it enters kiosk and receives later profile edits without reloading. Unknown/deleted numbers mean kiosk without a profile. A deleted referenced space means all spaces and warns in settings.
+
+Link overrides: `hprotate=0|90|180|270`; integer `hpcycle`/`hpidle`0–3600seconds; `hpsummary`/`hphidden`/`hpcontrols=0|1`; `hpicons`/`hptext`50–300percent rounded to5. Invalid values are ignored. `/kiosk/N` or `hpspace=N` selects space ahead of the profile. For example `/houseplan/kiosk/2?hpprofile=1` combines the second space and profile1. A fixed space does not auto-advance; cycling retains its60-second interaction pause, while independent idle Fit all works without cycling.
+
+Priority is URL → profile → local choice → defaults. As on the main plan keeps local choice. Explicit profile/link values never overwrite browser preferences; removing the profile restores them. Main-panel route aliases share summary/hidden/scales preferences. Lovelace cards and YAML options retain their own identities.

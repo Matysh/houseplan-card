@@ -189,7 +189,7 @@ test('#493 same-key scale remains authoritative and identity changes discard the
   try {
     const host = hostFixture();
     const key = summaryLocalKey({
-      userId: 'alice', path: '/dashboard/home', host: 'panel', slot: 'houseplan-card',
+      userId: 'alice', path: '/dashboard', host: 'panel', slot: 'houseplan-card', // #1113 panel-root identity
     });
     browser.values.set(key, JSON.stringify({
       version: 1, show: true, icon_scale: 2, font_scale: 1.5,

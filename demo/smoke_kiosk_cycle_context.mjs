@@ -299,6 +299,7 @@ for(const options of [{}, {kiosk:true,cycle:90,floor:'f1'}]) {
 }
 await page.clock.resume();
 await page.evaluate(()=>window.__card.setConfig({type:'custom:houseplan-card',kiosk:true,cycle:90}));
+await page.evaluate(()=>{window.__profileCycleSpaces=structuredClone(window.__card._serverCfg.spaces);});
 await page.evaluate(async()=>window.__hpTest.setServerConfig(cfg=>{
   cfg.spaces=cfg.spaces.filter(s=>s.id==='f1');return cfg;
 }));
@@ -310,4 +311,41 @@ await page.clock.fastForward(180_000);
 check('one-space kiosk has no idle reset',await page.evaluate(before=>{
   const c=window.__card;return c._space===before.space&&c._zoom===before.zoom;
 },single));
+// #1113: accepted server profile drives the existing carousel and a separate idle
+// deadline; no private timer/deadline is written by this fixture.
+await page.clock.resume();
+await page.evaluate(async()=>{
+  await window.__hpTest.setServerConfig(cfg=>{
+    cfg.spaces=window.__profileCycleSpaces;
+    cfg.settings.external_screens={version:1,next_id:2,screens:[{id:1,space:null,
+      rotation:0,cycle:10,idle:30,summary:'local',hidden_devices:'local',
+      icon_scale:null,font_scale:null,controls:true}]};return cfg;
+  });
+  document.getElementById('host').style.height='800px';
+  const c=window.__card;c.panelHost=true;c.routeKiosk={enabled:true,position:null,profile:1};
+  c.setConfig({type:'custom:houseplan-card'});
+});
+await waitForKioskViewport(page);await freeze();
+const profileFirst=await page.evaluate(()=>window.__card._space);
+await page.clock.fastForward(10_000);await page.clock.runFor(300);
+check('server profile interval advances to the next space',await page.evaluate(first=>window.__card._space!==first,profileFirst));
+await page.locator('houseplan-card .stage').dispatchEvent('wheel',{deltaY:-120,clientX:400,clientY:400});
+await page.clock.runFor(300);
+const profilePaused=await page.evaluate(()=>({space:window.__card._space,until:window.__card._cyclePausedUntil,now:Date.now()}));
+check('profile carousel preserves the sixty-second interaction pause',profilePaused.until-profilePaused.now>59_000);
+await page.clock.fastForward(59_000);
+check('profile carousel does not leave the interacted space early',await page.evaluate(before=>window.__card._space===before.space,profilePaused));
+await page.clock.resume();
+await page.evaluate(async()=>window.__hpTest.setServerConfig(cfg=>{
+  cfg.settings.external_screens.screens[0].cycle=0;return cfg;
+}));
+await waitForKioskViewport(page);await freeze();
+await page.locator('houseplan-card .stage').dispatchEvent('wheel',{deltaY:-120,clientX:400,clientY:400});
+await page.clock.runFor(300);
+const profileIdle=await page.evaluate(()=>({space:window.__card._space,until:window.__card._cyclePausedUntil,now:Date.now()}));
+check('profile idle without cycling uses its own thirty-second deadline',profileIdle.until-profileIdle.now>29_000&&profileIdle.until-profileIdle.now<=30_000);
+await page.clock.fastForward(29_000);
+check('profile idle cannot fit before its configured deadline',await page.evaluate(()=>window.__card._zoom>1));
+await page.clock.fastForward(2000);await page.clock.runFor(300);
+check('profile idle fits without advancing to another space',await page.evaluate(before=>window.__card._zoom===1&&window.__card._space===before.space,profileIdle));
 await finish(browser);
