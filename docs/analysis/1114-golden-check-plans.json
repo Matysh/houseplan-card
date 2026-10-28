@@ -1,0 +1,646 @@
+{
+  "scope": "read-only plan replay, no browser execution claimed",
+  "helperBase": "31b17bec040f25224b80f0f679378807ccfd37fc",
+  "cases": [
+    {
+      "issue": 1097,
+      "head": "430b3612e2fd681c7a8a7fa6e43a73374ea24a06",
+      "base": "ccc62ef113c53f6de4c97e3b09ca7c1b56be9a81",
+      "labels": [
+        "P2",
+        "S6-in-progress",
+        "tech-debt",
+        "track:ask",
+        "to_release"
+      ],
+      "risk": {
+        "classes": [
+          "geometry",
+          "touch",
+          "visual"
+        ],
+        "raising": [
+          "geometry",
+          "touch"
+        ],
+        "visual": {
+          "render": true,
+          "ui": false
+        },
+        "evidence": {
+          "geometry": [
+            "src/opening-drag-preview.ts:21 · участок opening-*",
+            "src/opening-drag-preview.ts:22 · участок opening-*",
+            "src/opening-drag-preview.ts:23 · участок opening-*",
+            "src/opening-drag-preview.ts:24 · участок opening-*",
+            "src/opening-drag-preview.ts:25 · участок opening-*"
+          ],
+          "touch": [
+            "src/houseplan-editor-runtime.ts:6255 · токен pointercancel"
+          ],
+          "visual": [
+            "src/opening-drag-preview.ts:71 · токен stroke (render), токен fill (render)",
+            "src/opening-drag-preview.ts:74 · токен fill (render), токен fill-opacity (render), токен stroke (render)",
+            "src/opening-drag-preview.ts:76 · токен fill (render)",
+            "src/opening-drag-preview.ts:77 · токен stroke (render), токен stroke-width (render)",
+            "src/opening-drag-preview.ts:170 · токен fill (render)"
+          ]
+        },
+        "counts": {
+          "geometry": 154,
+          "touch": 1,
+          "visual": 5
+        }
+      },
+      "files": [
+        "demo/benchmark_opening_drag.mjs",
+        "demo/performance/opening-drag-fixture.mjs",
+        "demo/performance/opening-drag.mjs",
+        "demo/smoke_opening_drag.mjs",
+        "demo/smoke_partition_openings_preview.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DEVELOPMENT.md",
+        "docs/STATUS.md",
+        "docs/analysis/1097-opening-drag-2026-10-28.md",
+        "docs/release-ledger/v1.82.0/1097.json",
+        "docs/testing-notes/mutation-browser-guards.md",
+        "scripts/bundle-budget.mjs",
+        "scripts/ci-registry-inventory.json",
+        "scripts/monolith-baseline.json",
+        "scripts/mutation-registry.mjs",
+        "scripts/smoke-links.mjs",
+        "src/houseplan-card.ts",
+        "src/houseplan-editor-runtime.ts",
+        "src/interaction-types.ts",
+        "src/live-editor.ts",
+        "src/opening-drag-preview.ts",
+        "test/core-file-budget.test.mjs",
+        "test/data/1097-opening-drag-baseline.json",
+        "test/opening-drag.test.mjs"
+      ],
+      "sourceDiffSha256": "0222a927704938960414bd98f242cb0858cf6822aba85434ab66ccdb0eca7e76",
+      "proposal": {
+        "schema": 1,
+        "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+        "golden": [],
+        "smokes": [],
+        "goldenChecks": [
+          {
+            "id": "opening-placement-door-thick-wall-dark",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "opening-placement-passage-thick-wall-dark",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "opening-placement-passage-thick-wall-light",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "split-corner-wall-thick-dark",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "geometry-view-dark-fit",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "geometry-view-light-fit",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          }
+        ]
+      },
+      "noChecksError": "Task visual scope is not declared for src/houseplan-card.ts, src/houseplan-editor-runtime.ts, src/interaction-types.ts, src/live-editor.ts, src/opening-drag-preview.ts. Add visual.golden or visual.goldenChecks scene IDs and reasons to this issue release-ledger entry (baselineIndex: node scripts/task-visual-intent.mjs --baseline-index). Full regression runs before beta.",
+      "plan": {
+        "full": false,
+        "golden": false,
+        "browser": {
+          "schema": 1,
+          "scope": "task",
+          "labels": [
+            "P2",
+            "S6-in-progress",
+            "tech-debt",
+            "to_release",
+            "track:ask"
+          ],
+          "files": [
+            "demo/benchmark_opening_drag.mjs",
+            "demo/performance/opening-drag-fixture.mjs",
+            "demo/performance/opening-drag.mjs",
+            "demo/smoke_opening_drag.mjs",
+            "demo/smoke_partition_openings_preview.mjs",
+            "docs/ARCHITECTURE.md",
+            "docs/CANVAS.md",
+            "docs/CHANGELOG.md",
+            "docs/CHANGELOG.ru.md",
+            "docs/DEVELOPMENT.md",
+            "docs/STATUS.md",
+            "docs/analysis/1097-opening-drag-2026-10-28.md",
+            "docs/release-ledger/v1.82.0/1097.json",
+            "docs/testing-notes/mutation-browser-guards.md",
+            "scripts/bundle-budget.mjs",
+            "scripts/ci-registry-inventory.json",
+            "scripts/monolith-baseline.json",
+            "scripts/mutation-registry.mjs",
+            "scripts/smoke-links.mjs",
+            "src/houseplan-card.ts",
+            "src/houseplan-editor-runtime.ts",
+            "src/interaction-types.ts",
+            "src/live-editor.ts",
+            "src/opening-drag-preview.ts",
+            "test/core-file-budget.test.mjs",
+            "test/data/1097-opening-drag-baseline.json",
+            "test/opening-drag.test.mjs"
+          ],
+          "golden": {
+            "mode": "selected",
+            "ids": [
+              "geometry-view-dark-fit",
+              "geometry-view-light-fit",
+              "opening-placement-door-thick-wall-dark",
+              "opening-placement-passage-thick-wall-dark",
+              "opening-placement-passage-thick-wall-light",
+              "split-corner-wall-thick-dark"
+            ],
+            "intent": [
+              {
+                "id": "opening-placement-door-thick-wall-dark",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1097,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "opening-placement-passage-thick-wall-dark",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1097,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "opening-placement-passage-thick-wall-light",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1097,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "split-corner-wall-thick-dark",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1097,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "geometry-view-dark-fit",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1097,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "geometry-view-light-fit",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1097,
+                "expectation": "unchanged"
+              }
+            ],
+            "reason": "explicit unchanged golden checks and connected scenes",
+            "unresolved": [
+              "src/houseplan-card.ts",
+              "src/houseplan-editor-runtime.ts",
+              "src/interaction-types.ts",
+              "src/live-editor.ts",
+              "src/opening-drag-preview.ts"
+            ]
+          },
+          "smoke": {
+            "mode": "selected",
+            "ids": [
+              "smoke_backdrop.mjs",
+              "smoke_backdrop_guard.mjs",
+              "smoke_daycycle_zoom_layers.mjs",
+              "smoke_decor.mjs",
+              "smoke_decor_layer_order.mjs",
+              "smoke_detached_authority.mjs",
+              "smoke_device_settings_action.mjs",
+              "smoke_free_walls.mjs",
+              "smoke_grid_scale_invariance.mjs",
+              "smoke_hide_layers.mjs",
+              "smoke_iso_theme_walls.mjs",
+              "smoke_lazy_editor_chunk.mjs",
+              "smoke_mode_transition.mjs",
+              "smoke_modes.mjs",
+              "smoke_mounted_authority.mjs",
+              "smoke_opening_drag.mjs",
+              "smoke_partition_openings.mjs",
+              "smoke_partition_openings_preview.mjs",
+              "smoke_physical_body_characterization.mjs",
+              "smoke_render_invalidation.mjs",
+              "smoke_selective_invalidation_history0.mjs",
+              "smoke_selective_invalidation_history320.mjs",
+              "smoke_selective_invalidation_inactive.mjs",
+              "smoke_selective_invalidation_visible.mjs",
+              "smoke_static_zoom_sharpness.mjs",
+              "smoke_view_recovery.mjs",
+              "smoke_visual_continuity.mjs",
+              "smoke_wall_hatch_density.mjs",
+              "smoke_wall_junctions.mjs",
+              "smoke_wall_smooth_joint.mjs"
+            ],
+            "reason": "connected smokes and bounded visual minimum",
+            "deferred": {
+              "until": "beta/night",
+              "reasons": [
+                "lexical candidate budget exceeded",
+                "weak lexical matches",
+                "broad symbols",
+                "unproven browser contract"
+              ],
+              "smokes": [
+                "smoke_active_chain_ink.mjs",
+                "smoke_align_guides.mjs",
+                "smoke_area_relocation_safety.mjs",
+                "smoke_danger_confirmation.mjs",
+                "smoke_decor_line_click.mjs",
+                "smoke_decor_multiselect.mjs",
+                "smoke_device_copy.mjs",
+                "smoke_device_position_history.mjs",
+                "smoke_device_structure_history.mjs",
+                "smoke_drag_bounds.mjs",
+                "smoke_e2e_hooks.mjs",
+                "smoke_edit_walk.mjs",
+                "smoke_editor_command_latency.mjs",
+                "smoke_editor_gestures.mjs",
+                "smoke_floor_cache_reuse.mjs",
+                "smoke_floor_geometry_cache.mjs",
+                "smoke_gear_tabs.mjs",
+                "smoke_glow.mjs",
+                "smoke_glow_fail_dark.mjs",
+                "smoke_glow_geometry_resilience.mjs",
+                "smoke_grid_snap.mjs",
+                "smoke_help_affordance.mjs",
+                "smoke_infinite_canvas.mjs",
+                "smoke_isometric_live_touch.mjs",
+                "smoke_junction_holes.mjs",
+                "smoke_junction_limits.mjs",
+                "smoke_junction_patch_resilience.mjs",
+                "smoke_linked_virtual_light.mjs",
+                "smoke_multiwall_junction.mjs",
+                "smoke_multiwall_strip_containment.mjs",
+                "smoke_node_history_context.mjs",
+                "smoke_open_passage.mjs",
+                "smoke_opening_binding.mjs",
+                "smoke_opening_entity_search.mjs",
+                "smoke_opening_preview.mjs",
+                "smoke_optional_space_model.mjs",
+                "smoke_orphan_space_references.mjs",
+                "smoke_pan_any_zoom.mjs",
+                "smoke_plan_upload_race.mjs",
+                "smoke_plan_upload_reject.mjs",
+                "smoke_post_write_adoption.mjs",
+                "smoke_preflight_diagnostics.mjs",
+                "smoke_properties_panel.mjs",
+                "smoke_radar_live.mjs",
+                "smoke_radar_setup.mjs",
+                "smoke_registryless_opening.mjs",
+                "smoke_resize_audit_1550.mjs",
+                "smoke_resize_pointer_real_plan.mjs",
+                "smoke_room_fit.mjs",
+                "smoke_selective_invalidation.mjs",
+                "smoke_space_card.mjs",
+                "smoke_space_delete_with_devices.mjs",
+                "smoke_space_scale_defaults.mjs",
+                "smoke_split_corner_wall.mjs",
+                "smoke_stairs.mjs",
+                "smoke_sun.mjs",
+                "smoke_wall_end_align.mjs",
+                "smoke_wall_key_roundtrip.mjs",
+                "smoke_wall_node_connected.mjs",
+                "smoke_wall_node_delete.mjs",
+                "smoke_wall_node_move.mjs",
+                "smoke_wall_node_reliability.mjs",
+                "smoke_wall_node_topology.mjs",
+                "smoke_wall_thickness_transition.mjs",
+                "smoke_wall_union_isolation.mjs",
+                "smoke_wallthick_standalone.mjs",
+                "smoke_zero_divider_taper.mjs"
+              ],
+              "symbols": [
+                "_baseVb",
+                "_cellCm",
+                "_cfgEpoch",
+                "_curSpaceCfg",
+                "_editorRuntime",
+                "_gridPitch",
+                "_space",
+                "_spaceModel",
+                "_viewOr",
+                "requestUpdate"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "issue": 1098,
+      "head": "d337235a06f071dc985f26fac3721b7c1b788713",
+      "base": "31b17bec040f25224b80f0f679378807ccfd37fc",
+      "labels": [
+        "P3",
+        "S6-in-progress",
+        "tech-debt",
+        "track:ask",
+        "ci:golden",
+        "to_release"
+      ],
+      "risk": {
+        "classes": [
+          "geometry",
+          "touch",
+          "perf",
+          "visual"
+        ],
+        "raising": [
+          "geometry",
+          "touch",
+          "perf"
+        ],
+        "visual": {
+          "render": true,
+          "ui": false
+        },
+        "evidence": {
+          "geometry": [
+            "src/stairs-editor.ts:170 · токен canonicalizeConfigGeometry"
+          ],
+          "touch": [
+            "src/live-interaction-runtime.ts:123 · участок live-interaction-runtime"
+          ],
+          "perf": [
+            "src/glow-scene.ts:254 · участок glow-*"
+          ],
+          "visual": [
+            "src/glow-scene.ts:254 · участок glow-* (render)"
+          ]
+        },
+        "counts": {
+          "geometry": 1,
+          "touch": 1,
+          "perf": 1,
+          "visual": 1
+        }
+      },
+      "files": [
+        "demo/benchmark_editor_gestures.mjs",
+        "demo/benchmark_led_strips.mjs",
+        "demo/smoke_floor_geometry_cache.mjs",
+        "demo/smoke_led_strip_draw.mjs",
+        "demo/smoke_stairs.mjs",
+        "docs/CANVAS.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/DEVELOPMENT.md",
+        "docs/LIGHT.md",
+        "docs/STAIRS.md",
+        "docs/STATUS.md",
+        "docs/analysis/1098-editor-gestures-after.json",
+        "docs/analysis/1098-editor-gestures-before.json",
+        "docs/analysis/1098-editor-gestures-glow.json",
+        "docs/analysis/1098-editor-gestures-resources-31b.json",
+        "docs/analysis/1098-editor-gestures-resources.json",
+        "docs/analysis/1098-editor-gestures.md",
+        "docs/release-ledger/v1.82.0/1098.json",
+        "scripts/ci-registry-inventory.json",
+        "scripts/monolith-baseline.json",
+        "scripts/mutation-registry.mjs",
+        "src/demand-space-models.ts",
+        "src/floor-geometry-key.ts",
+        "src/glow-scene.ts",
+        "src/houseplan-card.ts",
+        "src/led-strip-editor.ts",
+        "src/live-editor.ts",
+        "src/live-interaction-runtime.ts",
+        "src/stairs-editor.ts",
+        "src/structural-space-record.ts",
+        "src/summary-panel-runtime-loaded.ts",
+        "test/clean-floor.test.mjs",
+        "test/demand-space-models.test.mjs",
+        "test/floor-geometry-key.test.mjs",
+        "test/led-strip-editor.test.mjs",
+        "test/live-editor.test.mjs",
+        "test/stairs-editor-live.test.mjs"
+      ],
+      "sourceDiffSha256": "5798f1bc0b84c538277353d572b081312b31a390bea0871dd3a5ebcf20f19445",
+      "proposal": {
+        "schema": 1,
+        "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+        "golden": [],
+        "smokes": [],
+        "goldenChecks": [
+          {
+            "id": "stairs-flat-normal-light",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "stairs-flat-selected-light",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "led-strip-design-reference-on-light",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          },
+          {
+            "id": "wall-union-isolation-view-light",
+            "reason": "Preserve this existing task readback byte-for-byte"
+          }
+        ]
+      },
+      "noChecksError": "Task visual scope is not declared for src/demand-space-models.ts, src/floor-geometry-key.ts, src/glow-scene.ts, src/houseplan-card.ts, src/led-strip-editor.ts, src/live-editor.ts, src/live-interaction-runtime.ts, src/stairs-editor.ts, src/structural-space-record.ts, src/summary-panel-runtime-loaded.ts. Add visual.golden or visual.goldenChecks scene IDs and reasons to this issue release-ledger entry (baselineIndex: node scripts/task-visual-intent.mjs --baseline-index). Full regression runs before beta.",
+      "plan": {
+        "full": false,
+        "golden": false,
+        "browser": {
+          "schema": 1,
+          "scope": "task",
+          "labels": [
+            "P3",
+            "S6-in-progress",
+            "ci:golden",
+            "tech-debt",
+            "to_release",
+            "track:ask"
+          ],
+          "files": [
+            "demo/benchmark_editor_gestures.mjs",
+            "demo/benchmark_led_strips.mjs",
+            "demo/smoke_floor_geometry_cache.mjs",
+            "demo/smoke_led_strip_draw.mjs",
+            "demo/smoke_stairs.mjs",
+            "docs/CANVAS.md",
+            "docs/CHANGELOG.md",
+            "docs/CHANGELOG.ru.md",
+            "docs/DEVELOPMENT.md",
+            "docs/LIGHT.md",
+            "docs/STAIRS.md",
+            "docs/STATUS.md",
+            "docs/analysis/1098-editor-gestures-after.json",
+            "docs/analysis/1098-editor-gestures-before.json",
+            "docs/analysis/1098-editor-gestures-glow.json",
+            "docs/analysis/1098-editor-gestures-resources-31b.json",
+            "docs/analysis/1098-editor-gestures-resources.json",
+            "docs/analysis/1098-editor-gestures.md",
+            "docs/release-ledger/v1.82.0/1098.json",
+            "scripts/ci-registry-inventory.json",
+            "scripts/monolith-baseline.json",
+            "scripts/mutation-registry.mjs",
+            "src/demand-space-models.ts",
+            "src/floor-geometry-key.ts",
+            "src/glow-scene.ts",
+            "src/houseplan-card.ts",
+            "src/led-strip-editor.ts",
+            "src/live-editor.ts",
+            "src/live-interaction-runtime.ts",
+            "src/stairs-editor.ts",
+            "src/structural-space-record.ts",
+            "src/summary-panel-runtime-loaded.ts",
+            "test/clean-floor.test.mjs",
+            "test/demand-space-models.test.mjs",
+            "test/floor-geometry-key.test.mjs",
+            "test/led-strip-editor.test.mjs",
+            "test/live-editor.test.mjs",
+            "test/stairs-editor-live.test.mjs"
+          ],
+          "golden": {
+            "mode": "selected",
+            "ids": [
+              "led-strip-design-reference-on-light",
+              "stairs-flat-normal-light",
+              "stairs-flat-selected-light",
+              "wall-union-isolation-view-light"
+            ],
+            "intent": [
+              {
+                "id": "stairs-flat-normal-light",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1098,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "stairs-flat-selected-light",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1098,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "led-strip-design-reference-on-light",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1098,
+                "expectation": "unchanged"
+              },
+              {
+                "id": "wall-union-isolation-view-light",
+                "reason": "Preserve this existing task readback byte-for-byte",
+                "issue": 1098,
+                "expectation": "unchanged"
+              }
+            ],
+            "reason": "explicit unchanged golden checks and connected scenes",
+            "unresolved": [
+              "src/demand-space-models.ts",
+              "src/floor-geometry-key.ts",
+              "src/glow-scene.ts",
+              "src/houseplan-card.ts",
+              "src/led-strip-editor.ts",
+              "src/live-editor.ts",
+              "src/live-interaction-runtime.ts",
+              "src/stairs-editor.ts",
+              "src/structural-space-record.ts",
+              "src/summary-panel-runtime-loaded.ts"
+            ]
+          },
+          "smoke": {
+            "mode": "selected",
+            "ids": [
+              "smoke_active_chain_ink.mjs",
+              "smoke_backdrop.mjs",
+              "smoke_backdrop_guard.mjs",
+              "smoke_daycycle_zoom_layers.mjs",
+              "smoke_decor.mjs",
+              "smoke_decor_layer_order.mjs",
+              "smoke_detached_authority.mjs",
+              "smoke_device_settings_action.mjs",
+              "smoke_drag_bounds.mjs",
+              "smoke_e2e_hooks.mjs",
+              "smoke_e2e_primitive_fields.mjs",
+              "smoke_floor_geometry_cache.mjs",
+              "smoke_free_walls.mjs",
+              "smoke_grid_scale_invariance.mjs",
+              "smoke_grid_snap.mjs",
+              "smoke_hide_layers.mjs",
+              "smoke_infinite_canvas.mjs",
+              "smoke_junction_holes.mjs",
+              "smoke_junction_limits.mjs",
+              "smoke_lazy_editor_chunk.mjs",
+              "smoke_led_strip_bind.mjs",
+              "smoke_led_strip_draw.mjs",
+              "smoke_led_strip_field.mjs",
+              "smoke_led_strip_glow.mjs",
+              "smoke_led_strip_tube.mjs",
+              "smoke_legacy_geometry.mjs",
+              "smoke_mode_transition.mjs",
+              "smoke_modes.mjs",
+              "smoke_mounted_authority.mjs",
+              "smoke_optional_space_model.mjs",
+              "smoke_partition_openings.mjs",
+              "smoke_partition_openings_preview.mjs",
+              "smoke_physical_body_characterization.mjs",
+              "smoke_render_invalidation.mjs",
+              "smoke_selective_invalidation.mjs",
+              "smoke_selective_invalidation_authority.mjs",
+              "smoke_selective_invalidation_history0.mjs",
+              "smoke_selective_invalidation_history320.mjs",
+              "smoke_selective_invalidation_inactive.mjs",
+              "smoke_selective_invalidation_visible.mjs",
+              "smoke_stairs.mjs",
+              "smoke_static_zoom_sharpness.mjs",
+              "smoke_view_recovery.mjs",
+              "smoke_visual_continuity.mjs",
+              "smoke_wall_hatch_density.mjs",
+              "smoke_wallthick_standalone.mjs"
+            ],
+            "reason": "connected smokes and bounded visual minimum",
+            "deferred": {
+              "until": "beta/night",
+              "reasons": [
+                "weak lexical matches",
+                "broad symbols"
+              ],
+              "smokes": [
+                "smoke_bg_color.mjs",
+                "smoke_device_contact_editor_frame.mjs",
+                "smoke_edit_walk.mjs",
+                "smoke_floor_cache_reuse.mjs",
+                "smoke_geometry_corpus.mjs",
+                "smoke_pan_any_zoom.mjs",
+                "smoke_resize_audit_1550.mjs",
+                "smoke_resize_inner_dimensions.mjs",
+                "smoke_resize_labels.mjs",
+                "smoke_resize_outer_reconciliation.mjs",
+                "smoke_resize_wall_thickness.mjs",
+                "smoke_room_resize.mjs"
+              ],
+              "symbols": [
+                "_editorRuntime",
+                "_mode",
+                "_spaceModel",
+                "requestUpdate"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

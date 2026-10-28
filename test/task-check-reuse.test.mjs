@@ -256,3 +256,32 @@ test('#1067 only producer sealing may observe the still-running current proof jo
   const result = await verifyTaskCheckClaim(f.claim, { ...f.context, producing: true });
   assert.equal(result.accepted, true, result.reason);
 });
+
+test('#1114 a strict unchanged receipt cannot reuse tolerant or delta coverage with the same IDs', async () => {
+  const keys = new Set();
+  for (const expectation of [null, 'change', 'new']) {
+    const { claim, context } = await fixture();
+    const oldPlan = structuredClone(browserPlan);
+    oldPlan.golden.intent = expectation ? [{ ...oldPlan.golden.intent[0], expectation }] : [];
+    const old = await taskCheckPlanFromSnapshot(context.sourceSnapshot, { job: 'browser_selected', browserPlan: oldPlan, environment });
+    keys.add(old.key);
+    const oldRecord = makeTaskCheckRecord(old, { repo, run: 12, attempt: 2, sha,
+      workflow: '.github/workflows/validate-product.yml', created: new Date(now - 10000).toISOString() });
+    const strictPlan = structuredClone(browserPlan); strictPlan.golden.intent[0].expectation = 'unchanged';
+    const strict = await taskCheckPlanFromSnapshot(context.candidateSnapshot, { job: 'browser_selected', browserPlan: strictPlan, environment });
+    keys.add(strict.key); assert.notEqual(old.key, strict.key);
+    context.plan = strict; claim.plan = strict; claim.record = oldRecord;
+    context.proof.taskChecks.browser_selected = { mode: 'executed', record: oldRecord, plan: old };
+    context.proof.browserPlan.planned = oldPlan;
+    assert.equal((await verifyTaskCheckClaim(claim, context)).accepted, false);
+    const fresh = makeTaskCheckRecord(strict, { repo, run: 12, attempt: 2, sha,
+      workflow: '.github/workflows/validate-product.yml', created: new Date(now - 10000).toISOString() });
+    assert.equal(taskCheckRecordError(JSON.parse(JSON.stringify(fresh))), null);
+    claim.record = fresh;
+    context.proof.taskChecks.browser_selected = { mode: 'executed', record: fresh, plan: strict };
+    context.proof.browserPlan.planned = strictPlan;
+    const verified = await verifyTaskCheckClaim(claim, context);
+    assert.equal(verified.accepted, true, verified.reason);
+  }
+  assert.equal(keys.size, 4);
+});

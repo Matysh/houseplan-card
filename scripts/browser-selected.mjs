@@ -27,13 +27,18 @@ export function validateSelectedPlan(plan, { sceneIds = GOLDEN_SCENARIOS.map(s =
 export function selectedGoldenPassed(report, id, intent = []) {
   if (report?.results?.length !== 1 || report.results[0].id !== id || report.results[0].error
     || !/^[a-f0-9]{64}$/.test(report.results[0].actualSha256 || '') || !report.chromium || !report.buildFingerprint) return false;
-  const result = report.results[0], expectation = intent.find(item => item.id === id)?.expectation;
+  if (!Array.isArray(intent)) return false;
+  const result = report.results[0], expectations = new Set(intent.filter(item => item?.id === id).map(item => item.expectation));
+  if (expectations.size > 1 || [...expectations].some(value => !['change', 'new', 'unchanged'].includes(value))) return false;
+  const expectation = [...expectations][0];
   if (result.status === 'missing-baseline') return expectation === 'new';
   if (expectation === 'new') return false;
   // A new, pending scene can make the complete index stale. The capture runner
   // still validates this selected existing PNG's hash before comparing it.
   if (!report.baselineManifest?.present || report.baselineManifest.chromium !== report.chromium
     || !/^[a-f0-9]{64}$/.test(result.baselineSha256 || '')) return false;
+  if (expectation === 'unchanged') return result.status === 'passed'
+    && result.actualSha256 === result.baselineSha256 && result.differingPixels === 0 && result.diffRatio === 0;
   return result.status === 'passed' || result.status === 'different' && expectation === 'change';
 }
 

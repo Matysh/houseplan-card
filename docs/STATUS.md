@@ -1,5 +1,7 @@
 # Project status
 
+Task Golden checks (#1114) explicitly select unchanged scenes with byte-identical/zero-pixel evidence, separate from pending change/new intent and baseline acceptance.
+
 Wall-node movement (#1102) skips recounting previous junction violations when the cached baseline matches the current revision, preserving candidate validation and stale-cache fallback.
 
 Space deletion (#1101) prepares its validated config/layout pair in an executor under the existing write lock, retaining its dependency refusals, rollback and revision/event contract.
@@ -96,7 +98,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5794 · pure backend 692 · HA-harness backend 607 · browser smokes 478 (`npm run inventory`) |
+| Tests | Node unit 5805 · pure backend 692 · HA-harness backend 607 · browser smokes 478 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

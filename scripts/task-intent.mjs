@@ -12,6 +12,16 @@ export function validateVisualIntent(visual, issue) {
       throw Error(`#${issue}: visual intent needs unique scene IDs, change/new and a reason`);
     ids.add(item.id);
   }
+  if (visual.goldenChecks !== undefined) {
+    if (!Array.isArray(visual.goldenChecks)) throw Error(`#${issue}: invalid golden checks`);
+    for (const item of visual.goldenChecks) {
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(item?.id || '') || ids.has(item.id)
+        || typeof item.reason !== 'string' || !item.reason.trim()
+        || Object.prototype.hasOwnProperty.call(item, 'expectation'))
+        throw Error(`#${issue}: golden checks need unique scene IDs, a reason and no delta expectation`);
+      ids.add(item.id);
+    }
+  }
   if (new Set(visual.smokes).size !== visual.smokes.length
     || visual.smokes.some(id => typeof id !== 'string' || !/^smoke_[\w-]+\.mjs$/.test(id)))
     throw Error(`#${issue}: invalid visual intent smoke IDs`);

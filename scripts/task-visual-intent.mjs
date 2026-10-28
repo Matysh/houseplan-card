@@ -13,7 +13,11 @@ export function baselineIndexHash(root = process.cwd()) {
 
 export function readTaskVisualIntent({ root = process.cwd(), issue } = {}) {
   const visual = readTaskIntent({ root, issue });
-  return visual && visual.baselineIndex === baselineIndexHash(root) ? visual : null;
+  if (!visual) return null;
+  const current = visual.baselineIndex === baselineIndexHash(root);
+  if (!current && visual.goldenChecks?.length)
+    throw Error(`#${issue}: stale golden checks baseline; refresh the explicit check plan`);
+  return current ? visual : null;
 }
 
 export function readPendingVisualIntents({ root = process.cwd() } = {}) {

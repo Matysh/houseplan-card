@@ -22138,7 +22138,37 @@ const physicalCommit1099Cases = [
     patches: [{file:'src/physical-candidate-proof.ts',find:'adoptWallSegmentModelCandidateInPlace(current, next);',replace:'adoptWallSegmentModelCandidateInPlace(target,candidate);'}] },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases].map((mutant) => ({
+const goldenUnchanged1114Cases = [
+  { id: 'golden-strict-check-allows-tolerated-difference-1114',
+    guard: 'node --test test/golden-unchanged-checks.test.mjs',
+    because: '#1114: a passed capture under ordinary tolerance must not satisfy an explicit byte-identical check. Registered only; execution belongs to nightly.',
+    patches: [{ file: 'scripts/browser-selected.mjs',
+      find: "if (expectation === 'unchanged') return result.status === 'passed'",
+      replace: "if (false) return result.status === 'passed'" }] },
+  { id: 'golden-strict-check-inherits-pending-delta-1114',
+    guard: 'node --test test/golden-unchanged-checks.test.mjs',
+    because: '#1114: an unrelated pending change/new declaration cannot weaken a strict check on the same scene. Registered only; no development execution.',
+    patches: [{ file: 'scripts/browser-push-plan.mjs',
+      find: 'if (checks.some(check => pending.golden.some(item => item.id === check.id)))', replace: 'if (false)' }] },
+  { id: 'golden-strict-contract-claims-full-coverage-1114',
+    guard: 'node --test test/golden-unchanged-checks.test.mjs',
+    because: '#1114: strict unchanged is a selected-task contract and cannot silently claim a full or unscoped push receipt. Registered only.',
+    patches: [{ file: 'scripts/browser-plan-proof.mjs',
+      find: "item.expectation === 'unchanged' && isTaskBrowserPlan(plan) && plan[kind].mode === 'selected'",
+      replace: "item.expectation === 'unchanged'" }] },
+  { id: 'golden-strict-check-silently-expires-1114',
+    guard: 'node --test test/golden-unchanged-checks.test.mjs',
+    because: '#1114: stale explicit check epochs fail rather than falling through to no Golden demand. Registered only.',
+    patches: [{ file: 'scripts/task-visual-intent.mjs',
+      find: 'if (!current && visual.goldenChecks?.length)', replace: 'if (false)' }] },
+  { id: 'golden-strict-declaration-validation-bypassed-1114',
+    guard: 'node --test test/golden-unchanged-checks.test.mjs',
+    because: '#1114: malformed, duplicate and overlapping check declarations must fail before selecting scenes. Registered only.',
+    patches: [{ file: 'scripts/task-intent.mjs',
+      find: 'if (visual.goldenChecks !== undefined)', replace: 'if (false)' }] },
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

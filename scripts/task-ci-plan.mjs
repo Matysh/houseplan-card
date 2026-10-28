@@ -3,12 +3,18 @@ import { execFileSync } from 'node:child_process';
 import { classifyRisk } from './change-risk.mjs';
 import { browserPushPlan } from './browser-push-plan.mjs';
 import { CALL_CONTEXT_LINES } from './smoke-select.mjs';
+import { readTaskIntent } from './task-intent.mjs';
 
 export function taskCiPlan(inputs, { baseFull = false, labels = [], risk = null, unknown = false,
   diffText, files, root, browserOptions = {} } = {}) {
   const task = /^issue\/[1-9]\d+-/.test(inputs.refName || '');
   const full = Boolean(baseFull || task && labels.includes('ci:full'));
-  if (full) return { full: true, golden: true };
+  if (full) {
+    const issue = Number(/^issue\/([1-9]\d+)-/.exec(inputs.refName || '')?.[1]);
+    if (task && (readTaskIntent({ root, issue })?.goldenChecks?.length || browserOptions.visualIntent?.goldenChecks?.length))
+      throw Error('Unchanged golden checks require selected task coverage, not full');
+    return { full: true, golden: true };
+  }
   if (!task) return { full: false, golden: false };
   if (unknown || typeof diffText !== 'string' || !Array.isArray(files))
     throw Error('Task check plan is unknown: read the issue labels and complete task diff before running CI');

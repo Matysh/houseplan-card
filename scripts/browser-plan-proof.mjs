@@ -19,7 +19,8 @@ export function browserPlanExecution(plan, needs) {
       if (!Array.isArray(plan[kind].intent)) throw Error('invalid golden intent');
       const expected = new Map();
       for (const item of plan[kind].intent) {
-        if (!plan[kind].ids.includes(item?.id) || !['change', 'new'].includes(item.expectation)
+        if (!plan[kind].ids.includes(item?.id) || !(['change', 'new'].includes(item.expectation)
+          || item.expectation === 'unchanged' && isTaskBrowserPlan(plan) && plan[kind].mode === 'selected')
           || typeof item.reason !== 'string' || !item.reason.trim()
           || !Number.isSafeInteger(item.issue) || item.issue <= 0
           || expected.has(item.id) && expected.get(item.id) !== item.expectation) throw Error('invalid golden intent');

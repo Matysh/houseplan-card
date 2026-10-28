@@ -5858,6 +5858,45 @@ entry. Obtain `baselineIndex` with `node scripts/task-visual-intent.mjs --baseli
 }
 ```
 
+For strict regression checks of existing frames, use a separate optional
+`goldenChecks` field. A checks-only declaration keeps `golden` empty:
+
+```json
+"visual": {
+  "schema": 1,
+  "baselineIndex": "<current accepted index SHA-256>",
+  "golden": [],
+  "goldenChecks": [
+    { "id": "geometry-view-dark-fit", "reason": "Saved geometry must remain byte-identical" }
+  ],
+  "smokes": []
+}
+```
+
+`golden` remains pixel-delta intent (`change`/`new`); `goldenChecks` declares
+checks, with no expectation field. Checks select the existing bounded worker
+and require a successful canonical capture, equal actual/baseline SHA256 and
+complete zero-pixel/zero-ratio metrics. The ordinary tolerance is insufficient.
+Unknown IDs, duplicates, blank reasons, own delta/check overlap and any pending
+change/new on a checked scene fail. A stale check epoch fails with a request to
+refresh the plan, rather than silently dropping the check; old delta expiry and
+smoke declarations retain their existing behavior.
+
+Only the selected task plan adapts checks to its internal `unchanged` expectation,
+which is carried by the existing receipt scope/key. An older tolerant or delta
+receipt cannot satisfy it. The pending/acceptance reader still reads only raw
+`visual.golden`, so checks never request a baseline change. Combining the new
+strict contract with task `ci:full`/baseFull fails explicitly; full requests
+without checks, jobs, events, full-matrix policy and global baselines are unchanged.
+The infrastructure change itself uses no new expectation in its own CI plan:
+protected/archived readers gain the new enum only after that task reaches S8.
+
+This repairs the demonstrated #1097/#1098 plan gap (#1114); it does not map all
+core render files to a few scenes or misdeclare unchanged frames as `change`.
+The initial #1098 classification RED is run40685040818. Ordinary schema, plan,
+worker, stale-epoch, full-route and receipt negative cases live in
+`test/golden-unchanged-checks.test.mjs` and `test/task-check-reuse.test.mjs`.
+
 Use `change` for an existing frame and `new` for a new scene; include a concrete
 reason for each. The current task's scenes and connected cases are captured;
 pending intents of earlier tasks are considered only for those selected scenes.

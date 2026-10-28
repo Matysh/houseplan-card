@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1114,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "B/C-only repair of explicit selected Golden regression declarations: unchanged checks are separate from pending pixel-delta intent, require byte identity and zero differences, survive receipt scope, and fail on stale/conflicting/full requests. Existing jobs/events/default coverage, baseline acceptance and product runtime are unchanged.",
+  "summary": {
+    "ru": "Явные Golden-проверки неизменных кадров не ослабляются намерениями изменения эталонов.",
+    "en": "Explicit unchanged Golden checks remain separate from intended baseline pixel changes."
+  }
+}

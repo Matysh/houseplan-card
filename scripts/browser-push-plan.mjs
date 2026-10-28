@@ -32,32 +32,42 @@ export function browserPushPlan({ files, diffText, labels = [], render = false, 
   links = goldenConnections(scenarios), smokeSelection = selectSmokes(diffText, { root }),
   visualIntent = readTaskVisualIntent({ root, issue }), pendingVisual = null,
   declaredSmokes = visualIntent?.smokes ?? readTaskIntent({ root, issue })?.smokes ?? [] }) {
-  if (labels.includes('ci:full')) return fullBrowserPlan(true, true);
+  const checks = visualIntent?.goldenChecks || [];
+  if (labels.includes('ci:full')) {
+    if (checks.length) throw Error('Unchanged golden checks require selected task coverage, not full');
+    return fullBrowserPlan(true, true);
+  }
   const sceneSet = new Set(scenarios.map(s => s.id));
   const relevant = new Set([...corpus, 'demo/golden/baselines/baselines-index.json']);
   const postCapture = new Set(postCaptureInputs());
   const goldenFiles = files.filter(f => relevant.has(f) || /^(?:src|assets)\//.test(f)
     || /^demo\/golden\/baselines\//.test(f)
     || /^demo\/(?:fixtures|golden)\/.*\.mjs$/.test(f) && !postCapture.has(f));
-  const goldenDemand = labels.includes('ci:golden') || render || Boolean(visualIntent?.golden.length);
+  const goldenDemand = labels.includes('ci:golden') || render || Boolean(visualIntent?.golden.length) || Boolean(checks.length);
   let golden = { mode: 'none', ids: [], reason: goldenDemand ? 'no golden inputs changed' : 'no golden demand' };
-  if (goldenDemand && (goldenFiles.length || visualIntent?.golden.length)) {
+  if (goldenDemand && (goldenFiles.length || visualIntent?.golden.length || checks.length)) {
     const unknown = goldenFiles.filter(f => !Array.isArray(links[f]) || !links[f].length
       || links[f].some(id => !sceneSet.has(id)));
     const declared = visualIntent?.golden || [];
-    if (unknown.length && !declared.length) throw Error('Task visual scope is not declared for '
-      + unknown.join(', ') + '. Add visual.golden scene IDs and reasons to this issue release-ledger entry '
+    if (checks.some(check => declared.some(item => item.id === check.id)))
+      throw Error('Unchanged golden check conflicts with own pixel delta');
+    if (unknown.length && !declared.length && !checks.length) throw Error('Task visual scope is not declared for '
+      + unknown.join(', ') + '. Add visual.golden or visual.goldenChecks scene IDs and reasons to this issue release-ledger entry '
       + '(baselineIndex: node scripts/task-visual-intent.mjs --baseline-index). Full regression runs before beta.');
     const mapped = goldenFiles.flatMap(f => (links[f] || []).filter(id => sceneSet.has(id)));
     const changedScenes = [...diffText.matchAll(/^\+[^+].*?\bid:\s*['"]([^'"]+)['"]/gm)]
       .map(match => match[1]).filter(id => sceneSet.has(id));
-    const ids = [...new Set([...mapped, ...declared.map(item => item.id), ...changedScenes])].sort();
+    const ids = [...new Set([...mapped, ...declared.map(item => item.id), ...checks.map(item => item.id), ...changedScenes])].sort();
     for (const id of ids) if (!sceneSet.has(id)) throw Error(`Unknown declared golden scene: ${id}`);
     const pending = pendingVisual || readPendingVisualIntents({ root });
-    const intent = [...pending.golden, ...declared.map(item => ({ ...item, issue: visualIntent.issue || issue }))]
+    if (checks.some(check => pending.golden.some(item => item.id === check.id)))
+      throw Error('Unchanged golden check conflicts with pending visual delta');
+    const intent = [...pending.golden, ...declared.map(item => ({ ...item, issue: visualIntent.issue || issue })),
+      ...checks.map(item => ({ ...item, issue: visualIntent.issue || issue, expectation: 'unchanged' }))]
       .filter((item, index, values) => ids.includes(item.id)
         && values.findIndex(other => other.id === item.id && other.issue === item.issue) === index);
-    golden = { mode: 'selected', ids, intent, reason: declared.length ? 'task visual intent and connected scenes' : 'declared golden connections',
+    golden = { mode: 'selected', ids, intent, reason: checks.length ? 'explicit unchanged golden checks and connected scenes'
+      : declared.length ? 'task visual intent and connected scenes' : 'declared golden connections',
       ...(unknown.length ? { unresolved: unknown } : {}) };
   }
   const allSmokes = new Set(readdirSync(join(root, 'demo')).filter(f => /^smoke_.*\.mjs$/.test(f)));
