@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1110,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Keeps Validate classification reliable for large task diffs by draining its diagnostic file-list stream instead of terminating the producer after fifty lines. Only workflow display commands, their executable Git/shell regression evidence and generated CI bookkeeping change; product behavior is unchanged relative to v1.82.0.",
+  "summary": {
+    "ru": "Устранён ложный SIGPIPE при выводе большого списка файлов в классификации Validate.",
+    "en": "Prevented a spurious SIGPIPE when Validate previews a large changed-file list."
+  }
+}

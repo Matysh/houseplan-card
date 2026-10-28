@@ -460,7 +460,7 @@ jobs:
             echo "::error::Cannot read the complete task range; fetch the missing Git objects and retry."
             exit 1
           }
-          printf '%s\n' "$files" | head -50
+          printf '%s\n' "$files" | sed -n '1,50p'
           # Решение — в scripts/classify-changes.mjs по единому manifest входов
           # (#492 §5.2): там оно проверяемо unit-тестом, здесь — только
           # переписывается в выходы (#473 AC8).

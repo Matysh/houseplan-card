@@ -719,3 +719,65 @@ test('#700: check-docs --external=warn сводит внешние отказы 
   assert.match(source, /const externalErrors = EXTERNAL_WARN \? warnings : errors;/);
   assert.equal((source.match(/externalErrors\.push\(/g) || []).length, 2, 'оба вида внешнего отказа');
 });
+
+test('#1110 classify display drains a large real Git list and retains Git failure', (t) => {
+  if (spawnSync(posixCommand('bash'), ['--version']).status !== 0) { t.skip('bash unavailable'); return; }
+  const root = mkdtempSync(join(tmpdir(), 'hp-classify-display-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (args, input) => execFileSync('git', args, {
+    cwd: root, input, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
+  }).trim();
+  git(['init', '-q']);
+  git(['config', 'user.name', 'Workflow fixture']);
+  git(['config', 'user.email', 'workflow@example.invalid']);
+  git(['commit', '--allow-empty', '-qm', 'base']);
+  const base = git(['rev-parse', 'HEAD']);
+  git(['update-ref', 'refs/remotes/origin/dev', base]);
+  const blob = git(['hash-object', '-w', '--stdin'], 'fixture\n');
+  const paths = Array.from({ length: 1600 }, (_, i) => `docs/${String(i).padStart(4, '0')}-${'long-task-path-'.repeat(10)}.md`);
+  git(['update-index', '--index-info'], paths.map(path => `100644 ${blob}\t${path}\n`).join(''));
+  git(['commit', '-qm', 'large task']);
+  const head = git(['rev-parse', 'HEAD']), tree = git(['rev-parse', 'HEAD^{tree}']);
+  const expected = `${paths.join('\n')}\n`;
+  assert.ok(Buffer.byteLength(expected) > 200_000, 'input exceeds ordinary pipe capacity');
+  mkdirSync(join(root, 'scripts'));
+  // The actual workflow/Git/printf/shell execute unchanged. This sink observes
+  // the classifier input separately from the bounded human-readable preview.
+  writeFileSync(join(root, 'scripts/classify-changes.mjs'), `
+    import { readFileSync, writeFileSync } from 'node:fs';
+    writeFileSync(process.env.CLASSIFY_CALL, readFileSync(0, 'utf8'));
+    console.log('unknown_inputs=');
+  `);
+  const workflows = ['validate.yml', 'validate-product.yml'];
+  let sequence = 0;
+  const run = (file, revision = head) => {
+    const call = join(root, `call-${sequence++}`);
+    const step = findStep(read(file), { id: 'classify' });
+    const result = runStep(step, undefined, { cwd: root, env: { ...process.env,
+      REF: 'refs/heads/issue/1110-display', HEAD_SHA: revision, GREEN_BASE: base,
+      EVENT_NAME: 'push', FULL: 'false', BASE_SHA: '',
+      CLASSIFY_CALL: shellPath(call), GITHUB_OUTPUT: shellPath(join(root, 'outputs')),
+      GITHUB_STEP_SUMMARY: shellPath(join(root, 'summary')),
+    } });
+    return { ...result, classified: existsSync(call) ? readFileSync(call, 'utf8') : null };
+  };
+  for (const file of workflows) {
+    const large = run(file);
+    assert.equal(large.status, 0, `${file}: ${large.stderr}`);
+    assert.equal(large.classified, expected, 'classifier receives every changed path');
+    assert.deepEqual(large.stdout.trimEnd().split('\n'), [...paths.slice(0, 50), 'unknown_inputs='],
+      'human preview remains exactly the first fifty paths');
+    const empty = run(file, base);
+    assert.equal(empty.status, 0, `${file}: ${empty.stderr}`);
+    assert.equal(empty.classified, '\n', 'an empty Git range is still classified');
+  }
+  // Keep valid commits/ancestry but remove a needed tree: real git diff must
+  // fail, and neither a display change nor the shell may bless partial input.
+  rmSync(join(root, '.git', 'objects', tree.slice(0, 2), tree.slice(2)));
+  for (const file of workflows) {
+    const missing = run(file);
+    assert.notEqual(missing.status, 0, file);
+    assert.equal(missing.classified, null, 'Git failure cannot invoke the classifier');
+    assert.match(missing.stdout, /Cannot read the complete task range/);
+  }
+});
