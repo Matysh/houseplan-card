@@ -158,3 +158,24 @@ canonical sync fixed it. The new cold smoke explicitly verifies freshness after
 its property-before-definition cold-mount witness and before acceptance. On796b,
 28native assertions, General settings, lazy admin locale and nine Golden captures
 passed; those captures are prior material once the closed edge is finalized.
+
+Final closed-edge material: source fingerprint
+cd31dbf3d4de3498b9bcab955a7f9e2e38fa2a880bbf90af5659eb1d66dea83e,
+manifest SHA256b8cf551c322e27c4729d070917059f891d20f00818b10cbf962b06a94c44f930.
+Rollup19.8s, canonical bundle-sync, all30 native assertions PASS, integration-wide
+Ruff PASS. Runtime close performs one config/get then one accepted resubscription;
+authentication close performs neither after five ordinary HA ticks. The explicit
+cold freshness assertion passed after the property-before-definition witness.
+Prior796b nine-scene Golden/General/locale evidence remains separately identified;
+the final closed-edge delta changes transport lifetime and no visual composition.
+
+The six newly added external-screen-* hook records now state their first future
+release1.83.0-beta.4. Existing hook metadata is unchanged. The dialog closed enum
+contains the new constructor kind but its canonical schema has no per-value
+since record.
+
+Provenance epoch note: the revision2 draft began under the authorized S4 claim,
+but commit7e42e529 was created after actual S6. Its Spec-Draft trailer consequently
+produces one canonical nonblocking process warning; it is not treated as an S4
+commit or draft exemption. Published EE/6888 history and all hooks remain intact.
+All subsequent S6 commits omit that trailer. Exact-source CI/CODE is still needed.

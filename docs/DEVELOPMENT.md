@@ -6759,3 +6759,15 @@ gzip (own+21537/+1746/+3365). Fingerprint/chunk hashes account for the small
 remain3684415/358281/381234: actual gaps1441/1421/1025 stay within their unchanged
 2000B bands and absolute initial wall. No byte chasing or further limit change
 was needed. Host references/Port and their own costs are unchanged.
+
+#1113 SPEC r2 own-cost carry: frozen R1 donor6888aeb3 has a verified31510e38
+manifest/source fingerprint. Final authenticated-stream candidatecd31dbf3,
+same toolchain/build recipe, measures3692159 raw/360198 initial/382264 editor.
+Own growth over3685856/359702/382259 is6303/496/5B; hostRefs6662→6663 (+1),
+Port384/delegates145 unchanged. Carry only those deltas: raw reference3684415
+→3690718, initial358281→358777, editor381234→381239, hostRefs6638→6639.
+Inherited gaps1441/1421/1025B and24refs,2000B bands, Port2 gap and absolute
+initial387200 wall remain unchanged. The card grows13563→13582 (+19 lines),
+ceiling13535→13554 preserves28-line gap/50 band; runtime unchanged12053.
+This is the owner's explicit measured-resource authorization, with no byte
+golf, timing relaxation, semantic oracle weakening or new guard exception.

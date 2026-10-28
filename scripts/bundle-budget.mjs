@@ -455,7 +455,9 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #1113 measured own delta against accepted502/frozen5bad:357956→359693B (+1737).
 // Carry only that cost under the owner's resource-limit authorization; inherited
 // excess1412B, band2000B and absolute387200B wall remain unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 358_281;
+// #1113 SPEC r2: frozen R1 359702 ->360198 (+496 own bytes), final cd31dbf3.
+// Preserve the inherited1421-B gap,2000-B band and absolute wall.
+export const INITIAL_VIEW_GZIP_CEILING = 358_777;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -888,7 +890,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // unchanged2000-B band. Frozen donor corpus and own patch are verified.
 // #1113 matched378894→382289B (+3395 own bytes); preserve inherited1055B
 // excess and the same2000B band. No timing or behavioral AC is relaxed.
-export const LAZY_EDITOR_GZIP_CEILING = 381_234;
+// #1113 SPEC r2: frozen R1 382259 ->382264 (+5 own bytes), final cd31dbf3.
+// Preserve the inherited1025-B gap and2000-B band.
+export const LAZY_EDITOR_GZIP_CEILING = 381_239;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
