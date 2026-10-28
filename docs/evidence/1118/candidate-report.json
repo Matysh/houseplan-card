@@ -1,0 +1,1186 @@
+{
+  "complete": true,
+  "independentProcesses": 10,
+  "targetCaptures": 30,
+  "neighborCaptures": 4,
+  "rows": [
+    {
+      "process": 0,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 0,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 0,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 0,
+      "step": 3,
+      "id": "geometry-view-dark-fit",
+      "sha": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      }
+    },
+    {
+      "process": 0,
+      "step": 4,
+      "id": "geometry-view-light-fit",
+      "sha": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      }
+    },
+    {
+      "process": 1,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 1,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 1,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 2,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 2,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 2,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 3,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 3,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 3,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 4,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 4,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 4,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 5,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 5,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 5,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 6,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 6,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 6,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 7,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 7,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 7,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 8,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 8,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 8,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 9,
+      "step": 0,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 9,
+      "step": 1,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 9,
+      "step": 2,
+      "id": "geometry-plan-editor-dark",
+      "sha": "243de7d024962abb44c9f9247e50c56e9696022c1d1b7891835a8f8dbc3cb035",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "plan",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": "",
+        "planKeyboardFocus": {
+          "precondition": "native Shift+Tab then Tab",
+          "focusVisible": true,
+          "mode": "plan",
+          "space": "golden-geometry",
+          "tool": "select",
+          "persistenceAndGeometryUnchanged": true,
+          "trustedTabEvents": [
+            {
+              "trusted": true,
+              "shift": true,
+              "defaultPrevented": false
+            },
+            {
+              "trusted": true,
+              "shift": false,
+              "defaultPrevented": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "process": 9,
+      "step": 3,
+      "id": "geometry-view-dark-fit",
+      "sha": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      }
+    },
+    {
+      "process": 9,
+      "step": 4,
+      "id": "geometry-view-light-fit",
+      "sha": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+      "fingerprint": "b6a21769c817578b93bfa13725dd8a5ccdc8d5e4deb03d3259bfbd15be26e82f",
+      "chromium": "151.0.7922.34",
+      "runtime": {
+        "space": "golden-geometry",
+        "mode": "view",
+        "devices": 9,
+        "dialog": false,
+        "helpOpen": false,
+        "editorTray": "",
+        "defaultFloorWarning": ""
+      }
+    }
+  ]
+}

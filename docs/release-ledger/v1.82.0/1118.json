@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "issue": 1118,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "The unchanged pinned material reproduces the exact prior 67-pixel CI frame after ordinary raster history. Opt only geometry-plan-editor-dark into the existing restore-before-capture background repaint; keep launch arguments, fixture, keyboard/semantic controls and strict unchanged checks unchanged.",
+  "summary": {
+    "ru": "Golden-кадр редактора плана полностью перерисовывается перед снимком; история растра не подменяет канонический кадр.",
+    "en": "The Plan editor Golden frame uses the existing scoped repaint before capture to remove demonstrated raster-history drift."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+    "golden": [
+      {
+        "id": "geometry-plan-editor-dark",
+        "expectation": "change",
+        "reason": "The scoped full repaint deliberately yields canonical243de7d0 instead of indexed4e93c435: one anti-aliasing pixel at54,63, max channel delta1. The historical67-pixel222117 variant is not accepted. Full beta review must inspect the new frame; task branches do not accept global baselines."
+      }
+    ],
+    "smokes": []
+  }
+}

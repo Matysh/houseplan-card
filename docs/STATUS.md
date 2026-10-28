@@ -1,5 +1,7 @@
 # Project status
 
+Golden Plan editor capture (#1118) uses the existing scene-scoped background repaint to remove reproduced raster-history drift. Launch flags, semantic/keyboard controls and strict unchanged checks retain their contracts; its one-AA-pixel canonical-frame change is explicit pending beta review.
+
 Native runner fixture (#1115) observes its owned descendant's actual exit within the original shared two-second finalization deadline. Asynchronous SIGKILL/pipe closure no longer requires a synchronous kernel state transition; a live process still fails. Production transport, signals and authority are unchanged.
 
 Dreame history (#1117) accepts an absent/null historical map slot only with a unique same-source native-proven saved-map route. Known slots and typed identities remain strict; ambiguous routes are refused before calibration selection. No Store, live matcher, API or UI changes.

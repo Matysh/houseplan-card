@@ -6,7 +6,7 @@ import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 const target = GOLDEN_SCENARIOS.find(({ id }) => id === 'device-battery-zigbee-overlap-dark');
 const optedIds = ['device-battery-zigbee-overlap-dark', 'opening-placement-door-thick-wall-dark',
   'opening-placement-passage-thick-wall-dark', 'opening-placement-passage-thick-wall-light',
-  'plan-snap-line-gaps-dark'];
+  'plan-snap-line-gaps-dark', 'geometry-plan-editor-dark'];
 
 // Execute the very callback sent to Chromium. The fake frame scheduler records
 // what would be painted at each frame, not a regex over the implementation.

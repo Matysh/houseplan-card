@@ -27,13 +27,16 @@ radial spokes visible instead of hiding them under a translucent room fill.
 - Browser-argument helpers and their literal local dependencies enter both
   source/visual identity and the docs capture-script digest. Old receipts cannot
   be made current by changing a hash manually; re-capture and review normally.
-- Only `device-battery-zigbee-overlap-dark` opts into a root-background repaint
-  before its final capture (#881): two frames with a temporary colour, then
-  two with the original inline value/priority restored. This removes the
-  focused scene's partial-raster history without changing Chromium flags,
-  fixtures, semantic controls or thresholds; other scenes keep their capture
-  path. Its reviewed baseline is the fully repainted frame, not a historical
-  partially rasterised variant.
+- Only the explicit scene list in `scene-repaint.mjs` opts into a root-background
+  repaint before its final capture (#881 and the proven editor frames, including
+  `geometry-plan-editor-dark`, #1118): two frames with a temporary colour, then
+  two with the original inline value/priority restored. This removes those
+  scenes' demonstrated raster history without changing Chromium flags,
+  fixtures, semantic controls or thresholds; every other scene keeps its capture
+  path. Baselines are reviewed fully repainted frames, rather than historical
+  partially rasterised variants. #1118 deliberately declares its one-AA-pixel
+  canonical-frame change for the beta baseline review; strict unchanged checks
+  are not relaxed and task branches do not accept global baselines.
 - The browser is judged as it runs, not by its directory (#827, F33):
   `capture` and `verify` declare the pinned browser (`policy.mjs`), and the
   shared launcher compares every launched Chromium with the

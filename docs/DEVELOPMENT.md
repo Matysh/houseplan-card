@@ -6680,3 +6680,20 @@ case selects the older generated cleanup and asserts its points/record/route,
 one provider read, zero live reads and no Store/service side effects. Existing
 ACL and held-read tests remain in the same targeted suite. Synthetic provider
 and registered HA endpoint evidence do not claim a new installed-device test.
+
+## Scoped Plan editor Golden repaint (#1118)
+
+The pinned unchanged material reproduced the exact first CI failure for
+`geometry-plan-editor-dark` (actual SHA `2221172916c0c9b4a6f83e0da7a7385592b987cee1fe389f37f12055021106a1`)
+after ordinary root-background paint history. This establishes a raster-history
+witness, not the historical CI prefix or a CPU diagnosis. The existing scoped
+`captureGoldenFrame` repaint now includes that scene: two temporary-colour
+frames, restore the original inline value/priority (also on failure), two original
+frames, then unchanged screenshot options. No global Chromium flags, fixture,
+keyboard/semantic normalization or comparison thresholds change.
+
+The fully repainted frame differs from the current accepted index by one
+anti-aliasing pixel at `(54,63)`, maximum channel delta 1. Its explicit change
+intent belongs to #1118; the beta must review the complete canonical artifact.
+The 67-pixel historical variant is not a new baseline, and a task branch cannot
+accept global baselines. Neighbor scenes keep their ordinary capture path.
