@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/config-store.ts'],
+    smokes: ['smoke_static_config_events.mjs'],
+    because: '#1112: a trusted full-card placement burst must reach two embedded cards through one shared partial read and paint the server positions.',
+  },
+  {
     files: ['src/floor-geometry-key.ts', 'src/structural-space-record.ts', 'src/render-snapshot-capture.ts',
       'src/render-snapshot-reuse.ts', 'src/render-device-snapshot.ts', 'src/houseplan-render-lifecycle.ts',
       'src/device-copy-editor.ts', 'src/device-structure-history.ts', 'src/marker-deletion.ts',

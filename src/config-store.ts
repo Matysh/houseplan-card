@@ -35,6 +35,11 @@ let cache: HpConfigSnapshot | null = null;
 let inflight: Promise<HpConfigSnapshot> | null = null;
 let fetchGeneration = 0;
 let inflightGeneration = -1;
+let configInvalid = true;
+let layoutInvalid = true;
+let eventTimer: ReturnType<typeof setTimeout> | undefined;
+let pendingConfigRev = -1;
+let pendingLayoutRev = -1;
 let subscribedConnection: any = null;
 let subscriptionUnsubscribers: Array<() => void> = [];
 const listeners = new Set<() => void>();
@@ -69,12 +74,15 @@ export function cachedSnapshot(): HpConfigSnapshot | null {
 }
 
 async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapshot> {
+  const previous = cache;
+  const readConfig = configInvalid || !previous;
+  const readLayout = layoutInvalid || !previous;
   const [cfgResp, layResp] = await Promise.all([
-    hass.callWS({ type: 'houseplan/config/get' }),
-    hass.callWS({ type: 'houseplan/layout/get' }),
+    readConfig ? hass.callWS({ type: 'houseplan/config/get' }) : null,
+    readLayout ? hass.callWS({ type: 'houseplan/layout/get' }) : null,
   ]);
-  const configRev = cfgResp?.rev ?? 0;
-  const virtualLights = cache
+  const configRev = readConfig ? cfgResp?.rev ?? 0 : previous!.rev;
+  const virtualLights = !readConfig ? cache!.virtualLights : cache
     ? adoptVirtualLightServerSnapshot(
       cache.virtualLights,
       cfgResp?.virtual_lights,
@@ -83,34 +91,57 @@ async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapsh
     )
     : virtualLightSnapshot(cfgResp?.virtual_lights, configRev);
   const snapshot: HpConfigSnapshot = {
-    config: cfgResp?.config ?? null,
+    config: readConfig ? cfgResp?.config ?? null : previous!.config,
     rev: configRev,
-    decorAssetsApi: cfgResp?.decor_assets_api === 1 ? 1 : null,
-    summaryPanelApi: cfgResp?.summary_panel_api === 1 ? 1 : null,
-    configFingerprint: contentFingerprint(cfgResp?.config ?? null),
-    layout: layResp?.layout ?? {},
-    layoutRev: layResp?.rev ?? 0,
-    layoutFingerprint: contentFingerprint(layResp?.layout ?? {}),
+    decorAssetsApi: readConfig ? cfgResp?.decor_assets_api === 1 ? 1 : null : previous!.decorAssetsApi,
+    summaryPanelApi: readConfig ? cfgResp?.summary_panel_api === 1 ? 1 : null : previous!.summaryPanelApi,
+    configFingerprint: readConfig ? contentFingerprint(cfgResp?.config ?? null) : previous!.configFingerprint,
+    layout: readLayout ? layResp?.layout ?? {} : previous!.layout,
+    layoutRev: readLayout ? layResp?.rev ?? 0 : previous!.layoutRev,
+    layoutFingerprint: readLayout ? contentFingerprint(layResp?.layout ?? {}) : previous!.layoutFingerprint,
     virtualLights,
   };
   // A force request may arrive while this fetch is in flight. Its older
   // response remains useful to its original caller, but must not repopulate
   // the shared cache after the newer generation invalidated it.
-  if (generation === fetchGeneration) cache = snapshot;
+  if (generation === fetchGeneration) {
+    cache = snapshot;
+    configInvalid = layoutInvalid = false;
+    pendingConfigRev = pendingLayoutRev = -1;
+  }
   const connection = hass.connection;
   if (connection?.subscribeEvents && subscribedConnection !== connection) {
     for (const unsubscribe of subscriptionUnsubscribers) unsubscribe();
     subscriptionUnsubscribers = [];
     subscribedConnection = connection;
-    const invalidate = () => {
-      cache = null; // invalidate; listeners reload
+    clearTimeout(eventTimer);
+    eventTimer = undefined;
+    const invalidate = (kind: 'config' | 'layout', event: { data?: { rev?: unknown } }) => {
+      if (subscribedConnection !== connection) return;
+      const rev = event?.data?.rev;
+      const knownRev = kind === 'config'
+        ? Math.max(cache?.rev ?? -1, pendingConfigRev)
+        : Math.max(cache?.layoutRev ?? -1, pendingLayoutRev);
+      if (typeof rev === 'number' && Number.isSafeInteger(rev) && rev >= 0) {
+        if (rev <= knownRev) return;
+        if (kind === 'config') pendingConfigRev = rev;
+        else pendingLayoutRev = rev;
+      }
+      if (kind === 'config') configInvalid = true;
+      else layoutInvalid = true;
+      // Retain the other half for partial reads, but fence an older response
+      // immediately. One trailing window wakes all cards after a write burst.
       fetchGeneration++;
-      listeners.forEach((l) => l());
+      clearTimeout(eventTimer);
+      eventTimer = setTimeout(() => {
+        eventTimer = undefined;
+        if (subscribedConnection === connection) listeners.forEach((listener) => listener());
+      }, 200);
     };
     const pendingUnsubscribers: Array<() => void> = [];
     try {
       keepUnsubscriber(
-        await connection.subscribeEvents(invalidate, 'houseplan_config_updated'),
+        await connection.subscribeEvents((event: { data?: { rev?: unknown } }) => invalidate('config', event), 'houseplan_config_updated'),
         pendingUnsubscribers,
       );
       // Layout is separate state: dragging an icon on the full card writes only
@@ -118,7 +149,7 @@ async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapsh
       // position until the config changed or the page was reloaded — possibly
       // forever on a wall tablet (HP-1454-08).
       keepUnsubscriber(
-        await connection.subscribeEvents(invalidate, 'houseplan_layout_updated'),
+        await connection.subscribeEvents((event: { data?: { rev?: unknown } }) => invalidate('layout', event), 'houseplan_layout_updated'),
         pendingUnsubscribers,
       );
       keepUnsubscriber(await connection.subscribeEvents((event: any) => {
@@ -147,7 +178,7 @@ async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapsh
 /** Get the shared config snapshot (cached, deduped across cards). */
 export function getConfig(hass: any, force = false): Promise<HpConfigSnapshot> {
   if (force) {
-    cache = null;
+    configInvalid = layoutInvalid = true;
     fetchGeneration++;
     if (inflight) {
       // Do not let `force` silently join the stale request it was meant to
@@ -155,7 +186,7 @@ export function getConfig(hass: any, force = false): Promise<HpConfigSnapshot> {
       return inflight.catch(() => null).then(() => getConfig(hass, false));
     }
   }
-  if (cache) return Promise.resolve(cache);
+  if (cache && !configInvalid && !layoutInvalid) return Promise.resolve(cache);
   if (inflight) {
     if (inflightGeneration !== fetchGeneration) {
       return inflight.catch(() => null).then(() => getConfig(hass, false));

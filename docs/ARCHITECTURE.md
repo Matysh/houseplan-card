@@ -2601,3 +2601,5 @@ without gaining an admission exemption. The diagnostic has no verdict authority.
 Legacy digest comparisons remain labelled and use their original wire algorithm;
 new ToolSearch policy is never applied to old decisions. Unknown/mixed algorithms
 have unavailable comparison, and bound old refusals are retained honestly.
+
+Static-card update intake (#1112) retains the config/layout snapshot while marking its halves invalid. Known equal/older revisions do not notify; newer or revisionless events fence in-flight responses immediately and share a trailing 200ms notification window. A layout event fetches layout/get only, preserving config identity and capabilities; concurrent embedded cards share that request. Forced refresh still reads both halves and virtual-light events keep their immediate path.

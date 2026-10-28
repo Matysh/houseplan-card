@@ -2,6 +2,8 @@
 
 Space deletion (#1101) prepares its validated config/layout pair in an executor under the existing write lock, retaining its dependency refusals, rollback and revision/event contract.
 
+Static-card sync (#1112) filters known config/layout revision echoes, combines event bursts in one 200ms window and shares partial layout reads across embedded cards. Virtual-light events retain their immediate update path.
+
 Main-page URL kiosk (#1103) uses the thin host runtime routeKiosk property. Both path and query entries share the existing authoritative selection and kiosk guards, preserving strict Lovelace floor validation and HA chrome. Internal paths retain one read owner; URL changes do not reload unchanged configuration.
 
 Derived-artifact publication (#1109) drains the complete Git stat while printing
@@ -85,7 +87,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5774 · pure backend 692 · HA-harness backend 606 · browser smokes 477 (`npm run inventory`) |
+| Tests | Node unit 5778 · pure backend 692 · HA-harness backend 606 · browser smokes 478 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

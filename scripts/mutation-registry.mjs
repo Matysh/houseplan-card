@@ -77,6 +77,12 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'static-store-revision-echo-reloads-1112',
+    guard: 'node --test test/config-store-events.test.mjs',
+    because: '#1112 AC1: equal/older config and layout revisions must not wake a card or read the transport. Registered only; nightly execution.',
+    patches: [{ file: 'src/config-store.ts', find: 'if (rev <= knownRev) return;', replace: 'if (false && rev <= knownRev) return;' }],
+  },
+  {
     id: 'view-menu-forgets-generation-1089',
     guard: 'node demo/smoke_view_device_menu_lifecycle.mjs',
     because: '#1089 AC7: a held real View module must not open a stale menu after blur/pagehide or a newer owner. Static registration only; execution belongs to nightly.',

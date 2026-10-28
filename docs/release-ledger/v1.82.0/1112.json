@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1112,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 config-store invalidates the complete shared snapshot and wakes every static card for every config/layout event, without revision filtering or coalescence. This fixes redundant reads while retaining live positions and virtual-light state.",
+  "summary": {
+    "ru": "Статические карточки объединяют события переноса устройств и читают только изменённые данные.",
+    "en": "Static cards coalesce device-placement events and read only changed data."
+  }
+}
