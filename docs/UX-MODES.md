@@ -249,10 +249,13 @@ The device information card exposes **Edit** only to a Houseplan writer outside
 kiosk (`can_write`, not HA `is_admin`). Direct and late lazy-runtime entries,
 new-device acknowledgement and warm dialog restoration obey the same gate
 (#844). Read-only/kiosk still have device controls, more-info and Close.
-The saved **Device settings** action and right click in View open that same
-device editor without changing mode (#1050). Both require the current loaded
-House Plan writer authority outside kiosk; otherwise they show the permission
-hint, without loading the editor or falling back to information UI. The explicit
+The saved **Device settings** action opens that same device editor without
+changing mode (#1050). It requires the current loaded House Plan writer
+authority outside kiosk; otherwise it shows the permission hint, without
+loading the editor or falling back to information UI. In ordinary View, right
+click instead opens the shared five-command device menu (#1089); its Device
+settings item opens the same editor and is disabled for read-only users.
+Kiosk retains its permission hint without opening the menu. The explicit
 more-info action and long press retain their own behaviour. A delayed opening
 must retain its original route, space, mode, HA/user authority and exact current
 visible marker binding; ordinary HA state ticks do not invalidate the target.
