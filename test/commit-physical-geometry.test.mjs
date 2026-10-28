@@ -85,3 +85,17 @@ test('#1099 a failed preview is never reused as a successful commit proof',()=>{
  h.host._checkSpacePhysicalGeometry=strict;
  assert.equal(h.runtime._commitPhysicalGeometry('fresh-check',before),true);assert.ok(h.counts.preflight>0);
 });
+for(const failure of ['exception','missing-config','missing-preview','different-space'])
+test('#1099 preview retirement after '+failure+' never lends an older positive proof',()=>{
+ const h=harness(),before=h.runtime._geometrySnapshot('f');scenarios.thickness(h.host._serverCfg.spaces[0]);
+ const candidate=h.host._serverCfg.spaces[0];
+ assert.equal(h.runtime._rszSpaceCandidateRenderable('f',candidate),true);
+ h.host._checkSpacePhysicalGeometry=()=>{throw new Error('ordinary preview boundary fault');};
+ if(failure==='exception')assert.equal(h.runtime._rszSpaceCandidateRenderable('f',candidate),false);
+ else if(failure==='missing-config'){
+  const config=h.host._serverCfg;h.host._serverCfg=null;
+  assert.equal(h.runtime._rszSpaceCandidateRenderable('f',candidate),false);h.host._serverCfg=config;
+ }else assert.equal(h.runtime._rszCandidateRenderable(failure==='missing-preview'?null:{space:'g',sp:candidate}),false);
+ assert.equal(h.runtime._commitPhysicalGeometry('after-preview-failure',before),false);
+ assert.equal(h.history.length,0,'no history entry after the fresh check throws');
+});

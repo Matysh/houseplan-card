@@ -1597,7 +1597,7 @@ model version, serializable verdict and private wall geometry). The canonical
 candidate reuses that proof only on exact equality; otherwise it receives its own
 strict preflight. Junction checks consume the canonical candidate geometry.
 Resize may lend its last successful preview proof under the same equality rule.
-An exception remains a refusal; a cached failed proof never authorizes a write.
+Every preview attempt first retires its prior proof; missing candidates, another active floor and exceptions cannot preserve older authority. An exception remains a refusal; a cached failed proof never authorizes a write.
 
 Junction baseline inheritance uses one content/version/revision slot per current
 space, pruned against the live space list. A geometry-only previous-space carrier

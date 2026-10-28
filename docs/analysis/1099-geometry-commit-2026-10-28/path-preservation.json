@@ -1,0 +1,30 @@
+{
+  "reference": "d28493b3",
+  "note": "AC6 recipe invokes commit directly; neither changed Resize preview method is called.",
+  "rows": [
+    {
+      "file": "src/houseplan-editor-runtime.ts",
+      "scope": "_commitPhysicalGeometry",
+      "sha256": "4dfe1facf75e3cc7a4328ec23d6b972ef00bac0196361f8601bdf4ba84b3a06f",
+      "equal": true
+    },
+    {
+      "file": "src/physical-candidate-proof.ts",
+      "scope": "entire file",
+      "sha256": "f60e294ce458803fbd3209bbbf381abd6c9af9de2139e5e9f93d1bed2a475421",
+      "equal": true
+    },
+    {
+      "file": "test/helpers/geometry-commit-harness.mjs",
+      "scope": "entire file",
+      "sha256": "53a49ebf96ea7a62eb2713e52fbd460635126bd79c128ac747d2d1524ebb8524",
+      "equal": true
+    },
+    {
+      "file": "demo/benchmark_geometry_commit.mjs",
+      "scope": "entire file",
+      "sha256": "84df7d33096282b046d4695c30cf9ad1b580f2b881a989ad47028425627c577e",
+      "equal": true
+    }
+  ]
+}

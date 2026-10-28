@@ -998,7 +998,7 @@ candidate between safety preflight and junction validation. The original live
 #278 guard remains first; canonicalization needs a second pass when its physical
 fingerprint changes. Baseline inheritance needs at most one pass, then reuses its
 content/version/revision slot for the same previous space. A successful Resize
-preview may lend its proof only while the final fingerprint and model version match.
+preview may lend its proof only while the final fingerprint and model version match. Each new attempt retires the old proof before validation, including missing/configuration and exception refusals.
 Current-model identity/adoption visit only the edited floor; legacy migration
 keeps the existing atomic all-space boundary. The geometry-only baseline never
 restores marker room references into the live config. Fail-closed candidate

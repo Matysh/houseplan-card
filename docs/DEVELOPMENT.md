@@ -2954,7 +2954,7 @@ anchors are checked statically; each was caught by hand (patch → guard → rol
 
 `node --test test/commit-physical-geometry.test.mjs` executes the real editor
 barrier on a 146-room scene, exact old-runtime characterization vectors and
-frozen marker/foreign-floor inputs. The fixed UUID stream is an entropy input,
+frozen marker/foreign-floor inputs and four preview-proof retirement refusals. The fixed UUID stream is an entropy input,
 not a replacement algorithm. `node demo/benchmark_geometry_commit.mjs` measures
 seven bundled-runtime commits per thickness/merge/split/column case at DPR1/2;
 `--root=<immutable baseline checkout>` uses that checkout's actual bundled
@@ -2962,6 +2962,14 @@ runtime. Report candidate and baseline union counts alongside timing medians;
 only the declared union quota is normative. Do not raise existing time limits.
 Junction smokes retain their behavioral assertions; the private cache inspection
 now addresses the content slot by space ID. See ARCHITECTURE for proof ownership.
+
+The owner-authorized #1099 resource carry records the observed 3651515-B built
+JavaScript total (source fingerprint fd77759823af21a5c5c513df69d43ca5c771183d3a68359f0cf6e078840c639e).
+The prior3649075-B baseline plus2000-B band rejected that artifact by440B;
+its baseline becomes3651515B while the band, timing limits and other structural
+baselines stay unchanged. No clean dev0543 size was measured, so this is an
+observed resource carry, not a claimed isolated task byte delta. Rationale:
+https://github.com/Matysh/houseplan-card/issues/1099#issuecomment-6467489322.
 
 ## Editor draft ownership and failed-chain exit (#851)
 

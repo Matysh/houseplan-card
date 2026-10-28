@@ -3368,6 +3368,7 @@ public _rszSpaceCandidateGeometry(spaceId: string, sp: any): {
   }
 
 public _rszSpaceCandidateRenderable(spaceId: string, sp: any): boolean {
+    this._resizePhysicalProof = null;
     if (!this.host._serverCfg) return false;
     try {
       const candidate = {
@@ -3384,8 +3385,11 @@ public _rszSpaceCandidateRenderable(spaceId: string, sp: any): boolean {
   }
 
 public _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
-    return !!preview && preview.space === this.host._space
-      && this._rszSpaceCandidateRenderable(preview.space, preview.sp);
+    if (!preview || preview.space !== this.host._space) {
+      this._resizePhysicalProof = null;
+      return false;
+    }
+    return this._rszSpaceCandidateRenderable(preview.space, preview.sp);
   }
 
 public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {

@@ -22116,6 +22116,14 @@ const planHass1111Cases = [
 
 
 const physicalCommit1099Cases = [
+  { id: 'resize-preview-keeps-prior-proof-on-exception-1099',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/commit-physical-geometry.test.mjs',
+    because: '#1099 AC4/5: an exception or missing config during a later preview must retire an older positive proof before commit. Registered only; execution is nightly.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:'this._resizePhysicalProof = null;\n    if (!this.host._serverCfg) return false;',replace:'if (!this.host._serverCfg) return false;'}] },
+  { id: 'resize-preview-keeps-prior-proof-on-missing-candidate-1099',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/commit-physical-geometry.test.mjs',
+    because: '#1099 AC4/5: a missing preview or another active floor must retire the previous preview proof before commit. Registered only; execution is nightly.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:'if (!preview || preview.space !== this.host._space) {\n      this._resizePhysicalProof = null;',replace:'if (!preview || preview.space !== this.host._space) {'}] },
   { id: 'physical-proof-ignores-candidate-fingerprint-1099',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/commit-physical-geometry.test.mjs',
     because: '#1099: a changed Resize candidate must execute its own strict preflight; a prior successful wall pass belongs only to its exact physical fingerprint and model version. Registered only; execution is nightly.',
