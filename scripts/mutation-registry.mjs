@@ -77,6 +77,12 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'static-store-force-keeps-old-cache-1112',
+    guard: 'node --test test/config-store-events.test.mjs',
+    because: '#1112 AC2: a forced connection change must not retain the previous connection revision and suppress a new low revision. Registered only; nightly execution.',
+    patches: [{ file: 'src/config-store.ts', find: '    cache = null;', replace: '    // mutant retains old connection cache' }],
+  },
+  {
     id: 'static-store-revision-echo-reloads-1112',
     guard: 'node --test test/config-store-events.test.mjs',
     because: '#1112 AC1: equal/older config and layout revisions must not wake a card or read the transport. Registered only; nightly execution.',

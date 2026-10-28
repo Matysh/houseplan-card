@@ -82,7 +82,7 @@ async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapsh
     readLayout ? hass.callWS({ type: 'houseplan/layout/get' }) : null,
   ]);
   const configRev = readConfig ? cfgResp?.rev ?? 0 : previous!.rev;
-  const virtualLights = !readConfig ? cache!.virtualLights : cache
+  const virtualLights = !readConfig ? (cache ?? previous)!.virtualLights : cache
     ? adoptVirtualLightServerSnapshot(
       cache.virtualLights,
       cfgResp?.virtual_lights,
@@ -116,6 +116,7 @@ async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapsh
     subscribedConnection = connection;
     clearTimeout(eventTimer);
     eventTimer = undefined;
+    pendingConfigRev = pendingLayoutRev = -1;
     const invalidate = (kind: 'config' | 'layout', event: { data?: { rev?: unknown } }) => {
       if (subscribedConnection !== connection) return;
       const rev = event?.data?.rev;
@@ -178,6 +179,7 @@ async function fetchFresh(hass: any, generation: number): Promise<HpConfigSnapsh
 /** Get the shared config snapshot (cached, deduped across cards). */
 export function getConfig(hass: any, force = false): Promise<HpConfigSnapshot> {
   if (force) {
+    cache = null;
     configInvalid = layoutInvalid = true;
     fetchGeneration++;
     if (inflight) {
