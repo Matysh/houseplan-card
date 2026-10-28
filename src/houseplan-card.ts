@@ -1966,7 +1966,7 @@ export class HouseplanCard extends LitElement {
   } | null = null;
   private _physicalBodiesEntry: {
     key: string; partitions: number[][][];
-    columns: number[][][]; patches: number[][][]; all: number[][][];
+    columns: number[][][]; patches: number[][][]; all: number[][][]; readonly rawPatches?: number[][][];
   } | null = null;
   private _physicalBodiesPool = new Map<string, NonNullable<HouseplanCard['_physicalBodiesEntry']>>();
   /** The editor's current bodies (re-keyed by Resize); clearing it clears the pool. */
@@ -9861,10 +9861,11 @@ export class HouseplanCard extends LitElement {
     const key = physicalBodiesKey(this._floorKey(space.id), this._cellCm, this._gridPitch);
     return (this._physicalBodiesCache = floorPoolEntry(this._physicalBodiesPool, this._physicalBodiesCache, key, () => {
       this._floorCacheBuilds.physicalBodies++;
-      return { key, ...physicalBodyParts(
+      const parts = physicalBodyParts(
         space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
         this._partitionOpeningCuts(space),
-      ) };
+      );
+      return { key, ...parts, rawPatches: parts.rawPatches };
     })).all;
   }
 

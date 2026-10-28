@@ -3,6 +3,7 @@ import test from 'node:test';
 import { flushHouseplanPointerMove } from '../test-build/pointer-move-queue.js';
 import { wallBodiesUnionPath } from '../test-build/wall-thickness.js';
 import { physicalBodyParts } from '../test-build/physical-geometry.js';
+import { openingDragClip } from '../test-build/opening-drag-preview.js';
 globalThis.window ??= { customCards: [] };
 globalThis.window.customCards ??= [];
 globalThis.window.setTimeout ??= globalThis.setTimeout;
@@ -118,4 +119,31 @@ test('#1097 an unavailable local host takes the uncached canonical fallback visi
     assert.deepEqual(opening, before);
     assert.equal(host._cfgEpoch, 7);
     runtime._cancelOpeningDrag();
+});
+
+
+test('#1097 clip ownership follows pan, zoom, quarter turns and physical DPR without changing bounds', () => {
+    const bounds = [[11.3, 20.6, 50.9, 80.4]], original = structuredClone(bounds);
+    for (const dpr of [1, 2]) for (const zoom of [.3, 1.7]) for (const turn of [0, 1, 2, 3]) {
+        const angle = turn*Math.PI/2, a = zoom*Math.cos(angle), b = zoom*Math.sin(angle), c = -b, d = a;
+        const view = {a,b,c,d,e:25.23,f:-9.78,dpr}, clip = openingDragClip(bounds, view);
+        assert.ok(clip?.length);
+        for (const poly of clip) for (const ring of poly) for (const [x,y] of ring) {
+            const sx=(a*x+c*y+view.e)*dpr, sy=(b*x+d*y+view.f)*dpr;
+            assert.ok(Math.abs(sx-Math.round(sx))<1e-9, 'physical x edge');
+            assert.ok(Math.abs(sy-Math.round(sy))<1e-9, 'physical y edge');
+        }
+    }
+    assert.deepEqual(bounds, original, 'authored geometry is never snapped');
+    assert.equal(openingDragClip(bounds, {a:1,b:.2,c:0,d:1,e:0,f:0,dpr:1}), null, 'unknown transform is explicit fallback');
+    assert.equal(openingDragClip(bounds, {a:0,b:0,c:0,d:0,e:0,f:0,dpr:2}), null);
+});
+
+test('#1097 physical result retains raw joins without changing enumerable or cloned payload', () => {
+    const space = {partitions:[{id:'a',a:[0,0],b:[100,0],cm:20},{id:'b',a:[100,0],b:[100,100],cm:20}],wall_columns:[]};
+    const parts = physicalBodyParts(space, 5, 10, .002);
+    assert.ok(parts.rawPatches?.length, 'real join topology is retained');
+    assert.deepEqual(parts.rawPatches, parts.patches, 'uncut positive has the canonical raw join shapes');
+    assert.deepEqual(Object.keys(parts), ['partitions','columns','patches','all']);
+    assert.equal(Object.hasOwn(structuredClone(parts), 'rawPatches'), false, 'retained inputs stay out of serialized copies');
 });

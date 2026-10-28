@@ -4,10 +4,14 @@
  * Frozen common characterization and the original held-RED stay unchanged.
  */
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
+import { bundledProducers, callsFor } from './performance/opening-drag-coverage.mjs';
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 960 });
 const out = {}, trace = [];
+const coverageTargets = bundledProducers(fileURLToPath(new URL('../dist', import.meta.url)));
+const coverageSession = await page.context().newCDPSession(page);
 const hostedIds = ['held_door', 'held_window'];
 const allIds = [...hostedIds, 'static_window'];
 const settle = () => page.evaluate(() => window.__hpTest.settled());
@@ -131,6 +135,8 @@ const heldAt = (state, before, down, baseline, dx, dy) => {
 };
 
 try {
+  await coverageSession.send('Profiler.enable');
+  await coverageSession.send('Profiler.startPreciseCoverage', {callCount:true,detailed:true});
   await page.evaluate(async () => {
     await window.__hpTest.setServerConfig((cfg) => {
       cfg.model_version = 10;
@@ -310,6 +316,9 @@ try {
   out.trustedSamePointerCancelRestoresWithoutConfigHistoryOrGhost = true;
   // #1097: move the hosted opening itself, after all frozen #861 physical
   // host-characterization checks above have completed without new expectations.
+  const coldCoverage = (await coverageSession.send('Profiler.takePreciseCoverage')).result;
+  assert.ok(callsFor(coldCoverage, coverageTargets.physical) > 0, 'cold positive identifies the actual physical producer');
+  assert.ok(coverageTargets.constructor, 'the crop constructor is independently observable');
   const openingStart = await at(575, 300);
   await page.mouse.move(openingStart.x, openingStart.y); await page.mouse.down(); await settle();
   const openingDown = await sample();
@@ -335,6 +344,10 @@ try {
     }
     assert.equal(one(frame, 'held_door').origin[0], one(openingDown, 'held_door').origin[0]);
   }
+  const heldCoverage = (await coverageSession.send('Profiler.takePreciseCoverage')).result;
+  assert.equal(callsFor(heldCoverage, coverageTargets.physical), 0, 'no direct physical producer, including constructor work');
+  assert.equal(callsFor(heldCoverage, coverageTargets.constructor), 1, 'the observed constructor really ran');
+  out.openingHeldCoversDirectPhysicalProducerAndConstructor = true;
   const openingHeld = await sample();
   assert.equal(openingHeld.openingDrag.moved, true);
   assert.ok(openingHeld.liveFrames > openingDown.liveFrames);
@@ -350,6 +363,8 @@ try {
   assert.deepEqual(openingReleased.space.partitions, openingDown.space.partitions);
   out.openingDragRecutsOnlyItsPartitionAndPreservesSavedContract = true;
   checkAll(out);
+  await coverageSession.send('Profiler.stopPreciseCoverage');
+  await coverageSession.detach();
   await finish(browser);
 } catch (error) {
   console.log('diagnostic partition-opening-preview', JSON.stringify({ out, trace,

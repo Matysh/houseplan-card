@@ -736,7 +736,7 @@ export interface HouseplanEditorHostPort {
   _pendingPhysicalWrites: Map<string, { fingerprint: string; before: SpaceGeometryState; }>;
   _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][]; } | null;
   _persistLayout: Debounced<() => void>;
-  _physicalBodiesCache: { key: string; drafts: number[][][]; partitions: number[][][]; columns: number[][][]; patches: number[][][]; all: number[][][]; } | null;
+  _physicalBodiesCache: { key: string; drafts: number[][][]; partitions: number[][][]; columns: number[][][]; patches: number[][][]; all: number[][][]; readonly rawPatches?: number[][][]; } | null;
   _physicalBodiesR: (space?: SpaceModel | undefined) => number[][][];
   _physicalDialog: { kind: "partition" | "column"; id: string; cm: string; shape?: "square" | "circle"; angle?: string; length?: string; } | null;
   _physicalSel: { kind: "partition" | "column"; id: string; } | null;
@@ -6090,9 +6090,12 @@ public _renderOpeningDragBodies(display: SpaceDisplay, settled = false): Templat
         const saved = geometryOpenings(this.host._curSpaceCfg, space, this.host._cellCm, this.host._gridPitch, NORM_W);
         this._openingDragWalls = new OpeningDragWalls(base, space, saved, drag.id,
           items => this.host._roomWallOpeningInputs(items, space), this.host._physicalBodiesR(space),
-          this.host._cellCm, this.host._gridPitch);
+          this.host._cellCm, this.host._gridPitch, this.host._physicalBodiesCache);
       }
-      const local = this._openingDragWalls.render(moving, this.host._renderWallBodies(display, true), display, px, settled ? 'settled' : 'live');
+      const matrix = this.host._stageEl?.querySelector<SVGGraphicsElement>('svg.plan-svg > g')?.getScreenCTM();
+      const viewport = matrix ? { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d,
+        e: matrix.e, f: matrix.f, dpr: window.devicePixelRatio || 1 } : null;
+      const local = this._openingDragWalls.render(moving, this.host._renderWallBodies(display, true), display, px, settled ? 'settled' : 'live', viewport);
       if (local) return local;
     }
     // Required correctness fallback: one uncached canonical pass, no preview

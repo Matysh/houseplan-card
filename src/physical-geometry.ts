@@ -116,6 +116,8 @@ export interface PhysicalBodyParts {
   columns: number[][][];
   /** Bounded mitre/bevel volumes; never persisted or independently editable. */
   patches: number[][][];
+  /** Retained uncut join topology; non-enumerable and never serialized. */
+  readonly rawPatches?: number[][][];
   /** Canonical independent volume inputs for boolean render/floor/light consumers. */
   all: number[][][];
 }
@@ -272,11 +274,10 @@ export function physicalBodyParts(
   // an opening placed close to a T/endpoint even though its raw host body was
   // correctly split. Other crossing walls remain opaque through their own raw
   // bodies; only the extra shared mitre/bevel volume is trimmed here.
-  const patches = linearWallJoinPatches(
-    partitionSegments, epsilon,
-  ).flatMap((body) => cutPartitionBody(body, partitionCuts, epsilon));
+  const rawPatches = linearWallJoinPatches(partitionSegments, epsilon);
+  const patches = rawPatches.flatMap((body) => cutPartitionBody(body, partitionCuts, epsilon));
   const all = [...presentedPartitions, ...patches, ...columns];
-  return { partitions, columns, patches, all };
+  return Object.defineProperty({ partitions, columns, patches, all }, 'rawPatches', { value: rawPatches });
 }
 
 /** Explicit union consumer retained for geometry queries and pure tests. */

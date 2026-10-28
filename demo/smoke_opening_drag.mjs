@@ -5,7 +5,7 @@ import { launch, checkAll, finish } from './serve.mjs';
 import { openingDragFixture } from './performance/opening-drag-fixture.mjs';
 const fixture = openingDragFixture();
 const baseline = JSON.parse(readFileSync(new URL('../test/data/1097-opening-drag-baseline.json', import.meta.url)));
-const { page, browser } = await launch({ width: 1280, height: 1000 });
+const { page, browser } = await launch({ width: 1280, height: 1000 }, Number(process.env.HP_OPENING_DPR || 1));
 const out = {}, trace = [];
 const settle = () => page.evaluate(() => window.__hpTest.settled());
 const writesSettled = () => page.evaluate(() => window.__hpTest.waitForWrites());
@@ -237,6 +237,45 @@ try {
     const wire=await page.evaluate(()=>window.__card.hass.callWS({type:'houseplan/config/get'}));
     assert.deepEqual(wire.config,refusalBefore.config,'backend retains the last accepted pair');
     out.refusedCutResponseRetainsOldToastRollbackAndAcceptedServerConfig=true;
+    // A small native camera witness for presentation-only clip ownership.
+    const cameraSettled = async () => {
+        await page.waitForFunction(()=>!window.__card._cameraTransition.active && !window.__card._modeTransitionBusy && !window.__card._refitRaf && !window.__card._pendingRefitSize);
+        await settle();
+    };
+    await page.evaluate(()=>window.__hpTest.setTool('select'));
+    const cameraPoint = () => page.evaluate(() => {
+        const c=window.__card, opening=c._openingsR.find(o=>o.id==='perf-opening-0-0');
+        const frame=c.renderRoot.querySelector('svg.plan-svg > g'),m=frame.getScreenCTM();
+        const p=new DOMPoint(opening.rx,opening.ry).matrixTransform(m);
+        return {x:p.x,y:p.y,rx:opening.rx,ry:opening.ry,matrix:[m.a,m.b,m.c,m.d,m.e,m.f]};
+    });
+    for (let turn=0;turn<4;turn++) {
+        if (turn) await page.locator('[data-hp="rotate-right"]').click();
+        await page.locator('[data-hp="zoom-fit"]').click(); await cameraSettled();
+        const beforePan=await cameraPoint(), stage=await page.locator('.stage').boundingBox();
+        await page.mouse.move(stage.x+stage.width-8,stage.y+stage.height-8);await page.mouse.down();
+        await page.mouse.move(stage.x+stage.width-21,stage.y+stage.height-17,{steps:4});await page.mouse.up();await cameraSettled();
+        const afterPan=await cameraPoint();
+        assert.ok(Math.hypot(afterPan.x-beforePan.x,afterPan.y-beforePan.y)>5,'native pan changed the camera');
+        await page.mouse.move(afterPan.x,afterPan.y);await page.mouse.wheel(0,-120);await cameraSettled();
+        const start=await cameraPoint(), before=await sample();
+        assert.notDeepEqual(start.matrix.slice(0,4),afterPan.matrix.slice(0,4),'native zoom changed the scale');
+        await page.mouse.move(start.x,start.y);await page.mouse.down();await settle();
+        const target=await page.evaluate(([x,y])=>{const m=window.__card.renderRoot.querySelector('svg.plan-svg > g').getScreenCTM();const p=new DOMPoint(x+8,y).matrixTransform(m);return{x:p.x,y:p.y};},[start.rx,start.ry]);
+        await page.mouse.move(target.x,target.y);await settle();
+        const held=await sample();paint(held);unchanged(held,before);
+        assert.equal(await page.evaluate(()=>{
+            const local=[...window.__card.renderRoot.querySelectorAll('.hp-opening-drag-local')].find(e=>getComputedStyle(e).visibility==='visible');
+            const path=local.closest('.hp-opening-drag-walls').querySelector('clipPath path'),m=local.getScreenCTM();
+            const numbers=path.getAttribute('d').match(/[-+]?[0-9]*\.?[0-9]+(?:e[-+]?[0-9]+)?/gi).map(Number),points=[];
+            for(let i=0;i<numbers.length;i+=2)points.push([numbers[i],numbers[i+1]]);
+            return points.every(([x,y])=>{
+                const p=new DOMPoint(x,y).matrixTransform(m);return [p.x*devicePixelRatio,p.y*devicePixelRatio].every(v=>Math.abs(v-Math.round(v))<1e-6);
+            });
+        }),true,'actual camera/DPR puts complementary clip edges on physical pixels');
+        await page.keyboard.press('Escape');await page.mouse.up();await settle();unchanged(await sample(),before);
+    }
+    out.nativePanZoomAndFourTurnsKeepOpeningAndPhysicalPixelClips=true;
     checkAll(out);
     console.log('opening-drag evidence', JSON.stringify({ sourceBaseline: baseline.sourceSha, trace, switched, released: { builds: released.builds, pool: released.pool, openings: released.openings } }, null, 2));
     await finish(browser);
