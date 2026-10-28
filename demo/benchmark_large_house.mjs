@@ -548,7 +548,15 @@ try {
 
       const firstEntity = stage3Dense
         ? fixture.stage3Dense.stateEntityId
-        : Object.keys(fixture.states)[0];
+        : interaction ? Object.keys(fixture.states).find((entityId) =>
+          entityId.startsWith('switch.')
+          && fixture.layout[fixture.entities[entityId]?.device_id]?.s === card._space
+          && card.renderRoot.querySelector(`[data-hp="device"][data-entity="${entityId}"]`))
+          : Object.keys(fixture.states)[0];
+      // The interaction scene is now floor 2. A fixture-global first light is
+      // on floor 1 and must not masquerade as a visible dependency. A plain
+      // switch witnesses the HA face update without a separate glow-exit timer.
+      if (interaction && !firstEntity) throw new Error('interaction has no visible switch binding');
       const nextStates = {
         ...fixture.states,
         [firstEntity]: { ...fixture.states[firstEntity], state: fixture.states[firstEntity].state === 'on' ? 'off' : 'on' },
@@ -644,6 +652,27 @@ try {
         deltas.irrelevantFullRenders = fullRenderCount - beforeIrrelevant;
         deltas.irrelevantHassIntakes = card._hassSequence - intakeBefore;
 
+        const offFloorEntity = Object.keys(fixture.states).find((entityId) =>
+          entityId.startsWith('switch.')
+          && fixture.layout[fixture.entities[entityId]?.device_id]?.s !== card._space);
+        if (!offFloorEntity) throw new Error('interaction has no off-floor switch binding');
+        deltas.offFloorMarkerAbsent = !card.renderRoot.querySelector(
+          `[data-hp="device"][data-entity="${offFloorEntity}"]`);
+        const offFloorBefore = fullRenderCount, offFloorIntakeBefore = card._hassSequence;
+        currentStates = { ...currentStates, [offFloorEntity]: {
+          ...currentStates[offFloorEntity],
+          state: currentStates[offFloorEntity].state === 'on' ? 'off' : 'on',
+        } };
+        card.hass = hassFor(currentStates);
+        await card.updateComplete;
+        await frame();
+        deltas.offFloorFullRenders = fullRenderCount - offFloorBefore;
+        deltas.offFloorHassIntakes = card._hassSequence - offFloorIntakeBefore;
+
+        const relevantFace = () => card.renderRoot.querySelector(
+          `[data-hp="device"][data-entity="${firstEntity}"]`);
+        const relevantStateBefore = relevantFace()?.getAttribute('data-state');
+        const relevantLabelBefore = relevantFace()?.getAttribute('aria-label');
         const relevantBefore = fullRenderCount;
         const relevantStarted = performance.now();
         currentStates = {
@@ -658,6 +687,13 @@ try {
         await frame();
         timings.relevantHaTickMs = performance.now() - relevantStarted;
         deltas.relevantOutsideGestureFullRenders = fullRenderCount - relevantBefore;
+        const relevantStateAfter = relevantFace()?.getAttribute('data-state');
+        const relevantLabelAfter = relevantFace()?.getAttribute('aria-label');
+        deltas.relevantVisibleStateChanged = !!relevantStateBefore
+          && relevantStateBefore !== relevantStateAfter
+          && relevantStateAfter === (currentStates[firstEntity].state === 'on' ? 'working' : 'neutral');
+        deltas.relevantVisibleLabelChanged = !!relevantLabelBefore && !!relevantLabelAfter
+          && relevantLabelBefore !== relevantLabelAfter;
 
         const stage = card.renderRoot.querySelector('.stage');
         const device = card.renderRoot.querySelector('[data-hp="device"]');
@@ -1062,6 +1098,9 @@ try {
         interactionDiagnostics = { supported: requiresInteraction, ...deltas };
         if (requiresInteraction && (
           deltas.irrelevantFullRenders !== 0 || deltas.irrelevantHassIntakes !== 30
+          || deltas.offFloorFullRenders !== 0 || deltas.offFloorHassIntakes !== 1
+          || !deltas.offFloorMarkerAbsent || !deltas.relevantVisibleStateChanged
+          || !deltas.relevantVisibleLabelChanged
           || deltas.relevantOutsideGestureFullRenders !== 1 || deltas.hoverFullRenders !== 0
           || (requiresLightGeometryMemo && deltas.hoverLightGeometry !== 0)
           || deltas.hoverTargets.join(',') !== 'device,room,miss'

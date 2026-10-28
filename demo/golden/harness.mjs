@@ -1971,6 +1971,11 @@ export async function prepareGoldenScenario(page, scenario) {
         bubbles: true, composed: true, pointerId: 993, pointerType: 'mouse',
         clientX: screen.x, clientY: screen.y, shiftKey: free,
       }));
+      await card._editorRuntime._whenLiveEditorSettled();
+      // This first frame judges the settled layer's original wall ordering.
+      // A pointer frame may legitimately retain the live editor as its owner;
+      // explicitly hand it back instead of relying on incidental host updates.
+      card.requestUpdate();
       await card.updateComplete;
       await frame();
       const preview = card.renderRoot.querySelector('.furniture-placement-preview');
@@ -1988,7 +1993,10 @@ export async function prepareGoldenScenario(page, scenario) {
       if (handoff) {
         if (!Array.isArray(handoff) || handoff.length !== 2 || !handoff.every(Number.isFinite))
           throw new Error(`invalid preview handoff pointer: ${scenario.id}`);
-        card.hass = { ...card.hass }; await card.updateComplete;
+        card.hass = { ...card.hass };
+        // Identical HA snapshots may be deduplicated. This fixture must still
+        // exercise a real full-host -> live-pointer ownership handoff.
+        card.requestUpdate(); await card.updateComplete;
         const next = new DOMPoint(handoff[0] * 1000, handoff[1] * card._spaceH)
           .matrixTransform(svgRoot.getScreenCTM());
         stageEl.dispatchEvent(new PointerEvent('pointermove', {
