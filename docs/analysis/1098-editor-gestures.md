@@ -1,6 +1,6 @@
 # #1098 — stairs/LED gesture and cache evidence
 
-Final product: `b15126a6` (core `95eae345`), dev
+Original paired-evidence product: `b15126a6` (core `95eae345`), dev
 `f00d02d13737077d3d7f331f537c721bc57448f4` after #1111.
 Source fingerprint: `f78b25c840bd4e801b5745431fd5fecc1f246c2af4f0352569acb8713542acc2`.
 Before product: `ccc62ef113c53f6de4c97e3b09ca7c1b56be9a81`, unchanged while
@@ -125,3 +125,31 @@ already in stable, hence stable-fix. Persisted commands/rights/history protocol
 are unchanged. E2E verdict: не надо; the parent records the accepted task impact
 in houseplan-e2e after S8. No E2E harness implementation changes here.
 Final resource carry rationale: https://github.com/Matysh/houseplan-card/issues/1098#issuecomment-6468411738.
+
+## Integration after accepted #1099
+
+Prepared source1c1c8193cde5fd2c9e83756fc114bc465fbbe1f6 rebases on accepted
+31b17bec040f25224b80f0f679378807ccfd37fc. Its own A patch is byte-identical to
+published72fbec41 on f00d02d1: both binary-diff hashes are
+fb96b745ba68236a31651c96e4a243cd56c83b3aea92af9c82716d0dd5bb5098.
+Only inherited houseplan-editor-runtime.ts and physical-candidate-proof.ts change;
+package/lock/Rollup/TypeScript recipes remain identical. The accepted helper
+changes Physical/Resize commit preparation, not the two measured gesture paths.
+
+Fresh build/test-build,53 targeted units and the three trusted native stairs/LED/
+floor-cache smokes pass on this tree. Native pointer counters, canonical readback,
+lower-layer order and independent area/backdrop values retain their oracles.
+Mutation readiness1993definitions/execution0; no mutations executed. The original
+14-row timing and four captures above retain their original materials; they are
+not relabelled as captures/timings of this integration. New exact CI follows the
+accepted unchanged-check API repair1114; no fake visual delta is declared.
+
+[Fresh resource proof](1098-editor-gestures-resources-31b.json) verifies readonly
+accepted donor dfc2e3b7be945a876f3e4006a5ff240d454ad7d4, whose complete frontend
+corpus equals31b17bec. Source/manifest fingerprints, all asset hashes and topology
+match. JS3652946→3654523 B (+1577), hostRefs6557→6573 (+16). The accepted rolling
+bases3651515/6532 carry only this own cost to3653092/6548, preserving inherited
+1431B/25refs and the same2000B/25ref bands. This differs from the pre1099
+shared-minification cost by10B; no byte optimization or timing-limit change.
+Current integration source fingerprint:
+d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af.

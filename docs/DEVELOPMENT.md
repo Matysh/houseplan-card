@@ -6607,3 +6607,10 @@ bands. The earlier0543 own cost+1602B differs by15B after shared minification;
 no byte optimization was attempted. Full evidence and measured windows:
 [1098 editor gestures](analysis/1098-editor-gestures.md).
 Final resource carry rationale: https://github.com/Matysh/houseplan-card/issues/1098#issuecomment-6468411738.
+
+On accepted1099 dev31b17bec the verified donor dfc2e3b7 has dist3652946 B and
+hostRefs6557. Rebased1098 source1c1c8193 retains its exact own A patch; fresh build
+is3654523 B/6573, own+1577B/+16. Carry accepted bases3651515/6532 to3653092/6548,
+preserving inherited1431B/25refs and bands2000B/25refs. Timings are unchanged;
+[the integration addendum](analysis/1098-editor-gestures.md#integration-after-accepted-1099)
+keeps prior timing/capture materials separate from fresh correctness evidence.
