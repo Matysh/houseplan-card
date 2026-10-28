@@ -1,5 +1,7 @@
 # Infinite canvas — the spec (source of truth)
 
+Opening dragging (#1097) keeps the original wall snap, grid quantisation and ruler rules, but only its transient preview follows the pointer. The saved floor and geometry pools remain warm through the gesture; the local host cut follows the symbol through both live and ordinary host paint. Pointerup applies one candidate through the existing physical validation/history writer. Escape and pointercancel discard it and consume the old click tail; a movement of at most three CSS pixels retains ordinary tap behaviour. Missing local-host proof falls back to a canonical uncached drawing pass.
+
 ## Consumer-scoped floor reuse (#1093)
 
 Navigation/registry metadata does not eagerly scale hidden floor polygons. Per-card physical models are demanded lazily, bounded to eight floor identities, and invalidated by actual geometry rather than paint/title revisions. First show uses the latest coherent accepted floor; live preview and stored model remain distinct keys. A replaced mounted stage retires its old viewport/header resize observers before rebinding, and queued old callbacks cannot refit the new surface.

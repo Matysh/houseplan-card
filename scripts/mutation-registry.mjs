@@ -77,6 +77,36 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'opening-drag-mutates-saved-record-1097',
+    guard: 'node --test test/opening-drag.test.mjs',
+    because: '#1097 AC1/4/5: queued room and partition moves must own only the transient draft until release. Declaration only; not executed locally.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:'    const cfg = drag.preview;',replace:'    const cfg = drag.source;'}],
+  },
+  {
+    id: 'opening-drag-drops-retained-index-1097',
+    guard: compiledNodeSmoke('smoke_opening_drag'),
+    because: '#1097 AC2: zero build counters cannot prove the actual slot. Native center/shoulder observations catch losing non-enumerable retained topology. Declaration only; nightly execution.',
+    patches: [{file:'src/opening-drag-preview.ts',find:'openingIndex: this.base.openingIndex, openingPadUnits:',replace:'openingIndex: null, openingPadUnits:'}],
+  },
+  {
+    id: 'opening-drag-forgets-cancelled-click-tail-1097',
+    guard: 'node --test test/opening-drag.test.mjs',
+    because: '#1097 AC5: a cancelled owner and its queued/stale up must not open the opening dialog through a compatibility click. Declaration only; not executed locally.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:'if (this._openingDragClickTail === o.id)',replace:'if (false && this._openingDragClickTail === o.id)'}],
+  },
+  {
+    id: 'opening-drag-normal-paint-loses-preview-1097',
+    guard: compiledNodeSmoke('smoke_partition_openings_preview'),
+    because: '#1097 AC2/4: real viewport changes during a held hosted opening force normal host paint; the visible cut must survive the handoff from live paint. Declaration only; nightly execution.',
+    patches: [{file:'src/houseplan-card.ts',find:'if (!canonical && this._opDrag?.preview && this._editorRuntime)',replace:'if (false && !canonical && this._opDrag?.preview && this._editorRuntime)'}],
+  },
+  {
+    id: 'opening-drag-fallback-unobservable-1097',
+    guard: 'node --test test/opening-drag.test.mjs',
+    because: '#1097 AC6: an unavailable local host must use exactly the old canonical drawing pass and report fallback work. Declaration only; not executed locally.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:'    this._openingDragFallbackBuilds++;',replace:'    // mutant omits required fallback work count'}],
+  },
+  {
     id: 'static-store-force-keeps-old-cache-1112',
     guard: 'node --test test/config-store-events.test.mjs',
     because: '#1112 AC2: a forced connection change must not retain the previous connection revision and suppress a new low revision. Registered only; nightly execution.',

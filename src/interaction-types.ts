@@ -6,6 +6,14 @@ import type { OpeningPlacementCore } from './opening-placement';
 import type { OpeningFaceOffset } from './opening-symbol-placement';
 import type { ResolvedPartitionOpening, PartitionOpeningOrphanReason } from './partition-openings';
 import type { OpeningCfg } from './types';
+import type { SpaceGeometryState } from './geometry-history-state';
+
+/** One captured opening; preview never belongs to the saved floor record. */
+export interface OpeningDragState {
+  id: string; moved: boolean; sx: number; sy: number; dirty: boolean;
+  before: SpaceGeometryState | null; pid: number; spaceId: string; epoch: number;
+  source: OpeningCfg; preview: OpeningCfg | null;
+}
 
 /** Opening rulers shared by the card shell and lazy editor runtime. */
 export interface OpMeasure {

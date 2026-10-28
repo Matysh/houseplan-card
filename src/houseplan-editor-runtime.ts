@@ -79,7 +79,7 @@ import {
   openingAmount, openingShoulders, filterOpeningEntityCandidates, poleOfInaccessibility,
   type FloorInfo, parseRoomRef, resolveGlowValues, normalizeGlowColorOverride, isControllable,
   spaceDisplayOf, DEFAULT_FILL_COLORS, customFillOf, type FillColors,
-  type FillColorEntry, RUN_TARGET_DOMAINS, stageBgOf,
+  type FillColorEntry, type SpaceDisplay, RUN_TARGET_DOMAINS, stageBgOf,
   showRoomTooltipOf, volumetricViewOf, normalizeDeviceDisplay,
   type DeviceDisplayMode, liveTextReference, liveTextToken, DECOR_TEXT_BASE, fitView,
 } from './logic';
@@ -209,7 +209,7 @@ import type { OptimizePlansDialogState } from './optimize-plans-dialog';
 import { LazyOptimizePlansDialog } from './optimize-plans-loader';
 import {
   BodyObstaclesMemo, COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusObstacles, geometryArea,
-  partitionBody, sameColumnPlacement, type PartitionOpeningCut,
+  partitionBody, sameColumnPlacement, physicalBodyParts, type PartitionOpeningCut,
 } from './physical-geometry';
 import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening, partitionOpeningJambMargin,
@@ -343,7 +343,8 @@ import {
   buildOpeningDimensionContext, resolveOpeningDimensions,
   type OpeningDimensionContext,
 } from './opening-dimensions';
-import type { OpeningPlacementCandidate, OpMeasure, RenderOpening } from './interaction-types';
+import type { OpeningPlacementCandidate, OpMeasure, RenderOpening, OpeningDragState } from './interaction-types';
+import { OpeningDragWalls, renderOpeningDragGeometry } from './opening-drag-preview';
 import { safeStoredColor } from './color';
 import { gridVisualUnits } from './grid-scale';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
@@ -706,7 +707,9 @@ export interface HouseplanEditorHostPort {
   _normPos: (space: string, x: number, y: number) => { s: string; x: number; y: number; };
   _normalizeWalls: (walls: WallEntry[] | null | undefined, cuts: number[][]) => WallEntry[];
   _noteLayoutRev: (r: any) => void;
-  _opDrag: { id: string; moved: boolean; sx: number; sy: number; dirty: boolean; before: SpaceGeometryState | null; } | null;
+  _opDrag: OpeningDragState | null;
+  _wallUnionGeometry: () => ReturnType<typeof wallBodiesUnionPath>;
+  _renderWallBodies: (display: SpaceDisplay, canonical?: boolean) => TemplateResult;
   _opMeasure: OpMeasure | null;
   _openBindingInHa: (binding: string) => void;
   _openCuts: () => number[][];
@@ -948,7 +951,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this._cancelOpeningDrag(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -2291,6 +2294,7 @@ public _commitPhysicalGeometry(
   }
 
 public _clearGeometryGesture(preserveWallChainRedo = false): void {
+    this._cancelOpeningDrag();
     this.keyboardNudge.retire();
     this.decorLine.reset();
     this.chainExit.invalidate();
@@ -6055,6 +6059,54 @@ public _editOpening(o: RenderOpening): void {
     };
   }
 
+private _openingDragWalls: OpeningDragWalls | null = null;
+private _openingDragClickTail: string | null = null;
+/** Diagnostic fallback work, separate from the canonical floor pools. */
+public _openingDragFallbackBuilds = 0;
+
+public _cancelOpeningDrag(pointerId?: number): boolean {
+    const drag = this.host._opDrag;
+    if (!drag || (pointerId !== undefined && drag.pid !== pointerId)) return false;
+    cancelHouseplanPointerMove(this.host, 'opening');
+    this._openingDragClickTail = drag.id;
+    this.host._opDrag = null;
+    this._openingDragWalls = null;
+    this.host._opMeasure = null;
+    this.host.requestUpdate();
+    return true;
+  }
+
+public _renderOpeningDragBodies(display: SpaceDisplay, settled = false): TemplateResult {
+    const drag = this.host._opDrag;
+    const space = this.host._spaceModel();
+    if (!drag?.preview || !space || drag.spaceId !== space.id || drag.epoch !== this.host._cfgEpoch) return this.host._renderWallBodies(display, true);
+    const base = this.host._wallUnionGeometry();
+    const openings = this.host._openingsR;
+    const moving = openings.find(opening => opening.id === drag.id);
+    const view = this.host._viewOr(this.host._baseVb());
+    const px = this.host._stageEl?.clientWidth && view.w ? this.host._stageEl.clientWidth / view.w : 1;
+    if (base && moving) {
+      if (!this._openingDragWalls) {
+        const saved = geometryOpenings(this.host._curSpaceCfg, space, this.host._cellCm, this.host._gridPitch, NORM_W);
+        this._openingDragWalls = new OpeningDragWalls(base, space, saved, drag.id,
+          items => this.host._roomWallOpeningInputs(items, space), this.host._physicalBodiesR(space),
+          this.host._cellCm, this.host._gridPitch);
+      }
+      const local = this._openingDragWalls.render(moving, this.host._renderWallBodies(display, true), display, px, settled ? 'settled' : 'live');
+      if (local) return local;
+    }
+    // Required correctness fallback: one uncached canonical pass, no preview
+    // entry is ever inserted into or allowed to evict a saved floor's pool.
+    this._openingDragFallbackBuilds++;
+    const cuts = geometryPartitionOpeningCuts(openings);
+    const extras = physicalBodyParts(space, this.host._cellCm, this.host._gridPitch,
+      this.host._gridPitch * .0002, cuts).all;
+    const full = wallBodiesUnionPath(space.rooms, this.host._spaceWalls, this.host._openCuts(),
+      this.host._roomWallOpeningInputs(openings, space), this.host._wallKeyPitch,
+      this.host._cellCm, this.host._gridPitch, NORM_W, extras);
+    return full ? renderOpeningDragGeometry(full.paths, full.depthUnits, display, this.host._cellCm, px) : svg``;
+  }
+
 public _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
     if (this.host._mode !== 'plan' || !this.host._spaceModel()) return;
     // HP-1550-04: in the resize tool the wall handles own the geometry — a door
@@ -6064,14 +6116,20 @@ public _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
     ev.preventDefault();
     ev.stopPropagation();
     if (this.host._tool === 'select' && !this.properties.select('opening', o.id)) return;
+    this._cancelOpeningDrag();
+    this._openingDragClickTail = null;
     try {
       capturePointer(ev);
     } catch {
       /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
     }
+    const source = this.host._curSpaceCfg?.openings?.find(item => item.id === o.id);
+    if (!source) return;
+    this._openingDragWalls = null;
     this.host._opDrag = {
       id: o.id, moved: false, sx: ev.clientX, sy: ev.clientY, dirty: false,
-      before: this._geometrySnapshot(),
+      before: this._geometrySnapshot(), pid: ev.pointerId, spaceId: this.host._space,
+      epoch: this.host._cfgEpoch, source, preview: structuredClone(source),
     };
   }
 
@@ -6080,7 +6138,7 @@ public _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
   }
 
 private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
-    if (!this.host._opDrag || this.host._opDrag.id !== o.id) return;
+    if (!this.host._opDrag || this.host._opDrag.id !== o.id || this.host._opDrag.pid !== ev.pointerId) return;
     // audit L4: the other drag pipelines require 3 px before calling it a drag.
     // Without it every tap counted as a drag: the properties dialog never
     // opened and an unchanged config was written (which then broadcast the
@@ -6090,7 +6148,12 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
     if (!space) return;
     const raw = this._svgPoint(ev);
     const sp = this.host._curSpaceCfg;
-    const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
+    const drag = this.host._opDrag;
+    const source = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
+    if (drag.spaceId !== this.host._space || drag.epoch !== this.host._cfgEpoch || source !== drag.source) {
+      this._cancelOpeningDrag(); return;
+    }
+    const cfg = drag.preview;
     if (!cfg) return;
     if (cfg.host?.kind === 'partition') {
       const partition = space.partitions.find((item) => item.id === cfg.host!.id);
@@ -6122,7 +6185,6 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
       cfg.host = { ...cfg.host, t };
       cfg.x = nx; cfg.y = ny; cfg.angle = angle;
       this.host._opMeasure = null;
-      if (changed) this.host._cfgEpoch++;
       this.host.requestUpdate();
       return;
     }
@@ -6145,10 +6207,8 @@ private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
       if (host) cfg.host = host;
       else delete cfg.host;
     }
-    // The wall cut and room-coloured tunnel are geometry caches too. Advance
-    // the preview epoch so both follow the live opening instead of remaining at
-    // its pre-drag location until pointerup/save.
-    if (geometryChanged) this.host._cfgEpoch++;
+    // Only the transient projection moves. Saved floor keys and all warm
+    // geometry pools remain the same until the existing release transaction.
     this.host.requestUpdate();
   }
 
@@ -6198,17 +6258,30 @@ public _opRuler(
   }
 
 public _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
-    if (!this.host._opDrag || this.host._opDrag.id !== o.id) return;
+    if (!this.host._opDrag || this.host._opDrag.id !== o.id || this.host._opDrag.pid !== ev.pointerId) return;
+    if (ev.type === 'pointercancel') { this._cancelOpeningDrag(ev.pointerId); return; }
+    const owner = this.host._opDrag;
     flushHouseplanPointerMove(this.host, 'opening');
-    const drag = this.host._opDrag;
+    if (this.host._opDrag !== owner) return;
+    const drag = owner;
     const moved = drag.moved;
     this.host._opMeasure = null; // badges and the center tick live only through the drag
     // only write when the geometry actually changed (audit L4)
-    if (moved && drag.dirty) {
+    if (moved && drag.dirty && drag.preview && drag.spaceId === this.host._space
+        && drag.epoch === this.host._cfgEpoch
+        && this.host._curSpaceCfg?.openings?.find(item => item.id === o.id) === drag.source) {
+      const preview = drag.preview;
+      drag.preview = null;
+      Object.assign(drag.source, preview);
+      if (!preview.host) delete drag.source.host;
+      this.host._cfgEpoch++;
       this._commitPhysicalGeometry(this.host._t('history.move_opening'), drag.before);
     }
+    drag.preview = null;
+    if (moved) this._openingDragClickTail = drag.id;
+    this._openingDragWalls = null;
     // keep the flag until the click event that follows pointerup, then let it go
-    const finish = () => { this.host._opDrag = null; this.host.requestUpdate(); };
+    const finish = () => { if (this.host._opDrag !== drag) return; this.host._opDrag = null; this.host.requestUpdate(); };
     if (moved) window.setTimeout(finish, 0); else finish();
   }
 
@@ -6217,6 +6290,7 @@ public _opClick(ev: MouseEvent, o: RenderOpening): void {
     // the stage (room picking) instead of opening the editor dialog
     if (this.host._mode === 'plan' && this.host._tool === 'resize') return;
     ev.stopPropagation();
+    if (this._openingDragClickTail === o.id) { this._openingDragClickTail = null; return; }
     if (this.host._mode === 'plan' && this.host._tool === 'select' && this.properties.wide) {
       if (this.properties.select('opening', o.id) && ev.detail >= 2) this._editOpening(o);
       return;

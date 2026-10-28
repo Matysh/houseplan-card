@@ -1,0 +1,251 @@
+/** #1097 native large-house drag/cancel, canonical input and saved readback. */
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { launch, checkAll, finish } from './serve.mjs';
+import { openingDragFixture } from './performance/opening-drag-fixture.mjs';
+const fixture = openingDragFixture();
+const baseline = JSON.parse(readFileSync(new URL('../test/data/1097-opening-drag-baseline.json', import.meta.url)));
+const { page, browser } = await launch({ width: 1280, height: 1000 });
+const out = {}, trace = [];
+const settle = () => page.evaluate(() => window.__hpTest.settled());
+const writesSettled = () => page.evaluate(() => window.__hpTest.waitForWrites());
+const at = (x, y) => page.evaluate(([x, y]) => {
+    const svg = window.__card.renderRoot.querySelector('.stage svg');
+    const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
+    return { x: p.x, y: p.y };
+}, [x, y]);
+const sample = () => page.evaluate(() => {
+    const c = window.__card, root = c.renderRoot, proof = window.__openingDragProof;
+    const opening = c._openingsR.find(o => o.id === 'perf-opening-0-0');
+    const local = [...root.querySelectorAll('.hp-opening-drag-local .wallbody-fill')].find(element => getComputedStyle(element).visibility === 'visible');
+    const rad = (opening?.angle ?? 0) * Math.PI / 180;
+    const point = along => new DOMPoint(opening.rx + Math.cos(rad) * along, opening.ry + Math.sin(rad) * along);
+    const symbol = [...root.querySelectorAll('[data-hp="opening"]')].find(e => e.dataset.id === opening?.id && !!e.closest('[data-hp-live-editor]') === !!local?.closest('[data-hp-live-editor]'));
+    const openingPaint = [...root.querySelectorAll('[data-hp="opening"]')].filter(e => e.dataset.id === 'perf-opening-0-0').map(e => {
+        const b=e.getBoundingClientRect(),style=getComputedStyle(e),hit=e.querySelector('.op-hit');
+        return {transform:e.getAttribute('transform'),live:!!e.closest('[data-hp-live-editor]'),box:[b.x,b.y,b.width,b.height],
+          opacity:style.opacity,visibility:style.visibility,parentStyle:e.parentElement?.getAttribute('style'),hit:hit?.outerHTML};
+    });
+    return { dialog:!!c._openingDialog,tool:c._tool,space:c._space,openingPaint,builds: { ...c._floorCacheBuilds }, pool: [...c._wallUnionPool.keys()], epoch: c._cfgEpoch,
+        config: structuredClone(c._serverCfg), openings: structuredClone(c._curSpaceCfg.openings), preview: structuredClone(c._opDrag?.preview ?? null),
+        drag: c._opDrag && { id: c._opDrag.id, moved: c._opDrag.moved }, frames: c._liveEditorPaintCount,
+        toast:c._toast,expectedRefusalToast:proof.expectedRefusalToast,rejected:proof.rejected??0,full: proof.full, writes: proof.writes, accepted: proof.accepted, history: c._geometryHistory.size,
+        fallbacks: c._editorRuntime._openingDragFallbackBuilds, downs: [...proof.downs], cancels: [...proof.cancels],
+        cut: local && opening ? { centerEmpty: !local.isPointInFill(point(0)), shoulderSolid: local.isPointInFill(point(opening.rlen / 2 + 2)),
+            localInLive: !!local.closest('[data-hp-live-editor]'), symbol: !!symbol,
+            symbolOrigin: symbol?.getAttribute('transform'), d: local.getAttribute('d') } : null };
+});
+const families = ['wallUnion', 'physicalBodies', 'innerContour', 'cleanFloor', 'lightBarrier'];
+const unchanged = (state, before) => {
+    assert.deepEqual(state.config, before.config, 'held/cancelled source config stays byte-equivalent');
+    assert.equal(state.writes, before.writes);
+    assert.equal(state.accepted, before.accepted);
+    assert.equal(state.history, before.history);
+    assert.equal(state.epoch, before.epoch);
+    assert.deepEqual(state.pool, before.pool);
+    for (const family of families)
+        assert.equal(state.builds[family], before.builds[family], family);
+    assert.equal(state.fallbacks, before.fallbacks, 'valid host uses local route');
+};
+const paint = (state) => {
+    assert.equal(state.drag?.id, 'perf-opening-0-0');
+    assert.equal(state.drag.moved, true);
+    assert.ok(state.cut, 'visible local geometry owns this frame');
+    assert.equal(state.cut.centerEmpty, true, 'live host actually contains the new aperture');
+    assert.equal(state.cut.shoulderSolid, true, 'local cut retains its solid shoulder');
+    assert.equal(state.cut.symbol, true);
+};
+try {
+    await page.evaluate(async (fixture) => {
+        await window.__hpTest.setServerConfig(cfg => { cfg.spaces = structuredClone(fixture.config.spaces); cfg.model_version = fixture.config.model_version; cfg.markers = []; });
+        for (const sp of fixture.config.spaces)
+            await window.__hpTest.switchSpace(sp.id);
+        await window.__hpTest.switchSpace(fixture.config.spaces[0].id);
+        await window.__hpTest.setMode('plan');
+        await window.__hpTest.setTool('select');
+    }, fixture);
+    await page.waitForFunction(() => !window.__card.renderRoot.querySelector('.stage.mode-transition'));
+    await writesSettled();
+    await settle();
+    await page.evaluate(() => {
+        const c = window.__card;
+        window.__openingDragProof = { full: 0, writes: 0, accepted: 0, downs: [], cancels: [] };
+        const stage = c.renderRoot.querySelector('.stage');
+        for (const type of ['pointerdown', 'pointercancel'])
+            stage.addEventListener(type, e => {
+                window.__openingDragProof[type === 'pointerdown' ? 'downs' : 'cancels'].push({ pid: e.pointerId, trusted: e.isTrusted, type: e.pointerType, opening: e.target.closest('[data-hp="opening"]')?.dataset.id ?? null });
+            }, { capture: true });
+        const render = c._renderBody.bind(c);
+        c._renderBody = function (...args) { // private-ok: diagnostic wrapper counts the real renderer and returns its unmodified result.
+            window.__openingDragProof.full++;
+            return render(...args);
+        };
+        const call = c.hass.callWS.bind(c.hass);
+        c.hass = { ...c.hass, callWS: async (message) => {
+                const write = message.type === 'houseplan/config/set';
+                if (write)
+                    window.__openingDragProof.writes++;
+                // Explicit negative response at the fixture transport boundary;
+                // product validators and positive real ACKs stay unchanged.
+                if (write && window.__openingDragProof.rejectNext) {
+                    window.__openingDragProof.rejectNext=false;
+                    window.__openingDragProof.rejected=(window.__openingDragProof.rejected??0)+1;
+                    const error=Object.assign(new Error('invalid opening cut (fixture1097)'),{code:'invalid'});
+                    window.__openingDragProof.expectedRefusalToast=c._t('toast.cfg_save_failed',{err:c._errText(error)});
+                    throw error;
+                }
+                const result = await call(message);
+                if (write)
+                    window.__openingDragProof.accepted++;
+                return result;
+            } };
+    });
+    await settle();
+    const start = await at(132, 40), target = await at(90, 40);
+    const begin = async () => {
+        const before = await sample(), point = await at(132, 40);
+        await page.mouse.move(point.x, point.y);
+        await page.mouse.down();
+        await settle();
+        const down = await sample();
+        assert.equal(down.downs.length, before.downs.length + 1, 'a fresh trusted down reached the opening');
+        assert.equal(down.drag?.id, 'perf-opening-0-0');
+        down.screen = point;
+        const event = down.downs.at(-1);
+        assert.deepEqual({ trusted: event.trusted, type: event.type, opening: event.opening }, { trusted: true, type: 'mouse', opening: 'perf-opening-0-0' });
+        return down;
+    };
+    const escape = await begin();
+    await page.mouse.move(target.x, target.y);
+    await settle();
+    const escapeHeld = await sample();
+    unchanged(escapeHeld, escape);
+    paint(escapeHeld);
+    await page.keyboard.press('Escape');
+    await settle();
+    unchanged(await sample(), escape);
+    await page.mouse.up();
+    await writesSettled();
+    await settle();
+    unchanged(await sample(), escape);
+    assert.equal((await sample()).drag, null);
+    assert.equal((await sample()).dialog, false, 'a cancelled drag tail must not open the opening dialog');
+    out.nativeEscapeCancelsAndLateUpCannotWrite = true;
+    const tap = await begin();
+    await page.mouse.move(tap.screen.x + 2, tap.screen.y + 1);
+    await page.mouse.up();
+    await writesSettled();
+    await settle();
+    unchanged(await sample(), tap);
+    out.threePixelTapDoesNotMutateOrBuild = true;
+    if ((await sample()).dialog) {
+        const cancel = page.getByRole('button', {name:'Cancel', exact:true});
+        await cancel.click(); await cancel.waitFor({state:'hidden'}); await settle();
+    }
+    const down = await begin();
+    for (let i = 0; i < 30; i++) {
+        const p = await at((.065 + i * .004) * 1000, 40);
+        await page.mouse.move(p.x, p.y);
+        await settle();
+        const state = await sample();
+        unchanged(state, down);
+        paint(state);
+        const old = baseline.preview[i];
+        for (const field of ['x', 'y', 'angle'])
+            assert.ok(Math.abs(state.preview[field] - old[field]) < 1e-10, `${field}: exact old coordinate sequence`);
+        trace.push({ step: i, preview: state.preview, cut: state.cut && { ...state.cut, d: undefined }, builds: state.builds });
+    }
+    const held = await sample();
+    assert.ok(held.frames > down.frames);
+    assert.equal(held.full, down.full);
+    await page.mouse.up();
+    await writesSettled();
+    await settle();
+    const released = await sample();
+    assert.equal(released.writes, down.writes + 1);
+    assert.equal(released.accepted, down.accepted + 1);
+    assert.equal(released.history, down.history + 1);
+    assert.deepEqual(released.openings, baseline.openings, 'same byte-for-byte saved openings[] as the original implementation');
+    assert.ok(released.builds.wallUnion - down.builds.wallUnion <= 1, 'at most one saved new floor union');
+    out.thirtyNativeFramesHaveLocalCutsStablePoolsAndNoWrites = true;
+    out.savedOpeningArrayMatchesOriginalAndOneTransaction = true;
+    const switched = [];
+    for (const floor of fixture.config.spaces.slice(1)) {
+        const before = await sample();
+        await page.evaluate(id => window.__hpTest.switchSpace(id), floor.id);
+        await settle();
+        const after = await sample();
+        assert.equal(after.builds.wallUnion, before.builds.wallUnion, 'warm neighbour never rebuilds');
+        switched.push(floor.id);
+    }
+    out.warmNeighbourFloorsRetainTheirUnions = true;
+    await page.evaluate(id => window.__hpTest.switchSpace(id), fixture.config.spaces[0].id);
+    await settle();
+    // Trusted Chromium cancel on the delivered opening pointer; no device touch-parity claim.
+    const current = released.openings.find(o => o.id === 'perf-opening-0-0'), touchStart = await at(current.x * 1000, current.y * 1000), touchTarget = await at(100, 40);
+    const session = await page.context().newCDPSession(page);
+    try {
+        const before = await sample();
+        await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: touchStart.x, y: touchStart.y, id: 1097 }] });
+        await settle();
+        const touchDown = await sample();
+        assert.equal(touchDown.downs.at(-1).trusted, true);
+        assert.equal(touchDown.drag.id, 'perf-opening-0-0');
+        await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: touchTarget.x, y: touchTarget.y, id: 1097 }] });
+        await settle();
+        const touchHeld = await sample();
+        unchanged(touchHeld, touchDown);
+        paint(touchHeld);
+        await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+        await writesSettled();
+        await settle();
+        const cancelled = await sample();
+        unchanged(cancelled, touchDown);
+        assert.equal(cancelled.drag, null);
+        const cancel = cancelled.cancels.at(-1);
+        assert.equal(cancel.trusted, true);
+        assert.equal(cancel.pid, touchDown.downs.at(-1).pid);
+        assert.equal(cancelled.writes, before.writes);
+    }
+    finally {
+        await session.detach();
+    }
+    out.trustedSamePointerCancelRetiresPreviewWithoutWrite = true;
+    // Outside-wall input is refused by the original snap before any commit.
+    const outsideBefore=await sample(), outsideStart=await at(current.x*1000,current.y*1000);
+    await page.mouse.move(outsideStart.x,outsideStart.y);await page.mouse.down();await settle();
+    const outsideDown=await sample();assert.equal(outsideDown.drag?.id,'perf-opening-0-0');
+    const outside=await at(132,150);await page.mouse.move(outside.x,outside.y);await settle();
+    const outsideHeld=await sample();unchanged(outsideHeld,outsideDown);assert.equal(outsideHeld.drag.moved,false);
+    await page.mouse.up();await writesSettled();await settle();unchanged(await sample(),outsideBefore);
+    if((await sample()).dialog){const cancel=page.getByRole('button',{name:'Cancel',exact:true});await cancel.click();await cancel.waitFor({state:'hidden'});await settle();}
+    out.outsideWallPointerDoesNotInventACommit=true;
+    // Ordinary backend refusal uses the unchanged physical rollback owner.
+    const refusalBefore=await sample(), refusalStart=await at(current.x*1000,current.y*1000);
+    await page.evaluate(()=>{window.__openingDragProof.rejectNext=true;});
+    await page.mouse.move(refusalStart.x,refusalStart.y);await page.mouse.down();await settle();
+    const refusalDown=await sample(), refusedTarget=await at(140,40);
+    await page.mouse.move(refusedTarget.x,refusedTarget.y);await settle();unchanged(await sample(),refusalDown);
+    await page.mouse.up();
+    await writesSettled().catch(error=>assert.match(error.message,/invalid opening cut \(fixture1097\)/));
+    await settle();
+    await page.waitForFunction(()=>window.__card._writesPending===0&&!window.__card._saveConfigDebounced.pending());
+    const refused=await sample();
+    assert.equal(refused.rejected,refusalBefore.rejected+1);assert.equal(refused.writes,refusalBefore.writes+1);
+    assert.equal(refused.accepted,refusalBefore.accepted);assert.equal(refused.history,refusalBefore.history);
+    assert.deepEqual(refused.config,refusalBefore.config);assert.equal(refused.toast,refused.expectedRefusalToast);
+    const wire=await page.evaluate(()=>window.__card.hass.callWS({type:'houseplan/config/get'}));
+    assert.deepEqual(wire.config,refusalBefore.config,'backend retains the last accepted pair');
+    out.refusedCutResponseRetainsOldToastRollbackAndAcceptedServerConfig=true;
+    checkAll(out);
+    console.log('opening-drag evidence', JSON.stringify({ sourceBaseline: baseline.sourceSha, trace, switched, released: { builds: released.builds, pool: released.pool, openings: released.openings } }, null, 2));
+    await finish(browser);
+}
+catch (error) {
+    const state=await sample().catch(()=>null);
+    if(state){delete state.config;state.openings=state.openings.slice(0,2);}
+    console.log('opening-drag diagnostic', JSON.stringify({out,trace,sample:state}));
+    await page.screenshot({path:'/home/matysh/hp-1097-native-failure.png'});
+    await browser.close();
+    throw error;
+}

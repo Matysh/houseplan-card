@@ -2053,10 +2053,7 @@ export class HouseplanCard extends LitElement {
   } | null = null;
   private _openingInfo: OpeningCfg | null = null;
   private _openingInfoSpace: string | null = null;
-  private _opDrag: {
-    id: string; moved: boolean; sx: number; sy: number; dirty: boolean;
-    before: SpaceGeometryState | null;
-  } | null = null;
+  private _opDrag: import('./interaction-types').OpeningDragState | null = null;
   // live ruler badges + the "centered on the wall" tick while an opening is dragged
   private _opMeasure: OpMeasure | null = null;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
@@ -3334,6 +3331,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (e.key !== 'Escape') return;
+    if (this._editorRuntime?._cancelOpeningDrag()) { e.preventDefault(); return; }
     if (this._editorRuntime?.nodeMove?.cancel()) { e.preventDefault(); return; }
     if (this._editorRuntime?.stairs.escape()) { e.preventDefault(); return; }
     if (this._editorRuntime?.physicalGesture.drag || this._editorRuntime?.physicalGesture.rotation) {
@@ -8482,7 +8480,10 @@ export class HouseplanCard extends LitElement {
     const H = this._spaceH;
     const space = this._spaceModel();
     if (!space) return [];
-    return (sp?.openings || []).flatMap((o: OpeningCfg) => {
+    return (sp?.openings || []).flatMap((saved: OpeningCfg) => {
+      const openingDrag = this._opDrag;
+      const o = openingDrag?.preview && openingDrag.spaceId === space.id && openingDrag.epoch === this._cfgEpoch && openingDrag.source === saved
+        ? openingDrag.preview : saved;
       const fallback: RenderOpening = {
         ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
       };
@@ -9436,7 +9437,9 @@ export class HouseplanCard extends LitElement {
     });
   }
 
-  private _renderWallBodies(disp: SpaceDisplay): TemplateResult {
+  private _renderWallBodies(disp: SpaceDisplay, canonical = false): TemplateResult {
+    if (!canonical && this._opDrag?.preview && this._editorRuntime)
+      return this._editorRuntime._renderOpeningDragBodies(disp, true);
     if (this._renderProjection === 'iso') return svg`` as unknown as TemplateResult;
     if (disp && !disp.showBorders && (this._mode === 'view' || this._mode === 'devices'))
       return svg`` as unknown as TemplateResult;

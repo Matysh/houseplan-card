@@ -1,6 +1,7 @@
 # House Plan architecture
 
 Wall-node movement (#1102) reuses the same exact-revision junction baseline as node deletion. The cache replaces previous-document validation only when its revision equals the locked stored revision; publication remains after durable acceptance.
+Opening drag (#1097) retains its saved floor and epoch while an OpeningDragState owns one transient OpeningCfg. OpeningDragWalls crops the retained uncut masonry at the original/current host boundary, keeps the warm settled union outside that patch and recuts only local room masonry, the addressed independent wall and local join volumes. Normal host paint and live paint share this projection with separate SVG IDs. Release reuses the existing physical commit and writer; cancel, navigation and stale owners retire the preview. An unavailable local host uses an observable uncached canonical fallback.
 
 Space deletion (#1101) prepares detached config/layout candidates, validation and canonical paired intent in one executor job while the existing write lock remains held. Store resolution, revisions, commit/rollback and event publication retain the same owner and order.
 

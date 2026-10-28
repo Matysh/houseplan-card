@@ -74,6 +74,16 @@ const sample = () => page.evaluate((ids) => {
   }));
   const body = root.querySelector('[data-hp-live-editor] .physical-drag');
   return {
+    builds: { ...c._floorCacheBuilds }, pool: [...c._wallUnionPool.keys()], epoch: c._cfgEpoch,
+    openingDrag: c._opDrag && { id: c._opDrag.id, moved: c._opDrag.moved },
+    openingDragFallbacks: c._editorRuntime._openingDragFallbackBuilds ?? 0,
+    openingCut: (() => {
+      const opening = c._openingsR.find(o => o.id === 'held_window');
+      const path = [...root.querySelectorAll('.hp-opening-drag-local .wallbody-fill')]
+        .find(element => getComputedStyle(element).visibility === 'visible');
+      return opening && path ? {centerEmpty:!path.isPointInFill(new DOMPoint(opening.rx,opening.ry)),
+        shoulderSolid:path.isPointInFill(new DOMPoint(opening.rx+opening.rlen/2+1,opening.ry))} : null;
+    })(),
     full: proof.full, liveFrames: c._liveEditorPaintCount, writes: proof.writes,
     acceptedWrites: proof.acceptedWrites, history: c._geometryHistory.size,
     config: structuredClone(c._serverCfg),
@@ -298,6 +308,47 @@ try {
     restored(cancelled, before, baseline);
   } finally { await session.detach(); }
   out.trustedSamePointerCancelRestoresWithoutConfigHistoryOrGhost = true;
+  // #1097: move the hosted opening itself, after all frozen #861 physical
+  // host-characterization checks above have completed without new expectations.
+  const openingStart = await at(575, 300);
+  await page.mouse.move(openingStart.x, openingStart.y); await page.mouse.down(); await settle();
+  const openingDown = await sample();
+  assert.equal(openingDown.openingDrag.id, 'held_window', 'trusted hit starts the actual opening owner');
+  const openingBefore = openingDown.space.openings.find(o => o.id === 'held_window');
+  for (let index = 1; index <= 30; index++) {
+    if (index === 15 || index === 20) {
+      await page.setViewportSize({width:index === 15 ? 720 : 1280,height:960});
+      await settle();
+    }
+    const target = await at(575 + index * 50 / 30, 300);
+    await page.mouse.move(target.x, target.y); await settle();
+    const frame = await sample();
+    unchangedBeforeRelease(frame, openingDown);
+    assert.equal(frame.epoch, openingDown.epoch);
+    assert.deepEqual(frame.pool, openingDown.pool);
+    for (const family of ['wallUnion', 'physicalBodies', 'innerContour', 'cleanFloor', 'lightBarrier'])
+      assert.equal(frame.builds[family], openingDown.builds[family], `${family}: no full-floor work per opening frame`);
+    assert.equal(frame.openingDragFallbacks, openingDown.openingDragFallbacks);
+    if (frame.openingDrag.moved) {
+      assert.equal(frame.openingCut?.centerEmpty, true, 'the local cut follows across live and normal host paint');
+      assert.equal(frame.openingCut.shoulderSolid, true);
+    }
+    assert.equal(one(frame, 'held_door').origin[0], one(openingDown, 'held_door').origin[0]);
+  }
+  const openingHeld = await sample();
+  assert.equal(openingHeld.openingDrag.moved, true);
+  assert.ok(openingHeld.liveFrames > openingDown.liveFrames);
+  assert.ok(openingHeld.full > openingDown.full, 'real viewport changes exercised ordinary host paint during the held opening');
+  near(one(openingHeld, 'held_window').origin[0], 625);
+  await page.mouse.up(); await writesSettled(); await settle();
+  const openingReleased = await sample();
+  const changedOpening = openingReleased.space.openings.find(o => o.id === 'held_window');
+  assert.deepEqual(changedOpening, { ...openingBefore, x: .625, host: { ...openingBefore.host, t: .85 } },
+    'same saved position, host.t, angle and every non-position field');
+  assert.equal(openingReleased.writes, openingDown.writes + 1);
+  assert.equal(openingReleased.history, openingDown.history + 1);
+  assert.deepEqual(openingReleased.space.partitions, openingDown.space.partitions);
+  out.openingDragRecutsOnlyItsPartitionAndPreservesSavedContract = true;
   checkAll(out);
   await finish(browser);
 } catch (error) {

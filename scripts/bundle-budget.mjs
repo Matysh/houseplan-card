@@ -880,7 +880,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455534939
 // #1093: matched frozen #1089 editor375012 ->375159 (+147 B). Preserve
 // its inherited1939-B excess and the2000-B band; only this task's cost moves.
-export const LAZY_EDITOR_GZIP_CEILING = 375_223;
+// #1097 owner-authorized local opening preview: source-equivalent43ee/ccc62
+// build375496 ->377731 B gzip (+2235). Carry the exact delta and retain the
+// inherited273-B excess and unchanged2000-B band; timing limits do not change.
+export const LAZY_EDITOR_GZIP_CEILING = 377_458;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

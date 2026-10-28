@@ -5,6 +5,7 @@ Task Golden checks (#1114) explicitly select unchanged scenes with byte-identica
 Wall-node movement (#1102) skips recounting previous junction violations when the cached baseline matches the current revision, preserving candidate validation and stale-cache fallback.
 
 Stairs and LED vertex drags (#1098) use the existing live editor frame. Stair preview stays outside the stored config until one canonical commit; cancel writes nothing. Masonry caches exclude known LED/stairs/backdrop placement fields, clean-floor areas retain stairs, and lazy floor wrappers read fresh stairs/backdrop from raw records.
+Opening drag (#1097) owns a transient opening projection and local host cut instead of rebuilding the saved floor union on every move. Wall and partition openings retain their coordinate/host result, physical validation, rollback and history. Cancellation retires queued input and the compatibility click without cooling saved floor pools.
 
 Space deletion (#1101) prepares its validated config/layout pair in an executor under the existing write lock, retaining its dependency refusals, rollback and revision/event contract.
 

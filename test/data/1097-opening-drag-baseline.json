@@ -1,0 +1,690 @@
+{
+  "method": "Native 30 pointermove sequence (.065 + i*.004, .04); full saved openings[] via accepted ordinary writer, seven repeats DPR1/2",
+  "openings": [
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.181666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-y4ctrpjrfao3kubafasi",
+        "t": 0.769927538
+      }
+    },
+    {
+      "id": "perf-opening-0-1",
+      "type": "door",
+      "x": 0.224,
+      "y": 0.155,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-iymvzuzl56cl3kak2hjy",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-2",
+      "type": "door",
+      "x": 0.132,
+      "y": 0.27,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-rz44afixo77kdr2gwayj",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-3",
+      "type": "door",
+      "x": 0.04,
+      "y": 0.155,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-mp7velvxgl6ak6kdlyab",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-4",
+      "type": "door",
+      "x": 0.316,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-7zjyc57sgihawe3d76k7",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-5",
+      "type": "door",
+      "x": 0.408,
+      "y": 0.155,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-psqlfingdd7nakfybqpn",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-6",
+      "type": "door",
+      "x": 0.316,
+      "y": 0.27,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-ujyh42p7swkcgdbqkotu",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-7",
+      "type": "window",
+      "x": 0.5,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-zk3qyvbyyquaqieen3kl",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-8",
+      "type": "door",
+      "x": 0.592,
+      "y": 0.155,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-2tlu5peyp4uwelbvcitq",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-9",
+      "type": "door",
+      "x": 0.5,
+      "y": 0.27,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-gmbuc6iymkfskbnwcaww",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-10",
+      "type": "door",
+      "x": 0.684,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-tcd5qby5os2e76gpyuax",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-11",
+      "type": "gate",
+      "x": 0.776,
+      "y": 0.155,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-dlffeaqhkv72k3mexq55",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-12",
+      "type": "door",
+      "x": 0.684,
+      "y": 0.27,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-iibwxs4ygc6a5bjbrowi",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-13",
+      "type": "door",
+      "x": 0.868,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-vs63aocst3srzzqrl4bz",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-14",
+      "type": "window",
+      "x": 0.96,
+      "y": 0.155,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-dium3htnopnfyyj34q4j",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-15",
+      "type": "door",
+      "x": 0.868,
+      "y": 0.27,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-7hgslhh7chrz6kp72ivd",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-16",
+      "type": "door",
+      "x": 0.224,
+      "y": 0.385,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-6criuzkf7ofniyyf3tqj",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-17",
+      "type": "door",
+      "x": 0.132,
+      "y": 0.5,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-5cghjyotdewasnkbaipo",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-18",
+      "type": "door",
+      "x": 0.04,
+      "y": 0.385,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-6hrhvqe6u52yysh2jhiz",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-19",
+      "type": "door",
+      "x": 0.408,
+      "y": 0.385,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-mdxkh4sbvodielsieruu",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-20",
+      "type": "door",
+      "x": 0.316,
+      "y": 0.5,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-dr5swvayijgpuv4k7ads",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-21",
+      "type": "window",
+      "x": 0.592,
+      "y": 0.385,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-27kz4j2f4p4re2elqevm",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-22",
+      "type": "gate",
+      "x": 0.5,
+      "y": 0.5,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-qfj7c5ldxafgg3ekxtad",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-23",
+      "type": "door",
+      "x": 0.776,
+      "y": 0.385,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-vc4sayiwpvmh3u3xjqtr",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-24",
+      "type": "door",
+      "x": 0.684,
+      "y": 0.5,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-fuklgyg742dcpmylnoew",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-25",
+      "type": "door",
+      "x": 0.96,
+      "y": 0.385,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-2o5576du7ukzwjwallqn",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-26",
+      "type": "door",
+      "x": 0.868,
+      "y": 0.5,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-vf45do2njv3c5yxz2oav",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-27",
+      "type": "door",
+      "x": 0.224,
+      "y": 0.615,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-wo5k545jsqxpr4aiqjkw",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-28",
+      "type": "window",
+      "x": 0.132,
+      "y": 0.73,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-y3sj5kpj7722tyyabw7y",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-29",
+      "type": "door",
+      "x": 0.04,
+      "y": 0.615,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-nbb22aad2djz5mjom5c6",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-30",
+      "type": "door",
+      "x": 0.408,
+      "y": 0.615,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-di4q42naqcz4y635cixe",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-31",
+      "type": "door",
+      "x": 0.316,
+      "y": 0.73,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-xe7mokyjgs42f5batuvg",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-32",
+      "type": "door",
+      "x": 0.592,
+      "y": 0.615,
+      "angle": 90,
+      "length": 0.055,
+      "host": {
+        "kind": "wall",
+        "id": "wall-tjzxshvizfzxip64r4xz",
+        "t": 0.5
+      }
+    },
+    {
+      "id": "perf-opening-0-33",
+      "type": "gate",
+      "x": 0.5,
+      "y": 0.73,
+      "angle": 0,
+      "length": 0.045,
+      "host": {
+        "kind": "wall",
+        "id": "wall-pxjf5jjpgusmzkgtn54j",
+        "t": 0.5
+      }
+    }
+  ],
+  "preview": [
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.065,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.06916666666666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.07333333333333335,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.0775,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.08166666666666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.08583333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.09,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.09416666666666668,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.09833333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.10250000000000001,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.10666666666666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.11083333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.115,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.115,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.11916666666666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.12333333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.12333333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.12333333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.13583333333333333,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.14,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.1441666666666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.14833333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.1525,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.15666666666666668,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.16083333333333336,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.16500000000000004,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.1691666666666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.17333333333333334,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.1775,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    },
+    {
+      "id": "perf-opening-0-0",
+      "type": "window",
+      "x": 0.1816666666666667,
+      "y": 0.04,
+      "angle": 0,
+      "length": 0.045
+    }
+  ],
+  "sourceSha": "ccc62ef113c53f6de4c97e3b09ca7c1b56be9a81"
+}

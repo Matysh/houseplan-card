@@ -34,6 +34,7 @@ interface LiveEditorHost {
     readonly properties?: { selection(): unknown; readonly selectedTextId?: string | null; measureGroupText?(root: ParentNode): void };
     readonly physicalGesture?: { readonly active: boolean; readonly drag: { kind: string; id: string; moved: boolean } | null };
     readonly backdropGesture?: { readonly active: boolean; renderFrame(view: unknown): unknown };
+    _renderOpeningDragBodies?(display: SpaceDisplay): unknown;
   } | null;
   _ledEditor?: { readonly dragging: boolean; layer(space: SpaceModel): unknown } | null;
   _decorDraft?: unknown;
@@ -276,7 +277,7 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
   const display = host._spaceDisplayForRender();
   const moving = physicalOpeningIds(host._editorRuntime?.physicalGesture?.drag, host._openingsR);
   return svg`<g class="hp-live-plan" aria-hidden="true" pointer-events="none">
-    ${host._opDrag ? host._renderWallBodies(display) : nothing}
+    ${host._opDrag ? host._editorRuntime?._renderOpeningDragBodies?.(display) ?? host._renderWallBodies(display) : nothing}
     ${host._renderMarkupLayer(vb)}
     ${host._renderHiddenWallDiagnosticOverlay()}
     ${host._renderOpeningPlacementPreview()}

@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['OpeningDragWalls', 'renderOpeningDragGeometry', 'openingDragHostBounds'],
+    smokes: ['smoke_opening_drag.mjs', 'smoke_partition_openings_preview.mjs'],
+    because: '#1097: trusted wall/partition opening input observes actual aperture/shoulder ink, saved wire arrays, neighbour reuse and cancellation. Real viewport changes exercise normal/live ownership transfer without calling these local geometry helpers.',
+  },
+  {
     files: ['src/config-store.ts'],
     smokes: ['smoke_static_config_events.mjs'],
     because: '#1112: a trusted full-card placement burst must reach two embedded cards through one shared partial read and paint the server positions.',
