@@ -1,0 +1,43 @@
+{
+  "issue": 1113,
+  "iteration": "UI-002",
+  "revision": 3,
+  "approvedAt": "2026-10-28T19:57:22.8080463+03:00",
+  "ownerQuote": "фиксируй все изменения для задачи 1113. запиши их в задачу и приложи необходимые файлы в репозиторий.",
+  "baseCommit": "09bda8dbee8b50577bfc4affc332b8cda914f5b4",
+  "baseVersion": "1.83.0-beta.3",
+  "approvalScope": "Visual design and editing flow, not functional product acceptance",
+  "screenshots": "Synthetic fixture, no private backup",
+  "prototypeSanitization": "Isolated public localStorage key replaces private dataset key; UI behavior unchanged",
+  "validation": "Synthetic replay started and screenshots captured; no tests/build/CI run",
+  "files": [
+    {
+      "path": "prototype.mjs",
+      "sha256": "3316f680ecfb3a87bc8d3bda66f9fd4c53d6a7bf30e220e8b813cca0d8083a41"
+    },
+    {
+      "path": "README.md",
+      "sha256": "107e316152feec7c2640230ce4542b989aba5428eb921514031114a4485e987e"
+    },
+    {
+      "path": "replay.mjs",
+      "sha256": "5223f3e0c2931eb326dbda23aa10a8d4110fa41a473c0ba9a37dc26a66bc0790"
+    },
+    {
+      "path": "screenshots/01-empty.png",
+      "sha256": "a90d98b7fddd358b0fb114d332465694e8674cbd1eb76fbc26dd6b3f8e1f676b"
+    },
+    {
+      "path": "screenshots/02-constructor.png",
+      "sha256": "0a8c20df3f33cf0542d8dba25c4f1137f6c0ad6647f072e85bf16f57e1e75732"
+    },
+    {
+      "path": "screenshots/03-list.png",
+      "sha256": "1852d697c3c62dfad0aaf2bf6a9124b9dca24ebdcd6a43488933226416483975"
+    },
+    {
+      "path": "screenshots/04-constructor-note.png",
+      "sha256": "66ec73644efb04fbf03a0d213dcff984c29f8c2a52bba6b916f9270cb270931c"
+    }
+  ]
+}
