@@ -6589,3 +6589,12 @@ AC1–AC3 counter limits are the acceptance thresholds. Separate trusted-pointer
 stairs/LED smokes verify capture, transient raw state and canonical readback.
 The existing v1.82.0 stairs.write and LED.handleMove implementations were read
 before classifying this task as stable-fix.
+
+
+#1098 measured resource cost on dev0543e579: verified existing base dist3649670 B
+and hostRefs6552; candidate3651272 B and6568. Only the own deltas (+1602 B/+16)
+move rolling bases3649075/6529 to3650677/6545, retaining inherited595 B/23 refs
+and the original2000-B/25-ref bands. Asset hashes/topology and both source
+fingerprints were checked; the donor #1102 frontend input corpus equals dev.
+Timing limits and absolute loading caps are unchanged. Owner-authorized rationale:
+https://github.com/Matysh/houseplan-card/issues/1098#issuecomment-6467970821.

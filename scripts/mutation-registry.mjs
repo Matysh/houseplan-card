@@ -15340,14 +15340,8 @@ const MUTANT_DEFINITIONS = [
       + 'behind the marker — two dashed lines for one alignment (#521 AC5)',
     patches: [{
       file: 'src/live-editor.ts',
-      find: "  makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
-        + "  makeTransparent(state, root, '.hp-prop-selection');\n"
-        + "  if (host._mode === 'plan') {\n"
-        + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
-      replace: "  if (host._mode === 'plan') {\n"
-        + "    makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n"
-        + "    makeTransparent(state, root, '.hp-prop-selection');\n"
-        + '    if (host._opDrag) hide(state, root, \'.wallbodies\');',
+      find: "  makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n  makeTransparent(state, root, '.hp-prop-selection');\n  if (host._mode === 'plan') {\n",
+      replace: "  if (host._mode === 'plan') {\n    makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');\n    makeTransparent(state, root, '.hp-prop-selection');\n",
     }],
   },
   {

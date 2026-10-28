@@ -762,8 +762,8 @@ await page.evaluate(async()=>{
  if(!c._editorRuntime.stairs.dragging)throw new Error('1098 native stair press did not capture');
  const probe={reasons:[],will:c.willUpdate,before:{...c._floorCacheBuilds},epoch:c._cfgEpoch,renders:0,syncs:0,body:c._renderBody,sync:c._deviceContacts.sync};
  c.willUpdate=function(changed){probe.reasons.push([...changed.keys()].map(String));return probe.will.call(this,changed);};
- c._renderBody=function(...args){probe.renders++;return probe.body.apply(this,args);};
- c._deviceContacts.sync=function(...args){probe.syncs++;return probe.sync.apply(this,args);};window.__stair1098=probe;
+ c._renderBody=function(...args){probe.renders++;return probe.body.apply(this,args);}; // private-ok: #1098 passive full-render/contact-call counters; native DOM input still owns the gesture
+ c._deviceContacts.sync=function(...args){probe.syncs++;return probe.sync.apply(this,args);};window.__stair1098=probe; // private-ok: #1098 passive full-render/contact-call counters; native DOM input still owns the gesture
 });
 await page.mouse.move(liveStart[0]+12,liveStart[1]+12,{steps:15});
 // HA operational roster intake is a distinct stimulus, outside pointer-only AC1.
@@ -785,7 +785,7 @@ console.log('diagnostic1098',await page.evaluate(()=>({renders:window.__stair109
 await page.mouse.up();
 Object.assign(out,await page.evaluate(async()=>{
  const c=window.__card,p=window.__stair1098;await window.__hpTest.settled();
- c.willUpdate=p.will;c._renderBody=p.body;c._deviceContacts.sync=p.sync;
+ c.willUpdate=p.will;c._renderBody=p.body;c._deviceContacts.sync=p.sync; // private-ok: #1098 restore the original passive counter methods after the native gesture
  const deadline=performance.now()+5000;while((c._saveConfigDebounced.pending()||c._writesPending>0)&&performance.now()<deadline)await new Promise(r=>setTimeout(r,16));
  await window.__hpTest.settled();return {ac1098NativeStairCommitPersists:c._serverCfg.spaces[0].stairs[0].x!==.4,
  ac1098NativeStairCommitKeepsMasonry:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k])};

@@ -240,7 +240,7 @@ const liveLedPoint=await evaluate(()=>{const c=window.__card,h=c.renderRoot.quer
 await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._cameraTransition.active);
 await page.mouse.move(...liveLedPoint);await page.mouse.down();
 await evaluate(async()=>{const c=window.__card;await window.__hpTest.settled();if(!c._ledEditor.dragging)throw new Error('1098 native LED press did not capture');const p={before:{...c._floorCacheBuilds},renders:0,syncs:0,body:c._renderBody,sync:c._deviceContacts.sync};
- c._renderBody=function(...a){p.renders++;return p.body.apply(this,a);};c._deviceContacts.sync=function(...a){p.syncs++;return p.sync.apply(this,a);};window.__led1098=p;});
+ c._renderBody=function(...a){p.renders++;return p.body.apply(this,a);};c._deviceContacts.sync=function(...a){p.syncs++;return p.sync.apply(this,a);};window.__led1098=p;}); // private-ok: #1098 passive full-render/contact-call counters; native DOM input still owns the gesture
 await page.mouse.move(liveLedPoint[0],liveLedPoint[1]+30,{steps:30});
 const ledLive=await evaluate(()=>{const c=window.__card,p=window.__led1098;return {live:p.renders===0&&p.syncs===0,
  physics:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k]),
@@ -250,7 +250,7 @@ check('1098 thirty LED moves keep all physical caches',ledLive.physics);
 check('1098 LED raw points stay unchanged until release',ledLive.raw,[[.2,.35],[.3,.35],[.4,.35]]);
 await page.mouse.up();
 const ledFinal=await evaluate(async()=>{const c=window.__card,p=window.__led1098;await window.__hpTest.settled();
- c._renderBody=p.body;c._deviceContacts.sync=p.sync;const deadline=performance.now()+5000;
+ c._renderBody=p.body;c._deviceContacts.sync=p.sync;const deadline=performance.now()+5000; // private-ok: #1098 restore the original passive counter methods after the native gesture
  while((c._saveConfigDebounced.pending()||c._writesPending>0)&&performance.now()<deadline)await new Promise(r=>setTimeout(r,16));await window.__hpTest.settled();
  return {points:c._serverCfg.spaces[0].led_strips.find(s=>s.id==='live1098').points,
  physics:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k])};});
