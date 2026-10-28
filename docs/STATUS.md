@@ -1,5 +1,7 @@
 # Project status
 
+Continuation discovery (#1116) reads its two initial GitHub metadata endpoints with bounded bodyless GETs. Known interrupted sockets can recover; HTTP/JSON/shape/size/deadline failures retain a named diagnostic artifact and remain terminal, before any continuation authority.
+
 Golden Plan editor capture (#1118) uses the existing scene-scoped background repaint to remove reproduced raster-history drift. Launch flags, semantic/keyboard controls and strict unchanged checks retain their contracts; its one-AA-pixel canonical-frame change is explicit pending beta review.
 
 Native runner fixture (#1115) observes its owned descendant's actual exit within the original shared two-second finalization deadline. Asynchronous SIGKILL/pipe closure no longer requires a synchronous kernel state transition; a live process still fails. Production transport, signals and authority are unchanged.
@@ -109,7 +111,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5834 · pure backend 701 · HA-harness backend 608 · browser smokes 479 (`npm run inventory`) |
+| Tests | Node unit 5841 · pure backend 701 · HA-harness backend 608 · browser smokes 479 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

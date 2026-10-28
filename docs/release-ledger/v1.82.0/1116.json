@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1116,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repair the two initial read-only continuation-discovery metadata reads and retain actionable diagnostics on terminal HTTP/JSON failures. Preserve all sealed proof, current request, CAS, claim and delivery authority; no product source, user behavior or public API changes."
+}

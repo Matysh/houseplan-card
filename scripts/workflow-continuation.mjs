@@ -2,7 +2,7 @@
 // #856: consume the existing sealed-artifact/request epoch machinery, no runner polling.
 import { CI_WORKFLOWS, ciWorkflow, ciRunsUrl, registeredRuns } from './ci-workflows.mjs';
 import { execFileSync } from 'node:child_process';
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { authenticatedContinuation, pinnedMergeValidation, validContinuation } from './continuation-record.mjs';
 import { artifactNames, issueEvents, latestReviewRequest, loadSealedArtifact, processRuns, reviewRunsForRequest, relabel } from './process-reconcile.mjs';
 import { issueBodyDigest } from './review-doc-guard.mjs';
@@ -13,6 +13,7 @@ import { isMainModule } from './spawn-portable.mjs';
 import { probeGreenWorkflow } from './release-gate.mjs';
 import { probeE2e, realOps as e2eOps } from './e2e-gate.mjs';
 import { tagCommit } from './workflow-pending.mjs';
+import { continuationDiscovery, discoveryFailure } from './continuation-discovery.mjs';
 
 /** At most one domain dispatch. An ambiguous claimed intent requires owner repair,
  * not an automatic duplicate publisher/model round. Claims are namespaced refs,
@@ -185,10 +186,20 @@ export function authenticatedMergeCompanion(p, producer, event, product, context
     && (Date.parse(event.created_at) >= Date.parse(producer.created_at) || pinnedMergeValidation(p, product)));
 }
 
-export async function continueWorkflows({ repo, eventId, apply = false, out = null }) {
+function writeSummary(out, outcomes) {
+  if (!out) return;
+  mkdirSync(out, { recursive: true });
+  writeFileSync(`${out}/summary.json`, JSON.stringify({ schema: 1, outcomes, coverage: 'latest 100 artifacts, at most 12 continuations' }) + '\n');
+}
+
+export async function continueWorkflows({ repo, eventId, apply = false, out = null, discoveryRead }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '') || eventId && !/^[1-9]\d*$/.test(String(eventId))) throw Error('invalid event identity');
-  const event = eventId ? api(`repos/${repo}/actions/runs/${eventId}`) : null;
-  const artifacts = api(`repos/${repo}/actions/artifacts?per_page=100`).artifacts || [];
+  let event, artifacts;
+  try { ({ event, artifacts } = await continuationDiscovery(repo, eventId, discoveryRead)); }
+  catch (error) {
+    writeSummary(out, [discoveryFailure(error)]);
+    throw error; // A diagnostic artifact is never a successful discovery/noop.
+  }
   const candidates = artifacts.filter(a => /^workflow-continuation-[1-9]\d*-[1-9]\d*$/.test(a.name) && !a.expired).slice(0, 12);
   const outcomes = [];
   for (const artifact of candidates) {
@@ -293,11 +304,7 @@ export async function continueWorkflows({ repo, eventId, apply = false, out = nu
       }
     } catch (error) { outcomes.push(continuationFailure(error, p, stage, [process.env.HP_PROCESS_TOKEN, process.env.GH_TOKEN])); }
   }
-  if (out) {
-    const { mkdirSync, writeFileSync } = await import('node:fs');
-    mkdirSync(out, { recursive: true });
-    writeFileSync(`${out}/summary.json`, JSON.stringify({ schema: 1, outcomes, coverage: 'latest 100 artifacts, at most 12 continuations' }) + '\n');
-  }
+  writeSummary(out, outcomes);
   return outcomes;
 }
 if (isMainModule(import.meta.url)) {
@@ -307,5 +314,5 @@ if (isMainModule(import.meta.url)) {
       eventId: arg('run-id'), apply: arg('apply') === 'true', out: arg('out') });
     console.log(JSON.stringify(outcomes));
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nContinuation: ${JSON.stringify(outcomes)}\n`);
-  } catch { console.error('continuation discovery failed; no verdict/merge/release authority'); process.exitCode = 1; }
+  } catch (error) { console.error('continuation discovery failed; no verdict/merge/release authority: ' + JSON.stringify(discoveryFailure(error))); process.exitCode = 1; }
 }

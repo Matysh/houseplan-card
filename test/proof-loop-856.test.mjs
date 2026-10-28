@@ -169,12 +169,27 @@ test('#856 actual completion runner refuses cancelled/foreign/failed-source even
     'else if(p.includes("/actions/runs?"))value={workflow_runs:[f.child]};',
     'else process.exit(43);process.stdout.write(JSON.stringify(value));',
   ].join('\n'), { mode: 0o755 });
+  // #1116 discovery uses bodyless native GETs; the same ordinary source
+  // fixture supplies those reads and the later gh artifact/provenance reads.
+  const fetchFixture = join(dir, 'fetch-fixture.mjs');
+  writeFileSync(fetchFixture, [
+    "import fs from 'node:fs';",
+    'globalThis.fetch=async (url,init)=>{',
+    'const f=JSON.parse(fs.readFileSync(process.env.FAKE_FIXTURE));',
+    'const p=new URL(url).pathname+new URL(url).search;',
+    'fs.appendFileSync(process.env.FAKE_CALLS,JSON.stringify(["fetch",init.method,p])+"\\n");',
+    'if(init.method!=="GET"||init.body)throw Error("fixture discovery write refused");',
+    'if(p.endsWith("/actions/runs/30"))return Response.json(f.child);',
+    'if(p.includes("/actions/artifacts?"))return Response.json({artifacts:[f.artifact]});',
+    'throw Error("unexpected discovery read");};',
+  ].join('\n'));
   const wf = readFileSync(new URL('.github/workflows/_process-resume.yml', root), 'utf8');
   const step = findStep(wf, { name: 'Consume authenticated immutable continuation' });
   const execute = (source, event) => {
     writeFileSync(fixture, JSON.stringify({ parent: source, child: event, artifact }));
     return runStep(step, step.run.replaceAll('${{ runner.temp }}/continuation-result', shellPath(join(dir, 'result'))), {
       cwd: root, encoding: 'utf8', prependPath: [bin], env: { ...process.env,
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, '--import=' + fetchFixture].filter(Boolean).join(' '),
         REPO: repo, EVENT_ID: '30', FAKE_FIXTURE: fixture, FAKE_PENDING: pendingDir, FAKE_CALLS: calls,
         GH_TOKEN: 'fixture-token', HP_PROCESS_TOKEN: 'fixture-token', GITHUB_STEP_SUMMARY: join(dir, 'summary') },
     });

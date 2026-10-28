@@ -6697,3 +6697,41 @@ anti-aliasing pixel at `(54,63)`, maximum channel delta 1. Its explicit change
 intent belongs to #1118; the beta must review the complete canonical artifact.
 The 67-pixel historical variant is not a new baseline, and a task branch cannot
 accept global baselines. Neighbor scenes keep their ordinary capture path.
+
+### Continuation discovery read failures (#1116)
+
+Before this repair, the initial event-run and global artifact-list GETs used
+`gh api` outside the per-continuation catch. A failure exited before creating
+`continuation-result/summary.json`; the artifact uploader then failed too.
+The historical #1114 job log names neither endpoint nor HTTP status. Ordinary
+loopback reads on the unchanged accepted CLI reproduce the exact lowercase Go
+`unexpected end of JSON input` for HTTP 500 with malformed JSON and HTTP 502
+with an empty error body. This proves a failure class, not that either was the
+historical response. An interrupted declared-length body instead gives gh's
+`unexpected EOF` and native fetch's `UND_ERR_SOCKET`.
+
+`continuation-discovery.mjs` owns only those two bodyless metadata GETs. It
+checks non-2xx status before parsing its error body, bounds decoded response
+bytes at the previous 8 MiB per-read ceiling, and rejects invalid UTF-8, malformed
+JSON, foreign event IDs and malformed artifact-list shapes. HTTP 401/403/429/
+500/502, JSON/shape/size failures and cancellation remain terminal, never an
+empty successful list. The existing #921 transport helper is unchanged. One
+retry boundary includes the body: at most 3 attempts per GET with 100/400 ms
+pauses, at most 6 requests across the two discovery GETs, under one shared 30 s
+deadline. There is no outer retry or repeated claim/model/dispatch.
+
+A terminal discovery failure now writes schema 1 `summary.json` with an
+`unverified` outcome, named event-run/artifact-list stage, fixed relative API
+endpoint and an allowlisted reason/status; it still exits nonzero. No body,
+headers, token or raw exception text enters that diagnostic. Existing sealed
+artifact verification, producer/child authentication, CAS/epoch/body/branch
+checks, claim ownership and all write delivery remain unchanged. The #856
+workflow-step fixture supplies the new native GET port from the same ordinary
+child/artifact JSON and retains all its refusal/no-write oracles.
+
+`node --test test/continuation-discovery.test.mjs test/release-read-retry.test.mjs
+test/proof-loop-856.test.mjs test/merge-continuation-882.test.mjs` covers actual
+loopback interrupted-body recovery, terminal HTTP and JSON failures, exact body
+bounds, actual CLI diagnostic retention before any gh/git command, cancelled/
+foreign/failed producers, uncertain delivery, old material fetch and stale CAS.
+No public workflow is rerun merely to produce this failure witness.
