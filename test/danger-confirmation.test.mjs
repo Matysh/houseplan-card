@@ -21,20 +21,65 @@ test('danger confirmation resolves only the current token and clears its state',
 
   assert.equal(controller.resolve(token + 1, true), false, 'stale DOM decisions are ignored');
   assert.equal(controller.resolve(token, true), true);
+  assert.equal(controller.state, null, 'authority retires synchronously');
+  assert.equal(changes.at(-1), null, 'presentation retirement is published synchronously');
   assert.equal(await decision, true);
   assert.equal(controller.state, null);
   assert.equal(changes.at(-1), null);
   assert.equal(controller.resolve(token, true), false, 'double activation is inert');
 });
 
+test('accepted confirmation coalesces retirement with the resumed owner update', async () => {
+  let confirmation = null, busy = false, pending = false;
+  const frames = [];
+  // Model the host's microtask-batched reactive update. The real controller
+  // drives retirement; its real Promise resumes an owner that marks work busy.
+  const requestUpdate = () => {
+    if (pending) return;
+    pending = true;
+    queueMicrotask(() => {
+      pending = false;
+      frames.push({ confirmation: confirmation !== null, busy });
+    });
+  };
+  const controller = new HpConfirmController(state => {
+    confirmation = state;
+    requestUpdate();
+  });
+  const decision = controller.confirm(request('remove-marker'));
+  const token = controller.state.token;
+  const owner = (async () => {
+    if (await decision) {
+      assert.equal(controller.state, null, 'resumed work never sees old authority');
+      assert.equal(confirmation, null, 'retirement was already published');
+      busy = true;
+      requestUpdate();
+    }
+  })();
+  await Promise.resolve();
+  assert.deepEqual(frames, [{ confirmation: true, busy: false }]);
+  frames.length = 0;
+
+  assert.equal(controller.resolve(token, true), true);
+  assert.equal(confirmation, null, 'publication is not deferred to a later task');
+  assert.equal(busy, false, 'owner continuation cannot run synchronously');
+  await owner;
+  assert.deepEqual(frames, [{ confirmation: false, busy: true }],
+    'no intervening full host frame closes only confirmation before owner work');
+});
 test('cancel is the safe default and replacement cancels the older request', async () => {
   const controller = new HpConfirmController(() => undefined);
   const first = controller.confirm(request('first'));
+  const firstToken = controller.state.token;
   const second = controller.confirm(request('second'));
   const secondToken = controller.state.token;
+  assert.notEqual(secondToken, firstToken);
+  assert.equal(controller.resolve(firstToken, true), false, 'retired token cannot accept its replacement');
+  assert.equal(controller.state.token, secondToken, 'replacement is current synchronously');
 
   assert.equal(await first, false);
   assert.equal(controller.cancel(), true);
+  assert.equal(controller.state, null, 'cancel retires current authority synchronously');
   assert.equal(await second, false);
   assert.equal(controller.resolve(secondToken, true), false);
   assert.equal(controller.cancel(), false);

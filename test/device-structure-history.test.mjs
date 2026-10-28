@@ -4,6 +4,8 @@ import { CommandStack } from '../test-build/command-stack.js';
 import { ConfigWriteContext } from '../test-build/config-write-context.js';
 import { DeviceStructureHistory } from '../test-build/device-structure-history.js';
 import { retireDeviceBaseline } from '../test-build/device-position-history.js';
+import { deleteMarker } from '../test-build/marker-deletion.js';
+import { rememberDialogBaseline, forgetDialogBaseline } from '../test-build/editors/dialog-baseline.js';
 
 const deferred = () => { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return { promise, resolve, reject }; };
 const turn = () => new Promise(resolve => setImmediate(resolve));
@@ -184,4 +186,51 @@ test('#1073 unchanged retained commands send one housekeeping RPC; explicit hear
   f.history.prune(true);
   assert.equal(f.calls.filter(row=>row.type.endsWith('/retain')).length,2);
   f.history.retire();
+});
+
+test('#1093 paired adoption batches committed UI state before its snapshot and queued paint',async t=>{
+  const f=fixture(),seen=[];let dialog=true;
+  t.after(()=>f.history.retire());
+  f.h._cacheSnapshot=()=>seen.push(['snapshot',dialog]);
+  f.h.requestUpdate=()=>queueMicrotask(()=>seen.push(['paint',dialog]));
+  await f.history.adopt(f.reply,()=>{dialog=false;});await turn();
+  assert.deepEqual(seen,[['snapshot',false],['paint',false]]);
+  f.history.retire();
+});
+
+test('#1093 stale pair callback waits for both authoritative reads and never runs on read refusal',async t=>{
+  for(const refused of [false,true]) {
+    const f=fixture(),config=deferred(),layout=deferred();let accepted=0;
+    t.after(()=>f.history.retire());
+    f.h._cfgRev=f.reply.config_rev+1;f.h._reloadConfigOnly=()=>config.promise;f.h._reloadLayoutOnly=()=>layout.promise;
+    const pending=f.history.adopt(f.reply,()=>accepted++);const outcome=pending.catch(error=>error);
+    await turn();assert.equal(accepted,0);config.resolve();await turn();assert.equal(accepted,0);
+    if(refused)layout.reject(new Error('read refused'));else layout.resolve();
+    await outcome;assert.equal(accepted,refused?0:1);f.history.retire();
+  }
+});
+
+test('#1093 marker Delete retires only its accepted form before adopted pair paint',async t=>{
+  for(const result of ['accepted','refused','replacement','foreign-owner']) {
+    const f=fixture(),reply=deferred(),snapshots=[],closed=[];
+    t.after(()=>f.history.retire());
+    f.h._devices=[{id:'new',name:'Lamp',bindingKind:'virtual'}];
+    f.h._serverCfg={markers:[{id:'new',binding:'virtual'}],spaces:[{id:'f1'}]};
+    f.h._markers=f.h._serverCfg.markers;f.h._markerDialog={devId:'new',name:'Lamp'};
+    f.h._defPos={};f.h._activityRt=new Map();f.h._vacRt=new Map();f.h._vacSrvTrails={};
+    f.h._confirmDanger=async()=>true;f.h._errText=String;rememberDialogBaseline(f.h,'marker','original');
+    f.h._cacheSnapshot=()=>snapshots.push(f.h._markerDialog);
+    const runtime={host:f.h,deviceStructure:f.history,_closeMarkerDialog(){closed.push(f.h._markerDialog);forgetDialogBaseline(f.h,'marker');f.h._markerDialog=null;}};
+    f.h.transport=()=>reply.promise;
+    const pending=deleteMarker(runtime);await turn();
+    assert.equal(closed.length,0,'pending write keeps original form');assert.ok(f.h._markerDialog.busy);
+    let replacement;
+    if(result==='replacement'){replacement={devId:'new',name:'Replacement'};rememberDialogBaseline(f.h,'marker','replacement');f.h._markerDialog=replacement;}
+    if(result==='foreign-owner'){f.h.hass={...f.h.hass,user:{id:'other'}};f.h._configWriteContext.observe(f.h.hass);}
+    if(result==='refused')reply.reject({code:'commit_failed'});else reply.resolve({...f.reply,config:{markers:[],spaces:[{id:'f1'}]},layout:{}});
+    await pending;
+    if(result==='accepted'){assert.equal(closed.length,1);assert.deepEqual(snapshots,[null],'the first adopted snapshot cannot keep rendering deleted-marker fields');}
+    else {assert.equal(closed.length,0);if(result==='replacement')assert.equal(f.h._markerDialog,replacement);if(result==='refused')assert.equal(f.h._markerDialog.busy,false);}
+    f.history.retire();
+  }
 });

@@ -1,0 +1,95 @@
+{
+  "note": "Different local/CI environments; new CI has not run. Every cohort is its first preserved attempt, no trimming or retry.",
+  "comparison": [
+    {
+      "environment": "old local quiet",
+      "fingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+      "failures": [],
+      "delete": {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-delete",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 27.800000000745058,
+          "p95": 31.800000000745058,
+          "max": 31.90000000037253
+        },
+        "ackToPaint": {
+          "median": 108.20000000111759,
+          "p95": 121.5,
+          "max": 122.60000000149012
+        },
+        "client": {
+          "median": 139.5,
+          "p95": 156.30000000074506,
+          "max": 157.30000000074506
+        },
+        "maxLongTask": 153
+      }
+    },
+    {
+      "environment": "GitHub Actions 40610878036",
+      "fingerprint": "21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a",
+      "failures": [
+        "large/DPR1/history-delete/0ms: ackToPaint p95=185.39999999990687 >180",
+        "large/DPR1/history-delete/0ms: long task=240 >200"
+      ],
+      "delete": {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-delete",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 40.199999999953434,
+          "p95": 44.699999999953434,
+          "max": 54.300000000046566
+        },
+        "ackToPaint": {
+          "median": 164.40000000002328,
+          "p95": 185.39999999990687,
+          "max": 195
+        },
+        "client": {
+          "median": 208.59999999997672,
+          "p95": 244.5,
+          "max": 244.59999999997672
+        },
+        "maxLongTask": 240
+      }
+    },
+    {
+      "environment": "new local quiet",
+      "fingerprint": "b32914f4c1fc967a5cad50aee3c8f735006fa5ddce34500b04e6abf303acf5d9",
+      "failures": [],
+      "delete": {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-delete",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 16.199999999254942,
+          "p95": 18.899999998509884,
+          "max": 21.800000000745058
+        },
+        "ackToPaint": {
+          "median": 78.90000000223517,
+          "p95": 86.10000000149012,
+          "max": 91.70000000298023
+        },
+        "client": {
+          "median": 98.90000000223517,
+          "p95": 109.5,
+          "max": 111.10000000149012
+        },
+        "maxLongTask": 108
+      }
+    }
+  ]
+}

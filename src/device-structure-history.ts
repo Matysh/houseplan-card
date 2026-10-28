@@ -65,16 +65,21 @@ export class DeviceStructureHistory {
     this.host._devicePositionHistory.push({ name, before: state, after: state });
     this.prune();
   }
-  async adopt(reply: DeviceStructureReply): Promise<void> {
+  async adopt(reply: DeviceStructureReply, afterAdoption?: () => void): Promise<void> {
     const h = this.host;
     if (h._cfgRev > reply.config_rev || h._layoutRev > reply.layout_rev) {
       await Promise.all([h._reloadConfigOnly(true), h._reloadLayoutOnly()]);
+      afterAdoption?.();
       return;
     }
     h._adoption.acceptPairWrite(reply.config, reply.layout, reply);
     h._canOptimizeUndo = false; h._undoKind = null;
     h._cfgEpoch++; h._modelCache = null; h._frame = null; h._regSignature = ''; h._deviceInboxMemo = null;
-    h._maybeRebuildDevices(); h._cacheSnapshot(); h.requestUpdate();
+    h._maybeRebuildDevices();
+    // Current-owner UI retirement belongs to this same accepted pair. Running
+    // it after an await would paint deleted-marker fields before closing them.
+    afterAdoption?.();
+    h._cacheSnapshot(); h.requestUpdate();
   }
   async request(request: Record<string, unknown>, accepted: (reply: DeviceStructureReply, recovered?: boolean) => void | Promise<void>): Promise<DeviceStructureReply> {
     // A transport failure has an ambiguous result. Exactly one replay uses the

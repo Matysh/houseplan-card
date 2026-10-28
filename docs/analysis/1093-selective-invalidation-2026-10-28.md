@@ -1,7 +1,6 @@
 # #1093: selective invalidation — implementation evidence
 
-Baseline: `455535be9da51e0eef11ceccd1b9545a39875425`; current integration base: frozen #1089 `5228e2ff1fbe51ea55f324b056d9f3806246e041`, containing accepted #998/#1000/#1107. Synthetic fixtures only. The final timing matrix runs on this joint source; S7 still requires actual #1089 acceptance and an identical product/input fingerprint.
-This report records measured results separately from remaining acceptance work.
+Baseline diagnosis: `455535be9da51e0eef11ceccd1b9545a39875425`. Current accepted integration base: `cc9209f8ad8cbb8eb937fb27d5234c971bbc47da`, including #1089/#1096/#998/#1000/#1107. Synthetic fixtures only. The latest post-CI section below binds the current product; earlier source213 measurements remain historical evidence.
 After #1089 CODE r2 GREEN and automatic S8, accepted dev
 `cc9209f8ad8cbb8eb937fb27d5234c971bbc47da` was merged normally. Its final delta
 adds the corrected mobile-header witness and UX documentation; actual frontend
@@ -131,7 +130,7 @@ root. Full output belongs to artifacts/performance-smoke. Fixed network fixture
 delay alone is subtracted; visible DOM retirement, long tasks and real geometry
 remain part of the measurement. Browser and Node pins are unchanged.
 
-## Full joint-source timing result
+## First submitted joint-source timing result (historical source213)
 
 **PASS: 846 samples, failures=[], correctnessProbe=false, exit0.** Exact product
 fingerprint `21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a`;
@@ -175,7 +174,7 @@ floor-physics assertions passed. The full JSON retains raw IO phases and counter
 | small / visible-color | 5.6 | 8.8 | 13.8 | 14.3 | 0.0 |
 | small / visible-title | 5.1 | 9.3 | 13.7 | 13.9 | 0.0 |
 
-## Exact mandatory CI cores
+## First submitted exact CI cores (historical source213)
 
 A separate single serial quiet run executed the actual four mandatory wrappers
 on the same final fingerprint. This additionally binds the original 780px RED
@@ -193,7 +192,7 @@ elapsed/exit receipts](1093-evidence/cores/runs.json).
 
 Final matched visible Save (0/320ms fixed delays): delay0: pre-request p95 23.6ms, ACK-to-paint p95 41.2ms, client p95 61.3ms, client max 65.6ms; delay320: pre-request p95 22.0ms, ACK-to-paint p95 38.3ms, client p95 59.2ms, client max 61.8ms. The original baseline on this nonempty 780px input was RED (ACK-to-paint p95 245.2/239.6ms; client p95 324.9/305.2ms).
 
-## Selected visual and resource evidence
+## Selected visual evidence (historical source213)
 
 The four ledger scenes were captured with the canonical selected invocation
 `node demo/golden/run.mjs --mode=capture --scenario=<exact-id>` on both the
@@ -206,13 +205,102 @@ The initially attempted targeted `verify` invocation was correctly refused by
 the existing policy before capture: verify is full-matrix-only. No policy or
 baseline was altered; selected captures use the same command as browser_selected.
 
-[Measured resource comparison](1093-evidence/joint-price.json) verifies both
+The earlier [source213 resource comparison](1093-evidence/joint-price.json) verifies both
 source fingerprints and every manifest asset. #1093 costs +3544B initial gzip,
 +147B lazy editor, −36B onboarding and +13546B generated JS;47 additional host
 references implement consumer/owner joins. The owner authorized these measured
 increases. Each baseline carries only this task delta, preserving inherited
 headroom/excess and the existing bands; absolute and timing budgets remain
-unchanged. Bundle budgets and unused/monolith gates pass.
+unchanged. The new source-bound price is recorded below.
+
+## Post-CI diagnosis and current result (source b32914f4)
+
+The first submission at 68508c8 passed its local gate but product CI
+[40610878036](https://github.com/Matysh/houseplan-card/actions/runs/40610878036)
+failed before CODE review: Delete exceeded ACK-to-paint/long-task limits in
+history0, and the unchanged color-picker smoke raced its entrance animation.
+The canonical process returned S6; there was no model verdict or approval.
+The color-picker witness is a separate #1108 repair, not a runtime change here.
+The original CI RED is preserved beside the first local attempts; different
+machines are explicitly distinguished. New CI has not yet run.
+
+Profiling identified two avoidable Delete paints. Confirmation published its
+reactive close before waking the operation, so one full frame preceded busy
+state. Accepted paired deletion also painted the deleted marker's Properties
+before retiring its form. Confirmation now queues the resumed owner first,
+while still clearing authority and publishing synchronously. Pair adoption
+retires only the current accepted form before the first accepted-pair snapshot.
+Pending/refused, replacement and foreign owners do not close; stale pair recovery
+waits for both authoritative reads. Native motion and geometry algorithms are
+unchanged. Actual old-controller/old-adoption units were RED, then all30 focused
+tests passed. Native danger-confirmation, structure-history and selective
+invalidation smokes pass on the rebuilt source. Diagnostic CPU-throttled
+profiles are retained locally and are not timing acceptance evidence.
+
+| Environment / first history0 attempt | Source | Pre-request p95 | ACK-to-paint p95 | Client p95 | Long-task max |
+|---|---|---:|---:|---:|---:|
+| old local quiet | 21302ea5 | 31.8 | 121.5 | 156.3 | 153.0 |
+| GitHub Actions 40610878036 | 21302ea5 | 44.7 | 185.4 | 244.5 | 240.0 |
+| new local quiet | b32914f4 | 18.9 | 86.1 | 109.5 | 108.0 |
+
+[Raw comparison and environment distinction](1093-evidence/post-ci/delete-comparison.json),
+[CI RED raw](1093-evidence/post-ci/ci-40610878036-history0-red.json).
+No threshold, fixed-delay subtraction, sample count or timeout changed.
+
+**Current PASS: 846 samples, failures=[], correctnessProbe=false, exit0.**
+Exact fingerprint: `b32914f4c1fc967a5cad50aee3c8f735006fa5ddce34500b04e6abf303acf5d9`.
+This was one normative quiet run on CPU4–7, without profiling/throttling;
+the four exact wrappers were each run once on the same source. The history0
+result was retained while the full matrix and remaining wrappers completed.
+[Full current raw](1093-evidence/post-ci/full-timing.json),
+[exact wrapper raw/elapsed/exit](1093-evidence/post-ci/cores/runs.json).
+The table uses the greater p95/max of the separate20-sample0/320ms cohorts,
+not a pooled or trimmed distribution. Cold/DPR2 siblings remain in full raw.
+
+| Scene / operation | Pre-request p95 | ACK-to-paint p95 | Client p95 | Client max | Long-task max |
+|---|---:|---:|---:|---:|---:|
+| large / history-copy | 14.1 | 88.7 | 104.4 | 114.8 | 111.0 |
+| large / history-delete | 18.2 | 90.1 | 110.2 | 126.1 | 103.0 |
+| large / history-redo | 6.4 | 79.1 | 87.7 | 90.3 | 88.0 |
+| large / history-undo | 6.9 | 78.6 | 90.2 | 94.5 | 88.0 |
+| large / inactive-paint | 20.9 | 37.1 | 54.2 | 60.9 | 59.0 |
+| large / room-name | 33.3 | 37.8 | 68.5 | 78.6 | 76.0 |
+| large / room-paint | 32.4 | 36.2 | 67.0 | 74.6 | 69.0 |
+| large / visible-bg | 23.3 | 46.8 | 68.5 | 81.4 | 66.0 |
+| large / visible-color | 19.8 | 35.7 | 59.1 | 77.9 | 68.0 |
+| large / visible-title | 19.4 | 36.8 | 55.3 | 65.5 | 62.0 |
+| small / history-copy | 5.9 | 26.0 | 30.4 | 31.8 | 0.0 |
+| small / history-delete | 7.9 | 31.9 | 39.0 | 39.1 | 0.0 |
+| small / history-redo | 3.6 | 28.9 | 32.5 | 32.5 | 0.0 |
+| small / history-undo | 3.5 | 27.1 | 30.4 | 30.5 | 0.0 |
+| small / inactive-paint | 5.5 | 8.4 | 13.6 | 13.7 | 0.0 |
+| small / room-name | 9.3 | 8.7 | 17.8 | 18.0 | 0.0 |
+| small / room-paint | 7.3 | 8.6 | 16.1 | 17.9 | 0.0 |
+| small / visible-bg | 6.6 | 9.2 | 14.6 | 23.1 | 0.0 |
+| small / visible-color | 6.1 | 9.0 | 14.0 | 17.3 | 0.0 |
+| small / visible-title | 5.3 | 8.9 | 13.6 | 14.2 | 0.0 |
+
+| Exact wrapper | Samples | Wall seconds | Exit |
+|---|---:|---:|---:|
+| visible | 40 | 18.64 | 0 |
+| inactive | 40 | 18.77 | 0 |
+| history0 | 80 | 25.05 | 0 |
+| history320 | 80 | 51.32 | 0 |
+
+[Current verified resource comparison](1093-evidence/post-ci/joint-price.json):
++3559B initial gzip, +179B editor, −31B onboarding, +13612B raw JS and +47 host
+references against accepted1089. The batching fix adds only15/32/66B to the
+previous initial/editor/raw measurements. Addressed references preserve the
+inherited457B initial/1939B editor/23 host-reference excess and existing bands.
+The owner approved measured size increases; timing limits are unchanged.
+Static mutation readiness passes1977 declarations/555 browser witnesses,
+execution=0. The two new ordering guards are declarations only.
+
+The selected source213 Golden images below remain historical evidence. The
+current candidate requires fresh selected CI visual proof and a fresh normal
+pre-push gate after accepted #1108 integration; old screenshots are not claimed
+as source b329 captures. Release documentation capture is likewise rebound to
+the final published candidate by the release owner.
 
 ## Adjacent contracts retained
 
@@ -257,11 +345,11 @@ substitute or dependency for those checks.
 
 ## Remaining gates
 
-Actual accepted joint-source identity and full normal pre-push remain required
-before S7. Selected Golden proof and release documentation are complete;
-generated CI inventory is refreshed with the final source/test set.
-Static mutation readiness is GREEN: 1975 definitions, 555 classified browser
-witnesses; execution=0 and caught status intentionally unknown until nightly.
+The post-CI candidate requires accepted #1108 integration, current metadata,
+normal pre-push and fresh selected CI proof before CODE. Static readiness is
+GREEN: 1977 definitions, 555 classified browser witnesses; execution=0 and
+caught status intentionally unknown until nightly. Source213 visual evidence
+and the previous288-second full gate are historical, not new-candidate gates.
 No result in this author report asserts S7/S8. The first full local gate exposed
 four bookkeeping/witness failures: the new fixture was absent from the complete
 wall-identity passport; the raw fingerprint oracle had retained canonical-empty

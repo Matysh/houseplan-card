@@ -1,0 +1,338 @@
+[
+  {
+    "source": "b32914f4c1fc967a5cad50aee3c8f735006fa5ddce34500b04e6abf303acf5d9",
+    "profile": "visible",
+    "elapsedMs": 18639.380242,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "samples": 40,
+    "failures": [],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "visible-bg",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 16.300000000745058,
+          "p95": 20.600000001490116,
+          "max": 21
+        },
+        "ackToPaint": {
+          "median": 34.5,
+          "p95": 42.30000000074506,
+          "max": 42.69999999925494
+        },
+        "client": {
+          "median": 52.5,
+          "p95": 64.20000000298023,
+          "max": 65.19999999925494
+        },
+        "maxLongTask": 64
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "visible-bg",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 17.900000002235174,
+          "p95": 20,
+          "max": 20.5
+        },
+        "ackToPaint": {
+          "median": 32.5,
+          "p95": 36.100000001490116,
+          "max": 45
+        },
+        "client": {
+          "median": 52,
+          "p95": 57.80000000074506,
+          "max": 63.900000002235174
+        },
+        "maxLongTask": 0
+      }
+    ]
+  },
+  {
+    "source": "b32914f4c1fc967a5cad50aee3c8f735006fa5ddce34500b04e6abf303acf5d9",
+    "profile": "inactive",
+    "elapsedMs": 18770.833160000002,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "samples": 40,
+    "failures": [],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "inactive-paint",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 16.699999999254942,
+          "p95": 20.300000000745058,
+          "max": 21.299999997019768
+        },
+        "ackToPaint": {
+          "median": 35.5,
+          "p95": 41.5,
+          "max": 43.30000000074506
+        },
+        "client": {
+          "median": 52.399999998509884,
+          "p95": 63.5,
+          "max": 64.5
+        },
+        "maxLongTask": 63
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "inactive-paint",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 17,
+          "p95": 20.899999998509884,
+          "max": 21.5
+        },
+        "ackToPaint": {
+          "median": 32.30000000074506,
+          "p95": 34.600000001490116,
+          "max": 36.600000001490116
+        },
+        "client": {
+          "median": 50.80000000074506,
+          "p95": 56.100000001490116,
+          "max": 57.900000002235174
+        },
+        "maxLongTask": 0
+      }
+    ]
+  },
+  {
+    "source": "b32914f4c1fc967a5cad50aee3c8f735006fa5ddce34500b04e6abf303acf5d9",
+    "profile": "history0",
+    "elapsedMs": 25054.148672000003,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "samples": 80,
+    "failures": [],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-copy",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 10.5,
+          "p95": 13.699999999254942,
+          "max": 14.199999999254942
+        },
+        "ackToPaint": {
+          "median": 72.30000000074506,
+          "p95": 89.5,
+          "max": 99.39999999850988
+        },
+        "client": {
+          "median": 85.60000000149012,
+          "p95": 105.60000000149012,
+          "max": 117.5
+        },
+        "maxLongTask": 114
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-undo",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.599999997764826,
+          "p95": 6.099999997764826,
+          "max": 6.100000001490116
+        },
+        "ackToPaint": {
+          "median": 63,
+          "p95": 73.5,
+          "max": 74.69999999925494
+        },
+        "client": {
+          "median": 69.80000000074506,
+          "p95": 81.5,
+          "max": 83.40000000223517
+        },
+        "maxLongTask": 78
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-redo",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.600000001490116,
+          "p95": 5.800000000745058,
+          "max": 6
+        },
+        "ackToPaint": {
+          "median": 62.80000000074506,
+          "p95": 69.5,
+          "max": 74.10000000149012
+        },
+        "client": {
+          "median": 69.39999999850988,
+          "p95": 76.39999999850988,
+          "max": 82
+        },
+        "maxLongTask": 80
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-delete",
+        "delay": 0,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 16.199999999254942,
+          "p95": 18.899999998509884,
+          "max": 21.800000000745058
+        },
+        "ackToPaint": {
+          "median": 78.90000000223517,
+          "p95": 86.10000000149012,
+          "max": 91.70000000298023
+        },
+        "client": {
+          "median": 98.90000000223517,
+          "p95": 109.5,
+          "max": 111.10000000149012
+        },
+        "maxLongTask": 108
+      }
+    ]
+  },
+  {
+    "source": "b32914f4c1fc967a5cad50aee3c8f735006fa5ddce34500b04e6abf303acf5d9",
+    "profile": "history320",
+    "elapsedMs": 51319.234417,
+    "exit": 0,
+    "signal": null,
+    "error": null,
+    "samples": 80,
+    "failures": [],
+    "statistics": [
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-copy",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 10.800000000745058,
+          "p95": 13,
+          "max": 14.600000001490116
+        },
+        "ackToPaint": {
+          "median": 73.90000000223517,
+          "p95": 93.60000000149012,
+          "max": 93.70000000298023
+        },
+        "client": {
+          "median": 88.80000000074506,
+          "p95": 106.40000000223517,
+          "max": 112.60000000149012
+        },
+        "maxLongTask": 94
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-undo",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.400000002235174,
+          "p95": 5.799999997019768,
+          "max": 6.5
+        },
+        "ackToPaint": {
+          "median": 62.80000000074506,
+          "p95": 72.60000000149012,
+          "max": 76
+        },
+        "client": {
+          "median": 70.60000000149012,
+          "p95": 79.5,
+          "max": 83.5
+        },
+        "maxLongTask": 73
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-redo",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 4.600000001490116,
+          "p95": 5.100000001490116,
+          "max": 5.300000000745058
+        },
+        "ackToPaint": {
+          "median": 67.10000000149012,
+          "p95": 71.5,
+          "max": 75.79999999701977
+        },
+        "client": {
+          "median": 74.30000000074506,
+          "p95": 79.60000000149012,
+          "max": 84.29999999701977
+        },
+        "maxLongTask": 72
+      },
+      {
+        "scene": "large",
+        "dpr": 1,
+        "case": "history-delete",
+        "delay": 320,
+        "cold": false,
+        "n": 20,
+        "inputToRequest": {
+          "median": 16.5,
+          "p95": 18.5,
+          "max": 19
+        },
+        "ackToPaint": {
+          "median": 80,
+          "p95": 86,
+          "max": 87.19999999925494
+        },
+        "client": {
+          "median": 100.60000000149012,
+          "p95": 107.39999999850988,
+          "max": 107.5
+        },
+        "maxLongTask": 84
+      }
+    ]
+  }
+]

@@ -21984,6 +21984,14 @@ const roomContact1061Cases = [
 ];
 
 const selectiveInvalidation1093Cases = [
+  {id:'confirm-paints-before-resumed-owner-1093',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/danger-confirmation.test.mjs',
+    because:'#1093 AC9/10: the actual confirmation controller must queue the resumed owner before its reactive publication, while clearing authority synchronously. A microtask witness detects the extra busy-false frame. Declaration only; execution remains nightly.',
+    patches:[{file:'src/danger-confirm.ts',find:'    active.resolve(accepted);\n    this._changed(null);',replace:'    this._changed(null);\n    active.resolve(accepted);'}]},
+  {id:'paired-adoption-paints-before-owner-retirement-1093',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-structure-history.test.mjs',
+    because:'#1093 AC8/9/10: accepted deletion retires only its current form before the first accepted-pair snapshot; pending, refused and replacement owners remain unchanged. Declaration only; execution remains nightly.',
+    patches:[{file:'src/device-structure-history.ts',find:'    afterAdoption?.();\n    h._cacheSnapshot(); h.requestUpdate();',replace:'    h._cacheSnapshot(); h.requestUpdate();\n    afterAdoption?.();'}]},
   {id:'retired-summary-owner-blocks-fresh-metrics-1093',
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/summary-panel-runtime.test.mjs',
     because:'#1093 AC5: held old-owner timer and actual deferred import must not keep the new visible owner pending after reconnect; deterministic callback ordering observes fresh values without an unrelated HA tick.',

@@ -31,7 +31,7 @@ export function markerDeletionCandidate(config: ServerConfig, targets: readonly 
 }
 
 /** Throws on config refusal; housekeeping is best effort only after durable success. */
-async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly MarkerDeletionTarget[], candidateCurrent?: () => boolean): Promise<void> {
+async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly MarkerDeletionTarget[], candidateCurrent?: () => boolean, afterPairedAdoption?: () => void): Promise<void> {
   const host = runtime.host;
   const cfg = host._serverCfg;
   if (!cfg || !host._canEdit || host._kiosk || !host.isConnected) throw new Error('Delete unavailable');
@@ -55,18 +55,20 @@ async function commitDeletion(runtime: HouseplanEditorRuntime, targets: readonly
       await runtime.deviceStructure.request({ type: 'houseplan/marker/history', ...runtime.deviceStructure.fields(true), action: 'delete',
         targets, expected_config_rev: host._cfgRev, expected_layout_rev: host._layoutRev }, async reply => {
         if (!applicable()) return;
-        await runtime.deviceStructure.adopt(reply);
-        if (!applicable()) return;
-        runtime.deviceStructure.record(reply, name, targets[0].id, space);
-        const removed = new Set(targets.map(target => target.id));
-        if (host._selId && removed.has(host._selId)) host._selId = null;
-        if (host._infoCard && removed.has(host._infoCard.id)) host._closeInfoCard();
-        for (const id of removed) {
-          delete host._defPos[id]; host._dirtyPos.delete(id); host._sentPos.delete(id);
-          const activity = host._activityRt.get(id);
-          if (activity) clearTimeout(activity.timer);
-          host._activityRt.delete(id); host._vacRt.delete(id); delete host._vacSrvTrails[id];
-        }
+        await runtime.deviceStructure.adopt(reply, () => {
+          if (!applicable()) return;
+          runtime.deviceStructure.record(reply, name, targets[0].id, space);
+          const removed = new Set(targets.map(target => target.id));
+          if (host._selId && removed.has(host._selId)) host._selId = null;
+          if (host._infoCard && removed.has(host._infoCard.id)) host._closeInfoCard();
+          for (const id of removed) {
+            delete host._defPos[id]; host._dirtyPos.delete(id); host._sentPos.delete(id);
+            const activity = host._activityRt.get(id);
+            if (activity) clearTimeout(activity.timer);
+            host._activityRt.delete(id); host._vacRt.delete(id); delete host._vacSrvTrails[id];
+          }
+          afterPairedAdoption?.();
+        });
       });
     } finally {
       if (current()) {
@@ -172,15 +174,17 @@ export async function deleteMarker(runtime: HouseplanEditorRuntime): Promise<voi
       || !live || live.busy || live.devId !== target.id || targetForId(runtime, target.id)?.binding !== target.binding) return;
   const pending = { ...live, busy: true };
   host._markerDialog = pending;
+  const closeAcceptedForm = () => {
+    if (!current() || dialogSession(host, 'marker') !== session || host._markerDialog !== pending) return;
+    if (host._deviceInboxReturn) host._deviceInboxReturn = {
+      ...host._deviceInboxReturn, ...(target.binding === 'virtual' ? {} : { tab: 'readd' }), anchor: target.binding,
+    };
+    runtime._closeMarkerDialog();
+  };
   try {
-    await commitDeletion(runtime, [target]);
+    await commitDeletion(runtime, [target], undefined, closeAcceptedForm);
     if (!current()) return;
-    if (host._markerDialog === pending) {
-      if (host._deviceInboxReturn) host._deviceInboxReturn = {
-        ...host._deviceInboxReturn, ...(target.binding === 'virtual' ? {} : { tab: 'readd' }), anchor: target.binding,
-      };
-      runtime._closeMarkerDialog();
-    }
+    closeAcceptedForm();
     host._showToast(host._t('toast.marker_removed'), 'toast.marker_removed');
   } catch (error) {
     if (!current()) return;

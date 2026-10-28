@@ -62,8 +62,11 @@ export class HpConfirmController {
     const active = this._active;
     if (!active || active.token !== token) return false;
     this._active = null;
-    this._changed(null);
+    // Queue the resumed owner before the host's reactive update so its busy
+    // state can share that frame. Authority and presentation still retire
+    // synchronously in this call, before any Promise continuation can run.
     active.resolve(accepted);
+    this._changed(null);
     return true;
   }
 

@@ -1,0 +1,55 @@
+{
+  "base": {
+    "head": "0dd219b03c5f290ca7c94c4181c5d6bde051de87",
+    "fingerprint": "06085343dcf1c54549164daed071b89c03a8be59f216cdf569896f41839c84f2",
+    "initial": 352904,
+    "editor": 375012,
+    "onboarding": 44655,
+    "assets": 73,
+    "delegates": 145,
+    "portMembers": 380,
+    "hostRefs": 6479,
+    "portPrivates": 106,
+    "harnessPrivates": 101,
+    "bundleBytes": 3630487
+  },
+  "candidate": {
+    "head": "68508c8dcac2b529a8472209c2358d10ac09363e",
+    "fingerprint": "b32914f4c1fc967a5cad50aee3c8f735006fa5ddce34500b04e6abf303acf5d9",
+    "initial": 356463,
+    "editor": 375191,
+    "onboarding": 44624,
+    "assets": 73,
+    "delegates": 145,
+    "portMembers": 380,
+    "hostRefs": 6526,
+    "portPrivates": 105,
+    "harnessPrivates": 101,
+    "bundleBytes": 3644099,
+    "dirtySource": true
+  },
+  "delta": {
+    "initial": 3559,
+    "editor": 179,
+    "onboarding": -31,
+    "hostRefs": 47,
+    "bundleBytes": 13612
+  },
+  "incomingReference": {
+    "delegates": 145,
+    "portMembers": 376,
+    "hostRefs": 6456,
+    "portPrivates": 104,
+    "harnessPrivates": 101,
+    "bundleBytes": 3630487
+  },
+  "proposedReference": {
+    "delegates": 145,
+    "portMembers": 376,
+    "hostRefs": 6503,
+    "portPrivates": 104,
+    "harnessPrivates": 101,
+    "bundleBytes": 3644099
+  },
+  "verification": "Both source fingerprints and full manifest asset trees verified. Baseline product is byte-identical to accepted cc9209f8 (1089 acceptance receipt). Candidate fingerprint binds the uncommitted batching fix on the recorded parent HEAD; no clean-commit identity is claimed. Proposed references preserve inherited excess and add only the measured task delta."
+}

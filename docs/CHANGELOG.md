@@ -13,7 +13,7 @@
   device sources stay within the dialog, and Escape closes the adaptive icon
   picker before its parent form and returns focus to the icon field through
   Home Assistant's native focus API. (#998)
-- Save appearance changes and Copy/Undo/Redo without rebuilding unchanged floor geometry; hidden floors and layers defer display work until needed, while visible values and alarms remain current. Successful Save closes promptly after its confirmed response. (#1093)
+- Save appearance changes and Copy/Delete/Undo/Redo without rebuilding unchanged floor geometry; hidden floors and layers defer display work until needed, while visible values and alarms remain current. Successful Save closes promptly after its confirmed response, and confirmed deletion closes its current form in the same accepted update. (#1093)
 
 - Choose the compact floor selector before a warm card first paints, preventing
   a 9px header/stage jump when opening the plan again. (#1092)

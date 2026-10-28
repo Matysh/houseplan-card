@@ -452,7 +452,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // (+3544 B). Consumer dependency keys, lazy floor metadata and owner fences
 // belong to initial View. Carry only this task delta; retain the inherited
 // 457-B excess, 2000-B band and absolute wall. Timing limits are unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 355_991;
+export const INITIAL_VIEW_GZIP_CEILING = 356_006;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -880,7 +880,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_937;
 // https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455534939
 // #1093: matched frozen #1089 editor375012 ->375159 (+147 B). Preserve
 // its inherited1939-B excess and the2000-B band; only this task's cost moves.
-export const LAZY_EDITOR_GZIP_CEILING = 373_220;
+export const LAZY_EDITOR_GZIP_CEILING = 373_252;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
