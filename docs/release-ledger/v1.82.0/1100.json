@@ -36,7 +36,8 @@
       "smoke_stairs.mjs",
       "smoke_wall_chain_history.mjs",
       "smoke_node_history_context.mjs",
-      "smoke_geometry_history_refusal.mjs"
+      "smoke_geometry_history_refusal.mjs",
+      "smoke_opening_drag.mjs"
     ]
   }
 }

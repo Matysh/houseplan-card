@@ -1,8 +1,13 @@
 /** #1097 native large-house drag/cancel, canonical input and saved readback. */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
 import { openingDragFixture } from './performance/opening-drag-fixture.mjs';
+import { bundledProducers, callsFor } from './performance/opening-drag-coverage.mjs';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
+import { installHpTestOnPage } from './helpers/hp-test.mjs';
+import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 const fixture = openingDragFixture();
 const baseline = JSON.parse(readFileSync(new URL('../test/data/1097-opening-drag-baseline.json', import.meta.url)));
 const { page, browser } = await launch({ width: 1280, height: 1000 }, Number(process.env.HP_OPENING_DPR || 1));
@@ -276,6 +281,91 @@ try {
         await page.keyboard.press('Escape');await page.mouse.up();await settle();unchanged(await sample(),before);
     }
     out.nativePanZoomAndFourTurnsKeepOpeningAndPhysicalPixelClips=true;
+    // #1100/#1097 interop: history must retain the rich warm pool envelope.
+    // This T-join is a separate real current-model input, never a patched producer.
+    // A fresh card also separates the earlier deliberate rejected transport
+    // promise from this independent scenario; no private write-chain reset.
+    await page.reload();
+    await page.waitForFunction(()=>window.__card?._loadOk&&window.__card._booting===false);
+    await installHpTestOnPage(page);
+    await assertFreshDemoBundle(page);
+    const interop = commitWallSegmentModel({ spaces: [{ id: 'history-opening-interop', cell_cm: 5,
+        rooms: [{ id: 'history-room', poly: [[.1,.1],[.9,.1],[.9,.9],[.1,.9]] }],
+        partitions: [
+            { id: 'history-main', a: [.2,.4], b: [.8,.4], cm: 20 },
+            { id: 'history-branch', a: [.5,.4], b: [.5,.75], cm: 20 },
+        ],
+        openings: [{ id: 'history-opening', type: 'door', x: .42, y: .4, angle: 0, length: .08,
+            host: { kind: 'partition', id: 'history-main', t: (.42-.2)/.6 } }],
+    }], markers: [], settings: {} }).config;
+    const targets = bundledProducers(fileURLToPath(new URL('../dist', import.meta.url)));
+    assert.ok(targets.constructor, 'the exact bundled local-preview constructor is identifiable');
+    const coverage = await page.context().newCDPSession(page), interopTrace = [];
+    const interopAt = (x,y) => page.evaluate(([x,y]) => {
+        const m=window.__card.renderRoot.querySelector('svg.plan-svg > g').getScreenCTM();
+        const p=new DOMPoint(x,y).matrixTransform(m);return {x:p.x,y:p.y};
+    }, [x,y]);
+    const interopSnapshot = () => page.evaluate(() => {
+        const c=window.__card, opening=c._openingsR.find(o=>o.id==='history-opening');
+        const local=[...c.renderRoot.querySelectorAll('.hp-opening-drag-local .wallbody-fill')]
+            .find(node=>getComputedStyle(node).visibility==='visible');
+        const saved=c._curSpaceCfg.openings.find(o=>o.id==='history-opening');
+        const point=along=>new DOMPoint(opening.rx+Math.cos(opening.angle*Math.PI/180)*along,
+            opening.ry+Math.sin(opening.angle*Math.PI/180)*along);
+        return {config:structuredClone(c._serverCfg),saved:structuredClone(saved),preview:structuredClone(c._opDrag?.preview??null),
+            builds:{...c._floorCacheBuilds},fallbacks:c._editorRuntime._openingDragFallbackBuilds,
+            cut:local?{centerEmpty:!local.isPointInFill(point(0)),shoulderSolid:local.isPointInFill(point(opening.rlen/2+2)),
+                oldApertureSolid:local.isPointInFill(new DOMPoint(saved.x*1000,saved.y*c._spaceH))}:null};
+    });
+    try {
+        await coverage.send('Profiler.enable');
+        await coverage.send('Profiler.startPreciseCoverage',{callCount:true,detailed:true});
+        await writesSettled();
+        await page.evaluate(async cfg=>{
+            const hp=window.__hpTest;await hp.setServerConfig(cfg);await hp.switchSpace('history-opening-interop');
+            await hp.setMode('plan');await hp.setTool('select');await hp.waitForWrites();await hp.settled();
+        },interop);
+        await cameraSettled();
+        const cold=callsFor((await coverage.send('Profiler.takePreciseCoverage')).result,targets.physical);
+        assert.ok(cold>0,'the exact physical producer has a real cold positive');
+        const initial=await interopAt(420,400), committed=await interopAt(480,400);
+        await page.mouse.move(initial.x,initial.y);await page.mouse.down();
+        await page.mouse.move(committed.x,committed.y,{steps:5});await page.mouse.up();
+        await writesSettled();await settle();
+        const edited=await interopSnapshot();
+        assert.ok(Math.abs(edited.saved.x-.42)>.01,'native edit records a physical opening command');
+        for(const direction of ['undo','redo']){
+            await page.keyboard.press(direction==='undo'?'Control+z':'Control+Shift+z');
+            await writesSettled();await cameraSettled();
+            const warm=await interopSnapshot();
+            assert.equal(warm.saved.x,direction === 'undo' ? .42 : edited.saved.x,'history restores the accepted physical state');
+            // Discard the legitimate history safety/render work. The next held
+            // native drag must not call an uncounted full physical producer.
+            await coverage.send('Profiler.takePreciseCoverage');
+            const start=await interopAt(warm.saved.x*1000,400);
+            const target=await interopAt(direction==='undo'?480:560,400);
+            await page.mouse.move(start.x,start.y);await page.mouse.down();
+            await page.mouse.move(target.x,target.y,{steps:5});await settle();
+            const held=await interopSnapshot();
+            const observed=(await coverage.send('Profiler.takePreciseCoverage')).result;
+            const physical=callsFor(observed,targets.physical), constructors=callsFor(observed,targets.constructor);
+            assert.deepEqual(held.config,warm.config,'opening preview after history never edits the saved document');
+            for(const family of families)assert.equal(held.builds[family],warm.builds[family],family);
+            assert.equal(held.fallbacks,warm.fallbacks,'history retains the local route');
+            assert.equal(physical,0,'retained joins prevent a hidden physicalBodyParts call');
+            assert.equal(constructors,1,'one local preparation owns the entire drag');
+            assert.deepEqual(held.cut,{centerEmpty:true,shoulderSolid:true,oldApertureSolid:true},
+                'the next aperture is empty, its shoulder is solid, and the old aperture is filled');
+            interopTrace.push({direction,coldPhysical:cold,physical,constructors,cut:held.cut,builds:held.builds,fallbacks:held.fallbacks});
+            await page.keyboard.press('Escape');await page.mouse.up();await writesSettled();await settle();
+            assert.deepEqual((await interopSnapshot()).config,warm.config,'cancel leaves the history-restored document intact');
+        }
+        out.historyUndoRedoRetainLocalOpeningJoinPreview=true;
+        console.log('history-opening interop evidence',JSON.stringify(interopTrace));
+    } finally {
+        await coverage.send('Profiler.stopPreciseCoverage').catch(()=>{});
+        await coverage.detach();
+    }
     checkAll(out);
     console.log('opening-drag evidence', JSON.stringify({ sourceBaseline: baseline.sourceSha, trace, switched, released: { builds: released.builds, pool: released.pool, openings: released.openings } }, null, 2));
     await finish(browser);
@@ -284,7 +374,8 @@ catch (error) {
     const state=await sample().catch(()=>null);
     if(state){delete state.config;state.openings=state.openings.slice(0,2);}
     console.log('opening-drag diagnostic', JSON.stringify({out,trace,sample:state}));
-    await page.screenshot({path:'/home/matysh/hp-1097-native-failure.png'});
+    mkdirSync('artifacts',{recursive:true});
+    await page.screenshot({path:'artifacts/opening-drag-failure.png'});
     await browser.close();
     throw error;
 }

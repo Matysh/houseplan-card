@@ -148,12 +148,54 @@ There was no inherited indexed RED in these four scenes. The ledger uses
 schema2 `goldenChecks` only, with no change/new intent or baseline acceptance.
 The previously suspected mode-tab drift was tested rather than assumed.
 
-## Final integration still pending
+## Final accepted-parent integration
 
-This is the completed local functional/performance evidence, not S7 acceptance.
-Before S7, rebase onto accepted #1097, inspect its raw opening-join/preview
-producer inputs, run necessary final counter/native/corpus checks, and finish
-the normal protected hook/CI and parsed handoff. Measurements remain explicitly
-bound to the source pair above; source/recipe changes must not be silently
-presented as the same measured material. No extra beta or E2E test change is
-part of this task; the accepted E2E impact verdict is «не надо».
+The final source includes accepted dev `a054526cb676f9957f1b7a7387aad860b454594a`
+and all #1097 opening-join/preview changes. Its source tree is
+`79c7ac94c05846faf9f35ca3e161304cb9e8754d`. Fresh compile/build/sync passed;
+the seven selected integration suites passed129/129. Actual runtime history
+outcomes still satisfy22/22 model-invariant checks (see
+[raw final invariants](1100-geometry-history-performance/final-invariants.json)).
+Backend inputs are unchanged; the earlier224 PASS subset is retained.
+
+The new native interop in `smoke_opening_drag.mjs` performs a real physical edit,
+Undo and Redo on a canonical current-model warm T-join floor. After each history
+restore the next real held opening drag preserves the opening cut, solid shoulder
+and filled old aperture. The production physical-body counter is0, the local
+preview constructor is1, fallback is0, and all five cache families stay unchanged.
+Its cold positive counter is1 before the edit/history; only passive coverage
+counters are reset after history, never geometry or retained pools. Cancel leaves
+the exact restored document. This tests the non-enumerable raw join metadata's
+behavior through real adoption/history, not just its field name. No product fix
+was needed. [Raw interop](1100-geometry-history-performance/final-opening-interop.json).
+An earlier rejected writer-promise reuse was a separate harness setup failure;
+a normal public reload and fresh-demo proof precede the passing independent case.
+The original #1097 native cases, including refusal/camera cases, also pass.
+
+The measured CPU pair and four before/candidate Golden captures above remain
+bound to4bb/4f; the final protected CI reruns the seven scoped native smokes and
+four strict Golden checks against its exact head. No global baseline is accepted.
+The optimization and measured source path are unchanged; final upstream behavior
+is covered by the new native interop, integration suites and actual invariants.
+
+## Canonical resource accounting
+
+[Raw final resource proof](1100-geometry-history-performance/final-resource.json)
+uses `bundleBytes(dist)` from `scripts/monolith-metrics.mjs`: every dist file,
+including the43261-byte manifest. Both complete73-asset trees verify; all569
+fingerprint inputs of the frozen #1097 donor are byte-equal to accepted a054.
+Before policy total is3663304; candidate3664309: measured own cost1005 bytes.
+The separate JS sums are3620043/3621048; earlier JS-only observations were
+preliminary and are not the policy metric. Source fingerprints, manifest and
+asset-list hashes are preserved in the raw proof.
+
+Owner-authorized resource carry changes only the bundle reference3661873 to
+3662878 in the same A commit, preserving the inherited1431-byte gap and2000-byte
+band (issue comment6476116909). Other caps and all timing/functional limits stay
+unchanged. Initial-view gzip357939 to357938 and lazy-editor gzip378530 to378832
+pass existing bundle budgets. No byte-chasing or baseline acceptance is involved.
+
+The remaining acceptance steps are the normal protected push, exact-head CI,
+parsed handoff and independent CODE/automatic S8. This report does not substitute
+for their verdict. No beta or E2E test change is included; accepted E2E impact is
+«не надо».

@@ -1,0 +1,52 @@
+[
+  {
+    "direction": "undo",
+    "coldPhysical": 1,
+    "physical": 0,
+    "constructors": 1,
+    "cut": {
+      "centerEmpty": true,
+      "shoulderSolid": true,
+      "oldApertureSolid": true
+    },
+    "builds": {
+      "wallUnion": 3,
+      "innerContour": 20,
+      "cleanFloor": 26,
+      "openingWallIndex": 2,
+      "lightBarrier": 1,
+      "glowClip": 0,
+      "physicalBodies": 4,
+      "openingTunnel": 1,
+      "lightPhysicalBodies": 1,
+      "sunRays": 0,
+      "isoSun": 0
+    },
+    "fallbacks": 0
+  },
+  {
+    "direction": "redo",
+    "coldPhysical": 1,
+    "physical": 0,
+    "constructors": 1,
+    "cut": {
+      "centerEmpty": true,
+      "shoulderSolid": true,
+      "oldApertureSolid": true
+    },
+    "builds": {
+      "wallUnion": 3,
+      "innerContour": 20,
+      "cleanFloor": 26,
+      "openingWallIndex": 2,
+      "lightBarrier": 1,
+      "glowClip": 0,
+      "physicalBodies": 4,
+      "openingTunnel": 1,
+      "lightPhysicalBodies": 1,
+      "sunRays": 0,
+      "isoSun": 0
+    },
+    "fallbacks": 0
+  }
+]

@@ -1,0 +1,137 @@
+{
+  "source": "compiled final1097 integration on accepted a054526c; sourceFingerprint95952e81c303b84ab52ae18de79fd0af0cdecf5cd21b0954f2d1350c68f6bc12",
+  "rows": [
+    {
+      "name": "thickness",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "thickness",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "transform",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "transform",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "stairs",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "stairs",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "room",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "room",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "wall",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "wall",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "opening",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "opening",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "column",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "column",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "split",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "split",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "merge",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "merge",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "pre-v9",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "pre-v9",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "v9",
+      "direction": "undo",
+      "violations": [],
+      "notes": []
+    },
+    {
+      "name": "v9",
+      "direction": "redo",
+      "violations": [],
+      "notes": []
+    }
+  ]
+}
