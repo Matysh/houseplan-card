@@ -6490,3 +6490,5 @@ https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455534939.
 The owner-authorized editor runtime cap remains11898 lines with a50-line band;
 the final11906-line runtime reuses the existing Hide/Delete transactions.
 Rationale: https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453203632.
+
+After rebasing #1103 on beta.3, the built JavaScript total is 3649075 B (+4554 B over dev's 3644521 B). The resource baseline carries this measured URL-kiosk delta under the owner's resource-limit authorization. The 2000-B band, timing limits and other structural baselines are unchanged; hostRefs6552 remains within the existing 6529+25 band.

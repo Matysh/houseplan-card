@@ -10,7 +10,7 @@
   },
   "visual": {
     "schema": 1,
-    "baselineIndex": "b125b228572591cec7a1d7dedc99bf4a02550645b513566adbb662f71de577e2",
+    "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
     "golden": [
       {
         "id": "panel-wide-kiosk-all",
