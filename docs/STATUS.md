@@ -11,6 +11,8 @@ Visible current-space ripple demand owns light acquisition; registry/user/connec
 and visibility boundaries retain full rebuilds and authority. No persisted or
 protocol changes are introduced.
 
+Physical commits (#1099) share each exact successful candidate wall pass with junction validation. A content/version/revision baseline cache holds one slot per current space. Current-version identity and adoption visit only the edited floor; legacy migration keeps its existing atomic boundary. Resize reuses a successful preview only while its physical fingerprint and model version match.
+
 Main-page URL kiosk (#1103) uses the thin host runtime routeKiosk property. Both path and query entries share the existing authoritative selection and kiosk guards, preserving strict Lovelace floor validation and HA chrome. Internal paths retain one read owner; URL changes do not reload unchanged configuration.
 
 Derived-artifact publication (#1109) drains the complete Git stat while printing
@@ -94,7 +96,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5786 · pure backend 692 · HA-harness backend 607 · browser smokes 478 (`npm run inventory`) |
+| Tests | Node unit 5793 · pure backend 692 · HA-harness backend 607 · browser smokes 478 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

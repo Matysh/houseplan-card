@@ -1,0 +1,712 @@
+{
+  "schema": 1,
+  "root": "/home/matysh/hp-1099-baseline-61cc75bb",
+  "fingerprint": "a1733194b83cbfe550488e2bf0c4539d90889d0654bf8a2dffd8eb6e5edc492a",
+  "browserVersions": [
+    "151.0.7922.34"
+  ],
+  "node": "v22.23.2",
+  "benchmarkSha256": "84df7d33096282b046d4695c30cf9ad1b580f2b881a989ad47028425627c577e",
+  "fixtureSha256": "3a076b8438c7289d10dfdeefe55b7dcc21df693edaddf55e02a31caf03284bbe",
+  "fixtureRooms": 146,
+  "rows": [
+    {
+      "scenario": "thickness",
+      "dpr": 1,
+      "sample": 0,
+      "durationMs": 2463.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 1,
+      "sample": 1,
+      "durationMs": 2374.699999999255,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 1,
+      "sample": 2,
+      "durationMs": 2350.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 1,
+      "sample": 3,
+      "durationMs": 2401.7000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 1,
+      "sample": 4,
+      "durationMs": 2408.5999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 1,
+      "sample": 5,
+      "durationMs": 2322.0999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 1,
+      "sample": 6,
+      "durationMs": 2329.5,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 1,
+      "sample": 0,
+      "durationMs": 1711.0999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 1,
+      "sample": 1,
+      "durationMs": 1742.7000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 1,
+      "sample": 2,
+      "durationMs": 1666.4000000003725,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 1,
+      "sample": 3,
+      "durationMs": 1604.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 1,
+      "sample": 4,
+      "durationMs": 1603.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 1,
+      "sample": 5,
+      "durationMs": 1596,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 1,
+      "sample": 6,
+      "durationMs": 1643.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 1,
+      "sample": 0,
+      "durationMs": 2368.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 1,
+      "sample": 1,
+      "durationMs": 2408.4000000003725,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 1,
+      "sample": 2,
+      "durationMs": 2420.7999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 1,
+      "sample": 3,
+      "durationMs": 2436.9000000003725,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 1,
+      "sample": 4,
+      "durationMs": 2399.300000000745,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 1,
+      "sample": 5,
+      "durationMs": 2354.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 1,
+      "sample": 6,
+      "durationMs": 2520.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 1,
+      "sample": 0,
+      "durationMs": 2563.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 1,
+      "sample": 1,
+      "durationMs": 2491.5,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 1,
+      "sample": 2,
+      "durationMs": 2385.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 1,
+      "sample": 3,
+      "durationMs": 2434.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 1,
+      "sample": 4,
+      "durationMs": 2392.5,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 1,
+      "sample": 5,
+      "durationMs": 2439.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 1,
+      "sample": 6,
+      "durationMs": 2390.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 2,
+      "sample": 0,
+      "durationMs": 2442.399999999441,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 2,
+      "sample": 1,
+      "durationMs": 2375.899999999441,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 2,
+      "sample": 2,
+      "durationMs": 2310.199999999255,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 2,
+      "sample": 3,
+      "durationMs": 2352.5999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 2,
+      "sample": 4,
+      "durationMs": 2444.2000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 2,
+      "sample": 5,
+      "durationMs": 2355.7999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "thickness",
+      "dpr": 2,
+      "sample": 6,
+      "durationMs": 2420.0999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 2,
+      "sample": 0,
+      "durationMs": 1670.5999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 2,
+      "sample": 1,
+      "durationMs": 1623.7999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 2,
+      "sample": 2,
+      "durationMs": 1651.5999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 2,
+      "sample": 3,
+      "durationMs": 1651.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 2,
+      "sample": 4,
+      "durationMs": 1637.7999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 2,
+      "sample": 5,
+      "durationMs": 1672.9000000003725,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "merge",
+      "dpr": 2,
+      "sample": 6,
+      "durationMs": 1654,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 2,
+      "sample": 0,
+      "durationMs": 2445.7000000001863,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 2,
+      "sample": 1,
+      "durationMs": 2499.5,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 2,
+      "sample": 2,
+      "durationMs": 2554.5999999996275,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 2,
+      "sample": 3,
+      "durationMs": 2708.399999999441,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 2,
+      "sample": 4,
+      "durationMs": 2679.100000000559,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 2,
+      "sample": 5,
+      "durationMs": 2691.699999999255,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "split",
+      "dpr": 2,
+      "sample": 6,
+      "durationMs": 2651.9000000003725,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 2,
+      "sample": 0,
+      "durationMs": 2400.5,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 2,
+      "sample": 1,
+      "durationMs": 2459.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 2,
+      "sample": 2,
+      "durationMs": 2402.899999999441,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 2,
+      "sample": 3,
+      "durationMs": 2357.4000000003725,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 2,
+      "sample": 4,
+      "durationMs": 2386.899999999441,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 2,
+      "sample": 5,
+      "durationMs": 2358.2999999998137,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    },
+    {
+      "scenario": "column",
+      "dpr": 2,
+      "sample": 6,
+      "durationMs": 2399.4000000003725,
+      "ok": true,
+      "toasts": [],
+      "unions": 4,
+      "preflight": 2,
+      "junction": 2
+    }
+  ],
+  "statistics": [
+    {
+      "dpr": 1,
+      "scenario": "thickness",
+      "n": 7,
+      "medianMs": 2374.699999999255,
+      "maxMs": 2463.2999999998137,
+      "unions": [
+        4
+      ]
+    },
+    {
+      "dpr": 1,
+      "scenario": "merge",
+      "n": 7,
+      "medianMs": 1643.2000000001863,
+      "maxMs": 1742.7000000001863,
+      "unions": [
+        4
+      ]
+    },
+    {
+      "dpr": 1,
+      "scenario": "split",
+      "n": 7,
+      "medianMs": 2408.4000000003725,
+      "maxMs": 2520.2999999998137,
+      "unions": [
+        4
+      ]
+    },
+    {
+      "dpr": 1,
+      "scenario": "column",
+      "n": 7,
+      "medianMs": 2434.2999999998137,
+      "maxMs": 2563.2999999998137,
+      "unions": [
+        4
+      ]
+    },
+    {
+      "dpr": 2,
+      "scenario": "thickness",
+      "n": 7,
+      "medianMs": 2375.899999999441,
+      "maxMs": 2444.2000000001863,
+      "unions": [
+        4
+      ]
+    },
+    {
+      "dpr": 2,
+      "scenario": "merge",
+      "n": 7,
+      "medianMs": 1651.5999999996275,
+      "maxMs": 1672.9000000003725,
+      "unions": [
+        4
+      ]
+    },
+    {
+      "dpr": 2,
+      "scenario": "split",
+      "n": 7,
+      "medianMs": 2651.9000000003725,
+      "maxMs": 2708.399999999441,
+      "unions": [
+        4
+      ]
+    },
+    {
+      "dpr": 2,
+      "scenario": "column",
+      "n": 7,
+      "medianMs": 2399.4000000003725,
+      "maxMs": 2459.2999999998137,
+      "unions": [
+        4
+      ]
+    }
+  ]
+}

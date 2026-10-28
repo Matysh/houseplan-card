@@ -2950,6 +2950,19 @@ and corrupted-snapshot refusals are unreachable from the UI and stay unit-only.
 `origin/dev` fails both witnesses (the smoke shows the stack going 2→0). Mutation
 anchors are checked statically; each was caught by hand (patch → guard → rollback).
 
+## Physical writer proof reuse (#1099)
+
+`node --test test/commit-physical-geometry.test.mjs` executes the real editor
+barrier on a 146-room scene, exact old-runtime characterization vectors and
+frozen marker/foreign-floor inputs. The fixed UUID stream is an entropy input,
+not a replacement algorithm. `node demo/benchmark_geometry_commit.mjs` measures
+seven bundled-runtime commits per thickness/merge/split/column case at DPR1/2;
+`--root=<immutable baseline checkout>` uses that checkout's actual bundled
+runtime. Report candidate and baseline union counts alongside timing medians;
+only the declared union quota is normative. Do not raise existing time limits.
+Junction smokes retain their behavioral assertions; the private cache inspection
+now addresses the content slot by space ID. See ARCHITECTURE for proof ownership.
+
 ## Editor draft ownership and failed-chain exit (#851)
 
 `src/editors/draft-close.ts` fences each opening; `draft-actions.ts` connects

@@ -477,7 +477,7 @@ test('every frontend structural transaction crosses the wall identity barrier', 
   };
   const commitMethod = methodSource('_commitPhysicalGeometry');
   const restoreMethod = methodSource('_applyGeometryState');
-  assert.match(commitMethod, /commitWallSegmentModel\(liveCandidate\)/,
+  assert.match(commitMethod, /commitEditedSpaceModel\(liveCandidate, before.spaceId\)/,
     'ordinary structural commits must cross the identity barrier');
   assert.match(restoreMethod, /commitWallSegmentModel\(restoredCandidate\)/,
     'Undo/Redo restoration must cross the identity barrier');

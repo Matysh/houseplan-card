@@ -990,3 +990,16 @@ closed. A topology-close cut cannot discard the endpoint constraint. No nearest
 wall search, authored-debt allowance, changed grid or relaxed off-grid counter
 is introduced. T/X/overlap provenance and the existing materialization/lineage
 barriers remain part of the same transaction.
+
+## Physical writer proof reuse (#1099)
+
+The ordinary physical write barrier shares one successful wall pass per exact
+candidate between safety preflight and junction validation. The original live
+#278 guard remains first; canonicalization needs a second pass when its physical
+fingerprint changes. Baseline inheritance needs at most one pass, then reuses its
+content/version/revision slot for the same previous space. A successful Resize
+preview may lend its proof only while the final fingerprint and model version match.
+Current-model identity/adoption visit only the edited floor; legacy migration
+keeps the existing atomic all-space boundary. The geometry-only baseline never
+restores marker room references into the live config. Fail-closed candidate
+checks and fail-open unprovable inheritance retain their existing order and errors.

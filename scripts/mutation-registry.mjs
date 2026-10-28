@@ -7335,9 +7335,8 @@ const MUTANT_DEFINITIONS = [
       replace: '    if (false && !legacySafe) {',
     }, {
       file: 'src/houseplan-editor-runtime.ts',
-      find: '        && this.host._checkSpacePhysicalGeometry(\n'
-        + '          physicalCandidateFor(committedCandidate), before.spaceId,\n'
-        + '        ).ok;',
+      find: '        && (candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,\n'
+        + '          (config, id, capture) => this.host._checkSpacePhysicalGeometry(config, id, capture), candidateProof)).result.ok;',
       replace: '        && true;',
     }],
   },
@@ -9122,9 +9121,8 @@ const MUTANT_DEFINITIONS = [
       + 'plan that no longer exists — the epoch check IS the invalidation contract (#330 §4.4)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (cached && fingerprint && cached.fingerprint === fingerprint\n"
-        + '        && cached.spaceId === spaceId) {',
-      replace: '    if (cached && cached.spaceId === spaceId) {',
+      find: '    if (cached && fingerprint && cached.fingerprint === cacheKey) {',
+      replace: '    if (cached) {',
     }],
   },
   {
@@ -13893,7 +13891,7 @@ const MUTANT_DEFINITIONS = [
       + 'stable ids can detach thickness and opening hosts during any later editor operation (#282)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      } else committedCandidate = commitWallSegmentModel(liveCandidate).config;',
+      find: '      } else committedCandidate = commitEditedSpaceModel(liveCandidate, before.spaceId);',
       replace: '      } else committedCandidate = liveCandidate;',
     }],
   },
@@ -22116,7 +22114,23 @@ const planHass1111Cases = [
       replace: '    // projection invalidation bypassed' }] },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases].map((mutant) => ({
+
+const physicalCommit1099Cases = [
+  { id: 'physical-proof-ignores-candidate-fingerprint-1099',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/commit-physical-geometry.test.mjs',
+    because: '#1099: a changed Resize candidate must execute its own strict preflight; a prior successful wall pass belongs only to its exact physical fingerprint and model version. Registered only; execution is nightly.',
+    patches: [{file:'src/physical-candidate-proof.ts',find:'previous.fingerprint === fingerprint && previous.modelVersion === modelVersion',replace:'true'}] },
+  { id: 'geometry-baseline-restores-live-marker-references-1099',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/commit-physical-geometry.test.mjs',
+    because: '#1099 AC8: frozen live markers expose any attempt by a junction-only baseline to restore old room references into the shared current marker objects. Registered only; execution is nightly.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:'this._restoreGeometryStateInConfig(beforeConfig, { ...before, roomReferences: undefined });',replace:'this._restoreGeometryStateInConfig(beforeConfig, before);'}] },
+  { id: 'geometry-current-adoption-visits-unrelated-spaces-1099',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/commit-physical-geometry.test.mjs',
+    because: '#1099 AC3/8: a current one-space write must not mutate unrelated frozen floor records or the live markers while adopting the candidate. Registered only; execution is nightly.',
+    patches: [{file:'src/physical-candidate-proof.ts',find:'adoptWallSegmentModelCandidateInPlace(current, next);',replace:'adoptWallSegmentModelCandidateInPlace(target,candidate);'}] },
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

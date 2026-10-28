@@ -279,8 +279,8 @@ if (handle) {
   }
 }
 
-// #330 AC4 / #550: the production cache is keyed by the config object because
-// physical commits intentionally update that object in place. Prove that a
+// #330 AC4 / #550: the production cache has one content-keyed slot per space.
+// Physical commits still update their document in place. Prove that a
 // changed geometry fingerprint invalidates an entry even when object identity
 // is unchanged; the gesture above normally receives a fresh object after the
 // write and therefore cannot distinguish this case on its own.
@@ -301,7 +301,7 @@ resize.resizeBaselineFingerprintRejectsStaleObject = await page.evaluate(() => {
   };
   try {
     runtime._junctionLimitsIntroduced(structuredClone(previous), previous, space.id);
-    if (!runtime._junctionBaselineCache.get(previous)) return false;
+    if (!runtime._junctionBaselineCache.get(space.id)) return false;
     point[0] += 0.001;
     runtime._junctionLimitsIntroduced(structuredClone(previous), previous, space.id);
     return calls === 2;

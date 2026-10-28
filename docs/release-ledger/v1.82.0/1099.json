@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1099,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "The repeated physical-commit union and all-space model path exists in stable v1.82.0; this preserves the write verdict and document while reducing redundant work.",
+  "summary": {
+    "ru": "Ускорено подтверждение правок геометрии большого этажа без изменения результата и отказов.",
+    "en": "Confirm large-floor geometry edits faster with unchanged results and refusals."
+  }
+}

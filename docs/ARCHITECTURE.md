@@ -1589,6 +1589,25 @@ wall index and the sun wedges key by every input they read (#814); an edit of
 another floor or a shared setting leaves them warm. Every pool is an
 instance-local memo: nothing is persisted, and a remounted card starts empty.
 
+## Physical writer proof reuse (#1099)
+
+The live #278 safety check still runs before model canonicalisation. Each distinct
+physical candidate owns a successful `physicalCandidateProof` (physical fingerprint,
+model version, serializable verdict and private wall geometry). The canonical
+candidate reuses that proof only on exact equality; otherwise it receives its own
+strict preflight. Junction checks consume the canonical candidate geometry.
+Resize may lend its last successful preview proof under the same equality rule.
+An exception remains a refusal; a cached failed proof never authorizes a write.
+
+Junction baseline inheritance uses one content/version/revision slot per current
+space, pruned against the live space list. A geometry-only previous-space carrier
+restores no marker room references. Current-model canonicalisation and adoption
+are space-local; pre-current migrations retain the all-space atomic transaction.
+`physical-candidate-proof.ts` is also the shared boundary for subsequent geometry
+history work; algorithms, limits, persistence and history semantics stay with
+existing owners. The characterization corpus records the old production runtime
+under a fixed UUID input stream, including successful and refused marker rewrites.
+
 ## Markup editor
 
 Card state: `_mode`, `_tool` (`select|draw|column|merge|split|resize|opening|

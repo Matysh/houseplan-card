@@ -1,3 +1,4 @@
+import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelInPlace, type PhysicalCandidateProof } from './physical-candidate-proof';
 /**
  * House Plan Card — an interactive house plan as a native Lovelace card.
  * Configuration sources:
@@ -955,9 +956,10 @@ export class HouseplanEditorRuntime {
     select: id => this.properties.select('stair', id),
     beforeDialog: retry => this.properties.beforeIntent(retry, true),
   });
-  private _junctionBaselineCache = new WeakMap<object, {
-    spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
+  private _junctionBaselineCache = new Map<string, {
+    fingerprint: string; violations: JunctionLimitViolation[];
   }>();
+  private _resizePhysicalProof: PhysicalCandidateProof | null = null;
   private _resizePreviewNodes: MultiWallNodeMap | null = null;
   private _resizeBaselineLimits: JunctionLimitViolation[] = [];
   private _resizeAtomMap: (ResizeAtomContext & { snapshot: string }) | null = null;
@@ -2111,10 +2113,11 @@ public _junctionLimitsIntroduced(
     let fingerprint = '';
     try { fingerprint = spacePhysicalGeometryFingerprint(previousSpace); }
     catch { fingerprint = ''; }
-    const cached = !affected && previousConfig && typeof previousConfig === 'object'
-      ? this._junctionBaselineCache.get(previousConfig) : undefined;
-    if (cached && fingerprint && cached.fingerprint === fingerprint
-        && cached.spaceId === spaceId) {
+    const cacheKey = Number(previousConfig.model_version || 0) + '|' + this.host._cfgRev + '|' + fingerprint;
+    for (const id of this._junctionBaselineCache.keys())
+      if (!this.host._serverCfg?.spaces.some(space => space.id === id)) this._junctionBaselineCache.delete(id);
+    const cached = !affected ? this._junctionBaselineCache.get(spaceId) : undefined;
+    if (cached && fingerprint && cached.fingerprint === cacheKey) {
       inherited = cached.violations;
     }
     if (!inherited) {
@@ -2131,8 +2134,8 @@ public _junctionLimitsIntroduced(
         return [];
       }
       if (!affected && previousConfig && typeof previousConfig === 'object' && fingerprint) {
-        this._junctionBaselineCache.set(previousConfig, {
-          spaceId, fingerprint, violations: inherited,
+        this._junctionBaselineCache.set(spaceId, {
+          fingerprint: cacheKey, violations: inherited,
         });
       }
     }
@@ -2163,10 +2166,6 @@ public _commitPhysicalGeometry(
     // The public guard already selects one space internally.  Give it the
     // bounded carrier as well so a writer finish cannot accidentally make a
     // future preflight implementation inspect unrelated floors (#477/#461).
-    const physicalCandidateFor = (config: ServerConfig): ServerConfig => {
-      const space = config?.spaces?.find((item) => item.id === before.spaceId);
-      return space ? { ...config, spaces: [space] } : config;
-    };
     const editedState = this._geometrySnapshotFromConfig(liveCandidate, before.spaceId);
     const liveSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
     if (!liveSpace || spacePhysicalGeometryFingerprint(before)
@@ -2174,11 +2173,14 @@ public _commitPhysicalGeometry(
     // Preserve #278's existing fail-closed guard. Identity materialisation may
     // repair/atomise a degraded legacy projection, but it must never be used to
     // make an otherwise rejected user edit look safe.
+    const resizeProof = this._resizePhysicalProof;
+    this._resizePhysicalProof = null;
     let legacySafe = false;
+    let candidateProof: PhysicalCandidateProof | null = null;
     try {
-      legacySafe = this.host._checkSpacePhysicalGeometry(
-        physicalCandidateFor(liveCandidate), before.spaceId,
-      ).ok;
+      candidateProof = physicalCandidateProof(liveCandidate, before.spaceId,
+        (config, id, capture) => this.host._checkSpacePhysicalGeometry(config, id, capture), resizeProof);
+      legacySafe = candidateProof.result.ok;
     }
     catch { legacySafe = false; }
     if (!legacySafe) {
@@ -2232,7 +2234,7 @@ public _commitPhysicalGeometry(
         committedCandidate = commitWallSegmentModel(editedWithIdentity, {
           lineageHints, lineageSpaceId: before.spaceId,
         }).config;
-      } else committedCandidate = commitWallSegmentModel(liveCandidate).config;
+      } else committedCandidate = commitEditedSpaceModel(liveCandidate, before.spaceId);
     } catch (error) {
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
@@ -2251,9 +2253,8 @@ public _commitPhysicalGeometry(
       authoredPoints.push(...additionalAuthoredPoints.map((point) => [point[0], point[1]]));
       safe = wallModelOffGridValueCount(afterSpace)
         <= wallModelOffGridValueCount(historyBefore, authoredPoints)
-        && this.host._checkSpacePhysicalGeometry(
-          physicalCandidateFor(committedCandidate), before.spaceId,
-        ).ok;
+        && (candidateProof = physicalCandidateProof(committedCandidate, before.spaceId,
+          (config, id, capture) => this.host._checkSpacePhysicalGeometry(config, id, capture), candidateProof)).result.ok;
     } catch {
       safe = false;
     }
@@ -2266,10 +2267,10 @@ public _commitPhysicalGeometry(
     // #329: the owner's junction limits refuse the WRITE. An existing plan's
     // inherited violations are never re-judged (spec §3), so the candidate is
     // compared against the pre-edit document.
-    const beforeConfig = JSON.parse(JSON.stringify(liveCandidate));
-    this._restoreGeometryStateInConfig(beforeConfig, before);
+    const beforeConfig = { ...liveCandidate, spaces: [JSON.parse(JSON.stringify(liveSpace))] };
+    this._restoreGeometryStateInConfig(beforeConfig, { ...before, roomReferences: undefined });
     const introduced = this._junctionLimitsIntroduced(
-      committedCandidate, beforeConfig, before.spaceId,
+      committedCandidate, beforeConfig, before.spaceId, candidateProof?.geometry,
     );
     if (introduced.length) {
       this._clearGeometryGesture();
@@ -2277,7 +2278,7 @@ public _commitPhysicalGeometry(
       this.host._showToast(this._junctionLimitLabel(introduced[0]), `junction.limit_${introduced[0].rule}`);
       return false;
     }
-    adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);
+    adoptEditedSpaceModelInPlace(liveCandidate, committedCandidate, before.spaceId);
     if (recordHistory) this._recordGeometry(name, historyBefore);
     const afterSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
     const pending = this.host._pendingPhysicalWrites.get(before.spaceId);
@@ -3374,7 +3375,9 @@ public _rszSpaceCandidateRenderable(spaceId: string, sp: any): boolean {
         spaces: this.host._serverCfg.spaces.map((space) =>
           space.id === spaceId ? sp : space),
       } as ServerConfig;
-      return this.host._checkSpacePhysicalGeometry(candidate, spaceId).ok;
+      this._resizePhysicalProof = physicalCandidateProof(candidate, spaceId,
+        (config, id, capture) => this.host._checkSpacePhysicalGeometry(config, id, capture));
+      return this._resizePhysicalProof.result.ok;
     } catch {
       return false;
     }
