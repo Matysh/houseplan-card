@@ -24,6 +24,10 @@
       {
         "id": "stairs-flat-selected-light",
         "reason": "Nonphysical stair history must preserve the selected stair and its Plan layer."
+      },
+      {
+        "reason": "Actual accepted-base/candidate captures are byte-identical to the indexed Plan editor frame; history changes preserve geometry and editor paint.",
+        "id": "geometry-plan-editor-dark"
       }
     ],
     "smokes": [

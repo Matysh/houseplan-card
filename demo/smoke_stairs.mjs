@@ -5,6 +5,7 @@
 // Exercise only public DOM hooks and the harness facade for writes; card
 // internals are read-only oracles.
 import { launch, checkAll, finish } from './serve.mjs';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 
 const { page, browser } = await launch({ width: 1100, height: 850 });
 const out = await page.evaluate(async () => {
@@ -256,11 +257,6 @@ const out = await page.evaluate(async () => {
   await chooseStair('straight');
 
   // Select and move the straight stair through its actual hit target.
-  await writesIdle();
-  const beforeMoveDocument = JSON.stringify(card._serverCfg);
-  const roomAreas = () => Object.fromEntries(card._spaceModel().rooms.map(room => [room.id, card._roomArea(room)]));
-  const beforeMoveAreas = roomAreas();
-  const beforeMoveTransform = stairNode(straight.id)?.getAttribute('transform');
   const start = { x: straight.x, y: straight.y };
   const straightHit = stairNode(straight.id)?.querySelector('.hp-stair-hit');
   straightHit?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
@@ -269,34 +265,19 @@ const out = await page.evaluate(async () => {
   pointer(stage(), 'pointermove', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   pointer(stage(), 'pointerup', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   await settled();
-  await writesIdle();
   const moved = stairs().find((stair) => stair.id === straight.id);
-  const movedDocument = JSON.stringify(card._serverCfg), movedAreas = roomAreas();
-  const movedTransform = stairNode(straight.id)?.getAttribute('transform');
-  const physicalBuilds = () => [card._floorCacheBuilds.wallUnion, card._floorCacheBuilds.physicalBodies];
-  const beforeHistoryBuilds = physicalBuilds();
   result.moveUsesContinuousTransform = !!moved
     && (!closeTo(moved.x, start.x) || !closeTo(moved.y, start.y));
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
-  result.moveUndoWriteSettles = await writesIdle();
   const undone = stairs().find((stair) => stair.id === straight.id);
-  result.moveUndoExactDocument = JSON.stringify(card._serverCfg) === beforeMoveDocument;
-  result.moveUndoCleanFloorReadback = JSON.stringify(roomAreas()) === JSON.stringify(beforeMoveAreas);
-  result.moveUndoStairPaintReadback = stairNode(straight.id)?.getAttribute('transform') === beforeMoveTransform;
-  result.moveUndoNoPhysicalBuilds = JSON.stringify(physicalBuilds()) === JSON.stringify(beforeHistoryBuilds);
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
-  result.moveRedoWriteSettles = await writesIdle();
   const redone = stairs().find((stair) => stair.id === straight.id);
-  result.moveRedoExactDocument = JSON.stringify(card._serverCfg) === movedDocument;
-  result.moveRedoCleanFloorReadback = JSON.stringify(roomAreas()) === JSON.stringify(movedAreas);
-  result.moveRedoStairPaintReadback = stairNode(straight.id)?.getAttribute('transform') === movedTransform;
-  result.moveRedoNoPhysicalBuilds = JSON.stringify(physicalBuilds()) === JSON.stringify(beforeHistoryBuilds);
   result.moveUndoRedo = !!undone && !!redone
     && closeTo(undone.x, start.x) && closeTo(undone.y, start.y)
     && closeTo(redone.x, moved.x) && closeTo(redone.y, moved.y);
@@ -810,5 +791,53 @@ Object.assign(out,await page.evaluate(async()=>{
  await window.__hpTest.settled();return {ac1098NativeStairCommitPersists:c._serverCfg.spaces[0].stairs[0].x!==.4,
  ac1098NativeStairCommitKeepsMasonry:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k])};
 }));
+// #1100: an independent complete current model, after the legacy scenarios.
+// Canonicalization is fixture preparation; native input owns the measured edit/history.
+const historyRooms = [
+  { id: 'history-left', poly: [[.1,.1],[.5,.1],[.5,.9],[.1,.9]] },
+  { id: 'history-right', poly: [[.5,.1],[.9,.1],[.9,.9],[.5,.9]] },
+];
+const historyFixture = commitWallSegmentModel({spaces:[{id:'history1100',title:'History',cell_cm:5,rooms:historyRooms,
+  walls:historyRooms.flatMap(room=>room.poly.map((a,index)=>({a,b:room.poly[(index+1)%4],cm:10}))),
+  partitions:[{id:'history-body',a:[.2,.75],b:[.8,.75],cm:15}]}],markers:[],settings:{}}).config;
+historyFixture.spaces[0].stairs=[{id:'history-stair',kind:'straight',x:.4,y:.4,length:.2,width:.1,angle:0,
+  direction:'forward',color:'#ffffff',opacity:1,fill_color:'#ffffff',fill_opacity:0}];
+await page.evaluate(async fixture=>{
+ const hp=window.__hpTest;await hp.waitForWrites();await hp.setVolumetricView(false);await hp.setMode('view');
+ await hp.setServerConfig(fixture);await hp.setLayout({});await hp.switchSpace('history1100');
+ await hp.setMode('plan');await hp.setTool('select');await hp.waitForWrites();await hp.settled();
+},historyFixture);
+await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._cameraTransition.active);
+const historyObserve=()=>page.evaluate(()=>{
+ const c=window.__card,space=c._spaceModel(),node=c.renderRoot.querySelector('[data-hp="stair"][data-id="history-stair"]');
+ const areas=Object.fromEntries(space.rooms.map(room=>[room.id,c._roomArea(room)]));
+ return {document:JSON.stringify(c._serverCfg),areas,
+  pose:[node?.querySelector('.hp-stair-outline')?.getAttribute('points'),node?.querySelector('.hp-stair-arrow')?.getAttribute('d')],
+  builds:[c._floorCacheBuilds.wallUnion,c._floorCacheBuilds.physicalBodies]};
+});
+const historyBefore=await historyObserve();
+out.history1100CompleteCarrier=await page.evaluate(()=>{
+ const c=window.__card._serverCfg;return c.model_version===10&&c.spaces.every(space=>Array.isArray(space.wall_segments)
+  &&space.rooms.every(room=>Array.isArray(room.wall_ids)&&room.wall_ids.length===room.poly.length));
+});
+await page.locator('houseplan-card').locator('[data-hp="stair"][data-id="history-stair"] .hp-stair-hit').click();
+const historyPoints=await page.evaluate(()=>{
+ const matrix=window.__card.renderRoot.querySelector('.plan-svg').getScreenCTM();
+ return [[400,400],[550,440]].map(([x,y])=>{const p=new DOMPoint(x,y).matrixTransform(matrix);return[p.x,p.y];});
+});
+await page.mouse.move(...historyPoints[0]);await page.mouse.down();await page.mouse.move(...historyPoints[1],{steps:6});await page.mouse.up();
+await page.evaluate(async()=>{await window.__hpTest.waitForWrites();await window.__hpTest.settled();});
+const historyMoved=await historyObserve();
+out.history1100NativeMoveChangesPaint=JSON.stringify(historyMoved.pose)!==JSON.stringify(historyBefore.pose);
+out.history1100NativeMoveChangesRoomAreas=JSON.stringify(historyMoved.areas)!==JSON.stringify(historyBefore.areas);
+for(const [direction,expected]of[['undo',historyBefore],['redo',historyMoved]]){
+ await page.keyboard.press(direction==='undo'?'Control+z':'Control+Shift+z');
+ await page.evaluate(async()=>{await window.__hpTest.waitForWrites();await window.__hpTest.settled();});
+ const observed=await historyObserve();
+ out[`history1100${direction}ExactDocument`]=observed.document===expected.document;
+ out[`history1100${direction}CleanFloorReadback`]=JSON.stringify(observed.areas)===JSON.stringify(expected.areas);
+ out[`history1100${direction}StairPaintReadback`]=JSON.stringify(observed.pose)===JSON.stringify(expected.pose);
+ out[`history1100${direction}NoPhysicalBuilds`]=JSON.stringify(observed.builds)===JSON.stringify(historyMoved.builds);
+}
 checkAll(out);
 await finish(browser, out);

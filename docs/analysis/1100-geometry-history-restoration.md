@@ -2,60 +2,158 @@
 
 ## Contract and source
 
-SPEC r2 was accepted independently in comment6472008395, body SHA256
+Independent SPEC r2 is GREEN (comment6472008395), body SHA256
 `b77babe0ad22cf5ccc0ce324bb6ffba7b98212df740a20ec2345f5580addac20`.
 The owner selected one union when raw/canonical physical fingerprint and model
 version match, at most two when they differ, retaining both safety roles.
-The implementation starts from accepted dev `21fdd42d5d80c24f2e225aff904082e8a237a312`.
-The original characterization came from unmodified `0543e579`; it was repeated
-on accepted `31b17bec` before implementation: three expected RED and eleven
-exact-outcome PASS. These old results are not implementation acceptance.
 
-Current-model restore uses the accepted #1099 candidate proof and scoped
-model/adoption helpers. Raw safety stays before canonicalization. The existing
-decor-only API remains the first fast lane; a separate nonphysical fallback
-retains current-model, complete-carrier, guarded, unknown-field and pending-write
-boundaries. Negative F57 repair remains negative, with an empty outbound
-fingerprint requiring the existing deferred writer to revalidate.
+Implementation began on accepted `21fdd42d`; the measurements below compare
+accepted #1098 dev `4bb5eb42626f4efe72a20744746b8b2dc820ebc0` with candidate
+`4f890a94c1c21d7f7380b31b24d429222c889a6f`. Both product files remained
+byte-identical through that rebase. The candidate's later uncommitted changes
+were B-only fixture corrections: the timing JSON honestly records dirty=true,
+while the exact production source digest and both recipe hashes are recorded.
+No unaccepted #1098 source was used, and its consumer keys are not duplicated.
 
-## Addressed evidence
+Physical restoration uses accepted #1099 proof/model/adoption helpers. Raw
+safety precedes canonicalization; proof is local to this attempt. Current-model
+adoption visits only the edited floor; legacy roots retain atomic migration.
+F57's repairable negative verdict stays negative, with an empty outbound
+fingerprint requiring deferred writer revalidation. The existing decor-only
+API remains the first fast lane; a separate stairs/backdrop fallback retains
+complete-current-carrier, guarded, unknown-field and pending-write boundaries.
 
-Before editing, real Card getters/setters and producers showed B/C pool keys
-disappearing after physical Undo; switching B rebuilt a union. Real transform
-and valid straight-stair movement Undo visited canonical model/adoption three
-times instead of zero. The harness substitutes UI/storage only; canonical
-model, history stack, physical journal, geometry preparation and wall passes
-remain production owners. A thickness-catalog-only no-op and initial invalid
-stair setup were excluded from normative witnesses and retained externally.
+## Functional and counter evidence
 
-`test/fixtures/1100-history-characterization.json` preserves twelve deduplicated
-full documents for eleven ordinary scenarios / twenty-two Undo/Redo steps.
-The assertions compare exact JSON, toast, save count, cursor and command
-identity; expected results were not rewritten for the optimization. Existing
-#845 passports (154 documents / 77 files at this base) remained byte-equal;
-only this new twelve-document cohort was added with explicit membership.
+Before editing, unchanged accepted source showed B/C pool keys disappearing
+on physical Undo and one wall union when B was shown again. Transform and valid
+straight-stair movement Undo visited canonical model/adoption three times
+instead of zero. UI/storage are harness boundaries; history, journal, model,
+geometry preparation, wall passes and Card cache owners are production code.
+
+The fixed-result fixture retains twelve deduplicated documents for eleven
+ordinary cases / twenty-two Undo/Redo steps, comparing exact JSON, toast, save
+count, cursor and command identity. Its expected outcomes were not rewritten.
+All 154 previous #845 document passports and 77 file inventory entries remained
+byte-equal and ordered; only this twelve-document cohort was added.
 
 | AC | Evidence | Negative / regression boundary |
 |---|---|---|
-| AC1 | Production-path unit retains real B/C pool keys and B costs zero unions; native smoke prepared | Original unchanged source RED; `history-restore-clears-foreign-pools-1100` registered, not executed |
-| AC2 | Real transform/stair Undo and Redo have zero model getter visits, preflight and union calls; native readback prepared | Guarded/pending/legacy/unknown inputs remain strict; `nonphysical-history-takes-model-path-1100` registered, not executed |
-| AC3 | Nine physical cases record raw/canonical fingerprint+version, actual ordered checks and union counts; pre-v9 inequality exercises two passes | Raw/canonical negative and exception inputs refuse; `history-raw-negative-ignored-1100` and `history-different-canonical-reuses-raw-verdict-1100` registered, not executed |
-| AC4 | Existing refusal suite and real deferred writer reject negative F57 outbound candidate without sending; legacy root migrates atomically | F57 never gains a positive fingerprint; `history-negative-becomes-outbound-proof-1100` registered, not executed |
-| AC5 | Existing decor-only witnesses retained; new unknown/guarded/carrier inputs leave config untouched | `nonphysical-history-ignores-unknown-snapshot-field-1100` registered, not executed |
-| AC6 | Seven cold-card / seven warm apply/inverse benchmark prepared; measurement pending | Timing is diagnostic; exact documents and counters are normative |
-| AC7 | Backend subset: 224 passed, 2381 deselected; gate:small pending | No expectation, backend, geometry algorithm or timing-limit changes |
+| AC1 | Real Card B/C keys retained and B costs zero unions; `smoke_floor_cache_reuse.mjs` EXIT0, including native physical Undo and fresh-card equality | Unchanged-source RED and paired benchmark foreign-pool failures; `history-restore-clears-foreign-pools-1100` registered, not executed |
+| AC2 | Current-model native backdrop/stair edit, Undo/Redo: exact document, image/frame or actual outline/arrow paths, changed room-area readback, zero physical builds; both smokes EXIT0 | Identical corrected recipes on accepted4bb fail only the two zero-build assertions each, while their document/paint/area assertions pass; pending/guarded/legacy/unknown unit cases stay strict |
+| AC3 | Nine physical cases observe raw/canonical fingerprint+version, ordered checks and exact union quotas; ordinary pre-v9 inequality takes two passes | Raw/canonical negative and exception inputs refuse; `history-raw-negative-ignored-1100` and `history-different-canonical-reuses-raw-verdict-1100` registered, not executed |
+| AC4 | Existing refusal suite plus real deferred writer revalidation/no-send for F57; atomic foreign-floor legacy migration; native wall-chain/node/refusal smokes EXIT0 | Negative fingerprint stays empty; exceptions retain command identity; `history-negative-becomes-outbound-proof-1100` registered, not executed |
+| AC5 | Original decor-only witnesses retained, new unknown/guarded/carrier cases leave config untouched | `nonphysical-history-ignores-unknown-snapshot-field-1100` registered, not executed |
+| AC6 | Paired seven cold-card and seven warm apply/inverse samples for all three large-house scenarios; 84 baseline rows RED / 84 candidate rows GREEN | Exact documents and counters are normative; no timing threshold was changed or invented |
+| AC7 | Targeted102/102 and adjacent133/133 PASS; post1098 integration109/109 PASS; actual-output model invariants22/22 PASS; backend224 PASS,2381 deselected | Backend source/tests unchanged by1098, so its subset result is retained; final canonical gate/hook is pending |
 
-Initial targeted validation: 102/102 PASS in the history/decor/refusal files;
-adjacent commit, draft, Resize, alias, node-history, draft-exit and body-gesture
-files: 133/133 PASS. Static mutation readiness: 2003 definitions, execution=0,
-caught=unknown (nightly only). Three existing anchors and the structural
-identity source witness follow the new helper call; their behavioral refusal
-and identity contracts remain unchanged. No mutant was executed.
+Commands: `node --test test/geometry-history-restore.test.mjs test/decor-history-restore.test.mjs test/geometry-history-refusal.test.mjs test/demand-space-models.test.mjs test/clean-floor.test.mjs`;
+`python -m pytest tests_backend -k "wall_node or junction" -q`.
+The adjacent suite covers physical commit, draft-live preflight, Resize,
+adoption aliasing, node history, draft exit and body gestures.
 
-## Remaining task validation
+Addressable native commands, all EXIT0 on the candidate:
+`node demo/smoke_floor_cache_reuse.mjs`, `node demo/smoke_backdrop.mjs`,
+`node demo/smoke_stairs.mjs`, `node demo/smoke_wall_chain_history.mjs`,
+`node demo/smoke_node_history_context.mjs`, and
+`node demo/smoke_geometry_history_refusal.mjs`.
 
-This is an implementation checkpoint, not the S7 handoff. Native/performance
-checks await accepted #1098 and a fresh rebase: #1100 does not change consumer
-keys or use unaccepted source. The complete gate, exact selected Golden,
-native smoke results, paired measurements and final source identity will be
-recorded before S7. No visual delta or task baseline acceptance is requested.
+The first new native probe mistakenly compared pre-migration demo data with a
+canonical restore. Both accepted base and candidate failed the same four new
+assertions per smoke; these setup RED logs are retained separately. The final
+AC2 scenarios use real `commitWallSegmentModel` fixture construction before
+recording commands/counters, retain existing legacy scenarios, and never merely
+stamp model_version or relax expected0. Stair paint reads actual outline/arrow
+paths and must visibly change; a nullable group transform is not its oracle.
+
+The production invariant checker ran on twenty-two actual runtime outputs:
+references, wall keys, mixed-role records, hidden obstacles and physical
+geometry all have zero violations. See [raw results](1100-geometry-history-performance/invariants.json).
+Reproduce after fresh test-build compilation (no fixture expectation is used):
+
+```sh
+node --input-type=module <<'JS'
+import {historyCases, historyCharacterization} from './test/helpers/geometry-history-characterization.mjs';
+import {checkReferences, checkWallKeys, checkMixedRoleRecords, checkHiddenObstacles,
+  checkPhysicalGeometry} from './scripts/model-invariants.mjs';
+let count = 0;
+for (const name of historyCases) for (const step of historyCharacterization(name).steps) {
+  const config = step.config;
+  const failures = [...checkReferences({config}), ...checkWallKeys(config),
+    ...checkMixedRoleRecords(config), ...checkHiddenObstacles(config), ...checkPhysicalGeometry(config)];
+  if (failures.length) throw Error(JSON.stringify({name, direction: step.direction, failures}));
+  count++;
+}
+console.log(`${count} actual runtime outputs: invariants PASS`);
+JS
+```
+
+Six new nightly declarations and three relocated old anchors are statically
+valid; mutation execution=0 and caught=unknown. Frozen outcomes remain intact.
+
+## Paired synchronous CPU measurements
+
+Reproduce after fresh test-build compilation in each checkout:
+`node demo/benchmark_geometry_history.mjs --output=<raw.json>`.
+The same script and harness bytes were overlaid onto the immutable accepted
+baseline without changing any production source. Symlinked dependencies use
+the same pinned lockfile and Node22.23.2. Raw evidence:
+[before](1100-geometry-history-performance/before.json),
+[candidate](1100-geometry-history-performance/candidate.json),
+[environment](1100-geometry-history-performance/environment.json), and
+[recipe hashes](1100-geometry-history-performance/recipe.sha256).
+
+The active floor has146 rooms (147 for the valid-stair case), plus two warm
+foreign one-room floors. Cold means new Card pools on A with B/C warm; module
+and process-level geometry caches are not patched/reset. Warm reuses the same
+history owner. Seven samples are retained for each direction/phase/scenario.
+The timed boundary is synchronous `_stepGeometryHistory` with real geometry
+owners and no diagnostic deep clones. UI paint, debounce, transport, fixture
+construction and post-step readback are outside it. These are workstation CPU
+diagnostics, not browser frame time or measured latency on the owner's HA.
+Preflight/union columns count mandatory safety wall-pass calls; renderer cache
+builds are observed separately by native smokes.
+| Scenario | Card pools on A | Direction | Median CPU ms before → after | Preflight/union calls before → after | B union builds before → after |
+|---|---|---|---:|---|---|
+| thickness | cold-active-floor | undo | 1357.91 → 716.65 | 2/2 → 1/1 | 1 → 0 |
+| thickness | cold-active-floor | redo | 1374.31 → 702.69 | 2/2 → 1/1 | 1 → 0 |
+| thickness | warm-active-floor | undo | 1381.72 → 718.70 | 2/2 → 1/1 | 1 → 0 |
+| thickness | warm-active-floor | redo | 1380.56 → 721.33 | 2/2 → 1/1 | 1 → 0 |
+| transform | cold-active-floor | undo | 62.67 → 8.48 | 0/0 → 0/0 | 1 → 0 |
+| transform | cold-active-floor | redo | 64.22 → 8.33 | 0/0 → 0/0 | 1 → 0 |
+| transform | warm-active-floor | undo | 64.93 → 8.48 | 0/0 → 0/0 | 1 → 0 |
+| transform | warm-active-floor | redo | 66.26 → 8.42 | 0/0 → 0/0 | 1 → 0 |
+| stairs | cold-active-floor | undo | 66.23 → 8.65 | 0/0 → 0/0 | 1 → 0 |
+| stairs | cold-active-floor | redo | 67.23 → 8.69 | 0/0 → 0/0 | 1 → 0 |
+| stairs | warm-active-floor | undo | 69.08 → 8.82 | 0/0 → 0/0 | 1 → 0 |
+| stairs | warm-active-floor | redo | 72.27 → 8.62 | 0/0 → 0/0 | 1 → 0 |
+
+Baseline exited1 with84 counter violations; candidate exited0 with no counter
+violations. Every output document and save count was checked outside the timed
+interval. Neither limits nor fixed delays were altered. The raw data preserve
+all samples; the table reports medians without dropping outliers.
+
+## Actual Golden captures
+
+Pinned Chromium151.0.7922.34, Linux x64, matrix104, DPR1. Both accepted-base and
+candidate captures of `geometry-view-dark-fit`, `geometry-view-light-fit`,
+`stairs-flat-selected-light` and `geometry-plan-editor-dark` match their indexed
+PNG SHA256 exactly, with zero differing pixels and ratio0. Every before/candidate
+PNG is also byte-identical. The [raw pair](1100-geometry-history-performance/golden-pair.json)
+retains build fingerprints, capture provenance, indexed hashes and metrics.
+Actual PNGs/full capture logs are preserved in the task's local evidence folder;
+the final selected CI producer will retain its own canonical receipt/artifacts.
+
+There was no inherited indexed RED in these four scenes. The ledger uses
+schema2 `goldenChecks` only, with no change/new intent or baseline acceptance.
+The previously suspected mode-tab drift was tested rather than assumed.
+
+## Final integration still pending
+
+This is the completed local functional/performance evidence, not S7 acceptance.
+Before S7, rebase onto accepted #1097, inspect its raw opening-join/preview
+producer inputs, run necessary final counter/native/corpus checks, and finish
+the normal protected hook/CI and parsed handoff. Measurements remain explicitly
+bound to the source pair above; source/recipe changes must not be silently
+presented as the same measured material. No extra beta or E2E test change is
+part of this task; the accepted E2E impact verdict is «не надо».

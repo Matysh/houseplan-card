@@ -15,6 +15,7 @@
  */
 import { launch, check, finish } from './serve.mjs';
 import { requirePinnedBrowser } from '../scripts/browser-attestation.mjs';
+import { commitWallSegmentModel } from '../test-build/wall-segment-model.js';
 requirePinnedBrowser('#908 backdrop terminal input');
 const { page, browser } = await launch();
 
@@ -156,9 +157,6 @@ await settle();
 // ---------- 2) drag the body: the picture moves, the plan does not --------
 const roomsBefore = await page.evaluate(() =>
   JSON.stringify(window.__card._serverCfg.spaces.find((s) => s.id === 'f1').rooms));
-await page.evaluate(() => window.__hpTest.waitForWrites());
-const backdropBeforeDocument = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
-const backdropBeforeImage = await imageRect();
 {
   const [ax, ay] = await screenPt(500, 500);
   // +102 / +52 render units: neither is a whole number of grid steps, so the
@@ -219,9 +217,36 @@ check('the_plan_geometry_never_moved', await page.evaluate(() =>
   JSON.stringify(window.__card._serverCfg.spaces.find((s) => s.id === 'f1').rooms)), roomsBefore);
 
 // #1100: native ordinary history restores the picture and exact document without physical builds.
+// Keep the original legacy scenarios above/below. This separate current-model
+// fixture crosses the real migration before recording the measured command.
 await page.evaluate(() => window.__hpTest.waitForWrites());
+const historyInput = await page.evaluate(() => structuredClone(window.__card._serverCfg));
+const historyPlanKeys = ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle', 'plan_opacity'];
+const historyTransforms = historyInput.spaces.map(space => Object.fromEntries(historyPlanKeys.filter(key => key in space).map(key => [key, space[key]])));
+for (const space of historyInput.spaces) for (const key of historyPlanKeys) delete space[key];
+const historyFixture = commitWallSegmentModel(historyInput).config;
+historyFixture.spaces.forEach((space, index) => Object.assign(space, historyTransforms[index]));
+await page.evaluate(async fixture => {
+  await window.__hpTest.setServerConfig(fixture); await window.__hpTest.switchSpace('f1');
+  await window.__hpTest.setMode('decor');
+}, historyFixture);
+await tool('backdrop'); await page.evaluate(() => window.__hpTest.waitForWrites()); await settle();
+check('backdrop_history_fixture_has_current_carriers', await page.evaluate(() => {
+  const c = window.__card._serverCfg;
+  return c.model_version === 10 && c.spaces.every(space => Array.isArray(space.wall_segments)
+    && space.rooms.every(room => Array.isArray(room.wall_ids) && room.wall_ids.length === room.poly.length));
+}), true);
+const backdropBeforeDocument = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
+const backdropBeforeImage = await imageRect();
+{
+  const from = await screenPt(500, 500), to = await screenPt(550, 525);
+  await page.mouse.move(...from); await page.mouse.down();
+  await page.mouse.move(...to, { steps: 3 }); await page.mouse.up();
+  await page.evaluate(() => window.__hpTest.waitForWrites()); await settle();
+}
 const backdropMovedDocument = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
 const backdropMovedImage = await imageRect();
+check('backdrop_history_native_edit_really_moves_image', JSON.stringify(backdropMovedImage) !== JSON.stringify(backdropBeforeImage), true);
 const historyPhysicalBuilds = () => page.evaluate(() => [window.__card._floorCacheBuilds.wallUnion, window.__card._floorCacheBuilds.physicalBodies]);
 const backdropHistoryBuilds = await historyPhysicalBuilds();
 for (const [direction, expectedDocument, expectedImage] of [

@@ -1,0 +1,406 @@
+{
+  "beforeHead": "4bb5eb42626f4efe72a20744746b8b2dc820ebc0",
+  "candidateHead": "4f890a94c1c21d7f7380b31b24d429222c889a6f",
+  "rows": [
+    {
+      "id": "geometry-view-dark-fit",
+      "commonBaseByteEqual": true,
+      "beforeStrict": true,
+      "candidateStrict": true,
+      "before": {
+        "id": "geometry-view-dark-fit",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0005
+        },
+        "status": "passed",
+        "actualSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "view",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": ""
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-history-baseline-4bb5eb42/artifacts/golden/actual/geometry-view-dark-fit.png",
+        "baseline": "/home/matysh/hp-1100-history-baseline-4bb5eb42/demo/golden/baselines/geometry-view-dark-fit.png",
+        "baselineSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+        "dimensionsMatch": true,
+        "actualSize": [
+          988,
+          775
+        ],
+        "baselineSize": [
+          988,
+          775
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "candidate": {
+        "id": "geometry-view-dark-fit",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0005
+        },
+        "status": "passed",
+        "actualSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "view",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": ""
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-geometry-history-20261028/artifacts/golden/actual/geometry-view-dark-fit.png",
+        "baseline": "/home/matysh/hp-1100-geometry-history-20261028/demo/golden/baselines/geometry-view-dark-fit.png",
+        "baselineSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+        "dimensionsMatch": true,
+        "actualSize": [
+          988,
+          775
+        ],
+        "baselineSize": [
+          988,
+          775
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "beforeCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+        "ci": null
+      },
+      "candidateCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "34bf442878f221e2d46028ce2d8b78b41ef20818ebdfd1431f1bd6e499f30f23",
+        "ci": null
+      }
+    },
+    {
+      "id": "geometry-view-light-fit",
+      "commonBaseByteEqual": true,
+      "beforeStrict": true,
+      "candidateStrict": true,
+      "before": {
+        "id": "geometry-view-light-fit",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0005
+        },
+        "status": "passed",
+        "actualSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "view",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": ""
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-history-baseline-4bb5eb42/artifacts/golden/actual/geometry-view-light-fit.png",
+        "baseline": "/home/matysh/hp-1100-history-baseline-4bb5eb42/demo/golden/baselines/geometry-view-light-fit.png",
+        "baselineSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+        "dimensionsMatch": true,
+        "actualSize": [
+          988,
+          775
+        ],
+        "baselineSize": [
+          988,
+          775
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "candidate": {
+        "id": "geometry-view-light-fit",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0005
+        },
+        "status": "passed",
+        "actualSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "view",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": ""
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-geometry-history-20261028/artifacts/golden/actual/geometry-view-light-fit.png",
+        "baseline": "/home/matysh/hp-1100-geometry-history-20261028/demo/golden/baselines/geometry-view-light-fit.png",
+        "baselineSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+        "dimensionsMatch": true,
+        "actualSize": [
+          988,
+          775
+        ],
+        "baselineSize": [
+          988,
+          775
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "beforeCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+        "ci": null
+      },
+      "candidateCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "34bf442878f221e2d46028ce2d8b78b41ef20818ebdfd1431f1bd6e499f30f23",
+        "ci": null
+      }
+    },
+    {
+      "id": "stairs-flat-selected-light",
+      "commonBaseByteEqual": true,
+      "beforeStrict": true,
+      "candidateStrict": true,
+      "before": {
+        "id": "stairs-flat-selected-light",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0005
+        },
+        "status": "passed",
+        "actualSha256": "da75a4538e5922a49ef2c309f58306f2793e322acd78f98a386223351b82a14c",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "plan",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": ""
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-history-baseline-4bb5eb42/artifacts/golden/actual/stairs-flat-selected-light.png",
+        "baseline": "/home/matysh/hp-1100-history-baseline-4bb5eb42/demo/golden/baselines/stairs-flat-selected-light.png",
+        "baselineSha256": "da75a4538e5922a49ef2c309f58306f2793e322acd78f98a386223351b82a14c",
+        "dimensionsMatch": true,
+        "actualSize": [
+          628,
+          645
+        ],
+        "baselineSize": [
+          628,
+          645
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "candidate": {
+        "id": "stairs-flat-selected-light",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0005
+        },
+        "status": "passed",
+        "actualSha256": "da75a4538e5922a49ef2c309f58306f2793e322acd78f98a386223351b82a14c",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "plan",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": ""
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-geometry-history-20261028/artifacts/golden/actual/stairs-flat-selected-light.png",
+        "baseline": "/home/matysh/hp-1100-geometry-history-20261028/demo/golden/baselines/stairs-flat-selected-light.png",
+        "baselineSha256": "da75a4538e5922a49ef2c309f58306f2793e322acd78f98a386223351b82a14c",
+        "dimensionsMatch": true,
+        "actualSize": [
+          628,
+          645
+        ],
+        "baselineSize": [
+          628,
+          645
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "beforeCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+        "ci": null
+      },
+      "candidateCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "34bf442878f221e2d46028ce2d8b78b41ef20818ebdfd1431f1bd6e499f30f23",
+        "ci": null
+      }
+    },
+    {
+      "id": "geometry-plan-editor-dark",
+      "commonBaseByteEqual": true,
+      "beforeStrict": true,
+      "candidateStrict": true,
+      "before": {
+        "id": "geometry-plan-editor-dark",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0008
+        },
+        "status": "passed",
+        "actualSha256": "4e93c4352a86399be68aad356466cf1190f6a6c55e507bf9bc6fb00ad4fb29c3",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "plan",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": "",
+          "planKeyboardFocus": {
+            "precondition": "native Shift+Tab then Tab",
+            "focusVisible": true,
+            "mode": "plan",
+            "space": "golden-geometry",
+            "tool": "select",
+            "persistenceAndGeometryUnchanged": true,
+            "trustedTabEvents": [
+              {
+                "trusted": true,
+                "shift": true,
+                "defaultPrevented": false
+              },
+              {
+                "trusted": true,
+                "shift": false,
+                "defaultPrevented": false
+              }
+            ]
+          }
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-history-baseline-4bb5eb42/artifacts/golden/actual/geometry-plan-editor-dark.png",
+        "baseline": "/home/matysh/hp-1100-history-baseline-4bb5eb42/demo/golden/baselines/geometry-plan-editor-dark.png",
+        "baselineSha256": "4e93c4352a86399be68aad356466cf1190f6a6c55e507bf9bc6fb00ad4fb29c3",
+        "dimensionsMatch": true,
+        "actualSize": [
+          1180,
+          900
+        ],
+        "baselineSize": [
+          1180,
+          900
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "candidate": {
+        "id": "geometry-plan-editor-dark",
+        "threshold": {
+          "maxChannelDelta": 10,
+          "maxDiffRatio": 0.0008
+        },
+        "status": "passed",
+        "actualSha256": "4e93c4352a86399be68aad356466cf1190f6a6c55e507bf9bc6fb00ad4fb29c3",
+        "runtime": {
+          "space": "golden-geometry",
+          "mode": "plan",
+          "devices": 9,
+          "dialog": false,
+          "helpOpen": false,
+          "editorTray": "",
+          "defaultFloorWarning": "",
+          "planKeyboardFocus": {
+            "precondition": "native Shift+Tab then Tab",
+            "focusVisible": true,
+            "mode": "plan",
+            "space": "golden-geometry",
+            "tool": "select",
+            "persistenceAndGeometryUnchanged": true,
+            "trustedTabEvents": [
+              {
+                "trusted": true,
+                "shift": true,
+                "defaultPrevented": false
+              },
+              {
+                "trusted": true,
+                "shift": false,
+                "defaultPrevented": false
+              }
+            ]
+          }
+        },
+        "deviceScaleFactor": 1,
+        "actual": "/home/matysh/hp-1100-geometry-history-20261028/artifacts/golden/actual/geometry-plan-editor-dark.png",
+        "baseline": "/home/matysh/hp-1100-geometry-history-20261028/demo/golden/baselines/geometry-plan-editor-dark.png",
+        "baselineSha256": "4e93c4352a86399be68aad356466cf1190f6a6c55e507bf9bc6fb00ad4fb29c3",
+        "dimensionsMatch": true,
+        "actualSize": [
+          1180,
+          900
+        ],
+        "baselineSize": [
+          1180,
+          900
+        ],
+        "differingPixels": 0,
+        "diffRatio": 0,
+        "maxObservedDelta": 0,
+        "passed": true
+      },
+      "beforeCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+        "ci": null
+      },
+      "candidateCapture": {
+        "platform": "linux",
+        "arch": "x64",
+        "chromium": "151.0.7922.34",
+        "buildFingerprint": "34bf442878f221e2d46028ce2d8b78b41ef20818ebdfd1431f1bd6e499f30f23",
+        "ci": null
+      }
+    }
+  ]
+}
