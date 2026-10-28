@@ -61,6 +61,28 @@ const badges = () => page.evaluate(() =>
 const nums = async () => (await badges()).map((t) => parseFloat(t));
 const tick = () => page.evaluate(() => window.__card.renderRoot.querySelectorAll('.opcentertick').length);
 const near = (a, b, tol) => Math.abs(a - b) <= tol;
+// #1097: the saved opening is immutable while held. Preserve the original
+// magnet numbers/tolerances, but read the actual visible symbol that follows
+// the pointer; a hidden settled copy or a draft-only state cannot satisfy it.
+const paintedCoordinate = async (axis, label) => {
+  const result = await page.evaluate((axis) => {
+    const visible = (element) => {
+      for (let node = element; node; node = node.parentElement) {
+        const style = getComputedStyle(node);
+        if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) === 0) return false;
+      }
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    };
+    const symbols = [...window.__card.renderRoot.querySelectorAll('[data-hp="opening"][data-id="op1"]')]
+      .filter(element => element.querySelector('.op-leaf') && visible(element));
+    const match = symbols.length === 1 && /translate\(\s*([-+\d.eE]+)[ ,]+([-+\d.eE]+)\s*\)/.exec(symbols[0].getAttribute('transform') || '');
+    return { count: symbols.length, value: match ? Number(match[axis === 'x' ? 1 : 2]) / 1000 : null };
+  }, axis);
+  check(`${label}_one_visible_symbol`, result.count, 1);
+  return result.value ?? Number.NaN;
+};
+
 
 // ---------- drag to an off-center spot: two live badges, no tick ----------
 const [sx, sy] = await screenPt(200, 140);
@@ -100,8 +122,7 @@ const [t3x] = await screenPt(293.7, 140);
 await page.mouse.move(t3x, sy, { steps: 3 });
 await settle();
 check('tick_at_center', await tick(), 1);
-check('magnet_snaps_center', near(await page.evaluate(() =>
-  window.__card._curSpaceCfg.openings[0].x), 0.295, 1e-6));
+check('magnet_snaps_center', near(await paintedCoordinate('x', 'magnet_center'), 0.295, 1e-6));
 // both shoulders equal after the snap: (510 - 80) / 2 = 215 u -> 2.58 m
 check('badges_equal_at_center', await badges(), ['2.58 m', '2.58 m']);
 // the tick is perpendicular to the wall (horizontal wall -> a vertical dash)
@@ -140,7 +161,7 @@ await page.mouse.down();
 await page.mouse.move(t3x, sy, { steps: 3 });
 await settle();
 check('tick_with_shift', await tick(), 1);
-const freeX = await page.evaluate(() => window.__card._curSpaceCfg.openings[0].x);
+const freeX = await paintedCoordinate('x', 'magnet_shift');
 check('magnet_with_shift', near(freeX, 0.295, 1e-6));
 check('badges_still_there_with_shift', (await badges()).length, 2);
 await page.mouse.up();
@@ -192,8 +213,7 @@ await page.mouse.down();
 await page.mouse.move(vx0, vy2, { steps: 3 });
 await settle();
 check('shared_wall_tick_at_own_center', await tick(), 1);
-check('shared_wall_magnet_y_0_3', near(await page.evaluate(() =>
-  window.__card._curSpaceCfg.openings[0].y), 0.3, 1e-6));
+check('shared_wall_magnet_y_0_3', near(await paintedCoordinate('y', 'shared_wall_magnet'), 0.3, 1e-6));
 // equal shoulders on the own edge: (320 - 80) / 2 = 120 u -> 1.44 m
 check('shared_wall_badges_equal', await badges(), ['1.44 m', '1.44 m']);
 await page.mouse.up();

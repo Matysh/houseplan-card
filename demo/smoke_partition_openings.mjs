@@ -86,7 +86,7 @@ const out = await page.evaluate(async () => {
   card._saveOpening();
   await update();
   let space = card._curSpaceCfg;
-  const saved = space.openings?.[0];
+  let saved = space.openings?.[0];
   result.saveMaterializesHostAndCompatibilityGeometry = saved?.host?.id === 'host'
     && Math.abs(saved.host.t - 0.5) < 1e-9
     && Math.abs(saved.x - 0.5) < 1e-9
@@ -101,20 +101,22 @@ const out = await page.evaluate(async () => {
     && Math.abs(endpointCandidate.host.t - (endpointX - 250) / 500) < 1e-9
     && !!endpointCandidate.measure.labels[0].text;
 
-  const runtime = card._editorRuntime;
-  const originalSvgPoint = runtime._svgPoint;
-  card._opDrag = {
-    id: saved.id, moved: false, sx: 0, sy: 0, dirty: false,
-    before: card._geometrySnapshot(),
-  };
+  // #1097: the direct jamb case enters the ordinary down handler instead
+  // of fabricating a legacy owner without pointer/source/epoch identity.
+  // Keep the original coordinate override until up flushes the queued move.
+  const draggedId = saved.id;
+  const runtime = card._editorRuntime, originalSvgPoint = runtime._svgPoint;
+  card._opPointerDown(new PointerEvent('pointerdown', { pointerId: 186, clientX: 0, clientY: 0 }), saved);
   runtime._svgPoint = () => [250, 500];
-  card._opPointerMove(new PointerEvent('pointermove', {
-    pointerId: 186, clientX: 20, clientY: 0, bubbles: true,
-  }), saved);
-  await Promise.resolve();
-  runtime._svgPoint = originalSvgPoint;
-  card._opPointerUp(new PointerEvent('pointerup', { pointerId: 186, bubbles: true }), saved);
+  try {
+    card._opPointerMove(new PointerEvent('pointermove', {
+      pointerId: 186, clientX: 20, clientY: 0, bubbles: true,
+    }), saved);
+    card._opPointerUp(new PointerEvent('pointerup', { pointerId: 186, bubbles: true }), saved);
+  } finally { runtime._svgPoint = originalSvgPoint; }
   await update();
+  space = card._curSpaceCfg;
+  saved = space.openings.find(opening => opening.id === draggedId);
   result.directDragStopsAtSameJambBoundary = Math.abs(saved.host.t - (endpointX - 250) / 500) < 1e-9
     && Math.abs(saved.x - endpointX / 1000) < 1e-9;
 

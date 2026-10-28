@@ -2352,5 +2352,748 @@
     "candidate-calls.json": "e041389136dcbbf1b7b680ef65681e5b4b98b930ca7053f501b50ccddf110e9e",
     "before-recipe.sha256": "e822c2b95d453ad0707bcea9ec06969ae799c3d38c3325d8c260efc4028d3a39",
     "candidate-recipe.sha256": "e822c2b95d453ad0707bcea9ec06969ae799c3d38c3325d8c260efc4028d3a39"
+  },
+  "pixelProbe": {
+    "kind": "Fixed world ROI; diagnostic transient AA is not an exception to settled Golden exactness.",
+    "worldROI": [
+      209,
+      73.66666150093079,
+      239,
+      89.66666150093079
+    ],
+    "matrix": [
+      0.6714876174188539,
+      0,
+      0,
+      0.6714876174188539,
+      308.95661485859296,
+      285.685959008082
+    ],
+    "clip": {
+      "x": 449,
+      "y": 335,
+      "width": 22,
+      "height": 12
+    },
+    "baselineHeldVsReleased": {
+      "identical": false,
+      "differing": 74,
+      "sizeMismatch": false,
+      "maxDelta": 67
+    },
+    "baselineBeforeVsReleased": {
+      "identical": true,
+      "differing": 0,
+      "sizeMismatch": false,
+      "maxDelta": 0
+    },
+    "heldBaselineVsCandidate": {
+      "identical": false,
+      "differing": 7,
+      "sizeMismatch": false,
+      "maxDelta": 1
+    },
+    "settledBeforeBaselineVsCandidate": {
+      "identical": true,
+      "differing": 0,
+      "sizeMismatch": false,
+      "maxDelta": 0
+    },
+    "settledReleasedBaselineVsCandidate": {
+      "identical": true,
+      "differing": 0,
+      "sizeMismatch": false,
+      "maxDelta": 0
+    },
+    "imageSha256": {
+      "before": {
+        "before": "fc6ea3de8633b9d52663fe3177d9d97a4f4cc41884c62e76a810328baf28a1d6",
+        "held": "9f2c825e4a4854c10838fabf1ccd55a1ee8b8c3eba0c873858ead210ea5ddfe4",
+        "released": "fc6ea3de8633b9d52663fe3177d9d97a4f4cc41884c62e76a810328baf28a1d6"
+      },
+      "candidate": {
+        "before": "fc6ea3de8633b9d52663fe3177d9d97a4f4cc41884c62e76a810328baf28a1d6",
+        "held": "a344fcacf47acbae0ecfa3266b2e1c6da7d6146e3ccdbf1a3a81c3f11c6b4046",
+        "released": "fc6ea3de8633b9d52663fe3177d9d97a4f4cc41884c62e76a810328baf28a1d6"
+      }
+    }
+  },
+  "normalViewportClip": {
+    "nativeResizes": [
+      720,
+      1280
+    ],
+    "maximumPhysicalEdgeError": 2.2737367544323206e-13,
+    "ownerAfterSettle": "live",
+    "sourceChanged": false
+  },
+  "visualEvidence": {
+    "strictIndexedSceneIds": [
+      "split-corner-wall-thick-dark",
+      "geometry-view-dark-fit",
+      "geometry-view-light-fit"
+    ],
+    "commonBaseExactSceneIds": [
+      "opening-placement-door-thick-wall-dark",
+      "opening-placement-passage-thick-wall-dark",
+      "opening-placement-passage-thick-wall-light"
+    ],
+    "indexedInheritanceNote": "The three opening-placement frames already differ from the indexed baselines in accepted31b: 1002/1002/994 exact RGBA pixels, visually confined to the Plan editor mode-tab chrome. The task introducing that inherited discrepancy is not attributed. These are not reported as global GREEN; no fake change intent or baseline acceptance. Ordinary global acceptance remains a pre-beta activity.",
+    "controls": [
+      {
+        "id": "opening-placement-door-thick-wall-dark",
+        "scope": "same accepted common-base before/after",
+        "sourceBefore": "31b17bec040f25224b80f0f679378807ccfd37fc",
+        "sourceCandidate": "c6d735779bb26109d9442134254be8c3d207bf1e",
+        "bytesIdentical": true,
+        "beforeSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+        "candidateSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+        "indexedComparison": {
+          "identical": false,
+          "differing": 1002,
+          "sizeMismatch": false
+        },
+        "indexedBaselineSha256": "e299a5aa5fb18f935096bd76eaed99bccd019a33fffc524bb9d0554277a4df22",
+        "beforeCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "71166b1e9fff521bf4c08043e587bfb1a1a7ae22a1c13fc0b4c49d1cc65e224f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:07:33.464Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "71166b1e9fff521bf4c08043e587bfb1a1a7ae22a1c13fc0b4c49d1cc65e224f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-door-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-common-baseline-31b-20261028/artifacts/golden/actual/opening-placement-door-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 347,
+              "openingPreviewMaxChannelDelta": 95,
+              "openingPreviewPixelsInsideWall": 52,
+              "openingPreviewWallSamples": 742,
+              "baseline": "/home/matysh/hp-1097-common-baseline-31b-20261028/demo/golden/baselines/opening-placement-door-thick-wall-dark.png",
+              "baselineSha256": "e299a5aa5fb18f935096bd76eaed99bccd019a33fffc524bb9d0554277a4df22",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-common-baseline-31b-20261028/artifacts/golden/diff/opening-placement-door-thick-wall-dark.png"
+            }
+          ]
+        },
+        "candidateCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:06:00.230Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-door-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/opening-placement-door-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 347,
+              "openingPreviewMaxChannelDelta": 95,
+              "openingPreviewPixelsInsideWall": 52,
+              "openingPreviewWallSamples": 742,
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/opening-placement-door-thick-wall-dark.png",
+              "baselineSha256": "e299a5aa5fb18f935096bd76eaed99bccd019a33fffc524bb9d0554277a4df22",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/diff/opening-placement-door-thick-wall-dark.png"
+            }
+          ]
+        }
+      },
+      {
+        "id": "opening-placement-passage-thick-wall-dark",
+        "scope": "same accepted common-base before/after",
+        "sourceBefore": "31b17bec040f25224b80f0f679378807ccfd37fc",
+        "sourceCandidate": "c6d735779bb26109d9442134254be8c3d207bf1e",
+        "bytesIdentical": true,
+        "beforeSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+        "candidateSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+        "indexedComparison": {
+          "identical": false,
+          "differing": 1002,
+          "sizeMismatch": false
+        },
+        "indexedBaselineSha256": "8dcfeb9c9a79c91bb5f2fde387217383c6bc6d56813ecc5d387bc8cc3864e5ab",
+        "beforeCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "71166b1e9fff521bf4c08043e587bfb1a1a7ae22a1c13fc0b4c49d1cc65e224f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:07:36.264Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "71166b1e9fff521bf4c08043e587bfb1a1a7ae22a1c13fc0b4c49d1cc65e224f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-common-baseline-31b-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 321,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 264,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-common-baseline-31b-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-dark.png",
+              "baselineSha256": "8dcfeb9c9a79c91bb5f2fde387217383c6bc6d56813ecc5d387bc8cc3864e5ab",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-common-baseline-31b-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-dark.png"
+            }
+          ]
+        },
+        "candidateCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:06:03.132Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 321,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 264,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-dark.png",
+              "baselineSha256": "8dcfeb9c9a79c91bb5f2fde387217383c6bc6d56813ecc5d387bc8cc3864e5ab",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-dark.png"
+            }
+          ]
+        }
+      },
+      {
+        "id": "opening-placement-passage-thick-wall-light",
+        "scope": "same accepted common-base before/after",
+        "sourceBefore": "31b17bec040f25224b80f0f679378807ccfd37fc",
+        "sourceCandidate": "c6d735779bb26109d9442134254be8c3d207bf1e",
+        "bytesIdentical": true,
+        "beforeSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+        "candidateSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+        "indexedComparison": {
+          "identical": false,
+          "differing": 994,
+          "sizeMismatch": false
+        },
+        "indexedBaselineSha256": "574d6d3cde08358fa8c738844028d863823d8a3129f77e7d28524578f64dc5ff",
+        "beforeCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "71166b1e9fff521bf4c08043e587bfb1a1a7ae22a1c13fc0b4c49d1cc65e224f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:07:39.106Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "71166b1e9fff521bf4c08043e587bfb1a1a7ae22a1c13fc0b4c49d1cc65e224f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-light",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-common-baseline-31b-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-light.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 322,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 265,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-common-baseline-31b-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-light.png",
+              "baselineSha256": "574d6d3cde08358fa8c738844028d863823d8a3129f77e7d28524578f64dc5ff",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 967,
+              "diffRatio": 0.0009105461393596987,
+              "maxObservedDelta": 244,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-common-baseline-31b-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-light.png"
+            }
+          ]
+        },
+        "candidateCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:06:06.057Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-light",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-light.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 322,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 265,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-light.png",
+              "baselineSha256": "574d6d3cde08358fa8c738844028d863823d8a3129f77e7d28524578f64dc5ff",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 967,
+              "diffRatio": 0.0009105461393596987,
+              "maxObservedDelta": 244,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-light.png"
+            }
+          ]
+        }
+      },
+      {
+        "id": "split-corner-wall-thick-dark",
+        "scope": "strict indexed",
+        "comparison": {
+          "identical": true,
+          "differing": 0,
+          "sizeMismatch": false
+        },
+        "baselineSha256": "f69b62aef8c0c94058ed74ee4f7385d8e2fcd4530f5234ca4ed25c403594824c",
+        "actualSha256": "f69b62aef8c0c94058ed74ee4f7385d8e2fcd4530f5234ca4ed25c403594824c",
+        "capture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:06:08.529Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "split-corner-wall-thick-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0005
+              },
+              "status": "passed",
+              "actualSha256": "f69b62aef8c0c94058ed74ee4f7385d8e2fcd4530f5234ca4ed25c403594824c",
+              "runtime": {
+                "space": "golden-corner-split",
+                "mode": "view",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/split-corner-wall-thick-dark.png",
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/split-corner-wall-thick-dark.png",
+              "baselineSha256": "f69b62aef8c0c94058ed74ee4f7385d8e2fcd4530f5234ca4ed25c403594824c",
+              "dimensionsMatch": true,
+              "actualSize": [
+                988,
+                775
+              ],
+              "baselineSize": [
+                988,
+                775
+              ],
+              "differingPixels": 0,
+              "diffRatio": 0,
+              "maxObservedDelta": 0,
+              "passed": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "geometry-view-dark-fit",
+        "scope": "strict indexed",
+        "comparison": {
+          "identical": true,
+          "differing": 0,
+          "sizeMismatch": false
+        },
+        "baselineSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+        "actualSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+        "capture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:06:11.002Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "geometry-view-dark-fit",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0005
+              },
+              "status": "passed",
+              "actualSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "view",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/geometry-view-dark-fit.png",
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/geometry-view-dark-fit.png",
+              "baselineSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4",
+              "dimensionsMatch": true,
+              "actualSize": [
+                988,
+                775
+              ],
+              "baselineSize": [
+                988,
+                775
+              ],
+              "differingPixels": 0,
+              "diffRatio": 0,
+              "maxObservedDelta": 0,
+              "passed": true
+            }
+          ]
+        }
+      },
+      {
+        "id": "geometry-view-light-fit",
+        "scope": "strict indexed",
+        "comparison": {
+          "identical": true,
+          "differing": 0,
+          "sizeMismatch": false
+        },
+        "baselineSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+        "actualSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+        "capture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T14:06:13.426Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "ff0f84ee9e700ecb2bb43cd46305cf1709b6ef8f49ee7f5e0922e8ffa901430f",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "geometry-view-light-fit",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0005
+              },
+              "status": "passed",
+              "actualSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "view",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/geometry-view-light-fit.png",
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/geometry-view-light-fit.png",
+              "baselineSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee",
+              "dimensionsMatch": true,
+              "actualSize": [
+                988,
+                775
+              ],
+              "baselineSize": [
+                988,
+                775
+              ],
+              "differingPixels": 0,
+              "diffRatio": 0,
+              "maxObservedDelta": 0,
+              "passed": true
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "nativeFinal": {
+    "mainOpeningDrag": "PASS",
+    "hostedOpeningPreview861": "PASS with original frozen expectations",
+    "openingPreview": "PASS",
+    "openingMeasure": {
+      "baseline": "PASS",
+      "candidate": "PASS",
+      "oracleRepair": "Three original held magnet checks read the only actually visible SVG symbol; same expected numbers and tolerances."
+    },
+    "partitionOpenings": {
+      "baseline": "PASS",
+      "candidate": "PASS",
+      "fixtureRepair": "The direct jamb case enters ordinary pointerdown, retains the coordinate override through queued-up flush, and reads the accepted current record; same jamb x/t tolerances."
+    },
+    "floorCacheReuse": "PASS",
+    "nodeHistoryContext": "PASS",
+    "deviceContactLiveDrag": "PASS"
   }
 }
