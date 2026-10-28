@@ -2449,8 +2449,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node --test test/golden-scene-repaint.test.mjs',
     because: '#881 owner option b / AC1: scenes outside the explicit repaint allowlist must keep their unchanged capture path.',
     patches: [{ file: 'demo/golden/scene-repaint.mjs',
-      find: "'plan-snap-line-gaps-dark'].includes(scenario.id)) {",
-      replace: "'plan-snap-line-gaps-dark'].includes(scenario.id) || true) {" }],
+      find: "'plan-snap-line-gaps-dark', 'geometry-plan-editor-dark'].includes(scenario.id)) {",
+      replace: "'plan-snap-line-gaps-dark', 'geometry-plan-editor-dark'].includes(scenario.id) || true) {" }],
   },
   {
     id: 'view-edit-footer-forgets-permission',

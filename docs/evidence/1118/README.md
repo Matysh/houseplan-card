@@ -54,3 +54,11 @@ fixtures, keyboard/geometry controls and strict unchanged gates remain intact.
 
 Task evidence is not the required complete beta artifact or its review. Global
 baseline files and the production bundle are absent from this task commit.
+
+The first normal protected push was refused: the existing static
+golden-repaint-leaks-to-other-scenes declaration still anchored the former
+allowlist tail. Two tooling assertions reported the same stale anchor. A
+follow-up changes only that declaration's find/replace to the extended list;
+the guard and its broaden-to-all meaning are unchanged. Static readiness then
+passes for 2014 definitions (execution=0, caught=unknown); four focused
+behavior units still pass. No mutant was executed or treated as caught.
