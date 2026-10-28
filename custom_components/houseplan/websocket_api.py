@@ -2340,7 +2340,9 @@ async def ws_wall_node_move(hass: HomeAssistant, connection, msg: dict[str, Any]
             proved_baseline = node_move_host_baseline(previous, candidate, msg["space_id"],
                 msg["intent"], msg["direction"], msg.get("before_space"))
             validate_partition_opening_hosts(candidate, proved_baseline)
-            counts = validate_junction_limits(candidate, previous)
+            inherited = rt.junction_baseline
+            counts = validate_junction_limits(candidate, previous, baseline_counts=(
+                inherited[1] if inherited and inherited[0] == rev else None))
             return candidate, counts
 
         try:

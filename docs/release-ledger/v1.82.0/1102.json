@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1102,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already supports wall/node_move and recounts previous junction violations instead of using the exact-revision baseline. Reuse that existing cache while preserving all candidate guards and stale-revision fallback.",
+  "summary": {
+    "ru": "Сдвиг узла стены быстрее проверяет ограничения стыков.",
+    "en": "Moving a wall node validates junction limits with the existing revision cache."
+  }
+}

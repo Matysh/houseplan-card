@@ -1,5 +1,7 @@
 # Project status
 
+Wall-node movement (#1102) skips recounting previous junction violations when the cached baseline matches the current revision, preserving candidate validation and stale-cache fallback.
+
 Space deletion (#1101) prepares its validated config/layout pair in an executor under the existing write lock, retaining its dependency refusals, rollback and revision/event contract.
 
 Static-card sync (#1112) filters known config/layout revision echoes, combines event bursts in one 200ms window and shares partial layout reads across embedded cards. Virtual-light events retain their immediate update path.
@@ -87,7 +89,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5780 · pure backend 692 · HA-harness backend 606 · browser smokes 478 (`npm run inventory`) |
+| Tests | Node unit 5780 · pure backend 692 · HA-harness backend 607 · browser smokes 478 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

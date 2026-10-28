@@ -18455,6 +18455,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'node-move-ignores-junction-baseline-1102',
+    guard: 'node scripts/backend-test-guard.mjs issue_1102_node_move_junction_baseline_has_exact_revision_authority tests_backend/test_ha_wall_node_move_baseline.py',
+    because: '#1102: node movement must omit previous-side work only for an exact-revision junction baseline.',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            validate_partition_opening_hosts(candidate, proved_baseline)\n'
+        + '            inherited = rt.junction_baseline\n'
+        + '            counts = validate_junction_limits(candidate, previous, baseline_counts=(\n'
+        + '                inherited[1] if inherited and inherited[0] == rev else None))\n',
+      replace: '            validate_partition_opening_hosts(candidate, proved_baseline)\n'
+        + '            counts = validate_junction_limits(candidate, previous)\n',
+    }],
+  },
+  {
     id: 'space-delete-cpu-on-event-loop-1101',
     guard: 'node scripts/backend-test-guard.mjs issue_1101_space_delete_large_house_cpu_runs_in_executor tests_backend/test_ha_space_delete_executor.py',
     because: '#1101: large-house preparation must run on a worker while the paired writer still owns write_lock.',
@@ -21962,7 +21976,14 @@ const editorLatency1075Cases = [
     guard:'node scripts/backend-test-guard.mjs exact_revision_authority tests_backend/test_ha_wall_node_delete.py',
     because:'#1075 AC6: authenticated writes must recompute a missing/stale junction baseline rather than trusting a different revision.',
     patches:[{file:'custom_components/houseplan/websocket_api.py',
-      find:'inherited[1] if inherited and inherited[0] == rev else None',replace:'inherited[1] if inherited else None'}]},
+      find:'            validate_partition_opening_hosts(candidate, baseline)\n'
+        + '            inherited = rt.junction_baseline\n'
+        + '            counts = validate_junction_limits(candidate, previous, baseline_counts=(\n'
+        + '                inherited[1] if inherited and inherited[0] == rev else None))',
+      replace:'            validate_partition_opening_hosts(candidate, baseline)\n'
+        + '            inherited = rt.junction_baseline\n'
+        + '            counts = validate_junction_limits(candidate, previous, baseline_counts=(\n'
+        + '                inherited[1] if inherited else None))'}]},
 ];
 
 const decorStyle1071Cases = [

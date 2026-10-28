@@ -1,5 +1,7 @@
 # House Plan architecture
 
+Wall-node movement (#1102) reuses the same exact-revision junction baseline as node deletion. The cache replaces previous-document validation only when its revision equals the locked stored revision; publication remains after durable acceptance.
+
 Space deletion (#1101) prepares detached config/layout candidates, validation and canonical paired intent in one executor job while the existing write lock remains held. Store resolution, revisions, commit/rollback and event publication retain the same owner and order.
 
 
