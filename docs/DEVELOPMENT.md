@@ -2,19 +2,19 @@
 
 Opening drag (#1097): compile the test build, then run `node --test test/opening-drag.test.mjs test/live-editor.test.mjs test/opening-placement.test.mjs test/floor-geometry-key.test.mjs`, `node demo/smoke_opening_drag.mjs` and `node demo/smoke_partition_openings_preview.mjs`. The native smoke checks every cut and shoulder, original coordinate/final-array readback, unchanged held config/epoch/pools, neighbour reuse, cancellation and refusal. `node demo/benchmark_opening_drag.mjs` uses a canonical large-house fixture, seven series at DPR1/2 and native pointermove-to-settled wall-clock latency including IPC; counters are acceptance and milliseconds are descriptive. Preserve the earlier legacy-fixture diagnostic separately: its first release also migrated all floors, so its neighbour misses do not isolate preview eviction. See [the measurement audit](analysis/1097-opening-drag-2026-10-28.md).
 
-The owner permitted measured resource-limit growth for #1097. After accepted
-#1099, a fresh unchanged `31b17bec` build and the same recipe on the candidate
-show host references 6557→6604 (+47), runtime adapter 11960→12037 lines (+77),
-generated JS 3652946→3661718 B (+8772), initial gzip 357682→357829 B (+147),
-and lazy editor gzip 375648→378324 B (+2676); onboarding decreases 1 B.
-Carry only these own costs: host baseline6532→6579 (inherited gap25/band25),
-JS baseline3651515→3660287 (gap1431/band2000), runtime cap11923→12000
-(gap37/band50), editor ceiling375223→377899 (gap425/band2000). No accepted
-dev reference is reduced. The earlier ccc62 calibration remains diagnostic
-history in the local evidence, not the final common-base comparison. Timing
-and functional validators do not change. `benchmark_opening_drag --coverage`
-is a separate correctness pass with cold-positive exact producer coverage;
-its timings are disabled and never mixed into the seven-series sample.
+The owner permitted measured resource-limit growth for #1097. On the final
+accepted #1098 parent `4bb5eb42`, frozen donor `44d20c6f` has an identical
+568-file source/build corpus; its verified dist/manifest are reused read-only.
+Before→candidate: host references6573→6620 (+47), runtime11960→12037 (+77),
+generated JS3654523→3663304 B (+8781), initial gzip357807→357939 B (+132),
+lazy editor375914→378530 B (+2616); onboarding decreases6 B.
+Carry only this actual own cost from the accepted references: host6548→6595
+(gap25/band25), JS3653092→3661873 (gap1431/band2000), runtime11923→12000
+(gap37/band50), editor375223→377839 (gap691/band2000). Incoming dev bases
+are preserved. Older31b observations stay attached to their exact historical
+material in the paired report. Timing/functional validators remain unchanged.
+`benchmark_opening_drag --coverage` is a separate no-timing correctness pass;
+the already-published14+14 timing pair is not re-labelled as final-parent data.
 
 The #1089 View-menu owner distinguishes normal selection close from external retirement. Test delayed runtime import, target replacement, queued write and confirmation; the original pointer close consumes its compatibility click, while fresh pointer/keyboard input resets that barrier. Keep common context-menu styles adopted before the first rendered frame and avoid using projected hidden=false as saved visibility.
 

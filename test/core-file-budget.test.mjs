@@ -98,7 +98,7 @@ const CAPS = {
   // #1089, owner permits explicit finite cap increases rather than byte/line chasing:
   // existing Hide/Delete transactions gain the guarded View command adapter.
   // Actual runtime is 11898 lines; retain the finite cap and CORE_BAND50.
-  // #1097 owner-authorized observed adapter growth after accepted1099/common31b:
+  // #1097 owner-authorized observed adapter growth after accepted1098/dev4bb5:
   // 11960 ->12037 lines (+77). Carry only77 into11923, retaining the inherited
   // 37-line excess and CORE_BAND50. Local cut geometry stays in its leaf.
   'src/houseplan-editor-runtime.ts': 12000,

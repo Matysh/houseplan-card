@@ -3095,5 +3095,3447 @@
     "floorCacheReuse": "PASS",
     "nodeHistoryContext": "PASS",
     "deviceContactLiveDrag": "PASS"
+  },
+  "finalIntegration": {
+    "parent": "4bb5eb42626f4efe72a20744746b8b2dc820ebc0",
+    "candidateSourceCommit": "b675ee2c795a6916f3c53f8ff12ec60666592700",
+    "candidateSourceTree": "703aa9327b663094b3b9ec32016fc2e2de2191c3",
+    "ownAddedRemovedSignature": "0b5cae78e5bfc61b2749d4058927f9ec47138a60fbf37e1a2f6aefedde6415c4",
+    "ownAUnchanged": true,
+    "coverage": {
+      "issue": 1097,
+      "baseline": false,
+      "profile": "large-house-opening-drag-v2-canonical",
+      "measurement": "CDP exact function calls; separate correctness pass, no timing samples",
+      "profiles": [
+        {
+          "scale": 1,
+          "repeats": 1,
+          "coverage": true,
+          "samples": [
+            {
+              "repeat": 0,
+              "before": {
+                "builds": {
+                  "wallUnion": 3,
+                  "innerContour": 60,
+                  "cleanFloor": 64,
+                  "openingWallIndex": 3,
+                  "lightBarrier": 3,
+                  "glowClip": 0,
+                  "physicalBodies": 4,
+                  "openingTunnel": 3,
+                  "lightPhysicalBodies": 3,
+                  "sunRays": 0,
+                  "isoSun": 0
+                },
+                "pool": [
+                  "perf-floor-2|9129c04e3a625c18|20",
+                  "perf-floor-3|48d8f60811d114b9|20",
+                  "perf-floor-1|c02021c7aeb1b1b5|20"
+                ],
+                "epoch": 4,
+                "fallbacks": 0,
+                "config": [
+                  {
+                    "id": "perf-opening-0-0",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y4ctrpjrfao3kubafasi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-1",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iymvzuzl56cl3kak2hjy",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-2",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-rz44afixo77kdr2gwayj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-3",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mp7velvxgl6ak6kdlyab",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-4",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7zjyc57sgihawe3d76k7",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-5",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-psqlfingdd7nakfybqpn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-6",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-ujyh42p7swkcgdbqkotu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-7",
+                    "type": "window",
+                    "x": 0.5,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-zk3qyvbyyquaqieen3kl",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-8",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2tlu5peyp4uwelbvcitq",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-9",
+                    "type": "door",
+                    "x": 0.5,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-gmbuc6iymkfskbnwcaww",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-10",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tcd5qby5os2e76gpyuax",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-11",
+                    "type": "gate",
+                    "x": 0.776,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dlffeaqhkv72k3mexq55",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-12",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iibwxs4ygc6a5bjbrowi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-13",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vs63aocst3srzzqrl4bz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-14",
+                    "type": "window",
+                    "x": 0.96,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dium3htnopnfyyj34q4j",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-15",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7hgslhh7chrz6kp72ivd",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-16",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6criuzkf7ofniyyf3tqj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-17",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-5cghjyotdewasnkbaipo",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-18",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6hrhvqe6u52yysh2jhiz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-19",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mdxkh4sbvodielsieruu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-20",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dr5swvayijgpuv4k7ads",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-21",
+                    "type": "window",
+                    "x": 0.592,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-27kz4j2f4p4re2elqevm",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-22",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-qfj7c5ldxafgg3ekxtad",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-23",
+                    "type": "door",
+                    "x": 0.776,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vc4sayiwpvmh3u3xjqtr",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-24",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-fuklgyg742dcpmylnoew",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-25",
+                    "type": "door",
+                    "x": 0.96,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2o5576du7ukzwjwallqn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-26",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vf45do2njv3c5yxz2oav",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-27",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-wo5k545jsqxpr4aiqjkw",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-28",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y3sj5kpj7722tyyabw7y",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-29",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-nbb22aad2djz5mjom5c6",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-30",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-di4q42naqcz4y635cixe",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-31",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-xe7mokyjgs42f5batuvg",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-32",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tjzxshvizfzxip64r4xz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-33",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-pxjf5jjpgusmzkgtn54j",
+                      "t": 0.5
+                    }
+                  }
+                ],
+                "drag": {
+                  "id": "perf-opening-0-0",
+                  "moved": false
+                },
+                "frames": 0
+              },
+              "held": {
+                "builds": {
+                  "wallUnion": 3,
+                  "innerContour": 60,
+                  "cleanFloor": 64,
+                  "openingWallIndex": 3,
+                  "lightBarrier": 3,
+                  "glowClip": 0,
+                  "physicalBodies": 4,
+                  "openingTunnel": 3,
+                  "lightPhysicalBodies": 3,
+                  "sunRays": 0,
+                  "isoSun": 0
+                },
+                "pool": [
+                  "perf-floor-2|9129c04e3a625c18|20",
+                  "perf-floor-3|48d8f60811d114b9|20",
+                  "perf-floor-1|c02021c7aeb1b1b5|20"
+                ],
+                "epoch": 4,
+                "fallbacks": 0,
+                "config": [
+                  {
+                    "id": "perf-opening-0-0",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y4ctrpjrfao3kubafasi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-1",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iymvzuzl56cl3kak2hjy",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-2",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-rz44afixo77kdr2gwayj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-3",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mp7velvxgl6ak6kdlyab",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-4",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7zjyc57sgihawe3d76k7",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-5",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-psqlfingdd7nakfybqpn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-6",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-ujyh42p7swkcgdbqkotu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-7",
+                    "type": "window",
+                    "x": 0.5,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-zk3qyvbyyquaqieen3kl",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-8",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2tlu5peyp4uwelbvcitq",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-9",
+                    "type": "door",
+                    "x": 0.5,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-gmbuc6iymkfskbnwcaww",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-10",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tcd5qby5os2e76gpyuax",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-11",
+                    "type": "gate",
+                    "x": 0.776,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dlffeaqhkv72k3mexq55",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-12",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iibwxs4ygc6a5bjbrowi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-13",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vs63aocst3srzzqrl4bz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-14",
+                    "type": "window",
+                    "x": 0.96,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dium3htnopnfyyj34q4j",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-15",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7hgslhh7chrz6kp72ivd",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-16",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6criuzkf7ofniyyf3tqj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-17",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-5cghjyotdewasnkbaipo",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-18",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6hrhvqe6u52yysh2jhiz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-19",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mdxkh4sbvodielsieruu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-20",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dr5swvayijgpuv4k7ads",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-21",
+                    "type": "window",
+                    "x": 0.592,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-27kz4j2f4p4re2elqevm",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-22",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-qfj7c5ldxafgg3ekxtad",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-23",
+                    "type": "door",
+                    "x": 0.776,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vc4sayiwpvmh3u3xjqtr",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-24",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-fuklgyg742dcpmylnoew",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-25",
+                    "type": "door",
+                    "x": 0.96,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2o5576du7ukzwjwallqn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-26",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vf45do2njv3c5yxz2oav",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-27",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-wo5k545jsqxpr4aiqjkw",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-28",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y3sj5kpj7722tyyabw7y",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-29",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-nbb22aad2djz5mjom5c6",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-30",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-di4q42naqcz4y635cixe",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-31",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-xe7mokyjgs42f5batuvg",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-32",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tjzxshvizfzxip64r4xz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-33",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-pxjf5jjpgusmzkgtn54j",
+                      "t": 0.5
+                    }
+                  }
+                ],
+                "drag": {
+                  "id": "perf-opening-0-0",
+                  "moved": true
+                },
+                "frames": 28
+              },
+              "after": {
+                "builds": {
+                  "wallUnion": 4,
+                  "innerContour": 80,
+                  "cleanFloor": 84,
+                  "openingWallIndex": 3,
+                  "lightBarrier": 3,
+                  "glowClip": 0,
+                  "physicalBodies": 5,
+                  "openingTunnel": 3,
+                  "lightPhysicalBodies": 3,
+                  "sunRays": 0,
+                  "isoSun": 0
+                },
+                "pool": [
+                  "perf-floor-2|9129c04e3a625c18|20",
+                  "perf-floor-3|48d8f60811d114b9|20",
+                  "perf-floor-1|c02021c7aeb1b1b5|20",
+                  "perf-floor-1|4dc4c6e3926137ce|20"
+                ],
+                "epoch": 6,
+                "fallbacks": 0,
+                "config": [
+                  {
+                    "id": "perf-opening-0-0",
+                    "type": "window",
+                    "x": 0.181666667,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y4ctrpjrfao3kubafasi",
+                      "t": 0.769927538
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-1",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iymvzuzl56cl3kak2hjy",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-2",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-rz44afixo77kdr2gwayj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-3",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mp7velvxgl6ak6kdlyab",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-4",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7zjyc57sgihawe3d76k7",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-5",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-psqlfingdd7nakfybqpn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-6",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-ujyh42p7swkcgdbqkotu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-7",
+                    "type": "window",
+                    "x": 0.5,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-zk3qyvbyyquaqieen3kl",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-8",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2tlu5peyp4uwelbvcitq",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-9",
+                    "type": "door",
+                    "x": 0.5,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-gmbuc6iymkfskbnwcaww",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-10",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tcd5qby5os2e76gpyuax",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-11",
+                    "type": "gate",
+                    "x": 0.776,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dlffeaqhkv72k3mexq55",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-12",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iibwxs4ygc6a5bjbrowi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-13",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vs63aocst3srzzqrl4bz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-14",
+                    "type": "window",
+                    "x": 0.96,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dium3htnopnfyyj34q4j",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-15",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7hgslhh7chrz6kp72ivd",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-16",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6criuzkf7ofniyyf3tqj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-17",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-5cghjyotdewasnkbaipo",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-18",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6hrhvqe6u52yysh2jhiz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-19",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mdxkh4sbvodielsieruu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-20",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dr5swvayijgpuv4k7ads",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-21",
+                    "type": "window",
+                    "x": 0.592,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-27kz4j2f4p4re2elqevm",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-22",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-qfj7c5ldxafgg3ekxtad",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-23",
+                    "type": "door",
+                    "x": 0.776,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vc4sayiwpvmh3u3xjqtr",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-24",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-fuklgyg742dcpmylnoew",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-25",
+                    "type": "door",
+                    "x": 0.96,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2o5576du7ukzwjwallqn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-26",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vf45do2njv3c5yxz2oav",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-27",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-wo5k545jsqxpr4aiqjkw",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-28",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y3sj5kpj7722tyyabw7y",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-29",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-nbb22aad2djz5mjom5c6",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-30",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-di4q42naqcz4y635cixe",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-31",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-xe7mokyjgs42f5batuvg",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-32",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tjzxshvizfzxip64r4xz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-33",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-pxjf5jjpgusmzkgtn54j",
+                      "t": 0.5
+                    }
+                  }
+                ],
+                "drag": null,
+                "frames": 28
+              },
+              "frames": [],
+              "switches": [
+                {
+                  "id": "perf-floor-2",
+                  "wallUnion": 0
+                },
+                {
+                  "id": "perf-floor-3",
+                  "wallUnion": 0
+                }
+              ],
+              "delta": {
+                "wallUnion": 0,
+                "innerContour": 0,
+                "cleanFloor": 0,
+                "openingWallIndex": 0,
+                "lightBarrier": 0,
+                "glowClip": 0,
+                "physicalBodies": 0,
+                "openingTunnel": 0,
+                "lightPhysicalBodies": 0,
+                "sunRays": 0,
+                "isoSun": 0
+              },
+              "physical": {
+                "coldPositive": 6,
+                "calls": 0,
+                "cropConstructors": 1,
+                "targets": {
+                  "physical": {
+                    "relative": "houseplan-assets/houseplan-card-7y62USyO.js",
+                    "name": "bn",
+                    "start": 18596,
+                    "bodyStart": 18643,
+                    "end": 19315
+                  },
+                  "constructor": {
+                    "relative": "houseplan-assets/houseplan-editor-runtime-BJJfoWxw.js",
+                    "name": "G_",
+                    "start": 602421,
+                    "bodyStart": 602456,
+                    "classStart": 602412,
+                    "end": 602802
+                  }
+                }
+              },
+              "checks": {
+                "nativeDrag": true,
+                "liveFrames": 28,
+                "AC1": true,
+                "AC3": true
+              }
+            }
+          ],
+          "medianFrameMs": null,
+          "medianGestureMs": null
+        },
+        {
+          "scale": 2,
+          "repeats": 1,
+          "coverage": true,
+          "samples": [
+            {
+              "repeat": 0,
+              "before": {
+                "builds": {
+                  "wallUnion": 3,
+                  "innerContour": 60,
+                  "cleanFloor": 64,
+                  "openingWallIndex": 3,
+                  "lightBarrier": 3,
+                  "glowClip": 0,
+                  "physicalBodies": 4,
+                  "openingTunnel": 3,
+                  "lightPhysicalBodies": 3,
+                  "sunRays": 0,
+                  "isoSun": 0
+                },
+                "pool": [
+                  "perf-floor-2|9129c04e3a625c18|20",
+                  "perf-floor-3|48d8f60811d114b9|20",
+                  "perf-floor-1|c02021c7aeb1b1b5|20"
+                ],
+                "epoch": 4,
+                "fallbacks": 0,
+                "config": [
+                  {
+                    "id": "perf-opening-0-0",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y4ctrpjrfao3kubafasi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-1",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iymvzuzl56cl3kak2hjy",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-2",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-rz44afixo77kdr2gwayj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-3",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mp7velvxgl6ak6kdlyab",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-4",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7zjyc57sgihawe3d76k7",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-5",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-psqlfingdd7nakfybqpn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-6",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-ujyh42p7swkcgdbqkotu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-7",
+                    "type": "window",
+                    "x": 0.5,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-zk3qyvbyyquaqieen3kl",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-8",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2tlu5peyp4uwelbvcitq",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-9",
+                    "type": "door",
+                    "x": 0.5,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-gmbuc6iymkfskbnwcaww",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-10",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tcd5qby5os2e76gpyuax",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-11",
+                    "type": "gate",
+                    "x": 0.776,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dlffeaqhkv72k3mexq55",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-12",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iibwxs4ygc6a5bjbrowi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-13",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vs63aocst3srzzqrl4bz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-14",
+                    "type": "window",
+                    "x": 0.96,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dium3htnopnfyyj34q4j",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-15",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7hgslhh7chrz6kp72ivd",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-16",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6criuzkf7ofniyyf3tqj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-17",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-5cghjyotdewasnkbaipo",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-18",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6hrhvqe6u52yysh2jhiz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-19",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mdxkh4sbvodielsieruu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-20",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dr5swvayijgpuv4k7ads",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-21",
+                    "type": "window",
+                    "x": 0.592,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-27kz4j2f4p4re2elqevm",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-22",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-qfj7c5ldxafgg3ekxtad",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-23",
+                    "type": "door",
+                    "x": 0.776,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vc4sayiwpvmh3u3xjqtr",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-24",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-fuklgyg742dcpmylnoew",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-25",
+                    "type": "door",
+                    "x": 0.96,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2o5576du7ukzwjwallqn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-26",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vf45do2njv3c5yxz2oav",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-27",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-wo5k545jsqxpr4aiqjkw",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-28",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y3sj5kpj7722tyyabw7y",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-29",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-nbb22aad2djz5mjom5c6",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-30",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-di4q42naqcz4y635cixe",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-31",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-xe7mokyjgs42f5batuvg",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-32",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tjzxshvizfzxip64r4xz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-33",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-pxjf5jjpgusmzkgtn54j",
+                      "t": 0.5
+                    }
+                  }
+                ],
+                "drag": {
+                  "id": "perf-opening-0-0",
+                  "moved": false
+                },
+                "frames": 0
+              },
+              "held": {
+                "builds": {
+                  "wallUnion": 3,
+                  "innerContour": 60,
+                  "cleanFloor": 64,
+                  "openingWallIndex": 3,
+                  "lightBarrier": 3,
+                  "glowClip": 0,
+                  "physicalBodies": 4,
+                  "openingTunnel": 3,
+                  "lightPhysicalBodies": 3,
+                  "sunRays": 0,
+                  "isoSun": 0
+                },
+                "pool": [
+                  "perf-floor-2|9129c04e3a625c18|20",
+                  "perf-floor-3|48d8f60811d114b9|20",
+                  "perf-floor-1|c02021c7aeb1b1b5|20"
+                ],
+                "epoch": 4,
+                "fallbacks": 0,
+                "config": [
+                  {
+                    "id": "perf-opening-0-0",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y4ctrpjrfao3kubafasi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-1",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iymvzuzl56cl3kak2hjy",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-2",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-rz44afixo77kdr2gwayj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-3",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mp7velvxgl6ak6kdlyab",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-4",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7zjyc57sgihawe3d76k7",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-5",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-psqlfingdd7nakfybqpn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-6",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-ujyh42p7swkcgdbqkotu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-7",
+                    "type": "window",
+                    "x": 0.5,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-zk3qyvbyyquaqieen3kl",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-8",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2tlu5peyp4uwelbvcitq",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-9",
+                    "type": "door",
+                    "x": 0.5,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-gmbuc6iymkfskbnwcaww",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-10",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tcd5qby5os2e76gpyuax",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-11",
+                    "type": "gate",
+                    "x": 0.776,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dlffeaqhkv72k3mexq55",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-12",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iibwxs4ygc6a5bjbrowi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-13",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vs63aocst3srzzqrl4bz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-14",
+                    "type": "window",
+                    "x": 0.96,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dium3htnopnfyyj34q4j",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-15",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7hgslhh7chrz6kp72ivd",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-16",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6criuzkf7ofniyyf3tqj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-17",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-5cghjyotdewasnkbaipo",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-18",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6hrhvqe6u52yysh2jhiz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-19",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mdxkh4sbvodielsieruu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-20",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dr5swvayijgpuv4k7ads",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-21",
+                    "type": "window",
+                    "x": 0.592,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-27kz4j2f4p4re2elqevm",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-22",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-qfj7c5ldxafgg3ekxtad",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-23",
+                    "type": "door",
+                    "x": 0.776,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vc4sayiwpvmh3u3xjqtr",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-24",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-fuklgyg742dcpmylnoew",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-25",
+                    "type": "door",
+                    "x": 0.96,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2o5576du7ukzwjwallqn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-26",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vf45do2njv3c5yxz2oav",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-27",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-wo5k545jsqxpr4aiqjkw",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-28",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y3sj5kpj7722tyyabw7y",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-29",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-nbb22aad2djz5mjom5c6",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-30",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-di4q42naqcz4y635cixe",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-31",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-xe7mokyjgs42f5batuvg",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-32",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tjzxshvizfzxip64r4xz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-33",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-pxjf5jjpgusmzkgtn54j",
+                      "t": 0.5
+                    }
+                  }
+                ],
+                "drag": {
+                  "id": "perf-opening-0-0",
+                  "moved": true
+                },
+                "frames": 28
+              },
+              "after": {
+                "builds": {
+                  "wallUnion": 4,
+                  "innerContour": 80,
+                  "cleanFloor": 84,
+                  "openingWallIndex": 3,
+                  "lightBarrier": 3,
+                  "glowClip": 0,
+                  "physicalBodies": 5,
+                  "openingTunnel": 3,
+                  "lightPhysicalBodies": 3,
+                  "sunRays": 0,
+                  "isoSun": 0
+                },
+                "pool": [
+                  "perf-floor-2|9129c04e3a625c18|20",
+                  "perf-floor-3|48d8f60811d114b9|20",
+                  "perf-floor-1|c02021c7aeb1b1b5|20",
+                  "perf-floor-1|4dc4c6e3926137ce|20"
+                ],
+                "epoch": 6,
+                "fallbacks": 0,
+                "config": [
+                  {
+                    "id": "perf-opening-0-0",
+                    "type": "window",
+                    "x": 0.181666667,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y4ctrpjrfao3kubafasi",
+                      "t": 0.769927538
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-1",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iymvzuzl56cl3kak2hjy",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-2",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-rz44afixo77kdr2gwayj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-3",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mp7velvxgl6ak6kdlyab",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-4",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7zjyc57sgihawe3d76k7",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-5",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-psqlfingdd7nakfybqpn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-6",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-ujyh42p7swkcgdbqkotu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-7",
+                    "type": "window",
+                    "x": 0.5,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-zk3qyvbyyquaqieen3kl",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-8",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2tlu5peyp4uwelbvcitq",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-9",
+                    "type": "door",
+                    "x": 0.5,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-gmbuc6iymkfskbnwcaww",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-10",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tcd5qby5os2e76gpyuax",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-11",
+                    "type": "gate",
+                    "x": 0.776,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dlffeaqhkv72k3mexq55",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-12",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-iibwxs4ygc6a5bjbrowi",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-13",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.04,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vs63aocst3srzzqrl4bz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-14",
+                    "type": "window",
+                    "x": 0.96,
+                    "y": 0.155,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dium3htnopnfyyj34q4j",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-15",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.27,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-7hgslhh7chrz6kp72ivd",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-16",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6criuzkf7ofniyyf3tqj",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-17",
+                    "type": "door",
+                    "x": 0.132,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-5cghjyotdewasnkbaipo",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-18",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-6hrhvqe6u52yysh2jhiz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-19",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-mdxkh4sbvodielsieruu",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-20",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-dr5swvayijgpuv4k7ads",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-21",
+                    "type": "window",
+                    "x": 0.592,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-27kz4j2f4p4re2elqevm",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-22",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-qfj7c5ldxafgg3ekxtad",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-23",
+                    "type": "door",
+                    "x": 0.776,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vc4sayiwpvmh3u3xjqtr",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-24",
+                    "type": "door",
+                    "x": 0.684,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-fuklgyg742dcpmylnoew",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-25",
+                    "type": "door",
+                    "x": 0.96,
+                    "y": 0.385,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-2o5576du7ukzwjwallqn",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-26",
+                    "type": "door",
+                    "x": 0.868,
+                    "y": 0.5,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-vf45do2njv3c5yxz2oav",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-27",
+                    "type": "door",
+                    "x": 0.224,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-wo5k545jsqxpr4aiqjkw",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-28",
+                    "type": "window",
+                    "x": 0.132,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-y3sj5kpj7722tyyabw7y",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-29",
+                    "type": "door",
+                    "x": 0.04,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-nbb22aad2djz5mjom5c6",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-30",
+                    "type": "door",
+                    "x": 0.408,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-di4q42naqcz4y635cixe",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-31",
+                    "type": "door",
+                    "x": 0.316,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-xe7mokyjgs42f5batuvg",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-32",
+                    "type": "door",
+                    "x": 0.592,
+                    "y": 0.615,
+                    "angle": 90,
+                    "length": 0.055,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-tjzxshvizfzxip64r4xz",
+                      "t": 0.5
+                    }
+                  },
+                  {
+                    "id": "perf-opening-0-33",
+                    "type": "gate",
+                    "x": 0.5,
+                    "y": 0.73,
+                    "angle": 0,
+                    "length": 0.045,
+                    "host": {
+                      "kind": "wall",
+                      "id": "wall-pxjf5jjpgusmzkgtn54j",
+                      "t": 0.5
+                    }
+                  }
+                ],
+                "drag": null,
+                "frames": 28
+              },
+              "frames": [],
+              "switches": [
+                {
+                  "id": "perf-floor-2",
+                  "wallUnion": 0
+                },
+                {
+                  "id": "perf-floor-3",
+                  "wallUnion": 0
+                }
+              ],
+              "delta": {
+                "wallUnion": 0,
+                "innerContour": 0,
+                "cleanFloor": 0,
+                "openingWallIndex": 0,
+                "lightBarrier": 0,
+                "glowClip": 0,
+                "physicalBodies": 0,
+                "openingTunnel": 0,
+                "lightPhysicalBodies": 0,
+                "sunRays": 0,
+                "isoSun": 0
+              },
+              "physical": {
+                "coldPositive": 6,
+                "calls": 0,
+                "cropConstructors": 1,
+                "targets": {
+                  "physical": {
+                    "relative": "houseplan-assets/houseplan-card-7y62USyO.js",
+                    "name": "bn",
+                    "start": 18596,
+                    "bodyStart": 18643,
+                    "end": 19315
+                  },
+                  "constructor": {
+                    "relative": "houseplan-assets/houseplan-editor-runtime-BJJfoWxw.js",
+                    "name": "G_",
+                    "start": 602421,
+                    "bodyStart": 602456,
+                    "classStart": 602412,
+                    "end": 602802
+                  }
+                }
+              },
+              "checks": {
+                "nativeDrag": true,
+                "liveFrames": 28,
+                "AC1": true,
+                "AC3": true
+              }
+            }
+          ],
+          "medianFrameMs": null,
+          "medianGestureMs": null
+        }
+      ]
+    },
+    "native": {
+      "targetedUnitCount": 56,
+      "mainDpr1": "PASS",
+      "mainDpr2": "PASS",
+      "hostedPreview861": "PASS",
+      "measure": "PASS",
+      "partitionOpenings": "PASS",
+      "floorCacheReuse": "PASS",
+      "nodeHistoryContext": "PASS",
+      "deviceContact": "PASS"
+    },
+    "controls": [
+      {
+        "id": "opening-placement-door-thick-wall-dark",
+        "bytesIdentical": true,
+        "beforeSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+        "candidateSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+        "beforeCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T15:48:21.176Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-door-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-common-baseline-1098-20261028/artifacts/golden/actual/opening-placement-door-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 347,
+              "openingPreviewMaxChannelDelta": 95,
+              "openingPreviewPixelsInsideWall": 52,
+              "openingPreviewWallSamples": 742,
+              "baseline": "/home/matysh/hp-1097-common-baseline-1098-20261028/demo/golden/baselines/opening-placement-door-thick-wall-dark.png",
+              "baselineSha256": "e299a5aa5fb18f935096bd76eaed99bccd019a33fffc524bb9d0554277a4df22",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-common-baseline-1098-20261028/artifacts/golden/diff/opening-placement-door-thick-wall-dark.png"
+            }
+          ]
+        },
+        "candidateCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T15:48:29.749Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-door-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "6fa6f36af36a6dd346fd29871fa632e35a445c8601d024fdc5350aa70e7e56f6",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/opening-placement-door-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 347,
+              "openingPreviewMaxChannelDelta": 95,
+              "openingPreviewPixelsInsideWall": 52,
+              "openingPreviewWallSamples": 742,
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/opening-placement-door-thick-wall-dark.png",
+              "baselineSha256": "e299a5aa5fb18f935096bd76eaed99bccd019a33fffc524bb9d0554277a4df22",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/diff/opening-placement-door-thick-wall-dark.png"
+            }
+          ]
+        }
+      },
+      {
+        "id": "opening-placement-passage-thick-wall-dark",
+        "bytesIdentical": true,
+        "beforeSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+        "candidateSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+        "beforeCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T15:48:24.031Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-common-baseline-1098-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 321,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 264,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-common-baseline-1098-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-dark.png",
+              "baselineSha256": "8dcfeb9c9a79c91bb5f2fde387217383c6bc6d56813ecc5d387bc8cc3864e5ab",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-common-baseline-1098-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-dark.png"
+            }
+          ]
+        },
+        "candidateCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T15:48:32.629Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-dark",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "69f46db25382a7c26cdcf8a64319104302cc8c7bd282b24ced29a11860ab4906",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-dark.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 321,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 264,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-dark.png",
+              "baselineSha256": "8dcfeb9c9a79c91bb5f2fde387217383c6bc6d56813ecc5d387bc8cc3864e5ab",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 975,
+              "diffRatio": 0.0009180790960451978,
+              "maxObservedDelta": 212,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-dark.png"
+            }
+          ]
+        }
+      },
+      {
+        "id": "opening-placement-passage-thick-wall-light",
+        "bytesIdentical": true,
+        "beforeSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+        "candidateSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+        "beforeCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T15:48:26.854Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-light",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-common-baseline-1098-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-light.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 322,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 265,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-common-baseline-1098-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-light.png",
+              "baselineSha256": "574d6d3cde08358fa8c738844028d863823d8a3129f77e7d28524578f64dc5ff",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 967,
+              "diffRatio": 0.0009105461393596987,
+              "maxObservedDelta": 244,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-common-baseline-1098-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-light.png"
+            }
+          ]
+        },
+        "candidateCapture": {
+          "schema": 2,
+          "mode": "capture",
+          "capture": {
+            "platform": "linux",
+            "arch": "x64",
+            "chromium": "151.0.7922.34",
+            "buildFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+            "ci": null
+          },
+          "generatedAt": "2026-10-28T15:48:35.476Z",
+          "matrixVersion": 104,
+          "buildFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+          "chromium": "151.0.7922.34",
+          "baselineManifest": {
+            "present": true,
+            "valid": false,
+            "matrixVersion": 103,
+            "chromium": "151.0.7922.34"
+          },
+          "results": [
+            {
+              "id": "opening-placement-passage-thick-wall-light",
+              "threshold": {
+                "maxChannelDelta": 10,
+                "maxDiffRatio": 0.0008
+              },
+              "status": "different",
+              "actualSha256": "851cdc6dbdb6460d4f6d360cdfdb7d2476d85ee8a58710cbb43c8f9751be496a",
+              "runtime": {
+                "space": "golden-geometry",
+                "mode": "plan",
+                "devices": 9,
+                "dialog": false,
+                "helpOpen": false,
+                "editorTray": "",
+                "defaultFloorWarning": ""
+              },
+              "deviceScaleFactor": 1,
+              "actual": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/actual/opening-placement-passage-thick-wall-light.png",
+              "openingPreviewParts": 2,
+              "openingPreviewChangedPixels": 322,
+              "openingPreviewMaxChannelDelta": 146,
+              "openingPreviewPixelsInsideWall": 265,
+              "openingPreviewWallSamples": 714,
+              "baseline": "/home/matysh/hp-1097-opening-drag-20261028/demo/golden/baselines/opening-placement-passage-thick-wall-light.png",
+              "baselineSha256": "574d6d3cde08358fa8c738844028d863823d8a3129f77e7d28524578f64dc5ff",
+              "dimensionsMatch": true,
+              "actualSize": [
+                1180,
+                900
+              ],
+              "baselineSize": [
+                1180,
+                900
+              ],
+              "differingPixels": 967,
+              "diffRatio": 0.0009105461393596987,
+              "maxObservedDelta": 244,
+              "passed": false,
+              "diff": "/home/matysh/hp-1097-opening-drag-20261028/artifacts/golden/diff/opening-placement-passage-thick-wall-light.png"
+            }
+          ]
+        }
+      }
+    ],
+    "resources": {
+      "acceptedDev": "4bb5eb42626f4efe72a20744746b8b2dc820ebc0",
+      "frozenDonorHead": "44d20c6f1b71d683593ab220d3a7f1bc4dc643da",
+      "donorCorpusFiles": 568,
+      "donorCorpusSha256": "fb1e0405f80e393c9ad615aa21742f21764b1bf435b873e26e7af9a861a92e16",
+      "donorCorpusEqual": true,
+      "donorArtifactsVerified": true,
+      "manifestFilesSha256": "57d95a48487a3b3c98d5072032eeada6dd2d148321b299585fe41f28fae7377a",
+      "rows": [
+        {
+          "name": "accepted1098",
+          "head": "4bb5eb42626f4efe72a20744746b8b2dc820ebc0",
+          "sourceFingerprint": "d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af",
+          "baseline": {
+            "delegates": 145,
+            "portMembers": 380,
+            "hostRefs": 6548,
+            "portPrivates": 105,
+            "harnessPrivates": 101,
+            "bundleBytes": 3653092
+          },
+          "hostRefs": 6573,
+          "portMembers": 380,
+          "bundleBytes": 3654523,
+          "initialViewGzip": 357807,
+          "editorGzip": 375914,
+          "onboardingGzip": 44643,
+          "runtimeLines": 11960,
+          "cardLines": 13524
+        },
+        {
+          "name": "candidate",
+          "head": "b675ee2c795a6916f3c53f8ff12ec60666592700",
+          "sourceFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+          "baseline": {
+            "delegates": 145,
+            "portMembers": 380,
+            "hostRefs": 6548,
+            "portPrivates": 105,
+            "harnessPrivates": 101,
+            "bundleBytes": 3653092
+          },
+          "hostRefs": 6620,
+          "portMembers": 382,
+          "bundleBytes": 3663304,
+          "initialViewGzip": 357939,
+          "editorGzip": 378530,
+          "onboardingGzip": 44637,
+          "runtimeLines": 12037,
+          "cardLines": 13528
+        }
+      ]
+    },
+    "appliedReferences": {
+      "delegates": 145,
+      "portMembers": 380,
+      "hostRefs": 6595,
+      "portPrivates": 105,
+      "harnessPrivates": 101,
+      "bundleBytes": 3661873
+    },
+    "notes": "Historical31b14+14 timing and earlier31b controls remain scoped to their immutable source. Fresh integration counters/native and these accepted1098 controls bind the new parent. Strict indexed3 runs in fresh canonical CI; no global baseline accepted."
   }
 }

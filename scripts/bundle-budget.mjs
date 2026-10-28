@@ -880,10 +880,10 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455534939
 // #1093: matched frozen #1089 editor375012 ->375159 (+147 B). Preserve
 // its inherited1939-B excess and the2000-B band; only this task's cost moves.
-// #1097 after accepted #1099 common31b:375648 ->378324 B gzip (+2676).
-// Owner-authorized own-cost carry preserves inherited425-B excess and the
-// unchanged2000-B band. Direct producer/camera clip proof lives in the audit.
-export const LAZY_EDITOR_GZIP_CEILING = 377_899;
+// #1097 after accepted #1098/dev4bb5:375914 ->378530 B gzip (+2616).
+// Owner-authorized own-cost carry preserves inherited691-B excess and the
+// unchanged2000-B band. Frozen donor corpus and own patch are verified.
+export const LAZY_EDITOR_GZIP_CEILING = 377_839;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
