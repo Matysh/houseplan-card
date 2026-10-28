@@ -6,6 +6,7 @@ import { PassThrough } from 'node:stream';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { buildNativeReviewInvocation, createNativeReviewCollector, nativeReviewResult, runNativeReview,
   prepareNativeReviewPrompt, writeNativeReviewOutputs, verifyNativeReviewBinary, NATIVE_REVIEW_VERSION,
   NATIVE_REVIEW_SHA256, readBoundedReviewBytes } from '../scripts/review-native-runner.mjs';
@@ -33,6 +34,39 @@ function fixture(t, script) {
     spawnNative: (file, args, options) => { calls.push({ file, args, options }); return spawn(process.execPath, [childPath], options); } };
   return { config, policy, dependencies, calls, dir };
 }
+
+// SIGKILL dispatch, pipe closure and the kernel's exit state are asynchronous.
+// Observe the owned fixture within the original whole-operation deadline;
+// neither a live process nor a new grace period is accepted.
+async function assertOwnedProcessStopped(pid, deadline, readState = ownedPid => {
+  try { return readFileSync(`/proc/${ownedPid}/stat`, 'utf8').split(') ')[1].split(' ')[0]; }
+  catch (error) { if (error.code === 'ENOENT') return ''; throw error; }
+}) {
+  for (;;) {
+    const state = readState(pid);
+    const remaining = deadline - performance.now();
+    assert.ok(remaining >= 0, `owned descendant remains running at the deadline: ${state}`);
+    if (state === '' || state === 'Z') return;
+    await delay(Math.min(10, remaining));
+  }
+}
+
+test('#1115 owned-process observation refuses a live process at the existing deadline', async () => {
+  for (const state of ['R', 'S', 'D', 'T'])
+    await assert.rejects(assertOwnedProcessStopped(123, performance.now(), () => state),
+      /owned descendant remains running/);
+  for (const state of ['', 'Z'])
+    await assertOwnedProcessStopped(123, performance.now() + 1000, () => state);
+});
+
+test('#1115 owned-process observation waits for exit without renewing the deadline', async () => {
+  const states = ['R', 'S', 'Z'];
+  let reads = 0;
+  await assertOwnedProcessStopped(123, performance.now() + 1000, () => states[reads++]);
+  assert.equal(reads, 3);
+  await assert.rejects(assertOwnedProcessStopped(123, performance.now() - 1, () => 'Z'),
+    /at the deadline/);
+});
 
 test('#1065 native argv preserves empty setting sources, fixed catalog, one strict MCP and budgets', t => {
   const { config, policy } = fixture(t, '');
@@ -180,13 +214,15 @@ test('#1065 exited native leader cannot leave an owned pipe-holder beyond bounde
 const child=spawn(process.execPath,[${JSON.stringify(descendantPath)}],{stdio:['ignore',1,2,'ipc']});
 child.once('message',()=>{fs.writeFileSync(${JSON.stringify(pidPath)},String(child.pid));process.stdout.write(${JSON.stringify(raw)});process.exit(0);});\n`);
     let leader;
+    const deadline = performance.now() + 2000;
     const running = runNativeReview(config, { ...dependencies, spawnNative: (...args) => {
       leader = dependencies.spawnNative(...args); return leader;
     }, timeoutMs: 1000, terminateGraceMs: 50, stdioGraceMs: 50 });
     let timer;
     try {
       const result = await Promise.race([running, new Promise((_resolve, reject) => {
-        timer = setTimeout(() => reject(new Error('owned pipe-holder outlived bounded runner finalization')), 2000);
+        timer = setTimeout(() => reject(new Error('owned pipe-holder outlived bounded runner finalization')),
+          Math.max(0, deadline - performance.now()));
       })]);
       assert.equal(calls[0].options.detached, true);
       assert.equal(result.success, false); assert.equal(result.outputs.structured_output, undefined);
@@ -194,10 +230,7 @@ child.once('message',()=>{fs.writeFileSync(${JSON.stringify(pidPath)},String(chi
       assert.equal(result.status, 'native-stdio-timeout');
       assert.deepEqual(JSON.parse(readFileSync(result.outputs.execution_file, 'utf8')), messages());
       const pid = Number(readFileSync(pidPath, 'utf8'));
-      let state = '';
-      try { state = readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ')[1].split(' ')[0]; }
-      catch (error) { if (error.code !== 'ENOENT') throw error; }
-      assert.ok(state === '' || state === 'Z', `owned descendant remains running: ${state}`);
+      await assertOwnedProcessStopped(pid, deadline);
     } finally {
       clearTimeout(timer);
       // Only the PID created by this fixed fixture is a cleanup target.

@@ -6246,6 +6246,14 @@ product change, guard change or separate extra build is introduced.
 
 ## Review execution boundary (#1065)
 
+The owned pipe-holder regression (#1115) uses one absolute 2000ms deadline
+for the runner result and the fixture PID's stopped state. SIGKILL delivery and
+the kernel's transition to a missing/zombie process need not be observable in
+the same event-loop turn as pipe closure. The test polls only its own fixture
+PID in the remaining original budget; it neither adds a grace period nor
+accepts R/S/D/T as termination. Native runner code, signal timing, rejection
+status and review authority remain unchanged.
+
 Task, ship and release model jobs prepare `review-execution-policy.json` and
 explicit Claude settings from accepted-dev tooling, outside the reviewed tree.
 The pinned native launcher passes explicit settings, an empty settings-source

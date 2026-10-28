@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1115,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Fix the native transport fixture's immediate kernel-state observation race within its existing absolute 2000ms deadline. A live owned process still fails; production runner, signals, review permissions and result admission are unchanged.",
+  "summary": {
+    "ru": "Проверка завершения собственного дочернего процесса учитывает асинхронную доставку сигнала в прежнем общем лимите.",
+    "en": "Owned-child termination is observed within the unchanged whole-operation deadline."
+  }
+}
