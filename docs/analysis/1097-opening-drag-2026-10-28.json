@@ -1,0 +1,2356 @@
+{
+  "schema": 1,
+  "issue": 1097,
+  "commonBase": "31b17bec040f25224b80f0f679378807ccfd37fc",
+  "candidateSourceCommit": "c6d735779bb26109d9442134254be8c3d207bf1e",
+  "candidateSourceTree": "9441262fa31a8e99faed6c0c3cd49e99dacdd503",
+  "measurement": {
+    "profile": "large-house-opening-drag-v2-canonical",
+    "timing": "Node wall-clock trusted pointermove through awaited live/host settle; IPC included",
+    "coverage": "Separate CDP correctness pass; cold positive and the exact bundled physical producer/constructor are observed, timing samples empty.",
+    "recipe": "Identical B-only recipe on an unchanged accepted source clone and the candidate. Canonical fixture, no legacy first-release migration.",
+    "timingThreshold": "No new millisecond threshold; AC1/AC3 use counters and readback."
+  },
+  "before": [
+    {
+      "scale": 1,
+      "repeats": 7,
+      "medianFrameMs": 198.66105499999685,
+      "medianGestureMs": 5615.983658000001,
+      "samples": [
+        {
+          "repeat": 0,
+          "framesMs": [
+            225.5299869999999,
+            214.861218,
+            215.89051699999982,
+            198.0632830000004,
+            214.46974200000022,
+            198.5732590000007,
+            198.27848600000016,
+            198.3275389999999,
+            198.5314469999994,
+            198.64825199999996,
+            197.7555000000002,
+            198.22084799999993,
+            214.5165280000001,
+            65.40666799999963,
+            198.59805899999992,
+            198.40870600000017,
+            65.27498000000014,
+            65.73767700000008,
+            197.83655,
+            198.78114499999992,
+            198.64870399999927,
+            198.53024200000073,
+            198.6592069999988,
+            198.72597900000073,
+            198.6093980000005,
+            198.72682599999825,
+            198.56622700000116,
+            198.22407700000076,
+            198.60146800000075,
+            198.99626199999875
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 1,
+          "framesMs": [
+            210.29570299999978,
+            198.38307899999927,
+            197.86397399999987,
+            197.97680299999956,
+            198.8281160000006,
+            198.08780599999955,
+            198.9024960000006,
+            198.71183199999905,
+            230.55538499999966,
+            215.607363000001,
+            197.86822799999936,
+            198.47072200000002,
+            198.86667699999998,
+            65.19439599999896,
+            198.37367199999971,
+            198.77227200000016,
+            64.96561199999996,
+            65.10525699999926,
+            198.83269799999835,
+            198.7028190000019,
+            198.78518700000132,
+            198.97330000000147,
+            197.81083900000158,
+            198.6193349999994,
+            198.68504200000098,
+            198.52524400000038,
+            198.29341600000043,
+            198.85361699999703,
+            198.71446300000025,
+            198.35830500000156
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 2,
+          "framesMs": [
+            211.34699399999954,
+            198.49161000000095,
+            198.71360500000083,
+            198.51913699999932,
+            198.64975600000253,
+            198.67338499999823,
+            198.64958699999988,
+            198.8057370000024,
+            198.8645269999979,
+            198.58002299999862,
+            199.50986199999898,
+            197.6098099999981,
+            215.4462679999997,
+            64.10666599999968,
+            215.1003720000008,
+            198.77032300000064,
+            65.30115399999704,
+            65.1503789999988,
+            214.9421289999991,
+            215.69832300000053,
+            198.17751200000203,
+            199.1078630000011,
+            198.3425419999985,
+            198.7217669999991,
+            198.69785000000047,
+            198.87739399999919,
+            198.36527200000273,
+            198.58881699999984,
+            198.36085699999967,
+            198.96624599999996
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 3,
+          "framesMs": [
+            207.79690699999992,
+            198.56243299999915,
+            198.50044999999955,
+            198.80766399999993,
+            198.7251049999977,
+            198.0948810000009,
+            198.82211200000165,
+            198.77266800000143,
+            198.66520800000217,
+            197.6716910000032,
+            198.1739389999966,
+            198.78292800000054,
+            198.51244199999928,
+            65.41940999999497,
+            198.77868199999648,
+            198.66105499999685,
+            65.078766000006,
+            65.47374299999501,
+            198.2321860000011,
+            198.84342099999776,
+            198.80250700000033,
+            198.35487000000285,
+            199.31542199999967,
+            198.5349819999974,
+            198.1705740000034,
+            198.82092399999965,
+            215.07945899999322,
+            199.21675600000162,
+            197.85515999999916,
+            198.4638550000018
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 4,
+          "framesMs": [
+            211.25562100000388,
+            198.33865899999364,
+            198.51532600000064,
+            198.8494869999995,
+            198.64134999999806,
+            198.90858599999774,
+            214.67198400000052,
+            215.11448500000552,
+            215.51318399999582,
+            215.07394100000238,
+            198.73116499999742,
+            197.43539299999975,
+            198.73589099999663,
+            65.24654900000314,
+            198.49567299999762,
+            198.6271429999979,
+            65.57440700000006,
+            64.81244400000287,
+            198.2465579999989,
+            198.88744700000098,
+            198.7265849999967,
+            198.61497399999644,
+            198.84751200000028,
+            198.27441299999919,
+            198.91626800000085,
+            198.01537000000098,
+            198.8557970000038,
+            198.50462400000106,
+            199.05017499999667,
+            198.2334320000009
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 5,
+          "framesMs": [
+            211.49015099999815,
+            198.50214199999755,
+            197.8513759999987,
+            215.7012590000013,
+            198.1427509999994,
+            198.53130000000237,
+            198.81205300000147,
+            198.71483299999818,
+            198.61832200000208,
+            198.53639400000247,
+            198.53485399999772,
+            198.8476640000008,
+            198.27726899999834,
+            65.65721599999961,
+            214.62187699999777,
+            198.7981509999954,
+            65.2704539999977,
+            65.04076899999927,
+            198.4326230000006,
+            198.26633699999365,
+            198.599804999998,
+            198.81972999999562,
+            198.29733999999735,
+            198.75335199999972,
+            198.24460199999885,
+            198.9381760000033,
+            198.5454419999951,
+            198.64413600000262,
+            198.68180199999915,
+            198.62951299999986
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 6,
+          "framesMs": [
+            210.6480140000058,
+            199.02109400000336,
+            198.1464580000029,
+            197.7903790000055,
+            198.83060800000385,
+            215.48695600000065,
+            198.54576099999395,
+            198.6678830000019,
+            198.6088329999984,
+            198.7388260000007,
+            198.44951199999923,
+            199.28344999999536,
+            197.88230400000612,
+            65.14357100000052,
+            198.820925,
+            198.8980140000058,
+            65.04000500000257,
+            65.58754399999452,
+            198.18098199999804,
+            198.70815399999992,
+            198.17732799999794,
+            198.93092700000125,
+            214.92517899999802,
+            198.2162989999997,
+            198.270067999998,
+            198.61501399999543,
+            198.8653209999975,
+            198.35882200000196,
+            198.85173799999757,
+            198.2640360000005
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        }
+      ]
+    },
+    {
+      "scale": 2,
+      "repeats": 7,
+      "medianFrameMs": 215.023675000004,
+      "medianGestureMs": 5868.840902000011,
+      "samples": [
+        {
+          "repeat": 0,
+          "framesMs": [
+            209.22064999998838,
+            215.3263420000003,
+            215.08552100000088,
+            215.68034399999306,
+            198.2460599999904,
+            198.16160500000115,
+            198.18019699999422,
+            198.03850499998953,
+            198.415433999995,
+            198.34383899999375,
+            198.72520000000077,
+            198.5138539999898,
+            215.04283299999952,
+            65.21593800000846,
+            198.37813699999242,
+            215.89115799999854,
+            63.91722699999809,
+            65.22432899998967,
+            198.45546599999943,
+            214.2077879999997,
+            198.50775299999805,
+            198.38842099999601,
+            215.24495400000887,
+            198.2695709999971,
+            215.0116560000024,
+            198.6819339999929,
+            198.87580400001025,
+            198.366268999991,
+            198.60868699999992,
+            198.3977889999951
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 1,
+          "framesMs": [
+            211.9879690000089,
+            212.38384999999835,
+            214.86320100000012,
+            215.39373599999817,
+            214.64820200001122,
+            198.8197460000083,
+            198.66006499998912,
+            198.70010799999,
+            198.66850300000806,
+            198.57186199999705,
+            198.67676499999652,
+            198.24607299998752,
+            215.54048700000567,
+            65.60631999999168,
+            215.01355200000398,
+            215.2649609999935,
+            65.6460100000113,
+            64.24884800000291,
+            198.32917100000486,
+            198.5115380000061,
+            198.35980199999176,
+            214.71742200000153,
+            215.26358500000788,
+            214.96436299999186,
+            215.75974300000235,
+            214.89797199999157,
+            215.3140110000095,
+            215.3885900000023,
+            215.16518399999768,
+            214.58505700000387
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 2,
+          "framesMs": [
+            210.33955000000424,
+            215.42384100001073,
+            198.41242000000784,
+            199.15479499999492,
+            198.24460700000054,
+            215.75860000000102,
+            198.20383899999433,
+            216.10345999999845,
+            214.3048129999952,
+            215.04283400000713,
+            214.8266159999912,
+            216.0120600000082,
+            214.7101999999868,
+            65.26636300000246,
+            215.54227000000537,
+            215.07086599999457,
+            65.16303300000436,
+            65.17457600000489,
+            198.38112499999988,
+            198.6997330000013,
+            198.7276489999931,
+            198.6418599999888,
+            215.17810299999837,
+            215.71735400000762,
+            198.50683300000674,
+            215.49665599998843,
+            215.12051300000167,
+            215.17659799999092,
+            213.74027199999546,
+            215.29510499999742
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 3,
+          "framesMs": [
+            209.86424499998975,
+            198.97038800000155,
+            198.67323700000998,
+            215.5181719999964,
+            198.5596729999961,
+            198.07412699999986,
+            215.6764120000007,
+            215.3956879999896,
+            198.4914390000049,
+            198.52224799999385,
+            214.97951699999976,
+            215.62678900000174,
+            215.24125200000708,
+            65.1544600000052,
+            214.95975300000282,
+            215.11778299999423,
+            65.54273800000374,
+            65.24685299998964,
+            215.023675000004,
+            215.18509900000936,
+            215.34812399999646,
+            214.44562600000063,
+            215.25517199999013,
+            215.2097950000025,
+            199.0330430000031,
+            198.4493050000019,
+            215.4346280000027,
+            215.18467800000508,
+            215.5571490000002,
+            215.09983400000783
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 4,
+          "framesMs": [
+            226.32888000000094,
+            215.39015999999538,
+            215.17470800000592,
+            215.34720200000447,
+            215.1431750000047,
+            215.4990519999992,
+            215.36838299999363,
+            215.00873000000138,
+            215.59872899999027,
+            198.884475999992,
+            214.8480980000022,
+            215.41659100000106,
+            198.50365600000077,
+            64.78940899998997,
+            215.33127799999784,
+            215.17494300000544,
+            65.5468120000005,
+            64.3264679999993,
+            214.97053500000038,
+            214.69316300000355,
+            215.65103799999633,
+            214.91330000000016,
+            214.55389500000456,
+            215.13908999999694,
+            215.5590899999952,
+            215.2199910000054,
+            214.86223999998765,
+            198.44137800000317,
+            215.41058500000509,
+            198.53529900001013
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 5,
+          "framesMs": [
+            225.78449800000817,
+            215.33831800000917,
+            214.67186400000355,
+            215.96542199999385,
+            215.06128400001035,
+            215.67734700000437,
+            215.19950200000312,
+            198.31030800000008,
+            199.15312800000538,
+            198.60381700001017,
+            198.34052100000554,
+            215.13616100000218,
+            215.51290600000357,
+            65.36130699999921,
+            214.86584300000686,
+            215.44944399999804,
+            64.97438499999407,
+            65.57254300000204,
+            215.70171899998968,
+            197.89095899999666,
+            215.63327199999185,
+            198.65130800000043,
+            198.24070699998992,
+            198.5228139999963,
+            215.66830099999788,
+            214.64604799999506,
+            215.44673100000364,
+            215.14075299999968,
+            215.5884689999948,
+            214.5661700000055
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        },
+        {
+          "repeat": 6,
+          "framesMs": [
+            210.63264399999753,
+            215.6101500000077,
+            214.6679659999936,
+            215.31426600000123,
+            215.35863699999754,
+            215.27947400000994,
+            215.21329500000866,
+            215.24987100000726,
+            215.21800700000313,
+            198.5417800000141,
+            198.8901509999996,
+            215.55366499999946,
+            215.1015330000082,
+            65.09787800000049,
+            215.3545160000067,
+            198.6983670000045,
+            65.73115099999995,
+            65.1934340000007,
+            215.46308699999645,
+            215.00697200000286,
+            215.02728600001137,
+            214.97259000000486,
+            198.96485800000664,
+            215.32766199999605,
+            215.1512420000072,
+            215.2596760000015,
+            215.6620269999985,
+            215.1229689999891,
+            215.03247200000624,
+            215.42916899999545
+          ],
+          "delta": {
+            "wallUnion": 27,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 27,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 27,
+          "poolKeysUnchanged": false,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 1
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 1
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": false,
+            "AC3": false
+          }
+        }
+      ]
+    }
+  ],
+  "candidate": [
+    {
+      "scale": 1,
+      "repeats": 7,
+      "medianFrameMs": 65.18534100000034,
+      "medianGestureMs": 1978.912935000004,
+      "samples": [
+        {
+          "repeat": 0,
+          "framesMs": [
+            92.75496100000055,
+            63.77287400000023,
+            64.70258999999987,
+            65.32429199999933,
+            65.35073000000011,
+            64.59142500000053,
+            65.28974199999993,
+            65.18312799999967,
+            64.67736599999989,
+            65.46094200000061,
+            65.51601500000015,
+            64.38527299999987,
+            65.1437649999998,
+            65.59949799999958,
+            64.49256200000036,
+            64.97411199999988,
+            65.38372399999935,
+            64.71512499999972,
+            65.43881200000033,
+            64.86519300000054,
+            65.19193799999994,
+            65.47289999999975,
+            64.95437299999958,
+            64.8025459999999,
+            65.57715499999995,
+            64.83137799999986,
+            64.84564800000044,
+            65.08219000000008,
+            64.69034899999951,
+            64.9288889999998
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 1,
+          "framesMs": [
+            94.03179099999943,
+            65.10931600000004,
+            64.99993899999936,
+            65.0990929999989,
+            64.77275900000132,
+            65.01665599999978,
+            65.05385500000011,
+            65.45115400000032,
+            64.69091499999922,
+            65.98753500000021,
+            64.44703499999923,
+            65.12824699999874,
+            65.1472049999993,
+            64.97398799999974,
+            65.15625100000034,
+            65.53826500000105,
+            64.83014999999978,
+            64.69131000000016,
+            65.22225699999944,
+            65.2359919999999,
+            65.17398099999991,
+            65.20824900000116,
+            64.86627000000044,
+            65.3234250000005,
+            65.32629699999961,
+            65.57336399999986,
+            64.836553000001,
+            65.19851899999958,
+            64.28614199999902,
+            65.53705999999875
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 2,
+          "framesMs": [
+            93.61307899999883,
+            64.79678899999999,
+            65.36763600000086,
+            64.50471599999946,
+            65.13828000000103,
+            64.57119000000057,
+            65.16507699999966,
+            64.99428200000148,
+            65.76643899999908,
+            64.88446699999986,
+            65.06829300000027,
+            65.51168899999902,
+            64.72717299999931,
+            65.35015000000021,
+            64.7398720000001,
+            65.81686900000022,
+            65.16669099999854,
+            65.23468599999978,
+            65.09320099999968,
+            65.14900000000125,
+            64.85087999999996,
+            65.23142600000028,
+            65.88365200000044,
+            64.73533300000054,
+            65.35194700000102,
+            65.23524300000099,
+            65.03967999999986,
+            65.22620300000017,
+            65.19067799999902,
+            65.17062000000078
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 3,
+          "framesMs": [
+            91.76357199999984,
+            64.8783680000015,
+            64.40308000000005,
+            65.12653499999942,
+            65.02856500000053,
+            64.5821219999998,
+            64.95273700000325,
+            65.2380720000001,
+            65.26644800000213,
+            65.18587900000057,
+            65.26712699999916,
+            65.18043100000068,
+            65.35996299999897,
+            65.23071500000151,
+            64.13040399999954,
+            65.42593999999735,
+            64.6371790000012,
+            65.31096500000058,
+            65.22823100000096,
+            65.15036599999803,
+            65.3334990000003,
+            64.9101699999992,
+            65.47980500000267,
+            65.06109300000026,
+            65.22388800000044,
+            65.36891800000012,
+            65.32503499999802,
+            64.67775500000062,
+            64.94827199999781,
+            65.23780099999931
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 4,
+          "framesMs": [
+            76.41675400000167,
+            65.55822000000262,
+            64.26925699999993,
+            64.75937800000247,
+            65.6689460000016,
+            64.98396299999877,
+            64.53465700000015,
+            65.10422499999913,
+            65.58218299999862,
+            64.95673999999781,
+            65.42292599999928,
+            65.60614200000055,
+            64.85195699999895,
+            65.49678300000232,
+            65.38687800000116,
+            64.38490099999763,
+            65.30677300000025,
+            64.78182699999888,
+            65.335070000001,
+            64.9763230000026,
+            65.7196780000013,
+            63.90523600000233,
+            65.17152999999962,
+            65.30106599999999,
+            65.14453499999945,
+            65.30310500000269,
+            65.26900699999896,
+            64.94433199999912,
+            65.24969899999996,
+            65.17016400000284
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 5,
+          "framesMs": [
+            94.33466199999748,
+            64.91940899999827,
+            64.96286699999837,
+            65.15501199999926,
+            65.61242700000003,
+            64.86126599999989,
+            64.75249799999801,
+            65.40144900000087,
+            65.36653999999908,
+            64.94200099999944,
+            65.37731200000053,
+            65.25215899999966,
+            65.2978750000002,
+            65.37925399999949,
+            65.53985600000306,
+            64.9428939999998,
+            65.44535800000085,
+            64.50957200000266,
+            65.65206800000306,
+            64.77110099999845,
+            64.9837609999995,
+            65.32719100000031,
+            64.99984799999947,
+            65.29516700000022,
+            81.56272900000113,
+            81.40765400000237,
+            65.35868099999789,
+            64.94289500000014,
+            65.26983199999813,
+            65.04545700000017
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 6,
+          "framesMs": [
+            77.16155300000173,
+            65.18534100000034,
+            65.16665199999989,
+            64.72810499999832,
+            65.15162099999725,
+            65.74114199999894,
+            64.7901720000009,
+            65.31775899999775,
+            65.58262499999546,
+            65.27622100000008,
+            65.1448109999983,
+            65.10912599999574,
+            64.99205500000244,
+            65.30457299999398,
+            65.17354299999715,
+            65.03598599999532,
+            65.65052999999898,
+            64.99136600000202,
+            65.34452600000077,
+            65.57047100000636,
+            65.33386500000051,
+            64.7947720000011,
+            65.50351800000499,
+            65.36005599999771,
+            64.93283700000029,
+            65.3489069999996,
+            65.61939100000018,
+            64.99105400000553,
+            65.1093819999951,
+            65.03988599999866
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        }
+      ]
+    },
+    {
+      "scale": 2,
+      "repeats": 7,
+      "medianFrameMs": 65.22755199999665,
+      "medianGestureMs": 1978.8250700000062,
+      "samples": [
+        {
+          "repeat": 0,
+          "framesMs": [
+            92.82923099999607,
+            65.21008399999846,
+            65.11110599999665,
+            64.73542100000486,
+            65.30035299999872,
+            65.5234169999967,
+            64.26563200000237,
+            65.01474700000108,
+            65.26416099999915,
+            65.14851900000212,
+            65.01452199999767,
+            64.91301300000487,
+            65.89304199999606,
+            64.00455900000088,
+            65.11841399999685,
+            65.31371400000353,
+            65.48728000000119,
+            64.6577660000039,
+            65.49759199999971,
+            65.50074799999857,
+            64.68079800000123,
+            65.22302199999831,
+            65.60561100000632,
+            64.48879899999883,
+            65.32250200000271,
+            65.33347800000047,
+            64.90591100000165,
+            63.417435000003024,
+            65.56825399999798,
+            64.47593899999629
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 1,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 1,
+          "framesMs": [
+            93.32374799999525,
+            64.17602299999999,
+            65.28651199999877,
+            65.11541399999987,
+            65.06993800000055,
+            65.56718099999853,
+            65.45728600000439,
+            64.70530999999755,
+            65.20076499999413,
+            65.4051599999948,
+            64.93798600000446,
+            65.8772270000045,
+            64.96106799999689,
+            64.9502100000027,
+            65.14955000000191,
+            65.44899299999815,
+            65.08054000000266,
+            65.49157600000035,
+            65.57389599999442,
+            64.76469200000429,
+            65.486625000005,
+            65.48954300000332,
+            65.03885199999786,
+            65.21920000000682,
+            65.49967399999878,
+            65.06698399999732,
+            65.49478900000395,
+            65.42269400000077,
+            65.34856500000024,
+            65.15556199999992
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 2,
+          "framesMs": [
+            77.70926200000395,
+            65.23802599999908,
+            64.96587399999407,
+            64.920938999996,
+            65.86652500000491,
+            64.42870800000674,
+            64.40828799999872,
+            65.34903599999961,
+            65.01058699999703,
+            65.49755500000174,
+            64.68523500000447,
+            65.04164100000344,
+            64.9904200000019,
+            65.5364269999991,
+            64.91821499999787,
+            65.13767499999813,
+            65.57498499999929,
+            64.6621410000007,
+            65.02304300000105,
+            65.37903299999743,
+            65.13834899999347,
+            65.08664100000169,
+            64.98447999999917,
+            65.52692200000456,
+            64.52669099999912,
+            65.56726899999921,
+            65.30563200000324,
+            65.2049279999992,
+            64.87021799999638,
+            65.30139700000291
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 3,
+          "framesMs": [
+            91.95715999999811,
+            65.24355300000025,
+            65.15750499999558,
+            64.81522399999812,
+            65.49332799999684,
+            65.35240600000543,
+            64.9168159999972,
+            65.39998699999705,
+            65.41833800000313,
+            64.97844199999963,
+            65.12250100000529,
+            65.01796599999943,
+            65.25776500000211,
+            65.4039350000021,
+            65.10844599999837,
+            65.48873399999866,
+            65.68738599999779,
+            64.39966899999854,
+            65.08159599999635,
+            65.45417500000622,
+            65.30767199999536,
+            65.33105000000069,
+            65.48660699999891,
+            65.4177819999968,
+            64.28471300000092,
+            65.25826000000234,
+            65.47334100000444,
+            64.91660000000411,
+            65.4739350000018,
+            65.12540199999785
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 4,
+          "framesMs": [
+            76.76352600000246,
+            64.85089600000356,
+            65.22755199999665,
+            65.18327999999747,
+            65.15933300000324,
+            64.8490740000052,
+            65.59994399999414,
+            64.85901900000317,
+            65.2417260000002,
+            65.57500599999912,
+            65.13019599999825,
+            65.00612499999988,
+            65.745345000003,
+            65.07565500000055,
+            65.09227499999542,
+            65.43135400000028,
+            64.81150299999717,
+            65.77237500000047,
+            64.37307699999656,
+            65.48713300000236,
+            65.2340469999981,
+            65.15291799999977,
+            65.25374199999351,
+            65.23925099999906,
+            65.21226399999432,
+            65.41452600000048,
+            65.36194399999658,
+            65.01220900000044,
+            64.9861330000058,
+            65.38438699999824
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 5,
+          "framesMs": [
+            94.40078399999766,
+            65.2799939999968,
+            65.70638300000428,
+            64.36502300000575,
+            65.37374299999647,
+            64.99271900000167,
+            64.67638799999986,
+            65.15311700000166,
+            64.99857599999814,
+            65.10846900000615,
+            65.17390399999567,
+            65.33962299999985,
+            65.27995100000408,
+            65.4127079999962,
+            65.00050500000361,
+            65.19802399999753,
+            65.69114299999637,
+            64.59075000000303,
+            65.22817400000349,
+            66.2028169999976,
+            64.25951999999961,
+            65.09382599999662,
+            65.56821800000034,
+            65.25843799999711,
+            65.06175899999653,
+            65.52877799999987,
+            64.58244099999865,
+            65.3796180000063,
+            64.94050000000425,
+            65.67774700000155
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        },
+        {
+          "repeat": 6,
+          "framesMs": [
+            77.30383299999812,
+            64.62230000000272,
+            65.17934600000444,
+            65.4542550000042,
+            65.20566500000132,
+            65.05412700001034,
+            65.16534599999432,
+            64.85424700001022,
+            65.32577900000615,
+            65.45984599999792,
+            64.80948699999135,
+            65.84032499999739,
+            64.49416200000269,
+            65.54053700000804,
+            64.9615710000071,
+            63.90773000000627,
+            65.04157600000326,
+            64.91470599999593,
+            65.66496499998902,
+            65.41384500000277,
+            65.45677699999942,
+            65.45665100000042,
+            66.10609699999623,
+            64.58278799999971,
+            64.9528660000069,
+            65.20078400000057,
+            65.61799799998698,
+            65.11195500000031,
+            65.19844199999352,
+            65.93040199999814
+          ],
+          "delta": {
+            "wallUnion": 0,
+            "innerContour": 0,
+            "cleanFloor": 0,
+            "openingWallIndex": 0,
+            "lightBarrier": 0,
+            "glowClip": 0,
+            "physicalBodies": 0,
+            "openingTunnel": 0,
+            "lightPhysicalBodies": 0,
+            "sunRays": 0,
+            "isoSun": 0
+          },
+          "fallbackDelta": 0,
+          "epochDelta": 0,
+          "poolKeysUnchanged": true,
+          "releaseUnion": 0,
+          "neighbourUnion": [
+            {
+              "id": "perf-floor-2",
+              "wallUnion": 0
+            },
+            {
+              "id": "perf-floor-3",
+              "wallUnion": 0
+            }
+          ],
+          "acceptedOpeningsSha256": "094241ff837c39ea659236915aa35e3dc84965d88f0dd4e1365c621475bd7af1",
+          "checks": {
+            "nativeDrag": true,
+            "liveFrames": 28,
+            "AC1": true,
+            "AC3": true
+          }
+        }
+      ]
+    }
+  ],
+  "fullPhysicalCalls": {
+    "before": [
+      {
+        "scale": 1,
+        "coverage": true,
+        "timingSamples": [],
+        "physical": {
+          "coldPositive": 6,
+          "calls": 27,
+          "cropConstructors": 0,
+          "targets": {
+            "physical": {
+              "relative": "houseplan-assets/houseplan-card-BBSskRck.js",
+              "name": "bn",
+              "start": 18596,
+              "bodyStart": 18643,
+              "end": 19260
+            },
+            "constructor": null
+          }
+        },
+        "checks": {
+          "nativeDrag": true,
+          "liveFrames": 28,
+          "AC1": false,
+          "AC3": false
+        }
+      },
+      {
+        "scale": 2,
+        "coverage": true,
+        "timingSamples": [],
+        "physical": {
+          "coldPositive": 6,
+          "calls": 27,
+          "cropConstructors": 0,
+          "targets": {
+            "physical": {
+              "relative": "houseplan-assets/houseplan-card-BBSskRck.js",
+              "name": "bn",
+              "start": 18596,
+              "bodyStart": 18643,
+              "end": 19260
+            },
+            "constructor": null
+          }
+        },
+        "checks": {
+          "nativeDrag": true,
+          "liveFrames": 28,
+          "AC1": false,
+          "AC3": false
+        }
+      }
+    ],
+    "candidate": [
+      {
+        "scale": 1,
+        "coverage": true,
+        "timingSamples": [],
+        "physical": {
+          "coldPositive": 6,
+          "calls": 0,
+          "cropConstructors": 1,
+          "targets": {
+            "physical": {
+              "relative": "houseplan-assets/houseplan-card-a223bb25.js",
+              "name": "bn",
+              "start": 18596,
+              "bodyStart": 18643,
+              "end": 19315
+            },
+            "constructor": {
+              "relative": "houseplan-assets/houseplan-editor-runtime-CEckh0jO.js",
+              "name": "q_",
+              "start": 602141,
+              "bodyStart": 602176,
+              "classStart": 602132,
+              "end": 602522
+            }
+          }
+        },
+        "checks": {
+          "nativeDrag": true,
+          "liveFrames": 28,
+          "AC1": true,
+          "AC3": true
+        }
+      },
+      {
+        "scale": 2,
+        "coverage": true,
+        "timingSamples": [],
+        "physical": {
+          "coldPositive": 6,
+          "calls": 0,
+          "cropConstructors": 1,
+          "targets": {
+            "physical": {
+              "relative": "houseplan-assets/houseplan-card-a223bb25.js",
+              "name": "bn",
+              "start": 18596,
+              "bodyStart": 18643,
+              "end": 19315
+            },
+            "constructor": {
+              "relative": "houseplan-assets/houseplan-editor-runtime-CEckh0jO.js",
+              "name": "q_",
+              "start": 602141,
+              "bodyStart": 602176,
+              "classStart": 602132,
+              "end": 602522
+            }
+          }
+        },
+        "checks": {
+          "nativeDrag": true,
+          "liveFrames": 28,
+          "AC1": true,
+          "AC3": true
+        }
+      }
+    ]
+  },
+  "acceptedArraysMatchAll14": true,
+  "ac6": {
+    "before": {
+      "wallNode": {
+        "profile": "wall-node-candidate-v1",
+        "roomCount": 200,
+        "warmups": 3,
+        "series": 20,
+        "movesPerSeries": 120,
+        "distinctTargets": 115,
+        "fixtureFingerprint": "3491530608bb6bbed2d840dbe92227bf98e1b32d498d8674637195d2f4bc4deb",
+        "coldGraphMs": 47.372972000000004,
+        "candidateMs": {
+          "p50": 4.082143000000087,
+          "p95": 5.707674999999654,
+          "max": 12.583620000001247
+        }
+      },
+      "safeResize": {
+        "issue": 277,
+        "fixture": {
+          "rooms": 200,
+          "largeHouse": {
+            "floors": 3,
+            "rooms": 60,
+            "devices": 200,
+            "openings": 100,
+            "partitions": 60,
+            "columns": 40,
+            "decor": 500,
+            "stairs": 250
+          }
+        },
+        "warmups": 5,
+        "samples": 20,
+        "batch": 25,
+        "baseline": {
+          "min": 2.856703520000001,
+          "median": 2.990436679999993,
+          "p95": 3.5884766999999966,
+          "max": 3.591150899999999
+        },
+        "candidate": {
+          "min": 0.006168980000002194,
+          "median": 0.007293840000002092,
+          "p95": 0.011103599999996732,
+          "max": 0.011202060000000529
+        },
+        "commitPreflight": {
+          "min": 0.00014700000019729487,
+          "median": 0.00016300000015689875,
+          "p95": 0.0013149999999768625,
+          "max": 0.004400000000259752
+        },
+        "renderPrecomputeMs": 340.035959,
+        "cacheEntries": 20,
+        "budgets": {
+          "pointerP95Ms": 16,
+          "pointerRatio": 1.2,
+          "pointerNoiseMs": 0.25,
+          "relativeLimit": 4.556172039999995,
+          "commitPreflightP95Ms": 75,
+          "maxCacheEntries": 4096
+        },
+        "pass": true
+      },
+      "resizeRender": {
+        "issue": 277,
+        "fixture": {
+          "floors": 3,
+          "rooms": 60,
+          "devices": 200,
+          "openings": 100,
+          "partitions": 60,
+          "columns": 40,
+          "decor": 500,
+          "stairs": 250
+        },
+        "warmups": 3,
+        "samples": 20,
+        "roomCount": 20,
+        "handleCount": 80,
+        "snapshotOwner": "editor-runtime",
+        "warmupSnapshotCalls": 3,
+        "snapshotCalls": 20,
+        "snapshotCallsPerFrame": 1,
+        "render": {
+          "min": 1.3999999985098839,
+          "median": 1.5,
+          "p95": 1.9000000022351742,
+          "max": 2.5
+        },
+        "budgets": {
+          "renderP95Ms": 25,
+          "maxSnapshotCallsPerFrame": 1
+        },
+        "failures": [],
+        "pass": true
+      }
+    },
+    "candidate": {
+      "wallNode": {
+        "profile": "wall-node-candidate-v1",
+        "roomCount": 200,
+        "warmups": 3,
+        "series": 20,
+        "movesPerSeries": 120,
+        "distinctTargets": 115,
+        "fixtureFingerprint": "3491530608bb6bbed2d840dbe92227bf98e1b32d498d8674637195d2f4bc4deb",
+        "coldGraphMs": 54.61140499999999,
+        "candidateMs": {
+          "p50": 4.093622000000323,
+          "p95": 5.571520000001328,
+          "max": 10.542215999999826
+        }
+      },
+      "safeResize": {
+        "issue": 277,
+        "fixture": {
+          "rooms": 200,
+          "largeHouse": {
+            "floors": 3,
+            "rooms": 60,
+            "devices": 200,
+            "openings": 100,
+            "partitions": 60,
+            "columns": 40,
+            "decor": 500,
+            "stairs": 250
+          }
+        },
+        "warmups": 5,
+        "samples": 20,
+        "batch": 25,
+        "baseline": {
+          "min": 2.905701560000007,
+          "median": 3.0334214800000066,
+          "p95": 3.4492100800000025,
+          "max": 3.5286522200000014
+        },
+        "candidate": {
+          "min": 0.005785059999998339,
+          "median": 0.007013800000004266,
+          "p95": 0.009499719999998888,
+          "max": 0.011703279999996994
+        },
+        "commitPreflight": {
+          "min": 0.0001629999997021514,
+          "median": 0.00017799999977796688,
+          "p95": 0.001532000000224798,
+          "max": 0.003885999999965861
+        },
+        "renderPrecomputeMs": 311.40567300000004,
+        "cacheEntries": 20,
+        "budgets": {
+          "pointerP95Ms": 16,
+          "pointerRatio": 1.2,
+          "pointerNoiseMs": 0.25,
+          "relativeLimit": 4.389052096000003,
+          "commitPreflightP95Ms": 75,
+          "maxCacheEntries": 4096
+        },
+        "pass": true
+      },
+      "resizeRender": {
+        "issue": 277,
+        "fixture": {
+          "floors": 3,
+          "rooms": 60,
+          "devices": 200,
+          "openings": 100,
+          "partitions": 60,
+          "columns": 40,
+          "decor": 500,
+          "stairs": 250
+        },
+        "warmups": 3,
+        "samples": 20,
+        "roomCount": 20,
+        "handleCount": 80,
+        "snapshotOwner": "editor-runtime",
+        "warmupSnapshotCalls": 3,
+        "snapshotCalls": 20,
+        "snapshotCallsPerFrame": 1,
+        "render": {
+          "min": 1.2999999970197678,
+          "median": 1.800000000745058,
+          "p95": 2.2000000029802322,
+          "max": 2.5
+        },
+        "budgets": {
+          "renderP95Ms": 25,
+          "maxSnapshotCallsPerFrame": 1
+        },
+        "failures": [],
+        "pass": true
+      }
+    }
+  },
+  "resources": {
+    "commonBase": "31b17bec040f25224b80f0f679378807ccfd37fc",
+    "report": [
+      {
+        "name": "before",
+        "sha": "31b17bec040f25224b80f0f679378807ccfd37fc",
+        "baseline": {
+          "delegates": 145,
+          "portMembers": 380,
+          "hostRefs": 6532,
+          "portPrivates": 105,
+          "harnessPrivates": 101,
+          "bundleBytes": 3651515
+        },
+        "hostRefs": 6557,
+        "portMembers": 380,
+        "bundleBytes": 3652946,
+        "initialViewGzip": 357682,
+        "editorGzip": 375648,
+        "onboardingGzip": 44643,
+        "runtimeLines": 11960
+      },
+      {
+        "name": "after",
+        "sha": "c6d735779bb26109d9442134254be8c3d207bf1e",
+        "baseline": {
+          "delegates": 145,
+          "portMembers": 380,
+          "hostRefs": 6532,
+          "portPrivates": 105,
+          "harnessPrivates": 101,
+          "bundleBytes": 3651515
+        },
+        "hostRefs": 6604,
+        "portMembers": 382,
+        "bundleBytes": 3661718,
+        "initialViewGzip": 357829,
+        "editorGzip": 378324,
+        "onboardingGzip": 44642,
+        "runtimeLines": 12037
+      }
+    ]
+  },
+  "rawEvidenceSha256": {
+    "before-timing.json": "2d78af64a15152d37eb155e0eb55808d822b184ffcc2de74d332619219a84ca5",
+    "candidate-timing.json": "c75e92dd7074f8d88db9c00684a9a4264ea3a6f548055aa06d05c2fcae7b8464",
+    "before-calls.json": "732859dc4ab94a5b99af32cccf03329311c404e94edd2560aa852885b3777457",
+    "candidate-calls.json": "e041389136dcbbf1b7b680ef65681e5b4b98b930ca7053f501b50ccddf110e9e",
+    "before-recipe.sha256": "e822c2b95d453ad0707bcea9ec06969ae799c3d38c3325d8c260efc4028d3a39",
+    "candidate-recipe.sha256": "e822c2b95d453ad0707bcea9ec06969ae799c3d38c3325d8c260efc4028d3a39"
+  }
+}

@@ -98,11 +98,10 @@ const CAPS = {
   // #1089, owner permits explicit finite cap increases rather than byte/line chasing:
   // existing Hide/Delete transactions gain the guarded View command adapter.
   // Actual runtime is 11898 lines; retain the finite cap and CORE_BAND50.
-  // #1097 owner-authorized observed seam growth: source-equivalent ccc62 has
-  // 11953 lines, the opening draft/cancel/release/render adapter has 12027 (+74).
-  // Local cut geometry stays in its leaf module. Carry only 74 into the 11923
-  // reference, retaining the inherited 30-line excess and CORE_BAND50.
-  'src/houseplan-editor-runtime.ts': 11997,
+  // #1097 owner-authorized observed adapter growth after accepted1099/common31b:
+  // 11960 ->12037 lines (+77). Carry only77 into11923, retaining the inherited
+  // 37-line excess and CORE_BAND50. Local cut geometry stays in its leaf.
+  'src/houseplan-editor-runtime.ts': 12000,
 };
 
 /**

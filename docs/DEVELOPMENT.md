@@ -2,18 +2,20 @@
 
 Opening drag (#1097): compile the test build, then run `node --test test/opening-drag.test.mjs test/live-editor.test.mjs test/opening-placement.test.mjs test/floor-geometry-key.test.mjs`, `node demo/smoke_opening_drag.mjs` and `node demo/smoke_partition_openings_preview.mjs`. The native smoke checks every cut and shoulder, original coordinate/final-array readback, unchanged held config/epoch/pools, neighbour reuse, cancellation and refusal. `node demo/benchmark_opening_drag.mjs` uses a canonical large-house fixture, seven series at DPR1/2 and native pointermove-to-settled wall-clock latency including IPC; counters are acceptance and milliseconds are descriptive. Preserve the earlier legacy-fixture diagnostic separately: its first release also migrated all floors, so its neighbour misses do not isolate preview eviction. See [the measurement audit](analysis/1097-opening-drag-2026-10-28.md).
 
-The owner permitted measured resource-limit growth for #1097. The retained
-#1112 build `43ee3364` has identical frontend/build inputs to `ccc62ef1`.
-Compared with it, the local opening preview adds 53 B initial gzip, 2235 B lazy
-editor gzip and 7772 B generated JS; onboarding decreases 26 B. The editor
-ceiling carries only 2235 B (375223 → 377458), retaining its 273 B inherited
-excess and 2000 B band. The monolith host-reference baseline carries 45
-references and the JS baseline 7772 B, retaining inherited gaps of 23/595.
-The runtime adapter grows from 11953 to 12027 lines (+74); its core reference
-carries exactly that delta (11923 → 11997), retaining the 30-line inherited
-excess and band 50. Local geometry remains in its leaf module. Timing and
-functional validation thresholds are unchanged. The final rebase measurement
-is recorded in the #1097 analysis before S7.
+The owner permitted measured resource-limit growth for #1097. After accepted
+#1099, a fresh unchanged `31b17bec` build and the same recipe on the candidate
+show host references 6557→6604 (+47), runtime adapter 11960→12037 lines (+77),
+generated JS 3652946→3661718 B (+8772), initial gzip 357682→357829 B (+147),
+and lazy editor gzip 375648→378324 B (+2676); onboarding decreases 1 B.
+Carry only these own costs: host baseline6532→6579 (inherited gap25/band25),
+JS baseline3651515→3660287 (gap1431/band2000), runtime cap11923→12000
+(gap37/band50), editor ceiling375223→377899 (gap425/band2000). No accepted
+dev reference is reduced. The earlier ccc62 calibration remains diagnostic
+history in the local evidence, not the final common-base comparison. Timing
+and functional validators do not change. `benchmark_opening_drag --coverage`
+is a separate correctness pass with cold-positive exact producer coverage;
+its timings are disabled and never mixed into the seven-series sample.
+
 The #1089 View-menu owner distinguishes normal selection close from external retirement. Test delayed runtime import, target replacement, queued write and confirmation; the original pointer close consumes its compatibility click, while fresh pointer/keyboard input resets that barrier. Keep common context-menu styles adopted before the first rendered frame and avoid using projected hidden=false as saved visibility.
 
 

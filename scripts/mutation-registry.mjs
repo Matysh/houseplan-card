@@ -77,6 +77,18 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'opening-drag-hides-direct-physical-producer-1097',
+    guard: compiledNodeSmoke('smoke_partition_openings_preview'),
+    because: '#1097 AC1: pool misses cannot see direct constructor work. The native CDP cold positive and observed crop constructor must cover the exact bundled physical producer. Declaration only; nightly execution.',
+    patches: [{file:'src/houseplan-editor-runtime.ts',find:'this.host._gridPitch, this.host._physicalBodiesCache);',replace:'this.host._gridPitch, (physicalBodyParts(space, this.host._cellCm, this.host._gridPitch), this.host._physicalBodiesCache));'}],
+  },
+  {
+    id: 'opening-drag-fractional-clip-seam-1097',
+    guard: compiledNodeSmoke('smoke_opening_drag'),
+    because: '#1097 AC2: actual pan/zoom/quarter-turn camera and DPR must put complementary presentation boundaries on physical pixels, without snapping authored opening coordinates. Declaration only; nightly execution.',
+    patches: [{file:'src/opening-drag-preview.ts',find:'const clip = openingDragClip(bounds, viewport);',replace:'const clip = combine(bounds.map(box));'}],
+  },
+  {
     id: 'opening-drag-mutates-saved-record-1097',
     guard: 'node --test test/opening-drag.test.mjs',
     because: '#1097 AC1/4/5: queued room and partition moves must own only the transient draft until release. Declaration only; not executed locally.',
