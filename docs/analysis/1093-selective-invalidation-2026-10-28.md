@@ -2,6 +2,11 @@
 
 Baseline: `455535be9da51e0eef11ceccd1b9545a39875425`; current integration base: frozen #1089 `5228e2ff1fbe51ea55f324b056d9f3806246e041`, containing accepted #998/#1000/#1107. Synthetic fixtures only. The final timing matrix runs on this joint source; S7 still requires actual #1089 acceptance and an identical product/input fingerprint.
 This report records measured results separately from remaining acceptance work.
+After #1089 CODE r2 GREEN and automatic S8, accepted dev
+`cc9209f8ad8cbb8eb937fb27d5234c971bbc47da` was merged normally. Its final delta
+adds the corrected mobile-header witness and UX documentation; actual frontend
+fingerprint still matches the measured final source below. The earlier frozen
+base now has accepted ancestry; no timing inputs or product source changed.
 Accepted backend #1096 was subsequently merged from dev
 `bffa1b7cd2c9c3499c35b0288bbdeeda6091748e`; recomputed frontend fingerprint
 remained exactly `21302ea54db5854db5bd85e47371a306cb02157c4d339abb37ae3d21c41b815a`.

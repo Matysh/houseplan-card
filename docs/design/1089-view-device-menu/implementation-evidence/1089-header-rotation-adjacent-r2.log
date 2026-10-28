@@ -1,0 +1,88 @@
+browser-attestation ok (ok) [visual proof] · Playwright пин 1.62.0, установлен 1.62.0 · ожидается chromium-headless-shell 151.0.7922.34 rev 1234 · запущен 151.0.7922.34 (HeadlessChrome/151.0.7922.34, режим headless-shell) · путь /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-RfvXWI --remote-debugging-pipe --no-startup-window → /home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+PASS [
+  {
+    mode: 'plan',
+    target: 'plan',
+    reduced: false,
+    maxBudgetDelta: 0.03125,
+    head: 101
+  },
+  {
+    mode: 'plan',
+    target: 'view',
+    reduced: false,
+    maxBudgetDelta: 0.03125,
+    head: 55
+  },
+  {
+    mode: 'devices',
+    target: 'devices',
+    reduced: false,
+    maxBudgetDelta: 0.03125,
+    head: 101
+  },
+  {
+    mode: 'devices',
+    target: 'view',
+    reduced: false,
+    maxBudgetDelta: 0.03125,
+    head: 55
+  },
+  {
+    mode: 'decor',
+    target: 'decor',
+    reduced: false,
+    maxBudgetDelta: 0.03125,
+    head: 101
+  },
+  {
+    mode: 'decor',
+    target: 'view',
+    reduced: false,
+    maxBudgetDelta: 0.03125,
+    head: 55
+  },
+  {
+    mode: 'plan',
+    target: 'plan',
+    reduced: true,
+    maxBudgetDelta: 0,
+    head: 101
+  },
+  {
+    mode: 'plan',
+    target: 'view',
+    reduced: true,
+    maxBudgetDelta: 0,
+    head: 55
+  },
+  {
+    mode: 'devices',
+    target: 'devices',
+    reduced: true,
+    maxBudgetDelta: 0,
+    head: 101
+  },
+  {
+    mode: 'devices',
+    target: 'view',
+    reduced: true,
+    maxBudgetDelta: 0,
+    head: 55
+  },
+  {
+    mode: 'decor',
+    target: 'decor',
+    reduced: true,
+    maxBudgetDelta: 0,
+    head: 101
+  },
+  {
+    mode: 'decor',
+    target: 'view',
+    reduced: true,
+    maxBudgetDelta: 0,
+    head: 55
+  }
+]
+OK

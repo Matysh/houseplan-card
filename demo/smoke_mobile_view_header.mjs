@@ -22,12 +22,21 @@ const header = () => page.evaluate(() => {
   const mids = kids.map((el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; });
   const gear = sr.querySelector('[data-hp="header-menu"]');
   const g = gear?.getBoundingClientRect();
+  const card = sr.querySelector('ha-card').getBoundingClientRect();
+  const actionTargets = ['rotate-left', 'rotate-right', 'zoom-out', 'zoom-fit', 'zoom-in', 'header-menu'].map(id => {
+    const el = head.querySelector(`[data-hp="${id}"]`), r = el?.getBoundingClientRect();
+    return {id, shown: shown(el), width: r?.width ?? 0, height: r?.height ?? 0,
+      inCard: !!r && r.left >= card.left - 0.5 && r.right <= card.right + 0.5};
+  });
   return {
+    actionTargets,
+    targets44InCard: actionTargets.every(t => t.shown && t.width >= 43.999 && t.height >= 43.999 && t.inCard),
     height: head.getBoundingClientRect().height,
     oneRow: mids.length > 0 && Math.max(...mids) - Math.min(...mids) <= 6,
     title: shown(head.querySelector(':scope > .title')),
     tabs: shown(head.querySelector(':scope > .tabs')),
     zoom: shown(head.querySelector(':scope > .header-actions > .zoomctl')),
+    modeSlotVisible: shown(head.querySelector(':scope > .modes')),
     modeSlot: shown(head.querySelector(':scope > .modes'))
       && Math.abs(head.querySelector(':scope > .modes').getBoundingClientRect().width - 24) <= 0.5,
     cross: shown(head.querySelector('[data-hp="editor-close"]')),
@@ -84,11 +93,16 @@ const mode = () => page.evaluate(() => window.__card.shadowRoot.querySelector('h
 
 // ---- администратор (стенд) --------------------------------------------------
 const ADMIN_VIEW = ['mode-plan', 'mode-devices', 'mode-decor', 'space-settings', 'space-add', 'settings', 'pdf', 'support', 'hidden-devices', 'summary-settings', 'summary-toggle'];
-for (const width of [390, 320]) {
+for (const width of [390, 360, 320]) {
   await size(width);
   const h = await header();
   out[`admin${width}_oneRow56`] = h.oneRow && h.height <= 56;
-  out[`admin${width}_rowContent`] = !h.title && h.tabs && h.modeSlot && h.zoom && h.gear && h.gear44;
+  out[`admin${width}_targets44InCard`] = h.targets44InCard ? true : JSON.stringify(h.actionTargets);
+  // #1070: below 360px View drops only the empty mode slot to keep all
+  // required 44px actions in one row; editors retain their close slot.
+  const modeSlotMatches = width < 360 ? !h.modeSlotVisible : h.modeSlot;
+  const rowContent = !h.title && h.tabs && modeSlotMatches && h.zoom && h.gear && h.gear44;
+  out[`admin${width}_rowContent`] = rowContent ? true : JSON.stringify(h);
   out[`admin${width}_inlineHidden`] = h.hiddenInline.length === 0 ? true : h.hiddenInline.join(',');
   await openMenu();
   const m = await menuState();
@@ -249,10 +263,11 @@ await page.evaluate(async () => {
   while (Date.now() < until && !card.shadowRoot?.querySelector('[data-hp="space-tab"],[data-hp="space-select"]')) await new Promise((r) => setTimeout(r, 50));
   await new Promise((r) => setTimeout(r, 600));
 });
-for (const width of [390, 320]) {
+for (const width of [390, 360, 320]) {
   await size(width);
   const h = await header();
   out[`household${width}_oneRow56`] = h.oneRow && h.height <= 56;
+  out[`household${width}_targets44InCard`] = h.targets44InCard ? true : JSON.stringify(h.actionTargets);
   out[`household${width}_rowContent`] = !h.title && h.tabs && h.zoom && h.gear && !h.tabEditInDom;
   await openMenu();
   const m = await menuState();

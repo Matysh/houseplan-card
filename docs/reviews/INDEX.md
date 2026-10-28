@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 188, issue: 90. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 190, issue: 90. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -17,6 +17,8 @@
 | #1090 | [SPEC-REVIEW-1090-r2.md](SPEC-REVIEW-1090-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1090 | [CODE-REVIEW-1090-r1.md](CODE-REVIEW-1090-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1089 | [SPEC-REVIEW-1089-r1.md](SPEC-REVIEW-1089-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1089 | [CODE-REVIEW-1089-r1.md](CODE-REVIEW-1089-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | docs/UX-MODES.md описывает заменённое поведение #1050 как текущее | `docs/UX-MODES.md` `UX-MODES.md` `docs/TOUCH-SUPPORT.md` `docs/DEVICE-PRESENTATION.md` `TOUCH-SUPPORT.md` `DEVICE-PRESENTATION.md` |
+| #1089 | [CODE-REVIEW-1089-r2.md](CODE-REVIEW-1089-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1088 | [CODE-REVIEW-1088-r1.md](CODE-REVIEW-1088-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1087 | [CODE-REVIEW-1087-r1.md](CODE-REVIEW-1087-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1087 | [CODE-REVIEW-1087-r2.md](CODE-REVIEW-1087-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
