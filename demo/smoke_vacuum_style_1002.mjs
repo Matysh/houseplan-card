@@ -18,8 +18,8 @@ try {
         paths:[[[100,100],[400,100],[400,400]],[[500,500],[600,500]]],quality:{source:'native',reason:'ok',raw_points:5}}}}}):base(msg)};
     old.replaceWith(card);window.__card=card;await window.__hpTest.settled();await window.__hpTest.setMode('view');
   });
-  await page.waitForSelector('.vactrail > path.core');
-  const geometry=await page.locator('.vactrail > path.core').getAttribute('d');
+  await page.waitForSelector('.vactrail > [data-hp-plan-rotation-frame] > path.core');
+  const geometry=await page.locator('.vactrail > [data-hp-plan-rotation-frame] > path.core').getAttribute('d');
   for(const kiosk of [false,true]) for(const iso of [false,true]) {
     await page.evaluate(async({kiosk,iso})=>{
       window.__card.setConfig({type:'custom:houseplan-card',language:'en',kiosk,cycle:0});
@@ -29,7 +29,7 @@ try {
     await page.mouse.move(stage.x+stage.width*.8,stage.y+stage.height*.8);
     await page.mouse.down();await page.mouse.move(stage.x+stage.width*.8-45,stage.y+stage.height*.8-15);await page.mouse.up();
     await page.mouse.wheel(0,-180);await page.waitForTimeout(250);
-    const ink=await page.locator('.vactrail > path.core').evaluate(p=>{
+    const ink=await page.locator('.vactrail > [data-hp-plan-rotation-frame] > path.core').evaluate(p=>{
       const s=getComputedStyle(p);return {d:p.getAttribute('d'),width:s.strokeWidth,color:s.stroke,alpha:s.strokeOpacity,vector:s.vectorEffect};
     });
     out[`${kiosk?'kiosk':'view'}-${iso?'iso':'flat'}-unchangedGeometry`]=ink.d===geometry;

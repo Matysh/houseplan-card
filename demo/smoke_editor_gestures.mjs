@@ -181,7 +181,16 @@ Object.assign(out, await page.evaluate(async () => {
   };
   const noActivation = () => actionCalls === 0 && moreInfoCalls === 0
     && serviceCalls === 0 && c._infoCard === null && c._tapConfirm === null
-    && c._markerDialog === null;
+    && c._markerDialog === null && !c.renderRoot.querySelector('[data-hp="device-context-menu"]:not([inert])');
+  const waitForMenu = async () => {
+    const started=performance.now();
+    while(performance.now()-started<5000){
+      const menu=c.renderRoot.querySelector('[data-hp="device-context-menu"]:not([inert])');
+      if(menu?.getClientRects().length&&getComputedStyle(menu).visibility!=='hidden')return menu;
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+    }
+    return null;
+  };
 
   // The missed #563 order: stage first, marker second. Capture has already
   // made the sequence multi-touch before the marker's pointerdown handler runs.
@@ -274,11 +283,13 @@ Object.assign(out, await page.evaluate(async () => {
   const mouseContextPrevented = compatibilityContextMenu('mouse', 91);
   pointer('pointerup', 91, marker, 300, 'mouse');
   await c.updateComplete;
-  // #1050: View context opens this marker's existing settings, never HA more-info.
+  // #1089: a fresh context gesture opens the real menu, never settings or HA implicitly.
+  const mouseMenu=await waitForMenu();
   const mouseContextMenuStillWorks = mouseContextPrevented
-    && c._markerDialog?.devId === marker.dataset.id && c._mode === 'view'
+    && !!mouseMenu?.querySelector('[data-action="view-device-settings"]:not(:disabled)')
+    && c._markerDialog === null && c._mode === 'view'
     && moreInfoCalls === 0 && serviceCalls === 0 && actionCalls === 1;
-  c.renderRoot.querySelector('hp-dialog[data-kind="marker"] [data-hp="dialog-cancel"]')?.click();
+  document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
   await c.updateComplete;
 
   // Shift+F10 has no pointerdown. Its keydown is equivalent positive evidence
@@ -295,10 +306,12 @@ Object.assign(out, await page.evaluate(async () => {
   });
   marker.dispatchEvent(keyboardContext);
   await c.updateComplete;
+  const keyboardMenu=await waitForMenu();
   const keyboardContextMenuStillWorks = keyboardContext.defaultPrevented
-    && c._markerDialog?.devId === marker.dataset.id && c._mode === 'view'
+    && !!keyboardMenu?.querySelector('[data-action="view-device-settings"]:not(:disabled)')
+    && c._markerDialog === null && c._mode === 'view'
     && moreInfoCalls === 0 && serviceCalls === 0 && actionCalls === 1;
-  c.renderRoot.querySelector('hp-dialog[data-kind="marker"] [data-hp="dialog-cancel"]')?.click();
+  document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
   await c.updateComplete;
 
   c._clickDevice = originalClickDevice;

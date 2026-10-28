@@ -59,7 +59,7 @@ for (const [screen, viewport] of [['desktop', { width: 1200, height: 900 }],
       }));
       witness.geometry = () => {
         const c = window.__card, root = c.renderRoot;
-        const path = root.querySelector('.vactrail > path.core');
+        const path = root.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core');
         const tip = root.querySelector('.vactrail line.tip.core');
         const puck = root.querySelector('.vacpuck[data-mid="e_vacuum_route918"]');
         const plan = root.querySelector('.plan-svg');

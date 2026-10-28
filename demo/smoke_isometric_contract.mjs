@@ -2,6 +2,7 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 850 });
+await page.exposeFunction('__isoClickOpeningLock', () => page.locator('houseplan-card .oplock[role="button"]').click());
 const out = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.renderRoot;
@@ -357,9 +358,17 @@ const out = await page.evaluate(async () => {
   });
   sensorDevice?.dispatchEvent(deviceContext);
   await card.updateComplete;
-  // #1050 changes only the context action; the raised marker still owns it.
+  // #1089: the raised marker owns the context menu and its explicit Settings command.
+  const menuStarted = performance.now();
+  while (!root().querySelector('[data-hp="device-context-menu"]:not([inert])')
+      && performance.now() - menuStarted < 5000) await frame();
+  const contextMenu = root().querySelector('[data-hp="device-context-menu"]:not([inert])');
+  const settingsCommand = contextMenu?.querySelector('[data-action="view-device-settings"]');
+  const contextOwned = deviceContext.defaultPrevented && settingsCommand && !settingsCommand.disabled
+    && card._markerDialog === null && moreInfoCalls === 0;
+  settingsCommand?.click(); await frame(); await card.updateComplete;
   const contextOpenedDeviceSettings = deviceContext.defaultPrevented
-    && card._markerDialog?.devId === 'd_temp' && card._mode === 'view' && moreInfoCalls === 0;
+    && contextOwned && card._markerDialog?.devId === 'd_temp' && card._mode === 'view' && moreInfoCalls === 0;
   root().querySelector('hp-dialog[data-kind="marker"] [data-hp="dialog-cancel"]')?.click();
   await card.updateComplete;
   sensorDevice?.dispatchEvent(new KeyboardEvent('keydown', {
@@ -368,12 +377,16 @@ const out = await page.evaluate(async () => {
   const keyboardOpenedDeviceCard = card._infoCard?.id === 'd_temp';
   card._closeInfoCard();
   card._openMoreInfo = originalMoreInfo;
+  const cardPath = location.pathname + location.search + location.hash;
   const areaLink = root().querySelector('.roomlabel[data-id="r1"] .rlgo');
   areaLink?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
   const areaPath = location.pathname;
-  history.replaceState(null, '', '/#space=f1');
-  const lockRoot = root().querySelector('.oplock');
-  lockRoot?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+  history.replaceState(null, '', cardPath);
+  // #1093: returning from HA must notify the mounted card through the same public route event.
+  window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: true } }));
+  await frame(); await card.updateComplete;
+  // The first post-navigation action is a new physical press, not an abandoned click tail.
+  await window.__isoClickOpeningLock();
   result.raisedActionsRemainOwned = contextOpenedDeviceSettings && moreInfoCalls === 0 && keyboardOpenedDeviceCard
     && areaPath === '/config/areas/area/living_room'
     && card._openingInfo?.id === 'iso-centred-door';

@@ -13,7 +13,7 @@ export class HpSettingsSelect extends LitElement {
     pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
   };
   static styles = css`
-    :host { display:block; min-width:0; font:inherit; }
+    :host { display:block; position:relative; min-width:0; font:inherit; }
     ::slotted(select) { position:absolute!important; width:1px!important; height:1px!important;
       min-width:0!important; min-height:0!important; padding:0!important; margin:0!important;
       border:0!important; overflow:hidden!important; contain:strict;

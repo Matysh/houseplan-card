@@ -73,6 +73,15 @@ const fixtureFor = (scenario) => scenario.deviceAlerts ? makeMarkerAlertsFixture
   }
   return fixture;
 })() : scenario.vacuumHistory ? makeVacuumHistoryFixture(scenario.vacuumHistory)
+  : scenario.coverValueSource ? (() => {
+    const fixture = makeVisualMatrixFixture();
+    // A manual entity marker has its own identity and explicit floor. Reusing
+    // an automatic device ID made old cross-floor presentation maps alias it.
+    fixture.config.markers.push({ id: 'golden-cover-value',
+      binding: 'entity:cover.golden_door_half', space: scenario.space });
+    fixture.layout['golden-cover-value'] = { s: scenario.space, x: 0.5, y: 0.5 };
+    return fixture;
+  })()
   : scenario.deviceContacts ? makeDeviceContactsFixture()
   : scenario.offlineBoard ? makeDeviceOfflineFixture()
   : scenario.batteryBoard ? makeBatteryBoardFixture(scenario.batteryBoard)
@@ -2594,6 +2603,14 @@ export async function prepareGoldenScenario(page, scenario) {
       const markers = [...card.renderRoot.querySelectorAll('[data-hp="device"]')];
       const selected = markers.find((marker) => marker.dataset.id === scenario.deviceOnly);
       if (!selected) throw new Error(`golden isolated device missing: ${scenario.deviceOnly}`);
+      if (scenario.coverValueSource) {
+        const owners = card._devices.filter(device => device.id === scenario.deviceOnly);
+        if (owners.length !== 1 || owners[0].space !== scenario.space
+            || owners[0].bindingRef !== 'cover.golden_door_half'
+            || selected.querySelector('.valtext')?.textContent.trim() !== '42 %'
+            || Number(selected.style.getPropertyValue('--dev-scale')) !== 3)
+          throw new Error('golden cover value face must have one current-floor owner, 42 %, and scale 3');
+      }
       for (const marker of markers) marker.style.visibility = marker === selected ? 'visible' : 'hidden';
     }
     if (scenario.focusDevice) {
@@ -3049,6 +3066,15 @@ export async function prepareGoldenScenario(page, scenario) {
     page, fixture.windowLightProbes, !!scenario.interiorWindow.led,
   );
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
+  if (['opening-placement-door-thick-wall-dark', 'opening-placement-passage-thick-wall-dark',
+    'opening-placement-passage-thick-wall-light', 'plan-snap-line-gaps-dark'].includes(scenario.id)) {
+    // These static editor scenes can finish their host update before Chromium
+    // paints the settled SVG. The first/second capture differed despite equal
+    // root/child geometry, CTMs and computed styles; two frames make the first
+    // capture equal to the already-settled frame without changing the scene.
+    await page.evaluate(() => new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  }
   return result;
 }
 

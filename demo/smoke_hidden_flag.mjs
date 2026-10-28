@@ -37,15 +37,15 @@ Object.assign(out, await page.evaluate(async () => {
   o.countExcludesHidden = c._devices.filter((x) => x.space === 'f1' && !x.hidden).length
     === c._devices.filter((x) => x.space === 'f1').length - 1;
 
-  // Catalogue and header expose the same local display choice (#919).
+  // #1081 leaves the single local reveal choice in the real card header.
   o.noGhostsInView = !sr().querySelector('.dev.ghost');
   await window.__hpTest.setMode('devices');
   while (c._modeTransitionBusy || c._cameraTransition.active) await new Promise(resolve => requestAnimationFrame(resolve));
-  c._openDeviceInbox(); await c.updateComplete;
-  const ghostToggle = [...sr().querySelectorAll('.device-inbox-filters input[type="checkbox"]')].at(-1);
-  o.ghostToggleMovedIntoCatalog = !!ghostToggle;
+  const ghostToggle = sr().querySelector('button[data-hp="hidden-devices"]');
+  o.headerEyeTogglePresent = !!ghostToggle && ghostToggle.getBoundingClientRect().width > 0
+    && ghostToggle.getAttribute('aria-pressed') === 'false';
   ghostToggle?.click(); await c.updateComplete;
-  c._deviceInbox = null; await c.updateComplete;
+  o.headerEyeTogglePressed = sr().querySelector('button[data-hp="hidden-devices"]')?.getAttribute('aria-pressed') === 'true';
   const g = sr().querySelector(`.dev[data-id="${d.id}"]`);
   o.revealedInEditor = !!g && !g.classList.contains('ghost');
   o.revealedKeepsIcon = !!g?.querySelector('ha-icon');

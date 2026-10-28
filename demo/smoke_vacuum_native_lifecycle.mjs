@@ -59,7 +59,7 @@ try {
     fixture.frames = () => fixture.cards.map(card => {
       const root = card.renderRoot;
       const device = card._devices.find(item => item.id === marker.id);
-      return {current:root.querySelector('.vactrail > path.core')?.getAttribute('d')||'',
+      return {current:root.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core')?.getAttribute('d')||'',
         previous:root.querySelector('.vactrail .prev path.core')?.getAttribute('d')||'',
         tip:!!root.querySelector('.vactrail line.tip'),
         puck:!!root.querySelector('.vacpuck[data-mid="e_native1048"]'),

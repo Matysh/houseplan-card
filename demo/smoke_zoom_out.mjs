@@ -188,9 +188,8 @@ out.crossFloorEditorExit = await page.evaluate(async () => {
   c._resetZoom(); c._zoomAt(10, 10, 1.4); c._saveZoom();      // garden view zoom
   c._slideTo('f1', 'right'); await wait(350);
   c._setMode('devices'); await settleMode();
-  // этаж меняется НАСТОЯЩЕЙ вкладкой — именно этот путь под подозрением
-  const idx = c._model.findIndex((s) => s.id === 'garden');
-  sr.querySelectorAll('.tabs .tab')[idx].click();
+  // #997: compact navigation has no indexed floor tabs; use the public navigation contract.
+  await window.__hpTest.switchSpace('garden');
   await c.updateComplete; await settleMode();
   c._zoomAt(10, 10, 5.0); c._saveZoom();                      // 500% — рабочий инструмент
   c._setMode('view'); await settleMode();

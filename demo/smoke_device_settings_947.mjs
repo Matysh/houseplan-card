@@ -23,6 +23,8 @@ try{
   await openSettingsDeviceDialog(page,id);
   await reference.locator('#hp-review-case').selectOption(name);
   const expected=await reference.locator('.hp-after').evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,title:el.querySelector('h2').textContent.trim(),nav:el.querySelector('[data-nav]').getBoundingClientRect().width,sections:[...el.querySelectorAll('[data-nav] button')].map(n=>n.textContent.trim())}));
+  // #1000 extends the accepted v6 shell with one shared alarms section.
+  expected.sections.splice(5,0,'Тревоги устройства');
   out[`${name}_approved_v6`]=await dialog.evaluate((el,expected)=>{const surface=el.shadowRoot.querySelector('.surface').getBoundingClientRect(),nav=el.querySelector('.hpf-settings-nav');return Math.abs(surface.width-expected.width)<2&&Math.abs(surface.height-expected.height)<8&&Math.abs(nav.getBoundingClientRect().width-expected.nav)<2&&el.title===expected.title&&JSON.stringify([...nav.querySelectorAll('button')].map(n=>n.textContent.trim()))===JSON.stringify(expected.sections)&&el.subtitle.includes('1 этаж · жилой / Гостиная')&&el.querySelector('.hpf-footer').firstElementChild.classList.contains('hpf-status');},expected);
   if(!out[`${name}_approved_v6`])console.log('v6 mismatch',name,JSON.stringify({expected,actual:await dialog.evaluate(el=>({width:el.shadowRoot.querySelector('.surface').getBoundingClientRect().width,height:el.shadowRoot.querySelector('.surface').getBoundingClientRect().height,title:el.title,subtitle:el.subtitle,nav:el.querySelector('.hpf-settings-nav').getBoundingClientRect().width,sections:[...el.querySelectorAll('.hpf-settings-nav button')].map(n=>n.textContent.trim())}))}));
   out[`${name}_binding_modes_in_one_row`]=await dialog.locator('.hpf-seg:has(input[name="bmode"]) label').evaluateAll(nodes=>nodes.length===2&&Math.abs(nodes[0].getBoundingClientRect().top-nodes[1].getBoundingClientRect().top)<1&&Math.abs(nodes[0].getBoundingClientRect().width-nodes[1].getBoundingClientRect().width)<1);
@@ -30,8 +32,8 @@ try{
   if(name==='led')out.binding_name_is_separate_from_plan_label=await dialog.locator('#marker-name').inputValue()==='Подсветка карниза'&&(await dialog.locator('#marker-binding').textContent()).includes('Контроллер света гостиной');
   if(name==='climate')out.climate_binding_name_is_separate_from_plan_label=await dialog.locator('#marker-name').inputValue()==='Климат гостиной'&&(await dialog.locator('#marker-binding').textContent()).includes('Термостат гостиной');
   const tabs=await dialog.locator('[data-section-target]').evaluateAll(nodes=>nodes.map(n=>n.dataset.sectionTarget));
-  out[`${name}_shared_sections`]=JSON.stringify(tabs.slice(0,5))===JSON.stringify(['basics','appearance','actions','light','details']);
-  out[`${name}_specialized_only_when_real`]=JSON.stringify(tabs.slice(5))===JSON.stringify(name==='radar'?['radar']:name==='vacuum'?['vacuum']:[]);
+  out[`${name}_shared_sections`]=JSON.stringify(tabs.slice(0,6))===JSON.stringify(['basics','appearance','actions','light','details','alarms']);
+  out[`${name}_specialized_only_when_real`]=JSON.stringify(tabs.slice(6))===JSON.stringify(name==='radar'?['radar']:name==='vacuum'?['vacuum']:[]);
   out[`${name}_clean`]=await dialog.locator('.dialog-action-commit [data-hp=dialog-confirm]').isDisabled();
   await section('appearance');
   const face=dialog.locator('hp-device-preview .previewstage .dev');

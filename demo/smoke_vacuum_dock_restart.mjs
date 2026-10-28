@@ -44,7 +44,7 @@ try {
     await Promise.all(w.cards.map(card=>card.updateComplete));await window.__hpTest.settled();
   };
   w.geometry=()=>w.cards.map(card=>{
-    const root=card.renderRoot,current=root.querySelector('.vactrail > path.core'),previous=root.querySelector('.vactrail .prev path.core');
+    const root=card.renderRoot,current=root.querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core'),previous=root.querySelector('.vactrail .prev path.core');
     const device=card._devices.find(d=>d.id===marker.id);
     return {current:current?.getAttribute('d')||'',previous:previous?.getAttribute('d')||'',tip:!!root.querySelector('.vactrail line.tip'),
       puck:!!root.querySelector('.vacpuck[data-mid="e_vacuum_policy940"]'),diagnostic:device?card._vacTrailDiagnostics(device):null};

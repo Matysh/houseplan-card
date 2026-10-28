@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { captureHost } from './render-snapshot-fixture.mjs';
+import { captureRenderDeviceSnapshot } from '../test-build/render-snapshot-capture.js';
+import { presentationSnapshotKey } from '../test-build/render-device-snapshot.js';
 import { prepareGoldenFixture } from '../demo/golden/harness.mjs';
 import {
   GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS, OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT,
@@ -750,7 +753,6 @@ test('explicit cover value-source golden pins the 42 percent value face', () => 
     (item) => item.id === 'device-value-face-cover-source-dark',
   );
   assert.ok(scenario);
-  assert.equal(scenario.deviceOnly, 'golden-left-linkquality');
   const fixture = prepareGoldenFixture(scenario);
   const marker = fixture.config.markers.find((item) => item.id === scenario.deviceOnly);
   assert.equal(marker.binding, 'entity:cover.golden_door_half');
@@ -761,6 +763,19 @@ test('explicit cover value-source golden pins the 42 percent value face', () => 
     attribute: 'current_position',
   });
   assert.equal(fixture.states['cover.golden_door_half'].attributes.current_position, 42);
+  const host = captureHost(fixture);
+  host._space = scenario.space;
+  host._mode = 'view';
+  const owners = host._devices.filter(device => device.id === scenario.deviceOnly);
+  assert.equal(owners.length, 1, 'one marker identity cannot alias an automatic device on another floor');
+  assert.equal(owners[0].space, scenario.space, 'the value face belongs to the captured floor');
+  assert.equal(owners[0].bindingRef, 'cover.golden_door_half');
+  assert.equal(owners[0].marker.size, 3);
+  const snapshot = captureRenderDeviceSnapshot(host, null);
+  const face = snapshot.presentations.get(presentationSnapshotKey(scenario.deviceOnly, false));
+  assert.equal(face.display, 'value');
+  assert.equal(face.valueText, '42 %', 'current-floor capture resolves the owned cover attribute');
+  assert.deepEqual(snapshot.positions.get(scenario.deviceOnly), { x: 500, y: 500 });
 });
 
 test('device icon state-table goldens cover both themes and design facets', () => {

@@ -16,7 +16,7 @@ await page.evaluate(async () => {
   }));
   await window.__hpTest.switchSpace(space);
 });
-const res = await page.evaluate(async () => {
+const prepared = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
@@ -35,31 +35,39 @@ const res = await page.evaluate(async () => {
   out.noLegacyOptions = !values.includes('') && !values.includes('cover');
   out.defaultInfo = sel && sel.value === 'info';
   c._markerDialog = null; await c.updateComplete;
-  // 2) #1050: правый клик в Просмотре открывает настройки House Plan.
+  // #1089: View context menu precedes its explicit Settings command.
   c._setMode('view'); await c.updateComplete;
-  let moreInfo = null;
-  c._openMoreInfo = (eid) => { moreInfo = eid; };
-  const ev = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
-  c._ctxDevice(ev, dev);
-  out.ctxSettings = c._markerDialog?.devId === dev.id && moreInfo === null;
-  out.ctxPrevented = ev.defaultPrevented;
-  sr().querySelector('#marker-dialog [data-hp="dialog-cancel"]')?.click(); await c.updateComplete;
-  // 3) Devices opens its copy menu, without opening HA more-info.
-  c._setMode('devices'); await c.updateComplete;
-  moreInfo = null;
-  const ev2 = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
-  c._ctxDevice(ev2, dev);
-  await c.updateComplete;
-  out.editorCopyMenu = moreInfo === null && ev2.defaultPrevented
-    && !!sr().querySelector('[data-hp="device-copy"]');
-  // 4) Виртуальное без primary открывает тот же редактор без HA more-info.
-  c._setMode('view'); await c.updateComplete;
-  const virt = c._devices.find((d) => d.id === 'ctx_virtual' && d.virtual && !d.primary) || null;
-  if (virt) {
-    c._ctxDevice(new MouseEvent('contextmenu', { cancelable: true }), virt);
-    out.virtSettings = c._markerDialog?.devId === virt.id && moreInfo === null;
-    sr().querySelector('#marker-dialog [data-hp="dialog-cancel"]')?.click(); await c.updateComplete;
-  } else out.virtSettings = 'no-virt';
+  window.__tapCtx = {moreInfo:null,prevented:[]};
+  c._openMoreInfo = eid => { window.__tapCtx.moreInfo = eid; };
+  c.addEventListener('contextmenu', event => {
+    // Keep the native event; inspect its final state after dispatch, even if bubbling stops.
+    window.__tapCtx.prevented.push(event);
+  },true);
+  return {out,devId:dev.id};
+});
+const res=prepared.out;
+const card=page.locator('houseplan-card');
+const marker=id=>card.locator(`.dev[data-id="${id}"] .device-core`);
+const menu=card.locator('[data-hp="device-context-menu"]:not([inert])');
+const settle=()=>page.evaluate(()=>window.__hpTest.settled());
+for(const [id,key] of [[prepared.devId,'ctxSettings'],['ctx_virtual','virtSettings']]) {
+  await marker(id).click({button:'right'});await menu.waitFor({state:'visible'});
+  res[`${key}Menu`]=await menu.locator('[data-action="view-device-settings"]').isEnabled()
+    &&await page.evaluate(()=>!window.__card._markerDialog&&window.__tapCtx.moreInfo===null);
+  await menu.locator('[data-action="view-device-settings"]').click();
+  await card.locator('#marker-dialog').waitFor({state:'visible'});
+  res[key]=await page.evaluate(id=>window.__card._markerDialog?.devId===id&&window.__tapCtx.moreInfo===null,id);
+  await card.locator('#marker-dialog [data-hp="dialog-cancel"]').first().click();await settle();
+}
+await page.evaluate(()=>window.__hpTest.setMode('devices'));await settle();
+await marker(prepared.devId).click({button:'right'});
+await card.locator('[data-hp="device-copy"]').waitFor({state:'visible'});
+res.editorCopyMenu=await page.evaluate(()=>window.__tapCtx.moreInfo===null);
+res.ctxPrevented=await page.evaluate(()=>window.__tapCtx.prevented.length===3&&window.__tapCtx.prevented.every(event=>event.defaultPrevented));
+await page.keyboard.press('Escape');await page.evaluate(()=>window.__hpTest.setMode('view'));await settle();
+Object.assign(res,await page.evaluate(async devId=>{
+  const out={},c=window.__card;
+  const dev=c._devices.find(d=>d.id===devId);
   // 5) card-wide tap_action игнорируется: без явного действия клик = инфо
   c._config = { ...c._config, tap_action: 'toggle' };
   const calls = [];
@@ -119,9 +127,6 @@ const res = await page.evaluate(async () => {
     out.noneHasNoEffects = false;
   }
   return out;
-});
-// значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
-checkAll(res, {
-  "virtInfo": "no-virt",
-});
+},prepared.devId));
+checkAll(res);
 await finish(browser, res);

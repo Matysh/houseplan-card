@@ -1,5 +1,8 @@
 import { launch, check, checkAll, finish } from './serve.mjs';
-const { page, browser } = await launch();
+// #997: wide tabs are an explicit >1024px card contract, not the default viewport.
+const { page, browser } = await launch({width:1440,height:900});
+await page.evaluate(()=>{document.querySelector('#host').style.width='calc(100% - 16px)';});
+await page.waitForFunction(()=>window.__card.renderRoot.querySelector('.tabs:not(.compact-spaces) .tabedit'));
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -81,6 +84,26 @@ const kio = await page.evaluate(() => {
 });
 for (const [k, v] of Object.entries(kio)) check(k, v);
 
+// #997: compact navigation has one separate gear for the selected space.
+await page.setViewportSize({width:1000,height:900});
+const compact={};
+for(const mode of ['view','plan','devices','decor']) {
+  await page.evaluate(mode=>window.__hpTest.setMode(mode),mode);
+  await page.waitForFunction(()=>window.__card.renderRoot.querySelector('[data-hp="space-select"]'));
+  await page.evaluate(()=>window.__hpTest.settled());
+  compact[`compactGear_${mode}`]=await page.locator('houseplan-card [data-hp="space-settings"]').evaluate(el=>{
+    const r=el.getBoundingClientRect();return el.classList.contains('compact-space-settings')&&r.width===44&&r.height===44;
+  });
+}
+await page.evaluate(()=>window.__hpTest.setMode('view'));await page.evaluate(()=>window.__hpTest.settled());
+const compactSpace=await page.evaluate(()=>window.__card._space);
+await page.locator('houseplan-card [data-hp="space-settings"]').click();
+await page.locator('houseplan-card hp-dialog[data-kind="space"]').waitFor({state:'visible'});
+compact.compactGearOpensCurrent=await page.evaluate(space=>window.__card._space===space&&window.__card._spaceDialog?.spaceId===space,compactSpace);
+await page.locator('houseplan-card hp-dialog[data-kind="space"] [data-hp="dialog-cancel"]').first().click();
+await page.evaluate(()=>window.__hpTest.settled());
+for(const [key,value] of Object.entries(compact))check(key,value);
+
 // мобильный вид (#616): ряд вкладок не выезжает за карточку, а «+» на ≤ 480 px
 // живёт в меню шестерёнки — пункт есть, внутри карточки и попадает под палец.
 await page.setViewportSize({ width: 390, height: 760 });
@@ -114,4 +137,4 @@ const narrow = await page.evaluate(async () => {
 });
 for (const [k, v] of Object.entries(narrow)) check(k, v);
 
-await finish(browser, { ...res, ...kio, ...narrow });
+await finish(browser, { ...res, ...kio, ...compact, ...narrow });

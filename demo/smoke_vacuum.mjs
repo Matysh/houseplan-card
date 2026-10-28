@@ -137,7 +137,7 @@ const out = await page.evaluate(async () => {
     'camera.robo_map': { state: 'idle', attributes: mkAttrs(1200, 1200) } } };
   c._regSignature = ''; c.requestUpdate(); await c.updateComplete;
   c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
-  const resumedD = sr().querySelector('.vactrail > path.core')?.getAttribute('d') || '';
+  const resumedD = sr().querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core')?.getAttribute('d') || '';
   o.srvResumedCurrentKeepsEarlierPoints = (resumedD.match(/[ML]/g) || []).length === 4;
   o.srvResumedCurrentSmooth = (resumedD.match(/Q /g) || []).length === 2;
 
@@ -160,7 +160,7 @@ const out = await page.evaluate(async () => {
   o.srvPrevRunShown = !!prevG && prevG.querySelectorAll('path').length === 1
     && (prevD.match(/M /g) || []).length === 1
     && (prevD.match(/Q /g) || []).length === 1;
-  const cur = sr().querySelector('.vactrail > path.core');
+  const cur = sr().querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core');
   // 4 server points, the live tail trimmed while moving -> 3 rendered
   o.srvCurTrimmed = !!cur && (cur.getAttribute('d').match(/[ML]/g) || []).length === 3
     && (cur.getAttribute('d').match(/Q /g) || []).length === 1;
@@ -187,7 +187,7 @@ const out = await page.evaluate(async () => {
     } },
   } };
   await c.updateComplete;
-  const integrationD = sr().querySelector('.vactrail > path.core')?.getAttribute('d') || '';
+  const integrationD = sr().querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core')?.getAttribute('d') || '';
   o.multiSubpathNoBridge = (integrationD.match(/M /g) || []).length === 2
     && integrationD.endsWith('475 575');
   o.integrationEndpointNoInventedTip = !sr().querySelector('line.tip');
@@ -195,7 +195,7 @@ const out = await page.evaluate(async () => {
     'vacuum.robo': { state: 'docked', attributes: { friendly_name: 'Робот' } },
   } };
   await c.updateComplete;
-  const restingIntegrationD = sr().querySelector('.vactrail > path.core')?.getAttribute('d') || '';
+  const restingIntegrationD = sr().querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core')?.getAttribute('d') || '';
   o.integrationPathAlwaysAtRest = (restingIntegrationD.match(/M /g) || []).length === 2;
   // 'never' kills every line including the previous run
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'never';

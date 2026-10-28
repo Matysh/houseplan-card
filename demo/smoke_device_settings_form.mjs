@@ -28,9 +28,12 @@ const out = await page.evaluate(async () => {
   c._openMarkerDialog(lamp); await upd();
   const d0 = c._markerDialog;
 
-  // --- AC1: пять карточек по §7.1, старой разметки нет --------------------
-  o.fiveCardsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card))
-    === JSON.stringify(['basics', 'appearance', 'tap', 'light', 'details']);
+  // --- AC1 plus #1000: five original cards followed by shared alarms -----
+  o.sharedCardsWithAlarmsInOrder = JSON.stringify(qa('.hpf-card').map((card) => card.dataset.card
+    ?? card.closest('[data-settings-section]')?.dataset.settingsSection))
+    === JSON.stringify(['basics', 'appearance', 'tap', 'light', 'details', 'alarms'])
+    && !!q('[data-settings-section=alarms] .alarm-table')
+    && !!q('[data-settings-section=alarms] [data-hp=alarm-add]');
   o.noLegacyMarkup = qa('.srcrow, .namein, .areasel, .dropbtn, .droppanel, .candlist, fieldset, .markerlightgroup, .markerradios, '
     + '.colorrow, .habindingbanner, .bindsel, .bindharow, .entcheck, .ctrlchips, .ctrllist, .ctrlopt, .opl, .opv, .descin, .tempin, '
     + '.markerhelpfield, .markerhelplabel, .helpfieldlabel, .rhint, .markerlightdisabled, .markerlightwarning').length === 0;

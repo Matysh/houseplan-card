@@ -107,6 +107,17 @@ async function scenario(viewport, { flexContent = true } = {}) {
   check('desktop.flexContent', opened.flexContent);
   check('desktop.editorIsTheScroller', opened.editorScroll[0] > opened.editorScroll[1] + 50);
   check('desktop.bodyDoesNotScroll', opened.bodyScroll[0] <= opened.bodyScroll[1] + 1);
+  // Hidden native selects must not escape the editor's scroll container and
+  // create a second scrollable body behind the real content scroller (#998).
+  const outerScroll = await page.evaluate(() => {
+    const { body, editor } = window.__508;
+    const before = editor.getBoundingClientRect().top;
+    body.scrollTop = 100;
+    const result = { top: body.scrollTop, movement: editor.getBoundingClientRect().top - before };
+    body.scrollTop = 0;
+    return result;
+  });
+  check('desktop.bodyCannotMoveEditor', outerScroll.top === 0 && Math.abs(outerScroll.movement) <= 1);
   const footerBefore = opened.footer;
   await page.mouse.move(opened.editor.x + opened.editor.w / 2, opened.editor.y + Math.min(opened.editor.h / 2, 160));
   await page.mouse.wheel(0, 240);

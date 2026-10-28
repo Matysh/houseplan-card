@@ -28,7 +28,7 @@ const res = await page.evaluate(async () => {
   };
 
   c._openSpaceDialog('create'); await c.updateComplete;
-  out.freshFile = state();
+  out.freshDraw = state();
   await choose('draw');
   out.untouchedDraw = state();
   await choose('file');
@@ -76,6 +76,8 @@ const res = await page.evaluate(async () => {
   c._importTotal = 0;
   c._spaceDialog = null;
   c._openSpaceDialog('create'); await c.updateComplete;
+  // #1081 opens manual drawing; exercise file defaults through the real choice.
+  await choose('file');
   const existingPlan = c._serverCfg.spaces.find((s) => s.plan_url)?.plan_url;
   c._spaceDialog = {
     ...c._spaceDialog, title: 'File display defaults', planUrl: existingPlan || '/local/houseplan/plan.svg',
@@ -120,7 +122,7 @@ const res = await page.evaluate(async () => {
 });
 
 checkAll(res, {
-  freshFile: { source: 'file', showBorders: false, showNames: false, displayTouched: false },
+  freshDraw: { source: 'draw', showBorders: true, showNames: true, displayTouched: false },
   untouchedDraw: { source: 'draw', showBorders: true, showNames: true, displayTouched: false },
   untouchedFileAgain: { source: 'file', showBorders: false, showNames: false, displayTouched: false },
   mixedTouched: { source: 'draw', showBorders: false, showNames: true, displayTouched: true },
@@ -129,12 +131,12 @@ checkAll(res, {
   savedMixed: [false, true],
   reopenedMixed: { source: 'draw', showBorders: false, showNames: true, displayTouched: true },
   editSourcePreservesPair: { source: 'file', showBorders: false, showNames: true, displayTouched: true },
-  freshAfterCancel: { source: 'file', showBorders: false, showNames: false, displayTouched: false },
+  freshAfterCancel: { source: 'draw', showBorders: true, showNames: true, displayTouched: false },
   onboardingFirst: {
-    title: 'Floor one', source: 'file', showBorders: false, showNames: false, displayTouched: false,
+    title: 'Floor one', source: 'draw', showBorders: true, showNames: true, displayTouched: false,
   },
   onboardingSecond: {
-    title: 'Floor two', source: 'file', showBorders: false, showNames: false, displayTouched: false,
+    title: 'Floor two', source: 'draw', showBorders: true, showNames: true, displayTouched: false,
   },
   savedFileDefaults: [false, false],
 });

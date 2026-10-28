@@ -1033,11 +1033,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'device-battery-zigbee-overlap-dark', fixture: 'visual', space: 'golden-battery', mode: 'view',
     batteryZigbeeOverlap: true, iconSize: 5, theme: 'dark', viewport: { width: 1200, height: 900 },
     capture: 'battery-zigbee-overlap', threshold: { maxChannelDelta: 10, maxDiffRatio: 0 } },
-  { id: 'device-value-face-cover-source-dark', fixture: 'visual',
+  { id: 'device-value-face-cover-source-dark', fixture: 'visual', coverValueSource: true,
     space: 'golden-lighting', mode: 'view', glowEnabled: false, sunRays: false,
     showNames: false,
     markerOverrides: [{
-      id: 'golden-left-linkquality', binding: 'entity:cover.golden_door_half',
+      id: 'golden-cover-value', binding: 'entity:cover.golden_door_half', space: 'golden-lighting',
       display: 'value', size: 3,
       value_source: {
         kind: 'entity_attribute', entity_id: 'cover.golden_door_half',
@@ -1048,9 +1048,9 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       'cover.golden_door_half': { attributes: { current_position: 42 } },
     },
     layoutOverrides: {
-      'golden-left-linkquality': { s: 'golden-lighting', x: 0.50, y: 0.50 },
+      'golden-cover-value': { s: 'golden-lighting', x: 0.50, y: 0.50 },
     },
-    deviceOnly: 'golden-left-linkquality',
+    deviceOnly: 'golden-cover-value',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   ...['light', 'dark'].map((theme) => ({
     id: `device-icon-state-table-${theme}`, fixture: 'visual', space: 'golden-lighting', mode: 'view',

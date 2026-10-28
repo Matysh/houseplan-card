@@ -4,6 +4,8 @@
 import { launch, check, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1600, height: 1000 });
+await page.exposeFunction('__summaryNativeToggle', () =>
+  page.locator('houseplan-card [data-hp="summary-toggle"]').click());
 const evidence = {};
 const fixtureKey = 'hp_summary_505_fake_server';
 
@@ -62,8 +64,11 @@ async function installFixture({ seed = false } = {}) {
     const panel = () => root().querySelector('.summary-overlay');
     const control = () => root().querySelector('.summary-control');
     const toggle = () => control()?.querySelector('button:last-child');
-    const show = async (wanted) => {
-      if ((toggle()?.getAttribute('aria-pressed') === 'true') !== wanted) toggle()?.click();
+    const show = async (wanted, native = false) => {
+      if ((toggle()?.getAttribute('aria-pressed') === 'true') !== wanted) {
+        if (native) await window.__summaryNativeToggle();
+        else toggle()?.click();
+      }
       await card.updateComplete;
     };
     const open = async () => {
@@ -253,21 +258,23 @@ try {
   evidence.lifecycle = await page.evaluate(async () => {
     const f = window.__summary505;
     const out = {};
-    await f.size('right'); await f.show(true); await f.pause(240);
-    await f.show(false); await f.pause(45);
+    // Lifecycle boundaries retire compatibility clicks. Each next user intent
+    // below starts with trusted Playwright pointer input through show(..., true).
+    await f.size('right'); await f.show(true, true); await f.pause(240);
+    await f.show(false, true); await f.pause(45);
     f.panel()?.getAnimations().forEach((animation) => animation.cancel());
     await f.pause(290); await f.settle();
     out.cancelled_animation_still_cleans_up = !f.panel();
-    await f.show(true); await f.pause(55);
+    await f.show(true, true); await f.pause(55);
     await f.size('bottom');
     const anchored = f.snapshot();
     out.anchor_change_settles_visible_at_new_edge = f.panel()?.classList.contains('bottom') === true
       && anchored.opacity >= .99 && Math.abs(anchored.dy) < .5 && Math.abs(anchored.center) < 1;
     await f.pause(320);
     out.old_anchor_callback_cannot_remove_new_panel = !!f.panel();
-    await f.show(false); await f.pause(35); await f.size('right');
+    await f.show(false, true); await f.pause(35); await f.size('right');
     out.anchor_change_settles_latest_off_immediately = !f.panel();
-    await f.show(true); await f.pause(240);
+    await f.show(true, true); await f.pause(240);
     const savedIntent = f.stored().local;
     document.querySelector('#host').style.width = '260px';
     f.card._summary.resized(); await f.settle();
@@ -283,23 +290,32 @@ try {
     f.card.narrow = false; f.card._serverCfg = { ...f.card._serverCfg, settings: oldSettings };
     f.card._settings = oldSettings; f.card.requestUpdate(); await f.settle(); await f.pause(240);
 
-    // Dispatch the same lifecycle signal as a backgrounded document. The
-    // read-only browser property is scoped to this fixture and restored below.
-    await f.show(false); await f.pause(45);
+    // #1093 defers hidden host frames. Send the real document signal to all
+    // lifecycle owners, then judge the latest intent on the first visible frame.
     const descriptor = Object.getOwnPropertyDescriptor(document, 'visibilityState');
-    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
-    f.card._summary.visibility('hidden'); await f.settle();
+    const visibility = async (value) => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => value });
+      document.dispatchEvent(new Event('visibilitychange'));
+      await f.settle();
+    };
+    await f.show(false, true); await f.pause(45);
+    await visibility('hidden');
+    out.hidden_document_cancels_exit_motion = !f.panel()?.getAnimations().length
+      && JSON.parse(f.stored().local).show === false;
+    await visibility('visible');
     out.hidden_document_settles_latest_off = !f.panel();
-    await f.show(true); await f.settle();
-    out.hidden_document_on_settles_without_motion = !!f.panel() && f.snapshot().opacity >= .99;
+    await f.show(true, true); await f.pause(45);
+    await visibility('hidden');
+    out.hidden_document_on_settles_without_motion = !!f.panel()
+      && f.panel().getAnimations().length === 0 && JSON.parse(f.stored().local).show === true;
     if (descriptor) Object.defineProperty(document, 'visibilityState', descriptor);
     else delete document.visibilityState;
-    f.card._summary.visibility('visible'); await f.settle();
+    document.dispatchEvent(new Event('visibilitychange')); await f.settle();
     out.return_from_background_does_not_replay = !!f.panel() && f.snapshot().opacity >= .99
       && f.panel().getAnimations().length === 0;
 
     for (const boundary of ['editor', 'identity', 'host', 'unsupported', 'route', 'disconnect']) {
-      await f.show(true); await f.pause(240); await f.show(false); await f.pause(45);
+      await f.show(true, true); await f.pause(240); await f.show(false, true); await f.pause(45);
       const original = { user: f.card.hass.user, host: f.card.panelHost,
         settings: f.card._serverCfg.settings, path: location.pathname };
       if (boundary === 'editor') f.card._mode = 'plan';
@@ -336,7 +352,7 @@ try {
     f.card._serverCfg = { ...f.card._serverCfg, settings: { ...contentSettings, summary_panel: dense } };
     f.card._settings = f.card._serverCfg.settings;
     f.root().querySelector('.stage').style.height = '400px'; f.card._summary.resized();
-    f.card.requestUpdate(); await f.settle(); await f.show(true); await f.pause(240);
+    f.card.requestUpdate(); await f.settle(); await f.show(true, true); await f.pause(240);
     const contentNode = f.panel();
     const scroll = contentNode?.querySelector('.summary-scroll');
     if (scroll) scroll.scrollTop = 100;
@@ -426,7 +442,16 @@ try {
       const surface = dialog?.shadowRoot?.querySelector('.surface');
       const footer = dialog?.querySelector('[slot="footer"]');
       const targets = [...(editor?.querySelectorAll('button, input:not([type="checkbox"]), select, .summary-switch, .summary-drag') || []),
-        ...(footer?.querySelectorAll('button') || []), ...(dialog?.shadowRoot?.querySelectorAll('.close') || [])];
+        ...(footer?.querySelectorAll('button') || []), ...(dialog?.shadowRoot?.querySelectorAll('.close') || [])].map((target) => {
+          // #998 enhances a native select with a 44px shadow button. Measure
+          // the actual touch target, retaining the select as the value owner.
+          if (target.matches('select') && target.parentElement.matches('hp-settings-select')) {
+            const button = target.parentElement.shadowRoot?.querySelector('button');
+            if (!button) throw new Error('Summary scope select has no visible trigger');
+            return button;
+          }
+          return target;
+        });
       const boxes = targets.map((target) => ({ name: target.getAttribute('aria-label') || target.title || target.textContent.trim(),
         ...target.getBoundingClientRect().toJSON() }));
       const footerBox = footer?.getBoundingClientRect();

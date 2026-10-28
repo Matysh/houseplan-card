@@ -7,7 +7,10 @@
  */
 import { launch, check, checkAll, finish } from './serve.mjs';
 
-const { page, browser } = await launch({ width: 900, height: 820 }, 1);
+// The compact header moves this horizontal axis by half a CSS pixel. At DPR1
+// its yellow remainder beside the snap line is entirely antialiased; DPR2
+// resolves the actual ink without changing any colour or layering oracle.
+const { page, browser } = await launch({ width: 900, height: 820 }, 2);
 
 const out = await page.evaluate(async () => {
   const result = {};

@@ -118,6 +118,12 @@ export function captureRenderDeviceSnapshot(
   const dependencyDevices = snapshotDeviceDemand(devices, host._space, showGhosts);
   const visibleDevices = host._space === undefined ? devices : devices.filter(device => device.space === host._space
     && (!device.hidden || showGhosts) && !device.marker?.removed);
+  // A robot's dock owns its ordinary face, but each configured route owns its
+  // puck/trail on that route's floor. Keep those facts without painting an
+  // off-floor dock or capturing unrelated devices' presentations.
+  const vacuumDevices = devices.filter(device => !device.hidden && !device.marker?.removed && host._isVacDev(device)
+    && (host._space === undefined || device.space === host._space
+      || device.marker?.vacuum?.map_routes?.some(route => route.space === host._space)));
   // One plan-wide graph/index per capture; reuse observes consumed source keys
   // separately from structural topology and recorded HA state rows.
   const planLightSources = resolvedLightSources(
@@ -203,23 +209,27 @@ export function captureRenderDeviceSnapshot(
       const selected = presentations.get(presentationSnapshotKey(device.id, showLqi))?.stateSource;
       if (selected && (!selected.failure || selected.failure === 'unknown')) entityIds.add(selected.entityId);
     }
-    if (host._isVacDev(device)) {
-      const selected = host._vacRuntimeSource(device, planHass);
-      const runtime = host._vacRt.get(device.id);
-      // One routing authority per frame: render() must not re-derive which
-      // map the robot is on, or two answers become possible (#162).
-      facts.set(`vacuum:${device.id}`, {
-        ...selected,
-        runtime: runtime ? {
-          trail: runtime.material,
-          lastTs: runtime.lastTs,
-          moving: runtime.moving,
-          jump: runtime.jump,
-          livePending: runtime.livePending,
-        } : null,
-        server: host._vacSrvTrails[device.id] || null,
-      });
-    }
+  }
+  for (const device of vacuumDevices) {
+    for (const id of device.entities) entityIds.add(id);
+    if (device.primary) entityIds.add(device.primary);
+    if (device.marker?.vacuum?.source) entityIds.add(device.marker.vacuum.source);
+    for (const route of device.marker?.vacuum?.map_routes || []) if (route.source) entityIds.add(route.source);
+    const selected = host._vacRuntimeSource(device, planHass);
+    const runtime = host._vacRt.get(device.id);
+    // One routing authority per frame: render() must not re-derive which
+    // map the robot is on, or two answers become possible (#162).
+    facts.set(`vacuum:${device.id}`, {
+      ...selected,
+      runtime: runtime ? {
+        trail: runtime.material,
+        lastTs: runtime.lastTs,
+        moving: runtime.moving,
+        jump: runtime.jump,
+        livePending: runtime.livePending,
+      } : null,
+      server: host._vacSrvTrails[device.id] || null,
+    });
   }
   const snapshot = createRenderDeviceSnapshot({
     sourceSequence: host._hassSequence, hass: planHass,

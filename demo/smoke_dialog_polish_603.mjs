@@ -57,7 +57,10 @@ for (const dpr of [1, 2]) {
           const roomFields = !!basics && !basics.querySelector('.hpf-head')
             && !!basics.querySelector('#room-name') && !!basics.querySelector('#room-area')
             && !!basics.querySelector('#room-area')?.closest('.hpf-field')?.querySelector('hp-help')
-            && [...dialog.querySelectorAll('.hpf-head h3')].length === 3;
+            // #1078 adds the Sunlight card; retain exact order and the headerless Basics contract.
+            && JSON.stringify([...dialog.querySelectorAll('.hpf-card')].map(card => card.dataset.card))
+              === JSON.stringify(['basics', 'fill', 'sunlight', 'sources', 'sizes'])
+            && [...dialog.querySelectorAll('.hpf-head h3')].length === 4;
 
           // Measure the shared product toggle in General; Room v4 uses a single fill select.
           c._roomDialogCancel(); await settle();

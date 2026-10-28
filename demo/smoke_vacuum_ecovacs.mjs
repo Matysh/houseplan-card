@@ -51,7 +51,7 @@ try {
    device:d,space:c._space,source:d&&c._vacSourceResolution(d),hass:c._planHass.states['image.ecovacs_map'],
    registry:c._planHass.entities['image.ecovacs_map'],format:c._vacTrailFormat};}));throw error;
  });
- out.nativeWithMoveGaps=await page.locator('.vactrail > path.core').evaluate(p=>(p.getAttribute('d').match(/M /g)||[]).length===2);
+ out.nativeWithMoveGaps=await page.locator('.vactrail > [data-hp-plan-rotation-frame] > path.core').evaluate(p=>(p.getAttribute('d').match(/M /g)||[]).length===2);
  out.dockDoesNotMove=await page.locator('[data-hp="device"][data-id="e_vacuum_ecovacs"]').count()===1;
  const pose=await page.locator('.vacpuck').boundingBox();
  await page.evaluate(async()=>{window.__ecovacs.frame.position={x:70,y:45};
@@ -128,12 +128,12 @@ try {
   await page.evaluate(async({kiosk,iso})=>{const c=window.__card;
    c.setConfig({type:'custom:houseplan-card',language:'en',kiosk,cycle:0});
    await window.__hpTest.setVolumetricView(iso);await window.__hpTest.settled();},{kiosk,iso});
-  const original=await page.locator('.vactrail > path.core').getAttribute('d');
+  const original=await page.locator('.vactrail > [data-hp-plan-rotation-frame] > path.core').getAttribute('d');
   const stage=await page.locator('.stage').boundingBox();
   await page.mouse.move(stage.x+stage.width*.8,stage.y+stage.height*.8);await page.mouse.down();
   await page.mouse.move(stage.x+stage.width*.8-60,stage.y+stage.height*.8-20);await page.mouse.up();
   await page.mouse.wheel(0,-120);await page.waitForTimeout(250);
-  out[`${kiosk?'kiosk':'view'}-${iso?'iso':'flat'}-worldGeometry`]=original===await page.locator('.vactrail > path.core').getAttribute('d')
+  out[`${kiosk?'kiosk':'view'}-${iso?'iso':'flat'}-worldGeometry`]=original===await page.locator('.vactrail > [data-hp-plan-rotation-frame] > path.core').getAttribute('d')
    &&await page.locator('.vacpuck').isVisible();
  }
  out.noPngInConfig=await page.evaluate(()=>!JSON.stringify(window.__card._serverCfg).includes('data:image/png'));

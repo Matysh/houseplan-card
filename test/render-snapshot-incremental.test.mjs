@@ -29,6 +29,48 @@ const plain = (snapshot) => ({
   geometry: snapshot.geometry,
 });
 
+test('#1093 routed vacuum facts follow the route floor without painting its off-floor dock', () => {
+  const host = captureHost(oracleFixture()), reuse = new RenderSnapshotReuseWindow();
+  host._space = host._devices[0].space; host._mode = 'view';
+  const route = {id:'remote-route',source:'camera.remote_map',map_id:'upstairs',space:host._space,
+    calibration:[1,0,0,0,1,0]};
+  const robot = {...host._devices[0],id:'remote-vacuum',space:'remote-dock',primary:'vacuum.remote',
+    entities:['vacuum.remote'],allEntities:['vacuum.remote'],bindingKind:'entity',bindingRef:'vacuum.remote',
+    marker:{id:'remote-vacuum',vacuum:{source:'camera.remote_map',map_routes:[route]}}};
+  host._devices = [...host._devices,robot];
+  host.hass = {...host.hass,states:{...host.hass.states,
+    'vacuum.remote':{state:'cleaning',attributes:{}},
+    'camera.remote_map':{state:'idle',attributes:{map_name:'upstairs',robot_position:{x:100,y:200}}},
+    'camera.unrelated':{state:'idle',attributes:{map_name:'elsewhere'}}}};
+  host._isVacDev = device => device.id === robot.id;
+  host._vacRuntimeSource = (device,hass) => ({source:route.source,
+    mapId:hass.states[route.source].attributes.map_name,
+    telemetry:{pos:hass.states[route.source].attributes.robot_position},
+    routes:[route],resolution:{kind:'ready',route},unavailable:false});
+  host._vacRt.set(robot.id,{material:[],lastTs:1,moving:true,jump:false});
+  const first = captureRenderDeviceSnapshot(host,reuse);
+  assert.deepEqual(first.vacuumDevices.map(d=>d.id),[robot.id]);
+  assert.equal(first.facts.get(`vacuum:${robot.id}`).telemetry.pos.x,100);
+  assert.ok(first.entityIds.includes('vacuum.remote') && first.entityIds.includes('camera.remote_map'));
+  assert.equal(first.entityIds.includes('camera.unrelated'),false);
+  assert.equal(first.presentations.has(presentationSnapshotKey(robot.id,false)),false,'off-floor dock stays dormant');
+  assert.equal(first.positions.has(robot.id),false);
+  host.hass = {...host.hass,states:{...host.hass.states,'camera.remote_map':{
+    state:'idle',attributes:{map_name:'upstairs',robot_position:{x:140,y:240}}}}};
+  const next = captureRenderDeviceSnapshot(host,reuse);
+  assert.equal(next.facts.get(`vacuum:${robot.id}`).telemetry.pos.x,140);
+  assert.equal(first.facts.get(`vacuum:${robot.id}`).telemetry.pos.x,100,'held old frame immutable');
+  assert.deepEqual(plain(next),plain(captureRenderDeviceSnapshot(host,null)));
+  route.space = 'unrelated-floor';
+  const unrelated = captureRenderDeviceSnapshot(host,reuse);
+  assert.equal(unrelated.vacuumDevices.length,0);
+  assert.equal(unrelated.entityIds.includes('camera.remote_map'),false,'unrelated route remains dormant');
+  route.space = host._space; robot.hidden = true;
+  assert.equal(captureRenderDeviceSnapshot(host,reuse).vacuumDevices.length,0);
+  robot.hidden = false; robot.marker.removed = true;
+  assert.equal(captureRenderDeviceSnapshot(host,reuse).vacuumDevices.length,0);
+});
+
 test('#1093 one marker presentation edit preserves unrelated faces and fresh immutable roster', () => {
   const host=captureHost(oracleFixture()),reuse=new RenderSnapshotReuseWindow();
   const first=captureRenderDeviceSnapshot(host,reuse), before=reuse.stats.presentations;

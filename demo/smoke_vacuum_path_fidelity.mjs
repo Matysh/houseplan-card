@@ -36,7 +36,7 @@ const out = await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete;
   await new Promise((r)=>setTimeout(r,100));
   const root=()=>c.renderRoot;
-  const path=()=>root().querySelector('.vactrail > path.core')?.getAttribute('d');
+  const path=()=>root().querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core')?.getAttribute('d');
   const original=path();
   const results={
     nativeRawEndpoint:original?.endsWith('600 500'),
@@ -58,7 +58,7 @@ const out = await page.evaluate(async () => {
   results.limitedNoFalseTail=!root().querySelector('.vactrail line.tip')
     && (path()?.match(/M /g)||[]).length===2
     && path()?.endsWith('M 10 1999980 L 10 1999980');
-  results.latestPointUsesRoundCaps=getComputedStyle(root().querySelector('.vactrail > path.core')).strokeLinecap==='round';
+  results.latestPointUsesRoundCaps=getComputedStyle(root().querySelector('.vactrail > [data-hp-plan-rotation-frame] > path.core')).strokeLinecap==='round';
   server.e_vacuum_fidelity.current=run;
   await trailNotify({data:{}});
   c.requestUpdate(); await c.updateComplete;
