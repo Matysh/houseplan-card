@@ -1,0 +1,57 @@
+{
+  "canonicalMetric": "bundleBytes(dist) from scripts/monolith-metrics.mjs; every dist file including manifest",
+  "acceptedBase": "a054526cb676f9957f1b7a7387aad860b454594a",
+  "acceptedSourceTree": "703aa9327b663094b3b9ec32016fc2e2de2191c3",
+  "inputFiles": 569,
+  "donorInputsByteEqualAcceptedBase": true,
+  "modifiedInputs": [
+    "src/decor-history-restore.ts",
+    "src/houseplan-editor-runtime.ts"
+  ],
+  "before": {
+    "root": "/home/matysh/hp-1097-opening-drag-20261028",
+    "head": "9386c7ace890f0f7c729bed1f9675a60306ebf02",
+    "sourceTree": "703aa9327b663094b3b9ec32016fc2e2de2191c3",
+    "sourceFingerprint": "5474616daaac7f35ad7f6e081643a9d5f9f55fc47c11fd5ce1edec18cd3c6f1e",
+    "manifestSha256": "150126acf4e3ba55b5ab2c4b069d66394b635003269fb43161075375f40d2605",
+    "filesSha256": "7d46c4d0596a26c70edb11e90f4b957711a0b20683c1d9bfc11268c2fc6f4f54",
+    "files": 73,
+    "manifestBytes": 43261,
+    "jsPayloadBytes": 3620043,
+    "policyBundleBytes": 3663304,
+    "initialViewGzipBytes": 357939,
+    "lazyEditorGzipBytes": 378530
+  },
+  "candidate": {
+    "root": "/home/matysh/hp-1100-geometry-history-20261028",
+    "head": "14083720d850864fa6645fc4cb1d91189bd2feac",
+    "sourceTree": "79c7ac94c05846faf9f35ca3e161304cb9e8754d",
+    "sourceFingerprint": "95952e81c303b84ab52ae18de79fd0af0cdecf5cd21b0954f2d1350c68f6bc12",
+    "manifestSha256": "8078d5bac2b0721c6c2060c2853b09258ee9c8d6fb0c47a3dc23814d6212fb57",
+    "filesSha256": "a99b1868ea2f5bd2c0c741ae56feaca8757e8c3ba2aeebec86a6ae6e2f7979dd",
+    "files": 73,
+    "manifestBytes": 43261,
+    "jsPayloadBytes": 3621048,
+    "policyBundleBytes": 3664309,
+    "initialViewGzipBytes": 357938,
+    "lazyEditorGzipBytes": 378832
+  },
+  "ownCost": 1005,
+  "baseline": {
+    "delegates": 145,
+    "portMembers": 380,
+    "hostRefs": 6595,
+    "portPrivates": 105,
+    "harnessPrivates": 101,
+    "bundleBytes": 3661873
+  },
+  "carry": {
+    "oldReference": 3661873,
+    "newReference": 3662878,
+    "band": 2000,
+    "ownCost": 1005,
+    "inheritedGap": 1431,
+    "comment": 6476116909,
+    "sameACommit": "a25263b3afd73d134e6790a9886c304ff857998f"
+  }
+}

@@ -152,7 +152,7 @@ The previously suspected mode-tab drift was tested rather than assumed.
 
 The final source includes accepted dev `a054526cb676f9957f1b7a7387aad860b454594a`
 and all #1097 opening-join/preview changes. Its source tree is
-`79c7ac94c05846faf9f35ca3e161304cb9e8754d`. Fresh compile/build/sync passed;
+`b3fd0ed9674d9ce2905560625f67deb802ab21ef`. Fresh compile/build/sync passed;
 the seven selected integration suites passed129/129. Actual runtime history
 outcomes still satisfy22/22 model-invariant checks (see
 [raw final invariants](1100-geometry-history-performance/final-invariants.json)).
@@ -184,18 +184,34 @@ is covered by the new native interop, integration suites and actual invariants.
 uses `bundleBytes(dist)` from `scripts/monolith-metrics.mjs`: every dist file,
 including the43261-byte manifest. Both complete73-asset trees verify; all569
 fingerprint inputs of the frozen #1097 donor are byte-equal to accepted a054.
-Before policy total is3663304; candidate3664309: measured own cost1005 bytes.
-The separate JS sums are3620043/3621048; earlier JS-only observations were
+Before policy total is3663304; candidate3664319: measured own cost1015 bytes.
+The separate JS sums are3620043/3621058; earlier JS-only observations were
 preliminary and are not the policy metric. Source fingerprints, manifest and
 asset-list hashes are preserved in the raw proof.
 
 Owner-authorized resource carry changes only the bundle reference3661873 to
-3662878 in the same A commit, preserving the inherited1431-byte gap and2000-byte
-band (issue comment6476116909). Other caps and all timing/functional limits stay
-unchanged. Initial-view gzip357939 to357938 and lazy-editor gzip378530 to378832
+3662888 in the same A commit, preserving the inherited1431-byte gap and2000-byte
+band (issue comment6476497110). Other caps and all timing/functional limits stay
+unchanged. Initial-view gzip357939 to357956 and lazy-editor gzip378530 to378894
 pass existing bundle budgets. No byte-chasing or baseline acceptance is involved.
 
 The remaining acceptance steps are the normal protected push, exact-head CI,
 parsed handoff and independent CODE/automatic S8. This report does not substitute
 for their verdict. No beta or E2E test change is included; accepted E2E impact is
 «не надо».
+
+The first normal protected push was refused after324 seconds, before publication:
+noUnusedLocals found one obsolete `adoptWallSegmentModelCandidateInPlace` import;
+static readiness found browser guard commands lacking explicit test-build
+preparation after the new canonical fixture imports. The unused import was
+removed in the same A commit; all nine existing backdrop/stair guard commands
+now prepare tsc and fix-test-build without changing patches, oracles or namespace.
+Static readiness2011 PASS, execution0/caughtunknown. A fresh build verifies the
+actual output; it costs10 bytes more than the preceding build despite unchanged
+runtime logic, so final owncost is1015, not an assumed tree-shake identity.
+The [previous source measurement](1100-geometry-history-performance/final-resource-before-unused.json)
+is retained separately. Final resource proof has the new source identity; the
+129-unit/native/invariant witness predates only this unused-import deletion.
+The protected hook and exact-head CI validate the final material. The synchronous
+CPU recipe is unchanged and is not repeated for an unused import. No failed gate
+was retroactively relabeled successful.

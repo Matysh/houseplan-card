@@ -24,34 +24,34 @@
   },
   "candidate": {
     "root": "/home/matysh/hp-1100-geometry-history-20261028",
-    "head": "14083720d850864fa6645fc4cb1d91189bd2feac",
-    "sourceTree": "79c7ac94c05846faf9f35ca3e161304cb9e8754d",
-    "sourceFingerprint": "95952e81c303b84ab52ae18de79fd0af0cdecf5cd21b0954f2d1350c68f6bc12",
-    "manifestSha256": "8078d5bac2b0721c6c2060c2853b09258ee9c8d6fb0c47a3dc23814d6212fb57",
-    "filesSha256": "a99b1868ea2f5bd2c0c741ae56feaca8757e8c3ba2aeebec86a6ae6e2f7979dd",
+    "head": "58ddf47326ca914c093aae457654650b29454121",
+    "sourceTree": "b3fd0ed9674d9ce2905560625f67deb802ab21ef",
+    "sourceFingerprint": "2dcf9e58ef7b568f0111e68b18a89393d471046120fa212214800bca9191e542",
+    "manifestSha256": "b1d78c5c8f07abbf1c745de73c0cf79237d960919f1a151586a5449ac86b0902",
+    "filesSha256": "f0338adb20a0c812ca485ac6441e97f9dff0bfbcc2e50b5784f20ca901cddee3",
     "files": 73,
     "manifestBytes": 43261,
-    "jsPayloadBytes": 3621048,
-    "policyBundleBytes": 3664309,
-    "initialViewGzipBytes": 357938,
-    "lazyEditorGzipBytes": 378832
+    "jsPayloadBytes": 3621058,
+    "policyBundleBytes": 3664319,
+    "initialViewGzipBytes": 357956,
+    "lazyEditorGzipBytes": 378894
   },
-  "ownCost": 1005,
+  "ownCost": 1015,
   "baseline": {
     "delegates": 145,
     "portMembers": 380,
     "hostRefs": 6595,
     "portPrivates": 105,
     "harnessPrivates": 101,
-    "bundleBytes": 3661873
+    "bundleBytes": 3662878
   },
   "carry": {
     "oldReference": 3661873,
-    "newReference": 3662878,
+    "newReference": 3662888,
     "band": 2000,
-    "ownCost": 1005,
+    "ownCost": 1015,
     "inheritedGap": 1431,
-    "comment": 6476116909,
-    "sameACommit": "a25263b3afd73d134e6790a9886c304ff857998f"
+    "comment": 6476497110,
+    "sameACommit": "43a59b79"
   }
 }

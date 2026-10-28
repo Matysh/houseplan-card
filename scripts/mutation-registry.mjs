@@ -1646,13 +1646,13 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'backdrop-next-begin-forgets-grabbing-cursor',
-    guard: 'node demo/smoke_backdrop.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_backdrop.mjs',
     because: '#908 AC2 requires native pointer capture and Lit retained class binding across cancel then immediate begin; only the mounted DOM exposes its cached true value.',
     patches: [{ file: 'src/houseplan-editor-runtime.ts', find: "        if (phase === 'begin') host._stageEl?.classList.add('bdgrabbing');", replace: "        if (phase === 'begin') void 0;" }],
   },
   {
     id: 'backdrop-capture-loss-retains-owner',
-    guard: 'node demo/smoke_backdrop.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_backdrop.mjs',
     because: '#908 AC1/AC2 require an actual trusted lostpointercapture from Chromium before mouse release, with cursor, badge and config/history/write oracles in the mounted card.',
     patches: [{ file: 'src/houseplan-card.ts', find: '            if (this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);', replace: '            if (false && this._editorRuntime?.backdropGesture.owns(e.pointerId)) this._stagePointerCancel(e);' }],
   },
@@ -4655,7 +4655,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stairs-view-pan-opens-target-floor',
-    guard: 'node demo/smoke_stairs.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#663 AC6: a pan or pinch beginning on a stair must not be promoted to the '
       + 'compatibility click that navigates to another floor.',
     patches: [{
@@ -4666,7 +4666,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stairs-view-tread-lines',
-    guard: 'node demo/smoke_stairs.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#740 AC2: all treads of one stair are a single path; separate tread lines bring '
       + 'back 3–7 DOM elements per stair that every floor switch rebuilds.',
     patches: [{
@@ -4678,7 +4678,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stairs-fixed-floor-still-navigates',
-    guard: 'node demo/smoke_stairs.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#663 AC8: fixed-floor cards show stairs but never promise or perform navigation.',
     patches: [{
       file: 'src/stairs-editor-model.ts',
@@ -4688,7 +4688,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stairs-link-auto-creates-target-object',
-    guard: 'node demo/smoke_stairs.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#663 AC5: assigning a target is a one-way link and must not invent a mirrored '
       + 'stair on the destination floor.',
     patches: [{
@@ -4753,7 +4753,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stairs-gesture-click-reaches-plan-tool',
-    guard: 'node demo/smoke_stairs.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#676 AC6: the click the browser synthesizes after a handle drag must not reach '
       + 'the plan tool: under Stairs it placed a copy, under Select it dropped the selection.',
     patches: [{
@@ -4770,7 +4770,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stairs-view-tooltip-ignores-target-state',
-    guard: 'node demo/smoke_stairs.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#676 AC8: the hover tooltip has exactly the link condition; a missing, self, '
       + 'deleted or fixed-floor target must never announce a floor to go to.',
     patches: [{
@@ -4819,7 +4819,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'stairs-broken-targets-become-active',
-    guard: 'node demo/smoke_stairs.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/smoke_stairs.mjs',
     because: '#663 AC7: missing, self and deleted targets must stay visible and repairable, '
       + 'but must never navigate or hide their repair warning.',
     patches: [{
