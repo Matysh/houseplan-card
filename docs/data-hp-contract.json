@@ -6,12 +6,12 @@
     "additionsAreCompatible": true
   },
   "hooks": {
-    "external-screen-create": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
-    "external-screen-add": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
-    "external-screen-edit": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
-    "external-screen-delete": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
-    "external-screen-copy": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
-    "external-screen-ok": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
+    "external-screen-create": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-add": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-edit": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-delete": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-copy": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
+    "external-screen-ok": { "elements": ["button"], "since": "1.83.0-beta.4", "audience": ["test"] },
     "space-select": { "elements": ["hp-settings-select"], "since": "1.83.0", "audience": ["test"] },
     "space-select-value": { "elements": ["select"], "since": "1.83.0", "audience": ["test"] },
     "select-trigger": { "elements": ["button"], "since": "1.83.0", "audience": ["test"] },
