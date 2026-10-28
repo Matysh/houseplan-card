@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { ConfigReloadAuthority } from '../test-build/config-reload-authority.js';
+import { ConfigReloadAuthority, reloadConfigOnly } from '../test-build/config-reload-authority.js';
 
 const connectionA = {};
 const connectionB = {};
@@ -115,4 +115,20 @@ test('#543 force recovery may run while its rejected writer unwinds, but still y
   assert.equal(owner.isCurrent(state(claim, {
     writePending: true, baselineRevision: 3, baselineFingerprint: 'accepted-3',
   })), false);
+});
+
+test('#1113 runtime stream recovery callback runs only after an accepted authoritative reload',async(t)=>{
+  const previous=Object.getOwnPropertyDescriptor(globalThis,'location');
+  Object.defineProperty(globalThis,'location',{configurable:true,value:{pathname:'/houseplan'}});
+  t.after(()=>{if(previous)Object.defineProperty(globalThis,'location',previous);else delete globalThis.location;});
+  for(const status of ['adopted','refused','superseded','network-failure']){
+    let applied=0;
+    const host={hass:{connection:{},user:{id:'viewer'}},isConnected:true,panelHost:true,
+      _configReloadAuthority:new ConfigReloadAuthority(),_adoption:{currentConfigFingerprint:()=> 'base'},_cfgRev:1,_cfgWriting:false,
+      _saveConfigDebounced:{pending:()=>false,flush(){}},_regSignature:'',_continuityDataReady:false,
+      async _getAuthoritativeConfig(){if(status==='network-failure')throw Error('offline');return {config:{settings:{},spaces:[]},rev:1};},
+      async _adoptAuthoritative(){return {status,spaceChanged:false};},_maybeRebuildDevices(){},_restoreZoom(){},_showToast(){},_t:key=>key,_errText:String,requestUpdate(){}};
+    await reloadConfigOnly(host,false,undefined,()=>applied++);
+    assert.equal(applied,status==='adopted'?1:0,status);
+  }
 });

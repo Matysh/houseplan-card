@@ -1,4 +1,4 @@
-import { subscribeExternalScreenConfig } from './external-screens-events';
+import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
 import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
@@ -2279,6 +2279,7 @@ export class HouseplanCard extends LitElement {
   private _haSummaryPanelApi: number | null = null;
   private _haExternalScreensApi: number | null = null;
   private _haExternalScreensEventsApi: number | null = null;
+  private readonly _externalConfigStreamRecovery = new ExternalConfigStreamRecovery();
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
@@ -4800,7 +4801,9 @@ export class HouseplanCard extends LitElement {
   private _ensureLiveSyncSubscriptions(): void {
     const connection = this.hass?.connection;
     if (!connection) return;
+    if (this._externalConfigStreamRecovery.blocked && connection === this._liveSyncConnection) return;
     if (connection !== this._liveSyncConnection) {
+      this._externalConfigStreamRecovery.reset();
       for (const runtime of this._vacRt.values()) {
         if (runtime.livePending) { delete runtime.livePending; runtime.gap = true; }
       }
@@ -4849,6 +4852,15 @@ export class HouseplanCard extends LitElement {
         // Flush a pending local edit BEFORE adopting a remote revision:
         // otherwise the debounced write reads a config that this reload has
         // already replaced, and the user's edit vanishes (audit L2).
+        if (ev?.data?.kind === 'closed') {
+          this._externalConfigStreamRecovery.closed(ev.data.reason, {
+            retire: () => { this._liveSyncGeneration++; this._unsubCfg?.(); this._unsubCfg = null; },
+            refresh: afterApplied => { void this._reloadConfigOnly(false, undefined, afterApplied); },
+            canResume: () => this.isConnected && this.hass?.connection === connection && this._haExternalScreensEventsApi === 1,
+            resume: () => { this._liveSyncConnection = null; this._ensureLiveSyncSubscriptions(); },
+          });
+          return;
+        }
         const observedRev = Number(ev?.data?.rev ?? -1);
         const previous = this._serverCfg;
         const candidate = this.panelHost && this._routeKiosk.enabled && this._loadOk
@@ -4911,8 +4923,8 @@ export class HouseplanCard extends LitElement {
    * top of an unsent edit is exactly how edits disappeared (audit L2).
    * `force` skips the deferral (conflict path: the local edit already lost).
    */
-  private async _reloadConfigOnly(force = false, observedRev?: number): Promise<void> {
-    return reloadConfigOnly(this as unknown as ConfigReloadHostPort, force, observedRev);
+  private async _reloadConfigOnly(force = false, observedRev?: number, afterApplied?: () => void): Promise<void> {
+    return reloadConfigOnly(this as unknown as ConfigReloadHostPort, force, observedRev, afterApplied);
   }
 
   private _reloadRetry?: number;
@@ -5130,6 +5142,9 @@ export class HouseplanCard extends LitElement {
     this._markerDialog = { ...d, hideFromPlan: !effectivelyHidden };
   }
   private _onConnReady = (): void => {
+    if (this._externalConfigStreamRecovery.blocked) {
+      this._externalConfigStreamRecovery.reset(); this._liveSyncConnection = null; this._liveSyncGeneration++;
+    }
     this._loadTries = 0;
     clearTimeout(this._loadRetryTimer);
     this._loadRetryTimer = undefined;

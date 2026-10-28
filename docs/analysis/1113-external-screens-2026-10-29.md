@@ -138,3 +138,23 @@ No mutant was executed. General-settings legacy section order and all new de/fr
 settings translations address the actual prior CI failures without weakening
 locale or form semantics. New Rollup/native/exact-source CI evidence is required
 for this r2 delta; prior31510/4d8f bundles are not its build proof.
+
+Closed-stream lifecycle finalization distinguishes `unauthorized` from
+`runtime_changed`. Authentication closure is terminal on ordinary HA ticks;
+only actual ready/connection change resets the fence. Runtime replacement retires
+the live epoch and starts one existing authoritative reload. A typed optional
+post-adoption callback on that same reload owner confirms acceptance before
+checking the capability/connection and resubscribing once. Deferred writers
+carry the callback through their existing retry; failed/superseded reads cannot
+resume the stream. There is no new polling or alternate config owner.
+
+The focused finalization proof is42 frontend units PASS plus40 addressed backend
+PASS (including six real HA8.3 cases), no skips/teardown errors. Native adds the
+actual runtime-close one-refresh/one-resubscribe and auth-close zero-read/zero-
+resubscribe witnesses; its final material still needs build/sync verification.
+The earlier native RED during standalone r2 checking was a material mismatch:
+dist796bc64a versus demo assets4d8f because bundle-sync had been omitted. The
+canonical sync fixed it. The new cold smoke explicitly verifies freshness after
+its property-before-definition cold-mount witness and before acceptance. On796b,
+28native assertions, General settings, lazy admin locale and nine Golden captures
+passed; those captures are prior material once the closed edge is finalized.

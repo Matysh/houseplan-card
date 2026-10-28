@@ -119,6 +119,7 @@ const server=createFixtureStore(CFG,LAYOUT,(event,rev,extra)=>{
 window.__servedRevision=SERVED;
 const OWN_SCREEN_SUBSCRIPTIONS=new Set();
 window.__externalScreenSubscriptionCounts=()=>({own:OWN_SCREEN_SUBSCRIPTIONS.size,total:SERVER_LISTENERS.houseplan_config_updated.size});
+window.__closeExternalScreenStreams=reason=>{for(const listener of [...OWN_SCREEN_SUBSCRIPTIONS])listener({data:{kind:'closed',reason}});};
 const CONNECTION={subscribeEvents:async(cb,event)=>{
   const listeners=REGISTRY_LISTENERS[event]||SERVER_LISTENERS[event];
   if(!listeners)return()=>{};

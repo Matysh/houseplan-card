@@ -22361,6 +22361,15 @@ const externalScreens1113Cases = [
 ];
 
 const externalScreensStream1113Cases = [
+  {id:'screen-stream-auth-closure-retries-1113',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens-events.test.mjs',
+    because:'#1113 r2: terminal auth closure must perform zero reloads/subscriptions on ordinary ticks. Registered only.',
+    patches:[{file:'src/external-screens-events.ts',find:"if (reason !== 'runtime_changed') return;",replace:'if (false) return;'}]},
+  {id:'screen-stream-runtime-resumes-before-full-adoption-1113',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens-events.test.mjs',
+    because:'#1113 r2: a runtime projection cannot authorize resubscription before accepted full config/capability. Registered only.',
+    patches:[{file:'src/external-screens-events.ts',find:'port.refresh(() => {',replace:'port.resume(); port.refresh(() => {'}]},
+
   {id:'screen-stream-keeps-revoked-user-1113',
     guard:'node scripts/backend-test-guard.mjs profile_stream_revocation tests_backend/test_ha_external_screens_websocket.py',
     because:'#1113 r2: a revoked authenticated viewer cannot retain the own projection. Registered only; execution belongs to nightly.',

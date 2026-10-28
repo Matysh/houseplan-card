@@ -17,11 +17,37 @@ export async function subscribeExternalScreenConfig(
   const unsubscribe = await connection.subscribeMessage(data => {
     if (ended) return;
     if (data && typeof data === 'object' && (data as {kind?: unknown}).kind === 'closed') {
-      close(); return;
+      close(); callback(data); return;
     }
     callback(data);
   }, {type: 'houseplan/external_screens/subscribe', base_rev: baseRev});
   remove = unsubscribe;
   if (ended) unsubscribe();
   return close;
+}
+
+interface StreamRecoveryPort {
+  retire(): void;
+  refresh(afterApplied: () => void): void;
+  canResume(): boolean;
+  resume(): void;
+}
+/** Closed auth is terminal on ordinary ticks; only real ready/connection changes reset it. */
+export class ExternalConfigStreamRecovery {
+  private epoch = 0;
+  private stopped = false;
+  get blocked(): boolean { return this.stopped; }
+  reset(): void { this.epoch++; this.stopped = false; }
+  closed(reason: unknown, port: StreamRecoveryPort): void {
+    if (this.stopped) return;
+    this.stopped = true;
+    const epoch = ++this.epoch;
+    port.retire();
+    if (reason !== 'runtime_changed') return;
+    port.refresh(() => {
+      if (epoch !== this.epoch || !this.stopped || !port.canResume()) return;
+      this.stopped = false;
+      port.resume();
+    });
+  }
 }

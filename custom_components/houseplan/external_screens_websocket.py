@@ -64,7 +64,8 @@ async def ws_external_screens_subscribe(hass, connection, msg):
 
     @callback
     def close():
-        connection.send_event(msg["id"], {"kind": "closed"})
+        reason = "unauthorized" if connection.user is not user or not user.is_active else "runtime_changed"
+        connection.send_event(msg["id"], {"kind": "closed", "reason": reason})
         remove()
         connection.subscriptions.pop(msg["id"], None)
 

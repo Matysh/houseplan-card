@@ -1,3 +1,5 @@
+import {fileURLToPath} from 'node:url';
+import {assertFreshDemoBundle} from './bundle-freshness.mjs';
 /** #1113 real dialog/URL consumers on the existing synthetic HA wire bus. */
 import { launchColdView, checkAll, finish } from './serve.mjs';
 const {page,browser}=await launchColdView({width:1280,height:920},1,[],{},undefined,undefined,'/demo.html?panel-cold=1&external-screens=1',false);
@@ -81,9 +83,16 @@ const out=await page.evaluate(async()=>{
   window.__externalScreensReport={result,calls,kioskCalls,revision,rev};
   return result;
 });
+// The cold mount deliberately precedes element definition; validate its loaded tree before acceptance.
+await assertFreshDemoBundle(page,fileURLToPath(new URL('../',import.meta.url)));
 await page.locator('houseplan-panel').evaluate(panel=>panel.remove()); // Retire the other consumer after the live two-client witness.
 await page.waitForFunction(()=>window.__externalScreenSubscriptionCounts().own===1);
 out.retiredPanelRemovedItsOwnConfigSubscription=await page.evaluate(()=>window.__externalScreenSubscriptionCounts().total===1);
+const beforeRecovery=await page.evaluate(()=>window.__externalScreensReport.kioskCalls.filter(type=>type==='houseplan/config/get').length);
+await page.evaluate(()=>window.__closeExternalScreenStreams('runtime_changed'));
+await page.waitForFunction(before=>window.__externalScreenSubscriptionCounts().own===1&&window.__externalScreensReport.kioskCalls.filter(type=>type==='houseplan/config/get').length===before+1,beforeRecovery);
+out.runtimeClosedRefreshesOnceAndResubscribes=await page.evaluate(()=>window.__externalScreenSubscriptionCounts().total===1);
+
 const stage=page.locator('houseplan-card').last().locator('.stage');
 await stage.scrollIntoViewIfNeeded();
 const box=await stage.boundingBox();
@@ -116,5 +125,12 @@ Object.assign(out,await page.evaluate(async()=>{
   const settings=old.renderRoot.querySelector('hp-dialog[data-kind="settings"]');settings.querySelector('[data-section-target="external-screens"]').click();await old.updateComplete;
   result.oldBackendExplainsWithoutEditing=!!settings.querySelector('[data-card="external-screens"] [role="status"]')&&!settings.querySelector('[data-hp="external-screen-add"], [data-hp="external-screen-create"]');
   return result;
+}));
+Object.assign(out,await page.evaluate(async()=>{
+  const report=window.__externalScreensReport,calls=()=>report.kioskCalls.filter(type=>type==='houseplan/config/get').length,before=calls(),kiosk=document.querySelector('houseplan-card');
+  window.__closeExternalScreenStreams('unauthorized');
+  for(let i=0;i<5;i++){kiosk.hass={...kiosk.hass};await kiosk.updateComplete;}
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  return {authClosedNeverReloadsOrResubscribes:window.__externalScreenSubscriptionCounts().own===0&&calls()===before};
 }));
 checkAll(out);await finish(browser,out);

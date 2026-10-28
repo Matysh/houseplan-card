@@ -232,6 +232,7 @@ export async function reloadConfigOnly(
   host: ConfigReloadHostPort,
   force = false,
   observedRev?: number,
+  afterApplied?: () => void,
 ): Promise<void> {
   let reservation: ConfigReloadEventReservation | null = null;
   const owner = host._configReloadAuthority;
@@ -247,7 +248,7 @@ export async function reloadConfigOnly(
         if (reservation && !owner.isReservationCurrent(
           reservation, configReloadContext(host), host._cfgRev,
         )) return;
-        void reloadConfigOnly(host, false);
+        void reloadConfigOnly(host, false, undefined, afterApplied);
       }, 400);
       return;
     }
@@ -270,6 +271,7 @@ export async function reloadConfigOnly(
     if (adopted.status !== 'adopted') return;
     if (adopted.spaceChanged) host._restoreZoom();
     host.requestUpdate();
+    afterApplied?.();
   } catch (error: unknown) {
     if (!isCurrent()) return;
     settleCurrentAttempt = true;

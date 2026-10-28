@@ -2649,3 +2649,10 @@ HA events or modifies core subscribe permissions. Initial ready/resync is not
 full-config authority. Exact base/successor remains the common adoption rule;
 unknown/mixed/gap/pending-writer retains authoritative reload. Entry/user lifetime
 and connection cleanup fence server delivery as well as frontend completion.
+
+A closed profile stream declares its reason. Unauthorized closure is terminal
+until a real authentication/connection-ready boundary. Runtime replacement retires
+old live callbacks, performs one ordinary reload and resumes only after that
+owner actually adopts a full response with the capability. The reload's optional
+post-adoption callback follows existing pending-writer deferral and never fires
+for rejected/superseded/failed reads. Ordinary HA ticks cannot retry closed auth.

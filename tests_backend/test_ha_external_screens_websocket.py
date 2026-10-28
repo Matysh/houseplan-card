@@ -113,7 +113,7 @@ async def test_profile_stream_revocation_and_disconnect_remove_own_listener(hass
     # Keep the socket open to exercise this delivery fence separately.
     user.is_active = False
     hass.bus.async_fire(EVENT, {"rev": full["rev"] + 1})
-    assert (await viewer.receive_json())["event"] == {"kind": "closed"}
+    assert (await viewer.receive_json())["event"] == {"kind": "closed", "reason": "unauthorized"}
     assert hass.bus.async_listeners().get(EVENT, 0) == count
     await viewer.close()
     await hass.async_block_till_done()
