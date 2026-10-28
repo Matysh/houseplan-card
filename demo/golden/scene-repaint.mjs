@@ -1,6 +1,10 @@
-/** #881: invalidate raster history only for the owner's opted-in scene. */
+/** Invalidate proven raster-history artefacts only in explicitly scoped scenes. */
 export async function captureGoldenFrame(page, scenario, screenshotOptions) {
-  if (scenario.id === 'device-battery-zigbee-overlap-dark') {
+  // #881 and the four editor frames reproduced after the full shared-page
+  // prefix: extra rAFs alone do not invalidate Chromium's retained SVG paint.
+  if (['device-battery-zigbee-overlap-dark', 'opening-placement-door-thick-wall-dark',
+    'opening-placement-passage-thick-wall-dark', 'opening-placement-passage-thick-wall-light',
+    'plan-snap-line-gaps-dark'].includes(scenario.id)) {
     await page.evaluate(async () => {
       const style = document.documentElement.style;
       const property = '--hp-golden-page-bg';

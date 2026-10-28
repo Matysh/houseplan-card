@@ -52,6 +52,12 @@ const size = async (width, viewport = 1440, height = 1000) => {
     host.style.setProperty('margin', '0', 'important');
   }, width);
   await settle();
+  // Mode identity is committed before its finite chrome transition finishes.
+  // Measure and target touch coordinates only after that owned animation ends.
+  await page.waitForFunction(() => {
+    const c = window.__card;
+    return !c._modeTransitionBusy && !c._modeTransitionPreparing;
+  });
   await page.waitForFunction(expected => {
     const root = window.__card.renderRoot;
     return Math.abs(root.querySelector('.hdr').getBoundingClientRect().width - expected) < .01
@@ -147,7 +153,10 @@ try {
   check('header.phone.gear-and-zoom', s.headerMenu && s.zoom && !s.gear && !s.add);
   const touch = await button.boundingBox();
   await page.touchscreen.tap(touch.x + touch.width / 2, touch.y + touch.height / 2);
-  const option = await picker.locator(`[data-hp="select-option"][data-id="${floors[1].id}"]`).boundingBox();
+  const touchOption = picker.locator(`[data-hp="select-option"][data-id="${floors[1].id}"]`);
+  await touchOption.waitFor({ state: 'visible' });
+  const option = await touchOption.boundingBox();
+  if (!option) throw new Error('header phone touch did not expose the target floor option');
   await page.touchscreen.tap(option.x + option.width / 2, option.y + option.height / 2);
   await waitSpace(floors[1].id);
   check('header.phone.touch-selects-visible-floor', (await snapshot()).label, floors[1].title);

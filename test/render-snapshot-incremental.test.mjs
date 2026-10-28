@@ -15,6 +15,10 @@ import { RenderSnapshotReuseWindow } from '../test-build/render-snapshot-reuse.j
 import { presentationSnapshotKey } from '../test-build/render-device-snapshot.js';
 import { HiddenDeviceRoster } from '../test-build/hidden-device-visibility.js';
 import { thresholdIssues } from '../test-build/marker-alert-presentation.js';
+import { makeSelectiveInvalidationFixture } from '../demo/fixtures/selective-invalidation.mjs';
+import { resolvedLightSources } from '../test-build/devices.js';
+import { PresentationLightFrame } from '../test-build/presentation-light-frame.js';
+import { reconcileVirtualLightSnapshot, applyVirtualLightEvent, virtualLightWire } from '../test-build/virtual-light-state.js';
 
 /** A comparable projection of a snapshot: maps become entry lists, the capture time is dropped. */
 const plain = (snapshot) => ({
@@ -477,4 +481,60 @@ test('#850 AC3: a row read only through the battery context or a badge is still 
   const badge = presentationSnapshotKey('perf-device-2', false);
   assert.match(JSON.stringify(tick('sensor.perf_12', '17.25').presentations.get(badge).valueBadge), /17/,
     'the badge of another device\'s row is fresh');
+});
+
+test('#1093 config ACK virtual revisions keep all 120 visible faces without changing authority', () => {
+  const host = captureHost({ ...makeSelectiveInvalidationFixture(true), areas: {} });
+  host._space = 'f1'; host._mode = 'plan';
+  const reuse = new RenderSnapshotReuseWindow();
+  const first = captureRenderDeviceSnapshot(host, reuse);
+  assert.equal(first.presentations.size, 240, 'two variants for each of 120 visible devices');
+  const topology = () => new PresentationLightFrame(resolvedLightSources(
+    host._planHass, host._devices, null, host._virtualLights)).topology;
+  const beforeTopology = topology();
+  assert.notEqual(beforeTopology, null, 'the real light graph has reusable topology');
+  for (const advance of [
+    () => reconcileVirtualLightSnapshot(host._virtualLights, host._serverCfg, 1),
+    () => ({ ...host._virtualLights, rev: 7, configRev: 2, off: new Set(host._virtualLights.off) }),
+  ]) {
+    const before = { ...reuse.stats }, previousAuthority = host._virtualLights;
+    host._virtualLights = advance();
+    const authority = host._virtualLights, wire = virtualLightWire(authority);
+    assert.notEqual(authority, previousAuthority, 'real ACK creates a new revision-bearing object');
+    host._cfgEpoch++; host._hassSequence++;
+    assert.equal(topology(), beforeTopology, 'revision-only ACK does not change graph topology');
+    const next = captureRenderDeviceSnapshot(host, reuse);
+    assert.equal(reuse.stats.presentations, before.presentations, 'ACK revision alone must not resolve 240 faces');
+    assert.equal(reuse.stats.refreshed, before.refreshed);
+    assert.equal(next.geometry, host._cfgEpoch, 'new snapshot keeps current frame authority');
+    assert.equal(next.sourceSequence, host._hassSequence);
+    assert.equal(host._virtualLights, authority, 'capture does not replace authority');
+    assert.deepEqual(virtualLightWire(host._virtualLights), wire, 'revisions and off set remain intact');
+    assert.deepEqual(plain(next), plain(captureRenderDeviceSnapshot(host, null)));
+  }
+});
+
+test('#1093 virtual display equality ignores Set order but retains real toggles and stale-event authority', () => {
+  const host = captureHost(oracleFixture()), reuse = new RenderSnapshotReuseWindow();
+  host._virtualLights = applyVirtualLightEvent(host._virtualLights, { marker_id: 'perf-virtual-a', on: false, rev: 1 });
+  host._virtualLights = applyVirtualLightEvent(host._virtualLights, { marker_id: 'perf-virtual-b', on: false, rev: 2 });
+  captureRenderDeviceSnapshot(host, reuse);
+  const before = { ...reuse.stats };
+  host._virtualLights = { ...host._virtualLights, off: new Set([...host._virtualLights.off].reverse()) };
+  const equivalent = captureRenderDeviceSnapshot(host, reuse);
+  assert.equal(reuse.stats.presentations, before.presentations, 'same membership in a new Set retains faces');
+  assert.deepEqual(plain(equivalent), plain(captureRenderDeviceSnapshot(host, null)));
+  const authority = host._virtualLights;
+  host._virtualLights = applyVirtualLightEvent(authority, { marker_id: 'perf-virtual-a', on: true, rev: 2 });
+  assert.equal(host._virtualLights, authority, 'stale event cannot turn the lamp on');
+  captureRenderDeviceSnapshot(host, reuse);
+  assert.equal(reuse.stats.presentations, before.presentations);
+  host._virtualLights = applyVirtualLightEvent(authority, { marker_id: 'perf-virtual-a', on: true, rev: 3 });
+  assert.deepEqual(virtualLightWire(host._virtualLights), { rev: 3, config_rev: 0, off: ['perf-virtual-b'] });
+  const changed = captureRenderDeviceSnapshot(host, reuse);
+  assert.equal(reuse.stats.refreshed, before.refreshed + 1, 'actual off-membership change remains an invalidation');
+  assert.equal(reuse.stats.presentations - before.presentations, host._devices.length * 2);
+  assert.notDeepEqual(changed.presentations.get(presentationSnapshotKey('perf-virtual-a', false)),
+    equivalent.presentations.get(presentationSnapshotKey('perf-virtual-a', false)), 'actual lamp face changes');
+  assert.deepEqual(plain(changed), plain(captureRenderDeviceSnapshot(host, null)));
 });

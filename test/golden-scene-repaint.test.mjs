@@ -4,6 +4,9 @@ import { captureGoldenFrame } from '../demo/golden/scene-repaint.mjs';
 import { GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
 
 const target = GOLDEN_SCENARIOS.find(({ id }) => id === 'device-battery-zigbee-overlap-dark');
+const optedIds = ['device-battery-zigbee-overlap-dark', 'opening-placement-door-thick-wall-dark',
+  'opening-placement-passage-thick-wall-dark', 'opening-placement-passage-thick-wall-light',
+  'plan-snap-line-gaps-dark'];
 
 // Execute the very callback sent to Chromium. The fake frame scheduler records
 // what would be painted at each frame, not a regex over the implementation.
@@ -57,22 +60,26 @@ async function withPage({ value = '#11151b', priority = '', failFrame = 0,
   }
 }
 
-test('only the opted-in scene repaints twice then restores and paints twice before capture', async () => {
-  await withPage({}, async ({ page, options, png, frames, state }) => {
-    assert.strictEqual(await captureGoldenFrame(page, target, options), png);
-    assert.deepEqual(frames, [
-      ['rgb(1, 2, 3)', 'important'], ['rgb(1, 2, 3)', 'important'],
-      ['#11151b', ''], ['#11151b', ''],
-    ]);
-    assert.equal(state().evaluations, 1);
-    assert.equal(state().screenshots, 1);
-  });
+test('each proven opted-in scene restores the original paint before the unchanged capture', async () => {
+  for (const id of optedIds) {
+    const scenario = GOLDEN_SCENARIOS.find((entry) => entry.id === id);
+    assert.ok(scenario, id);
+    await withPage({}, async ({ page, options, png, frames, state }) => {
+      assert.strictEqual(await captureGoldenFrame(page, scenario, options), png);
+      assert.deepEqual(frames, [
+        ['rgb(1, 2, 3)', 'important'], ['rgb(1, 2, 3)', 'important'],
+        ['#11151b', ''], ['#11151b', ''],
+      ]);
+      assert.equal(state().evaluations, 1);
+      assert.equal(state().screenshots, 1);
+    });
+  }
 });
 
 test('every other matrix scene keeps the original screenshot path without evaluate or repaint', async () => {
   await withPage({}, async ({ page, options, png, frames, state }) => {
-    const otherScenes = GOLDEN_SCENARIOS.filter(({ id }) => id !== target.id);
-    assert.equal(otherScenes.length, GOLDEN_SCENARIOS.length - 1);
+    const otherScenes = GOLDEN_SCENARIOS.filter(({ id }) => !optedIds.includes(id));
+    assert.equal(otherScenes.length, GOLDEN_SCENARIOS.length - optedIds.length);
     for (const scenario of otherScenes)
       assert.strictEqual(await captureGoldenFrame(page, scenario, options), png);
     assert.deepEqual(frames, []);

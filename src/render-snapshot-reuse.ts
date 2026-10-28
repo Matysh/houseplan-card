@@ -118,7 +118,11 @@ export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
           consumerDemand?.decor !== false && 'decor' in space ? space.decor?.map((shape: { id?:string; kind?:string; text?:unknown; entity?:unknown }) =>
             shape.kind === 'text' ? [shape.id, shape.text, shape.entity] : null) : undefined])),
     ];
-    const inputs: unknown[] = [host._config, JSON.stringify(host._config), host._virtualLights, frame?.topology,
+    // Config ACKs advance virtual-light authority even when every lamp keeps
+    // its state. Faces consume only off membership; keep revision/ownership
+    // checks in the authoritative snapshot and the outer capture boundary.
+    const virtualDisplayKey = JSON.stringify([...host._virtualLights.off].sort());
+    const inputs: unknown[] = [host._config, JSON.stringify(host._config), virtualDisplayKey, frame?.topology,
       host._reducedMotion, host._showHidden === true, directSignalReadings(hass)];
     for (const name of Object.keys(host.hass || {}).sort()) if (name !== 'states') inputs.push(name, host.hass[name]);
     for (const [id, runtime] of host._activityRt) {

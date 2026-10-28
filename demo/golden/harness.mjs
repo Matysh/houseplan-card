@@ -1750,6 +1750,12 @@ export async function prepareGoldenScenario(page, scenario) {
         bubbles: true, composed: true, pointerId: 992, pointerType: 'mouse',
         clientX: screen.x, clientY: screen.y,
       }));
+      if (scenario.id === 'plan-snap-line-gaps-dark') {
+        // Judge the same final snapshot owner as the settled reference frame,
+        // after the production pointer calculation and lightweight paint.
+        await card._editorRuntime._whenLiveEditorSettled();
+        card.requestUpdate();
+      }
       await card.updateComplete;
       await frame();
       const overlay = card.renderRoot.querySelector('[data-hp="plan-snap-overlay"]');
@@ -1824,6 +1830,11 @@ export async function prepareGoldenScenario(page, scenario) {
         bubbles: true, composed: true, pointerId: 991, pointerType: 'mouse',
         clientX: screen.x, clientY: screen.y,
       }));
+      if (['opening-placement-door-thick-wall-dark', 'opening-placement-passage-thick-wall-dark',
+        'opening-placement-passage-thick-wall-light'].includes(scenario.id)) {
+        await card._editorRuntime._whenLiveEditorSettled();
+        card.requestUpdate();
+      }
       await card.updateComplete;
       await frame();
       const preview = card.renderRoot.querySelector(`.opening-preview[data-kind="${type}"]`);
@@ -3066,15 +3077,6 @@ export async function prepareGoldenScenario(page, scenario) {
     page, fixture.windowLightProbes, !!scenario.interiorWindow.led,
   );
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
-  if (['opening-placement-door-thick-wall-dark', 'opening-placement-passage-thick-wall-dark',
-    'opening-placement-passage-thick-wall-light', 'plan-snap-line-gaps-dark'].includes(scenario.id)) {
-    // These static editor scenes can finish their host update before Chromium
-    // paints the settled SVG. The first/second capture differed despite equal
-    // root/child geometry, CTMs and computed styles; two frames make the first
-    // capture equal to the already-settled frame without changing the scene.
-    await page.evaluate(() => new Promise((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  }
   return result;
 }
 

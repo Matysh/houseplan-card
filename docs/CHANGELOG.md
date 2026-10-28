@@ -16,7 +16,7 @@
   picker before its parent form and returns focus to the icon field through
   Home Assistant's native focus API. Dropdowns also keep long Summary forms
   inside their content scroller without adding an outer dialog scrollbar. (#998)
-- Save appearance changes and Copy/Delete/Undo/Redo without rebuilding unchanged floor geometry; hidden floors and layers defer display work until needed, while visible values and alarms remain current. Successful Save closes promptly after its confirmed response, and confirmed deletion closes its current form in the same accepted update. A vacuum and its route history remain visible on the configured route's floor even when its dock belongs to another floor. (#1093)
+- Save appearance changes and Copy/Delete/Undo/Redo without rebuilding unchanged floor geometry; hidden floors and layers defer display work until needed, while visible values and alarms remain current. Successful Save closes promptly after its confirmed response, and confirmed deletion closes its current form in the same accepted update. A vacuum and its route history remain visible on the configured route's floor even when its dock belongs to another floor. Ordinary saves also retain unchanged device appearances without recalculating them. (#1093)
 
 - Choose the compact floor selector before a warm card first paints, preventing
   a 9px header/stage jump when opening the plan again. (#1092)
