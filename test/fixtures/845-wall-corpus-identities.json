@@ -239,6 +239,10 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/vacuum-history/dreame-tasshack-2.0.2-no-slot.json",
+      "configs": 0
+    },
+    {
       "file": "test/fixtures/vacuum-history/dreame-tasshack-2.0.2-two-records.json",
       "configs": 0
     },
