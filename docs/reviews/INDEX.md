@@ -1,6 +1,6 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 212, issue: 103. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 214, issue: 103. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
@@ -30,6 +30,8 @@
 | #1098 | [SPEC-REVIEW-1098-r2.md](SPEC-REVIEW-1098-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1098 | [CODE-REVIEW-1098-r1.md](CODE-REVIEW-1098-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1097 | [SPEC-REVIEW-1097-r1.md](SPEC-REVIEW-1097-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | неверный номер Core user job в разделе «Сценарий» | `docs/SCOPE.md` |
+| #1097 | [CODE-REVIEW-1097-r1.md](CODE-REVIEW-1097-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | дублирующая запись в CHANGELOG RU/EN | `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` |
+| #1097 | [CODE-REVIEW-1097-r2.md](CODE-REVIEW-1097-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1096 | [SPEC-REVIEW-1096-r1.md](SPEC-REVIEW-1096-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | preserve_space_appearance не оговаривает легаси-документ, хотя config/get в том же пунк… | `room_appearance.py` `docs/release-ledger/v1.82.0/1037.json` |
 | #1096 | [SPEC-REVIEW-1096-r2.md](SPEC-REVIEW-1096-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1096 | [CODE-REVIEW-1096-r1.md](CODE-REVIEW-1096-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
