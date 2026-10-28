@@ -1,0 +1,3 @@
+:root { --mdc-dialog-scrim-color: rgb(0 0 0 / 0.45); }
+/* UI-005: HA layout spacing absent from the isolated harness bootstrap. */
+:root { --ha-space-1:4px; --ha-space-2:8px; --ha-space-3:12px; --ha-space-4:16px; --ha-space-6:24px; --ha-space-20:80px; }

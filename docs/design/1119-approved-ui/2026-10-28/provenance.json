@@ -1,0 +1,180 @@
+{
+  "issue": 1119,
+  "baseTag": "v1.83.0-beta.3",
+  "baseCommit": "09bda8dbee8b50577bfc4affc332b8cda914f5b4",
+  "fixtureSource": "demo/ui-lab/fixture.json at baseCommit (synthetic)",
+  "prototypeSources": "Exact final iteration files; no product implementation",
+  "approval": "accepted-journal.json",
+  "screenshots": "Synthetic replay illustrations, not private plan",
+  "excludedIssue": 1113,
+  "testsRun": false,
+  "files": [
+    {
+      "path": "accepted-journal.json",
+      "sha256": "296a6d5f0de8aee6163aa6cbe980208fda0220f0d667a155911f08290d6aea98",
+      "bytes": 5750
+    },
+    {
+      "path": "fixture.json",
+      "sha256": "aa41929dd4bdd3a53c8c61c9d31834b9c2ca756c7dfa766ddc4cba7f886c583a",
+      "bytes": 53951
+    },
+    {
+      "path": "README.md",
+      "sha256": "0467589efc502cb8f7f7db330de97c028e2896ef409f6956bdd5ad984863af8f",
+      "bytes": 16477
+    },
+    {
+      "path": "replay.mjs",
+      "sha256": "cb6f531c474cc66119574292afc2cb04be69e645a6a878f235f91a633d863d12",
+      "bytes": 3321
+    },
+    {
+      "path": "theme.css",
+      "sha256": "d38c01e4283719f42808d6f17351839e1497c652c997bed761225b0f84325e4e",
+      "bytes": 255
+    },
+    {
+      "path": "prototypes/UI-001-rotation.mjs",
+      "sha256": "fa7f4aeaec7fbc0d08201034103325ad7786d1d3a72ec9b20e3d4010486e781c",
+      "bytes": 5123
+    },
+    {
+      "path": "prototypes/UI-003-device-card.mjs",
+      "sha256": "b689c01946b86b826fc4377b9a00f02c21dc2ed9023f2d0eca5fcc46fd993e02",
+      "bytes": 4234
+    },
+    {
+      "path": "prototypes/UI-004-device-dots.mjs",
+      "sha256": "f787c6c3ddf5800e5c1dcdeb87a247aa5065591491ac95513358da704febdfb3",
+      "bytes": 706
+    },
+    {
+      "path": "prototypes/UI-005-summary-dialog.mjs",
+      "sha256": "deeeabb03923256f2c819a5fe3f30ad76f9ed7b4473c5bb54594f13d8c872c45",
+      "bytes": 3335
+    },
+    {
+      "path": "prototypes/UI-006-editor-light.mjs",
+      "sha256": "3c6ea23b85154ff1a0e3c876e9b63586a71e40887686560f841c824a87eae5ed",
+      "bytes": 658
+    },
+    {
+      "path": "prototypes/UI-007-device-tip-status.mjs",
+      "sha256": "f269045b1afb60b66c74a4e13853513e1a5a572afb3ddcb9a03b65dc0740aa71",
+      "bytes": 3582
+    },
+    {
+      "path": "prototypes/UI-008-editor-buttons.mjs",
+      "sha256": "fb5b0eaff9c7008f8aeaf0d9003b5cf0d797d645fd521968680a8dcedac032c6",
+      "bytes": 1840
+    },
+    {
+      "path": "prototypes/UI-009-compact-zoom.mjs",
+      "sha256": "b1d32824186f64a89b0a1e9f659a897b507868deb620b5cfcc03444405012dba",
+      "bytes": 866
+    },
+    {
+      "path": "prototypes/UI-010-properties-breakpoint.mjs",
+      "sha256": "6e694eea6c9dbaacd83de89d9a42300ff78ecc597e047dd5ce2402437456faaf",
+      "bytes": 3128
+    },
+    {
+      "path": "screenshots/01-overview.png",
+      "sha256": "1b534c7fb567eb5569d66256d83af9673c95ce57177c624b973170d728eb1db7",
+      "bytes": 45511
+    },
+    {
+      "path": "screenshots/02-power-off-tooltip.png",
+      "sha256": "e7b67463cf86c2759c1987ba4a9777154d575f69215c1a4067214313c187e92b",
+      "bytes": 47815
+    },
+    {
+      "path": "screenshots/03-device-card.png",
+      "sha256": "032d705160e2f617cc7fe2b735368199922503073c45bdd2140e9cfc028fec43",
+      "bytes": 37097
+    },
+    {
+      "path": "screenshots/04-summary-settings.png",
+      "sha256": "d9def59cb7378d543771f25d8e95ea68ff58eada2911d60cc877b443bf3619ca",
+      "bytes": 47617
+    },
+    {
+      "path": "screenshots/05-wide-toolbar.png",
+      "sha256": "6135f8e68833c563ea2a9d770f0ee658e56f1d3e49aab6ab4a22d6825b064c8b",
+      "bytes": 16984
+    },
+    {
+      "path": "screenshots/06-plan-editor-wide.png",
+      "sha256": "147d34487a968c758c726a4c34766131dc735a56fda9c97563a7c483d645bd01",
+      "bytes": 180111
+    },
+    {
+      "path": "screenshots/07-plan-editor-1000.png",
+      "sha256": "f64da1f316307400722d1c3b2b9374f0c8f610299d5bc76086427367f833425e",
+      "bytes": 139452
+    },
+    {
+      "path": "screenshots/08-device-editor-glow.png",
+      "sha256": "807dd63685bc23d9ce811e015f0fbdc6d7f2bae963a28f4d5dd5cf03fbae765b",
+      "bytes": 98596
+    },
+    {
+      "path": "screenshots/09-backdrop-no-glow.png",
+      "sha256": "099ad4f4e5352c7c554a3db1c7d9084ed0f9ba2321365a635162b9598ed1184f",
+      "bytes": 114516
+    },
+    {
+      "path": "screenshots/10-unavailable-tooltip.png",
+      "sha256": "0bfd7cf92083837ab3c7c364ae2ce45da005410bc956570795a766c81fdf60ad",
+      "bytes": 63089
+    }
+  ],
+  "prototypeIdentity": [
+    {
+      "path": "prototypes/UI-001-rotation.mjs",
+      "sourceSha256": "fa7f4aeaec7fbc0d08201034103325ad7786d1d3a72ec9b20e3d4010486e781c",
+      "packetSha256": "fa7f4aeaec7fbc0d08201034103325ad7786d1d3a72ec9b20e3d4010486e781c"
+    },
+    {
+      "path": "prototypes/UI-003-device-card.mjs",
+      "sourceSha256": "b689c01946b86b826fc4377b9a00f02c21dc2ed9023f2d0eca5fcc46fd993e02",
+      "packetSha256": "b689c01946b86b826fc4377b9a00f02c21dc2ed9023f2d0eca5fcc46fd993e02"
+    },
+    {
+      "path": "prototypes/UI-004-device-dots.mjs",
+      "sourceSha256": "f787c6c3ddf5800e5c1dcdeb87a247aa5065591491ac95513358da704febdfb3",
+      "packetSha256": "f787c6c3ddf5800e5c1dcdeb87a247aa5065591491ac95513358da704febdfb3"
+    },
+    {
+      "path": "prototypes/UI-005-summary-dialog.mjs",
+      "sourceSha256": "deeeabb03923256f2c819a5fe3f30ad76f9ed7b4473c5bb54594f13d8c872c45",
+      "packetSha256": "deeeabb03923256f2c819a5fe3f30ad76f9ed7b4473c5bb54594f13d8c872c45"
+    },
+    {
+      "path": "prototypes/UI-006-editor-light.mjs",
+      "sourceSha256": "3c6ea23b85154ff1a0e3c876e9b63586a71e40887686560f841c824a87eae5ed",
+      "packetSha256": "3c6ea23b85154ff1a0e3c876e9b63586a71e40887686560f841c824a87eae5ed"
+    },
+    {
+      "path": "prototypes/UI-007-device-tip-status.mjs",
+      "sourceSha256": "f269045b1afb60b66c74a4e13853513e1a5a572afb3ddcb9a03b65dc0740aa71",
+      "packetSha256": "f269045b1afb60b66c74a4e13853513e1a5a572afb3ddcb9a03b65dc0740aa71"
+    },
+    {
+      "path": "prototypes/UI-008-editor-buttons.mjs",
+      "sourceSha256": "fb5b0eaff9c7008f8aeaf0d9003b5cf0d797d645fd521968680a8dcedac032c6",
+      "packetSha256": "fb5b0eaff9c7008f8aeaf0d9003b5cf0d797d645fd521968680a8dcedac032c6"
+    },
+    {
+      "path": "prototypes/UI-009-compact-zoom.mjs",
+      "sourceSha256": "b1d32824186f64a89b0a1e9f659a897b507868deb620b5cfcc03444405012dba",
+      "packetSha256": "b1d32824186f64a89b0a1e9f659a897b507868deb620b5cfcc03444405012dba"
+    },
+    {
+      "path": "prototypes/UI-010-properties-breakpoint.mjs",
+      "sourceSha256": "6e694eea6c9dbaacd83de89d9a42300ff78ecc597e047dd5ce2402437456faaf",
+      "packetSha256": "6e694eea6c9dbaacd83de89d9a42300ff78ecc597e047dd5ce2402437456faaf"
+    }
+  ]
+}
