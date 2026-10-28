@@ -179,3 +179,13 @@ but commit7e42e529 was created after actual S6. Its Spec-Draft trailer consequen
 produces one canonical nonblocking process warning; it is not treated as an S4
 commit or draft exemption. Published EE/6888 history and all hooks remain intact.
 All subsequent S6 commits omit that trailer. Exact-source CI/CODE is still needed.
+
+The first r2 normal protected push was refused after259s, no publication:
+four product assertions failed. The numeric-CAPS static guard matched the word
+"measured" in a new comment; only the comment now says "observed". Three existing
+#901 public trail-event fixtures lacked the newly constructed lifecycle owner;
+they now instantiate the same real ExternalConfigStreamRecovery as the card.
+Connection/ABA/detach response and state-preservation assertions are unchanged.
+Both addressed suites then passed91tests/0skip in0.41s. No production/build input
+changed; source fingerprint remainscd31dbf3. Other required normal gate portions
+passed; a full normal retry is required.

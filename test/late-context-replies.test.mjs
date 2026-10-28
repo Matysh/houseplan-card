@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { ExternalConfigStreamRecovery } from '../test-build/external-screens-events.js';
 import { ConfigWriteContext } from '../test-build/config-write-context.js';
 import { vacuumTrailRefresh } from '../test-build/vacuum-trail-refresh.js';
 import { PlanOptimizationUndo } from '../test-build/plan-optimize-undo.js';
@@ -155,6 +156,7 @@ for (const mode of ['connection', 'aba', 'detach']) test(`#901 wiring: public HA
   context.observe(hass);
   const host = { hass, isConnected: true, _configWriteContext: context,
     _liveSyncConnection: null, _liveSyncGeneration: 0, _liveSyncAttempt: null,
+    _externalConfigStreamRecovery: new ExternalConfigStreamRecovery(),
     _vacRt: new Map(),
     _vacSrvTrails: { fresh: { current: { points: [[1, 2]] } } }, _vacTrailFormat: 2,
     updates: 0, requestUpdate() { this.updates++; } };
