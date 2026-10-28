@@ -9,6 +9,7 @@
 | #1118 | [CODE-REVIEW-1118-r1.md](CODE-REVIEW-1118-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1117 | [SPEC-REVIEW-1117-r1.md](SPEC-REVIEW-1117-r1.md) | spec · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1117 | [CODE-REVIEW-1117-r1.md](CODE-REVIEW-1117-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
+| #1116 | [CODE-REVIEW-1116-r1.md](CODE-REVIEW-1116-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | диф #1116 удаляет чужой принятый | `docs/reviews/SPEC-REVIEW-1120-r1.md` `docs/reviews/INDEX.md` `scripts/reviews-archive.mjs` `SPEC-REVIEW-1120-r1.md` `reviews-index.test.mjs` `candidate-reviews-index.test.mjs` `INDEX.md` |
 | #1115 | [CODE-REVIEW-1115-r1.md](CODE-REVIEW-1115-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1115 | [CODE-REVIEW-1115-r2.md](CODE-REVIEW-1115-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1114 | [CODE-REVIEW-1114-r1.md](CODE-REVIEW-1114-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
