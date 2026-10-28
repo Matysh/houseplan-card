@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1108,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Synchronizes the existing color-picker smoke with the accepted finite entrance animation before exact geometry assertions. This B/C-only test repair and generated CI inventory bookkeeping preserve all control, gradient, range and 32px predicates and leave product runtime behavior unchanged relative to v1.82.0.",
+  "summary": {
+    "ru": "Проверка выбора цвета измеряет геометрию после завершения анимации открытия.",
+    "en": "The color-picker smoke measures geometry after its entrance animation settles."
+  }
+}

@@ -1,5 +1,9 @@
 # Project status
 
+Color-picker smoke timing (#1108) waits for the real finite entrance animation
+before exact geometry checks. The 32px hue height, gradient, native controls and
+range limits retain their existing assertions; product motion is unchanged.
+
 Dialog pickers (#998) reuse the accepted UI-029 field/menu paint. Native selects
 remain the value source, including onboarding and the remaining editor dialogs.
 The real HA icon picker keeps its adaptive surface and one focus border; its
