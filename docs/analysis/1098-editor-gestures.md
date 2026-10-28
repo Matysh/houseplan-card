@@ -153,3 +153,19 @@ bases3651515/6532 carry only this own cost to3653092/6548, preserving inherited
 shared-minification cost by10B; no byte optimization or timing-limit change.
 Current integration source fingerprint:
 d37a475302de7198cf3d1a3f18b4e50749b6420ac510a7ff25626a64dbb6c2af.
+
+## Accepted unchanged-Golden declaration (#1114)
+
+Final integration rebases onto `86c6c7eab555e50e417d6d6fdeb2c3b8b27eb4fb`
+(the accepted #1114 helpers, approved source `e5cc24c0`). This adds no frontend
+source or build-recipe change relative to the #1099 integration above. The own
+A patch remains SHA256 `fb96b745ba68236a31651c96e4a243cd56c83b3aea92af9c82716d0dd5bb5098`.
+The existing 31b resource measurement and fresh correctness material retain
+their actual source scope; original paired timings/captures are not relabelled.
+
+The task ledger now uses accepted `visual.schema: 2` and four `goldenChecks`,
+with `golden: []`: normal/selected stairs, LED design reference and wall-union
+isolation. These require fresh canonical byte-identical/zero-pixel evidence;
+they declare no pending visual change or new global baseline. The earlier
+published product classification failure on `72fbec41` remains a real failure,
+fixed by the accepted infrastructure contract rather than a fake change intent.
