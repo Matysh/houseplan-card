@@ -189,3 +189,13 @@ Connection/ABA/detach response and state-preservation assertions are unchanged.
 Both addressed suites then passed91tests/0skip in0.41s. No production/build input
 changed; source fingerprint remainscd31dbf3. Other required normal gate portions
 passed; a full normal retry is required.
+
+Exact eb7 product CI40789706567 then found one remaining backend refusal:
+job123171770406 reports2690PASS/1FAIL/1skip in127.09s. The sole failure is
+the stale generated persisted-schema manifest, which omitted external_screens.
+The author withdrew S7 before edits (6483882871); the successful process40789857184
+was only deferred on CI, not a CODE verdict. Canonical dump-config-schema.py
+adds exactly13lines for the existing two variants,344paths; all four manifest
+freshness/determinism tests PASS in0.23s. The schema, walker and freshness oracle
+are unchanged. Remaining browser progress checks are still awaited before
+publication; this does not turn the earlier CI RED into PASS.

@@ -411,6 +411,19 @@
       "required": false,
       "type": "float"
     },
+    "config.settings.external_screens": {
+      "required": false,
+      "variants": [
+        {
+          "allowExtra": true,
+          "object": true,
+          "opaque": "<function _external_screen_invariants>"
+        },
+        {
+          "opaque": "<function _future_external_screens>"
+        }
+      ]
+    },
     "config.settings.fill_colors": {
       "required": false
     },
