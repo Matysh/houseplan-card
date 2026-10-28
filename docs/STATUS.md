@@ -1,5 +1,9 @@
 # Project status
 
+Derived-artifact publication (#1109) drains the complete Git stat while printing
+its first 40 lines. Large accepted payloads no longer abort before push with
+SIGPIPE; actual Git errors still stop the step under its existing pipefail guard.
+
 Selective frontend invalidation (#1093) keeps physical floor caches across paint
 saves and coherent equivalent updates. Derived models, faces, room/decor sources
 and optional runtime work follow active consumer demand; hidden authority and
@@ -77,7 +81,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.2` |
-| Tests | Node unit 5765 · pure backend 692 · HA-harness backend 604 · browser smokes 476 (`npm run inventory`) |
+| Tests | Node unit 5766 · pure backend 692 · HA-harness backend 604 · browser smokes 476 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

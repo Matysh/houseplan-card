@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1109,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "B/C-only repair of beta-derived diagnostic output and an executable workflow regression. The display still prints 40 lines but drains the complete Git producer; existing pipefail, artifact acceptance and push authority remain unchanged. No product or user behavior changes relative to v1.82.0.",
+  "summary": {
+    "ru": "Публикация производных артефактов не обрывается на длинной диагностике git stat.",
+    "en": "Derived-artifact publication no longer aborts on a long Git stat diagnostic."
+  }
+}

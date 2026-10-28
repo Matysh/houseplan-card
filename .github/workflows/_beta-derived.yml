@@ -222,7 +222,7 @@ jobs:
           git -c user.name="claude[bot]" \
               -c user.email="209825114+claude[bot]@users.noreply.github.com" \
               commit -q -F "$msg"
-          git show --stat --format='%H %s' HEAD | head -40
+          git show --stat --format='%H %s' HEAD | sed -n '1,40p'
           # #730: сдвигом dev считается только устаревший lease — отказ
           # разбирает код слияния (merge-candidate.mjs --push-refusal, #705).
           # Скрипт — из dev: рабочая копия и есть dev. Сдвиг — прежний совет

@@ -21,6 +21,41 @@ const WORKFLOWS = fileURLToPath(new URL('../.github/workflows/', import.meta.url
 const TESTS = fileURLToPath(new URL('.', import.meta.url));
 const hasBash = () => spawnSync(posixCommand('bash'), ['--version']).status === 0;
 
+test('#1109: beta-derived large commit diagnostics drain Git and preserve producer errors', t => {
+  if (!hasBash()) { t.skip('bash unavailable'); return; }
+  const root = mkdtempSync(join(tmpdir(), 'hp-1109-stat-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (...args) => {
+    const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout;
+  };
+  git('init', '-q');
+  const step = findStep(readFileSync(join(WORKFLOWS, '_beta-derived.yml'), 'utf8'), { name: 'Коммит в dev' });
+  const lines = step.run.split('\n');
+  const diagnostic = lines.filter(line => /^git show --stat\b/.test(line));
+  assert.equal(diagnostic.length, 1);
+  // Execute the actual guard and diagnostic, stopping before credentials/push.
+  // The runner supplies its normal shell; no test-only pipefail is added.
+  const body = `${lines[0]}\n${diagnostic[0]}\necho reached-push-boundary\n`;
+  const options = { cwd: root, encoding: 'utf8', timeout: 30000 };
+  const missingHead = runStep(step, body, options);
+  assert.notEqual(missingHead.status, 0, 'real git show error must stop the step');
+  assert.doesNotMatch(missingHead.stdout, /reached-push-boundary/);
+  assert.match(missingHead.stderr, /HEAD/);
+
+  for (let i = 0; i < 1500; i += 1) {
+    writeFileSync(join(root, `scene-${String(i).padStart(4, '0')}-${'x'.repeat(100)}.txt`), 'reviewed artifact\n');
+  }
+  git('add', '.');
+  git('-c', 'user.name=Workflow test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'large derived payload');
+  const full = git('show', '--stat', '--format=%H %s', 'HEAD');
+  assert.ok(Buffer.byteLength(full) > 65536, 'fixture exceeds a pipe buffer');
+  const result = runStep(step, body, options);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, `${full.split('\n').slice(0, 40).join('\n')}\nreached-push-boundary\n`);
+});
+
 const WORKFLOW = [
   'name: x',
   'on: push',
