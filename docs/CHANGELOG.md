@@ -5,7 +5,6 @@
 - Moving a wall node reuses the junction baseline only for the exact stored revision, avoiding repeated scans of the previous plan. Existing structural refusals remain unchanged. (#1102)
 - Drag stairs and LED vertices smoothly on large plans; their saves and backdrop transforms keep wall geometry warm while stair areas and backdrop placement stay current. (#1098)
 
-- Move openings more smoothly on large plans while retaining warm neighbouring floors. Escape and pointer cancellation discard the opening preview; release keeps the existing saved result and validation. (#1097)
 - Move openings more smoothly on large plans while retaining warm neighbouring floors. Escape and pointer cancellation discard the opening preview; release keeps the existing saved result and validation. Preview edges follow pan, zoom and quarter turns. (#1097)
 - Delete spaces without preparing configuration on the Home Assistant event loop; paired writes and revision conflicts retain their existing behavior. (#1101)
 - Static cards coalesce update bursts into one shared read and ignore revisions they already have. Moving devices on the full card refreshes their positions without downloading the configuration again. (#1112)
