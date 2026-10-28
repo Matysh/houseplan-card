@@ -1,0 +1,98 @@
+{
+  "issue": 1120,
+  "revision": 6,
+  "baseCommit": "09bda8dbee8b50577bfc4affc332b8cda914f5b4",
+  "contextCommit": "0c8c13ae1d93b76f9b132a8bfbd0c864b0304161",
+  "fixture": "synthetic",
+  "privateBackupIncluded": false,
+  "files": [
+    {
+      "path": "approval.json",
+      "sha256": "110c1f93f13cf0a9d31a8f321e72a2ab2a504518879bb0ec28f70311ec7f4f45"
+    },
+    {
+      "path": "fixture.json",
+      "sha256": "aa41929dd4bdd3a53c8c61c9d31834b9c2ca756c7dfa766ddc4cba7f886c583a"
+    },
+    {
+      "path": "README.md",
+      "sha256": "294f4dc4a82264e663677dbf4d20550dad68d4417198e8caaec67374f81024f4"
+    },
+    {
+      "path": "replay.mjs",
+      "sha256": "e36308e4b470441d9e752e85a58ed11218dcd333460da54ebc1dd06aa5c05d8a"
+    },
+    {
+      "path": "theme.css",
+      "sha256": "d38c01e4283719f42808d6f17351839e1497c652c997bed761225b0f84325e4e"
+    },
+    {
+      "path": "context/UI-001-rotation.mjs",
+      "sha256": "fa7f4aeaec7fbc0d08201034103325ad7786d1d3a72ec9b20e3d4010486e781c"
+    },
+    {
+      "path": "context/UI-003-device-card.mjs",
+      "sha256": "b689c01946b86b826fc4377b9a00f02c21dc2ed9023f2d0eca5fcc46fd993e02"
+    },
+    {
+      "path": "context/UI-004-device-dots.mjs",
+      "sha256": "f787c6c3ddf5800e5c1dcdeb87a247aa5065591491ac95513358da704febdfb3"
+    },
+    {
+      "path": "context/UI-005-summary-dialog.mjs",
+      "sha256": "deeeabb03923256f2c819a5fe3f30ad76f9ed7b4473c5bb54594f13d8c872c45"
+    },
+    {
+      "path": "context/UI-006-editor-light.mjs",
+      "sha256": "3c6ea23b85154ff1a0e3c876e9b63586a71e40887686560f841c824a87eae5ed"
+    },
+    {
+      "path": "context/UI-007-device-tip-status.mjs",
+      "sha256": "f269045b1afb60b66c74a4e13853513e1a5a572afb3ddcb9a03b65dc0740aa71"
+    },
+    {
+      "path": "context/UI-008-editor-buttons.mjs",
+      "sha256": "fb5b0eaff9c7008f8aeaf0d9003b5cf0d797d645fd521968680a8dcedac032c6"
+    },
+    {
+      "path": "context/UI-009-compact-zoom.mjs",
+      "sha256": "b1d32824186f64a89b0a1e9f659a897b507868deb620b5cfcc03444405012dba"
+    },
+    {
+      "path": "context/UI-010-properties-breakpoint.mjs",
+      "sha256": "6e694eea6c9dbaacd83de89d9a42300ff78ecc597e047dd5ce2402437456faaf"
+    },
+    {
+      "path": "prototypes/UI-1120-header-overflow.mjs",
+      "sha256": "b0c81b9a9a133c45dc90c1a5e16722b05151eb9b999401d02d1ad924d4c31197"
+    },
+    {
+      "path": "prototypes/UI-1120-panel-header.mjs",
+      "sha256": "07900bbf25c62770960cd9c1549add07a54d2378ae5f21178e0d3709f97a2b38"
+    },
+    {
+      "path": "screenshots/01-full.png",
+      "sha256": "966de8ee8fcf8d859bd5244ecfe11cebbde33006788eafb2750353741e8c3290"
+    },
+    {
+      "path": "screenshots/02-editor-icons.png",
+      "sha256": "4c6e687eb073a348c06187f6b6450f23f213e8b0feb1ef3ddea38bb585c8d6ef"
+    },
+    {
+      "path": "screenshots/03-no-zoom.png",
+      "sha256": "d9f946063b6340ab6dcaeffa3bc92010018ebae586ee500a840a92beafb3f750"
+    },
+    {
+      "path": "screenshots/04-space-dropdown.png",
+      "sha256": "bd87320570da4526aa9cc2032fb95ed0e906e946b1fec8e11525201b652f7d07"
+    },
+    {
+      "path": "screenshots/05-two-rows.png",
+      "sha256": "2791da0880bc3a53e22b0fd77707f1f88e800bae2d0cb7a11b4a8847a281e968"
+    },
+    {
+      "path": "screenshots/06-ha-sidebar.png",
+      "sha256": "3fdb12f1dc9f7d4ab3578bc72257e3c6db00c756b244efa8d8b6617be882923b"
+    }
+  ]
+}

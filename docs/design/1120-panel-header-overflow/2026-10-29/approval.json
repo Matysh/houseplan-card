@@ -1,0 +1,15 @@
+{
+  "issue": 1120,
+  "revision": 6,
+  "approvedAt": "2026-10-29T00:13:14.0384400+03:00",
+  "ownerQuote": "Отлично, фиксируй согласованный визуал в задачу 1120, все материалы приложи через репозиторий. Новый принцип переполнения заменяет прежние пороги из задачи 1119.",
+  "supersedes": [
+    "UI-008: 1480px editor labels breakpoint",
+    "UI-009: 1120px zoom breakpoint and local trials 1100/1150/1170",
+    "Fixed space-dropdown/header wrapping breakpoints"
+  ],
+  "retains": "UI-010: 1024px properties sidebar threshold",
+  "status": "approved",
+  "baseCommit": "09bda8dbee8b50577bfc4affc332b8cda914f5b4",
+  "previousVisualCommit": "0c8c13ae1d93b76f9b132a8bfbd0c864b0304161"
+}
