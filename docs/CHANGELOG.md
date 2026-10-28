@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Delete spaces without preparing configuration on the Home Assistant event loop; paired writes and revision conflicts retain their existing behavior. (#1101)
+
 ## v1.83.0-beta.3 — 2026-10-28
 
 - In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. Viewport resize repositions it; explicit camera/navigation changes retire the old command. (#1089)

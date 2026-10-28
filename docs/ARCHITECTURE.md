@@ -1,5 +1,7 @@
 # House Plan architecture
 
+Space deletion (#1101) prepares detached config/layout candidates, validation and canonical paired intent in one executor job while the existing write lock remains held. Store resolution, revisions, commit/rollback and event publication retain the same owner and order.
+
 
 View device context menu (#1089) has a per-card transient owner behind its own fingerprinted ViewRuntimeBoundary. EditorContextMenu and one idempotent shared stylesheet adopter provide presentation. Accepted command intent survives normal menu close but is revoked by a newer owner, navigation or authority change. Settings uses the existing guarded dialog entry; Hide/Show and Delete reuse the editor transaction with a guard at the queued dispatch boundary. Informational selection does not import the editor runtime.
 

@@ -6492,3 +6492,5 @@ the final11906-line runtime reuses the existing Hide/Delete transactions.
 Rationale: https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6453203632.
 
 After rebasing #1103 on beta.3, the built JavaScript total is 3649075 B (+4554 B over dev's 3644521 B). The resource baseline carries this measured URL-kiosk delta under the owner's resource-limit authorization. The 2000-B band, timing limits and other structural baselines are unchanged; hostRefs6552 remains within the existing 6529+25 band.
+
+For space/delete (#1101), keep candidate JSON copies, schema validation and canonical pending/rollback documents inside _prepare_delete_cpu; await its executor under write_lock. The large-house HA test asserts worker-thread ownership for candidate/schema/canonical functions, and the competing-writer test pauses that await before testing the existing revision conflict.

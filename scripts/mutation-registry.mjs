@@ -18443,6 +18443,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-delete-cpu-on-event-loop-1101',
+    guard: 'node scripts/backend-test-guard.mjs issue_1101_space_delete_large_house_cpu_runs_in_executor tests_backend/test_ha_space_delete_executor.py',
+    because: '#1101: large-house preparation must run on a worker while the paired writer still owns write_lock.',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '                await hass.async_add_executor_job(_prepare_delete_cpu)\n',
+      replace: '                _prepare_delete_cpu()\n',
+    }],
+  },
+  {
     id: 'space-delete-skips-active-marker-id-invariant',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'space_delete_rejects_changed_legacy_duplicate_marker_ids '
@@ -18451,8 +18461,8 @@ const MUTANT_DEFINITIONS = [
       + 'must not be committed merely because it existed before this structural write (#625 AC3)',
     patches: [{
       file: 'custom_components/houseplan/websocket_api.py',
-      find: '            validate_active_marker_ids(target_config, current_config)\n',
-      replace: '            # mutant: space/delete skips the active marker id invariant\n',
+      find: '                validate_active_marker_ids(target_config, current_config)\n',
+      replace: '                # mutant: space/delete skips the active marker id invariant\n',
     }],
   },
   {
@@ -18464,8 +18474,8 @@ const MUTANT_DEFINITIONS = [
       + 'flag answers space_in_use and the space never goes (#819 AC2)',
     patches: [{
       file: 'custom_components/houseplan/websocket_api.py',
-      find: '                remove_markers=msg["remove_markers"],\n',
-      replace: '                remove_markers=False,\n',
+      find: '                    remove_markers=msg["remove_markers"],\n',
+      replace: '                    remove_markers=False,\n',
     }],
   },
   {

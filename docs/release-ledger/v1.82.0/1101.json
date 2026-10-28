@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1101,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already runs space/delete candidate copies and schema/canonical preparation on the event loop. Move CPU work of this existing writer to the executor while preserving its paired commit, errors and revision protocol.",
+  "summary": {
+    "ru": "Удаление пространства не блокирует основной цикл Home Assistant подготовкой конфигурации.",
+    "en": "Space deletion prepares configuration without blocking the Home Assistant event loop."
+  }
+}

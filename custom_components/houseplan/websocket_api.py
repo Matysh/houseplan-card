@@ -2726,48 +2726,57 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
             ):
                 connection.send_error(msg["id"], "space_not_found", "Space no longer exists")
                 return
-            (
-                target_config, target_layout, dependencies, removed_layout, removed_markers,
-            ) = _space_delete_target(
-                current_config, current_layout, space_id,
-                remove_markers=msg["remove_markers"],
+            new_config_rev = config_rev + 1
+            new_layout_rev = layout_rev + 1
+
+            def _prepare_delete_cpu():
+                (
+                    target_config, target_layout, dependencies, removed_layout, removed_markers,
+                ) = _space_delete_target(
+                    current_config, current_layout, space_id,
+                    remove_markers=msg["remove_markers"],
+                )
+                spaces = current_config.get("spaces") or []
+                deleting_last_space = (
+                    len(spaces) == 1 and spaces[0].get("id") == space_id
+                )
+                if dependencies and not deleting_last_space:
+                    return None, None, dependencies, removed_layout, removed_markers
+                target_config = CONFIG_SCHEMA(target_config)
+                validate_active_marker_ids(target_config, current_config)
+                target_layout = LAYOUT_SCHEMA(target_layout)
+                original_metadata = _layout_metadata(layout_data)
+                final_metadata = {
+                    key: value for key, value in original_metadata.items()
+                    if key not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"}
+                }
+                pending = {
+                    "kind": "space_delete",
+                    "config": canonicalize_config_geometry(target_config),
+                    "layout": canonicalize_layout_geometry(target_layout),
+                    "config_rev": new_config_rev,
+                    "layout_rev": new_layout_rev,
+                    "final_metadata": final_metadata,
+                }
+                rollback = {
+                    "kind": "space_delete_rollback",
+                    "config": canonicalize_config_geometry(current_config),
+                    "layout": canonicalize_layout_geometry(current_layout),
+                    "config_rev": config_rev,
+                    "layout_rev": layout_rev,
+                    "final_metadata": original_metadata,
+                }
+                return pending, rollback, dependencies, removed_layout, removed_markers
+
+            pending, rollback, dependencies, removed_layout, removed_markers = (
+                await hass.async_add_executor_job(_prepare_delete_cpu)
             )
-            spaces = current_config.get("spaces") or []
-            deleting_last_space = (
-                len(spaces) == 1 and spaces[0].get("id") == space_id
-            )
-            if dependencies and not deleting_last_space:
+            if pending is None:
                 connection.send_error(
                     msg["id"], "space_in_use",
                     f"Space is still used by {len(dependencies)} active marker(s)",
                 )
                 return
-            target_config = CONFIG_SCHEMA(target_config)
-            validate_active_marker_ids(target_config, current_config)
-            target_layout = LAYOUT_SCHEMA(target_layout)
-            new_config_rev = config_rev + 1
-            new_layout_rev = layout_rev + 1
-            original_metadata = _layout_metadata(layout_data)
-            final_metadata = {
-                key: value for key, value in original_metadata.items()
-                if key not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"}
-            }
-            pending = {
-                "kind": "space_delete",
-                "config": canonicalize_config_geometry(target_config),
-                "layout": canonicalize_layout_geometry(target_layout),
-                "config_rev": new_config_rev,
-                "layout_rev": new_layout_rev,
-                "final_metadata": final_metadata,
-            }
-            rollback = {
-                "kind": "space_delete_rollback",
-                "config": canonicalize_config_geometry(current_config),
-                "layout": canonicalize_layout_geometry(current_layout),
-                "config_rev": config_rev,
-                "layout_rev": layout_rev,
-                "final_metadata": original_metadata,
-            }
             await _commit_pair(rt, pending, rollback)
             if removed_markers:
                 # Under the lock, like config/set: a later write must not
