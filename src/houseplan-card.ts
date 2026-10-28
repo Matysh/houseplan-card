@@ -98,6 +98,7 @@ import {
   presentationRouteOwner, type RouteKiosk,
 } from './route-kiosk';
 import { KioskCarousel } from './kiosk-carousel';
+import { PlanHassProjection } from './plan-hass-projection';
 import { acceptTapConfirmation, currentMarkerActionDevice, currentMarkerSettingsDevice, markerSettingsTargetKey, infoCardRowContextKey, openingActionTargetCurrent } from './view-action-context';
 import { ViewHoldGesture } from './view-hold';
 import { DeviceHitController, deviceLayerMutated, observeDeviceHitGeometryScroll } from './device-hit-owner';
@@ -322,7 +323,7 @@ import type {
   IsoStructuralSource,
 } from './iso-scene-render';
 import {
-  acquireHaRegistries, activeRegistryHass, cacheHaBindingStatuses,
+  acquireHaRegistries, cacheHaBindingStatuses,
   fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,
   openingEntityAvailable, refreshHaRegistries, renderOpeningEntityAvailable,
   resolveHaBindingStatus,
@@ -2832,6 +2833,7 @@ export class HouseplanCard extends LitElement {
   };
 
   public connectedCallback(): void {
+    this._planHassProjection?.invalidate(); this._planHassMemo = null;
     window.addEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
     window.addEventListener('storage', this._rotationChanged);
     this._connectedPath = location.pathname;
@@ -2942,6 +2944,7 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._planHassProjection?.invalidate(); this._planHassMemo = null;
     this._deviceRosterState.clear();
     this._spaceModels.clear(); this._modelCache = null;
     window.removeEventListener(PLAN_ROTATION_EVENT, this._rotationChanged);
@@ -4910,6 +4913,7 @@ export class HouseplanCard extends LitElement {
   private _haRegistryRev = -1;
   private _haBindingCacheKey = '';
   private _planHassMemo: { hass: unknown; sig: string; active: unknown; full: unknown } | null = null;
+  private _planHassProjection?: PlanHassProjection;
   private _renderLife = new RenderLifecycle();
   private _liveEditorPaintCount = 0;
 
@@ -4954,7 +4958,8 @@ export class HouseplanCard extends LitElement {
     if (memo && memo.hass === this.hass && memo.sig === sig) {
       return memo.active;
     }
-    const active = projectEcovacsSources(this, activeRegistryHass(this.hass, snapshot, memo?.sig === sig && memo.active), this.hass);
+    const projected = (this._planHassProjection ??= new PlanHassProjection()).project(this.hass, snapshot);
+    const active = projectEcovacsSources(this, projected, this.hass);
     const full = fullRegistryHass(this.hass, snapshot);
     this._planHassMemo = { hass: this.hass, sig, active, full };
     return active;
@@ -11915,9 +11920,11 @@ export class HouseplanCard extends LitElement {
       return snapshots;
     }
     const live = new Set<string>();
-    const planLightSources = resolvedLightSources(
+    const hasDemand = this._displayDevices.some((d) => !d.hidden && d.space === this._space
+      && normalizeDeviceDisplay(d.marker?.display) === 'icon_ripple');
+    const planLightSources = hasDemand ? resolvedLightSources(
       this._planHass, this._displayDevices, null, this._virtualLights,
-    );
+    ) : undefined;
     for (const d of this._displayDevices) {
       if (d.hidden || d.space !== this._space) continue;
       // Alarm/continuous semantics are resolved from the current samples and

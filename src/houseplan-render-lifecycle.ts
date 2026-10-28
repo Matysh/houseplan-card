@@ -82,6 +82,7 @@ interface HassIntakeHost {
   _continuity: { note: (reason: string) => void };
   _ensureHaRegistryAuthority: () => void;
   _planHassMemo: { hass: unknown } | null;
+  _planHassProjection?: { invalidate(): void };
   _hookConnection: () => void;
   _loadOk: boolean;
   _loading: boolean;
@@ -99,9 +100,7 @@ export function intakeHass(value: object): void {
   host._renderSnapshotAt = Date.now();
   host._continuity.note('hass-snapshot');
   host._ensureHaRegistryAuthority();
-  // A new HA frame rebuilds the active projection; #850: rows of the same
-  // registry build are lent to it (`activeRegistryHass`), so the light graph
-  // keyed by the registry survives a state tick.
+  // Re-observe the frame lazily; its projection retains unchanged state rows.
   if (host._planHassMemo) host._planHassMemo.hass = null;
   host._hookConnection();
   if (!host._loadOk && !host._loading && host._loadTries < 8) host._loadFromServer();
@@ -109,7 +108,11 @@ export function intakeHass(value: object): void {
   // hidden; its demand policy suspends timers and visual publication separately.
   host._alerts?.reconcile();
   // Keep authority/transport live, coalesce visual activity until the next show.
-  if (host.ownerDocument?.visibilityState === 'hidden' || host._routeDepartureHandled) return;
+  if (host.ownerDocument?.visibilityState === 'hidden' || host._routeDepartureHandled) {
+    host._planHassProjection?.invalidate();
+    if (host._planHassMemo) host._planHassMemo.hass = null;
+    return;
+  }
   host._maybeRebuildDevices();
   host._vacTick();
   host._activityTick();

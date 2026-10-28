@@ -35,6 +35,13 @@ export const SMOKE_LINKS = [
     because: '#1112: a trusted full-card placement burst must reach two embedded cards through one shared partial read and paint the server positions.',
   },
   {
+    files: ['src/plan-hass-projection.ts'],
+    smokes: ['smoke_disabled_device.mjs', 'smoke_activity_color_settings.mjs',
+      'smoke_device_battery_performance.mjs', 'smoke_radar_live.mjs', 'smoke_vacuum.mjs',
+      'smoke_live_text.mjs', 'smoke_selective_invalidation.mjs', 'smoke_view_runtime_kiosk_recovery.mjs'],
+    because: '#1111: these mounted consumers observe registry authority, activity demand, current values and recovery across real HA frames; pure projection equality cannot prove their browser behavior.',
+  },
+  {
     files: ['src/floor-geometry-key.ts', 'src/structural-space-record.ts', 'src/render-snapshot-capture.ts',
       'src/render-snapshot-reuse.ts', 'src/render-device-snapshot.ts', 'src/houseplan-render-lifecycle.ts',
       'src/device-copy-editor.ts', 'src/device-structure-history.ts', 'src/marker-deletion.ts',

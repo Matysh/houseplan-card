@@ -1,0 +1,534 @@
+{
+  "schema": 1,
+  "runtime": "/home/matysh/hp-1103-route-kiosk-work/test-build",
+  "node": "v22.23.2",
+  "fixture": {
+    "devices": 214,
+    "entities": 2890,
+    "states": 1673,
+    "displayed": 200
+  },
+  "sources": {
+    "houseplan-card.js": "6af15069059ccd1b73b6f9497b1261f31149172c8f3dd0ec70740cfd449916d0",
+    "ha-binding-status.js": "1bd156efd9da90e5a8803994786e598575efffb990f3745888fce6c9ca49a637",
+    "houseplan-render-lifecycle.js": "998980ae1b73e3135bb9636817b749adebf6889204df97ce12f8d215917e9087",
+    "devices.js": "9c61392e8685d1d514a0d78de2ed3844e8ed6fac9af87d9b273260160c3de14c"
+  },
+  "harness": "5377e770701d9b6785a6b13ea799c67fca143deedd74d4f0a6ac862efda17152",
+  "hostFixture": "25b1da8368a09e844f73a17beac3decdccd00fe1f272433808d45eb438a13912",
+  "fixtureSource": "6407a3ff87618a1a176f9af354155661c9145e4451ae077909d942a22be5a38a",
+  "samples": [
+    {
+      "kind": "unchanged",
+      "iteration": 0,
+      "duration": 0.2941470000000095,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 1,
+      "duration": 0.053363999999987755,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 2,
+      "duration": 0.04443700000001627,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 3,
+      "duration": 0.04809700000001271,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 4,
+      "duration": 0.04189199999999005,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 5,
+      "duration": 0.03844800000001669,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 6,
+      "duration": 0.04001999999999839,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 7,
+      "duration": 0.11891799999997943,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 8,
+      "duration": 0.08940000000001191,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 9,
+      "duration": 0.044014000000004216,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 10,
+      "duration": 0.036358000000006996,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 11,
+      "duration": 0.04919600000002333,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 12,
+      "duration": 0.028678000000013526,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 13,
+      "duration": 0.028552000000019007,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 14,
+      "duration": 0.027783999999996922,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 15,
+      "duration": 0.06074699999999211,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 16,
+      "duration": 0.030028999999984762,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 17,
+      "duration": 0.02895700000001966,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 18,
+      "duration": 0.029049000000014757,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "unchanged",
+      "iteration": 19,
+      "duration": 0.02837099999999282,
+      "registryLookups": 0,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 0,
+      "duration": 0.8248759999999891,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 1,
+      "duration": 0.8804099999999835,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 2,
+      "duration": 0.7468819999999994,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 3,
+      "duration": 0.8303569999999922,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 4,
+      "duration": 0.772863000000001,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 5,
+      "duration": 0.8626940000000047,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 6,
+      "duration": 0.7937689999999975,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 7,
+      "duration": 0.741455000000002,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 8,
+      "duration": 0.7080920000000219,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 9,
+      "duration": 0.6197850000000074,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 10,
+      "duration": 0.5413929999999993,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 11,
+      "duration": 1.2053080000000023,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 12,
+      "duration": 0.5526870000000201,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 13,
+      "duration": 0.5855870000000039,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 14,
+      "duration": 0.5002929999999992,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 15,
+      "duration": 0.4868759999999952,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 16,
+      "duration": 0.4699860000000058,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 17,
+      "duration": 0.4657269999999869,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 18,
+      "duration": 0.47446400000001177,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "iteration": 19,
+      "duration": 0.4662240000000111,
+      "registryLookups": 5,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 0,
+      "duration": 4.121363000000002,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 1,
+      "duration": 4.066738999999984,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 2,
+      "duration": 4.575782000000004,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 3,
+      "duration": 2.993147999999991,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 4,
+      "duration": 2.6336829999999907,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 5,
+      "duration": 3.1780219999999986,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 6,
+      "duration": 2.5191250000000025,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 7,
+      "duration": 2.6747900000000016,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 8,
+      "duration": 2.4877440000000206,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 9,
+      "duration": 3.0352289999999584,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 10,
+      "duration": 2.515966999999989,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 11,
+      "duration": 2.4680890000000204,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 12,
+      "duration": 2.9233469999999784,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 13,
+      "duration": 2.6867529999999533,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 14,
+      "duration": 2.6332950000000324,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 15,
+      "duration": 2.533688999999981,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 16,
+      "duration": 3.0139970000000176,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 17,
+      "duration": 2.5692189999999755,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 18,
+      "duration": 2.447414999999978,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "iteration": 19,
+      "duration": 3.320961999999952,
+      "registryLookups": 4563,
+      "lightRequests": 0,
+      "lightCalculations": 0
+    }
+  ],
+  "statistics": [
+    {
+      "kind": "unchanged",
+      "n": 20,
+      "median": 0.04001999999999839,
+      "p95": 0.11891799999997943,
+      "max": 0.2941470000000095,
+      "maxRegistryLookups": 0,
+      "maxLightRequests": 0,
+      "maxLightCalculations": 0
+    },
+    {
+      "kind": "five-changes",
+      "n": 20,
+      "median": 0.6197850000000074,
+      "p95": 0.8804099999999835,
+      "max": 1.2053080000000023,
+      "maxRegistryLookups": 5,
+      "maxLightRequests": 0,
+      "maxLightCalculations": 0
+    },
+    {
+      "kind": "registry-change",
+      "n": 20,
+      "median": 2.6747900000000016,
+      "p95": 4.121363000000002,
+      "max": 4.575782000000004,
+      "maxRegistryLookups": 4563,
+      "maxLightRequests": 0,
+      "maxLightCalculations": 0
+    }
+  ]
+}

@@ -22089,7 +22089,34 @@ const scopedAttachment1096Cases = [{
     replace: '    if False:\n        return 0'}],
 }];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases].map((mutant) => ({
+const planHass1111Cases = [
+  { id: 'plan-hass-rechecks-unchanged-rows-1111',
+    because: '#1111 AC1: actual getter/intake and independent registry-table observations limit five changed rows to five decisions.',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-hass-projection.test.mjs',
+    patches: [{ file: 'src/plan-hass-projection.ts',
+      find: '          if (Object.prototype.hasOwnProperty.call(previous.states, eid) && source[eid] === previous.states[eid]) continue;',
+      replace: '          if (false && Object.prototype.hasOwnProperty.call(previous.states, eid) && source[eid] === previous.states[eid]) continue;' }] },
+  { id: 'ripple-acquires-light-without-demand-1111',
+    because: '#1111 AC1/4: actual activity method must not acquire the light projection for empty, hidden or off-floor ripple demand.',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-hass-projection.test.mjs',
+    patches: [{ file: 'src/houseplan-card.ts',
+      find: '    const hasDemand = this._displayDevices.some((d) => !d.hidden && d.space === this._space',
+      replace: '    const hasDemand = true || this._displayDevices.some((d) => !d.hidden && d.space === this._space' }] },
+  { id: 'plan-hass-forgets-user-owner-1111',
+    because: '#1111 AC3: user replacement rebuilds the real projection once, then three unchanged frames retain it.',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-hass-projection.test.mjs',
+    patches: [{ file: 'src/plan-hass-projection.ts',
+      find: '      || previous.connection !== hass.connection || previous.user !== hass.user) {',
+      replace: '      || previous.connection !== hass.connection) {' }] },
+  { id: 'plan-hass-reuses-hidden-projection-1111',
+    because: '#1111 AC3/7: actual hidden/departed intake must invalidate the per-card projection before the next visible consumer.',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-hass-projection.test.mjs',
+    patches: [{ file: 'src/houseplan-render-lifecycle.ts',
+      find: '    host._planHassProjection?.invalidate();',
+      replace: '    // projection invalidation bypassed' }] },
+];
+
+export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

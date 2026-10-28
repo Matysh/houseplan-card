@@ -116,7 +116,27 @@ const out = await page.evaluate(async () => {
   out.readonlyUsesSavedColorWithoutWrites = getComputedStyle(readonly.shadowRoot.querySelector(`[data-id="${id}"] .device-pulse`))
     .getPropertyValue('--ripple-color').trim() === '#123456' && writes.length === 0;
   readonly.remove();
+  // #1111: the same real ripple source stops owning activity when moved away.
+  const awaySpace = c._serverCfg.spaces.find(space => space.id !== 'f1' && space.rooms?.some(room => room.area));
+  if (!awaySpace) throw new Error('#1111 fixture needs a second space with an HA-bound room');
+  const away = awaySpace.id, awayRoom = awaySpace.rooms.find(room => room.area);
+  await hp.setServerConfig(cfg => ({ ...cfg,
+    markers: cfg.markers.map(marker => marker.id === id
+      ? { ...marker, space: away, area: awayRoom.area, room_id: awayRoom.id } : marker),
+  }));
+  await hp.setLayout(current => ({ ...current, [id]: { ...current[id], s: away } }));
+  await setState('off'); await setState('on');
+  out.offFloorRippleRetiresHistory = !c._activityRt.has(id);
+  out.offFloorTickKeepsCurrentPlan = c._space === 'f1'
+    && !root().querySelector(`[data-id="${id}"]`);
   return out;
 });
+if (!out.offFloorRippleRetiresHistory || !out.offFloorTickKeepsCurrentPlan) {
+  console.log(await page.evaluate(() => {
+    const card = window.__card, id = 'lg_binary_sensor.hp865_presence';
+    return { space: card._space, marker: card._serverCfg.markers.find(m => m.id === id),
+      layout: card._layout[id], device: card._displayDevices.find(d => d.id === id) };
+  }));
+}
 checkAll(out);
 await finish(browser, out);

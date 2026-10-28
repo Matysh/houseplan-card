@@ -319,6 +319,15 @@ export function isRegistryEntryEnabled(entry: any): boolean {
   return !!entry && entry.disabled_by == null;
 }
 
+/** The state filter is shared by full and incremental projections. */
+export function registryStateEnabled(snapshot: HaRegistrySnapshot, eid: string): boolean {
+  const entity = snapshot.entities?.[eid];
+  if (entity && !isRegistryEntryEnabled(entity)) return false;
+  const parent = entity?.device_id ? snapshot.devices?.[entity.device_id] : null;
+  if (snapshot.authoritative && entity?.device_id && !parent) return false;
+  return !parent || isRegistryEntryEnabled(parent);
+}
+
 /**
  * Hass-shaped projection containing registry metadata but only active rows.
  * #850: `same`, the projection of the same registry build, lends its registry
@@ -344,16 +353,12 @@ export function activeRegistryHass(hass: any, snapshot = haRegistrySnapshot(hass
     }
   }
   for (const [eid, state] of Object.entries<any>(hass?.states || {})) {
-    const entity = snapshot.entities?.[eid];
     // A complete Entity Registry is not a complete list of HA states: YAML
     // entities without unique_id and core runtime entities such as sun.sun can
     // legitimately have a live state without any registry row. Absence is
     // therefore not evidence of disablement. Explicit disabled entity/device
     // rows below remain authoritative and are still removed.
-    if (entity && !isRegistryEntryEnabled(entity)) continue;
-    const parent = entity?.device_id ? snapshot.devices?.[entity.device_id] : null;
-    if (snapshot.authoritative && entity?.device_id && !parent) continue;
-    if (parent && !isRegistryEntryEnabled(parent)) continue;
+    if (!registryStateEnabled(snapshot, eid)) continue;
     states[eid] = state;
   }
   return { ...hass, devices, entities, states };

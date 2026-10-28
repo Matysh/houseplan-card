@@ -6,6 +6,7 @@
 
 - Delete spaces without preparing configuration on the Home Assistant event loop; paired writes and revision conflicts retain their existing behavior. (#1101)
 - Static cards coalesce update bursts into one shared read and ignore revisions they already have. Moving devices on the full card refreshes their positions without downloading the configuration again. (#1112)
+- #1111: reduce background HA tick work with incremental state projection and demand-based ripple light resolution.
 
 ## v1.83.0-beta.3 — 2026-10-28
 

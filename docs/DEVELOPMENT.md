@@ -6500,3 +6500,14 @@ Static-card sync (#1112): node demo/smoke_static_config_events.mjs uses five tru
 The #1112 forced-refresh path retains its original full cache reset. A connection switch also retires pending revision high-water marks. The regression unit holds the new connection's rev5 response, delivers an old rev101 event from the previous rev100 connection, then proves the new connection's rev6 event still notifies and paints current data.
 
 Node move (#1102) follows node_delete for rt.junction_baseline: reuse only inherited[0] == rev under write_lock. The HA test checks exact/stale/missing caches and counts previous-side migration calls; candidate limits still execute and cache publication follows storage success.
+
+HA intake consumers (#1111): declare demand before acquiring light graphs. Reuse
+unchanged state identities, never a mutable prior projection; use the canonical
+registry/parent predicate. A complete HA states map still needs a cheap key scan
+when its identity changes, so report comparisons separately from registry decisions.
+`node demo/benchmark_hass_tick.mjs --runtime=<test-build> --output=<report>` isolates
+CPU intake/projection/activity on the #1093 fixture, not browser paint or network.
+Keep before/after raw reports and their source/harness hashes; existing device,
+ripple, vacuum, radar and recovery smokes remain the observable consumer proof.
+
+The measured #1111 delta is +3 host references (6552→6555) for the per-card projection owner/visibility boundary. The owner-authorized resource baseline therefore moves 6529→6532, preserving its inherited 23-reference gap and unchanged +25 band. The original isolated JS delta was +1411 B (3649075→3650486). After inheriting accepted #1112, the total is 3651091 B: the normal pre-push rejected +2016 B against the old +2000 band. Under the same owner authorization, measured bundleBytes baseline moves 3649075→3651091 (issue comment6467216255); the 2000-B band, timing limits and remaining structural bases stay unchanged. The rejected run is retained as RED.

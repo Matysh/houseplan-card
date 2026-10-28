@@ -1,0 +1,11 @@
+{
+  "issue": 1111,
+  "baseStable": "v1.82.0",
+  "rationale": "The stable release rebuilt active state projection and acquired ripple light sources on every HA tick; optimize the existing path without changing protocol, persisted state or visible outcomes.",
+  "schema": 1,
+  "summary": {
+    "ru": "Меньше фоновой работы при обновлении состояний Home Assistant.",
+    "en": "Reduce background work when Home Assistant states update."
+  },
+  "category": "stable-fix"
+}
