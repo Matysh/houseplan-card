@@ -65,6 +65,7 @@ const out=await page.evaluate(async()=>{
   const preferenceSnapshot=()=>JSON.stringify(Object.fromEntries(Object.keys(localStorage).filter(key=>/summary-panel|hp_hidden_devices|houseplan_card_kiosk/.test(key)).sort().map(key=>[key,localStorage.getItem(key)])));
   await until(()=>kiosk.renderRoot.querySelector('[data-hp="summary-settings"]'),'second consumer controls');
   const secondRoot=kiosk.renderRoot.querySelector('ha-card'), localBefore=preferenceSnapshot();
+  result.eachPanelHasOneOwnConfigSubscription=window.__externalScreenSubscriptionCounts().own===2&&window.__externalScreenSubscriptionCounts().total===2;
   const countsBefore=kioskCalls.filter(type=>type==='houseplan/config/get').length;
   const caches=JSON.stringify(kiosk._floorCacheBuilds), revision=kiosk._cfgRev;
   const cfg=structuredClone(kiosk._serverCfg);Object.assign(cfg.settings.external_screens.screens[0],{summary:'hide',hidden_devices:'show',icon_scale:1.5,font_scale:1.25,controls:false});
@@ -81,6 +82,8 @@ const out=await page.evaluate(async()=>{
   return result;
 });
 await page.locator('houseplan-panel').evaluate(panel=>panel.remove()); // Retire the other consumer after the live two-client witness.
+await page.waitForFunction(()=>window.__externalScreenSubscriptionCounts().own===1);
+out.retiredPanelRemovedItsOwnConfigSubscription=await page.evaluate(()=>window.__externalScreenSubscriptionCounts().total===1);
 const stage=page.locator('houseplan-card').last().locator('.stage');
 await stage.scrollIntoViewIfNeeded();
 const box=await stage.boundingBox();
@@ -103,7 +106,7 @@ Object.assign(out,await page.evaluate(async()=>{
   const mount=async(readonly,old)=>{
     const card=document.createElement('houseplan-card');card.setConfig({type:'custom:houseplan-card'});
     card.hass={...original,user:{...original.user,id:readonly?'readonly':'writer',is_admin:!readonly},callWS:async message=>{
-      const response=await original.callWS(message);if(message.type==='houseplan/config/get'){response.can_write=!readonly;if(old)delete response.external_screens_api;}return response;
+      const response=await original.callWS(message);if(message.type==='houseplan/config/get'){response.can_write=!readonly;if(old){delete response.external_screens_api;delete response.external_screens_events_api;}}return response;
     }};root.append(card);await until(()=>card._loadOk);await card.updateComplete;return card;
   };
   const readonly=await mount(true,false);

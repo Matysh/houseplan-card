@@ -205,3 +205,11 @@ test('#1113 external-screen editing is a literal config/get capability, never a 
     assert.equal(host._haExternalScreensApi,null);
   }
 });
+
+// #1113 authenticated own config stream is an independent literal capability.
+test('#1113 profile stream capability accepts only the exact protocol version',()=>{
+  for(const value of [undefined,null,0,2,true,'1']) {
+    const host={_syncVersionRecovery(){}};adoptCardConfigCapabilities(host,{external_screens_events_api:value});assert.equal(host._haExternalScreensEventsApi,null);
+  }
+  const host={_syncVersionRecovery(){}};adoptCardConfigCapabilities(host,{external_screens_events_api:1});assert.equal(host._haExternalScreensEventsApi,1);
+});

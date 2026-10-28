@@ -2640,3 +2640,12 @@ shared with activeRegistryHass; Ecovacs overlays are applied after the raw cache
 projection. Ripple light acquisition follows visible current-space demand and
 retains the existing light resolver cache and activity retirement. See
 [measurements and scope](analysis/1111-hass-intake-2026-10-28.md).
+
+External-screen config delivery r2 (#1113): main-panel clients select the own
+`external_screens_events_api:1` subscribeMessage transport under the existing
+config subscription owner, replacing that one listener. The read-only fixed
+command forwards only own revision/profile frames; it never exposes arbitrary
+HA events or modifies core subscribe permissions. Initial ready/resync is not
+full-config authority. Exact base/successor remains the common adoption rule;
+unknown/mixed/gap/pending-writer retains authoritative reload. Entry/user lifetime
+and connection cleanup fence server delivery as well as frontend completion.

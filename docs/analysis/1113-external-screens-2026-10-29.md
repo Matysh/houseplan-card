@@ -84,3 +84,57 @@ leave1441/1421/1025B gaps inside the original2000B bands; no further ceiling
 change was made for fingerprint/chunk-hash compression variation. Product and
 tooling groups, type/build, no-new-any/private-writes, CSS, bundle policy/budget
 and unused/core connectivity all passed. Remote exact-source CI remains separate.
+
+## Revision2: authenticated non-admin delivery
+
+The author withdrew S7 (finding6482427355) when real-HA seam research proved
+that generic subscribe_events rejects custom Houseplan events for non-admin
+users. This is confirmed in official HA2026.10.4 commands.py179–208 and
+permissions/events.py27–47. The earlier synthetic native cases were admin-only;
+they never proved the viewer boundary. No code was pushed while S7 was active.
+After S6→S3, SPEC r2 was reviewed GREEN H0/M0 (6482666148), then implementation
+resumed in S6 (6482683896). Previous sourceee816580 and its normal GREEN gates
+remain historical, not approval of the corrected transport.
+
+The new fixed own authenticated command, runtime capability and subscribeMessage
+replace the main panel's single config subscription under the same lifecycle
+owner. Initial ready/resync carries revision only: it cannot claim a full config
+candidate. A complete patch still requires exact base/successor and persisted
+namespace equality. Mixed/gap/unknown/pending-writer retains full authoritative
+reload. The endpoint never accepts arbitrary event_type, changes HA core
+permissions, grants write rights or delivers other integrations' events.
+Per-delivery active-user/runtime identity and ordinary unsubscribe/disconnect
+remove the own listener; late frontend subscription completion retires once.
+
+Actual local HA is2026.8.3, not2026.10.4. Five own HA test functions/six collected
+cases PASS without skip or teardown error; with namespace/projection tests the
+addressed result is40PASS/1.89s. They exercise real USER/READ_ONLY subscriptions,
+complete patch, initial race/resync, mixed changes, forbidden generic/arbitrary
+events and forged own-bus payload, active-user negative input, real unsubscribe
+and disconnect with listener count restored, bounded subscriptions/strict bases.
+The first attempt expected an own closed frame after the full HA AuthManager
+revocation API; HA instead closes the whole socket first. Own per-delivery
+revocation uses the ordinary inactive-user input, matching the existing LQI
+subscription test, and actual ordinary close still proves connection cleanup.
+
+A separately introduced broad HA-core AuthManager regression had passing body
+assertions but a WebSocketResponse._send_heartbeat teardown error. Public owning
+TestClient/server drain did not remove it. A bounded isolated HA-only baseline,
+without loading Houseplan or adding this listener, reproduces the same result:
+1assertionPASS plus1teardownERROR in1.20s. Its initial wrong -c pyproject invocation
+failed fixture setup; only the corrected -c pytest.ini run is baseline evidence.
+The diagnostic remains outside the product suite and is not counted as PASS.
+Only that additional broad-core test was excluded; no existing guard, ignore,
+expected-lingering marker, core policy or timer cancellation was changed. Real
+HA2026.10.4 browser/profile acceptance remains the companion exact-beta4 CI task.
+
+Frontend typecheck and24 focused unit tests PASS. Ruff for the entire integration
+PASS. Four new protective declarations (own revocation, forged namespace,
+initial projection authority, late subscribe cleanup) are registered; static
+readiness2027definitions/eight inherited warnings, execution0/caughtunknown.
+The existing #890 old-subscription declaration was retargeted to the same
+ownsContext omission after extraction; its native oracle remains unchanged.
+No mutant was executed. General-settings legacy section order and all new de/fr
+settings translations address the actual prior CI failures without weakening
+locale or form semantics. New Rollup/native/exact-source CI evidence is required
+for this r2 delta; prior31510/4d8f bundles are not its build proof.

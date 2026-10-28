@@ -117,12 +117,20 @@ const server=createFixtureStore(CFG,LAYOUT,(event,rev,extra)=>{
   for(const cb of SERVER_LISTENERS[event])cb({event_type:event,data:{rev,...extra}});
 },{markerHistory:new URLSearchParams(location.search).get('device-history')==='1',externalScreens:new URLSearchParams(location.search).get('external-screens')==='1'});
 window.__servedRevision=SERVED;
+const OWN_SCREEN_SUBSCRIPTIONS=new Set();
+window.__externalScreenSubscriptionCounts=()=>({own:OWN_SCREEN_SUBSCRIPTIONS.size,total:SERVER_LISTENERS.houseplan_config_updated.size});
 const CONNECTION={subscribeEvents:async(cb,event)=>{
   const listeners=REGISTRY_LISTENERS[event]||SERVER_LISTENERS[event];
   if(!listeners)return()=>{};
   listeners.add(cb);
   return()=>listeners.delete(cb);
-},subscribeMessage:async()=>()=>{}};
+},subscribeMessage:async(cb,message)=>{
+  if(message?.type!=='houseplan/external_screens/subscribe')return()=>{};
+  const listener=event=>cb(event.data),listeners=SERVER_LISTENERS.houseplan_config_updated;
+  listeners.add(listener);OWN_SCREEN_SUBSCRIPTIONS.add(listener);
+  cb({kind:message.base_rev===server.configRev?'ready':'resync',rev:server.configRev});
+  return()=>{listeners.delete(listener);OWN_SCREEN_SUBSCRIPTIONS.delete(listener);};
+}};
 let STATES={
   'light.ceiling':{entity_id:'light.ceiling',state:'on',attributes:{friendly_name:'Ceiling light'}},
   'light.floor_lamp':{entity_id:'light.floor_lamp',state:'off',attributes:{friendly_name:'Floor lamp',linkquality:196}},

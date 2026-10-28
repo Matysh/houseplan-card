@@ -1806,6 +1806,16 @@ IDs are durable links: they are unique, below next_id, never reused, and ordinar
 
 The support projection keeps only typed numbers, booleans/enumerations and pseudonymized space identity; unknown v1 fields are omitted, future namespaces report unsupported_version. `external_screens_api:1` is a runtime config/get capability, never persisted. Without it the UI asks to update/restart the backend.
 
-The existing config-updated event may additionally carry `external_screens_update:{version:1,base_rev,value}` only after a durable ordinary write proved that this namespace was the sole config delta. A loaded main-panel kiosk can adopt an exact-successor patch through the common adoption owner, retaining all other body identities and server capabilities. Unknown/missing/mixed/stale/gapped events and pending writers use ordinary config reload. This is additive: old clients still observe rev and reload; no endpoint, listener, persisted event ledger or alternate writer is added.
+The existing config-updated event may additionally carry `external_screens_update:{version:1,base_rev,value}` only after a durable ordinary write proved that this namespace was the sole config delta. A loaded main-panel kiosk can adopt an exact-successor patch through the common adoption owner, retaining all other body identities and server capabilities. Unknown/missing/mixed/stale/gapped events and pending writers use ordinary config reload. This is additive: old clients still observe rev and reload. Revision2 uses
+`external_screens_events_api:1` and the fixed authenticated read-only command
+`houseplan/external_screens/subscribe` for main-panel clients. This replaces their
+single config event transport with subscribeMessage; Lovelace and old backends
+retain their previous path. HA core custom-event permissions are unchanged.
+Initial ready/resync carries only the authoritative rev and never a complete
+configuration candidate. Exact-base/successor namespace-only patches retain the
+common adoption boundary; mixed/gap/replay/pending-writer require ordinary reload.
+Each own connection-owned listener checks active user identity per delivery and
+is removed on unsubscribe/disconnect/revocation. There is no persisted event
+ledger, new write permission or alternate writer.
 
 Introduced2026-10-28 by#1113; no reader removal or compatibility deadline is introduced.

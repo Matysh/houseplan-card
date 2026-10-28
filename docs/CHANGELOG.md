@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Show past Dreame cleanup paths when the archive omits its map slot, using the uniquely proven saved map and existing calibration. Foreign and ambiguous maps remain refused. (#1117)
-- External-screen profiles configure main-panel kiosks remotely, with per-field URL overrides and live updates (#1113).
+- External-screen profiles configure main-panel kiosks remotely, with per-field URL overrides and live updates (#1113). Live updates also support authenticated read-only screens.
 
 - Undo and Redo retain warm neighboring floors; restoring backdrop and stair edits skips unchanged wall geometry while preserving exact documents and existing refusals. (#1100)
 - Moving a wall node reuses the junction baseline only for the exact stored revision, avoiding repeated scans of the previous plan. Existing structural refusals remain unchanged. (#1102)

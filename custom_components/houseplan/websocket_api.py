@@ -139,11 +139,11 @@ from .validation import (
     PartitionOpeningHostError,
     PartitionOpeningJambMarginError,
     WallModelClientOutdatedError,
+    external_screens_config_event,
     ordinary_write_scope,
     prepare_ordinary_summary_candidate,
     sanitize_filename,
     summary_panel_entity_ids,
-    external_screens_config_event,
     valid_space_id,
     validate_active_marker_ids,
     validate_marker_controls,
@@ -285,6 +285,9 @@ async def _resolved_write_pair(
 @callback
 def async_register(hass: HomeAssistant) -> None:
     """Register the WS commands."""
+    from .external_screens_websocket import (
+        async_register as async_register_external_screens,
+    )
     from .radar_websocket import async_register as async_register_radar
     from .vacuum_ecovacs_websocket import async_register as async_register_ecovacs
     from .vacuum_history_websocket import async_register as async_register_history
@@ -294,6 +297,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_layout_get)
     websocket_api.async_register_command(hass, ws_trail_get)
     websocket_api.async_register_command(hass, ws_trail_delete)
+    async_register_external_screens(hass)
     async_register_ecovacs(hass)
     async_register_history(hass)
     websocket_api.async_register_command(hass, ws_layout_set)
@@ -1839,6 +1843,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "decor_assets_api": DECOR_ASSETS_API_VERSION,
             "summary_panel_api": SUMMARY_PANEL_API_VERSION,
             "external_screens_api": 1,
+        "external_screens_events_api": 1,
             **({"radar_stage1_api": 1} if rt.radar_coordinator is not None else {}),
             **({"zigbee_scan_api": 1, "zigbee_maps_api": 1} if rt.zigbee_coordinator is not None
                and not rt.zigbee_coordinator.closed else {}),

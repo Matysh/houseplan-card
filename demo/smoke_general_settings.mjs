@@ -93,7 +93,7 @@ const res = await page.evaluate(async () => {
 checkAll(res, {
   "rows": 13, // #1037 moves one wall-fill row into Space; other controls remain
                // + «Оптимизировать планы» по действию, а не удалённому #605 классу alignall
-  "cards": ["Information on the plan", "Appearance and background", "Room fills", "Light, Sun and Moon", "Zigbee diagnostics", "Backups and maintenance"],
+  "cards": ["Information on the plan", "Appearance and background", "Room fills", "Light, Sun and Moon", "Zigbee diagnostics", "External screens", "Backups and maintenance"],
   "groups": ["Lights", "Temperature", "Zigbee signal"],
   "everyCardHasContent": true,
   "glowRadiusInsideGlowGroup": true,

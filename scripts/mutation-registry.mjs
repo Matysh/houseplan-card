@@ -1992,8 +1992,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_config_authority.mjs',
     because: '#890 AC6: an actual late old-server event must not start a config-only B read and cancel its mandatory config/layout pair; the mounted subscription consumer is the oracle.',
     patches: [{ file: 'src/houseplan-card.ts',
-      find: '          if (ownsContext()) return callback(ev);',
-      replace: '          return callback(ev);' }],
+      find: 'const receive = (ev: unknown) => { if (ownsContext()) return callback(ev); };',
+      replace: 'const receive = (ev: unknown) => { return callback(ev); };' }],
   },
   {
     id: 'view-space-change-keeps-pending-hold',
@@ -22360,7 +22360,26 @@ const externalScreens1113Cases = [
   }
 ];
 
-export const MUTANTS = [...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+const externalScreensStream1113Cases = [
+  {id:'screen-stream-keeps-revoked-user-1113',
+    guard:'node scripts/backend-test-guard.mjs profile_stream_revocation tests_backend/test_ha_external_screens_websocket.py',
+    because:'#1113 r2: a revoked authenticated viewer cannot retain the own projection. Registered only; execution belongs to nightly.',
+    patches:[{file:'custom_components/houseplan/external_screens_websocket.py',find:'return connection.user is user and user.is_active and get_data(hass) is runtime',replace:'return connection.user is user and get_data(hass) is runtime'}]},
+  {id:'screen-stream-trusts-forged-bus-namespace-1113',
+    guard:'node scripts/backend-test-guard.mjs profile_stream_does_not_grant tests_backend/test_ha_external_screens_websocket.py',
+    because:'#1113 r2: the own HA event name does not authorize arbitrary payloads or foreign data. Registered only.',
+    patches:[{file:'custom_components/houseplan/external_screens_websocket.py',find:'and update.get("value") == stored.get("config", {}).get("settings", {}).get("external_screens")):',replace:'and True):'}]},
+  {id:'screen-stream-initial-projection-claims-complete-config-1113',
+    guard:'node scripts/backend-test-guard.mjs profile_stream_initial_projection tests_backend/test_ha_external_screens_websocket.py',
+    because:'#1113 r2: an initial projection cannot hide mixed changes between full GET and subscribe. Registered only.',
+    patches:[{file:'custom_components/houseplan/external_screens_websocket.py',find:'"kind": "ready" if msg["base_rev"] == rev else "resync", "rev": rev,',replace:'"kind": "ready", "rev": rev, "external_screens_update": {"version": 1, "base_rev": msg["base_rev"], "value": stored.get("config", {}).get("settings", {}).get("external_screens")},'}]},
+  {id:'screen-stream-late-subscribe-leaks-1113',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens-events.test.mjs',
+    because:'#1113 r2: closed-before-ACK stream retires its actual late unsubscribe exactly once. Registered only.',
+    patches:[{file:'src/external-screens-events.ts',find:'if (ended) unsubscribe();',replace:'if (false) unsubscribe();'}]},
+];
+
+export const MUTANTS = [...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

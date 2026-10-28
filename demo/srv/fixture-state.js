@@ -35,7 +35,7 @@ export function createFixtureStore(config, layout, emit = () => {}, { markerHist
     handle(m, registryEntities = []) {
       switch (m.type) {
         case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true, device_contact_api: 1,
-          ...(externalScreens ? { external_screens_api: 1 } : {}),
+          ...(externalScreens ? { external_screens_api: 1, external_screens_events_api: 1 } : {}),
           ...(markerHistory ? { device_history_api: 1 } : {}) };
         case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev };
         case 'houseplan/marker/copy': {

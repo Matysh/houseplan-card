@@ -1,3 +1,4 @@
+import { subscribeExternalScreenConfig } from './external-screens-events';
 import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
@@ -2277,6 +2278,7 @@ export class HouseplanCard extends LitElement {
   private _haDecorAssetsApi: number | null = null;
   private _haSummaryPanelApi: number | null = null;
   private _haExternalScreensApi: number | null = null;
+  private _haExternalScreensEventsApi: number | null = null;
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
@@ -4828,9 +4830,11 @@ export class HouseplanCard extends LitElement {
     ): void => {
       if (current()) return;
       attempts.push(async () => {
-        const unsubscribe = await connection.subscribeEvents((ev: unknown) => {
-          if (ownsContext()) return callback(ev);
-        }, event);
+        const receive = (ev: unknown) => { if (ownsContext()) return callback(ev); };
+        const unsubscribe = event === 'houseplan_config_updated'
+          ? await subscribeExternalScreenConfig(connection, this.panelHost && this._haExternalScreensEventsApi === 1,
+            this._cfgRev, data => receive({ data }))
+          : await connection.subscribeEvents(receive, event);
         const valid = ownsContext() && !current();
         if (valid) adopt(unsubscribe);
         else unsubscribe?.();
