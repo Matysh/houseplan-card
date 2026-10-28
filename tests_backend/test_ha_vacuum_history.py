@@ -507,3 +507,35 @@ async def test_history_capability_and_commands(hass, hass_ws_client, command):
     await client.send_json_auto_id(message)
     answer = await client.receive_json()
     assert answer["error"]["code"] == "not_found", answer
+
+async def test_original_producer_optional_slot_through_registered_ws_preserves_store_and_live(hass, hass_ws_client, monkeypatch):
+    fixture = json.loads((Path(__file__).resolve().parent.parent /
+                          "test/fixtures/vacuum-history/dreame-tasshack-2.0.2-no-slot.json").read_text())
+    _, rt, rec, camera, client = await prepared(hass, hass_ws_client)
+    camera.metadata = fixture["metadata"]
+    camera.payload_by_index = {row["index"]: row["payload"] for row in fixture["records"]}
+    camera.async_write_ha_state()
+    await hass.async_block_till_done()
+    stores = (rt.config_store, rt.store, rec.store)
+    before = [copy.deepcopy(await store.async_load()) for store in stores]
+    native = copy.deepcopy(rec.book.data)
+
+    async def forbidden(*_, **__):
+        pytest.fail("historical preview must not write stores or call robot services")
+
+    for store in stores:
+        monkeypatch.setattr(store, "async_save", forbidden)
+    monkeypatch.setattr(type(hass.services), "async_call", forbidden)
+    listing = await catalog(client)
+    assert camera.calls == [] and camera.live_calls == []
+    selected = listing["records"][1]
+    assert selected["timestamp"] == fixture["records"][1]["timestamp"]
+    answer = await request(client, "get", record_id=selected["id"], revision=listing["revision"])
+    assert answer["success"], answer
+    dto = answer["result"]
+    assert dto["id"] == selected["id"] and dto["timestamp"] == selected["timestamp"]
+    assert dto["route"] == ROUTE and dto["completed"] is False
+    assert dto["paths"] == [[[2000, 0], [3000, 0], [3000, 1000]]]
+    assert camera.calls == [(2, False, False, True, False, False, False)] and camera.live_calls == []
+    assert rec.book.data == native
+    assert [await store.async_load() for store in stores] == before

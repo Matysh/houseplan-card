@@ -6648,3 +6648,27 @@ is3654523 B/6573, own+1577B/+16. Carry accepted bases3651515/6532 to3653092/6548
 preserving inherited1431B/25refs and bands2000B/25refs. Timings are unchanged;
 [the integration addendum](analysis/1098-editor-gestures.md#integration-after-accepted-1099)
 keeps prior timing/capture materials separate from fresh correctness evidence.
+
+### Optional historical Dreame slot (#1117)
+
+The pinned public serializer omits `MapData.map_index=None`. Reproduce the
+synthetic two-record variant with `python test/fixtures/vacuum-history/produce.py
+--source <pinned>/custom_components/dreame_vacuum --without-map-index
+--output test/fixtures/vacuum-history/dreame-tasshack-2.0.2-no-slot.json`.
+The original producer methods and all source hashes stay pinned. The generator
+now resolves the hash-checked constants at their actual `dreame/const.py` path;
+the historical two-record fixture retains its old `const.py` label and bytes.
+The new fixture records the actual path and unset synthetic input. Ordinary
+regeneration of the slot-present records has identical payload/catalog/AST/hash
+values after that metadata path correction. No field is deleted from producer
+output to obtain the no-slot fixture.
+
+`history_route` compares saved floors with the existing typed normalizer and
+only permits an unspecified historical slot to match a known native slot.
+Current/previous proofs are gathered and deduplicated before calibration; two
+routes cannot collapse to the only calibrated route. Ordinary live matching,
+physical lease and history WS ownership remain unchanged. The new real HA WS
+case selects the older generated cleanup and asserts its points/record/route,
+one provider read, zero live reads and no Store/service side effects. Existing
+ACL and held-read tests remain in the same targeted suite. Synthetic provider
+and registered HA endpoint evidence do not claim a new installed-device test.

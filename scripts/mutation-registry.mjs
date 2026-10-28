@@ -22242,7 +22242,22 @@ const geometryHistory1100Cases = [
     patches:[{file:'src/decor-history-restore.ts',find:'if (contentFingerprint(withoutPresentation(before)) !== contentFingerprint(withoutPresentation(target)))',replace:'if (false)'}]},
 ];
 
-export const MUTANTS = [...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+const historyOptionalSlot1117Cases = [
+  {id:'history-optional-slot-forgets-saved-floor-1117',
+    guard:'node scripts/backend-test-guard.mjs slot_absence_does_not_relax_saved_floor tests_backend/test_vacuum_history.py',
+    because:'#1117 AC2/3: absent history slot cannot authorize another typed saved floor. Registered only; no development execution.',
+    patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'native_key is None or native_key[0] != history_key[0]',replace:'native_key is None'}]},
+  {id:'history-known-slot-becomes-wildcard-1117',
+    guard:'node scripts/backend-test-guard.mjs history_optional_slot_table tests_backend/test_vacuum_history.py',
+    because:'#1117 AC2: a known historical slot still requires the same known native slot, preserving zero and types. Registered only.',
+    patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'or history_key[1] is not None and native_key[1] != history_key[1]:',replace:'or False:'}]},
+  {id:'history-optional-slot-chooses-calibrated-first-1117',
+    guard:'node scripts/backend-test-guard.mjs two_slots_for_one_saved_map tests_backend/test_vacuum_history.py',
+    because:'#1117 AC4: ambiguity is decided before calibration; an uncalibrated second route cannot be discarded. Registered only.',
+    patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'matched[route["id"]] = route',replace:'if route["calibration"] is not None: matched[route["id"]] = route'}]},
+];
+
+export const MUTANTS = [...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "issue": 1117,
+  "baseStable": "v1.82.0",
+  "category": "line-fix",
+  "introducedBy": 999,
+  "rationale": "Historical cleanup selection was introduced by #999 in the 1.83 beta line and is absent from stable v1.82.0. Repair only its Dreame saved-map matching for an unspecified historical slot, preserving native provenance, route uniqueness, ACL, leases, persisted data and UI."
+}

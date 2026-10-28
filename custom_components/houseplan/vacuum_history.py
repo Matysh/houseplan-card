@@ -210,7 +210,10 @@ def history_snapshot(payload: Any) -> tuple[PathSnapshot, bool]:
 
 
 def history_route(value: PathSnapshot, routes: list[dict], book: Any, spaces: set[str]) -> dict:
-    """Only an exact current/previous native coordinate witness can bind a floor."""
+    """Bind only a unique native-proven floor; history may omit its slot."""
+    history_key = dreame_coordinate_key(value.map_key)
+    if history_key is None:
+        raise PathRejected("coordinates_unverified")
     matched = {}
     for slot in ("current", "previous"):
         run = (book or {}).get(slot)
@@ -220,8 +223,13 @@ def history_route(value: PathSnapshot, routes: list[dict], book: Any, spaces: se
                 or (run.get("quality") or {}).get("source") != "native":
             continue
         identity = run.get("_native_identity")
-        if not isinstance(identity, list) or len(identity) != 2 or identity[0] != "dreame" \
-                or dreame_coordinate_key(identity[1]) != dreame_coordinate_key(value.map_key):
+        if not isinstance(identity, list) or len(identity) != 2 or identity[0] != "dreame":
+            continue
+        native_key = dreame_coordinate_key(identity[1])
+        # Only absent/null HISTORY slots are optional. Known slots, typed saved
+        # floors and the ordinary native equality contract remain strict.
+        if native_key is None or native_key[0] != history_key[0] \
+                or history_key[1] is not None and native_key[1] != history_key[1]:
             continue
         for route in routes:
             if route["source"] == run.get("source") and route["id"] == run.get("route_id") \

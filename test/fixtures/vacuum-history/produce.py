@@ -25,9 +25,9 @@ import numpy as np
 PIN = "f5b8472b8e2e4bb3dff7bc2a81a5fd594eca9585"
 
 
-async def produce(source: Path) -> dict:
+async def produce(source: Path, *, without_map_index: bool = False) -> dict:
     expected = json.loads(Path(__file__).with_name("dreame-tasshack-2.0.2.json").read_text())["sourceSha256"]
-    names = {"camera": "camera.py", "const": "const.py", "map": "dreame/map.py",
+    names = {"camera": "camera.py", "const": "dreame/const.py", "map": "dreame/map.py",
              "types": "dreame/types.py", "device": "dreame/device.py"}
     hashes = {path: hashlib.sha256((source / path).read_bytes()).hexdigest() for path in names.values()}
     for name, path in names.items():
@@ -73,7 +73,7 @@ async def produce(source: Path) -> dict:
     for i, stamp in enumerate(epochs):
         value = ns["MapData"]()
         value.version = 2
-        value.map_id, value.saved_map_id, value.map_index, value.frame_id = 77 + i, 36, 1, 4 + i
+        value.map_id, value.saved_map_id, value.map_index, value.frame_id = 77 + i, 36, None if without_map_index else 1, 4 + i
         value.history_map, value.saved_map, value.wifi_map, value.completed = True, False, False, i == 0
         value.dimensions = ns["MapImageDimensions"](0, 0, 2, 2, 50)
         value.pixel_type = np.zeros((2, 2), dtype=np.uint8)
@@ -107,18 +107,28 @@ async def produce(source: Path) -> dict:
     for i, stamp in enumerate(epochs, 1):
         payload = json.loads(await camera.history_map_image(i, False, False, True, False, False, False))
         assert payload["history_map"] is True and payload["completed"] is (i == 1)
+        if without_map_index:
+            assert "map_index" not in payload, "Unchanged producer must omit an unset MapData slot"
+        else:
+            assert payload["map_index"] == 1
         assert payload["path"] == [[1, *( [0, 0, 1000, 0, 1000, 1000] if i == 1 else [2000, 0, 3000, 0, 3000, 1000])]]
         output.append({"index": i, "timestamp": stamp, "payload": payload})
-    return {"pin": PIN, "sourceSha256": hashes,
+    result = {"pin": PIN, "sourceSha256": hashes,
             "methodAstSha256": {node.name: hashlib.sha256(ast.dump(node, include_attributes=False).encode()).hexdigest() for node in methods},
             "metadata": metadata, "records": output,
             "scope": "Original public metadata/selector/serializer; synthetic collaborators, normalized labels, synthetic token. No cloud/decoder/render preprocessing/installed-device proof."}
+
+    if without_map_index:
+        result["syntheticInput"] = {"MapData.map_index": None}
+    return result
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=Path(__file__).with_name("dreame-tasshack-2.0.2-two-records.json"))
+    parser.add_argument("--without-map-index", action="store_true",
+                        help="Set synthetic MapData.map_index=None before invoking the unchanged producer")
     args = parser.parse_args()
-    args.output.write_text(json.dumps(asyncio.run(produce(args.source)), indent=2) + "\n")
+    args.output.write_text(json.dumps(asyncio.run(produce(args.source, without_map_index=args.without_map_index)), indent=2) + "\n")
     print(json.dumps({"output": args.output.name, "sha256": hashlib.sha256(args.output.read_bytes()).hexdigest(), "bytes": args.output.stat().st_size}))

@@ -171,3 +171,127 @@ def test_metadata_encode_allocation_is_bounded_before_building_oversized_json():
 def test_metadata_character_preflight_retains_exact_encoded_byte_limit(label):
     with pytest.raises(PathRejected, match="limited"):
         history_catalog({label: next(iter(metadata().values()))}, "camera.map", "vacuum.robot")
+
+@pytest.mark.parametrize("missing", [True, False], ids=["absent", "null"])
+@pytest.mark.parametrize("legacy", [False, True], ids=["explicit", "legacy"])
+def test_history_without_slot_uses_unique_saved_map_native_proof(missing, legacy):
+    from custom_components.houseplan.vacuum_routes import effective_routes
+
+    raw = json.loads(payload(map_id=2, map_index=None))
+    if missing:
+        del raw["map_index"]
+    value, _ = history_snapshot(json.dumps(raw))
+    vacuum = {"source": "camera.map"}
+    if legacy:
+        vacuum["calibration"] = {"floor": ROUTE["calibration"]}
+    else:
+        vacuum["map_routes"] = [ROUTE]
+    routes = effective_routes("robot", vacuum, "f1")
+    book = witness()
+    book["current"]["route_id"] = routes[0]["id"]
+    before = copy.deepcopy((raw, routes, book))
+    assert history_route(value, routes, book, {"f1"}) == routes[0]
+    assert (raw, routes, book) == before
+
+@pytest.mark.parametrize("history_slot,native_slot,allowed", [
+    (None, 1, True), (None, None, True), (None, 0, True), (None, "1", True),
+    (1, 1, True), (1, None, False), (1, 2, False), (1, "1", False),
+    (0, 0, True), (0, None, False), (0, "0", False), ("0", "0", True),
+])
+def test_history_optional_slot_table_preserves_known_and_typed_slots(history_slot, native_slot, allowed):
+    value = history_snapshot(payload(saved_map_id=0, map_index=history_slot))[0]
+    book = witness()
+    book["current"]["_native_identity"] = ["dreame", json.dumps([99, 0, native_slot])]
+    if allowed:
+        assert history_route(value, [ROUTE], book, {"f1"}) == ROUTE
+    else:
+        with pytest.raises(PathRejected, match="coordinates_unverified"):
+            history_route(value, [ROUTE], book, {"f1"})
+
+
+@pytest.mark.parametrize("field", ["map_index", "saved_map_id"])
+@pytest.mark.parametrize("invalid", [True, False, 1.0, [], {}, "x" * 257])
+def test_history_optional_slot_never_coerces_malformed_identity(field, invalid):
+    with pytest.raises(PathRejected, match="coordinates_unverified"):
+        history_snapshot(payload(**{field: invalid}))
+
+
+@pytest.mark.parametrize("identity", ["[2,61,1]", '[2,"36",1]', "[36,null,true]", "broken", "[2,36,[]]"])
+def test_slot_absence_does_not_relax_saved_floor_or_native_validity(identity):
+    book = witness()
+    book["current"]["_native_identity"] = ["dreame", identity]
+    with pytest.raises(PathRejected, match="coordinates_unverified"):
+        history_route(history_snapshot(payload(map_index=None))[0], [ROUTE], book, {"f1"})
+
+
+@pytest.mark.parametrize("field,value", [
+    ("source", "camera.other"), ("route_id", "r2"), ("map_id", "other"), ("path_format", 1),
+    ("provenance", {"provider": "other", "schema": DREAME_SCHEMA}),
+    ("provenance", {"provider": "dreame", "schema": "other"}),
+    ("quality", {"source": "positions"}), ("_native_identity", ["other", "[2,36,1]"]),
+])
+def test_slot_absence_still_requires_the_same_source_native_route_passport(field, value):
+    book = witness()
+    book["current"][field] = value
+    with pytest.raises(PathRejected, match="coordinates_unverified"):
+        history_route(history_snapshot(payload(map_index=None))[0], [ROUTE], book, {"f1"})
+
+
+@pytest.mark.parametrize("reverse_slots", [False, True])
+@pytest.mark.parametrize("reverse_routes", [False, True])
+@pytest.mark.parametrize("calibration", [None, ROUTE["calibration"]])
+def test_two_slots_for_one_saved_map_are_ambiguous_before_calibration(reverse_slots, reverse_routes, calibration):
+    value = history_snapshot(payload(map_index=None))[0]
+    first = witness()["current"]
+    second = {**first, "route_id": "r2", "_native_identity": ["dreame", "[77,36,2]"]}
+    runs = [first, second][:: -1 if reverse_slots else 1]
+    book = dict(zip(("current", "previous"), runs))
+    routes = [ROUTE, {**ROUTE, "id": "r2", "calibration": calibration}][:: -1 if reverse_routes else 1]
+    before = copy.deepcopy((routes, book))
+    with pytest.raises(PathRejected, match="ambiguous"):
+        history_route(value, routes, book, {"f1"})
+    assert (routes, book) == before
+
+
+def test_duplicate_native_route_and_missing_space_or_calibration_keep_exact_results():
+    value = history_snapshot(payload(map_index=None))[0]
+    book = witness()
+    book["previous"] = copy.deepcopy(book["current"])
+    assert history_route(value, [ROUTE], book, {"f1"}) == ROUTE
+    with pytest.raises(PathRejected, match="missing_space"):
+        history_route(value, [ROUTE], book, set())
+    with pytest.raises(PathRejected, match="needs_calibration"):
+        history_route(value, [{**ROUTE, "calibration": None}], book, {"f1"})
+    with pytest.raises(PathRejected, match="coordinates_unverified"):
+        history_route(value, [ROUTE], {}, {"f1"})
+
+
+def test_history_optional_slot_does_not_change_ordinary_native_equality():
+    from custom_components.houseplan.vacuum_paths import same_native_coordinates
+
+    live = dreame_snapshot(payload(history_map=False, map_index=None))
+    assert not same_native_coordinates(["dreame", "[1,36,1]"], live, DREAME_SCHEMA)
+    assert same_native_coordinates(["dreame", "[1,36,null]"], live, DREAME_SCHEMA)
+
+
+def test_original_producer_no_slot_fixture_has_unchanged_pin_hashes_and_methods():
+    from pathlib import Path
+
+    folder = Path(__file__).resolve().parent.parent / "test/fixtures/vacuum-history"
+    original = json.loads((folder / "dreame-tasshack-2.0.2-two-records.json").read_text())
+    generated = json.loads((folder / "dreame-tasshack-2.0.2-no-slot.json").read_text())
+    assert generated["syntheticInput"] == {"MapData.map_index": None}
+    assert generated["pin"] == original["pin"]
+    assert generated["methodAstSha256"] == original["methodAstSha256"]
+    # The old fixture called the pinned dreame/const.py simply const.py. The
+    # new generator records the real upstream path while preserving its hash.
+    hashes = dict(original["sourceSha256"])
+    hashes["dreame/const.py"] = hashes.pop("const.py")
+    assert generated["sourceSha256"] == hashes
+    assert generated["metadata"] == original["metadata"]
+    for old, new in zip(original["records"], generated["records"], strict=True):
+        assert "map_index" not in new["payload"]
+        assert {**new, "payload": {**new["payload"], "map_index": 1}} == old
+        value, completed = history_snapshot(json.dumps(new["payload"]))
+        assert completed is new["payload"]["completed"]
+        assert history_route(value, [ROUTE], witness(), {"f1"}) == ROUTE

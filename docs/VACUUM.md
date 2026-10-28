@@ -612,7 +612,14 @@ The separate historical decoder requires numeric version 2, genuine
 and complete finite raw-millimetre chunks. It rejects a malformed value as a
 whole. The ordinary live decoder still refuses history. Matching uses only an
 exact-source native current/previous coordinate witness with known provenance,
-saved route/map and typed `dreame_coordinate_key` floor/slot identity. Those
+saved route/map and typed `dreame_coordinate_key` floor/slot identity. History
+alone treats an absent/null JSON `map_index` as unspecified: the typed saved
+floor must still match, and all proven current/previous candidates must identify
+one route before checking its space/calibration. Two different routes remain
+ambiguous even when only one is calibrated; duplicate witnesses for one route
+are harmless. A known historical slot still requires that exact known native
+slot, and zero remains a value. Invalid bool/float/array identities never become
+missing values. The ordinary live coordinate matcher is unchanged. Those
 slots never provide the selected cleanup content. Missing/ambiguous coordinates,
 an unknown floor or missing saved calibration are explicit refusals; there is no
 current/default-map guess, new fit or automatic floor switch.
