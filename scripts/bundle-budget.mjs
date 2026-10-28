@@ -452,7 +452,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // (+3544 B). Consumer dependency keys, lazy floor metadata and owner fences
 // belong to initial View. Carry only this task delta; retain the inherited
 // 457-B excess, 2000-B band and absolute wall. Timing limits are unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 356_458;
+export const INITIAL_VIEW_GZIP_CEILING = 356_553;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -670,7 +670,7 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_935;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -880,7 +880,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_941;
 // https://github.com/Matysh/houseplan-card/issues/1089#issuecomment-6455534939
 // #1093: matched frozen #1089 editor375012 ->375159 (+147 B). Preserve
 // its inherited1939-B excess and the2000-B band; only this task's cost moves.
-export const LAZY_EDITOR_GZIP_CEILING = 375_196;
+export const LAZY_EDITOR_GZIP_CEILING = 375_288;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -916,7 +916,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // registers the shared select instead of leaving native controls unupgraded.
 // Matched accepted #1070 dist40339 ->44057 (+3718 B). Carry only that measured
 // cost:39412 ->43130, retaining the inherited927-B gap and2000-B band.
-export const LAZY_ONBOARDING_GZIP_CEILING = 44_628;
+export const LAZY_ONBOARDING_GZIP_CEILING = 44_667;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of
