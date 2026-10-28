@@ -76,3 +76,11 @@ Moving the new matrix entries changes the frontend/build fingerprint. The4d8f
 local visual captures above remain prior-input evidence; final normal build and
 exact-source CI must prove the new material before acceptance. No source
 behavior, visual content, negative oracle or guard was weakened.
+
+Final normal protected push of8578b0e8 passed262s/0failed and published the branch.
+Build fingerprint31510e3814f4b7ee74e25387e44577427874bcd25e0c7ab98e45150a661f153f;
+raw3685856/initialgzip359702/editorgzip382259. The unchanged carried references
+leave1441/1421/1025B gaps inside the original2000B bands; no further ceiling
+change was made for fingerprint/chunk-hash compression variation. Product and
+tooling groups, type/build, no-new-any/private-writes, CSS, bundle policy/budget
+and unused/core connectivity all passed. Remote exact-source CI remains separate.

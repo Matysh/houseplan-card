@@ -6681,7 +6681,7 @@ one provider read, zero live reads and no Store/service side effects. Existing
 ACL and held-read tests remain in the same targeted suite. Synthetic provider
 and registered HA endpoint evidence do not claim a new installed-device test.
 
-#1113 resource accounting (29.10.2026): the accepted502 frontend/build corpus
+#1113 resource accounting (29.10.2026, measured4d8f build): the accepted502 frontend/build corpus
 (569 paths) equals the frozen5bad donor. The matched candidate costs+21527 raw
 dist bytes including the manifest, +1737 initial View gzip and+3395 lazy editor
 gzip; hostRefs+43 and portMembers+2. These own deltas alone carry their existing
@@ -6696,3 +6696,11 @@ accepted-dev13528 (+35 own lines), runtime12053 versus12046 (+7). Carry only
 these deltas from ceilings13500/12000 to13535/12007. Inherited gaps28/46 and
 the50-line band remain unchanged. This uses the same owner resource permission
 as the byte/reference carry; no behavioral test or timing threshold changes.
+
+After the data-only Golden matrix entries were appended instead of prepended,
+the final31510e38 build measured3685856 raw B,359702 initial gzip and382259 editor
+gzip (own+21537/+1746/+3365). Fingerprint/chunk hashes account for the small
++10/+9/-30 difference from the prior measured build. Existing carried references
+remain3684415/358281/381234: actual gaps1441/1421/1025 stay within their unchanged
+2000B bands and absolute initial wall. No byte chasing or further limit change
+was needed. Host references/Port and their own costs are unchanged.
