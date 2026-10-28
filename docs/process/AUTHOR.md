@@ -265,7 +265,7 @@
   `dev` перед бетой. Задача, которая меняет визуал намеренно, ставит
   `ci:golden`, сохраняет ожидания в поле `visual` release-ledger и просматривает
   целевые кадры/diff. Для строгих проверок прежних кадров задаётся отдельный
-  `visual.goldenChecks` с ID/причиной: byte identity и0pixel/ratio, без fake change,
+  `visual.goldenChecks` при `visual.schema: 2` с ID/причиной: byte identity и0pixel/ratio, без fake change,
   pending/own delta, stale epoch или full-смешивания (#1114). Прежний допуск не
   заменяет эту проверку; её scope входит в receipt, но не в baseline acceptance.
   Глобальные эталоны в задаче не принимаются

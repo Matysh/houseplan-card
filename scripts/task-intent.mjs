@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export function validateVisualIntent(visual, issue) {
-  if (visual?.schema !== 1 || !/^[a-f0-9]{64}$/.test(visual.baselineIndex || '')
+  if (![1, 2].includes(visual?.schema) || !/^[a-f0-9]{64}$/.test(visual.baselineIndex || '')
     || !Array.isArray(visual.golden) || !Array.isArray(visual.smokes)) throw Error(`#${issue}: invalid visual intent`);
   const ids = new Set();
   for (const item of visual.golden) {
@@ -13,6 +13,7 @@ export function validateVisualIntent(visual, issue) {
     ids.add(item.id);
   }
   if (visual.goldenChecks !== undefined) {
+    if (visual.schema !== 2) throw Error(`#${issue}: golden checks require visual schema 2`);
     if (!Array.isArray(visual.goldenChecks)) throw Error(`#${issue}: invalid golden checks`);
     for (const item of visual.goldenChecks) {
       if (!/^[a-z0-9][a-z0-9-]*$/.test(item?.id || '') || ids.has(item.id)

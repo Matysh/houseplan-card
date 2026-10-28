@@ -5859,11 +5859,16 @@ entry. Obtain `baselineIndex` with `node scripts/task-visual-intent.mjs --baseli
 ```
 
 For strict regression checks of existing frames, use a separate optional
-`goldenChecks` field. A checks-only declaration keeps `golden` empty:
+`goldenChecks` field with `visual.schema: 2`. Legacy schema 1 remains valid
+without this field; declaring it, even empty, requires schema 2. Older ordinary
+readers reject that version instead of silently ignoring checks when render demand
+is absent. Rebase on the accepted helpers before declaring checks; this version
+does not retrofit old full-plan early returns. A checks-only declaration keeps
+`golden` empty:
 
 ```json
 "visual": {
-  "schema": 1,
+  "schema": 2,
   "baselineIndex": "<current accepted index SHA-256>",
   "golden": [],
   "goldenChecks": [

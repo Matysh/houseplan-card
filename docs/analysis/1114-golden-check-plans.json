@@ -83,7 +83,7 @@
       ],
       "sourceDiffSha256": "0222a927704938960414bd98f242cb0858cf6822aba85434ab66ccdb0eca7e76",
       "proposal": {
-        "schema": 1,
+        "schema": 2,
         "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
         "golden": [],
         "smokes": [],
@@ -434,7 +434,7 @@
       ],
       "sourceDiffSha256": "5798f1bc0b84c538277353d572b081312b31a390bea0871dd3a5ebcf20f19445",
       "proposal": {
-        "schema": 1,
+        "schema": 2,
         "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
         "golden": [],
         "smokes": [],

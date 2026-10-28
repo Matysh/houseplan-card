@@ -13,7 +13,7 @@ import historicalScopes from './data/golden-unchanged-scopes.json' with { type: 
 
 const id = 'geometry-view-dark-fit', other = 'geometry-view-light-fit';
 const check = { id, reason: 'The saved opening geometry and wall paint must stay byte-identical' };
-const visual = () => ({ schema: 1, baselineIndex: 'a'.repeat(64), golden: [], smokes: [], goldenChecks: [check] });
+const visual = () => ({ schema: 2, baselineIndex: 'a'.repeat(64), golden: [], smokes: [], goldenChecks: [check] });
 const empty = { direct: [], registered: [], unproven: false, noExecutableDiff: true };
 const make = (intent = visual(), options = {}) => browserPushPlan({ issue: 1114, files: ['src/unmapped-renderer.ts'],
   diffText: '', corpus: [], render: true, smokeSelection: empty, pendingVisual: { golden: [] }, visualIntent: intent, ...options });
@@ -42,6 +42,15 @@ test('#1114 explicit checks select unknown render scope without declaring a pixe
   assert.equal(make(visual(), { files: [], render: false }).golden.mode, 'selected');
   assert.throws(() => make({ ...visual(), goldenChecks: [] }), /Task visual scope is not declared/);
   assert.throws(() => make(null), /Task visual scope is not declared/);
+});
+
+test('#1114 strict checks require a reader version that cannot silently ignore them', () => {
+  const legacy = { schema: 1, baselineIndex: 'a'.repeat(64), golden: [], smokes: [] };
+  assert.deepEqual(validateVisualIntent(legacy, 1114), legacy);
+  for (const goldenChecks of [[], [check]])
+    assert.throws(() => validateVisualIntent({ ...legacy, goldenChecks }, 1114), /require visual schema 2/);
+  assert.deepEqual(validateVisualIntent(visual(), 1114), visual());
+  assert.throws(() => validateVisualIntent({ ...visual(), schema: 3 }, 1114), /invalid visual intent/);
 });
 
 test('#1114 checks reject malformed IDs/reasons, duplicate scene ownership and fake delta expectations', () => {
