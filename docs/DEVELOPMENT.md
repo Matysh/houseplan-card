@@ -6745,3 +6745,9 @@ initial1412B, editor1055B, hostRefs24 and portMembers2 gaps, all bands and the
 absolute initial wall remain unchanged. The pure URL parser stays in the thin
 panel leaf: importing a named parser from the shared card resolver violates the
 stable panel side-effect import contract and is not a budget remedy.
+
+#1113 line-ceiling accounting: normal protected gate measured card13563 versus
+accepted-dev13528 (+35 own lines), runtime12053 versus12046 (+7). Carry only
+these deltas from ceilings13500/12000 to13535/12007. Inherited gaps28/46 and
+the50-line band remain unchanged. This uses the same owner resource permission
+as the byte/reference carry; no behavioral test or timing threshold changes.

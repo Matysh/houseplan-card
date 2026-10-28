@@ -139,6 +139,7 @@
           "confirm",
           "decor",
           "device-inbox",
+          "external-screen-constructor",
           "import",
           "info",
           "kiosk",

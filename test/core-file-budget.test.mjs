@@ -67,7 +67,8 @@ const CAPS = {
   // exceeds the previous13327+50. Apply existing #898 +10% (ceil=14660),
   // retaining CORE_BAND50 and every other core cap; no source golfing.
   // https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253
-  'src/houseplan-card.ts': 13500,
+  // #1113 owner-authorized own growth only: +35 lines; inherited gap/band retained.
+  'src/houseplan-card.ts': 13535,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
@@ -101,7 +102,8 @@ const CAPS = {
   // #1097 owner-authorized observed adapter growth after accepted1098/dev4bb5:
   // 11960 ->12037 lines (+77). Carry only77 into11923, retaining the inherited
   // 37-line excess and CORE_BAND50. Local cut geometry stays in its leaf.
-  'src/houseplan-editor-runtime.ts': 12000,
+  // #1113 owner-authorized own growth only: +7 lines; inherited gap/band retained.
+  'src/houseplan-editor-runtime.ts': 12007,
 };
 
 /**
