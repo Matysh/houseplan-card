@@ -1,6 +1,6 @@
 # #1093: selective invalidation — implementation evidence
 
-Baseline diagnosis: `455535be9da51e0eef11ceccd1b9545a39875425`. Current accepted integration base: `cc9209f8ad8cbb8eb937fb27d5234c971bbc47da`, including #1089/#1096/#998/#1000/#1107. Synthetic fixtures only. The latest post-CI section below binds the current product; earlier source213 measurements remain historical evidence.
+Baseline diagnosis: `455535be9da51e0eef11ceccd1b9545a39875425`. Current accepted integration base: `b4f9681b2600d4215ea0e732258571985b56e6b2`, including #1108/#1089/#1096/#998/#1000/#1107. Synthetic fixtures only. The latest post-CI section below binds the current product; earlier source213 measurements remain historical evidence. Accepted #1108 changes only its smoke wait and process documents; the ordinary merge preserves the measured b32914f4 product fingerprint.
 After #1089 CODE r2 GREEN and automatic S8, accepted dev
 `cc9209f8ad8cbb8eb937fb27d5234c971bbc47da` was merged normally. Its final delta
 adds the corrected mobile-header witness and UX documentation; actual frontend
@@ -298,7 +298,7 @@ execution=0. The two new ordering guards are declarations only.
 
 The selected source213 Golden images below remain historical evidence. The
 current candidate requires fresh selected CI visual proof and a fresh normal
-pre-push gate after accepted #1108 integration; old screenshots are not claimed
+pre-push gate after the completed accepted #1108 integration; old screenshots are not claimed
 as source b329 captures. Release documentation capture is likewise rebound to
 the final published candidate by the release owner.
 
@@ -345,7 +345,7 @@ substitute or dependency for those checks.
 
 ## Remaining gates
 
-The post-CI candidate requires accepted #1108 integration, current metadata,
+The post-CI candidate includes accepted #1108 and requires current metadata,
 normal pre-push and fresh selected CI proof before CODE. Static readiness is
 GREEN: 1977 definitions, 555 classified browser witnesses; execution=0 and
 caught status intentionally unknown until nightly. Source213 visual evidence

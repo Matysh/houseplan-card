@@ -28,6 +28,11 @@ const result = await page.evaluate(async () => {
   picker?.addEventListener('hp-color-opacity-change', (event) => events.push(event.detail));
   trigger?.click();
   await picker?.updateComplete;
+  // #1108: #1081's real entrance translates the surface for 160ms. Measure
+  // settled layout, retaining the exact 32px contract and native animation.
+  await Promise.all(picker.shadowRoot.querySelector('.picker').getAnimations({ subtree: true })
+    .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
+    .map(animation => animation.finished.catch(() => {})));
   await frame();
   const surface = () => picker?.shadowRoot?.querySelector('.picker');
   const ranges = () => [...(surface()?.querySelectorAll('input[type="range"]') || [])];
