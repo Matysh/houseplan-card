@@ -36,6 +36,13 @@ function physicalRecord(record: unknown, excluded: readonly string[]): unknown {
 
 /** Consumer projection only. Wire/history keep the complete saved record.
  * Malformed/null settings and every unrecognised field remain significant. */
+/** Known source/placement fields that do not alter masonry (#1098).
+ * plan_url/plan_aspect and unknown extensions deliberately remain significant. */
+export const PHYSICAL_PRESENTATION_FIELDS = [
+  'led_strips', 'stairs', 'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x',
+  'plan_scale_y', 'plan_angle', 'plan_opacity',
+] as const;
+
 export function physicalSpaceRecord(record: unknown, ...nonStructural: readonly string[]): unknown {
   const structural = physicalRecord(record, ['decor', 'title', ...nonStructural]) as Record<string, unknown> | null;
   // The write canonicalizer drops these empty legacy collections. Both forms

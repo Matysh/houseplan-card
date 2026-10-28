@@ -335,3 +335,21 @@ test('#842 Ðš2 LED: a refusal to delete plan objects shows no LED error toast â€
   assert.equal(f.rolled.length, 1, 'the optimistic strip is rolled back');
   assert.deepEqual(f.toasts, []);
 });
+
+import {routeHouseplanEditorUpdate,disposeHouseplanEditor} from '../test-build/live-editor.js';
+test('#1098 LED vertex burst keeps final coordinates, writes once, and routes every move live',async()=>{
+ const strip={id:'burst',points:[[.1,.1],[.2,.1],[.3,.1]],marker:null};
+ const {led,host,pushed,saves}=setup({strips:[strip]});await settle();
+ const oldRaf=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame;
+ let frames=0,full=0;globalThis.requestAnimationFrame=()=>++frames;globalThis.cancelAnimationFrame=()=>{};
+ host.isConnected=true;host._ledEditor=led;host.requestUpdate=()=>{if(!routeHouseplanEditorUpdate(host))full++;};
+ const event=(x,y)=>({...ev(x,y),stopPropagation(){},currentTarget:{setPointerCapture(){}}});
+ try{
+  led.handleDown(event(200,100),strip,1);
+  for(let i=1;i<=30;i++)led.handleMove(event(200,100+i*2));
+  assert.equal(full,0);assert.equal(frames,1);assert.deepEqual(stripsOf(host)[0].points,strip.points);
+  await led.handleUp(event(200,160));
+  assert.deepEqual(stripsOf(host)[0].points,[[.1,.1],[.2,.16],[.3,.1]]);
+  assert.equal(pushed.length,1);assert.equal(saves.length,1);
+ }finally{disposeHouseplanEditor(host);globalThis.requestAnimationFrame=oldRaf;globalThis.cancelAnimationFrame=oldCancel;}
+});

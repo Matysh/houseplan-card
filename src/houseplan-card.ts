@@ -333,7 +333,7 @@ import type { DecorShape, DecorStyle } from './editors/decor/types';
 import { StairViewRuntime, type StairViewHostPort } from './stairs-view';
 import { cleanFloorForRoom, type CleanFloorResult } from './clean-floor';
 import {
-  floorGeometryKeyReader, floorPoolEntry, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, sunRoomSettingsKey, wallUnionKey,
+  cleanFloorFingerprint, floorGeometryKeyReader, floorPoolEntry, openingWallIndexKey, physicalBodiesKey, sunGeometryKey, sunRoomSettingsKey, wallUnionKey,
   wallUnionPoolEntry, writeWallUnionPool, type FloorKeySource, type SunWindow,
 } from './floor-geometry-key';
 import {
@@ -1980,6 +1980,7 @@ export class HouseplanCard extends LitElement {
   private _lightPhysicalBodiesCache: { key: string; all: number[][][] } | null = null;
   private _cleanFloorCache = new Map<string, CleanFloorResult>();
   private _innerContourCache = new Map<string, number[][] | null>();
+  private readonly _cleanFloorKey = floorGeometryKeyReader(this as unknown as FloorKeySource, cleanFloorFingerprint);
   private readonly _floorKey = floorGeometryKeyReader(this as unknown as FloorKeySource); // #744: key of the four caches above
   private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
   private readonly _lightBarrierPass = new LightBarrierPass();
@@ -9878,7 +9879,7 @@ export class HouseplanCard extends LitElement {
     room: RoomCfg, floor: number[][], space: SpaceModel | undefined = this._spaceModel(),
   ): CleanFloorResult {
     return cleanFloorForRoom({
-      room, floor, space, floorKey: this._floorKey,
+      room, floor, space, floorKey: this._cleanFloorKey,
       resizePreview: !!this._resize?.preview,
       cache: this._cleanFloorCache,
       physicalBodies: (model) => this._physicalBodiesR(model),
@@ -11532,6 +11533,7 @@ export class HouseplanCard extends LitElement {
             ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}
             ${this._mode === 'plan' && this._editorRuntime
               ? this._editorRuntime.stairs.renderLayer() : this._stairsView.renderLayer()}
+            ${this._mode === 'plan' ? svg`<g data-hp-live-stairs></g>` : nothing}
             ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}
             ${glowLayerVisible ? this._ledRt(space)?.renderLedFieldFor(this as never, space, disp.glow) : nothing}
             ${this._renderSunRays(space)}

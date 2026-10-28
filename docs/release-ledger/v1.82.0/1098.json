@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1098,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Read v1.82.0 src/stairs-editor.ts write/pointerMove and src/led-strip-editor.ts handleMove: both existing editors already take the full-host path and stairs bump the epoch per move. This fixes existing gesture/cache work without a new feature or persisted model.",
+  "summary": {
+    "ru": "Лестницы и вершины LED-полос плавно перемещаются на большом плане; их сохранение и перенос подложки не пересобирают стены.",
+    "en": "Stairs and LED vertices drag smoothly on large plans; their saves and backdrop movement keep wall geometry warm."
+  }
+}

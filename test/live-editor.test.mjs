@@ -277,3 +277,23 @@ test('live editor browser smokes use the explicit settlement contract', () => {
       `${name}: no timing heuristic`);
   }
 });
+
+test('#1098 stair and LED move requests coalesce into the existing live frame',()=>{
+ const oldRaf=globalThis.requestAnimationFrame,oldCancel=globalThis.cancelAnimationFrame;let scheduled=0;
+ globalThis.requestAnimationFrame=()=>++scheduled;globalThis.cancelAnimationFrame=()=>{};
+ try{
+  for(const [mode,runtime,led] of [['plan',{stairs:{live:true}},null],['devices',{}, {dragging:true}]]){
+   const host={isConnected:true,_mode:mode,_editorRuntime:runtime,_ledEditor:led};const before=scheduled;
+   for(let i=0;i<30;i++)assert.equal(routeHouseplanEditorUpdate(host),true);
+   assert.equal(scheduled-before,1);disposeHouseplanEditor(host);
+  }
+ }finally{globalThis.requestAnimationFrame=oldRaf;globalThis.cancelAnimationFrame=oldCancel;}
+});
+import {LiveRuntime} from '../test-build/live-interaction-runtime.js';
+test('#1098 HA deferral recognizes both gesture owners until their terminal event',()=>{
+ const host={_pointers:{size:0},_cameraTransition:{active:false},_editorRuntime:{stairs:{dragging:false}}};
+ const runtime=new LiveRuntime(host);assert.equal(runtime.active(),false);
+ host._editorRuntime.stairs.dragging=true;assert.equal(runtime.active(),true);
+ host._editorRuntime.stairs.dragging=false;host._ledEditor={dragging:true};assert.equal(runtime.active(),true);
+ host._ledEditor.dragging=false;assert.equal(runtime.active(),false);
+});

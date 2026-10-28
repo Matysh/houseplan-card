@@ -744,5 +744,51 @@ if (focusProbe) {
   });
 }
 
+// #1098: actual native capture, thirty moves, and an HA tick while held.
+const liveStart=await page.evaluate(async()=>{
+ const c=window.__card,hp=window.__hpTest;
+ await hp.setMode('view');await hp.setServerConfig(old=>({...old,spaces:[{id:'live1098',title:'Live',cell_cm:5,
+  rooms:[{id:'r',poly:[[.1,.1],[.9,.1],[.9,.9],[.1,.9]]}],wall_segments:[],partitions:[{id:'live-masonry',a:[.2,.6],b:[.6,.6],cm:15}],
+  stairs:[{id:'live-stair',kind:'straight',x:.4,y:.4,angle:0,direction:'forward',length:.2,width:.1}]}],markers:[]}));
+ await hp.setLayout({});await hp.setMode('plan');await hp.setTool('select');
+ const node=c.renderRoot.querySelector('[data-hp="stair"][data-id="live-stair"] .hp-stair-hit');
+ node.dispatchEvent(new MouseEvent('click',{bubbles:true,composed:true}));await hp.settled();
+ const q=new DOMPoint(400,400).matrixTransform(c.renderRoot.querySelector('.plan-svg').getScreenCTM());return [q.x,q.y];
+});
+await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._cameraTransition.active);
+await page.mouse.move(...liveStart);await page.mouse.down();
+await page.evaluate(async()=>{
+ const c=window.__card;await window.__hpTest.settled();
+ if(!c._editorRuntime.stairs.dragging)throw new Error('1098 native stair press did not capture');
+ const probe={reasons:[],will:c.willUpdate,before:{...c._floorCacheBuilds},epoch:c._cfgEpoch,renders:0,syncs:0,body:c._renderBody,sync:c._deviceContacts.sync};
+ c.willUpdate=function(changed){probe.reasons.push([...changed.keys()].map(String));return probe.will.call(this,changed);};
+ c._renderBody=function(...args){probe.renders++;return probe.body.apply(this,args);};
+ c._deviceContacts.sync=function(...args){probe.syncs++;return probe.sync.apply(this,args);};window.__stair1098=probe;
+});
+await page.mouse.move(liveStart[0]+12,liveStart[1]+12,{steps:15});
+// HA operational roster intake is a distinct stimulus, outside pointer-only AC1.
+await page.evaluate(async()=>{const c=window.__card,p=window.__stair1098,id=Object.keys(c.hass.states)[0],old=c.hass.states[id],before=[p.renders,p.syncs];
+ c.hass={...c.hass,states:{...c.hass.states,[id]:{...old,state:old.state==='on'?'off':'on'}}};
+ await window.__hpTest.settled();p.tickRenders=p.renders-before[0];p.tickSyncs=p.syncs-before[1];
+ p.tickKeptPreview=c._editorRuntime.stairs.dragging&&c._editorRuntime.stairs.live&&c._cfgEpoch===p.epoch&&c._serverCfg.spaces[0].stairs[0].x===.4;
+});
+await page.mouse.move(liveStart[0]+24,liveStart[1]+24,{steps:15});
+Object.assign(out,await page.evaluate(()=>{
+ const c=window.__card,p=window.__stair1098;
+ const layer=c.renderRoot.querySelector('[data-hp-live-stairs]'),walls=c.renderRoot.querySelector('.wallbodies');
+ return {ac1098LiveStairsKeepTheirMasonryOrder:!!layer?.querySelector('.hp-stairs-layer')&&!!walls&&!!(layer.compareDocumentPosition(walls)&Node.DOCUMENT_POSITION_FOLLOWING),
+ ac1098ThirtyNativeStairMovesKeepPhysics:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k]),
+  ac1098ThirtyNativeStairMovesKeepContacts:p.syncs-p.tickSyncs===0,ac1098ThirtyNativeStairMovesUseLive:p.renders-p.tickRenders===0&&c._liveEditorPaintCount>0,
+  ac1098StairAndHaTickStayTransient:p.tickKeptPreview&&c._cfgEpoch===p.epoch&&c._serverCfg.spaces[0].stairs[0].x===.4};
+}));
+console.log('diagnostic1098',await page.evaluate(()=>({renders:window.__stair1098.renders,syncs:window.__stair1098.syncs,reasons:window.__stair1098.reasons})));
+await page.mouse.up();
+Object.assign(out,await page.evaluate(async()=>{
+ const c=window.__card,p=window.__stair1098;await window.__hpTest.settled();
+ c.willUpdate=p.will;c._renderBody=p.body;c._deviceContacts.sync=p.sync;
+ const deadline=performance.now()+5000;while((c._saveConfigDebounced.pending()||c._writesPending>0)&&performance.now()<deadline)await new Promise(r=>setTimeout(r,16));
+ await window.__hpTest.settled();return {ac1098NativeStairCommitPersists:c._serverCfg.spaces[0].stairs[0].x!==.4,
+ ac1098NativeStairCommitKeepsMasonry:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k])};
+}));
 checkAll(out);
 await finish(browser, out);

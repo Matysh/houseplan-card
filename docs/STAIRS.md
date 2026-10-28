@@ -178,3 +178,9 @@ a blocked or absent-target deletion does not clean up any links.
   the same stair outline/tread geometry without changing the room floor paint.
 - Backend schemas and transfer/support surfaces treat `stairs` as a bounded,
   additive space collection. Old configs without it remain unchanged.
+
+Stair move/resize/rotate previews now stay in the editor runtime (#1098).
+The shared live editor redraws the stair symbols/frame; pointerup commits one
+canonical record and one history step, while Escape/cancel writes nothing.
+Clean-floor/summary area keys retain stairs; wall/body/contour/contact keys do
+not. The canonical ACK reuses the same stair footprint key.

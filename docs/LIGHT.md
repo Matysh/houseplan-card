@@ -570,3 +570,9 @@ and three raster densities: free ends, acute/reflected turns, decimal loops,
 self-crossings and an opaque wall. Unit tests pin joins, circle events and
 doorway emitter normals. The original household export is checked locally,
 not stored as a public fixture.
+
+For #1098 the architectural fingerprint excludes the same exact known
+presentation fields as masonry: led_strips, stairs, plan_x, plan_y, plan_scale,
+plan_scale_x, plan_scale_y, plan_angle and plan_opacity. It retains plan_url,
+plan_aspect, structural inputs and unknown fields/settings. LED shape/field
+keys and opening-state signatures keep their existing semantics.

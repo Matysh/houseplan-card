@@ -22168,7 +22168,18 @@ const goldenUnchanged1114Cases = [
       find: 'if (visual.goldenChecks !== undefined)', replace: 'if (false)' }] },
 ];
 
-export const MUTANTS = [...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases].map((mutant) => ({
+const editorGesture1098Cases = [{
+  id: 'presentation-key-retains-stale-demand-values-1098',
+  guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/demand-space-models.test.mjs test/clean-floor.test.mjs',
+  because: '#1098 AC3/AC9: narrowed masonry keys cannot serve stairs/backdrop from an older cached full model; fresh areas, rectangles and per-read identity are observable oracles.',
+  patches: [
+    {file: 'src/demand-space-models.ts', find: "import { NORM_W, planRect, spaceModels } from './space-geometry';", replace: "import { spaceModels } from './space-geometry';"},
+    {file: 'src/demand-space-models.ts', find: "import { stairList } from './stairs';", replace: ''},
+    {file: 'src/demand-space-models.ts', find: 'get stairs() { return stairs ??= stairList(raw.stairs); }', replace: 'get stairs() { return stairs ??= full().stairs; }'},
+    {file: 'src/demand-space-models.ts', find: 'if (bg === undefined) bg = raw.plan_url ? { href: raw.plan_url, ...planRect(raw, NORM_W) } : null;', replace: 'if (bg === undefined) bg = full().bg;'},
+  ],
+}];
+export const MUTANTS = [...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

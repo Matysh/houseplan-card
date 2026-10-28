@@ -525,6 +525,38 @@ Object.assign(checks, await page.evaluate(async () => {
   return out;
 }));
 
+// #1098: one-room area/backdrop oracle observes values as well as warm keys.
+Object.assign(checks, await page.evaluate(async () => {
+ const c=window.__card,hp=window.__hpTest,out={},counter=()=>({...c._floorCacheBuilds,contacts:c._deviceContacts.work.rebuilds});
+ const cfg={id:'cache1098',title:'Cache',cell_cm:5,view_box:[0,0,1,1],
+  rooms:[{id:'one',poly:[[.1,.1],[.6,.1],[.6,.6],[.1,.6]]}],wall_segments:[],
+  stairs:[{id:'area-stair',kind:'straight',x:.3,y:.3,angle:0,direction:'forward',length:.2,width:.1}],
+  plan_url:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="40" height="20"/%3E',plan_aspect:2};
+ await hp.setMode('view');await hp.setServerConfig(old=>({...old,spaces:[cfg],markers:[]}));await hp.setLayout({});
+ const area=()=>c._roomArea(c._spaceModel().rooms[0]),beforeArea=area();
+ const fields=['wallUnion','physicalBodies','innerContour','contacts'];
+ const assertWarm=(name,before)=>{const after=counter();out[name]=fields.every(k=>after[k]===before[k]);return after;};
+ let before=counter();
+ await hp.setServerConfig(old=>{old.spaces[0].stairs[0].x=.6;old.spaces[0].stairs[0].y=.6;});
+ const nextArea=area();let after=assertWarm('ac1098StairCommitKeepsMasonryAndContacts',before);
+ out.ac1098StairBuildsOneCleanFloor=after.cleanFloor-before.cleanFloor===1;
+ const fresh=await window.__hp744.oracle(structuredClone(c._serverCfg),'cache1098');
+ out.ac1098StairAreaIsFreshAndChanged=fresh.ready&&nextArea===fresh.areas.one&&nextArea!==beforeArea;
+ before=counter();await hp.setServerConfig(old=>old);area();after=assertWarm('ac1098CanonicalAckKeepsMasonryAndContacts',before);
+ out.ac1098AckKeepsCleanFloor=after.cleanFloor===before.cleanFloor;
+ before=counter();await hp.setServerConfig(old=>{old.spaces[0].led_strips=[{id:'source',points:[[.2,.2],[.3,.2]],marker:null}];});
+ area();after=assertWarm('ac1098LedCommitKeepsMasonryAndContacts',before);out.ac1098LedKeepsCleanFloor=after.cleanFloor===before.cleanFloor;
+ const attrs=()=>{const image=c.renderRoot.querySelector('image[data-hp="backdrop"]');return ['x','y','width','height','transform'].map(k=>image?.getAttribute(k));};
+ const oldAttrs=attrs();before=counter();
+ await hp.setServerConfig(old=>Object.assign(old,{spaces:old.spaces.map(s=>({...s,plan_x:.07,plan_y:.09,plan_scale_x:1.2,plan_scale_y:.8,plan_angle:30}))}));
+ const r=c._spaceModel().bg,shown=attrs();
+ // The independent formula of planRect for aspect2, these known scales/offsets.
+ const expected=['70','340','1200','400','rotate(30 670 540)'];
+ out.ac1098BackdropAttrsAreFresh=JSON.stringify(shown)===JSON.stringify(expected)&&JSON.stringify(shown)!==JSON.stringify(oldAttrs)
+  &&r.x===70&&r.y===340&&r.w===1200&&r.h===400&&r.angle===30;
+ area();after=assertWarm('ac1098BackdropCommitKeepsMasonryAndContacts',before);out.ac1098BackdropKeepsCleanFloor=after.cleanFloor===before.cleanFloor;
+ return out;
+}));
 checkAll(checks, {
   ac1GardenVisitBuildsNothingByCounter: { wallUnion: 0, innerContour: 0, cleanFloor: 0 },
   ac8aHostRendersMidDragBuildNoUnion: 0,

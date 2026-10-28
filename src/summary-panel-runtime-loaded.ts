@@ -27,7 +27,7 @@ import { stableSummaryPlacementSlot, summaryPreferenceKey } from './summary-pane
 import {
   refreshSummaryEntityIndex, type SummaryEntityIndex,
 } from './summary-panel-picker';
-import { floorRecordKeyMemo, physicalFloorFingerprint } from './floor-geometry-key';
+import { cleanFloorFingerprint, floorRecordKeyMemo } from './floor-geometry-key';
 
 const isSummarySystemKey = (value: string): value is SummaryPanelSystemKey =>
   value === 'device_count' || value === 'total_area' || value === 'datetime';
@@ -99,7 +99,7 @@ export class LoadedSummaryPanelRuntime {
    */
   private readonly areaFloors = new Map<string, number | null>();
   /** #769: the floor record key, one fingerprint per floor and epoch (test seam). */
-  private areaKeys = floorRecordKeyMemo(physicalFloorFingerprint);
+  private areaKeys = floorRecordKeyMemo(cleanFloorFingerprint);
   private storageUnavailable = false;
   private clockContext = '';
   private editorRenderer: SummaryPanelEditorRenderer | null = null;

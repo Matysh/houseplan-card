@@ -6576,3 +6576,16 @@ Keep before/after raw reports and their source/harness hashes; existing device,
 ripple, vacuum, radar and recovery smokes remain the observable consumer proof.
 
 The measured #1111 delta is +3 host references (6552→6555) for the per-card projection owner/visibility boundary. The owner-authorized resource baseline therefore moves 6529→6532, preserving its inherited 23-reference gap and unchanged +25 band. The original isolated JS delta was +1411 B (3649075→3650486). After inheriting accepted #1112, the total is 3651091 B: the normal pre-push rejected +2016 B against the old +2000 band. Under the same owner authorization, measured bundleBytes baseline moves 3649075→3651091 (issue comment6467216255); the 2000-B band, timing limits and remaining structural bases stay unchanged. The rejected run is retained as RED.
+
+## Stairs/LED editor demand (#1098)
+
+The exact consumer projection and raw DemandSpaceModels getters are documented
+in [CANVAS](CANVAS.md#stairsled-editor-demand-1098): masonry excludes led_strips,
+stairs and the seven named backdrop placement fields; clean-floor/summary areas
+retain stairs. plan_url, plan_aspect and unknown fields remain significant.
+`node demo/benchmark_led_strips.mjs --editor-gestures --samples=7 --output=report.json`
+runs the paired mounted gesture/commit journey for DPR1/2. Timings are diagnostic;
+AC1–AC3 counter limits are the acceptance thresholds. Separate trusted-pointer
+stairs/LED smokes verify capture, transient raw state and canonical readback.
+The existing v1.82.0 stairs.write and LED.handleMove implementations were read
+before classifying this task as stable-fix.

@@ -29,9 +29,11 @@ interface LiveRuntimeHost {
   _cameraTransition: { active: boolean };
   _deviceDrag?: unknown;
   _editorRuntime?: {
+    readonly stairs?: { readonly dragging: boolean };
     readonly physicalGesture?: { readonly active: boolean };
     readonly backdropGesture?: { readonly active: boolean };
   } | null;
+  _ledEditor?: { readonly dragging: boolean } | null;
   _decorMove?: unknown;
   _decorDraft?: unknown;
   _dtDrag?: unknown;
@@ -118,7 +120,7 @@ export class LiveRuntime {
     return host._pointers.size > 0 || host._cameraTransition.active || !!host._deviceDrag
       || !!host._editorRuntime?.physicalGesture?.active || !!host._decorMove
       || !!host._decorDraft || !!host._dtDrag || !!host._editorRuntime?.backdropGesture?.active || !!host._opDrag
-      || !!host._resize?.dragging;
+      || !!host._resize?.dragging || !!host._editorRuntime?.stairs?.dragging || !!host._ledEditor?.dragging;
   }
   public commit(): void {
     commitHouseplanViewport(this.host, this.active());

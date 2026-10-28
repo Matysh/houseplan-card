@@ -65,6 +65,12 @@ import {
   hoverScenarios, sensorTickScenarios, summarizeCpuProfile, tickCounterFailures,
 } from './performance/sensor-tick-scenarios.mjs';
 
+// #1098: the same LED benchmark entry also measures native vertex editing.
+if (process.argv.includes('--editor-gestures')) {
+  await import('./benchmark_editor_gestures.mjs');
+  process.exit(process.exitCode ?? 0);
+}
+
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const warmupOnly = process.argv.includes('--warmup-only');
 const samples = warmupOnly ? 0 : Math.max(1, Math.min(20, Number(valueArg('samples')) || 7));

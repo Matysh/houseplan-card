@@ -231,4 +231,29 @@ check('Background editor: no LED editor layer or tool', await evaluate(() => {
   return !r.querySelector('[data-hp-led-editor]') && !r.querySelector('[data-tool="led-strip"]') && !r.querySelector('[data-led-handle]');
 }));
 
+// #1098: native capture keeps all thirty vertex moves live; read back the ACK.
+await evaluate(async()=>{const c=window.__card,hp=window.__hpTest;await hp.setMode('devices');
+ await hp.setServerConfig(cfg=>{cfg.spaces[0].led_strips.push({id:'live1098',points:[[.2,.35],[.3,.35],[.4,.35]],marker:null});});
+ c.renderRoot.querySelector('[data-led-select="live1098"]').dispatchEvent(new MouseEvent('click',{bubbles:true,composed:true}));await hp.settled();});
+const liveLedPoint=await evaluate(()=>{const c=window.__card,h=c.renderRoot.querySelector('[data-led-handle="1"]');
+ const p=new DOMPoint(Number(h.getAttribute('cx')),Number(h.getAttribute('cy'))).matrixTransform(c.renderRoot.querySelector('.plan-svg').getScreenCTM());return [p.x,p.y];});
+await page.waitForFunction(()=>!window.__card._modeTransitionBusy&&!window.__card._cameraTransition.active);
+await page.mouse.move(...liveLedPoint);await page.mouse.down();
+await evaluate(async()=>{const c=window.__card;await window.__hpTest.settled();if(!c._ledEditor.dragging)throw new Error('1098 native LED press did not capture');const p={before:{...c._floorCacheBuilds},renders:0,syncs:0,body:c._renderBody,sync:c._deviceContacts.sync};
+ c._renderBody=function(...a){p.renders++;return p.body.apply(this,a);};c._deviceContacts.sync=function(...a){p.syncs++;return p.sync.apply(this,a);};window.__led1098=p;});
+await page.mouse.move(liveLedPoint[0],liveLedPoint[1]+30,{steps:30});
+const ledLive=await evaluate(()=>{const c=window.__card,p=window.__led1098;return {live:p.renders===0&&p.syncs===0,
+ physics:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k]),
+ preview:c._ledEditor.drag.points.map(q=>q.map(n=>n/1000)),raw:c._serverCfg.spaces[0].led_strips.find(s=>s.id==='live1098').points};});
+check('1098 thirty LED moves use live frames without contacts',ledLive.live);
+check('1098 thirty LED moves keep all physical caches',ledLive.physics);
+check('1098 LED raw points stay unchanged until release',ledLive.raw,[[.2,.35],[.3,.35],[.4,.35]]);
+await page.mouse.up();
+const ledFinal=await evaluate(async()=>{const c=window.__card,p=window.__led1098;await window.__hpTest.settled();
+ c._renderBody=p.body;c._deviceContacts.sync=p.sync;const deadline=performance.now()+5000;
+ while((c._saveConfigDebounced.pending()||c._writesPending>0)&&performance.now()<deadline)await new Promise(r=>setTimeout(r,16));await window.__hpTest.settled();
+ return {points:c._serverCfg.spaces[0].led_strips.find(s=>s.id==='live1098').points,
+ physics:['wallUnion','physicalBodies','innerContour','lightBarrier'].every(k=>c._floorCacheBuilds[k]===p.before[k])};});
+check('1098 LED final move survives pointerup and canonical ACK',ledFinal.points,ledLive.preview.map(p=>p.map(n=>Number(n.toFixed(9)))));
+check('1098 LED commit keeps masonry warm',ledFinal.physics);
 await finish(browser);

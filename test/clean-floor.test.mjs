@@ -74,3 +74,23 @@ test('#669 AC1 a room without independent bodies subtracts stairs from the plain
   assert.ok(Math.abs(result.area - plain) <= plain * 1e-9);
   assert.equal(calls.count, 1);
 });
+
+import {DemandSpaceModels} from '../test-build/demand-space-models.js';
+import {cleanFloorFingerprint} from '../test-build/floor-geometry-key.js';
+import {spaceModels} from '../test-build/space-geometry.js';
+test('#1098 raw-model stairs re-key only clean-floor area and agree with a fresh build',()=>{
+ const raw={id:'A',rooms:[{id:'r',poly:[[.1,.1],[.5,.1],[.5,.5],[.1,.5]]}],stairs:[structuredClone(stair)]};
+ const config={spaces:[raw]},models=new DemandSpaceModels(),cache=new Map();let builds=0;
+ const read=(model,store=cache)=>cleanFloorForRoom({room:model.rooms[0],floor:model.rooms[0].poly,space:model,
+   floorKey:()=>cleanFloorFingerprint(config.spaces[0]),resizePreview:false,cache:store,physicalBodies:()=>[],onBuild:()=>builds++});
+ const before=read(models.read(config)[0]).area,physical=models.work.builds;
+ raw.stairs[0].x=.5;raw.stairs[0].y=.5;
+ const current=models.read(structuredClone(config))[0],next=read(current);assert.equal(builds,2);
+ const fresh=read(spaceModels(config)[0],new Map()).area;
+ assert.equal(next.area,fresh);assert.notEqual(next.area,before);assert.equal(models.work.builds,physical);
+ assert.equal(read(current),next);assert.equal(builds,3,'fresh oracle built once; subsequent cached read did not');
+ for(const patch of [{led_strips:[{id:'led'}]},{plan_x:.3,plan_angle:30}]){
+  Object.assign(raw,patch);const model=models.read(structuredClone(config))[0];assert.equal(read(model),next);
+ }
+ assert.equal(builds,3);
+});

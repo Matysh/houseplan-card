@@ -743,3 +743,28 @@ The architectural connection overlay of the **Walls** tool and the planar
 face graph that offers rooms after a closed chain are wall contracts:
 `WALL-THICKNESS.md`, sections «Architectural connection overlay» and «Planar
 wall faces».
+
+## Stairs/LED editor demand (#1098)
+
+Stair previews and LED vertex points belong to the gesture until pointerup;
+`routeHouseplanEditorUpdate` coalesces their paint through the existing live
+editor rAF. Selection/down and the terminal commit keep ordinary host updates.
+Stair cancel/Escape discards the preview without writing or bumping the config
+epoch. A successful stair write uses the existing scalar canonicalization
+before its optimistic frame, so the ACK retains the same clean-floor key.
+
+`physicalSpaceRecord` remains a conservative general projection. The masonry
+consumer (`physicalFloorFingerprint`, also used by demanded physical models,
+bodies, inner contours, contacts and architectural lighting) additionally drops
+only `led_strips`, `stairs`, `plan_x`, `plan_y`, `plan_scale`, `plan_scale_x`,
+`plan_scale_y`, `plan_angle`, `plan_opacity`. `cleanFloorFingerprint` retains
+`stairs`; summary areas use it too. Both retain `plan_url`, `plan_aspect`,
+structural fields and every unknown field/setting. No broad `plan_*` match.
+
+DemandSpaceModels wrappers memoize raw `stairList(raw.stairs)` and raw backdrop
+`{href: raw.plan_url, ...planRect(raw,NORM_W)}` within each read. The eight-floor
+physical LRU can then ignore those fields without serving stale derived data.
+The outer card `_modelCache` still refreshes on the config epoch/server adoption;
+its `_cfgFingerprint` retains backdrop fields. The other model owner is the
+summary runtime: its read wrappers refresh on the observed config revision and
+its area keys retain stairs. No model cache was narrowed beyond its consumer.

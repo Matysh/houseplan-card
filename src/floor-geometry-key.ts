@@ -30,7 +30,7 @@ import { lruRead, lruWrite } from './card-runtime';
 import { lightGeometryFingerprint } from './glow-scene';
 import { roomPoly } from './logic';
 import { contentFingerprint } from './visual-continuity';
-import { physicalSpaceRecord } from './structural-space-record';
+import { physicalSpaceRecord, PHYSICAL_PRESENTATION_FIELDS } from './structural-space-record';
 
 /** The card members the key reads; the card passes itself. */
 export interface FloorKeySource {
@@ -80,8 +80,16 @@ export function floorRecordKeyMemo(
 }
 
 export const physicalFloorFingerprint = (records: unknown): string => contentFingerprint(
-  Array.isArray(records) ? records.map(record => physicalSpaceRecord(record)) : physicalSpaceRecord(records),
+  Array.isArray(records) ? records.map(record => physicalSpaceRecord(record, ...PHYSICAL_PRESENTATION_FIELDS))
+    : physicalSpaceRecord(records, ...PHYSICAL_PRESENTATION_FIELDS),
 );
+
+/** Clean-floor areas consume stair footprints, unlike masonry (#1098). */
+export const cleanFloorFingerprint = (records: unknown): string => {
+  const excluded = PHYSICAL_PRESENTATION_FIELDS.filter(field => field !== 'stairs');
+  return contentFingerprint(Array.isArray(records)
+    ? records.map(record => physicalSpaceRecord(record, ...excluded)) : physicalSpaceRecord(records, ...excluded));
+};
 
 /** A structural reader `spaceId → key`, excluding decor and solar-only room flags,
  * remembered per epoch and per source record.

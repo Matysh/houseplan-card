@@ -343,3 +343,16 @@ test('#814 AC1: the sun key — every input moves it, the cached wedges are the 
   rays(structuredClone(input));
   assert.equal(rays.builds, builds, 'equal inputs in new objects (a server push, an epoch) build nothing');
 });
+
+test('#1098 consumer keys exclude only known presentation inputs',()=>{
+ const base=record('A'),source={_cfgEpoch:0,_renderCfg:{spaces:[base]},_curSpaceCfg:base};
+ const read=floorGeometryKeyReader(source),key=read('A'),light=lightGeometryFingerprint(base,5,1000);
+ for(const field of ['led_strips','stairs','plan_x','plan_y','plan_scale','plan_scale_x','plan_scale_y','plan_angle','plan_opacity']){
+  base[field]={probe:field};source._cfgEpoch++;
+  assert.equal(read('A'),key,field);assert.equal(lightGeometryFingerprint(base,5,1000),light,field);delete base[field];
+ }
+ for(const field of ['plan_url','plan_aspect','unknown_future','wall_segments','partitions','wall_columns','openings','view_box','cell_cm']){
+  const next={...base,[field]:{probe:field}};source._curSpaceCfg=next;source._renderCfg={spaces:[next]};source._cfgEpoch++;
+  assert.notEqual(read('A'),key,field);assert.notEqual(lightGeometryFingerprint(next,5,1000),light,field);
+ }
+});

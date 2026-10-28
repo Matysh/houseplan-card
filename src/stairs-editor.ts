@@ -1,4 +1,5 @@
 import { html, nothing, svg, type TemplateResult } from 'lit';
+import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
 import { FURN_WALL_CELLS } from './furniture-placement';
 import {
   furnitureWallSurfacesFor, type FurnitureWallSurface, type FurnitureWallSurfaceSource,
@@ -45,9 +46,11 @@ type StairDrag = {
   handle: StairHandleSign;
   start: number[];
   original: Stair;
+  current: Stair;
+  preview: boolean;
   before: unknown;
   moved: boolean;
-  /** Wall faces are read once per gesture: each write bumps the epoch that keys their cache. */
+  /** Wall faces are captured once; only the terminal write bumps the epoch. */
   surfaces: readonly FurnitureWallSurface[];
 };
 
@@ -107,6 +110,11 @@ export class StairEditorRuntime {
   public get selected(): string | null { return this.selectedId; }
   public get dialogOpen(): boolean { return this.dialog !== null; }
   public get dragging(): boolean { return this.drag !== null || this.draft !== null; }
+  /** Only a moving preview belongs to the live frame; selection/down keeps its host update. */
+  public get live(): boolean { return !!this.drag?.preview || this.draft !== null; }
+  private get previewStairs(): Stair[] {
+    return this.stairs.map(stair => this.drag?.id === stair.id ? this.drag.current : stair);
+  }
 
   public select(id: string | null): void {
     if (id !== null && !this.stairs.some(stair => stair.id === id)) return;
@@ -157,10 +165,12 @@ export class StairEditorRuntime {
   private write(stairs: Stair[]): void {
     const space = this.owner._curSpaceCfg as { stairs?: Stair[] } | null;
     if (!space) return;
-    if (stairs.length) space.stairs = stairs;
+    // Match the existing persisted scalar precision before the optimistic paint.
+    // The canonical ACK then reuses this clean floor rather than rounding it cold.
+    const canonical = canonicalizeConfigGeometry({ spaces: [{ stairs }] }).spaces[0].stairs;
+    if (canonical.length) space.stairs = canonical;
     else delete space.stairs;
-    // #744: the stairs are part of this floor's record, so the new epoch gives
-    // this floor a new geometry key; other floors keep their clean floors.
+    // Only clean-floor areas consume stairs; the masonry key stays warm (#1098).
     this.owner._cfgEpoch++;
     this.owner._modelCache = null;
     this.owner.requestUpdate();
@@ -384,6 +394,8 @@ export class StairEditorRuntime {
       handle,
       start: this.owner._svgPoint(event as unknown as MouseEvent),
       original: structuredClone(stair),
+      current: structuredClone(stair),
+      preview: false,
       before: this.owner._geometrySnapshot(),
       moved: false,
       surfaces: this.surfaces(),
@@ -423,7 +435,9 @@ export class StairEditorRuntime {
       );
     }
     drag.moved ||= Math.hypot(point[0] - drag.start[0], point[1] - drag.start[1]) > 0.5;
-    this.replace(next);
+    drag.current = next;
+    drag.preview = true;
+    this.owner.requestUpdate();
     return true;
   }
 
@@ -439,15 +453,15 @@ export class StairEditorRuntime {
     const drag = this.drag;
     if (!drag || drag.pid !== event.pointerId) return false;
     this.swallowNextClick();
-    if (cancelled) {
-      this.replace(drag.original);
-    } else if (drag.moved) {
+    this.drag = null;
+    if (!cancelled && drag.moved) {
+      this.replace(drag.current);
       const label = drag.mode === 'resize' ? 'history.stair_resize'
         : drag.mode === 'rotate' ? 'history.stair_rotate' : 'history.stair_move';
       this.owner._recordGeometry(this.owner._t(label), drag.before);
       this.owner._saveConfigDebounced();
     }
-    this.drag = null;
+    this.owner.requestUpdate();
     return true;
   }
 
@@ -462,9 +476,8 @@ export class StairEditorRuntime {
   public undoActiveDrag(): boolean {
     if (this.draft) { this.cancelDraft(); return true; }
     if (!this.drag) return false;
-    const drag = this.drag;
-    this.replace(drag.original);
     this.drag = null;
+    this.owner.requestUpdate();
     return true;
   }
 
@@ -552,7 +565,7 @@ export class StairEditorRuntime {
 
   public renderLayer(): TemplateResult {
     const spaceIds = new Set(this.owner._model.map((item) => item.id));
-    const items = this.stairs.map((stair) => this.renderStair(
+    const items = this.previewStairs.map((stair) => this.renderStair(
       stair, spaceIds, this.inputEnabled && this.selectedId === stair.id, false,
     ));
     const draft = this.draft ? this.renderStair(this.draft.stair, spaceIds, true, true) : nothing;
@@ -566,7 +579,7 @@ export class StairEditorRuntime {
    */
   public renderFrame(view: { w: number; h: number }): TemplateResult | typeof nothing {
     if (!this.inputEnabled) return nothing;
-    const stair = this.draft?.stair ?? this.stairs.find((item) => item.id === this.selectedId);
+    const stair = this.draft?.stair ?? this.previewStairs.find((item) => item.id === this.selectedId);
     if (!stair) return nothing;
     const hr = Math.max(view.w, view.h) * 0.018;
     const kr = hr / 4;

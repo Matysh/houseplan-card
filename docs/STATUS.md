@@ -4,6 +4,8 @@ Task Golden checks (#1114) explicitly select unchanged scenes with byte-identica
 
 Wall-node movement (#1102) skips recounting previous junction violations when the cached baseline matches the current revision, preserving candidate validation and stale-cache fallback.
 
+Stairs and LED vertex drags (#1098) use the existing live editor frame. Stair preview stays outside the stored config until one canonical commit; cancel writes nothing. Masonry caches exclude known LED/stairs/backdrop placement fields, clean-floor areas retain stairs, and lazy floor wrappers read fresh stairs/backdrop from raw records.
+
 Space deletion (#1101) prepares its validated config/layout pair in an executor under the existing write lock, retaining its dependency refusals, rollback and revision/event contract.
 
 Static-card sync (#1112) filters known config/layout revision echoes, combines event bursts in one 200ms window and shares partial layout reads across embedded cards. Virtual-light events retain their immediate update path.

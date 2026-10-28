@@ -8,7 +8,7 @@
  */
 import { nothing, svg, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { physicalSpaceRecord } from './structural-space-record';
+import { physicalSpaceRecord, PHYSICAL_PRESENTATION_FIELDS } from './structural-space-record';
 import { interiorWindowLightPassages } from './interior-window-light';
 import {
   lightPass, resolvedLightSources, selectSpatialGlowSource,
@@ -251,7 +251,7 @@ export function resolveGlowCandidates(input: {
 export function lightGeometryFingerprint(
   rawSpaceConfig: unknown, cellCm: number, gridPitch: number,
 ): string {
-  const geometry = physicalSpaceRecord(rawSpaceConfig, 'led_strips');
+  const geometry = physicalSpaceRecord(rawSpaceConfig, ...PHYSICAL_PRESENTATION_FIELDS);
   return contentFingerprint([geometry, cellCm, gridPitch]);
 }
 

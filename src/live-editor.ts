@@ -30,10 +30,12 @@ interface LiveEditorHost {
   _tool: string;
   _deviceDrag: { id: string } | null;
   _editorRuntime?: {
+    readonly stairs?: { readonly live: boolean; renderLayer(): unknown; renderFrame(view: unknown): unknown };
     readonly properties?: { selection(): unknown; readonly selectedTextId?: string | null; measureGroupText?(root: ParentNode): void };
     readonly physicalGesture?: { readonly active: boolean; readonly drag: { kind: string; id: string; moved: boolean } | null };
     readonly backdropGesture?: { readonly active: boolean; renderFrame(view: unknown): unknown };
   } | null;
+  _ledEditor?: { readonly dragging: boolean; layer(space: SpaceModel): unknown } | null;
   _decorDraft?: unknown;
   _decorMove?: { id: string; selection?: { ids: readonly string[] } } | null;
   _dtDrag?: { id: string } | null;
@@ -113,7 +115,7 @@ const activeEditorGesture = (host: LiveEditorHost): boolean => host._mode !== 'v
   !!host._deviceDrag || !!host._editorRuntime?.physicalGesture?.active
   || !!host._decorDraft || !!host._decorMove || !!host._dtDrag || !!host._editorRuntime?.backdropGesture?.active
   || !!host._opDrag
-  || !!host._resize?.dragging
+  || !!host._resize?.dragging || !!host._editorRuntime?.stairs?.live || !!host._ledEditor?.dragging
 );
 
 /**
@@ -150,7 +152,7 @@ export function routeHouseplanEditorUpdate(
 
 const hide = (state: LiveEditorState, root: ParentNode, selector: string): void => {
   for (const element of root.querySelectorAll<HTMLElement>(selector)) {
-    if (element.closest('[data-hp-live-editor]')) continue;
+    if (element.closest('[data-hp-live-editor], [data-hp-live-stairs]')) continue;
     if (element.style.visibility === 'hidden') continue;
     element.style.visibility = 'hidden';
     state.hidden.push(element);
@@ -160,7 +162,7 @@ const hide = (state: LiveEditorState, root: ParentNode, selector: string): void 
 /** Keep the captured source hittable while only its live copy stays visible. */
 const makeTransparent = (state: LiveEditorState, root: ParentNode, selector: string): void => {
   for (const element of root.querySelectorAll<HTMLElement>(selector)) {
-    if (element.closest('[data-hp-live-editor]')) continue;
+    if (element.closest('[data-hp-live-editor], [data-hp-live-stairs]')) continue;
     if (element.style.opacity === '0') continue;
     element.style.opacity = '0';
     state.transparent.push(element);
@@ -258,6 +260,9 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
   const vb = host._baseVb();
   const view = host._viewOr(vb);
   const measure = host._opMeasureView;
+  if (host._editorRuntime?.stairs?.live) return svg`<g class="hp-live-stairs" aria-hidden="true" pointer-events="none">
+    ${host._editorRuntime.stairs.renderFrame(view)}
+  </g>`;
   if (host._resize?.dragging) {
     const display = host._spaceDisplayForRender();
     const plan = host._resize.plan;
@@ -309,6 +314,10 @@ const editorTemplate = (host: LiveEditorHost): TemplateResult | typeof nothing =
   // the settled scene, and the next live paint takes it again. Both sides draw
   // the same `_alignPoint`, live since this issue; the settled copy left over
   // from a mid-gesture render is hidden by `paintHouseplanEditor`.
+  if (host._ledEditor?.dragging) {
+    const space = host._spaceModel();
+    return space ? svg`<g class="hp-live-led" aria-hidden="true" pointer-events="none">${host._ledEditor.layer(space)}</g>` : nothing;
+  }
   return svg`<g class="hp-live-devices" aria-hidden="true" pointer-events="none">
     ${host._renderAlignGuides()}
   </g>`;
@@ -335,7 +344,7 @@ const makeDecorShapeTransparent = (
 ): void => {
   const selected = new Set(ids);
   for (const element of root.querySelectorAll<HTMLElement>('.decorlayer [data-hp="decor"]')) {
-    if (element.closest('[data-hp-live-editor]') || !selected.has(element.dataset.id || '')) continue;
+    if (element.closest('[data-hp-live-editor], [data-hp-live-stairs]') || !selected.has(element.dataset.id || '')) continue;
     if (element.style.opacity === '0') continue;
     element.style.opacity = '0';
     state.transparent.push(element);
@@ -347,7 +356,7 @@ const makeMovingOpeningsTransparent = (
 ): void => {
   const moving = new Set(ids);
   for (const element of root.querySelectorAll<HTMLElement>('.openinglayer [data-hp="opening"]')) {
-    if (!element.closest('[data-hp-live-editor]') && moving.has(element.dataset.id || '')) {
+    if (!element.closest('[data-hp-live-editor], [data-hp-live-stairs]') && moving.has(element.dataset.id || '')) {
       element.style.opacity = '0';
       state.transparent.push(element);
     }
@@ -356,7 +365,7 @@ const makeMovingOpeningsTransparent = (
 
 const dim = (state: LiveEditorState, root: ParentNode, selector: string): void => {
   for (const element of root.querySelectorAll<HTMLElement>(selector)) {
-    if (element.closest('[data-hp-live-editor]')) continue;
+    if (element.closest('[data-hp-live-editor], [data-hp-live-stairs]')) continue;
     element.style.opacity = '0.35';
     state.dimmed.push(element);
   }
@@ -370,6 +379,10 @@ export function paintHouseplanEditor(value: object): void {
   const state = stateOf(host);
   restore(state);
   paintDevice(host, root);
+  // Stairs remain beneath masonry/glow; only their selection frame belongs on top.
+  const stairsTarget = root.querySelector<SVGElement>('[data-hp-live-stairs]');
+  if (stairsTarget) render(host._mode === 'plan' && host._editorRuntime?.stairs?.live
+    ? host._editorRuntime.stairs.renderLayer() : nothing, stairsTarget);
   const target = root.querySelector<SVGElement>('[data-hp-live-editor]');
   if (!target) return;
   // #521: the settled copy of the guides layer goes transparent for the whole
@@ -382,6 +395,10 @@ export function paintHouseplanEditor(value: object): void {
   makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');
   makeTransparent(state, root, '.hp-prop-selection');
   if (host._mode === 'plan') {
+    if (host._editorRuntime?.stairs?.live) {
+      hide(state, root, '.hp-stairs-layer');
+      hide(state, root, '.hp-stair-frame');
+    }
     if (host._opDrag) hide(state, root, '.wallbodies');
     if (host._resize?.dragging) {
       dim(state, root, '.wallbodies');
@@ -395,6 +412,7 @@ export function paintHouseplanEditor(value: object): void {
     if (activeId) makeDecorShapeTransparent(state, root, host._decorMove?.selection?.ids ?? [activeId]);
     makeTransparent(state, root, '.dtframe, .backdropframe');
   }
+  if (host._mode === 'devices' && host._ledEditor?.dragging) hide(state, root, '.led-editor');
   render(svg`${editorTemplate(host)}${host._editorRuntime?.properties?.selection() ?? nothing}`, target);
   if (host._mode === 'decor') {
     // Full host renders hand preview ownership back to the settled layer.
@@ -482,6 +500,8 @@ export function commitHouseplanEditor(value: object, restoredDeviceId?: string):
   const target = (host.renderRoot as ParentNode | undefined)
     ?.querySelector<SVGElement>('[data-hp-live-editor]');
   if (target) render(nothing, target);
+  const stairsTarget = host.renderRoot?.querySelector<SVGElement>('[data-hp-live-stairs]');
+  if (stairsTarget) render(nothing, stairsTarget);
   const htmlTarget = (host.renderRoot as ParentNode | undefined)
     ?.querySelector<HTMLElement>('[data-hp-live-editor-html]');
   if (htmlTarget) {

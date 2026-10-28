@@ -184,6 +184,8 @@ export class LedStripEditor {
   private spaceId = '';
   private bodyCache: { key: string; bodies: PlacementBodies; guides: Pt[][] } | null = null;
 
+  public get dragging(): boolean { return this.drag !== null; }
+
   constructor(private readonly host: LedEditorHost) {
     void LED_LANGUAGE_RUNTIME.ensure(this.lang).then(() => host.requestUpdate());
   }
