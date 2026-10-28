@@ -337,7 +337,8 @@ function runtimeFixture(t) {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => { writes.push([key, value]); values.set(key, value); },
   } });
-  const key = summaryLocalKey({ userId: 'alice', path: path.pathname, host: 'panel', slot: 'houseplan-card' });
+  // #1113 main-panel aliases persist at their registered root; route changes below stay real.
+  const key = summaryLocalKey({ userId: 'alice', path: '/dashboard', host: 'panel', slot: 'houseplan-card' });
   const saved = JSON.stringify({ version: 1, show: true, icon_scale: 1.85, font_scale: 1.35 });
   values.set(key, saved);
   const host = {

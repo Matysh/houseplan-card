@@ -270,7 +270,7 @@ test('в корпусе настоящего репозитория все canon
   assert.deepEqual(golden, [
     'demo/golden/decor-multiselect.mjs',
     'demo/golden/device-battery.mjs', 'demo/golden/device-contacts.mjs',
-    'demo/golden/device-offline.mjs', 'demo/golden/harness.mjs',
+    'demo/golden/device-offline.mjs', 'demo/golden/external-screens.mjs', 'demo/golden/harness.mjs',
     'demo/golden/interior-window-light.mjs',
     'demo/golden/marker-alerts.mjs',
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',

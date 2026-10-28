@@ -57,3 +57,22 @@ Exact post-rebase protected push/CI/CODE evidence belongs to the handoff.
 E2E verdict **надо**: real HA admin/mobile/viewer kiosk journeys and independent
 profile clients belong in the companion repository before beta. This native
 fixture is synthetic; a skipped installed-version gate cannot establish PASS.
+
+## First protected push refusal and addressed correction
+
+The first normal push of be145ca5 was refused after266s: core line ceilings,
+two matrix-version inventories, the closed new dialog kind, the Golden input
+corpus, a panel-root local-preference fixture and provenance fixture assuming
+that the matrix's first scene already has a baseline. No branch was published.
+The old presentation/authority/negative assertions are retained; their saved
+main-panel preference now uses the registered root. New Golden entries append
+after existing entries; no accepted first scene is replaced. Closed inventories
+are extended to the actual new kind/helper; matrix oracles use105. The core
+ceilings carry only measured own35/7 lines, retaining inherited28/46 gaps and
+the50-line band (see DEVELOPMENT). All131 focused tests across the seven
+affected suites PASS/0skip in3.21s.
+
+Moving the new matrix entries changes the frontend/build fingerprint. The4d8f
+local visual captures above remain prior-input evidence; final normal build and
+exact-source CI must prove the new material before acceptance. No source
+behavior, visual content, negative oracle or guard was weakened.
