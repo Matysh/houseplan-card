@@ -13352,8 +13352,8 @@ const MUTANT_DEFINITIONS = [
     because: '#660 AC1: wide-screen inline summary actions remain usable in all three editors',
     patches: [{
       file: 'src/summary-panel-runtime-loaded.ts',
-      find: "    if (kiosk && this.host._mode !== 'view') return nothing;",
-      replace: "    if (this.host._mode !== 'view') return nothing;",
+      find: "    if (kiosk && (this.host._mode !== 'view' || this.host._externalScreen?.controls === false)) return nothing;",
+      replace: "    if (this.host._mode !== 'view' || kiosk && this.host._externalScreen?.controls === false) return nothing;",
     }],
   },
   {
@@ -20597,8 +20597,8 @@ const MUTANT_DEFINITIONS = [
     because: '#780 r1 H1: an ordinary save without the unknown field keeps the stored shapes; only an explicit list deletes',
     patches: [{
       file: 'custom_components/houseplan/validation.py',
-      find: '    preserve_summary_panel_namespace(candidate, previous)\n    preserve_led_strips(candidate, previous)',
-      replace: '    preserve_summary_panel_namespace(candidate, previous)',
+      find: '    preserve_summary_panel_namespace(candidate, previous)\n    preserve_external_screens_namespace(candidate, previous)\n    preserve_led_strips(candidate, previous)',
+      replace: '    preserve_summary_panel_namespace(candidate, previous)\n    preserve_external_screens_namespace(candidate, previous)',
     }],
   },
   {
@@ -22257,7 +22257,110 @@ const historyOptionalSlot1117Cases = [
     patches:[{file:'custom_components/houseplan/vacuum_history.py',find:'matched[route["id"]] = route',replace:'if route["calibration"] is not None: matched[route["id"]] = route'}]},
 ];
 
-export const MUTANTS = [...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+const externalScreens1113Cases = [
+  { id: 'screen-constructor-accepts-retired-session-1113',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens.test.mjs',
+    because: '#1113: a nested constructor cannot mutate a replacement General settings session. Registered only; execution belongs to nightly.',
+    patches: [{file:'src/editors/external-screens.ts',find:"&& dialogSession(this.host, 'settings') === d.session",replace:'&& true'}] },
+  {
+    "id": "screen-retired-number-reissued-1113",
+    "guard": "python -m pytest tests_backend/test_external_screens.py -q",
+    "because": "#1113: A retired screen link cannot target a newly created profile. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "custom_components/houseplan/validation.py",
+        "find": "if before is None and screen[\"id\"] < old.get(\"next_id\", 1):",
+        "replace": "if False:"
+      }
+    ]
+  },
+  {
+    "id": "screen-old-writer-erases-namespace-1113",
+    "guard": "python -m pytest tests_backend/test_external_screens.py -q",
+    "because": "#1113: An older ordinary writer must preserve the accepted screen namespace. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "custom_components/houseplan/validation.py",
+        "find": "    preserve_external_screens_namespace(candidate, previous)",
+        "replace": "    # omitted preservation"
+      }
+    ]
+  },
+  {
+    "id": "screen-changed-broken-space-accepted-1113",
+    "guard": "python -m pytest tests_backend/test_external_screens.py -q",
+    "because": "#1113: Only unchanged dangling references survive an ordinary write. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "custom_components/houseplan/validation.py",
+        "find": "if screen != before and screen[\"space\"] is not None and screen[\"space\"] not in spaces:",
+        "replace": "if False:"
+      }
+    ]
+  },
+  {
+    "id": "screen-mixed-event-claims-patch-1113",
+    "guard": "python -m pytest tests_backend/test_external_screens.py -q",
+    "because": "#1113: Mixed config changes cannot be represented as a complete profile-only event. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "custom_components/houseplan/validation.py",
+        "find": "    if before == after:\n        event[\"external_screens_update\"]",
+        "replace": "    if True:\n        event[\"external_screens_update\"]"
+      }
+    ]
+  },
+  {
+    "id": "screen-url-loses-field-priority-1113",
+    "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens.test.mjs",
+    "because": "#1113: Explicit URL values precede every profile field. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "src/external-screens.ts",
+        "find": "return this.result = { ...result, ...route.overrides };",
+        "replace": "return this.result = { ...route.overrides, ...result };"
+      }
+    ]
+  },
+  {
+    "id": "screen-event-ignores-exact-base-1113",
+    "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens.test.mjs",
+    "because": "#1113: Replay and missed-predecessor events require the ordinary authoritative reload. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "src/external-screens.ts",
+        "find": "|| update.base_rev !== currentRev || event.rev !== currentRev + 1)",
+        "replace": "|| false)"
+      }
+    ]
+  },
+  {
+    "id": "screen-only-candidate-allows-geometry-1113",
+    "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/external-screens.test.mjs",
+    "because": "#1113: The narrow adoption profile must preserve every non-settings body identity. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "src/external-screens.ts",
+        "find": "return equal(a,b,'settings') && !!sa",
+        "replace": "return true && !!sa"
+      }
+    ]
+  },
+  {
+    "id": "screen-idle-fits-under-pointer-1113",
+    "guard": "npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/kiosk-carousel.test.mjs",
+    "because": "#1113: Idle fit cannot change the camera while a pointer owns a gesture. Registered only; execution belongs to nightly.",
+    "patches": [
+      {
+        "file": "src/kiosk-carousel.ts",
+        "find": "|| this.clock.now() < current.pausedUntil || !current.gesturesIdle",
+        "replace": "|| this.clock.now() < current.pausedUntil || false"
+      }
+    ]
+  }
+];
+
+export const MUTANTS = [...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

@@ -448,6 +448,8 @@ const LS_KEY = 'houseplan_card_layout_v1';
 const LS_CFG = 'houseplan_card_cfg_v1'; // cache of the server config+layout for instant rendering
 const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space only; editor sessions never survive page navigation
+import { ExternalScreenResolver, externalScreenEventCandidate, type ResolvedScreen } from './external-screens';
+
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const POINTER_HOVER_TARGET_SELECTOR = 'hp-dialog, hp-help, hp-color-opacity, hp-device-preview, hp-settings-select, hp-zigbee-topology-settings';
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
@@ -917,6 +919,14 @@ export class HouseplanCard extends LitElement {
   }
   public hass?: any;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
+  private readonly _externalScreenResolver = new ExternalScreenResolver();
+  private get _externalScreen(): ResolvedScreen {
+    return this._externalScreenResolver.read(this._settings.external_screens, this.panelHost ? this._routeKiosk : null);
+  }
+  private get _effectiveKioskScale() {
+    const screen = this._externalScreen;
+    return { icon: screen.icon_scale ?? this._kioskScale.icon, font: screen.font_scale ?? this._kioskScale.font };
+  }
   private _routeKiosk: RouteKiosk = NO_ROUTE_KIOSK;
   private _routeKioskPending: RouteKiosk | null = null; private _routeKioskGeneration = 0;
   public get routeKiosk(): RouteKiosk { return this._routeKiosk; }
@@ -1588,6 +1598,11 @@ export class HouseplanCard extends LitElement {
    * positional index until the integration has answered authoritatively.
    */
   private _fixedFloorState(models = this._model, authoritative = this._loadOk): FixedFloorState {
+    if (this.panelHost && this._routeKiosk.enabled && this._routeKiosk.position === null) {
+      const screen = this._externalScreen;
+      if (this._routeKiosk.profile && !authoritative) return { kind: 'pending', value: this._routeKiosk.profile };
+      if (screen.space && models.some(model => model.id === screen.space)) return { kind: 'valid', id: screen.space, source: 'id' };
+    }
     return resolvePresentationFloor(this.panelHost ? this._routeKiosk : null,
       models.map((space) => space.id), authoritative,
       !!this._config && Object.prototype.hasOwnProperty.call(this._config, 'floor'), this._config?.floor);
@@ -2261,6 +2276,7 @@ export class HouseplanCard extends LitElement {
   /** #51: custom-image protocol capability from config/get; fail closed. */
   private _haDecorAssetsApi: number | null = null;
   private _haSummaryPanelApi: number | null = null;
+  private _haExternalScreensApi: number | null = null;
   private _haRadarStage1Api: number | null = null;
   private _haWallNodeMoveApi: number | null = null;
   private _haWallNodeDeleteApi: number | null = null;
@@ -2275,7 +2291,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; glowRadiusInput: string; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; northDegInput: string; bgMode: 'static' | 'daynight'; sunRays: boolean; sunRayOrigin: SunRayOrigin;
-    showRoomTooltip: boolean; showLqi: boolean; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; busy: boolean;
+    showRoomTooltip: boolean; showLqi: boolean; deviceBattery: import('./device-battery-settings').DeviceBatteryMode; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings; radarShowLive: boolean; volumetricView: boolean; moon: boolean; externalScreens?: unknown; busy: boolean;
   } | null = null;
   private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
@@ -2587,7 +2603,8 @@ export class HouseplanCard extends LitElement {
   private readonly _kioskCarousel = new KioskCarousel({
     state: () => ({ connected: this.isConnected,
       intervalMs: this._kiosk && !this._hasFixedFloor && this._model.length > 1
-        ? Math.max(0, Number(this._config?.cycle) || 0) * 1000 : 0,
+        ? Math.max(0, this._externalScreen.cycle ?? (Number(this._config?.cycle) || 0)) * 1000 : 0,
+      idleMs: this._kiosk ? (this._externalScreen.idle ?? 0) * 1000 : 0,
       pausedUntil: this._cyclePausedUntil,
       ...cardInteractionIdleSnapshot(this as unknown as VersionRecoveryCardPort),
     }),
@@ -3996,7 +4013,7 @@ export class HouseplanCard extends LitElement {
     if (fixed.kind !== 'absent') return { id: null, source: 'none' };
     const recoverySpace = this._recoveryViewport?.space;
     const restoreRecovery = this._kiosk && this._recoveryViewport?.key === this._kioskRecoveryKey()
-      && nonCarouselKiosk(this._config?.cycle, false, models.length)
+      && nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, false, models.length)
       && !!recoverySpace && models.some((space) => space.id === recoverySpace);
     return resolveInitialSpace({
       spaceIds: models.map((space) => space.id),
@@ -4128,7 +4145,7 @@ export class HouseplanCard extends LitElement {
     const memo = this._recoveryViewport; this._recoveryViewport = null;
     if (!memo || memo.key !== this._kioskRecoveryKey() || !this._kiosk || this._mode !== 'view' || memo.space !== this._space
         || !this._model.some((space) => space.id === memo.space)
-        || !nonCarouselKiosk(this._config?.cycle, this._hasFixedFloor, this._model.length)) return false;
+        || !nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, this._hasFixedFloor, this._model.length)) return false;
     this._zoom = memo.zoom; this._view = { ...memo.view };
     this._applyView(memo.zoom, memo.view.x + memo.view.w / 2, memo.view.y + memo.view.h / 2);
     return true;
@@ -4136,7 +4153,7 @@ export class HouseplanCard extends LitElement {
   /** One patchable seam shared by trusted manual and guarded automatic reload. */
   private _reloadDocument(automatic = false): void {
     if (this._kiosk && this._mode === 'view' && this._view
-        && nonCarouselKiosk(this._config?.cycle, this._hasFixedFloor, this._model.length)) {
+        && nonCarouselKiosk(this._externalScreen.cycle ?? this._config?.cycle, this._hasFixedFloor, this._model.length)) {
       let saved = false;
       try { saved = saveKioskViewport(this.ownerDocument.defaultView?.sessionStorage ?? null,
         this._kioskRecoveryKey(), { space: this._space, zoom: this._zoom, view: this._view }); } catch { /* storage unavailable */ }
@@ -4334,7 +4351,7 @@ export class HouseplanCard extends LitElement {
   private readonly _hiddenDevicePreference = new HiddenDevicePreference();
   private readonly _hiddenDeviceRoster = new HiddenDeviceRoster<DevItem>();
   private get _displayDevices(): readonly DevItem[] {
-    return this._hiddenDeviceRoster.read(this._devices, this._showHidden, this._cfgEpoch);
+    return this._hiddenDeviceRoster.read(this._devices, this._externalScreen.hidden_devices ?? this._showHidden, this._cfgEpoch);
   }
 
   private get _showAll(): boolean {
@@ -4829,6 +4846,19 @@ export class HouseplanCard extends LitElement {
         // otherwise the debounced write reads a config that this reload has
         // already replaced, and the user's edit vanishes (audit L2).
         const observedRev = Number(ev?.data?.rev ?? -1);
+        const previous = this._serverCfg;
+        const candidate = this.panelHost && this._routeKiosk.enabled && this._loadOk
+          && !this._cfgWriting && !this._saveConfigDebounced.pending()
+          ? externalScreenEventCandidate(previous, this._cfgRev, ev?.data) : null;
+        if (candidate) {
+          const base = this._cfgRev;
+          const current = () => ownsContext() && this._serverCfg === previous && this._cfgRev === base
+            && !this._cfgWriting && !this._saveConfigDebounced.pending();
+          const fallback = () => { if (ownsContext() && observedRev > this._cfgRev) void this._reloadConfigOnly(false, observedRev); };
+          void this._adoptAuthoritative({ cfgResp: candidate, reason: 'external-screens-event', profile: 'screen-event', isCurrent: current })
+            .then(result => { if (result.status !== 'adopted') fallback(); }, fallback);
+          return;
+        }
         if (observedRev !== this._cfgRev) void this._reloadConfigOnly(false, observedRev);
       },
     );
@@ -6561,8 +6591,8 @@ export class HouseplanCard extends LitElement {
       space, devices: devs, openings: this._openingsR, display: disp,
       structure: structural.geometry, camera: structural.camera,
       iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
-      kioskIconScale: this._mode === 'view' ? this._kioskScale.icon : 1,
-      kioskFontScale: this._mode === 'view' ? this._kioskScale.font : 1,
+      kioskIconScale: this._mode === 'view' ? this._effectiveKioskScale.icon : 1,
+      kioskFontScale: this._mode === 'view' ? this._effectiveKioskScale.font : 1,
       positionOf: (device) => this._pos(device),
       presentationOf: (device, withLqi) => this._devicePresentation(device, withLqi),
       labelPositionOf: (room, spaceId) => this._labelPos(room, spaceId),
@@ -6733,7 +6763,7 @@ export class HouseplanCard extends LitElement {
     return this._view && this._view.w ? this._view : fitView(vb, this._stageAspect(vb));
   }
 
-  private get _rotation() { return devicePlanRotation.get(this._space, this._config?.rotation, this._kiosk); }
+  private get _rotation() { return devicePlanRotation.get(this._space, this._externalScreen.rotation ?? this._config?.rotation, this._kiosk); }
   private readonly _rotationChanged = (event: Event): void => {
     if (event instanceof StorageEvent) {
       if (event.key !== PLAN_ROTATION_STORAGE && event.key !== null) return;
@@ -10967,11 +10997,15 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderRulesDialog();
   }
 
-  private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void { this._summary?.saveScale(patch); }
+  private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void {
+    this._summary?.saveScale({ ...(this._externalScreen.icon_scale === undefined && patch.icon !== undefined ? { icon: patch.icon } : {}),
+      ...(this._externalScreen.font_scale === undefined && patch.font !== undefined ? { font: patch.font } : {}) });
+  }
 
   /** Per-SCREEN size settings (wall tablets differ) — stored locally. */
   private _renderKioskDialog(): TemplateResult {
-    const k = this._kioskScale;
+    const k = this._effectiveKioskScale;
+    const locked = { icon: this._externalScreen.icon_scale !== undefined, font: this._externalScreen.font_scale !== undefined };
     const row = (key: 'icon' | 'font', label: string) => {
       const value = Math.round(k[key] * 100);
       const input = (event: Event) => {
@@ -10981,8 +11015,9 @@ export class HouseplanCard extends LitElement {
       return html`<label>${label}</label>
         <div class="colorrow">
           <input type="range" min="50" max="300" step="5" .value=${String(value)}
-            @input=${input} aria-label=${label} />
+            @input=${input} aria-label=${label} ?disabled=${locked[key]} />
           <span class="opv">${value}%</span>
+          ${locked[key] ? html`<span class="rhint">${this._t('kiosk.profile_locked')}</span>` : nothing}
         </div>`;
     };
     return html`<hp-dialog .hass=${this.hass} data-kind="kiosk" .title=${this._t('kiosk.title')} icon="mdi:tablet"
@@ -10993,7 +11028,7 @@ export class HouseplanCard extends LitElement {
           ${row('font', this._t('kiosk.font_scale'))}
         </div>
         <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this._t('gs.reset')}</button>
+          <button class="btn ghost" ?disabled=${locked.icon && locked.font} @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this._t('gs.reset')}</button>
           <span class="spacer"></span>
           <button class="btn on" data-hp="dialog-cancel" @click=${() => (this._kioskDialog = false)}>${this._t('btn.close')}</button>
         </div>
@@ -11623,7 +11658,7 @@ export class HouseplanCard extends LitElement {
                  space-card, so the two renderers agree. The compatibility
                  base is resolved before `iconCqw`; only the per-device and
                  kiosk multipliers still feed --dev-size. */}
-          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._mode === 'view' ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._kioskScale.font : 1}">
+          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._mode === 'view' ? this._effectiveKioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._mode === 'view' ? this._effectiveKioskScale.font : 1}">
             ${renderRadarLive(
               [...this._radarLive.frames.values()].filter((frame) => {
                 const marker = this._serverCfg?.markers.find((item) => item.id === frame.marker_id);

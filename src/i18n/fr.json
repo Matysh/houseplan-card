@@ -1354,5 +1354,6 @@
   "view.menu_foreign": "L’entité appartient à un autre appareil.",
   "view.menu_disabled": "L’appareil ou l’entité est désactivé dans Home Assistant.",
   "view.menu_unverified": "L’appartenance dans Home Assistant n’a pas été confirmée.",
-  "backup.error.invalid_alert_sources": "Conditions d’alarme de l’appareil non valides."
+  "backup.error.invalid_alert_sources": "Conditions d’alarme de l’appareil non valides.",
+  "kiosk.profile_locked": "Défini par un profil écran ou un lien"
 }

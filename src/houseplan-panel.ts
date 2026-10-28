@@ -3,7 +3,8 @@ import { parseRouteKiosk } from './panel-route-kiosk';
 import type { RouteKiosk } from './route-kiosk';
 
 const sameRouteKiosk = (a: RouteKiosk, b: RouteKiosk): boolean =>
-  a.enabled === b.enabled && a.position === b.position;
+  a.enabled === b.enabled && a.position === b.position && a.profile === b.profile
+    && JSON.stringify(a.overrides ?? {}) === JSON.stringify(b.overrides ?? {});
 
 interface PanelRoute { prefix?: string; path?: string; }
 

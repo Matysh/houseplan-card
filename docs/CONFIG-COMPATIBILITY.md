@@ -1797,3 +1797,15 @@ carrier semantics, changed thickness, removed/replaced carriers and opening
 host/fit/jamb checks retain the complete original proof. Ordinary config/set
 does not acquire this Optimize exception. Paired revisions, intent/recovery and
 one-deep Undo are unchanged; no automatic Optimize or migration runs on read.
+
+## External screens namespace (#1113)
+
+`settings.external_screens` is optional. Absence means no profiles and opening settings creates no write. Version1 is `{version:1,next_id,screens:[...]}` with at most20 profiles. Each profile has a positive safe-integer `id`, stable space ID or `null`, rotation0/90/180/270, integer cycle/idle0–3600s, summary/hidden_devices `local|show|hide`, icon_scale/font_scale `null` or0.5–3 in0.05 steps, and boolean controls. Names and credentials are not stored.
+
+IDs are durable links: they are unique, below next_id, never reused, and ordinary writes cannot decrease next_id or introduce a previously retired number. New/changed profiles require an existing referenced space; unchanged dangling profiles survive and warn in the form. Old ordinary writers that omit the namespace preserve the accepted one before normalization. Version>1 remains opaque and bounded to128KiB, survives losslessly, and is inert in this frontend. The form refuses editing that future namespace. Full import/restore carries its source namespace as-is and does not inherit the old installation counter. Store/model versions stay unchanged.
+
+The support projection keeps only typed numbers, booleans/enumerations and pseudonymized space identity; unknown v1 fields are omitted, future namespaces report unsupported_version. `external_screens_api:1` is a runtime config/get capability, never persisted. Without it the UI asks to update/restart the backend.
+
+The existing config-updated event may additionally carry `external_screens_update:{version:1,base_rev,value}` only after a durable ordinary write proved that this namespace was the sole config delta. A loaded main-panel kiosk can adopt an exact-successor patch through the common adoption owner, retaining all other body identities and server capabilities. Unknown/missing/mixed/stale/gapped events and pending writers use ordinary config reload. This is additive: old clients still observe rev and reload; no endpoint, listener, persisted event ledger or alternate writer is added.
+
+Introduced2026-10-28 by#1113; no reader removal or compatibility deadline is introduced.

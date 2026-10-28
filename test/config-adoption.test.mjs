@@ -640,3 +640,21 @@ test('#843: adoptionEpoch moves on every identity change except our own accepted
   step('harness revision seam', () => adoption.seedIdentity({ configRev: 9 }), true);
   step('harness layout seam', () => adoption.seedIdentity({ layoutRev: 9 }), false);
 });
+
+test('#1113 exact profile-only adoption retains capabilities, virtual light values and unrelated body identities', async () => {
+  const before=cfg('One',{markers:[{id:'virtual-lamp',binding:'virtual'}]});
+  const adoption=adoptedWith(before,7), host=hostStub(adoption);
+  host._virtualLights=virtualLightSnapshot({rev:4,config_rev:7,off:['virtual-lamp']},7);
+  host._serverCanWrite=false;host._canOptimizeUndo=true;host._undoKind='import';
+  const next={...adoption.config,settings:{...adoption.config.settings,external_screens:{version:1,next_id:1,screens:[]}}};
+  const result=await adoptAuthoritativeGated(host,{cfgResp:{config:next,rev:8},reason:'external-screens-event',profile:'screen-event'});
+  assert.equal(result.status,'adopted');assert.equal(adoption.config.spaces,before.spaces);assert.equal(adoption.config.markers,before.markers);
+  assert.equal(host.calls.includes('adoptConfigCapabilities'),false);assert.equal(host._serverCanWrite,false);
+  assert.deepEqual([...host._virtualLights.off],['virtual-lamp']);assert.equal(host._virtualLights.rev,4);assert.equal(host._virtualLights.configRev,8);
+  assert.equal(host._canOptimizeUndo,false);assert.equal(host._undoKind,null);
+  assert.equal(host.calls.includes('cacheSnapshot'),true);
+  assert.equal((await adoptAuthoritativeGated(host,{cfgResp:{config:next,rev:8},reason:'external-screens-event',profile:'screen-event'})).status,'superseded','replayed revision cannot enter the narrow event profile');
+  const unsafe={...next,spaces:structuredClone(next.spaces)};
+  assert.equal((await adoptAuthoritativeGated(host,{cfgResp:{config:unsafe,rev:9},reason:'external-screens-event',profile:'screen-event'})).status,'superseded');
+  assert.equal(adoption.config,next);
+});

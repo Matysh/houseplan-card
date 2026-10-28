@@ -452,7 +452,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // (+3544 B). Consumer dependency keys, lazy floor metadata and owner fences
 // belong to initial View. Carry only this task delta; retain the inherited
 // 457-B excess, 2000-B band and absolute wall. Timing limits are unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 356_544;
+// #1113 measured own delta against accepted502/frozen5bad:357956→359693B (+1737).
+// Carry only that cost under the owner's resource-limit authorization; inherited
+// excess1412B, band2000B and absolute387200B wall remain unchanged.
+export const INITIAL_VIEW_GZIP_CEILING = 358_281;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -883,7 +886,9 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // #1097 after accepted #1098/dev4bb5:375914 ->378530 B gzip (+2616).
 // Owner-authorized own-cost carry preserves inherited691-B excess and the
 // unchanged2000-B band. Frozen donor corpus and own patch are verified.
-export const LAZY_EDITOR_GZIP_CEILING = 377_839;
+// #1113 matched378894→382289B (+3395 own bytes); preserve inherited1055B
+// excess and the same2000B band. No timing or behavioral AC is relaxed.
+export const LAZY_EDITOR_GZIP_CEILING = 381_234;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**

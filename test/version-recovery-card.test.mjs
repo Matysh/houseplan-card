@@ -196,3 +196,12 @@ test('#894 enlarged non-carousel recovery changes only the zoom predicate', () =
     ['layoutWritesIdle', { _dirtyPos: pending(1) }], ['interactionPauseElapsed', { _cyclePausedUntil: Date.now() + 60000 }],
   ]) assert.equal(cardVersionReloadSafetySnapshot(safeHost({ ...enlarged, ...overrides }))[field], false, field);
 });
+
+test('#1113 external-screen editing is a literal config/get capability, never a saved namespace grant',()=>{
+  const host={_syncVersionRecovery(){}};
+  adoptCardConfigCapabilities(host,{external_screens_api:1});assert.equal(host._haExternalScreensApi,1);
+  for(const value of [undefined,0,2,true,'1',null]){
+    adoptCardConfigCapabilities(host,{external_screens_api:value,config:{settings:{external_screens:{version:1,next_id:1,screens:[]}}}});
+    assert.equal(host._haExternalScreensApi,null);
+  }
+});

@@ -6680,3 +6680,13 @@ case selects the older generated cleanup and asserts its points/record/route,
 one provider read, zero live reads and no Store/service side effects. Existing
 ACL and held-read tests remain in the same targeted suite. Synthetic provider
 and registered HA endpoint evidence do not claim a new installed-device test.
+
+#1113 resource accounting (29.10.2026): the accepted502 frontend/build corpus
+(569 paths) equals the frozen5bad donor. The matched candidate costs+21527 raw
+dist bytes including the manifest, +1737 initial View gzip and+3395 lazy editor
+gzip; hostRefs+43 and portMembers+2. These own deltas alone carry their existing
+references under the owner's resource-limit authorization. Inherited raw1431B,
+initial1412B, editor1055B, hostRefs24 and portMembers2 gaps, all bands and the
+absolute initial wall remain unchanged. The pure URL parser stays in the thin
+panel leaf: importing a named parser from the shared card resolver violates the
+stable panel side-effect import contract and is not a budget remedy.

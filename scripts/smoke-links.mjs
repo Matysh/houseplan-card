@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/external-screens.ts', 'src/editors/external-screens.ts'],
+    smokes: ['smoke_external_screens.mjs'],
+    because: '#1113: native outer/nested settings, actual panel URL entry and two independent consumers observe the shared profile namespace and exact-base WebSocket delta without assigning private product state.',
+  },
+  {
     symbols: ['OpeningDragWalls', 'renderOpeningDragGeometry', 'openingDragHostBounds'],
     smokes: ['smoke_opening_drag.mjs', 'smoke_partition_openings_preview.mjs'],
     because: '#1097: trusted wall/partition opening input observes actual aperture/shoulder ink, saved wire arrays, neighbour reuse and cancellation. Real viewport changes exercise normal/live ownership transfer without calling these local geometry helpers.',

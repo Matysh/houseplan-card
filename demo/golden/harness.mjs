@@ -1,3 +1,4 @@
+import { addExternalScreenFixture, prepareExternalScreens } from './external-screens.mjs';
 import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
@@ -219,6 +220,7 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
+  if (scenario.externalScreens) addExternalScreenFixture(fixture, scenario);
   if (scenario.decorMultiselect) addDecorMultiselectFixture(fixture,scenario);
   if (scenario.uiLab1081) addUiLab1081Fixture(fixture, scenario);
   if (scenario.uiKit1051) {
@@ -1199,6 +1201,7 @@ export async function prepareGoldenScenario(page, scenario) {
           can_write: scenario.canWrite !== false,
           ...(scenario.nodeMenuTool ? { wall_node_move_api: 1, wall_node_delete_api: 1 } : {}),
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
+          ...(scenario.externalScreens?{external_screens_api:1,summary_panel_api:1}:{}),
           ...(scenario.directLqi ? { zigbee_lqi_api: 1 } : {}),
           ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
             ? { integration_version: scenario.integrationVersion } : {}),
@@ -3086,6 +3089,7 @@ export async function prepareGoldenScenario(page, scenario) {
     page, fixture.windowLightProbes, !!scenario.interiorWindow.led,
   );
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
+  if (scenario.externalScreens) await prepareExternalScreens(page, scenario);
   return result;
 }
 

@@ -292,3 +292,24 @@ def test_issue_945_display_settings_fit_the_closed_private_safe_snapshot():
         validate(result, CONFIG)
         assert result["spaces"][0]["settings"] == settings
         assert "private-floor" not in json.dumps(result)
+
+
+def test_external_screens_projection_keeps_only_typed_fields_and_pseudonymizes_space():
+    from custom_components.houseplan.support_wire_schema import CONFIG, validate
+    source = {"model_version": 10, "spaces": [{"id": "private-home"}], "markers": [], "settings": {
+        "external_screens": {"version": 1, "next_id": 2, "private": "secret", "screens": [{
+            "id": 1, "space": "private-home", "rotation": 90, "cycle": 30, "idle": 0,
+            "summary": "show", "hidden_devices": "local", "controls": False,
+            "icon_scale": None, "font_scale": 1.5, "private": "secret",
+        }]}}}
+    before = copy.deepcopy(source)
+    projected, _ = project(source); projected["model_version"] = 10
+    validate(projected, CONFIG)
+    screens = projected["settings"]["external_screens"]
+    assert screens["screens"][0]["space"] == projected["spaces"][0]["id"]
+    assert screens["next_id"] == 2 and screens["screens"][0]["controls"] is False
+    assert "secret" not in json.dumps(projected) and "private-home" not in json.dumps(projected)
+    assert source == before
+    source["settings"]["external_screens"] = {"version": 9, "private": "secret"}
+    future, _ = project(source)
+    assert future["settings"]["external_screens"] == {"status": "unsupported_version"}

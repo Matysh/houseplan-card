@@ -1354,5 +1354,6 @@
   "view.menu_foreign": "The entity belongs to another device.",
   "view.menu_disabled": "The device or entity is disabled in Home Assistant.",
   "view.menu_unverified": "Home Assistant ownership has not been verified.",
-  "backup.error.invalid_alert_sources": "Invalid device alarm conditions."
+  "backup.error.invalid_alert_sources": "Invalid device alarm conditions.",
+  "kiosk.profile_locked": "Set by a screen profile or link"
 }

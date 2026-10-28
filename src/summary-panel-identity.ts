@@ -7,6 +7,7 @@
  * structural fallback introduced with the summary panel.
  */
 import { summaryLocalKey } from './summary-panel';
+import { presentationRouteOwner } from './route-kiosk';
 
 export interface SummaryPreferenceHost {
   readonly hass?: { user?: { id?: string; name?: string } };
@@ -21,7 +22,7 @@ export function summaryPreferenceKey(host: SummaryPreferenceHost): string | null
     // Preserve the established preference address used before sharing this
     // reader with the cold-runtime notice. Do not invent a '/' key when a
     // detached/synthetic host has no owning Window.
-    path: location.pathname,
+    path: presentationRouteOwner(location.pathname, host.panelHost),
     host: host.panelHost ? 'panel' : 'lovelace',
     slot: stableSummaryPlacementSlot(host),
   });

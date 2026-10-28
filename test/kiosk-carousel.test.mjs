@@ -107,3 +107,37 @@ test('#846 AC8 queued callbacks from disposed ownership cannot act after reconne
   assert.deepEqual(h.calls,[],'old timeout/interval closures are fenced');
   h.clock.advance(0);assert.deepEqual(h.calls,[['fit',220_000]]);
 });
+
+test('#1113 idle without a carousel fits once at the configured deadline and never advances', () => {
+  const h = harness({intervalMs:0,idleMs:30_000});
+  assert.equal(h.timers.size,1);
+  h.clock.advance(29_999); assert.deepEqual(h.calls,[]);
+  h.clock.advance(1); assert.deepEqual(h.calls,[['fit',130_000]]);
+  h.carousel.sync(); h.clock.advance(300_000); assert.equal(h.calls.length,1);
+  h.carousel.interact(); h.clock.advance(29_999); assert.equal(h.calls.length,1);
+  h.clock.advance(1); assert.equal(h.calls.length,2);
+  assert.equal(h.calls.some(([kind])=>kind==='advance'),false);
+});
+
+test('#1113 idle deadline waits for actual pointer release and re-arms after a dialog closes', () => {
+  const h = harness({intervalMs:0,idleMs:30_000});
+  h.state.gesturesIdle=false; h.carousel.sync();
+  h.clock.advance(40_000); assert.deepEqual(h.calls,[]);
+  h.state.gesturesIdle=true; h.carousel.sync(); h.clock.advance(0);
+  assert.equal(h.calls.length,1);
+  h.carousel.interact(); h.state.surfacesIdle=false; h.carousel.sync();
+  h.clock.advance(100_000); assert.equal(h.calls.length,1);
+  h.state.surfacesIdle=true; h.carousel.sync();
+  h.clock.advance(29_999); assert.equal(h.calls.length,1);
+  h.clock.advance(1); assert.equal(h.calls.length,2);
+});
+
+test('#1113 idle off/disconnect retires timers and reconnect starts a fresh idle period', () => {
+  const h = harness({intervalMs:0,idleMs:30_000});
+  h.state.idleMs=0; h.carousel.sync(); h.clock.advance(40_000); assert.equal(h.calls.length,0);
+  h.state.idleMs=30_000; h.carousel.sync(); h.clock.advance(10_000);
+  h.carousel.dispose(); assert.equal(h.timers.size,0);
+  h.clock.advance(100_000); h.carousel.sync();
+  h.clock.advance(29_999); assert.equal(h.calls.length,0);
+  h.clock.advance(1); assert.equal(h.calls.length,1);
+});

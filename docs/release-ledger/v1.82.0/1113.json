@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "issue": 1113,
+  "baseStable": "v1.82.0",
+  "category": "major",
+  "rationale": "Server-managed external screen profiles and main-panel kiosk URL overrides were absent in stable v1.82.0.",
+  "summary": {
+    "ru": "Профили телевизоров и планшетов с удалённой настройкой вида киоска.",
+    "en": "Remotely configured kiosk profiles for televisions and tablets."
+  },
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+    "golden": [
+      {
+        "id": "settings-external-screens-empty-light",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "settings-external-screens-empty-dark",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "settings-external-screens-list-light",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "settings-external-screens-list-dark",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "settings-external-screens-constructor-light",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "settings-external-screens-constructor-dark",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "panel-kiosk-profile-rotated-90",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "panel-kiosk-profile-summary-on",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "panel-kiosk-profile-no-controls",
+        "expectation": "new",
+        "reason": "#1113 approved UI-002r3 native screen-profile section/constructor and profile-driven kiosk presentation."
+      },
+      {
+        "id": "general-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "General settings gains the approved External screens navigation item before maintenance; the existing appearance/picker stays unchanged."
+      }
+    ],
+    "smokes": [
+      "smoke_external_screens.mjs",
+      "smoke_panel_route_kiosk.mjs",
+      "smoke_plan_rotation.mjs",
+      "smoke_kiosk_cycle_context.mjs",
+      "smoke_summary_panel.mjs",
+      "smoke_hidden_device_toggle.mjs",
+      "smoke_kiosk_scale_no_editor.mjs",
+      "smoke_houseplan_panel.mjs",
+      "smoke_kiosk.mjs",
+      "smoke_kiosk_pan_lock.mjs",
+      "smoke_kiosk_viewport_recovery.mjs",
+      "smoke_general_settings.mjs",
+      "smoke_general_settings_form.mjs"
+    ]
+  }
+}

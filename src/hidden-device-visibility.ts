@@ -1,4 +1,5 @@
 /** Local display intent; never rewrites a saved marker or HA lifecycle. */
+import { presentationRouteOwner } from './route-kiosk';
 import { stableSummaryPlacementSlot } from './summary-panel-identity';
 
 export interface HiddenDevice {
@@ -45,7 +46,7 @@ export function hiddenDevicePreferenceKey(host: HiddenPreferenceHost): string | 
   const path = host.ownerDocument.defaultView?.location.pathname;
   const slot = stableSummaryPlacementSlot(host);
   return user && path && slot
-    ? `hp_hidden_devices_v1:${JSON.stringify([user, path, host.panelHost ? 'panel' : 'lovelace', slot])}` : null;
+    ? `hp_hidden_devices_v1:${JSON.stringify([user, presentationRouteOwner(path, host.panelHost), host.panelHost ? 'panel' : 'lovelace', slot])}` : null;
 }
 
 export type HiddenDeviceStorage = Pick<Storage, 'getItem' | 'setItem'> | null;

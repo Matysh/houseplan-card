@@ -1,6 +1,6 @@
 // A small wire fixture, not a second backend validator. Payloads are cloned at
 // the boundary so an optimistic client cannot mutate the saved server document.
-export function createFixtureStore(config, layout, emit = () => {}, { markerHistory = false } = {}) {
+export function createFixtureStore(config, layout, emit = () => {}, { markerHistory = false, externalScreens = false } = {}) {
   let cfg = structuredClone(config), positions = structuredClone(layout);
   let configRev = 1, layoutRev = 1;
   // #1073 is a wire/lifecycle fixture, not the production delta validator.
@@ -9,7 +9,15 @@ export function createFixtureStore(config, layout, emit = () => {}, { markerHist
   const pair = () => ({ config: structuredClone(cfg), layout: structuredClone(positions) });
   const reply = token => ({ ...pair(), config_rev: configRev, layout_rev: layoutRev, ...(token ? { history_token: token } : {}) });
   const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const changed = (kind) => emit(`houseplan_${kind}_updated`, kind === 'config' ? configRev : layoutRev);
+  const screenEvent = (before, value, baseRev) => {
+    if (!externalScreens || !value.settings?.external_screens || equal(before.settings?.external_screens,value.settings.external_screens)) return undefined;
+    const omit = cfg => ({...cfg,settings:Object.fromEntries(Object.entries(cfg.settings||{}).filter(([key])=>key!=='external_screens'))});
+    return equal(omit(before),omit(value)) ? {external_screens_update:{version:1,base_rev:baseRev,value:structuredClone(value.settings.external_screens)}} : undefined;
+  };
+  const changed = (kind, data) => {
+    const event = `houseplan_${kind}_updated`, rev = kind === 'config' ? configRev : layoutRev;
+    if (data) emit(event, rev, data); else emit(event, rev);
+  };
   const cas = (message, rev) => {
     if ((rev && !Object.hasOwn(message, 'expected_rev'))
       || (Object.hasOwn(message, 'expected_rev') && message.expected_rev !== rev)) {
@@ -20,13 +28,14 @@ export function createFixtureStore(config, layout, emit = () => {}, { markerHist
   return {
     get configRev() { return configRev; },
     get layoutRev() { return layoutRev; },
-    pushConfig(value) { cfg = structuredClone(value); configRev++; changed('config'); return configRev; },
+    pushConfig(value) { const event=screenEvent(cfg,value,configRev); cfg = structuredClone(value); configRev++; changed('config',event); return configRev; },
     pushLayout(value) { positions = structuredClone(value); layoutRev++; changed('layout'); return layoutRev; },
     // The old optimizer stub is deliberately not a geometry implementation.
     advanceOptimizer() { return { config_rev: ++configRev, layout_rev: ++layoutRev }; },
     handle(m, registryEntities = []) {
       switch (m.type) {
         case 'houseplan/config/get': return { config: structuredClone(cfg), rev: configRev, can_write: true, device_contact_api: 1,
+          ...(externalScreens ? { external_screens_api: 1 } : {}),
           ...(markerHistory ? { device_history_api: 1 } : {}) };
         case 'houseplan/layout/get': return { layout: structuredClone(positions), rev: layoutRev };
         case 'houseplan/marker/copy': {
@@ -85,11 +94,12 @@ export function createFixtureStore(config, layout, emit = () => {}, { markerHist
           const next = structuredClone(m.config);
           const nextPositions=m.contact_layout ? {...positions,...structuredClone(m.contact_layout)} : positions;
           const configChanged=!equal(next,cfg),layoutChanged=!equal(nextPositions,positions);
+          const event = screenEvent(cfg,next,configRev);
           // Publish neither half before both CAS checks and both candidates exist.
           cfg=next;positions=nextPositions;
           if(configChanged)configRev++;
           if(layoutChanged)layoutRev++;
-          if(configChanged)changed('config');
+          if(configChanged)changed('config',event);
           if(layoutChanged)changed('layout');
           return { ok: true, rev: configRev,...(m.contact_layout?{layout_rev:layoutRev,contact_layout:structuredClone(m.contact_layout)}:{}) };
         }

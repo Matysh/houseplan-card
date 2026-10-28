@@ -248,6 +248,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => set({ zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>`,
         ]),
       })}` },
+        ...(host._canEdit && !host._kiosk ? [{ id: 'external-screens', title: st('screens.title'), body: this.externalScreens.renderSection() }] : []),
         { id: 'data', title: st('gs.section_maintenance'), body: html`${formCard({
         id: 'data',
         title: st('gs.section_maintenance'),
@@ -311,5 +312,5 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
         </button>
       </div>
     </div>
-  </hp-dialog>`;
+  </hp-dialog>${this.externalScreens.renderConstructor()}`;
 }
