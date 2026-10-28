@@ -351,7 +351,7 @@ test('#1098 consumer keys exclude only known presentation inputs',()=>{
   base[field]={probe:field};source._cfgEpoch++;
   assert.equal(read('A'),key,field);assert.equal(lightGeometryFingerprint(base,5,1000),light,field);delete base[field];
  }
- for(const field of ['plan_url','plan_aspect','unknown_future','wall_segments','partitions','wall_columns','openings','view_box','cell_cm']){
+ for(const field of ['plan_url','plan_aspect','model_version','unknown_future','wall_segments','partitions','wall_columns','openings','view_box','cell_cm']){
   const next={...base,[field]:{probe:field}};source._curSpaceCfg=next;source._renderCfg={spaces:[next]};source._cfgEpoch++;
   assert.notEqual(read('A'),key,field);assert.notEqual(lightGeometryFingerprint(next,5,1000),light,field);
  }

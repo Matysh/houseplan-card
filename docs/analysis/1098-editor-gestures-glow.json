@@ -1,0 +1,519 @@
+{
+  "schema": 2,
+  "profile": "large-light-blend-v1",
+  "generatedAt": "2026-10-28T11:51:52.763Z",
+  "buildFingerprint": "f78b25c840bd4e801b5745431fd5fecc1f246c2af4f0352569acb8713542acc2",
+  "runtime": {
+    "node": "v22.23.2",
+    "chromium": "151.0.7922.34",
+    "platform": "linux",
+    "arch": "x64",
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "deviceScaleFactor": 1,
+    "cpuThrottleRate": 4,
+    "reducedMotion": true
+  },
+  "fixture": {
+    "id": "additive-pools-v1",
+    "variants": [
+      1,
+      10,
+      30,
+      60
+    ],
+    "rooms": 2,
+    "devices": 60
+  },
+  "samples": 7,
+  "warmups": 1,
+  "summary": {
+    "stateUpdate1Ms": {
+      "median": 49.5,
+      "p95": 50.4,
+      "min": 46.5,
+      "max": 50.4
+    },
+    "stateUpdate10Ms": {
+      "median": 62.8,
+      "p95": 66,
+      "min": 57.4,
+      "max": 66
+    },
+    "stateUpdate30Ms": {
+      "median": 65.8,
+      "p95": 66.6,
+      "min": 63.8,
+      "max": 66.6
+    },
+    "stateUpdate60Ms": {
+      "median": 76.1,
+      "p95": 94,
+      "min": 65.4,
+      "max": 94
+    },
+    "screenshotCaptureMs": {
+      "median": 122.16,
+      "p95": 123.93,
+      "min": 120.31,
+      "max": 123.93
+    }
+  },
+  "longTasks": {
+    "maxSingleMs": 53,
+    "countP95": 1,
+    "totalP95Ms": 53
+  },
+  "rows": [
+    {
+      "sample": 0,
+      "longTasks": {
+        "stateUpdate1": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate10": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate30": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate60": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 53,
+          "totalMs": 53
+        }
+      },
+      "renderCounts": {
+        "1": 1,
+        "10": 1,
+        "30": 1,
+        "60": 1
+      },
+      "poolCounts": {
+        "1": 1,
+        "10": 10,
+        "30": 30,
+        "60": 60
+      },
+      "stateUpdate1Ms": 50,
+      "stateUpdate10Ms": 57.4,
+      "stateUpdate30Ms": 65.9,
+      "stateUpdate60Ms": 71.7,
+      "cacheEntries": {
+        "cleanFloor": 2,
+        "glowClip": 60,
+        "wallUnion": 1,
+        "openingTunnel": 1,
+        "openingWallIndex": 1
+      },
+      "cacheGrowth": {
+        "cleanFloor": 0,
+        "glowClip": 0,
+        "wallUnion": 0,
+        "openingTunnel": 0,
+        "openingWallIndex": 0
+      },
+      "heapGrowthBytes": 30496,
+      "preciseGc": true,
+      "renderedDevices": 60,
+      "screenBlend": true,
+      "screenshotCaptureMs": 123.93
+    },
+    {
+      "sample": 1,
+      "longTasks": {
+        "stateUpdate1": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate10": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate30": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate60": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        }
+      },
+      "renderCounts": {
+        "1": 1,
+        "10": 1,
+        "30": 1,
+        "60": 1
+      },
+      "poolCounts": {
+        "1": 1,
+        "10": 10,
+        "30": 30,
+        "60": 60
+      },
+      "stateUpdate1Ms": 50.4,
+      "stateUpdate10Ms": 66,
+      "stateUpdate30Ms": 66.6,
+      "stateUpdate60Ms": 73.1,
+      "cacheEntries": {
+        "cleanFloor": 2,
+        "glowClip": 60,
+        "wallUnion": 1,
+        "openingTunnel": 1,
+        "openingWallIndex": 1
+      },
+      "cacheGrowth": {
+        "cleanFloor": 0,
+        "glowClip": 0,
+        "wallUnion": 0,
+        "openingTunnel": 0,
+        "openingWallIndex": 0
+      },
+      "heapGrowthBytes": 56100,
+      "preciseGc": true,
+      "renderedDevices": 60,
+      "screenBlend": true,
+      "screenshotCaptureMs": 120.31
+    },
+    {
+      "sample": 2,
+      "longTasks": {
+        "stateUpdate1": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate10": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate30": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate60": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 50,
+          "totalMs": 50
+        }
+      },
+      "renderCounts": {
+        "1": 1,
+        "10": 1,
+        "30": 1,
+        "60": 1
+      },
+      "poolCounts": {
+        "1": 1,
+        "10": 10,
+        "30": 30,
+        "60": 60
+      },
+      "stateUpdate1Ms": 49,
+      "stateUpdate10Ms": 62.8,
+      "stateUpdate30Ms": 63.8,
+      "stateUpdate60Ms": 83,
+      "cacheEntries": {
+        "cleanFloor": 2,
+        "glowClip": 60,
+        "wallUnion": 1,
+        "openingTunnel": 1,
+        "openingWallIndex": 1
+      },
+      "cacheGrowth": {
+        "cleanFloor": 0,
+        "glowClip": 0,
+        "wallUnion": 0,
+        "openingTunnel": 0,
+        "openingWallIndex": 0
+      },
+      "heapGrowthBytes": 3164,
+      "preciseGc": true,
+      "renderedDevices": 60,
+      "screenBlend": true,
+      "screenshotCaptureMs": 122.16
+    },
+    {
+      "sample": 3,
+      "longTasks": {
+        "stateUpdate1": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate10": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate30": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate60": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        }
+      },
+      "renderCounts": {
+        "1": 1,
+        "10": 1,
+        "30": 1,
+        "60": 1
+      },
+      "poolCounts": {
+        "1": 1,
+        "10": 10,
+        "30": 30,
+        "60": 60
+      },
+      "stateUpdate1Ms": 49.5,
+      "stateUpdate10Ms": 62.1,
+      "stateUpdate30Ms": 65.8,
+      "stateUpdate60Ms": 65.4,
+      "cacheEntries": {
+        "cleanFloor": 2,
+        "glowClip": 60,
+        "wallUnion": 1,
+        "openingTunnel": 1,
+        "openingWallIndex": 1
+      },
+      "cacheGrowth": {
+        "cleanFloor": 0,
+        "glowClip": 0,
+        "wallUnion": 0,
+        "openingTunnel": 0,
+        "openingWallIndex": 0
+      },
+      "heapGrowthBytes": 3092,
+      "preciseGc": true,
+      "renderedDevices": 60,
+      "screenBlend": true,
+      "screenshotCaptureMs": 121.32
+    },
+    {
+      "sample": 4,
+      "longTasks": {
+        "stateUpdate1": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate10": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate30": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate60": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 51,
+          "totalMs": 51
+        }
+      },
+      "renderCounts": {
+        "1": 1,
+        "10": 1,
+        "30": 1,
+        "60": 1
+      },
+      "poolCounts": {
+        "1": 1,
+        "10": 10,
+        "30": 30,
+        "60": 60
+      },
+      "stateUpdate1Ms": 50.1,
+      "stateUpdate10Ms": 65.6,
+      "stateUpdate30Ms": 65,
+      "stateUpdate60Ms": 76.1,
+      "cacheEntries": {
+        "cleanFloor": 2,
+        "glowClip": 60,
+        "wallUnion": 1,
+        "openingTunnel": 1,
+        "openingWallIndex": 1
+      },
+      "cacheGrowth": {
+        "cleanFloor": 0,
+        "glowClip": 0,
+        "wallUnion": 0,
+        "openingTunnel": 0,
+        "openingWallIndex": 0
+      },
+      "heapGrowthBytes": 17296,
+      "preciseGc": true,
+      "renderedDevices": 60,
+      "screenBlend": true,
+      "screenshotCaptureMs": 122.42
+    },
+    {
+      "sample": 5,
+      "longTasks": {
+        "stateUpdate1": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate10": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate30": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate60": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 50,
+          "totalMs": 50
+        }
+      },
+      "renderCounts": {
+        "1": 1,
+        "10": 1,
+        "30": 1,
+        "60": 1
+      },
+      "poolCounts": {
+        "1": 1,
+        "10": 10,
+        "30": 30,
+        "60": 60
+      },
+      "stateUpdate1Ms": 46.5,
+      "stateUpdate10Ms": 61.6,
+      "stateUpdate30Ms": 66.3,
+      "stateUpdate60Ms": 94,
+      "cacheEntries": {
+        "cleanFloor": 2,
+        "glowClip": 60,
+        "wallUnion": 1,
+        "openingTunnel": 1,
+        "openingWallIndex": 1
+      },
+      "cacheGrowth": {
+        "cleanFloor": 0,
+        "glowClip": 0,
+        "wallUnion": 0,
+        "openingTunnel": 0,
+        "openingWallIndex": 0
+      },
+      "heapGrowthBytes": 5776,
+      "preciseGc": true,
+      "renderedDevices": 60,
+      "screenBlend": true,
+      "screenshotCaptureMs": 122.24
+    },
+    {
+      "sample": 6,
+      "longTasks": {
+        "stateUpdate1": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate10": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate30": {
+          "supported": true,
+          "count": 0,
+          "maxMs": 0,
+          "totalMs": 0
+        },
+        "stateUpdate60": {
+          "supported": true,
+          "count": 1,
+          "maxMs": 52,
+          "totalMs": 52
+        }
+      },
+      "renderCounts": {
+        "1": 1,
+        "10": 1,
+        "30": 1,
+        "60": 1
+      },
+      "poolCounts": {
+        "1": 1,
+        "10": 10,
+        "30": 30,
+        "60": 60
+      },
+      "stateUpdate1Ms": 46.5,
+      "stateUpdate10Ms": 65.5,
+      "stateUpdate30Ms": 65.6,
+      "stateUpdate60Ms": 79,
+      "cacheEntries": {
+        "cleanFloor": 2,
+        "glowClip": 60,
+        "wallUnion": 1,
+        "openingTunnel": 1,
+        "openingWallIndex": 1
+      },
+      "cacheGrowth": {
+        "cleanFloor": 0,
+        "glowClip": 0,
+        "wallUnion": 0,
+        "openingTunnel": 0,
+        "openingWallIndex": 0
+      },
+      "heapGrowthBytes": 6896,
+      "preciseGc": true,
+      "renderedDevices": 60,
+      "screenBlend": true,
+      "screenshotCaptureMs": 121.38
+    }
+  ]
+}

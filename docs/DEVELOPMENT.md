@@ -6598,3 +6598,12 @@ and the original2000-B/25-ref bands. Asset hashes/topology and both source
 fingerprints were checked; the donor #1102 frontend input corpus equals dev.
 Timing limits and absolute loading caps are unchanged. Owner-authorized rationale:
 https://github.com/Matysh/houseplan-card/issues/1098#issuecomment-6467970821.
+
+After inheriting #1111 (devf00d02d1), the verified donor source7dd01ccb has the
+same full frontend corpus as dev and dist3651091 B/hostRefs6555. The final #1098
+source builds3652678 B/6571: own+1587 B/+16refs. Rolling bases carry that actual
+cost to3652678/6548, retaining the inherited23-reference gap and2000-B/25-ref
+bands. The earlier0543 own cost+1602B differs by15B after shared minification;
+no byte optimization was attempted. Full evidence and measured windows:
+[1098 editor gestures](analysis/1098-editor-gestures.md).
+Final resource carry rationale: https://github.com/Matysh/houseplan-card/issues/1098#issuecomment-6468411738.

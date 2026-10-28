@@ -66,8 +66,11 @@ for(const dpr of [1,2]){
    const final=await page.evaluate(()=>window.__gestureProbe.result);
    rows.push(final);console.log(JSON.stringify(final));
   }
+ }finally{
+  await browser.close();
+  // #404/#776: include exceptions delivered while the browser tears down.
   if(await reportPageErrors())throw new Error('page errors');
- }finally{await browser.close();}
+ }
 }
 const median=values=>[...values].sort((a,b)=>a-b)[Math.floor(values.length/2)];
 const summary=[1,2].map(dpr=>({dpr,...Object.fromEntries(['stairsMoveMs','stairsCommitMs','ledMoveMs','ledCommitMs'].map(k=>[k,median(rows.filter(r=>r.dpr===dpr).map(r=>r[k]))]))}));

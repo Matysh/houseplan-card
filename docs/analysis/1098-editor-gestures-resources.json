@@ -1,0 +1,20 @@
+{
+  "base": "f00d02d13737077d3d7f331f537c721bc57448f4",
+  "candidate": "b15126a6064de7a1f3cefa1177398258e69eff6d",
+  "donorSource": "7dd01ccbc58e0267044e9de7cc4a7650872990ac",
+  "buildInputDelta": "",
+  "before": {
+    "sourceFingerprint": "14c5f28b9f82945d880b1ba6d7d7f5f08d624039bf29281e8bbae29c767b71ce",
+    "bundleBytes": 3651091,
+    "hostRefs": 6555
+  },
+  "after": {
+    "sourceFingerprint": "f78b25c840bd4e801b5745431fd5fecc1f246c2af4f0352569acb8713542acc2",
+    "bundleBytes": 3652678,
+    "hostRefs": 6571
+  },
+  "delta": {
+    "bundleBytes": 1587,
+    "hostRefs": 16
+  }
+}
