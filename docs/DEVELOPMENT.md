@@ -203,6 +203,25 @@ floor edit there also pays its wall-model migration in the junction step.
 
 ## Editor command latency (#1075)
 
+Geometry restoration (#1100) retains the decor-only lane and adds a separate
+nonphysical stairs/backdrop lane. Both require the current complete model and
+keep guarded/unknown/legacy/pending-write cases on the strict path. Physical
+history uses the accepted edited-space helper: raw safety precedes model
+canonicalization, exact fingerprint plus model-version equality reuses one
+verdict, and different candidates retain both checks. A repairable negative
+boundary never becomes outbound write authority. Restored content keys preserve
+the foreign-floor pools instead of clearing all floors.
+
+Run `node demo/benchmark_geometry_history.mjs --output=artifacts/performance-smoke/geometry-history.json`
+after test-build preparation for seven cold-card and seven warm apply/inverse
+samples per large-house scenario. It measures synchronous production history
+CPU through the real geometry and Card cache owners, excluding UI, debounce,
+transport and diagnostic deep copies. Cold means empty active-floor Card pools
+with foreign floors warm; process-level geometry caches are not reset. Exact
+documents and counters are the oracle; the timings are diagnostic. Native
+`smoke_floor_cache_reuse`, `smoke_backdrop` and `smoke_stairs` separately verify
+foreign-floor reuse and Undo/Redo document, layer and clean-floor readback.
+
 Use `node demo/smoke_wall_node_delete.mjs` for native right-click ownership,
 all Plan tools (including cold non-Select entry), safe delete/inverse and
 stale/permission/field guards. `node demo/smoke_editor_command_latency.mjs`

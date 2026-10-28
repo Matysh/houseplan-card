@@ -509,6 +509,15 @@ test('#883 AC2 the repairable history boundary (wall-degraded-extra) is still re
   s.runtime._undoGeometry();
   assert.deepEqual([s.toasts.at(-1), s.geometryHistory.peekRedo()], [undone(WALL), step]);
 });
+
+test('#1100 a repairable negative boundary is revalidated by the real deferred writer and cannot send', async () => {
+  const s = setup();await s.addWall('f');const step=await s.addWall('f'),sent=s.server.sets;
+  let checks=0;s.host._checkSpacePhysicalGeometry=()=>{checks++;return {ok:false,reason:'wall-degraded-extra'};};
+  s.runtime._undoGeometry();
+  assert.equal(s.geometryHistory.peekRedo(),step);assert.equal(checks,1,'equal raw/canonical share only the negative verdict');
+  assert.equal(s.host._pendingPhysicalWrites.get('f').fingerprint,'');
+  await s.writes();assert.ok(checks>1,'empty fingerprint forces a strict outbound check');assert.equal(s.server.sets,sent);
+});
 test('#883 AC2 an explicit wall-model refusal and an uncanonicalizable snapshot remove only their step (unit-only)', async () => {
   for (const [label, reason, corrupt] of [
     ['model', 'geometry', state => { state.rooms[0].poly = [[0, 0], [2, 0]]; }],

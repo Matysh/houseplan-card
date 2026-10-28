@@ -256,6 +256,11 @@ const out = await page.evaluate(async () => {
   await chooseStair('straight');
 
   // Select and move the straight stair through its actual hit target.
+  await writesIdle();
+  const beforeMoveDocument = JSON.stringify(card._serverCfg);
+  const roomAreas = () => Object.fromEntries(card._spaceModel().rooms.map(room => [room.id, card._roomArea(room)]));
+  const beforeMoveAreas = roomAreas();
+  const beforeMoveTransform = stairNode(straight.id)?.getAttribute('transform');
   const start = { x: straight.x, y: straight.y };
   const straightHit = stairNode(straight.id)?.querySelector('.hp-stair-hit');
   straightHit?.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
@@ -264,19 +269,34 @@ const out = await page.evaluate(async () => {
   pointer(stage(), 'pointermove', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   pointer(stage(), 'pointerup', [start.x * 1000 - 180, start.y * 1000 - 170], 6631);
   await settled();
+  await writesIdle();
   const moved = stairs().find((stair) => stair.id === straight.id);
+  const movedDocument = JSON.stringify(card._serverCfg), movedAreas = roomAreas();
+  const movedTransform = stairNode(straight.id)?.getAttribute('transform');
+  const physicalBuilds = () => [card._floorCacheBuilds.wallUnion, card._floorCacheBuilds.physicalBodies];
+  const beforeHistoryBuilds = physicalBuilds();
   result.moveUsesContinuousTransform = !!moved
     && (!closeTo(moved.x, start.x) || !closeTo(moved.y, start.y));
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
+  result.moveUndoWriteSettles = await writesIdle();
   const undone = stairs().find((stair) => stair.id === straight.id);
+  result.moveUndoExactDocument = JSON.stringify(card._serverCfg) === beforeMoveDocument;
+  result.moveUndoCleanFloorReadback = JSON.stringify(roomAreas()) === JSON.stringify(beforeMoveAreas);
+  result.moveUndoStairPaintReadback = stairNode(straight.id)?.getAttribute('transform') === beforeMoveTransform;
+  result.moveUndoNoPhysicalBuilds = JSON.stringify(physicalBuilds()) === JSON.stringify(beforeHistoryBuilds);
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true,
   }));
   await settled();
+  result.moveRedoWriteSettles = await writesIdle();
   const redone = stairs().find((stair) => stair.id === straight.id);
+  result.moveRedoExactDocument = JSON.stringify(card._serverCfg) === movedDocument;
+  result.moveRedoCleanFloorReadback = JSON.stringify(roomAreas()) === JSON.stringify(movedAreas);
+  result.moveRedoStairPaintReadback = stairNode(straight.id)?.getAttribute('transform') === movedTransform;
+  result.moveRedoNoPhysicalBuilds = JSON.stringify(physicalBuilds()) === JSON.stringify(beforeHistoryBuilds);
   result.moveUndoRedo = !!undone && !!redone
     && closeTo(undone.x, start.x) && closeTo(undone.y, start.y)
     && closeTo(redone.x, moved.x) && closeTo(redone.y, moved.y);

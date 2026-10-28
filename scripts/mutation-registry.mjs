@@ -7392,8 +7392,8 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
       // #883: both history-boundary verdicts share one closure; the repair is its middle branch.
-      find: "        return check.ok ? true : allowHistoryBoundaryRepair && check.reason === 'wall-degraded-extra' ? false : null;",
-      replace: "        return check.ok ? true : null;",
+      find: ": allowHistoryBoundaryRepair && value.result.reason === 'wall-degraded-extra' ? false : null;",
+      replace: ': null;',
     }],
   },
   {
@@ -13946,7 +13946,7 @@ const MUTANT_DEFINITIONS = [
       + 'without rebuilding v8 references can persist stale room and opening identities (#282)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: 'else committedCandidate = commitWallSegmentModel(restoredCandidate).config;',
+      find: 'else committedCandidate = commitEditedSpaceModel(restoredCandidate, target.spaceId);',
       replace: 'else committedCandidate = restoredCandidate;',
     }],
   },
@@ -21996,7 +21996,7 @@ const editorLatency1075Cases = [
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/decor-history-restore.test.mjs',
     because:'#1075 AC8: changed walls, stairs, transforms and unknown non-decor fields must retain the strict restore lane.',
     patches:[{file:'src/decor-history-restore.ts',
-      find:'|| contentFingerprint(withoutDecor(before)) !== contentFingerprint(withoutDecor(target))',replace:'|| false'}]},
+      find:'if (contentFingerprint(withoutDecor(before)) !== contentFingerprint(withoutDecor(target)))',replace:'if (false)'}]},
   {id:'node-delete-repeated-opening-proof-1075',
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/wall-node-delete-menu.test.mjs',
     because:'#1075 AC3: an unchanged frozen menu source is proved once, not again when choosing its command.',
@@ -22215,7 +22215,34 @@ const editorGesture1098Cases = [{
     {file: 'src/demand-space-models.ts', find: 'if (bg === undefined) bg = raw.plan_url ? { href: raw.plan_url, ...planRect(raw, NORM_W) } : null;', replace: 'if (bg === undefined) bg = full().bg;'},
   ],
 }];
-export const MUTANTS = [...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases].map((mutant) => ({
+const geometryHistory1100Cases = [
+  {id:'history-restore-clears-foreign-pools-1100',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/geometry-history-restore.test.mjs',
+    because:'#1100 AC1: actual Card pools retain B/C keys and a real subsequent B read builds no wall union. Registered only; execution belongs to nightly.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:"// Content keys select this floor's restored geometry; foreign LRU entries remain warm.",replace:'this.host._wallUnionCache = null; this.host._physicalBodiesCache = null;'}]},
+  {id:'nonphysical-history-takes-model-path-1100',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/geometry-history-restore.test.mjs',
+    because:'#1100 AC2: real stairs/transform Undo/Redo must avoid model/adoption visits and physical passes. Registered only.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:'&& restoreNonPhysicalHistory(config, before, target));',replace:'&& false && restoreNonPhysicalHistory(config, before, target));'}]},
+  {id:'history-raw-negative-ignored-1100',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/geometry-history-restore.test.mjs',
+    because:'#1100 AC3/4: an explicit raw refusal must stop before canonicalization and preserve document/write state. Registered only.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:'if (rawProof && verdict(rawProof) === null) return unsafe();',replace:'if (false) return unsafe();'}]},
+  {id:'history-different-canonical-reuses-raw-verdict-1100',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/geometry-history-restore.test.mjs',
+    because:'#1100 AC3: the real unequal pre-v9 candidate needs a second union/verdict; same-candidate quota cannot weaken that boundary. Registered only.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:'const strict = physicalChanged ? verdict(proof(committedCandidate, rawProof)) : true;',replace:'const strict = physicalChanged ? verdict(rawProof!) : true;'}]},
+  {id:'history-negative-becomes-outbound-proof-1100',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/geometry-history-refusal.test.mjs',
+    because:'#1100 AC4: F57 stays negative; the actual deferred writer must revalidate and cannot send the unsafe candidate. Registered only.',
+    patches:[{file:'src/houseplan-editor-runtime.ts',find:"fingerprint: strict ? spacePhysicalGeometryFingerprint(afterSpace) : '',",replace:'fingerprint: spacePhysicalGeometryFingerprint(afterSpace),'}]},
+  {id:'nonphysical-history-ignores-unknown-snapshot-field-1100',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/decor-history-restore.test.mjs',
+    because:'#1100 AC4/5: unknown and physical deltas cannot gain nonphysical restoration authority. Registered only.',
+    patches:[{file:'src/decor-history-restore.ts',find:'if (contentFingerprint(withoutPresentation(before)) !== contentFingerprint(withoutPresentation(target)))',replace:'if (false)'}]},
+];
+
+export const MUTANTS = [...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

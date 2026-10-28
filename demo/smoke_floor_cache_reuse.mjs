@@ -527,8 +527,28 @@ ac3.committedIsTheFreshCards = await planFresh();
 const wallAt = (x) => page.evaluate((x) => [...window.__card.renderRoot.querySelectorAll('.rszhandle:not(.rszcorner)')]
   .some((node) => Math.abs(Number(node.getAttribute('cx')) - x) < 0.5 && Math.abs(Number(node.getAttribute('cy')) - 325) < 0.5), x);
 ac3.commitMovesTheWall = !(await wallAt(500));
+const foreignPoolKeys = () => page.evaluate(() => {
+  const foreign = key => key.startsWith('garden|') || key.startsWith('loft|');
+  return [window.__card._wallUnionPool, window.__card._physicalBodiesPool].map(pool => [...pool.keys()].filter(foreign).sort());
+});
+await page.evaluate(async () => {
+  for (const id of ['garden', 'loft', 'f1']) {
+    await window.__hpTest.switchSpace(id); await window.__hp814.settled();
+  }
+  await window.__hpTest.setTool('resize');
+});
+const warmForeignKeys = await foreignPoolKeys();
+checkAll({ bothForeignPoolsAreWarm: warmForeignKeys.every(keys => keys.some(key => key.startsWith('garden|')) && keys.some(key => key.startsWith('loft|'))) }, { bothForeignPoolsAreWarm: true });
 await page.keyboard.press('Control+z');
 await page.evaluate(() => window.__hp814.settled());
+ac3.undoRetainsForeignPoolKeys = JSON.stringify(await foreignPoolKeys()) === JSON.stringify(warmForeignKeys);
+ac3.undoForeignSwitchUnionBuilds = await page.evaluate(async () => {
+  const card = window.__card, before = card._floorCacheBuilds.wallUnion;
+  await window.__hpTest.switchSpace('garden'); await window.__hp814.settled();
+  const builds = card._floorCacheBuilds.wallUnion - before;
+  await window.__hpTest.switchSpace('f1'); await window.__hp814.settled();
+  await window.__hpTest.setTool('resize'); return builds;
+});
 ac3.undoRestoresTheWall = await wallAt(500);
 ac3.undoIsTheFreshCards = await planFresh();
 ac3.gestureAfterUndo = await heldGesture(f1Wall, 'escape');
@@ -546,6 +566,8 @@ checkAll(ac3, {
   committedGesture: gesture(true, 1),
   committedIsTheFreshCards: [],
   undoIsTheFreshCards: [],
+  undoRetainsForeignPoolKeys: true,
+  undoForeignSwitchUnionBuilds: 0,
   gestureAfterUndo: gesture(true, 1),
   redoIsTheFreshCards: [],
   otherFloorGesture: gesture(true, 1),

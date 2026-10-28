@@ -62,7 +62,7 @@ import type { ConfigAdoption, GatedAdoptionInput, GatedAdoptionResult } from './
 import { isGeometryCleanupRefusal, supersedeDeferredWrite } from './config-adoption';
 import type { WallNodeEditor } from './wall-node-editor';
 import { type SpaceGeometryState, nodeHistoryNext } from './geometry-history-state';
-import { restoreDecorOnlyHistory } from './decor-history-restore';
+import { restoreDecorOnlyHistory, restoreNonPhysicalHistory } from './decor-history-restore';
 import { type HistoryApply, historyUnfit, runOrdinaryHistory } from './geometry-history-step';
 import { PhysicalWriteHistory, physicalHistoryChanged, physicalRollbackState } from './physical-write-history';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
@@ -243,7 +243,7 @@ import {
 } from './space-geometry';
 import {
   WALL_SEGMENT_MODEL_VERSION,
-  adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
+  commitWallSegmentModel,
   fixedTopologyWallLineageHints,
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
@@ -2029,8 +2029,7 @@ public _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
     if (!this._restoreGeometryStateInConfig(this.host._serverCfg, state)) return false;
     this.host._cfgEpoch++;
     this.host._modelCache = null;
-    this.host._wallUnionCache = null;
-    this.host._physicalBodiesCache = null;
+    // Content keys select this floor's restored geometry; foreign LRU entries remain warm.
     this.host._frame = null;
     this.host.requestUpdate();
     return true;
@@ -2399,35 +2398,45 @@ public _applyGeometryState(
       if (target === 'state') return target;
       before = this._geometrySnapshot(target.spaceId);
       if (!before) return 'space';
-      const decorOnly = !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);
-      if (decorOnly) host._cfgEpoch++;
-      else if (!this._restoreGeometryStateLocal(target)) return 'space';
-      const restoredCandidate = config;
       const physicalChanged = spacePhysicalGeometryFingerprint(before)
         !== spacePhysicalGeometryFingerprint(target);
+      const decorOnly = !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);
+      const presentationOnly = decorOnly || (!physicalChanged && !host._pendingPhysicalWrites.size
+        && restoreNonPhysicalHistory(config, before, target));
+      if (presentationOnly) host._cfgEpoch++;
+      else if (!this._restoreGeometryStateLocal(target)) return 'space';
+      const restoredCandidate = config;
       // An explicit negative verdict refuses; an exception of the check is none (caught below).
       // A history snapshot can predate the write-time wall degradation that
       // canonicalized its command. Restore that one repairable baseline so
       // Undo remains byte-exact immediately; _writeConfig still degrades and
       // strictly validates the outbound candidate before it can leave the
       // card. Every other preflight failure stays fail-closed.
-      const verdict = (candidate: ServerConfig): boolean | null => {
-        const check = host._checkSpacePhysicalGeometry(candidate, target.spaceId);
-        return check.ok ? true : allowHistoryBoundaryRepair && check.reason === 'wall-degraded-extra' ? false : null;
+      const proof = (candidate: ServerConfig, previous?: PhysicalCandidateProof): PhysicalCandidateProof => {
+        // F57 may repeat the same negative boundary verdict, never a positive write proof.
+        const raw = candidate.spaces.find(item => item.id === target.spaceId);
+        if (allowHistoryBoundaryRepair && previous && !previous.result.ok && previous.result.reason === 'wall-degraded-extra'
+            && previous.fingerprint === spacePhysicalGeometryFingerprint(raw)
+            && previous.modelVersion === Number(candidate.model_version || 0)) return previous;
+        return physicalCandidateProof(candidate, target.spaceId,
+          (cfg, id, capture) => host._checkSpacePhysicalGeometry(cfg, id, capture), previous);
       };
+      const verdict = (value: PhysicalCandidateProof): boolean | null => value.result.ok ? true
+        : allowHistoryBoundaryRepair && value.result.reason === 'wall-degraded-extra' ? false : null;
       const baseline = before, unsafe = (): 'geometry' => { this._restoreGeometryStateLocal(baseline); return 'geometry'; };
-      if (physicalChanged && verdict(restoredCandidate) === null) return unsafe();
+      const rawProof = physicalChanged ? proof(restoredCandidate) : undefined;
+      if (rawProof && verdict(rawProof) === null) return unsafe();
       let committedCandidate: ServerConfig;
       try {
-        if (decorOnly) committedCandidate = restoredCandidate;
-        else committedCandidate = commitWallSegmentModel(restoredCandidate).config;
+        if (presentationOnly) committedCandidate = restoredCandidate;
+        else committedCandidate = commitEditedSpaceModel(restoredCandidate, target.spaceId);
       } catch (error) {
         if (!(error instanceof WallSegmentModelError)) throw error;
         return unsafe();
       }
-      const strict = physicalChanged ? verdict(committedCandidate) : true;
+      const strict = physicalChanged ? verdict(proof(committedCandidate, rawProof)) : true;
       if (strict === null) return unsafe();
-      if (!decorOnly) adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
+      if (!presentationOnly) adoptEditedSpaceModelInPlace(restoredCandidate, committedCandidate, target.spaceId);
       if (physicalChanged) {
         const afterSpace = restoredCandidate.spaces.find((space) => space.id === target.spaceId);
         const pending = host._pendingPhysicalWrites.get(target.spaceId);
@@ -2440,7 +2449,7 @@ public _applyGeometryState(
       this._showGeometrySpace(target.spaceId, !!host._activeWallChainId && host._space === target.spaceId);
       host._modelCache = null;
       host._frame = null;
-      if (!decorOnly) { host._regSignature = ''; host._maybeRebuildDevices(); }
+      if (!presentationOnly) { host._regSignature = ''; host._maybeRebuildDevices(); }
     } catch {
       // Unexpected: no proof of unfitness. Local changes and the floor go back to the baseline.
       if (before) this._restoreGeometryStateLocal(before);

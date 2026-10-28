@@ -156,6 +156,9 @@ await settle();
 // ---------- 2) drag the body: the picture moves, the plan does not --------
 const roomsBefore = await page.evaluate(() =>
   JSON.stringify(window.__card._serverCfg.spaces.find((s) => s.id === 'f1').rooms));
+await page.evaluate(() => window.__hpTest.waitForWrites());
+const backdropBeforeDocument = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
+const backdropBeforeImage = await imageRect();
 {
   const [ax, ay] = await screenPt(500, 500);
   // +102 / +52 render units: neither is a whole number of grid steps, so the
@@ -214,6 +217,23 @@ check('badge_gone_after_release', (await badges()).length, 0);
 }
 check('the_plan_geometry_never_moved', await page.evaluate(() =>
   JSON.stringify(window.__card._serverCfg.spaces.find((s) => s.id === 'f1').rooms)), roomsBefore);
+
+// #1100: native ordinary history restores the picture and exact document without physical builds.
+await page.evaluate(() => window.__hpTest.waitForWrites());
+const backdropMovedDocument = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
+const backdropMovedImage = await imageRect();
+const historyPhysicalBuilds = () => page.evaluate(() => [window.__card._floorCacheBuilds.wallUnion, window.__card._floorCacheBuilds.physicalBodies]);
+const backdropHistoryBuilds = await historyPhysicalBuilds();
+for (const [direction, expectedDocument, expectedImage] of [
+  ['undo', backdropBeforeDocument, backdropBeforeImage], ['redo', backdropMovedDocument, backdropMovedImage],
+]) {
+  await page.keyboard.press(direction === 'undo' ? 'Control+z' : 'Control+Shift+z');
+  await page.evaluate(() => window.__hpTest.waitForWrites()); await settle();
+  check(`backdrop_history_${direction}_exact_document`, await page.evaluate(() => JSON.stringify(window.__card._serverCfg)), expectedDocument);
+  check(`backdrop_history_${direction}_image_readback`, await imageRect(), expectedImage);
+  check(`backdrop_history_${direction}_frame_readback`, await frameRect(), expectedImage);
+  check(`backdrop_history_${direction}_no_physical_builds`, await historyPhysicalBuilds(), backdropHistoryBuilds);
+}
 
 // ---------- 3) Shift cannot step off the grid -----------------------------
 await restore();

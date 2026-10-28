@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Undo and Redo retain warm neighboring floors; restoring backdrop and stair edits skips unchanged wall geometry while preserving exact documents and existing refusals. (#1100)
 - Moving a wall node reuses the junction baseline only for the exact stored revision, avoiding repeated scans of the previous plan. Existing structural refusals remain unchanged. (#1102)
 - Drag stairs and LED vertices smoothly on large plans; their saves and backdrop transforms keep wall geometry warm while stair areas and backdrop placement stay current. (#1098)
 

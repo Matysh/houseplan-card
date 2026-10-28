@@ -27,6 +27,10 @@
       "configs": 19
     },
     {
+      "file": "test/fixtures/1100-history-characterization.json",
+      "configs": 12
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -2832,6 +2836,1079 @@
                 "wall-4scfpep6kh4fij3ussxy",
                 "wall-qwzszs7wsw3hwi5wtvvz",
                 "wall-7siotqtanxx6w5ucm7x7"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/4df7e443a49997e4cc82519b52d72374262773a7f16fad7760e0bb6f7f8d021d",
+      "fingerprint": "4df7e443a49997e4cc82519b52d72374262773a7f16fad7760e0bb6f7f8d021d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/0471b858c9d6c6fa0e56073dba9221e9399bb9953dcabd94ef795b07e9ee70e9",
+      "fingerprint": "0471b858c9d6c6fa0e56073dba9221e9399bb9953dcabd94ef795b07e9ee70e9",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/9fa84cadf55add9e3bb7447d98fd82d5c3a9630355df9dd98a1bf4a7c221a48c",
+      "fingerprint": "9fa84cadf55add9e3bb7447d98fd82d5c3a9630355df9dd98a1bf4a7c221a48c",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/a3eb715e039cbc68a80c9ba57924d3d20e28f34abc535fcdf3fa6480accc5281",
+      "fingerprint": "a3eb715e039cbc68a80c9ba57924d3d20e28f34abc535fcdf3fa6480accc5281",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg",
+            "wall-4wr27uieyaxhdikdx4ua",
+            "wall-i7qzx2j7tjykysz3s2yn",
+            "wall-ife6oitry35vf427zq2g",
+            "wall-2lpjl5zndvkwkmma7udc"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            },
+            {
+              "id": "stair-room",
+              "walls": [
+                "wall-i7qzx2j7tjykysz3s2yn",
+                "wall-2lpjl5zndvkwkmma7udc",
+                "wall-ife6oitry35vf427zq2g",
+                "wall-4wr27uieyaxhdikdx4ua"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/e01db4030882928e353447af5df27e45e6226e844da54608f413349f81c2b619",
+      "fingerprint": "e01db4030882928e353447af5df27e45e6226e844da54608f413349f81c2b619",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg",
+            "wall-4wr27uieyaxhdikdx4ua",
+            "wall-i7qzx2j7tjykysz3s2yn",
+            "wall-ife6oitry35vf427zq2g",
+            "wall-2lpjl5zndvkwkmma7udc"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            },
+            {
+              "id": "stair-room",
+              "walls": [
+                "wall-i7qzx2j7tjykysz3s2yn",
+                "wall-2lpjl5zndvkwkmma7udc",
+                "wall-ife6oitry35vf427zq2g",
+                "wall-4wr27uieyaxhdikdx4ua"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/f97492dd7fa22cf22b4879b98c70a81fb0fa8cd9e867bbb28da203bca96d6c97",
+      "fingerprint": "f97492dd7fa22cf22b4879b98c70a81fb0fa8cd9e867bbb28da203bca96d6c97",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg",
+            "wall-00000000-0000-4000-8000-000000000001",
+            "wall-00000000-0000-4000-8000-000000000002",
+            "wall-00000000-0000-4000-8000-000000000003",
+            "wall-00000000-0000-4000-8000-000000000004"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            },
+            {
+              "id": "new-room",
+              "walls": [
+                "wall-00000000-0000-4000-8000-000000000002",
+                "wall-00000000-0000-4000-8000-000000000004",
+                "wall-00000000-0000-4000-8000-000000000003",
+                "wall-00000000-0000-4000-8000-000000000001"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/a9b88a003e484c0856ac67b694cccbcb2c9226410d68c43efa3c0062648b76df",
+      "fingerprint": "a9b88a003e484c0856ac67b694cccbcb2c9226410d68c43efa3c0062648b76df",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "new-wall"
+          ]
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/f92ae144f92290a41b6c9ac2d0a1e0888f1214a75eb13ae613de8cddbff24160",
+      "fingerprint": "f92ae144f92290a41b6c9ac2d0a1e0888f1214a75eb13ae613de8cddbff24160",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-4xen7jsydxglvqtqmptl"
+              }
+            }
+          ],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/f94c62a02ca3389b6e5b78f9982b249bec61486b3b24eb19dbe7591fa2f98141",
+      "fingerprint": "f94c62a02ca3389b6e5b78f9982b249bec61486b3b24eb19dbe7591fa2f98141",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/cf779c093e8e3e91c9a4ce8a52b195e4fe13950a9719458ad430a1c505550b6a",
+      "fingerprint": "cf779c093e8e3e91c9a4ce8a52b195e4fe13950a9719458ad430a1c505550b6a",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-00000000-0000-4000-8000-000000000001",
+            "wall-00000000-0000-4000-8000-000000000002",
+            "wall-00000000-0000-4000-8000-000000000003",
+            "wall-jvimmne7rxxbfw45epix",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "split-a",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-00000000-0000-4000-8000-000000000001",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            },
+            {
+              "id": "split-b",
+              "walls": [
+                "wall-00000000-0000-4000-8000-000000000002",
+                "wall-jvimmne7rxxbfw45epix",
+                "wall-00000000-0000-4000-8000-000000000003",
+                "wall-00000000-0000-4000-8000-000000000001"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-jvimmne7rxxbfw45epix"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/20defa3a47a63c9db0a5ce5a63d7fb87bcbf5d7ddb963b9c3f8ac273d27f7d92",
+      "fingerprint": "20defa3a47a63c9db0a5ce5a63d7fb87bcbf5d7ddb963b9c3f8ac273d27f7d92",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-ntd43prmamfki3hejl26",
+            "wall-4xen7jsydxglvqtqmptl",
+            "wall-7tt3qqjghob3thpuisbl",
+            "wall-xpu5vjcaizoo2nexpssh",
+            "wall-q5vznhd7h3g74plf3dny",
+            "wall-bklkx4euukxodw242yfg"
+          ],
+          "rooms": [
+            {
+              "id": "merged",
+              "walls": [
+                "wall-4xen7jsydxglvqtqmptl",
+                "wall-xpu5vjcaizoo2nexpssh",
+                "wall-bklkx4euukxodw242yfg",
+                "wall-q5vznhd7h3g74plf3dny",
+                "wall-7tt3qqjghob3thpuisbl",
+                "wall-ntd43prmamfki3hejl26"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1100-history-characterization.json/documents/702104bd6a795b49f37cd187e6daead6eb53521abeb4b113cba85ed9d4f09389",
+      "fingerprint": "702104bd6a795b49f37cd187e6daead6eb53521abeb4b113cba85ed9d4f09389",
+      "ok": true,
+      "identity": [
+        {
+          "space": "a",
+          "catalogue": [
+            "wall-00000000-0000-4000-8000-000000000001",
+            "wall-00000000-0000-4000-8000-000000000002",
+            "wall-00000000-0000-4000-8000-000000000003",
+            "wall-00000000-0000-4000-8000-000000000004",
+            "wall-00000000-0000-4000-8000-000000000005",
+            "wall-00000000-0000-4000-8000-000000000006",
+            "wall-00000000-0000-4000-8000-000000000007"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "wall-00000000-0000-4000-8000-000000000002",
+                "wall-00000000-0000-4000-8000-000000000004",
+                "wall-00000000-0000-4000-8000-000000000003",
+                "wall-00000000-0000-4000-8000-000000000001"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-00000000-0000-4000-8000-000000000005",
+                "wall-00000000-0000-4000-8000-000000000007",
+                "wall-00000000-0000-4000-8000-000000000006",
+                "wall-00000000-0000-4000-8000-000000000004"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "b",
+          "catalogue": [
+            "wall-c4qbl3ti2rg5v4pmpgwj",
+            "wall-d6jkefq2k6c23dfhs2xb",
+            "wall-obifrf6rpsemblml25ov",
+            "wall-rkhbtikqicu3lj4hgk62"
+          ],
+          "rooms": [
+            {
+              "id": "b-room",
+              "walls": [
+                "wall-d6jkefq2k6c23dfhs2xb",
+                "wall-rkhbtikqicu3lj4hgk62",
+                "wall-obifrf6rpsemblml25ov",
+                "wall-c4qbl3ti2rg5v4pmpgwj"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "c",
+          "catalogue": [
+            "wall-ugwgmsh6d4mlhomdrlwv",
+            "wall-cpvhxjkvlaqsmayhxbxw",
+            "wall-4t5qnp3a6jm5j65b3hul",
+            "wall-2y36we4bvrztgtcsrrss"
+          ],
+          "rooms": [
+            {
+              "id": "c-room",
+              "walls": [
+                "wall-cpvhxjkvlaqsmayhxbxw",
+                "wall-2y36we4bvrztgtcsrrss",
+                "wall-4t5qnp3a6jm5j65b3hul",
+                "wall-ugwgmsh6d4mlhomdrlwv"
               ]
             }
           ],

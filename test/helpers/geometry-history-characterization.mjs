@@ -8,14 +8,18 @@ const extra={
  merge(s){s.rooms.splice(0,2,{id:'merged',poly:[[.01,.01],[.07,.01],[.07,.04],[.01,.04]]});},
 };
 export const historyCases=[...Object.keys(historyChanges),...Object.keys(extra),'pre-v9','v9'];
+export function historyCaseHarness(name){
+ const config=historyFixture({stairsCase:name==='stairs'});
+ if(name==='pre-v9'){delete config.model_version;for(const s of config.spaces){delete s.wall_segments;for(const r of s.rooms)delete r.wall_ids;}}
+ if(name==='v9')config.model_version=9;
+ const h=historyHarness(config),command=h.command(name,historyChanges[name]||extra[name]||historyChanges.thickness);
+ if(!command)throw Error('No canonical history command '+name);
+ return {h,command};
+}
 export function historyCharacterization(name){
  const original=crypto.randomUUID;let serial=0;crypto.randomUUID=()=>`00000000-0000-4000-8000-${String(++serial).padStart(12,'0')}`;
  try{
-  const config=historyFixture({stairsCase:name==='stairs'});
-  if(name==='pre-v9'){delete config.model_version;for(const s of config.spaces){delete s.wall_segments;for(const r of s.rooms)delete r.wall_ids;}}
-  if(name==='v9')config.model_version=9;
-  const h=historyHarness(config),command=h.command(name,historyChanges[name]||extra[name]||historyChanges.thickness);
-  if(!command)throw Error('No canonical history command '+name);
+  const {h,command}=historyCaseHarness(name);
   const result={afterEdit:clone(h.host._serverCfg),steps:[]};
   for(const direction of ['undo','redo']){
    for(const id of ['a','b','c'])h.warm(id);h.host._space='a';

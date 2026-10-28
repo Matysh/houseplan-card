@@ -20,7 +20,7 @@ export function historyFixture({large=false,stairsCase=false}={}){
  if(stairsCase)config.spaces[0].stairs=[{id:'stair',x:.45,y:.45,width:.1,length:.2,angle:0,direction:'forward',kind:'straight'}];
  return config;
 }
-export function historyHarness(config=historyFixture()){
+export function historyHarness(config=historyFixture(),{diagnostics=true}={}){
  const counts={preflight:0,union:0,save:0,deviceRebuild:0},checks=[],toasts=[],wallArguments=[],wallResults=[];
  const host={_serverCfg:clone(config),_space:'a',_loadOk:true,_cfgEpoch:0,_cfgRev:1,_pendingPhysicalWrites:new Map(),
   _geometryHistory:new CommandStack(50),_modelCache:null,_frame:null,_regSignature:'warm',_activeWallChainId:null,
@@ -48,8 +48,8 @@ export function historyHarness(config=historyFixture()){
  host._partitionOpeningCuts=()=>input().partitionCuts;host._roomWallOpeningInputs=()=>input().roomOpenings;
  host._physicalBodiesR=HouseplanCard.prototype._physicalBodiesR;host._wallUnionGeometry=HouseplanCard.prototype._wallUnionGeometry;
  host._checkSpacePhysicalGeometry=(candidate,id,capture)=>{
-  counts.preflight++;checks.push(clone(candidate));
-  return checkSpacePhysicalGeometry(candidate,id,{wallPass:(...args)=>{counts.union++;wallArguments.push(clone(args));const geometry=wallBodiesGeometry(...args);wallResults.push(clone(geometry));return geometry;},captureWallGeometry:(_inputs,g)=>capture?.(g)});
+  counts.preflight++;if(diagnostics)checks.push(clone(candidate));
+  return checkSpacePhysicalGeometry(candidate,id,{wallPass:(...args)=>{counts.union++;if(diagnostics)wallArguments.push(clone(args));const geometry=wallBodiesGeometry(...args);if(diagnostics)wallResults.push(clone(geometry));return geometry;},captureWallGeometry:(_inputs,g)=>capture?.(g)});
  };
  const runtime=Object.assign(Object.create(HouseplanEditorRuntime.prototype),{host,physicalWriteHistory:new PhysicalWriteHistory(),
   decorLine:{snapshot:null,reset(){},restore(){}},_clearGeometryGesture(){},_showGeometrySpace(id){host._space=id;}});

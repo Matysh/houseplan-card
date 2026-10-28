@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "issue": 1100,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 (eb172115f3b90568d22a8b99dc947dd66cf2b409) already clears all floor pools in _restoreGeometryStateLocal and canonicalizes every ordinary history restore. Preserve exact documents, refusals and write authority while removing this redundant work.",
+  "summary": {
+    "ru": "Отмена и повторение правок плана сохраняют тёплые соседние этажи; шаги подложки и лестниц не пересчитывают стены.",
+    "en": "Undo and Redo retain warm neighboring floors; backdrop and stair history skip unchanged wall geometry."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+    "golden": [],
+    "goldenChecks": [
+      {
+        "id": "geometry-view-dark-fit",
+        "reason": "Physical Undo must preserve saved wall and opening geometry in dark View."
+      },
+      {
+        "id": "geometry-view-light-fit",
+        "reason": "Physical Undo must preserve saved wall and opening geometry in light View."
+      },
+      {
+        "id": "stairs-flat-selected-light",
+        "reason": "Nonphysical stair history must preserve the selected stair and its Plan layer."
+      }
+    ],
+    "smokes": [
+      "smoke_floor_cache_reuse.mjs",
+      "smoke_backdrop.mjs",
+      "smoke_stairs.mjs",
+      "smoke_wall_chain_history.mjs",
+      "smoke_node_history_context.mjs",
+      "smoke_geometry_history_refusal.mjs"
+    ]
+  }
+}
