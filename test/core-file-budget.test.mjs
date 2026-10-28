@@ -67,7 +67,7 @@ const CAPS = {
   // exceeds the previous13327+50. Apply existing #898 +10% (ceil=14660),
   // retaining CORE_BAND50 and every other core cap; no source golfing.
   // https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253
-  'src/houseplan-card.ts': 14660,
+  'src/houseplan-card.ts': 13500,
   // #478 removed the persisted room-draft editor branch. Keep that reduction.
   // #485 keeps its large setup surface in editors/radar-section.ts; these are
   // only the dialog state/save seam and the thin lazy-render adapter.
@@ -98,7 +98,7 @@ const CAPS = {
   // #1089, owner permits explicit finite cap increases rather than byte/line chasing:
   // existing Hide/Delete transactions gain the guarded View command adapter.
   // Actual runtime is 11898 lines; retain the finite cap and CORE_BAND50.
-  'src/houseplan-editor-runtime.ts': 11898,
+  'src/houseplan-editor-runtime.ts': 11923,
 };
 
 /**

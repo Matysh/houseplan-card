@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.83.0-beta.3 — 2026-10-28
+
 - In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. Viewport resize repositions it; explicit camera/navigation changes retire the old command. (#1089)
 - Save settings and device edits on a large house faster: the server validates
   and canonicalises only the floors and devices the save changed, and walks
