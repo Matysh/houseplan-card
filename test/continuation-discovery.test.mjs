@@ -154,9 +154,9 @@ test('#1116 actual CLI fails closed and retains its artifact before any command/
     assert.match(run.stderr, /no verdict\/merge\/release authority/);
     assert.equal(existsSync(marker), false, 'failed discovery must reach no gh/git/dispatch command');
     const result = JSON.parse(readFileSync(join(out, 'summary.json'), 'utf8')).outcomes[0];
-    assert.equal(result.stage, stage);
-    assert.equal(result.endpoint, stage === 'event-run' ? runPath : listPath);
-    assert.equal(result.reason, stage === 'event-run' ? 'http-502' : 'malformed-json');
-    assert.equal(result.authority, false);
+    assert.deepEqual(result, { action: 'unverified', code: 'discovery-failed', stage,
+      endpoint: stage === 'event-run' ? runPath : listPath,
+      reason: stage === 'event-run' ? 'http-502' : 'malformed-json', authority: false });
+    assert.doesNotMatch(JSON.stringify(result), /fixture-private-response|fixture-private-token/);
   }
 });
