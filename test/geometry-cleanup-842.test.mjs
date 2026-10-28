@@ -163,7 +163,7 @@ test('#842 AC6: an explicit partition+opening delete is the operation’s own re
   const h = editorWriteHarness({ config: cfg });
   Object.assign(h.host, { _path: [], _geometryHistory: { clear() {}, push() {}, size: 0 } });
   h.runtime._clearGeometryGesture = () => {};
-  h.runtime._junctionBaselineCache = new WeakMap();
+  h.runtime._junctionBaselineCache = new Map();
   // «Delete wall and openings» (`_confirmPartitionDelete`, a class-field handler
   // the smoke clicks for real): remove the partition with its hosted openings,
   // then the production physical commit (#314 barrier, history, deferred write).

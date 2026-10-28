@@ -389,12 +389,12 @@ test('#330 AC4: кэш baseline инвалидируется по конфиг-�
     source.indexOf('private _junctionLimitsIntroduced('),
     source.indexOf('private _commitPhysicalGeometry('),
   );
-  assert.match(method, /cached\.fingerprint === fingerprint/,
+  assert.match(method, /cached\.fingerprint === cacheKey/,
     'кэш baseline обязан сверять геометрический fingerprint — счётчик превью тикает без изменения документа, а in-place commit меняет геометрию без смены identity');
   assert.match(method, /spacePhysicalGeometryFingerprint\(previousSpace\)/,
     'fingerprint берётся от пространства baseline-документа');
-  assert.match(method, /_junctionBaselineCache\.set\(previousConfig/,
-    'кэш ключуется идентичностью документа');
+  assert.match(method, /_junctionBaselineCache\.set\(spaceId/,
+    'bounded cache uses the current space slot; the value key binds physical content, model version and revision (#1099)');
   assert.match(method, />= WALL_SEGMENT_MODEL_VERSION\s*\n?\s*\? previousConfig/,
     'документ текущей версии используется как есть (#330 §4.6)');
 });

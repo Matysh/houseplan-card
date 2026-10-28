@@ -23,6 +23,10 @@
       "configs": 0
     },
     {
+      "file": "test/fixtures/1099-commit-characterization.json",
+      "configs": 19
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -1439,6 +1443,1400 @@
           "partitions": [
             "remote-wall"
           ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/thickness/config",
+      "fingerprint": "3c07117c2c1595bc07cfb8c2f92a266b19b833ae8c689c8e8b13edfeaed5a75c",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/split/config",
+      "fingerprint": "91351191233003070359f9cefe1d0189f7b6a18f986cbb22f1e75def9a07e615",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "wall-00000000-0000-4000-8000-000000000001",
+            "wall-00000000-0000-4000-8000-000000000002",
+            "wall-00000000-0000-4000-8000-000000000003",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "left",
+              "walls": [
+                "f-w0",
+                "wall-00000000-0000-4000-8000-000000000001",
+                "f-w2",
+                "f-w3"
+              ]
+            },
+            {
+              "id": "right",
+              "walls": [
+                "wall-00000000-0000-4000-8000-000000000002",
+                "f-w1",
+                "wall-00000000-0000-4000-8000-000000000003",
+                "wall-00000000-0000-4000-8000-000000000001"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/merge/config",
+      "fingerprint": "3eb478ca4fbcc64c594d1469825cf535205adc113ae1ad5767f39a78e9e68e1f",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "wall-00000000-0000-4000-8000-000000000001",
+            "wall-00000000-0000-4000-8000-000000000002",
+            "wall-00000000-0000-4000-8000-000000000003"
+          ],
+          "rooms": [
+            {
+              "id": "merged",
+              "walls": [
+                "f-w0",
+                "wall-00000000-0000-4000-8000-000000000001",
+                "wall-00000000-0000-4000-8000-000000000003",
+                "wall-00000000-0000-4000-8000-000000000002",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/column/config",
+      "fingerprint": "527ae58984d09da1b893c9e96e742b56602533968279cc9a8af5531203844bff",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/unsafe/config",
+      "fingerprint": "354433392017e134dec9ca54fc2f5e54b167adcca951dd76a36335cc77b334fc",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/introduced/config",
+      "fingerprint": "354433392017e134dec9ca54fc2f5e54b167adcca951dd76a36335cc77b334fc",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/inherited/config",
+      "fingerprint": "c80510a967c1bf836dbbce835715a472b8f0efcfa5ab12e1f241cf8a8ec08fdf",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "short"
+          ]
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/pre-v9/config",
+      "fingerprint": "4739eb050999c723aac408a1efdedc3651ccec7a5a28cb17c201c9cecfb4dd8b",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "wall-xfruoiqhxolaldwftqpu",
+            "wall-mzobvtwkuveztl45xffv",
+            "wall-wyb3wknq4xxcuak6p7ib",
+            "wall-3dxx25kdladz55ijxsqk"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "wall-mzobvtwkuveztl45xffv",
+                "wall-3dxx25kdladz55ijxsqk",
+                "wall-wyb3wknq4xxcuak6p7ib",
+                "wall-xfruoiqhxolaldwftqpu"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "wall-sepz5u5nuou4dighanca",
+            "wall-qinke4iixnugnzz6ninf",
+            "wall-mn2t5csdsljztrq3tkzi",
+            "wall-5apbakdzq43gbhgvn6en"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "wall-qinke4iixnugnzz6ninf",
+                "wall-5apbakdzq43gbhgvn6en",
+                "wall-mn2t5csdsljztrq3tkzi",
+                "wall-sepz5u5nuou4dighanca"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "wall-4scfpep6kh4fij3ussxy",
+            "wall-w5gvncjb2cd2ogz56c5m",
+            "wall-qwzszs7wsw3hwi5wtvvz",
+            "wall-7siotqtanxx6w5ucm7x7"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "wall-w5gvncjb2cd2ogz56c5m",
+                "wall-4scfpep6kh4fij3ussxy",
+                "wall-qwzszs7wsw3hwi5wtvvz",
+                "wall-7siotqtanxx6w5ucm7x7"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/migration-blocker/config",
+      "fingerprint": "354433392017e134dec9ca54fc2f5e54b167adcca951dd76a36335cc77b334fc",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-merge/config",
+      "fingerprint": "f6e5b74711574ba0d8ec0cf0363ce9549047bfa3c9686caeaf401f9283c3f0d4",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "wall-00000000-0000-4000-8000-000000000001",
+            "wall-00000000-0000-4000-8000-000000000002",
+            "wall-00000000-0000-4000-8000-000000000003"
+          ],
+          "rooms": [
+            {
+              "id": "merged",
+              "walls": [
+                "f-w0",
+                "wall-00000000-0000-4000-8000-000000000001",
+                "wall-00000000-0000-4000-8000-000000000003",
+                "wall-00000000-0000-4000-8000-000000000002",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-merge-safe-refusal/config",
+      "fingerprint": "a8d544dad1e98ff00b08e66d3da949caabadf99a748e9d3038dcecec8822d6c0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-merge-junction-refusal/config",
+      "fingerprint": "a8d544dad1e98ff00b08e66d3da949caabadf99a748e9d3038dcecec8822d6c0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-delete/config",
+      "fingerprint": "455ca756e6699678579491147b9b61385d09ecfcd61dcd901cb1bf6a65a2a478",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-delete-safe-refusal/config",
+      "fingerprint": "a8d544dad1e98ff00b08e66d3da949caabadf99a748e9d3038dcecec8822d6c0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-delete-junction-refusal/config",
+      "fingerprint": "a8d544dad1e98ff00b08e66d3da949caabadf99a748e9d3038dcecec8822d6c0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "f-w3",
+            "f-w0",
+            "f-w2",
+            "f-w1"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "f-w0",
+                "f-w1",
+                "f-w2",
+                "f-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "g-w3",
+            "g-w0",
+            "g-w2",
+            "g-w1"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "g-w0",
+                "g-w1",
+                "g-w2",
+                "g-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "h-w1",
+            "h-w0",
+            "h-w2",
+            "h-w3"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "h-w0",
+                "h-w1",
+                "h-w2",
+                "h-w3"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-pre-v9-merge-safe-refusal/config",
+      "fingerprint": "4d63de20d5f88c6e73d8bd959c620c17a5e9e400d227b188eb9f2b56cbb0e8ce",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "wall-xfruoiqhxolaldwftqpu",
+            "wall-mzobvtwkuveztl45xffv",
+            "wall-wyb3wknq4xxcuak6p7ib",
+            "wall-3dxx25kdladz55ijxsqk"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "wall-mzobvtwkuveztl45xffv",
+                "wall-3dxx25kdladz55ijxsqk",
+                "wall-wyb3wknq4xxcuak6p7ib",
+                "wall-xfruoiqhxolaldwftqpu"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "wall-sepz5u5nuou4dighanca",
+            "wall-qinke4iixnugnzz6ninf",
+            "wall-mn2t5csdsljztrq3tkzi",
+            "wall-5apbakdzq43gbhgvn6en"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "wall-qinke4iixnugnzz6ninf",
+                "wall-5apbakdzq43gbhgvn6en",
+                "wall-mn2t5csdsljztrq3tkzi",
+                "wall-sepz5u5nuou4dighanca"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "wall-4scfpep6kh4fij3ussxy",
+            "wall-w5gvncjb2cd2ogz56c5m",
+            "wall-qwzszs7wsw3hwi5wtvvz",
+            "wall-7siotqtanxx6w5ucm7x7"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "wall-w5gvncjb2cd2ogz56c5m",
+                "wall-4scfpep6kh4fij3ussxy",
+                "wall-qwzszs7wsw3hwi5wtvvz",
+                "wall-7siotqtanxx6w5ucm7x7"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-pre-v9-merge-junction-refusal/config",
+      "fingerprint": "4d63de20d5f88c6e73d8bd959c620c17a5e9e400d227b188eb9f2b56cbb0e8ce",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "wall-xfruoiqhxolaldwftqpu",
+            "wall-mzobvtwkuveztl45xffv",
+            "wall-wyb3wknq4xxcuak6p7ib",
+            "wall-3dxx25kdladz55ijxsqk"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "wall-mzobvtwkuveztl45xffv",
+                "wall-3dxx25kdladz55ijxsqk",
+                "wall-wyb3wknq4xxcuak6p7ib",
+                "wall-xfruoiqhxolaldwftqpu"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "wall-sepz5u5nuou4dighanca",
+            "wall-qinke4iixnugnzz6ninf",
+            "wall-mn2t5csdsljztrq3tkzi",
+            "wall-5apbakdzq43gbhgvn6en"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "wall-qinke4iixnugnzz6ninf",
+                "wall-5apbakdzq43gbhgvn6en",
+                "wall-mn2t5csdsljztrq3tkzi",
+                "wall-sepz5u5nuou4dighanca"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "wall-4scfpep6kh4fij3ussxy",
+            "wall-w5gvncjb2cd2ogz56c5m",
+            "wall-qwzszs7wsw3hwi5wtvvz",
+            "wall-7siotqtanxx6w5ucm7x7"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "wall-w5gvncjb2cd2ogz56c5m",
+                "wall-4scfpep6kh4fij3ussxy",
+                "wall-qwzszs7wsw3hwi5wtvvz",
+                "wall-7siotqtanxx6w5ucm7x7"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-pre-v9-delete-safe-refusal/config",
+      "fingerprint": "4d63de20d5f88c6e73d8bd959c620c17a5e9e400d227b188eb9f2b56cbb0e8ce",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "wall-xfruoiqhxolaldwftqpu",
+            "wall-mzobvtwkuveztl45xffv",
+            "wall-wyb3wknq4xxcuak6p7ib",
+            "wall-3dxx25kdladz55ijxsqk"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "wall-mzobvtwkuveztl45xffv",
+                "wall-3dxx25kdladz55ijxsqk",
+                "wall-wyb3wknq4xxcuak6p7ib",
+                "wall-xfruoiqhxolaldwftqpu"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "wall-sepz5u5nuou4dighanca",
+            "wall-qinke4iixnugnzz6ninf",
+            "wall-mn2t5csdsljztrq3tkzi",
+            "wall-5apbakdzq43gbhgvn6en"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "wall-qinke4iixnugnzz6ninf",
+                "wall-5apbakdzq43gbhgvn6en",
+                "wall-mn2t5csdsljztrq3tkzi",
+                "wall-sepz5u5nuou4dighanca"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "wall-4scfpep6kh4fij3ussxy",
+            "wall-w5gvncjb2cd2ogz56c5m",
+            "wall-qwzszs7wsw3hwi5wtvvz",
+            "wall-7siotqtanxx6w5ucm7x7"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "wall-w5gvncjb2cd2ogz56c5m",
+                "wall-4scfpep6kh4fij3ussxy",
+                "wall-qwzszs7wsw3hwi5wtvvz",
+                "wall-7siotqtanxx6w5ucm7x7"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1099-commit-characterization.json/results/marker-pre-v9-delete-junction-refusal/config",
+      "fingerprint": "4d63de20d5f88c6e73d8bd959c620c17a5e9e400d227b188eb9f2b56cbb0e8ce",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f",
+          "catalogue": [
+            "wall-xfruoiqhxolaldwftqpu",
+            "wall-mzobvtwkuveztl45xffv",
+            "wall-wyb3wknq4xxcuak6p7ib",
+            "wall-3dxx25kdladz55ijxsqk"
+          ],
+          "rooms": [
+            {
+              "id": "f-r",
+              "walls": [
+                "wall-mzobvtwkuveztl45xffv",
+                "wall-3dxx25kdladz55ijxsqk",
+                "wall-wyb3wknq4xxcuak6p7ib",
+                "wall-xfruoiqhxolaldwftqpu"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "g",
+          "catalogue": [
+            "wall-sepz5u5nuou4dighanca",
+            "wall-qinke4iixnugnzz6ninf",
+            "wall-mn2t5csdsljztrq3tkzi",
+            "wall-5apbakdzq43gbhgvn6en"
+          ],
+          "rooms": [
+            {
+              "id": "g-r",
+              "walls": [
+                "wall-qinke4iixnugnzz6ninf",
+                "wall-5apbakdzq43gbhgvn6en",
+                "wall-mn2t5csdsljztrq3tkzi",
+                "wall-sepz5u5nuou4dighanca"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        },
+        {
+          "space": "h",
+          "catalogue": [
+            "wall-4scfpep6kh4fij3ussxy",
+            "wall-w5gvncjb2cd2ogz56c5m",
+            "wall-qwzszs7wsw3hwi5wtvvz",
+            "wall-7siotqtanxx6w5ucm7x7"
+          ],
+          "rooms": [
+            {
+              "id": "h-r",
+              "walls": [
+                "wall-w5gvncjb2cd2ogz56c5m",
+                "wall-4scfpep6kh4fij3ussxy",
+                "wall-qwzszs7wsw3hwi5wtvvz",
+                "wall-7siotqtanxx6w5ucm7x7"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
         }
       ]
     },
