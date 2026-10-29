@@ -317,8 +317,13 @@ S1-new → S2-analysis → S3-spec → S4-spec-review ⟲ → S5-ready →
   Tool policy перед ревью (#1065) предъявляет закрытый native каталог чтения,
   внешнего Write и единственный fixed-check MCP. Модель выбирает только
   `check_id`; executable/argv/env/cwd задаёт manifest принятого tooling, а не
-  текст запроса. Общих Bash/Edit/Agent и business MCP в каталоге нет. Подмена,
-  rollback, inline interpreter и shell composition отказываются до исполнения.
+  текст запроса. Общих Bash/Edit/Agent и business MCP в каталоге нет.
+  Task diff (#1122) и `read:base` начинаются от единственного общего предка
+  material и принятого reference, как и changedFiles кодового контекста. Каталог явно
+  связывает SHA обеих сторон и предка; входящий diff и прямое сравнение деревьев
+  с новым dev — только контекст, не доказательство удаления автором задачи.
+  Неизвестный/неоднозначный предок отказывает; ship/release сохраняют прямой range.
+  Подмена, rollback, inline interpreter и shell composition отказываются до исполнения.
   SDK-hook startup/timeout отказывает нативно; перед моделью обязателен отказной
   self-probe неизменённого hook с командой только как JSON-данными.
   Перед seal сверяются полный execution trace, журнал решений, неизменность

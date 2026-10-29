@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1122,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Align task review recipes with the common-ancestor task context and distinguish incoming reference changes from authored deletions. Preserve real deletions, direct ship/release ranges, historical verdicts and all publication/merge/execution guards.",
+  "summary": {
+    "ru": "Ревью отличает входящие документы dev от удалений в самой задаче и явно показывает базу сравнения.",
+    "en": "Task review distinguishes incoming dev documents from task deletions and explicitly identifies the comparison basis."
+  }
+}

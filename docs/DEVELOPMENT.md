@@ -6278,6 +6278,19 @@ product change, guard change or separate extra build is introduced.
 
 ## Review execution boundary (#1065)
 
+Task diff provenance (#1122): `prepare` resolves exactly one common ancestor
+of material and the accepted reference, matching the code-review context range.
+`read:diff`, `read:log`, changed files and `read:base` share that base, including
+real deleted paths. The digest-bound catalogue names all three SHAs and exposes
+incoming/reference tree comparisons separately, explicitly not as evidence of
+authored deletion. Ship/release retain direct ranges; legacy manifests keep
+their recorded semantics. Run `node --test test/review-capabilities.test.mjs
+test/review-execution-policy.test.mjs test/review-context.test.mjs
+test/review-approved-check.test.mjs test/review-native-call-digest.test.mjs
+test/review-result-gate.test.mjs`. The real prepare/hook tests require Linux;
+the ordinary Git-DAG fixture is portable. No historical verdict is reinterpreted
+or rerun, and publication, patch-id, CAS and execution guards are unchanged.
+
 The owned pipe-holder regression (#1115) uses one absolute 2000ms deadline
 for the runner result and the fixture PID's stopped state. SIGKILL delivery and
 the kernel's transition to a missing/zombie process need not be observable in

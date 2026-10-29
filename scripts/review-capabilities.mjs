@@ -17,6 +17,14 @@ const sha = value => typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
 const pathInput = value => typeof value === 'string' && value.length > 0 && value.length <= 1024
   && !isAbsolute(value) && !/[\0\r\n\\]/.test(value) && !value.split('/').includes('..');
 const outside = value => isAbsolute(value) || value === '..' || value.startsWith('..' + sep);
+export function resolveReviewDiffBasis({ kind, materialSha, referenceSha, mergeBases }) {
+  if (!['task', 'ship', 'release'].includes(kind) || !sha(materialSha) || !sha(referenceSha))
+    throw Error('invalid review diff identity');
+  if (kind === 'task' && (!Array.isArray(mergeBases) || mergeBases.length !== 1 || !sha(mergeBases[0])))
+    throw Error('task review requires exactly one common ancestor');
+  return { schema: 'houseplan-review-diff-basis/v1', comparison: kind === 'task' ? 'task-patch' : 'direct-tree',
+    referenceSha, baseSha: kind === 'task' ? mergeBases[0] : referenceSha, materialSha };
+}
 const staticChecks = Object.freeze({
   'ci-profiles': ['scripts/ci-profiles.mjs', '--check'],
   'ci-registry-inventory': ['scripts/ci-registry-inventory.mjs', '--check'],
@@ -34,6 +42,18 @@ function validateMaterial(policy) {
     || !['task', 'ship', 'release'].includes(policy.kind) || !['spec', 'code', 'ship', 'release'].includes(policy.stage)
     || !Array.isArray(policy.files) || policy.files.length > 30000 || policy.files.some(p => !pathInput(p))
     || new Set(policy.files).size !== policy.files.length) throw Error('invalid capability material');
+  if (policy.changedFiles !== undefined && (!Array.isArray(policy.changedFiles) || policy.changedFiles.length > 30000
+    || policy.changedFiles.some(p => !pathInput(p)) || new Set(policy.changedFiles).size !== policy.changedFiles.length))
+    throw Error('invalid changed file material');
+  // The trusted prepare resolves Git ancestry once. Do not recompute Git on
+  // every tool call; bind these explicit roles into the sealed capability set.
+  if (policy.diffBasis !== undefined) {
+    const d = policy.diffBasis;
+    const expected = resolveReviewDiffBasis({ kind: policy.kind, materialSha: policy.sha,
+      referenceSha: d?.referenceSha, mergeBases: [d?.baseSha] });
+    if (policy.base !== expected.baseSha || canonicalCallJson(d) !== canonicalCallJson(expected))
+      throw Error('inconsistent review diff basis');
+  }
 }
 
 function runtimePaths(root) {
@@ -64,9 +84,17 @@ function recipes(policy, runtime) {
     add('static:' + name, 'Read-only/static check ' + name, 'static', [node(args)]);
   const base = sha(policy.base) ? policy.base : policy.sha;
   const git = args => ({ bin: 'git', args: ['-c', 'maintenance.auto=false', '-c', 'gc.auto=0', '--no-pager', ...args] });
-  add('read:diff', 'Read the immutable base-to-candidate diff', 'read', [git(['diff', '--no-ext-diff', '--no-textconv', base, policy.sha])], 5000);
+  const taskBasis = policy.diffBasis?.comparison === 'task-patch';
+  add('read:diff', taskBasis ? 'Read the authored task patch from the common ancestor to the candidate'
+    : 'Read the immutable base-to-candidate diff', 'read', [git(['diff', '--no-ext-diff', '--no-textconv', base, policy.sha])], 5000);
   add('read:log', 'Read commits in the immutable task range', 'read', [git(['log', '--oneline', base + '..' + policy.sha])], 5000);
-  for (const file of [...new Set(policy.changedFiles || [])].sort()) if (pathInput(file) && files.has(file))
+  if (taskBasis) {
+    add('read:incoming-diff', 'Read incoming reference changes since the common ancestor, not the task patch', 'read',
+      [git(['diff', '--no-ext-diff', '--no-textconv', base, policy.diffBasis.referenceSha])], 5000);
+    add('read:reference-diff', 'Read reference-to-candidate direct tree context; not evidence of authored deletion', 'read',
+      [git(['diff', '--no-ext-diff', '--no-textconv', policy.diffBasis.referenceSha, policy.sha])], 5000);
+  }
+  for (const file of [...new Set(policy.changedFiles || [])].sort()) if (pathInput(file) && (files.has(file) || taskBasis))
     add('read:base:' + file, 'Read base version of ' + file, 'read', [git(['show', '--no-ext-diff', '--no-textconv', base + ':' + file])], 5000);
   if (policy.stage !== 'spec') {
     if (files.has('tsconfig.test.json') && files.has('scripts/fix-test-build.mjs'))
@@ -90,7 +118,7 @@ export function buildReviewCapabilities(policy) {
   const value = { schema: CAPABILITIES_SCHEMA, materialSha: policy.sha, root: policy.root,
     stage: policy.stage, kind: policy.kind, nativeTools: [...NATIVE_REVIEW_TOOLS],
     serverName: REVIEW_MCP_SERVER_NAME, toolName: REVIEW_MCP_TOOL_NAME,
-    runtime, checks: recipes(policy, runtime) };
+    ...(policy.diffBasis ? { diffBasis: { ...policy.diffBasis } } : {}), runtime, checks: recipes(policy, runtime) };
   return { ...value, digest: capabilityDigest(value) };
 }
 
@@ -101,6 +129,7 @@ export function readReviewCapabilities(policy) {
     || value.materialSha !== policy.sha || value.root !== policy.root || value.stage !== policy.stage || value.kind !== policy.kind
     || JSON.stringify(value.nativeTools) !== JSON.stringify(NATIVE_REVIEW_TOOLS)
     || value.serverName !== REVIEW_MCP_SERVER_NAME || value.toolName !== REVIEW_MCP_TOOL_NAME
+    || canonicalCallJson(value.diffBasis ?? null) !== canonicalCallJson(policy.diffBasis ?? null)
     || value.runtime?.node !== realpathSync(process.execPath) || value.runtime.nodeVersion !== process.versions.node
     || !Array.isArray(value.checks) || value.checks.length > 6000) throw Error('invalid capability manifest');
   const { digest, ...payload } = value;
@@ -120,7 +149,12 @@ export function reviewCheckToolDefinition(manifest) {
 }
 
 export function reviewChecksMarkdown(manifest) {
+  const d = manifest.diffBasis;
+  const basis = d ? '\n\nDiff basis: ' + d.comparison + '\nReference (accepted tooling/range input): ' + d.referenceSha
+    + '\nBase' + (d.comparison === 'task-patch' ? ' (common ancestor; authored task patch starts here)' : ' (direct range)') + ': ' + d.baseSha
+    + (d.comparison === 'task-patch' ? '\nread:diff and read:base use the common ancestor. Incoming/reference comparisons are context only; they do not prove an authored deletion.' : '') : '';
   return '# Declared review checks\n\nMaterial: ' + manifest.materialSha + '\nManifest SHA256: ' + manifest.digest
+    + basis
     + '\n\nUse run_check(check_id). No shell is available. Reuse compatible CI evidence; execute a check only for a concrete uncovered risk or invalidated proof. Tests importing test-build can use build:test first. A failed or unavailable check is not PASS.\n\n'
     + manifest.checks.map(c => '- `' + c.id + '` — ' + c.description + ' (' + c.timeoutMs + ' ms)').join('\n') + '\n';
 }

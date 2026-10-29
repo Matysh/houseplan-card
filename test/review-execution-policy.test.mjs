@@ -242,6 +242,51 @@ test('#1065 published historical claim is rejected as report DATA, not reenacted
   assert.ok(reviewResultProblems({ files: Object.keys(data), read: n => data[n], expected }).some(p => /temporary patch/.test(p)));
 });
 
+test('#1122 real prepare uses the task common ancestor but preserves ship/release direct ranges', { skip: process.platform !== 'linux' }, t => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-1122-prepare-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+  const repo = join(dir, 'repo'); mkdirSync(repo);
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', REVIEW_CLAUDE_VERSION: REVIEW_CLI_VERSION,
+    GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
+    REVIEW_DOC: join(dir, 'report.md') };
+  const git = (...args) => execFileSync('git', ['-c', 'maintenance.auto=false', '-c', 'gc.auto=0', ...args],
+    { cwd: repo, env, encoding: 'utf8', stdio: 'pipe' }).trim();
+  git('init', '-q');
+  writeFileSync(join(repo, 'INDEX.md'), 'old index\n');
+  writeFileSync(join(repo, 'removed.md'), 'base document\n');
+  git('add', '.'); git('commit', '-qm', 'common ancestor');
+  const ancestor = git('rev-parse', 'HEAD');
+  git('rm', 'removed.md'); git('commit', '-qm', 'real task deletion');
+  const candidate = git('rev-parse', 'HEAD');
+  git('checkout', '-q', '--detach', ancestor);
+  writeFileSync(join(repo, 'incoming.md'), 'accepted C document\n');
+  writeFileSync(join(repo, 'INDEX.md'), 'new index\n');
+  git('add', '.'); git('commit', '-qm', 'newer dev');
+  const reference = git('rev-parse', 'HEAD');
+  git('checkout', '-q', '--detach', candidate);
+  const script = fileURLToPath(new URL('../scripts/review-execution-policy.mjs', import.meta.url));
+  for (const [kind, stage, ref, expectedBase, changed] of [
+    ['task', 'code', reference, ancestor, ['removed.md']],
+    ['task', 'spec', candidate, candidate, []],
+    ['ship', 'ship', reference, reference, ['INDEX.md', 'incoming.md', 'removed.md']],
+    ['release', 'release', reference, reference, ['INDEX.md', 'incoming.md', 'removed.md']],
+  ]) {
+    const path = join(dir, `${kind}-${stage}.json`);
+    const result = spawnSync(process.execPath, [script, 'prepare', path], { cwd: repo,
+      env: { ...env, REVIEW_KIND: kind, REVIEW_STAGE: stage, REVIEW_BASE: ref }, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    const p = JSON.parse(readFileSync(path));
+    assert.equal(p.base, expectedBase);
+    assert.equal(p.diffBasis.referenceSha, ref);
+    assert.equal(p.diffBasis.materialSha, candidate);
+    assert.deepEqual(p.changedFiles, changed);
+    const diff = p.capabilities.checks.find(c => c.id === 'read:diff');
+    assert.deepEqual(diff.steps[0].args.slice(-2), [expectedBase, candidate]);
+    assert.match(readFileSync(`${path}.checks.md`, 'utf8'), new RegExp(expectedBase));
+  }
+});
+
 test('#1065 real hook refuses an unsafe request before any protected write or test execution', { skip: process.platform !== 'linux' }, t => {
   const dir = mkdtempSync(join(tmpdir(), 'hp-1065-policy-'));
   t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));

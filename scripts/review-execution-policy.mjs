@@ -8,7 +8,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { isMainModule } from './spawn-portable.mjs';
 import { reviewDecisionMetadata, reviewToolMetadata } from './review-tool-metadata.mjs';
 import { NATIVE_CALL_DIGEST_ALGORITHM as CALL_DIGEST_ALGORITHM, nativeCallDigest as callDigest } from './review-native-call-digest.mjs';
-import { buildReviewCapabilities, readReviewCapabilities, reviewChecksMarkdown,
+import { buildReviewCapabilities, readReviewCapabilities, reviewChecksMarkdown, resolveReviewDiffBasis,
   READ_ONLY_REVIEW_TOOLS, REVIEW_MCP_NATIVE_TOOL_NAME } from './review-capabilities.mjs';
 import { checkTraceProblems, readCheckExecutionEntries, verifyCheckExecutionFiles } from './review-approved-check.mjs';
 
@@ -239,9 +239,13 @@ if (isMainModule(import.meta.url)) {
         return !(isAbsolute(rel) || rel === '..' || rel.startsWith('..' + sep)) || realpathSync(dirname(p)) !== dirname(p);
       })) throw new Error('reports must be outside material');
       const sha = git('rev-parse', 'HEAD');
-      const base = git('rev-parse', `${process.env.REVIEW_BASE || sha}^{commit}`);
+      const referenceSha = git('rev-parse', `${process.env.REVIEW_BASE || sha}^{commit}`);
+      const kind = process.env.REVIEW_KIND;
+      const diffBasis = resolveReviewDiffBasis({ kind, materialSha: sha, referenceSha,
+        mergeBases: kind === 'task' ? git('merge-base', '--all', referenceSha, sha).split('\n').filter(Boolean) : undefined });
+      const base = diffBasis.baseSha;
       const policy = { schema: 2, root, outputs, cliVersion: REVIEW_CLI_VERSION, cliSha256: REVIEW_CLI_SHA256,
-        sha, base, changedFiles: git('diff', '--name-only', base, sha).split('\n').filter(Boolean), kind: process.env.REVIEW_KIND,
+        sha, base, diffBasis, changedFiles: git('diff', '--name-only', base, sha).split('\n').filter(Boolean), kind,
         callDigestAlgorithm: CALL_DIGEST_ALGORITHM,
         stage: process.env.REVIEW_STAGE || 'code', files: git('ls-files').split('\n'), journal: `${policyPath}.jsonl`, checksJournal: `${policyPath}.checks.jsonl` };
       unchanged(policy);

@@ -2597,6 +2597,10 @@ validates a fixed `run_check(check_id)` or an external report Write; the manifes
 owns executable/argv/env/cwd. Generic Bash/Edit/Agent and business MCP are absent;
 arbitrary shell programs and
 canonical implementation/guard/limit replacement are not review inputs.
+Task recipes (#1122) share the context's common-ancestor base. A digest-bound
+descriptor names material, reference and base; separate incoming/direct-tree
+readers cannot relabel reference-only documents as authored deletions.
+Missing or multiple ancestors refuse; ship/release ranges remain direct.
 The private journal stores tool IDs, policy-binding digests and decisions, with optional
 bounded fixed-vocabulary diagnostic shape metadata (#1082). The SDK's
 nonexecuting StructuredOutput channel is bound to the final structured result;
