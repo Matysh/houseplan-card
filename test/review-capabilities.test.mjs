@@ -68,8 +68,9 @@ test('#1065 available runtime cannot silently disappear from a rehashed capabili
 });
 
 test('#1122 incoming reference documents are not authored deletions; real task deletions remain visible', t => {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'hp-1122-diff-')));
-  t.after(() => rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+  const dir = mkdtempSync(join(tmpdir(), 'hp-1122-diff-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 }));
+  const root = realpathSync(dir);
   const env = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^GIT_/i.test(key))),
     GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null',
     GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
