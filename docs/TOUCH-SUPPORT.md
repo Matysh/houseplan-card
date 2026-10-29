@@ -2,7 +2,7 @@
 
 External-screen profiles (#1113) configure main-panel kiosk from a desktop General settings dialog. Kiosk pan/pinch, double-tap Fit all, edge swipe and3-second size hold remain supported. Explicit profile/link scales lock only their local sliders. Idle fit without auto-advance waits while a finger or modal owns the interaction and runs once per idle period. This adds no editor touch-parity obligation.
 
-The main panel also enters the same kiosk explicitly through /houseplan/kiosk[/N] or root hpkiosk=1/hpspace=N (#1103). Its menu/HA chrome remain available. One-based position pins one space; absent/invalid positions retain all-space swipe behavior. This does not change the input support policy.
+The main panel also enters the same kiosk explicitly through /houseplan/kiosk[/N] or root hpkiosk=1/hpspace=N (#1103). The main-panel kiosk now hides the whole card header, including its HA menu (#1120); Back or the ordinary /houseplan URL exits. One-based position pins one space; absent/invalid positions retain all-space swipe behavior. This does not change the input support policy.
 
 Approved by the owner on **2026-08-08**. This document is the source of truth
 for product scope, implementation trade-offs, documentation and release
@@ -14,9 +14,11 @@ House Plan is a **touch-first product in View and kiosk**, but its editors are
 **desktop-first administration tools**.
 
 This contract applies equally to the primary `/houseplan` sidebar panel and to
-optional dashboard cards. The panel menu button remains available on every
-width with a 44 × 44 px target; Home Assistant kiosk state does not silently
-enable House Plan's separate card kiosk mode.
+optional dashboard cards. In ordinary panel View, the 44 × 44 px HA menu follows
+native visibility policy: narrow HA or a hidden wide sidebar, except native HA
+kiosk or an external provider with hasSidebar:true. House Plan kiosk hides its
+whole header and menu; Home Assistant kiosk state does not silently enable
+House Plan's separate card kiosk mode.
 
 | Surface | Desktop browser with mouse/keyboard | Touch/coarse-pointer device |
 |---|---|---|
