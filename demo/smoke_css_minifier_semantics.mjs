@@ -38,6 +38,16 @@ for (const [label, url] of files) {
   pairs.push({ label, source: body, minified: minifyCssText(body, label) });
 }
 
+const descendantFixture = `
+  .stage:is(.mode-plan,.mode-decor) :is(.glow-pools-frame,.led-fields) { display: none; }
+  .stage :where(.caption) { color : rgb(12, 34, 56); }
+  .stage .caption ::before { content: "child : before"; }
+  .stage .caption::after { content: "self : after"; }
+  @supports selector(.stage :is(.caption)) { .stage :not(.excluded) { --pair: 1 2; } }
+`;
+pairs.push({ label: '#1121-descendant-pseudos', source: descendantFixture,
+  minified: minifyCssText(descendantFixture, '#1121') });
+
 const { page, browser } = await launch();
 const out = await page.evaluate(async (input) => {
   const result = {};
@@ -74,7 +84,7 @@ const out = await page.evaluate(async (input) => {
     after.replaceSync(pair.minified);
     const left = rulesOf(before);
     const right = rulesOf(after);
-    comparedRules += left.length;
+    if (pair.label !== '#1121-descendant-pseudos') comparedRules += left.length;
     if (left.length !== right.length) {
       mismatches.push(`${pair.label}: правил ${left.length} против ${right.length}`);
       continue;
@@ -86,16 +96,41 @@ const out = await page.evaluate(async (input) => {
       }
     }
   }
-  result.filesCompared = input.length;
-  result.enoughFiles = input.length >= 5;
+  const productPairs = input.filter(pair => pair.label !== '#1121-descendant-pseudos');
+  result.filesCompared = productPairs.length;
+  result.enoughFiles = productPairs.length >= 5;
   result.rulesCompared = comparedRules;
   result.enoughRules = comparedRules >= 500;
   result.everyRuleIdentical = mismatches.length === 0;
   result.mismatches = mismatches.slice(0, 3);
   // Минификация обязана быть не просто безопасной, но и полезной.
-  const saved = input.reduce((sum, pair) => sum + pair.source.length - pair.minified.length, 0);
+  const saved = productPairs.reduce((sum, pair) => sum + pair.source.length - pair.minified.length, 0);
   result.savedBytes = saved;
   result.savesRealBytes = saved > 20000;
+  const fixture = input.find(pair => pair.label === '#1121-descendant-pseudos');
+  const observe = (css) => {
+    const root = document.createElement('div').attachShadow({ mode: 'open' });
+    root.innerHTML = '<div class="stage mode-decor"><svg><g class="glow-pools-frame"></g><g class="led-fields"></g></svg><div class="caption"><span></span></div></div>';
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(css);
+    root.adoptedStyleSheets = [sheet];
+    document.body.append(root.host);
+    const styles = [...root.querySelectorAll('.glow-pools-frame,.led-fields')]
+      .map(node => getComputedStyle(node).display);
+    const caption = root.querySelector('.caption');
+    const observed = { hidden: styles, color: getComputedStyle(caption).color,
+      childBefore: getComputedStyle(caption.firstElementChild, '::before').content,
+      selfBefore: getComputedStyle(caption, '::before').content,
+      selfAfter: getComputedStyle(caption, '::after').content };
+    root.host.remove();
+    return observed;
+  };
+  const reference = observe(fixture.source);
+  const actual = observe(fixture.minified);
+  result.descendantReferenceHasEffect = reference.hidden.every(value => value === 'none')
+    && reference.color === 'rgb(12, 34, 56)' && reference.childBefore === '"child : before"'
+    && reference.selfBefore === 'none' && reference.selfAfter === '"self : after"';
+  result.descendantNativePaintEquivalent = JSON.stringify(reference) === JSON.stringify(actual);
   return result;
 }, pairs);
 

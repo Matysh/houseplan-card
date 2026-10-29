@@ -127,6 +127,31 @@ test('CSS template minifier preserves semantic whitespace, strings and functions
   );
 });
 
+test('#1121 descendant whitespace before pseudo classes/elements remains significant', () => {
+  for (const selector of [
+    '.stage:is(.mode-plan,.mode-decor) :is(.glow-pools-frame,.led-fields)',
+    '.parent :hover', '.parent ::before', '.parent :where(.child)',
+    '.parent :not(.excluded)', ':is(.parent) :has(.child)',
+    '@supports selector(.parent :is(.child))',
+    '.parent /* separator */ :is(.child)',
+  ]) {
+    const input = `${selector} { color: red; }`;
+    const output = minifyCssText(input);
+    assert.ok(output.includes(' :'), `${selector}: ${output}`);
+    assert.equal(minifyCssText(output), output, 'minification stays idempotent');
+  }
+  assert.equal(minifyCssText('.parent:hover::before { color : red; --label: "a : b"; }'),
+    '.parent:hover::before{color :red;--label:"a : b";}');
+  const source = 'export const style = css ` .parent :is(.child) { color : red; } `;';
+  for (const coverage of [false, true]) {
+    const transformed = cssTemplateMinifier({ coverage }).transform(source, '/src/pseudo.styles.ts');
+    assert.ok(transformed.code.includes('.parent :is(.child){color :red;}'));
+    assert.equal(Boolean(transformed.map), coverage);
+    assert.throws(() => cssTemplateMinifier({ coverage }).transform(
+      'const s = css`color:${value}`;', '/src/dynamic.styles.ts'), /interpolated css template/);
+  }
+});
+
 // #526. Плагин видит ВЫВОД TypeScript, а не исходник, и принтер TS ставит
 // пробел между тегом и шаблоном: `css \``. Отсев по строгому `css\`` не
 // срабатывал никогда — минификация не выполнялась ни для одного файла стилей,

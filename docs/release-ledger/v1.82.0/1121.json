@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "issue": 1121,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "B/C-only repair of the static Lit CSS minifier: preserve significant descendant whitespace before pseudo selectors while retaining valid declarations, closed interpolation and coverage source maps. Product source styles and accepted UI remain unchanged; a controlled browser fixture supplements the unchanged real-sheet equivalence guard.",
+  "visual": {
+    "schema": 1,
+    "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+    "golden": [],
+    "smokes": ["smoke_css_minifier_semantics.mjs"]
+  }
+}

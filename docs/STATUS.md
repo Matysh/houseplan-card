@@ -1,5 +1,9 @@
 # Project status
 
+Static CSS tooling (#1121) preserves descendant pseudo-selector whitespace;
+real-sheet semantic comparison and a controlled native paint witness retain
+declaration, interpolation and source-map contracts without product CSS changes.
+
 Approved UI (#1119) adds owner-scoped 280ms quarter turns, upright screen-frame contacts, shared information/summary UI Kit, visible new/hidden dots and explicit owned Off/Unavailable paint. Plan/Background hide light spill; all Properties routes share 1024px. Header overflow and HA menu changes belong to #1120, not this implementation.
 
 Continuation discovery (#1116) reads its two initial GitHub metadata endpoints with bounded bodyless GETs. Known interrupted sockets can recover; HTTP/JSON/shape/size/deadline failures retain a named diagnostic artifact and remain terminal, before any continuation authority.
@@ -114,8 +118,8 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Generated | 2026-10-29 — rerun `node scripts/status-snapshot.mjs` for the current tree |
 | Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
-| Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5876 · pure backend 710 · HA-harness backend 613 · browser smokes 481 (`npm run inventory`) |
+| Latest prerelease tag | `v1.83.0-beta.2` |
+| Tests | Node unit 5877 · pure backend 710 · HA-harness backend 613 · browser smokes 481 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

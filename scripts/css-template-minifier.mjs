@@ -8,7 +8,9 @@
  */
 import { coverageMapsEnabled, editMappedSource } from './coverage-maps.mjs';
 const isWhitespace = (char) => /[\t\n\f\r ]/.test(char);
-const TIGHT_BEFORE = new Set(['{', '}', ':', ';', ',', '>', ')']);
+// A colon may start a descendant pseudo selector, not just a declaration.
+// Keep its preceding whitespace conservatively; `color :red` remains valid.
+const TIGHT_BEFORE = new Set(['{', '}', ';', ',', '>', ')']);
 const TIGHT_AFTER = new Set(['{', '}', ':', ';', ',', '>', '(']);
 
 export function minifyCssText(source, label = '<css>') {

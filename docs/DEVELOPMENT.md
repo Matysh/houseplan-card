@@ -1,5 +1,15 @@
 # Development and deployment
 
+Static CSS minification (#1121) conservatively retains whitespace before `:`:
+it may be a descendant pseudo selector, while `color :red` is still a valid
+declaration. No selector/declaration parser or interpolation exception is added.
+`bundle-assets` covers pseudo classes/elements, functional selectors, comments,
+declarations and both coverage modes; `coverage-maps` keeps the actual Rollup
+sentinel proof. `smoke_css_minifier_semantics` compares all real style rules and
+separately observes scoped SVG display and descendant/self pseudo paint. Its
+controlled fixture contributes neither to minimum real-sheet/rule counts nor
+to required product byte savings. Both ordinary guards failed before the fix.
+
 Approved UI (#1119): compile the test build and run `plan-rotation-motion`, `device-contact-screen`, `device-presentation`, `live-hover-status`, contact and form-kit units. The active tooltip consumes the current resolved frame on ordinary HA ticks, without requiring pointer movement; preserve the captured pre-fix stale Off witness. `demo/smoke_approved_ui.mjs` observes cold information without the full editor chunk, native summary exit frames, real on-source light layers in four modes, actual-container Properties routing, owned paint and contact badge hits through four rotations. Keep `smoke_device_offline` LED, foreign-quality, static/live, diagnostics and no-write oracles; UI-007 explicitly supersedes ordinary content-only #1026 paint. Pair the seven remaining accepted UI prototypes with the candidate using the same synthetic fixture, HA runtime, theme, language, scale and settled dialog readiness; dynamic rotation/close needs intermediate frames. UI-008/009 and header fixture adaptations are excluded in favour of #1120 r6. Mutation checks are declaration/static readiness only; no development mutant execution.
 The Summary composition is explicit in its lazy leaf: 20px body padding,
 13px/1.5 text, 44px switch targets and 13px/22px text inputs. Verify cold
