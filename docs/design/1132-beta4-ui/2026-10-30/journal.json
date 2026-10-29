@@ -1,0 +1,176 @@
+{
+  "iteration": "2026-10-29-beta4",
+  "status": "approved",
+  "startedAt": "2026-10-29",
+  "baseTag": "v1.83.0-beta.4",
+  "baseCommit": "08b154115ff815062cfc0221f39f7e53545dbe45",
+  "productFingerprint": "db22631f8dffce327662c122343d4c921f036b08d153a1b63c45a9e9ddaeb125",
+  "bundleSource": "Unmodified tracked release frontend copied to ignored dist; no rebuild",
+  "dataset": "Public synthetic fixture derived from beta4 demo/ui-lab/fixture.json; LQI 148 and label overlap added.",
+  "prototypes": [
+    "prototypes/UI-006-print-uikit.mjs"
+  ],
+  "cssOverrides": [
+    "overrides/houseplan-card.css"
+  ],
+  "changes": [
+    {
+      "id": "UI-001",
+      "revision": 1,
+      "status": "owner-approved",
+      "description": "Убрать верхний блик, имитирующий объём, у значков устройств",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "Disable device-core-inset-shadow; preserve other shadows and status outlines"
+    },
+    {
+      "id": "UI-002",
+      "revision": 1,
+      "status": "owner-approved",
+      "description": "Вернуть hover трём кнопкам редакторов: подсветка фона и текста с существующим плавным переходом",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "Pointer-only hover on enabled inactive editor tabs; active editor styling retained"
+    },
+    {
+      "id": "UI-003",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Единая стилистика шапки: пространства и редакторы в контурных группах высотой 44 px; название пространства и шестерёнка прилегают как сегменты; прозрачный фон, штатные линии и hover",
+      "files": [
+        "overrides/houseplan-card.css"
+      ]
+    },
+    {
+      "id": "UI-004",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Убрать белую браузерную обводку кнопки редактора, остающуюся после выхода по Escape",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "Suppress native focus-visible outline on editor mode tabs; retain focus, active border and hover"
+    },
+    {
+      "id": "UI-005",
+      "revision": 2,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Узкая верхняя панель: пространства в первом ряду, редакторы и повороты во втором, остальные действия и сводная панель в третьем; кнопки не скрываются",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "For measured narrow wrapped state, flatten actions wrapper, place rotation alongside editor group, then break before remaining actions; no fixed 355/423 breakpoint. Additional wrapping remains possible on smaller widths."
+    },
+    {
+      "id": "UI-006",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Диалог печати: восстановить штатный hover крестика общего hp-dialog; применить общий UI Kit к строкам параметров PDF/SVG",
+      "files": [
+        "prototypes/UI-006-print-uikit.mjs"
+      ],
+      "findings": "Shell hp-dialog, selects hp-settings-select, color hp-color-opacity and footer settingsActionsCss already shared. Nested PDF shadow root prevents card pointer-hover propagation; checkbox labels were custom. Reuse form-kit-styles-Cadt5rxn and hpf-toggle rows; preserve original inputs/handlers and reduced motion."
+    },
+    {
+      "id": "UI-007",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "В компактном виде кнопки редактора устройств использовать mdi:chip",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "Exact mdi:chip path from bundled icon catalogue via local CSS mask. Product handoff: change compact icon to mdi:chip; keep wide pencil unchanged."
+    },
+    {
+      "id": "UI-008",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "В компактном виде кнопки редактора подложки использовать mdi:palette",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "Exact mdi:palette from pinned HA frontend 20260930.4 MDI catalogue via local CSS mask. Product handoff: compact icon mdi:palette; wide pencil unchanged."
+    },
+    {
+      "id": "UI-009",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Разделить повороты и масштаб на две визуальные группы на верхней панели: зазор 10 px и скруглённые внешние углы",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "Round rotate-right trailing corners and zoom-out leading corners; 10px gap before zoom-out. Hidden zoom controls leave no gap."
+    },
+    {
+      "id": "UI-010",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Отменить отдельное визуальное состояние Power Off: внутренняя иконка больше не полупрозрачна. Сохранить оранжевую индикацию Power On и штатное отображение недоступности",
+      "files": [
+        "overrides/houseplan-card.css",
+        "runtime/app.mjs"
+      ],
+      "implementation": "Remove only Power Off glyph dimming across shared device faces: plan/view/editors, previews, space cards. Lab routes same CSS to hp-device-preview and houseplan-space-card shadow roots. Semantic power facts and status tooltip remain; unavailable/LED/HA-disabled rules preserved.",
+      "supersedes": "Previous Power Off glyph-opacity requirement from UI-007 r3 / issue 1119"
+    },
+    {
+      "id": "UI-011",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Убрать из конструктора внешних экранов опцию «Кнопки поверх плана». В режиме киоска эти кнопки всегда скрыты.",
+      "files": [
+        "overrides/houseplan-card.css",
+        "runtime/app.mjs"
+      ],
+      "implementation": "Local CSS hides the whole controls field and kiosk overlay controls regardless of stored profile value. Constructor change handler sets controls=false for new and edited screens. Product handoff: remove the option and always suppress kiosk overlay controls, including existing profiles and URL overrides."
+    },
+    {
+      "id": "LAB-001",
+      "revision": 1,
+      "status": "lab-fix",
+      "date": "2026-10-30",
+      "description": "Восстановить затемнение вокруг диалогов на локальном стенде. По сообщению владельца в beta 4 затемнение уже работает; не включать как изменение продукта.",
+      "files": [
+        "overrides/ha-dialog.css"
+      ],
+      "implementation": "Standalone ha-dialog was missing --mdc-dialog-scrim-color and rendered transparent backdrop. Supply black 45% matching hp-dialog native fallback, preserving native HA/WA backdrop animation.",
+      "productHandoff": false
+    },
+    {
+      "id": "UI-012",
+      "revision": 1,
+      "status": "owner-approved",
+      "date": "2026-10-30",
+      "description": "Показания Zigbee под устройством рисовать поверх названия комнаты и её показаний.",
+      "files": [
+        "overrides/houseplan-card.css"
+      ],
+      "implementation": "Room labels use z-index 1. Place markers containing LQI on z-index 2 and LQI on 3; low-specificity marker selector preserves higher hover/focus/topology layers. Preserve existing device availability opacity and LQI colors."
+    },
+    {
+      "id": "LAB-002",
+      "revision": 1,
+      "status": "lab-fixture",
+      "date": "2026-10-30",
+      "description": "Synthetic replay includes LQI 148 on light.lab_ceiling with room-name overlap.",
+      "files": [
+        "fixture.json"
+      ],
+      "productHandoff": false,
+      "implementation": "Public synthetic fixture only; no private backup."
+    }
+  ],
+  "workflow": "Fast local visual iteration; record each owner-approved change; publish approved materials through repository when requested",
+  "issue": 1132
+}

@@ -1,0 +1,2249 @@
+{
+  "config": {
+    "spaces": [
+      {
+        "id": "golden-geometry",
+        "title": "Ground floor",
+        "plan_url": null,
+        "view_box": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "cell_cm": 5,
+        "settings": {
+          "fill_mode": "custom",
+          "show_borders": true,
+          "show_names": true,
+          "room_color": "#343941",
+          "room_opacity": 1,
+          "custom_fill": {
+            "c": "#7f7f7f",
+            "a": 1
+          },
+          "glow_enabled": true,
+          "bg_color": "#152332",
+          "card_name_scale": 1.3,
+          "label_temp": true,
+          "label_hum": true,
+          "label_lqi": true,
+          "label_light": true
+        },
+        "rooms": [
+          {
+            "id": "geo-nw",
+            "name": "Kitchen-living room",
+            "area": "golden_geo_nw",
+            "poly": [
+              [
+                0.06,
+                0.08
+              ],
+              [
+                0.48,
+                0.08
+              ],
+              [
+                0.48,
+                0.15
+              ],
+              [
+                0.48,
+                0.27
+              ],
+              [
+                0.48,
+                0.48
+              ],
+              [
+                0.06,
+                0.48
+              ]
+            ],
+            "wall_ids": [
+              "wall-4xqim4uuxt2hyi4fhrko",
+              "wall-y3aen57adebtt6s2slvu",
+              "wall-jpr7xmfel3obl54g7bxd",
+              "wall-yylsmsx5pmmwkz7irprk",
+              "wall-ho2pudi6xixfy4arlrfr",
+              "wall-234wojzxcmub2itpixmi"
+            ]
+          },
+          {
+            "id": "geo-ne",
+            "name": "Guest bedroom",
+            "area": "golden_geo_ne",
+            "poly": [
+              [
+                0.48,
+                0.08
+              ],
+              [
+                0.94,
+                0.08
+              ],
+              [
+                0.94,
+                0.48
+              ],
+              [
+                0.48,
+                0.48
+              ],
+              [
+                0.48,
+                0.27
+              ],
+              [
+                0.48,
+                0.15
+              ]
+            ],
+            "wall_ids": [
+              "wall-izxhkrx3naqu33unzfb4",
+              "wall-6keyaycibpqabuvyzqsi",
+              "wall-gberlzbc5ksacvvuznpd",
+              "wall-yylsmsx5pmmwkz7irprk",
+              "wall-jpr7xmfel3obl54g7bxd",
+              "wall-y3aen57adebtt6s2slvu"
+            ]
+          },
+          {
+            "id": "geo-sw",
+            "name": "Hallway",
+            "area": "golden_geo_sw",
+            "poly": [
+              [
+                0.06,
+                0.48
+              ],
+              [
+                0.48,
+                0.48
+              ],
+              [
+                0.48,
+                0.92
+              ],
+              [
+                0.06,
+                0.92
+              ]
+            ],
+            "wall_ids": [
+              "wall-ho2pudi6xixfy4arlrfr",
+              "wall-y4pcrvfw3sb5myiywcxs",
+              "wall-tnbeif2wbwiyr6jicbmv",
+              "wall-f36sijjyusy7axuflnak"
+            ]
+          },
+          {
+            "id": "geo-se",
+            "name": "Guest bathroom",
+            "area": "golden_geo_se",
+            "poly": [
+              [
+                0.48,
+                0.48
+              ],
+              [
+                0.94,
+                0.48
+              ],
+              [
+                0.94,
+                0.92
+              ],
+              [
+                0.48,
+                0.92
+              ]
+            ],
+            "wall_ids": [
+              "wall-gberlzbc5ksacvvuznpd",
+              "wall-twi5ghx7cqgu4hwnt6nw",
+              "wall-6p3anhzhdjqjpmzdioan",
+              "wall-y4pcrvfw3sb5myiywcxs"
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "key": "0.058333,0.279167@1.5706",
+            "cm": 15,
+            "a": [
+              0.06,
+              0.08
+            ],
+            "b": [
+              0.06,
+              0.48
+            ]
+          },
+          {
+            "key": "0.270833,0.079167@0.0000",
+            "cm": 10,
+            "a": [
+              0.06,
+              0.08
+            ],
+            "b": [
+              0.48,
+              0.08
+            ]
+          },
+          {
+            "key": "0.058333,0.700000@1.5706",
+            "cm": 15,
+            "a": [
+              0.06,
+              0.48
+            ],
+            "b": [
+              0.06,
+              0.92
+            ]
+          },
+          {
+            "key": "0.270833,0.479167@0.0000",
+            "cm": 15,
+            "a": [
+              0.06,
+              0.48
+            ],
+            "b": [
+              0.48,
+              0.48
+            ]
+          },
+          {
+            "key": "0.270833,0.920833@0.0000",
+            "cm": 10,
+            "a": [
+              0.06,
+              0.92
+            ],
+            "b": [
+              0.48,
+              0.92
+            ]
+          },
+          {
+            "key": "0.479167,0.116667@1.5706",
+            "cm": 25,
+            "a": [
+              0.48,
+              0.08
+            ],
+            "b": [
+              0.48,
+              0.15
+            ]
+          },
+          {
+            "key": "0.708333,0.079167@0.0000",
+            "cm": 10,
+            "a": [
+              0.48,
+              0.08
+            ],
+            "b": [
+              0.94,
+              0.08
+            ]
+          },
+          {
+            "key": "0.479167,0.375000@1.5706",
+            "cm": 25,
+            "a": [
+              0.48,
+              0.27
+            ],
+            "b": [
+              0.48,
+              0.48
+            ]
+          },
+          {
+            "key": "0.479167,0.700000@1.5706",
+            "cm": 25,
+            "a": [
+              0.48,
+              0.48
+            ],
+            "b": [
+              0.48,
+              0.92
+            ]
+          },
+          {
+            "key": "0.708333,0.479167@0.0000",
+            "cm": 15,
+            "a": [
+              0.48,
+              0.48
+            ],
+            "b": [
+              0.94,
+              0.48
+            ]
+          },
+          {
+            "key": "0.708333,0.920833@0.0000",
+            "cm": 15,
+            "a": [
+              0.48,
+              0.92
+            ],
+            "b": [
+              0.94,
+              0.92
+            ]
+          },
+          {
+            "key": "0.941667,0.279167@1.5706",
+            "cm": 15,
+            "a": [
+              0.94,
+              0.08
+            ],
+            "b": [
+              0.94,
+              0.48
+            ]
+          },
+          {
+            "key": "0.941667,0.700000@1.5706",
+            "cm": 15,
+            "a": [
+              0.94,
+              0.48
+            ],
+            "b": [
+              0.94,
+              0.92
+            ]
+          }
+        ],
+        "openings": [
+          {
+            "id": "geo-window",
+            "type": "window",
+            "x": 0.26,
+            "y": 0.08,
+            "angle": 0,
+            "length": 0.12,
+            "host": {
+              "kind": "wall",
+              "id": "wall-4xqim4uuxt2hyi4fhrko",
+              "t": 0.476190476
+            }
+          },
+          {
+            "id": "geo-door",
+            "type": "door",
+            "x": 0.48,
+            "y": 0.37,
+            "angle": 90,
+            "length": 0.12,
+            "host": {
+              "kind": "wall",
+              "id": "wall-yylsmsx5pmmwkz7irprk",
+              "t": 0.476190476
+            }
+          },
+          {
+            "id": "geo-gate",
+            "type": "gate",
+            "x": 0.72,
+            "y": 0.92,
+            "angle": 0,
+            "length": 0.2,
+            "host": {
+              "kind": "wall",
+              "id": "wall-6p3anhzhdjqjpmzdioan",
+              "t": 0.52173913
+            }
+          },
+          {
+            "id": "geo-diagonal-window",
+            "type": "window",
+            "x": 0.78,
+            "y": 0.2,
+            "angle": 45,
+            "length": 0.08
+          }
+        ],
+        "partitions": [
+          {
+            "id": "geo-partition-h",
+            "a": [
+              0.14,
+              0.68
+            ],
+            "b": [
+              0.4,
+              0.68
+            ],
+            "cm": 12
+          },
+          {
+            "id": "geo-partition-v",
+            "a": [
+              0.75,
+              0.56
+            ],
+            "b": [
+              0.75,
+              0.82
+            ],
+            "cm": 20
+          }
+        ],
+        "wall_columns": [
+          {
+            "id": "geo-column-square",
+            "shape": "square",
+            "center": [
+              0.63,
+              0.67
+            ],
+            "cm": 35,
+            "angle": 30
+          },
+          {
+            "id": "geo-column-circle",
+            "shape": "circle",
+            "center": [
+              0.86,
+              0.72
+            ],
+            "cm": 40
+          }
+        ],
+        "decor": [
+          {
+            "id": "lab-sofa",
+            "kind": "furniture",
+            "symbol": "sofa",
+            "x": 0.17,
+            "y": 0.27,
+            "w": 0.23,
+            "h": 0.12,
+            "angle": 0,
+            "color": "#343941",
+            "opacity": 0.65
+          },
+          {
+            "id": "lab-table",
+            "kind": "furniture",
+            "symbol": "coffee_table",
+            "x": 0.22,
+            "y": 0.2,
+            "w": 0.12,
+            "h": 0.07,
+            "angle": 0,
+            "color": "#343941",
+            "opacity": 0.65
+          },
+          {
+            "id": "lab-bed",
+            "kind": "furniture",
+            "symbol": "bed_double",
+            "x": 0.65,
+            "y": 0.22,
+            "w": 0.18,
+            "h": 0.2,
+            "angle": 0,
+            "color": "#343941",
+            "opacity": 0.65
+          }
+        ],
+        "wall_segments": [
+          {
+            "id": "wall-234wojzxcmub2itpixmi",
+            "a": [
+              0.06,
+              0.08
+            ],
+            "b": [
+              0.06,
+              0.48
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-4xqim4uuxt2hyi4fhrko",
+            "a": [
+              0.06,
+              0.08
+            ],
+            "b": [
+              0.48,
+              0.08
+            ],
+            "cm": 10
+          },
+          {
+            "id": "wall-f36sijjyusy7axuflnak",
+            "a": [
+              0.06,
+              0.48
+            ],
+            "b": [
+              0.06,
+              0.92
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-ho2pudi6xixfy4arlrfr",
+            "a": [
+              0.06,
+              0.48
+            ],
+            "b": [
+              0.48,
+              0.48
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-tnbeif2wbwiyr6jicbmv",
+            "a": [
+              0.06,
+              0.92
+            ],
+            "b": [
+              0.48,
+              0.92
+            ],
+            "cm": 10
+          },
+          {
+            "id": "wall-y3aen57adebtt6s2slvu",
+            "a": [
+              0.48,
+              0.08
+            ],
+            "b": [
+              0.48,
+              0.15
+            ],
+            "cm": 25
+          },
+          {
+            "id": "wall-izxhkrx3naqu33unzfb4",
+            "a": [
+              0.48,
+              0.08
+            ],
+            "b": [
+              0.94,
+              0.08
+            ],
+            "cm": 10
+          },
+          {
+            "id": "wall-jpr7xmfel3obl54g7bxd",
+            "a": [
+              0.48,
+              0.15
+            ],
+            "b": [
+              0.48,
+              0.27
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-yylsmsx5pmmwkz7irprk",
+            "a": [
+              0.48,
+              0.27
+            ],
+            "b": [
+              0.48,
+              0.48
+            ],
+            "cm": 25
+          },
+          {
+            "id": "wall-y4pcrvfw3sb5myiywcxs",
+            "a": [
+              0.48,
+              0.48
+            ],
+            "b": [
+              0.48,
+              0.92
+            ],
+            "cm": 25
+          },
+          {
+            "id": "wall-gberlzbc5ksacvvuznpd",
+            "a": [
+              0.48,
+              0.48
+            ],
+            "b": [
+              0.94,
+              0.48
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-6p3anhzhdjqjpmzdioan",
+            "a": [
+              0.48,
+              0.92
+            ],
+            "b": [
+              0.94,
+              0.92
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-6keyaycibpqabuvyzqsi",
+            "a": [
+              0.94,
+              0.08
+            ],
+            "b": [
+              0.94,
+              0.48
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-twi5ghx7cqgu4hwnt6nw",
+            "a": [
+              0.94,
+              0.48
+            ],
+            "b": [
+              0.94,
+              0.92
+            ],
+            "cm": 15
+          }
+        ]
+      },
+      {
+        "id": "golden-lighting",
+        "title": "2nd floor",
+        "plan_url": null,
+        "view_box": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "cell_cm": 5,
+        "settings": {
+          "fill_mode": "custom",
+          "glow_enabled": true,
+          "show_borders": true,
+          "show_names": true,
+          "north_deg": 0,
+          "sun_rays": true,
+          "bg_mode": "static",
+          "custom_fill": {
+            "c": "#7f7f7f",
+            "a": 1
+          },
+          "bg_color": "#152332",
+          "room_color": "#343941",
+          "room_opacity": 1,
+          "card_name_scale": 1.3,
+          "label_temp": true,
+          "label_hum": true,
+          "label_lqi": true,
+          "label_light": true
+        },
+        "rooms": [
+          {
+            "id": "light-left",
+            "name": "Спальня",
+            "area": "golden_light_left",
+            "poly": [
+              [
+                0.07,
+                0.1
+              ],
+              [
+                0.5,
+                0.1
+              ],
+              [
+                0.5,
+                0.88
+              ],
+              [
+                0.07,
+                0.88
+              ]
+            ],
+            "wall_ids": [
+              "wall-sl7eewmku44wdzltoxsn",
+              "wall-c7epzaor4sw4zyr2tarl",
+              "wall-y6omndwig3vfx5ysy7ga",
+              "wall-yelrzrqcufu3yvswihmt"
+            ]
+          },
+          {
+            "id": "light-right",
+            "name": "Детская",
+            "area": "golden_light_right",
+            "poly": [
+              [
+                0.5,
+                0.1
+              ],
+              [
+                0.93,
+                0.1
+              ],
+              [
+                0.93,
+                0.88
+              ],
+              [
+                0.5,
+                0.88
+              ]
+            ],
+            "wall_ids": [
+              "wall-skh5bxslmjjwi2yx34fm",
+              "wall-cebm26jxie4vzdhyvgom",
+              "wall-cldcpera6bj22trb2qrr",
+              "wall-c7epzaor4sw4zyr2tarl"
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "key": "0.070833,0.491667@1.5706",
+            "cm": 15,
+            "a": [
+              0.07,
+              0.1
+            ],
+            "b": [
+              0.07,
+              0.88
+            ]
+          },
+          {
+            "key": "0.283333,0.100000@0.0000",
+            "cm": 15,
+            "a": [
+              0.07,
+              0.1
+            ],
+            "b": [
+              0.5,
+              0.1
+            ]
+          },
+          {
+            "key": "0.283333,0.879167@0.0000",
+            "cm": 15,
+            "a": [
+              0.07,
+              0.88
+            ],
+            "b": [
+              0.5,
+              0.88
+            ]
+          },
+          {
+            "key": "0.500000,0.491667@1.5706",
+            "cm": 25,
+            "a": [
+              0.5,
+              0.1
+            ],
+            "b": [
+              0.5,
+              0.88
+            ]
+          },
+          {
+            "key": "0.716667,0.100000@0.0000",
+            "cm": 15,
+            "a": [
+              0.5,
+              0.1
+            ],
+            "b": [
+              0.93,
+              0.1
+            ]
+          },
+          {
+            "key": "0.716667,0.879167@0.0000",
+            "cm": 15,
+            "a": [
+              0.5,
+              0.88
+            ],
+            "b": [
+              0.93,
+              0.88
+            ]
+          },
+          {
+            "key": "0.929167,0.491667@1.5706",
+            "cm": 15,
+            "a": [
+              0.93,
+              0.1
+            ],
+            "b": [
+              0.93,
+              0.88
+            ]
+          }
+        ],
+        "openings": [
+          {
+            "id": "light-window",
+            "type": "window",
+            "x": 0.27,
+            "y": 0.1,
+            "angle": 0,
+            "length": 0.14,
+            "host": {
+              "kind": "wall",
+              "id": "wall-sl7eewmku44wdzltoxsn",
+              "t": 0.465116279
+            }
+          },
+          {
+            "id": "light-door",
+            "type": "door",
+            "x": 0.5,
+            "y": 0.54,
+            "angle": 90,
+            "length": 0.15,
+            "host": {
+              "kind": "wall",
+              "id": "wall-c7epzaor4sw4zyr2tarl",
+              "t": 0.564102564
+            }
+          },
+          {
+            "id": "light-gate",
+            "type": "gate",
+            "x": 0.74,
+            "y": 0.88,
+            "angle": 0,
+            "length": 0.22,
+            "host": {
+              "kind": "wall",
+              "id": "wall-cldcpera6bj22trb2qrr",
+              "t": 0.558139535
+            }
+          }
+        ],
+        "partitions": [
+          {
+            "id": "light-partition",
+            "a": [
+              0.7,
+              0.22
+            ],
+            "b": [
+              0.7,
+              0.7
+            ],
+            "cm": 18
+          }
+        ],
+        "wall_columns": [
+          {
+            "id": "light-column",
+            "shape": "circle",
+            "center": [
+              0.38,
+              0.64
+            ],
+            "cm": 45
+          }
+        ],
+        "decor": [],
+        "wall_segments": [
+          {
+            "id": "wall-yelrzrqcufu3yvswihmt",
+            "a": [
+              0.07,
+              0.1
+            ],
+            "b": [
+              0.07,
+              0.88
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-sl7eewmku44wdzltoxsn",
+            "a": [
+              0.07,
+              0.1
+            ],
+            "b": [
+              0.5,
+              0.1
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-y6omndwig3vfx5ysy7ga",
+            "a": [
+              0.07,
+              0.88
+            ],
+            "b": [
+              0.5,
+              0.88
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-c7epzaor4sw4zyr2tarl",
+            "a": [
+              0.5,
+              0.1
+            ],
+            "b": [
+              0.5,
+              0.88
+            ],
+            "cm": 25
+          },
+          {
+            "id": "wall-skh5bxslmjjwi2yx34fm",
+            "a": [
+              0.5,
+              0.1
+            ],
+            "b": [
+              0.93,
+              0.1
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-cldcpera6bj22trb2qrr",
+            "a": [
+              0.5,
+              0.88
+            ],
+            "b": [
+              0.93,
+              0.88
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-cebm26jxie4vzdhyvgom",
+            "a": [
+              0.93,
+              0.1
+            ],
+            "b": [
+              0.93,
+              0.88
+            ],
+            "cm": 15
+          }
+        ]
+      }
+    ],
+    "markers": [
+      {
+        "id": "golden-light-two",
+        "binding": "device:golden-light-two",
+        "space": "golden-lighting",
+        "room_id": "light-left"
+      },
+      {
+        "id": "lab_ceiling",
+        "binding": "device:lab_ceiling",
+        "tap_action": "toggle",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      },
+      {
+        "id": "lab_switch",
+        "binding": "device:lab_switch",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      },
+      {
+        "id": "lab_temperature",
+        "binding": "device:lab_temperature",
+        "tap_action": "more-info",
+        "display": "value",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      },
+      {
+        "id": "lab_humidity",
+        "binding": "device:lab_humidity",
+        "tap_action": "more-info",
+        "display": "value",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      },
+      {
+        "id": "lab_co2",
+        "binding": "device:lab_co2",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      },
+      {
+        "id": "lab_motion",
+        "binding": "device:lab_motion",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      },
+      {
+        "id": "lab_cover",
+        "binding": "device:lab_cover",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      },
+      {
+        "id": "lab_leak",
+        "binding": "device:lab_leak",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-sw"
+      },
+      {
+        "id": "lab_washer",
+        "binding": "device:lab_washer",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-sw"
+      },
+      {
+        "id": "lab_unavailable",
+        "binding": "device:lab_unavailable",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-sw"
+      },
+      {
+        "id": "lab_robot",
+        "binding": "device:lab_robot",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-se"
+      },
+      {
+        "id": "lab_lock",
+        "binding": "device:lab_lock",
+        "tap_action": "more-info",
+        "space": "golden-geometry",
+        "room_id": "geo-sw"
+      },
+      {
+        "id": "lab_virtual",
+        "binding": "virtual",
+        "name": "Виртуальная лампа",
+        "icon": "mdi:lightbulb-outline",
+        "is_light": true,
+        "tap_action": "toggle",
+        "space": "golden-geometry",
+        "room_id": "geo-nw"
+      }
+    ],
+    "settings": {
+      "glow_radius_cm": 360,
+      "north_deg": 0,
+      "sun_rays": true,
+      "bg_mode": "static",
+      "fill_colors": {
+        "glow_light": {
+          "c": "#ffd27b",
+          "a": 0.5
+        },
+        "wall_fill": {
+          "c": "#aaaaaa",
+          "a": 1
+        }
+      },
+      "filter_seeded": true,
+      "known_devices": [
+        "golden-light-one",
+        "golden-light-two",
+        "golden-light-three",
+        "golden-presence",
+        "golden-climate",
+        "golden-left-temperature",
+        "golden-right-temperature",
+        "golden-left-linkquality",
+        "golden-right-linkquality",
+        "lab_ceiling",
+        "lab_switch",
+        "lab_temperature",
+        "lab_humidity",
+        "lab_co2",
+        "lab_motion",
+        "lab_cover",
+        "lab_leak",
+        "lab_washer",
+        "lab_unavailable",
+        "lab_robot",
+        "lab_lock"
+      ],
+      "new_device_ids": [],
+      "marker_area_snapshot": {
+        "golden-light-one": {
+          "binding": "device:golden-light-one",
+          "area": "golden_light_left"
+        },
+        "golden-light-two": {
+          "binding": "device:golden-light-two",
+          "area": "golden_light_left"
+        },
+        "golden-light-three": {
+          "binding": "device:golden-light-three",
+          "area": "golden_light_right"
+        },
+        "golden-presence": {
+          "binding": "device:golden-presence",
+          "area": "golden_light_right"
+        },
+        "golden-climate": {
+          "binding": "device:golden-climate",
+          "area": "golden_light_right"
+        },
+        "golden-left-temperature": {
+          "binding": "device:golden-left-temperature",
+          "area": "golden_light_left"
+        },
+        "golden-right-temperature": {
+          "binding": "device:golden-right-temperature",
+          "area": "golden_light_right"
+        },
+        "golden-left-linkquality": {
+          "binding": "device:golden-left-linkquality",
+          "area": "golden_light_left"
+        },
+        "golden-right-linkquality": {
+          "binding": "device:golden-right-linkquality",
+          "area": "golden_light_right"
+        },
+        "lab_ceiling": {
+          "binding": "device:lab_ceiling",
+          "area": "golden_geo_nw"
+        },
+        "lab_switch": {
+          "binding": "device:lab_switch",
+          "area": "golden_geo_nw"
+        },
+        "lab_temperature": {
+          "binding": "device:lab_temperature",
+          "area": "golden_geo_nw"
+        },
+        "lab_humidity": {
+          "binding": "device:lab_humidity",
+          "area": "golden_geo_nw"
+        },
+        "lab_co2": {
+          "binding": "device:lab_co2",
+          "area": "golden_geo_nw"
+        },
+        "lab_motion": {
+          "binding": "device:lab_motion",
+          "area": "golden_geo_nw"
+        },
+        "lab_cover": {
+          "binding": "device:lab_cover",
+          "area": "golden_geo_nw"
+        },
+        "lab_leak": {
+          "binding": "device:lab_leak",
+          "area": "golden_geo_nw"
+        },
+        "lab_washer": {
+          "binding": "device:lab_washer",
+          "area": "golden_geo_nw"
+        },
+        "lab_unavailable": {
+          "binding": "device:lab_unavailable",
+          "area": "golden_geo_nw"
+        },
+        "lab_robot": {
+          "binding": "device:lab_robot",
+          "area": "golden_geo_nw"
+        },
+        "lab_lock": {
+          "binding": "device:lab_lock",
+          "area": "golden_geo_nw"
+        }
+      },
+      "show_lqi": true,
+      "room_tooltip": true,
+      "summary_panel": {
+        "version": 1,
+        "title": "Обзор дома",
+        "show_on_mobile": true,
+        "blocks": [
+          {
+            "id": "lab-general",
+            "title": "Дом",
+            "visible": true,
+            "scope": {
+              "type": "all"
+            },
+            "values": [
+              {
+                "id": "lab-n",
+                "label": "Устройств",
+                "source": {
+                  "type": "system",
+                  "key": "device_count"
+                }
+              },
+              {
+                "id": "lab-area",
+                "label": "Площадь",
+                "source": {
+                  "type": "system",
+                  "key": "total_area"
+                }
+              },
+              {
+                "id": "lab-time",
+                "label": "Дата и время",
+                "source": {
+                  "type": "system",
+                  "key": "datetime"
+                }
+              }
+            ]
+          },
+          {
+            "id": "lab-climate",
+            "title": "Микроклимат",
+            "visible": true,
+            "scope": {
+              "type": "all"
+            },
+            "values": [
+              {
+                "id": "lab-t",
+                "label": "Температура",
+                "source": {
+                  "type": "entity",
+                  "entity_id": "sensor.lab_temperature"
+                }
+              },
+              {
+                "id": "lab-h",
+                "label": "Влажность",
+                "source": {
+                  "type": "entity",
+                  "entity_id": "sensor.lab_humidity"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "external_screens": {
+        "version": 1,
+        "next_id": 2,
+        "screens": [
+          {
+            "id": 1,
+            "space": null,
+            "rotation": 0,
+            "cycle": 0,
+            "idle": 0,
+            "summary": "local",
+            "hidden_devices": "local",
+            "icon_scale": null,
+            "font_scale": null,
+            "controls": true
+          }
+        ]
+      }
+    },
+    "model_version": 10
+  },
+  "devices": {
+    "golden-light-one": {
+      "id": "golden-light-one",
+      "name": "Golden golden-light-one",
+      "model": "GOLDEN-GOLDEN-LIGHT-ONE",
+      "area_id": "golden_light_left",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-light-one"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-light-two": {
+      "id": "golden-light-two",
+      "name": "Golden golden-light-two",
+      "model": "GOLDEN-GOLDEN-LIGHT-TWO",
+      "area_id": "golden_light_left",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-light-two"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-light-three": {
+      "id": "golden-light-three",
+      "name": "Golden golden-light-three",
+      "model": "GOLDEN-GOLDEN-LIGHT-THREE",
+      "area_id": "golden_light_right",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-light-three"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-presence": {
+      "id": "golden-presence",
+      "name": "Golden golden-presence",
+      "model": "GOLDEN-GOLDEN-PRESENCE",
+      "area_id": "golden_light_right",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-presence"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-climate": {
+      "id": "golden-climate",
+      "name": "Golden golden-climate",
+      "model": "GOLDEN-GOLDEN-CLIMATE",
+      "area_id": "golden_light_right",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-climate"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-left-temperature": {
+      "id": "golden-left-temperature",
+      "name": "Golden golden-left-temperature",
+      "model": "GOLDEN-GOLDEN-LEFT-TEMPERATURE",
+      "area_id": "golden_light_left",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-left-temperature"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-right-temperature": {
+      "id": "golden-right-temperature",
+      "name": "Golden golden-right-temperature",
+      "model": "GOLDEN-GOLDEN-RIGHT-TEMPERATURE",
+      "area_id": "golden_light_right",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-right-temperature"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-left-linkquality": {
+      "id": "golden-left-linkquality",
+      "name": "Golden golden-left-linkquality",
+      "model": "GOLDEN-GOLDEN-LEFT-LINKQUALITY",
+      "area_id": "golden_light_left",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-left-linkquality"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "golden-right-linkquality": {
+      "id": "golden-right-linkquality",
+      "name": "Golden golden-right-linkquality",
+      "model": "GOLDEN-GOLDEN-RIGHT-LINKQUALITY",
+      "area_id": "golden_light_right",
+      "identifiers": [
+        [
+          "houseplan_golden",
+          "golden-right-linkquality"
+        ]
+      ],
+      "config_entries": [
+        "golden_entry"
+      ],
+      "entry_type": null,
+      "via_device_id": null,
+      "disabled_by": null
+    },
+    "lab_ceiling": {
+      "id": "lab_ceiling",
+      "name": "Свет над столом",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_ceiling"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_switch": {
+      "id": "lab_switch",
+      "name": "Умный выключатель",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_switch"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_temperature": {
+      "id": "lab_temperature",
+      "name": "Температура в гостиной",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_temperature"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_humidity": {
+      "id": "lab_humidity",
+      "name": "Влажность в гостиной",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_humidity"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_co2": {
+      "id": "lab_co2",
+      "name": "Углекислый газ",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_co2"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_motion": {
+      "id": "lab_motion",
+      "name": "Датчик присутствия",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_motion"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_cover": {
+      "id": "lab_cover",
+      "name": "Штора в гостиной",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_cover"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_leak": {
+      "id": "lab_leak",
+      "name": "Датчик протечки",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_leak"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_washer": {
+      "id": "lab_washer",
+      "name": "Стиральная машина",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_washer"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_unavailable": {
+      "id": "lab_unavailable",
+      "name": "Недоступный датчик",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_unavailable"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_robot": {
+      "id": "lab_robot",
+      "name": "Робот-пылесос",
+      "name_by_user": null,
+      "model": "Dreame X50",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_robot"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    },
+    "lab_lock": {
+      "id": "lab_lock",
+      "name": "Замок входной двери",
+      "name_by_user": null,
+      "model": "Demo device",
+      "manufacturer": "UI Lab",
+      "area_id": "golden_geo_nw",
+      "identifiers": [
+        [
+          "ui_lab",
+          "lab_lock"
+        ]
+      ],
+      "config_entries": [
+        "lab_entry"
+      ],
+      "disabled_by": null,
+      "entry_type": null,
+      "via_device_id": null
+    }
+  },
+  "entities": {
+    "light.golden_light_one": {
+      "entity_id": "light.golden_light_one",
+      "device_id": "golden-light-one",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "light.golden_light_two": {
+      "entity_id": "light.golden_light_two",
+      "device_id": "golden-light-two",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "light.golden_light_three": {
+      "entity_id": "light.golden_light_three",
+      "device_id": "golden-light-three",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "binary_sensor.golden_presence": {
+      "entity_id": "binary_sensor.golden_presence",
+      "device_id": "golden-presence",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "climate.golden_climate": {
+      "entity_id": "climate.golden_climate",
+      "device_id": "golden-climate",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "sensor.golden_left_temperature": {
+      "entity_id": "sensor.golden_left_temperature",
+      "device_id": "golden-left-temperature",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "sensor.golden_right_temperature": {
+      "entity_id": "sensor.golden_right_temperature",
+      "device_id": "golden-right-temperature",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "sensor.golden_left_linkquality": {
+      "entity_id": "sensor.golden_left_linkquality",
+      "device_id": "golden-left-linkquality",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "sensor.golden_right_linkquality": {
+      "entity_id": "sensor.golden_right_linkquality",
+      "device_id": "golden-right-linkquality",
+      "platform": "houseplan_golden",
+      "config_entry_id": "golden_entry",
+      "disabled_by": null
+    },
+    "light.lab_ceiling": {
+      "entity_id": "light.lab_ceiling",
+      "device_id": "lab_ceiling",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Свет над столом"
+    },
+    "switch.lab_switch": {
+      "entity_id": "switch.lab_switch",
+      "device_id": "lab_switch",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Умный выключатель"
+    },
+    "sensor.lab_temperature": {
+      "entity_id": "sensor.lab_temperature",
+      "device_id": "lab_temperature",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Температура в гостиной"
+    },
+    "sensor.lab_humidity": {
+      "entity_id": "sensor.lab_humidity",
+      "device_id": "lab_humidity",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Влажность в гостиной"
+    },
+    "sensor.lab_co2": {
+      "entity_id": "sensor.lab_co2",
+      "device_id": "lab_co2",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Углекислый газ"
+    },
+    "binary_sensor.lab_motion": {
+      "entity_id": "binary_sensor.lab_motion",
+      "device_id": "lab_motion",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Датчик присутствия"
+    },
+    "cover.lab_cover": {
+      "entity_id": "cover.lab_cover",
+      "device_id": "lab_cover",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Штора в гостиной"
+    },
+    "binary_sensor.lab_leak": {
+      "entity_id": "binary_sensor.lab_leak",
+      "device_id": "lab_leak",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Датчик протечки"
+    },
+    "switch.lab_washer": {
+      "entity_id": "switch.lab_washer",
+      "device_id": "lab_washer",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Стиральная машина"
+    },
+    "sensor.lab_unavailable": {
+      "entity_id": "sensor.lab_unavailable",
+      "device_id": "lab_unavailable",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Недоступный датчик"
+    },
+    "vacuum.lab_robot": {
+      "entity_id": "vacuum.lab_robot",
+      "device_id": "lab_robot",
+      "platform": "dreame_vacuum",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Робот-пылесос"
+    },
+    "lock.lab_lock": {
+      "entity_id": "lock.lab_lock",
+      "device_id": "lab_lock",
+      "platform": "demo",
+      "config_entry_id": "lab_entry",
+      "disabled_by": null,
+      "original_name": "Замок входной двери"
+    }
+  },
+  "states": {
+    "sun.sun": {
+      "entity_id": "sun.sun",
+      "state": "above_horizon",
+      "attributes": {
+        "azimuth": 180,
+        "elevation": 24
+      }
+    },
+    "cover.golden_door_closed": {
+      "entity_id": "cover.golden_door_closed",
+      "state": "closed",
+      "attributes": {
+        "friendly_name": "Golden closed door",
+        "current_position": 0
+      }
+    },
+    "cover.golden_door_half": {
+      "entity_id": "cover.golden_door_half",
+      "state": "open",
+      "attributes": {
+        "friendly_name": "Golden half-open door",
+        "current_position": 50
+      }
+    },
+    "light.golden_light_one": {
+      "entity_id": "light.golden_light_one",
+      "state": "on",
+      "attributes": {
+        "friendly_name": "Golden golden-light-one",
+        "rgb_color": [
+          255,
+          196,
+          112
+        ]
+      }
+    },
+    "light.golden_light_two": {
+      "entity_id": "light.golden_light_two",
+      "state": "on",
+      "attributes": {
+        "friendly_name": "Golden golden-light-two",
+        "color_temp_kelvin": 2700
+      }
+    },
+    "light.golden_light_three": {
+      "entity_id": "light.golden_light_three",
+      "state": "off",
+      "attributes": {
+        "friendly_name": "Golden golden-light-three"
+      }
+    },
+    "binary_sensor.golden_presence": {
+      "entity_id": "binary_sensor.golden_presence",
+      "state": "on",
+      "attributes": {
+        "friendly_name": "Golden golden-presence",
+        "device_class": "occupancy"
+      }
+    },
+    "climate.golden_climate": {
+      "entity_id": "climate.golden_climate",
+      "state": "heat",
+      "attributes": {
+        "friendly_name": "Golden golden-climate",
+        "current_temperature": 22.4,
+        "temperature": 23,
+        "hvac_action": "heating"
+      }
+    },
+    "sensor.golden_left_temperature": {
+      "entity_id": "sensor.golden_left_temperature",
+      "state": "17",
+      "attributes": {
+        "friendly_name": "Golden golden-left-temperature",
+        "device_class": "temperature",
+        "unit_of_measurement": "°C"
+      }
+    },
+    "sensor.golden_right_temperature": {
+      "entity_id": "sensor.golden_right_temperature",
+      "state": "29",
+      "attributes": {
+        "friendly_name": "Golden golden-right-temperature",
+        "device_class": "temperature",
+        "unit_of_measurement": "°C"
+      }
+    },
+    "sensor.golden_left_linkquality": {
+      "entity_id": "sensor.golden_left_linkquality",
+      "state": "35",
+      "attributes": {
+        "friendly_name": "Golden golden-left-linkquality",
+        "unit_of_measurement": "lqi"
+      }
+    },
+    "sensor.golden_right_linkquality": {
+      "entity_id": "sensor.golden_right_linkquality",
+      "state": "190",
+      "attributes": {
+        "friendly_name": "Golden golden-right-linkquality",
+        "unit_of_measurement": "lqi"
+      }
+    },
+    "light.lab_ceiling": {
+      "entity_id": "light.lab_ceiling",
+      "state": "on",
+      "attributes": {
+        "friendly_name": "Свет над столом",
+        "rgb_color": [
+          255,
+          205,
+          125
+        ],
+        "brightness": 185,
+        "supported_color_modes": [
+          "rgb"
+        ],
+        "color_mode": "rgb",
+        "linkquality": 148
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "switch.lab_switch": {
+      "entity_id": "switch.lab_switch",
+      "state": "off",
+      "attributes": {
+        "friendly_name": "Умный выключатель",
+        "linkquality": 212
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "sensor.lab_temperature": {
+      "entity_id": "sensor.lab_temperature",
+      "state": "22.4",
+      "attributes": {
+        "friendly_name": "Температура в гостиной",
+        "device_class": "temperature",
+        "unit_of_measurement": "°C",
+        "battery": 78,
+        "linkquality": 185
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "sensor.lab_humidity": {
+      "entity_id": "sensor.lab_humidity",
+      "state": "46",
+      "attributes": {
+        "friendly_name": "Влажность в гостиной",
+        "device_class": "humidity",
+        "unit_of_measurement": "%",
+        "battery": 45,
+        "linkquality": 152
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "sensor.lab_co2": {
+      "entity_id": "sensor.lab_co2",
+      "state": "674",
+      "attributes": {
+        "friendly_name": "Углекислый газ",
+        "device_class": "carbon_dioxide",
+        "unit_of_measurement": "ppm"
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "binary_sensor.lab_motion": {
+      "entity_id": "binary_sensor.lab_motion",
+      "state": "on",
+      "attributes": {
+        "friendly_name": "Датчик присутствия",
+        "device_class": "occupancy",
+        "battery": 30,
+        "linkquality": 98
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "cover.lab_cover": {
+      "entity_id": "cover.lab_cover",
+      "state": "open",
+      "attributes": {
+        "friendly_name": "Штора в гостиной",
+        "device_class": "curtain",
+        "current_position": 70,
+        "supported_features": 15
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "binary_sensor.lab_leak": {
+      "entity_id": "binary_sensor.lab_leak",
+      "state": "off",
+      "attributes": {
+        "friendly_name": "Датчик протечки",
+        "device_class": "moisture",
+        "battery": 92,
+        "linkquality": 243
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "switch.lab_washer": {
+      "entity_id": "switch.lab_washer",
+      "state": "on",
+      "attributes": {
+        "friendly_name": "Стиральная машина"
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "sensor.lab_unavailable": {
+      "entity_id": "sensor.lab_unavailable",
+      "state": "unavailable",
+      "attributes": {
+        "friendly_name": "Недоступный датчик",
+        "device_class": "temperature",
+        "unit_of_measurement": "°C"
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "vacuum.lab_robot": {
+      "entity_id": "vacuum.lab_robot",
+      "state": "docked",
+      "attributes": {
+        "friendly_name": "Робот-пылесос",
+        "battery_level": 88,
+        "status": "Docked",
+        "supported_features": 8191
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    },
+    "lock.lab_lock": {
+      "entity_id": "lock.lab_lock",
+      "state": "locked",
+      "attributes": {
+        "friendly_name": "Замок входной двери",
+        "battery_level": 83
+      },
+      "last_changed": "2026-10-19T11:00:00+03:00",
+      "last_updated": "2026-10-19T11:00:00+03:00"
+    }
+  },
+  "layout": {
+    "golden-light-one": {
+      "s": "golden-lighting",
+      "x": 0.2,
+      "y": 0.34
+    },
+    "golden-light-two": {
+      "s": "golden-lighting",
+      "x": 0.35,
+      "y": 0.72
+    },
+    "golden-light-three": {
+      "s": "golden-lighting",
+      "x": 0.82,
+      "y": 0.3
+    },
+    "golden-presence": {
+      "s": "golden-lighting",
+      "x": 0.82,
+      "y": 0.62
+    },
+    "golden-climate": {
+      "s": "golden-lighting",
+      "x": 0.6,
+      "y": 0.28
+    },
+    "golden-left-temperature": {
+      "s": "golden-lighting",
+      "x": 0.19,
+      "y": 0.54
+    },
+    "golden-right-temperature": {
+      "s": "golden-lighting",
+      "x": 0.81,
+      "y": 0.48
+    },
+    "golden-left-linkquality": {
+      "s": "golden-lighting",
+      "x": 0.34,
+      "y": 0.54
+    },
+    "golden-right-linkquality": {
+      "s": "golden-lighting",
+      "x": 0.66,
+      "y": 0.7
+    },
+    "lab_ceiling": {
+      "s": "golden-geometry",
+      "x": 0.18,
+      "y": 0.15
+    },
+    "lab_switch": {
+      "s": "golden-geometry",
+      "x": 0.12,
+      "y": 0.43
+    },
+    "lab_temperature": {
+      "s": "golden-geometry",
+      "x": 0.28,
+      "y": 0.43
+    },
+    "lab_humidity": {
+      "s": "golden-geometry",
+      "x": 0.39,
+      "y": 0.43
+    },
+    "lab_co2": {
+      "s": "golden-geometry",
+      "x": 0.39,
+      "y": 0.2
+    },
+    "lab_motion": {
+      "s": "golden-geometry",
+      "x": 0.42,
+      "y": 0.15
+    },
+    "lab_cover": {
+      "s": "golden-geometry",
+      "x": 0.3,
+      "y": 0.12
+    },
+    "lab_leak": {
+      "s": "golden-geometry",
+      "x": 0.11,
+      "y": 0.54
+    },
+    "lab_washer": {
+      "s": "golden-geometry",
+      "x": 0.2,
+      "y": 0.7
+    },
+    "lab_unavailable": {
+      "s": "golden-geometry",
+      "x": 0.36,
+      "y": 0.71
+    },
+    "lab_robot": {
+      "s": "golden-geometry",
+      "x": 0.6,
+      "y": 0.73
+    },
+    "lab_lock": {
+      "s": "golden-geometry",
+      "x": 0.12,
+      "y": 0.84
+    },
+    "lab_virtual": {
+      "s": "golden-geometry",
+      "x": 0.39,
+      "y": 0.3
+    },
+    "rl_geo-nw": {
+      "s": "golden-geometry",
+      "x": 0.18,
+      "y": 0.17
+    }
+  },
+  "areas": {
+    "golden_geo_nw": {
+      "area_id": "golden_geo_nw",
+      "name": "Kitchen-living room"
+    },
+    "golden_geo_ne": {
+      "area_id": "golden_geo_ne",
+      "name": "Guest bedroom"
+    },
+    "golden_geo_sw": {
+      "area_id": "golden_geo_sw",
+      "name": "Hallway"
+    },
+    "golden_geo_se": {
+      "area_id": "golden_geo_se",
+      "name": "Guest bathroom"
+    },
+    "golden_geo_nested": {
+      "area_id": "golden_geo_nested",
+      "name": "Nested"
+    },
+    "golden_light_left": {
+      "area_id": "golden_light_left",
+      "name": "Спальня"
+    },
+    "golden_light_right": {
+      "area_id": "golden_light_right",
+      "name": "Детская"
+    }
+  }
+}
