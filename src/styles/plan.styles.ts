@@ -382,6 +382,11 @@ export const planStyles = css`
       fill: var(--room-fill, transparent);
       fill-opacity: var(--room-fill-op, 0);
     }
+    /* Explicit descendant classes avoid the existing pseudo-combinator minifier bug (#1121). */
+    .stage.mode-plan .glow-pools-frame,
+    .stage.mode-plan .led-fields,
+    .stage.mode-decor .glow-pools-frame,
+    .stage.mode-decor .led-fields { display:none; }
     .glow-pools-frame,
     .glow-pools,
     .glow-spot {

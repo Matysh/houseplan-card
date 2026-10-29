@@ -1,5 +1,7 @@
 # Project status
 
+Approved UI (#1119) adds owner-scoped 280ms quarter turns, upright screen-frame contacts, shared information/summary UI Kit, visible new/hidden dots and explicit owned Off/Unavailable paint. Plan/Background hide light spill; all Properties routes share 1024px. Header overflow and HA menu changes belong to #1120, not this implementation.
+
 Continuation discovery (#1116) reads its two initial GitHub metadata endpoints with bounded bodyless GETs. Known interrupted sockets can recover; HTTP/JSON/shape/size/deadline failures retain a named diagnostic artifact and remain terminal, before any continuation authority.
 
 Golden Plan editor capture (#1118) uses the existing scene-scoped background repaint to remove reproduced raster-history drift. Launch flags, semantic/keyboard controls and strict unchanged checks retain their contracts; its one-AA-pixel canonical-frame change is explicit pending beta review.

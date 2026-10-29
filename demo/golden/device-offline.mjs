@@ -1,4 +1,4 @@
-/** #1026: data-only board, judged on the actual shared face and LED renderer. */
+/** #1026 owned inputs; #1119 UI-007 whole-marker/off-glyph paint, LED geometry unchanged. */
 export async function prepareDeviceOfflineBoard(page) {
   return page.evaluate(async () => {
     const card = window.__goldenCard, root = card.renderRoot;
@@ -20,12 +20,16 @@ export async function prepareDeviceOfflineBoard(page) {
       ['whole', false], ['alarm-whole', false]]) {
       const marker = face(id), core = marker?.querySelector('.device-core');
       const glyph = core?.querySelector('ha-icon,.valtext');
+      const powerOff = id === 'icon' || id === 'source';
       if (!marker || !core || !glyph) throw new Error(`offline board missing real face: ${id}`);
       await Promise.allSettled(marker.getAnimations({ subtree: true })
         .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
         .map(animation => animation.finished));
-      if (marker.classList.contains('unavail') !== offline || !near(opacity(marker), 1)
-        || !near(opacity(core), 1) || !near(effective(glyph, marker), offline ? .35 : 1)) {
+      if (marker.classList.contains('unavail') !== offline || !near(opacity(marker), offline ? .35 : 1)
+        || !near(opacity(core), 1)
+        || marker.classList.contains('power-off') !== powerOff
+        || !near(effective(glyph, marker), offline || powerOff ? .35 : 1)
+        || (offline && !near(opacity(glyph), 1))) {
         throw new Error(`offline board wrong owned paint: ${id}`);
       }
       if (id === 'text' && (!glyph.matches('.valtext') || !glyph.textContent.includes('23.5')))
@@ -52,8 +56,8 @@ export async function prepareDeviceOfflineBoard(page) {
     if (getComputedStyle(down.querySelector('.device-core')).backgroundColor
       !== getComputedStyle(normal.querySelector('.device-core')).backgroundColor)
       throw new Error('offline board has a replacement offline background');
-    if (!near(effective(face('exact').querySelector('.device-battery'), face('exact')), 1))
-      throw new Error('offline board dims an independent battery indicator');
+    if (!near(effective(face('exact').querySelector('.device-battery'), face('exact')), .35))
+      throw new Error('offline board does not dim the entire ordinary marker');
     for (const state of ['off', 'unavailable', 'unknown']) {
       const led = root.querySelector(`.led-strip[data-marker="offline-led-${state}"]`);
       const core = led?.querySelector('.led-core'), outline = led?.querySelector('.led-outline');
@@ -69,6 +73,6 @@ export async function prepareDeviceOfflineBoard(page) {
     const badgeOnly = face('led-unavailable'), badgeContent = badgeOnly?.querySelector('.value-badge-content');
     if (!near(effective(badgeContent, badgeOnly), .35))
       throw new Error('offline board loses LED badge-only indication');
-    return { markers: records, leds: 3, actualText: true, badgeShellUnaffected: true };
+    return { markers: records, leds: 3, actualText: true, wholeOrdinaryMarker: true, ledGeometryUnchanged: true };
   });
 }

@@ -3,7 +3,7 @@ import {
 } from './live-viewport';
 import {
   clearDeviceFocusTip, clearPointerHover, deviceFocusTipActive, hideDeviceFocusTip,
-  reconcileDeviceFocusTip, resetHouseplanHover, showDeviceFocusTip, showDevicePointerTip,
+  reconcileDeviceFocusTip, refreshDeviceTip, resetHouseplanHover, showDeviceFocusTip, showDevicePointerTip,
   syncHouseplanHover,
 } from './live-hover';
 import {
@@ -16,6 +16,8 @@ import { lightGeometryFingerprint } from './glow-scene';
 import type { DevItem } from './types';
 import { DeviceContactRenderer } from './device-contact-render';
 import { contactValueFrameChanged, syncHouseplanDeviceContacts } from './device-contact-card';
+import { ensureInfoCardStyles } from './info-card-styles';
+import type { FormKitStyleHost } from './form-kit-styles';
 
 export const LIVE_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
@@ -49,7 +51,7 @@ export class LiveRuntime {
   public readonly capture = new RenderSnapshotReuseWindow();
   private fingerprints = new WeakMap<object, [number, number, number, string]>();
   private geometryBuilds = 0;
-  public constructor(private readonly host: object) {}
+  public constructor(private readonly host: object) { ensureInfoCardStyles(host as FormKitStyleHost); }
   /** #850: exact work counters for the performance witness. */
   public work(): Record<string, number> {
     return { ...this.capture.stats, lightGraphs: lightWork[0], lightResolutions: lightWork[1],
@@ -125,6 +127,7 @@ export class LiveRuntime {
   public commit(): void {
     commitHouseplanViewport(this.host, this.active());
     reconcileDeviceFocusTip(this.host);
+    refreshDeviceTip(this.host);
     resetHouseplanHover(this.host);
     syncHouseplanHover(this.host);
   }

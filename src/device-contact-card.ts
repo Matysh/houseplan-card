@@ -10,11 +10,13 @@ import type { ResolvedDevicePresentation } from './device-presentation';
 import type { DeviceHitController } from './device-hit-owner';
 import { floorGeometryKeyReader, type FloorKeySource } from './floor-geometry-key';
 import type { HassRenderSnapshot } from './render-invalidation';
+import type { PlanRotation } from './view-frame';
 
 interface ContactCard extends FloorKeySource {
   renderRoot: ParentNode;
   _config?: { icon_size?: number };
   _renderProjection: string; _mode: string; _markup: boolean;
+  readonly _rotation: PlanRotation;
   _kioskScale: { icon: number };
   _renderDevices: readonly DevItem[];
   _deviceHits: DeviceHitController;
@@ -71,7 +73,7 @@ export function syncHouseplanDeviceContacts(value: object, renderer: DeviceConta
     * (host._mode === 'view' ? host._kioskScale.icon : 1);
   const wasReflowed=renderer.reflowed;
   const changed = renderer.sync(host.renderRoot, { key, enabled: true, walls: wall.walls, masonry: wall.masonry,
-    space:space.id,layout:host._layout,invalidate:()=>host.requestUpdate(),
+    space:space.id,layout:host._layout,rotation:host._rotation,invalidate:()=>host.requestUpdate(),
     markers: positionableIconMarkers(host._renderDevices, space.id, ledStripsByMarker(space)).map((d) => ({
       id: d.id, ...host._pos(d,false), virtual:d.virtual===true||d.bindingKind==='virtual', diameter: base * host._devicePresentation(d).scale,
     })) });

@@ -14,6 +14,8 @@ import type { SpaceModel } from './types';
 import { adoptDeviceContactStyles } from './device-contact.styles';
 import { contactBasisMarker } from './device-contact-basis';
 import { DeviceContactLayout } from './device-contact-layout';
+import { screenContactMarker, screenContactScene } from './device-contact-screen';
+import type { PlanRotation } from './view-frame';
 
 export interface DeviceContactFrame {
   key: string;
@@ -25,6 +27,7 @@ export interface DeviceContactFrame {
   space?: string;
   layout?: Readonly<Record<string,{x:number;y:number;s?:string;contact_basis?:unknown}|undefined>>;
   invalidate?: () => void;
+  rotation?: PlanRotation;
 }
 interface MeasuredMarker { element: HTMLElement; ink: HTMLElement }
 const metricKey = (shell: Element | null | undefined): string => shell
@@ -52,6 +55,8 @@ export class DeviceContactRenderer {
   private readonly layout = new DeviceContactLayout();
   private authored = new Map<string,ContactMarker>();
   private fontContext = '';
+  private rotation: PlanRotation = 0;
+  private screen: { source: DeviceContactScene; rotation: PlanRotation; scene: DeviceContactScene } | null = null;
   private fontDocument: Document | null = null;
   private invalidate: (() => void) | undefined;
   private readonly fontsChanged = (): void => {
@@ -93,10 +98,13 @@ export class DeviceContactRenderer {
       this.hitShapes.delete(element); render(nothing, ink);
     }
     this.elements.clear(); this.frameKey = ''; this.floorKey = ''; this.scene = null;
+    this.screen = null;
   }
 
   public sync(root: ParentNode, frame: DeviceContactFrame): boolean {
     if (!frame.enabled) { const active = !!this.scene; if (active) this.clear(); return active; }
+    const turned = this.rotation !== (frame.rotation ?? 0);
+    this.rotation = frame.rotation ?? 0;
     adoptDeviceContactStyles(root);
     this.invalidate=frame.invalidate;
     const doc=(root as ShadowRoot).ownerDocument;
@@ -116,7 +124,10 @@ export class DeviceContactRenderer {
     const key = frame.key + '|' + frame.markers.map((m) => [m.id, m.x, m.y, m.diameter,
       m.virtual,JSON.stringify(frame.layout?.[m.id]?.contact_basis),
       metricKey(nodes.get(m.id)?.querySelector('.device-shell'))].join(':')).join('|');
-    if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) return false;
+    if (key === this.frameKey && frame.markers.every((m) => this.elements.get(m.id)?.element === nodes.get(m.id))) {
+      if (turned && this.scene) this.paint(this.scene.shapes.keys());
+      return turned;
+    }
     const measured: ContactMarker[] = [];
     const nextElements = new Map<string, MeasuredMarker>();
     const pending = new Map<string, HTMLElement>();
@@ -157,7 +168,11 @@ export class DeviceContactRenderer {
       });
     // A new value can have the exact same fitted box. Refresh its metric key,
     // not the complete spatial graph; the shared face already paints the text.
-    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; return false; }
+    if (sameGeometry) {
+      this.elements = nextElements; this.frameKey = key;
+      if (turned) this.paint(previous.shapes.keys());
+      return turned;
+    }
     const reusable=previous && this.floorKey===frame.key && effective.length===previous.shapes.size
       && effective.every(m=>previous.shapes.has(m.id)&&this.elements.get(m.id)?.element===nextElements.get(m.id)?.element);
     if(reusable) {
@@ -167,7 +182,7 @@ export class DeviceContactRenderer {
           || ['left','right','top','bottom'].some(side=>old.box[side as keyof ContactRect]!==m.box[side as keyof ContactRect]))
           for(const id of previous.replace(m))affected.add(id);
       }
-      this.elements=nextElements;this.frameKey=key;this.paint(affected);return true;
+      this.elements=nextElements;this.frameKey=key;this.paint(turned ? previous.shapes.keys() : affected);return true;
     }
     this.retireElements(); this.elements = nextElements;
     this.frameKey = key; this.floorKey = frame.key;
@@ -221,8 +236,25 @@ export class DeviceContactRenderer {
   }
 
   private paint(ids: Iterable<string>): void {
-    const scene = this.scene!;
-    for (const rawGroup of scene.components(ids)) {
+    const source = this.scene!, affected = new Set(ids);
+    if (this.screen?.source !== source || this.screen.rotation !== this.rotation) {
+      this.screen = { source, rotation: this.rotation, scene: screenContactScene(source, this.rotation) };
+    } else if (this.rotation) {
+      // A live move refreshes just its old/new component in the screen index.
+      // Never rebuild the full contact graph on every pointer event.
+      for (const id of [...affected]) {
+        const marker = source.shapes.get(id)?.marker;
+        if (!marker) continue;
+        const next = screenContactMarker(marker, this.rotation), old = this.screen.scene.shapes.get(id)?.marker;
+        if (!old || next.x !== old.x || next.y !== old.y || next.diameter !== old.diameter
+            || next.virtual !== old.virtual || next.precise !== old.precise
+            || (['left','right','top','bottom'] as const).some(side => next.box[side] !== old.box[side])) {
+          for (const changed of this.screen.scene.replace(next)) affected.add(changed);
+        }
+      }
+    }
+    const scene = this.screen.scene;
+    for (const rawGroup of scene.components(affected)) {
       const group=contactContourShapes(rawGroup);
       const joined = group.length > 1;
       const owner = group[0];

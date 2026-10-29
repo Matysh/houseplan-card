@@ -3561,8 +3561,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_device_contact_work.mjs',
     because: '#866 AC9: a real 200-marker board paints an updated badge value through public options reconciliation while preserving its identical geometry and full-index build count.',
     patches: [{file:'src/device-contact-render.ts',
-      find:'    if (sameGeometry) { this.elements = nextElements; this.frameKey = key; return false; }',
-      replace:'    if (false && sameGeometry) { this.elements = nextElements; this.frameKey = key; return false; }'}],
+      find:'    if (sameGeometry) {',
+      replace:'    if (false && sameGeometry) {'}],
   },
   {
     id: 'device-contact-rounds-exact-drop-to-grid',
@@ -12323,22 +12323,22 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'device-own-offline-fades-whole-marker',
     guard: 'node demo/smoke_device_offline.mjs',
-    because: '#1026 preserves ordinary shell, frame, contact, diagnostic and hit paint; '
-      + 'the native computed-ancestor oracle distinguishes a faded parent from inner content opacity',
+    because: '#1119 supersedes ordinary-marker #1026 paint but preserves the special LED badge-only content gate; '
+      + 'the actual LED computed-ancestor oracle rejects applying the ordinary whole-marker fade to it',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '    .dev.unavail .device-core > ha-icon,',
-      replace: '    .dev.unavail,\n    .dev.unavail .device-core > ha-icon,',
+      find: '    .dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',
+      replace: '    .dev.unavail:not(.iso-tile-shadow) { opacity:0.35; }',
     }],
   },
   {
     id: 'device-own-offline-fades-badge-frame',
     guard: 'node demo/smoke_device_offline.mjs',
-    because: '#1026 dims badge content once, independently of source quality, while its frame remains opaque',
+    because: '#1119 preserves the LED exception: only badge content fades while its special frame remains opaque',
     patches: [{
       file: 'src/styles/devices.styles.ts',
-      find: '    .dev.unavail .value-badge-content {',
-      replace: '    .dev.unavail .value-badge {',
+      find: '    .dev.led-badge.unavail .value-badge-content {',
+      replace: '    .dev.led-badge.unavail .value-badge {',
     }],
   },
   {
@@ -22388,7 +22388,59 @@ const externalScreensStream1113Cases = [
     patches:[{file:'src/external-screens-events.ts',find:'if (ended) unsubscribe();',replace:'if (false) unsubscribe();'}]},
 ];
 
-export const MUTANTS = [...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+// #1119: declarations only. Static --check does not execute mutants or claim caught.
+const approvedUi1119Cases = [
+  {id:'retired-pointer-drops-other-focus-tip-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/live-hover-status.test.mjs',
+    because:'#1119 AC7: retiring pointer target A cannot erase the still-owned keyboard tooltip for another visible device B.',
+    patches:[{file:'src/live-hover.ts',find:"if (tip.source === 'focus') focusTips.delete(value);",replace:'focusTips.delete(value);'}]},
+  {id:'active-device-tip-keeps-old-status-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/live-hover-status.test.mjs',
+    because:'#1119 AC7: an already-visible tooltip must follow the current HA frame without another pointer event; ordinary state removes the status line.',
+    patches:[{file:'src/live-hover.ts',find:'const current = { ...tip, ...deviceTipContent(host, device) };',replace:'const current = { ...tip };'}]},
+  {id:'rotation-motion-duration-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-rotation-motion.test.mjs',
+    because:'#1119 AC1: actual intermediate motion and the 280ms terminal are independent observable controller outputs.',
+    patches:[{file:'src/plan-rotation-motion.ts',find:'(now - start) / 280',replace:'(now - start) / 2800'}]},
+  {id:'rotation-motion-stale-owner-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-rotation-motion.test.mjs',
+    because:'#1119 AC1: old ownership must restore its lease and cannot start another queued turn.',
+    patches:[{file:'src/plan-rotation-motion.ts',find:'if (!request.current() || !stage.isConnected || !wrap.isConnected) { finish(); return; }',replace:'if (!stage.isConnected || !wrap.isConnected) { finish(); return; }'}]},
+  {id:'rotation-motion-releases-concurrent-barrier-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/plan-rotation-motion.test.mjs',
+    because:'#1119 AC1: cancellation cannot release an input barrier now owned by the mode transition.',
+    patches:[{file:'src/plan-rotation-motion.ts',find:'stage.inert = inert || this.port.blocked();',replace:'stage.inert = inert;'}]},
+  {id:'screen-contact-rotates-upright-box-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-contact-screen.test.mjs',
+    because:'#1119 AC2: an asymmetric actual face stays upright at each transformed anchor; painted hit must include it.',
+    patches:[{file:'src/device-contact-screen.ts',find:'return { ...marker, x, y };',replace:'return { ...marker, x, y, box: {left:marker.box.top,right:marker.box.bottom,top:marker.box.left,bottom:marker.box.right} };'}]},
+  {id:'foreign-control-powers-owner-off-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-presentation.test.mjs',
+    because:'#1119 AC7: selected foreign value/control cannot supply the owner power state.',
+    patches:[{file:'src/device-power.ts',find:'const own = device.entities;',replace:'const own = [...device.entities, ...(device.controls || [])];'}]},
+  {id:'power-off-ignores-composite-priority-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-presentation.test.mjs',
+    because:'#1119 AC7: composite Power off remains authoritative alongside active lifecycle or child-lock roles.',
+    patches:[{file:'src/device-power.ts',find:"const power = gates.length ? gates : eligible.filter(eid => poweredDomains.has(eid.split('.')[0]));",replace:"const power = own.filter(eid => poweredDomains.has(eid.split('.')[0]));"}]},
+  {id:'foreign-visual-control-masks-own-power-1119',
+    guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-presentation.test.mjs',
+    because:'#1119 AC7: a foreign visual control cannot replace the permitted own Power roster; actual composite foreign-control input failed before the fix.',
+    patches:[{file:'src/device-presentation.ts',find:'deviceOwnPowerOff(hass, d, options.registryHass || hass)',replace:'deviceOwnPowerOff(hass, {...d, entities:sources.visualSources.map(source => source.eid)}, options.registryHass || hass)'}]},
+  {id:'properties-threshold-old-960-1119',guard:'node demo/smoke_properties_panel.mjs',
+    because:'#1119 AC8: the actual 1023/1024 resize must route properties consistently in every editor.',
+    patches:[{file:'src/editors/properties/editor.ts',find:'const PROPERTIES_MIN_WIDTH = 1024;',replace:'const PROPERTIES_MIN_WIDTH = 960;'}]},
+  {id:'editor-light-spill-visible-1119',guard:'node demo/smoke_approved_ui.mjs',
+    because:'#1119 AC6: a real on-source positive control remains visible in View/Devices and is hidden only in Plan/Background.',
+    patches:[{file:'src/styles/plan.styles.ts',find:'.stage.mode-decor .glow-pools-frame,',replace:'.stage:not(.stage) .glow-pools-frame,'}]},
+  {id:'ordinary-offline-fades-floor-shadow-1119',guard:'node demo/smoke_device_offline.mjs',
+    because:'#1119 AC7: the real marker fades, but its distinct floor-shadow twin retains ordinary opacity and ink; the natural pre-fix render fails this existing oracle.',
+    patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge) { opacity:0.35; }'}]},
+  {id:'ordinary-offline-content-only-1119',guard:'node demo/smoke_device_offline.mjs',
+    because:'#1119 AC7: ordinary own-unavailable fades the whole marker once while LED and foreign-quality gates remain distinct.',
+    patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:1; }'}]},
+];
+
+export const MUTANTS = [...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

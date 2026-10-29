@@ -6,7 +6,7 @@ export const summaryPanelDialogCss = `
        every override scoped so the other editor/dialog surfaces stay intact. */
     :host([data-kind='summary']) ha-dialog {
       --ha-dialog-surface-background: var(--card-background-color, #fff);
-      --ha-dialog-border-radius: 15px;
+      --ha-dialog-border-radius: 13px;
       --ha-icon-button-size: 44px;
       --dialog-box-shadow: inset 0 0 0 1px var(--divider-color, #dce5e7),
         0 18px 60px rgb(25 34 38 / 26%);
@@ -19,9 +19,9 @@ export const summaryPanelDialogCss = `
     }
 
     :host([data-kind='summary']) .header {
-      min-height: 70px;
+      min-height: 78px;
       flex-shrink: 0;
-      padding: 12px 17px;
+      padding: 12px 16px;
       border-color: var(--divider-color, #dce5e7);
     }
 
@@ -33,7 +33,7 @@ export const summaryPanelDialogCss = `
     :host([data-kind='summary']) .close {
       width: 44px;
       height: 44px;
-      border-radius: 8px;
+      border-radius: 50%;
     }
 
     :host([data-kind='summary']) .content { flex: 1 1 auto; }

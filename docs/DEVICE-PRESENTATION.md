@@ -50,12 +50,24 @@ active physical controllers with no own entities retain their target behavior.
 boolean belong to the accepted immutable frame. Only eligible confirmed own
 offline emits `.unavail`, a device-unavailable explanation and a11y state.
 Static modes, live-states:false and lifecycle gates keep their existing policy.
-Alarm authority, reasons and red paint are independent. The old whole-marker
-opacity and grey background are removed: only the core glyph/Text and inner
-`.value-badge-content` receive 0.35. Source-quality uses one content opacity
-instead of multiplying parent/child fades. Frames, contact ink, shadow, LQI,
-battery and hit geometry keep ordinary paint and dimensions. Existing confirmed
-offline visual-hover eligibility remains; ordinary actions are unchanged.
+Alarm authority, reasons and red paint are independent. UI-007 r3 (#1119)
+supersedes the #1026 ordinary content-only appearance: eligible `.unavail`
+dims the whole ordinary marker/circle to 0.35, including its frame, contact ink
+and diagnostics; inner glyph/value/badge remains at opacity 1 for this reason,
+so the fade is not multiplied. The separate 2.5D shadow keeps its ordinary
+paint; hit sizes and geometry stay unchanged. Existing confirmed-offline hover policy and
+ordinary actions remain unchanged.
+
+`deviceOwnPowerOff` reads only the permitted own roster through the shared
+native role resolver, independently of the selected visual/control sources.
+Composite `power_gate` roles take priority; otherwise own light/switch/fan/
+climate/media_player/humidifier/water_heater/remote sources must all explicitly
+be `off`. Virtual bindings, static/live/lifecycle/protected gates, binary off,
+unknown/missing and foreign selected values/controls cannot invent Power Off.
+Eligible `.power-off` dims only the inner MDI icon to 0.35 while its circle and
+badges retain ordinary paint. Unavailable has priority. One resolved presentation
+also supplies the localized Off/Unavailable line after tooltip name/model;
+normal states have no extra line. An already-visible pointer/focus tip refreshes from the current resolved device at the existing View commit; it does not wait for another pointer event. No extra registry scan, timer or subscription is added.
 
 LED source loss suppresses light and uses the same inactive shape as off.
 The previous unavailable enum/grey/dash paint branch is retired. With no badge
@@ -292,7 +304,7 @@ climate and LQI retain their existing registry-scoped single contributions.
 | S02 | cover — побочная capability при light/role | `source.cover_capability_bypassed` | cover не перехватывает выбранный face | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S03 | есть active external controls | `source.controls` + `availability.controller_available` | status берётся от целей, availability — от контроллера | normal | `controller-availability-follows-target`; `presentation-row-contract` |
 | S04 | цели unavailable, controller имеет live diagnostic | `availability.controller_available` | доступная нейтральная подложка, не `unavail` | normal | `controller-diagnostics-do-not-prove-online`; `presentation-row-contract` |
-| S05 | у controller есть собственные entities, но ни одной live entity; цель работает | `availability.controller_unavailable` | source quality suppresses yellow/pulse; own offline content only when every own row is unavailable, otherwise unknown without fade | normal action сохраняется | `controller-availability-follows-target`; `presentation-row-contract` |
+| S05 | у controller есть собственные entities, но ни одной live entity; цель работает | `availability.controller_unavailable` | source quality suppresses yellow/pulse; own offline whole-marker paint only when every own row is unavailable, otherwise unknown without fade | normal action сохраняется | `controller-availability-follows-target`; `presentation-row-contract` |
 | S06 | virtual controller + controls | `source.virtual_controller` | controller доступен; status следует цели | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S07 | все saved controls отфильтрованы tombstone | `source.filtered_saved_controls` | controller-role сохранён, availability дают свои diagnostics | normal | `wireless-controller-loses-filtered-target-role`; `wireless-controller-preview-drops-sibling-markers` |
 | S08 | manual virtual light с outgoing controls | `source.manual_virtual_light` | собственный manual source владеет face | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
@@ -309,7 +321,7 @@ climate and LQI retain their existing registry-scoped single contributions.
 | ID | Вход | Решение | Наблюдаемый результат | Интерактивность | Доказательство |
 |---|---|---|---|---|---|
 | F01 | dynamic + alarm | `status.alarm` | красный alarm face | normal | `device-presentation-policy-alarm`; `presentation-row-contract` |
-| F02 | dynamic + unavailable sample | `status.unavailable` | no fabricated work/pulse; own confirmed offline fades only glyph/badge content, never plate/frame | normal action сохраняется | `device-presentation-policy-unavailable`; `device-unavailable-hover-restored` |
+| F02 | dynamic + unavailable sample | `status.unavailable` | no fabricated work/pulse; own confirmed offline fades the whole ordinary marker once; inner opacity is not multiplied | normal action сохраняется | `device-presentation-policy-unavailable`; `device-unavailable-hover-restored` |
 | F03 | lock locked/unlocked | `source.device_role` + `status.neutral/open` | `lock-locked` / `lock-unlocked`, согласованный a11y state | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | F04 | working available | `status.working` | yellow plate | normal | `device-presentation-policy-status`; `presentation-row-contract` |
 | F05 | open available, не cover | `status.open` | orange plate | normal | `device-presentation-policy-status`; `presentation-row-contract` |
@@ -441,6 +453,13 @@ CONFIG-COMPATIBILITY.md. A cold legacy load cannot reconstruct an unknown earlie
 text width: its first observed face is the session reference.
 Metrics are bounded and font-context aware;
 unchanged fitted geometry reuses indexes and solver results.
+
+Quarter-turn contact presentation (#1119) derives a screen scene from these
+world positions. Marker anchors, wall endpoints/normals and masonry share the
+exact turn matrix; measured asymmetric badge boxes remain upright. Contours and
+individual hit silhouettes are recomputed in that frame rather than rotating
+the previous contour. Rotation does not re-author placement, clear physical
+pools or add a config/layout write; live moves update the affected screen index.
 
 The frozen designer handoff governs the shared outer silhouette. A free core
 keeps D and its historical 101.5/80 outer-shell ratio; contact calibration changes
@@ -689,7 +708,7 @@ no working/open plate in any state:
 | `open`, ajar (`open` + position) | neutral | — | open glyph |
 | `opening`, `closing` | neutral | continuous pulse in Icon + state and activity | open glyph |
 | `unknown` / no state | neutral | — | base icon, no morph |
-| `unavailable` | neutral plate; own-confirmed offline fades only contents | — | base icon |
+| `unavailable` | ordinary whole-marker fade for own-confirmed offline | — | base icon |
 
 Until this the domain shared one branch with `valve` and wore `.dev.open` —
 an orange FILLED badge (`--hp-open`), not a mere border — while open or

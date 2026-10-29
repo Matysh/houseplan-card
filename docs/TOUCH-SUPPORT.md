@@ -34,6 +34,13 @@ editor parity with desktop is not promised.
 
 ## What “fully supported View” means
 
+Quarter-turn buttons use the shared 280 ms presentation (#1119), with reduced
+motion retaining its final frame. Plan gestures stay blocked only during that
+finite motion; queued header turns remain usable and retirement restores input.
+Screen-facing contact silhouettes remain the same basis for painted badges and
+native device hits after each quarter turn. Properties in all three editors
+use the owning card's 1024 px boundary; editor touch remains best effort.
+
 On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 
 - render the plan and current states correctly;

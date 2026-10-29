@@ -55,6 +55,14 @@ wall faces, opening depth and raised overlays use the same fixed quarter camera.
 Static shares the frame helper and device preference; PDF turns its immutable
 print scene before fitting. No space/layout field or backend write is introduced.
 
+`plan-rotation-motion` (#1119) owns queued 280 ms presentation around that unchanged
+quarter-turn endpoint. The temporary wrapper transform leaves the background still;
+its generation/authority lease restores styles and input ownership on retirement.
+`device-contact-screen` derives transformed anchors, walls/normals and masonry
+from the retained world scene, preserving measured upright face boxes. Its
+screen index owns contour paint and individual hits; authored placement and
+physical cache identity remain in the native world frame.
+
 The existing mode controller also owns the narrow header height and its total
 stage offset. The loaded editor runtime measures the natural target header;
 ordinary View needs no new runtime import. `modeStageHeight` quantizes the
@@ -224,10 +232,15 @@ Own availability (#1026) is one three-state fact from `DevItem.entities`, resolv
 before source selection and reused by source eligibility and presentation policy.
 It never expands the roster through controls, values or physical siblings.
 The existing sample-quality gate still suppresses invented work/activity; only
-confirmed own unavailable produces the policy's eligible offline content paint.
-The shared face owns one inner badge span, including the geometry-only shadow
-twin. LED source loss uses the ordinary inactive path; its badge consumes the
-same presentation fact. Snapshot row tracking captures the own reads without
+confirmed own unavailable produces the policy's eligible ordinary whole-marker
+0.35 paint (#1119, superseding #1026 content-only paint). `device-power` reads
+the permitted own roster through the shared native role resolver, independently
+of visual/controller selection; composite Power takes priority. Power Off
+dims only the inner MDI icon, while unavailable wins without a second inner
+fade. The same presentation frame supplies tooltip status. The shared face
+retains its inner badge span and geometry-only shadow twin. LED source loss
+keeps ordinary inactive geometry and its special badge-content-only paint.
+Snapshot row tracking captures the own reads without
 adding a registry scan, listener, polling owner or writer.
 
 The config-authority browser witness (#1052) isolates late foreign-event reads

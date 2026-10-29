@@ -23,6 +23,7 @@ import {
 import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
+import { deviceOwnPowerOff } from './device-power';
 import { canRevealUserHidden } from './hidden-device-visibility';
 import {
   createDeviceBatteryContext, resolveDeviceBattery,
@@ -192,6 +193,8 @@ export interface ResolvedDevicePresentation {
   ownAvailability: OwnDeviceAvailability;
   /** Eligible own-offline content paint after static/live/lifecycle gates. */
   offline: boolean;
+  /** Eligible native/composite power fact; shares policy gates with its paint. */
+  powerOff: boolean;
   lockState: DeviceLockState;
   display: DeviceDisplayMode;
   icon: string;
@@ -696,7 +699,7 @@ export function activitySourceSignature(
 
 export function presentationClasses(presentation: Pick<
   ResolvedDevicePresentation,
-  'visual' | 'lockState' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse' | 'offline'
+  'visual' | 'lockState' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse' | 'offline' | 'powerOff'
 >): string[] {
   if (presentation.effectiveHidden) return [];
   if (displayIsNeutral(presentation.display)) return ['static-icon'];
@@ -706,6 +709,7 @@ export function presentationClasses(presentation: Pick<
   if (presentation.offline) classes.push('unavail');
   else if (visual.availability === 'available' && visual.status === 'working') classes.push('on');
   else if (visual.availability === 'available' && visual.status === 'open') classes.push('open');
+  if (presentation.powerOff) classes.push('power-off');
   if (presentation.lockState) classes.push(`lock-${presentation.lockState}`);
   // Keep the semantic class names as styling/debug hooks during the beta;
   // they no longer select a separate renderer or animation implementation.
@@ -812,6 +816,9 @@ export function resolveDevicePresentation(
     vacuumLiveRequested: d.marker?.vacuum?.live === true,
   });
   const { effectiveHidden, visual } = policy;
+  const powerOff = !effectiveHidden && !policy.bindingUnavailable && !neutralFace
+    && options.liveStates && ownAvailability === 'available' && !sources.protectedFace
+    && deviceOwnPowerOff(hass, d, options.registryHass || hass);
   const resolvedBattery = options.showBattery !== false && showMarkerBatteryOf(d.marker) && !effectiveHidden
     ? resolveDeviceBattery(d, options.batteryContext
       || createDeviceBatteryContext(hass, options.registryHass || hass)) : null;
@@ -923,6 +930,7 @@ export function resolveDevicePresentation(
     visual,
     ownAvailability,
     offline: policy.offline,
+    powerOff,
     lockState,
     display,
     icon,

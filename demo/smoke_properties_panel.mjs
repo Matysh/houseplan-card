@@ -70,12 +70,12 @@ try {
   await panel.locator('[data-property="shape"] button').last().click();
   await page.waitForFunction(()=>!window.__card._editorRuntime.properties.fields.draft);
   check('properties.circle_disables_angle',await panel.locator('[data-property="angle"]').evaluate(el=>el.classList.contains('disabled')),true);
-  await page.setViewportSize({ width: 959, height: 1080 });
+  await page.setViewportSize({ width: 1023, height: 1080 });
   await panel.waitFor({ state: 'hidden' });
   check('properties.narrow_absent', await panel.count(), 0);
-  await page.setViewportSize({ width: 960, height: 1080 });
+  await page.setViewportSize({ width: 1024, height: 1080 });
   await panel.waitFor({ state: 'visible' });
-  check('properties.threshold_960', Math.round((await panel.boundingBox()).width), 360);
+  check('properties.threshold_1024', Math.round((await panel.boundingBox()).width), 360);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.evaluate(async () => { await window.__hpTest.setMode('devices'); });
   await card.locator('[data-hp="zoom-fit"]').click();
@@ -124,7 +124,7 @@ try {
   const savedSpace=()=>page.evaluate(async()=> (await window.__card.hass.callWS({type:'houseplan/config/get'})).config.spaces.find(s=>s.id==='properties'));
   // Pure resize must neither commit nor discard a number draft.
   await panel.locator('[data-property="w"] input').fill('400');
-  await page.setViewportSize({width:959,height:1080});await panel.waitFor({state:'hidden'});
+  await page.setViewportSize({width:1023,height:1080});await panel.waitFor({state:'hidden'});
   check('properties.responsive_draft_not_written',(await savedSpace()).decor[0].w,rect.w);
   await page.setViewportSize({width:1920,height:1080});await panel.waitFor();
   check('properties.responsive_draft_retained',await panel.locator('[data-property="w"] input').inputValue(),'400');
@@ -133,7 +133,7 @@ try {
   let picker=panel.locator('[data-property="stroke"] hp-color-opacity');
   await picker.locator('.trigger').click();
   await picker.locator('input[type="text"]').fill('#12');
-  await page.setViewportSize({width:959,height:1080});await panel.waitFor({state:'hidden'});
+  await page.setViewportSize({width:1023,height:1080});await panel.waitFor({state:'hidden'});
   await page.setViewportSize({width:1920,height:1080});await panel.waitFor();
   picker=panel.locator('[data-property="stroke"] hp-color-opacity');
   await picker.locator('.trigger').click();
@@ -255,7 +255,7 @@ try {
       check(`properties.dialog_${id}_wide_inert`,await panel.getAttribute('inert'),'');
       await page.keyboard.press('Escape');await card.locator('hp-dialog').waitFor({state:'hidden'});
       await input.fill('');
-      await page.setViewportSize({width:959,height:1080});await panel.waitFor({state:'hidden'});
+      await page.setViewportSize({width:1023,height:1080});await panel.waitFor({state:'hidden'});
       await openFull();await card.locator('hp-dialog').waitFor();
       check(`properties.dialog_${id}_narrow_discards_hidden_draft`,await page.evaluate(()=>window.__card._editorRuntime.properties.fields.draft),null);
       await page.keyboard.press('Escape');await card.locator('hp-dialog').waitFor({state:'hidden'});
@@ -284,8 +284,10 @@ try {
   }
   await page.evaluate(()=>{const c=window.__card;c.style.removeProperty('--card-background-color');c.style.removeProperty('--primary-text-color');c.hass={...c.hass,themes:{...c.hass.themes,darkMode:true}};});
   // Short-height and large text keep the pinned footer and a scrollable form.
-  await page.setViewportSize({width:1000,height:480});
+  await page.setViewportSize({width:1024,height:480});
   await page.evaluate(()=>window.__hpTest.settled());
+  await panel.waitFor();
+  check('properties.short_actual_container_is_wide',await card.locator('ha-card').evaluate(el=>el.getBoundingClientRect().width>=1024),true);
   check('properties.short_footer_accessible',await panel.locator('.hp-prop-foot').evaluate(el=>{const r=el.getBoundingClientRect();return r.bottom<=innerHeight+1&&r.top>=0;}),true);
   check('properties.short_form_scrollable',await panel.locator('.hp-prop-scroll').evaluate(el=>el.scrollHeight>el.clientHeight),true);
   await page.setViewportSize({width:1920,height:1080});

@@ -61,7 +61,7 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
       @change=${(event: Event) => context.setDialog({
         ...dialog, localShow: (event.target as HTMLInputElement).checked,
       })} /></label>`;
-  return html`<hp-dialog .hass=${host.hass} data-kind="summary"
+  return html`<hp-dialog .hass=${host.hass} data-kind="summary" class="ui-dialog" form-shell settings-layout compact style="--hp-dialog-wide-width:920px"
       .title=${t('summary.settings')} wide flex-content
       dismiss-on-scrim aria-busy=${String(dialog.busy)}
       @hp-close=${close}>
@@ -117,12 +117,12 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                 <span class="summary-drag" draggable=${String(!dialog.busy)} title=${t('summary.drag')}
                   @dragstart=${(event: DragEvent) => context.dragStart(event, `block:${bi}`)}>${summaryIcon('grip')}</span>
                 <div class="summary-order">
-                <button class="summary-icon-button" type="button" title=${t('summary.up')}
+                <button class="btn summary-icon-button" type="button" title=${t('summary.up')}
                   aria-label=${t('summary.up')} ?disabled=${bi === 0 || dialog.busy}
                   @click=${() => context.mutate((draft) => {
                     draft.blocks = moveSummaryItem(draft.blocks, bi, bi - 1);
                   })}>${summaryIcon('up')}</button>
-                <button class="summary-icon-button" type="button" title=${t('summary.down')}
+                <button class="btn summary-icon-button" type="button" title=${t('summary.down')}
                   aria-label=${t('summary.down')}
                   ?disabled=${bi === dialog.draft.blocks.length - 1 || dialog.busy}
                   @click=${() => context.mutate((draft) => {
@@ -137,7 +137,7 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                   @input=${(event: Event) => context.mutate((draft) => {
                     draft.blocks[bi].title = (event.target as HTMLInputElement).value;
                   })} />
-                <button class="summary-icon-button summary-visibility" type="button"
+                <button class="btn summary-icon-button summary-visibility" type="button"
                   ?disabled=${dialog.busy} aria-pressed=${String(block.visible)}
                   title=${t(block.visible ? 'summary.hide_block' : 'summary.show_block')}
                   aria-label=${t(block.visible ? 'summary.hide_block' : 'summary.show_block')}
@@ -199,12 +199,12 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                       <span class="summary-drag" draggable=${String(!dialog.busy)} title=${t('summary.drag')}
                         @dragstart=${(event: DragEvent) => context.dragStart(event, `value:${bi}:${vi}`)}>${summaryIcon('grip')}</span>
                       <div class="summary-order">
-                      <button class="summary-icon-button" type="button" title=${t('summary.up')}
+                      <button class="btn summary-icon-button" type="button" title=${t('summary.up')}
                         aria-label=${t('summary.up')} ?disabled=${vi === 0 || dialog.busy}
                         @click=${() => context.mutate((draft) => {
                           draft.blocks[bi].values = moveSummaryItem(draft.blocks[bi].values, vi, vi - 1);
                         })}>${summaryIcon('up')}</button>
-                      <button class="summary-icon-button" type="button" title=${t('summary.down')}
+                      <button class="btn summary-icon-button" type="button" title=${t('summary.down')}
                         aria-label=${t('summary.down')}
                         ?disabled=${vi === block.values.length - 1 || dialog.busy}
                         @click=${() => context.mutate((draft) => {
@@ -223,7 +223,7 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                           ? html`<div class="summary-problem error">${problemText(fieldProblem(`${vp}.label`))}</div>` : nothing}
                       </div>
                     <div class="summary-source-field">
-                    <button class="summary-source" type="button"
+                    <button class="btn summary-source" type="button"
                       ?disabled=${dialog.busy}
                       data-summary-source-owner=${owner}
                       data-summary-error=${String(dialog.attempted && firstError?.path === `${vp}.source`)}
@@ -254,20 +254,20 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                           aria-label=${t('summary.select_source')}>
                         <div class="summary-source-group">${t('summary.system_group')}</div>
                         ${(['device_count', 'total_area', 'datetime'] as const).map((key) => html`
-                          <button type="button" role="option"
+                          <button class="btn" type="button" role="option"
                             ?disabled=${dialog.busy}
                             aria-selected=${sourceToken === `system:${key}` ? 'true' : 'false'}
                             @click=${() => context.setSource(block.id, value.id, `system:${key}`)}>
                             ${t(`summary.system.${key}`)}
                           </button>`)}
                         ${broken ? html`<div class="summary-source-group">${t('summary.current_source')}</div>
-                          <button type="button" role="option" class="broken" aria-selected="true"
+                          <button type="button" role="option" class="btn broken" aria-selected="true"
                             ?disabled=${dialog.busy}
                             @click=${() => context.setSource(block.id, value.id, sourceToken)}>
                             ${sourceLabel}
                           </button>` : nothing}
                         <div class="summary-source-group">${t('summary.entities_group')}</div>
-                        ${search.entries.map((entry) => html`<button type="button" role="option"
+                        ${search.entries.map((entry) => html`<button class="btn" type="button" role="option"
                             ?disabled=${dialog.busy}
                             aria-selected=${sourceToken === `entity:${entry.id}` ? 'true' : 'false'}
                             @click=${() => context.setSource(block.id, value.id, `entity:${entry.id}`)}>
@@ -280,14 +280,14 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                     ${sourceProblem
                       ? html`<div class="summary-problem ${sourceProblem.kind}">${problemText(sourceProblem)}</div>` : nothing}
                     </div>
-                    <button class="summary-icon-button summary-value-remove" type="button"
+                    <button class="btn danger summary-icon-button summary-value-remove" type="button"
                       title=${t('btn.delete')} aria-label=${t('btn.delete')} ?disabled=${dialog.busy}
                       @click=${() => context.mutate((draft) => {
                         draft.blocks[bi].values.splice(vi, 1);
                       })}>${summaryIcon('close')}</button>
                   </div>`;
                 })}
-                <button class="summary-add summary-add-value" type="button"
+                <button class="btn summary-add summary-add-value" type="button"
                   ?disabled=${block.values.length >= 20 || dialog.busy}
                   title=${block.values.length >= 20 ? t('summary.limit_values') : ''}
                   @click=${() => context.mutate((draft) => {
@@ -297,14 +297,14 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
                 </button>
               </div>
               <footer class="summary-block-footer">
-                <button class="summary-delete-block" type="button" ?disabled=${dialog.busy}
+                <button class="btn summary-delete-block" type="button" ?disabled=${dialog.busy}
                   @click=${() => context.deleteBlock(bi)}>${t('summary.delete_block')}</button>
               </footer>
               </div>
             </article>`;
           })}
         </div>
-        <button class="summary-add summary-add-block" type="button"
+        <button class="btn summary-add summary-add-block" type="button"
           ?disabled=${dialog.draft.blocks.length >= 10 || dialog.busy}
           title=${dialog.draft.blocks.length >= 10 ? t('summary.limit_blocks') : ''}
           @click=${() => context.mutate((draft) => {

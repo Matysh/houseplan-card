@@ -24,6 +24,44 @@ import {
 const FROZEN_PANEL_CSS = readFileSync(
   new URL('./fixtures/summary-panel-editor.css', import.meta.url), 'utf8',
 );
+// #1119 UI-005 intentionally adopts the approved compact composition. Keep the
+// independent pre-UI snapshot, permit only these named substitutions, and
+// continue comparing every other byte (including all shared generator parts).
+function acceptedSummaryComposition(snapshot) {
+  const replacements = [
+    ['padding: 14px 17px 18px;', 'padding: 20px;'],
+    ['background: var(--summary-editor-muted);\n    font-size: .875rem;\n    line-height: 1.4;',
+      'background: var(--hpf-surface);\n    font-size: 13px;\n    line-height: 1.5;'],
+    [`.summary-editor .summary-switch input {`,
+      `hp-dialog[data-kind='summary'].ui-dialog .summary-switch input[type='checkbox'] {`],
+    [`  .summary-editor .summary-block-title { font-weight: 700; }\n`, ''],
+    [`    padding: 8px 10px;
+    color: var(--primary-text-color);
+    background: var(--summary-editor-surface);
+    border: 1px solid var(--summary-editor-line);
+    border-radius: 7px;
+    font: inherit;
+    font-size: .875rem;
+    line-height: 1.4;
+  }
+  .summary-editor select { cursor: pointer; }`,
+    `    color: var(--primary-text-color);
+    background: var(--summary-editor-surface);
+    border: 1px solid var(--summary-editor-line);
+    border-radius: 7px;
+    font: inherit;
+  }
+  .summary-editor select { padding:8px 10px; font-size:.875rem; line-height:1.4; cursor:pointer; }
+  hp-dialog[data-kind='summary'].ui-dialog input[type='text'],
+  hp-dialog[data-kind='summary'].ui-dialog input[type='search'] { padding:10px 12px; font-size:13px; line-height:22px; }`],
+  ];
+  for (const [before, after] of replacements) {
+    assert.equal(snapshot.split(before).length - 1, 1, 'accepted composition targets exactly one historical declaration');
+    snapshot = snapshot.replace(before, after);
+  }
+  return snapshot;
+}
+const ACCEPTED_PANEL_CSS = acceptedSummaryComposition(FROZEN_PANEL_CSS);
 /**
  * #597 M2 ревью ТЗ. К3 обещает, что разрез генератора на фрагменты не меняет
  * ни байта в листе диалогов, а сослаться было не на что: существующие тесты
@@ -108,10 +146,10 @@ test('#594 AC11 генератор воспроизводит правила п�
  * правки. Она живёт ровно до того шага эпика #591, который законно меняет вид
  * панели: там её обновляют вместе с кадрами и объясняют расхождение.
  */
-test('#597 собранный лист панели совпадает с замороженным побайтово', () => {
-  assert.equal(summaryPanelEditorCss.length, FROZEN_PANEL_CSS.length,
+test('#1119 Summary UI-005 changes only named composition in the complete #597 snapshot', () => {
+  assert.equal(summaryPanelEditorCss.length, ACCEPTED_PANEL_CSS.length,
     'длина листа панели изменилась — значит изменился и он сам');
-  assert.equal(summaryPanelEditorCss, FROZEN_PANEL_CSS);
+  assert.equal(summaryPanelEditorCss, ACCEPTED_PANEL_CSS);
   // И фрагменты действительно пришли из набора, а не остались литералами:
   // иначе тест выше сравнивал бы панель сама с собой.
   const source = readFileSync(

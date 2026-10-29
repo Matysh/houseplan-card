@@ -35,6 +35,16 @@ export const SMOKE_LINKS = [
     because: '#1113: native outer/nested settings, actual panel URL entry and two independent consumers observe the shared profile namespace and exact-base WebSocket delta without assigning private product state.',
   },
   {
+    files: ['src/plan-rotation-motion.ts', 'src/device-contact-screen.ts',
+      'src/info-card-styles.ts', 'src/form-kit-styles.ts', 'src/device-power.ts',
+      'src/summary-panel-editor.ts', 'src/summary-panel-dialog-style.ts',
+      'src/summary-panel-editor-style.ts', 'src/styles/devices.styles.ts',
+      'src/styles/plan.styles.ts', 'src/editors/properties/editor.ts'],
+    smokes: ['smoke_approved_ui.mjs'],
+    because: '#1119: seven accepted UI contracts are observed through actual cold info, guarded exit frames, '
+      + 'four-mode light visibility, owned status paint, stacking, contact silhouettes/native hits and container properties routing.',
+  },
+  {
     symbols: ['OpeningDragWalls', 'renderOpeningDragGeometry', 'openingDragHostBounds'],
     smokes: ['smoke_opening_drag.mjs', 'smoke_partition_openings_preview.mjs'],
     because: '#1097: trusted wall/partition opening input observes actual aperture/shoulder ink, saved wire arrays, neighbour reuse and cancellation. Real viewport changes exercise normal/live ownership transfer without calling these local geometry helpers.',

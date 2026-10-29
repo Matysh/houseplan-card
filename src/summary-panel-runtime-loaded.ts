@@ -17,6 +17,7 @@ import { enqueueSerializedWrite } from './serialized-write-queue';
 import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
 import type { SummaryPanelEditorRenderer } from './summary-panel-editor';
 import { summaryPanelCss } from './summary-panel-style';
+import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { summaryPanelDialogCss } from './summary-panel-dialog-style';
 import { summaryIcon } from './summary-panel-icons';
 import { SummaryPanelPresentation } from './summary-panel-presentation';
@@ -121,7 +122,10 @@ export class LoadedSummaryPanelRuntime {
   private dialogStyleSheet: CSSStyleSheet | null = null;
   private readonly styledDialogRoots = new WeakSet<ShadowRoot>();
 
-  public constructor(host: unknown) { this.host = host as SummaryPanelHost; }
+  public constructor(host: unknown) {
+    this.host = host as SummaryPanelHost;
+    if (this.host.renderRoot.ownerDocument) ensureCompactDialogStyles(this.host);
+  }
 
   private get effectiveShow(): boolean { return this.host._externalScreen?.summary ?? this.local.show; }
 

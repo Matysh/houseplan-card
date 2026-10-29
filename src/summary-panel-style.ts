@@ -1,5 +1,5 @@
 import { css } from 'lit';
-import { summaryPanelEditorCss } from './summary-panel-editor-style';
+import { summaryPanelEditorCss, summaryPanelUiKitCss } from './summary-panel-editor-style';
 
 /** Lazy screen-space styles. The stage, not the viewport, chooses the anchor. */
 export const summaryPanelCss = `
@@ -210,5 +210,5 @@ export const summaryPanelCss = `
     :host([data-pointer-hover]) .hdr > .head .summary-control > button:not(:disabled):hover { border-color: var(--hp-accent); z-index: 1; }
     .hdr > .head .summary-control > button:focus-visible { z-index: 2; }
 `.cssText}
-  ${summaryPanelEditorCss}
+  ${summaryPanelEditorCss}${summaryPanelUiKitCss}
 `;

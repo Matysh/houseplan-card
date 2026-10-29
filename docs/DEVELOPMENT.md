@@ -1,5 +1,14 @@
 # Development and deployment
 
+Approved UI (#1119): compile the test build and run `plan-rotation-motion`, `device-contact-screen`, `device-presentation`, `live-hover-status`, contact and form-kit units. The active tooltip consumes the current resolved frame on ordinary HA ticks, without requiring pointer movement; preserve the captured pre-fix stale Off witness. `demo/smoke_approved_ui.mjs` observes cold information without the full editor chunk, native summary exit frames, real on-source light layers in four modes, actual-container Properties routing, owned paint and contact badge hits through four rotations. Keep `smoke_device_offline` LED, foreign-quality, static/live, diagnostics and no-write oracles; UI-007 explicitly supersedes ordinary content-only #1026 paint. Pair the seven remaining accepted UI prototypes with the candidate using the same synthetic fixture, HA runtime, theme, language, scale and settled dialog readiness; dynamic rotation/close needs intermediate frames. UI-008/009 and header fixture adaptations are excluded in favour of #1120 r6. Mutation checks are declaration/static readiness only; no development mutant execution.
+The Summary composition is explicit in its lazy leaf: 20px body padding,
+13px/1.5 text, 44px switch targets and 13px/22px text inputs. Verify cold
+Info→Summary, cold Summary→Info and editor-first entry; adoption order must
+not choose the result. Preserve #508's inner `overflow:auto` and its native
+wheel/touch/footer checks even though the visual-only adapter inherited
+`overflow:visible`. The independent historical Summary CSS fixture remains;
+its full-sheet comparison permits only the five named UI-005 substitutions.
+
 Opening drag (#1097): compile the test build, then run `node --test test/opening-drag.test.mjs test/live-editor.test.mjs test/opening-placement.test.mjs test/floor-geometry-key.test.mjs`, `node demo/smoke_opening_drag.mjs` and `node demo/smoke_partition_openings_preview.mjs`. The native smoke checks every cut and shoulder, original coordinate/final-array readback, unchanged held config/epoch/pools, neighbour reuse, cancellation and refusal. `node demo/benchmark_opening_drag.mjs` uses a canonical large-house fixture, seven series at DPR1/2 and native pointermove-to-settled wall-clock latency including IPC; counters are acceptance and milliseconds are descriptive. Preserve the earlier legacy-fixture diagnostic separately: its first release also migrated all floors, so its neighbour misses do not isolate preview eviction. See [the measurement audit](analysis/1097-opening-drag-2026-10-28.md).
 
 The owner permitted measured resource-limit growth for #1097. On the final

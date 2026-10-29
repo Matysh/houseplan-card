@@ -4,6 +4,7 @@ import { makeDeviceIssuesFixture } from '../fixtures/device-issues.mjs';
 import { makeMarkerAlertsFixture } from '../fixtures/marker-alerts.mjs';
 import { prepareMarkerAlerts } from './marker-alerts.mjs';
 import { makeDeviceContactsFixture, prepareDeviceContacts } from './device-contacts.mjs';
+import { prepareApprovedUi } from './approved-ui.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
 import { makeInteriorWindowFixture } from '../fixtures/interior-window-light.mjs';
@@ -1199,6 +1200,7 @@ export async function prepareGoldenScenario(page, scenario) {
         if (message.type === 'houseplan/config/get') return {
           config: structuredClone(fixture.config), rev: scenario.decorGroupStyle?decorStyleRevision:1,
           can_write: scenario.canWrite !== false,
+          ...(scenario.approvedUi === 'summary' ? { summary_panel_api: 1 } : {}),
           ...(scenario.nodeMenuTool ? { wall_node_move_api: 1, wall_node_delete_api: 1 } : {}),
           ...(scenario.vacuumHistory?{vacuum_history_api:1}:{}),
           ...(scenario.externalScreens?{external_screens_api:1,summary_panel_api:1}:{}),
@@ -3018,6 +3020,7 @@ export async function prepareGoldenScenario(page, scenario) {
   }
   if (scenario.batteryBoard) result.batteryBoard = await prepareBatteryBoard(page, scenario);
   if (scenario.deviceContacts) result.deviceContacts = await prepareDeviceContacts(page);
+  if (scenario.approvedUi) result.approvedUi = await prepareApprovedUi(page, scenario);
   if (scenario.offlineBoard) result.offlineBoard = await prepareDeviceOfflineBoard(page);
   if (scenario.revealHiddenDevices) {
     // #919 enters through the same native header action as the user. No

@@ -91,7 +91,8 @@ async function scenario(viewport, { flexContent = true } = {}) {
     window.__508 = { dialog, editor, body };
     return {
       dialog: true, haBranch: !!ha, flexContent: ha?.hasAttribute('flexcontent') === true,
-      editor: rect(editor), editorScroll: [editor.scrollHeight, editor.clientHeight],
+      editor: rect(editor), editorPadding: getComputedStyle(editor).padding,
+      editorScroll: [editor.scrollHeight, editor.clientHeight],
       body: rect(body), bodyScroll: [body.scrollHeight, body.clientHeight],
       dialogRect: rect(native), footer: footer ? rect(footer) : null, inner: [innerWidth, innerHeight],
     };
@@ -104,6 +105,7 @@ async function scenario(viewport, { flexContent = true } = {}) {
 {
   const { page, browser, opened, readScroll } = await scenario({ width: 1280, height: 720 });
   check('desktop.haBranch', opened.haBranch);
+  check('desktop.approvedCompactPadding', opened.editorPadding, '20px');
   check('desktop.flexContent', opened.flexContent);
   check('desktop.editorIsTheScroller', opened.editorScroll[0] > opened.editorScroll[1] + 50);
   check('desktop.bodyDoesNotScroll', opened.bodyScroll[0] <= opened.bodyScroll[1] + 1);
@@ -133,6 +135,7 @@ async function scenario(viewport, { flexContent = true } = {}) {
 {
   const { page, browser, opened, readScroll } = await scenario({ width: 390, height: 844 });
   check('phone.haBranch', opened.haBranch);
+  check('phone.approvedCompactPadding', opened.editorPadding, '18px 14px');
   check('phone.dialogFitsViewport', opened.dialogRect.h <= opened.inner[1] + 1);
   check('phone.footerInViewport', !!opened.footer && opened.footer.y + opened.footer.h <= opened.inner[1] + 1);
   check('phone.editorIsTheScroller', opened.editorScroll[0] > opened.editorScroll[1] + 50);

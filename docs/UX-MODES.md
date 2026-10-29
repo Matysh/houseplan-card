@@ -439,7 +439,7 @@ layer you cannot see is a layer you cannot edit.
 
 ## Devices — placement and marker configuration
 
-- Icon dragging (ONLY here). At owner-card width ≥960 px, click selects a device
+- Icon dragging (ONLY here). At owner-card width ≥1024 px, click selects a device
   in the shared Properties column; double-click / Open device settings opens the
   full edit dialog. Below that width a click opens the **edit dialog directly**
   (binding, name, icon, size/angle, display as icon / icon + activity / value,

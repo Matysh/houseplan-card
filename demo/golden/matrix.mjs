@@ -282,6 +282,18 @@ export const STAGE6_ACCEPTANCE_SCENARIOS = Object.freeze([
 const LED_STRIPS_OFF = Object.fromEntries(['light.demo_led_strip', 'light.demo_led_strip_wall', 'light.demo_led_strip_corner', 'light.demo_led_strip_loop'].map((id) => [id, { state: 'off' }]));
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  // #1119 seven remaining UI contracts; header overflow is owned by #1120.
+  ...['light', 'dark'].flatMap(theme => ['info', 'summary'].map(approvedUi => ({
+    id: `approved-ui-${approvedUi}-${theme}-1119`, fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', approvedUi, preloadEditorRuntime: false,
+    theme, language: theme === 'dark' ? 'ru' : 'en', viewport: { width: 1280, height: 1000 }, ...page,
+  }))),
+  ...[90, 270].map(rotation => ({
+    id: `approved-ui-contacts-${rotation}-1119`, fixture: 'visual', deviceContacts: true,
+    space: 'golden-contacts', mode: 'view', iconSize: 5, rotation,
+    decorOverride: [{id:'frame-caption',kind:'text',x:.03,y:.02,text:'Contact frame',size_cm:20,color:'#748087'}],
+    language: 'en', theme: rotation === 90 ? 'light' : 'dark', viewport: { width: 1400, height: 1100 }, ...stage,
+  })),
   ...STAGE6_ACCEPTANCE_SCENARIOS,
   ...[
     { id: 'view-device-menu-writer-dark', viewDeviceMenu: 'writer', theme: 'dark', language: 'en' },

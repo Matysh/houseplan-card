@@ -706,6 +706,13 @@ editing never performs it implicitly.
 
 ### Quarter-turn presentation (#1070)
 
+The #1119 presentation owner animates each button turn for 280 ms with cubic
+ease-out over the stationary background. Ordered presses retain their endpoint;
+mode/floor/authority changes and disconnect retire old callbacks and restore
+styles/input. Reduced motion goes directly to the same canonical final frame.
+The screen-facing contact projection recomputes contours/hits from upright
+measured boxes and transformed anchors/walls, without rewriting placement.
+
 `view-frame.ts` owns exact 0/90/180/270 matrices, inverse vectors, display bounds
 and HTML anchor percentages. The saved camera remains in the unrotated frame;
 `_cameraView` reads it, while `_viewOr` derives a presentation view. Rotating does

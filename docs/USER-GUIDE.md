@@ -58,7 +58,7 @@ defines preset scales; apply a preset to rooms in the space or room settings.
 
 ### Editor properties panel
 
-At a card width of 960 px or more, Plan, Devices and Background show a persistent
+At a card width of 1024 px or more, Plan, Devices and Background show a persistent
 **Properties** column. Click an object to edit its position, dimensions and
 appearance. Grey fields are unavailable; locked fields are computed. Contour
 endpoints move only through node dragging. Opening width keeps its centre; its
@@ -1729,7 +1729,7 @@ layer. See [Presence radars](RADAR.md) for supported profiles, setup and privacy
 
 | Gesture | View | Device editor |
 |---|---|---|
-| Short click/tap | Configured action | Select in Properties on wide cards (≥960 px); open marker settings on narrow cards |
+| Short click/tap | Configured action | Select in Properties on wide cards (≥1024 px); open marker settings on narrow cards |
 | Hold 600 ms | House Plan device card | No device control |
 | Right click | Five-command device menu; read-only keeps information commands, kiosk keeps its permission hint | “Copy device” menu |
 
@@ -1888,9 +1888,9 @@ Presentation uses one shared outer shell around three independent layers:
 stable core, icon or value, and optional activity pulse. Visual priority is
 **alarm → keyboard focus → selected → hover → semantic state → neutral**.
 
-Unavailable markers keep the normal presentation with reduced icon opacity,
+Confirmed unavailable devices fade the whole ordinary marker to 35%; the inner icon/value/badge does not receive a second fade. Off devices fade only their inner MDI icon to 35%, keeping the circle ordinary. Tooltips name Off or Unavailable after the name/model. Unavailable devices retain
 no visual hover and no pulse, but their ordinary activation may still open
-information or settings. A media player in `off` uses the same dimmed treatment.
+information or settings. A media player in `off` follows the icon-only Off treatment.
 Hover starts only from a real hover-capable mouse. Finger or pen input clears
 tooltip/highlight immediately; later mouse movement restores desktop hover.
 
@@ -1903,7 +1903,8 @@ tooltip/highlight immediately; later mouse movement restores desktop hover.
 | Red lock | Lock is unsecured | Unlocked/open lock |
 | Green lock | Lock is secured | Locked lock |
 | Orange | Physically open | Door/window contact, opening valve |
-| Faded contents | Confirmed own offline | Every active own entity explicitly unavailable; only the core icon/value and badge contents fade |
+| Faded whole marker | Confirmed own offline | Every active own entity explicitly unavailable; ordinary marker, circle and contents fade once to 35% |
+| Faded icon | Own Power Off | Explicit own power domain or composite Power=off; circle and badges keep ordinary paint |
 | Neutral | No alarm, work or open condition | Off, closed, idle, standby, docked |
 
 For a controller with `controls`, target work and controller availability are
@@ -1916,10 +1917,11 @@ missing telemetry alone is not evidence that the device is offline, so its
 controlled target makes it yellow when working and neutral otherwise. If the
 device does expose own entities but has no real own reading, a working target
 does not create yellow paint or a pulse. Only every own row explicitly reporting
-`unavailable` fades the contents; a mixture with missing/unknown is not confirmed
+`unavailable` fades the whole ordinary marker; a mixture with missing/unknown is not confirmed
 offline. A virtual controller has no physical offline evidence. Off/idle/standby/
-paused are ordinary available states, including media players. Frames, contact
-ink, LQI and battery retain their appearance. An LED strip keeps its ordinary
+paused remain real available samples, including media players. Explicit own Power
+Off dims only the inner MDI icon. Own unavailable dims the ordinary frame, contact
+ink, LQI and battery together; its separate 2.5D shadow retains ordinary paint. An LED strip keeps its ordinary
 inactive shape and fades only badge text when a badge is present.
 This remains true when the same target was separately removed from the plan:
 the removed marker is not restored, but it cannot make the controller look
@@ -1929,7 +1931,7 @@ For a composite appliance with a dedicated Power switch, Power=`on` alone
 remains neutral. If Home Assistant also exposes a strict lifecycle entity such
 as Status/Run state/Job state, active values (`start`, `running`, `washing`,
 `rinse`, and similar work states) make the marker yellow; idle, paused and
-terminal values remove it. Power=`off` or unavailable still fades the marker
+terminal values remove it. Power=`off` still dims only the icon; confirmed own unavailable dims the ordinary marker
 even if the lifecycle value is stale. Mode, Program, Stage and remaining time
 are not treated as independent proof of work, and an ordinary lone relay keeps
 its existing yellow-on behaviour.
@@ -2117,7 +2119,7 @@ the open state is not hidden.
 | `lock.*` | Red unlocked, green locked | Travelling while locking/unlocking | Card; Toggle forbidden |
 | `valve.*` | Orange while open/moving | Travelling | Card; Toggle may be explicit |
 | `climate.*` | Yellow for real heating/cooling/work; HVAC mode fallback only when action is absent | Work | House Plan card |
-| `media_player.*` | Neutral including off; only confirmed own offline dims contents | None | House Plan card |
+| `media_player.*` | Neutral circle; off dims only its icon, confirmed own offline dims the ordinary marker | None | House Plan card |
 | `vacuum.*` | Yellow cleaning/returning | Work/travelling | House Plan card; live puck opens HA more-info |
 | `script.*` / `automation.*` | Script yellow while on; automation stays neutral | Work / short explicit Run event | Card or explicit Run |
 | `button.*` / `event.*` | Neutral | Short event on change | House Plan card |
@@ -2126,9 +2128,8 @@ the open state is not hidden.
 
 Virtual devices use the ordinary neutral/hover background with a dashed outer
 circle. An HA-less virtual device does not invent unavailable or activity;
-a linked virtual light may still follow its real controller. Unavailable keeps the ordinary
-presentation with the standard icon opacity reduction, no visual hover and no
-motion; its existing click/tap still opens information or settings. Marker LQI
+a linked virtual light may still follow its real controller. Confirmed own unavailable
+dims the ordinary marker once, without visual hover or motion; its existing click/tap still opens information or settings. Marker LQI
 uses the same continuous red-to-green scale as before the package update; the
 room fill gradient and the displayed number are unchanged.
 

@@ -56,6 +56,80 @@ const options = {
   showSignal: true,
 };
 
+test('#1119 native Power Off is separate from availability, foreign source quality and policy gates', () => {
+  const project = (eid, value, extra = {}, opts = {}) => {
+    const h = hass(value === null ? {} : { [eid]: state(eid,value) }, {
+      [eid]: {entity_id:eid,device_id:'d1',platform:'demo'},
+    });
+    return resolveDevicePresentation(h,device({entities:[eid],primary:eid,...extra}),{...options,...opts});
+  };
+  for (const domain of ['switch','light','fan','climate','media_player','humidifier','water_heater','remote']) {
+    const p = project(`${domain}.native`,'off');
+    assert.equal(p.powerOff,true,domain); assert.equal(p.offline,false); assert.ok(p.classes.includes('power-off'));
+  }
+  for (const value of ['on','unknown','unavailable','',null]) {
+    const p = project('switch.native',value); assert.equal(p.powerOff,false,String(value));
+    assert.equal(p.offline,value==='unavailable');
+  }
+  for (const eid of ['binary_sensor.native','sensor.native','vacuum.native','lock.native','cover.native'])
+    assert.equal(project(eid,'off').powerOff,false,eid);
+  assert.equal(project('switch.native','off',{virtual:true,bindingKind:'virtual'}).powerOff,false);
+  assert.equal(project('switch.native','off',{}, {liveStates:false}).powerOff,false);
+  for (const display of ['static_icon','value_static_icon']) assert.equal(project('switch.native','off',{
+    marker:{id:'d1',binding:'device:d1',display},
+  }).powerOff,false,display);
+  assert.equal(project('switch.native','off',{bindingStatus:{kind:'ha_disabled',reason:'device'}}).powerOff,false);
+  const h = hass({'sensor.own':state('sensor.own','22'),'light.foreign':state('light.foreign','off')},{
+    'sensor.own':{entity_id:'sensor.own',device_id:'d1',platform:'demo'},
+    'light.foreign':{entity_id:'light.foreign',device_id:'other',platform:'demo'},
+  });
+  const controller=device({primary:'sensor.own',entities:['sensor.own'],controls:['light.foreign'],
+    marker:{id:'d1',binding:'device:d1',tap_action:'toggle',controls:['light.foreign']}});
+  assert.equal(resolveDevicePresentation(h,controller,options).powerOff,false,'foreign control cannot power off owner');
+  h.states['light.foreign'].state='unavailable';
+  const p=resolveDevicePresentation(h,controller,options);
+  assert.equal(p.powerOff,false); assert.equal(p.offline,false); assert.equal(p.ownAvailability,'available');
+});
+
+test('#1119 composite Power gate governs the same presentation used by every face', () => {
+  const h=hass({'sensor.status':state('sensor.status','run'),'switch.power':state('switch.power','off'),
+    'switch.child_lock':state('switch.child_lock','on')},{
+    'sensor.status':{entity_id:'sensor.status',device_id:'d1',translation_key:'status'},
+    'switch.power':{entity_id:'switch.power',device_id:'d1',original_name:'Power'},
+    'switch.child_lock':{entity_id:'switch.child_lock',device_id:'d1'},
+  });
+  const d=device({primary:'sensor.status',entities:Object.keys(h.states)});
+  const p=resolveDevicePresentation(h,d,options);
+  assert.equal(p.powerOff,true); assert.equal(p.ownAvailability,'available'); assert.equal(p.offline,false);
+  assert.ok(p.visualSources.some(s=>s.role==='power_gate'&&s.eid==='switch.power'));
+  h.states['switch.power'].state='on'; assert.equal(resolveDevicePresentation(h,d,options).powerOff,false);
+  h.states['switch.power'].state='unavailable'; assert.equal(resolveDevicePresentation(h,d,options).powerOff,false);
+});
+
+test('#1119 composite own Power survives a foreign visual control source', () => {
+  const h=hass({'sensor.status':state('sensor.status','run'),'switch.power':state('switch.power','off'),
+    'switch.child_lock':state('switch.child_lock','on'),'light.foreign':state('light.foreign','on')},{
+    'sensor.status':{entity_id:'sensor.status',device_id:'d1',translation_key:'status'},
+    'switch.power':{entity_id:'switch.power',device_id:'d1',original_name:'Power'},
+    'switch.child_lock':{entity_id:'switch.child_lock',device_id:'d1'},
+    'light.foreign':{entity_id:'light.foreign',device_id:'other'},
+  });
+  const d=device({primary:'sensor.status',entities:['sensor.status','switch.power','switch.child_lock'],
+    controls:['light.foreign'],marker:{id:'d1',binding:'device:d1',controls:['light.foreign']}});
+  for(const foreign of ['on','off','unavailable','unknown']) {
+    h.states['light.foreign'].state=foreign;
+    for(const power of ['off','on','unknown','unavailable']) {
+      h.states['switch.power'].state=power;
+      const p=resolveDevicePresentation(h,d,options);
+      assert.equal(p.ownAvailability,'available');assert.equal(p.offline,false);
+      assert.equal(p.sourceKind,'controls');
+      assert.deepEqual(p.visualSources.map(s=>s.eid),['light.foreign'],'own power does not replace visual/controller content');
+      assert.equal(p.powerOff,power==='off',JSON.stringify({foreign,power,visualSources:p.visualSources.map(s=>s.eid),ownAvailability:p.ownAvailability}));
+      assert.equal(p.classes.includes('power-off'),power==='off');
+    }
+  }
+});
+
 test('#865 ordinary settings colour shares pulse priority without inheriting safety red', () => {
   const project = (eid, value, attributes, marker = {}, extra = {}) => {
     const h = hass({ [eid]: state(eid, value, attributes) }, {

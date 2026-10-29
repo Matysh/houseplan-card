@@ -10,7 +10,8 @@ import {
  * #597: карточка-группа, обводка фокуса, выключенное состояние и ряд-переключатель
  * больше не описаны здесь — они приходят из общего набора (`form-kit.styles.ts`),
  * который был поднят из ЭТОГО файла в #594. Подстановка, а не редизайн: собранный
- * лист обязан совпасть с прежним побайтово (`test/form-kit.test.mjs`).
+ * лист сохраняет прежние фрагменты побайтово; UI-005 меняет только явно
+ * перечисленную композицию (`test/form-kit.test.mjs`).
  */
 export const summaryPanelEditorCss = `
   ${css`hp-dialog[data-kind='summary'] {
@@ -29,16 +30,16 @@ export const summaryPanelEditorCss = `
     min-width: 0;
     min-height: 0;
     max-height: none;
-    padding: 14px 17px 18px;
+    padding: 20px;
     gap: 12px;
     flex: 1 1 auto;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
     color: var(--primary-text-color);
-    background: var(--summary-editor-muted);
-    font-size: .875rem;
-    line-height: 1.4;
+    background: var(--hpf-surface);
+    font-size: 13px;
+    line-height: 1.5;
   }
   .summary-editor *,
   .summary-editor-footer * { box-sizing: border-box; }
@@ -69,16 +70,15 @@ ${formKitCardsCss(SUMMARY_PANEL_FORM_KIT)}
     max-width: 100%;
     min-height: 44px;
     margin: 0;
-    padding: 8px 10px;
     color: var(--primary-text-color);
     background: var(--summary-editor-surface);
     border: 1px solid var(--summary-editor-line);
     border-radius: 7px;
     font: inherit;
-    font-size: .875rem;
-    line-height: 1.4;
   }
-  .summary-editor select { cursor: pointer; }
+  .summary-editor select { padding:8px 10px; font-size:.875rem; line-height:1.4; cursor:pointer; }
+  hp-dialog[data-kind='summary'].ui-dialog input[type='text'],
+  hp-dialog[data-kind='summary'].ui-dialog input[type='search'] { padding:10px 12px; font-size:13px; line-height:22px; }
   .summary-editor [aria-invalid='true'] {
     border-color: var(--error-color, #db4437);
   }`.cssText}
@@ -90,7 +90,7 @@ ${formKitSwitchRowCss(SUMMARY_PANEL_FORM_KIT)}
 ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
   ${css`/* The native checkbox itself is the visible 44px hit target. No hidden
      duplicate control or optimistic storage write is needed for the switch. */
-  .summary-editor .summary-switch input {
+  hp-dialog[data-kind='summary'].ui-dialog .summary-switch input[type='checkbox'] {
     appearance: none;
     position: relative;
     width: 44px;
@@ -169,7 +169,6 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
     border-radius: 10px 10px 0 0;
     background: var(--summary-editor-surface);
   }
-  .summary-editor .summary-block-title { font-weight: 700; }
   .summary-order { display: grid; grid-template-columns: repeat(2, 44px); gap: 4px; }
   .summary-icon-button,
   .summary-drag {
@@ -394,3 +393,16 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
     .summary-value-remove { grid-column: 3; grid-row: 1; }
   }`.cssText}
 `;
+
+/** Accepted UI-005 subject layout; common .btn owns its interaction paint. */
+export const summaryPanelUiKitCss = css`
+
+  hp-dialog[data-kind="summary"].ui-dialog .summary-icon-button.btn { width:44px; min-width:44px; padding:0; }
+  hp-dialog[data-kind="summary"].ui-dialog .summary-source.btn { justify-content:space-between; text-align:left; padding:7px 9px; }
+  hp-dialog[data-kind="summary"].ui-dialog .summary-source-results .btn { display:grid; justify-content:stretch; text-align:left; padding:7px 9px; }
+  hp-dialog[data-kind="summary"].ui-dialog .summary-editor-footer { margin:0; padding:12px 16px; }
+  hp-dialog[data-kind="summary"].ui-dialog .summary-visibility[aria-pressed="true"] { color:var(--primary-color); border-color:var(--primary-color); background:var(--summary-editor-accent-soft); }
+  @media(max-width:680px) {
+    hp-dialog[data-kind="summary"].ui-dialog .summary-editor { padding:18px 14px; }
+  }
+`.cssText;

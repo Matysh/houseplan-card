@@ -317,6 +317,7 @@ import {
   presentationViewport, planZoomTarget, type FrameRect, type PlanRotation,
 } from './view-frame';
 import { renderHomeArrow, renderPlanRotationControls } from './view-frame-view';
+import { PlanRotationMotion } from './plan-rotation-motion';
 import type { IsoDecorationLayers } from './iso-openings';
 import type { IsoOverlayPlacement } from './iso-overlays';
 import type {
@@ -1317,6 +1318,7 @@ export class HouseplanCard extends LitElement {
    *  short structural transition first so two controllers never write `_view`
    *  in the same frame. */
   private _prepareCameraCommand(): void {
+    this._rotationMotion.cancel();
     ++this._viewDeviceMenuRequest;
     this._bootSoftCancel(); if (this._modeTransitionBusy) this._cancelModeTransition(true);
     if (this._tool === 'opening') {
@@ -2962,6 +2964,7 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._rotationMotion.cancel();
     this._planHassProjection?.invalidate(); this._planHassMemo = null;
     this._deviceRosterState.clear();
     this._spaceModels.clear(); this._modelCache = null;
@@ -6783,9 +6786,27 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _rotation() { return devicePlanRotation.get(this._space, this._externalScreen.rotation ?? this._config?.rotation, this._kiosk); }
+  private readonly _rotationMotion = new PlanRotationMotion({
+    current: () => {
+      const owner = this._configWriteContext.claim(), space = this._space, mode = this._mode;
+      return () => this.isConnected && !this._kiosk && space === this._space && mode === this._mode
+        && this._configWriteContext.current(owner, this.hass);
+    },
+    stage: () => this.renderRoot.querySelector<HTMLElement>('.stage'),
+    changed: direction => {
+      this._cancelCameraTransition(false); this._clearRoomFocus(true);
+      devicePlanRotation.set(this._space, stepPlanRotation(this._rotation, direction));
+      window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+    },
+    updated: () => this.updateComplete,
+    reduced: () => this.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches === true,
+    blocked: () => this._modeTransitionBusy,
+    requestFrame: callback => requestAnimationFrame(callback), cancelFrame: id => cancelAnimationFrame(id), now: () => performance.now(),
+  });
   private readonly _rotationChanged = (event: Event): void => {
     if (event instanceof StorageEvent) {
       if (event.key !== PLAN_ROTATION_STORAGE && event.key !== null) return;
+      this._rotationMotion.cancel();
       devicePlanRotation.reload();
     }
     this._isoProjectionSnapshot = null;
@@ -6794,10 +6815,7 @@ export class HouseplanCard extends LitElement {
   private _rotatePlan(direction: -1 | 1): void {
     ++this._viewDeviceMenuRequest;
     if (this._kiosk || !this._space) return;
-    this._cancelCameraTransition(false);
-    this._clearRoomFocus(true);
-    devicePlanRotation.set(this._space, stepPlanRotation(this._rotation, direction));
-    window.dispatchEvent(new Event(PLAN_ROTATION_EVENT));
+    this._rotationMotion.rotate(direction);
   }
   private _displayBase(vb = this._baseVb()): FrameRect {
     if (this._effectiveProjection() === 'iso') {
@@ -12387,7 +12405,7 @@ export class HouseplanCard extends LitElement {
             value: presentation.lqiText,
           }) : '',
     ]);
-    /* css-uses {"owner":"HouseplanCard._renderDevice","kind":"class","values":["static-icon","alarm","unavail","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2"],"reason":"presentationClasses emits this finite semantic state vocabulary"} */
+    /* css-uses {"owner":"HouseplanCard._renderDevice","kind":"class","values":["static-icon","alarm","unavail","power-off","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2"],"reason":"presentationClasses emits this finite semantic state vocabulary"} */
     return html`<div
       ${''/* docs/STYLING-HOOKS.md §3: the styling contract. `nothing` on an
              attribute binding REMOVES the attribute, so a virtual marker has
@@ -13347,10 +13365,10 @@ export class HouseplanCard extends LitElement {
     const radarHealthKey = radar ? radarHealthI18nKey(radar, radarFrame?.health) : null;
     const controls = (d.controls ?? d.marker?.controls ?? [])
       .filter(isControllable).filter((eid) => this._planEntityAvailable(eid));
-    return html`<hp-dialog .hass=${this.hass} data-kind="info"
-      .title=${d.name} .icon=${d.icon} wide
+    return html`<hp-dialog .hass=${this.hass} data-kind="info" class="ui-dialog" form-shell settings-layout compact
+      .title=${d.name} .subtitle=${this._t('device.card_subtitle')} .icon=${d.icon} wide
       dismiss-on-scrim @hp-close=${this._closeInfoCard}>
-        <div class="body">
+        <div class="body hpf-form hpf-settings-form">
           ${renderDeviceIssues(presentation, key => this._t(key), eid => this._openMoreInfo(eid))}
           ${(() => {
             // Field feedback: on a wall tablet this card is for CONTROLLING the
@@ -13371,37 +13389,37 @@ export class HouseplanCard extends LitElement {
                   )}></ha-icon>
                   <span class="en">${name}</span>
                   ${kind === 'toggle'
-                    ? html`<button class="entbtn ${on ? 'on' : ''}"
+                    ? html`<button class="btn entbtn ${on ? 'on' : 'ghost'}"
                         @click=${() => this._cardToggle(eid)}>${val}</button>`
                     : kind === 'open'
-                      ? html`<button class="entbtn"
+                      ? html`<button class="btn entbtn ghost"
                           @click=${() => { this._closeInfoCard(); this._openMoreInfo(eid); }}>${val}</button>`
                       : html`<span class="ev">${val}</span>`}
                 </div>`;
               })}
             </div>`;
           })()}
-          ${d.model ? html`<div class="inforow"><span class="k">${this._t('info.model')}</span><span>${d.model}</span></div>` : nothing}
+          ${d.model ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.model')}</span><span>${d.model}</span></div>` : nothing}
           ${stateTxt && !this._cardEntities(d).length
-            ? html`<div class="inforow"><span class="k">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.state')}</span><span>${stateTxt}</span></div>` : nothing}
           ${radarHealthKey
-            ? html`<div class="inforow"><span class="k">${this._t('radar.health')}</span>
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('radar.health')}</span>
                 <span>${this._t(radarHealthKey)}</span></div>`
             : nothing}
           ${safeUrl(d.link)
-            ? html`<div class="inforow"><span class="k">${this._t('info.link')}</span>
-                <a href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.link')}</span>
+                <a class="hpf-link" href="${safeUrl(d.link)}" target="_blank" rel="noreferrer noopener">${d.link}</a></div>`
             : nothing}
-          ${d.description ? html`<div class="infodesc">${d.description}</div>` : nothing}
+          ${d.description ? html`<div class="infodesc hpf-note">${d.description}</div>` : nothing}
           ${d.pdfs && d.pdfs.length
-            ? html`<div class="inforow"><span class="k">${this._t('info.manuals')}</span><span class="pdflist">
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.manuals')}</span><span class="pdflist">
                 ${d.pdfs.map(
-                  (p) => html`<a class="pdf" href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
+                  (p) => html`<a class="pdf hpf-link" href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">
                     <ha-icon icon="mdi:file-pdf-box"></ha-icon>${p.name}</a>`,
                 )}</span></div>`
             : nothing}
           ${controls.length
-            ? html`<div class="inforow"><span class="k">${this._t('info.controls')}</span>
+            ? html`<div class="inforow hpf-row"><span class="k hpf-label">${this._t('info.controls')}</span>
                 <span class="ctrlstates">
                   ${controls.map((eid) => {
                     const cs = this.hass.states[eid];
@@ -13413,10 +13431,10 @@ export class HouseplanCard extends LitElement {
                 </span></div>`
             : nothing}
           ${!d.model && !stateTxt && !radarHealthKey && !d.link && !d.description && !(d.pdfs && d.pdfs.length) && !controls.length
-            ? html`<div class="infodesc muted">${this._t('info.none')}</div>`
+            ? html`<div class="infodesc hpf-note muted">${this._t('info.none')}</div>`
             : nothing}
         </div>
-        <div class="row infofooter" slot="footer">
+        <div class="row infofooter hpf-footer" slot="footer">
           ${deviceEditorAllowed(this._canEdit, this._kiosk) ? html`<button class="btn" @click=${() => { const dd = d; this._closeInfoCard(); this._openMarkerDialog(dd); }}>
             <ha-icon icon="mdi:pencil"></ha-icon>${this._t('btn.edit')}
           </button>` : nothing}

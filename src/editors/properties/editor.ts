@@ -37,6 +37,7 @@ import { DecorGroupTextBoxes } from '../decor/group-selection';
 import type { DevItem, Marker, ServerConfig } from '../../types';
 import type { HouseplanEditorRuntime } from '../../houseplan-editor-runtime';
 
+const PROPERTIES_MIN_WIDTH = 1024;
 const bindingOf = (device: DevItem): string => device.marker?.binding ?? (device.bindingKind === 'virtual' ? 'virtual' : `${device.bindingKind}:${device.bindingRef}`);
 const ok: PropertiesCommit = { ok: true };
 const failure = (key: PropertiesString): PropertiesCommit => ({ ok: false, error: { key } });
@@ -159,7 +160,7 @@ export class PropertiesEditor {
     return host.isConnected && host._canEdit && !host._kiosk && host._norm && host._loadOk
       && host._mode !== 'view' && !!host._serverCfg && !!host._configWriteGuard()();
   }
-  get wide(): boolean { return this.allowed && this.width >= 960; }
+  get wide(): boolean { return this.allowed && this.width >= PROPERTIES_MIN_WIDTH; }
   get identity(): PropertiesIdentity | null {
     const value = this.selected;
     if (value?.editor === 'decor' && this.selectionContext
@@ -216,8 +217,8 @@ export class PropertiesEditor {
     this.observed = card; card.addEventListener('pointerdown', this.pointerGuard, true);
     const update = () => {
       const width = card.getBoundingClientRect().width;
-      const changed = (width >= 960) !== (this.width >= 960); this.width = width;
-      if (changed && width < 960) {
+      const changed = (width >= PROPERTIES_MIN_WIDTH) !== (this.width >= PROPERTIES_MIN_WIDTH); this.width = width;
+      if (changed && width < PROPERTIES_MIN_WIDTH) {
         const hadFocus = (this.host.renderRoot as ShadowRoot).activeElement?.closest('.hp-properties');
         const draft = this.fields.draft;
         const picker = [...this.host.renderRoot.querySelectorAll<HTMLElement>('.hp-properties [data-property]')]

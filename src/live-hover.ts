@@ -16,6 +16,7 @@ export interface LiveTip {
   y: number;
   title: string;
   meta: string;
+  status?: string;
   battery?: string;
   lqi?: number | null;
   temp?: number | null;
@@ -41,6 +42,7 @@ interface LiveHoverHost {
 }
 
 interface DeviceTipHost extends LiveHoverHost {
+  _devices: readonly DevItem[];
   _mode: string;
   _drag: unknown;
   _deviceDrag: unknown;
@@ -84,7 +86,7 @@ const focusTips = new WeakMap<object, LiveTip>();
 
 const deviceTipContent = (
   host: DeviceTipHost, device: DevItem,
-): { title: string; meta: string; battery: string } => {
+): { title: string; meta: string; battery: string; status: string } => {
   const showLqi = effectiveShowLqi(host._settings, host._spaceDisplayForRender().showLqi, host._config?.show_signal);
   const presentation = host._devicePresentation(device, showLqi);
   const ghostLabel = presentation.haDisabled
@@ -99,7 +101,9 @@ const deviceTipContent = (
   const battery = deviceBatteryTipText(device,
     createDeviceBatteryContext(host._renderPlanHass, host._fullRegistryHass), (key, vars) => host._t(key, vars),
     presentation.valueBadge?.source);
-  return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics, battery };
+  const status = presentation.offline ? host._t('device.presentation_unavailable')
+    : presentation.powerOff ? host._t('device.power_off') : '';
+  return { title: device.name, meta: presentation.haDisabled ? ghostLabel : metrics, battery, status };
 };
 
 export function showDevicePointerTip(value: object, event: PointerEvent, device: DevItem): void {
@@ -142,7 +146,23 @@ export function clearPointerHover(value: object): void {
   host._deviceHits.hover(host.renderRoot, null);
   host._tip = focusTips.get(value) || null;
   host._hoverRoom = null;
+  refreshDeviceTip(value);
   syncHouseplanHover(host);
+}
+
+/** An already-visible tip consumes the same current presentation as its face. */
+export function refreshDeviceTip(value: object): void {
+  const host = value as DeviceTipHost, tip = host._tip;
+  if (!tip?.deviceId || tip.room) return;
+  const device = host._devices.find(device => device.id === tip.deviceId);
+  if (!device) {
+    host._tip = null;
+    if (tip.source === 'focus') focusTips.delete(value);
+    return;
+  }
+  const current = { ...tip, ...deviceTipContent(host, device) };
+  host._tip = current;
+  if (tip.source === 'focus') focusTips.set(value, current);
 }
 
 export function reconcileDeviceFocusTip(value: object): void {
@@ -192,6 +212,7 @@ const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   title.textContent = tip.title;
   element.append(title);
   appendMeta(element, '', tip.meta);
+  appendMeta(element, '', tip.status);
   appendMeta(element, '', tip.battery);
   appendMeta(element, host._t('tip.temp_avg'), tip.temp == null ? '' : `${tip.temp}°`);
   appendMeta(element, host._t('tip.hum_avg'), tip.hum == null ? '' : `${tip.hum}%`);

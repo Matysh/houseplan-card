@@ -1,4 +1,7 @@
 {
+  "device.power_off": "Выключено",
+  "device.presentation_unavailable": "Недоступно",
+  "device.card_subtitle": "Карточка устройства",
   "backup.error.invalid_more_info_entity": "Неверно указана сущность для открытия в Home Assistant.",
   "toast.more_info_target_unavailable": "Не удалось открыть выбранную сущность. Проверьте «Открывать в Home Assistant» в настройках устройства.",
   "backup.error.invalid_state_source": "Некорректный источник состояния значка или список активных состояний.",

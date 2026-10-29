@@ -105,7 +105,7 @@ export const devicesStyles = css`
       background: #f0301f;
       border: 2px solid var(--card-background-color, var(--hp-bg));
       pointer-events: none;
-      z-index: 2;
+      z-index: 3;
     }
     .dev .newdot.hiddendot { background: #9e9e9e; }
     .dev {
@@ -425,9 +425,12 @@ export const devicesStyles = css`
     .stage.projection-iso.mode-view .dev[data-hp-zigbee-topology-endpoint] {
       z-index: 8;
     }
-    .dev.unavail .device-core > ha-icon,
-    .dev.unavail .device-core > .valtext,
-    .dev.unavail .value-badge-content {
+    /* UI-007 fades the visible marker; its separate floor-shadow twin keeps ordinary ink. */
+    .dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }
+    .dev.power-off .device-core > ha-icon,
+    .dev.led-badge.unavail .device-core > ha-icon,
+    .dev.led-badge.unavail .device-core > .valtext,
+    .dev.led-badge.unavail .value-badge-content {
       opacity: 0.35;
     }
     .dev.virtual .device-shell-frame {

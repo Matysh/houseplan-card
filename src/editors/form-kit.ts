@@ -12,54 +12,11 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 
-import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from '../styles/form-kit.styles';
 import { colorTileInk } from './color-tile-ink';
 import { sourcePickerOverlay } from './source-picker-overlay';
-import { dialogCompositionCss } from '../styles/dialog-composition.styles';
 import { disclosureMotion } from './disclosure-motion';
 
-/**
- * Лист набора живёт в ленивом редакторском графе, а не в `cardStyles` (#594 AC8).
- *
- * Замер был однозначным: в синхронном графе набор дал +1459 Б gzip и пробил
- * потолок initial View на 415 Б. Диалоги — инструмент администратора, во View их
- * не открывают никогда, поэтому лист приезжает вместе с редактором тем же
- * способом, которым это делает боковая панель: `adoptedStyleSheets` с откатом
- * на `<style>` там, где конструируемых листов нет.
- */
-const FORM_KIT_CSS = cardDialogFormKitTokens
-  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }) + dialogCompositionCss;
-const adopted = new WeakSet<ShadowRoot>();
-let sheet: CSSStyleSheet | null = null;
-
-export interface FormKitStyleHost {
-  renderRoot: DocumentFragment | HTMLElement;
-}
-
-/**
- * Идемпотентно вносит лист набора в теневой корень карточки.
- *
- * Документ берётся у самого корня, а не у хоста: тип хоста редактора его не
- * обещает, а `ShadowRoot` всегда знает свой документ.
- */
-export function ensureFormKitStyles(host: FormKitStyleHost): void {
-  const root = host.renderRoot as ShadowRoot;
-  if (!root || adopted.has(root)) return;
-  const doc = root.ownerDocument ?? globalThis.document;
-  const Sheet = doc?.defaultView?.CSSStyleSheet;
-  if (Sheet && 'adoptedStyleSheets' in root) {
-    if (!sheet) { sheet = new Sheet(); sheet.replaceSync(FORM_KIT_CSS); }
-    root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
-    adopted.add(root);
-    return;
-  }
-  if (root.querySelector('style[data-hp-form-kit]')) { adopted.add(root); return; }
-  const style = doc.createElement('style');
-  style.dataset.hpFormKit = 'true';
-  style.textContent = FORM_KIT_CSS;
-  root.appendChild(style);
-  adopted.add(root);
-}
+export { ensureFormKitStyles, type FormKitStyleHost } from '../form-kit-styles';
 
 export interface FormCardOptions {
   /** Заголовок группы. Пустой заголовок — карточка без шапки. */

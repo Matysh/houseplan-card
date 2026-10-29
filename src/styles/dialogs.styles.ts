@@ -441,76 +441,6 @@ export const dialogsStyles = css`
       color: var(--hp-muted);
       cursor: default;
     }
-    .entlist {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-      margin-bottom: 10px;
-    }
-    .entrow {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-      padding: var(--sp-3) var(--sp-4);
-      border-radius: var(--rad-m);
-      background: var(--secondary-background-color, rgba(128, 128, 128, 0.12));
-    }
-    .entrow ha-icon { --mdc-icon-size: 20px; color: var(--hp-muted); }
-    .entrow.on ha-icon { color: var(--hp-accent); }
-    .entrow .en { flex: 1; font-size: var(--fs-m); }
-    .entrow .ev { font-size: var(--fs-m); color: var(--hp-muted); }
-    .entbtn {
-      min-width: 74px;
-      min-height: 32px;
-      padding: var(--sp-2) var(--sp-5);
-      border: 1px solid var(--hp-muted);
-      border-radius: 999px;
-      background: transparent;
-      color: var(--hp-txt);
-      font: inherit;
-      font-size: var(--fs-m);
-      cursor: pointer;
-    }
-    .entbtn.on {
-      background: var(--hp-accent);
-      border-color: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      font-weight: 600;
-    }
-    .inforow {
-      display: flex;
-      gap: 10px;
-      font-size: var(--fs-m);
-      margin: var(--sp-2) 0;
-    }
-    .inforow .k {
-      color: var(--hp-muted);
-      min-width: 84px;
-    }
-    .inforow a {
-      color: var(--hp-accent);
-      word-break: break-all;
-    }
-    .infodesc {
-      font-size: var(--fs-m);
-      white-space: pre-wrap;
-      margin-top: var(--sp-3);
-    }
-    .infodesc.muted {
-      color: var(--hp-muted);
-    }
-    .pdflist {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-    }
-    .pdf {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-2);
-      color: var(--hp-accent);
-      text-decoration: none;
-    }
     ha-icon-picker {
       display: block;
     }
@@ -623,21 +553,6 @@ export const dialogsStyles = css`
     hp-dialog .hpf-footer-space .dialog-action-commit { grid-column: 4; grid-row: 2; margin-left: 0; flex-wrap: nowrap; }
     hp-dialog .danger-confirm-footer .dialog-action-commit { flex-wrap: nowrap; }
     hp-dialog .danger-confirm-footer .btn { min-width: 0; white-space: normal; }
-    /* Device info can have Edit + Open in HA + Close. It uses a wide dialog;
-       wrapping remains as a phone fallback, but without a flex spacer (which
-       used to strand Edit alone on the first line). */
-    hp-dialog .row.infofooter {
-      align-items: center;
-      justify-content: flex-start;
-      flex-wrap: wrap;
-      gap: var(--sp-3);
-    }
-    hp-dialog .row.infofooter .btn {
-      flex-shrink: 0;
-    }
-    hp-dialog .row.infofooter .infofooter-close {
-      margin-left: auto;
-    }
     @media (max-width: 480px) {
       hp-dialog .hpf-footer-space {
         grid-template-columns: 44px 44px minmax(0, 1fr) auto;
@@ -668,9 +583,6 @@ export const dialogsStyles = css`
         width: 100%;
         padding-inline: 8px;
         line-height: 1.25;
-      }
-      hp-dialog .row.infofooter {
-        padding: var(--sp-4) var(--sp-5);
       }
     }
 
