@@ -8999,7 +8999,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
       find: '      replaceChunkSource(cardEntry, cardPattern,\n'
-        + '        `${recordEntryUrl}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`\n'
+        + '        `${recordEntryUrl}${bootstrapBarrier}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(cardContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-card.js: the implementation chunk is unavailable\",e)}',\n"
         + '        { coverage, bundle },\n'
@@ -9016,7 +9016,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
       find: '      replaceChunkSource(panelEntry, panelPattern,\n'
-        + '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
+        + '        `${recordEntryUrl}${bootstrapBarrier}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '\n"
         + "          + 'chunk is unavailable\",e)}',\n"
@@ -9054,10 +9054,10 @@ const MUTANT_DEFINITIONS = [
       + '(#535 AC1/AC2)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
+      find: '        `${recordEntryUrl}${bootstrapBarrier}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
-      replace: '        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("./${CARD_ENTRY_FILE}")}`\n'
+      replace: '        `${recordEntryUrl}${bootstrapBarrier}try{${awaitAssets(panelSideEffects)}await import("./${CARD_ENTRY_FILE}")}`\n'
         + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
         + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card implementation '",
     }],
