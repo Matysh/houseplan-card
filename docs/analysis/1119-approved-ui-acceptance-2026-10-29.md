@@ -6,7 +6,7 @@ UI001/003/004/005/006/007/010; the owner's #1120 decision replaces UI008/009.
 The package files remain byte-identical. Product integration is based on accepted
 #1113 dev `0d55dec1c20d099f3e6f0576298357aeacfed497`.
 
-The fresh rendered task fingerprint is
+The completed targeted120 rendered task fingerprint is
 `eb778dbb69737839298eb01c5e19c6d13c712d4553343675c857781c4d8026ab`.
 Matrix 106 has 320 scenes. The predeclared task diagnostic selected 120;
 it did not run or accept the global matrix. All 120 canonical per-ID captures
@@ -90,3 +90,34 @@ individual reports, matched-base comparisons and exact costs are retained in
 The final post-task E2E verdict is separate. A real-HA container 1023/1024/1025
 case is prepared in the companion repository for the beta candidate; actual
 execution of that case is not claimed by local synthetic proof.
+
+## Post-gate identity and selected CI recovery
+
+Normal protected publication is source 422de6e835dcc51f5a8dfa293fc34ce639ec03ae.
+Its exact build fingerprint is
+88e76cd097a0172687469e8c845a0939f37182bfdd5fbf484d74b3844fd74bb1.
+The build-input difference from eb778 is erased Power input typing plus three
+DE/FR dictionary keys each; EN/RU, styles, runtime bodies, harness and matrix
+are unchanged. Fresh native7/three lazy orders and native #508 scroll/footer/
+mobile checks passed at88; the120 receipt above remains its original identity.
+
+[Selected CI run40810670756 attempt1](https://github.com/Matysh/houseplan-card/actions/runs/40810670756)
+completed86 selected Golden checks and55 smokes successfully, with one failed
+smoke (four assertions in device-battery-tooltip). This is a RED producer,
+not overall PASS, full320 execution, strict index equality or reuse authority.
+[Raw artifact12870857513](https://github.com/Matysh/houseplan-card/actions/runs/40810670756/artifacts/12870857513)
+has uploaded SHA256 fed02ba96f1039ba2e6aed2590b4e50ee820f36a3be328c9d024472d52011f9c.
+
+An external unchanged-source diagnostic confirmed both pointer/focus and Flat/iso:
+the exact binary entity's unavailable rows are [entity name, Unavailable];
+off/on restore availability and show [entity name, Battery normal/Low battery].
+The old battery fixture included Unavailable in its ordinary identity baseline.
+The corrected B first positively checks both unavailable tips, separate rows,
+exact status and no battery row, then derives only the proven identity prefix.
+The original strict off/on battery counts/order/text/geometry checks remain.
+No product behavior, timeout, comparison tolerance or guard is changed.
+
+The corrected native battery smoke passed on the same source-fresh FP88,
+including the two new unavailable preconditions, all original four Normal/Low
+checks, and the unchanged numeric/disabled/None/low-only/badge/Russian cases.
+Static registry check passed with execution0; no mutant was executed.

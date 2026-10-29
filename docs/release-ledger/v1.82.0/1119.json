@@ -438,6 +438,7 @@
     ],
     "smokes": [
       "smoke_approved_ui.mjs",
+      "smoke_device_battery_tooltip.mjs",
       "smoke_plan_rotation.mjs",
       "smoke_plan_rotation_touch.mjs",
       "smoke_plan_rotation_editors.mjs",

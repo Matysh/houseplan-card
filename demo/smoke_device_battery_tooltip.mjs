@@ -181,11 +181,24 @@ try {
       .querySelector('[data-id="d_temp"] .device-battery')?.dataset.state === 'normal');
 
     await setBatteryState(page, 'unavailable', 'binary_sensor.hp_light_low');
-    const binaryBase = (await pointerTip('battery_low')).rows;
+    const binaryUnavailable = await both('battery_low');
     await setBatteryState(page, 'off', 'binary_sensor.hp_light_low');
-    out[`${view}_binaryNormalLine`] = hasLine(await both('battery_low'), binaryBase, 'Battery normal');
+    const binaryNormal = await both('battery_low');
     await setBatteryState(page, 'on', 'binary_sensor.hp_light_low');
-    out[`${view}_binaryLowLine`] = hasLine(await both('battery_low'), binaryBase, 'Low battery');
+    const binaryLow = await both('battery_low');
+    evidence[view + '_binaryStates'] = { unavailable: binaryUnavailable, off: binaryNormal, on: binaryLow };
+    // #1119: this exact-entity marker has no other own availability evidence.
+    // Unavailable is now a status row, not part of its stable name/model rows.
+    const unavailableValid = ['pointer', 'focus'].every((source) => {
+      const tip = binaryUnavailable[source];
+      return tip.visible && tip.separateLines && tip.rows.length >= 2
+        && tip.rows.at(-1) === 'Unavailable' && !tip.rows.some((row) => /battery/i.test(row));
+    }) && JSON.stringify(binaryUnavailable.pointer.rows) === JSON.stringify(binaryUnavailable.focus.rows);
+    out[view + '_binaryUnavailableStatusNoBattery'] = unavailableValid;
+    if (!unavailableValid) throw new Error('binary unavailable tooltip precondition failed: ' + view);
+    const binaryBase = binaryUnavailable.pointer.rows.slice(0, -1);
+    out[view + '_binaryNormalLine'] = hasLine(binaryNormal, binaryBase, 'Battery normal');
+    out[view + '_binaryLowLine'] = hasLine(binaryLow, binaryBase, 'Low battery');
     await setBatteryState(page, 'off', 'binary_sensor.hp_light_low');
 
     const plain = await both('d_leak');
