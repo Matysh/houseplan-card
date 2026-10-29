@@ -6914,3 +6914,14 @@ Run smoke_ui_polish_1132 for native editor/Escape/print and actual overlapping
 LQI text pixels in light/dark Flat/2.5D. Keep device_preview_parity, device_offline,
 panel_header_overflow/touch, external_screens and PDF/SVG export coverage. The
 summary buttons are suppressed in render; summary-panel contents are not.
+
+#1132 measured resource accounting: generated JS3716921→3722083 B (+5162 B,
+0.139%;3162 B beyond the current band). The owner standing minor-growth
+permission quoted in #1038 comment6383329349 and applied by #976 covers this
+small UI cost. This task carries only bundleBytes to3722083; the2000-B band,
+all gzip graph references, initial View absolute wall and runtime/functional
+limits stay unchanged. Shared outlined groups/measurement and the native PDF
+Form Kit/pointer owner explain the cost; splitting kit ownership to recover
+3162 B would add disproportionate complexity. The raw growth is not a claimed
+speed improvement. The first two gate results remain red; their successful
+constituents do not replace a fresh protected gate after this accounting.

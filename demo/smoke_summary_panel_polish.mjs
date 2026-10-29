@@ -176,15 +176,12 @@ try {
     f.card.requestUpdate(); await f.settle(); await f.show(true); await f.pause(240); await f.settle();
     const control = f.root().querySelector('.summary-control.kiosk');
     const panel = f.panel();
-    const controlBox = control?.getBoundingClientRect();
     const panelBox = panel?.getBoundingClientRect();
+    const stageBox = f.root().querySelector('.stage').getBoundingClientRect();
     const out = {
-      kiosk_pair_stays_outside_camera: !!control && !control.closest('.zoomwrap'),
-      kiosk_panel_clears_measured_controls: !!panelBox && !!controlBox && panelBox.top >= controlBox.bottom + 8,
-      kiosk_pair_keeps_two_touch_targets: control?.querySelectorAll('button').length === 2
-        && [...control.querySelectorAll('button')].every((button) => {
-          const box = button.getBoundingClientRect(); return box.width >= 44 && box.height >= 44;
-        }),
+      kiosk_controls_never_render: !control && !f.root().querySelector('.summary-control'),
+      kiosk_summary_retains_contents: !!panel?.querySelector('h2') && panel.querySelectorAll('.summary-value').length > 0,
+      kiosk_panel_stays_in_stage: !!panelBox && panelBox.top >= stageBox.top && panelBox.bottom <= stageBox.bottom,
     };
     f.card._config = { ...f.card._config, kiosk: false }; f.card.requestUpdate(); await f.settle();
     return out;
