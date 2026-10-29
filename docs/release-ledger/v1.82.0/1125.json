@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1125,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Only B/C build-loader ordering, ordinary readiness/error fixtures, declaration anchors and documentation change. Stable v1.82.0 already has HpDialog and both stable entry facades; preserve their existing modal content, controls, ACL and data while waiting for genuine HA public bootstrap before loading any component. No class A/D changes, new feature, schema/API, intentional pixels or visual baseline changes; this is infrastructure bootstrapping repair."
+}
