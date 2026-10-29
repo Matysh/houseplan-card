@@ -1,4 +1,7 @@
 import type { DevItem } from './types';
+import type { resolveDeviceOwnAvailability } from './device-own-availability';
+
+type DevicePowerHass = Parameters<typeof resolveDeviceOwnAvailability>[0];
 import { resolvedDeviceStateEntities } from './devices';
 import { isDevicePowerSwitch } from './device-visual';
 
@@ -9,7 +12,7 @@ const poweredDomains = new Set(['light', 'switch', 'fan', 'climate', 'media_play
  * the selected visual/control source. Composite Power excludes feature toggles.
  */
 export function deviceOwnPowerOff(
-  hass: any, device: DevItem, registryHass: any = hass,
+  hass: DevicePowerHass, device: DevItem, registryHass: unknown = hass,
 ): boolean {
   if (device.virtual || device.bindingKind === 'virtual') return false;
   const own = device.entities;

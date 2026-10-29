@@ -268,6 +268,7 @@ test('в корпусе настоящего репозитория все canon
   const corpus = fingerprintCorpus(fileURLToPath(new URL('..', import.meta.url)));
   const golden = corpus.filter((file) => file.startsWith('demo/golden/')).sort();
   assert.deepEqual(golden, [
+    'demo/golden/approved-ui.mjs',
     'demo/golden/decor-multiselect.mjs',
     'demo/golden/device-battery.mjs', 'demo/golden/device-contacts.mjs',
     'demo/golden/device-offline.mjs', 'demo/golden/external-screens.mjs', 'demo/golden/harness.mjs',

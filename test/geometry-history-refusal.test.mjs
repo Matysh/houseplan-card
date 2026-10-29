@@ -59,9 +59,9 @@ function setup({ floors = ['f', 'g'], configInput } = {}) {
   const window = new EventTarget();
   window.requestAnimationFrame = callback => { setImmediate(() => callback(0)); return 1; };
   window.cancelAnimationFrame = () => {};
-  const document = { defaultView: window, createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) };
+  const document = { defaultView: window, createElement: () => ({ dataset: {}, textContent: '' }), createElementNS: () => ({ style: {}, classList: { add() {} }, appendChild() {} }) };
   const stage = { getBoundingClientRect: () => ({ left: 0, top: 0 }), removeAttribute() {} };
-  const root = { ownerDocument: document, querySelectorAll: () => [], querySelector: selector => selector === '.stage' ? stage : null };
+  const root = { ownerDocument: document, appendChild() {}, querySelectorAll: () => [], querySelector: selector => selector === '.stage' ? stage : null };
   const host = {
     // This geometry shell registers Lit controllers; alert forms are never opened.
     addController() {},

@@ -151,9 +151,19 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
         scenario.decorOverride.length, scenario.id);
       // #606 deliberately isolates four furniture drawings; other decor
       // override scenes remain the five-kind integration fixtures.
-      const expectedKinds = scenario.id === 'furniture-corrected-art-light'
-        ? new Set(['furniture'])
-        : new Set(['line', 'rect', 'ellipse', 'text', 'furniture']);
+      const approvedContactFrame = ['approved-ui-contacts-90-1119',
+        'approved-ui-contacts-270-1119'].includes(scenario.id);
+      if (approvedContactFrame) {
+        assert.equal(scenario.deviceContacts, true, scenario.id);
+        assert.equal(scenario.fixture, 'visual', scenario.id);
+        assert.ok([90, 270].includes(scenario.rotation), scenario.id);
+        assert.deepEqual(scenario.decorOverride.map(({ id, kind, text }) => ({ id, kind, text })),
+          [{ id: 'frame-caption', kind: 'text', text: 'Contact frame' }], scenario.id);
+      }
+      const expectedKinds = approvedContactFrame ? new Set(['text'])
+        : scenario.id === 'furniture-corrected-art-light'
+          ? new Set(['furniture'])
+          : new Set(['line', 'rect', 'ellipse', 'text', 'furniture']);
       assert.deepEqual(new Set(scenario.decorOverride.map((shape) => shape.kind)),
         expectedKinds, scenario.id);
     }
@@ -507,7 +517,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 105);
+  assert.equal(GOLDEN_MATRIX_VERSION, 106);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -1013,7 +1023,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 105);
+  assert.equal(GOLDEN_MATRIX_VERSION, 106);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',

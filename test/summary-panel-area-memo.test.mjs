@@ -83,6 +83,8 @@ const harness = (config) => {
     },
   };
   const host = {
+    // The metrics-only shell mounts no dialog; retain the runtime's root port.
+    renderRoot: { querySelector: () => null },
     hass: { states: {}, config: {} }, _config: {}, requestUpdate: () => undefined,
     _mode: 'view', _space: config.spaces[0].id, _markers: [], _layoutRev: 0,
     _haRegistry: { authoritative: true, revision: 0, devices: {}, entities: {} },

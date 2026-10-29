@@ -37,13 +37,15 @@ function fixture({
   // приёмки. Настоящий прогон отчитывается по ней `missing-baseline`, и
   // фикстура обязана моделировать это же, иначе `accept.mjs` справедливо
   // ругается на неполный отчёт.
+  const acceptedDonor = GOLDEN_SCENARIOS.find(({ id }) => existsSync(resolve(BASELINES, id + '.png')));
+  assert.ok(acceptedDonor, 'provenance fixture needs an existing accepted PNG');
   const results = GOLDEN_SCENARIOS.map((scenario) => {
     const source = resolve(BASELINES, `${scenario.id}.png`);
     const actual = resolve(dir, 'actual', `${scenario.id}.png`);
     if (!existsSync(source)) {
       // Кадр у новой сцены есть (его и смотрит ревьюер), эталона ещё нет.
       // Байты берём у любой принятой сцены: провенанс не о содержимом кадра.
-      copyFileSync(resolve(BASELINES, `${GOLDEN_SCENARIOS[0].id}.png`), actual);
+      copyFileSync(resolve(BASELINES, `${acceptedDonor.id}.png`), actual);
       return {
         id: scenario.id,
         status: 'missing-baseline',

@@ -1,4 +1,7 @@
 {
+  "device.power_off": "Aus",
+  "device.presentation_unavailable": "Nicht verfügbar",
+  "device.card_subtitle": "Gerätekarte",
   "backup.error.invalid_more_info_entity": "Die Entität zum Öffnen in Home Assistant ist ungültig.",
   "toast.more_info_target_unavailable": "Die ausgewählte Entität kann nicht geöffnet werden. Prüfen Sie In Home Assistant öffnen in den Geräteeinstellungen.",
   "backup.error.invalid_state_source": "Ungültige Symbolzustandsquelle oder aktive Zustände.",

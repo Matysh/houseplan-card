@@ -209,7 +209,10 @@ test('#641: stale fingerprints, toolchain drift and undeclared diffs cannot be a
 
     const reportPath = resolve(unexpected, 'golden-report.json');
     const report = JSON.parse(readFileSync(reportPath, 'utf8'));
-    report.results[0].status = 'different';
+    const accepted = report.results.find(({ id }) => id === ACCEPTED[0]);
+    assert.ok(accepted);
+    assert.equal(accepted.status, 'passed');
+    accepted.status = 'different';
     writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
     await assert.rejects(() => createWslAttestation({
       root: ROOT, artifactRoot: unexpected, intent,
