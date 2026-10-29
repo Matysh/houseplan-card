@@ -95,7 +95,9 @@ test('#659 header menu state transitions are guarded without rendering a browser
   contains('src/header-menu.ts',
     'const run = (item: HeaderMenuItem) => { this.close(false); item.run(); };',
     "if (event.key !== 'Escape' || !this.open) return;",
-    'if (!nav || !tab || nav.clientWidth === 0) return;',
+    'if (!nav || !tab) return;\n'
+      + "    const id = tab.dataset.id || '';\n"
+      + '    if (id === this.revealedFor || nav.clientWidth === 0) return;',
   );
 });
 

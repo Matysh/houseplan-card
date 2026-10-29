@@ -13476,8 +13476,8 @@ const MUTANT_DEFINITIONS = [
     because: '#616 AC5: with many spaces the active tab must be scrolled into view on load and on switch',
     patches: [{
       file: 'src/header-menu.ts',
-      find: '    if (!nav || !tab || nav.clientWidth === 0) return;',
-      replace: '    if (!nav || !tab || nav.clientWidth >= 0) return;',
+      find: '    if (id === this.revealedFor || nav.clientWidth === 0) return;',
+      replace: '    if (id === this.revealedFor || nav.clientWidth >= 0) return;',
     }],
   },
   {
