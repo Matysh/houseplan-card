@@ -2,6 +2,10 @@
   "schema": 1,
   "issue": 1125,
   "baseStable": "v1.82.0",
-  "category": "infra",
-  "rationale": "Only B/C build-loader ordering, ordinary readiness/error fixtures, declaration anchors and documentation change. Stable v1.82.0 already has HpDialog and both stable entry facades; preserve their existing modal content, controls, ACL and data while waiting for genuine HA public bootstrap before loading any component. No class A/D changes, new feature, schema/API, intentional pixels or visual baseline changes; this is infrastructure bootstrapping repair."
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already opens settings and import forms in the HpDialog modal shell and ships both stable entry facades. Late genuine Home Assistant bootstrap can replace the registry after those existing components register, leaving the form without its working modal shell. Restore that existing user-visible behavior through the shipped entry loader, preserving the existing controls, stored data and intended appearance.",
+  "summary": {
+    "ru": "Настройки и импорт сохраняют модальную оболочку при холодном запуске Home Assistant.",
+    "en": "Settings and import dialogs keep their modal shell during a cold Home Assistant start."
+  }
 }
