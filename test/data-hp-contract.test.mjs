@@ -121,9 +121,16 @@ test('#489 dialog actions, editor tool vocabulary and panel hooks remain represe
     'backdrop', 'line', 'rect', 'ellipse', 'text', 'furniture', 'image', 'erase',
   ]) assert.ok(toolValues.has(required), `missing data-tool ${required}`);
 
-  const panel = sources.find((entry) => entry.relative === 'houseplan-panel.ts')?.text || '';
-  assert.match(panel, /menu\.dataset\.hp = 'panel-menu'/);
-  assert.match(panel, /title\.dataset\.hp = 'panel-title'/);
+  const menu = sources.find((entry) => entry.relative === 'panel-header-menu.ts')?.text || '';
+  assert.deepEqual([...templateAttributeValues(menu, 'data-hp', 'panel-header-menu.ts')], ['panel-menu']);
+  assert.ok(contract.hooks['panel-menu'], 'the drawer action retains its public hook');
+  assert.equal(sourceValues.has('panel-title'), false, '#1120 removes the title, without hidden compatibility DOM');
+  assert.equal(contract.hooks['panel-title'], undefined);
+  const retired = contract.retiredHooks['panel-title'];
+  assert.equal(retired.since, '1.73.0-beta.7');
+  assert.equal(retired.retired, '1.83.0-beta.4');
+  assert.equal(retired.issue, 1120);
+  assert.match(retired.reason, /outer main-panel title\/header/);
 });
 
 // Ordinary negative input strings exercise the parser; no source, build or guard

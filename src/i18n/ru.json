@@ -1,4 +1,8 @@
 {
+  "mode.plan_short": "План",
+  "mode.devices_short": "Устройства",
+  "mode.decor_short": "Подложка",
+  "panel.sidebar_menu": "Боковое меню",
   "device.power_off": "Выключено",
   "device.presentation_unavailable": "Недоступно",
   "device.card_subtitle": "Карточка устройства",

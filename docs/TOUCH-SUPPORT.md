@@ -43,14 +43,31 @@ use the owning card's 1024 px boundary; editor touch remains best effort.
 
 On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 
+The main /houseplan panel (#1120) has one full-height card header, without
+a separate outer title bar or 56 px reserve. The 44 px HA menu is first inside it:
+visible for narrow HA or a hidden wide sidebar; native HA kiosk or an external
+provider's hasSidebar:true hides it. House Plan route/profile kiosk hides the
+whole header and menu; Back or the ordinary /houseplan URL exits.
+
+Adaptation measures actual content, names, locale and available container
+width. In order: short Plan/Devices/Background labels with equal pencils become
+distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
+become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
+left onto a second row. Expansion restores the reverse sequence, without fixed
+width thresholds. If the wrapped first row cannot fit, the existing phone gear
+retains editor/space/settings actions. At 320/359 px there are at most two rows;
+rotation/floor/menu targets stay 44 px and editor close 24 px. Gestures retain zoom.
+Properties independently uses 1024 px of card width. Lovelace receives no HA menu
+and retains the existing fixed phone/header behavior described below.
+
 - render the plan and current states correctly;
-- on a phone (≤ 480 px) keep the header to one row of at most 56 px — space
+- in Lovelace on a phone (≤ 480 px) keep the header to one row of at most 56 px — space
   selection, rotation/zoom and one gear whose menu holds every other header action, each
   item a 44 px target (#616);
-- use the shared floor dropdown when the actual header is ≤1024 px (#997),
+- in Lovelace use the shared floor dropdown when the actual header is ≤1024 px (#997),
   retaining touch selection, the current floor, editor dirty guards and the
   existing phone gear/zoom targets; wider headers retain tabs;
-- retain that View row even below 360 px. Admin editors may use two header rows
+- in Lovelace retain that View row even below 360 px. Admin editors may use two header rows
   below 360 px, with five rotation/zoom targets together at 44 px and the existing
   close control. Editors remain desktop-first/best effort on touch (#1070);
 - support convenient pan, pinch zoom and space switching;

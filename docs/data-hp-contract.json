@@ -224,11 +224,6 @@
       "since": "1.73.0-beta.7",
       "audience": ["test"]
     },
-    "panel-title": {
-      "elements": ["div"],
-      "since": "1.73.0-beta.7",
-      "audience": ["test"]
-    },
     "partition": {
       "elements": ["path"],
       "since": "1.60.2-beta.1",
@@ -1120,6 +1115,14 @@
     }
   },
   "retiredHooks": {
+    "panel-title": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "retired": "1.83.0-beta.4",
+      "issue": 1120,
+      "reason": "Owner-approved #1120 removes the outer main-panel title/header entirely. The retained panel-menu hook moves into the ordinary card header; kiosk hides both header and menu, with no hidden title replacement."
+    },
     "room-draft": {
       "elements": ["line"],
       "since": "1.60.2-beta.1",

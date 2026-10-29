@@ -18,3 +18,6 @@
 # и параллельные задачи не возвращаются в S6 из-за соседней строки ченджлога.
 docs/CHANGELOG.md merge=union
 docs/CHANGELOG.ru.md merge=union
+
+# #1120: immutable approved replay bytes include original CRLF; keep SHA-256 provenance.
+docs/design/1120-panel-header-overflow/2026-10-29/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

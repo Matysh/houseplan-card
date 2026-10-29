@@ -73,7 +73,7 @@ const haSequence = await page.evaluate(async () => {
   const cardRoot = card.shadowRoot || card.renderRoot;
   const panelRect = panel.getBoundingClientRect();
   const wrapperRect = wrapper.getBoundingClientRect();
-  const appbarRect = panel.shadowRoot.querySelector('.appbar').getBoundingClientRect();
+  const noOuterAppbar = !panel.shadowRoot.querySelector('.appbar');
   const headerRect = cardRoot.querySelector('.hdr').getBoundingClientRect();
   const stageRect = cardRoot.querySelector('.stage').getBoundingClientRect();
   const result = {
@@ -86,8 +86,8 @@ const haSequence = await page.evaluate(async () => {
       && panel.panel?.component_name === 'houseplan-panel',
     autoHeightHostFillsViewportMinusInsets: Math.abs(panelRect.height - (innerHeight - 16)) <= 1
       && Math.abs(wrapperRect.height - innerHeight) <= 1,
-    autoHeightHostKeepsPositiveStage: stageRect.height > 0 && stageRect.width > 0
-      && Math.abs(stageRect.height + headerRect.height + appbarRect.height - panelRect.height) <= 1,
+    autoHeightHostKeepsPositiveStage: noOuterAppbar && stageRect.height > 0 && stageRect.width > 0
+      && Math.abs(stageRect.height + headerRect.height - panelRect.height) <= 1,
   };
   panel.remove();
   wrapper.remove();
@@ -230,7 +230,8 @@ const result = await page.evaluate(async () => {
   panel.panel = { component_name: 'houseplan-panel' };
   host.append(panel);
   const baseHass = {
-    ...window.__mkHass(),
+    ...window.__mkHass(), dockedSidebar: 'always_hidden', kioskMode: false,
+    localize: key => key === 'ui.sidebar.sidebar_toggle' ? 'Menu' : undefined,
     user: { id: 'writer', name: 'Writer', is_admin: false },
   };
   panel.hass = baseHass;
@@ -256,7 +257,7 @@ const result = await page.evaluate(async () => {
     menuEvents += 1;
     menuDetail = { bubbles: event.bubbles, composed: event.composed };
   });
-  shellRoot.querySelector('.menu').click();
+  cardRoot.querySelector('[data-hp=panel-menu]').click();
 
   const contentRect = shellRoot.querySelector('.content').getBoundingClientRect();
   const cardRect = card.getBoundingClientRect();
@@ -276,15 +277,15 @@ const result = await page.evaluate(async () => {
     hassForwarded: card.hass === updatedHass,
     panelHostWithoutKiosk: card.panelHost === true && card._config?.kiosk !== true,
     noDuplicateProductTitle: !cardRoot.querySelector('.head > .title')
-      && shellRoot.querySelectorAll('.title').length === 1,
+      && shellRoot.querySelectorAll('.title').length === 0,
     retainedCardNavigation: !!cardRoot.querySelector('[data-hp="space-tab"],[data-hp="space-select"]')
       && !!cardRoot.querySelector('[data-editor-navigation="plan"]'),
     menuContract: menuEvents === 1 && menuDetail?.bubbles === true && menuDetail?.composed === true,
-    menuAccessible: shellRoot.querySelector('.menu').getAttribute('aria-label') === 'Menu'
-      && shellRoot.querySelector('.menu').getBoundingClientRect().width >= 44,
-    appbarKeepsHeaderAndToolbarSemantics: shellRoot.querySelector('.appbar')?.tagName === 'HEADER'
-      && !shellRoot.querySelector('.appbar').hasAttribute('role')
-      && shellRoot.querySelector('.toolbar')?.getAttribute('role') === 'toolbar',
+    menuAccessible: cardRoot.querySelector('[data-hp=panel-menu]').getAttribute('aria-label') === 'Menu'
+      && cardRoot.querySelector('[data-hp=panel-menu]').getBoundingClientRect().width >= 44,
+    menuLivesFirstInCardWithoutOuterReserve: !shellRoot.querySelector('.appbar,.toolbar')
+      && cardRoot.querySelector('.head button')?.dataset.hp === 'panel-menu'
+      && Math.abs(cardRect.top - panel.getBoundingClientRect().top) <= 1,
     noHorizontalOverflow: panel.scrollWidth - panel.clientWidth <= 1
       && shellRoot.querySelector('.page').scrollWidth - shellRoot.querySelector('.page').clientWidth <= 1,
     cardOwnsContentSlot: Math.abs(cardRect.height - contentRect.height) <= 1
@@ -387,7 +388,7 @@ await assertFreshDemoBundleUnlessAllowed(page);
 await page.evaluate(() => {
   window.__hpPanelMenuEvidence = { sources: [], events: [] };
   const panel = window.__hpPanel;
-  const menu = panel.shadowRoot.querySelector('.menu');
+  const menu = panel.shadowRoot.querySelector('houseplan-card').shadowRoot.querySelector('[data-hp=panel-menu]');
   menu.addEventListener('click', (event) => {
     window.__hpPanelMenuEvidence.sources.push(event.isTrusted);
   }, { capture: true });
@@ -405,7 +406,7 @@ await page.evaluate(() => {
   window.__hpStageEvidence = { moreInfo: 0 };
   panel.addEventListener('hass-more-info', () => { window.__hpStageEvidence.moreInfo += 1; });
 });
-const wideMenu = page.locator('houseplan-panel').locator('.menu');
+const wideMenu = page.locator('houseplan-panel').locator('[data-hp=panel-menu]');
 await wideMenu.click();
 await wideMenu.focus();
 await page.keyboard.press('Enter');
@@ -435,6 +436,19 @@ wideUserActivation.retainedStageInteractiveFocuses &&= stageFocused;
 // A real viewport resize must settle without a feedback loop or a page-wide
 // horizontal scrollbar. Keep the populated panel mounted for this check.
 await page.setViewportSize({ width: 320, height: 720 });
+await page.evaluate(() => { window.__hpPanel.narrow = true; });
+// #1120: the lazy picker/Lit commit is part of the new content-driven phone
+// presentation. Observe that public presentation before the unchanged two-frame
+// camera/height stability oracle (rather than sampling the old wide row).
+await page.waitForFunction(() => {
+  const root = window.__hpPanelCard.renderRoot;
+  const picker = root.querySelector('[data-hp="space-select"]');
+  const gear = root.querySelector('[data-hp="header-menu"]');
+  const actions = root.querySelector('.header-actions');
+  const menu = root.querySelector('[data-hp="panel-menu"]');
+  return picker?.getBoundingClientRect().width > 0 && gear?.getBoundingClientRect().width >= 44
+    && actions?.getBoundingClientRect().top >= menu?.getBoundingClientRect().bottom;
+});
 const resized = await page.evaluate(async () => {
   const card = window.__hpPanelCard;
   const panel = window.__hpPanel;
@@ -489,7 +503,7 @@ const narrowReadOnly = await page.evaluate(async () => {
   window.__hpPanel = panel;
   window.__hpPanelCard = card;
   window.__hpPanelMenuEvidence = { sources: [], events: [] };
-  const menu = panel.shadowRoot.querySelector('.menu');
+  const menu = panel.shadowRoot.querySelector('houseplan-card').shadowRoot.querySelector('[data-hp=panel-menu]');
   menu.addEventListener('click', (event) => {
     window.__hpPanelMenuEvidence.sources.push(event.isTrusted);
   }, { capture: true });
@@ -503,11 +517,11 @@ const narrowReadOnly = await page.evaluate(async () => {
     narrowReadOnlyOwnsContentSlot: Math.abs(cardRect.height - content.height) <= 1,
     narrowReadOnlyNoCreateAction: !empty?.querySelector('button'),
     narrowReadOnlyNoRuntime: !card._editorRuntime && !card._onboardingRuntime,
-    narrowReadOnlyOneHeading: panel.shadowRoot.querySelectorAll('[role="heading"]').length === 1
+    narrowReadOnlyHasNoOuterHeading: panel.shadowRoot.querySelectorAll('[role="heading"]').length === 0
       && !root.querySelector('.head > .title'),
   };
 });
-const narrowMenu = page.locator('houseplan-panel').locator('.menu');
+const narrowMenu = page.locator('houseplan-panel').locator('[data-hp=panel-menu]');
 await narrowMenu.click();
 await narrowMenu.focus();
 await page.keyboard.press('Enter');

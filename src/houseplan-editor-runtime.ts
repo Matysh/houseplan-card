@@ -498,6 +498,7 @@ export interface HouseplanEditorHostPort {
   readonly _alerts?: import('./marker-alert-view-runtime').MarkerAlertViewRuntime;
   readonly _connectionWasLost: boolean;
   readonly panelHost: boolean;
+  _panelHeaderNaturalHeight(mode: HouseplanMode): number | null;
   /** #780: the LED tool lives in its own lazy chunk; the card owns its loader. */
   _ledEditor: import('./led-strip-editor').LedStripEditor | null;
   _ledButton(): TemplateResult;
@@ -1214,6 +1215,8 @@ public warmRoomDraft() {
 /** Natural header height belongs to the loaded editor's mode-layout boundary.
  * Route departure can measure View before Lit has replaced the editor DOM. */
 public _modeHeaderHeight(mode: HouseplanMode): number {
+    const panelHeight = this.host.panelHost ? this.host._panelHeaderNaturalHeight(mode) : null;
+    if (panelHeight !== null) return panelHeight;
     const root = this.host.renderRoot;
     const card = root.querySelector('ha-card[data-hp-mode]');
     const head = root.querySelector('.hdr > .head') as HTMLElement | null;

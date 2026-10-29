@@ -16,21 +16,16 @@ interface HouseplanCardElement extends HTMLElement {
   setConfig(config: { type: 'custom:houseplan-card' }): void;
 }
 
-interface HomeAssistantPanelHost {
-  localize?: (key: string) => string | undefined;
-}
-
 /** Properties Home Assistant assigns to a custom panel element, in its order. */
 const PRE_UPGRADE_PROPERTIES = ['panel', 'hass', 'narrow', 'route'] as const;
 
 /** Home Assistant custom-panel shell; the existing card owns all product state. */
 export class HouseplanPanel extends HTMLElement {
-  private _hass?: HomeAssistantPanelHost;
+  private _hass?: unknown;
   private _narrow = false;
   private _route?: unknown;
   private _panel?: unknown;
   private _card?: HouseplanCardElement;
-  private _menuButton?: HTMLButtonElement;
   private _acceptedUrl = '';
   private _acceptedRoute?: unknown;
   private _pendingRoute?: { intent: RouteKiosk; url: string; route: unknown };
@@ -87,12 +82,11 @@ export class HouseplanPanel extends HTMLElement {
     }
   }
 
-  public get hass(): HomeAssistantPanelHost | undefined { return this._hass; }
-  public set hass(value: HomeAssistantPanelHost | undefined) {
+  public get hass(): unknown | undefined { return this._hass; }
+  public set hass(value: unknown | undefined) {
     this._hass = value;
     this._ensureShell();
     if (this._card) this._card.hass = value;
-    this._syncMenuLabel();
   }
 
   public get narrow(): boolean { return this._narrow; }
@@ -154,66 +148,8 @@ export class HouseplanPanel extends HTMLElement {
         min-width: 0;
         min-height: 0;
         display: grid;
-        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
         overflow: hidden;
-      }
-      .appbar {
-        box-sizing: border-box;
-        min-width: 0;
-        min-height: var(--header-height, 56px);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 0 16px;
-        background: var(--app-header-background-color, var(--primary-background-color));
-        color: var(--app-header-text-color, var(--primary-text-color));
-        border-bottom: 1px solid var(--divider-color);
-        z-index: 1;
-      }
-      .toolbar {
-        min-width: 0;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .menu {
-        box-sizing: border-box;
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
-        margin: 0;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 0;
-        border-radius: 50%;
-        color: inherit;
-        background: transparent;
-        cursor: pointer;
-      }
-      .menu:focus-visible {
-        outline: 2px solid var(--primary-color);
-        outline-offset: 2px;
-      }
-      @media (hover: hover) {
-        .menu:hover { background: var(--secondary-background-color); }
-      }
-      .menu ha-icon { --mdc-icon-size: 24px; }
-      .title {
-        min-width: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 20px;
-        font-weight: 500;
-        line-height: 1.2;
-      }
-      .title ha-icon {
-        --mdc-icon-size: 24px;
-        color: var(--primary-color);
       }
       .content {
         min-width: 0;
@@ -230,34 +166,6 @@ export class HouseplanPanel extends HTMLElement {
 
     const page = document.createElement('div');
     page.className = 'page';
-    const appbar = document.createElement('header');
-    appbar.className = 'appbar';
-    const toolbar = document.createElement('div');
-    toolbar.className = 'toolbar';
-    toolbar.setAttribute('role', 'toolbar');
-
-    const menu = document.createElement('button');
-    menu.className = 'menu';
-    menu.dataset.hp = 'panel-menu';
-    menu.type = 'button';
-    menu.innerHTML = '<ha-icon icon="mdi:menu"></ha-icon>';
-    menu.addEventListener('click', () => {
-      menu.dispatchEvent(new CustomEvent('hass-toggle-menu', {
-        bubbles: true,
-        composed: true,
-      }));
-    });
-    this._menuButton = menu;
-
-    const title = document.createElement('div');
-    title.className = 'title';
-    title.dataset.hp = 'panel-title';
-    title.setAttribute('role', 'heading');
-    title.setAttribute('aria-level', '1');
-    title.innerHTML = '<ha-icon icon="mdi:floor-plan"></ha-icon><span>House Plan</span>';
-    toolbar.append(menu, title);
-    appbar.append(toolbar);
-
     const content = document.createElement('main');
     content.className = 'content';
     const card = document.createElement('houseplan-card') as HouseplanCardElement;
@@ -269,20 +177,12 @@ export class HouseplanPanel extends HTMLElement {
     card.setConfig({ type: 'custom:houseplan-card' });
     if (this._hass !== undefined) card.hass = this._hass;
     content.append(card);
-    page.append(appbar, content);
+    page.append(content);
     this.shadowRoot.append(style, page);
     this._card = card;
-    this._syncMenuLabel();
   }
 
-  private _syncMenuLabel(): void {
-    if (!this._menuButton) return;
-    const label = this._hass?.localize?.('ui.common.menu')
-      || this._hass?.localize?.('ui.panel.lovelace.menu')
-      || 'Menu';
-    this._menuButton.setAttribute('aria-label', label);
-    this._menuButton.title = label;
-  }
+
 }
 
 if (!customElements.get('houseplan-panel')) {

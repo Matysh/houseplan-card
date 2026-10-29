@@ -1,4 +1,8 @@
 {
+  "mode.plan_short": "Plan",
+  "mode.devices_short": "Geräte",
+  "mode.decor_short": "Hintergrund",
+  "panel.sidebar_menu": "Seitenleiste umschalten",
   "device.power_off": "Aus",
   "device.presentation_unavailable": "Nicht verfügbar",
   "device.card_subtitle": "Gerätekarte",

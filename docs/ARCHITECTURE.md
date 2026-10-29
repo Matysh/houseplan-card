@@ -1281,6 +1281,26 @@ back to 2.5), converted once at the surface boundary and rendered in `cqw` insid
 
 ## Sticky header
 
+The main-panel composition (#1120) uses panel-header-flow.ts for ordered
+native-only inert metrics, removed synchronously without cloning custom elements,
+IDs, events, popup owners or live Lit parts. The existing _roHdr/coalesced frame
+owns content width and height; owner/content/fractional-width/font memoization
+avoids measuring unchanged HA ticks. Mode targets use the same natural header
+measurement before camera motion. DOM replacement, kiosk and disconnect retire
+queued/font/focus work. No second ResizeObserver or MutationObserver is added.
+
+panel-header-menu.ts reads public narrow/dockedSidebar/kiosk/external-sidebar/
+localized-name inputs and emits composed hass-toggle-menu from a plain 44 px
+button. Native component registration/context and notification subscriptions
+are unnecessary. Minimum supported HA without kioskMode is supported; modern
+external hasSidebar:true hides the action consistently. Cold View keeps editor
+code lazy; Lovelace and the 1024 px Properties boundary remain separate.
+
+Synthetic DOM/event evidence does not prove the native HA drawer. Companion
+E2E is required on the exact beta candidate before release; task visual intent
+does not accept global baselines. The immutable accepted r6 materials live in
+docs/design/1120-panel-header-overflow/2026-10-29.
+
 `.head` is `position: sticky; top: var(--header-height, 56px)`, so ordinary
 dashboard cards keep `ha-card { overflow: visible }` (hidden overflow breaks
 sticky). The bounded `panel-host` and Sections `layout="grid"` branches own their

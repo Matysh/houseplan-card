@@ -4,6 +4,9 @@ import { DeviceSignalController } from './device-signal-runtime';
 import { roomNameColorOf, spaceDraftAppearanceOf } from './room-appearance';
 import { decorTextElementId } from './decor-text-element';
 import { headerContentWidth, renderHeaderSpaceNavigation } from './header-space-select';
+import { PanelHeaderMemo, measurePanelHeader, applyPanelHeaderChoice, panelHeaderWidth,
+  type PanelHeaderMeasurement, type PanelHeaderSpaces } from './panel-header-flow';
+import { panelMenuKey, panelMenuState, renderPanelMenu } from './panel-header-menu';
 import { DeviceRosterStateKey } from './device-roster-state-key';
 import { DemandSpaceModels } from './demand-space-models';
 import { snapshotConsumerDemand, type SnapshotConsumerDemand } from './render-snapshot-consumers';
@@ -619,6 +622,7 @@ export class HouseplanCard extends LitElement {
 
   public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     let forceHass = false;
+    let panelMenuChanged = false;
     if (name === 'hass') {
       const authorityChanged = this._configWriteContext.observe(this.hass);
       if (authorityChanged) {
@@ -640,6 +644,12 @@ export class HouseplanCard extends LitElement {
         this._editorRuntime?.optimizationUndo.retire();
         this._geometryHistory.clear(); this._devicePositionHistory.clear();
         this._pendingPhysicalWrites.clear(); this._newSyncKey = ''; this._regSignature = '';
+      }
+      if (this.panelHost) {
+        const key = panelMenuKey(this.hass, !!this.narrow, this._t('panel.sidebar_menu'));
+        panelMenuChanged = key !== this._panelMenuHassKey;
+        this._panelMenuHassKey = key;
+        if (panelMenuChanged) forceHass = true;
       }
       // Every assignment counts, even A→B→A coalesced into one Lit update.
       this._configReloadAuthority.observeContext(configReloadContext(this));
@@ -667,7 +677,8 @@ export class HouseplanCard extends LitElement {
       if (!render && !this._summary?.observeHassComposition()) return;
     }
     if (name !== undefined) this._terminalFrame = 0;
-    if (this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
+    if (!panelMenuChanged && !(this.panelHost && name === 'narrow')
+        && this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
     this._liveRt?.clear();
     super.requestUpdate(name, oldValue, forceHass ? { ...options, hasChanged: () => true } : options);
   }
@@ -921,6 +932,13 @@ export class HouseplanCard extends LitElement {
   }
   public hass?: any;
   public panelHost = false; public layout: string | null = null; public narrow: boolean | null = null;
+  private readonly _panelHeaderMemo = new PanelHeaderMemo();
+  private _panelHeaderChoice: PanelHeaderMeasurement = { phase: 0, phone: false, height: 0 };
+  private _panelHeaderObservedContent = '';
+  private _panelMenuHassKey = '';
+  private _headerLeaseCleanup?: () => void;
+  private _headerFocusFrame?: number;
+
   private readonly _externalScreenResolver = new ExternalScreenResolver();
   private get _externalScreen(): ResolvedScreen {
     return this._externalScreenResolver.read(this._settings.external_screens, this.panelHost ? this._routeKiosk : null);
@@ -972,6 +990,87 @@ export class HouseplanCard extends LitElement {
   private _config?: CardConfig;
 
   /** HA owns the vertical slot in sidebar panel and Sections grid layouts. */
+
+  private get _headerNavigationSpaces(): readonly SpaceModel[] {
+    const model = this._model, fixed = this._fixedFloorState(model), space = this._spaceModel();
+    return fixed.kind === 'valid' && space ? [space] : model;
+  }
+  private get _panelHeaderSpaces(): PanelHeaderSpaces {
+    return { spaces: this._headerNavigationSpaces, current: this._space,
+      configure: this._norm && this._canEdit,
+      create: this._canEdit && !this._kiosk && !this._hasFixedFloor };
+  }
+  private _panelHeaderContentKey(head: HTMLElement, mode: HouseplanMode = this._mode): string {
+    const typography = getComputedStyle(head);
+    return JSON.stringify([mode, this._space, this._canEdit, this._norm, this._hasFixedFloor,
+      langOf(this.hass, this._config?.language), this.narrow, this._panelMenuHassKey,
+      typography.fontFamily, typography.fontSize, typography.fontWeight, typography.letterSpacing,
+      this._panelHeaderSpaces.spaces.map(space => [space.id, space.title]),
+      Array.from(head.querySelector('.header-actions')?.children || [])
+        .map(node => [node.getAttribute('class'), node.childElementCount])]);
+  }
+  private _renderPanelMenu(): TemplateResult | typeof nothing {
+    if (!this.panelHost) return nothing;
+    return renderPanelMenu(panelMenuState(this.hass, !!this.narrow, this._kiosk, this._t('panel.sidebar_menu')));
+  }
+  private _renderEmptyPanelHeader(): TemplateResult | typeof nothing {
+    if (!this.panelHost || this._kiosk) return nothing;
+    const menu = panelMenuState(this.hass, !!this.narrow, false, this._t('panel.sidebar_menu'));
+    if (!menu.visible) return nothing;
+    return html`<div class="hdr" data-panel-flow="0" data-panel-mode=${this._mode}>
+      <div class="head">${renderPanelMenu(menu)}</div></div>`;
+  }
+  /** The loaded mode owner may measure View before Lit replaces the editor DOM. */
+  public _panelHeaderNaturalHeight(mode: HouseplanMode): number | null {
+    if (!this.panelHost || this._kiosk) return null;
+    const header = this.renderRoot.querySelector('.hdr') as HTMLElement | null;
+    const head = header?.querySelector(':scope > .head') as HTMLElement | null;
+    if (!header || !head) return null;
+    const width = mode === 'view' ? headerContentWidth(getComputedStyle(header)) : panelHeaderWidth(head);
+    return width > 0 ? measurePanelHeader(header, head, width, this._panelHeaderSpaces, mode).height : null;
+  }
+  private async _settlePanelHeader(): Promise<void> {
+    if (!this.panelHost || this._kiosk) return;
+    for (let pass = 0; pass < 3; pass++) {
+      const before = JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces]);
+      this._onWinResize?.();
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      if (this._spaceSelectLoad) await this._spaceSelectLoad;
+      await this.updateComplete;
+      if (before === JSON.stringify([this._panelHeaderChoice.phase, this._panelHeaderChoice.phone, this._compactSpaces])) return;
+    }
+  }
+  private _retainPanelHeaderFocus(head: HTMLElement, active: Element | null, owns: () => boolean): void {
+    if (!(active instanceof HTMLElement) || !head.contains(active)) return;
+    const marker = active.closest('[data-hp]') as HTMLElement | null;
+    const kind = marker?.dataset.hp;
+    const mode = marker?.dataset.mode;
+    const spaceFocus = kind === 'space-tab' || !!active.closest('hp-settings-select');
+    void this.updateComplete.then(() => {
+      if (!owns()) return;
+      if (this._headerFocusFrame !== undefined) cancelAnimationFrame(this._headerFocusFrame);
+      this._headerFocusFrame = requestAnimationFrame(() => {
+        this._headerFocusFrame = undefined;
+        if (!owns() || active.isConnected && active.getClientRects().length > 0) return;
+        const outer = this.ownerDocument.activeElement;
+        if (outer && outer !== this && outer !== this.ownerDocument.body) return;
+        const visible = (selector: string): HTMLElement | null => {
+          const nodes = head.querySelectorAll<HTMLElement>(selector);
+          return Array.from(nodes).find(node => node.getClientRects().length > 0) || null;
+        };
+        let target: HTMLElement | null = null;
+        if (spaceFocus) {
+          const select = visible('[data-hp="space-select"]');
+          target = select?.shadowRoot?.querySelector<HTMLElement>('[part="control"]')
+            || visible('[data-hp="space-tab"][aria-current="page"]');
+        } else if (kind === 'mode-tab' && mode) {
+          target = visible('[data-hp="mode-tab"][data-mode="' + mode + '"]');
+        } else if (kind?.startsWith('zoom-')) target = visible('[data-hp="rotate-right"]');
+        (target || visible('[data-hp="header-menu"]') || visible('button'))?.focus();
+      });
+    });
+  }
+
   private get _containerOwnedHeight(): boolean { return this.panelHost || this.layout === 'grid'; }
 
   private _space = 'f1';
@@ -1541,7 +1640,7 @@ export class HouseplanCard extends LitElement {
     targetCenterX?: number,
     targetCenterY?: number,
   ): void {
-    void this.updateComplete.then(() => {
+    void this.updateComplete.then(async () => {
       if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
         // Only clean the generation that still owns the preparing flag. A
         // stale callback must not cancel a newer transition, but a config or
@@ -1552,6 +1651,14 @@ export class HouseplanCard extends LitElement {
           this._modeTransitionVisual = null;
           this._modeTransitionForceAtomic = false;
           this.requestUpdate();
+        }
+        return;
+      }
+      await this._settlePanelHeader();
+      if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== targetMode) {
+        if (request === this._modeTransitionRequest) {
+          this._modeTransitionPreparing = false; this._modeTransitionVisual = null;
+          this._modeTransitionForceAtomic = false; this.requestUpdate();
         }
         return;
       }
@@ -3089,6 +3196,7 @@ export class HouseplanCard extends LitElement {
     this._roViewport = undefined;
     this._roHdr?.disconnect();
     this._roHdr = undefined;
+    this._headerLeaseCleanup?.(); this._headerLeaseCleanup = undefined;
     this._resizeTargets = undefined;
     if (this._onWinResize) {
       window.removeEventListener('resize', this._onWinResize);
@@ -4527,9 +4635,16 @@ export class HouseplanCard extends LitElement {
     if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {
       this._roViewport?.disconnect(); this._roViewport = undefined;
       this._roHdr?.disconnect(); this._roHdr = undefined;
+      this._headerLeaseCleanup?.(); this._headerLeaseCleanup = undefined;
       if (this._onWinResize) window.removeEventListener('resize', this._onWinResize);
       this._onWinResize = undefined;
       this._resizeTargets = { stage, header: hdr };
+    }
+    if (this.panelHost && this._kiosk && this._roHdr) {
+      this._roHdr.disconnect(); this._roHdr = undefined;
+      this._headerLeaseCleanup?.(); this._headerLeaseCleanup = undefined;
+      if (this._onWinResize) window.removeEventListener('resize', this._onWinResize);
+      this._onWinResize = undefined;
     }
     if (stage && !this._roViewport) {
       const ownsViewport = () => this.isConnected && this._roViewport === observer && stage === this._stageEl;
@@ -4551,36 +4666,40 @@ export class HouseplanCard extends LitElement {
     // put anything tall before the card and the "header budget" swallowed the
     // whole viewport, leaving a 0px stage (HP-1500-02). Content above the card
     // is the dashboard's business — it scrolls; it is not header.
-    if (hdr && stage && !this._roHdr) {
-      // Seed the same content-box width before the first paint, including on a
-      // warm remount; waiting for ResizeObserver first paints the wide tabs.
+    if (hdr && stage && !this._roHdr && !(this.panelHost && this._kiosk)) {
       let headerWidth = headerContentWidth(getComputedStyle(hdr));
-      // A queued old frame may outlive disconnect and even the same-element
-      // reconnect. Only this observer lease may measure or publish its memo.
+      let frame = 0;
       const ownsHeader = () => this.isConnected && this._roHdr === observer && stage === this._stageEl;
       const measure = () => {
         if (!ownsHeader()) return;
-        const compact = headerWidth > 0 && headerWidth <= 1024;
-        if (compact !== this._compactSpaces) {
-          this._compactSpaces = compact;
-          this.requestUpdate();
-          // Measure the chosen navigation, never bill its retired predecessor
-          // against the stage or overwrite a correct warm header memo with it.
-          void this.updateComplete.then(() => { if (ownsHeader()) measure(); });
-          return;
+        const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
+        let compact = headerWidth > 0 && headerWidth <= 1024;
+        if (this.panelHost && head && headerWidth > 0) {
+          const previous = this._panelHeaderChoice;
+          const active = (this.renderRoot as ShadowRoot).activeElement;
+          const available = panelHeaderWidth(head);
+          const choice = this._panelHeaderMemo.resolve(observer, this._panelHeaderContentKey(head), available,
+            () => measurePanelHeader(hdr, head, available, this._panelHeaderSpaces, this._mode));
+          this._panelHeaderChoice = choice;
+          applyPanelHeaderChoice(hdr, choice);
+          compact = choice.phase >= 3;
+          if (previous.phone && !choice.phone) this._headerMenu.close(false);
+          if (previous.phase !== choice.phase || previous.phone !== choice.phone || compact !== this._compactSpaces)
+            this._retainPanelHeaderFocus(head, active, ownsHeader);
         }
         if (compact && !this._spaceSelectLoad && !customElements.get('hp-settings-select')) {
-          this._spaceSelectLoad = import('./hp-settings-select').then(() => { if (ownsHeader()) this.requestUpdate(); })
-            .catch(() => { this._spaceSelectLoad = null; });
+          this._spaceSelectLoad = import('./hp-settings-select').then(() => {
+            if (ownsHeader()) { this.requestUpdate(); schedule(); }
+          }).catch(() => { this._spaceSelectLoad = null; });
         }
+        if (compact !== this._compactSpaces) {
+          this._compactSpaces = compact; this.requestUpdate();
+          void this.updateComplete.then(() => { if (ownsHeader()) schedule(); });
+          return;
+        }
+        if (compact && !customElements.get('hp-settings-select')) return;
         const t = measuredCardHeaderHeight(this.renderRoot, stage, this._containerOwnedHeight); if (t === null) return;
-        // `t` is already an integer. Ignoring a one-pixel delta left the View
-        // stage one pixel shorter after an editor collapse and made the fitted
-        // viewport drift; changing stage height cannot feed back into its top.
         if (t >= 0 && t !== this._hdrH) this._hdrH = t;
-        // DEV-B703-01: chrome that lands after the settle (or a window
-        // resize with a live card) must not poison the next warm mount —
-        // the memo follows the live settled geometry.
         void this.updateComplete.then(() => requestAnimationFrame(() => {
           if (!ownsHeader() || this._booting || this._kiosk
               || this._modeTransitionBusy || this._modeTransitionPreparing
@@ -4590,21 +4709,40 @@ export class HouseplanCard extends LitElement {
             ownHdrH: hdr.getBoundingClientRect().height });
         }));
       };
-      // a frame later: setting state straight from the observer callback makes
-      // the browser report "ResizeObserver loop completed with undelivered
-      // notifications" — the render it triggers resizes the stage again
+      const schedule = () => {
+        if (!ownsHeader() || frame) return;
+        frame = requestAnimationFrame(() => { frame = 0; measure(); });
+      };
       const observer = this._roHdr = new ResizeObserver((entries) => {
-        const headerEntry = entries.find((entry) => entry.target === hdr);
-        // The content box matches the CSS container query, including fractional
-        // widths and cards inside transformed dashboard containers.
-        if (headerEntry) headerWidth = headerEntry.contentRect.width;
-        if (this._containerOwnedHeight || entries.some((e) => e.target === hdr)) requestAnimationFrame(measure);
+        const entry = entries.find(value => value.target === hdr);
+        if (entry) headerWidth = entry.contentRect.width;
+        if (this._containerOwnedHeight || entry) schedule();
       });
-      this._roHdr.observe(hdr);
-      this._roHdr.observe(stage); // HA-owned slots can resize without changing their header.
-      this._onWinResize = () => requestAnimationFrame(measure);
-      window.addEventListener('resize', this._onWinResize);
+      observer.observe(hdr); observer.observe(stage);
+      this._onWinResize = schedule; window.addEventListener('resize', schedule);
+      const fonts = hdr.ownerDocument.fonts;
+      const fontsChanged = () => { if (ownsHeader()) { this._panelHeaderMemo.invalidate(); schedule(); } };
+      if (this.panelHost && fonts) {
+        fonts.addEventListener('loadingdone', fontsChanged);
+        void fonts.ready.then(fontsChanged);
+      }
+      this._headerLeaseCleanup = () => {
+        if (frame) cancelAnimationFrame(frame);
+        if (this._headerFocusFrame !== undefined) cancelAnimationFrame(this._headerFocusFrame);
+        this._headerFocusFrame = undefined;
+        fonts?.removeEventListener('loadingdone', fontsChanged);
+        this._panelHeaderMemo.clear(); this._panelHeaderObservedContent = '';
+      };
       measure();
+    }
+    if (this.panelHost && !this._kiosk && hdr) {
+      const head = hdr.querySelector(':scope > .head') as HTMLElement | null;
+      if (head) {
+        const content = this._panelHeaderContentKey(head);
+        if (content !== this._panelHeaderObservedContent) {
+          this._panelHeaderObservedContent = content; this._onWinResize?.();
+        }
+      }
     }
     if (stage && !this._view) this._refitView();
     this._editorSecondary?.afterRender();
@@ -11158,7 +11296,7 @@ export class HouseplanCard extends LitElement {
     const fixed = this._fixedFloorState(model);
     if (fixed.kind === 'pending') {
       return html`<ha-card data-fixed-floor-state="pending" data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}>
-        ${this.panelHost ? nothing : html`<div class="head">
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
         <div class="empty" data-hp="empty" role="status" aria-live="polite">
@@ -11172,7 +11310,7 @@ export class HouseplanCard extends LitElement {
         data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-fixed-floor-state="invalid"
         data-fixed-floor-reason=${fixed.reason}>
-        ${this.panelHost ? nothing : html`<div class="head">
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
         <div class="empty fixedfloor-error" data-hp="empty" role="alert" aria-live="assertive">
@@ -11193,7 +11331,7 @@ export class HouseplanCard extends LitElement {
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
         data-ha-unverified-bindings=${diagnostics.bindings.unverified}>
-        ${this.panelHost ? nothing : html`<div class="head">
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
         <div class="empty" data-hp="empty">
@@ -11228,7 +11366,7 @@ export class HouseplanCard extends LitElement {
     }
     const space = this._spaceModel();
     if (!space) return nothing;
-    const navigationSpaces = fixed.kind === 'valid' ? [space] : model;
+    const navigationSpaces = this._headerNavigationSpaces;
     const compactSpaces = this._compactSpaces && !this._kiosk && !!customElements.get('hp-settings-select');
     const vb = space.vb;
     let projection = this._effectiveProjection();
@@ -11325,9 +11463,12 @@ export class HouseplanCard extends LitElement {
         @keydown=${this._touchGestureGuard}
         @contextmenu=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
-        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}" style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
+        <div class="hdr ${this._kiosk ? 'kioskhide' : ''}"
+          data-panel-flow=${this.panelHost ? this._panelHeaderChoice.phase : nothing}
+          ?data-panel-phone=${this.panelHost && this._panelHeaderChoice.phone}
+          data-panel-mode=${this.panelHost ? this._mode : nothing} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
         <div class="head" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:${this._headerMenu.open ? 'visible' : 'hidden'}` : nothing}>
-          ${this.panelHost ? nothing : html`<div class="title">
+          ${this.panelHost ? this._renderPanelMenu() : html`<div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}
           </div>`}
@@ -11350,7 +11491,10 @@ export class HouseplanCard extends LitElement {
                     title=${this._t(('mode.' + m + '_tip') as any)}
                     aria-label=${this._t(`mode.${m}` as const)}
                     @click=${() => this._setMode(m)}>
-                    <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
+                    <ha-icon class=${this.panelHost ? 'panel-mode-compact' : nothing} icon=${ic}></ha-icon>
+                    ${this.panelHost ? html`<ha-icon class="panel-mode-full" icon="mdi:pencil" aria-hidden="true"></ha-icon>
+                      <span class="panel-mode-full">${this._t(('mode.' + m + '_short') as I18nKey)}</span>` : nothing}
+                    <span class="ml">${this._t(('mode.' + m) as I18nKey)}</span>
                   </button>${this._mode === m ? editorClose : nothing}`,
                 )}
                 ${this._mode === 'view' ? editorClose : nothing}

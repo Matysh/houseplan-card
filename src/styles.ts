@@ -12,11 +12,12 @@ import { devicesStyles } from './styles/devices.styles';
 import { chromeStyles } from './styles/chrome.styles';
 import { dialogsStyles } from './styles/dialogs.styles';
 import { isoTilesStyles } from './styles/iso-tiles.styles';
+import { panelHeaderStyles } from './styles/panel-header.styles';
 
 export { baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles };
 
 export const cardStyles: CSSResultGroup = [
   baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles,
   // #649: last, so the 2.5D tile rules win over Flat marker rules of equal weight.
-  isoTilesStyles,
+  isoTilesStyles, panelHeaderStyles,
 ];

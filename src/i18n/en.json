@@ -1,4 +1,8 @@
 {
+  "mode.plan_short": "Plan",
+  "mode.devices_short": "Devices",
+  "mode.decor_short": "Background",
+  "panel.sidebar_menu": "Toggle sidebar",
   "device.power_off": "Off",
   "device.presentation_unavailable": "Unavailable",
   "device.card_subtitle": "Device card",

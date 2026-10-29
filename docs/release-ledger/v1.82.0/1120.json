@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "issue": 1120,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 already contains the main House Plan panel, its HA menu and responsive header. This task improves that existing composition and navigation, replacing the duplicated bar and fixed adaptation without a new workflow or stored schema.",
+  "summary": {
+    "ru": "Одна шапка основной страницы с меню HA и адаптацией по реальному свободному месту.",
+    "en": "One main-page header with the HA menu and adaptation to actual available space."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+    "golden": [
+      {
+        "id": "panel-wide-view-light-en",
+        "expectation": "change",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Ordinary HA menu is first inside the card only under public narrow/hidden-sidebar policy; content-driven composition preserves permissions and actions."
+      },
+      {
+        "id": "panel-narrow-read-only-empty-light-en",
+        "expectation": "change",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Ordinary HA menu is first inside the card only under public narrow/hidden-sidebar policy; content-driven composition preserves permissions and actions."
+      },
+      {
+        "id": "panel-wide-plan-editor-dark-en",
+        "expectation": "change",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Ordinary HA menu is first inside the card only under public narrow/hidden-sidebar policy; content-driven composition preserves permissions and actions."
+      },
+      {
+        "id": "panel-wide-kiosk-all",
+        "expectation": "new",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Kiosk/profile hides the whole card header and HA menu; preserve URL/profile rotation/summary/control authority."
+      },
+      {
+        "id": "panel-narrow-kiosk-fixed",
+        "expectation": "new",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Kiosk/profile hides the whole card header and HA menu; preserve URL/profile rotation/summary/control authority."
+      },
+      {
+        "id": "panel-kiosk-profile-rotated-90",
+        "expectation": "new",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Kiosk/profile hides the whole card header and HA menu; preserve URL/profile rotation/summary/control authority."
+      },
+      {
+        "id": "panel-kiosk-profile-summary-on",
+        "expectation": "new",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Kiosk/profile hides the whole card header and HA menu; preserve URL/profile rotation/summary/control authority."
+      },
+      {
+        "id": "panel-kiosk-profile-no-controls",
+        "expectation": "new",
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Kiosk/profile hides the whole card header and HA menu; preserve URL/profile rotation/summary/control authority."
+      }
+    ],
+    "goldenChecks": [
+      {
+        "id": "geometry-view-dark-fit",
+        "reason": "Preserve the existing Lovelace plan/contact/alarm stage: panel-only adaptation and HA menu must not affect this indexed frame. Require fresh byte identity and zero differing pixels; this is not pending change intent."
+      },
+      {
+        "id": "geometry-view-light-fit",
+        "reason": "Preserve the existing Lovelace plan/contact/alarm stage: panel-only adaptation and HA menu must not affect this indexed frame. Require fresh byte identity and zero differing pixels; this is not pending change intent."
+      },
+      {
+        "id": "device-contacts-designer-dark",
+        "reason": "Preserve the existing Lovelace plan/contact/alarm stage: panel-only adaptation and HA menu must not affect this indexed frame. Require fresh byte identity and zero differing pixels; this is not pending change intent."
+      },
+      {
+        "id": "device-alert-alarm-flat",
+        "reason": "Preserve the existing Lovelace plan/contact/alarm stage: panel-only adaptation and HA menu must not affect this indexed frame. Require fresh byte identity and zero differing pixels; this is not pending change intent."
+      }
+    ],
+    "smokes": [
+      "smoke_panel_header_overflow.mjs",
+      "smoke_panel_header_touch.mjs",
+      "smoke_houseplan_panel.mjs",
+      "smoke_panel_route_kiosk.mjs",
+      "smoke_header_compact_spaces.mjs",
+      "smoke_mobile_view_header.mjs",
+      "smoke_mode_transition.mjs",
+      "smoke_plan_rotation.mjs",
+      "smoke_external_screens.mjs",
+      "smoke_properties_panel.mjs"
+    ]
+  }
+}

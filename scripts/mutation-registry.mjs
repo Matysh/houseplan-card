@@ -13276,8 +13276,8 @@ const MUTANT_DEFINITIONS = [
     because: '#647 AC3: an X inside the active mode tab widens that tab and moves its neighbours',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>\n                  </button>${this._mode === m ? editorClose : nothing}`",
-      replace: "                    <ha-icon icon=${ic}></ha-icon><span class=\"ml\">${this._t(('mode.' + m) as any)}</span>${this._mode === m ? html`<ha-icon class=\"closex\" icon=\"mdi:close\"></ha-icon>` : nothing}\n                  </button>${this._mode === m ? editorClose : nothing}`",
+      find: "                    <span class=\"ml\">${this._t(('mode.' + m) as I18nKey)}</span>\n                  </button>${this._mode === m ? editorClose : nothing}`",
+      replace: "                    <span class=\"ml\">${this._t(('mode.' + m) as I18nKey)}</span>${this._mode === m ? html`<ha-icon class=\"closex\" icon=\"mdi:close\"></ha-icon>` : nothing}\n                  </button>${this._mode === m ? editorClose : nothing}`",
     }],
   },
   {
@@ -13517,8 +13517,8 @@ const MUTANT_DEFINITIONS = [
     because: '#997 AC1: a narrow dashboard card inside a wide window must use its own header content box, including the exact 1024 px boundary.',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'const compact = headerWidth > 0 && headerWidth <= 1024;',
-      replace: 'const compact = window.innerWidth > 0 && window.innerWidth <= 1024;',
+      find: 'let compact = headerWidth > 0 && headerWidth <= 1024;',
+      replace: 'let compact = window.innerWidth > 0 && window.innerWidth <= 1024;',
     }],
   },
   {
@@ -22440,7 +22440,35 @@ const approvedUi1119Cases = [
     patches:[{file:'src/styles/devices.styles.ts',find:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }',replace:'.dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:1; }'}]},
 ];
 
-export const MUTANTS = [...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+// #1120 declarations only. No mutant has been executed in the task.
+const panelHeader1120Cases = [
+  {id:'panel-header-measures-outer-owner-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
+    because:'#1120 AC3/5: Properties reserves360px; native all-three-wide-editor containment and real centre-hit must use the allocated head, not the wider hdr. Original9849 clipped Golden is preserved.',
+    patches:[{file:'src/houseplan-card.ts',find:'const available = panelHeaderWidth(head);',replace:'const available = headerWidth;'}]},
+  {id:'panel-header-order-skips-full-1120',guard:'node --test test/panel-header-flow.test.mjs',
+    because:'#1120 AC3: every measurement restarts from the first fitting candidate, including expansion and exact fractional widths.',
+    patches:[{file:'src/panel-header-flow.ts',find:'Number.isFinite(widths[phase]) && widths[phase] <= available',replace:'phase > 0 && Number.isFinite(widths[phase]) && widths[phase] <= available'}]},
+  {id:'panel-header-cache-ignores-content-1120',guard:'node --test test/panel-header-flow.test.mjs',
+    because:'#1120 AC3/7: changed locale/roster/mode must remeasure even at the same fractional owner width.',
+    patches:[{file:'src/panel-header-flow.ts',find:'owner !== this.owner || key !== this.key || width !== this.width || !this.value',replace:'owner !== this.owner || width !== this.width || !this.value'}]},
+  {id:'panel-menu-external-sidebar-1120',guard:'node --test test/panel-header-menu.test.mjs',
+    because:'#1120 AC1: the pinned modern public HA predicate hides the menu when an external provider declares its own sidebar.',
+    patches:[{file:'src/panel-header-menu.ts',find:'&& hass?.auth?.external?.config?.hasSidebar !== true',replace:'&& true'}]},
+  {id:'panel-menu-requires-modern-field-1120',guard:'node --test test/panel-header-menu.test.mjs',
+    because:'#1120 AC1: minimum supported HA lacks kioskMode; absence must not hide every narrow/hidden-sidebar menu.',
+    patches:[{file:'src/panel-header-menu.ts',find:'hass?.kioskMode !== true',replace:'hass?.kioskMode === false'}]},
+  {id:'panel-menu-own-kiosk-leaks-1120',guard:'node --test test/panel-header-menu.test.mjs',
+    because:'#1120 AC2: House Plan kiosk hides its menu regardless of the public HA sidebar state.',
+    patches:[{file:'src/panel-header-menu.ts',find:'const visible = !kiosk &&',replace:'const visible = true &&'}]},
+  {id:'panel-menu-public-event-not-composed-1120',guard:'node --test test/panel-header-menu.test.mjs',
+    because:'#1120 AC1: the ordinary button event must cross both card and panel shadow roots.',
+    patches:[{file:'src/panel-header-menu.ts',find:'bubbles: true, composed: true,',replace:'bubbles: true, composed: false,'}]},
+  {id:'panel-phone-nav-selector-loses-specificity-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
+    because:'#1120 AC5: at320px actions moved to the gear must not remain inline and force a third row; original native RED173px is preserved.',
+    patches:[{file:'src/styles/panel-header.styles.ts',find:":host([panel-host]) .hdr[data-panel-flow][data-panel-phone] .head > .tabs .tabadd,",replace:":host([panel-host]) .hdr[data-panel-phone] .tabs .tabadd,"}]},
+];
+
+export const MUTANTS = [...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

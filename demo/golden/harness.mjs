@@ -2708,7 +2708,10 @@ export async function prepareGoldenScenario(page, scenario) {
       const shellPage = panelRoot?.querySelector('.page');
       const appbar = panelRoot?.querySelector('.appbar');
       const content = panelRoot?.querySelector('.content');
-      const menu = panelRoot?.querySelector('.menu');
+      const menu = card.renderRoot.querySelector('[data-hp="panel-menu"]');
+      const menuExpected = !scenario.panelKioskUrl && panel?.hass?.kioskMode !== true
+        && panel?.hass?.auth?.external?.config?.hasSidebar !== true
+        && (panel?.narrow === true || panel?.hass?.dockedSidebar === 'always_hidden');
       const stage = card.renderRoot.querySelector('.stage');
       const empty = card.renderRoot.querySelector('.empty');
       const panelRect = panel?.getBoundingClientRect();
@@ -2731,17 +2734,23 @@ export async function prepareGoldenScenario(page, scenario) {
         shellPage ? shellPage.scrollWidth - shellPage.clientWidth : 0,
         content ? content.scrollWidth - content.clientWidth : 0,
       );
-      if (!panel || !panelRoot || !shellPage || !appbar || !content || !menu
+      if (!panel || !panelRoot || !shellPage || appbar || !content
+          || panelRoot.querySelector('.toolbar,.title')
+          || (menuExpected ? !menu : !!menu)
           || panel.shadowRoot.querySelectorAll('houseplan-card').length !== 1
           || card.panelHost !== true || card._config?.kiosk === true
           || card.renderRoot.querySelector('.head > .title')
-          || menu.getBoundingClientRect().width < 44
-          || menu.getBoundingClientRect().height < 44
+          || menuExpected && (menu.getBoundingClientRect().width < 44
+            || menu.getBoundingClientRect().height < 44
+            || !menu.getAttribute('aria-label')
+            || card.renderRoot.querySelector('.head button') !== menu)
           || horizontalOverflow > 1
           || !panelRect || panelRect.width <= 0 || panelRect.height <= 0
           || !contentRect || !cardRect
           || Math.abs(contentRect.width - cardRect.width) > 1
-          || Math.abs(contentRect.height - cardRect.height) > 1) {
+          || Math.abs(contentRect.height - cardRect.height) > 1
+          || Math.abs(contentRect.top - panelRect.top) > 1
+          || Math.abs(contentRect.height - panelRect.height) > 1) {
         throw new Error(`golden panel-host shell contract failed: ${scenario.id}`);
       }
       if (scenario.emptyPlan && !scenario.firstSpace) {
@@ -2761,7 +2770,9 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`golden panel editor chrome did not open: ${scenario.id}`);
       }
       panelHost = {
-        narrow: panel.hasAttribute('narrow'),
+        narrow: panel.narrow === true,
+        innerMenu: menuExpected,
+        outerReserve: false,
         panel: [panelRect.width, panelRect.height],
         content: [contentRect.width, contentRect.height],
         card: [cardRect.width, cardRect.height],

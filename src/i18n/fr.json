@@ -1,4 +1,8 @@
 {
+  "mode.plan_short": "Plan",
+  "mode.devices_short": "Appareils",
+  "mode.decor_short": "Arrière-plan",
+  "panel.sidebar_menu": "Afficher ou masquer le panneau latéral",
   "device.power_off": "Éteint",
   "device.presentation_unavailable": "Indisponible",
   "device.card_subtitle": "Fiche de l’appareil",

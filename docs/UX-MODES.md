@@ -41,13 +41,24 @@ Dragging moves one marker, never its connected neighbours. Flat View/kiosk may
 show derived shared outlines but no editor toggle, drag handle or group action.
 Individual tap/hold/confirmation authority remains unchanged.
 
-The dedicated **House Plan** sidebar panel is the primary host for this mode
-system. It contributes the HA app bar and drawer button, then embeds the same
-full card used on dashboards. In panel-host mode only the duplicated product
-title disappears; space tabs, editor navigation, zoom and actions remain (the
-header device count was removed in #647). Dashboard and kiosk behaviour is unchanged.
+The main /houseplan panel (#1120) has one full-height card header, without
+a separate outer title bar or 56 px reserve. The 44 px HA menu is first inside it:
+visible for narrow HA or a hidden wide sidebar; native HA kiosk or an external
+provider's hasSidebar:true hides it. House Plan route/profile kiosk hides the
+whole header and menu; Back or the ordinary /houseplan URL exits.
 
-**Phone header (≤ 480 px window width, #616/#1070).** View keeps a single row of at
+Adaptation measures actual content, names, locale and available container
+width. In order: short Plan/Devices/Background labels with equal pencils become
+distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
+become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
+left onto a second row. Expansion restores the reverse sequence, without fixed
+width thresholds. If the wrapped first row cannot fit, the existing phone gear
+retains editor/space/settings actions. At 320/359 px there are at most two rows;
+rotation/floor/menu targets stay 44 px and editor close 24 px. Gestures retain zoom.
+Properties independently uses 1024 px of card width. Lovelace receives no HA menu
+and retains the existing fixed phone/header behavior described below.
+
+**Lovelace phone header (≤ 480 px window width, #616/#1070).** View keeps a single row of at
 most 56 px: a compact space selector (current floor, no inline gear or «+»),
 the rotation/zoom cluster, one gear and — for an
 admin — the editor X slot of #647. The card title is hidden. Everything else is
@@ -70,7 +81,7 @@ stroke borders retain the full 44px target rectangles inside a native HA card.
 The existing mode controller owns header, toolbar and stage height together,
 including the reduced-motion terminal and quick navigation through the gear.
 
-**Compact space navigation (#997).** At a measured `hp-head` width ≤1024 px,
+**Lovelace compact space navigation (#997).** At a measured `hp-head` width ≤1024 px,
 the shared UI Kit select replaces the floor tabs in View and editors. It keeps
 the same available spaces/order and calls the existing space-navigation guard.
 The field retains the accepted space while a dirty edit blocks navigation.

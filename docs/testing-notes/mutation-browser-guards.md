@@ -44,9 +44,9 @@ that transition events alone prove disposal.
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 100 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 62 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Responsive DOM layout | 64 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 278 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **565 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **567 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 
 
@@ -593,6 +593,10 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 - `wall-draw-rejection-rollback-skipped`
 
 ### Responsive DOM layout
+
+- `panel-header-measures-outer-owner-1120`
+
+- `panel-phone-nav-selector-loses-specificity-1120`
 
 - `properties-threshold-old-960-1119`
 
@@ -1303,3 +1307,14 @@ fade is the new accepted UI-007 contract. Their IDs/history are retained, not
 claimed as evidence against the superseding owner decision. Contact identical-
 geometry reuse keeps the same native build-count guard with its updated anchor.
 All declarations are static readiness only; development does not execute mutants.
+
+#1120 registers one responsive DOM witness: actual320px cascade specificity
+must hide space actions already moved into the phone gear, keeping two rows.
+The original173px/third-row native failure is preserved. Six public-policy/
+ordered-cache witnesses use pure units. Static readiness only; execution zero.
+
+#1120 also registers the allocated-head witness: Properties retains its existing
+360px reservation, while all three wide editors must fit every header action
+inside the remaining head and pass real centre-hit tests. Original9849 visual
+clipping is a semantic RED despite successful capture execution. Not executed
+as a mutant; the ordinary fixed-source smoke must pass before handoff.

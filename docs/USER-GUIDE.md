@@ -417,7 +417,26 @@ it again after the editor is neutral to return to View.
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
 | Static card | Live states, values and alarms as in View (`live_states`), no tooltips or more-info | Render only | Render only; not interactive |
 
-### Phone header
+### Main-page header
+
+The main /houseplan panel (#1120) has one full-height card header, without
+a separate outer title bar or 56 px reserve. The 44 px HA menu is first inside it:
+visible for narrow HA or a hidden wide sidebar; native HA kiosk or an external
+provider's hasSidebar:true hides it. House Plan route/profile kiosk hides the
+whole header and menu; Back or the ordinary /houseplan URL exits.
+
+Adaptation measures actual content, names, locale and available container
+width. In order: short Plan/Devices/Background labels with equal pencils become
+distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
+become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
+left onto a second row. Expansion restores the reverse sequence, without fixed
+width thresholds. If the wrapped first row cannot fit, the existing phone gear
+retains editor/space/settings actions. At 320/359 px there are at most two rows;
+rotation/floor/menu targets stay 44 px and editor close 24 px. Gestures retain zoom.
+Properties independently uses 1024 px of card width. Lovelace receives no HA menu
+and retains the existing fixed phone/header behavior described below.
+
+### Phone header in Lovelace
 
 At a width of 480 px or less, View keeps one header row: a compact space
 selector, zoom controls and one **Actions and settings** gear. The card title
@@ -436,8 +455,7 @@ Both rotation buttons remain beside zoom, and the floor selector, actions gear
 and close button stay accessible. View still uses one row. From 360–480 px the
 editors keep one row; wider windows retain the regular responsive layout.
 
-When the header itself is 1024 px wide or narrower — in the panel that is Home
-Assistant without its sidebar, on a dashboard the card width — the editor
+In a Lovelace card, when the header itself is 1024 px wide or narrower, the editor
 buttons show only their icons. The name stays in the tooltip and is announced
 by screen readers. Wider than 1024 px the buttons show icon and label.
 
@@ -2636,7 +2654,8 @@ the same order as the tabs/dropdown. A missing or invalid position leaves all
 spaces available; this main-page mode does not enable automatic cycling.
 Reordering spaces changes what a position selects. An explicit kiosk path wins
 as a whole over query options: `/houseplan/kiosk/2?hpspace=3&hpkiosk=0` still
-pins the second space. HA chrome remains visible. Exit through `/houseplan`
+pins the second space. The card header and its HA menu are hidden without an
+outer bar. Exit through `/houseplan`
 without `hpkiosk=1`, or Back. These links do not change stored settings or
 other Lovelace cards.
 
@@ -2673,8 +2692,8 @@ refused with “The action target changed. Try again.” Open its current card
 again. Unlock still asks for confirmation; Lock does not.
 
 Kiosk sizing is stored in that display's browser, so one tablet may use larger
-markers without affecting other clients. House Plan hides only its own header;
-hide the Home Assistant header with Companion App or a separate kiosk tool.
+markers without affecting other clients. Main-page kiosk hides the House Plan header and its HA menu together.
+In Lovelace, the surrounding dashboard header remains controlled by Home Assistant.
 
 A kiosk without a running carousel, with one space or with a fixed floor may
 automatically reload a new version even while enlarged, after the usual 60-second

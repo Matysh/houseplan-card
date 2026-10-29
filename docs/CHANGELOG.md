@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The main-page header adapts to actual content: captions, zoom and floor tabs make room before actions wrap left. The HA menu sits inside this single header; kiosk hides it with the header. Narrow screens retain every action. Lovelace behavior is unchanged. (#1120)
+
 - Show past Dreame cleanup paths when the archive omits its map slot, using the uniquely proven saved map and existing calibration. Foreign and ambiguous maps remain refused. (#1117)
 - External-screen profiles configure main-panel kiosks remotely, with per-field URL overrides and live updates (#1113). Live updates also support authenticated read-only screens. Screen profiles reconnect after an integration reload.
 

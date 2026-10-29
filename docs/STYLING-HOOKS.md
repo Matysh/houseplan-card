@@ -463,8 +463,12 @@ Home Assistant's own close control stays inside HA's private shadow root.
 
 ### 7.6 Sidebar panel
 
-Inside `houseplan-panel`'s own shadow root, `[data-hp="panel-menu"]` opens the HA
-menu and `[data-hp="panel-title"]` identifies the visible House Plan title.
+On the main page, `[data-hp="panel-menu"]` now lives in the nested
+`houseplan-card` shadow root and opens the HA drawer from the ordinary card
+header. It follows public HA narrow/sidebar visibility and is absent in the
+main-page kiosk. The owner-approved #1120 removes the outer title/header
+entirely; `panel-title` is listed in `retiredHooks` from 1.83.0-beta.4,
+without a hidden compatibility element. Lovelace receives no menu hook.
 The rest of the panel shell remains private.
 
 ### 7.7 Internal diagnostics are not public API

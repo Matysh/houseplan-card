@@ -10,6 +10,44 @@ separately observes scoped SVG display and descendant/self pseudo paint. Its
 controlled fixture contributes neither to minimum real-sheet/rule counts nor
 to required product byte savings. Both ordinary guards failed before the fix.
 
+## Main-panel content overflow (#1120)
+
+Measured resource carry compares frozen accepted1119 b2bd/FP88 with candidate
+FPc8cd3878: total generated JS3701302→3714380 (+13078 B), initial View
+361025→364888 (+3863 B gzip), host references6672→6674 (+2), card source
+13600→13744 (+144 lines). Only those four exhausted rolling references carry
+the corresponding own delta; their previous reserve and bands remain unchanged.
+Editor port384→385 and runtime12053→12056 fit existing bands, so their ceilings
+are unchanged. Delegates145 and private counts105/101 are unchanged; the actual
+unused scan found no violations. Panel-only delivery shrinks3495→2791 B gzip.
+All absolute walls, timing, geometry, functional and image tolerances remain.
+
+The public data-hp contract records panel-title as retired from 1.83.0-beta.4
+(issue #1120): the approved title/header is removed, not retained as hidden DOM.
+panel-menu remains active inside the nested card shadow root. Source-candidate
+E2E can identify this explicit installed-contract retirement without a fake
+version bump; actual HA evidence is required before S7, separately from release.
+
+The main-panel composition (#1120) uses panel-header-flow.ts for ordered
+native-only inert metrics, removed synchronously without cloning custom elements,
+IDs, events, popup owners or live Lit parts. The existing _roHdr/coalesced frame
+owns content width and height; owner/content/fractional-width/font memoization
+avoids measuring unchanged HA ticks. Mode targets use the same natural header
+measurement before camera motion. DOM replacement, kiosk and disconnect retire
+queued/font/focus work. No second ResizeObserver or MutationObserver is added.
+
+panel-header-menu.ts reads public narrow/dockedSidebar/kiosk/external-sidebar/
+localized-name inputs and emits composed hass-toggle-menu from a plain 44 px
+button. Native component registration/context and notification subscriptions
+are unnecessary. Minimum supported HA without kioskMode is supported; modern
+external hasSidebar:true hides the action consistently. Cold View keeps editor
+code lazy; Lovelace and the 1024 px Properties boundary remain separate.
+
+Synthetic DOM/event evidence does not prove the native HA drawer. Companion
+E2E is required on the exact beta candidate before release; task visual intent
+does not accept global baselines. The immutable accepted r6 materials live in
+docs/design/1120-panel-header-overflow/2026-10-29.
+
 Approved UI (#1119): compile the test build and run `plan-rotation-motion`, `device-contact-screen`, `device-presentation`, `live-hover-status`, contact and form-kit units. The active tooltip consumes the current resolved frame on ordinary HA ticks, without requiring pointer movement; preserve the captured pre-fix stale Off witness. `demo/smoke_approved_ui.mjs` observes cold information without the full editor chunk, native summary exit frames, real on-source light layers in four modes, actual-container Properties routing, owned paint and contact badge hits through four rotations. Keep `smoke_device_offline` LED, foreign-quality, static/live, diagnostics and no-write oracles; UI-007 explicitly supersedes ordinary content-only #1026 paint. Pair the seven remaining accepted UI prototypes with the candidate using the same synthetic fixture, HA runtime, theme, language, scale and settled dialog readiness; dynamic rotation/close needs intermediate frames. UI-008/009 and header fixture adaptations are excluded in favour of #1120 r6. Mutation checks are declaration/static readiness only; no development mutant execution.
 The Summary composition is explicit in its lazy leaf: 20px body padding,
 13px/1.5 text, 44px switch targets and 13px/22px text inputs. Verify cold
