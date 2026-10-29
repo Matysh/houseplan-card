@@ -131,9 +131,9 @@ export class HeaderMenu {
   revealActiveTab(): void {
     const nav = this.owner.renderRoot.querySelector('.head .tabs') as HTMLElement | null;
     const tab = nav?.querySelector('.tab.active') as HTMLElement | null;
-    if (!nav || !tab || nav.clientWidth === 0) return;
+    if (!nav || !tab) return;
     const id = tab.dataset.id || '';
-    if (id === this.revealedFor) return;
+    if (id === this.revealedFor || nav.clientWidth === 0) return;
     this.revealedFor = id;
     const box = nav.getBoundingClientRect();
     const rect = tab.getBoundingClientRect();

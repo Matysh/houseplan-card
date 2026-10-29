@@ -1,7 +1,7 @@
 // #1070: native 320px mode navigation preserves one header/stage budget and
 // the saved canonical View camera at90, including the reduced-motion terminal.
 import assert from 'node:assert/strict';
-import {writeFileSync} from 'node:fs';
+import {mkdirSync,writeFileSync} from 'node:fs';
 import {launch,requirePinnedBrowser,finish} from './serve.mjs';
 requirePinnedBrowser();
 const {page,browser}=await launch({width:320,height:900});
@@ -18,6 +18,8 @@ const snapshot=()=>page.evaluate(()=>{
     head:height('.head'),chrome:height('.editorchrome'),stage:height('.stage'),
     width:stage.clientWidth, point:[p.x,p.y],camera:window.__hpTest.viewFrameSnapshot().camera};
 });
+// Each shard runs independently; diagnostic writes own their directory.
+mkdirSync('artifacts/plan-rotation-1070',{recursive:true});
 const records=[];
 try{
   await page.addStyleTag({content:'#host{width:auto!important;padding:0!important;margin:0!important}'});

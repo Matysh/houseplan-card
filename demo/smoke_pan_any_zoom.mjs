@@ -116,8 +116,20 @@ Object.assign(out, await page.evaluate(async () => {
     bubbles: true, composed: true, cancelable: true, pointerId: id, clientX: x, clientY: y,
   }));
 
+  // A mode switch owns its camera until its transition completes. Start each
+  // tool's baseline after that owner settles, rather than attributing the
+  // incoming mode's retained viewport to the pointer gesture.
+  const settleMode = async () => {
+    const deadline = performance.now() + 1500;
+    while (c._modeTransitionBusy || c._modeTransitionPreparing) {
+      if (performance.now() > deadline) throw Error('mode did not settle');
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    await c.updateComplete;
+  };
+
   // a) resize handle: the wall moves, the view does not
-  c._setMode('plan'); c._tool = 'resize'; c._applyView(1); await c.updateComplete;
+  c._setMode('plan'); c._tool = 'resize'; await settleMode(); c._applyView(1); await c.updateComplete;
   const h = sr.querySelector('.rszhandle[aria-disabled="false"]');
   o.resizeHandlePresent = !!h;
   if (h) {
@@ -136,7 +148,7 @@ Object.assign(out, await page.evaluate(async () => {
   c._resize?.selectRoom(null);
 
   // b) a device badge in the devices editor drags the DEVICE
-  c._setMode('devices'); c._applyView(1); await c.updateComplete;
+  c._setMode('devices'); await settleMode(); c._applyView(1); await c.updateComplete;
   const dev = sr.querySelector('.devlayer .dev');
   o.devicePresent = !!dev;
   if (dev) {

@@ -308,6 +308,9 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   const darkLockShell = getComputedStyle(lockNode.querySelector('.device-shell-frame')).borderColor;
   const originalLockClasses = lockNode.className;
   const originalLockStyle = lockNode.getAttribute('style') || '';
+  // Palette samples are synchronous; freeze only this fixture's wrapper opacity
+  // transition, just as its core/shell paint above. Real hover/motion stays live.
+  lockNode.style.transition = 'none';
   lockNode.style.setProperty('--device-base-size', '50.4px');
   lockNode.style.setProperty('--dev-scale', '1');
   const stateClasses = [
@@ -552,9 +555,11 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
         && Math.abs(stateMatrix[theme][state].shellWidth
           - Math.max(1, Math.floor(reference[theme][state].shellWidth * 50.4))) <= 0.5)),
     ownOfflineRetainsOrdinaryThemePaint: ['light', 'dark'].every(theme =>
-      ['core', 'glyph', 'shell', 'shellWidth', 'opacity'].every(key =>
+      ['core', 'glyph', 'shell', 'shellWidth'].every(key =>
         stateMatrix[theme].unavailable[key] === stateMatrix[theme].default[key])
-      && stateMatrix[theme].unavailable.glyphOpacity === '0.35'),
+      && stateMatrix[theme].default.opacity === '1'
+      && stateMatrix[theme].unavailable.opacity === '0.35'
+      && stateMatrix[theme].unavailable.glyphOpacity === '1'),
     openingLockPaletteMatches: ['light', 'dark'].every((theme) =>
       ['lock', 'unlock'].every((state) =>
         openingLockMatrix[theme][state].core === reference[theme][state].core
@@ -638,7 +643,8 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       && lqiSamples.some((sample) => sample.value > 41 && sample.value < 179
         && sample.actual !== 'rgb(240, 160, 12)'),
     unavailableHasNoHoverOrMotion: JSON.stringify(beforeUnavailable) === JSON.stringify(afterUnavailable)
-      && beforeUnavailable.opacity === '1' && beforeUnavailable.glyphOpacity === '0.35'
+      // #1119 UI007: the whole unavailable ordinary marker fades once.
+      && beforeUnavailable.opacity === '0.35' && beforeUnavailable.glyphOpacity === '1'
       && beforeUnavailable.coreOpacity === '1' && beforeUnavailable.shellOpacity === '1'
       && !unavailable.querySelector('.device-pulse'),
     valueCapsuleOwnsHoverAndActionAtEveryPosition: capsulePositions.length === 4

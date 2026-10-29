@@ -57,6 +57,9 @@ const out = await page.evaluate(async () => {
     bubbles: true, pointerId: 71, pointerType: 'mouse',
   }));
   await update();
+  // Pointer state is coalesced separately from Lit; observe the committed live
+  // ink before checking its rubber band, just as the screenshot does below.
+  await card._editorRuntime._whenLiveEditorSettled();
 
   const pathline = root().querySelector('polyline.pathline');
   const vertices = [...root().querySelectorAll('circle.vertex')];

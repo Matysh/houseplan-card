@@ -55,8 +55,8 @@ const probe = await page.evaluate(async () => {
   const opacityById = () => Object.fromEntries(markers().filter(visible)
     .map((node) => [node.dataset.id, effectiveOpacity(node)]));
 
-  // #1026 confirms every own row unavailable. Editor landmark fade applies
-  // to the shell, while only inner content also receives the own-offline fade.
+  // #1119 UI007 fades the whole unavailable marker once, with inner opacity1.
+  // Independent editor landmark de-emphasis remains35%, as in Background.
   const target = markers().find((node) => node.dataset.entity && c.hass.states[node.dataset.entity]);
   if (target) {
     const own = c._devices.find(device => device.id === target.dataset.id)?.entities ?? [];
@@ -81,9 +81,15 @@ const probe = await page.evaluate(async () => {
   const plain = markers().find((node) => visible(node) && !node.classList.contains('unavail'));
   out.planPlainMarkerAt35 = !!plain && Math.abs(planOpacity[plain.dataset.id] - 0.35) < 1e-3;
   const unavail = markers().find((node) => visible(node) && node.classList.contains('unavail'));
-  out.planUnavailableShellAt35 = !!unavail
-    && Math.abs(planOpacity[unavail.dataset.id] - 0.35) < 1e-3;
+  out.planUnavailableShellAt35x35 = !!unavail
+    && Math.abs(planOpacity[unavail.dataset.id] - 0.35 * 0.35) < 1e-3;
   const unavailableContent = unavail?.querySelector('.device-core > ha-icon,.device-core > .valtext');
+  out.planUnavailableAvailabilityAppliedOnce = !!unavail && !!unavailableContent
+    && getComputedStyle(unavail).opacity === '0.35'
+    && getComputedStyle(unavail).filter === 'opacity(0.35)'
+    && getComputedStyle(unavail.querySelector('.device-core')).opacity === '1'
+    && getComputedStyle(unavail.querySelector('.device-shell-frame')).opacity === '1'
+    && getComputedStyle(unavailableContent).opacity === '1';
   out.planUnavailableContentAt35x35 = !!unavailableContent
     && Math.abs(effectiveOpacity(unavailableContent) - 0.35 * 0.35) < 1e-3;
   // Room labels share .devlayer: no layer fade reaches them (their own

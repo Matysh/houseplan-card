@@ -260,10 +260,22 @@ const j4Blur = await page.evaluate(() => {
 out.j4_blur = j4Blur;
 check('j4.blur_hides_focus_tooltip', j4Blur.hidden && j4Blur.stateCleared, true);
 
+// Enter above toggled the device. Compare both input sources in that SAME
+// current state, retaining the complete status line instead of stripping it.
+await page.evaluate((deviceId) => {
+  window.__card.renderRoot.querySelector(`[data-hp="device"][data-id="${deviceId}"]`)?.focus();
+}, tabStops.id);
+await settle();
 const j4HoverParity = await page.evaluate((deviceId) => {
   const card = window.__card;
   const marker = card.renderRoot.querySelector(`[data-hp="device"][data-id="${deviceId}"]`);
   const rect = marker?.getBoundingClientRect();
+  const focusTip = card.renderRoot.querySelector('[data-hp-live-tip]');
+  const focusText = focusTip?.textContent?.trim() || '';
+  const focusOwner = card._tip?.deviceId;
+  const focusSource = card._tip?.source;
+  const primary = card._devices.find((device) => device.id === deviceId)?.primary;
+  const stateBefore = card.hass.states[primary]?.state;
   marker?.dispatchEvent(new PointerEvent('pointerover', {
     bubbles: true, composed: true, pointerType: 'mouse',
     clientX: rect?.left || 0, clientY: rect?.top || 0,
@@ -277,11 +289,16 @@ const j4HoverParity = await page.evaluate((deviceId) => {
   const edgeInViewport = !!edgeBox && edgeBox.left >= 0 && edgeBox.top >= 0
     && edgeBox.right <= innerWidth && edgeBox.bottom <= innerHeight;
   card._clearTransientHover();
-  return { hoverText, edgeInViewport };
+  return { hoverText, edgeInViewport, focusText, focusOwner, focusSource,
+    stateBefore, stateAfter: card.hass.states[primary]?.state };
 }, tabStops.id);
 out.j4_hover_parity = j4HoverParity;
+check('j4.focus_and_mouse_use_same_current_device_state',
+  j4HoverParity.focusOwner === tabStops.id && j4HoverParity.focusSource === 'focus'
+    && j4HoverParity.stateBefore === j4HoverParity.stateAfter
+    && !!j4HoverParity.focusText, true);
 check('j4.focus_and_mouse_tooltip_content_match',
-  j4HoverParity.hoverText, j4.focusTooltip.text);
+  j4HoverParity.hoverText, j4HoverParity.focusText);
 check('j4.tooltip_clamps_at_viewport_edge', j4HoverParity.edgeInViewport, true);
 
 // --- J5. «Переключить этаж» --------------------------------------------------

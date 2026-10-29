@@ -119,7 +119,8 @@ const out = await page.evaluate(async () => {
   }, () => c._stateClass(plainLamp)) === 'on';
   o.mixedWithoutTheOptionOffIsNeutral = withStates({
     'light.mixed': st('off', {}), 'cover.mixed': st('opening', { device_class: 'curtain' }),
-  }, () => c._stateClass(plainLamp)) === '';
+  // #1119 UI007 keeps the ordinary neutral shell and dims its own Off glyph.
+  }, () => c._stateClass(plainLamp)) === 'power-off';
   // a wall switch with controls and NO cover in sight still mirrors them
   const remote = {
     id: 'p_remote', primary: 'sensor.remote', entities: ['sensor.remote'], tapAction: null,

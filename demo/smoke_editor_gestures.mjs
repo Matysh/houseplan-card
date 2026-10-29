@@ -137,6 +137,14 @@ Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   c._setMode('view');
   await c.updateComplete;
+  // A mode's first Lit update is not its structural viewport terminal.
+  // Let the original mode/refit owner finish before a camera-only Fit command.
+  const viewportDeadline = performance.now() + 1500;
+  while (c._modeTransitionBusy || c._modeTransitionPreparing || c._refitRaf || c._pendingRefitSize) {
+    if (performance.now() >= viewportDeadline) throw new Error('Pinch fixture View did not settle');
+    await new Promise(resolve => requestAnimationFrame(resolve));
+  }
+  await window.__hpTest.settled();
   const stage = c._stageEl;
   const marker = c.renderRoot.querySelector('.dev[data-entity]')
     || c.renderRoot.querySelector('.dev');
@@ -192,9 +200,23 @@ Object.assign(out, await page.evaluate(async () => {
     return null;
   };
 
+  // Fit is animated in View. A pointerdown deliberately freezes its current
+  // frame (#396), so an immediate pinch can otherwise start at the old 8x cap.
+  // Observe the real reset terminal before recording either pinch baseline.
+  const resetForPinch = async () => {
+    c._resetZoom();
+    const deadline = performance.now() + 1500;
+    while (c._cameraTransition.active) {
+      if (performance.now() >= deadline) throw new Error('Pinch fixture fit did not settle');
+      await new Promise(resolve => requestAnimationFrame(resolve));
+    }
+    await c.updateComplete;
+    if (c._zoom !== 1) throw new Error(`Pinch fixture requires completed fit, got zoom ${c._zoom}`);
+  };
+
   // The missed #563 order: stage first, marker second. Capture has already
   // made the sequence multi-touch before the marker's pointerdown handler runs.
-  c._resetZoom();
+  await resetForPinch();
   const stageFirstZoom0 = c._zoom;
   pointer('pointerdown', 41, stage, 400);
   pointer('pointerdown', 42, marker, 300);
@@ -219,7 +241,7 @@ Object.assign(out, await page.evaluate(async () => {
 
   // Original #563 order: marker first, stage second. The already armed hold
   // must still be cancelled and every compatibility click must remain blocked.
-  c._resetZoom();
+  await resetForPinch();
   const zoom0 = c._zoom;
   pointer('pointerdown', 51, marker, 300);
   pointer('pointerdown', 52, stage, 400);

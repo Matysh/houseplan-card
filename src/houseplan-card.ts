@@ -4694,7 +4694,9 @@ export class HouseplanCard extends LitElement {
         }
         if (compact !== this._compactSpaces) {
           this._compactSpaces = compact; this.requestUpdate();
-          void this.updateComplete.then(() => { if (ownsHeader()) schedule(); });
+          void this.updateComplete.then(() => {
+            if (ownsHeader()) { if (this.panelHost) schedule(); else measure(); }
+          });
           return;
         }
         if (compact && !customElements.get('hp-settings-select')) return;

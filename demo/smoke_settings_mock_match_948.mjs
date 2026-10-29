@@ -9,6 +9,10 @@ const reference=watchPage(await ctx.newPage());
 await reference.setContent('<!doctype html><html><body style="margin:0;color-scheme:light">'+readFileSync('docs/design/settings-dialogs-944/general-settings-v10.html','utf8')+'</body></html>');
 await reference.locator('.hp-after h2').waitFor();
 const expected=await reference.locator('.hp-after').evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height,nav:el.querySelector('[data-nav]').getBoundingClientRect().width,labels:[...el.querySelectorAll('[data-nav] button')].map(n=>n.textContent.trim())}));
+// #1113 adds one accepted navigation section; keep immutable #948 geometry
+// and the complete original six-section order, without rewriting its prototype.
+output.referenceStillHasSixOriginalSections=expected.labels.length===6&&!expected.labels.includes('Внешние экраны');
+const currentExpected={...expected,labels:[...expected.labels.slice(0,-1),'Внешние экраны',expected.labels.at(-1)]};
 await page.evaluate(async()=>{const c=window.__card;c.setConfig({...c._config,language:'ru'});c.style.setProperty('--card-background-color','#fff');c.style.setProperty('--primary-background-color','#eceeef');c.style.setProperty('--primary-text-color','#223039');c.style.setProperty('--secondary-text-color','#64747e');c.style.setProperty('--divider-color','#dce2e6');c.style.setProperty('--primary-color','#008aa5');c.hass={...c.hass,language:'ru'};await window.__hpTest.settled();});
 await page.evaluate(async()=>{
  const c=window.__card;
@@ -18,7 +22,7 @@ await page.evaluate(async()=>{
 });
 await page.locator('houseplan-card [data-hp=settings]').filter({visible:true}).first().click();
 const dialog=page.locator('houseplan-card hp-dialog[data-kind=settings]');
-output.referenceStructure=await dialog.evaluate((el,expected)=>{const surface=el.shadowRoot.querySelector('.surface'),nav=el.querySelector('.hpf-settings-nav'),header=el.shadowRoot.querySelector('.header'),close=header.querySelector('.close'),title=header.querySelector('.title');return Math.abs(surface.getBoundingClientRect().width-expected.width)<2&&Math.abs(surface.getBoundingClientRect().height-expected.height)<=8&&Math.abs(nav.getBoundingClientRect().width-expected.nav)<2&&JSON.stringify([...nav.querySelectorAll('button')].map(n=>n.textContent.trim()))===JSON.stringify(expected.labels)&&close.getBoundingClientRect().left<title.getBoundingClientRect().left;},expected);
+output.referenceStructure=await dialog.evaluate((el,expected)=>{const surface=el.shadowRoot.querySelector('.surface'),nav=el.querySelector('.hpf-settings-nav'),header=el.shadowRoot.querySelector('.header'),close=header.querySelector('.close'),title=header.querySelector('.title');return Math.abs(surface.getBoundingClientRect().width-expected.width)<2&&Math.abs(surface.getBoundingClientRect().height-expected.height)<=8&&Math.abs(nav.getBoundingClientRect().width-expected.nav)<2&&JSON.stringify([...nav.querySelectorAll('button')].map(n=>n.textContent.trim()))===JSON.stringify(expected.labels)&&close.getBoundingClientRect().left<title.getBoundingClientRect().left;},currentExpected);
 output.paletteCaptionsAboveSwatches=await dialog.locator('[data-card=fills] .hpf-colortile').evaluateAll(nodes=>nodes.length===8&&nodes.every(n=>n.firstElementChild.classList.contains('hpf-colortile-heading')&&n.firstElementChild.querySelector('hp-help')));
 output.paletteKeepsUndividedGroups=await dialog.locator('[data-card=fills] .hpf-sections-plain > .hpf-section').evaluateAll(nodes=>nodes.length===4&&nodes.slice(1).every(n=>{const s=getComputedStyle(n);return s.borderTopWidth==='0px'&&s.paddingTop==='0px'&&s.marginTop==='18px';}));
 output.volumetricMatchesApprovedSection=await dialog.locator('[data-card=plan] .hpf-body > :first-child #gs-volumetric-view').count()===1;

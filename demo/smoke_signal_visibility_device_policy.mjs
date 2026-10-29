@@ -6,7 +6,13 @@ const { page, browser } = await launch({ width: 1200, height: 900 });
 const root = page.locator('#host > houseplan-card');
 const ids = ['d_temp', 'lg_sensor.living_temp'];
 const out = { completed: false };
-const settle = () => page.evaluate(() => window.__hpTest.settled());
+const settle = async () => {
+  await page.evaluate(() => window.__hpTest.settled());
+  // #1112 coalesces Static config events for200ms; the test facade settles only
+  // the full card. Observe independent revision adoption before checking LQI.
+  await page.waitForFunction(() => window.__signal876.mini._snap?.rev >= window.__card._cfgRev);
+  await page.evaluate(() => window.__signal876.mini.updateComplete);
+};
 const sample = () => page.evaluate(ids => {
   const full = window.__card, mini = window.__signal876.mini;
   const rows = card => ids.map(id => card.shadowRoot.querySelector(`[data-id="${id}"] .lqi`)?.textContent.trim() ?? null);

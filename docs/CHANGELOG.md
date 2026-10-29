@@ -4,6 +4,8 @@
 
 ## v1.83.0-beta.4 — 2026-10-29
 
+- Keep the correct header height from the first cold Lovelace frame, and avoid forced tab-layout reads when the active space is unchanged. (#1120)
+
 - Open the main House Plan page directly in kiosk mode through /houseplan/kiosk or ?hpkiosk=1. Select one space by its displayed position with /kiosk/N or hpspace=N; invalid positions leave all spaces available. The main-page kiosk uses the full panel without a header, following #1120. (#1103)
 
 - Settings and import dialogs wait for Home Assistant to finish bootstrapping before their components load, preventing a rare missing modal shell on cold entry. (#1125)

@@ -45,10 +45,10 @@ const out = await page.evaluate(() => {
     'switch.trv_anti_scaling': { state: 'on' },
   }) === '';
 
-  // выключена → чёрная
+  // #1119 UI007: выключена → обычная тёмная подложка, power-off приглушает лишь MDI.
   o.offIsDark = cls(trv, {
     'climate.trv': { state: 'off', attributes: { hvac_action: 'off' } },
-  }) === '';
+  }) === 'power-off';
 
   // Некоторые интеграции не отдают hvac_action: тогда их текущий режим из
   // hvac_modes — единственный доступный сигнал фактической работы.
@@ -66,7 +66,7 @@ const out = await page.evaluate(() => {
   o.darkLampIdle = cls(lamp, {
     'sensor.lamp_power': { state: '5' },
     'light.lamp': { state: 'off' },
-  }) === '';
+  }) === 'power-off';
 
   // «источник света»: умный выключатель с глупыми светильниками — жёлтый от
   // того же условия, что и пятно glow
