@@ -16,6 +16,8 @@ const res = await page.evaluate(async () => {
     return {
       classes: semantic.filter((name) => node.classList.contains(name)),
       icon: node.querySelector('.device-core > ha-icon')?.getAttribute('icon') || '',
+      glyphOpacity: getComputedStyle(node.querySelector('.device-core > ha-icon')).opacity,
+      insetShadow: getComputedStyle(node).getPropertyValue('--device-core-inset-shadow').trim(),
       value: node.querySelector('.valtext')?.textContent?.trim() || '',
       badge: node.querySelector('.value-badge')?.textContent?.trim() || '',
       badgePosition: [...(node.querySelector('.value-badge')?.classList || [])]
@@ -331,6 +333,8 @@ const res = await page.evaluate(async () => {
     deviceGroup894SharedIcon: deviceGroupFace?.icon === GROUP_ICON && deviceGroupPreview?.icon === GROUP_ICON
       && deviceGroupStatic?.icon === GROUP_ICON && deviceGroupAuto.includes(GROUP_ICON),
     deviceGroup894TargetsUnchanged: JSON.stringify(groupTargets) === JSON.stringify([z2mGroup]),
+    off1132OpaqueAcrossSurfaces: [deviceGroupFace,deviceGroupPreview,deviceGroupStatic].every(f=>f?.glyphOpacity==='1'),
+    bevel1132AbsentAcrossSurfaces: [deviceGroupFace,deviceGroupPreview,deviceGroupStatic].every(f=>f?.insetShadow==='0 0 0 0 transparent'),
   };
 });
 

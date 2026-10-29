@@ -171,8 +171,6 @@ export const devicesStyles = css`
         0 calc(var(--dev-size) * .025) calc(var(--dev-size) * .0375) rgb(37 40 45 / 12%),
         0 calc(var(--dev-size) * .1) calc(var(--dev-size) * .175)
           calc(var(--dev-size) * -.025) rgb(37 40 45 / 18%);
-      --device-core-inset-shadow:
-        inset 0 calc(var(--dev-size) * 0.0125) calc(var(--dev-size) * 0.0125) rgb(255 255 255 / 70%);
     }
     .dev::before {
       content: '';
@@ -427,7 +425,6 @@ export const devicesStyles = css`
     }
     /* UI-007 fades the visible marker; its separate floor-shadow twin keeps ordinary ink. */
     .dev.unavail:not(.led-badge):not(.iso-tile-shadow) { opacity:0.35; }
-    .dev.power-off .device-core > ha-icon,
     .dev.led-badge.unavail .device-core > ha-icon,
     .dev.led-badge.unavail .device-core > .valtext,
     .dev.led-badge.unavail .value-badge-content {
@@ -529,7 +526,11 @@ export const devicesStyles = css`
     }
     .dev:not(.unavail) .value-badge.unavailable > .value-badge-content,
     .dev:not(.unavail) .value-badge.missing > .value-badge-content { opacity: 0.66; }
+    /* LQI must escape the marker's opacity/transform context above room text.
+       Existing hover and topology selectors keep their higher layers. */
+    .dev:where(:has(.lqi)) { z-index: 2; }
     .dev .lqi {
+      z-index: 3;
       position: absolute;
       top: calc(50% + var(--device-shell-size) / 2 + var(--dev-size) * .05);
       left: 50%;

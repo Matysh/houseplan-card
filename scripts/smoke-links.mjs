@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/styles/devices.styles.ts', 'src/styles/panel-header.styles.ts', 'src/pdf/hp-pdf-dialog.ts'],
+    smokes: ['smoke_ui_polish_1132.mjs'],
+    because: '#1132: native editor/Escape/print input and overlapping LQI/room-text pixels in both themes and projections observe shared style consequences without calling CSS internals.',
+  },
+  {
     files: ['src/external-screens.ts', 'src/editors/external-screens.ts'],
     smokes: ['smoke_external_screens.mjs'],
     because: '#1113: native outer/nested settings, actual panel URL entry and two independent consumers observe the shared profile namespace and exact-base WebSocket delta without assigning private product state.',

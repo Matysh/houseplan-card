@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "referenceCommit": "4defb9839bc8c4fb858223596651cbac2227a196",
+  "referenceProduct": "08b154115ff815062cfc0221f39f7e53545dbe45",
+  "productFingerprint": "ce69c04f6e4377ddbb9d02287c57b8382da8293d2df274d469e1b939d7389efa",
+  "chromium": "151.0.7922.34",
+  "haFrontend": "20260930.4",
+  "dpr": 1,
+  "theme": "dark",
+  "language": "ru",
+  "geometry": [
+    {
+      "id": "01-wide",
+      "viewport": [
+        1600,
+        950
+      ],
+      "headerHeight": 65,
+      "rows": 1,
+      "rotationZoomGap": 10,
+      "maxGeometryDelta": 0
+    },
+    {
+      "id": "02-compact",
+      "viewport": [
+        1200,
+        850
+      ],
+      "headerHeight": 65,
+      "rows": 1,
+      "rotationZoomGap": 10,
+      "maxGeometryDelta": 0
+    },
+    {
+      "id": "03-wrapped",
+      "viewport": [
+        800,
+        850
+      ],
+      "headerHeight": 119,
+      "rows": 2,
+      "rotationZoomGap": null,
+      "maxGeometryDelta": 0
+    },
+    {
+      "id": "04-three-rows",
+      "viewport": [
+        390,
+        844
+      ],
+      "headerHeight": 183,
+      "rows": 3,
+      "rotationZoomGap": null,
+      "maxGeometryDelta": 0
+    }
+  ],
+  "diffs": [
+    {
+      "name": "01-wide",
+      "width": 1600,
+      "height": 950,
+      "changed": 31,
+      "peak": 1
+    },
+    {
+      "name": "02-compact",
+      "width": 1200,
+      "height": 850,
+      "changed": 70,
+      "peak": 1
+    },
+    {
+      "name": "03-wrapped",
+      "width": 800,
+      "height": 850,
+      "changed": 62,
+      "peak": 2
+    },
+    {
+      "name": "04-three-rows",
+      "width": 390,
+      "height": 844,
+      "changed": 43,
+      "peak": 1
+    },
+    {
+      "name": "05-print-dialog",
+      "width": 1200,
+      "height": 900,
+      "changed": 68,
+      "peak": 6
+    },
+    {
+      "name": "06-external-screen",
+      "width": 1200,
+      "height": 900,
+      "changed": 6,
+      "peak": 1
+    },
+    {
+      "name": "07-markers-lqi",
+      "width": 412,
+      "height": 396,
+      "changed": 0,
+      "peak": 0
+    }
+  ]
+}

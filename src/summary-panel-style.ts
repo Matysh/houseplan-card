@@ -32,7 +32,6 @@ export const summaryPanelCss = `
     color: var(--primary-text-color);
     background: transparent;
   }
-  .summary-control.kiosk > button.on { box-shadow:inset 0 0 0 1px var(--primary-color); }
   .summary-control > button:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: -3px;
@@ -45,13 +44,6 @@ export const summaryPanelCss = `
     fill: none;
   }
   svg.summary-settings-icon { width:24px; height:24px; }
-  .summary-control.kiosk {
-    position: absolute;
-    z-index: 31;
-    top: calc(12px + env(safe-area-inset-top));
-    right: calc(12px + env(safe-area-inset-right));
-    box-shadow: 0 4px 14px rgb(0 0 0 / 22%);
-  }
   .summary-overlay,
   .summary-measure {
     box-sizing: border-box;

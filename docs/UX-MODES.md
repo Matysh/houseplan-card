@@ -1,6 +1,6 @@
 # UX redesign: three modes (approved 2026-07-21)
 
-Main-panel `hpprofile=N` enables kiosk and resolves a server profile. Path/hpspace selects the space ahead of the profile; URL field overrides win, then explicit profile values, then local preferences/defaults. Path precedence applies only to hpkiosk/hpspace, so query profile/overrides work on /kiosk/N too. Explicit summary/scale overrides lock their corresponding local control; controls=false hides the two summary controls. Local preferences share the panel root across all kiosk aliases; Lovelace identities and YAML stay unchanged. General settings → External screens is writer-only and follows the approved UI-002r3 constructor. Its outer Save closes through the shared animated exit only after a same-session successful ACK (#1113).
+Main-panel `hpprofile=N` enables kiosk and resolves a server profile. Path/hpspace selects the space ahead of the profile; URL field overrides win, then explicit profile values, then local preferences/defaults. Path precedence applies only to hpkiosk/hpspace, so query profile/overrides work on /kiosk/N too. Explicit summary/scale overrides lock their corresponding local control; kiosk never renders the two summary control buttons, even for legacy controls=true or hpcontrols=1; summary contents/preferences remain active (#1132). Local preferences share the panel root across all kiosk aliases; Lovelace identities and YAML stay unchanged. General settings → External screens is writer-only and follows the approved UI-002r3 constructor. Its outer Save closes through the shared animated exit only after a same-session successful ACK (#1113).
 
 In ordinary View, right-click a device to choose Device settings, HA more-info, Device card, Hide (or Show on plan for a hidden device shown through the eye), or Delete. Read-only users retain informational commands; writer commands are disabled with a reason. Kiosk keeps its existing refusal and touch hold keeps opening the device card. Delete removes the plan representation only after the existing confirmation. The menu uses the common UI Kit and leaves the current mode, floor and camera unchanged. (#1089)
 
@@ -51,10 +51,12 @@ Adaptation measures actual content, names, locale and available container
 width. In order: short Plan/Devices/Background labels with equal pencils become
 distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
 become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
-left onto a second row. Expansion restores the reverse sequence, without fixed
-width thresholds. If the wrapped first row cannot fit, the existing phone gear
-retains editor/space/settings actions. At 320/359 px there are at most two rows;
-rotation/floor/menu targets stay 44 px and editor close 24 px. Gestures retain zoom.
+left onto further rows. Expansion restores the reverse sequence, without fixed
+width thresholds. #1132 retires the additional phone hiding/menu fallback:
+spaces occupy the first row, editors and rotations the next, and remaining
+actions wrap below (three rows in the approved390px fixture; more for tighter
+or longer content). Groups and editor close have44px targets; rotation/zoom
+are separate outlined groups with10px between them. Gestures retain zoom.
 Properties independently uses 1024 px of card width. Lovelace receives no HA menu
 and retains the existing fixed phone/header behavior described below.
 

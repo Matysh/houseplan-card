@@ -1,0 +1,146 @@
+[
+  {
+    "projection": "flat",
+    "theme": "light",
+    "textLayer": "name",
+    "clip": {
+      "x": 433,
+      "y": 364,
+      "width": 18,
+      "height": 11
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 13,
+    "collisions": 9,
+    "preserved": 13
+  },
+  {
+    "projection": "flat",
+    "theme": "light",
+    "textLayer": "metrics",
+    "clip": {
+      "x": 433,
+      "y": 364,
+      "width": 18,
+      "height": 11
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 13,
+    "collisions": 5,
+    "preserved": 13
+  },
+  {
+    "projection": "flat",
+    "theme": "dark",
+    "textLayer": "name",
+    "clip": {
+      "x": 433,
+      "y": 364,
+      "width": 18,
+      "height": 11
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 13,
+    "collisions": 9,
+    "preserved": 13
+  },
+  {
+    "projection": "flat",
+    "theme": "dark",
+    "textLayer": "metrics",
+    "clip": {
+      "x": 433,
+      "y": 364,
+      "width": 18,
+      "height": 11
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 13,
+    "collisions": 5,
+    "preserved": 13
+  },
+  {
+    "projection": "isometric",
+    "theme": "light",
+    "textLayer": "name",
+    "clip": {
+      "x": 432,
+      "y": 364,
+      "width": 21,
+      "height": 13
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 16,
+    "collisions": 11,
+    "preserved": 16
+  },
+  {
+    "projection": "isometric",
+    "theme": "light",
+    "textLayer": "metrics",
+    "clip": {
+      "x": 432,
+      "y": 364,
+      "width": 21,
+      "height": 13
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 16,
+    "collisions": 6,
+    "preserved": 16
+  },
+  {
+    "projection": "isometric",
+    "theme": "dark",
+    "textLayer": "name",
+    "clip": {
+      "x": 432,
+      "y": 364,
+      "width": 21,
+      "height": 13
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 16,
+    "collisions": 11,
+    "preserved": 16
+  },
+  {
+    "projection": "isometric",
+    "theme": "dark",
+    "textLayer": "metrics",
+    "clip": {
+      "x": 432,
+      "y": 364,
+      "width": 21,
+      "height": 13
+    },
+    "intersection": true,
+    "color": "rgb(130, 238, 43)",
+    "owner": "d_temp",
+    "originalStyle": "left:34.214891975308646%;top:34.25925925925926%;color:#55606c;opacity:0.8;--rl-scale:1;--rl-space:1;--rl-name:1;--rl-meta:1",
+    "ink": 16,
+    "collisions": 6,
+    "preserved": 16
+  }
+]

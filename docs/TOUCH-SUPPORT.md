@@ -55,10 +55,12 @@ Adaptation measures actual content, names, locale and available container
 width. In order: short Plan/Devices/Background labels with equal pencils become
 distinct compact icons; exactly Zoom out/Fit all/Zoom in disappear; space tabs
 become a dropdown; the editor/action gap shrinks to 10 px; finally actions wrap
-left onto a second row. Expansion restores the reverse sequence, without fixed
-width thresholds. If the wrapped first row cannot fit, the existing phone gear
-retains editor/space/settings actions. At 320/359 px there are at most two rows;
-rotation/floor/menu targets stay 44 px and editor close 24 px. Gestures retain zoom.
+left onto further rows. Expansion restores the reverse sequence, without fixed
+width thresholds. #1132 retires the additional phone hiding/menu fallback:
+spaces occupy the first row, editors and rotations the next, and remaining
+actions wrap below (three rows in the approved390px fixture; more for tighter
+or longer content). Groups and editor close have44px targets; rotation/zoom
+are separate outlined groups with10px between them. Gestures retain zoom.
 Properties independently uses 1024 px of card width. Lovelace receives no HA menu
 and retains the existing fixed phone/header behavior described below.
 

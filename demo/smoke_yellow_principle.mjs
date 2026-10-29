@@ -45,7 +45,7 @@ const out = await page.evaluate(() => {
     'switch.trv_anti_scaling': { state: 'on' },
   }) === '';
 
-  // #1119 UI007: выключена → обычная тёмная подложка, power-off приглушает лишь MDI.
+  // #1132: выключена → обычная тёмная подложка и непрозрачный MDI; смысловой power-off остаётся.
   o.offIsDark = cls(trv, {
     'climate.trv': { state: 'off', attributes: { hvac_action: 'off' } },
   }) === 'power-off';

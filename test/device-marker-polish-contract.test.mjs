@@ -197,7 +197,7 @@ test('issue 212 removes the global touch latch and gates every shared hover sele
     const naked = selectors.flatMap((selector) => selector.split(','))
       .map((selector) => selector.trim())
       .filter((selector) => selector.includes(':hover'))
-      .filter((selector) => !selector.includes(':host([data-pointer-hover])'));
+      .filter((selector) => !/:host\([^)]*\[data-pointer-hover\][^)]*\)/.test(selector));
     assert.deepEqual(naked, [], `${name} has ungated hover selectors: ${naked.join(' | ')}`);
   }
 });

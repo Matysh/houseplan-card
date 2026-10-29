@@ -238,8 +238,8 @@ confirmed own unavailable produces the policy's eligible ordinary whole-marker
 0.35 paint (#1119, superseding #1026 content-only paint). `device-power` reads
 the permitted own roster through the shared native role resolver, independently
 of visual/controller selection; composite Power takes priority. Power Off
-dims only the inner MDI icon, while unavailable wins without a second inner
-fade. The same presentation frame supplies tooltip status. The shared face
+retains semantic classification and tooltip with ordinary opaque glyph paint
+(#1132); unavailable wins with its single whole-marker fade. The same presentation frame supplies tooltip status. The shared face
 retains its inner badge span and geometry-only shadow twin. LED source loss
 keeps ordinary inactive geometry and its special badge-content-only paint.
 Snapshot row tracking captures the own reads without
@@ -2701,3 +2701,11 @@ old live callbacks, performs one ordinary reload and resumes only after that
 owner actually adopts a full response with the capability. The reload's optional
 post-adoption callback follows existing pending-writer deferral and never fires
 for rejected/superseded/failed reads. Ordinary HA ticks cannot retry closed auth.
+
+#1132 keeps header adaptation in the existing measured owner, with outlined44px
+groups and continued wrapping instead of a second phone hiding policy. PDF
+adopts ensureFormKitStyles in its own root and forwards instance-local pointer
+modality to hp-dialog. Kiosk render omits summary controls regardless of legacy
+profile/URL fields; summary content stays with its original owner. Device LQI
+raises only its owning stacking context (higher-specificity hover/topology
+layers remain authoritative), and no pointer/state polling is added.

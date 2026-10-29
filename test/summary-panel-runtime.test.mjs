@@ -73,13 +73,15 @@ const hostFixture = () => {
   };
 };
 
-test('#660 desktop summary controls stay available in editors while kiosk controls stay View-only', () => {
+test('#660/#1132 summary controls stay in ordinary editors but are never rendered in kiosk', () => {
   const host = hostFixture();
   const runtime = new LoadedSummaryPanelRuntime(host);
   for (const mode of ['plan', 'devices', 'decor']) {
     host._mode = mode;
-    assert.notEqual(runtime.renderControls(false), nothing, `${mode}: desktop controls`);
-    assert.equal(runtime.renderControls(true), nothing, `${mode}: kiosk controls`);
+    host._kiosk = false;
+    assert.notEqual(runtime.renderControls(), nothing, `${mode}: desktop controls`);
+    host._kiosk = true;
+    assert.equal(runtime.renderControls(), nothing, `${mode}: kiosk controls`);
   }
 });
 

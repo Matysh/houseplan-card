@@ -25,8 +25,8 @@ try {
   const f = start.faces;
   out.actualFixtureHasGlyphAndText = !!f['offline-icon']?.glyph && f['offline-text']?.value === true
     && f['offline-text'].text.includes('23.5');
-  out.mediaOffDimsOnlyItsGlyph = !offline(f['offline-icon']) && opaque(f['offline-icon']?.parent)
-    && dim(f['offline-icon']?.glyph) && closeTo(f['offline-icon']?.glyph?.opacity, .35);
+  out.mediaOffKeepsOpaqueGlyph = !offline(f['offline-icon']) && opaque(f['offline-icon']?.parent)
+    && opaque(f['offline-icon']?.glyph) && closeTo(f['offline-icon']?.glyph?.opacity, 1);
   out.unavailableDimsWholeOrdinaryMarker = offline(f['offline-down']) && dim(f['offline-down']?.parent)
     && dim(f['offline-down']?.core) && dim(f['offline-down']?.frame)
     && dim(f['offline-down']?.contact)
@@ -39,8 +39,8 @@ try {
   out.unknownIsNotConfirmedOffline = !offline(f['offline-unknown']) && opaque(f['offline-unknown']?.glyph);
   out.missingOwnedStateIsNotConfirmedOffline = !offline(f['offline-missing']) && opaque(f['offline-missing']?.glyph);
   out.foreignSourceQualityDoesNotMultiplyOwnPowerOff = !offline(f['offline-source'])
-    && opaque(f['offline-source']?.parent) && dim(f['offline-source']?.glyph)
-    && closeTo(f['offline-source']?.glyph?.opacity, .35)
+    && opaque(f['offline-source']?.parent) && opaque(f['offline-source']?.glyph)
+    && closeTo(f['offline-source']?.glyph?.opacity, 1)
     && opaque(badge(f['offline-source'])?.paint) && closeTo(badge(f['offline-source'])?.content?.effective, .66);
   out.twoReasonsHaveOneOfflineOpacity = offline(f['offline-double'])
     && dim(badge(f['offline-double'])?.paint) && dim(badge(f['offline-double'])?.content);
@@ -80,7 +80,7 @@ try {
   const recovered = await readDeviceOfflinePaint(page, ['offline-down', 'offline-text']); observations.recovered = recovered;
   out.ownedRecoveryRemovesOfflineWithoutReload = ['offline-down', 'offline-text'].every(id =>
     !offline(recovered.faces[id]) && opaque(recovered.faces[id]?.parent)
-      && (id === 'offline-down' ? dim(recovered.faces[id]?.glyph) : opaque(recovered.faces[id]?.glyph))
+      && opaque(recovered.faces[id]?.glyph)
       && opaque(badge(recovered.faces[id])?.content));
   out.ownedRecoveryKeepsShellGeometry = ['offline-down', 'offline-text'].every(id =>
     JSON.stringify(shape(f[id])) === JSON.stringify(shape(recovered.faces[id])));
@@ -104,7 +104,7 @@ try {
   await setDeviceOfflineStates(page, { 'switch.offline_alarm_power': 'off' });
   const liveAlarm = (await readDeviceOfflinePaint(page, ['offline-alarm'])).faces['offline-alarm'];
   observations.liveAlarm = liveAlarm;
-  out.ownRecoveryKeepsConfirmedAlarmColorAndFrame = !offline(liveAlarm) && dim(liveAlarm?.glyph) && opaque(liveAlarm?.parent)
+  out.ownRecoveryKeepsConfirmedAlarmColorAndFrame = !offline(liveAlarm) && opaque(liveAlarm?.glyph) && opaque(liveAlarm?.parent)
     && /(?:^|\s)alarm(?:\s|$)/.test(liveAlarm?.classes ?? '')
     && liveAlarm?.core?.background === f['offline-alarm']?.core?.background
     && liveAlarm?.frame?.border === f['offline-alarm']?.frame?.border;
@@ -121,7 +121,7 @@ try {
   await setDeviceOfflineStates(page, { 'media_player.offline_down': 'off' });
   const previewLive = await readDeviceOfflinePaint(page, ['offline-down'], 'preview');
   out.openPreviewTracksOwnRecovery = !offline(previewLive.faces['offline-down']) && opaque(previewLive.faces['offline-down']?.parent)
-    && dim(previewLive.faces['offline-down']?.glyph);
+    && opaque(previewLive.faces['offline-down']?.glyph);
   await page.evaluate(async () => { await window.__hpTest.close(undefined, { via: 'cancel' }); await window.__hpTest.setMode('view'); });
   await setDeviceOfflineStates(page, { 'media_player.offline_down': 'unavailable' });
 
@@ -151,7 +151,7 @@ try {
   await setDeviceOfflineStates(page, { 'media_player.offline_down': 'off' });
   const staticLive = await readDeviceOfflinePaint(page, ['offline-down'], 'space');
   out.staticCardTracksOwnRecovery = !offline(staticLive.faces['offline-down']) && opaque(staticLive.faces['offline-down']?.parent)
-    && dim(staticLive.faces['offline-down']?.glyph);
+    && opaque(staticLive.faces['offline-down']?.glyph);
   await setDeviceOfflineStates(page, { 'media_player.offline_down': 'unavailable' });
   await page.evaluate(() => {
     const full = window.__card, space = document.querySelector('houseplan-space-card');

@@ -200,7 +200,7 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
 });
 
 test('issue 486 keeps its three ordinary panel-host surfaces alongside route kiosk scenes', () => {
-  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.panelKioskUrl);
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost && !scenario.panelKioskUrl && !scenario.id.endsWith('-ui-1132'));
   assert.deepEqual(scenarios.map((scenario) => scenario.id), [
     'panel-wide-view-light-en',
     'panel-wide-plan-editor-dark-en',
@@ -214,6 +214,7 @@ test('issue 486 keeps its three ordinary panel-host surfaces alongside route kio
   assert.equal(scenarios.every((scenario) => scenario.capture === 'page'), true);
   assert.deepEqual(scenarios.map((scenario) => scenario.mode), ['view', 'plan', 'view']);
 
+  assert.deepEqual(GOLDEN_SCENARIOS.filter(s=>s.id.endsWith('-ui-1132')).map(s=>s.viewport), [{width:1200,height:850},{width:390,height:844}]);
   const readOnly = scenarios.at(-1);
   assert.equal(readOnly.emptyPlan, true);
   assert.equal(readOnly.canWrite, false);
@@ -517,7 +518,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 106);
+  assert.equal(GOLDEN_MATRIX_VERSION, 107);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -1023,7 +1024,7 @@ test('issue 570 Stage 4 reuses the historical iso goldens for visual handoff cov
 
 test('#673 Stage 6 designer acceptance scenes are canonical golden entries', () => {
   const ids = STAGE6_ACCEPTANCE_SCENARIOS.map((scenario) => scenario.id);
-  assert.equal(GOLDEN_MATRIX_VERSION, 106);
+  assert.equal(GOLDEN_MATRIX_VERSION, 107);
   assert.deepEqual(ids, [
     'isometric-stage6-light-lightfloor',
     'isometric-stage6-light-darkfloor',

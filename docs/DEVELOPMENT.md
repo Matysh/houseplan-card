@@ -6902,3 +6902,15 @@ initial387200 wall remain unchanged. The card grows13563→13582 (+19 lines),
 ceiling13535→13554 preserves28-line gap/50 band; runtime unchanged12053.
 This is the owner's explicit measured-resource authorization, with no byte
 golf, timing relaxation, semantic oracle weakening or new guard exception.
+
+## Approved beta4 UI implementation (#1132)
+
+The immutable reference is docs/design/1132-beta4-ui/2026-10-30. Comparison evidence
+uses its public fixture, pinned Chromium151/HA20260930.4 and settled shadow-root
+animations, with no product stylesheet override. The sole HA-shell scrim token
+is LAB-001 on both sides. Shared device styles retire bevel/Off-only dimming;
+panel-only groups remain measured, and PDF adopts the existing shared form kit.
+Run smoke_ui_polish_1132 for native editor/Escape/print and actual overlapping
+LQI text pixels in light/dark Flat/2.5D. Keep device_preview_parity, device_offline,
+panel_header_overflow/touch, external_screens and PDF/SVG export coverage. The
+summary buttons are suppressed in render; summary-panel contents are not.

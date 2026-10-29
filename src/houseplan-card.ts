@@ -11493,7 +11493,8 @@ export class HouseplanCard extends LitElement {
                     title=${this._t(('mode.' + m + '_tip') as any)}
                     aria-label=${this._t(`mode.${m}` as const)}
                     @click=${() => this._setMode(m)}>
-                    <ha-icon class=${this.panelHost ? 'panel-mode-compact' : nothing} icon=${ic}></ha-icon>
+                    <ha-icon class=${this.panelHost ? 'panel-mode-compact' : nothing}
+                      icon=${this.panelHost && m === 'devices' ? 'mdi:chip' : this.panelHost && m === 'decor' ? 'mdi:palette' : ic}></ha-icon>
                     ${this.panelHost ? html`<ha-icon class="panel-mode-full" icon="mdi:pencil" aria-hidden="true"></ha-icon>
                       <span class="panel-mode-full">${this._t(('mode.' + m + '_short') as I18nKey)}</span>` : nothing}
                     <span class="ml">${this._t(('mode.' + m) as I18nKey)}</span>
@@ -11516,7 +11517,7 @@ export class HouseplanCard extends LitElement {
           </div>
           ${this._kiosk ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
           ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog }) : nothing}
-          ${!this._kiosk ? this._summary?.renderControls(false) : nothing}
+          ${!this._kiosk ? this._summary?.renderControls() : nothing}
           ${''/* #616: ≤ 480 px — one gear holds everything the phone row drops */}${this._kiosk ? nothing : this._headerMenu.render(headerMenuItems({
             canEdit: this._norm && this._canEdit, kiosk: this._kiosk, mode: this._mode, hasFixedFloor: this._hasFixedFloor, showHidden: this._showHidden,
             summary: this._summary?.menuItems() ?? [], t: (k) => this._t(k),
@@ -11876,7 +11877,6 @@ export class HouseplanCard extends LitElement {
           ${this._renderEditorRuntimeLoading()}
           ${this._renderRecoveryOverlay()}
           ${this._summary?.renderMeasure()}
-          ${this._kiosk ? this._summary?.renderControls(true) : nothing}
           ${this._summary?.renderPanel()}
           ${this._booting || this._bootFading || isoFirstFramePending
             ? html`<div class="bootveil ${this._booting || isoFirstFramePending ? '' : 'off'}" aria-hidden="true">

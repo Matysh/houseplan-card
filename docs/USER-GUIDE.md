@@ -1906,9 +1906,9 @@ Presentation uses one shared outer shell around three independent layers:
 stable core, icon or value, and optional activity pulse. Visual priority is
 **alarm → keyboard focus → selected → hover → semantic state → neutral**.
 
-Confirmed unavailable devices fade the whole ordinary marker to 35%; the inner icon/value/badge does not receive a second fade. Off devices fade only their inner MDI icon to 35%, keeping the circle ordinary. Tooltips name Off or Unavailable after the name/model. Unavailable devices retain
+Confirmed unavailable devices fade the whole ordinary marker to 35%; the inner icon/value/badge does not receive a second fade. Off devices keep their ordinary opaque icon and circle. Tooltips name Off or Unavailable after the name/model. Unavailable devices retain
 no visual hover and no pulse, but their ordinary activation may still open
-information or settings. A media player in `off` follows the icon-only Off treatment.
+information or settings. A media player in `off` keeps the ordinary icon paint.
 Hover starts only from a real hover-capable mouse. Finger or pen input clears
 tooltip/highlight immediately; later mouse movement restores desktop hover.
 
@@ -1922,7 +1922,7 @@ tooltip/highlight immediately; later mouse movement restores desktop hover.
 | Green lock | Lock is secured | Locked lock |
 | Orange | Physically open | Door/window contact, opening valve |
 | Faded whole marker | Confirmed own offline | Every active own entity explicitly unavailable; ordinary marker, circle and contents fade once to 35% |
-| Faded icon | Own Power Off | Explicit own power domain or composite Power=off; circle and badges keep ordinary paint |
+| Ordinary icon, Off in tooltip | Own Power Off | Explicit own power domain or composite Power=off; circle and badges keep ordinary paint |
 | Neutral | No alarm, work or open condition | Off, closed, idle, standby, docked |
 
 For a controller with `controls`, target work and controller availability are
@@ -3360,10 +3360,10 @@ Activation and removal each require three continuous seconds. Missing/incomparab
 
 ### External screens: a separate television or tablet view
 
-Use **General settings → External screens → Create** on a desktop. Choose one/all spaces, rotation, auto-advance, idle Fit all, summary/hidden devices, icon/text scales and overlay controls. **OK** changes the outer draft; **Save** applies it and closes with the shared animation. A save failure leaves the form open. Click **Screen N** to edit; deletion never reuses its number. Up to20 profiles are allowed. Copy produces your installation's complete URL.
+Use **General settings → External screens → Create** on a desktop. Choose one/all spaces, rotation, auto-advance, idle Fit all, summary/hidden devices, icon/text scales. Kiosks always hide the control buttons over the plan; the summary itself remains available. **OK** changes the outer draft; **Save** applies it and closes with the shared animation. A save failure leaves the form open. Click **Screen N** to edit; deletion never reuses its number. Up to20 profiles are allowed. Copy produces your installation's complete URL.
 
 Open `/houseplan?hpprofile=1` on the screen: it enters kiosk and receives later profile edits without reloading. Unknown/deleted numbers mean kiosk without a profile. A deleted referenced space means all spaces and warns in settings.
 
-Link overrides: `hprotate=0|90|180|270`; integer `hpcycle`/`hpidle`0–3600seconds; `hpsummary`/`hphidden`/`hpcontrols=0|1`; `hpicons`/`hptext`50–300percent rounded to5. Invalid values are ignored. `/kiosk/N` or `hpspace=N` selects space ahead of the profile. For example `/houseplan/kiosk/2?hpprofile=1` combines the second space and profile1. A fixed space does not auto-advance; cycling retains its60-second interaction pause, while independent idle Fit all works without cycling.
+Link overrides: `hprotate=0|90|180|270`; integer `hpcycle`/`hpidle`0–3600seconds; `hpsummary`/`hphidden=0|1`; `hpicons`/`hptext`50–300percent rounded to5. Invalid values are ignored. `/kiosk/N` or `hpspace=N` selects space ahead of the profile. For example `/houseplan/kiosk/2?hpprofile=1` combines the second space and profile1. A fixed space does not auto-advance; cycling retains its60-second interaction pause, while independent idle Fit all works without cycling.
 
 Priority is URL → profile → local choice → defaults. As on the main plan keeps local choice. Explicit profile/link values never overwrite browser preferences; removing the profile restores them. Main-panel route aliases share summary/hidden/scales preferences. Lovelace cards and YAML options retain their own identities.

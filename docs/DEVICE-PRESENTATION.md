@@ -64,8 +64,10 @@ Composite `power_gate` roles take priority; otherwise own light/switch/fan/
 climate/media_player/humidifier/water_heater/remote sources must all explicitly
 be `off`. Virtual bindings, static/live/lifecycle/protected gates, binary off,
 unknown/missing and foreign selected values/controls cannot invent Power Off.
-Eligible `.power-off` dims only the inner MDI icon to 0.35 while its circle and
-badges retain ordinary paint. Unavailable has priority. One resolved presentation
+#1132 retains semantic `.power-off` and its tooltip but uses ordinary opaque
+MDI paint, on the plan, preview and embedded cards. The upper inset bevel is
+also removed; external shadows and status contours remain. Confirmed whole-marker
+unavailability retains priority and its single0.35 fade. One resolved presentation
 also supplies the localized Off/Unavailable line after tooltip name/model;
 normal states have no extra line. An already-visible pointer/focus tip refreshes from the current resolved device at the existing View commit; it does not wait for another pointer event. No extra registry scan, timer or subscription is added.
 

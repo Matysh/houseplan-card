@@ -110,7 +110,11 @@ function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean): 
       const tab = button('tab' + (space.id === nav.current ? ' active' : ''));
       const label = doc.createElement('span'); label.className = 'tabtitle'; label.textContent = space.title;
       tab.appendChild(label);
-      if (nav.configure) tab.appendChild(iconMetric(doc, 13, 'tabedit'));
+      if (nav.configure) {
+        const gear = iconMetric(doc, 20, 'tabedit');
+        gear.style.width = '44px'; gear.style.height = '42px';
+        tab.appendChild(gear);
+      }
     }
   }
   if (nav.create) button('tab tabadd').appendChild(iconMetric(doc, 15));

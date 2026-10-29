@@ -37,7 +37,7 @@ export function externalScreensOf(raw: unknown): ExternalScreens | null {
 }
 export function defaultExternalScreen(id: number): ExternalScreen {
   return { id, space: null, rotation: 0, cycle: 0, idle: 0, summary: 'local',
-    hidden_devices: 'local', icon_scale: null, font_scale: null, controls: true };
+    hidden_devices: 'local', icon_scale: null, font_scale: null, controls: false };
 }
 /** A nested editor changes a detached outer draft only; numbers survive deletion. */
 export function upsertExternalScreen(draft: ExternalScreens, row: ExternalScreen): ExternalScreens {

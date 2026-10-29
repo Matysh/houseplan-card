@@ -1819,3 +1819,8 @@ is removed on unsubscribe/disconnect/revocation. There is no persisted event
 ledger, new write permission or alternate writer.
 
 Introduced2026-10-28 by#1113; no reader removal or compatibility deadline is introduced.
+
+#1132: legacy external-screen controls booleans and hpcontrols URL syntax remain
+readable but inert in kiosks. Reading/cancelling never converts stored profiles.
+New profiles and explicitly confirmed nested edits write controls:false; unknown
+fields, revisions, outer Save and Cancel retain their previous contracts.

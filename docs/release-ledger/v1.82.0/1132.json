@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "issue": 1132,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable1.82 already has the main panel, device glyphs/LQI and PDF/SVG export. This delivers the owner-approved polish of those surfaces. Beta-only phone/Off/profile changes are implementation detail, not separate stable features.",
+  "summary": {
+    "ru": "Единое оформление панели и печати; кнопки на узком экране, ясные значки и читаемый Zigbee.",
+    "en": "Consistent panel and print controls, narrow-screen actions, clear device icons and readable Zigbee labels."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "ca9c1cd989e7f9644345d6fe40d6745bb1f23b841b9f027b4bfaeba48b2d8775",
+    "golden": [
+      {
+        "id": "panel-wide-view-light-en",
+        "expectation": "change",
+        "reason": "#1132 UI003/005/007-009/011: approved44px outlined main-panel groups, continued wrapping or retired kiosk controls; summary contents preserved."
+      },
+      {
+        "id": "panel-wide-plan-editor-dark-en",
+        "expectation": "change",
+        "reason": "#1132 UI003/005/007-009/011: approved44px outlined main-panel groups, continued wrapping or retired kiosk controls; summary contents preserved."
+      },
+      {
+        "id": "panel-narrow-read-only-empty-light-en",
+        "expectation": "change",
+        "reason": "#1132 UI003/005/007-009/011: approved44px outlined main-panel groups, continued wrapping or retired kiosk controls; summary contents preserved."
+      },
+      {
+        "id": "panel-kiosk-profile-rotated-90",
+        "expectation": "change",
+        "reason": "#1132 UI003/005/007-009/011: approved44px outlined main-panel groups, continued wrapping or retired kiosk controls; summary contents preserved."
+      },
+      {
+        "id": "panel-kiosk-profile-summary-on",
+        "expectation": "change",
+        "reason": "#1132 UI003/005/007-009/011: approved44px outlined main-panel groups, continued wrapping or retired kiosk controls; summary contents preserved."
+      },
+      {
+        "id": "panel-kiosk-profile-no-controls",
+        "expectation": "change",
+        "reason": "#1132 UI003/005/007-009/011: approved44px outlined main-panel groups, continued wrapping or retired kiosk controls; summary contents preserved."
+      },
+      {
+        "id": "settings-external-screens-constructor-light",
+        "expectation": "change",
+        "reason": "#1132 UI011: remove the controls-over-plan field from the constructor, keeping its UI Kit and other controls."
+      },
+      {
+        "id": "settings-external-screens-constructor-dark",
+        "expectation": "change",
+        "reason": "#1132 UI011: remove the controls-over-plan field from the constructor, keeping its UI Kit and other controls."
+      },
+      {
+        "id": "device-offline-dark",
+        "expectation": "change",
+        "reason": "#1132 UI001/010/012: remove upper device bevel and Off-only MDI fading, lift LQI above overlapping room text while preserving unavailable/LED/status paint."
+      },
+      {
+        "id": "device-offline-light",
+        "expectation": "change",
+        "reason": "#1132 UI001/010/012: remove upper device bevel and Off-only MDI fading, lift LQI above overlapping room text while preserving unavailable/LED/status paint."
+      },
+      {
+        "id": "device-icon-state-table-dark",
+        "expectation": "change",
+        "reason": "#1132 UI001/010/012: remove upper device bevel and Off-only MDI fading, lift LQI above overlapping room text while preserving unavailable/LED/status paint."
+      },
+      {
+        "id": "device-icon-state-table-light",
+        "expectation": "change",
+        "reason": "#1132 UI001/010/012: remove upper device bevel and Off-only MDI fading, lift LQI above overlapping room text while preserving unavailable/LED/status paint."
+      },
+      {
+        "id": "direct-zigbee-lqi-flat-dark",
+        "expectation": "change",
+        "reason": "#1132 UI001/010/012: remove upper device bevel and Off-only MDI fading, lift LQI above overlapping room text while preserving unavailable/LED/status paint."
+      },
+      {
+        "id": "direct-zigbee-lqi-iso-dark",
+        "expectation": "change",
+        "reason": "#1132 UI001/010/012: remove upper device bevel and Off-only MDI fading, lift LQI above overlapping room text while preserving unavailable/LED/status paint."
+      },
+      {
+        "id": "panel-compact-ui-1132",
+        "expectation": "new",
+        "reason": "#1132: retain the approved compact and multirow main-panel composition as an indexed regression scene."
+      },
+      {
+        "id": "panel-three-rows-ui-1132",
+        "expectation": "new",
+        "reason": "#1132: retain the approved compact and multirow main-panel composition as an indexed regression scene."
+      }
+    ],
+    "goldenChecks": [
+      {
+        "id": "pdf-export-geometry-light",
+        "reason": "PDF exported scene/writer is unchanged; require fresh identical pixels for the actual exported plan."
+      }
+    ],
+    "smokes": [
+      "smoke_ui_polish_1132.mjs",
+      "smoke_panel_header_overflow.mjs",
+      "smoke_panel_header_touch.mjs",
+      "smoke_external_screens.mjs",
+      "smoke_device_preview_parity.mjs",
+      "smoke_device_offline.mjs",
+      "smoke_pdf_export.mjs",
+      "smoke_svg_export.mjs",
+      "smoke_device_signal_topology.mjs",
+      "smoke_device_hit_capsules.mjs"
+    ]
+  }
+}

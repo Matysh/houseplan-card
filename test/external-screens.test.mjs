@@ -7,6 +7,7 @@ import { parseRouteKiosk, screenOverrides } from '../test-build/panel-route-kios
 test('#1113 detached draft adds/edits/deletes without reusing numbers or overflowing20', () => {
   let d = emptyExternalScreens(); const original = structuredClone(d);
   d = upsertExternalScreen(d, defaultExternalScreen(1));
+  assert.equal(d.screens[0].controls, false, '#1132 new screens never enable controls over the plan');
   assert.deepEqual(original, emptyExternalScreens());
   d = upsertExternalScreen(d, defaultExternalScreen(2));
   d = upsertExternalScreen(d, defaultExternalScreen(3));
@@ -22,7 +23,7 @@ test('#1113 detached draft adds/edits/deletes without reusing numbers or overflo
 });
 
 test('#1113 codec is inert on future/malformed envelopes and preserves unknown v1 fields', () => {
-  const d = { ...emptyExternalScreens(), next_id:2, screens:[{...defaultExternalScreen(1), future:{n:3}}] };
+  const d = { ...emptyExternalScreens(), next_id:2, screens:[{...defaultExternalScreen(1), controls:true, future:{n:3}}] };
   assert.equal(externalScreensOf(d), d);
   for (const malformed of [null,[],{...d,version:2},{...d,next_id:1}, {...d,screens:[d.screens[0],d.screens[0]]},
     {...d,screens:[{...d.screens[0],cycle:true}]}, {...d,screens:[{...d.screens[0],icon_scale:.51}]}]) assert.equal(externalScreensOf(malformed), null);

@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 106;
+export const GOLDEN_MATRIX_VERSION = 107;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -339,6 +339,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'panel-wide-view-light-en', fixture: 'visual', space: 'golden-geometry',
     panelHost: true, mode: 'view', language: 'en', theme: 'light',
     viewport: { width: 1280, height: 800 }, ...page },
+  { id: 'panel-compact-ui-1132', fixture: 'visual', space: 'golden-geometry',
+    panelHost: true, mode: 'view', language: 'en', theme: 'dark',
+    viewport: { width: 1200, height: 850 }, ...page },
+  { id: 'panel-three-rows-ui-1132', fixture: 'visual', space: 'golden-geometry',
+    panelHost: true, mode: 'view', language: 'en', theme: 'dark',
+    viewport: { width: 390, height: 844 }, ...page },
   { id: 'header-spaces-phone-light-997', fixture: 'visual', space: 'golden-geometry',
     headerSpaces: { title: 'Первый этаж с длинным названием', open: false },
     mode: 'view', language: 'ru', theme: 'light', viewport: { width: 390, height: 844 }, ...page },

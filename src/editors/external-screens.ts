@@ -34,7 +34,7 @@ export class ExternalScreensEditor implements ReactiveController {
     const session = dialogSession(this.host, 'settings'), rows = this.rows();
     if (!session || this.host._haExternalScreensApi !== 1 || !rows || !row && rows.screens.length >= 20
       || row && !rows.screens.includes(row)) return;
-    const draft = { row: { ...(row ?? defaultExternalScreen(rows.next_id)) }, session,
+    const draft = { row: { ...(row ?? defaultExternalScreen(rows.next_id)), controls: false }, session,
       authority: this.host._configWriteContext.claim(), instance: {} };
     if (this.current(draft)) { this.draft = draft; this.host.requestUpdate(); }
   }
@@ -49,7 +49,7 @@ export class ExternalScreensEditor implements ReactiveController {
   private save(instance: object): void {
     const d = this.draft, rows = this.rows(), outer = this.host._settingsDialog;
     if (!d || d.instance !== instance || !this.current(d) || !rows || !outer) return;
-    this.host._settingsDialog = { ...outer, externalScreens: upsertExternalScreen(rows, d.row) };
+    this.host._settingsDialog = { ...outer, externalScreens: upsertExternalScreen(rows, { ...d.row, controls: false }) };
     this.cancel(instance);
   }
   private path(id: number): string {
@@ -119,7 +119,7 @@ export class ExternalScreensEditor implements ReactiveController {
       return field({ label, htmlFor: `screen-${key}`, hint, help: help ? html`<hp-help instant .text=${help} .ariaLabel=${label}></hp-help>` : nothing,
         control: html`<hp-settings-select><select class="hpf-select" id=${`screen-${key}`} data-hp="field" data-field=${`external-screen-${key}`} aria-label=${label} ?disabled=${disabled}
           @change=${(e: Event) => { const value = (e.target as HTMLSelectElement).value;
-            const next = key === 'space' ? value || null : key === 'summary' || key === 'hidden_devices' ? value : key === 'controls' ? value === 'true' : value === '' ? null : Number(value);
+            const next = key === 'space' ? value || null : key === 'summary' || key === 'hidden_devices' ? value : value === '' ? null : Number(value);
             this.change({ [key]: next }, d.instance); }}>
           ${options.map(([n, text]) => html`<option value=${n} ?selected=${n === value}>${text}</option>`)}</select></hp-settings-select>` });
     };
@@ -136,7 +136,6 @@ export class ExternalScreensEditor implements ReactiveController {
         ${select('idle', this.t('idle'), times([0,30,60,120,300,600]), cycling, cycling ? this.t('idle_hint') : '', this.t('idle_help'))}
         ${select('summary', this.t('summary'), [...local])}${select('hidden_devices', this.t('hidden_devices'), local.map(([value,label]) => [value, value === 'hide' ? this.t('dont_show') : label]))}
         ${select('icon_scale', this.t('icon_scale'), [...sizes])}${select('font_scale', this.t('font_scale'), [...sizes])}
-        ${select('controls', this.t('controls'), [['true',this.t('show')], ['false',this.t('hide')]], false, '', this.t('controls_help'))}
       </div><p class="hpf-note hpf-hint hp-screen-note">${this.t('note')}</p></div>
       <div slot="footer" class="row dialog-action-footer hpf-footer"><span class="spacer"></span><div class="dialog-action-group dialog-action-commit">
         <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => this.cancel(d.instance)}>${this.host._t('btn.cancel')}</button>

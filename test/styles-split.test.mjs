@@ -74,7 +74,8 @@ test('issue 266 the media wrappers survived the move', () => {
   // per-zone copies by the generator. #437's overlay stylesheet is loaded
   // with its lazy runtime and has its own source contract, so the five eager
   // surface owners retain 12 wrappers; #1120 adds one panel-menu-only wrapper.
-  assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 13,
+  // #1132 adds the panel editor/group transition wrapper.
+  assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 14,
     'reduced-motion wrappers must survive — golden always shoots reduced');
 });
 
@@ -82,6 +83,6 @@ test('#1120 the appended panel header sheet owns only panel selectors and its na
   const rules = parseRules(panelHeaderStyles.cssText).filter(rule => rule.kind === 'rule');
   assert.ok(rules.length > 20);
   for (const rule of rules) for (const selector of rule.selectors)
-    assert.ok(selector.includes(':host([panel-host])') || selector.includes('.panel-menu')
+    assert.ok(/:host\(\[panel-host\](?:\[[^\]]+\])*\)/.test(selector) || selector.includes('.panel-menu')
       || selector.includes('.panel-header-metrics'), `unscoped panel rule: ${selector}`);
 });

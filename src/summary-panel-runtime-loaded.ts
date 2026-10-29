@@ -308,23 +308,23 @@ export class LoadedSummaryPanelRuntime {
     return temporaryReason || this.t(this.effectiveShow ? 'summary.hide' : 'summary.show');
   }
 
-  public renderControls(kiosk = false): TemplateResult | typeof nothing {
-    if (kiosk && (this.host._mode !== 'view' || this.host._externalScreen?.controls === false)) return nothing;
+  public renderControls(): TemplateResult | typeof nothing {
+    if (this.host._kiosk) return nothing;
     const toggleTitle = this.toggleTitle();
     const stop = (event: Event) => event.stopPropagation();
-    return html`<div class="summary-control ${kiosk ? 'kiosk' : ''}" role="group"
+    return html`<div class="summary-control" role="group"
         aria-label=${this.t('summary.controls')} @click=${stop} @dblclick=${stop}
         @pointerdown=${stop} @pointerup=${stop} @pointermove=${stop} @wheel=${stop}>
       <button type="button" data-hp="summary-settings" @click=${() => void this.openDialog()}
           data-hp-tooltip=${this.t('summary.settings')} aria-label=${this.t('summary.settings')}>
         ${summaryIcon('settings')}
       </button>
-      ${kiosk && this.host._externalScreen?.summary !== undefined ? nothing : html`<button type="button" data-hp="summary-toggle" class=${this.effectiveShow ? 'on' : ''}
+      <button type="button" data-hp="summary-toggle" class=${this.effectiveShow ? 'on' : ''}
         aria-pressed=${this.effectiveShow ? 'true' : 'false'}
           data-hp-tooltip=${toggleTitle} aria-label=${toggleTitle}
         @click=${() => this.saveLocal({ show: !this.effectiveShow })}>
         ${summaryIcon('sidebar')}
-      </button>`}
+      </button>
     </div>`;
   }
 

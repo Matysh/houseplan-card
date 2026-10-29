@@ -37,10 +37,10 @@ try {
       const modes=find('.modes'),actions=find('.header-actions'),rotate=find('[data-hp=rotate-right]');
       return {head:box(head),stage:box(root.querySelector('.stage')),panel:box(panel),scroll:head.scrollWidth,
         menu:menu?box(menu):null,menuName:menu?.getAttribute('aria-label'),
-        first:find('button')?.dataset.hp, picker:!!picker,
+        first:find('button')?.dataset.hp, picker:!!picker,spaceSettings:!!find('.tabedit,[data-hp=space-settings]'),
         labels:!!find('.panel-mode-full'),zoom:[...head.querySelectorAll('[data-hp^=zoom-]')].filter(visible).length,
         rotations:[...head.querySelectorAll('[data-hp^=rotate-]')].filter(visible).map(e=>box(e)),
-        gear:!!find('[data-hp=header-menu]'),rows:actions&&menu&&box(actions).y>=box(menu).bottom?2:1,
+        gear:!!find('[data-hp=header-menu]'),rows:new Set([...head.querySelectorAll('button,hp-settings-select')].filter(visible).map(e=>Math.round(box(e).y))).size,
         gap:modes&&actions?box(actions).x-box(modes).right:null,
         rightRadius:rotate?getComputedStyle(rotate).borderTopRightRadius:null,
         outer:!!panel.shadowRoot.querySelector('.appbar,.toolbar,.title'),
@@ -73,7 +73,7 @@ try {
     window.__overflowCallBaseline=JSON.stringify(window.__panelHeaderCalls.filter(t=>/houseplan\/(config|layout)\/(get|set)/.test(t)));
   });
   // Resize the actual host at a fixed viewport: policy cannot use window breakpoints.
-  for(const width of [1800,1600,1500,1400,1300,1200,1100,1050,1000,950,900,850,800,700,600,480,359,320,
+  for(const width of [1800,1750,1700,1650,1600,1500,1400,1300,1200,1100,1050,1000,950,900,850,800,700,600,480,359,320,
     359,480,600,700,800,850,900,950,1000,1050,1100,1200,1300,1400,1500,1600,1800]) {
     const row=await page.evaluate(async width=>{
       document.getElementById('host').style.width=width+'px';
@@ -84,7 +84,8 @@ try {
   for(const row of evidence.widths) {
     check('width'+row.width+'noOuterReserve',!row.outer&&Math.abs(row.head.y-row.panel.y)<=1);
     check('width'+row.width+'noHorizontalOverflow',row.scroll<=row.head.width+1);
-    check('width'+row.width+'twoRowsMaximum',row.head.height<=140);
+    check('width'+row.width+'allControlsWithinHeader',row.controls.every(c=>c.rect.x>=row.head.x-1&&c.rect.right<=row.head.right+1&&c.rect.y>=row.head.y&&c.rect.bottom<=row.head.bottom+1));
+    check('width'+row.width+'actionsNeverHidden',!row.gear&&row.spaceSettings&&['mode-tab','settings','pdf','support','hidden-devices','space-add'].every(kind=>row.controls.some(c=>c.kind===kind)));
     check('width'+row.width+'menuFirst44',row.first==='panel-menu'&&row.menu?.width>=44&&row.menu?.height>=44);
     check('width'+row.width+'rotationRetained',row.rotations.length===2&&row.rotations.every(r=>r.width>=44&&r.height>=44));
     check('width'+row.width+'metricTreeRetired',row.metrics===0);
@@ -94,8 +95,9 @@ try {
     }
     if(row.zoom===0) check('width'+row.width+'rotationEndRounded',parseFloat(row.rightRadius)>=6);
   }
-  const classify=row=>row.rows===2?4:row.picker?3:row.zoom===0?2:row.labels?0:1;
-  const down=evidence.widths.slice(0,18).map(classify), up=evidence.widths.slice(18).map(classify);
+  const classify=row=>row.rows>1?4:row.picker?3:row.zoom===0?2:row.labels?0:1;
+  const pivot=evidence.widths.findIndex(row=>row.width===320)+1;
+  const down=evidence.widths.slice(0,pivot).map(classify), up=evidence.widths.slice(pivot).map(classify);
   check('allOrderedObservableStages',new Set(down).size===5);
   check('orderedReduction',down.every((phase,i)=>i===0||phase>=down[i-1]));
   check('reverseRestoration',up.every((phase,i)=>i===0||phase<=up[i-1])&&up.at(-1)===0);
@@ -107,7 +109,7 @@ try {
       const row=await page.evaluate(async width=>{
         document.getElementById('host').style.width=width+'px';return await window.__overflowSettle();
       },width);
-      if(row.rows===2) break;
+      if(row.rows>1) break;
       last={width,...row};
     }
     evidence.lastSingleRow=last;
@@ -116,22 +118,17 @@ try {
   await page.evaluate(async()=>{
     document.getElementById('host').style.width='320px';await window.__overflowSettle();
   });
-  const gear=page.locator('houseplan-panel houseplan-card [data-hp=header-menu]');
-  await gear.click();
-  const items=await page.locator('houseplan-panel houseplan-card [data-hp=header-menu-item]').evaluateAll(nodes=>
-    nodes.map(e=>({id:e.dataset.id,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})));
+  const items=await page.locator('houseplan-panel houseplan-card .head button').evaluateAll(nodes=>
+    nodes.filter(e=>e.getBoundingClientRect().width>0).map(e=>({id:e.dataset.hp,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})));
   evidence.phoneItems=items;
-  check('phoneKeepsAllWriterActions',['mode-plan','mode-devices','mode-decor','space-settings','space-add',
+  check('phoneKeepsAllWriterActions',['mode-tab','space-settings','space-add',
     'settings','pdf','support','hidden-devices'].every(id=>items.some(item=>item.id===id)));
   check('phoneMenuTargets44',items.every(item=>item.width>=44&&item.height>=44));
-  await page.keyboard.press('Escape');
-  check('phoneEscapeRestoresVisibleTrigger',await gear.evaluate(e=>e.getRootNode().activeElement===e));
   const card=page.locator('houseplan-panel houseplan-card');
-  // All modes remain reachable from the real phone menu; the retained close
-  // control keeps its existing 24px contract and returns to the same View.
+  // #1132 keeps every editor directly reachable even on a phone. Groups and
+  // close share the approved 44px target rather than disappearing into a menu.
   for(const mode of ['plan','devices','decor']) {
-    await gear.click();
-    await card.locator('[data-hp=header-menu-item][data-id=mode-'+mode+']').click();
+    await card.locator('[data-hp=mode-tab][data-mode='+mode+']').click();
     await page.waitForFunction(mode=>{
       const r=window.__overflowPanel.shadowRoot.querySelector('houseplan-card').shadowRoot;
       return r.querySelector('ha-card')?.dataset.hpMode===mode
@@ -139,10 +136,10 @@ try {
     },mode);
     const state=await page.evaluate(()=>window.__overflowSettle());
     evidence['phoneEditor'+mode]=state;
-    check('phoneEditor'+mode+'twoRows',state.rows===2&&state.head.height<=140);
+    check('phoneEditor'+mode+'wrappedControlsFit',state.rows>=3&&state.scroll<=state.head.width+1);
     const close=card.locator('.hdr>.head [data-hp=editor-close]');
-    check('phoneEditor'+mode+'close24',await close.evaluate(e=>{
-      const r=e.getBoundingClientRect();return r.width>=24&&r.height>=24;
+    check('phoneEditor'+mode+'close44',await close.evaluate(e=>{
+      const r=e.getBoundingClientRect();return r.width===44&&r.height===44;
     }));
     await close.click();
     await page.waitForFunction(()=>{
@@ -170,7 +167,7 @@ try {
       const controls=[...head.querySelectorAll('button,hp-settings-select')].filter(e=>e.getBoundingClientRect().width>0);
       const boxes=controls.map(e=>{const r=e.getBoundingClientRect(),hit=root.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
         return{kind:e.dataset.hp,inHead:r.x>=h.x-.01&&r.right<=h.right+.01,hit:hit===e||e.contains(hit)};});
-      // Owner correction: the real SVG path and the unchanged 24px close
+      // Owner correction: the real SVG path and the common 44px close
       // target must share the active editor pill's centre (no CSS translations).
       const close=head.querySelector('[data-hp=editor-close]'),slot=close.closest('.editor-close-slot');
       const icon=close.querySelector('ha-icon'),path=icon.shadowRoot?.querySelector('path');
@@ -189,7 +186,7 @@ try {
     });
     evidence['wideEditor'+mode]=wide;
     check('wideEditor'+mode+'usesAllocatedHead',wide.headWidth<wide.cardWidth&&wide.propertiesWidth===360);
-    check('wideEditor'+mode+'closeGlyphCentred',wide.closeAlignment.width===24&&wide.closeAlignment.height===24
+    check('wideEditor'+mode+'closeGlyphCentred',wide.closeAlignment.width===44&&wide.closeAlignment.height===44
       &&Math.abs(wide.closeAlignment.glyphToTarget)<=.5&&Math.abs(wide.closeAlignment.glyphToPill)<=.5
       &&Math.abs(wide.closeAlignment.slotToPill)<=.5);
     check('wideEditor'+mode+'allControlsFitAndHit',wide.fits&&wide.boxes.every(b=>b.inHead&&b.hit));
@@ -206,8 +203,7 @@ try {
   await page.evaluate(async()=>{document.getElementById('host').style.width='320px';await window.__overflowSettle();});
   // A real dirty dialog retains its text and focus across layout changes and
   // Keep; Discard closes without writing the server plan.
-  await gear.click();
-  await card.locator('[data-hp=header-menu-item][data-id=space-settings]').click();
+  await card.locator('[data-hp=space-settings]').click();
   const form=card.locator('hp-dialog[data-kind=space]');
   const title=form.locator('input[data-field$="-title"]');
   await title.fill('Unfinished header resize');
@@ -267,7 +263,7 @@ try {
   await page.evaluate(async()=>{document.getElementById('host').style.width='1800px';await window.__overflowSettle();});
   await card.locator('[data-hp=mode-tab][data-mode=plan]').focus();
   await page.evaluate(async()=>{document.getElementById('host').style.width='320px';await window.__overflowSettle();});
-  check('phoneEditorFocusTransfersToGear',await gear.evaluate(e=>e.getRootNode().activeElement===e));
+  check('phoneEditorKeepsItsVisibleFocus',await card.locator('[data-hp=mode-tab][data-mode=plan]').evaluate(e=>e.getRootNode().activeElement===e));
   await page.evaluate(async()=>{
     const outside=document.createElement('button');outside.id='native-outside-focus';outside.textContent='Outside header';
     document.body.append(outside);outside.focus();
@@ -314,14 +310,15 @@ try {
   await page.evaluate(async()=>{
     document.getElementById('host').style.width='320px';await window.__overflowSettle();
   });
-  await gear.click();
+  const pickerTrigger=card.locator('[data-hp=space-select] [data-hp=select-trigger]');
+  await pickerTrigger.click();
   const lifecycle=await page.evaluate(async()=>{
     const panel=window.__overflowPanel,card=panel.shadowRoot.querySelector('houseplan-card');
-    const oldMenu=card.shadowRoot.querySelector('#hp-header-menu'),host=panel.parentElement;
+    const select=card.shadowRoot.querySelector('[data-hp=space-select]'),host=panel.parentElement;
     panel.remove();await new Promise(requestAnimationFrame);host.append(panel);
     await card.updateComplete;const current=await window.__overflowSettle();
     return{sameCard:panel.shadowRoot.querySelector('houseplan-card')===card,
-      oldMenuRetired:!oldMenu.isConnected&&!card.shadowRoot.querySelector('#hp-header-menu'),current};
+      oldMenuRetired:select.shadowRoot.querySelector('[data-hp=select-trigger]')?.getAttribute('aria-expanded')==='false',current};
   });
   evidence.lifecycle=lifecycle;
   check('detachRetiresPopupAndKeepsOneCard',lifecycle.sameCard&&lifecycle.oldMenuRetired);

@@ -1,5 +1,7 @@
 import { LitElement, css, html, nothing, unsafeCSS, type TemplateResult } from 'lit';
 import { settingsActionsCss } from '../styles/settings-action.styles';
+import { ensureFormKitStyles } from '../form-kit-styles';
+import { PointerModalityController } from '../pointer-modality';
 import '../hp-dialog';
 import type { HpDialog } from '../hp-dialog';
 import type { ServerConfig, SpaceModel } from '../types';
@@ -63,7 +65,8 @@ function loadOptions(): PdfExportOptions {
 export class HpPdfDialog extends LitElement {
   static properties = { context: { attribute: false } };
   static styles = [css`
-    :host { display:contents;--hp-dialog-icon-size:40.48px;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
+    :host { display:contents; }
+    hp-dialog { --hp-dialog-icon-size:40.48px;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
     .body {
       --hpf-surface:var(--card-background-color,#fff);
       --hpf-control-surface:var(--hpf-surface);
@@ -106,7 +109,7 @@ export class HpPdfDialog extends LitElement {
     label:has(input:not(:disabled)):hover { color:var(--primary-color); }
     label:has(input:disabled),input:disabled { cursor:not-allowed;opacity:.5; }
     @media(max-width:680px){.body{padding:18px 14px;}.row{padding:12px 14px;}}
-    @media(prefers-reduced-motion:reduce){:host{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}label{transition:none;}}
+    @media(prefers-reduced-motion:reduce){hp-dialog{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}label{transition:none;}}
     @media (max-width:360px) {
       .row { display:grid; grid-template-columns:minmax(0,1fr); }
       .spacer { display:none; }
@@ -120,6 +123,18 @@ export class HpPdfDialog extends LitElement {
   private busy = false;
   private fade: Animation | null = null;
   private invalidHex: string | null = null;
+  private readonly pointer = new PointerModalityController(this, enabled => {
+    this.renderRoot?.querySelector('hp-dialog')?.toggleAttribute('data-pointer-hover', enabled);
+  });
+  private readonly notePointer = (event: PointerEvent): void => { this.pointer.note(event); };
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    ensureFormKitStyles(this);
+    this.pointer.connect(this.ownerDocument.defaultView);
+    for (const type of ['pointerover', 'pointerdown', 'pointermove'] as const)
+      this.addEventListener(type, this.notePointer, true);
+  }
 
   private setFormat(value: 'pdf' | 'svg'): void {
     if (this.busy || this.format === value) return;
@@ -135,7 +150,12 @@ export class HpPdfDialog extends LitElement {
     });
   }
 
-  disconnectedCallback(): void { super.disconnectedCallback(); this.fade?.cancel(); }
+  disconnectedCallback(): void {
+    for (const type of ['pointerover', 'pointerdown', 'pointermove'] as const)
+      this.removeEventListener(type, this.notePointer, true);
+    this.pointer.disconnect();
+    super.disconnectedCallback(); this.fade?.cancel();
+  }
 
   private setSvg<K extends keyof SvgExportOptions>(key: K, value: SvgExportOptions[K]): void {
     if (this.busy) return;
@@ -185,14 +205,14 @@ export class HpPdfDialog extends LitElement {
     const isSvg = this.format === 'svg';
     const o = isSvg ? this.svgOptions : this.options || defaults();
     const firstKey = isSvg ? 'devices' : 'dimensions';
-    const option = (key: keyof PdfExportOptions | 'devices', label: string, checked: boolean, first = false) => html`<label class=${first ? 'first-option' : ''}>
+    const option = (key: keyof PdfExportOptions | 'devices', label: string, checked: boolean, first = false) => html`<label class=${`hpf-toggle hpf-noicon hpf-compact${first ? ' first-option' : ''}`}>
       <input data-hp="field" data-field=${`${isSvg ? 'svg' : 'pdf'}-${key}`} type="checkbox" .checked=${checked} ?disabled=${this.busy}
         @change=${(event: Event) => {
           const value = (event.target as HTMLInputElement).checked;
           if (isSvg && key !== 'dimensions') this.setSvg(key, value);
           else if (key !== 'devices') this.setOption(key, value);
         }}>
-      <span>${label}</span>
+      <span class="hpf-toggle-title">${label}</span>
     </label>`;
     return html`<hp-dialog .hass=${this.context.hass} form-shell settings-layout compact wide data-kind="pdf"
       title=${this.context.t('pdf.title')}
@@ -200,7 +220,7 @@ export class HpPdfDialog extends LitElement {
         if (this.busy) (event.currentTarget as HpDialog).rejectClose();
         else this.context.close();
       }}>
-      <div class="body">
+      <div class="body hpf-form">
         <div class="hpf-field"><label for="export-format">${t('export.format')}</label>
           ${selectControl({ name: 'export-format', value: this.format, disabled: this.busy,
             ariaLabel: t('export.format'), options: [{ value: 'pdf', label: t('export.pdf') }, { value: 'svg', label: t('export.svg') }],

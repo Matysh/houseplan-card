@@ -151,13 +151,13 @@ try {
   await width(1400); await installDeviceOfflineFixture(page);
   const faces = (await readDeviceOfflinePaint(page, ['offline-icon', 'offline-down'])).faces;
   assert.equal(faces['offline-icon'].parent.opacity, 1);
-  assert.equal(faces['offline-icon'].glyph.opacity, .35);
+  assert.equal(faces['offline-icon'].glyph.opacity, 1); // #1132 retires Off-only dimming.
   assert.equal(faces['offline-down'].parent.opacity, .35);
   assert.equal(faces['offline-down'].glyph.opacity, 1);
   assert.equal(faces['offline-down'].glyph.effective, .35);
   await setDeviceOfflineStates(page, { 'media_player.offline_down': 'off' });
   const recovered = (await readDeviceOfflinePaint(page, ['offline-down'])).faces['offline-down'];
-  assert.equal(recovered.parent.opacity, 1); assert.equal(recovered.glyph.opacity, .35);
+  assert.equal(recovered.parent.opacity, 1); assert.equal(recovered.glyph.opacity, 1);
   record('ownStatusPaint', { faces, recovered });
   await card.locator('[data-hp="device"][data-id="offline-down"]').hover();
   const statusTip = card.locator('[data-hp-live-tip]');

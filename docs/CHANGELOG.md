@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Unify main-panel groups and print controls, keep actions visible as narrow headers wrap, and show clear device icons and Zigbee labels. Kiosk screens always hide control buttons over the plan. (#1132)
+
 ## v1.83.0-beta.4 — 2026-10-29
 
 - Keep the correct header height from the first cold Lovelace frame, and avoid forced tab-layout reads when the active space is unchanged. (#1120)

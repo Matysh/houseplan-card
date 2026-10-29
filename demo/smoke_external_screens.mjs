@@ -10,9 +10,9 @@ const out=await page.evaluate(async()=>{
   const wire={...hass,callWS:async message=>{calls.push(message.type);if(window.__failExternalScreensSave&&message.type==='houseplan/config/set')throw Error('controlled profile save refusal');return call(message);}};
   const initial=await call({type:'houseplan/config/get'});
   const profile=id=>({id,space:null,rotation:0,cycle:0,idle:0,summary:'local',hidden_devices:'local',icon_scale:null,font_scale:null,controls:true});
-  initial.config.settings||={};initial.config.settings.external_screens={version:1,next_id:2,screens:[{...profile(1),rotation:90}]};
+  initial.config.settings||={};initial.config.settings.external_screens={version:1,next_id:2,screens:[{...profile(1),rotation:90,summary:'show'}]};
   window.__pushServerConfig(initial.config);
-  history.replaceState(null,'','/houseplan?hpprofile=1&foreign=keep');
+  history.replaceState(null,'','/houseplan?hpprofile=1&foreign=keep&hpcontrols=1&hpsummary=1');
   const panel=document.createElement('houseplan-panel');panel.panel={component_name:'houseplan-panel'};panel.hass=wire;panel.narrow=false;panel.route={prefix:'/houseplan',path:''};
   document.getElementById('host').style.cssText='width:100%;height:100vh;margin:0;padding:0';document.getElementById('host').replaceChildren(panel);
   await import('/assets/houseplan-panel.js');await customElements.whenDefined('houseplan-panel');
@@ -20,10 +20,14 @@ const out=await page.evaluate(async()=>{
   const admin=panel.shadowRoot.querySelector('houseplan-card');await admin.updateComplete;
   result.coldProfileEnablesKioskAndRotation=admin._kiosk&&admin._rotation===90&&new URLSearchParams(location.search).get('foreign')==='keep';
   const root=admin.renderRoot,element=root.querySelector('ha-card');
-  await until(()=>root.querySelector('[data-hp="summary-settings"]'),'positive kiosk controls');
+  await until(()=>root.querySelector('.summary-overlay:not([inert])'),'visible kiosk summary');
+  result.legacyProfileAndURLCannotEnableButtons=!!root.querySelector('.summary-overlay')&&!root.querySelector('.summary-control,[data-hp="summary-settings"],[data-hp="summary-toggle"]');
+  result.readingLegacyControlsPreservesStoredValue=admin._serverCfg.settings.external_screens.screens[0].controls===true;
+  const writesBeforeLegacyReread=calls.filter(type=>type==='houseplan/config/set').length;
   let setConfigs=0;const original=admin.setConfig;admin.setConfig=function(...args){setConfigs++;return original.apply(this,args);};
   const navigate=async url=>{history.replaceState(null,'',url);panel.route={prefix:'/houseplan',path:location.pathname.slice('/houseplan'.length)};await admin.updateComplete;await sleep(80);await admin.updateComplete;};
   await navigate('/houseplan/kiosk/2?hpprofile=1&hpspace=1&hprotate=270');
+  result.legacyRereadDoesNotWrite=calls.filter(type=>type==='houseplan/config/set').length===writesBeforeLegacyReread;
   result.pathPositionAndIndependentOverrides=admin._space===admin._model[1].id&&admin._rotation===270;
   await navigate('/houseplan?hpprofile=999&hpsummary=0&hpcontrols=0');
   result.unknownProfileStillKiosk=admin._kiosk&&!root.querySelector('[data-hp="summary-toggle"]')&&!root.querySelector('[data-hp="summary-settings"]');
@@ -37,7 +41,8 @@ const out=await page.evaluate(async()=>{
   settings().querySelector('[data-hp="external-screen-add"]').click();await admin.updateComplete;
   const child=()=>root.querySelector('hp-dialog[data-kind="external-screen-constructor"]');
   await until(()=>child(),'constructor');
-  result.constructorHasNoInnerCard=child().querySelectorAll('.hpf-card').length===0&&child().querySelectorAll('select').length===9;
+  result.constructorHasNoInnerCard=child().querySelectorAll('.hpf-card').length===0&&child().querySelectorAll('select').length===8;
+  result.retiredControlsFieldAbsent=!child().querySelector('[data-field="external-screen-controls"]');
   const select=(key,value)=>{const el=child().querySelector(`[data-field="external-screen-${key}"]`);el.value=String(value);el.dispatchEvent(new Event('change',{bubbles:true}));};
   select('space',admin._model[0].id);await admin.updateComplete;
   result.oneSpaceDisablesCycle=child().querySelector('[data-field="external-screen-cycle"]').disabled;
@@ -46,8 +51,9 @@ const out=await page.evaluate(async()=>{
   child().querySelector('[data-hp="dialog-cancel"]').click();await admin.updateComplete;await sleep(250);
   result.cancelDidNotChangeOuterOrServer=admin._settingsDialog.externalScreens.screens.length===1&&JSON.stringify(admin._serverCfg.settings.external_screens)===beforeSaved;
   settings().querySelector('[data-hp="external-screen-add"]').click();await admin.updateComplete;await until(()=>child(),'second constructor');
+  select('summary','show');await admin.updateComplete;
   child().querySelector('[data-hp="external-screen-ok"]').click();await admin.updateComplete;await sleep(250);
-  result.okChangesOnlyOuterDraft=admin._settingsDialog.externalScreens.screens.length===2&&JSON.stringify(admin._serverCfg.settings.external_screens)===beforeSaved;
+  result.okChangesOnlyOuterDraft=admin._settingsDialog.externalScreens.screens.length===2&&JSON.stringify(admin._serverCfg.settings.external_screens)===beforeSaved&&admin._settingsDialog.externalScreens.screens[1].controls===false;
   settings().querySelector('[data-hp="external-screen-delete"]').click();await admin.updateComplete;
   settings().querySelector('[data-hp="external-screen-add"]').click();await admin.updateComplete;await until(()=>child(),'third constructor');
   child().querySelector('[data-hp="external-screen-ok"]').click();await admin.updateComplete;await sleep(250);
@@ -65,7 +71,8 @@ const out=await page.evaluate(async()=>{
   const kiosk=document.createElement('houseplan-card');kiosk.panelHost=true;kiosk.routeKiosk={enabled:true,position:null,profile:2};const kioskCalls=[];kiosk.hass={...hass,callWS:async message=>{kioskCalls.push(message.type);return call(message);}};kiosk.setConfig({type:'custom:houseplan-card'});document.getElementById('host').append(kiosk);
   await until(()=>kiosk._loadOk,'independent kiosk consumer');await kiosk.updateComplete;
   const preferenceSnapshot=()=>JSON.stringify(Object.fromEntries(Object.keys(localStorage).filter(key=>/summary-panel|hp_hidden_devices|houseplan_card_kiosk/.test(key)).sort().map(key=>[key,localStorage.getItem(key)])));
-  await until(()=>kiosk.renderRoot.querySelector('[data-hp="summary-settings"]'),'second consumer controls');
+  await until(()=>kiosk.renderRoot.querySelector('.summary-overlay:not([inert])'),'second consumer summary');
+  result.secondConsumerSummaryHasContentsWithoutControls=!!kiosk.renderRoot.querySelector('.summary-overlay h2')&&kiosk.renderRoot.querySelectorAll('.summary-overlay .summary-value').length>0&&!kiosk.renderRoot.querySelector('.summary-control');
   const secondRoot=kiosk.renderRoot.querySelector('ha-card'), localBefore=preferenceSnapshot();
   result.eachPanelHasOneOwnConfigSubscription=window.__externalScreenSubscriptionCounts().own===2&&window.__externalScreenSubscriptionCounts().total===2;
   const countsBefore=kioskCalls.filter(type=>type==='houseplan/config/get').length;

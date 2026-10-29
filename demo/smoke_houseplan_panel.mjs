@@ -438,16 +438,17 @@ wideUserActivation.retainedStageInteractiveFocuses &&= stageFocused;
 await page.setViewportSize({ width: 320, height: 720 });
 await page.evaluate(() => { window.__hpPanel.narrow = true; });
 // #1120: the lazy picker/Lit commit is part of the new content-driven phone
-// presentation. Observe that public presentation before the unchanged two-frame
+// presentation. #1132 keeps actions directly visible on further rows. Observe
+// that public presentation before the unchanged two-frame
 // camera/height stability oracle (rather than sampling the old wide row).
 await page.waitForFunction(() => {
   const root = window.__hpPanelCard.renderRoot;
   const picker = root.querySelector('[data-hp="space-select"]');
   const gear = root.querySelector('[data-hp="header-menu"]');
-  const actions = root.querySelector('.header-actions');
+  const rotation = root.querySelector('[data-hp="rotate-left"]');
   const menu = root.querySelector('[data-hp="panel-menu"]');
-  return picker?.getBoundingClientRect().width > 0 && gear?.getBoundingClientRect().width >= 44
-    && actions?.getBoundingClientRect().top >= menu?.getBoundingClientRect().bottom;
+  return picker?.getBoundingClientRect().width > 0 && gear?.getBoundingClientRect().width === 0
+    && rotation?.getBoundingClientRect().top >= menu?.getBoundingClientRect().bottom;
 });
 const resized = await page.evaluate(async () => {
   const card = window.__hpPanelCard;

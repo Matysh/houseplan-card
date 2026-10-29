@@ -1,0 +1,501 @@
+{
+  "version": "151.0.7922.34",
+  "frames": [
+    {
+      "id": "01-wide",
+      "width": 1600,
+      "height": 950,
+      "headerHeight": 65,
+      "phase": "0",
+      "phone": false,
+      "rows": 1,
+      "rotationZoomGap": 10,
+      "controls": [
+        {
+          "kind": "space-tab",
+          "height": 44,
+          "width": 142,
+          "x": 12,
+          "y": 10
+        },
+        {
+          "kind": "space-tab",
+          "height": 44,
+          "width": 121,
+          "x": 164,
+          "y": 10
+        },
+        {
+          "kind": "space-add",
+          "height": 44,
+          "width": 44,
+          "x": 295,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 82,
+          "x": 349,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 121,
+          "x": 430,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 115,
+          "x": 550,
+          "y": 10
+        },
+        {
+          "kind": "rotate-left",
+          "height": 44,
+          "width": 44,
+          "x": 1048,
+          "y": 10
+        },
+        {
+          "kind": "rotate-right",
+          "height": 44,
+          "width": 44,
+          "x": 1091,
+          "y": 10
+        },
+        {
+          "kind": "zoom-out",
+          "height": 44,
+          "width": 44,
+          "x": 1145,
+          "y": 10
+        },
+        {
+          "kind": "zoom-fit",
+          "height": 44,
+          "width": 44,
+          "x": 1188,
+          "y": 10
+        },
+        {
+          "kind": "zoom-in",
+          "height": 44,
+          "width": 44,
+          "x": 1231,
+          "y": 10
+        },
+        {
+          "kind": "hidden-devices",
+          "height": 44,
+          "width": 44,
+          "x": 1285,
+          "y": 10
+        },
+        {
+          "kind": "settings",
+          "height": 44,
+          "width": 44,
+          "x": 1339,
+          "y": 10
+        },
+        {
+          "kind": "pdf",
+          "height": 44,
+          "width": 44,
+          "x": 1393,
+          "y": 10
+        },
+        {
+          "kind": "support",
+          "height": 44,
+          "width": 44,
+          "x": 1447,
+          "y": 10
+        },
+        {
+          "kind": "summary-settings",
+          "height": 44,
+          "width": 44,
+          "x": 1501,
+          "y": 10
+        },
+        {
+          "kind": "summary-toggle",
+          "height": 44,
+          "width": 44,
+          "x": 1544,
+          "y": 10
+        }
+      ]
+    },
+    {
+      "id": "02-compact",
+      "width": 1200,
+      "height": 850,
+      "headerHeight": 65,
+      "phase": "1",
+      "phone": false,
+      "rows": 1,
+      "rotationZoomGap": 10,
+      "controls": [
+        {
+          "kind": "space-tab",
+          "height": 44,
+          "width": 142,
+          "x": 12,
+          "y": 10
+        },
+        {
+          "kind": "space-tab",
+          "height": 44,
+          "width": 121,
+          "x": 164,
+          "y": 10
+        },
+        {
+          "kind": "space-add",
+          "height": 44,
+          "width": 44,
+          "x": 295,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 349,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 394,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 439,
+          "y": 10
+        },
+        {
+          "kind": "rotate-left",
+          "height": 44,
+          "width": 44,
+          "x": 648,
+          "y": 10
+        },
+        {
+          "kind": "rotate-right",
+          "height": 44,
+          "width": 44,
+          "x": 691,
+          "y": 10
+        },
+        {
+          "kind": "zoom-out",
+          "height": 44,
+          "width": 44,
+          "x": 745,
+          "y": 10
+        },
+        {
+          "kind": "zoom-fit",
+          "height": 44,
+          "width": 44,
+          "x": 788,
+          "y": 10
+        },
+        {
+          "kind": "zoom-in",
+          "height": 44,
+          "width": 44,
+          "x": 831,
+          "y": 10
+        },
+        {
+          "kind": "hidden-devices",
+          "height": 44,
+          "width": 44,
+          "x": 885,
+          "y": 10
+        },
+        {
+          "kind": "settings",
+          "height": 44,
+          "width": 44,
+          "x": 939,
+          "y": 10
+        },
+        {
+          "kind": "pdf",
+          "height": 44,
+          "width": 44,
+          "x": 993,
+          "y": 10
+        },
+        {
+          "kind": "support",
+          "height": 44,
+          "width": 44,
+          "x": 1047,
+          "y": 10
+        },
+        {
+          "kind": "summary-settings",
+          "height": 44,
+          "width": 44,
+          "x": 1101,
+          "y": 10
+        },
+        {
+          "kind": "summary-toggle",
+          "height": 44,
+          "width": 44,
+          "x": 1144,
+          "y": 10
+        }
+      ]
+    },
+    {
+      "id": "03-wrapped",
+      "width": 800,
+      "height": 850,
+      "headerHeight": 119,
+      "phase": "4",
+      "phone": false,
+      "rows": 2,
+      "rotationZoomGap": null,
+      "controls": [
+        {
+          "kind": "panel-menu",
+          "height": 44,
+          "width": 44,
+          "x": 12,
+          "y": 10
+        },
+        {
+          "kind": "space-select",
+          "height": 44,
+          "width": 180,
+          "x": 66,
+          "y": 10
+        },
+        {
+          "kind": "space-settings",
+          "height": 44,
+          "width": 44,
+          "x": 245,
+          "y": 10
+        },
+        {
+          "kind": "space-add",
+          "height": 44,
+          "width": 44,
+          "x": 299,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 353,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 398,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 443,
+          "y": 10
+        },
+        {
+          "kind": "rotate-left",
+          "height": 44,
+          "width": 44,
+          "x": 12,
+          "y": 64
+        },
+        {
+          "kind": "rotate-right",
+          "height": 44,
+          "width": 44,
+          "x": 55,
+          "y": 64
+        },
+        {
+          "kind": "hidden-devices",
+          "height": 44,
+          "width": 44,
+          "x": 109,
+          "y": 64
+        },
+        {
+          "kind": "settings",
+          "height": 44,
+          "width": 44,
+          "x": 163,
+          "y": 64
+        },
+        {
+          "kind": "pdf",
+          "height": 44,
+          "width": 44,
+          "x": 217,
+          "y": 64
+        },
+        {
+          "kind": "support",
+          "height": 44,
+          "width": 44,
+          "x": 271,
+          "y": 64
+        },
+        {
+          "kind": "summary-settings",
+          "height": 44,
+          "width": 44,
+          "x": 325,
+          "y": 64
+        },
+        {
+          "kind": "summary-toggle",
+          "height": 44,
+          "width": 44,
+          "x": 368,
+          "y": 64
+        }
+      ]
+    },
+    {
+      "id": "04-three-rows",
+      "width": 390,
+      "height": 844,
+      "headerHeight": 183,
+      "phase": "4",
+      "phone": true,
+      "rows": 3,
+      "rotationZoomGap": null,
+      "controls": [
+        {
+          "kind": "panel-menu",
+          "height": 44,
+          "width": 44,
+          "x": 12,
+          "y": 10
+        },
+        {
+          "kind": "space-select",
+          "height": 44,
+          "width": 180,
+          "x": 66,
+          "y": 10
+        },
+        {
+          "kind": "space-settings",
+          "height": 44,
+          "width": 44,
+          "x": 245,
+          "y": 10
+        },
+        {
+          "kind": "space-add",
+          "height": 44,
+          "width": 44,
+          "x": 299,
+          "y": 10
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 12,
+          "y": 64
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 57,
+          "y": 64
+        },
+        {
+          "kind": "mode-tab",
+          "height": 44,
+          "width": 46,
+          "x": 102,
+          "y": 64
+        },
+        {
+          "kind": "rotate-left",
+          "height": 44,
+          "width": 44,
+          "x": 158,
+          "y": 64
+        },
+        {
+          "kind": "rotate-right",
+          "height": 44,
+          "width": 44,
+          "x": 201,
+          "y": 64
+        },
+        {
+          "kind": "hidden-devices",
+          "height": 44,
+          "width": 44,
+          "x": 12,
+          "y": 128
+        },
+        {
+          "kind": "settings",
+          "height": 44,
+          "width": 44,
+          "x": 66,
+          "y": 128
+        },
+        {
+          "kind": "pdf",
+          "height": 44,
+          "width": 44,
+          "x": 120,
+          "y": 128
+        },
+        {
+          "kind": "support",
+          "height": 44,
+          "width": 44,
+          "x": 174,
+          "y": 128
+        },
+        {
+          "kind": "summary-settings",
+          "height": 44,
+          "width": 44,
+          "x": 228,
+          "y": 128
+        },
+        {
+          "kind": "summary-toggle",
+          "height": 44,
+          "width": 44,
+          "x": 271,
+          "y": 128
+        }
+      ]
+    }
+  ]
+}

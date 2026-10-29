@@ -13356,8 +13356,8 @@ const MUTANT_DEFINITIONS = [
     because: '#660 AC1: wide-screen inline summary actions remain usable in all three editors',
     patches: [{
       file: 'src/summary-panel-runtime-loaded.ts',
-      find: "    if (kiosk && (this.host._mode !== 'view' || this.host._externalScreen?.controls === false)) return nothing;",
-      replace: "    if (this.host._mode !== 'view' || kiosk && this.host._externalScreen?.controls === false) return nothing;",
+      find: "    if (this.host._kiosk) return nothing;",
+      replace: "    if (this.host._mode !== 'view' || this.host._kiosk) return nothing;",
     }],
   },
   {
@@ -22451,8 +22451,8 @@ const panelHeader1120Cases = [
     because:'#1120 owner correction: actual active-editor SVG paint, 24px target and pill centres align in all three editors. Natural 9f RED glyph+6px/slot-1.5px is preserved; declaration only.',
     patches:[{file:'src/styles/panel-header.styles.ts',find:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:inline-flex; }',replace:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:block; }'}]},
   {id:'panel-editor-close-target-top-aligned-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
-    because:'#1120 owner correction: closing remains24px, but its centre must follow the27px active pill rather than stretch alignment. Declaration only; no mutant execution.',
-    patches:[{file:'src/styles/panel-header.styles.ts',find:'display:inline-flex; align-items:center; flex:none; width:auto; padding:var(--sp-2); gap:var(--sp-1);',replace:'display:inline-flex; align-items:normal; flex:none; width:auto; padding:var(--sp-2); gap:var(--sp-1);'}]},
+    because:'#1132 replaces the24px close with the common44px target; actual glyph and target centres must still align with the editor pill. Static declaration only.',
+    patches:[{file:'src/styles/panel-header.styles.ts',find:'position:absolute; inset:-1px; width:44px; height:44px;',replace:'position:absolute; inset:1px; width:44px; height:44px;'}]},
   {id:'panel-header-measures-outer-owner-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1120 AC3/5: Properties reserves360px; native all-three-wide-editor containment and real centre-hit must use the allocated head, not the wider hdr. Original9849 clipped Golden is preserved.',
     patches:[{file:'src/houseplan-card.ts',find:'const available = panelHeaderWidth(head);',replace:'const available = headerWidth;'}]},
@@ -22475,8 +22475,8 @@ const panelHeader1120Cases = [
     because:'#1120 AC1: the ordinary button event must cross both card and panel shadow roots.',
     patches:[{file:'src/panel-header-menu.ts',find:'bubbles: true, composed: true,',replace:'bubbles: true, composed: false,'}]},
   {id:'panel-phone-nav-selector-loses-specificity-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
-    because:'#1120 AC5: at320px actions moved to the gear must not remain inline and force a third row; original native RED173px is preserved.',
-    patches:[{file:'src/styles/panel-header.styles.ts',find:":host([panel-host]) .hdr[data-panel-flow][data-panel-phone] .head > .tabs .tabadd,",replace:":host([panel-host]) .hdr[data-panel-phone] .tabs .tabadd,"}]},
+    because:'#1132 supersedes the old phone-hiding contract: further wrapping must keep direct actions visible without horizontal clipping. Static declaration only.',
+    patches:[{file:'src/styles/panel-header.styles.ts',find:":host([panel-host]) .hdr[data-panel-flow='4'] > .head { flex-wrap:wrap; }",replace:":host([panel-host]) .hdr[data-panel-flow='4'] > .head { flex-wrap:nowrap; }"}]},
 ];
 
 export const MUTANTS = [...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
