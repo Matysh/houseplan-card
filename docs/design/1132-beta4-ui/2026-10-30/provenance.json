@@ -1,0 +1,30 @@
+{
+  "issue": 1132,
+  "baseTag": "v1.83.0-beta.4",
+  "baseCommit": "08b154115ff815062cfc0221f39f7e53545dbe45",
+  "productFingerprint": "db22631f8dffce327662c122343d4c921f036b08d153a1b63c45a9e9ddaeb125",
+  "haFrontend": "20260930.4",
+  "approvedDate": "2026-10-30",
+  "dataset": "public synthetic beta4 fixture",
+  "screenshots": "New captures on synthetic data; not production acceptance evidence",
+  "checks": "Replay launched and screenshots captured; no product tests/build/CI",
+  "files": {
+    "approval.json": "a1c3867449ba3a669c887781820afd0e675182a515e3764deea87e86deb618f1",
+    "CONTRACT.md": "b6c7c6e5ea8612cf1179c0bf75d41b2ffa4f907d01848232746c969ec43c3761",
+    "fixture.json": "36692ab89d2318b66602bd3d873703bfeb12454e56d71792e826200f4631c1b2",
+    "journal.json": "41cd46f7c3d0566a9e9d38a1e549315528e065a2a1cefed862bc0acde8f1e65c",
+    "overrides/ha-dialog.css": "cd1981660620b1a15025c83a9ef9ce534b28c07fb5d7f8c093dfb3bded7dcae3",
+    "overrides/houseplan-card.css": "4f2aa9da94c18b37a0b8f67e0cb1018e382768d2ceded2b401a8b7cf53d17ad5",
+    "prototypes/UI-006-print-uikit.mjs": "6fa1ac8487bffbee0b57690f630829fd66abb4c136203c0ac17deb5445949583",
+    "README.md": "6d5462d22127b087954085cfc576dadddd10254ef0d5addb32ffb4f22452f793",
+    "replay.mjs": "470ad57597fdfe0f0eff087b2b53cde1169cb0a441117852092de2a5c4f979aa",
+    "runtime/app.mjs": "bc4e91e765fc4cf9b9bdd6826631d8a0216008d9c47524ec6e4b901daf4a02cf",
+    "screenshots/01-wide.png": "1cf03161935c9a6440eb8db48f68e8bf9a63e9cb12b17f64256cef2d0ed02443",
+    "screenshots/02-compact.png": "0fbbbd882432c6abcaee63d3464fb72ea500ea6f6f94d1f1ee75e59b590168f3",
+    "screenshots/03-wrapped.png": "b7e2d9a3e1a977111f6f27f556b649ce75fb04d47b25ca0c203d383e73b82aea",
+    "screenshots/04-three-rows.png": "79591fd2e426bb5939d9ad616e0819a7ecdccf48dda7b9ccdd7fd61a1d78d6c8",
+    "screenshots/05-print-dialog.png": "24c42b8a6924f8433eee5e0af071b49fb6c9344691835ddcb4ce3812290701a1",
+    "screenshots/06-external-screen.png": "1e5f7092f3176f4f54612e16f16ceb52f6843bea60685a906fb76381cb4cb127",
+    "screenshots/07-markers-lqi.png": "65937ef447a4051c2845e76d9af4b1b36b9df62c700d433d21f9d88b35c2fcbf"
+  }
+}

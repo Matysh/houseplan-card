@@ -1,0 +1,14 @@
+{
+  "issue": 1132,
+  "approvedAt": "2026-10-30",
+  "scope": "UI-001 through UI-012, UI-005 revision 2",
+  "ownerMessage": "Всё, фиксируем все изменения в отдельную задачу, прикладываем материалы в репозиторий, всё как обычно. После этого стенд можно выключить.",
+  "kind": "visual approval only",
+  "baseline": "v1.83.0-beta.4",
+  "productTestsRun": false,
+  "privateDataPublished": false,
+  "excludedFromProduct": [
+    "LAB-001 scrim token repair in standalone lab",
+    "LAB-002 demo LQI data"
+  ]
+}

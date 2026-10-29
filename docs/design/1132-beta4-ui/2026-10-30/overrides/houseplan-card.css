@@ -1,0 +1,238 @@
+/* UI-011: external screens always hide controls over the plan. */
+hp-dialog[data-kind="external-screen-constructor"] .hpf-field:has(#screen-controls),
+.summary-control.kiosk {
+  display: none !important;
+}
+/* UI-010 r1: Power Off has no distinct dimmed glyph presentation.
+   Own unavailability and the existing Power On paint retain their rules. */
+.dev.power-off:not(.unavail) .device-core > ha-icon {
+  opacity: 1 !important;
+}
+
+/* UI-009 r1: separate rotation and zoom into two outlined groups. */
+.hdr > .head .zoomctl [data-hp="rotate-right"] {
+  border-radius: 0 var(--rad-m) var(--rad-m) 0 !important;
+}
+.hdr > .head .zoomctl [data-hp="zoom-out"] {
+  margin-inline-start: 10px !important;
+  border-radius: var(--rad-m) 0 0 var(--rad-m) !important;
+}
+
+/* UI-001 r1: remove the upper bevel highlight from device faces. */
+.dev {
+  --device-core-inset-shadow: 0 0 0 0 transparent !important;
+}
+
+/* UI-002 r1: restore pointer hover for all three editor tabs. */
+:host([data-pointer-hover]) .modes .modetab:not(.active):not(:disabled):hover {
+  background-color: rgba(127, 127, 127, 0.14);
+  color: var(--hp-txt);
+}
+
+/* UI-003 r1: one outlined, 44px toolbar treatment. Lab-only visual proposal. */
+.hdr .head > .tabs,
+.hdr .head > .modes {
+  padding: 0 !important;
+  background: transparent !important;
+  align-items: center;
+}
+.hdr .head > .tabs { gap: 10px !important; }
+.hdr .head > .tabs .tab {
+  box-sizing: border-box;
+  height: 44px;
+  min-height: 44px;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--rad-m);
+  background: transparent;
+  color: var(--hp-txt);
+  padding: 0;
+  gap: 0;
+  position: relative;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+.hdr .head > .tabs .tabtitle {
+  padding-inline: 12px;
+  line-height: 42px;
+}
+.hdr .head > .tabs .tab > .tabedit {
+  box-sizing: border-box;
+  width: 44px;
+  height: 42px;
+  min-width: 44px;
+  margin: 0;
+  border-inline-start: 1px solid var(--hp-line);
+  border-radius: 0 calc(var(--rad-m) - 1px) calc(var(--rad-m) - 1px) 0;
+  justify-content: center;
+  opacity: 1;
+  --mdc-icon-size: 20px;
+}
+.hdr .head > .tabs .tab.active { border-color: var(--hp-accent); }
+.hdr .head > .tabs .tabadd,
+.hdr .head > .tabs .compact-space-settings {
+  width: 44px;
+  min-width: 44px;
+  justify-content: center;
+  --mdc-icon-size: 20px;
+}
+.hdr .head > .tabs .tabadd ha-icon { --mdc-icon-size: 20px; }
+.hdr .head > .tabs.compact-spaces { gap: 0 !important; }
+.hdr .compact-space-select::part(control) {
+  box-sizing: border-box;
+  min-height: 44px;
+  height: 44px;
+  background: transparent;
+  border: 1px solid var(--hp-line);
+  border-radius: var(--rad-m) 0 0 var(--rad-m);
+}
+.hdr .head > .tabs .compact-space-settings {
+  margin-inline-start: -1px;
+  border-radius: 0 var(--rad-m) var(--rad-m) 0;
+}
+.hdr .tabs.compact-spaces .tabadd { margin-inline-start: 10px; }
+.hdr .head > .modes { gap: 0 !important; }
+.hdr .modes .modetab,
+.hdr .modes .editor-close-slot:not([aria-hidden='true']) {
+  box-sizing: border-box;
+  position: relative;
+  height: 44px;
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--hp-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--hp-txt);
+}
+.hdr .modes .modetab { padding: 0 12px; justify-content: center; }
+.hdr .modes .modetab ha-icon { --mdc-icon-size: 20px; }
+.hdr .modes > * + * { margin-inline-start: -1px; }
+.hdr .modes .modetab:first-child { border-radius: var(--rad-m) 0 0 var(--rad-m); }
+.hdr .modes .modetab:last-child,
+.hdr .modes .modetab:has(+ .editor-close-slot[aria-hidden='true']),
+.hdr .modes .editor-close-slot:last-child:not([aria-hidden='true']) {
+  border-radius: 0 var(--rad-m) var(--rad-m) 0;
+}
+.hdr .modes .editor-close-slot[aria-hidden='true'] { display: none; }
+.hdr .modes .editor-close-slot:not([aria-hidden='true']) { width: 44px; }
+.hdr .modes .editor-close-slot .closex {
+  width: 100%; height: 100%; color: var(--hp-txt); opacity: 1;
+}
+.hdr .modes .modetab.active { border-color: var(--hp-accent); z-index: 1; }
+.hdr .modes .modetab.active::after { display: none; }
+/* UI-004 r1: Escape returns focus to the editor tab; do not leave a native
+   white outline over the toolbar's own border after returning to View. */
+.hdr .modes .modetab:focus-visible { outline: none; }
+:host([data-pointer-hover]) .hdr .tabs .tab:hover,
+:host([data-pointer-hover]) .hdr .modes .modetab:not(:disabled):hover,
+:host([data-pointer-hover]) .hdr .modes .editor-close-slot:not([aria-hidden='true']):hover {
+  border-color: var(--hp-accent);
+  background: transparent;
+  color: var(--hp-txt);
+  z-index: 2;
+}
+:host([data-pointer-hover]) .hdr .tabs .tab > .tabedit:hover {
+  border-inline-start-color: var(--hp-accent);
+  background: rgba(127, 127, 127, 0.14);
+}
+
+/* UI-005 r1: wrapping is the final adaptation, including narrow portrait.
+   Override the beta4 phone fallback in both the live header and metrics tree.
+   Earlier phases still collapse labels, zoom controls and space tabs. */
+:host([panel-host]) .hdr[data-panel-flow='4'] > .head {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center;
+  justify-content: flex-start;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'] .head > .modes {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: 100%;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'] .head .modetab,
+:host([panel-host]) .hdr[data-panel-flow='4'] .head > .tabs .tabedit,
+:host([panel-host]) .hdr[data-panel-flow='4'] .head > .tabs .tabadd,
+:host([panel-host]) .hdr[data-panel-flow='4'] .header-actions > .header-action,
+:host([panel-host]) .hdr[data-panel-flow='4'] .header-actions > .summary-control {
+  display: inline-flex !important;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'] .head > .tabs {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-shrink: 1 !important;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'] .compact-space-select {
+  flex: 1 1 180px !important;
+  min-width: 44px !important;
+  max-width: 180px !important;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'] .head > .header-actions {
+  flex: 1 0 100% !important;
+  min-width: 0;
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'] .header-menu-wrap {
+  display: none !important;
+}
+
+/* UI-005 r2: on the narrow wrapped layout, let rotation share the editor row.
+   Use the existing measured overflow signal, not a new 355/423 breakpoint. */
+:host([panel-host]) .hdr[data-panel-flow='4'][data-panel-phone] .head > .header-actions {
+  display: contents !important;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'][data-panel-phone] .head > .modes,
+:host([panel-host]) .hdr[data-panel-flow='4'][data-panel-phone] .header-actions > .zoomctl {
+  order: 1;
+  flex: 0 0 auto !important;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'][data-panel-phone] > .head::after {
+  content: '';
+  order: 2;
+  flex: 0 0 100%;
+  height: 0;
+  margin-block: -5px;
+  pointer-events: none;
+}
+:host([panel-host]) .hdr[data-panel-flow='4'][data-panel-phone] .header-actions > .header-action,
+:host([panel-host]) .hdr[data-panel-flow='4'][data-panel-phone] .header-actions > .summary-control {
+  order: 3;
+  flex: 0 0 auto;
+}
+
+/* UI-007 r1: compact Devices editor uses the exact bundled mdi:chip glyph.
+   Keep the wide pencil unchanged. CSS preview preserves the native button. */
+.hdr .modetab[data-mode="devices"] ha-icon:not(.panel-mode-full) {
+  position: relative;
+  visibility: hidden;
+}
+.hdr .modetab[data-mode="devices"] ha-icon:not(.panel-mode-full)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  visibility: visible;
+  background: currentColor;
+  mask: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTYsNEgxOFY1SDIxVjdIMThWOUgyMVYxMUgxOFYxM0gyMVYxNUgxOFYxN0gyMVYxOUgxOFYyMEg2VjE5SDNWMTdINlYxNUgzVjEzSDZWMTFIM1Y5SDZWN0gzVjVINlY0TTExLDE1VjE4SDEyVjE1SDExTTEzLDE1VjE4SDE0VjE1SDEzTTE1LDE1VjE4SDE2VjE1SDE1WiIvPjwvc3ZnPg==") center / contain no-repeat;
+}
+
+/* UI-008 r1: compact Background editor uses mdi:palette from pinned HA MDI. */
+.hdr .modetab[data-mode="decor"] ha-icon:not(.panel-mode-full) {
+  position: relative;
+  visibility: hidden;
+}
+.hdr .modetab[data-mode="decor"] ha-icon:not(.panel-mode-full)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  visibility: visible;
+  background: currentColor;
+  mask: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE3LjUsMTJBMS41LDEuNSAwIDAsMSAxNiwxMC41QTEuNSwxLjUgMCAwLDEgMTcuNSw5QTEuNSwxLjUgMCAwLDEgMTksMTAuNUExLjUsMS41IDAgMCwxIDE3LjUsMTJNMTQuNSw4QTEuNSwxLjUgMCAwLDEgMTMsNi41QTEuNSwxLjUgMCAwLDEgMTQuNSw1QTEuNSwxLjUgMCAwLDEgMTYsNi41QTEuNSwxLjUgMCAwLDEgMTQuNSw4TTkuNSw4QTEuNSwxLjUgMCAwLDEgOCw2LjVBMS41LDEuNSAwIDAsMSA5LjUsNUExLjUsMS41IDAgMCwxIDExLDYuNUExLjUsMS41IDAgMCwxIDkuNSw4TTYuNSwxMkExLjUsMS41IDAgMCwxIDUsMTAuNUExLjUsMS41IDAgMCwxIDYuNSw5QTEuNSwxLjUgMCAwLDEgOCwxMC41QTEuNSwxLjUgMCAwLDEgNi41LDEyTTEyLDNBOSw5IDAgMCwwIDMsMTJBOSw5IDAgMCwwIDEyLDIxQTEuNSwxLjUgMCAwLDAgMTMuNSwxOS41QzEzLjUsMTkuMTEgMTMuMzUsMTguNzYgMTMuMTEsMTguNUMxMi44OCwxOC4yMyAxMi43MywxNy44OCAxMi43MywxNy41QTEuNSwxLjUgMCAwLDEgMTQuMjMsMTZIMTZBNSw1IDAgMCwwIDIxLDExQzIxLDYuNTggMTYuOTcsMyAxMiwzWiIvPjwvc3ZnPg==") center / contain no-repeat;
+}
+
+/* UI-012: Zigbee readings paint above room names and room metrics (z=1).
+   Promote their marker too, so opacity/transform stacking contexts cannot
+   trap the reading below a room label. Hover/focus/topology keep higher layers. */
+.dev:where(:has(.lqi)) { z-index: 2; }
+.dev .lqi { z-index: 3; }
