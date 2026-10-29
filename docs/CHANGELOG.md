@@ -2,13 +2,17 @@
 
 ## Unreleased
 
+## v1.83.0-beta.4 — 2026-10-29
+
+- Open the main House Plan page directly in kiosk mode through /houseplan/kiosk or ?hpkiosk=1. Select one space by its displayed position with /kiosk/N or hpspace=N; invalid positions leave all spaces available. The main-page kiosk uses the full panel without a header, following #1120. (#1103)
+
 - Settings and import dialogs wait for Home Assistant to finish bootstrapping before their components load, preventing a rare missing modal shell on cold entry. (#1125)
 - The main-page header adapts to actual content: captions, zoom and floor tabs make room before actions wrap left. The HA menu sits inside this single header; kiosk hides it with the header. Narrow screens retain every action. The active editor close stays centred inside its24px target. Lovelace behavior is unchanged. (#1120)
 
 - Show past Dreame cleanup paths when the archive omits its map slot, using the uniquely proven saved map and existing calibration. Foreign and ambiguous maps remain refused. (#1117)
 - External-screen profiles configure main-panel kiosks remotely, with per-field URL overrides and live updates (#1113). Live updates also support authenticated read-only screens. Screen profiles reconnect after an integration reload.
 
-- Rotate the plan smoothly while contact outlines follow upright device badges. Device cards and summary settings share the UI Kit; new/hidden dots remain visible above their shells. Off devices dim their icon, confirmed unavailable devices dim the whole ordinary marker, and tooltips name the state. Light spill is hidden in Plan/Background editors; Properties uses one 1024px card-width boundary. Header overflow is delivered separately in #1120. (#1119)
+- Rotate the plan smoothly while contact outlines follow upright device badges. Device cards and summary settings share the UI Kit; new/hidden dots remain visible above their shells. Off devices dim their icon, confirmed unavailable devices dim the whole ordinary marker, and tooltips name the state. Light spill is hidden in Plan/Background editors; Properties uses one 1024px card-width boundary. (#1119)
 - Undo and Redo retain warm neighboring floors; restoring backdrop and stair edits skips unchanged wall geometry while preserving exact documents and existing refusals. (#1100)
 - Moving a wall node reuses the junction baseline only for the exact stored revision, avoiding repeated scans of the previous plan. Existing structural refusals remain unchanged. (#1102)
 - Drag stairs and LED vertices smoothly on large plans; their saves and backdrop transforms keep wall geometry warm while stair areas and backdrop placement stay current. (#1098)
@@ -34,10 +38,7 @@
   Home Assistant's native focus API. Dropdowns also keep long Summary forms
   inside their content scroller without adding an outer dialog scrollbar. (#998)
 - Save appearance changes and Copy/Delete/Undo/Redo without rebuilding unchanged floor geometry; hidden floors and layers defer display work until needed, while visible values and alarms remain current. Successful Save closes promptly after its confirmed response, and confirmed deletion closes its current form in the same accepted update. A vacuum and its route history remain visible on the configured route's floor even when its dock belongs to another floor. Ordinary saves also retain unchanged device appearances without recalculating them. (#1093)
-- Open the main House Plan page directly in kiosk mode through /houseplan/kiosk
-  or ?hpkiosk=1. Select one space by its displayed position with /kiosk/N or
-  hpspace=N; invalid positions leave all spaces available. Home Assistant chrome
-  is unchanged. (#1103)
+
 
 - Choose the compact floor selector before a warm card first paints, preventing
   a 9px header/stage jump when opening the plan again. (#1092)

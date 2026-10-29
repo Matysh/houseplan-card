@@ -1,5 +1,9 @@
 # Project status
 
+Main-panel header (#1120) owns the HA menu inside the card, without an outer title bar or height reserve. Measured content fitting reduces captions, zoom and floor navigation before wrapping left; all phone actions remain available. The Properties sidebar retains its independent 1024px card-width boundary. Kiosk hides the whole header/menu; Lovelace behavior is unchanged. The active editor close glyph remains centred in its 24px target.
+
+Generated stable entry loaders (#1125) wait for public home-assistant readiness before eager imports or fallback constructors in a pending HA document. Already-ready HA and non-HA documents retain the immediate path; bounded bootstrap failure rejects before fallback registration. Product dialog components are unchanged. The controlled real-HA regression and final beta evidence are separate checks.
+
 Static CSS tooling (#1121) preserves descendant pseudo-selector whitespace;
 real-sheet semantic comparison and a controlled native paint witness retain
 declaration, interpolation and source-map contracts without product CSS changes.
@@ -40,7 +44,7 @@ protocol changes are introduced.
 
 Physical commits (#1099) share each exact successful candidate wall pass with junction validation. A content/version/revision baseline cache holds one slot per current space. Current-version identity and adoption visit only the edited floor; legacy migration keeps its existing atomic boundary. Resize reuses a successful preview only while its physical fingerprint and model version match.
 
-Main-page URL kiosk (#1103) uses the thin host runtime routeKiosk property. Both path and query entries share the existing authoritative selection and kiosk guards, preserving strict Lovelace floor validation and HA chrome. Internal paths retain one read owner; URL changes do not reload unchanged configuration.
+Main-page URL kiosk (#1103) uses the thin host runtime routeKiosk property. Both path and query entries share the existing authoritative selection and kiosk guards, preserving strict Lovelace floor validation. Under #1120, the main-page kiosk hides the complete card header and its HA menu; Back or the ordinary /houseplan URL exits. Internal paths retain one read owner; URL changes do not reload unchanged configuration.
 
 Derived-artifact publication (#1109) drains the complete Git stat while printing
 its first 40 lines. Large accepted payloads no longer abort before push with
@@ -120,10 +124,10 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Item | State |
 |---|---|
 | Generated | 2026-10-29 — rerun `node scripts/status-snapshot.mjs` for the current tree |
-| Version | **1.83.0-beta.3** in all 7 version sources (`scripts/release-contract.mjs`) |
+| Version | **1.83.0-beta.4** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.3` |
-| Tests | Node unit 5889 · pure backend 710 · HA-harness backend 613 · browser smokes 483 (`npm run inventory`) |
+| Tests | Node unit 5893 · pure backend 710 · HA-harness backend 613 · browser smokes 483 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

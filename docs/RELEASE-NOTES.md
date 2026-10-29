@@ -1,18 +1,18 @@
-<!-- release: v1.83.0-beta.3 -->
+<!-- release: v1.83.0-beta.4 -->
 ## Основное
 
-- План и свет: поворот на 90°, свет через внутренние окна и настройка комнат, пропускающих солнце.
-- Устройства: пороговые тревоги, контекстное меню в Просмотре, история копирования и удаления, выбор сущности для открытия в Home Assistant.
-- Производительность: меньше повторных вычислений при сохранении и редактировании, меньше нагрузки от обновлений Zigbee-сигнала.
+- Основная страница: киоск по URL, общие профили внешних экранов и компактная шапка в обычном режиме.
+- Интерфейс: доработаны поворот плана, карточки устройств, сводка и адаптивные панели.
+- Производительность: плавнее редактирование больших планов, меньше фоновой и серверной работы.
 - Мелкие исправления и улучшения.
 
-[Подробная история изменений](https://github.com/Matysh/houseplan-card/blob/v1.83.0-beta.3/docs/CHANGELOG.ru.md)
+[Подробная история изменений](https://github.com/Matysh/houseplan-card/blob/v1.83.0-beta.4/docs/CHANGELOG.ru.md)
 
 ## Highlights
 
-- Plan and lighting: 90° rotation, light through internal windows, and rooms that let sunlight pass through.
-- Devices: threshold alerts, a context menu in View, copy/delete history, and entity selection for opening in Home Assistant.
-- Performance: less repeated work during saves and edits, and lower overhead from Zigbee signal updates.
+- Main page: URL kiosks, shared external-screen profiles, and a compact header in ordinary mode.
+- Interface: refined plan rotation, device cards, summary settings, and responsive panels.
+- Performance: smoother editing of large plans and less background and server work.
 - Small fixes and improvements.
 
-[Full changelog](https://github.com/Matysh/houseplan-card/blob/v1.83.0-beta.3/docs/CHANGELOG.md)
+[Full changelog](https://github.com/Matysh/houseplan-card/blob/v1.83.0-beta.4/docs/CHANGELOG.md)
