@@ -1,0 +1,453 @@
+{
+  "schema": 1,
+  "issue": 1119,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Stable v1.82.0 commit eb172115f3b90568d22a8b99dc947dd66cf2b409 already has device information, Summary settings, markers and editor Properties. This mixed task improves those existing interfaces; quarter-turn/contact and owned-availability refinements supplement beta #1070/#1026. The net result is a stable UI fix, with no new large workflow or persisted schema.",
+  "summary": {
+    "ru": "Карточка устройства и настройки сводки приведены к общему виду; выключение и недоступность показаны раздельно, свойства адаптируются к ширине карточки.",
+    "en": "Device information and Summary settings share a consistent appearance; Off and Unavailable are distinct, and Properties adapts to card width."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "7ffcfff58675c6eed2c3fab54e82ae6cde6771dcdc36ba540fa13f10908f0b85",
+    "golden": [
+      {
+        "id": "approved-ui-contacts-270-1119",
+        "expectation": "new",
+        "reason": "UI001: new final quarter-turn frame of the actual 32-marker designer corpus; upright wall/free contact contours and visible hit composition follow the approved replay, without changing authored placement."
+      },
+      {
+        "id": "approved-ui-contacts-90-1119",
+        "expectation": "new",
+        "reason": "UI001: new final quarter-turn frame of the actual 32-marker designer corpus; upright wall/free contact contours and visible hit composition follow the approved replay, without changing authored placement."
+      },
+      {
+        "id": "approved-ui-info-dark-1119",
+        "expectation": "new",
+        "reason": "UI003: new device information UI Kit scene with localized subtitle, shell/header/icon, entity/model rows and wrapped shared footer; ordinary actions and data remain intact."
+      },
+      {
+        "id": "approved-ui-info-light-1119",
+        "expectation": "new",
+        "reason": "UI003: new device information UI Kit scene with localized subtitle, shell/header/icon, entity/model rows and wrapped shared footer; ordinary actions and data remain intact."
+      },
+      {
+        "id": "approved-ui-summary-dark-1119",
+        "expectation": "new",
+        "reason": "UI005: new full Summary UI Kit scene via real summary_panel_api config/get opt-in, with panel/block title and three actual source controls; header, switches, body and footer follow approved composition."
+      },
+      {
+        "id": "approved-ui-summary-light-1119",
+        "expectation": "new",
+        "reason": "UI005: new full Summary UI Kit scene via real summary_panel_api config/get opt-in, with panel/block title and three actual source controls; header, switches, body and footer follow approved composition."
+      },
+      {
+        "id": "decor-over-glow-base-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "decor-over-opaque-hover-light",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "decor-preview-handoff-1080",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry."
+      },
+      {
+        "id": "device-alert-reasons",
+        "expectation": "change",
+        "reason": "UI003: the actual device information/reasons card adopts the approved shared UI Kit shell/header, localized subtitle, rows and footer; threshold/native reasons, group order, values and actions remain unchanged."
+      },
+      {
+        "id": "device-icon-state-table-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "device-icon-state-table-light",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "device-issues-alarm-card",
+        "expectation": "change",
+        "reason": "UI003: the actual device information/reasons card adopts the approved shared UI Kit shell/header, localized subtitle, rows and footer; threshold/native reasons, group order, values and actions remain unchanged."
+      },
+      {
+        "id": "device-issues-alarm-plan",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "device-issues-maintenance-card",
+        "expectation": "change",
+        "reason": "UI003: the actual device information/reasons card adopts the approved shared UI Kit shell/header, localized subtitle, rows and footer; threshold/native reasons, group order, values and actions remain unchanged."
+      },
+      {
+        "id": "device-issues-maintenance-plan",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "device-offline-dark",
+        "expectation": "change",
+        "reason": "UI007: confirmed own-unavailable fades each whole ordinary marker once to 0.35; own Off fades only its MDI. Preserve foreign/unknown/static/LED gates, geometry and separate ordinary 2.5D floor-shadow paint."
+      },
+      {
+        "id": "device-offline-light",
+        "expectation": "change",
+        "reason": "UI007: confirmed own-unavailable fades each whole ordinary marker once to 0.35; own Off fades only its MDI. Preserve foreign/unknown/static/LED gates, geometry and separate ordinary 2.5D floor-shadow paint."
+      },
+      {
+        "id": "device-value-badge-positions-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "direct-zigbee-lqi-flat-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "direct-zigbee-lqi-iso-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "furniture-placement-preview-light",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry."
+      },
+      {
+        "id": "furniture-transform-light",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry."
+      },
+      {
+        "id": "hidden-devices-editor-dark",
+        "expectation": "change",
+        "reason": "UI004: the explicitly revealed hidden/new dot now paints above the real face, including dense 2.5D overlays, without changing visibility, hit targets or selection. UI007 also fades the eligible own Off MDI only; ordinary circle and non-status layers keep their contract."
+      },
+      {
+        "id": "hidden-devices-iso-dark",
+        "expectation": "change",
+        "reason": "UI004: the explicitly revealed hidden/new dot now paints above the real face, including dense 2.5D overlays, without changing visibility, hit targets or selection."
+      },
+      {
+        "id": "hidden-devices-view-light",
+        "expectation": "change",
+        "reason": "UI004: the explicitly revealed hidden/new dot now paints above the real face, including dense 2.5D overlays, without changing visibility, hit targets or selection. UI007 also fades the eligible own Off MDI only; ordinary circle and non-status layers keep their contract."
+      },
+      {
+        "id": "hidden-wall-diagnostics-plan-dark",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry."
+      },
+      {
+        "id": "hidden-wall-diagnostics-plan-light",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry."
+      },
+      {
+        "id": "hover-over-glow-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-live-layers-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-no-borders-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage3-forced-colors-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage3-no-filter-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage3-openings-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage3-overlays-dark",
+        "expectation": "change",
+        "reason": "UI004: the explicitly revealed hidden/new dot now paints above the real face, including dense 2.5D overlays, without changing visibility, hit targets or selection. UI007 also fades the eligible own Off MDI only; ordinary circle and non-status layers keep their contract."
+      },
+      {
+        "id": "isometric-stage3-overlays-light",
+        "expectation": "change",
+        "reason": "UI004: the explicitly revealed hidden/new dot now paints above the real face, including dense 2.5D overlays, without changing visibility, hit targets or selection. UI007 also fades the eligible own Off MDI only; ordinary circle and non-status layers keep their contract."
+      },
+      {
+        "id": "isometric-stage6-dark-darkfloor",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage6-dark-lightfloor",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage6-hover-light",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage6-light-darkfloor",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "isometric-stage6-light-lightfloor",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-custom-glow-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-custom-glow-light",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-fill-light-axis-split-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-fill-lqi-axis-split-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-fill-temp-axis-split-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-glow-sun-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-manual-auto-spill-overlap-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-opaque-glow-two-doorways-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-temp-glow-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-temp-glow-light",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-temp-glow-no-sources-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "lighting-temp-glow-room-override-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "openings-filled-tunnel-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "openings-hidden-view-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "openings-thick-wall-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "panel-kiosk-profile-no-controls",
+        "expectation": "new",
+        "reason": "Existing accepted #1113 profile scene remains NEW on this index. Exercise #1119 final presentation under effective profile rotation/controls/summary; preserve the accepted profile/URL and local-preference contract. No header-overflow change is authorized."
+      },
+      {
+        "id": "panel-kiosk-profile-rotated-90",
+        "expectation": "new",
+        "reason": "Existing accepted #1113 profile scene remains NEW on this index. Exercise #1119 final presentation under effective profile rotation/controls/summary; preserve the accepted profile/URL and local-preference contract. No header-overflow change is authorized."
+      },
+      {
+        "id": "panel-kiosk-profile-summary-on",
+        "expectation": "new",
+        "reason": "Existing accepted #1113 profile scene remains NEW on this index. Exercise #1119 final presentation under effective profile rotation/controls/summary; preserve the accepted profile/URL and local-preference contract. No header-overflow change is authorized."
+      },
+      {
+        "id": "plan-rotation-flat-270-1070",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "plan-rotation-flat-90-1070",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "plan-rotation-iso-0-1070",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "plan-rotation-iso-180-1070",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "plan-rotation-iso-270-1070",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "plan-rotation-iso-90-1070",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "room-co2-flat-light",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "room-co2-iso-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "room-label-parity-plan-dark",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry. UI006 additionally hides real Plan Glow layers; room-label data stays unchanged."
+      },
+      {
+        "id": "room-label-parity-plan-light",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry. UI006 additionally hides real Plan Glow layers; room-label data stays unchanged."
+      },
+      {
+        "id": "room-label-parity-view-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "room-label-parity-view-light",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "stairs-flat-selected-light",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry."
+      },
+      {
+        "id": "vacuum-history-dst-light",
+        "expectation": "change",
+        "reason": "UI010: at this 1000px owner-card width the existing narrow editor/dialog route replaces the formerly visible Properties column. Preserve authored geometry, selections/drafts and native narrow framing; this is the approved 960→1024 boundary, not new geometry."
+      },
+      {
+        "id": "view-device-menu-hidden-ru",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "view-device-menu-iso-edge-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "view-device-menu-readonly-light-ru",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      },
+      {
+        "id": "view-device-menu-writer-dark",
+        "expectation": "change",
+        "reason": "UI007: the visible native owned Power Off glyph is 0.35 in this settled View/quarter-turn/context scene (including explicit off-source overrides). Its circle, badge, light calculations, world geometry and interaction remain ordinary; foreign/binary/unknown values do not supply Power Off."
+      }
+    ],
+    "goldenChecks": [
+      {
+        "id": "device-alert-alarm-flat",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "device-alert-alarm-iso",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "device-battery-board-dark",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "device-contacts-designer-dark",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "device-contacts-designer-light",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "geometry-view-dark-fit",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "geometry-view-light-fit",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "led-strip-off-light",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      },
+      {
+        "id": "static-bg-moon-gibbous-white-light",
+        "reason": "Actual task capture is byte-identical to the indexed PNG and has zero differing pixels. Preserve this adjacent geometry/contact/LED/diagnostic/static/alarm surface; no pending visual change is inherited."
+      }
+    ],
+    "smokes": [
+      "smoke_approved_ui.mjs",
+      "smoke_plan_rotation.mjs",
+      "smoke_plan_rotation_touch.mjs",
+      "smoke_plan_rotation_editors.mjs",
+      "smoke_device_contacts.mjs",
+      "smoke_info_card_context.mjs",
+      "smoke_summary_dialog_scroll.mjs",
+      "smoke_summary_panel_polish.mjs",
+      "smoke_glow.mjs",
+      "smoke_properties_panel.mjs",
+      "smoke_device_offline.mjs"
+    ]
+  }
+}

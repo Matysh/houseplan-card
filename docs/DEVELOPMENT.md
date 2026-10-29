@@ -9,6 +9,19 @@ wheel/touch/footer checks even though the visual-only adapter inherited
 `overflow:visible`. The independent historical Summary CSS fixture remains;
 its full-sheet comparison permits only the five named UI-005 substitutions.
 
+The owner-approved #1119 resource carry compares the exact accepted #1113
+`0d55dec1` / `cd31dbf3` source and verified ready bundle with candidate
+`eb778dbb`: generated JS 3692159→3701071 (+8912 B), host references
+6663→6672 (+9), initial View 360198→361045 (+847 B gzip), lazy editor
+382264→382750 (+486), onboarding 45213→45699 (+486). Only measured positive
+own costs are added to the corresponding rolling references, preserving their
+previous headroom and bands (2000 B / 25 host references). Delegates, port and
+unused-private counts stay 145/384/105/101; the independent actual unused scan
+has no violations. Decreased graphs are not tightened in the task; LED graphs
+(+12/+11 B) and the absolute initial/panel walls retain ample existing reserve.
+No functional, geometry, timing or image threshold changes. Original REDs and
+prior-source render proofs remain separate from fresh accepted-base evidence.
+
 Opening drag (#1097): compile the test build, then run `node --test test/opening-drag.test.mjs test/live-editor.test.mjs test/opening-placement.test.mjs test/floor-geometry-key.test.mjs`, `node demo/smoke_opening_drag.mjs` and `node demo/smoke_partition_openings_preview.mjs`. The native smoke checks every cut and shoulder, original coordinate/final-array readback, unchanged held config/epoch/pools, neighbour reuse, cancellation and refusal. `node demo/benchmark_opening_drag.mjs` uses a canonical large-house fixture, seven series at DPR1/2 and native pointermove-to-settled wall-clock latency including IPC; counters are acceptance and milliseconds are descriptive. Preserve the earlier legacy-fixture diagnostic separately: its first release also migrated all floors, so its neighbour misses do not isolate preview eviction. See [the measurement audit](analysis/1097-opening-drag-2026-10-28.md).
 
 The owner permitted measured resource-limit growth for #1097. On the final

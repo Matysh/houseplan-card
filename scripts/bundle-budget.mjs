@@ -457,7 +457,11 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // excess1412B, band2000B and absolute387200B wall remain unchanged.
 // #1113 SPEC r2: frozen R1 359702 ->360198 (+496 own bytes), final cd31dbf3.
 // Preserve the inherited1421-B gap,2000-B band and absolute wall.
-export const INITIAL_VIEW_GZIP_CEILING = 358_777;
+// #1119, owner-approved measured own-cost carry on accepted #1113 0d55/cd31:
+// initial View360198->361045 (+847), editor382264->382750 (+486),
+// onboarding45213->45699 (+486). Only those rolling references carry their
+// measured positive deltas; existing bands, absolute walls and other gates stay.
+export const INITIAL_VIEW_GZIP_CEILING = 359_624;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -892,7 +896,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_940;
 // excess and the same2000B band. No timing or behavioral AC is relaxed.
 // #1113 SPEC r2: frozen R1 382259 ->382264 (+5 own bytes), final cd31dbf3.
 // Preserve the inherited1025-B gap and2000-B band.
-export const LAZY_EDITOR_GZIP_CEILING = 381_239;
+export const LAZY_EDITOR_GZIP_CEILING = 381_725;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -928,7 +932,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // registers the shared select instead of leaving native controls unupgraded.
 // Matched accepted #1070 dist40339 ->44057 (+3718 B). Carry only that measured
 // cost:39412 ->43130, retaining the inherited927-B gap and2000-B band.
-export const LAZY_ONBOARDING_GZIP_CEILING = 44_642;
+export const LAZY_ONBOARDING_GZIP_CEILING = 45_128;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of

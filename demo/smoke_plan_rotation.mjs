@@ -1,6 +1,8 @@
 // #1070: native controls/gestures plus exact painted-frame and persistence oracles.
 import { launch, launchColdView, launchPanelCold, check, finish, requirePinnedBrowser } from './serve.mjs';
 import { installHpTestOnPage } from './helpers/hp-test.mjs';
+import { assertFreshDemoBundle } from './bundle-freshness.mjs';
+import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 requirePinnedBrowser();
 const { page, browser } = await launch({ width: 1100, height: 1000 });
@@ -205,6 +207,107 @@ try {
   await page.waitForFunction(() => document.getElementById('rotation-kiosk').renderRoot.querySelector('.stage')?.dataset.hpPlanRotation === '270');
   check('explicit URL rotation overrides the profile without changing the ordinary browser choice',
     await page.evaluate(() => window.__card._rotation === 90));
+  // #1119/#1113: a real profile route and bounded namespace event retire a
+  // queued ordinary turn without adopting it into profile or browser storage.
+  const profileMotion = await launchColdView({ width: 1280, height: 920 }, 1, [], {},
+    undefined, undefined, '/demo.html?panel-cold=1&external-screens=1', false);
+  try {
+    const p = profileMotion.page, c = p.locator('houseplan-card').first();
+    await p.emulateMedia({ reducedMotion: 'no-preference' });
+    await p.evaluate(async () => {
+      history.replaceState(null, '', '/houseplan');
+      const panel = document.createElement('houseplan-panel');
+      panel.panel = { component_name: 'houseplan-panel' }; panel.hass = window.__mkHass();
+      panel.narrow = false; panel.route = { prefix: '/houseplan', path: '' };
+      const host = document.getElementById('host');
+      host.style.cssText = 'width:100%;height:100vh;max-width:none;margin:0;padding:0';
+      host.replaceChildren(panel); window.__1119Panel = panel;
+      await import('/assets/houseplan-panel.js'); await customElements.whenDefined('houseplan-panel');
+    });
+    await p.waitForFunction(() => {
+      const card = window.__1119Panel.shadowRoot?.querySelector('houseplan-card');
+      if (!card?._loadOk || card._booting || card._bootSoft) return false;
+      window.__card = card; return true;
+    });
+    await assertFreshDemoBundle(p, fileURLToPath(new URL('../', import.meta.url)));
+    const seedRevision = await p.evaluate(async () => {
+      const card = window.__card, reply = await card.hass.callWS({ type: 'houseplan/config/get' });
+      reply.config.settings ||= {};
+      reply.config.settings.external_screens = { version: 1, next_id: 2, screens: [{ id: 1,
+        space: null, rotation: 90, cycle: 0, idle: 0, summary: 'local', hidden_devices: 'local',
+        icon_scale: null, font_scale: null, controls: true }] };
+      return window.__pushServerConfig(reply.config);
+    });
+    await p.waitForFunction(rev => window.__card._cfgRev === rev, seedRevision);
+    await p.waitForFunction(() => window.__externalScreenSubscriptionCounts().own === 1);
+    await p.evaluate(() => {
+      window.__1119ProfileCalls = [];
+      const panel = window.__1119Panel, call = panel.hass.callWS;
+      panel.hass = { ...panel.hass, callWS: async message => {
+        window.__1119ProfileCalls.push(message.type); return call(message);
+      } };
+    });
+    const rotate = c.locator('[data-hp="rotate-right"]');
+    await rotate.click();
+    await p.waitForFunction(() => window.__card.renderRoot.querySelector('.zoomwrap').style.transform.startsWith('rotate('));
+    await rotate.click();
+    const entered = await p.evaluate(() => {
+      const card = window.__card, root = card.renderRoot;
+      const active = root.querySelector('.zoomwrap').style.transform;
+      const preference = localStorage.getItem('houseplan_card_rotation_v1');
+      const cache = JSON.stringify(card._floorCacheBuilds), element = root.querySelector('ha-card');
+      window.__1119ProfileMotion = { preference, cache, element };
+      history.replaceState(null, '', '/houseplan?hpprofile=1');
+      window.__1119Panel.route = { prefix: '/houseplan', path: '' };
+      const cfg = structuredClone(card._serverCfg);
+      cfg.settings.external_screens.screens[0].rotation = 270;
+      const rev = window.__pushServerConfig(cfg);
+      return { active, rev };
+    });
+    check('profile event starts while the native queued turn is actually active', entered.active.startsWith('rotate('));
+    await p.waitForFunction(rev => {
+      const card = window.__card, root = card.renderRoot;
+      return card._cfgRev === rev && root.querySelector('.stage').dataset.hpPlanRotation === '270'
+        && root.querySelector('.zoomwrap').style.transform === '' && !root.querySelector('.stage').inert;
+    }, entered.rev);
+    await p.waitForTimeout(330);
+    const live = await p.evaluate(() => {
+      const card = window.__card, root = card.renderRoot, before = window.__1119ProfileMotion;
+      return { rotation: root.querySelector('.stage').dataset.hpPlanRotation,
+        transform: root.querySelector('.zoomwrap').style.transform,
+        inert: root.querySelector('.stage').inert, preference: localStorage.getItem('houseplan_card_rotation_v1') === before.preference,
+        cache: JSON.stringify(card._floorCacheBuilds) === before.cache, element: root.querySelector('ha-card') === before.element,
+        gets: window.__1119ProfileCalls.filter(type => type === 'houseplan/config/get').length,
+        writes: window.__1119ProfileCalls.filter(type => /houseplan\/.*(?:set|update|patch|save|copy|delete|move)$/.test(type)).length };
+    });
+    check('live profile rotation retires queued motion and keeps its real stage input',
+      live.rotation === '270' && live.transform === '' && !live.inert);
+    check('profile event preserves ordinary preference, physical cache and card', live.preference && live.cache && live.element);
+    check('bounded live rotation has no config GET or writer', live.gets === 0 && live.writes === 0);
+    const overrideRevision = await p.evaluate(() => {
+      const card = window.__card;
+      history.replaceState(null, '', '/houseplan?hpprofile=1&hprotate=180');
+      window.__1119Panel.route = { prefix: '/houseplan', path: '' };
+      const cfg = structuredClone(card._serverCfg); cfg.settings.external_screens.screens[0].rotation = 0;
+      return window.__pushServerConfig(cfg);
+    });
+    await p.waitForFunction(rev => window.__card._cfgRev === rev
+      && window.__card.renderRoot.querySelector('.stage').dataset.hpPlanRotation === '180', overrideRevision);
+    await p.evaluate(() => {
+      history.replaceState(null, '', '/houseplan');
+      window.__1119Panel.route = { prefix: '/houseplan', path: '' };
+    });
+    await p.waitForFunction(() => !window.__card._kiosk
+      && window.__card.renderRoot.querySelector('.stage').dataset.hpPlanRotation === '90');
+    const returned = await p.evaluate(() => ({
+      preference: localStorage.getItem('houseplan_card_rotation_v1') === window.__1119ProfileMotion.preference,
+      gets: window.__1119ProfileCalls.filter(type => type === 'houseplan/config/get').length,
+      rotation: window.__card.renderRoot.querySelector('.stage').dataset.hpPlanRotation,
+    }));
+    check('URL override survives live profile edits and leaving kiosk restores only the accepted native turn',
+      returned.preference && returned.rotation === '90' && returned.gets === 0);
+    writeFileSync(`${evidence}/profile-motion-1119.json`, JSON.stringify({ entered, live, returned }, null, 2));
+  } finally { await profileMotion.browser.close(); }
   await page.reload();
   await page.waitForFunction(() => window.__card?._booting === false);
   await installHpTestOnPage(page); await wait();
