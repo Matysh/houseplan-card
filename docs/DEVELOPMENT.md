@@ -12,15 +12,20 @@ to required product byte savings. Both ordinary guards failed before the fix.
 
 ## Main-panel content overflow (#1120)
 
-Measured resource carry compares frozen accepted1119 b2bd/FP88 with candidate
-FPc8cd3878: total generated JS3701302→3714380 (+13078 B), initial View
-361025→364888 (+3863 B gzip), host references6672→6674 (+2), card source
-13600→13744 (+144 lines). Only those four exhausted rolling references carry
-the corresponding own delta; their previous reserve and bands remain unchanged.
-Editor port384→385 and runtime12053→12056 fit existing bands, so their ceilings
-are unchanged. Delegates145 and private counts105/101 are unchanged; the actual
-unused scan found no violations. Panel-only delivery shrinks3495→2791 B gzip.
-All absolute walls, timing, geometry, functional and image tolerances remain.
+Measured own-resource carry compares verified original CI ready output for
+accepted1121 d91b/FP2f521ed3 with current FP84b458a5: generated JS
+3701323→3714801 (+13478 B), initial View361029→364973 (+3944 B gzip),
+host references6672→6674 (+2), card source13600→13744 (+144 lines).
+The incoming minifier's21raw/4initialgzip bytes are excluded from this task's
+delta. Only those four exhausted rolling references carry the corresponding
+own delta; all previous bands remain unchanged. Port384→385 and runtime
+12053→12056 fit existing bands. Delegates145/private105/101 are unchanged;
+the actual current unused scan found no violations. Panel-only delivery
+shrinks3495→2797 B gzip. Structural donor facts inherit the actual accepted1119
+scan through byte-identical source/compiler/metric inputs; bundle size and graph
+facts use the exact GREEN1121 CI artifact, not a donor rebuild. Earlier c8 and
+pre1121 cost/proof identities remain historical receipts. Absolute walls,
+timing, geometry, functional guards and image tolerances remain unchanged.
 
 The public data-hp contract records panel-title as retired from 1.83.0-beta.4
 (issue #1120): the approved title/header is removed, not retained as hidden DOM.
@@ -44,7 +49,7 @@ external hasSidebar:true hides the action consistently. Cold View keeps editor
 code lazy; Lovelace and the 1024 px Properties boundary remain separate.
 
 Synthetic DOM/event evidence does not prove the native HA drawer. Companion
-E2E is required on the exact beta candidate before release; task visual intent
+E2E is required on the exact published task SHA before S7; task visual intent
 does not accept global baselines. The immutable accepted r6 materials live in
 docs/design/1120-panel-header-overflow/2026-10-29.
 

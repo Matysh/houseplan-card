@@ -461,10 +461,10 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // initial View360198->361045 (+847), editor382264->382750 (+486),
 // onboarding45213->45699 (+486). Only those rolling references carry their
 // measured positive deltas; existing bands, absolute walls and other gates stay.
-// #1120, owner-authorized exact own-cost carry from accepted1119 b2bd/88:
-// initial View361025 ->364962 (+3937 B gzip). Preserve2000 B band and the
+// #1120, owner-authorized exact own-cost carry from accepted1121 d91b/2f52:
+// initial View361029 ->364973 (+3944 B gzip), accepted1121 d91b/2f52. Preserve2000 B band and the
 // absolute387200 B wall; lazy graphs remain inside their existing reserves.
-export const INITIAL_VIEW_GZIP_CEILING = 363_561;
+export const INITIAL_VIEW_GZIP_CEILING = 363_568;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

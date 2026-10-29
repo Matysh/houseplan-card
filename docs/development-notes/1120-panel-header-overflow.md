@@ -64,7 +64,26 @@ The immutable r6 package remains unchanged. This direct correction requires the 
 The first whole gate also found seven stale/source-contract assumptions and two open class producers. The repair retains exact style cascade/ownership, fixed-floor refusal, the full-height outer shell plus real card-owned menu and empty-state linkage. `Plan` is explicitly reviewed as a DE/FR cognate. Hover remains pointer-hover gated. The native metrics boundary now admits only the actual finite header icon/select class variants; it does not declare arbitrary classes or suppress CSS auditing.
 
 
-Final pre-publication native/visual proof after that correction uses ready FP2050285a.
+Pre-upstream native/visual proof after that correction uses ready FP2050285a.
 All ten affected native smokes passed, including the actual3editor SVG centre guard, phone actions/reverse phases, unchanged Lovelace/rotation/profile/Properties oracles. Selected12 completed as3 declared indexed changes,5 new/unindexed frames and4 strict SHA/zero-pixel identical neighbors. Eleven current PNG hashes equal the prior c8 set; only the active Plan header changes to correct the close glyph. The current whole Plan image and direct native mode-group crop were inspected. No baseline is accepted and no full-matrix result is claimed.
 
-Final actual cost against the same frozen accepted1119 donor: raw+13508B, initial View+3937Bgzip, hostrefs+2, portmembers+1, corecard+144lines/runtime+3; zero unused violations. Relative to the prior c8 carry only raw430B and initial74B are added to the references. All bands, absolute walls, other resource guards and functional/timing/geometry/image thresholds remain unchanged. No byte-golf was performed. RealHA proof remains pending on the exact published SHA before S7; current native tests are not a substitute.
+Pre-upstream actual cost against the same frozen accepted1119 donor: raw+13508B, initial View+3937Bgzip, hostrefs+2, portmembers+1, corecard+144lines/runtime+3; zero unused violations. Relative to the prior c8 carry only raw430B and initial74B are added to the references. All bands, absolute walls, other resource guards and functional/timing/geometry/image thresholds remain unchanged. No byte-golf was performed. RealHA proof remains pending on the exact published SHA before S7; current native tests are not a substitute.
+
+
+After accepted1121 d91b, both unpublished1120 commits were rebased. Manual
+conflicts were only current DEVELOPMENT prose and generated STATUS/inventory;
+both current sections and the canonical regenerated inventories survive.
+The incoming minifier changes a build input, so one fresh build produced
+FP84b458a5727d200b95022163615e7aa7335b78faaf029f365fa9acdcb186454e.
+Fresh actual all-sheet CSS-minifier semantics, all ten affected native smokes,
+close SVG centres0/0/0 and selected12 pass their declared contracts. Every
+selected actual PNG equals its prior2050 counterpart, including the inspected
+corrected Plan frame; four neighbors remain strict index-SHA/pixel0 equal.
+No old receipt is renamed to the new source identity.
+
+Current own-cost uses the verified GREEN1121 original CI artifact and accepted
+source donor, without rebuilding it: raw3701323→3714801 (+13478), initial
+361029→364973 (+3944 gzip), refs+2/port+1/corecard+144/runtime+3; actual unused
+violations[]. Incoming1121 raw+21/initial+4 is explicitly excluded. The earlier
+references are adjusted only by -30raw/+7initial after this more precise base
+attribution. All bands and functional/timing/geometry/image thresholds stay.
