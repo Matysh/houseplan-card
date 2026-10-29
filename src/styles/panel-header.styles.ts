@@ -22,10 +22,11 @@ export const panelHeaderStyles = css`
   min-width:44px; padding-inline:12px; gap:8px;
 }
 :host([panel-host]) .hdr[data-panel-flow] .head > .modes {
-  display:inline-flex; flex:none; width:auto; padding:var(--sp-2); gap:var(--sp-1);
+  display:inline-flex; align-items:center; flex:none; width:auto; padding:var(--sp-2); gap:var(--sp-1);
   background:rgba(127,127,127,.12);
 }
 :host([panel-host]) .hdr[data-panel-flow] .head .modetab { display:inline-flex; }
+:host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:inline-flex; }
 :host([panel-host]) .hdr[data-panel-flow] .modetab > .ml { display:none; }
 :host([panel-host]) .hdr[data-panel-flow] .panel-mode-full { display:none; }
 :host([panel-host]) .hdr[data-panel-flow] .panel-mode-compact { display:inline-flex; }
@@ -81,7 +82,7 @@ export const panelHeaderStyles = css`
   transition:background 150ms ease;
 }
 .panel-menu ha-icon { --mdc-icon-size:24px; }
-.panel-menu:hover { background:rgba(127,127,127,.16); }
+:host([data-pointer-hover]) .hdr[data-panel-flow] .panel-menu:hover { background:rgba(127,127,127,.16); }
 .panel-menu:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
-@media(prefers-reduced-motion:reduce) { .panel-menu { transition:none; } }
+@media (prefers-reduced-motion: reduce) { .panel-menu { transition:none; } }
 `;

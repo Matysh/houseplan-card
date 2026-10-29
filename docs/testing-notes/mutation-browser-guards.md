@@ -44,9 +44,9 @@ that transition events alone prove disposal.
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
 | Paint, cascade and layer composition | 100 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 64 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Responsive DOM layout | 66 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 278 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **567 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **569 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 
 
@@ -593,6 +593,9 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 - `wall-draw-rejection-rollback-skipped`
 
 ### Responsive DOM layout
+
+- `panel-editor-close-glyph-baseline-1120`
+- `panel-editor-close-target-top-aligned-1120`
 
 - `panel-header-measures-outer-owner-1120`
 
@@ -1318,3 +1321,5 @@ ordered-cache witnesses use pure units. Static readiness only; execution zero.
 inside the remaining head and pass real centre-hit tests. Original9849 visual
 clipping is a semantic RED despite successful capture execution. Not executed
 as a mutant; the ordinary fixed-source smoke must pass before handoff.
+
+#1120 owner correction adds two native close witnesses: actual SVG path paint and the24px close target share the active pill centre in all3editors. The natural9f glyph+6px/slot-1.5px failure and native corrected screenshots are preserved. These require actual computed SVG screen geometry; no mutant is executed during development.

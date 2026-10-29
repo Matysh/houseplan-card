@@ -22,7 +22,11 @@ test('GUI clear deletes floor while an existing YAML index survives unrelated ed
 });
 
 test('fixed View and kiosk remove every floor-changing affordance', () => {
-  assert.match(card, /const navigationSpaces = fixed\.kind === 'valid' \? \[space\] : model;/);
+  assert.match(card, /private get _headerNavigationSpaces\(\): readonly SpaceModel\[\] \{\s*const model = this\._model, fixed = this\._fixedFloorState\(model\), space = this\._spaceModel\(\);\s*return fixed\.kind === 'valid' && space \? \[space\] : model;/);
+  assert.match(card, /private get _panelHeaderSpaces\(\): PanelHeaderSpaces \{\s*return \{ spaces: this\._headerNavigationSpaces, current: this\._space,/);
+  assert.match(card, /const navigationSpaces = this\._headerNavigationSpaces;/);
+  assert.match(card, /renderHeaderSpaceNavigation\(\{\s*spaces: navigationSpaces,/);
+  assert.match(card, /configure: this\._norm && this\._canEdit/);
   assert.match(card, /this\._canEdit && !this\._kiosk && !this\._hasFixedFloor/);
   assert.match(card, /!this\._hasFixedFloor && this\._kiosk && this\._zoom <= 1\.001/);
   assert.match(card, /this\._kiosk && !this\._hasFixedFloor && this\._kioskDots/);

@@ -53,7 +53,12 @@ export function panelHeaderWidth(head: HTMLElement): number { return outerSize(h
 
 function iconMetric(doc: Document, size: number, className = ''): HTMLElement {
   const icon = doc.createElement('span');
-  icon.className = className + ' panel-icon-metric';
+  // The header renderers expose exactly these icon variants; metrics never
+  // adopt arbitrary custom-element class producers from another surface.
+  icon.className = 'panel-icon-metric';
+  if (className.split(/\s+/).includes('tabedit')) icon.classList.add('tabedit');
+  if (className.split(/\s+/).includes('panel-mode-compact')) icon.classList.add('panel-mode-compact');
+  if (className.split(/\s+/).includes('panel-mode-full')) icon.classList.add('panel-mode-full');
   icon.style.cssText = 'flex:none;width:' + size + 'px;height:' + size + 'px;';
   return icon;
 }
@@ -71,7 +76,7 @@ function nativeMetric(node: Node, doc: Document): Node | null {
   }
   if (node.localName.includes('-')) {
     const metric = doc.createElement('span');
-    metric.className = node.getAttribute('class') || '';
+    if (node.classList.contains('compact-space-select')) metric.classList.add('compact-space-select');
     if (node.classList.contains('compact-space-select'))
       metric.style.cssText = 'display:block;flex:0 0 180px;width:180px;min-width:180px;height:44px;';
     return metric;

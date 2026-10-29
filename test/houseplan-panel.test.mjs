@@ -16,19 +16,22 @@ test('#486 panel shell keeps one full card and forwards HA properties without in
   assert.doesNotMatch(panel, /kiosk\s*:/, 'HA shell state must not enable card kiosk mode');
 });
 
-test('#486 menu and container-owned panel layout have explicit accessibility and overflow contracts', () => {
-  const panel = source('src/houseplan-panel.ts');
-  assert.match(panel, /menu\.dataset\.hp = 'panel-menu';/);
-  assert.match(panel, /title\.dataset\.hp = 'panel-title';/);
-  assert.match(panel, /new CustomEvent\('hass-toggle-menu', \{[\s\S]*bubbles: true,[\s\S]*composed: true/);
-  assert.match(panel, /width: 44px;[\s\S]*height: 44px;/);
-  assert.match(panel, /setAttribute\('aria-label', label\)/);
-  assert.match(panel, /document\.createElement\('header'\)/);
-  assert.match(panel, /toolbar\.setAttribute\('role', 'toolbar'\)/);
-  assert.doesNotMatch(panel, /appbar\.setAttribute\('role', 'toolbar'\)/,
-    'the toolbar may not replace the app bar header landmark');
-  assert.match(panel, /grid-template-rows: auto minmax\(0, 1fr\)/);
+test('#1120 the full-height shell delegates the accessible HA menu to every ordinary card header', () => {
+  const panel = source('src/houseplan-panel.ts'), card = source('src/houseplan-card.ts');
+  const menu = source('src/panel-header-menu.ts'), styles = source('src/styles/panel-header.styles.ts');
+  assert.doesNotMatch(panel, /createElement\('header'\)|panel-title|panel-menu|hass-toggle-menu/);
+  assert.match(panel, /grid-template-rows: minmax\(0, 1fr\)/);
+  assert.match(panel, /page\.append\(content\)/);
   assert.match(panel, /\.content \{[\s\S]*min-width: 0;[\s\S]*min-height: 0;[\s\S]*overflow: hidden;/);
+  assert.match(menu, /data-hp="panel-menu"/);
+  assert.match(menu, /aria-label=\$\{state.label\}/);
+  assert.match(menu, /new CustomEvent\('hass-toggle-menu', \{\s*bubbles: true, composed: true,\s*\}\)/);
+  assert.match(styles, /width:44px; height:44px; min-width:44px; min-height:44px/);
+  assert.match(styles, /\.panel-menu:focus-visible/);
+  assert.match(card, /private _renderPanelMenu\(\)[^{]*\{\s*if \(!this.panelHost\) return nothing;\s*return renderPanelMenu\(panelMenuState\(this.hass, !!this.narrow, this._kiosk,/);
+  assert.match(card, /private _renderEmptyPanelHeader\(\)[^{]*\{\s*if \(!this.panelHost \|\| this._kiosk\) return nothing;[\s\S]*?if \(!menu.visible\) return nothing;/);
+  assert.equal((card.match(/\$\{this\.panelHost \? this\._renderEmptyPanelHeader\(\) :/g) || []).length, 3,
+    'pending, invalid and read-only empty branches retain the ordinary HA exit');
 });
 
 test('#488 the shell sizes itself from the viewport and adopts pre-upgrade HA properties', () => {

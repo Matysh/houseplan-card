@@ -7,9 +7,10 @@ import { parseRules } from '../scripts/css-lex.mjs';
 import { cardStyles, baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles }
   from '../test-build/styles.js';
 import { CARD_DIALOG_FORM_KIT, formKitCss } from '../test-build/styles/form-kit.styles.js';
+import { panelHeaderStyles } from '../test-build/styles/panel-header.styles.js';
 import { isoTilesStyles } from '../test-build/styles/iso-tiles.styles.js';
 
-const FILES = ['base', 'plan', 'devices', 'chrome', 'dialogs'];
+const FILES = ['base', 'plan', 'devices', 'chrome', 'dialogs', 'panel-header'];
 const sourceOf = (name) =>
   readFileSync(new URL(`../src/styles/${name}.styles.ts`, import.meta.url), 'utf8');
 
@@ -23,7 +24,7 @@ test('issue 266 the aggregator is exactly the five surface files in the cascade 
   // диалога. Пятёрка и её порядок неприкосновенны.
   // #649: the 2.5D tile sheet follows the five and is scoped to the 2.5D View
   // only (next test), so no accepted Flat frame can change through it.
-  assert.deepEqual(cardStyles, [baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles, isoTilesStyles],
+  assert.deepEqual(cardStyles, [baseStyles, planStyles, devicesStyles, chromeStyles, dialogsStyles, isoTilesStyles, panelHeaderStyles],
     'the cascade order is a contract — the golden set was accepted against it');
 });
 
@@ -72,7 +73,15 @@ test('issue 266 the media wrappers survived the move', () => {
   // 10 historical source wrappers; two were MIXED-zone and split into
   // per-zone copies by the generator. #437's overlay stylesheet is loaded
   // with its lazy runtime and has its own source contract, so the five eager
-  // surface owners remain at the historical 12 wrappers.
-  assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 12,
+  // surface owners retain 12 wrappers; #1120 adds one panel-menu-only wrapper.
+  assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 13,
     'reduced-motion wrappers must survive — golden always shoots reduced');
+});
+
+test('#1120 the appended panel header sheet owns only panel selectors and its native metrics', () => {
+  const rules = parseRules(panelHeaderStyles.cssText).filter(rule => rule.kind === 'rule');
+  assert.ok(rules.length > 20);
+  for (const rule of rules) for (const selector of rule.selectors)
+    assert.ok(selector.includes(':host([panel-host])') || selector.includes('.panel-menu')
+      || selector.includes('.panel-header-metrics'), `unscoped panel rule: ${selector}`);
 });

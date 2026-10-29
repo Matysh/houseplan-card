@@ -22442,6 +22442,12 @@ const approvedUi1119Cases = [
 
 // #1120 declarations only. No mutant has been executed in the task.
 const panelHeader1120Cases = [
+  {id:'panel-editor-close-glyph-baseline-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
+    because:'#1120 owner correction: actual active-editor SVG paint, 24px target and pill centres align in all three editors. Natural 9f RED glyph+6px/slot-1.5px is preserved; declaration only.',
+    patches:[{file:'src/styles/panel-header.styles.ts',find:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:inline-flex; }',replace:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:block; }'}]},
+  {id:'panel-editor-close-target-top-aligned-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
+    because:'#1120 owner correction: closing remains24px, but its centre must follow the27px active pill rather than stretch alignment. Declaration only; no mutant execution.',
+    patches:[{file:'src/styles/panel-header.styles.ts',find:'display:inline-flex; align-items:center; flex:none; width:auto; padding:var(--sp-2); gap:var(--sp-1);',replace:'display:inline-flex; align-items:normal; flex:none; width:auto; padding:var(--sp-2); gap:var(--sp-1);'}]},
   {id:'panel-header-measures-outer-owner-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1120 AC3/5: Properties reserves360px; native all-three-wide-editor containment and real centre-hit must use the allocated head, not the wider hdr. Original9849 clipped Golden is preserved.',
     patches:[{file:'src/houseplan-card.ts',find:'const available = panelHeaderWidth(head);',replace:'const available = headerWidth;'}]},

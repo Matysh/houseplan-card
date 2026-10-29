@@ -461,6 +461,7 @@ test('i18n: German catalog keeps the product glossary and has no translation sen
 
 test('i18n: German values equal to English are explicitly reviewed', () => {
   const allowed = new Set([
+    'mode.plan_short', // #1120: Plan is the same product term in EN, DE and FR.
     'view.menu_ha', // #1089: the owner's command name HA more-info is language-neutral.
     'export.transparent', // #1036: Transparent is also the German background label.
     'space.label_co2', 'roomcard.co2_label', // #920: CO₂ and ppm are language-neutral scientific symbols.
@@ -514,6 +515,7 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
   // Every entry here is a legitimate French/English homograph or a unit,
   // template or brand token — reviewed with the contributed dictionary.
   const allowed = new Set([
+    'mode.plan_short', // #1120: Plan is the same product term in EN, DE and FR.
     'view.menu_ha', // #1089: preserve the same HA command name in every menu.
     'export.transparent', // #1036: Transparent is also the French background label.
     'space.label_co2', // #920: chemical formula, not untranslated prose.

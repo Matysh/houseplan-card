@@ -170,14 +170,28 @@ try {
       const controls=[...head.querySelectorAll('button,hp-settings-select')].filter(e=>e.getBoundingClientRect().width>0);
       const boxes=controls.map(e=>{const r=e.getBoundingClientRect(),hit=root.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
         return{kind:e.dataset.hp,inHead:r.x>=h.x-.01&&r.right<=h.right+.01,hit:hit===e||e.contains(hit)};});
+      // Owner correction: the real SVG path and the unchanged 24px close
+      // target must share the active editor pill's centre (no CSS translations).
+      const close=head.querySelector('[data-hp=editor-close]'),slot=close.closest('.editor-close-slot');
+      const icon=close.querySelector('ha-icon'),path=icon.shadowRoot?.querySelector('path');
+      if(!path)throw Error('native editor close SVG path missing');
+      const pb=path.getBBox(),paint=new DOMPoint(pb.x+pb.width/2,pb.y+pb.height/2).matrixTransform(path.getScreenCTM());
+      const target=close.getBoundingClientRect(),pill=head.querySelector('.modetab.active').getBoundingClientRect();
+      const sb=slot.getBoundingClientRect();
+      const closeAlignment={width:target.width,height:target.height,
+        glyphToTarget:paint.y-target.y-target.height/2,glyphToPill:paint.y-pill.y-pill.height/2,
+        slotToPill:sb.y+sb.height/2-pill.y-pill.height/2};
       const vb=root.querySelector('.plan-svg').viewBox.baseVal;
-      return{headWidth:h.width,cardWidth:element.getBoundingClientRect().width,propertiesWidth:properties?.width,
+      return{closeAlignment,headWidth:h.width,cardWidth:element.getBoundingClientRect().width,propertiesWidth:properties?.width,
         fits:head.scrollWidth<=h.width+1,boxes,positive:stage.width>0&&stage.height>0,
         height:Math.abs(stage.height+hdr.getBoundingClientRect().height-element.getBoundingClientRect().height)<=1,
         cameraAspect:Math.abs(vb.width/vb.height-stage.width/stage.height)<.01};
     });
     evidence['wideEditor'+mode]=wide;
     check('wideEditor'+mode+'usesAllocatedHead',wide.headWidth<wide.cardWidth&&wide.propertiesWidth===360);
+    check('wideEditor'+mode+'closeGlyphCentred',wide.closeAlignment.width===24&&wide.closeAlignment.height===24
+      &&Math.abs(wide.closeAlignment.glyphToTarget)<=.5&&Math.abs(wide.closeAlignment.glyphToPill)<=.5
+      &&Math.abs(wide.closeAlignment.slotToPill)<=.5);
     check('wideEditor'+mode+'allControlsFitAndHit',wide.fits&&wide.boxes.every(b=>b.inHead&&b.hit));
     check('wideEditor'+mode+'heightAndCamera',wide.positive&&wide.height&&wide.cameraAspect);
     await card.locator('.hdr>.head [data-hp=editor-close]').click();

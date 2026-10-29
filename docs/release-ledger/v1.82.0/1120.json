@@ -25,7 +25,7 @@
       {
         "id": "panel-wide-plan-editor-dark-en",
         "expectation": "change",
-        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Ordinary HA menu is first inside the card only under public narrow/hidden-sidebar policy; content-driven composition preserves permissions and actions."
+        "reason": "#1120 owner-approved r6: remove outer appbar/title/56px reserve; the actual card owns the complete slot. Ordinary HA menu is first inside the card only under public narrow/hidden-sidebar policy; content-driven composition preserves permissions and actions. Owner correction: centre the active-editor close SVG inside its unchanged24px target and align target with active pill; original r6 package is immutable."
       },
       {
         "id": "panel-wide-kiosk-all",
