@@ -197,6 +197,16 @@ try {
     await hp.setMode('view');
 
     q('[data-hp="pdf"]').click(); await settle();
+    // The lazy PDF element may finish after the shared card settled promise.
+    // Wait for its public dialog and actual field before using either.
+    if (!await wait(() => {
+      const host = q('hp-pdf-dialog');
+      const dialog = host?.shadowRoot?.querySelector('hp-dialog[data-kind="pdf"]') || q('hp-dialog[data-kind="pdf"]');
+      const field = dialog?.querySelector('[data-hp="field"][data-field="pdf-dimensions"]');
+      if (!field) return false;
+      const bounds = field.getBoundingClientRect();
+      return bounds.width > 0 && bounds.height > 0 && getComputedStyle(field).visibility === 'visible';
+    })) throw new Error('The lazy PDF dialog/dimensions field did not mount within 7000ms');
     const pdfHost = q('hp-pdf-dialog');
     const pdfDialog = pdfHost?.shadowRoot?.querySelector('hp-dialog[data-kind="pdf"]') || q('hp-dialog[data-kind="pdf"]');
     const option = pdfDialog.querySelector('[data-hp="field"][data-field="pdf-dimensions"]');

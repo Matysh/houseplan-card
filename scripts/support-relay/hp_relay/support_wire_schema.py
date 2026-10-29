@@ -301,6 +301,15 @@ GLOBAL_SETTINGS = Object(
             }
         ),
         "summary_panel": nullable(Choice((SUMMARY_CONFIG, UNSUPPORTED))),
+        "external_screens": Choice((UNSUPPORTED, Object({
+            "version": enum(1), "next_id": NUMBER,
+            "screens": Array(Object({
+                **fields("id rotation cycle idle icon_scale font_scale", nullable(NUMBER)),
+                "controls": BOOL, "space": REF_OR_NULL,
+                "summary": enum("local", "show", "hide"),
+                "hidden_devices": enum("local", "show", "hide"),
+            })),
+        }))),
         "exclude_integrations": Array(REF_OR_NULL),
         "radar": Object({"show_live": nullable(BOOL)}),
     }

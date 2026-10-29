@@ -199,3 +199,29 @@ adds exactly13lines for the existing two variants,344paths; all four manifest
 freshness/determinism tests PASS in0.23s. The schema, walker and freshness oracle
 are unchanged. Remaining browser progress checks are still awaited before
 publication; this does not turn the earlier CI RED into PASS.
+
+Canonical Validate40792811619 on3b confirms the snapshot repair: all2691pytest
+PASS/1skip133.13s. Its subsequent relay unittest step,41cases, fails solely
+the byte-identical wire-schema copy guard. Before edits the author withdrew S7
+(6484364421). Copying the canonical integration schema into the existing relay
+mirror adds9lines; all41relaytests then PASS4.137s. Equality and both closed
+validators are unchanged. The bounded mirror audit found this one copy, the
+persisted-schema manifest, enum/field parity and existing release-version
+mirrors/inventories; no gate or reuse rule was added or weakened.
+
+The same canonical browser job123182952871 reports37/38smokes plus10/10selected
+Golden policyPASS. Only smoke_e2e_hooks fails at a null PDFdialog field access
+after a lazy-open click plus shared card settle. The fixture now waits, using
+its existing7000ms bounded helper, for the actual public PDFdialog field with
+positive layout bounds and visible CSS before the original option-toggle/field
+assertions. It does not repeat the click, retry the complete smoke, alter the
+product or introduce a fixed sleep. The addressed native smoke PASS after this
+correction. This is a demonstrated missing readiness condition; the old eb7
+PASS alone is not called proof of a flaky product. Root smoke sources and the
+relay Python mirror are outside the render-input corpus; canonical fingerprint
+still matchescd31dbf3 and measured build costs are unchanged.
+
+The existing relay README package2 rollout requires accepted-tree versioned
+staging/prod deployment before release with synthetic discard-only checks and
+rollback. No deployment, production POST, env/secret/spool/HA/Caddy changes
+were performed during this implementation correction.
