@@ -236,9 +236,13 @@ test('#1046 a foreign server-owned node history command ends the active Line ses
   s.runtime.decorLine=drawing;
   const begin=()=>{const e={clientX:100,clientY:100,pointerId:1,button:0,pointerType:'mouse',shiftKey:false};
     drawing.pointerDown(e);drawing.pointerUp(e);drawing.click(e,false);assert.equal(drawing.active,true);};
-  begin();s.runtime._undoGeometry();await s.idle();
+  begin();s.runtime._undoGeometry();
+  assert.equal(drawing.active,false,'server Undo retires Line before the transport resolves');
+  await s.idle();
   assert.equal(drawing.active,false);assert.deepEqual(s.floorOf('f'),s.original);
-  begin();s.runtime._redoGeometry();await s.idle();
+  begin();s.runtime._redoGeometry();
+  assert.equal(drawing.active,false,'server Redo retires Line before the transport resolves');
+  await s.idle();
   assert.equal(drawing.active,false);assert.deepEqual(s.floorOf('f'),s.after);
   assert.deepEqual(s.nodeWrites(),['apply@3:f','undo@4:f','apply@5:f']);
 });

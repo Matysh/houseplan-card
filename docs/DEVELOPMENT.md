@@ -1,5 +1,34 @@
 # Development and deployment
 
+## Nightly witness maintenance (#1123)
+
+Run 40829602818 at b2bdc4ad1486 produced an incomplete aggregate (shard 12
+interrupted). All 20 primary artifact ZIP digests were verified during triage;
+individual shard logs explain failures, but do not establish a coherent result
+for the whole SHA. The task preserves all witness IDs and nightly-only execution.
+
+Ten escaped definitions had either unreachable fault paths or missing ordinary
+observations. CO2 now targets consumer demand, alignment explicitly reads the
+settled position, and Zigbee typography overrides the newer shared cascade.
+Line lostcapture and secondary furniture input each bypass both relevant fences.
+The room witness targets stale-response cleanup after the writer rejects the
+retired context; reopening in the same authority while Save is pending is blocked
+and is not used as a fixture. Ordinary guards separately observe visibility-only
+retirement, nonempty mixed fields contained in their property, immediate Line
+retirement before server ACK, and spacing history through Undo/Redo at small zoom.
+
+Three preparation failures retain TypeScript narrowing through runtime predicates:
+decor history takes its physical fallback, revision filtering admits equal echoes,
+and stage replacement skips old-observer cleanup. The wall-thickness witness now
+declares its compiled test-build prerequisite. These declarations are not compiled
+or executed as mutants during development; the next nightly run owns that proof.
+
+The two historical ETIMEDOUT interruptions are infrastructure failures, not
+caught/survived outcomes; no timeout is raised. The unmutated icon, household and
+mobile-rotation preparation failures were already repaired by the beta.4 line and
+have successful ordinary CI evidence in run 40916450385. No threshold, image mask,
+mutation evidence attribution, shard aggregation or product code changes here.
+
 Static CSS minification (#1121) conservatively retains whitespace before `:`:
 it may be a descendant pseudo selector, while `color :red` is still a valid
 declaration. No selector/declaration parser or interpolation exception is added.

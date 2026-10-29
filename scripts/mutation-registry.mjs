@@ -128,7 +128,7 @@ const MUTANT_DEFINITIONS = [
     id: 'static-store-revision-echo-reloads-1112',
     guard: 'node --test test/config-store-events.test.mjs',
     because: '#1112 AC1: equal/older config and layout revisions must not wake a card or read the transport. Registered only; nightly execution.',
-    patches: [{ file: 'src/config-store.ts', find: 'if (rev <= knownRev) return;', replace: 'if (false && rev <= knownRev) return;' }],
+    patches: [{ file: 'src/config-store.ts', find: 'if (rev <= knownRev) return;', replace: 'if (rev < knownRev) return;' }],
   },
   {
     id: 'view-menu-forgets-generation-1089',
@@ -894,7 +894,7 @@ const MUTANT_DEFINITIONS = [
     because: '#1051 UI-023 supersedes compact status typography: source-footer summary must use the same common disclosure triangle and text as manual ZHA in both themes.',
     patches: [{ file: 'src/hp-zigbee-topology-settings.ts',
       find: '    :host { display: block; color: inherit; font: inherit; }',
-      replace: '    :host { display: block; color: inherit; font: inherit; } :host .incomplete > summary { font-size:19px; }' }],
+      replace: '    :host { display: block; color: inherit; font: inherit; } :host .incomplete > summary { font-size:19px !important; }' }],
   },
   {
     id: 'zigbee-incomplete-mixes-provider-groups-1005',
@@ -1343,10 +1343,10 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'room-co2-loses-explicit-snapshot-source',
     guard: 'node demo/smoke_room_co2.mjs',
-    because: '#920 AC5: a selected sensor outside every room must feed row, preview and stationary tooltip through the held snapshot.',
-    patches: [{ file: 'src/render-snapshot-capture.ts',
-      find: '    addSource(room.settings?.co2_source);',
-      replace: '    /* CO2 dependency omitted */' }],
+    because: '#920 AC5 / #1093: selected CO2 outside every room must enter the active consumer-demand snapshot used by row, preview and stationary tooltip; the legacy full-capture fallback is no longer the mounted card path.',
+    patches: [{ file: 'src/render-snapshot-consumers.ts',
+      find: '      [tooltip || (labels && display.labelCo2), room.settings?.co2_source],',
+      replace: '      [false, room.settings?.co2_source],' }],
   },
   {
     id: 'room-co2-tooltip-keeps-old-state',
@@ -2783,7 +2783,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'spacing-write-differs-from-the-shown-point',
     guard: 'node demo/smoke_device_equal_spacing.mjs',
-    because: '#873 AC1/AC6: pointerup writes the previewed point; re-rounding the raw pointer at release stores a neighbouring node, not the target the hint promised. Browser: the write path of a real gesture',
+    because: '#873 AC1/AC6: history must retain the shown magnet target. Re-rounding the raw pointer in the command after-state corrupts Redo when minimum zoom puts a neighbouring lattice node inside the capture radius; the browser observes persisted Undo/Redo, not only the initial live-layout write.',
     patches: [{ file: 'src/houseplan-card.ts', find: '    const after = devicePlacement(this._layout, d.id);\n', replace: '    const box = (this.renderRoot.querySelector(\'.stage\') as HTMLElement).getBoundingClientRect(), view = this._viewOr(this._baseVb()); // mutant: the write re-rounds the raw pointer\n    const after: DevicePlacement | null = this._devicePlacementForCanvas(d, drag.ox + ((ev.clientX - drag.sx) / box.width) * view.w, drag.oy + ((ev.clientY - drag.sy) / box.height) * view.h);\n' }],
   },
   {
@@ -8761,8 +8761,12 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'placement-accepts-any-mouse-button',
     guard: 'node demo/smoke_furniture_polish.mjs',
-    because: 'a right click with an armed tool must not stamp furniture (#369e)',
+    because: '#369e: both the card routing fence and the armed-tool fence reject a secondary mouse button. Bypassing both must not silently stamp furniture; the browser observes unchanged count and a later successful primary click.',
     patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (this._mode === 'decor' && ev.button === 2) return;",
+      replace: '    // mutant: forward secondary decor input to the armed tool',
+    }, {
       file: 'src/houseplan-editor-runtime.ts',
       find: "    if (ev.pointerType === 'mouse' && ev.button !== 0\n"
         + "        && t !== 'select' && t !== 'erase') return false;",
@@ -15389,13 +15393,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'align-point-reads-frozen-snapshot',
     guard: 'node demo/smoke_align_guides.mjs',
-    because: 'during a live gesture `_pos` answers from the snapshot of the last settled '
-      + 'render, so the guide is measured from where the marker stood before the drag — eight '
-      + 'grid steps away on a measured run (#521 AC2)',
+    because: '#521 AC2 / #1003: `_pos(d, false)` explicitly reads settled coordinates; ordinary `_pos(d)` now follows the live drag. Guides must use the moving point rather than the last settled snapshot.',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '      return d ? (() => { const p = this._livePos(d); return [p.x, p.y]; })() : null;',
-      replace: '      return d ? (() => { const p = this._pos(d); return [p.x, p.y]; })() : null;',
+      replace: '      return d ? (() => { const p = this._pos(d, false); return [p.x, p.y]; })() : null;',
     }],
   },
   {
@@ -17241,7 +17243,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'e2e-wall-thickness-field-wrong-quantity-1011',
-    guard: 'node demo/smoke_wallthick_standalone.mjs',
+    guard: compiledNodeSmoke('smoke_wallthick_standalone'),
     because: 'an existing room wall and independent partition must expose their actual thickness under wall-thickness, including real input, Apply wire centimetres and Undo; an open string inventory cannot establish the semantic meaning of a mounted control (#1011 r3)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
@@ -21878,8 +21880,10 @@ const decorLine1046Cases = [
     patches:[{file:'src/houseplan-editor-runtime.ts',find:'if (outcome === true && command) this.decorLine.restore(',
       replace:'if (outcome === true && command && !lineToken) this.decorLine.restore('}] },
   { id:'decor-line-lost-capture-ignored-1046', guard:'node demo/smoke_decor_line_click.mjs',
-    because:'#1046 AC4: mounted stage lostpointercapture must retire the click token before a compatibility click; the pure session unit cannot prove DOM routing.',
-    patches:[{file:'src/houseplan-card.ts',find:'            if (this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);',
+    because:'#1046 AC4: both generic draft and Line-session lostcapture routes retire the click token. Disable both Line routes, retaining other draft types, so the mounted compatibility-click witness observes the actual missing retirement.',
+    patches:[{file:'src/houseplan-card.ts',find:'            if (this._decorDraft?.pid === e.pointerId) this._stagePointerCancel(e);',
+      replace:"            if (this._decorDraft?.kind !== 'line' && this._decorDraft?.pid === e.pointerId) this._stagePointerCancel(e);"},
+    {file:'src/houseplan-card.ts',find:'            if (this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);',
       replace:'            if (false && this._editorRuntime?.decorLine.owns(e.pointerId)) this._stagePointerCancel(e);'}] },
   { id:'decor-line-escape-keeps-session-1046', guard:'node demo/smoke_decor_line_click.mjs',
     because:'#1046 AC3: real Escape must end the Line owner before Properties consumes the shortcut, while preserving stored lines and the tool.',
@@ -21991,7 +21995,7 @@ const editorLatency1075Cases = [
     because:'#1075 AC8: native furniture Undo/Redo must preserve warm structural cache builds and identical cold-reference SVG; a pure helper cannot prove the mounted history caller uses it.',
     patches:[{file:'src/houseplan-editor-runtime.ts',
       find:'const decorOnly = !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);',
-      replace:'const decorOnly = false && !host._pendingPhysicalWrites.size && restoreDecorOnlyHistory(config, before, target);'}]},
+      replace:'const decorOnly = host._pendingPhysicalWrites.size < 0 && restoreDecorOnlyHistory(config, before, target);'}]},
   {id:'decor-history-physical-delta-ignored-1075',
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/decor-history-restore.test.mjs',
     because:'#1075 AC8: changed walls, stairs, transforms and unknown non-decor fields must retain the strict restore lane.',
@@ -22095,7 +22099,7 @@ const selectiveInvalidation1093Cases = [
     patches:[{file:'src/summary-panel-runtime-loaded.ts',find:'    this.metricsRefresh = 0;\n    this.metricsLoad = null;',replace:'    // Retain the retired owner scheduling latches.'}]},
   {id:'replaced-stage-keeps-old-resize-observer-1093', guard:compiledNodeSmoke('smoke_selective_invalidation'),
     because:'#1093 AC11: a real mounted HA reload replaces stage DOM; subsequent native CSS widths must switch compact navigation and preserve current viewport sizing. A pure width helper cannot prove observer ownership.',
-    patches:[{file:'src/houseplan-card.ts',find:'    if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {',replace:'    if (false) {'}]},
+    patches:[{file:'src/houseplan-card.ts',find:'    if (this._resizeTargets?.stage !== stage || this._resizeTargets?.header !== hdr) {',replace:'    if (!this._resizeTargets) {'}]},
   {id:'paint-save-retains-accepted-exit-1093', guard:compiledNodeSmoke('smoke_selective_invalidation_visible'),
     because:'#1093 AC10: only real native pointer-to-visible-paint samples detect the retained 180ms successful-close animation; unit state equality cannot establish the browser time budget.',
     patches:[{file:'src/editors/dialog-baseline.ts',find:'  return !accepted || (!!owner && owner !== accepted);',replace:'  return true;'}]},
@@ -22106,8 +22110,9 @@ const selectiveInvalidation1093Cases = [
     because:'#1093 AC8/9: a trusted Copy while a native Properties save is held/refused must send no paired WS, while the later fresh intent succeeds; the mounted command routing is essential.',
     patches:[{file:'src/prior-config-write.ts',find:'  catch (error) { if (pending) throw error; }',replace:'  catch (error) { void error; void pending; }'}]},
   {id:'late-room-save-closes-new-owner-1093', guard:compiledNodeSmoke('smoke_selective_invalidation_authority'),
-    because:'#1093 AC8: actual native Save, discard, foreign identity reload and reopened room must survive the late old ACK without toast/adoption/closure on its replacement.',
-    patches:[{file:'src/editors/room-save.ts',find:"    if (!contextCurrent()) return;\n    if (host.isConnected && host._roomDialog && dialogSession(host, 'room') === owner\n      && host._space === spaceId && host._roomEditId === roomId && roomDraftKey(host) === savedDraft) {",replace:'    if (host.isConnected && host._roomDialog) {'}]},
+    because:'#1093 AC8: the writer now rejects a retired ACK before the success callback. Its catch must preserve the foreign replacement Room; stale-save cleanup cannot close the current dialog. Actual native Save, discard, foreign reload and reopen exercise that terminal path.',
+    patches:[{file:'src/editors/room-save.ts',find:'  } catch (error) {\n    if (!contextCurrent()) return;',
+      replace:'  } catch (error) {\n    if (!contextCurrent()) { host._roomDialog = false; host._roomEditId = null; return; }'}]},
   {id:'hidden-alert-schedules-visual-deadline-1093',
     guard:'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/marker-alert-runtime.test.mjs',
     because:'#1093 AC5: the fake clock observes exact pending timers while authoritative hidden condition edges retain their continuous confirmation history.',

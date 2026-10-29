@@ -1,5 +1,12 @@
 # Project status
 
+Nightly mutation maintenance (#1123) repairs witness reachability and preparation
+on the current consumer-demand, pointer-routing and retired-save paths. Ordinary
+guards cover hidden-only lifecycle input, mixed-field presence/containment,
+immediate server-history retirement and minimum-zoom spacing Undo/Redo. Mutants
+remain registered for nightly execution; static readiness and ordinary PASS do
+not establish caught outcomes or repair the interrupted historical aggregate.
+
 Main-panel header (#1120) owns the HA menu inside the card, without an outer title bar or height reserve. Measured content fitting reduces captions, zoom and floor navigation before wrapping left; all phone actions remain available. The Properties sidebar retains its independent 1024px card-width boundary. Kiosk hides the whole header/menu; Lovelace behavior is unchanged. The active editor close glyph remains centred in its 24px target.
 
 Generated stable entry loaders (#1125) wait for public home-assistant readiness before eager imports or fallback constructors in a pending HA document. Already-ready HA and non-HA documents retain the immediate path; bounded bootstrap failure rejects before fallback registration. Product dialog components are unchanged. The controlled real-HA regression and final beta evidence are separate checks.

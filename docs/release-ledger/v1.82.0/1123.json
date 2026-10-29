@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1123,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Repair nightly mutation witness reachability, ordinary observations and preparation prerequisites after current product evolution. Preserve all witness IDs, nightly-only mutation execution, proof attribution and existing limits; no class A product changes.",
+  "summary": {
+    "ru": "Восстановлены актуальные пути и подготовка ночных мутационных свидетелей; обычные проверки закрывают пропущенные наблюдения.",
+    "en": "Nightly mutation witnesses follow current runtime paths and preparation prerequisites; ordinary guards cover missing observations."
+  }
+}

@@ -210,7 +210,8 @@ const show = (page, kind) => page.evaluate((mode) => {
 {
   const { page, browser, cdp } = await begin();
   try {
-    for (const kind of ['hidden', 'pagehide']) for (const count of [1, 2]) {
+    for (const kind of ['hidden-only', 'hidden', 'pagehide']) for (const count of [1, 2]) {
+      const lifecycle = kind === 'hidden-only' ? 'hidden' : kind;
       const initial = await state(page);
       await page.locator(DEVICE).evaluate((node, n) => {
         for (let id = 100; id < 100 + n; ++id) node.dispatchEvent(new PointerEvent('pointerdown', {
@@ -218,10 +219,10 @@ const show = (page, kind) => page.evaluate((mode) => {
           isPrimary: id === 100, button: 0, buttons: 1,
         }));
       }, count);
-      await hide(page, kind);
+      await hide(page, lifecycle);
       // Duplicate hidden+pagehide is one retirement, not a reset/re-arm.
       if (kind === 'hidden') await hide(page, 'pagehide');
-      await wait(page, 650); await show(page, kind); await wait(page, 100);
+      await wait(page, 650); await show(page, lifecycle); await wait(page, 100);
       await dispatchTail(page); await dispatchTail(page, 'contextmenu');
       await sameInert(page, initial, `${kind}Missing${count}Terminals`, 40);
       assert.equal((await state(page)).contacts, 0);

@@ -180,6 +180,23 @@ const out = {};
       return result;
     };
 
+    // At minimum zoom the 4px capture radius crosses the lattice midpoint.
+    // Distinguish the shown target from raw-pointer rounding through Undo/Redo.
+    for(let i=0;i<8;i++){sr().querySelector('[data-hp="zoom-out"]').click();await quiet();}
+    const smallStart=structuredClone(c._layout[C]);
+    const small=await gesture(C,{x:200,y:200},[4,0]);
+    const rawX=200+4/stage().getBoundingClientRect().width*c._viewOr(c._baseVb()).w;
+    res.ac6SmallZoomInputCrossesGridMidpoint=Math.round(rawX/c._gridPitch)*c._gridPitch!==200;
+    res.ac6SmallZoomTargetIsShownAndStored=at(small.preview,200,200)&&at(stored(C),200,200)&&small.hint.length===1;
+    const smallWrites=writes.length;
+    sr().querySelector('[data-device-position-history="undo"]').click();await idle();
+    res.ac6SmallZoomUndoRestoresStart=c._layout[C].x===smallStart.x&&c._layout[C].y===smallStart.y&&c._layout[C].s===smallStart.s;
+    sr().querySelector('[data-device-position-history="redo"]').click();await idle();
+    res.ac6SmallZoomRedoRestoresShownPoint=at(stored(C),200,200)&&writes.length===smallWrites+2
+      &&at({x:writes.at(-1)?.pos.x*1000,y:writes.at(-1)?.pos.y*1000},200,200);
+    await window.__hpTest.setLayout(layout=>({...layout,[C]:smallStart}));
+    sr().querySelector('[data-hp="zoom-fit"]').click();await quiet();
+
     // ---- AC1 + AC4: C в продолжение ряда, сохранённый значок -------------------
     const gC = await gesture(C, { x: 200, y: 200 }, [4, 0]);
     res.ac1CPreviewIsTheTarget = at(gC.preview, 200, 200);
