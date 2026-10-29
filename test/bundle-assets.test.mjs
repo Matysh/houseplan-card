@@ -5,12 +5,14 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 import { editMappedSource, lineOffsets, positionAt } from '../scripts/coverage-maps.mjs';
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 
 import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
   entryFallbackPlugin, ENTRY_URL_SEAM, NAMESPACE_LOCALE_CHUNKS, VIEW_RUNTIME_RETRY_CHUNKS,
+  waitForHaBootstrap,
 } from '../scripts/bundle-manifest.mjs';
 import {
   INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
@@ -467,6 +469,168 @@ test('#486 sync payload orders dependencies before both stable entries', () => {
     'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
   ]);
 });
+
+// Public bootstrap inputs only: these Node fixtures exercise the emitted function,
+// not HA internals. The causal real-HA 600 ms negative/positive is separate proof.
+const bootstrapFixture = (overrides = {}) => {
+  const timers = [];
+  const cleared = [];
+  const context = {
+    document: { querySelector: () => ({}) },
+    customElements: { get: () => undefined, whenDefined: () => new Promise(() => {}) },
+    setTimeout: (callback, delay) => { timers.push({ callback, delay }); return timers.length; },
+    clearTimeout: (id) => cleared.push(id),
+    ...overrides,
+  };
+  return { context, timers, cleared,
+    wait: () => runInNewContext(`(${waitForHaBootstrap.toString()})(1234)`, context) };
+};
+
+test('#1125 bootstrap bypasses non-HA documents and an already defined public root', async () => {
+  for (const document of [undefined, { querySelector: () => null }]) {
+    const fixture = bootstrapFixture({ document, customElements: undefined });
+    await fixture.wait();
+    assert.deepEqual(fixture.timers, []);
+  }
+  const fixture = bootstrapFixture({ customElements: {
+    get: (name) => { assert.equal(name, 'home-assistant'); return class {}; },
+    whenDefined: () => assert.fail('ready roots require no wait'),
+  } });
+  await fixture.wait();
+  assert.deepEqual(fixture.timers, []);
+});
+
+test('#1125 pending native registry may resolve a proxy after the global registry changes', async () => {
+  let resolve;
+  const fixture = bootstrapFixture({ customElements: {
+    get: () => undefined,
+    whenDefined: (name) => { assert.equal(name, 'home-assistant'); return new Promise((r) => { resolve = r; }); },
+  } });
+  const pending = fixture.wait();
+  assert.equal(fixture.timers.length, 1);
+  assert.equal(fixture.timers[0].delay, 1234);
+  fixture.context.customElements = { get: (name) => name === 'home-assistant' ? class ActualRoot {} : undefined };
+  resolve(class NativeProxy {});
+  await pending;
+  assert.deepEqual(fixture.cleared, [1]);
+});
+
+test('#1125 missing registry, rejected readiness and an unowned current root fail closed', async () => {
+  const missing = bootstrapFixture({ customElements: undefined });
+  await assert.rejects(missing.wait(), /registry is unavailable/);
+  assert.deepEqual(missing.timers, []);
+  const rejected = bootstrapFixture({ customElements: {
+    get: () => undefined, whenDefined: () => Promise.reject(new Error('root registration failed')),
+  } });
+  await assert.rejects(rejected.wait(), /root registration failed/);
+  assert.deepEqual(rejected.cleared, [1]);
+  const unowned = bootstrapFixture({ customElements: {
+    get: () => undefined, whenDefined: () => Promise.resolve(class Proxy {}),
+  } });
+  await assert.rejects(unowned.wait(), /no current root definition/);
+  assert.deepEqual(unowned.cleared, [1]);
+});
+
+test('#1125 bootstrap has a bounded failure deadline and clears its timer', async () => {
+  const fixture = bootstrapFixture();
+  const pending = fixture.wait();
+  const rejection = assert.rejects(pending, /did not complete within 1234 ms/);
+  fixture.timers[0].callback();
+  await rejection;
+  assert.deepEqual(fixture.cleared, [1]);
+});
+
+for (const entryName of ['houseplan-card.js', 'houseplan-panel.js']) {
+  for (const missingMain of [false, true]) test(
+    `#1125 emitted ${entryName} waits before eager assets and ${missingMain ? 'stale fallback' : 'implementation'}`,
+    () => {
+      const temp = mkdtempSync(join(tmpdir(), 'houseplan-ha-bootstrap-'));
+      try {
+        const bundle = minimalTwoEntryBundle();
+        bundle['houseplan-card.js'].code = 'import"./houseplan-assets/extra.js";export{x}from"./houseplan-assets/card-HASH.js";';
+        bundle['houseplan-panel.js'].code = 'import"./houseplan-assets/extra.js";import"./houseplan-assets/card-HASH.js";customElements.define("houseplan-panel",class extends HTMLElement{});';
+        entryFallbackPlugin().generateBundle({}, bundle);
+        writeFileSync(join(temp, 'package.json'), '{"type":"module"}');
+        mkdirSync(join(temp, 'houseplan-assets'));
+        writeFileSync(join(temp, entryName), bundle[entryName].code);
+        writeFileSync(join(temp, 'houseplan-assets/extra.js'),
+          'globalThis.steps.push("eager");customElements.define("eager-element",class extends HTMLElement{});');
+        if (!missingMain) writeFileSync(join(temp, 'houseplan-assets/card-HASH.js'),
+          'globalThis.steps.push("implementation");customElements.define("houseplan-card",class extends HTMLElement{});');
+        writeFileSync(join(temp, 'check.mjs'), `
+import assert from 'node:assert/strict';
+const definitions = new Map();
+let barrierEntered;
+const entered = new Promise((resolve) => { barrierEntered = resolve; });
+let resolveRoot;
+const rootReady = new Promise((resolve) => { resolveRoot = resolve; });
+globalThis.document = { querySelector: (name) => name === 'home-assistant' ? {} : null };
+globalThis.HTMLElement = class OldHTMLElement {};
+globalThis.customElements = {
+  get: () => undefined,
+  whenDefined: (name) => { assert.equal(name, 'home-assistant'); barrierEntered(); return rootReady; },
+  define: () => assert.fail('no class may register before HA bootstrap'),
+};
+globalThis.steps = [];
+let staleErrors = 0;
+console.error = (message) => { assert.match(message, /stale houseplan-/); staleErrors += 1; };
+const loading = import('./${entryName}');
+// Observe the actual facade entering readiness, not an assumed scheduler delay.
+await entered;
+assert.deepEqual(steps, []);
+const ReadyHTMLElement = class ReadyHTMLElement {};
+globalThis.HTMLElement = ReadyHTMLElement;
+definitions.set('home-assistant', class HomeAssistant extends ReadyHTMLElement {});
+globalThis.customElements = {
+  get: (name) => definitions.get(name),
+  define: (name, ctor) => {
+    assert.equal(Object.getPrototypeOf(ctor), ReadyHTMLElement, name);
+    definitions.set(name, ctor);
+  },
+};
+resolveRoot(class NativeProxy {});
+await loading;
+assert.deepEqual(steps, ${JSON.stringify(missingMain ? ['eager'] : ['eager', 'implementation'])});
+assert.equal(staleErrors, ${missingMain ? 1 : 0});
+assert.ok(definitions.has('${entryName === 'houseplan-card.js' ? 'houseplan-card' : 'houseplan-panel'}'));
+`);
+        const result = spawnSync(process.execPath, [join(temp, 'check.mjs')], { encoding: 'utf8', timeout: 10000 });
+        assert.equal(result.status, 0, `${result.error || ''}\n${result.stdout}\n${result.stderr}`);
+      } finally {
+        rmSync(temp, { recursive: true, force: true });
+      }
+    },
+  );
+}
+
+for (const entryName of ['houseplan-card.js', 'houseplan-panel.js']) test(
+  `#1125 emitted ${entryName} readiness timeout cannot create a stale fallback`,
+  () => {
+    const bundle = minimalTwoEntryBundle();
+    bundle['houseplan-card.js'].code = 'export{x}from"./houseplan-assets/card-HASH.js";';
+    bundle['houseplan-panel.js'].code = 'import"./houseplan-assets/card-HASH.js";customElements.define("houseplan-panel",class extends HTMLElement{});';
+    entryFallbackPlugin().generateBundle({}, bundle);
+    const entryUrl = `data:text/javascript;base64,${Buffer.from(bundle[entryName].code).toString('base64')}`;
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+import assert from 'node:assert/strict';
+let requestedDeadline;
+let cleared = false;
+globalThis.document = { querySelector: () => ({}) };
+globalThis.customElements = {
+  get: () => undefined, whenDefined: () => new Promise(() => {}),
+  define: () => assert.fail('readiness failure must not register a fallback'),
+};
+globalThis.HTMLElement = class { constructor() { assert.fail('no fallback constructor'); } };
+globalThis.setTimeout = (callback, delay) => { requestedDeadline = delay; queueMicrotask(callback); return 1; };
+globalThis.clearTimeout = (id) => { assert.equal(id, 1); cleared = true; };
+console.error = () => assert.fail('bootstrap errors must not be reported as stale imports');
+await assert.rejects(import(${JSON.stringify(entryUrl)}), /bootstrap did not complete within 30000 ms/);
+assert.equal(requestedDeadline, 30000);
+assert.equal(cleared, true);
+`], { encoding: 'utf8', timeout: 10000 });
+    assert.equal(result.status, 0, `${result.error || ''}\n${result.stdout}\n${result.stderr}`);
+  },
+);
 
 for (const extraEdges of [false, true]) test(
   '#486 both stable entries install a visible stale-load fallback (#803 extra eager chunks)', async () => {

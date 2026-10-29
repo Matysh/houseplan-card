@@ -481,6 +481,37 @@ export function editorRuntimeRetryUrlPlugin({ coverage = coverageMapsEnabled() }
  */
 export const ENTRY_URL_SEAM = '__HOUSEPLAN_ENTRY_URL__';
 
+/** Real HA may preload resources before app installs its scoped registry.
+ * Its public root is defined after that shim; never register our classes first.
+ * No root means a non-HA/demo document, which keeps the existing immediate path.
+ */
+export async function waitForHaBootstrap(timeoutMs = 30000) {
+  if (!globalThis.document?.querySelector('home-assistant')) return;
+  const registry = globalThis.customElements;
+  if (registry?.get('home-assistant')) return;
+  if (typeof registry?.whenDefined !== 'function') {
+    throw new Error('House Plan: Home Assistant custom element registry is unavailable');
+  }
+  let timer;
+  try {
+    await Promise.race([
+      registry.whenDefined('home-assistant'),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(
+          `House Plan: Home Assistant bootstrap did not complete within ${timeoutMs} ms`,
+        )), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+  // Native whenDefined can return the shim's proxy, not its actual constructor.
+  // The current global registry must nevertheless own the public HA root now.
+  if (!globalThis.customElements?.get('home-assistant')) {
+    throw new Error('House Plan: Home Assistant bootstrap has no current root definition');
+  }
+}
+
 export function entryFallbackPlugin({ coverage = coverageMapsEnabled() } = {}) {
   // #803: manual chunking can add eager side-effect edges to either facade.
   // They must settle before the implementation, as static imports did, but
@@ -496,6 +527,8 @@ export function entryFallbackPlugin({ coverage = coverageMapsEnabled() } = {}) {
   };
   const awaitAssets = (assets) => assets.map((asset) => `await import("${asset}");`).join('');
   const recordEntryUrl = `globalThis.${ENTRY_URL_SEAM}??=import.meta.url;`;
+  // Outside the stale-import catch: a failed bootstrap must define no fallback class.
+  const bootstrapBarrier = `await (${waitForHaBootstrap.toString()})();`;
   const fallbackDefinition = (contract) => `if(!customElements.get("${contract.element}")){`
     + 'const l=String(navigator.language||"en").toLowerCase();'
     + 'const m=l.startsWith("ru")'
@@ -530,7 +563,7 @@ export function entryFallbackPlugin({ coverage = coverageMapsEnabled() } = {}) {
       const cardAsset = cardMatches[0][2];
       const cardSideEffects = hoistSideEffectAssets(cardEntry, cardAsset, bundle);
       replaceChunkSource(cardEntry, cardPattern,
-        `${recordEntryUrl}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`
+        `${recordEntryUrl}${bootstrapBarrier}try{${awaitAssets(cardSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(cardContract)}`
           + 'console.error("[houseplan] stale houseplan-card.js: the implementation chunk is unavailable",e)}',
         { coverage, bundle },
@@ -563,7 +596,7 @@ export function entryFallbackPlugin({ coverage = coverageMapsEnabled() } = {}) {
       }
       const panelSideEffects = hoistSideEffectAssets(panelEntry, cardAsset, bundle);
       replaceChunkSource(panelEntry, panelPattern,
-        `${recordEntryUrl}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`
+        `${recordEntryUrl}${bootstrapBarrier}try{${awaitAssets(panelSideEffects)}await import("${cardAsset}")}`
           + `catch(e){${fallbackDefinition(panelContract)}`
           + 'console.error("[houseplan] stale houseplan-panel.js: the card implementation '
           + 'chunk is unavailable",e)}',

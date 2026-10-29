@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Settings and import dialogs wait for Home Assistant to finish bootstrapping before their components load, preventing a rare missing modal shell on cold entry. (#1125)
 - The main-page header adapts to actual content: captions, zoom and floor tabs make room before actions wrap left. The HA menu sits inside this single header; kiosk hides it with the header. Narrow screens retain every action. The active editor close stays centred inside its24px target. Lovelace behavior is unchanged. (#1120)
 
 - Show past Dreame cleanup paths when the archive omits its map slot, using the uniquely proven saved map and existing calibration. Foreign and ambiguous maps remain refused. (#1117)
