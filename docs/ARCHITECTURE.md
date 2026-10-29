@@ -2546,6 +2546,12 @@ release policy, and its actual job outcome must match proof metadata.
 
 ## CI path profiles (#980)
 
+Validation token policy (#1124) starts with workflow-level contents read.
+Explicit job maps retain their scoped API/publication authority; packaging has
+actions read for cross-run immutable producer downloads. Product headers inherit
+the canonical execution header, while generated docs/tooling headers also carry
+the restricted default. Permissions remain part of authenticated job recipes.
+
 One generated path manifest binds GitHub ingress to computed test ownership.
 The canonical full job recipe stays in `validate.yml`; generated product jobs
 omit tooling, and the tooling/docs profiles omit product producers. Unknown

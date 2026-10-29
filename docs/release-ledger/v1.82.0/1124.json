@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1124,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Limit default validation GITHUB_TOKEN capabilities to contents read in canonical and generated workflows, preserving declared job scopes and authenticated cross-run artifact restoration. No class A product change; main CodeQL closure remains a post-publication observation.",
+  "summary": {
+    "ru": "Проверки CI явно ограничивают права токена по умолчанию чтением содержимого репозитория.",
+    "en": "CI validation explicitly limits default token permissions to repository contents read."
+  }
+}

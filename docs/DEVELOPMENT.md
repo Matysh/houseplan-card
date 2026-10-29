@@ -1,5 +1,19 @@
 # Development and deployment
 
+Validation workflows (#1124) set `permissions: { contents: read }` at workflow
+scope. The canonical Validate header feeds the generated product recipe through
+`executionHeader`; the generator's docs/tooling header also defaults to contents
+read. Job permission maps replace that default, retaining existing explicit
+API/issue/publication scopes. The packaging job additionally declares actions
+read: `ci-registry-build.mjs` uses authenticated `gh run download` when reusing
+an immutable producer from another run. Same-run artifact actions retain their
+existing runtime-token path. Triggers, jobs, PAT routing, receipts and merge
+authority are unchanged. `ci-profiles.test.mjs` checks effective permissions of
+every job and refuses missing/broad defaults, an overprivileged ordinary job,
+a publisher without write access and a cross-run reader without actions read.
+Closing the historical main CodeQL alerts requires main publication and a fresh
+CodeQL analysis; a green dev check is not that result.
+
 ## Nightly witness maintenance (#1123)
 
 Run 40829602818 at b2bdc4ad1486 produced an incomplete aggregate (shard 12

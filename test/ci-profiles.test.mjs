@@ -20,6 +20,48 @@ const toolingProof = run => ({ schema: 'houseplan-ci-proof/v1', candidate: { sha
   run: { id: run.id, attempt: run.run_attempt, workflow: 'validate-tooling.yml', event: run.event },
   checks: { preflight: { mode: 'executed', result: 'success' } } });
 
+test('#1124 validation tokens default to contents read and retain only declared job capabilities', () => {
+  const overrides = {
+    preflight: { contents: 'read', actions: 'read', issues: 'write' },
+    changes: { contents: 'read', actions: 'read', issues: 'read' },
+    reuse: { contents: 'read', actions: 'read' },
+    bundle: { contents: 'read', actions: 'read' },
+    tooling: { contents: 'read', actions: 'read' },
+    dev_build: { contents: 'write' },
+    browser_selected: { contents: 'read', actions: 'read' },
+    proof: { contents: 'write', actions: 'read' },
+  };
+  const policy = (workflow, profile = 'full') => {
+    assert.deepEqual(workflow.permissions, { contents: 'read' }, 'explicit read-only workflow default');
+    assert.ok(Object.keys(workflow.jobs).length, 'real workflow jobs are present');
+    for (const [id, job] of Object.entries(workflow.jobs)) {
+      // Job permissions replace the default map rather than adding to it.
+      const expected = id === 'changes' && profile === 'tooling' ? { contents: 'read' }
+        : overrides[id] ?? { contents: 'read' };
+      assert.deepEqual(job.permissions ?? workflow.permissions, expected, `effective permissions: ${id}`);
+    }
+  };
+  const full = parse(readFileSync('.github/workflows/validate.yml', 'utf8'));
+  policy(full);
+  const generated = generatedProfiles();
+  for (const profile of ['product', 'docs', 'tooling']) {
+    policy(parse(generated.get(`.github/workflows/validate-${profile}.yml`)), profile);
+  }
+  // Ordinary YAML configuration inputs; no workflow is patched or executed.
+  for (const permissions of [undefined, {}, 'read-all', 'write-all', { contents: 'write' }, { contents: 'read', issues: 'write' }]) {
+    assert.throws(() => policy({ ...full, permissions }), { name: 'AssertionError' });
+  }
+  const broadened = structuredClone(full);
+  broadened.jobs.frontend.permissions = { contents: 'write' };
+  assert.throws(() => policy(broadened), { name: 'AssertionError' });
+  const missingPublisher = structuredClone(full);
+  delete missingPublisher.jobs.proof.permissions;
+  assert.throws(() => policy(missingPublisher), { name: 'AssertionError' });
+  const missingArtifactReader = structuredClone(full);
+  delete missingArtifactReader.jobs.bundle.permissions.actions;
+  assert.throws(() => policy(missingArtifactReader), { name: 'AssertionError' });
+});
+
 test('#1060 actual product producer declares its coverage without erasing candidate companions', () => {
   const candidate = { profiles: ['tooling', 'docs'], proven: true };
   assert.deepEqual(producerProfilePlan(candidate, 'product').profiles, ['product', 'tooling', 'docs']);

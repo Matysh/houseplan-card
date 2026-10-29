@@ -21,6 +21,9 @@ concurrency:
   group: validate-docs-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   preflight:
     name: "Предполёт: документация, провенанс, процесс"
