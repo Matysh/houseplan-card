@@ -16,6 +16,7 @@ substituted into the historical releases.
 | v1.81.0 | deee605cb8c88584c14e2e1fe15360e073acd5c6 | retained / present |
 | v1.82.0-beta.3 | 41148d89fb50e3fdcac6f8e6536b74e7c0b6ca8c | retained / present |
 | v1.82.0-beta.4 | b4815c509ac85522da13555687ab34f64316820c | cleared / absent |
+| v1.82.0 | eb172115f3b90568d22a8b99dc947dd66cf2b409 | cleared / absent |
 
 The first affected release is v1.82.0-beta.4, published 2026-10-20 21:48:15 UTC
 (2026-10-21 00:48:15 Moscow). Stable v1.82.0, published 2026-10-21 13:52:19 UTC,
@@ -52,8 +53,9 @@ external requests or WebSockets. It is not a full HA server harness.
 closed events, then reconnects the same shell and proves normal close still
 works. `retired-dialog-closes-successor-1154` registers the corresponding
 negative witness for nightly mutation execution; registration is not a caught
-result. Ordinary smoke coverage also exercises the existing full space-copy
-flow and Escape behavior.
+result. The ordinary space-copy smoke also mounts an HA-shell fixture that emits
+the observed late hide/closed events and proves name entry and cancellation
+through the actual copy UI, alongside the existing complete copy-write flow.
 
 An initial run of the old all-form `verify_ha_dialog_discard_recovery.mjs` stopped
 before reaching this scenario: its pre-#976 expectation that the parent HA

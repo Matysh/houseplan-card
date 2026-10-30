@@ -134,6 +134,35 @@ const out = await page.evaluate(async () => {
   result.cleanCopyIsInsertedAfterSourceAndSelected = !!cleanCopy
     && card._serverCfg.spaces[1]?.id === cleanCopy.id
     && card._space === cleanCopy.id;
+
+  // #1154: the genuine HA diagnostic proves this late removal event occurs.
+  // Keep the full UI transition in ordinary CI too, without the large HA wheel.
+  class RemovalHaDialog extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' }).innerHTML = '<slot name="headerTitle"></slot><slot></slot><slot name="footer"></slot>';
+    }
+    disconnectedCallback() {
+      queueMicrotask(() => {
+        this.dispatchEvent(new Event('wa-hide', { bubbles: true, composed: true, cancelable: true }));
+        this.dispatchEvent(new Event('closed'));
+      });
+    }
+  }
+  if (!customElements.get('ha-dialog')) customElements.define('ha-dialog', RemovalHaDialog);
+  const haStart = calls.length;
+  const haCopy = await openCopy();
+  await nameCopy(haCopy.copyDialog, 'Retained HA copy');
+  await settle();
+  result.haCopySurvivesRetiredSettings = !!card._spaceDialog?.copy
+    && currentDialog() === haCopy.copyDialog
+    && haCopy.copyDialog.hasAttribute('ha-dialog-shell')
+    && haCopy.copyDialog.querySelector('#space-copy-name')?.value === 'Retained HA copy';
+  haCopy.copyDialog.querySelector('[data-hp="dialog-cancel"]').click();
+  await settle();
+  result.haCopyCancelRestoresSettingsWithoutWrites = !!card._spaceDialog && !card._spaceDialog.copy
+    && !!currentDialog()?.querySelector('#space-title')
+    && !calls.slice(haStart).some(call => ['houseplan/config/set', 'houseplan/plan/optimize'].includes(call.type));
   return result;
 });
 

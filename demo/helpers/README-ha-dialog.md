@@ -19,7 +19,9 @@ node demo/verify_space_copy.mjs
 It retains the copy-name modal after the old settings shell is removed, edits
 the name, cancels through Escape and the footer, verifies zero writes, and
 checks Keep/Discard on a dirty space. The ordinary modal-recovery smoke also
-covers detached hide/closed events and reconnection. This remains a synthetic,
+covers detached hide/closed events and reconnection; the regular space-copy
+smoke repeats the full dialog transition with an HA-shell fixture emitting the
+observed removal events. This remains a synthetic,
 offline diagnostic; it does not copy or change a real user's space.
 
 #607 verifies the real HA close button:
