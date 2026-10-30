@@ -598,7 +598,9 @@ export class HpDialog extends LitElement {
   };
 
   private _requestClose = (): void => {
-    if (this._closing || this._closeRequested) return;
+    // HA may finish hiding a retired shell after its replacement has opened.
+    // That completion no longer owns the consumer's current dialog state.
+    if (!this.isConnected || this._closing || this._closeRequested) return;
     this._closeRequested = true;
     // Owners run their existing dirty/busy guards first. Their accepted state
     // retirement reaches dialogPresence; a refused close never animates away.
@@ -610,7 +612,7 @@ export class HpDialog extends LitElement {
   private _onHaHide = (event: Event): void => {
     // HA's internal modal retargets to this ha-dialog. A slotted picker's
     // popover has a different target and must never close the owning form.
-    if (event.target !== event.currentTarget) return;
+    if (!this.isConnected || event.target !== event.currentTarget) return;
     const owner = event.composedPath().find(node => node instanceof Element && node.localName === 'ha-dialog');
     if (owner !== event.currentTarget || this._closing) return;
     event.preventDefault();
@@ -620,7 +622,7 @@ export class HpDialog extends LitElement {
   private _onHaClosed = (event: Event): void => {
     // A picker/popover may emit its own bubbling `closed`; it is not the
     // terminal of this shell's accepted exit or a request to close its owner.
-    if (event.composedPath()[0] !== event.currentTarget) return;
+    if (!this.isConnected || event.composedPath()[0] !== event.currentTarget) return;
     if (this._closing) this._exit.current?.complete();
     else this._requestClose();
   };

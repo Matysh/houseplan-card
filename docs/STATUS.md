@@ -4,6 +4,10 @@ CI flake investigation (#1133) retains the first Golden/101ms/Cancel failures
 and their uncertainty. Post-verdict diagnostics retain grid-pan geometry and
 bounded original/client/persisted deltas; no original oracle is weakened.
 
+Space copying (#1154) ignores late hide/closed events from disconnected dialog
+shells. Connected close/discard and native fallback behavior remain in place;
+the genuine HA fixture and ordinary lifecycle smoke cover the regression.
+
 Validation token defaults (#1124) explicitly allow contents read in the full
 workflow and generated product/docs/tooling profiles. Existing job overrides
 remain scoped; packaging also declares actions read for authenticated cross-run

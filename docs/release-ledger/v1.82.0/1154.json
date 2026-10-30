@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "issue": 1154,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "Space copying exists in stable 1.82.0; the detached-dialog hide regression first shipped in 1.82.0-beta.4 and is present in that stable. Restore the existing name-entry and cancellation contract without changing copy writes or UX.",
+  "summary": {
+    "ru": "Окно имени копии пространства больше не закрывается само.",
+    "en": "The space-copy name dialog no longer closes on its own."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "4395538b3fe35d1c1687cbeb6d5d180de98f2e98b705865532d7ce5c0a033b39",
+    "golden": [],
+    "smokes": ["smoke_dialog_modal_recovery.mjs", "smoke_space_copy.mjs", "smoke_esc_dialogs.mjs"]
+  }
+}

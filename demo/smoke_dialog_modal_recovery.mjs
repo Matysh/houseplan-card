@@ -367,6 +367,22 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
   await frame();
   const disconnectedRejectDoesNotReopen = !detached.isConnected && detachedHa.open === false;
 
+  // #1154: a removed HA shell may emit its hide/closed lifecycle after its
+  // successor opened. Neither event is another user request to close it.
+  let retiredCloseCount = 0;
+  detached.addEventListener('hp-close', () => { retiredCloseCount++; });
+  const staleHide = new Event('wa-hide', { bubbles: true, composed: true, cancelable: true });
+  detachedHa.shadowRoot.querySelector('slot').dispatchEvent(staleHide);
+  detachedHa.dispatchEvent(new Event('closed'));
+  await frame();
+  const retiredHaEventsDoNotRequestClose = retiredCloseCount === 0;
+  document.body.append(detached);
+  await settle(detached);
+  const currentHide = new Event('wa-hide', { bubbles: true, composed: true, cancelable: true });
+  detachedHa.shadowRoot.querySelector('slot').dispatchEvent(currentHide);
+  const reconnectedHaStillRequestsClose = retiredCloseCount === 1 && currentHide.defaultPrevented;
+  detached.remove();
+
   const lateAlert = document.createElement('hp-dialog');
   lateAlert.alert = true;
   lateAlert.title = 'Alert after HA';
@@ -396,6 +412,8 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
     rejectedHaCloseReopensSameShell,
     repeatedRejectIsIdempotent,
     disconnectedRejectDoesNotReopen,
+    retiredHaEventsDoNotRequestClose,
+    reconnectedHaStillRequestsClose,
     alertAfterHaStillUsesExactlyOneNativeModal: alertAfterHaStaysOneNativeModal,
   };
 });

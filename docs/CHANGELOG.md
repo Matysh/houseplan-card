@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep the space-copy name dialog open when the preceding settings window finishes closing. (#1154)
+
 ## v1.83.0-beta.5 — 2026-10-30
 
 - **Device catalog:** restored the standard spacing around an empty search result. [#1151](https://github.com/Matysh/houseplan-card/issues/1151)

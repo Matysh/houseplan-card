@@ -7,7 +7,20 @@ a Home Assistant server, and it never connects to a real HA instance. It was
 built for the #505 summary-panel parity work
 ([`505-summary-panel-design-parity.md`](../../docs/specs/505-summary-panel-design-parity.md));
 that one-off capture script and its designer prototype were removed by #681 and
-remain in git history. Two diagnostics use the fixture today.
+remain in git history. The diagnostics below use the fixture today.
+
+#1154 verifies settings-to-copy replacement with the authentic component:
+
+```sh
+npm run bundle:sync
+node demo/verify_space_copy.mjs
+```
+
+It retains the copy-name modal after the old settings shell is removed, edits
+the name, cancels through Escape and the footer, verifies zero writes, and
+checks Keep/Discard on a dirty space. The ordinary modal-recovery smoke also
+covers detached hide/closed events and reconnection. This remains a synthetic,
+offline diagnostic; it does not copy or change a real user's space.
 
 #607 verifies the real HA close button:
 

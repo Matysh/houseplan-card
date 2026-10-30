@@ -1048,6 +1048,16 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'retired-dialog-closes-successor-1154',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: '#1154 AC2: detached HA hide/closed events must not request a close from the next dialog; mounted lifecycle and reconnect controls require a browser. Static readiness in development; execution only nightly.',
+    patches: [
+      { file: 'src/hp-dialog.ts', find: 'if (!this.isConnected || this._closing || this._closeRequested) return;', replace: 'if (this._closing || this._closeRequested) return;' },
+      { file: 'src/hp-dialog.ts', find: 'if (!this.isConnected || event.target !== event.currentTarget) return;', replace: 'if (event.target !== event.currentTarget) return;' },
+      { file: 'src/hp-dialog.ts', find: 'if (!this.isConnected || event.composedPath()[0] !== event.currentTarget) return;', replace: 'if (event.composedPath()[0] !== event.currentTarget) return;' },
+    ],
+  },
+  {
     id: 'inbox-menu-forgets-footer-976',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/device-inbox-menu.test.mjs',
     because: '#976 AC9: the menu is bounded by dialog chrome and the visual viewport, not the whole browser below its footer.',
@@ -18009,8 +18019,8 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_dialog_modal_recovery.mjs',
     because: '#988 AC3: a slotted picker lifecycle must not request closing its owner, while own-shell hide remains active.',
     patches: [{ file: 'src/hp-dialog.ts',
-      find: 'if (event.target !== event.currentTarget) return;',
-      replace: 'if (false) return;',
+      find: 'if (!this.isConnected || event.target !== event.currentTarget) return;',
+      replace: 'if (!this.isConnected) return;',
     }],
   },
   {

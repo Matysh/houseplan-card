@@ -9,6 +9,13 @@ See [the investigation](analysis/1133-ci-flake-evidence.md). Run
 and `node demo/smoke_settings_polish_radar_vacuum_955.mjs`. Historical101ms stays
 FAIL under100ms; #1145's separate owner decision is not retrospective evidence.
 
+Dialog retirement (#1154): disconnected `hp-dialog` instances cannot request
+consumer closure. HA hide/closed handlers also return before cancelling an old
+hide event or completing a current exit. `node demo/verify_space_copy.mjs` uses
+the pinned genuine HA fixture for settings-to-copy replacement, name input,
+Escape/Cancel, zero pre-confirmation writes and dirty-space Keep/Discard.
+The regular modal-recovery smoke covers late events and a real reconnect.
+
 Validation workflows (#1124) set `permissions: { contents: read }` at workflow
 scope. The canonical Validate header feeds the generated product recipe through
 `executionHeader`; the generator's docs/tooling header also defaults to contents

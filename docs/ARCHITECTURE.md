@@ -1,5 +1,11 @@
 # House Plan architecture
 
+Dialog lifecycle (#1154): `HpDialog` only sends `hp-close` while connected. Its
+HA hide/closed handlers ignore a disconnected shell before touching the event
+or exit controller. Replacing Space settings with Copy can therefore retire
+the old HA modal without allowing its asynchronous completion to close the
+successor. Connected close requests and accepted exit ownership are unchanged.
+
 Stable entry facades (#1125) wait for the public `home-assistant` definition before importing any eager side-effect or implementation chunk in an HA document. The app defines that root after installing its scoped custom-element registry; the current global registry must own the definition when readiness resolves. A 30-second failure deadline rejects the entry before any fallback class is defined; it is not a startup delay or retry. Already bootstrapped HA and documents without that root keep the immediate import path. Missing implementation chunks retain the existing reload fallback after the bootstrap barrier.
 
 External-screen profiles (#1113) are a versioned optional settings namespace. The thin panel parses only URL syntax; ExternalScreenResolver memoizes effective values against the accepted namespace and normalized route. The card retains its floor/camera, summary, hidden-device and gesture owners. The lazy General settings editor owns one detached nested constructor; only the outer writer persists. Pure profile-only server events use an exact-base additive patch through common adoption; gaps and mixed changes retain normal reload. Capabilities/ACL are not inferred from a profile.
