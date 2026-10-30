@@ -29,7 +29,7 @@ const result = await page.evaluate(async () => {
   trigger?.click();
   await picker?.updateComplete;
   // #1108: #1081's real entrance translates the surface for 160ms. Measure
-  // settled layout, retaining the exact 32px contract and native animation.
+  // settled layout with the #1145 44px hit area and native animation.
   await Promise.all(picker.shadowRoot.querySelector('.picker').getAnimations({ subtree: true })
     .filter(animation => Number.isFinite(animation.effect.getComputedTiming().endTime))
     .map(animation => animation.finished.catch(() => {})));
@@ -58,7 +58,7 @@ const result = await page.evaluate(async () => {
   out.hueTrackContract = hue?.classList.contains('hue-range')
     && hue.min === '0' && hue.max === '359' && hue.step === '1'
     && hueStyle.getPropertyValue('--hp-picker-track').includes('linear-gradient')
-    && hue.getBoundingClientRect().height === 32;
+    && hue.getBoundingClientRect().height === 44;
   // #1008: painted centre/ring/geometry is proved by smoke_color_picker_presentation.
   ranges()[1].value = '100';
   ranges()[1].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
@@ -97,7 +97,7 @@ const result = await page.evaluate(async () => {
   const confirmRect = confirm?.getBoundingClientRect();
   const surfaceRect = surface()?.getBoundingClientRect();
   out.confirmIsFullWidthTouchTarget = !!confirmRect && !!surfaceRect
-    && confirmRect.height >= 40
+    && confirmRect.height >= 44
     && Math.abs(confirmRect.width - (surface().clientWidth - 24)) <= 1
     && surface()?.lastElementChild === confirm;
   const eventsBeforeConfirm = events.length;

@@ -685,7 +685,7 @@ Object.assign(res, await page.evaluate(async () => {
     c.hass = { ...c.hass, themes: { ...(c.hass.themes || {}), darkMode } };
     await c.updateComplete;
     const rect = trigger?.getBoundingClientRect();
-    themeStates.push(!!rect && rect.width === 40 && rect.height === 40
+    themeStates.push(!!rect && rect.width === 44 && rect.height === 44
       && getComputedStyle(trigger).visibility === 'visible');
   }
   trigger?.click();
