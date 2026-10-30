@@ -1,0 +1,581 @@
+{
+  "diagnosticOnly": true,
+  "notNormativePass": true,
+  "matchedWindows": [
+    [
+      72413244538.99998,
+      72413328538.99998
+    ],
+    [
+      72413493439,
+      72413575538.99998
+    ],
+    [
+      72413726239,
+      72413790839
+    ],
+    [
+      72413944038.99998,
+      72414006839
+    ],
+    [
+      72414142939,
+      72414201538.99998
+    ],
+    [
+      72414442739,
+      72414504739
+    ],
+    [
+      72414660038.99998,
+      72414721538.99998
+    ],
+    [
+      72414876839,
+      72414939639
+    ],
+    [
+      72415093339,
+      72415154239
+    ],
+    [
+      72415332538.99998,
+      72415400839
+    ],
+    [
+      72415944739,
+      72416010139
+    ],
+    [
+      72416210839,
+      72416266038.99998
+    ],
+    [
+      72416444639,
+      72416499939
+    ],
+    [
+      72416710639,
+      72416768739
+    ],
+    [
+      72416977139,
+      72417032239
+    ]
+  ],
+  "traceOffsetMicroseconds": 72409682639,
+  "samples": [
+    {
+      "case": "room-name",
+      "iteration": 0,
+      "input": 3561.8999999910593,
+      "paint": 3645.8999999910593,
+      "client": 84,
+      "ackToPaint": 40.3999999910593,
+      "longTasks": [
+        {
+          "start": 3563.0999999940395,
+          "duration": 81
+        }
+      ]
+    },
+    {
+      "case": "room-name",
+      "iteration": 1,
+      "input": 3810.7999999970198,
+      "paint": 3892.8999999910593,
+      "client": 82.09999999403954,
+      "ackToPaint": 33.099999994039536,
+      "longTasks": [
+        {
+          "start": 3808.2000000029802,
+          "duration": 83
+        }
+      ]
+    },
+    {
+      "case": "room-name",
+      "iteration": 2,
+      "input": 4043.5999999940395,
+      "paint": 4108.20000000298,
+      "client": 64.6000000089407,
+      "ackToPaint": 29.700000002980232,
+      "longTasks": [
+        {
+          "start": 4042.2999999970198,
+          "duration": 65
+        }
+      ]
+    },
+    {
+      "case": "room-name",
+      "iteration": 3,
+      "input": 4261.399999991059,
+      "paint": 4324.20000000298,
+      "client": 62.80000001192093,
+      "ackToPaint": 28.900000005960464,
+      "longTasks": [
+        {
+          "start": 4258.899999991059,
+          "duration": 64
+        }
+      ]
+    },
+    {
+      "case": "room-name",
+      "iteration": 4,
+      "input": 4460.29999999702,
+      "paint": 4518.899999991059,
+      "client": 58.599999994039536,
+      "ackToPaint": 28.5,
+      "longTasks": [
+        {
+          "start": 4461.29999999702,
+          "duration": 56
+        }
+      ]
+    },
+    {
+      "case": "room-paint",
+      "iteration": 0,
+      "input": 4760.0999999940395,
+      "paint": 4822.0999999940395,
+      "client": 62,
+      "ackToPaint": 28,
+      "longTasks": [
+        {
+          "start": 4758,
+          "duration": 63
+        }
+      ]
+    },
+    {
+      "case": "room-paint",
+      "iteration": 1,
+      "input": 4977.399999991059,
+      "paint": 5038.899999991059,
+      "client": 61.5,
+      "ackToPaint": 28.5,
+      "longTasks": [
+        {
+          "start": 4975,
+          "duration": 63
+        }
+      ]
+    },
+    {
+      "case": "room-paint",
+      "iteration": 2,
+      "input": 5194.20000000298,
+      "paint": 5257,
+      "client": 62.79999999701977,
+      "ackToPaint": 30,
+      "longTasks": [
+        {
+          "start": 5192.5999999940395,
+          "duration": 63
+        }
+      ]
+    },
+    {
+      "case": "room-paint",
+      "iteration": 3,
+      "input": 5410.70000000298,
+      "paint": 5471.5999999940395,
+      "client": 60.8999999910593,
+      "ackToPaint": 30.200000002980232,
+      "longTasks": [
+        {
+          "start": 5408.899999991059,
+          "duration": 61
+        }
+      ]
+    },
+    {
+      "case": "room-paint",
+      "iteration": 4,
+      "input": 5649.899999991059,
+      "paint": 5718.20000000298,
+      "client": 68.30000001192093,
+      "ackToPaint": 30.80000001192093,
+      "longTasks": [
+        {
+          "start": 5647,
+          "duration": 70
+        }
+      ]
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 0,
+      "input": 6262.0999999940395,
+      "paint": 6327.5,
+      "client": 65.40000000596046,
+      "ackToPaint": 41.1000000089407,
+      "longTasks": [
+        {
+          "start": 6260.70000000298,
+          "duration": 57
+        }
+      ]
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 1,
+      "input": 6528.20000000298,
+      "paint": 6583.399999991059,
+      "client": 55.19999998807907,
+      "ackToPaint": 32.29999999701977,
+      "longTasks": [
+        {
+          "start": 6526.899999991059,
+          "duration": 54
+        }
+      ]
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 2,
+      "input": 6762,
+      "paint": 6817.29999999702,
+      "client": 55.29999999701977,
+      "ackToPaint": 34.900000005960464,
+      "longTasks": [
+        {
+          "start": 6763.20000000298,
+          "duration": 52
+        }
+      ]
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 3,
+      "input": 7028,
+      "paint": 7086.0999999940395,
+      "client": 58.099999994039536,
+      "ackToPaint": 35.099999994039536,
+      "longTasks": [
+        {
+          "start": 7026.5,
+          "duration": 57
+        }
+      ]
+    },
+    {
+      "case": "visible-bg",
+      "iteration": 4,
+      "input": 7294.5,
+      "paint": 7349.5999999940395,
+      "client": 55.099999994039536,
+      "ackToPaint": 31.700000002980232,
+      "longTasks": [
+        {
+          "start": 7293.29999999702,
+          "duration": 54
+        }
+      ]
+    }
+  ],
+  "selfTimeMs": [
+    {
+      "frame": {
+        "functionName": "sync",
+        "scriptId": "29",
+        "url": "http://demo.local/assets/houseplan-assets/live-interaction-runtime-Bzpft-UL.js",
+        "lineNumber": 0,
+        "columnNumber": 19503
+      },
+      "ms": 159.328
+    },
+    {
+      "frame": {
+        "functionName": "s",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 41,
+        "columnNumber": 77601
+      },
+      "ms": 129.46900000000002
+    },
+    {
+      "frame": {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "ms": 92.82500000000017
+    },
+    {
+      "frame": {
+        "functionName": "o",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 41,
+        "columnNumber": 77714
+      },
+      "ms": 72.71000000000002
+    },
+    {
+      "frame": {
+        "functionName": "sg",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 210,
+        "columnNumber": 36895
+      },
+      "ms": 35.177
+    },
+    {
+      "frame": {
+        "functionName": "toggleAttribute",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "ms": 32.580000000000005
+    },
+    {
+      "frame": {
+        "functionName": "remove",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "ms": 27.272000000000048
+    },
+    {
+      "frame": {
+        "functionName": "Jn",
+        "scriptId": "17",
+        "url": "http://demo.local/assets/houseplan-assets/view-frame-G3eqIixO.js",
+        "lineNumber": 0,
+        "columnNumber": 70390
+      },
+      "ms": 19.535999999999998
+    },
+    {
+      "frame": {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "ms": 17.733999999999998
+    },
+    {
+      "frame": {
+        "functionName": "No",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 41,
+        "columnNumber": 34697
+      },
+      "ms": 16.615000000000002
+    },
+    {
+      "frame": {
+        "functionName": "",
+        "scriptId": "17",
+        "url": "http://demo.local/assets/houseplan-assets/view-frame-G3eqIixO.js",
+        "lineNumber": 0,
+        "columnNumber": 51493
+      },
+      "ms": 13.117
+    },
+    {
+      "frame": {
+        "functionName": "ig",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 210,
+        "columnNumber": 36239
+      },
+      "ms": 12.099000000000002
+    },
+    {
+      "frame": {
+        "functionName": "rememberAccepted",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 164,
+        "columnNumber": 80967
+      },
+      "ms": 9.84
+    },
+    {
+      "frame": {
+        "functionName": "$a",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 41,
+        "columnNumber": 58085
+      },
+      "ms": 8.964
+    },
+    {
+      "frame": {
+        "functionName": "Br",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 41,
+        "columnNumber": 48792
+      },
+      "ms": 8.675
+    },
+    {
+      "frame": {
+        "functionName": "ts.map.code",
+        "scriptId": "17",
+        "url": "http://demo.local/assets/houseplan-assets/view-frame-G3eqIixO.js",
+        "lineNumber": 0,
+        "columnNumber": 324034
+      },
+      "ms": 8.601
+    },
+    {
+      "frame": {
+        "functionName": "t.snapshot",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 485,
+        "columnNumber": 29350
+      },
+      "ms": 8.494
+    },
+    {
+      "frame": {
+        "functionName": "p",
+        "scriptId": "27",
+        "url": "http://demo.local/assets/houseplan-assets/lit-element-CiUEg7gU.js",
+        "lineNumber": 0,
+        "columnNumber": 10808
+      },
+      "ms": 7.66
+    },
+    {
+      "frame": {
+        "functionName": "querySelector",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "ms": 7.579000000000001
+    },
+    {
+      "frame": {
+        "functionName": "ut",
+        "scriptId": "17",
+        "url": "http://demo.local/assets/houseplan-assets/view-frame-G3eqIixO.js",
+        "lineNumber": 0,
+        "columnNumber": 50073
+      },
+      "ms": 7.563000000000001
+    },
+    {
+      "frame": {
+        "functionName": "handle",
+        "scriptId": "7",
+        "url": "http://demo.local/fixture-state.js",
+        "lineNumber": 34,
+        "columnNumber": 10
+      },
+      "ms": 7.556000000000001
+    },
+    {
+      "frame": {
+        "functionName": "getBoundingClientRect",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "ms": 7.007999999999999
+    },
+    {
+      "frame": {
+        "functionName": "equal",
+        "scriptId": "7",
+        "url": "http://demo.local/fixture-state.js",
+        "lineNumber": 10,
+        "columnNumber": 16
+      },
+      "ms": 6.612
+    },
+    {
+      "frame": {
+        "functionName": "_cacheSnapshot",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 455,
+        "columnNumber": 50313
+      },
+      "ms": 6.554
+    },
+    {
+      "frame": {
+        "functionName": "Rr",
+        "scriptId": "17",
+        "url": "http://demo.local/assets/houseplan-assets/view-frame-G3eqIixO.js",
+        "lineNumber": 0,
+        "columnNumber": 76618
+      },
+      "ms": 6.430000000000001
+    },
+    {
+      "frame": {
+        "functionName": "_cfgFingerprint",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 485,
+        "columnNumber": 335
+      },
+      "ms": 6.277000000000001
+    },
+    {
+      "frame": {
+        "functionName": "",
+        "scriptId": "29",
+        "url": "http://demo.local/assets/houseplan-assets/live-interaction-runtime-Bzpft-UL.js",
+        "lineNumber": 0,
+        "columnNumber": 5914
+      },
+      "ms": 5.497999999999999
+    },
+    {
+      "frame": {
+        "functionName": "",
+        "scriptId": "28",
+        "url": "http://demo.local/assets/houseplan-assets/houseplan-card-CDJO9P9O.js",
+        "lineNumber": 485,
+        "columnNumber": 1133
+      },
+      "ms": 5.244999999999999
+    },
+    {
+      "frame": {
+        "functionName": "querySelectorAll",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1
+      },
+      "ms": 5.115
+    },
+    {
+      "frame": {
+        "functionName": "ge",
+        "scriptId": "40",
+        "url": "http://demo.local/assets/houseplan-assets/editor-shared-RSrlSc8u.js",
+        "lineNumber": 7,
+        "columnNumber": 5126
+      },
+      "ms": 5.105
+    }
+  ]
+}
