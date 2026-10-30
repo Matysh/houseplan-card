@@ -95,7 +95,9 @@ for (const [k, v] of Object.entries(res)) check(k, v);
 
 // ---- a window resize between instances → memo stale → the full boot ----
 await page.setViewportSize({ width: 900, height: 680 });
-const rez = await page.evaluate(async () => {
+// #1145 prerelease gate: CDP may collect an unrooted async result during resize.
+// Retain this real evaluation until its result is transferred; all boot oracles stay.
+const rez = await page.evaluate(() => (window.__warmRemountResizeTask = (async () => {
   const out = {};
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const c = document.createElement('houseplan-card');
@@ -117,7 +119,8 @@ const rez = await page.evaluate(async () => {
   out.resizedSettles = c._booting === false;
   wrap.remove();
   return out;
-});
+})()));
+await page.evaluate(() => { delete window.__warmRemountResizeTask; });
 for (const [k, v] of Object.entries(rez)) check(k, v);
 
 await finish(browser, { ...res, ...rez });
