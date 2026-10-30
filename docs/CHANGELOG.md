@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.83.0-beta.6 — 2026-10-30
+
 - Keep the space-copy name dialog open when the preceding settings window finishes closing. (#1154)
 
 ## v1.83.0-beta.5 — 2026-10-30
