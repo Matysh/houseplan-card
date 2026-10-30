@@ -512,7 +512,10 @@ or saved positions; full and static cards share these rules.
   battery inheritance is reused, including a live entity whose parent marker alone
   was removed from the plan. Unknown/disabled/missing parents do not lend data.
   Exact `marker.hide_signal:true` hides only `lqiText`; `lqiTipText`, explicitly
-  selected derived LQI and topology remain. The effective `showSignal` still gates
+  selected derived LQI and topology remain. LQI owners may sit above room captions;
+  topology strokes remain above unrelated owners and below participating endpoints.
+  Layer checks compare this order, without assuming an unrelated owner's `z-index`
+  is always `auto` (#1132). The effective `showSignal` still gates
   system line/tooltip and ordinary static/LED policies remain unchanged.
   The direct feed is independent of system-line visibility and topology:
   device/entity aliases of one physical radio still contribute once per room.

@@ -221,11 +221,14 @@ const result = await page.evaluate(async () => {
     getComputedStyle(unrelated.querySelector('.device-shell')).zIndex, 10,
   );
   const sourceLayer = Number.parseInt(getComputedStyle(source).zIndex, 10);
+  // #1132: LQI owners rise above room text. The route still has to paint
+  // above unrelated markers and below its endpoints; "auto" is not that oracle.
+  const unrelatedLayer = Number.parseInt(getComputedStyle(unrelated).zIndex, 10) || 0;
   out.incidentOnly = overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-line"]').length === 2
     && overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-neighbor"]').length === 2;
   out.layerContract = overlay.parentElement === devlayer
     && !overlay.hasAttribute('data-hp-live-layer')
-    && getComputedStyle(unrelated).zIndex === 'auto'
+    && overlayLayer > unrelatedLayer
     && overlayLayer > unrelatedFloorLayer
     && overlayLayer > unrelatedShellLayer
     && sourceLayer > overlayLayer
