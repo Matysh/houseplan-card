@@ -3,6 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { launch } from './serve.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
@@ -59,6 +60,11 @@ const requiresFloorBodyPools = cardSource.includes('private _physicalBodiesPool'
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
+// #1093: pre-1.83 comparison trees render after an off-floor HA change.
+// The candidate always retains the new zero-render oracle; historical trees
+// are judged by it only when they have the snapshot-consumer optimization.
+const requiresOffFloorIsolation = interaction && (targetRoot === resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  || existsSync(resolve(targetRoot, 'src/render-snapshot-consumers.ts')));
 // #850: a target whose live runtime remembers the light geometry fingerprint has it judged at zero on hover.
 const requiresLightGeometryMemo = interaction && existsSync(resolve(targetRoot, 'src/live-interaction-runtime.ts'))
   && readFileSync(resolve(targetRoot, 'src/live-interaction-runtime.ts'), 'utf8').includes('public geometry(record');
@@ -149,7 +155,7 @@ try {
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
       requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, planRotation,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, requiresOffFloorIsolation, planRotation,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -1098,7 +1104,7 @@ try {
         interactionDiagnostics = { supported: requiresInteraction, ...deltas };
         if (requiresInteraction && (
           deltas.irrelevantFullRenders !== 0 || deltas.irrelevantHassIntakes !== 30
-          || deltas.offFloorFullRenders !== 0 || deltas.offFloorHassIntakes !== 1
+          || (requiresOffFloorIsolation && deltas.offFloorFullRenders !== 0) || deltas.offFloorHassIntakes !== 1
           || !deltas.offFloorMarkerAbsent || !deltas.relevantVisibleStateChanged
           || !deltas.relevantVisibleLabelChanged
           || deltas.relevantOutsideGestureFullRenders !== 1 || deltas.hoverFullRenders !== 0
@@ -1467,7 +1473,7 @@ try {
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
       interaction, requiresInteraction, stage3Dense, requireStage3,
       requiresIsoStructuralBuildCounter, requiresStairs, profile, backdrop,
-      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, planRotation,
+      requiresFloorCacheBuildCounters, requiresFloorBodyPools, requiresLightGeometryMemo, requiresOffFloorIsolation, planRotation,
     });
     // #520: диагностика печатается в лог прогона и в запись не попадает.
     const { bootDiag, ...measured } = row;

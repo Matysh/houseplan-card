@@ -174,6 +174,13 @@ gap and 2000 B band. The generated JS resource baseline moves from 3574169 to
 
 Use the shared `node demo/benchmark_selective_invalidation.mjs --profile=full --output=artifacts/performance-smoke/selective-invalidation.json` before S7 and beta. It asserts native Save/Copy/history timings, coherent readback, real physical counters, cold saves and DPR siblings on nonempty synthetic small/large scenes. Only the declared 0/320 ms fixture delay is subtracted. Keep raw baseline RED and final source-matched GREEN separately; `--iterations=1` is an explicitly marked correctness probe, never timing acceptance. The four bounded core wrappers are mandatory selected-browser inputs for frontend/build and gate/fixture changes. Do not interpret ignored JSON existence, a historical bundle or a missing core job as PASS. [Audit and current evidence](analysis/1093-selective-invalidation-2026-10-28.md).
 
+For stable Full Performance comparisons, the off-floor zero-render oracle applies
+to the current candidate and comparison trees that contain snapshot-consumer
+demand. A pre-1.83 baseline lacks that optimization and may render once; its
+intake count, invisible-marker witness, visible positive control and measured
+timings remain checked. This compatibility boundary changes no candidate oracle,
+timing budget or accepted frame.
+
 
 
 The owner authorized the measured #1093 resource increase over frozen #1089:
