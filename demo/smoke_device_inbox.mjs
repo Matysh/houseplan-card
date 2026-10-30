@@ -67,6 +67,11 @@ const out = await page.evaluate(async () => {
   }
 
   const search = root().querySelector('.device-inbox-search');
+  search.value = '__1151_no_matches__';
+  search.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  await window.__hpTest.settled();
+  const empty = root().querySelector('.device-inbox-empty');
+  result.emptySearchHas16pxPadding = !!empty && getComputedStyle(empty).padding === '16px';
   search.value = 'Ceiling light';
   search.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
   await c.updateComplete;
@@ -106,5 +111,16 @@ const out = await page.evaluate(async () => {
   return result;
 });
 
+await page.setViewportSize({width:390,height:820});
+const emptyResult=await page.evaluate(async()=>{
+ const c=window.__card;c._openDeviceInbox();await window.__hpTest.settled();
+ const before=JSON.stringify({config:c._serverCfg,layout:c._layout,rev:c._cfgRev});
+ const search=c.shadowRoot.querySelector('.device-inbox-search');search.value='__1151_no_matches__';search.dispatchEvent(new Event('input',{bubbles:true,composed:true}));await window.__hpTest.settled();
+ const empty=c.shadowRoot.querySelector('.device-inbox-empty'),r=empty?.getBoundingClientRect(),s=empty&&getComputedStyle(empty);
+ return{padding:s?.padding,left:r?.left,right:r?.right,readOnly:before===JSON.stringify({config:c._serverCfg,layout:c._layout,rev:c._cfgRev})};
+});
+out.emptyNarrowHas16pxPaddingAndFits=emptyResult.padding==='16px'&&emptyResult.left>=0&&emptyResult.right<=390;
+out.emptyNarrowSearchRemainsReadOnly=emptyResult.readOnly;
+console.log('1151 empty search:',JSON.stringify(emptyResult));
 checkAll(out);
 await finish(browser, out);

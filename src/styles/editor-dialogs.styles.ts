@@ -758,7 +758,7 @@ export const editorDialogsStyles = css`
       flex-wrap: wrap;
     }
     .device-inbox-menu { position: relative; }
-    .device-inbox-empty { color: var(--hp-muted); text-align: center; padding: var(--sp-8); }
+    .device-inbox-empty { color: var(--hp-muted); text-align: center; padding: var(--sp-6); }
     .device-inbox-more { align-self: center; }
     @media (max-width: 680px) {
       .device-inbox-head { grid-template-columns: minmax(0, 1fr); }

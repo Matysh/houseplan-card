@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "issue": 1151,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "The device catalog and its empty-search state already exist in stable1.82. The undefined spacing token renders as0px; restore the existing16px step without changing filtering or writes.",
+  "summary": {
+    "ru": "Исправлены отступы пустого результата каталога устройств.",
+    "en": "Restored device-catalog empty-search spacing."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "4395538b3fe35d1c1687cbeb6d5d180de98f2e98b705865532d7ce5c0a033b39",
+    "golden": [],
+    "smokes": [
+      "smoke_device_inbox.mjs"
+    ]
+  }
+}
