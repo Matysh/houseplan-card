@@ -9,6 +9,7 @@
 // отказ — английский в строках пространства, один тост, без вечной загрузки.
 import { readFileSync } from 'node:fs';
 import { launchColdView, checkAll, finish } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 import { NAMESPACE_LOCALE_CHUNKS } from '../scripts/bundle-manifest.mjs';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
@@ -329,7 +330,8 @@ const out = {};
   const initial = await page.evaluate(() => performance.getEntriesByType('resource')
     .map((entry) => new URL(entry.name).pathname.split('/').at(-1)));
   out.enViewRequestsNoNamespaceChunk = namespaceRequests(initial).length === 0;
-  await page.evaluate(() => window.__card._requestMode('plan'));
+  await evaluateRetainedAction(page, () => window.__card._requestMode('plan'),
+    'open English editor without a locale namespace');
   await page.waitForFunction(() => window.__card._mode === 'plan' && !!window.__card._editorRuntime);
   await page.waitForTimeout(80);
   out.enEditorRequestsNoNamespaceChunk = namespaceRequests(requested).length === 0;

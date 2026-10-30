@@ -403,10 +403,10 @@ try {
   }, secondFrame);
 
   // AC5 (ii): warm remount — General settings revive on the new instance, styled in their first frame.
-  await page.evaluate(async () => {
+  await evaluateRetainedAction(page, async () => {
     await window.__hpTest.setMode('view');
     window.__card.renderRoot.querySelector('[data-hp="settings"]').click();
-  });
+  }, 'open General settings before warm remount');
   await page.waitForFunction(() => !!window.__card.renderRoot.querySelector('hp-dialog .backupupload'),
     null, { timeout: 15000 });
   await page.evaluate(() => {

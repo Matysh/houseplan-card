@@ -7,10 +7,11 @@
 // invalidates the memo → the full protective boot is back.
 // FAILS on the build before DEV-B703-01 (every instance booted cold).
 import { launch, check, finish } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 
 const { page, browser } = await launch({ width: 820, height: 760 });
 
-const res = await page.evaluate(async () => {
+const res = await evaluateRetainedAction(page, async () => {
   const out = {};
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   customElements.get('houseplan-card')?._warmBootReset?.(); // deterministic: the page starts cold
@@ -90,14 +91,14 @@ const res = await page.evaluate(async () => {
   c2.remove();
   wrap.remove();
   return out;
-});
+}, 'cold and warm remount frames');
 for (const [k, v] of Object.entries(res)) check(k, v);
 
 // ---- a window resize between instances → memo stale → the full boot ----
 await page.setViewportSize({ width: 900, height: 680 });
-// #1145 prerelease gate: CDP may collect an unrooted async result during resize.
-// Retain this real evaluation until its result is transferred; all boot oracles stay.
-const rez = await page.evaluate(() => (window.__warmRemountResizeTask = (async () => {
+// #1160: retain the CDP action itself through a handle until result transfer.
+// A window-owned inner promise does not retain CDP's pending evaluation.
+const rez = await evaluateRetainedAction(page, async () => {
   const out = {};
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const c = document.createElement('houseplan-card');
@@ -119,8 +120,7 @@ const rez = await page.evaluate(() => (window.__warmRemountResizeTask = (async (
   out.resizedSettles = c._booting === false;
   wrap.remove();
   return out;
-})()));
-await page.evaluate(() => { delete window.__warmRemountResizeTask; });
+}, 'resized remount cold boot');
 for (const [k, v] of Object.entries(rez)) check(k, v);
 
 await finish(browser, { ...res, ...rez });

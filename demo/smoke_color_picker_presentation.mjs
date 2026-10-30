@@ -1,6 +1,7 @@
 // #1008 / UI-016: native range pseudo-elements require actual paint, not CSS text.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launch, requirePinnedBrowser, checkAll, finish } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 
 requirePinnedBrowser('1008 HSV thumb and track pixels');
 const output = 'artifacts/color-picker-presentation';
@@ -191,7 +192,9 @@ try {
   const savedBefore = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
   // Each real settings family supplies the same actual component/template.
   for (const family of ['general', 'space', 'room', 'device', 'decor']) {
-    await page.evaluate(async family => {
+    await page.evaluate(family => { window.__colorPickerConsumerFamily = family; }, family);
+    await evaluateRetainedAction(page, async () => {
+      const family = window.__colorPickerConsumerFamily;
       const c = window.__card, hp = window.__hpTest;
       if (family === 'general') {
         let button = c.renderRoot.querySelector('[data-hp="settings"]');
@@ -223,9 +226,10 @@ try {
       await p.togglePicker(); await p.updateComplete;
       const input = p._surface().querySelector('input[type="text"]');
       input.value = '#66cc66'; input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-    }, family);
+    }, `open ${family} color picker`);
     await paint(`consumer-${family}`, '#66cc66');
-    await page.evaluate(async family => {
+    await evaluateRetainedAction(page, async () => {
+      const family = window.__colorPickerConsumerFamily;
       const c = window.__card, hp = window.__hpTest; window.__picker.closePicker();
       if (family === 'decor') { await hp.setMode('view'); return; }
       const { confirm } = await hp.close(undefined, { via: 'cancel' });
@@ -235,8 +239,9 @@ try {
         if (performance.now() > until) throw new Error('settings did not close after discard');
         await new Promise(requestAnimationFrame);
       }
-    }, family);
+    }, `close ${family} color picker`);
   }
+  await page.evaluate(() => { delete window.__colorPickerConsumerFamily; });
   out.consumerCancelDoesNotPersist = await page.evaluate(before => JSON.stringify(window.__card._serverCfg) === before, savedBefore);
   await page.setViewportSize({ width: 320, height: 760 });
   // An absent browser capability is an environment input, not a source mutation.

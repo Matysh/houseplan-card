@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "issue": 1160,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Use the existing retained-page-action helper at five smoke callers with observed CDP promise-collection failures. Preserve the underlying product actions, all assertions, deadlines, raster tolerances and the independent forced-GC contrast. Remove the ineffective window-only resize promise retention; no product or workflow change.",
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
+    "golden": [],
+    "smokes": [
+      "smoke_color_picker_presentation.mjs",
+      "smoke_drag_bounds.mjs",
+      "smoke_editor_styles_lazy.mjs",
+      "smoke_lazy_admin_locale.mjs",
+      "smoke_warm_remount.mjs"
+    ]
+  }
+}

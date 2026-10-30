@@ -10,10 +10,11 @@
 // that lives inside 0..1, so the old clamps really were in the way — and drags
 // each kind of thing out to 2.5 / 2.2 and beyond.
 import { launch, checkAll, finish } from './serve.mjs';
+import { evaluateRetainedAction } from './helpers/retained-page-action.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 820 }, 1);
 
-const out = await page.evaluate(async () => {
+const out = await evaluateRetainedAction(page, async () => {
   const o = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
@@ -143,6 +144,6 @@ const out = await page.evaluate(async () => {
 
   c._setMode('view');
   return o;
-});
+}, 'drag bounds scenarios');
 
 await finish(browser, checkAll(out));
