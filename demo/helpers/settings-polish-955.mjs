@@ -9,6 +9,7 @@ import {assertFreshDemoBundle} from '../bundle-freshness.mjs';
 import {checkAll,watchPage} from '../serve.mjs';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {configDifference} from './ci-flake-evidence.mjs';
 
 // Keep every interaction/viewport/theme assertion in one shared implementation.
 export async function runSettingsPolish955(defaultCases, finish) {
@@ -18,7 +19,7 @@ const caseName=process.argv.find(a=>a.startsWith('--case='))?.slice(7);
 if(caseName&&(!['general','space','room','sensor','led','climate','vacuum','radar'].includes(caseName)||fast))throw Error('Use --case with one known full scenario, without --fast');
 const receiptName=caseName?'case-'+caseName:fast?touch?'touch-matrix':'fast-matrix':defaultCases.join('-')+'-matrix';
 const fixture=await launchHaDialogFixture({authentic:true,viewport:{width:1280,height:900},extraModules:['16213'],hasTouch:touch});
-const {page}=fixture,out={},matrix=[];
+const {page}=fixture,out={},matrix=[],diagnostics={};
 const geometryOnly=process.argv.includes('--geometry');
 const palettes={light:['#fff','#eceeef','#223039','#64747e','#dce2e6','#008aa5'],dark:['#17222e','#0f1822','#e7eef4','#a6b6c3','#354755','#67cfe8'],custom:['#fff6e9','#f0e2d0','#35291d','#75634e','#d6c3ac','#9b45b7']};
 watchPage(page);
@@ -189,10 +190,19 @@ try{
   out[name+'_keep_returns_draft']=await d.isVisible();await d.locator('.hpf-footer [data-hp=dialog-cancel]').click();
   await confirm.locator('[data-hp=dialog-confirm]').click();await d.waitFor({state:'detached'});
   out[name+'_cancel_preserves_config']=await page.evaluate(original=>JSON.stringify(window.__card._serverCfg)===original,original);
+  // Observe only AFTER the original strict verdict. No waits, retries or
+  // canonicalisation may turn a failing Cancel into PASS.
+  if(!out[name+'_cancel_preserves_config']) {
+   const observed=await page.evaluate(async()=>({client:window.__card._serverCfg,
+    persisted:(await window.__card.hass.callWS({type:'houseplan/config/get'})).config}));
+   diagnostics[name]={originalToClient:configDifference(JSON.parse(original),observed.client),
+    originalToPersisted:configDifference(JSON.parse(original),observed.persisted),
+    clientToPersisted:configDifference(observed.client,observed.persisted)};
+  }
   matrix.push({form:name,sections,helpPaths:sawHelp,colorPaths:sawColors,toggleRows:sawToggles,selectPaths:sawSelects});
   console.log('#955 checked '+name);
  }
- await fixture.assertClean();mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${receiptName}.json`,JSON.stringify({matrix,out},null,2));checkAll(out);await finish(fixture.browser,out);
-}finally{mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${receiptName}.json`,JSON.stringify({matrix,out},null,2));await fixture.close();}
+ await fixture.assertClean();mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${receiptName}.json`,JSON.stringify({matrix,out,diagnostics},null,2));checkAll(out);await finish(fixture.browser,out);
+}finally{mkdirSync('artifacts/polish-955',{recursive:true});writeFileSync(`artifacts/polish-955/${receiptName}.json`,JSON.stringify({matrix,out,diagnostics},null,2));await fixture.close();}
 
 }

@@ -9,6 +9,7 @@ import { goldenClip, prepareGoldenScenario, resetGoldenStability } from './harne
 import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
 import { inspectBatteryBoardPixels } from './device-battery.mjs';
 import { captureGoldenFrame } from './scene-repaint.mjs';
+import { uiLab1081CaptureEvidence } from './ui-lab-1081.mjs';
 import { CAPTURE_PROVENANCE_SCHEMA, captureProvenance } from '../../scripts/capture-environment.mjs';
 import {
   assertGoldenInvocation,
@@ -1047,6 +1048,7 @@ try {
         scale: 'css',
       };
       const actual = await captureGoldenFrame(page, scenario, screenshotOptions);
+      if (scenario.uiLab1081 === 'grid-pan') result.captureEvidence = await uiLab1081CaptureEvidence(page);
       if (result.runtime.phoneHeader?.close)
         result.phoneClosePixels = await inspectPhoneClosePixels(page, actual, result.runtime.phoneHeader.close);
       const actualPath = resolve(actualRoot, `${scenario.id}.png`);

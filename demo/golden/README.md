@@ -88,6 +88,10 @@ product never sets the seam (`src/card-version.ts`).
 
 ## Diagnostic workflow
 
+Grid-pan failures retain post-screenshot stage/SVG/marker geometry, grid styles,
+DPR and motion classes (#1133). These are diagnostics, not another comparison or
+a retry. They cannot make a differing frame pass or justify baseline acceptance.
+
 On every development track (#1044), `ci:golden` requests selected scenes and
 semantic assertions. Expected differences/new scenes live in the issue's
 release-ledger `visual` field; the schema, baseline-index hash command and

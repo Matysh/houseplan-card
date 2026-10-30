@@ -5,6 +5,20 @@ export function addUiLab1081Fixture(fixture, scenario) {
   fixture.layout['ui1081-device'] = { s: scenario.space, x: .4, y: .45 };
 }
 
+// Read only after the screenshot: diagnostic layout reads must not change the
+// timing/raster history of the frame being judged (#1133).
+export async function uiLab1081CaptureEvidence(page) {
+  return page.evaluate(() => {
+    const root=window.__goldenCard.renderRoot,stage=root.querySelector('.stage');
+    const rect=el=>el?.getBoundingClientRect().toJSON()??null;
+    const style=getComputedStyle(stage);
+    return {schema:1,dpr:devicePixelRatio,stage:rect(stage),
+      svg:rect(stage.querySelector('svg')),marker:rect(root.querySelector('[data-hp="device"][data-id="ui1081-device"]')),
+      backgroundPosition:style.backgroundPosition,backgroundSize:style.backgroundSize,
+      transform:style.transform,stageClasses:[...stage.classList].sort()};
+  });
+}
+
 export async function prepareUiLab1081(page, scenario) {
   const card = page.locator('houseplan-card');
   await page.waitForFunction(mode => window.__goldenCard._mode === mode, scenario.mode);

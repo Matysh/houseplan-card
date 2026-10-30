@@ -1,5 +1,14 @@
 # Development and deployment
 
+CI flake evidence (#1133): preserve the first FAIL and its immutable artifact.
+`ci-flake-evidence.mjs` reports bounded differences but never replaces the strict
+Cancel oracle. The vacuum/radar polish smoke collects client/persisted deltas
+only after failure; Golden grid-pan telemetry is collected after its judged PNG.
+See [the investigation](analysis/1133-ci-flake-evidence.md). Run
+`node --test test/ci-flake-evidence.test.mjs test/golden-scene-repaint.test.mjs`
+and `node demo/smoke_settings_polish_radar_vacuum_955.mjs`. Historical101ms stays
+FAIL under100ms; #1145's separate owner decision is not retrospective evidence.
+
 Validation workflows (#1124) set `permissions: { contents: read }` at workflow
 scope. The canonical Validate header feeds the generated product recipe through
 `executionHeader`; the generator's docs/tooling header also defaults to contents

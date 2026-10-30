@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1133,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Investigate and explicitly classify historical failures; add post-verdict evidence without changing product code, comparison/timing limits, capture inputs or baseline acceptance. This is diagnostic delivery, not a claim to have repaired unresolved raster/Cancel drift.",
+  "summary": {
+    "ru": "Диагностика нестабильных CI-проверок сохраняет геометрию кадра и различия состояния после отказа без ослабления проверок.",
+    "en": "Flaky-check diagnostics retain post-capture geometry and post-failure state differences without weakening the original oracles."
+  }
+}
