@@ -16,17 +16,19 @@ try {
  // Real caller templates, not invented primary class names in a style gallery.
  for(const kind of ['text','backdrop','shape','image']){
   await card.evaluate(async(c,kind)=>{
-   if(kind==='text')c._decorTextDialog={x:.3,y:.3,text:'UI audit',color:'#223344',opacity:1,angle:'0',sizeCm:20};
-   if(kind==='backdrop')c._backdropDialog={widthCm:500,heightCm:400,angle:'0'};
-   if(kind==='shape')c._decorShapeDialog={id:'ui-shape',kind:'rect',color:'#223344',opacity:1,widthCm:2,angle:'0'};
-   if(kind==='image'){c._haDecorAssetsApi=1;c._decorAssetCatalog=[];c.requestUpdate();await window.__hpTest.settled();c.shadowRoot.querySelector('[data-editor-palette=image]').click();}
+   if(kind==='text')c._decorTextDialog={x:.3,y:.3,text:'UI audit',color:'#223344',opacity:1,angle:'0',sizeCm:20}; // private-ok: #1145 actual text-template paint fixture without persisting a decor object; no Save command invoked.
+   if(kind==='backdrop')c._backdropDialog={widthCm:500,heightCm:400,angle:'0'}; // private-ok: #1145 inspect the actual frame form without uploading a mock background asset.
+   if(kind==='shape')c._decorShapeDialog={id:'ui-shape',kind:'rect',color:'#223344',opacity:1,widthCm:2,angle:'0'}; // private-ok: #1145 legacy shape-footer paint fixture without inventing persisted geometry.
+   if(kind==='image'){c._haDecorAssetsApi=1;c._decorAssetCatalog=[];c.requestUpdate();await window.__hpTest.settled();c.shadowRoot.querySelector('[data-editor-palette=image]').click();} // private-ok: #1145 mock backend capability/catalog seed before the actual public palette click; no writer guard is replaced.
    await window.__hpTest.settled();
   },kind);
   const action=card.locator(kind==='image'?'.imageupload':'hp-dialog [slot=footer] [data-hp=dialog-confirm]').last();
   await action.waitFor({state:'visible'});
   check('AC1 '+kind+' actual action is primary',await action.evaluate(e=>getComputedStyle(e).backgroundColor!=='rgba(0, 0, 0, 0)'&&e.classList.contains('on')));
   await page.screenshot({path:`${output}/${kind}.png`});
-  await card.evaluate(async c=>{c._decorTextDialog=null;c._backdropDialog=null;c._decorShapeDialog=null;c._decorImagePalette=null;c._decorTool='select';await window.__hpTest.settled();});
+  if(kind==='image')await card.locator('[data-action=image-palette-close]').click();
+  else await card.locator('hp-dialog .close').last().click();
+  await settled();
  }
  // Measure real dialog bodies, including the physical dialog incorrectly
  // referenced as wallthick-dlg in the original audit. Seed only input data.
@@ -47,7 +49,7 @@ try {
  check('AC1 stairs direction still selects one value',await stairs.locator('.hpf-actions .on').count()===1);
  await stairs.locator('[slot=footer] [data-hp=dialog-cancel]').click();await settled();
  for(const kind of ['partition','column']){
-  await card.evaluate(async(c,kind)=>{c._physicalDialog={id:'ui-physical1145',kind,shape:'square',cm:'15',angle:'0'};await window.__hpTest.settled();},kind);
+  await card.evaluate(async(c,kind)=>{c._physicalDialog={id:'ui-physical1145',kind,shape:'square',cm:'15',angle:'0'};await window.__hpTest.settled();},kind); // private-ok: #1145 real physical-form display fixture; native field input/Cancel are exercised and no Save is invoked.
   const physical=card.locator('hp-dialog[data-kind=physical]');await physical.waitFor({state:'visible'});await inspectRows(physical,kind);
   const input=physical.locator('[data-field=physical-size]');await input.fill('20');
   check('AC5 '+kind+' input still updates draft',await card.evaluate(c=>c._physicalDialog.cm==='20'));
@@ -62,7 +64,7 @@ try {
  await settings.getByRole('button',{name:optimizeName,exact:true}).click();
  const optimize=card.locator('hp-dialog[data-kind=settings][icon="mdi:broom"]');await optimize.waitFor({state:'visible'});
  // A failed-result data fixture selects the diagnostics branch; no guard or function is replaced.
- await card.evaluate(async c=>{c._alignDialog={...c._alignDialog,changed:true,preflight:{ok:false,failures:[{displayName:'UI audit',reason:'wall-null'}]}};await window.__hpTest.settled();});
+ await card.evaluate(async c=>{c._alignDialog={...c._alignDialog,changed:true,preflight:{ok:false,failures:[{displayName:'UI audit',reason:'wall-null'}]}};await window.__hpTest.settled();}); // private-ok: #1145 failed-result display data only, no geometry guard/function is replaced or Apply invoked.
  await inspectRows(optimize,'optimize');
  await optimize.locator('[slot=footer] [data-hp=dialog-cancel]').click();await settled();
  await settings.locator('.close').click();await settled();
