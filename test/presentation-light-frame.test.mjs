@@ -161,14 +161,24 @@ test('#895 AC2/AC4: unknown proof falls back; topology, disposal and fresh rows 
     host.hass = { ...host.hass, states: Object.fromEntries(Object.entries(host.hass.states)
       .map(([id, row]) => [id, { ...row, attributes: { ...row.attributes } }])) };
     equalComplete(host, reuse, 'fresh state rows');
-    assert.ok(reuse.built.size <= host._devices.length * 2, 'presentation entries bounded by current roster');
-    assert.ok(reuse.lightDeps.size <= host._devices.length, 'source dependency entries bounded by current roster');
+    // #1161 moves the unchanged cache into bounded floor owners. Keep every
+    // original memory assertion on the retained cache, without a product API.
+    const slots = [...reuse.floors.values()];
+    assert.equal(slots.length, 1, 'undefined-floor caller retains one owner');
+    for (const slot of slots) {
+      assert.ok(slot.built.size <= host._devices.length * 2, 'presentation entries bounded by current roster');
+      assert.ok(slot.lightDeps.size <= host._devices.length, 'source dependency entries bounded by current roster');
+    }
   }
-  const oldSources = reuse.lightFrame;
+  const retiredSlots = [...reuse.floors.values()];
+  const oldSources = retiredSlots[0].lightFrame;
   reuse.reset();
-  assert.equal(reuse.built.size, 0); assert.equal(reuse.lightDeps.size, 0);
-  assert.equal(reuse.lightFrame, null, 'dispose does not retain old graph/frame');
-  assert.equal(reuse.rows.size, 0);
+  assert.equal(reuse.floors.size, 0, 'dispose retires every floor owner');
+  for (const slot of retiredSlots) {
+    assert.equal(slot.built.size, 0); assert.equal(slot.lightDeps.size, 0);
+    assert.equal(slot.lightFrame, null, 'dispose does not retain old graph/frame');
+    assert.equal(slot.rows.size, 0);
+  }
   // A late invocation from a retired source context has no owner callback or
   // reference to the new capture's dependency sets.
   oldSources.markerStates(['marker:late']);
