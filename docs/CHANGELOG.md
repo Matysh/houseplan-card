@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.83.0 — 2026-10-30
+
+Stable promotion of the 1.83 line after beta.6: screen profiles and rotation, threshold alerts, editor tools, cleanup history and light between rooms. See changelog_user_stable_en.md for the full user-facing notes.
+
 ## v1.83.0-beta.6 — 2026-10-30
 
 - Keep the space-copy name dialog open when the preceding settings window finishes closing. (#1154)

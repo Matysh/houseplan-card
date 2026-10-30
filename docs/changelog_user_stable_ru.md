@@ -7,6 +7,26 @@
 Запись 1.80.1 ниже — утверждённый владельцем образец оформления. Она не меняет
 опубликованный релиз; его историческая подборка milestone ещё не пересобрана.
 
+<!-- release: v1.83.0 -->
+<!-- base: v1.82.0 -->
+## Релиз Houseplan 1.83.0
+
+План стало удобнее настраивать, показывать на домашних экранах и использовать для быстрых действий.
+
+🖥️ **Свой вид для каждого экрана.** Поворачивайте план на 90°, открывайте киоск по ссылке и удалённо настраивайте профили телевизоров и планшетов. [#1070](https://github.com/Matysh/houseplan-card/issues/1070), [#1103](https://github.com/Matysh/houseplan-card/issues/1103), [#1113](https://github.com/Matysh/houseplan-card/issues/1113)
+
+🔔 **Тревоги и состояние устройств.** Настройте пороговые правила, получайте Zigbee-сигнал напрямую из интеграции и открывайте нужные действия из контекстного меню. Выключенные и недоступные устройства различаются. [#1000](https://github.com/Matysh/houseplan-card/issues/1000), [#1026](https://github.com/Matysh/houseplan-card/issues/1026), [#1029](https://github.com/Matysh/houseplan-card/issues/1029), [#1050](https://github.com/Matysh/houseplan-card/issues/1050), [#1089](https://github.com/Matysh/houseplan-card/issues/1089)
+
+🛠️ **Точнее редактирование и перенос.** Прилипание в углы, шаг стрелками, удаление промежуточных узлов, линии и группы декора, порядок слоёв и собственные цвета. Переносите picture-elements и скачивайте текущий вид в SVG. [#1003](https://github.com/Matysh/houseplan-card/issues/1003), [#1022](https://github.com/Matysh/houseplan-card/issues/1022), [#1025](https://github.com/Matysh/houseplan-card/issues/1025), [#1035](https://github.com/Matysh/houseplan-card/issues/1035), [#1036](https://github.com/Matysh/houseplan-card/issues/1036), [#1037](https://github.com/Matysh/houseplan-card/issues/1037), [#1038](https://github.com/Matysh/houseplan-card/issues/1038), [#1045](https://github.com/Matysh/houseplan-card/issues/1045), [#1046](https://github.com/Matysh/houseplan-card/issues/1046)
+
+🤖 **Больше деталей уборки.** Просматривайте путь прошлой уборки Dreame, настраивайте его цвет и прозрачность; живой след продолжается между обновлениями карты. [#999](https://github.com/Matysh/houseplan-card/issues/999), [#1002](https://github.com/Matysh/houseplan-card/issues/1002), [#1049](https://github.com/Matysh/houseplan-card/issues/1049)
+
+💡 **Свет проходит между комнатами.** Внутренние окна пропускают свет ламп и LED, а террасы и открытые цепочки комнат — солнечные лучи. [#1078](https://github.com/Matysh/houseplan-card/issues/1078), [#1079](https://github.com/Matysh/houseplan-card/issues/1079)
+
+Ускорили сохранение и правки больших планов, Undo/Redo и обновления состояний. Исправили восстановление подключения, диалоги, резервные копии и оформление узких экранов.
+
+[Все пользовательские изменения релиза](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.83%22)
+
 <!-- release: v1.82.0 -->
 <!-- base: v1.81.0 -->
 ## Релиз Houseplan 1.82.0
