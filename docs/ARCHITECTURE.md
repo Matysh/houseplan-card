@@ -2675,6 +2675,10 @@ Tool IDs and unknown names/keys are pseudonymized, argv is represented only by
 finite semantic categories, and payloads/credentials are never copied. Missing,
 malformed and oversized evidence stays explicit. Metadata channels are observed
 without gaining an admission exemption. The diagnostic has no verdict authority.
+Native result projection (#1134) adds bounded shape/is_error/reported-category
+metadata, not payload text or a pre-hook admission exemption. A provider-free
+manual native probe demonstrates schema/coerce/hook ordering with synthetic
+HOME and loopback-only transport; historical gaps remain refused and unclassified.
 Legacy digest comparisons remain labelled and use their original wire algorithm;
 new ToolSearch policy is never applied to old decisions. Unknown/mixed algorithms
 have unavailable comparison, and bound old refusals are retained honestly.

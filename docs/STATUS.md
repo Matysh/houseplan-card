@@ -1,5 +1,9 @@
 # Project status
 
+Native Grep diagnostics (#1134) distinguish reported input-validation/tool errors
+without admitting missing journals. A pinned native pre-hook rejection path is
+reproduced with an isolated synthetic provider; historical refusals remain.
+
 CI flake investigation (#1133) retains the first Golden/101ms/Cancel failures
 and their uncertainty. Post-verdict diagnostics retain grid-pan geometry and
 bounded original/client/persisted deltas; no original oracle is weakened.
@@ -147,7 +151,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0-beta.5** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.82.0` |
 | Latest prerelease tag | `v1.83.0-beta.4` |
-| Tests | Node unit 5898 · pure backend 710 · HA-harness backend 613 · browser smokes 485 (`npm run inventory`) |
+| Tests | Node unit 5901 · pure backend 710 · HA-harness backend 613 · browser smokes 485 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

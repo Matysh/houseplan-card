@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1134,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Reproduce native Grep validation/hook ordering without a provider; retain bounded result categories. Admission/audit, historical authority, native/model pins, budgets and publication are unchanged.",
+  "summary": {
+    "ru": "Диагностика ревью сохраняет категорию ошибки параметров Grep без ослабления допуска.",
+    "en": "Review diagnostics retain reported Grep input-error categories without weakening admission."
+  }
+}

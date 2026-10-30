@@ -43,6 +43,17 @@ function algorithmInfo(record, implicitLegacy = false) {
   return { algorithm: 'unknown', source: present ? 'unsupported' : 'missing', unknownMarkerDigest: present ? digest(value) : null };
 }
 
+function resultMetadata(result) {
+  const content=result?.content, contentShape=typeof content==='string'?'text':Array.isArray(content)?'blocks':content===undefined?'missing':'other';
+  const isError=typeof result?.is_error==='boolean'?result.is_error:null;
+  // Only classify a bounded, known envelope. Never retain result text or turn
+  // even a genuine native validation error into admission/absence-of-execution proof.
+  const first=typeof content==='string'?content:Array.isArray(content)&&content[0]?.type==='text'?content[0].text:null;
+  const validation=typeof first==='string'&&/^\s*(?:<tool_use_error>\s*)?InputValidationError:/.test(first.slice(0,256));
+  return {isError,contentShape,category:isError===true?(validation?'input-validation-error-reported':'tool-error-reported')
+    :isError===false?'non-error-reported':'unknown'};
+}
+
 function callSummary(call, entries, results, policy, final, duplicate) {
   const id = call?.id, matches = typeof id === 'string' ? entries.filter(row => row?.id === id) : [];
   const policyAlgorithm = algorithmInfo(policy, policy?.schema === 1);
@@ -66,7 +77,7 @@ function callSummary(call, entries, results, policy, final, duplicate) {
   const comparable = inputDigest !== null && journalAlgorithm.algorithm !== 'unknown'
     && journalAlgorithm.algorithm === policyAlgorithm.algorithm;
   const inputMatches = matches.length === 1 && comparable ? matches[0].input === inputDigest : null;
-  const resultCount = results.filter(row => row?.tool_use_id === id).length;
+  const matchedResults = results.filter(row => row?.tool_use_id === id), resultCount=matchedResults.length;
   const actualMetadata = matches.length === 1 ? projectStoredToolMetadata(matches[0].diagnostic) : null;
   const actualDecision = matches.length === 1 ? projectStoredDecision(matches[0].diagnosticDecision) : null;
   const traceMetadata = reviewToolMetadata(call?.name, call?.input, { files: policy?.files, literalArgv });
@@ -92,7 +103,9 @@ function callSummary(call, entries, results, policy, final, duplicate) {
       reasonAvailable: Boolean(actualDecision), decision: actualDecision, metadata: actualMetadata,
       decisionAgreesWithTrace: decisionKnown && actualDecision ? isDeepStrictEqual(actualDecision, reviewDecisionMetadata(expectedReason)) : null,
       metadataAgreesWithTrace: actualMetadata ? isDeepStrictEqual(actualMetadata, traceMetadata) : null },
-    terminalSchemaChannel: schemaChannel, resultCount, problems: reasons.filter(reason => REASONS.has(reason)) };
+    terminalSchemaChannel: schemaChannel, resultCount,
+    resultMetadata:matchedResults.slice(0,4).map(resultMetadata),omittedResults:Math.max(0,resultCount-4),
+    problems: reasons.filter(reason => REASONS.has(reason)) };
 }
 
 export function buildFailureCertificate({ messages, entries, policy, provenance = {}, inputs = {} }) {

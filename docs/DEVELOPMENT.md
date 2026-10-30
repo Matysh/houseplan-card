@@ -6380,6 +6380,16 @@ product change, guard change or separate extra build is introduced.
 
 ## Review execution boundary (#1065)
 
+Native Grep gap (#1134): see [the isolated provider-free reproduction](analysis/1134-native-grep-journal.md).
+The manual `review-inert-grep-probe.mjs --cli=/absolute/pinned/claude` requires a
+Linux network namespace with only loopback and a synthetic HOME/Git/API fixture.
+It asserts the unchanged real hook's rows, not a model verdict. Failure metadata
+retains bounded result shape/error categories; an input-validation-error-reported
+never exempts a missing journal. Run `node --test test/review-failure-diagnostics.test.mjs
+test/review-capabilities.test.mjs test/review-execution-policy.test.mjs
+test/review-native-call-digest.test.mjs` for privacy/categories and unchanged audit
+refusal. Old category-less certificates stay unknown, never retroactive PASS.
+
 Task diff provenance (#1122): `prepare` resolves exactly one common ancestor
 of material and the accepted reference, matching the code-review context range.
 `read:diff`, `read:log`, changed files and `read:base` share that base, including

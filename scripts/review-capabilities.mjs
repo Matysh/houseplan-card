@@ -156,5 +156,6 @@ export function reviewChecksMarkdown(manifest) {
   return '# Declared review checks\n\nMaterial: ' + manifest.materialSha + '\nManifest SHA256: ' + manifest.digest
     + basis
     + '\n\nUse run_check(check_id). No shell is available. Reuse compatible CI evidence; execute a check only for a concrete uncovered risk or invalidated proof. Tests importing test-build can use build:test first. A failed or unavailable check is not PASS.\n\n'
+    + 'Native Grep takes its declared JSON schema, not arbitrary rg flags. Prefer output_mode (content, files_with_matches, count); -n is boolean. Do not invent -v or use shell-style argument strings. A native input-validation result can occur before PreToolUse and is not a successful check.\n\n'
     + manifest.checks.map(c => '- `' + c.id + '` — ' + c.description + ' (' + c.timeoutMs + ' ms)').join('\n') + '\n';
 }

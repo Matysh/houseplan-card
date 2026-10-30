@@ -38,6 +38,47 @@ function fixture() {
 }
 const cert = row => buildFailureCertificate(row ?? fixture());
 
+test('#1134 result error categories remain diagnostic and never repair a missing journal', () => {
+  for (const [content, is_error, category, shape] of [
+    [`<tool_use_error>InputValidationError: ${secret}</tool_use_error>`, true, 'input-validation-error-reported', 'text'],
+    [[{type:'text',text:`InputValidationError: ${secret}`}], true, 'input-validation-error-reported', 'blocks'],
+    [`Other error mentioning InputValidationError: ${secret}`, true, 'tool-error-reported', 'text'],
+    [secret, false, 'non-error-reported', 'text'],
+    ['InputValidationError: '+secret, false, 'non-error-reported', 'text'],
+    [secret, undefined, 'unknown', 'text'],
+    [null, 'true', 'unknown', 'other'],
+  ]) {
+    const f=fixture(); f.call.name='Grep'; f.call.input={pattern:'needle',path:'fixture.txt','-v':true};
+    f.entries=[];f.messages.at(-1).permission_denials=[];
+    Object.assign(f.messages[1].message.content[0],{content,is_error});
+    const result=cert(f), call=result.calls[0];
+    assert.deepEqual(call.resultMetadata,[{isError:typeof is_error==='boolean'?is_error:null,contentShape:shape,category}]);
+    assert.ok(call.problems.includes('missing-journal'));
+    assert.equal(call.terminalSchemaChannel,false);
+    assert.equal(result.verdictAuthority,false);
+    assert.ok(traceProblems(f.messages,[],f.policy).some(p=>p.includes('no matching policy decision')));
+    assert.ok(!JSON.stringify(result).includes(secret));
+  }
+});
+
+test('#1134 missing, duplicate and excessive result rows retain refusal and bounded metadata', () => {
+  const f=fixture();f.messages[1].message.content=[];
+  assert.deepEqual(cert(f).calls[0].resultMetadata,[]);
+  assert.ok(cert(f).calls[0].problems.includes('missing-result'));
+  f.messages[1].message.content=Array.from({length:9},()=>({type:'tool_result',tool_use_id:f.call.id,is_error:true,content:secret}));
+  const call=cert(f).calls[0];
+  assert.equal(call.resultCount,9);assert.equal(call.resultMetadata.length,4);assert.equal(call.omittedResults,5);
+  assert.ok(call.problems.includes('duplicate-result'));
+  assert.ok(!JSON.stringify(call).includes(secret));
+});
+
+test('#1134 native probe cannot start a CLI/provider through an ordinary no-argument invocation', () => {
+  const run=spawnSync(process.execPath,['scripts/review-inert-grep-probe.mjs'],{cwd:ROOT,encoding:'utf8',timeout:10000});
+  assert.equal(run.status,1);
+  assert.match(run.stderr,/isolated network namespace|Supply --cli=/);
+  assert.equal(run.stdout,'');
+});
+
 test('#1084 diagnostic comparison uses the recorded algorithm and retains raw shape differences', () => {
   const f = fixture(); f.call.name = 'Grep'; f.call.input = { pattern: secret, path: 'src', '-l': true };
   f.messages.at(-1).permission_denials = [];
