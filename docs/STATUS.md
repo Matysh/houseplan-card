@@ -12,6 +12,11 @@ Space copying (#1154) ignores late hide/closed events from disconnected dialog
 shells. Connected close/discard and native fallback behavior remain in place;
 the genuine HA fixture and ordinary lifecycle smoke cover the regression.
 
+HA-dialog recovery diagnostics (#1155) observe the retained parent HA modal and
+the native alert confirmation's actual modal focus. Native input, exact kept
+drafts, repeated close counts and unchanged saved configuration cover all four
+settings owners and device creation. Product lifecycle and CI policy are unchanged.
+
 Validation token defaults (#1124) explicitly allow contents read in the full
 workflow and generated product/docs/tooling profiles. Existing job overrides
 remain scoped; packaging also declares actions read for authenticated cross-run

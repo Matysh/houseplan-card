@@ -3149,8 +3149,15 @@ after confirmation; leaving a refused chain never deletes stored partitions.
 The native witness is `node demo/smoke_editor_draft_exit.mjs`; set
 `HP_SMOKE_WIDTH=390` for its touch-enabled mobile variant. Use
 `demo/verify_ha_dialog_discard_recovery.mjs` with the offline authentic HA fixture
-to verify nested modal reopening **and editable focus**, not only visibility.
+to verify nested confirmation **and editable focus**, not only visibility.
 Its component evidence is not live HA authentication or owner/GPU acceptance.
+The #1155 diagnostic follows #976: the parent HA modal stays open while the
+native alert confirmation owns focus. It checks the actual `:modal` surfaces,
+visible confirmation, Keep's exact draft/focus return, native Playwright input,
+single/repeated close requests, Discard and clean close for all four settings
+owners plus device creation. Saved configuration must remain byte-identical;
+fixture errors, external requests and WebSocket attempts remain fatal. This is
+an explicit diagnostic, not a regular CI smoke or a different product contract.
 The baseline `ece52121` fails the native dirty new-device Escape before fault
 injection; session guards have static mutation definitions, not local caught proof.
 

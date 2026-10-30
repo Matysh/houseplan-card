@@ -61,50 +61,63 @@ const open = async (testCase) => {
   await waitOwnerOpen(testCase);
 };
 
-const edit = async (testCase, suffix) => page.evaluate(async ({ kind, input, suffix }) => {
-  const card = window.__card;
-  const field = card.shadowRoot.querySelector(`hp-dialog[data-kind="${kind}"] ${input}`);
-  if (!field) throw new Error(`${kind}: missing field ${input}`);
-  field.focus();
-  if (kind === 'settings') field.value = suffix === ' first' ? '47' : '48';
-  else field.value = `${field.value}${suffix}`;
-  field.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
-  await card.updateComplete;
-  return field.value;
-}, { ...testCase, suffix });
+const edit = async ({ kind, input }, suffix) => {
+  const field = page.locator(`hp-dialog[data-kind="${kind}"] ${input}`);
+  const value = kind === 'settings' ? (suffix === ' first' ? '47' : '48')
+    : `${await field.inputValue()}${suffix}`;
+  await field.fill(value);
+  await page.evaluate(() => window.__card.updateComplete);
+  return field.inputValue();
+};
 
-const clickAuthenticClose = async (testCase) => page.evaluate(({ kind }) => {
-  const card = window.__card;
-  const dialog = card.shadowRoot.querySelector(`hp-dialog[data-kind="${kind}"]`);
-  const ha = dialog?.shadowRoot.querySelector('ha-dialog');
-  const button = dialog?.shadowRoot.querySelector('.header button.close')
-    || ha?.shadowRoot.querySelector('ha-icon-button[data-dialog="close"]');
-  if (!button) throw new Error(`${kind}: authentic HA close button not found`);
-  dialog.__hp607CloseCount = dialog.__hp607CloseCount || 0;
-  if (!dialog.__hp607Counting) {
-    dialog.__hp607Counting = true;
-    dialog.addEventListener('hp-close', () => { dialog.__hp607CloseCount += 1; });
-  }
-  button.click();
-}, testCase);
+const clickAuthenticClose = async (testCase) => {
+  await page.evaluate(({ kind }) => {
+    const card = window.__card;
+    const dialog = card.shadowRoot.querySelector(`hp-dialog[data-kind="${kind}"]`);
+    const ha = dialog?.shadowRoot.querySelector('ha-dialog');
+    const button = dialog?.shadowRoot.querySelector('.header button.close')
+      || ha?.shadowRoot.querySelector('ha-icon-button[data-dialog="close"]');
+    if (!button) throw new Error(`${kind}: authentic HA close button not found`);
+    dialog.__hp607CloseCount = dialog.__hp607CloseCount || 0;
+    if (!dialog.__hp607Counting) {
+      dialog.__hp607Counting = true;
+      dialog.addEventListener('hp-close', () => { dialog.__hp607CloseCount += 1; });
+    }
+  }, testCase);
+  const dialog = page.locator(`hp-dialog[data-kind="${testCase.kind}"]`);
+  const headerClose = dialog.locator('.header button.close');
+  await (await headerClose.count() ? headerClose : dialog.locator('ha-icon-button[data-dialog="close"]')).click();
+};
 
 const waitConfirm = async (testCase) => {
   try {
-    await page.waitForFunction(({ kind }) => {
+    await page.waitForFunction(({ kind, state }) => {
       const card = window.__card;
       const dialog = card.shadowRoot.querySelector(`hp-dialog[data-kind="${kind}"]`);
       const ha = dialog?.shadowRoot.querySelector('ha-dialog');
-      return ha?.open === false && Boolean(card.shadowRoot.querySelector('hp-confirm'));
+      const ownerSurface = ha?.shadowRoot.querySelector('wa-dialog')?.shadowRoot.querySelector('dialog');
+      const confirm = card.shadowRoot.querySelector('hp-confirm');
+      const surface = confirm?.querySelector('hp-dialog')?.shadowRoot.querySelector('dialog[role="alertdialog"]');
+      const rect = surface?.getBoundingClientRect();
+      // #976 keeps the owner's HA modal open until the discard decision.
+      // DOM presence/open flags alone cannot prove the child owns modal input.
+      return Boolean(card[state]) && ha?.open === true && ownerSurface?.matches(':modal') === true
+        && surface?.open === true && surface.matches(':modal')
+        && rect.width > 0 && rect.height > 0 && getComputedStyle(surface).visibility === 'visible'
+        && confirm.contains(card.shadowRoot.activeElement);
     }, testCase);
   } catch (error) {
     const state = await page.evaluate(({ kind, state }) => {
       const card = window.__card;
       const dialog = card.shadowRoot.querySelector(`hp-dialog[data-kind="${kind}"]`);
       const ha = dialog?.shadowRoot.querySelector('ha-dialog');
+      const confirm = card.shadowRoot.querySelector('hp-confirm');
+      const confirmSurface = confirm?.querySelector('hp-dialog')?.shadowRoot.querySelector('dialog');
       return {
         owner: Boolean(card[state]), dialog: Boolean(dialog), haOpen: ha?.open,
         closeCount: dialog?.__hp607CloseCount,
-        confirm: Boolean(card.shadowRoot.querySelector('hp-confirm')),
+        confirm: Boolean(confirm), confirmModal: confirmSurface?.matches(':modal'),
+        confirmFocus: confirm?.contains(card.shadowRoot.activeElement),
         buttons: [...(ha?.shadowRoot.querySelectorAll('ha-icon-button') || [])]
           .map((button) => ({ dataDialog: button.getAttribute('data-dialog'), label: button.getAttribute('aria-label') })),
       };
@@ -113,13 +126,11 @@ const waitConfirm = async (testCase) => {
   }
 };
 
-const decide = async (accept) => page.evaluate((accept) => {
-  const card = window.__card;
+const decide = async (accept) => {
   const selector = accept ? '[data-hp="dialog-confirm"]' : '[data-hp="dialog-cancel"]';
-  const button = card.shadowRoot.querySelector(`hp-confirm ${selector}`);
-  if (!button) throw new Error(`Confirmation button not found: ${selector}`);
-  button.click();
-}, accept);
+  await page.locator(`hp-confirm [slot="footer"] ${selector}`).click();
+  await page.locator('hp-confirm').waitFor({ state: 'detached' });
+};
 
 try {
   await page.goto(`${fixture.url}/product.html`);
@@ -132,6 +143,7 @@ try {
     throw new Error(`HA diagnostic bootstrap failed: ${JSON.stringify({ state, errors: fixture.errors, externalRequests: fixture.externalRequests })}`, { cause: error });
   }
   await assertFreshDemoBundle(page);
+  const saved = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
 
   for (const testCase of cases) {
     console.log(`Checking ${testCase.kind}`);
@@ -139,6 +151,7 @@ try {
     const firstDraft = await edit(testCase, ' first');
     await clickAuthenticClose(testCase);
     await waitConfirm(testCase);
+    results[`${testCase.kind}: confirmation is modal above its retained HA owner`] = true;
     await decide(false);
     await waitOwnerOpen(testCase);
     try {
@@ -161,6 +174,8 @@ try {
       }, testCase);
       throw new Error(`HA input focus did not recover: ${JSON.stringify(focus)}`, { cause: error });
     }
+    assert.equal(await page.locator(`hp-dialog[data-kind="${testCase.kind}"] ${testCase.input}`).inputValue(),
+      firstDraft, `${testCase.kind}: Keep must retain the first draft before editing continues`);
     const secondDraft = await edit(testCase, ' second');
 
     const continued = await page.evaluate(({ kind, state, input, firstDraft, secondDraft }) => {
@@ -200,7 +215,9 @@ try {
   });
   const create = { kind: 'marker', input: '#marker-name', state: '_markerDialog' };
   await waitOwnerOpen(create);
-  await clickAuthenticClose(create); await waitConfirm(create); await decide(false);
+  await clickAuthenticClose(create); await waitConfirm(create);
+  results['851 new device: confirmation is modal above its retained HA owner'] = true;
+  await decide(false);
   await waitOwnerOpen(create);
   await page.waitForFunction(() => {
     const root = window.__card.shadowRoot;
@@ -211,6 +228,9 @@ try {
   await clickAuthenticClose(create); await waitConfirm(create); await decide(true); await waitOwnerClosed(create);
   results['851 new device: authentic HA discard closes'] = true;
 
+  assert.equal(await page.evaluate(() => JSON.stringify(window.__card._serverCfg)), saved,
+    'Keep, Discard and clean close must not save any form or new device');
+  results['all forms: saved configuration remains unchanged'] = true;
   await fixture.assertClean();
   for (const [name, value] of Object.entries(results)) assert.equal(value, true, name);
   console.log(JSON.stringify({

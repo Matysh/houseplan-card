@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "issue": 1155,
+  "baseStable": "v1.82.0",
+  "category": "infra",
+  "rationale": "Update the explicit offline HA-dialog recovery diagnostic to the already accepted retained-parent contract, observing real native modal focus, trusted input, draft preservation and unchanged saved configuration. Only test infrastructure and technical documentation change; no product behavior, persisted data or CI policy changes.",
+  "summary": {
+    "ru": "Диагностика HA-dialog проверяет актуальный контракт модального подтверждения и возврата к черновику.",
+    "en": "The HA-dialog diagnostic checks the current modal-confirmation and draft-return contract."
+  }
+}
