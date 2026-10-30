@@ -22,6 +22,13 @@ View device context menu (#1089) has a per-card transient owner behind its own f
 
 ## Derived consumer ownership (#1093)
 
+The live render-snapshot reuse owner (#1161) retains at most eight independent
+floor slots with LRU recency on every begin. Each slot executes the original
+source/presentation/row/light invalidation and cloning algorithm. Capture still
+selects only current consumers; navigation can reuse that floor's own unchanged
+faces. Reset or an unfinished capture retires all slots, while aggregate work
+counters retain completed work even after eviction.
+
 Physical keys project known paint/text fields out while retaining unknown and structural semantics; wire/history fingerprints stay complete. DemandSpaceModels keeps at most eight physical floor models per card, lending cheap metadata until a real consumer asks for geometry. DeviceRosterStateKey observes registry/config and state metadata dependencies; value ticks refresh the affected immutable presentation rows. Room/decor projection follows effective visible/preview/tooltip demand and retains hidden sources of active aggregates. Hidden document/route intake still adopts authority and data, but defers visual producers/chunks/imports. Per-device confirmed alert issues invalidate only their dependent faces; hidden confirmation observations retain continuous history without visual deadlines. Successful same-owner Save ACK retires its dialog paint; refusals and replacement owners retain existing protocols. DOM replacement retires both header/viewport resize observer leases. See [the source and measurement audit](analysis/1093-selective-invalidation-2026-10-28.md).
 
 

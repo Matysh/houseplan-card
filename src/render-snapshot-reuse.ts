@@ -55,7 +55,56 @@ const ACTIVITY_WINDOW_MS = 3300;
 const same = (a: readonly unknown[] | null, b: readonly unknown[]): boolean =>
   !!a && a.length === b.length && a.every((value, index) => value === b[index]);
 
+/** Bounded per-floor ownership; each slot retains the original invalidation
+ * algorithm. Navigation must not turn every previously warm face cold. */
 export class RenderSnapshotReuseWindow implements RenderSnapshotReuse {
+  public readonly stats = { full: 0, refreshed: 0, incremental: 0, presentations: 0 };
+  private readonly floors = new Map<string | undefined, RenderSnapshotReuseSlot>();
+  private active = new RenderSnapshotReuseSlot();
+  private open = false;
+
+  public begin(host: RenderSnapshotHost, lightSources: unknown, devices?: readonly DevItem[]): RenderSnapshotWindow {
+    if (this.open) this.reset();
+    const key = host._space;
+    const slot = this.floors.get(key) || new RenderSnapshotReuseSlot();
+    this.floors.delete(key);
+    this.floors.set(key, slot);
+    while (this.floors.size > 8) {
+      const oldest = this.floors.keys().next().value;
+      this.floors.get(oldest)?.reset();
+      this.floors.delete(oldest);
+    }
+    this.active = slot;
+    this.open = true;
+    const before = { ...slot.stats };
+    try { return slot.begin(host, lightSources, devices); }
+    finally {
+      this.stats.full += slot.stats.full - before.full;
+      this.stats.refreshed += slot.stats.refreshed - before.refreshed;
+      this.stats.incremental += slot.stats.incremental - before.incremental;
+    }
+  }
+
+  public present(id: string, showLqi: boolean, build: () => ResolvedDevicePresentation): ResolvedDevicePresentation {
+    const slot = this.active, before = slot.stats.presentations;
+    try { return slot.present(id, showLqi, build); }
+    finally { this.stats.presentations += slot.stats.presentations - before; }
+  }
+
+  public end(snapshot: RenderDeviceSnapshot): void {
+    this.active.end(snapshot);
+    this.open = false;
+  }
+
+  public reset(): void {
+    for (const slot of new Set([this.active, ...this.floors.values()])) slot.reset();
+    this.floors.clear();
+    this.active = new RenderSnapshotReuseSlot();
+    this.open = false;
+  }
+}
+
+class RenderSnapshotReuseSlot implements RenderSnapshotReuse {
   /**
    * Exact work counters for the performance witness (#850 AC1): captures that
    * started from nothing (`full`), that kept the rows but rebuilt every

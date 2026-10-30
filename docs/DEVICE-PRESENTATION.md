@@ -294,6 +294,13 @@ with `hidden:false`; the raw roster and `marker.hidden` remain unchanged.
 with positive active/virtual lifecycle authority. Disabled, removed, orphaned
 and unverified rows never inherit the override. Snapshot reuse keys include
 the display roster and choice; its live updates equal a complete capture.
+
+#1161: the full card's live runtime retains up to eight independent per-floor
+reuse windows. Every begin refreshes LRU recency; each window keeps the complete
+source/presentation/row/light guards, including changed hidden-state facts on
+return. Capture remains narrowed to current consumers. Evicted floors rebuild;
+reset/disconnect or an unfinished capture retires all windows. Public work
+counters aggregate actual work without forgetting evicted or reset history.
 The static card never supplies this override. LED replacement, activity,
 contacts, light fill/Glow and actions consume the same display rows; room
 climate and LQI retain their existing registry-scoped single contributions.

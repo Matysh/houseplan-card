@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "issue": 1161,
+  "baseStable": "v1.82.0",
+  "category": "line-fix",
+  "introducedBy": 1093,
+  "rationale": "The 1.83 narrowed snapshot consumers correctly added the active floor to the reuse source key (e1c200232665ab82b765f3ecbe672ddc4da427f1). A single slot then rebuilt every face on warm floor returns. Retain up to eight independent slots while preserving that narrowing and the original invalidation algorithm; previous stable did not incur these repeated captures.",
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
+    "golden": [],
+    "goldenChecks": [
+      { "id": "large-house-zoom-250-dark", "reason": "Unchanged current-floor frozen device presentations and dense View." },
+      { "id": "large-house-warm-remount-dark", "reason": "The second floor and a warm remount retain their accepted frame." },
+      { "id": "device-contacts-designer-dark", "reason": "Reuse preserves the same marker faces and contact geometry." }
+    ],
+    "smokes": [
+      "smoke_floor_snapshot_reuse.mjs",
+      "smoke_visual_continuity.mjs",
+      "smoke_warm_remount.mjs",
+      "smoke_hidden_device_toggle.mjs",
+      "smoke_marker_alert_view.mjs",
+      "smoke_selective_invalidation_inactive.mjs"
+    ]
+  }
+}

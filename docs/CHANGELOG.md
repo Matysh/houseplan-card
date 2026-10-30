@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Warm floor navigation avoids a forced stage layout when a complete continuity frame is already steady; cold and recovery paint barriers retain their geometry checks. [#1159](https://github.com/Matysh/houseplan-card/issues/1159)
+- Retain up to eight guarded per-floor device-snapshot reuse windows so warm floor returns avoid rebuilding unchanged faces while preserving hidden-state freshness and bounded reset/eviction. (#1161)
 
 ## v1.83.0 — 2026-10-30
 
