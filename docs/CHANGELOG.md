@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Warm floor navigation avoids a forced stage layout when a complete continuity frame is already steady; cold and recovery paint barriers retain their geometry checks. [#1159](https://github.com/Matysh/houseplan-card/issues/1159)
+
 ## v1.83.0 — 2026-10-30
 
 Stable promotion of the 1.83 line after beta.6: screen profiles and rotation, threshold alerts, editor tools, cleanup history and light between rooms. See changelog_user_stable_en.md for the full user-facing notes.

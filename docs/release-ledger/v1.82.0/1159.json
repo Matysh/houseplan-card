@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "issue": 1159,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "The previous stable already read stage.clientWidth/clientHeight before discovering that a complete steady continuity frame has no paint candidate. Avoid that synchronous layout without changing cold completion, recovery, stage leases, assets, persistence or rendered output.",
+  "summary": {
+    "ru": "Переключение прогретых этажей меньше блокирует браузер измерением уже готовой сцены; защита холодной загрузки и восстановления сохранена.",
+    "en": "Warm floor navigation avoids synchronous measurement of an already complete scene while preserving cold-start and recovery safeguards."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
+    "golden": [],
+    "goldenChecks": [
+      {
+        "id": "large-house-zoom-250-dark",
+        "reason": "The complete dense View remains pixel-identical; only a no-op steady settle callback avoids a synchronous geometry read."
+      }
+    ],
+    "smokes": ["smoke_continuity_stage_layout.mjs", "smoke_visual_continuity.mjs", "smoke_warm_remount.mjs", "smoke_warm_view_marker.mjs", "smoke_view_hold_lifecycle.mjs"]
+  }
+}

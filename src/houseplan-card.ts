@@ -4180,7 +4180,11 @@ export class HouseplanCard extends LitElement {
 
   /** Called from updated(): one token owns at most one paint barrier. */
   private _settleContinuityFrame(externalUpdate: boolean): void {
-    if (this._booting || !this._continuityStageValid()) return;
+    if (this._booting) return;
+    // A complete steady frame has no candidate to settle. Reading its size
+    // after Lit writes would force layout only to return below anyway.
+    if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') return;
+    if (!this._continuityStageValid()) return;
     if (!this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       // Cold start belongs to the boot veil. Do not replace it with a recovery
       // error just because a protected backdrop is still signing/decoding.
