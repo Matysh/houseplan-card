@@ -1,12 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 251, issue: 120. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 252, issue: 121. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | линия v1.83.0 | [RELEASE-REVIEW-v1.83.0.md](RELEASE-REVIEW-v1.83.0.md) | ревью линии · — | ⚪ — | 0 | 0 | исполняемый oracle для ha-dialog/verify_space_copy недоступен в этом ревью | `review-execution-policy.json.checks.md` `demo/verify_ha_dialog_discard_recovery.mjs` `demo/verify_space_copy.mjs` `smoke_space_copy.mjs` `smoke_discard_dialog_polish.mjs` `smoke_discard_copy.mjs` `src/hp-dialog.ts` |
 | бета v1.83.0-beta.5 | [SHIP-REVIEW-v1.83.0-beta.5.md](SHIP-REVIEW-v1.83.0-beta.5.md) | пакетное ревью ship · — | 🟢 зелёный | 0 | 0 | — | — |
 | бета v1.83.0-beta.1 | [SHIP-REVIEW-v1.83.0-beta.1.md](SHIP-REVIEW-v1.83.0-beta.1.md) | пакетное ревью ship · — | 🟢 зелёный | 0 | 0 | — | — |
+| #1160 | [CODE-REVIEW-1160-r1.md](CODE-REVIEW-1160-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1155 | [CODE-REVIEW-1155-r1.md](CODE-REVIEW-1155-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1154 | [CODE-REVIEW-1154-r1.md](CODE-REVIEW-1154-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1154 | [CODE-REVIEW-1154-r2.md](CODE-REVIEW-1154-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
