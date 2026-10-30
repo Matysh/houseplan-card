@@ -142,7 +142,7 @@ trusted `HP_REVIEW_OUTSIDE_FINDINGS_FILE_ISSUES=[1106]` по PROCESS §10.4 и �
 
 ---
 
-Побочные находки: [docs/reviews/findings/1106-code-r1.md](findings/1106-code-r1.md).
+Побочные находки: [docs/reviews/findings/1106-code-r1.md](../../../docs/reviews/findings/1106-code-r1.md).
 <!-- hp:outside-findings-blob 35e22bd2ad433ed2d89b8ccb56638a7316cb9543 -->
 
 ---
