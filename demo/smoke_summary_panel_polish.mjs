@@ -72,7 +72,10 @@ async function installFixture({ seed = false } = {}) {
       await card.updateComplete;
     };
     const open = async () => {
-      control()?.querySelector('button:first-child')?.click();
+      // #1132 removes kiosk entry buttons. This fixture still probes the
+      // underlying local-only safety policy, not a user-reachable kiosk action.
+      if (card._kiosk) await card._summary.openDialog();
+      else control()?.querySelector('button:first-child')?.click();
       for (let i = 0; i < 60 && !root().querySelector('hp-dialog[data-kind="summary"]'); i++) {
         await pause(5); await settle();
       }
