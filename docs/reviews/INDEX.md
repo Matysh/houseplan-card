@@ -1,12 +1,13 @@
 # Индекс ревью
 
-Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 239, issue: 115. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
+Генерируется `node scripts/reviews-index.mjs` (#635) — не редактировать руками. Документов: 240, issue: 115. Вердикт: 🟢 зелёный · 🟡 жёлтый · 🔴 красный · ⚪ не распознан (свободная форма старых документов). H/M — число High/Medium по строке вердикта или заголовкам находок. Файлы — пути, названные в находках; ищите по имени файла: `grep form-kit INDEX.md`.
 
 | Issue | Документ | Этап · раунд | Вердикт | H | M | Находки | Файлы |
 |---|---|---|---|---:|---:|---|---|
 | бета v1.83.0-beta.1 | [SHIP-REVIEW-v1.83.0-beta.1.md](SHIP-REVIEW-v1.83.0-beta.1.md) | пакетное ревью ship · — | 🟢 зелёный | 0 | 0 | — | — |
 | #1132 | [SPEC-REVIEW-1132-r1.md](SPEC-REVIEW-1132-r1.md) | spec · r1 | 🟡 жёлтый | 0 | 1 | неоднозначная формулировка «summary/control overlay» в контракте UI-011 | `src/summary-panel-runtime-loaded.ts` `docs/SCOPE.md` |
 | #1132 | [SPEC-REVIEW-1132-r2.md](SPEC-REVIEW-1132-r2.md) | spec · r2 | 🟢 зелёный | 0 | 0 | — | — |
+| #1132 | [CODE-REVIEW-1132-r1.md](CODE-REVIEW-1132-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
 | #1125 | [CODE-REVIEW-1125-r1.md](CODE-REVIEW-1125-r1.md) | code · r1 | 🟡 жёлтый | 0 | 1 | release-ledger классифицирует пользовательский багфикс как infra | `docs/release-ledger/v1.82.0/1125.json` `PROCESS.md` `docs/CHANGELOG.md` `docs/CHANGELOG.ru.md` |
 | #1125 | [CODE-REVIEW-1125-r2.md](CODE-REVIEW-1125-r2.md) | code · r2 | 🟢 зелёный | 0 | 0 | — | — |
 | #1124 | [CODE-REVIEW-1124-r1.md](CODE-REVIEW-1124-r1.md) | code · r1 | 🟢 зелёный | 0 | 0 | — | — |
