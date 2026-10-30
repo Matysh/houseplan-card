@@ -21,7 +21,7 @@ export async function prepareExternalScreens(page, scenario) {
       await wait(()=>card._kiosk&&card.routeKiosk.profile===1,'profile kiosk');
       if(card._rotation!==(scenario.screenRotation||0))throw Error('external-screen golden rotation not applied');
       if(scenario.screenSummary)await wait(()=>root.querySelector('.summary-overlay')?.getClientRects().length,'summary painted');
-      if(scenario.screenControls===false&&(root.querySelector('[data-hp="summary-settings"]')||root.querySelector('[data-hp="summary-toggle"]')))throw Error('external-screen golden controls remain');
+      if(root.querySelector('[data-hp="summary-settings"],[data-hp="summary-toggle"]'))throw Error('external-screen golden controls remain');
       return;
     }
     root.querySelector('[data-hp="settings"]').click();
@@ -32,7 +32,8 @@ export async function prepareExternalScreens(page, scenario) {
       dialog.querySelector('[data-hp="external-screen-add"]').click();
       await wait(()=>root.querySelector('hp-dialog[data-kind="external-screen-constructor"]'),'constructor');
       const child=root.querySelector('hp-dialog[data-kind="external-screen-constructor"]');
-      if(child.querySelector('.hpf-card')||child.querySelectorAll('select').length!==9)throw Error('external-screen constructor structure');
+      if(child.querySelector('.hpf-card')||child.querySelectorAll('select').length!==8
+        ||child.querySelector('[data-field="external-screen-controls"]'))throw Error('external-screen constructor structure');
       const icon=child.renderRoot.querySelector('ha-icon[icon="mdi:monitor"]');
       if(!icon?.shadowRoot?.querySelector('path')?.getAttribute('d'))throw Error('external-screen monitor icon absent in the HA fixture');
     }else if(!dialog.querySelector(scenario.externalScreens==='empty'?'[data-hp="external-screen-create"]':'[data-hp="external-screen-edit"]'))throw Error('external-screen section state missing');

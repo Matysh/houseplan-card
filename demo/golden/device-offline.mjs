@@ -1,4 +1,4 @@
-/** #1026 owned inputs; #1119 UI-007 whole-marker/off-glyph paint, LED geometry unchanged. */
+/** #1026 owned inputs; #1132 retires Off-only dimming, retaining whole unavailable paint. */
 export async function prepareDeviceOfflineBoard(page) {
   return page.evaluate(async () => {
     const card = window.__goldenCard, root = card.renderRoot;
@@ -28,7 +28,7 @@ export async function prepareDeviceOfflineBoard(page) {
       if (marker.classList.contains('unavail') !== offline || !near(opacity(marker), offline ? .35 : 1)
         || !near(opacity(core), 1)
         || marker.classList.contains('power-off') !== powerOff
-        || !near(effective(glyph, marker), offline || powerOff ? .35 : 1)
+        || !near(effective(glyph, marker), offline ? .35 : 1)
         || (offline && !near(opacity(glyph), 1))) {
         throw new Error(`offline board wrong owned paint: ${id}`);
       }
