@@ -1111,6 +1111,8 @@ class HouseplanSpaceCard extends LitElement {
       }
       .hp-static-btn {
         width: 100%;
+        min-height: 44px;
+        box-sizing: border-box;
         padding: 9px 14px;
         border: none;
         border-radius: 10px;

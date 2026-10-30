@@ -48,7 +48,7 @@ export const dialogsStyles = css`
     .btn ha-icon {
       --mdc-icon-size: 17px;
     }
-    :host([data-pointer-hover]) .btn:hover {
+    :host([data-pointer-hover]) .btn:not(:disabled):hover {
       border-color: var(--hp-accent);
     }
     .btn.on {
@@ -61,7 +61,7 @@ export const dialogsStyles = css`
     }
     .btn[disabled] {
       opacity: 0.5;
-      pointer-events: none;
+      cursor: not-allowed;
     }
     .recoveryoverlay {
       position: absolute;
@@ -348,8 +348,8 @@ export const dialogsStyles = css`
       cursor: pointer;
     }
     .btn.danger {
-      border-color: #b3402a;
-      color: #ff7a5c;
+      border-color: var(--error-color, #db4437);
+      color: var(--error-color, #db4437);
     }
     hp-dialog .row .spacer {
       flex: 1;
@@ -467,7 +467,7 @@ export const dialogsStyles = css`
       overflow-wrap: anywhere;
     }
     .backupwarn { background: color-mix(in srgb, var(--hp-accent) 12%, transparent); }
-    .backuperror { background: rgba(179, 64, 42, .16); color: #ff7a5c; }
+    .backuperror { background: color-mix(in srgb, var(--error-color, #db4437) 16%, transparent); color: var(--error-color, #db4437); }
     hp-dialog .body {
       padding: var(--sp-5) var(--sp-6);
       display: flex;
@@ -495,10 +495,12 @@ export const dialogsStyles = css`
     }
     hp-dialog .row {
       display: flex;
-      justify-content: flex-end;
       gap: var(--sp-4);
-      width: 100%;
       min-width: 0;
+    }
+    hp-dialog > .row[slot='footer'] {
+      justify-content: flex-end;
+      width: 100%;
       box-sizing: border-box;
       padding: var(--sp-5) var(--sp-6);
       border-top: 1px solid var(--hp-line);

@@ -763,7 +763,7 @@ export class LedStripEditor {
         visibleLabel: this.t('led.tool'),
         dismissPolicy: 'stay-open-on-canvas',
         dismiss: () => this.close(),
-        content: html`<span class="hint" data-led-hint>${n
+        content: html`<span class="hpf-hint" data-led-hint>${n
           ? this.t(touch ? 'led.points_touch' : 'led.points', { n })
           : `${this.t(touch ? 'led.start_touch' : 'led.start')}. ${this.t('led.hint')}`}</span>
           ${n ? html`<button data-hp="action" data-action="led-finish" class="btn" data-led-action="finish" @click=${() => void this.finish()}>
@@ -826,8 +826,8 @@ export class LedStripEditor {
             data-led-pick=${d.id} ?disabled=${taken || this.busy} title=${taken ? this.t('led.taken') : d.name}
             style="justify-content:flex-start" @click=${() => void this.bind(stripId, d.id)}>
             <ha-icon icon=${d.icon || 'mdi:lightbulb'}></ha-icon>${d.name}${taken
-              ? html` <small class="hint">· ${this.t('led.taken')}</small>` : nothing}</button>`;
-        }) : html`<div class="hint">${this.t('led.pick_empty')}</div>`}
+              ? html` <small class="hpf-hint">· ${this.t('led.taken')}</small>` : nothing}</button>`;
+        }) : html`<div class="hpf-hint">${this.t('led.pick_empty')}</div>`}
       </div>
       <div class="row" slot="footer">
         <button data-hp="action" data-action="led-new-device" class="btn" data-led-action="new-device" @click=${() => this.newDevice(stripId)}>

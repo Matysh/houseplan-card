@@ -114,7 +114,7 @@ export function renderRadarSection(
       ${radarToggle}
       <fieldset class="markerlightgroup radargroup">
         <legend>${options.t('radar.title')}</legend>
-        <p class="muted">${options.t('radar.saved_unsupported')}</p>
+        <p class="hpf-hint">${options.t('radar.saved_unsupported')}</p>
         <div class="row">
           <button data-hp="action" data-action="radar-remove" class="btn danger" type="button" @click=${remove}>
             <ha-icon icon="mdi:radar-off"></ha-icon>${options.t('radar.remove')}

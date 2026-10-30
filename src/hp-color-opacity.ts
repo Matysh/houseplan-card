@@ -184,8 +184,8 @@ export class HpColorOpacity extends LitElement {
     }
     .readout { font:inherit; color:var(--hp-color-readout-color,var(--primary-text-color)); line-height:var(--hp-color-readout-line-height,inherit); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
     .trigger {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       flex: none;
       box-sizing: border-box;
       padding: 3px;
@@ -343,7 +343,7 @@ export class HpColorOpacity extends LitElement {
     }
     input[type='range'] {
       width: auto;
-      height: 40px;
+      height: 44px;
       min-width: 0;
       flex: 1;
       margin: -5px 0;
@@ -354,8 +354,8 @@ export class HpColorOpacity extends LitElement {
       appearance: none;
       -webkit-appearance: none;
       width: 100%;
-      height: 32px;
-      min-height: 32px;
+      height: 44px;
+      min-height: 44px;
       margin: -1px 0;
       padding: 0;
       border: 0;
@@ -425,7 +425,7 @@ export class HpColorOpacity extends LitElement {
     }
     input[type='text'],
     input[type='number'] {
-      min-height: 40px;
+      min-height: 44px;
       box-sizing: border-box;
       border: 1px solid var(--divider-color, #666);
       border-radius: 6px;
@@ -462,7 +462,7 @@ export class HpColorOpacity extends LitElement {
     }
     .confirm {
       width: 100%;
-      min-height: 40px;
+      min-height: 44px;
       box-sizing: border-box;
       border: 1px solid var(--primary-color, #03a9f4);
       border-radius: 6px;

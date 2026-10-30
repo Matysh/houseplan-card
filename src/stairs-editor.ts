@@ -675,7 +675,7 @@ export class StairEditorRuntime {
             angle: (event.target as HTMLInputElement).value,
           })}>
         <label>${this.owner._t('stairs.direction')}</label>
-        <div class="segmented">${directionOptions.map(([value, key]) => html`
+        <div class="hpf-actions">${directionOptions.map(([value, key]) => html`
           <button class="btn ${dialog.direction === value ? 'on' : ''}"
             @click=${() => this.updateDialog({
               direction: value as Stair['direction'],
@@ -689,7 +689,7 @@ export class StairEditorRuntime {
           ${this.owner._model.filter((item) => item.id !== this.owner._space).map((item) => html`
             <option value=${item.id} ?selected=${dialog.targetSpaceId === item.id}>${item.title}</option>`)}
         </select></hp-settings-select>
-        ${targetState !== 'active' ? html`<p class="hint warn">${this.owner._t(
+        ${targetState !== 'active' ? html`<p class="hpf-hint hpf-note-warning">${this.owner._t(
           targetState === 'fixed' ? 'stairs.fixed_floor' : 'stairs.target_warning',
         )}</p>` : nothing}
       </div>

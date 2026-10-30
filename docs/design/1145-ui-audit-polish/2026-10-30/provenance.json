@@ -1,0 +1,85 @@
+{
+  "schema": "houseplan-ui-audit-qa/v1",
+  "issue": 1145,
+  "kind": "synthetic QA evidence, not designer approval",
+  "before": "3d9bc8364013f0f8ab297de07e528b3761dd6c1e",
+  "baseAfterSpec": "70888b212faaa34592df326eefd5beba6e37cf5b",
+  "sourceDiffSha256": "075ed233102ffe3fd344b23a243d3f451eb61c98330da7dce66dea37113e5c41",
+  "chromium": "151.0.7922.34",
+  "dpr": 1,
+  "comparisonViewport": {
+    "width": 1100,
+    "height": 900
+  },
+  "nativeViewport": {
+    "width": 1100,
+    "height": 940
+  },
+  "files": [
+    {
+      "path": "before-decor-text.png",
+      "sha256": "ccf437cd77729b85dbb6e15e4d5079e21d74e3a4c116bf8b32701a6bb95caa39",
+      "bytes": 157025
+    },
+    {
+      "path": "before-probe.png",
+      "sha256": "8f080b3f54433d56fc58c26fd297c0c3a96be8e3be259e79413999e7c1c33ed6",
+      "bytes": 165913
+    },
+    {
+      "path": "after-decor-text.png",
+      "sha256": "42917885b30cc07fc09f14e9fe777c345a0731e3f316170f275a9c8f2d11d4c5",
+      "bytes": 156375
+    },
+    {
+      "path": "after-probe.png",
+      "sha256": "0c0c4380162fda4c266f8cb612600e15b8de2116d34b1aa9d1ba87d77dfab4e4",
+      "bytes": 166142
+    },
+    {
+      "path": "native-theme-light.png",
+      "sha256": "7e2f1ba2047d887ec7783f71bda2f919cb93b9a41e70e6d9f372db7ae56be2a7",
+      "bytes": 179616
+    },
+    {
+      "path": "native-theme-dark.png",
+      "sha256": "f1db443a603e22cc5d79aed49d1dcfb599892e8a6b342aef9f771fed301a36b2",
+      "bytes": 157190
+    },
+    {
+      "path": "native-theme-custom.png",
+      "sha256": "c67fb3f2797f69f7f92856d4b5446d74fecef8a010ba47570a89e0abfc81b66c",
+      "bytes": 169554
+    },
+    {
+      "path": "native-rows-stairs.png",
+      "sha256": "f0b5a6e4c1b6f2e0abdc9cc6782565bbbd209269408006f8f86062e361c4a3c6",
+      "bytes": 163326
+    },
+    {
+      "path": "native-rows-partition.png",
+      "sha256": "72b5272c294c1ea3bb6a68a77868eab6305df04ce964f1694d652390f9776590",
+      "bytes": 208301
+    },
+    {
+      "path": "native-rows-column.png",
+      "sha256": "dd433b35fdde5fc207577c4323c064a786d6e82b60b7a96ddc2150d7172d7f2c",
+      "bytes": 191474
+    },
+    {
+      "path": "native-rows-optimize.png",
+      "sha256": "d389b756cec2cf6f6b0497fecbe3fb5d8bc25f9d291312ac49274528c59dbc95",
+      "bytes": 80698
+    },
+    {
+      "path": "native-picker-320.png",
+      "sha256": "689aeeb9478dc9e9c2cd27f2df1e10f3eb54a2ef48a68c119800605ef63750f0",
+      "bytes": 63967
+    },
+    {
+      "path": "native-picker-390.png",
+      "sha256": "0af3be37edab9b35b8f3e77f5f58c91548c2904e29af1804483f7cd358548f2f",
+      "bytes": 84498
+    }
+  ]
+}

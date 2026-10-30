@@ -55,7 +55,8 @@ function deleteHandler(result) {
     const node = stack.pop();
     if (Array.isArray(node)) { stack.push(...node); continue; }
     if (!node || typeof node !== 'object' || !Array.isArray(node.strings)) continue;
-    const index = node.strings.findIndex((part) => part.includes('ghostbtn danger') && part.trimEnd().endsWith('@click='));
+    const index = node.strings.findIndex((part, index) => part.trimEnd().endsWith('@click=')
+      && /data-action="vacuum-route-delete"[^>]*$/.test(node.strings.slice(0, index + 1).join('')));
     if (index >= 0) return node.values[index];
     stack.push(...node.values);
   }

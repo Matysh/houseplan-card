@@ -319,7 +319,7 @@ export const editorDialogsStyles = css`
     :host([data-pointer-hover]) .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
     .furnitem.on {
       border-color: var(--hp-accent);
-      background: rgba(38, 166, 154, 0.18);
+      background: color-mix(in srgb, var(--hp-accent) 18%, transparent);
     }
     .furnprev {
       width: 40px;
@@ -448,7 +448,7 @@ export const editorDialogsStyles = css`
     }
     .rrow .rpat { flex: 2; }
     .rrow .ricon { flex: 1.4; }
-    .rrow .rpat.bad { border-color: #ff7a5c; }
+    .rrow .rpat.bad { border-color: var(--error-color, #db4437); }
     .rrow .rprev { color: var(--hp-txt); min-width: 18px; }
     .rrow .ract {
       --mdc-icon-size: 16px;

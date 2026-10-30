@@ -42,11 +42,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 11 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 100 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 103 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
-| Responsive DOM layout | 66 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
+| Responsive DOM layout | 67 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 278 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **569 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **573 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 
 
@@ -137,6 +137,10 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+- `dialog-footer-leaks-into-body-1145`
+- `summary-touch-sticky-hover-1145`
+- `disabled-kit-loses-pointer-hit-1145`
 
 - `editor-light-spill-visible-1119`
 - `ordinary-offline-content-only-1119`
@@ -593,6 +597,8 @@ toggles; ordinary fresh-click and fade/lifecycle controls remain in the smoke.
 - `wall-draw-rejection-rollback-skipped`
 
 ### Responsive DOM layout
+
+- `ordinary-color-target40-1145`
 
 - `panel-editor-close-glyph-baseline-1120`
 - `panel-editor-close-target-top-aligned-1120`
@@ -1323,3 +1329,5 @@ clipping is a semantic RED despite successful capture execution. Not executed
 as a mutant; the ordinary fixed-source smoke must pass before handoff.
 
 #1120 owner correction adds two native close witnesses: actual SVG path paint and the24px close target share the active pill centre in all3editors. The natural9f glyph+6px/slot-1.5px failure and native corrected screenshots are preserved. These require actual computed SVG screen geometry; no mutant is executed during development.
+
+#1145 adds four browser-only witnesses: computed footer/body cascade, pointer-events and disabled hit cursor, native sticky touch hover versus desktop hover, and real44px/compact36px ShadowRoot targets. Two negative43px inputs exercise the size oracle without patching the implementation. Declarations only; no development mutant execution.

@@ -6905,7 +6905,7 @@ export class HouseplanCard extends LitElement {
     return html`<div class="farhint">
       <ha-icon icon="mdi:map-marker-alert-outline"></ha-icon>
       <span>${this._t('canvas.far_objects', { n: this._outliers })}</span>
-      <button class="btn ghostbtn" @click=${() => this._fitFar()}>${this._t('canvas.show_far')}</button>
+      <button class="btn ghost" @click=${() => this._fitFar()}>${this._t('canvas.show_far')}</button>
     </div>`;
   }
 
@@ -11952,13 +11952,13 @@ export class HouseplanCard extends LitElement {
         ${dialogPresence(this._summary?.dialogOpen ? this._summary.renderDialog() : nothing)}
         ${this._vacFit ? html`<div class="vaccalbar" data-hp="vacuum-calibration" aria-busy=${String(!!this._vacFit.busy)}>
           <span>${this._t('vac.fit_hint')}</span>
-          <button class="btn ghostbtn" data-hp="vacuum-calibration-action" data-action="rotate" ?disabled=${this._vacFit.busy}
+          <button class="btn ghost" data-hp="vacuum-calibration-action" data-action="rotate" ?disabled=${this._vacFit.busy}
             @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as FitParams['rot'] })}>${this._t('vac.fit_rotate')}</button>
-          <button class="btn ghostbtn" data-hp="vacuum-calibration-action" data-action="mirror" ?disabled=${this._vacFit.busy}
+          <button class="btn ghost" data-hp="vacuum-calibration-action" data-action="mirror" ?disabled=${this._vacFit.busy}
             @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
           <button class="btn" data-hp="vacuum-calibration-action" data-action="save" ?disabled=${this._vacFit.busy}
             @click=${() => this._vacFitSave()}>${this._t('btn.save')}</button>
-          <button class="btn ghostbtn" data-hp="vacuum-calibration-action" data-action="cancel" ?disabled=${this._vacFit.busy}
+          <button class="btn ghost" data-hp="vacuum-calibration-action" data-action="cancel" ?disabled=${this._vacFit.busy}
             @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${dialogPresence(this._tapConfirm

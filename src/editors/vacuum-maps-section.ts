@@ -291,9 +291,9 @@ export function renderVacuumMapsSection(
         </select></hp-settings-select>
       </label>
       <div class="vacbtns">
-        <button data-hp="action" data-action="vacuum-route-calibrate" data-value=${route.id} type="button" class="btn ghostbtn"
+        <button data-hp="action" data-action="vacuum-route-calibrate" data-value=${route.id} type="button" class="btn ghost"
           @click=${() => runtime._vacStartFit(dev, route.id)}>${host._t('vac.fit')}</button>
-        <button data-hp="action" data-action="vacuum-route-delete" data-value=${route.id} type="button" class="btn ghostbtn danger"
+        <button data-hp="action" data-action="vacuum-route-delete" data-value=${route.id} type="button" class="btn ghost danger"
           @click=${() => void drop(route)}>${t('vac.route_delete')}</button>
       </div>
     </li>`;
@@ -324,7 +324,7 @@ export function renderVacuumMapsSection(
               </select></hp-settings-select>
             </label>
             <div class="vacbtns">
-              <button data-hp="action" data-action="vacuum-route-cancel" type="button" class="btn ghostbtn" ?disabled=${!!draft.saving}
+              <button data-hp="action" data-action="vacuum-route-cancel" type="button" class="btn ghost" ?disabled=${!!draft.saving}
                 @click=${cancelDraft}>${host._t('btn.cancel')}</button>
               <button data-hp="action" data-action="vacuum-route-confirm" type="button" class="btn vacroute-draft-save"
                 ?disabled=${!!draft.saving || !spaceIds.has(draft.space)}

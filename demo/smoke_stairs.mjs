@@ -435,7 +435,7 @@ const out = await page.evaluate(async () => {
   }));
   await settled();
   dialog = root().querySelector('[data-hp="dialog"][data-kind="stairs"]');
-  const down = [...(dialog?.querySelectorAll('.segmented .btn') || [])]
+  const down = [...(dialog?.querySelectorAll('.hpf-actions .btn') || [])]
     .find((button) => button.textContent.trim() === 'Down');
   down?.click();
   await saveDialog(dialog);
@@ -653,7 +653,7 @@ const out = await page.evaluate(async () => {
     && broken?.getAttribute('role') === 'img';
   await hp.setMode('plan');
   dialog = await openStairDialog(straight.id);
-  result.brokenTargetHasRepairWarning = !!dialog?.querySelector('.hint.warn')
+  result.brokenTargetHasRepairWarning = !!dialog?.querySelector('.hpf-hint.hpf-note-warning')
     && [...dialog.querySelectorAll('option')].every((option) => option.value !== '__deleted__');
   await hp.close(dialog, { via: 'cancel' });
   result.dialogCancelCloses = !root().querySelector('[data-hp="dialog"][data-kind="stairs"]');

@@ -27,7 +27,7 @@ export const summaryPanelCss = `
     transition: background-color 160ms ease;
   }
   .summary-control > button:last-child { border-right: 0; }
-  .summary-control > button:hover { background: var(--secondary-background-color); }
+  :host([data-pointer-hover]) .summary-control > button:hover { background: var(--secondary-background-color); }
   .summary-control > button.on {
     color: var(--primary-text-color);
     background: transparent;

@@ -1,0 +1,216 @@
+{
+  "themes": [
+    {
+      "theme": "light",
+      "danger": "rgb(219, 68, 55)",
+      "error": "rgb(219, 68, 55)",
+      "border": "rgb(219, 68, 55)",
+      "selected": "color(srgb 0.0823529 0.396078 0.752941 / 0.18)",
+      "dangerToken": true,
+      "backupToken": true,
+      "regexToken": true,
+      "furnitureToken": true,
+      "dangerContrast": 4.29094240309568,
+      "backupContrast": 3.4446630910171363,
+      "baselineBackupContrast": 2.0161055683532707,
+      "selectedAlpha": 0.1803921568627451
+    },
+    {
+      "theme": "dark",
+      "danger": "rgb(219, 68, 55)",
+      "error": "rgb(219, 68, 55)",
+      "border": "rgb(219, 68, 55)",
+      "selected": "color(srgb 0.564706 0.792157 0.976471 / 0.18)",
+      "dangerToken": true,
+      "backupToken": true,
+      "regexToken": true,
+      "furnitureToken": true,
+      "dangerContrast": 3.744630625489398,
+      "backupContrast": 3.216734234619269,
+      "baselineBackupContrast": 5.574783089153059,
+      "selectedAlpha": 0.1803921568627451
+    },
+    {
+      "theme": "custom",
+      "danger": "rgb(255, 171, 145)",
+      "error": "rgb(255, 171, 145)",
+      "border": "rgb(255, 171, 145)",
+      "selected": "color(srgb 1 0.717647 0.301961 / 0.18)",
+      "dangerToken": true,
+      "backupToken": true,
+      "regexToken": true,
+      "furnitureToken": true,
+      "dangerContrast": 7.515406860047754,
+      "backupContrast": 5.332536854373276,
+      "baselineBackupContrast": 4.818599863771236,
+      "selectedAlpha": 0.1803921568627451
+    }
+  ],
+  "sizes": [
+    {
+      "cls": "alarm-add",
+      "x": 391,
+      "y": 370.84375,
+      "width": 44,
+      "height": 44
+    },
+    {
+      "cls": "alarm-remove",
+      "x": 435,
+      "y": 370.84375,
+      "width": 44,
+      "height": 44
+    },
+    {
+      "width": 390,
+      "left": 31,
+      "right": 323,
+      "scroll": 290,
+      "client": 290,
+      "fits": true,
+      "controls": [
+        {
+          "cls": "hsv-range hue-range",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "hsv-range",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "hsv-range",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "",
+          "type": "text",
+          "height": 44
+        },
+        {
+          "cls": "",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "",
+          "type": "number",
+          "height": 44
+        },
+        {
+          "cls": "confirm",
+          "type": "button",
+          "height": 44
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "left": 8,
+      "right": 300,
+      "scroll": 290,
+      "client": 290,
+      "fits": true,
+      "controls": [
+        {
+          "cls": "hsv-range hue-range",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "hsv-range",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "hsv-range",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "",
+          "type": "text",
+          "height": 44
+        },
+        {
+          "cls": "",
+          "type": "range",
+          "height": 44
+        },
+        {
+          "cls": "",
+          "type": "number",
+          "height": 44
+        },
+        {
+          "cls": "confirm",
+          "type": "button",
+          "height": 44
+        }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "label": "stairs",
+      "rows": [
+        {
+          "padding": "0px",
+          "border": "0px",
+          "justify": "normal"
+        },
+        {
+          "padding": "0px",
+          "border": "0px",
+          "justify": "normal"
+        }
+      ]
+    },
+    {
+      "label": "partition",
+      "rows": [
+        {
+          "padding": "0px",
+          "border": "0px",
+          "justify": "normal"
+        }
+      ]
+    },
+    {
+      "label": "column",
+      "rows": [
+        {
+          "padding": "0px",
+          "border": "0px",
+          "justify": "normal"
+        }
+      ]
+    },
+    {
+      "label": "optimize",
+      "rows": [
+        {
+          "padding": "0px",
+          "border": "0px",
+          "justify": "normal"
+        }
+      ]
+    },
+    {
+      "padding": "0px",
+      "border": "0px",
+      "justify": "normal"
+    }
+  ],
+  "desktop": {
+    "host": "houseplan-card",
+    "gate": true,
+    "hover": true,
+    "bg": "rgb(53, 65, 78)",
+    "secondary": "#35414e",
+    "original": "rgba(0, 0, 0, 0)",
+    "media": true
+  }
+}

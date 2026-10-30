@@ -474,7 +474,7 @@ export class RadarSetupController {
           transform="translate(${view.scene(marker.point).join(' ')}) scale(${view.glyph})">
           <circle r="18"></circle><text y="1">${marker.label}</text></g>`)}
       </svg>
-      <p class="muted">${this.host.t('radar.desktop_hint')}</p>
+      <p class="hpf-hint">${this.host.t('radar.desktop_hint')}</p>
       ${state.error ? html`<p class="error" role="alert">${this.host.t(state.error)}</p>` : nothing}
       ${state.checkErrorCm != null ? html`<p role="status">${this.host.t('radar.error_distance', {
         distance: formatLength(

@@ -64,7 +64,8 @@ const chromeCoreStyles = unsafeCSS(css`
       display: flex;
       align-items: center;
       gap: var(--sp-2);
-      max-width: calc(100% - var(--sp-8));
+      max-width: calc(100% - 2 * var(--sp-4));
+      box-sizing: border-box;
       background: var(--card-background-color, var(--hp-bg));
       opacity: 0.94;
       color: var(--hp-txt);
@@ -79,10 +80,11 @@ const chromeCoreStyles = unsafeCSS(css`
       flex: none;
     }
     .farhint span {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
+    .farhint .btn { flex: none; }
     .dropbtn {
       display: flex;
       align-items: center;

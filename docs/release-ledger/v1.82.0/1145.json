@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "issue": 1145,
+  "baseStable": "v1.82.0",
+  "category": "stable-fix",
+  "rationale": "v1.82.0 already exposes legacy Save buttons, footer/body rows, themed danger actions, color pickers and summary controls. This fixes those existing surfaces; beta-only alarm/HSV details are polish of the delivered feature, not independent stable features.",
+  "summary": {
+    "ru": "Исправлены оформление действий, размеры обычных контролов, отступы в диалогах и подсветка сводной на touch.",
+    "en": "Polished action styling, ordinary control targets, dialog rows and touch hover in the summary."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "4395538b3fe35d1c1687cbeb6d5d180de98f2e98b705865532d7ce5c0a033b39",
+    "golden": [
+      {
+        "id": "decor-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "#1145: ordinary color picker targets44px, selection uses HA accent; body rows no longer inherit footer padding/border."
+      },
+      {
+        "id": "furniture-variants-light",
+        "expectation": "change",
+        "reason": "#1145: ordinary color picker targets44px, selection uses HA accent; body rows no longer inherit footer padding/border."
+      },
+      {
+        "id": "furniture-variants-dark",
+        "expectation": "change",
+        "reason": "#1145: ordinary color picker targets44px, selection uses HA accent; body rows no longer inherit footer padding/border."
+      },
+      {
+        "id": "optimize-preflight-dialog-dark-en",
+        "expectation": "change",
+        "reason": "#1145: ordinary color picker targets44px, selection uses HA accent; body rows no longer inherit footer padding/border."
+      },
+      {
+        "id": "optimize-preflight-dialog-light-ru",
+        "expectation": "change",
+        "reason": "#1145: ordinary color picker targets44px, selection uses HA accent; body rows no longer inherit footer padding/border."
+      }
+    ],
+    "smokes": [
+      "smoke_ui_polish_1145.mjs",
+      "smoke_color_picker_presentation.mjs",
+      "smoke_stairs.mjs",
+      "smoke_optimize_context.mjs",
+      "smoke_led_strip_bind.mjs",
+      "smoke_radar_setup.mjs"
+    ]
+  }
+}

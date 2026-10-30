@@ -6925,3 +6925,9 @@ Form Kit/pointer owner explain the cost; splitting kit ownership to recover
 3162 B would add disproportionate complexity. The raw growth is not a claimed
 speed improvement. The first two gate results remain red; their successful
 constituents do not replace a fresh protected gate after this accounting.
+
+## UI audit polish (#1145)
+
+`node demo/smoke_ui_polish_1145.mjs` uses real Save templates, native stairs/physical dialogs and a failed-result data fixture for the actual Optimize diagnostics template. It records computed body rows, theme-token paint/contrast,44px ordinary controls versus36px compact color,320/390px placement, native disabled/enabled commands and real touch/desktop summary input. It never substitutes the geometry guard. The shared-CSS probe is explicitly a fixture, not a real HA destructive command. Four registry declarations are not executed during development.
+
+The HSV presentation smoke now expects44px input boxes under #1145; its10px tracks,20px thumb raster, independent native opacity and ownership checks remain unchanged. Wait for actual finite transitions before reading themed colors, and for the placement frame after resize. Canvas alpha unpremultiplication can shift low-alpha RGB; compare composited selection paint against the same surface.

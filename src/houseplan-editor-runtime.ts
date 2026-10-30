@@ -5434,7 +5434,7 @@ public _renderDecorTextDialog(): TemplateResult {
         <div class="row" slot="footer">
           <span class="spacer"></span>
           <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._decorTextDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn primary" data-hp="dialog-confirm" ?disabled=${!d.text.trim()} @click=${() => this._decorSaveText()}>${this.host._t('btn.save')}</button>
+          <button class="btn on" data-hp="dialog-confirm" ?disabled=${!d.text.trim()} @click=${() => this._decorSaveText()}>${this.host._t('btn.save')}</button>
         </div>
     </hp-dialog>`;
   }
@@ -5466,7 +5466,7 @@ public _renderBackdropDialog(): TemplateResult {
       </div>
       <div class="row" slot="footer"><span class="spacer"></span>
         <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._backdropDialog = null)}>${this.host._t('btn.cancel')}</button>
-        <button class="btn primary" data-hp="dialog-confirm" @click=${() => this._saveBackdropDialog()}>${this.host._t('btn.save')}</button>
+        <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveBackdropDialog()}>${this.host._t('btn.save')}</button>
       </div>
     </hp-dialog>`;
   }

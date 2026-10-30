@@ -51,7 +51,7 @@ async function paint(label, selected, endpoints) {
   }, { data: png.toString('base64'), state });
   out[`${label}:centres`] = sampled.every(r => near(r.centre, rgb(selected), 1));
   out[`${label}:20px-centred-white-rims`] = sampled.every(r => r.rim.every(p => near(p, [255, 255, 255], 12)));
-  out[`${label}:32px-inputs-fit`] = state.fits && state.ranges.every(r => r.height === 32);
+  out[`${label}:44px-inputs-fit`] = state.fits && state.ranges.every(r => r.height === 44);
   if (endpoints) {
     const bg = state.background.match(/\d+/g).slice(0, 3).map(Number);
     out[`${label}:10px-tracks`] = sampled.every(r => r.track.every(p => near(p.outside, bg, 1)));
@@ -184,7 +184,7 @@ try {
   const alpha = page.locator('#presentation-probe .row input[type="range"]');
   const native = await alpha.evaluate(e => ({ height: e.getBoundingClientRect().height, appearance: getComputedStyle(e).appearance }));
   await alpha.focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowRight');
-  out.opacityStaysNativeAndIndependent = native.height === 40 && native.appearance === 'auto'
+  out.opacityStaysNativeAndIndependent = native.height === 44 && native.appearance === 'auto'
     && await page.evaluate(() => window.__picker.opacity === .01);
 
   await page.evaluate(() => { window.__picker.remove(); });

@@ -2709,3 +2709,5 @@ modality to hp-dialog. Kiosk render omits summary controls regardless of legacy
 profile/URL fields; summary content stays with its original owner. Device LQI
 raises only its owning stacking context (higher-specificity hover/topology
 layers remain authoritative), and no pointer/state polling is added.
+
+UI audit polish (#1145) keeps presentation in existing stylesheet owners. Shared hp-dialog row layout remains reusable, while footer padding/divider/alignment is scoped to the direct footer slot. Existing primary/ghost/action/hint classes replace unsupported aliases. Ordinary color controls use44px targets; compact/cover swatches keep their allocated size. No new observers, data fields, renderer branches or write authority are introduced.

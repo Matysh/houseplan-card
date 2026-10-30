@@ -243,7 +243,7 @@ export class DecorImageEditor<Snapshot> {
         }}><ha-icon icon="mdi:close"></ha-icon></button>
       </div>
       <div class="furnbody">
-        <label class="btn primary imageupload ${this.host._decorAssetBusy ? 'disabled' : ''}">
+        <label class="btn on imageupload ${this.host._decorAssetBusy ? 'disabled' : ''}">
           <ha-icon icon="mdi:upload"></ha-icon>${this.host._t(
             this.host._decorAssetBusy ? 'decor.image_uploading' : 'decor.image_upload',
           )}
@@ -583,7 +583,7 @@ export class DecorImageEditor<Snapshot> {
           <span class="spacer"></span>
           <button class="btn ghost" data-hp="dialog-cancel"
             @click=${() => (this.host._decorShapeDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class=${kit ? 'btn on' : 'btn primary'} data-hp="dialog-confirm" ?disabled=${invalidFurnitureSize}
+          <button class=${kit ? 'btn on' : 'btn on'} data-hp="dialog-confirm" ?disabled=${invalidFurnitureSize}
             @click=${this.hooks.saveShape}>${this.host._t('btn.save')}</button>
         </div>
     </hp-dialog>`;
