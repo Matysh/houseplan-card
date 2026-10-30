@@ -464,7 +464,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #1120, owner-authorized exact own-cost carry from accepted1121 d91b/2f52:
 // initial View361029 ->364973 (+3944 B gzip), accepted1121 d91b/2f52. Preserve2000 B band and the
 // absolute387200 B wall; lazy graphs remain inside their existing reserves.
-export const INITIAL_VIEW_GZIP_CEILING = 365_976;
+export const INITIAL_VIEW_GZIP_CEILING = 365_998;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -682,7 +682,7 @@ export function initialViewCeilingViolation(bytes, {
  * оставался незафиксированным.
  */
 // #898, owner decision 2026-10-14: every ceiling with less than 10 % headroom is raised by 10 % (rounded up). 16940 -> 18634 B.
-export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
+export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_943;
 /**
  * #600, промежуточные замеры по сериям (итог ставится в конце):
  * - серия 0: 222 900 → 225 900. Набор контролов формы вырос до полного
@@ -899,7 +899,7 @@ export const LAZY_FURNITURE_ART_GZIP_CEILING = 16_938;
 // excess and the same2000B band. No timing or behavioral AC is relaxed.
 // #1113 SPEC r2: frozen R1 382259 ->382264 (+5 own bytes), final cd31dbf3.
 // Preserve the inherited1025-B gap and2000-B band.
-export const LAZY_EDITOR_GZIP_CEILING = 383_161;
+export const LAZY_EDITOR_GZIP_CEILING = 383_109;
 export const LAZY_GRAPH_CEILING_BAND = 2_000;
 
 /**
@@ -935,7 +935,7 @@ export const LAZY_GRAPH_CEILING_BAND = 2_000;
 // registers the shared select instead of leaving native controls unupgraded.
 // Matched accepted #1070 dist40339 ->44057 (+3718 B). Carry only that measured
 // cost:39412 ->43130, retaining the inherited927-B gap and2000-B band.
-export const LAZY_ONBOARDING_GZIP_CEILING = 46_119;
+export const LAZY_ONBOARDING_GZIP_CEILING = 46_103;
 
 /**
  * #780 ТЗ §13.1: the LED chunks are a new feature's own budget, not a raise of

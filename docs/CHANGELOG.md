@@ -2,10 +2,10 @@
 
 ## Unreleased
 
+## v1.83.0-beta.5 — 2026-10-30
+
 - **Device catalog:** restored the standard spacing around an empty search result. [#1151](https://github.com/Matysh/houseplan-card/issues/1151)
 - **Dialog polish:** primary Save actions, themed error/selection colors, 44px ordinary controls, correctly scoped footer rows and touch-safe summary hover. Compact editor controls retain their size. [#1145](https://github.com/Matysh/houseplan-card/issues/1145)
-
-## v1.83.0-beta.5 — 2026-10-30
 
 - Unify main-panel groups and print controls, keep actions visible as narrow headers wrap, and show clear device icons and Zigbee labels. Kiosk screens always hide control buttons over the plan. (#1132)
 
