@@ -66,7 +66,7 @@ try {
     o.movedWallPlateSolid=movedWall.opacity===.3&&movedWall.flatSwatch&&!movedWall.coverSwatch
       &&getComputedStyle(movedWall.shadowRoot.querySelector('.swatch')).opacity==='1'
       &&getComputedStyle(movedWall.shadowRoot.querySelector('.trigger')).backgroundImage==='none'
-      &&Math.abs(movedTrigger.width-40)<=1&&Math.abs(movedTrigger.height-40)<=1;
+      &&Math.abs(movedTrigger.width-44)<=1&&Math.abs(movedTrigger.height-44)<=1;
     await select(d,'space-fill-mode','temp');o.wallFillAlwaysAvailable=!!d.querySelector('[data-field="space-wall-fill"]')&&!d.querySelector('[data-field="space-fill-color"]');
     const acceptedBefore=JSON.stringify(saved());rejectNext=true;d.querySelector('[data-hp="dialog-confirm"]').click();
     for(let i=0;i<50&&(rejections!==1||c._spaceDialog?.busy);i++){await new Promise(r=>setTimeout(r,20));await settle();}

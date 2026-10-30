@@ -90,7 +90,7 @@ for (const theme of ['light', 'dark']) {
         && getComputedStyle(glowPicker.renderRoot.querySelector('.trigger')).backgroundImage==='none'
         && JSON.stringify(c._settingsDialog.colors.wall_fill)===legacyWallFill;
       // #931: solid colour is independent of compact Properties layout. Native
-      // form plates keep their 40px trigger and inline label/hex at every width.
+      // form plates keep their 44px trigger and inline label/hex at every width.
       dialog.querySelector('[data-section-target="sun"]').click(); await c.updateComplete;
       const visiblePlates = [...dialog.querySelectorAll('[data-card="sun"] .hpf-colorfield hp-color-opacity')];
       const plateBoxes = visiblePlates.map((plate) => {
@@ -99,7 +99,7 @@ for (const theme of ['light', 'dark']) {
       });
       // A flex item blockifies inline-flex to flex in getComputedStyle.
       const plateLayout = plateBoxes.length === 1 && plateBoxes.every((box) => box.display === 'flex'
-        && Math.abs(box.width - 40) <= 1 && Math.abs(box.height - 40) <= 1);
+        && Math.abs(box.width - 44) <= 1 && Math.abs(box.height - 44) <= 1);
       dialog.querySelector('[data-section-target="fills"]').click(); await c.updateComplete;
       const hex = [...dialog.querySelectorAll('.hpf-hex')];
       const upperHex = hex.length === 10 && hex.every((node) => node.textContent === node.textContent.toUpperCase());
@@ -149,11 +149,14 @@ const trigger = tile.locator('hp-color-opacity .trigger');
 const bounds = await tile.boundingBox();
 await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
 result.tileWholeSurfaceOpens = await trigger.getAttribute('aria-expanded') === 'true';
-await trigger.click();
+// #1145: the larger ordinary picker may cover its opener; use native Escape.
+await page.keyboard.press('Escape');
+result.tilePointerEscapeCloses = await trigger.getAttribute('aria-expanded') === 'false';
 await trigger.focus();
 await page.keyboard.press('Enter');
 result.tileKeyboardOpens = await trigger.getAttribute('aria-expanded') === 'true';
 await page.keyboard.press('Escape');
+result.tileKeyboardEscapeCloses = await trigger.getAttribute('aria-expanded') === 'false';
 
 const icon = await page.evaluate(async () => {
   const c = window.__card;

@@ -68,7 +68,7 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   o.firstRoutePreselectsDock = pending()?.querySelector('.vacroute-draft-space')?.value === 'garden';
   o.firstDraftDoesNotWrite = routes().length === 0;
-  pending()?.querySelector('button.ghostbtn')?.click();
+  pending()?.querySelector('button[data-action="vacuum-route-cancel"]')?.click();
   await c.updateComplete;
 
   // Start with one accepted route, then exercise the separate-source entry.
@@ -88,7 +88,7 @@ const out = await page.evaluate(async () => {
   o.separateSourceStartsBlank = pending()?.querySelector('.vacroute-draft-space')?.value === '';
   o.blankDraftCannotSave = pending()?.querySelector('.vacroute-draft-save')?.disabled === true;
   o.separateSourceDoesNotWrite = routes().length === 1;
-  pending()?.querySelector('button.ghostbtn')?.click();
+  pending()?.querySelector('button[data-action="vacuum-route-cancel"]')?.click();
   await c.updateComplete;
   o.cancelLeavesAcceptedRoutes = !pending() && routes().length === 1;
 
