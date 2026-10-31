@@ -4,7 +4,7 @@
   "parentSource": "5bd7b73391143a07a3a503d9be78084c15f0b227",
   "sourceComparisonParent": "aa2079df7e5cb4c597fc4d30256e9e17218c8a4f",
   "parentProductFingerprint": "9ef8b868422d4814f6fc3890442846b55befa7d4ba3d2902f79770519a3b6638",
-  "productFingerprint": "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3",
+  "productFingerprint": "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9",
   "kind": "Author comparison and native checks; no blanket baseline acceptance and no live-HA/GPU validation claim",
   "method": "Unchanged #1146 AST census v1; all seven baseline caps unchanged. Registry changes are source ownership findings, not selector-usage or byte-count guesses.",
   "before": {
@@ -70,7 +70,7 @@
       "cssLinesStylesDir": 5065,
       "cssLinesElsewhere": 1810,
       "physicalStylesDir": 5521,
-      "decls": 7423,
+      "decls": 7424,
       "rules": 2867,
       "filesWithCss": 55,
       "inlineStatic": 74,
@@ -130,17 +130,17 @@
     "opening": "Existing opening-info surface added to inventory. Shared reading rows and semantic state colours; existing unlock confirmation, pending/stale/service guards remain."
   },
   "payload": {
-    "initialViewGzipBytes": 385902,
+    "initialViewGzipBytes": 385920,
     "initialViewBudget": 387200,
-    "lazyEditorGzipBytes": 366245,
-    "lazyOnboardingGzipBytes": 32336,
+    "lazyEditorGzipBytes": 366301,
+    "lazyOnboardingGzipBytes": 32365,
     "limitsRaised": false,
     "note": "Existing low-headroom warning retained. Retired support-label CSS marker replaced with the live editor-only supportbody layout marker; eager/onboarding exclusion and editor-presence assertions are unchanged."
   },
   "uiLab": {
     "renderer": "Official pinned HA20260930.4 components with synthetic fixtures",
     "browser": "151.0.7922.34",
-    "rawSha256": "48ae91837dc318886b471682e8102595a645a7cc5fe5f5c41267318c183bdb64",
+    "rawSha256": "c10a71a06317b766a8298db82f2971dd6157e6f6c8033a73a36e0b9f85b51062",
     "profiles": [
       {
         "id": "light-1280",
@@ -257,7 +257,7 @@
           }
         ],
         "fingerprints": [
-          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+          "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9"
         ]
       },
       {
@@ -375,7 +375,7 @@
           }
         ],
         "fingerprints": [
-          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+          "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9"
         ]
       },
       {
@@ -493,7 +493,7 @@
           }
         ],
         "fingerprints": [
-          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+          "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9"
         ]
       },
       {
@@ -611,7 +611,7 @@
           }
         ],
         "fingerprints": [
-          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+          "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9"
         ]
       },
       {
@@ -729,7 +729,7 @@
           }
         ],
         "fingerprints": [
-          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+          "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9"
         ]
       },
       {
@@ -847,18 +847,19 @@
           }
         ],
         "fingerprints": [
-          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+          "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9"
         ]
       }
     ],
     "states": 162,
-    "coverageIsNotWinningPaintProof": true
+    "coverageIsNotWinningPaintProof": true,
+    "harnessReadiness": "Ready comparisons wait for the actual MDI close path in genuine HA, then finite paint; an asynchronously empty first close icon is not presented as a product frame. No product delay or animation suppression is introduced."
   },
   "golden": {
     "comparisonOnly": true,
     "parentCaptureSha256": "0854de20febdda54b57ad45fee8fdf3b525a6ace78e8cd07d3c462b4246655d3",
-    "candidateCaptureSha256": "ed2837faedef149cd2acdaca70c0c4f6c71398c7cef50089d91e733ebe5b40c3",
-    "changedFromParent": 50,
+    "candidateCaptureSha256": "5e59c7a8df0e06c5e5f89207bae045971d6a34ba4fefee540aad90188fa99f27",
+    "changedFromParent": 56,
     "results": [
       {
         "id": "approved-ui-info-light-1119",
@@ -944,29 +945,29 @@
       {
         "id": "device-inbox-narrow-ru-dark",
         "strict": false,
-        "parentDifferentPixels": 2611,
+        "parentDifferentPixels": 14075,
         "status": "different",
-        "baselineDifferentPixels": 2511,
-        "baselineDiffRatio": 0.007153846153846154,
-        "actualSha256": "6832f18a9a964deb79e2fae655ff56f59e637a2ad7c348cfc9505eda26b24591"
+        "baselineDifferentPixels": 12108,
+        "baselineDiffRatio": 0.0344957264957265,
+        "actualSha256": "9bf1d7ab804dc14379a48963b09f2a5d6ed7d1de909aa08cab38caab58bee685"
       },
       {
         "id": "device-state-source-standard-en",
         "strict": false,
-        "parentDifferentPixels": 28349,
+        "parentDifferentPixels": 26614,
         "status": "different",
-        "baselineDifferentPixels": 133702,
-        "baselineDiffRatio": 0.09442231638418079,
-        "actualSha256": "87e4771d9378848232c95e9e817f7d27131c94cb3c9a84c1c84fd94caa2c5915"
+        "baselineDifferentPixels": 132050,
+        "baselineDiffRatio": 0.09325564971751413,
+        "actualSha256": "ef9384fcb80e9ec2392bb7975e297e1e4ab6363f8ef56ac6b60e6ddd693c4822"
       },
       {
         "id": "device-state-source-manual-ru",
         "strict": false,
-        "parentDifferentPixels": 30193,
+        "parentDifferentPixels": 28451,
         "status": "different",
-        "baselineDifferentPixels": 132020,
-        "baselineDiffRatio": 0.09323446327683615,
-        "actualSha256": "aba4c1223917414930666124f6f4f4060f7885f8271e3131750fc4b584e83e83"
+        "baselineDifferentPixels": 130390,
+        "baselineDiffRatio": 0.09208333333333334,
+        "actualSha256": "a87129352f1a4b3b657ee1adbd9fb088b1ed210c463a37cb79d21f67f7f22bc4"
       },
       {
         "id": "device-state-source-unknown-en",
@@ -998,11 +999,11 @@
       {
         "id": "device-dialog-mobile-ru",
         "strict": false,
-        "parentDifferentPixels": 84393,
+        "parentDifferentPixels": 82158,
         "status": "different",
-        "baselineDifferentPixels": 80911,
-        "baselineDiffRatio": 0.20746410256410255,
-        "actualSha256": "f86ce441d3506029cbe56b21ce96b6fbc8c568d4cf460b4a9551687356dd240d"
+        "baselineDifferentPixels": 79051,
+        "baselineDiffRatio": 0.2026948717948718,
+        "actualSha256": "c38c59e8973befab8d879c4c621aa04d3cf84244bba48a686cf7b8dab81d8f90"
       },
       {
         "id": "device-dialog-desktop-de",
@@ -1016,29 +1017,29 @@
       {
         "id": "room-temperature-dialog-desktop-en",
         "strict": false,
-        "parentDifferentPixels": 13789,
+        "parentDifferentPixels": 14164,
         "status": "different",
-        "baselineDifferentPixels": 25164,
-        "baselineDiffRatio": 0.031066666666666666,
-        "actualSha256": "ea8092523ac11061c8b3bbc56617e80ecb9ec932dbe1ece31894bad326276a07"
+        "baselineDifferentPixels": 25151,
+        "baselineDiffRatio": 0.031050617283950616,
+        "actualSha256": "3fcec9fc5ec08cbfd32de248793d178258a26e07330d6afc99f7d6a38c429a42"
       },
       {
         "id": "room-temperature-dialog-mobile-ru",
         "strict": false,
-        "parentDifferentPixels": 54361,
+        "parentDifferentPixels": 53428,
         "status": "different",
-        "baselineDifferentPixels": 52720,
-        "baselineDiffRatio": 0.16485303314571606,
-        "actualSha256": "431ce0521dbef36a5f1bf7f46064f3cc5f8b30e5a726387bbc1f7f5c6c421e84"
+        "baselineDifferentPixels": 51824,
+        "baselineDiffRatio": 0.16205128205128205,
+        "actualSha256": "89599d460c72469702dcbd8535421514411d132f0f488f7399b7e6f4dab582d0"
       },
       {
         "id": "room-discard-dialog-mobile-ru",
         "strict": false,
-        "parentDifferentPixels": 98090,
+        "parentDifferentPixels": 96993,
         "status": "different",
-        "baselineDifferentPixels": 77679,
-        "baselineDiffRatio": 0.2960327743902439,
-        "actualSha256": "9a5e1b267667ed083a5e8574ed60ef1a3b5a3cfd9c8ad309a1b472d4ae23caa2"
+        "baselineDifferentPixels": 77637,
+        "baselineDiffRatio": 0.29587271341463417,
+        "actualSha256": "8df2cb8b9f46225f9976a64ce55bd7f37e503cc3d48812ace73393a448687f1b"
       },
       {
         "id": "more-info-dialog-desktop-en",
@@ -1052,101 +1053,101 @@
       {
         "id": "more-info-dialog-mobile-ru",
         "strict": false,
-        "parentDifferentPixels": 94806,
+        "parentDifferentPixels": 95990,
         "status": "different",
-        "baselineDifferentPixels": 51374,
-        "baselineDiffRatio": 0.14270555555555556,
-        "actualSha256": "90c3c97eb83995d1e4db3b71f095870344c384a6b40a9f8078071119fb160482"
+        "baselineDifferentPixels": 53190,
+        "baselineDiffRatio": 0.14775,
+        "actualSha256": "d185d2e923f7f2689e993bf8fa5cb0ee47111e1a17684abbf66bac11f998d080"
       },
       {
         "id": "toggle-entity-dialog-desktop-en",
         "strict": false,
-        "parentDifferentPixels": 37393,
+        "parentDifferentPixels": 31419,
         "status": "different",
-        "baselineDifferentPixels": 135350,
-        "baselineDiffRatio": 0.10427580893682589,
-        "actualSha256": "e607174c37f8c377cc23c3d4e0aba24147d4dc464e474125071b1f022ed9525c"
+        "baselineDifferentPixels": 129667,
+        "baselineDiffRatio": 0.09989753466872112,
+        "actualSha256": "8869bc101580d6f60b77dc36a6da2575f802258c0d760c038d3c898bbd0bb2ca"
       },
       {
         "id": "toggle-entity-dialog-mobile-ru",
         "strict": false,
-        "parentDifferentPixels": 95232,
+        "parentDifferentPixels": 92312,
         "status": "different",
-        "baselineDifferentPixels": 90049,
-        "baselineDiffRatio": 0.23089487179487178,
-        "actualSha256": "0f35028f999fe1453b4e367c5b52f7ab184491a453d3d971aa225c66b92b537b"
+        "baselineDifferentPixels": 87128,
+        "baselineDiffRatio": 0.2234051282051282,
+        "actualSha256": "b7ecf7d810728f5d5a2773e2c204eb4ff3798601fc3ee270bbaf20d25f3cc75a"
       },
       {
         "id": "device-help-popover-light-ru",
         "strict": false,
-        "parentDifferentPixels": 67491,
+        "parentDifferentPixels": 67884,
         "status": "different",
-        "baselineDifferentPixels": 84295,
-        "baselineDiffRatio": 0.12323830409356726,
-        "actualSha256": "8055e77279ad6ec2ea01deb290fcf86d0ba04be7f2fd1e018d27602e82b25955"
+        "baselineDifferentPixels": 84296,
+        "baselineDiffRatio": 0.12323976608187134,
+        "actualSha256": "013a0e79c6da34f5d4b0e4bb2d88a245dcd0f2df5604751f0ef6169fac87700c"
       },
       {
         "id": "decor-color-popover-mobile-ru",
         "strict": false,
-        "parentDifferentPixels": 184413,
+        "parentDifferentPixels": 184475,
         "status": "different",
-        "baselineDifferentPixels": 128810,
-        "baselineDiffRatio": 0.4345816464237517,
-        "actualSha256": "26f5bd347b5246738844f23fa4526de78dcea70587e7e005dd0f7592a5ed0ddd"
+        "baselineDifferentPixels": 128809,
+        "baselineDiffRatio": 0.43457827260458837,
+        "actualSha256": "80edb0f09de5e45666a5e22b9f29ed4773aa3a23cb5c1b660b383dd9e765cca7"
       },
       {
         "id": "decor-color-popover-desktop-en",
         "strict": false,
-        "parentDifferentPixels": 359115,
+        "parentDifferentPixels": 359626,
         "status": "different",
-        "baselineDifferentPixels": 328933,
-        "baselineDiffRatio": 0.5278129011553273,
-        "actualSha256": "a6616fc49ecb1d8575a3f0d7b74480cfdb907655ced06f5d35157d54724c5ce5"
+        "baselineDifferentPixels": 328929,
+        "baselineDiffRatio": 0.5278064826700899,
+        "actualSha256": "07149a6281925ae9bd692d2a9aef8abd1c8ac13d66d2efcb478dab85eb77e683"
       },
       {
         "id": "general-color-popover-desktop-en",
         "strict": false,
-        "parentDifferentPixels": 24785,
+        "parentDifferentPixels": 25298,
         "status": "different",
-        "baselineDifferentPixels": 27409,
-        "baselineDiffRatio": 0.03383827160493827,
-        "actualSha256": "7583188be735f4d9a173d2dace3bc769e49195cb7109582a4a31c12aa8b3aa42"
+        "baselineDifferentPixels": 27412,
+        "baselineDiffRatio": 0.033841975308641976,
+        "actualSha256": "8194ce9c207582363728d1f65b26ff6a22173af72a78c11860b86327202a1ee9"
       },
       {
         "id": "settings-help-zoom-200-en-light",
         "strict": false,
-        "parentDifferentPixels": 53441,
+        "parentDifferentPixels": 50831,
         "status": "different",
-        "baselineDifferentPixels": 39871,
-        "baselineDiffRatio": 0.11359259259259259,
-        "actualSha256": "1dd848afdb0342cc0921b56543a0aa40e9c6a64d0a6c845cc6d6b891056c5c15"
+        "baselineDifferentPixels": 37975,
+        "baselineDiffRatio": 0.10819088319088319,
+        "actualSha256": "fbfcccb96d90c1c26eabe797322db119bdc604a940b91f90d56c848f8a726586"
       },
       {
         "id": "settings-help-zoom-200-ru-dark",
         "strict": false,
-        "parentDifferentPixels": 51221,
+        "parentDifferentPixels": 50164,
         "status": "different",
-        "baselineDifferentPixels": 33532,
-        "baselineDiffRatio": 0.09553276353276353,
-        "actualSha256": "b766a402911202cc07909a77f927442f762db23f9dfdf5ab6ca38e1ff244f2ce"
+        "baselineDifferentPixels": 30668,
+        "baselineDiffRatio": 0.08737321937321937,
+        "actualSha256": "37393ccafea7ac0ac6d2278a42776850904e7471174fb6744f2df3694397977d"
       },
       {
         "id": "support-desktop-empty-light-en",
         "strict": false,
-        "parentDifferentPixels": 0,
+        "parentDifferentPixels": 514,
         "status": "different",
-        "baselineDifferentPixels": 10685,
-        "baselineDiffRatio": 0.010903061224489795,
-        "actualSha256": "bea20398917fc9d8dba84989a0eb1451a21580e20b9ec5a3764df2fdfcd124fb"
+        "baselineDifferentPixels": 10690,
+        "baselineDiffRatio": 0.010908163265306123,
+        "actualSha256": "28713d4b4409aac3d92af6956aae1c0f49b5ecfb0e2336279151c2e1eef32c71"
       },
       {
         "id": "support-desktop-preview-dark-en",
         "strict": false,
-        "parentDifferentPixels": 0,
+        "parentDifferentPixels": 512,
         "status": "different",
-        "baselineDifferentPixels": 7538,
-        "baselineDiffRatio": 0.007691836734693877,
-        "actualSha256": "1135696fd6817f87db07104f26d1b62c83346b0a3453752ef9bf5db793ead114"
+        "baselineDifferentPixels": 7540,
+        "baselineDiffRatio": 0.007693877551020408,
+        "actualSha256": "7688f2f8dc3312986b33df3ad237fdc638adb5c3ec7f3d01c921401d29b93938"
       },
       {
         "id": "support-phone-validation-light-ru",
@@ -1169,56 +1170,56 @@
       {
         "id": "support-relay-error-light-en",
         "strict": false,
-        "parentDifferentPixels": 0,
+        "parentDifferentPixels": 516,
         "status": "different",
-        "baselineDifferentPixels": 9069,
-        "baselineDiffRatio": 0.011196296296296296,
-        "actualSha256": "08426a096d1a6ef2193a0f108dd440317ac3c9ee7320c7d209282b15f17094c7"
+        "baselineDifferentPixels": 9076,
+        "baselineDiffRatio": 0.011204938271604938,
+        "actualSha256": "4e9d783342903d36a905c09992f5e5dca02d9aea861707a8f703e92bf066199e"
       },
       {
         "id": "support-tablet-preview-dark-ru",
         "strict": false,
-        "parentDifferentPixels": 0,
+        "parentDifferentPixels": 514,
         "status": "different",
-        "baselineDifferentPixels": 28298,
-        "baselineDiffRatio": 0.04094039351851852,
-        "actualSha256": "a741b08f2ecaa43195f438a053341ef0f1406e25c6bb09965a3d77870c4b7f58"
+        "baselineDifferentPixels": 28303,
+        "baselineDiffRatio": 0.04094762731481481,
+        "actualSha256": "48c89854856c8e9ac6cacf3787398544f5ad949b6d7aeec2f434d349e31c7e65"
       },
       {
         "id": "device-ripple-color-popover-mobile-ru",
         "strict": false,
-        "parentDifferentPixels": 141294,
+        "parentDifferentPixels": 136455,
         "status": "different",
-        "baselineDifferentPixels": 91703,
-        "baselineDiffRatio": 0.23513589743589744,
-        "actualSha256": "1512d3ddca3dd65746f4593578303eb354aabce8badb896fd7a74f4867f65e8a"
+        "baselineDifferentPixels": 88101,
+        "baselineDiffRatio": 0.2259,
+        "actualSha256": "2826aabcb7e5f1df4f1218f23e044deb8eb411dc86afbb9f1d2d23024a7a7cba"
       },
       {
         "id": "space-room-color-popover-desktop-ru",
         "strict": false,
-        "parentDifferentPixels": 103033,
+        "parentDifferentPixels": 103545,
         "status": "different",
-        "baselineDifferentPixels": 98826,
-        "baselineDiffRatio": 0.10980666666666666,
-        "actualSha256": "8a3a1d8abf251b570a98afb17b338239e4aeb7bd1c9d1af59c821fd9b5c911cc"
+        "baselineDifferentPixels": 98834,
+        "baselineDiffRatio": 0.10981555555555556,
+        "actualSha256": "22a4b2ace14ac59a0d76cc0dcbc0f8de0b0ec4bceab05d1182b0649ff7a93c4a"
       },
       {
         "id": "backup-full-preview-desktop-en",
         "strict": false,
-        "parentDifferentPixels": 265695,
+        "parentDifferentPixels": 266209,
         "status": "different",
-        "baselineDifferentPixels": 214618,
-        "baselineDiffRatio": 0.23846444444444445,
-        "actualSha256": "b9bbfc5bef660c33da877184ec2fdc1135572e3e4ed74de4c6c920c6d6f975b9"
+        "baselineDifferentPixels": 214614,
+        "baselineDiffRatio": 0.23846,
+        "actualSha256": "daedc8b63f80ecfd9c1ffe2e3efdb1b13d47ba500a8ff92997d989e55f71d364"
       },
       {
         "id": "backup-plan-only-export-desktop-en",
         "strict": false,
-        "parentDifferentPixels": 250131,
+        "parentDifferentPixels": 250643,
         "status": "different",
         "baselineDifferentPixels": 211989,
         "baselineDiffRatio": 0.23554333333333333,
-        "actualSha256": "ff9afa54ae11e6b696f55897388118f844e45f78973802b0a20c7d5c1102d366"
+        "actualSha256": "71322b6ac74fcd368209766d75a5e4d5ee8e4db9550fdd1908f28efd79cd7097"
       },
       {
         "id": "backup-space-preview-mobile-ru",
@@ -1232,20 +1233,20 @@
       {
         "id": "optimize-preflight-dialog-dark-en",
         "strict": false,
-        "parentDifferentPixels": 240819,
+        "parentDifferentPixels": 241333,
         "status": "different",
-        "baselineDifferentPixels": 192895,
-        "baselineDiffRatio": 0.2820102339181286,
-        "actualSha256": "4841aa4a4838cb0be36858129d9ae0c0916e6af18881a31b037c98879f0c16fc"
+        "baselineDifferentPixels": 192892,
+        "baselineDiffRatio": 0.28200584795321637,
+        "actualSha256": "ebe2fc78e670268515278cd2173924d78270b0856c7dcc094212b1c19e6a1267"
       },
       {
         "id": "optimize-preflight-dialog-light-ru",
         "strict": false,
-        "parentDifferentPixels": 236634,
+        "parentDifferentPixels": 237144,
         "status": "different",
-        "baselineDifferentPixels": 191374,
-        "baselineDiffRatio": 0.27978654970760236,
-        "actualSha256": "fe296464d14b3c970029397509a8c54a8b9ea162c5cf241c186fcfae130e1fd9"
+        "baselineDifferentPixels": 191372,
+        "baselineDiffRatio": 0.27978362573099413,
+        "actualSha256": "8721ffebbd3e6cf98524648d938f606738c842e5a6287fa51b4d10d94b8d30cf"
       },
       {
         "id": "optimize-orphan-references-dark-en",
@@ -1304,56 +1305,56 @@
       {
         "id": "ui-1081-new-space-light",
         "strict": false,
-        "parentDifferentPixels": 18723,
+        "parentDifferentPixels": 16329,
         "status": "different",
-        "baselineDifferentPixels": 96483,
-        "baselineDiffRatio": 0.0908502824858757,
-        "actualSha256": "a754ed355df12c766be3b297836b1c095e9c64381923fb3efa13375e77a7a310"
+        "baselineDifferentPixels": 94293,
+        "baselineDiffRatio": 0.08878813559322034,
+        "actualSha256": "701bcb362a68bf6a6c6e0526ffeaf368421b7729c647bcf821b1a8c16a1e30f2"
       },
       {
         "id": "ui-1081-new-space-dark",
         "strict": false,
-        "parentDifferentPixels": 18774,
+        "parentDifferentPixels": 16361,
         "status": "different",
-        "baselineDifferentPixels": 99913,
-        "baselineDiffRatio": 0.09408003766478343,
-        "actualSha256": "ad23ffae0d206f7174a45d707f9d7223178f33b8212c5f8a56d7fbb0dfb3989e"
+        "baselineDifferentPixels": 97664,
+        "baselineDiffRatio": 0.0919623352165725,
+        "actualSha256": "4edfc2b5ed87c716cc8df22f2c55e31d7d5939b00fe3b799d784c8f256131932"
       },
       {
         "id": "ui-1081-device-confirm-narrow-light",
         "strict": false,
-        "parentDifferentPixels": 0,
+        "parentDifferentPixels": 59,
         "status": "different",
-        "baselineDifferentPixels": 856,
-        "baselineDiffRatio": 0.0026005589986632643,
-        "actualSha256": "7ef2626201483705b7126c93f7566333a19bf7cadf08dffe5409aebbe8ed51cc"
+        "baselineDifferentPixels": 862,
+        "baselineDiffRatio": 0.002618787215943614,
+        "actualSha256": "ed0d6df3226671119751a27a1eb807c2cc254099d8ccd141488c1c9dbf83a964"
       },
       {
         "id": "ui-1081-device-confirm-narrow-dark",
         "strict": false,
-        "parentDifferentPixels": 0,
+        "parentDifferentPixels": 59,
         "status": "different",
-        "baselineDifferentPixels": 789,
-        "baselineDiffRatio": 0.0023970105723660224,
-        "actualSha256": "df3eeb3dd5f49f953fcbe6b9012f5ffd6ab307126f39ee6ae7719ec9c724f151"
+        "baselineDifferentPixels": 797,
+        "baselineDiffRatio": 0.002421314862073156,
+        "actualSha256": "a097a6b94f590cd954d0ca3a6e2961053c01ff1895970c18c24d82cac82207d5"
       },
       {
         "id": "ui-1081-space-blocker-narrow-light",
         "strict": false,
-        "parentDifferentPixels": 45764,
+        "parentDifferentPixels": 43637,
         "status": "different",
-        "baselineDifferentPixels": 43653,
-        "baselineDiffRatio": 0.1326193948231863,
-        "actualSha256": "60a9dc20f7572bcdb736e1272854a1ba8e61a6c657181820868f81d0cb6cf360"
+        "baselineDifferentPixels": 41632,
+        "baselineDiffRatio": 0.12647952363592174,
+        "actualSha256": "729504d36297f11fe890f11d6f4d305248e965616161d9a7c5413ccbf8defaa0"
       },
       {
         "id": "ui-1081-space-blocker-narrow-dark",
         "strict": false,
-        "parentDifferentPixels": 46082,
+        "parentDifferentPixels": 43952,
         "status": "different",
-        "baselineDifferentPixels": 44250,
-        "baselineDiffRatio": 0.1344331024425811,
-        "actualSha256": "a427dd04d15818b683f95f67044324beb6dd49a5aa6b0b70db06744d7fdd6891"
+        "baselineDifferentPixels": 42211,
+        "baselineDiffRatio": 0.1282385466034755,
+        "actualSha256": "50380232a8284bdefffb11c686e67c7225548ad4e9df412e35fe4e8b9c0fe7a3"
       },
       {
         "id": "settings-external-screens-empty-light",
@@ -1477,160 +1478,307 @@
   },
   "behaviorChecks": {
     "native": {
-      "productFingerprint": "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3",
-      "declaredSmokes": 24,
-      "rawSha256": "be37404406980082b78f5c3ae2bffe6688b3bdf8476028e210e5ba7342bc3565",
+      "productFingerprint": "3771470e88b2b881552a43fc2951097e64409514f1e651a707ea927d0ccfe7d9",
+      "declaredSmokes": 57,
+      "fourFixesSha256": "0719b5577eb489db2f488f9ddb0c18dedcca9b24d2072a0b11ee6c20e3abe8d9",
+      "remaining53Sha256": "168f48b88c70017384ac4f43e1aeedf99961bbef67556cec0b84bce4e1a2902d",
       "results": [
         {
-          "name": "summary_panel_polish",
-          "args": [],
+          "name": "ha_form_shell_parity",
           "code": 0,
-          "ms": 23206
+          "ms": 2082,
+          "entry": "demo/smoke_ha_form_shell_parity.mjs"
         },
         {
-          "name": "summary_dialog_scroll",
-          "args": [],
+          "name": "external_screens",
           "code": 0,
-          "ms": 5900
+          "ms": 6024,
+          "entry": "demo/smoke_external_screens.mjs"
         },
         {
-          "name": "ui_polish_963_reference",
-          "args": [],
+          "name": "dialog_picker_998",
           "code": 0,
-          "ms": 58995
+          "ms": 95596,
+          "entry": "demo/smoke_dialog_picker_998.mjs"
         },
         {
-          "name": "settings_polish_955",
-          "args": [],
+          "name": "dialog_polish_603",
           "code": 0,
-          "ms": 146391
+          "ms": 108078,
+          "entry": "demo/smoke_dialog_polish_603.mjs"
         },
         {
-          "name": "dialog_ui_kit",
-          "args": [],
+          "entry": "demo/smoke_color_picker.mjs",
           "code": 0,
-          "ms": 5056
+          "ms": 2509
         },
         {
-          "name": "space_copy",
-          "args": [],
+          "entry": "demo/smoke_color_picker_consumers.mjs",
           "code": 0,
-          "ms": 2405
+          "ms": 1727
         },
         {
-          "name": "partition_openings",
-          "args": [],
+          "entry": "demo/smoke_danger_confirm_branches.mjs",
           "code": 0,
-          "ms": 2519
+          "ms": 4080
         },
         {
-          "name": "led_strip_bind",
-          "args": [],
+          "entry": "demo/smoke_decor_images.mjs",
           "code": 0,
-          "ms": 11051
+          "ms": 2255
         },
         {
-          "name": "stairs",
-          "args": [],
+          "entry": "demo/smoke_detached_authority.mjs",
           "code": 0,
-          "ms": 16834
+          "ms": 8272
         },
         {
-          "name": "merge_split",
-          "args": [],
+          "entry": "demo/smoke_device_copy.mjs",
           "code": 0,
-          "ms": 2244
+          "ms": 7450
         },
         {
-          "name": "physical_body_characterization",
-          "args": [],
+          "entry": "demo/smoke_approved_ui.mjs",
           "code": 0,
-          "ms": 6750
+          "ms": 27755
         },
         {
-          "name": "warm_view_marker",
-          "args": [],
+          "entry": "demo/smoke_dialog_modal_recovery.mjs",
           "code": 0,
-          "ms": 23312
+          "ms": 3351
         },
         {
-          "name": "lock_action",
-          "args": [],
+          "entry": "demo/smoke_dialog_ui_kit.mjs",
           "code": 0,
-          "ms": 1811
+          "ms": 5094
         },
         {
-          "name": "lock_invariant",
-          "args": [],
+          "entry": "demo/smoke_discard_dialog_polish.mjs",
           "code": 0,
-          "ms": 1653
+          "ms": 5597
         },
         {
-          "name": "ui_polish_1145",
-          "args": [],
+          "entry": "demo/smoke_e2e_hooks.mjs",
           "code": 0,
-          "ms": 10728
+          "ms": 11380
         },
         {
-          "name": "pdf_export",
-          "args": [],
+          "entry": "demo/smoke_e2e_primitive_fields.mjs",
           "code": 0,
-          "ms": 5098
+          "ms": 4564
         },
         {
-          "name": "svg_export",
-          "args": [],
+          "entry": "demo/smoke_editor_styles_lazy.mjs",
           "code": 0,
-          "ms": 7822
+          "ms": 17577
         },
         {
-          "name": "discard_dialog_polish",
-          "args": [],
+          "entry": "demo/smoke_device_settings_action.mjs",
+          "code": 0,
+          "ms": 51319
+        },
+        {
+          "entry": "demo/smoke_furniture_polish.mjs",
+          "code": 0,
+          "ms": 1916
+        },
+        {
+          "entry": "demo/smoke_first_space_converter.mjs",
+          "code": 0,
+          "ms": 20320
+        },
+        {
+          "entry": "demo/smoke_led_strip_bind.mjs",
+          "code": 0,
+          "ms": 11126
+        },
+        {
+          "entry": "demo/smoke_lazy_editor_chunk.mjs",
+          "code": 0,
+          "ms": 37646
+        },
+        {
+          "entry": "demo/smoke_led_strip_draw.mjs",
+          "code": 0,
+          "ms": 11731
+        },
+        {
+          "entry": "demo/smoke_led_strip_field.mjs",
+          "code": 0,
+          "ms": 42602
+        },
+        {
+          "entry": "demo/smoke_led_strip_glow.mjs",
+          "code": 0,
+          "ms": 48316
+        },
+        {
+          "entry": "demo/smoke_lock_action.mjs",
+          "code": 0,
+          "ms": 1827
+        },
+        {
+          "entry": "demo/smoke_lock_invariant.mjs",
+          "code": 0,
+          "ms": 1613
+        },
+        {
+          "entry": "demo/smoke_merge_split.mjs",
+          "code": 0,
+          "ms": 2431
+        },
+        {
+          "entry": "demo/smoke_led_strip_tube.mjs",
+          "code": 0,
+          "ms": 19636
+        },
+        {
+          "entry": "demo/smoke_partition_openings.mjs",
+          "code": 0,
+          "ms": 2617
+        },
+        {
+          "entry": "demo/smoke_mounted_authority.mjs",
+          "code": 0,
+          "ms": 10480
+        },
+        {
+          "entry": "demo/smoke_pdf_export.mjs",
+          "code": 0,
+          "ms": 5025
+        },
+        {
+          "entry": "demo/smoke_picker_motion.mjs",
+          "code": 0,
+          "ms": 1973
+        },
+        {
+          "entry": "demo/smoke_physical_body_characterization.mjs",
+          "code": 0,
+          "ms": 6687
+        },
+        {
+          "entry": "demo/smoke_room_appearance.mjs",
+          "code": 0,
+          "ms": 6774
+        },
+        {
+          "entry": "demo/smoke_room_co2.mjs",
+          "code": 0,
+          "ms": 8470
+        },
+        {
+          "entry": "demo/smoke_settings_navigation.mjs",
+          "code": 0,
+          "ms": 2718
+        },
+        {
+          "entry": "demo/smoke_settings_select.mjs",
+          "code": 0,
+          "ms": 3418
+        },
+        {
+          "entry": "demo/smoke_space_copy.mjs",
+          "code": 0,
+          "ms": 2481
+        },
+        {
+          "entry": "demo/smoke_stairs.mjs",
+          "code": 0,
+          "ms": 16974
+        },
+        {
+          "entry": "demo/smoke_summary_dialog_scroll.mjs",
           "code": 0,
           "ms": 5676
         },
         {
-          "name": "editor_styles_lazy",
-          "args": [],
+          "entry": "demo/smoke_summary_panel_polish.mjs",
           "code": 0,
-          "ms": 18543
+          "ms": 23477
         },
         {
-          "name": "danger_confirm_branches",
-          "args": [],
+          "entry": "demo/smoke_sun_transparent.mjs",
           "code": 0,
-          "ms": 4174
+          "ms": 15986
         },
         {
-          "name": "approved_ui",
-          "args": [],
+          "entry": "demo/smoke_svg_export.mjs",
           "code": 0,
-          "ms": 27840
+          "ms": 8487
         },
         {
-          "name": "dialog_modal_recovery",
-          "args": [],
+          "entry": "demo/smoke_ui_1051.mjs",
           "code": 0,
-          "ms": 3396
+          "ms": 10598
         },
         {
-          "name": "furniture_polish",
-          "args": [],
+          "entry": "demo/smoke_ui_lab_1081.mjs",
           "code": 0,
-          "ms": 1909
+          "ms": 5893
         },
         {
-          "name": "decor_images",
-          "args": [],
+          "entry": "demo/smoke_ui_polish_1132.mjs",
           "code": 0,
-          "ms": 2218
+          "ms": 5519
+        },
+        {
+          "entry": "demo/smoke_ui_polish_1145.mjs",
+          "code": 0,
+          "ms": 11058
+        },
+        {
+          "entry": "demo/smoke_settings_polish_955.mjs",
+          "code": 0,
+          "ms": 157241
+        },
+        {
+          "entry": "demo/smoke_ui_polish_976.mjs",
+          "code": 0,
+          "ms": 7365
+        },
+        {
+          "entry": "demo/smoke_ui_polish_963_reference.mjs",
+          "code": 0,
+          "ms": 56386
+        },
+        {
+          "entry": "demo/smoke_vacuum_firstuse.mjs",
+          "code": 0,
+          "ms": 3229
+        },
+        {
+          "entry": "demo/smoke_vacuum_multifloor.mjs",
+          "code": 0,
+          "ms": 2350
+        },
+        {
+          "entry": "demo/smoke_view_recovery.mjs",
+          "code": 0,
+          "ms": 10893
+        },
+        {
+          "entry": "demo/smoke_zigbee_hidden_placement.mjs",
+          "code": 0,
+          "ms": 4104
+        },
+        {
+          "entry": "demo/smoke_zigbee_incomplete_reasons.mjs",
+          "code": 0,
+          "ms": 4185
+        },
+        {
+          "entry": "demo/smoke_warm_view_marker.mjs",
+          "code": 0,
+          "ms": 22738
         }
       ]
     },
-    "units": "48 targeted tests GREEN plus immutable generator parity8/8; full gate:small is required before push.",
+    "units": "Immutable generator8/8 and48 targeted units GREEN;65 runtime/Support/selector and5 compatibility tests GREEN after the first gate fixture repair. Full gate:small is enforced by the normal pre-push for the final material.",
     "regressions": "Native scroll caught collapsed Summary grid tracks: grid-auto-rows:max-content restores wheel/touch scroll. Visual inspection caught a duplicate class attribute on block title: combined classes restore its wide phone column, covered by responsive native checks. Native1145 caught missing footer right alignment: shared low-specificity footer now preserves default right alignment and specialized grid layouts.",
     "save": "Actual prototype Save ink comparison passes four languages/two themes. Popup motion is verified via getAnimations() (Web Animations duration180/ease-out), including reduced motion; not an obsolete CSS transition oracle.",
-    "localGateRecovery": "The first full local gate caught incomplete fake ShadowRoot documents in Summary unit fixtures, the retired Summary sheet in smoke-links, a Support field oracle at its former owner and one unclassified descriptive CSS-API comment. Fixtures now expose ownerDocument/appendChild, Support checks actual Form Kit output, links point to the common shell and the comment is classified word-only. All65 focused runtime/Support/selector tests and5 lifecycle tests pass. Product source/fingerprint and the 24native/162UIlab/68golden proof are unchanged."
+    "localGateRecovery": "The first full local gate caught incomplete fake ShadowRoot documents in Summary unit fixtures, the retired Summary sheet in smoke-links, a Support field oracle at its former owner and one unclassified descriptive CSS-API comment. Fixtures now expose ownerDocument/appendChild, Support checks actual Form Kit output, links point to the common shell and the comment is classified word-only. All65 focused runtime/Support/selector tests and5 lifecycle tests pass. Product source/fingerprint and the 24native/162UIlab/68golden proof are unchanged.",
+    "sourceControlFixes": "All 57 required strong/explicit smokes are GREEN on this fingerprint. The previous request was withdrawn to S6 (comment 6541788651) after four additional smokes failed. The ordinary 18px checkbox fallback now has zero specificity and cannot override the Kit 44px toggle. HpSettingsSelect owns a 20px line-height, preserving 44px short triggers at mobile 16px text. The existing #603 geometry and #998 exact-height/radius oracles are unchanged. External-screen checks observe the visible hpf-hint; the HA stub adopts the real common Kit through native settings and checks the intended opaque Kit body/card while preserving width, scroll, footer and fullscreen bounds."
   },
   "mutation": {
     "reanchored": [
@@ -1641,16 +1789,26 @@
       "ha-form-shell-loses-canvas",
       "form-kit-fragment-drifts-from-panel"
     ],
-    "retainedOtherAffectedDefinitions": 8,
     "staticDefinitions": 2057,
     "execution": 0,
     "caught": "unknown",
-    "note": "Static readiness only. Shared body contract is checked on composed CSS; historical generator drift retains its API fixture guard. No mutant execution is claimed."
+    "note": "Static readiness only. Shared body contract is checked on composed CSS; historical generator drift retains its API fixture guard. No mutant execution is claimed. Existing hp-settings-select anchors also pass the complete static registry check after the typography fix.",
+    "retainedFromOriginal14OwnerCandidates": 8
   },
   "boundaries": [
     "No backend/model/API/configuration/i18n/permission changes.",
     "No release, version, tracked frontend snapshot or golden baseline changes.",
     "Rebase over #1164 changed release tooling/docs only; src tree and pinned product input were unchanged by that rebase.",
     "Post-task E2E impact is assessed separately before S7."
-  ]
+  ],
+  "e2e": {
+    "verdict": "не надо",
+    "repository": "Matysh/houseplan-e2e",
+    "commit": "ee06beba82ff3cf2aeca6a647c14f5443d737950",
+    "document": "task-impact/houseplan-card-1148.md",
+    "productAuthor": "47c5502c3997d2cb0f66df7b113b21ed359faf80",
+    "actualE2eEdits": 0,
+    "liveE2eExecuted": false,
+    "publicationReadBack": true
+  }
 }

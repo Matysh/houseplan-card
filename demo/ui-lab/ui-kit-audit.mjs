@@ -78,6 +78,28 @@ try {
       await page.mouse.move(0, 0);
       const capture = async name => {
         await waitForUiKitPaint(page);
+        // Genuine HA loads an MDI glyph asynchronously. A ready comparison
+        // must contain the close glyph, rather than only its empty hit box.
+        await page.waitForFunction(() => {
+          const hasGlyph = root => {
+            if ([...root.querySelectorAll('path[d],use[href]')].some(node =>
+              node.getAttribute('d') || node.getAttribute('href'))) return true;
+            const nodes = [...(root instanceof Element ? [root] : []), ...root.querySelectorAll('*')];
+            return nodes.some(node => node.shadowRoot && hasGlyph(node.shadowRoot));
+          };
+          let pending = 0;
+          const visit = root => {
+            for (const node of root.querySelectorAll('*')) {
+              if (node.matches('button.close') && node.getBoundingClientRect().width > 0) {
+                const icon = node.querySelector('ha-icon[icon="mdi:close"]');
+                if (icon && !hasGlyph(icon)) pending++;
+              }
+              if (node.shadowRoot) visit(node.shadowRoot);
+            }
+          };
+          visit(document); return pending === 0;
+        }, undefined, { timeout: 4000 });
+        await waitForUiKitPaint(page);
         const file = `${id}-${name}.png`;
         await page.screenshot({ path: resolve(output, file) });
         profile.stages.push({ name, frame: file });
