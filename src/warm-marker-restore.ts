@@ -40,7 +40,7 @@ export class WarmMarkerRestore<T> {
   render(t: (key: I18nKey) => string): TemplateResult | typeof nothing {
     if (!this.active) return nothing;
     const failed = this.phase === 'failed';
-    return html`<hp-dialog data-kind="marker-restore" .title=${t('info.device_header')}
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" data-kind="marker-restore" .title=${t('info.device_header')}
       dismiss-on-scrim @hp-close=${() => this.cancel()}>
       <div class="body" role="status">${t(failed ? 'editor.load_failed' : 'editor.loading')}</div>
       <div class="row" slot="footer">

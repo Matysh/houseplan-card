@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use the shared UI Kit shell for the remaining dialogs, including space copy and print export, while preserving copy, cancellation and download workflows. [#1148](https://github.com/Matysh/houseplan-card/issues/1148)
+
 - Unify View and kiosk controls, notices, device issue details and onboarding with the shared UI Kit and reduced-motion behavior. Show the oversized-plan warning during first-space setup and retain the draft on cancellation. Keep device-card spacing independent of whether settings were opened first. [#1147](https://github.com/Matysh/houseplan-card/issues/1147)
 
 ## v1.83.0 — 2026-10-30

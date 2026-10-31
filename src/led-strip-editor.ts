@@ -811,7 +811,7 @@ export class LedStripEditor {
       .filter((d) => d.space === this.host._space && !d.marker?.removed)
       .sort((a, b) => Number(isLight(b)) - Number(isLight(a)) || a.name.localeCompare(b.name));
     const close = () => { this.picker = null; this.host.requestUpdate(); };
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="led-picker" .title=${this.t('led.pick_title')}
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="led-picker" .title=${this.t('led.pick_title')}
       icon="mdi:led-strip-variant" flex-content @wheel=${(e: WheelEvent) => e.stopPropagation()}
       @pointerdown=${(e: Event) => e.stopPropagation()} @pointermove=${(e: Event) => e.stopPropagation()}
       @pointerup=${(e: Event) => e.stopPropagation()} @pointercancel=${(e: Event) => e.stopPropagation()}

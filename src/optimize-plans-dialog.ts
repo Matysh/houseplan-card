@@ -521,7 +521,7 @@ export class OptimizePlansDialog {
     ];
     const visibleDetails = referenceDetails.slice(0, 10);
     const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
-    return html`<hp-dialog .hass=${this.port.hass()} data-kind="settings" .title=${this.port.t('gs.align_title')} icon="mdi:broom"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.port.hass()} data-kind="settings" .title=${this.port.t('gs.align_title')} icon="mdi:broom"
       dismiss-on-scrim @hp-close=${() => this.port.setDialog(null)}>
         <div class="body">
           ${failed

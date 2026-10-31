@@ -76,6 +76,11 @@ const dialog = await page.evaluate(async () => {
   await shell?.updateComplete;
   await frame();
   await frame();
+  // Kit entry is allowed to translate until its real finite animation ends.
+  // Reconnection must retain the same modal and centre it at rest.
+  await Promise.all((surface?.getAnimations() || [])
+    .filter(animation => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+    .map(animation => animation.finished.catch(() => {})));
   const shellAfterReconnect = native || shell?.shadowRoot?.querySelector('ha-dialog');
   const reconnectKeepsModalCentered = shellBeforeReconnect === shellAfterReconnect
     && (native ? native.open && native.matches(':modal') : !!shellAfterReconnect)
@@ -191,7 +196,14 @@ const narrowLocales = await page.evaluate(async () => {
   };
   const settle = async () => {
     await card.updateComplete;
+    const pdf = card.renderRoot.querySelector('hp-pdf-dialog');
+    await pdf?.updateComplete;
+    const shell = pdf?.shadowRoot?.querySelector('hp-dialog');
+    await shell?.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await Promise.all((shell?.shadowRoot?.querySelector('.surface')?.getAnimations() || [])
+      .filter(animation => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+      .map(animation => animation.finished.catch(() => {})));
   };
   const closeDialog = async () => {
     card._pdfDialog = false;
@@ -238,6 +250,7 @@ const narrowLocales = await page.evaluate(async () => {
     const metric = {
       language,
       copy: buttons.map((button) => button.textContent.trim()),
+      buttonBoxes: buttonRects.map(rect => ({ width:rect.width,height:rect.height })),
       localized: buttons[0]?.textContent.trim() === expected[language].cancel
         && buttons[1]?.textContent.trim() === expected[language].save,
       documentWidths: {

@@ -804,7 +804,7 @@ export class PropertiesEditor {
     }).sort();
     const preview = liveText(text, null, this.host._renderPlanHass, id => this.host._planEntityAvailable(id));
     const error = this.fields.draft?.error;
-    return html`<hp-dialog class="hp-properties-variable" data-kind="properties-variable" properties-shell wide
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog hp-properties-variable" data-kind="properties-variable" wide
       .hass=${this.host.hass} .title=${this.t('insert_variable')} @hp-close=${() => this.closeVariable()}>
       <div class="hp-prop-variable-body hpf-form">
         <div class="hp-prop-variable-label">${this.t('entity')}</div>

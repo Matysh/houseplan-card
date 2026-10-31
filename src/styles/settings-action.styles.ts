@@ -39,6 +39,7 @@ export function settingsActionsCss(selector: string, primary = '.on'): string {
     ${selector}:disabled{cursor:not-allowed;opacity:.5;}
     ${selector} ha-icon{margin:0;flex:none;--mdc-icon-size:20px;}
     ${selector}.hpf-action-wide{min-width:88px;}
+    ${selector}.hpf-action-fill{width:100%;}
     ${controlReducedMotionCss(selector)}
   `;
 }

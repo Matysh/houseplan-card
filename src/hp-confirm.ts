@@ -46,9 +46,8 @@ export class HpConfirm extends LitElement {
     const destructive = request.kind === 'destructive';
     const descriptionId = `hp-confirm-description-${this.token}`;
     const discard = request.key.startsWith('discard-');
-    const compact = request.key.startsWith('remove-marker');
-    return html`<hp-dialog class=${`danger-confirm-dialog${discard ? ' discard-confirm-dialog' : ''}${compact ? ' ui-dialog' : ''}`} data-kind="confirm"
-      ?form-shell=${compact} ?settings-layout=${compact} ?compact=${compact} ?wide=${compact}
+    return html`<hp-dialog class="ui-dialog danger-confirm-dialog ${discard ? 'discard-confirm-dialog' : ''}" data-kind="confirm"
+      form-shell settings-layout compact wide
       .hass=${this.hass}
       .title=${request.title}
       .alert=${true}
@@ -63,7 +62,7 @@ export class HpConfirm extends LitElement {
             : null}
           <p>${request.message}</p>
         </div>
-        <div class=${`row dialog-action-footer danger-confirm-footer${compact ? ' hpf-footer' : ''}`} slot="footer">
+        <div class="row dialog-action-footer danger-confirm-footer hpf-footer" slot="footer">
           <span class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" type="button" autofocus data-hp="dialog-cancel"
               @click=${() => this._decide(false)}>${request.cancelLabel}</button>

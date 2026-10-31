@@ -5370,7 +5370,7 @@ public _renderDecorTextDialog(): TemplateResult {
     const d = this.host._decorTextDialog!;
     const ent = (d.pickerEntity || '').trim();
     const st = ent ? this.host.hass?.states?.[ent] : null;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.text_title')}
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.text_title')}
       icon="mdi:format-text" dismiss-on-scrim @hp-close=${() => (this.host._decorTextDialog = null)}>
         <div class="body">
           <label>${this.host._t('decor.text_label')}</label>
@@ -5446,7 +5446,7 @@ public _renderDecorShapeDialog(): TemplateResult {
 public _renderBackdropDialog(): TemplateResult {
     const d = this.host._backdropDialog!;
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.backdrop_properties')}
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.backdrop_properties')}
       icon="mdi:image-edit-outline" dismiss-on-scrim @hp-close=${() => (this.host._backdropDialog = null)}>
       <div class="body">
         <label>${this.host._t('decor.size')}</label>
@@ -9467,7 +9467,7 @@ public _renderBackupExportDialog(): TemplateResult {
     const d = this.host._backupExportDialog!;
     const recovery = d.archive?.recovery || d.preparedJson?.recovery;
     const currentSpace = (this.host._serverCfg?.spaces || []).find((space) => space.id === this.host._space);
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.export_title')}
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.export_title')}
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
@@ -9551,7 +9551,7 @@ public _renderBackupImportDialog(): TemplateResult {
       : this.host._t(missingDecor.length ? 'backup.confirm_missing_images' : 'backup.confirm_detach');
     const confirmText = detachedOpenings && !contentConfirm ? this._toolsT('backup.confirm_openings')
       : detachedOpenings ? `${contentConfirmText} ${this._toolsT('backup.confirm_openings')}` : contentConfirmText;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.import_title')}
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => this._closeBackupImport()}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
         <div class="backupfile"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
@@ -10587,7 +10587,7 @@ public _renderOpeningDialog(): TemplateResult {
             </div>`
           : nothing}`;
     };
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="opening" wide
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="opening" wide
       .title=${d.id ? this.host._t('opening.edit') : this.host._t('opening.new')} icon=${icon}
       @hp-close=${() => (this.host._openingDialog = null)}>
         <div class="body">
@@ -11066,7 +11066,7 @@ public _renderActiveChainInk(): TemplateResult {
 public _renderPartitionDeleteDialog(): TemplateResult {
     const dialog = this.host._partitionDeleteDialog!;
     const imperial = this.host.hass?.config?.unit_system?.length === 'mi';
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="confirm"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="confirm"
       .title=${this.host._t('confirm.delete_partition_openings_title')}
       icon="mdi:wall" dismiss-on-scrim
       @hp-close=${() => (this.host._partitionDeleteDialog = null)}>
@@ -11100,7 +11100,7 @@ public _renderPartitionDeleteDialog(): TemplateResult {
 
 public _renderRoomDeleteDialog(): TemplateResult {
     const dialog = this.host._roomDeleteDialog!;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="confirm"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="confirm"
       .title=${this.host._t('confirm.delete_room_title', { name: dialog.name })}
       icon="mdi:floor-plan" dismiss-on-scrim
       @hp-close=${() => (this.host._roomDeleteDialog = null)}>
@@ -11125,7 +11125,7 @@ public _renderRoomDeleteDialog(): TemplateResult {
 public _renderPhysicalDialog(): TemplateResult {
     const d = this.host._physicalDialog!;
     const column = d.kind === 'column';
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="physical" wide
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="physical" wide
       .title=${this.host._t(column ? 'physical.column_properties' : 'physical.partition_properties')}
       icon=${column ? 'mdi:vector-square' : 'mdi:wall'}
       @hp-close=${() => (this.host._physicalDialog = null)}>
@@ -12033,7 +12033,7 @@ public _renderMergeDialog(): TemplateResult {
         <span>${r?.name || ''} <span class="muted">· ${area || this.host._t('merge.no_area')}</span></span>
       </label>`;
     };
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="room" .title=${this.host._t('merge.header')} icon="mdi:vector-union"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.host.hass} data-kind="room" .title=${this.host._t('merge.header')} icon="mdi:vector-union"
       @hp-close=${() => (this.host._mergeDialog = null)}>
         <div class="body">
           <p class="muted">${this.host._t('merge.hint')}</p>

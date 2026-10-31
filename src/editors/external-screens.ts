@@ -126,7 +126,7 @@ export class ExternalScreensEditor implements ReactiveController {
     const local: [string, string][] = [['local', this.t('local')], ['show', this.t('show')], ['hide', this.t('hide')]];
     const sizes: [string, string][] = [['', this.t('local')], ...[.5,.75,1,1.25,1.5,1.75,2,2.5,3].map(n => [String(n), `${n * 100} %`] as [string, string])];
     const times = (values: number[]): [string, string][] => values.map(n => [String(n), this.time(n)]);
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="external-screen-constructor" form-shell settings-layout compact wide lang=${langOf(this.host.hass, this.host._config?.language)}
+    return html`<hp-dialog class="ui-dialog" .hass=${this.host.hass} data-kind="external-screen-constructor" form-shell settings-layout compact wide lang=${langOf(this.host.hass, this.host._config?.language)}
       .title=${this.rows()?.screens.some(item => item.id === row.id) ? this.t('screen', { n: row.id }) : this.t('new')}
       .subtitle=${this.t('subtitle')} icon="mdi:monitor" @hp-close=${(e: Event) => { e.stopPropagation(); this.cancel(d.instance); }}>
       <div class="body hpf-form hpf-settings-form hp-screen-constructor"><div class="hpf-grid hp-screen-fields">

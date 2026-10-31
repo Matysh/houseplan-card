@@ -414,8 +414,8 @@ export class DecorImageEditor<Snapshot> {
   public renderShapeDialog(): TemplateResult {
     const dialog = this.host._decorShapeDialog!;
     const kit = dialog.kind === 'furniture';
-    if (kit) ensureSettingsDialogStyles(this.host);
-    const inputClass = kit ? 'namein hpf-input' : 'namein';
+    ensureSettingsDialogStyles(this.host);
+    const inputClass = 'namein hpf-input';
     const canFill = dialog.kind === 'rect' || dialog.kind === 'ellipse';
     const kindLabel = this.host._t(`decor.${dialog.kind}` as I18nKey);
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
@@ -433,11 +433,11 @@ export class DecorImageEditor<Snapshot> {
       ? this.host._decorAssetCatalog.find((asset) => asset.asset_id === dialog.assetId)
         || this.host._decorAssets.get(dialog.assetId || '')
       : null;
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" class=${kit ? 'ui-dialog decor-properties-dialog' : nothing}
-      ?form-shell=${kit} ?settings-layout=${kit} ?compact=${kit} .wide=${kit}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" class="ui-dialog ${kit ? 'decor-properties-dialog' : ''}"
+      form-shell settings-layout compact wide
       .title=${this.host._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
       dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>
-        <div class=${kit ? 'body hpf-form' : 'body'}>
+        <div class="body hpf-form">
           ${dialog.kind === 'furniture' ? html`
             <label>${this._tool('furn.symbol')}</label>
             <hp-settings-select><select data-hp="field" data-field="decor-symbol" class=${inputClass} aria-label=${this._tool('furn.symbol')}

@@ -633,7 +633,7 @@ export class StairEditorRuntime {
         })}><span class="opl">${this.owner._t(
           imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm',
         )}</span></div>`;
-    return html`<hp-dialog .hass=${this.owner.hass} data-kind="stairs" wide
+    return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.owner.hass} data-kind="stairs" wide
       .title=${this.owner._t('stairs.properties')} icon="mdi:stairs"
       @hp-close=${() => this.closeDialog()}>
       <div class="body">

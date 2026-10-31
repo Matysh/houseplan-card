@@ -11927,7 +11927,7 @@ export class HouseplanCard extends LitElement {
             ? this._editorRuntime._renderBackdropGuard()
             : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
           : nothing)}
-        ${dialogPresence(this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass} data-kind="vacuum"
+        ${dialogPresence(this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.hass} data-kind="vacuum"
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
           dismiss-on-scrim aria-busy=${String(!!this._vacCalConfirm.busy)}
           @hp-close=${() => { if (!this._vacCalConfirm?.busy) this._vacCalConfirm = null; }}>
@@ -13317,6 +13317,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private _renderOpeningInfoCard(): TemplateResult {
+    ensureFormKitStyles(this);
+    ensureCompactDialogStyles(this);
     const o = this._openingInfo!;
     // A legacy/future writer may have left door bindings on a passage. They
     // remain readable for lossless round-trip, but are inert on every surface.
@@ -13341,7 +13343,7 @@ export class HouseplanCard extends LitElement {
       : (amt > 0 ? 'mdi:door-open' : 'mdi:door-closed');
     const row = (icon: string, label: string, value: string, cls = '') =>
       html`<div class="oprow ${cls}"><ha-icon icon=${icon}></ha-icon><span>${label}</span><b>${value}</b></div>`;
-    return html`<hp-dialog .hass=${this.hass} data-kind="opening"
+    return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.hass} data-kind="opening"
       .title=${title} icon=${openingIcon} dismiss-on-scrim
       @hp-close=${() => (this._openingInfo = null)}>
         <div class="body">
@@ -13363,13 +13365,13 @@ export class HouseplanCard extends LitElement {
             : nothing}
           ${lock && (lSt === 'locked' || ['unlocked', 'open'].includes(String(lSt)))
             ? html`<button
-                class="btn lockact ${lSt === 'locked' ? 'warn' : ''}"
+                class="btn hpf-action-fill lockact ${lSt === 'locked' ? 'danger' : ''}"
                 @click=${() => this._lockAction(lock, lSt === 'locked' ? 'unlock' : 'lock')}>
                 <ha-icon icon=${lSt === 'locked' ? 'mdi:lock-open-variant' : 'mdi:lock'}></ha-icon>
                 ${this._t(lSt === 'locked' ? 'opening.unlock_action' : 'opening.lock_action')}
               </button>`
             : lock && ['locking', 'unlocking'].includes(String(lSt))
-              ? html`<button class="btn lockact" disabled>
+              ? html`<button class="btn hpf-action-fill lockact" disabled>
                   <ha-icon icon="mdi:timer-sand"></ha-icon>${this._t('opening.lock_pending')}
                 </button>`
               : nothing}

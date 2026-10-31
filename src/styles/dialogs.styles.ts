@@ -144,18 +144,6 @@ export const dialogsStyles = css`
       --oplock-stroke-ratio: .025;
     }
     .oplock.unknown { --oplock-core-fg: var(--hp-muted); }
-    .btn.lockact {
-      width: 100%;
-      justify-content: center;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      margin-top: var(--sp-4);
-    }
-    .btn.lockact.warn {
-      color: var(--error-color, #d33);
-      border-color: var(--error-color, #d33);
-    }
     .oprow {
       display: flex;
       align-items: center;
@@ -207,28 +195,6 @@ export const dialogsStyles = css`
     .btn.danger {
       border-color: var(--error-color, #db4437);
       color: var(--error-color, #db4437);
-    }
-    hp-dialog .row .spacer {
-      flex: 1;
-    }
-    hp-dialog .body {
-      max-height: 66vh;
-      overflow-y: auto;
-    }
-    /* #600 К6: у диалогов настроек (атрибут form-shell) скроллит оболочка (.content в
-       hp-dialog), тело формы высотой не владеет — иначе на классических полосах
-       Windows видны две. Канва — --secondary-background-color, карточки на ней
-       белые (§3.1 «Тело»). */
-    hp-dialog[form-shell] .body {
-      max-height: none;
-      overflow: visible;
-      padding: 16px;
-      box-sizing: border-box;
-      background: var(--hpf-canvas, var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000))));
-    }
-    hp-dialog[form-shell][ha-dialog-shell] .body { min-height: 100%; }
-    @media (max-width: 480px) {
-      hp-dialog[form-shell] .body { padding: 12px; }
     }
     hp-confirm {
       display: contents;
@@ -301,21 +267,6 @@ export const dialogsStyles = css`
     ha-icon-picker {
       display: block;
     }
-    .floorrow {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-      padding: var(--sp-3) var(--sp-2);
-      font-size: var(--fs-m);
-      cursor: pointer;
-    }
-    .floorrow .floorlvl {
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
-      padding: 0 var(--sp-3);
-    }
     .backupwarn, .backuperror {
       border-radius: var(--rad-s);
       padding: var(--sp-3);
@@ -325,31 +276,5 @@ export const dialogsStyles = css`
     }
     .backupwarn { background: color-mix(in srgb, var(--hp-accent) 12%, transparent); }
     .backuperror { background: color-mix(in srgb, var(--error-color, #db4437) 16%, transparent); color: var(--error-color, #db4437); }
-    hp-dialog .body {
-      padding: var(--sp-5) var(--sp-6);
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-3);
-    }
-    hp-dialog .body label {
-      font-size: var(--fs-s);
-      color: var(--hp-muted);
-      margin-top: var(--sp-3);
-    }
-    hp-dialog .row {
-      display: flex;
-      gap: var(--sp-4);
-      min-width: 0;
-    }
-    hp-dialog > .row[slot='footer'] {
-      justify-content: flex-end;
-      width: 100%;
-      box-sizing: border-box;
-      padding: var(--sp-5) var(--sp-6);
-      border-top: 1px solid var(--hp-line);
-    }
-    hp-dialog > .row[slot='footer'] button {
-      min-height: 44px;
-    }
   .device-issue-groups { display:grid; gap:12px; margin-bottom:16px; }
 `;

@@ -1,5 +1,6 @@
-import { LitElement, css, html, nothing, unsafeCSS, type TemplateResult } from 'lit';
-import { settingsActionsCss } from '../styles/settings-action.styles';
+import { LitElement, css, html, nothing, type TemplateResult } from 'lit';
+import { ensureCompactDialogStyles } from '../compact-dialog-styles';
+import { controlMotion } from '../ui-motion';
 import { ensureFormKitStyles } from '../form-kit-styles';
 import { PointerModalityController } from '../pointer-modality';
 import '../hp-dialog';
@@ -64,58 +65,7 @@ function loadOptions(): PdfExportOptions {
 
 export class HpPdfDialog extends LitElement {
   static properties = { context: { attribute: false } };
-  static styles = [css`
-    :host { display:contents; }
-    hp-dialog { --hp-dialog-icon-size:40.48px;--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12); }
-    .body {
-      --hpf-surface:var(--card-background-color,#fff);
-      --hpf-control-surface:var(--hpf-surface);
-      --hpf-tint:color-mix(in srgb,var(--primary-color,#03a9f4) 10%,var(--hpf-surface));
-      display:grid;
-      gap:12px;
-      width:100%;
-      max-width:100%;
-      min-width:0;
-      padding:20px;
-      box-sizing:border-box;
-    }
-    label {
-      display:flex;
-      min-width:0;
-      min-height:44px;
-      align-items:center;
-      gap:12px;
-      cursor:pointer;
-      font-size:13px;
-      line-height:22px;
-      transition:color 160ms ease;
-    }
-    label span { min-width:0; overflow-wrap:anywhere; }
-    input { width:18px; height:18px; margin:0; flex:none; accent-color:var(--hp-accent,#d89300); }
-    .row {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      width:100%;
-      max-width:100%;
-      min-width:0;
-      padding:12px 16px;
-      box-sizing:border-box;
-    }
-    .spacer { flex:1; }
-    .hpf-field { display:grid; gap:8px; min-width:0; }
-    .hpf-field > label { min-height:22px; font-weight:600; }
-    input { cursor:pointer; }
-    label:has(input:not(:disabled)):hover { color:var(--primary-color); }
-    label:has(input:disabled),input:disabled { cursor:not-allowed;opacity:.5; }
-    @media(max-width:680px){.body{padding:18px 14px;}.row{padding:12px 14px;}}
-    @media(prefers-reduced-motion:reduce){hp-dialog{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}label{transition:none;}}
-    @media (max-width:360px) {
-      .row { display:grid; grid-template-columns:minmax(0,1fr); }
-      .spacer { display:none; }
-      button { width:100%; }
-    }
-  `, unsafeCSS(settingsActionsCss('button', '.primary'))];
+  static styles = css`:host { display:contents; }`;
   context!: PdfDialogContext;
   private options: PdfExportOptions | null = null;
   private format: 'pdf' | 'svg' = 'pdf';
@@ -131,6 +81,7 @@ export class HpPdfDialog extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     ensureFormKitStyles(this);
+    ensureCompactDialogStyles(this);
     this.pointer.connect(this.ownerDocument.defaultView);
     for (const type of ['pointerover', 'pointerdown', 'pointermove'] as const)
       this.addEventListener(type, this.notePointer, true);
@@ -144,7 +95,7 @@ export class HpPdfDialog extends LitElement {
       this.fade?.cancel();
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
         this.fade = this.renderRoot.querySelector('.first-option')?.animate(
-          [{ opacity: 0 }, { opacity: 1 }], { duration: 120, easing: 'ease-out' },
+          [{ opacity: 0 }, { opacity: 1 }], { duration: controlMotion.appear.duration, easing: controlMotion.appear.easing },
         ) || null;
       }
     });
@@ -214,14 +165,14 @@ export class HpPdfDialog extends LitElement {
         }}>
       <span class="hpf-toggle-title">${label}</span>
     </label>`;
-    return html`<hp-dialog .hass=${this.context.hass} form-shell settings-layout compact wide data-kind="pdf"
+    return html`<hp-dialog class="ui-dialog hpf-stack-actions" .hass=${this.context.hass} form-shell settings-layout compact wide data-kind="pdf"
       title=${this.context.t('pdf.title')}
       icon="mdi:printer-outline" dismiss-on-scrim @hp-close=${(event: Event) => {
         if (this.busy) (event.currentTarget as HpDialog).rejectClose();
         else this.context.close();
       }}>
       <div class="body hpf-form">
-        <div class="hpf-field"><label for="export-format">${t('export.format')}</label>
+        <div class="hpf-field"><label class="hpf-label" for="export-format">${t('export.format')}</label>
           ${selectControl({ name: 'export-format', value: this.format, disabled: this.busy,
             ariaLabel: t('export.format'), options: [{ value: 'pdf', label: t('export.pdf') }, { value: 'svg', label: t('export.svg') }],
             onChange: value => this.setFormat(value) })}
@@ -230,7 +181,7 @@ export class HpPdfDialog extends LitElement {
         ${option('decor', t('pdf.decor'), o.decor)}
         ${option('roomNames', t('pdf.room_names'), o.roomNames)}
         ${this.context.space.bg ? option('backdrop', t('pdf.backdrop'), o.backdrop) : nothing}
-        ${isSvg ? html`<div class="hpf-field"><label for="export-background">${t('export.background')}</label>
+        ${isSvg ? html`<div class="hpf-field"><label class="hpf-label" for="export-background">${t('export.background')}</label>
           ${selectControl({ name: 'export-background', value: this.svgOptions.background, disabled: this.busy,
             ariaLabel: t('export.background'), options: [
               { value: 'transparent', label: t('export.transparent') }, { value: 'current', label: t('export.current') },
@@ -254,10 +205,10 @@ export class HpPdfDialog extends LitElement {
         </div>` : nothing}
       </div>
       <div class="row" slot="footer">
-        <button data-hp="dialog-cancel" ?disabled=${this.busy}
+        <button class="btn" data-hp="dialog-cancel" ?disabled=${this.busy}
           @click=${this.context.close}>${this.context.t('btn.cancel')}</button>
         <span class="spacer"></span>
-        <button class="primary" data-hp="dialog-confirm"
+        <button class="btn on primary" data-hp="dialog-confirm"
           ?disabled=${this.busy} @click=${() => void this.save()}>
           <ha-icon icon=${this.busy ? 'mdi:progress-clock' : 'mdi:download'}></ha-icon>
           ${this.context.t(this.busy ? 'pdf.saving' : 'pdf.save')}

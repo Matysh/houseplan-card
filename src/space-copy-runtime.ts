@@ -85,12 +85,12 @@ export function renderSpaceCopyDialog(
   const dialog = host._spaceDialog!;
   const copy = dialog.copy!;
   const close = () => closeSpaceCopyDialog(host);
-  return html`<hp-dialog .hass=${host.hass} data-kind="space"
+  return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${host.hass} data-kind="space"
     .title=${host._t('space.copy_title')}
     icon="mdi:content-copy" @hp-close=${close}>
-      <div class="body">
-        <label for="space-copy-name">${host._t('space.copy_name')}</label>
-        <input id="space-copy-name" class="namein" type="text" autofocus
+      <div class="body hpf-form">
+        <label class="hpf-label" for="space-copy-name">${host._t('space.copy_name')}</label>
+        <input id="space-copy-name" class="namein hpf-input" type="text" autofocus
           .value=${copy.title}
           @focus=${(event: FocusEvent) => (event.currentTarget as HTMLInputElement).select()}
           @input=${(event: Event) => {
