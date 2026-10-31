@@ -13527,7 +13527,7 @@ export class HouseplanCard extends LitElement {
     return html`<hp-dialog .hass=${this.hass} data-kind="info" class="ui-dialog" form-shell settings-layout compact
       .title=${d.name} .subtitle=${this._t('device.card_subtitle')} .icon=${d.icon} wide
       dismiss-on-scrim @hp-close=${this._closeInfoCard}>
-        <div class="body hpf-form hpf-settings-form">
+        <div class="body hpf-form">
           ${renderDeviceIssues(presentation, key => this._t(key), eid => this._openMoreInfo(eid))}
           ${(() => {
             // Field feedback: on a wall tablet this card is for CONTROLLING the

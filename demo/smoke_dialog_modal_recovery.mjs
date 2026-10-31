@@ -15,6 +15,12 @@ const desktop = await page.evaluate(async () => {
     await element.querySelector('hp-dialog')?.updateComplete;
     await frame();
     await frame();
+    // #1147 translates entry for180ms. Judge resting layout after real motion;
+    // smoke_ui_kit_motion separately checks the actual intermediate frames.
+    const shell = element.localName === 'hp-dialog' ? element : element.querySelector('hp-dialog');
+    const surface = shell?.shadowRoot?.querySelector('.surface');
+    await Promise.allSettled((surface?.getAnimations() ?? [])
+      .filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished));
   };
   const deepActive = () => {
     let active = document.activeElement;
@@ -236,6 +242,12 @@ const narrowAndLateRegistration = await page.evaluate(async () => {
     await element.querySelector('hp-dialog')?.updateComplete;
     await frame();
     await frame();
+    // #1147 translates entry for180ms. Judge resting layout after real motion;
+    // smoke_ui_kit_motion separately checks the actual intermediate frames.
+    const shell = element.localName === 'hp-dialog' ? element : element.querySelector('hp-dialog');
+    const surface = shell?.shadowRoot?.querySelector('.surface');
+    await Promise.allSettled((surface?.getAnimations() ?? [])
+      .filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished));
   };
   const centred = (host) => {
     const surface = host.shadowRoot?.querySelector('.surface');

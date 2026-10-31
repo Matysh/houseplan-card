@@ -143,6 +143,10 @@ for (const language of ['en', 'ru']) for (const kind of Object.keys(roots)) {
       throw error;
     }
     out[`${prefix}:one-real-nonce-request-and-ready`] = f.seen.length === 2 && f.seen[0] === 'plain' && /hp_retry=view-/.test(f.seen[1]);
+    // #1147 retires input immediately and paints the real140ms exit before detach.
+    await f.page.evaluate(() => window.__card.updateComplete);
+    if (await notice.count()) out[`${prefix}:recovered-notice-is-inert-during-exit`] = await notice.evaluate(element => element.inert);
+    await notice.waitFor({ state:'detached' });
     out[`${prefix}:successful-recovery-clears-notice`] = await notice.count() === 0;
     if (kind === 'summary') out[`${prefix}:saved-show-preference-preserved`] = await f.page.evaluate(previous =>
       Object.entries(previous).every(([key, value]) => localStorage.getItem(key) === value)
@@ -188,6 +192,9 @@ try {
   await button.dblclick();
   await aggregate.page.waitForFunction(() => ['live', 'zigbee'].every(name => window.__card._viewRuntimes[name].state === 'ready'));
   out.doubleClickRemainsOneRetryPerFailedBoundary = aggregate.seen.length === 2 && aggregate.others.zigbee.length === 2;
+  await aggregate.page.evaluate(() => window.__card.updateComplete);
+  if (await notice.count()) out.aggregateRetiresBeforeExit = await notice.evaluate(element => element.inert);
+  await notice.waitFor({ state:'detached' });
   out.aggregateDisappearsOnlyAfterBothFunctionsRecover = await notice.count() === 0;
 } finally { await aggregate.browser.close(); }
 

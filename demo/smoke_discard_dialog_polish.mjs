@@ -45,7 +45,8 @@ const openQuestion = async () => {
     return {
       animated: !!entering,
       movingPaint: Number(paint.opacity) > 0 && Number(paint.opacity) < 1
-        && new DOMMatrix(paint.transform).m42 > 0,
+        && Number.parseFloat(paint.translate.split(/\s+/).at(-1)) < 0
+        && Number.parseFloat(paint.translate.split(/\s+/).at(-1)) >= -10,
       keyboardTarget: root.activeElement === button,
       noInitialRing: buttonPaint.outlineStyle === 'none' && buttonPaint.boxShadow === 'none',
       modal: dialog.shadowRoot.querySelector('dialog').matches(':modal'),
@@ -133,8 +134,7 @@ try {
   });
   await back.click();
   await waitReturned();
-  // Risky neighbour: ordinary warning/destructive dialogs retain their own
-  // safe autofocus and do not acquire the unsaved-draft entrance animation.
+  // #1147: ordinary warnings share Kit motion and keep their safe autofocus.
   await openQuestion();
   await finishEntrance();
   await question.locator('[data-hp="dialog-confirm"]').click();
@@ -147,7 +147,11 @@ try {
   });
   await back.waitFor();
   results.unrelatedKeepsSafeFocus = await back.evaluate(button => button.getRootNode().activeElement === button);
-  results.unrelatedHasNoNewEntrance = await question.locator('.surface').evaluate(surface => surface.getAnimations().length === 0);
+  results.unrelatedUsesSharedEntrance = await question.locator('.surface').evaluate(surface => {
+    const paint = getComputedStyle(surface);
+    return paint.animationName === 'hp-ui-appear' && paint.animationDuration === '0.18s'
+      && paint.animationTimingFunction === 'ease-out';
+  });
   await back.click();
   await question.waitFor({ state: 'detached' });
   console.log(JSON.stringify(results, null, 2));

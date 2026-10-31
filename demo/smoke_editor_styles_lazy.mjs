@@ -65,7 +65,7 @@ function installHelpers() {
     for (const rule of sheet.cssRules) {
       if (rule.selectorText === '.radarcoordinates') return 'editor-dialogs';
       if (rule.selectorText === '.editor-secondary-host') return 'editor-tray';
-      if (rule.selectorText === '.hpf-context-menu') return 'editor-menu';
+      if (rule.selectorText === '.hpf-context-menu') return 'shared-menu';
       if (rule.selectorText === '.hp-properties') return 'editor-properties';
     }
     return 'other';
@@ -89,7 +89,7 @@ function installHelpers() {
       };
     },
     editorSelectors(root) {
-      return [...(root.adoptedStyleSheets || [])].filter((sheet) => kindOf(sheet) !== 'other')
+      return [...(root.adoptedStyleSheets || [])].filter((sheet) => kindOf(sheet).startsWith('editor-'))
         .flatMap((sheet) => selectors(sheet.cssRules)).filter((selector) => selector !== ':host');
     },
     trayVar(host) { return getComputedStyle(host).getPropertyValue('--hp-editor-tray-bg').trim(); },
@@ -206,9 +206,9 @@ function installHelpers() {
 /** #805: follow the named eager dialogs sheet, including preceding #956 sheets. */
 const dialogSlot = cardStyles.flat(Infinity).indexOf(dialogsStyles) + 1;
 if (!dialogSlot) throw Error('The eager dialogs cascade anchor is missing');
-const canonical = (kinds, litSheets) => ['editor-dialogs','editor-menu','editor-tray','editor-properties']
+const canonical = (kinds, litSheets) => ['editor-dialogs','shared-menu','editor-tray','editor-properties']
   .every(kind => kinds.filter(value => value === kind).length === 1)
-  && kinds.indexOf('editor-dialogs') === dialogSlot && kinds.indexOf('editor-menu') === dialogSlot + 1
+  && kinds.indexOf('editor-dialogs') === dialogSlot && kinds.indexOf('shared-menu') === dialogSlot + 1
   && kinds.indexOf('editor-tray') === litSheets + 2 && kinds.indexOf('editor-properties') === litSheets + 3;
 
 /** Ordinary orphaned action fixture: no product/guard patch, only a weak owner. */
@@ -262,7 +262,7 @@ try {
     await page.evaluate(() => {delete window.hp967WeakOwner;});
     await cdp.detach();
   }
-  const cold = await page.evaluate(async () => {
+  const cold = await page.evaluate(async (dialogAnchorSlot) => {
     const card = window.__card;
     const kiosk = document.createElement('houseplan-card');
     kiosk.id = 'hp-805-kiosk';
@@ -284,18 +284,28 @@ try {
       trayVar: [card, kiosk, space].map((host) => window.__hp805.trayVar(host)),
       litSheets: window.__hp805.litSheets(card),
       litRules: window.__hp805.inventory({ adoptedStyleSheets: card.constructor.elementStyles.map((style) => style.styleSheet) }).ruleCount,
-      // The card's static styles open the root, sheet for sheet; anything after them is adopted later.
-      litFirst: card.constructor.elementStyles.every((style, i) => card.renderRoot.adoptedStyleSheets[i] === style.styleSheet),
-      laterKinds: [...card.renderRoot.adoptedStyleSheets].slice(card.constructor.elementStyles.length)
-        .map((sheet) => window.__hp805.kindOf(sheet)),
+      // #1147 inserts the shared View/menu sheet after dialogs. The static
+      // sheets keep their relative order; true editor sheets still stay lazy.
+      litFirst: card.constructor.elementStyles.every((style, i) => [...card.renderRoot.adoptedStyleSheets]
+        .filter(sheet => window.__hp805.kindOf(sheet) !== 'shared-menu')[i] === style.styleSheet),
+      sharedMenuOnceAfterDialogs: (() => {
+        const sheets = [...card.renderRoot.adoptedStyleSheets];
+        const menus = sheets.filter(sheet => window.__hp805.kindOf(sheet) === 'shared-menu');
+        const anchor = card.constructor.elementStyles[dialogAnchorSlot - 1]?.styleSheet;
+        return menus.length === 1 && sheets.indexOf(menus[0]) === sheets.indexOf(anchor) + 1;
+      })(),
+      laterKinds: [...card.renderRoot.adoptedStyleSheets]
+        .filter(sheet => window.__hp805.kindOf(sheet) !== 'shared-menu').slice(card.constructor.elementStyles.length)
+        .map(sheet => window.__hp805.kindOf(sheet)),
     };
-  });
+  }, dialogSlot);
   out.coldViewRequestsNoEditorChunk = !desktop.loaded.concat(desktop.requests)
     .some((path) => path.includes('houseplan-editor-runtime-'));
   console.log('cold View JS:', JSON.stringify(desktop.loaded.map(jsName)));
   out.coldViewLoadsTheInitialGraph = manifest.initialViewFiles.every((path) => desktop.loaded.map(jsName).includes(path));
   out.coldRootsHaveNoEditorSheet = [cold.card, cold.kiosk, cold.space]
-    .every((inventory) => inventory.kinds.every((kind) => kind === 'other'));
+    .every((inventory) => inventory.kinds.every((kind) => !kind.startsWith('editor-')));
+  out.sharedMenuIsSingleAfterDialogs = cold.sharedMenuOnceAfterDialogs;
   out.coldHostsHaveNoTrayTokens = cold.trayVar.every((value) => value === '');
 
   // AC3 settings family on the cold tab: the first frame of the dialog has its styles.
@@ -308,7 +318,7 @@ try {
   const settings = await frameOf(page);
   console.log(`first frame, settings: @${settings.phase}`);
   out.settingsFirstFrameStyled = settings.rendered && settings.value === 'none'
-    && JSON.stringify(settings.kinds) === JSON.stringify(['editor-dialogs', 'editor-menu', 'editor-tray', 'editor-properties'])
+    && JSON.stringify(settings.kinds) === JSON.stringify(['editor-dialogs', 'shared-menu', 'editor-tray', 'editor-properties'])
     || `display=${settings.value} (${settings.phase}), editor sheets ${settings.kinds.join('+') || 'none'}`;
   const afterLoad = await page.evaluate(async () => {
     const card = window.__card;
@@ -318,9 +328,9 @@ try {
       card: window.__hp805.inventory(card.renderRoot),
       kinds: [...card.renderRoot.adoptedStyleSheets].map(window.__hp805.kindOf),
       editor: window.__hp805.editorSelectors(card.renderRoot),
-      editorRules: [...card.renderRoot.adoptedStyleSheets].filter((sheet) => window.__hp805.kindOf(sheet) !== 'other')
+      editorRules: [...card.renderRoot.adoptedStyleSheets].filter((sheet) => window.__hp805.kindOf(sheet).startsWith('editor-'))
         .reduce((sum, sheet) => sum + window.__hp805.inventory({ adoptedStyleSheets: [sheet] }).ruleCount, 0),
-      editorChars: [...card.renderRoot.adoptedStyleSheets].filter((sheet) => window.__hp805.kindOf(sheet) !== 'other')
+      editorChars: [...card.renderRoot.adoptedStyleSheets].filter((sheet) => window.__hp805.kindOf(sheet).startsWith('editor-'))
         .reduce((sum, sheet) => sum + [...sheet.cssRules].reduce((n, rule) => n + rule.cssText.length, 0), 0),
       kioskKinds: window.__hp805.inventory(kiosk.renderRoot).kinds,
       kioskRuntime: !!kiosk._editorRuntime,
@@ -342,11 +352,11 @@ try {
     + ` (${cold.card.ruleCount} in all ${cold.card.kinds.length} sheets, later ones: summary panel);`
     + ` the editor sheets bring ${afterLoad.editorRules} rules, ${afterLoad.editorChars} chars of CSS`);
   out.coldRootIsCardStylesPlusLaterNonEditorSheets = cold.litFirst
-    && cold.laterKinds.every((kind) => kind === 'other');
+    && cold.laterKinds.every((kind) => !kind.startsWith('editor-'));
   out.sheetsInCanonicalSlotsOnce = canonical(afterLoad.kinds, cold.litSheets) || afterLoad.kinds.join(',');
   out.trayTokensArriveWithTheRuntime = afterLoad.trayVar !== '';
   out.kioskAndSpaceCardStayWithoutEditorSheets = !afterLoad.kioskRuntime
-    && afterLoad.kioskKinds.every((kind) => kind === 'other') && afterLoad.spaceKinds.every((kind) => kind === 'other');
+    && afterLoad.kioskKinds.every((kind) => !kind.startsWith('editor-')) && afterLoad.spaceKinds.every((kind) => !kind.startsWith('editor-'));
   // AC7: the editor brings its own graph only — no separate sheet chunk, no new role.
   const editorRequests = desktop.requests.slice(beforeOpen).map((path) => path.replace(/\?.*$/, ''));
   console.log('JS requested on opening the editor:', JSON.stringify(editorRequests));
@@ -366,7 +376,7 @@ try {
     const root = card.renderRoot;
     const withSheets = window.__hp805.snapshot(card);
     const all = [...root.adoptedStyleSheets];
-    root.adoptedStyleSheets = all.filter((sheet) => window.__hp805.kindOf(sheet) === 'other');
+    root.adoptedStyleSheets = all.filter((sheet) => !window.__hp805.kindOf(sheet).startsWith('editor-'));
     const withoutSheets = window.__hp805.snapshot(card);
     root.adoptedStyleSheets = all;
     const differing = withSheets.filter((entry, i) => entry !== withoutSheets[i]).map((entry) => entry.split('|')[0]);
@@ -584,7 +594,7 @@ try {
     await window.__hp805.settle(card);
     return { kinds: window.__hp805.inventory(card.renderRoot).kinds, tray: window.__hp805.trayVar(card) };
   });
-  out.phoneColdViewWithoutEditorSheets = phoneCold.kinds.every((kind) => kind === 'other') && phoneCold.tray === '';
+  out.phoneColdViewWithoutEditorSheets = phoneCold.kinds.every((kind) => !kind.startsWith('editor-')) && phoneCold.tray === '';
   const onboarding = await phone.page.evaluate(async () => {
     const card = window.__card;
     card.hass = { ...card.hass, floors: {}, areas: {} };
@@ -606,7 +616,7 @@ try {
     };
   });
   out.onboardingWithoutEditorAndItsSheets = onboarding.shown && !onboarding.editor
-    && onboarding.kinds.every((kind) => kind === 'other');
+    && onboarding.kinds.every((kind) => !kind.startsWith('editor-'));
   out.onboardingSharedRowsStyledWithoutEditor = onboarding.shared.length > 0
     && onboarding.shared.every((entry) => entry.endsWith(':flex')) || JSON.stringify(onboarding.shared);
   out.phoneNoEditorChunkRequested = !phone.loaded.concat(phone.requests).some((path) => path.includes('houseplan-editor-runtime-'));
@@ -663,7 +673,7 @@ try {
       .map(window.__hp805.kindOf).filter((kind) => kind !== 'other')),
   };
   out.retryAfterFailedAttemptAdoptsOnce = attempts === 2 && retried.result.value === 'absolute'
-    && JSON.stringify(retried.kinds) === JSON.stringify(['editor-dialogs', 'editor-menu', 'editor-tray', 'editor-properties']) || `${attempts} attempts, ${retried.kinds}`;
+    && JSON.stringify(retried.kinds) === JSON.stringify(['editor-dialogs', 'shared-menu', 'editor-tray', 'editor-properties']) || `${attempts} attempts, ${retried.kinds}`;
   await close(retry);
 
   // ---- AC5 (v): a module of another build adopts nothing; the View keeps working
@@ -681,7 +691,7 @@ try {
     const card = window.__card;
     await window.__hp805.settle(card);
     return card._mode === 'view' && !card._editorRuntime
-      && [...card.renderRoot.adoptedStyleSheets].every((sheet) => window.__hp805.kindOf(sheet) === 'other')
+      && [...card.renderRoot.adoptedStyleSheets].every((sheet) => !window.__hp805.kindOf(sheet).startsWith('editor-'))
       && window.__hp805.trayVar(card) === '' && !card.renderRoot.querySelector('.editor-secondary-host')
       && !!card.renderRoot.querySelector('.stage');
   });
