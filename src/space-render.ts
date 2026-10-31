@@ -149,6 +149,20 @@ function cachedStaticOpeningIndex(
   return value;
 }
 
+/** Pure presentation boundary shared by Static's painted symbol and frame. */
+export function staticOpeningFace(
+  opening: GeometryOpeningProjection, index: OpeningWallIndex | null,
+  hasWalls: boolean,
+): OpeningVisibleSpec['face'] {
+  const flipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
+  return opening.partitionHost
+    ? partitionOpeningFace(opening.partitionHost, flipV)
+    : index && (hasWalls || opening.type === 'gate') ? openingInnerFaceOffsetFromIndex(index, {
+        x: opening.rx, y: opening.ry, angle: opening.angle,
+        length: opening.rlen, flip_v: flipV,
+      }) : { ox: 0, oy: 0, cm: 0, side: -1 };
+}
+
 function cachedStaticPhysicalBodies(
   cfg: ServerConfig,
   spaceId: string,
@@ -455,13 +469,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const visibleSpec = (
     opening: GeometryOpeningProjection, amount: number, base = '', tone = '',
   ): OpeningVisibleSpec => {
-    const flipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
-    const face = opening.partitionHost
-      ? partitionOpeningFace(opening.partitionHost, flipV)
-      : openingIndex ? openingInnerFaceOffsetFromIndex(openingIndex, {
-          x: opening.rx, y: opening.ry, angle: opening.angle,
-          length: opening.rlen, flip_v: flipV,
-        }) : { ox: 0, oy: 0, cm: 0, side: -1 as const };
+    const face = staticOpeningFace(opening, openingIndex, walls.length > 0);
     return { type: opening.type, length: opening.rlen, angle: opening.angle,
       amount, flipH: !!opening.flip_h, flipV: !!opening.flip_v,
       base, tone, cellCm, gridPitch: GRID_PITCH, face };

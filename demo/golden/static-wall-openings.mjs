@@ -1,6 +1,6 @@
 // Actual houseplan-space-card capture, with a physical cut and painted leaf oracle.
 export async function prepareStaticWallOpenings(page, scenario) {
-  return page.evaluate(async ({ fit, width, diagonal }) => {
+  return page.evaluate(async ({ fit, width, diagonal, linePlan }) => {
     const full = window.__goldenCard;
     const host = document.getElementById('host');
     const el = document.createElement('houseplan-space-card');
@@ -22,12 +22,13 @@ export async function prepareStaticWallOpenings(page, scenario) {
     const solid=point=>paths.some(p=>p.isPointInFill(new DOMPoint(...turn(point))));
     if(Math.abs(el.getBoundingClientRect().width-width)>1
       ||!(rect.width>1&&rect.height>1)||style.display==='none'||style.visibility==='hidden'
-      ||!paths.length||solid([.375,.1875])||!solid([.16,.1875]))
+      ||!paths.length||solid([.375,.1875])
+      ||(linePlan?!solid([.26,.5625]):!solid([.16,.1875])))
       throw Error('Static wall-opening painted leaf/cut/control contract failed');
     if(root.querySelectorAll('[data-hp="opening"]').length!==5
-      ||!root.querySelector('.static-opening-tunnels [data-id="shared-window"]'))
+      ||(!linePlan&&!root.querySelector('.static-opening-tunnels [data-id="shared-window"]')))
       throw Error('Static opening neighbor/tunnel missing');
     window.__goldenCard=el;
-    return {wallDoorPainted:true,wallDoorCut:true,solidControl:true,visibleSymbols:5,fit,width,diagonal};
+    return {wallDoorPainted:true,wallDoorCut:true,solidControl:true,visibleSymbols:5,fit,width,diagonal,linePlan:!!linePlan};
   },scenario.staticWallOpenings);
 }

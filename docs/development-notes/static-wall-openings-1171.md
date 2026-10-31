@@ -1,12 +1,41 @@
 # Static wall openings #1171 — executed evidence
 
-Implementation: `26c78835fb1350d956a4fc80fafb87183cd5e983` and
+Initial implementation: `26c78835fb1350d956a4fc80fafb87183cd5e983` and
 `7dfb2d02466a8e93d6e3a65ae2cd1528def1edb3`, based on dev
 `33707db7a8a9a6dc48d7445b3a0fb1fdf66e6e2e`. SPEC r2 is green, H0/M0.
 The source plan is independently authored in
 `demo/fixtures/static-wall-openings.mjs`; no private support geometry is used.
 
-## Executed results
+## CODE r1 M1 correction
+
+[CODE r1](../reviews/CODE-REVIEW-1171-r1.md) returned one Medium: existence of
+a space-level gate index must not select the indexed face for every ordinary
+opening in a line plan. The correction applies the full renderer's policy per
+opening. `staticOpeningFace` is a pure boundary used by both Static paint and
+bounds; partition math and indexed wall/gate math remain shared unchanged.
+
+The new ordinary semantic test uses a real contour index, no room-wall records,
+and mixed gate/door/window/partition inputs. After extracting the existing
+policy without changing its result, it fails with door `side:+1` against the
+full-plan classic `side:-1`. Adding the per-opening wall/gate guard makes it pass.
+This is a real pre-fix input, not an injected implementation mutation. Gate,
+partition and physical30cm wall controls keep their real indexed faces.
+
+Executed follow-up:12 focused tests PASS;74 targeted static/cache/matrix/corpus
+tests PASS; actual native smoke24 assertions PASS, including the mixed line
+plan. A fourth actual-Static Golden scene at360px was captured and inspected.
+The semantic face test is the RED witness; no pre-fix pixel difference is claimed
+for zero-depth ordinary glyphs. The new pure mutation declaration
+`static-gate-leaks-indexed-face-to-line-openings-1171` targets that test and is
+static-ready only. Current declaration totals2066, execution0/caught unknown.
+
+The final delivery repeats the required gate and refreshes the adjacent capture
+receipt for all four Static scenes plus two unchanged full-plan controls. Exact
+commands/results and the current source SHA are fixed in the new S6 handoff.
+The E2E assessment remains applicable: this is read-side face selection and adds
+no HA transport, writer or persisted field.
+
+## Initial executed results before CODE r1
 
 All browser evidence uses pinned WSL Ubuntu, Node22.23.2, Playwright1.62.0 and
 Chromium151.0.7922.34 rev1234 (launched-browser attestation, not a directory guess).
@@ -59,12 +88,13 @@ representation, saved host or ID is removed or migrated.
 
 ## Visual evidence
 
-Final captures on `7dfb2d024` are recorded in the adjacent JSON receipt. Three
+Initial final captures on `7dfb2d024` were recorded before CODE r1. Three
 new Static scenes report `missing-baseline` with declared `expectation:new`;
 they were visually inspected, including the360px leaf extent. Global baselines
 are not accepted in this task. Both explicit unchanged full-plan checks report
 `diff=0px ratio=0.000000 maxDelta=0`. These final five captures ran after the
-gate's build completed; earlier diagnostic captures are not the final receipt.
+gate's build completed. The adjacent JSON is refreshed for the M1 candidate;
+the old capture results are history, not a receipt for changed inputs.
 
 ## Post-task E2E
 

@@ -76,6 +76,10 @@ and maximum painted bounds consume that projection; the shared wall-face index
 is cached by structural geometry. Contact state changes paint, without changing
 the frame or rebuilding masonry. The existing borders choice also owns symbol
 visibility. Reading a plan never rehosts or rewrites an opening.
+Face selection is per opening: a gate may demand a contour index in a line
+plan, while ordinary non-partition doors/windows still use the classic zero
+face when room-wall records are absent. One pure Static boundary serves both
+symbol paint and bounds, with direct semantic tests for that mixed case.
 
 `plan-rotation-motion` (#1119) owns queued 280 ms presentation around that unchanged
 quarter-turn endpoint. The temporary wrapper transform leaves the background still;

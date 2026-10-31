@@ -3,7 +3,7 @@ import { launch, checkAll, finish, requirePinnedBrowser } from './serve.mjs';
 import { makeStaticWallOpeningsFixture } from './fixtures/static-wall-openings.mjs';
 requirePinnedBrowser('static-wall-openings-1171');
 const {page,browser}=await launch({width:1100,height:900},1,[],{hasTouch:true});
-const out=await page.evaluate(async ({fixture,diagonalFixture,beforeOnly})=>{
+const out=await page.evaluate(async ({fixture,diagonalFixture,linePlanFixture,beforeOnly})=>{
   const T=window.__hpTest,c=window.__card, result={};
   const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   const until=async predicate=>{const end=performance.now()+6000;while(!predicate()){if(performance.now()>end)throw Error('1171 fixture did not settle '+JSON.stringify({transform:root()?.querySelector('[data-id="wall-door"]')?.getAttribute('transform'),opening:el._snap?.config?.spaces[0]?.openings?.[0],result}));await frame();}};
@@ -133,11 +133,16 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,beforeOnly})=>{
   await update();result.quarterTurnKeepsSymbolsInFrame=paintedInside();
   c.shadowRoot.querySelector('[data-hp="rotate-left"]').click();
   await until(()=>root().querySelector('.hp-static-stage')?.getAttribute('data-hp-plan-rotation')==='0');
-  await T.setServerConfig(fixture);await until(()=>opening('wall-door')?.getAttribute('transform')?.includes('rotate(0)'));
+  await T.setServerConfig(linePlanFixture);
+  await until(()=>el._snap?.config?.spaces[0].walls?.length===0);
+  await update();
+  result.linePlanMixedGateDoorWindowParity=expected.every(sameSymbol)&&paintedInside();
+  await T.setServerConfig(fixture);await until(()=>el._snap?.config?.spaces[0].walls?.length===7);
+  await update();
 
   window.__static1171=el;window.__host1171=host;
   return result;
-},{fixture:makeStaticWallOpeningsFixture(),diagonalFixture:makeStaticWallOpeningsFixture({diagonal:true}),beforeOnly:process.argv.includes('--before')});
+},{fixture:makeStaticWallOpeningsFixture(),diagonalFixture:makeStaticWallOpeningsFixture({diagonal:true}),linePlanFixture:makeStaticWallOpeningsFixture({linePlan:true}),beforeOnly:process.argv.includes('--before')});
 if(!process.argv.includes('--before')){
   const target=page.locator('houseplan-space-card .static-opening[data-id="wall-door"]');
   await target.scrollIntoViewIfNeeded();const r=await target.boundingBox();

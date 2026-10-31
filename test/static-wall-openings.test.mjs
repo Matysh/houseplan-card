@@ -3,7 +3,31 @@ import assert from 'node:assert/strict';
 import { makeStaticWallOpeningsFixture } from '../demo/fixtures/static-wall-openings.mjs';
 import { spaceModels,GRID_STEP_N,GRID_PITCH,NORM_W } from '../test-build/space-geometry.js';
 import { geometryOpenings,geometryRoomOpeningInputs,geometryPartitionOpeningCuts } from '../test-build/plan-geometry-preflight.js';
-import { renderSpaceStatic } from '../test-build/space-render.js';
+import { renderSpaceStatic,staticOpeningFace } from '../test-build/space-render.js';
+import { openingWallIndex,openingInnerFaceOffsetFromIndex } from '../test-build/wall-thickness.js';
+import { partitionOpeningFace } from '../test-build/partition-openings.js';
+
+test('#1171 M1: an indexed gate cannot change an ordinary line-plan opening face',()=>{
+  const cfg=makeStaticWallOpeningsFixture(),s=cfg.spaces[0];
+  s.walls=[];delete s.wall_segments;for(const room of s.rooms)delete room.wall_ids;
+  const model=spaceModels(cfg)[0],openings=geometryOpenings(s,model,5,GRID_PITCH,NORM_W);
+  const index=openingWallIndex(model.rooms,[],[],GRID_STEP_N,5,GRID_PITCH,NORM_W);
+  const classic={ox:0,oy:0,cm:0,side:-1};
+  const door=openings.find(o=>o.id==='wall-door');
+  const indexed=openingInnerFaceOffsetFromIndex(index,{x:door.rx,y:door.ry,angle:door.angle,length:door.rlen,flip_v:false});
+  assert.notDeepEqual(indexed,classic,'real contour index has a distinct side; the ordinary case is not vacuous');
+  for(const id of ['wall-door','shared-window','legacy-window'])
+    assert.deepEqual(staticOpeningFace(openings.find(o=>o.id===id),index,false),classic,id);
+  const gate=openings.find(o=>o.id==='outer-gate');
+  assert.deepEqual(staticOpeningFace(gate,index,false),openingInnerFaceOffsetFromIndex(index,{
+    x:gate.rx,y:gate.ry,angle:gate.angle,length:gate.rlen,flip_v:true,
+  }),'gate retains its indexed exterior-side rule');
+  const partition=openings.find(o=>o.id==='partition-door');
+  assert.deepEqual(staticOpeningFace(partition,index,false),partitionOpeningFace(partition.partitionHost,false));
+  const physical=makeStaticWallOpeningsFixture(),physicalModel=spaceModels(physical)[0];
+  const physicalIndex=openingWallIndex(physicalModel.rooms,physical.spaces[0].walls,[],GRID_STEP_N,5,GRID_PITCH,NORM_W);
+  assert.equal(staticOpeningFace(door,physicalIndex,true).cm,30,'ordinary physical wall still uses its real face');
+});
 
 function templates(value,found=[]) {
   if(Array.isArray(value))for(const item of value)templates(item,found);

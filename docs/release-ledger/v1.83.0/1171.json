@@ -12,6 +12,7 @@
     "schema": 2,
     "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
     "golden": [
+      { "id": "static-wall-openings-line-plan-phone-light", "expectation": "new", "reason": "#1171 CODEr1 M1: actual line-plan Static with no room-wall bodies, mixed gate/door/windows and a partition neighbor; per-opening classic/indexed face selection matches full View." },
       { "id": "static-wall-openings-house-phone-light", "expectation": "new", "reason": "#1171: actual read-only space card at360px, tight house frame includes room-wall leaf, neighboring partition opening and physical cuts/tunnels." },
       { "id": "static-wall-openings-content-desktop-light", "expectation": "new", "reason": "#1171: actual space card content frame includes the maximum opening envelope, with shared/exterior wall cuts and tunnel fills." },
       { "id": "static-wall-openings-diagonal-house-dark", "expectation": "new", "reason": "#1171: actual space card on independently rotated synthetic walls, preserving wall-side geometry and complete tight frame." }

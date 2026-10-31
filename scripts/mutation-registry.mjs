@@ -15390,6 +15390,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'static-gate-leaks-indexed-face-to-line-openings-1171',
+    guard: 'node --test test/static-wall-openings.test.mjs',
+    because: '#1171 CODEr1 M1: a real zero-depth contour index has side+1 at the north door; only gate/partition may use it without room-wall records, ordinary openings retain classic side-1.',
+    patches: [{file:'src/space-render.ts',
+      find: ": index && (hasWalls || opening.type === 'gate') ? openingInnerFaceOffsetFromIndex(index, {",
+      replace: ': index ? openingInnerFaceOffsetFromIndex(index, {'}],
+  },
+  {
     id: 'static-opening-missing-contact-looks-active-1171',
     guard: 'node demo/smoke_static_wall_openings.mjs',
     because: '#1171: the actual static leaf must retain full-plan neutral paint when its configured contact is absent from projected HA state.',
