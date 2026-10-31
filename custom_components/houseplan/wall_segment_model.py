@@ -15,7 +15,10 @@ import re
 import uuid
 from typing import Any
 
-from .coordinate_canonicalization import canonicalize_config_geometry
+from .coordinate_canonicalization import (
+    canonicalize_config_geometry,
+    canonicalize_lattice_coordinate,
+)
 
 WALL_SEGMENT_MODEL_VERSION = 10
 GRID_STEP_N = 1 / 240
@@ -356,6 +359,10 @@ def _atomize(
                 poly.append([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t])
                 parents.append(index)
 
+        # Match the TS barrier: stored-equivalent derived cuts are one atom
+        # before assigning IDs, never two IDs collapsed by final rounding.
+        poly = [[canonicalize_lattice_coordinate(p[0]),
+                 canonicalize_lattice_coordinate(p[1])] for p in poly]
         old_ids = raw_room.get("wall_ids") if isinstance(raw_room.get("wall_ids"), list) else []
         indexed_lineage = len(old_ids) == len(original)
         rigid_delta: tuple[float, float] | None = None

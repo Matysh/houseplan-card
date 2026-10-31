@@ -12,9 +12,21 @@ export function selectWallFaceLineage(
   partitions: readonly WallFaceCarrier[],
   activePartitionIds: ReadonlySet<string>,
   epsilon: number,
+  existingWalls: readonly WallFaceCarrier[] = [],
 ): string[] {
   return ring.map((a, index) => {
     const b = ring[(index + 1) % ring.length];
+    // A retained hosted partition may already coincide with a previously
+    // created room wall. That catalogue identity wins; promoting the parent
+    // partition's ID over it would assign two IDs to one physical atom.
+    const existing = existingWalls.find(wall => (
+      Math.hypot(wall.a[0] - a[0], wall.a[1] - a[1]) <= epsilon
+      && Math.hypot(wall.b[0] - b[0], wall.b[1] - b[1]) <= epsilon
+    ) || (
+      Math.hypot(wall.b[0] - a[0], wall.b[1] - a[1]) <= epsilon
+      && Math.hypot(wall.a[0] - b[0], wall.a[1] - b[1]) <= epsilon
+    ));
+    if (existing) return existing.id;
     const carriers = partitions.filter((partition) => {
       const length = Math.hypot(partition.b[0] - partition.a[0], partition.b[1] - partition.a[1]);
       if (!(length > epsilon)) return false;

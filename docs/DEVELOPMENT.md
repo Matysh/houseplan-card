@@ -3549,6 +3549,13 @@ Source RED probes, independent negative corpus probes and static mutation
 readiness are distinct from nightly mutant execution. No snapshot/format/gesture
 change and no headless claim of live HA or real-GPU acceptance.
 
+For #1166, the corpus extension uses the independently compiled v1.83.0
+implementation (`cb2c71ab7b5943e607b83a4f052a734eb36b22f7`): all166 prior
+entries stay exact, and all228 entries have the same identity projection with
+the current implementation. The added public/synthetic inputs do not replace
+the separate failing graph/materialization regressions. The accepted original
+passport lineage remains recorded in its `baseline` field.
+
 The matrix includes realistic off-grid noisy T/X atoms and reversed endpoints,
 an unrelated collinear node beyond the finite carrier, and a forbidden exchange
 of two edges' connectivity at the same foreign point. Pure guards cover the

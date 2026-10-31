@@ -30,14 +30,17 @@ export function graphSources(space){
 }
 
 /** Compare generated IDs bijectively; retain identity across every state of each recipe. */
-export function stableRoomReceiptIds(records){
+export function stableRoomReceiptIds(records,{preserveSourceIdentities=false}={}){
   const result=structuredClone(records),ids=new Map();
-  for(const row of result)for(const config of [row.source,...row.candidates]){
+  const configs=row=>preserveSourceIdentities?[row.original,row.source,...row.candidates].filter(Boolean):[row.source,...row.candidates];
+  if(preserveSourceIdentities)for(const row of result)for(const config of configs(row))
+    for(const space of config.spaces)for(const p of space.partitions||[])ids.set(p.id,p.id);
+  for(const row of result)for(const config of configs(row)){
     for(const space of config.spaces)for(const wall of space.wall_segments||[])
       if(!ids.has(wall.id))ids.set(wall.id,`wall-ordinal-${ids.size}`);
   }
   const ref=id=>{if(!ids.has(id))throw new Error(`Missing allocated wall reference: ${id}`);return ids.get(id);};
-  for(const row of result)for(const config of [row.source,...row.candidates])for(const space of config.spaces){
+  for(const row of result)for(const config of configs(row))for(const space of config.spaces){
     for(const wall of space.wall_segments||[])wall.id=ref(wall.id);
     for(const room of space.rooms||[])if(room.wall_ids)room.wall_ids=room.wall_ids.map(ref);
     for(const opening of space.openings||[])if(opening.host?.kind==='wall')opening.host.id=ref(opening.host.id);

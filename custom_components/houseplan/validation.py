@@ -31,6 +31,7 @@ from custom_components.houseplan.led_strips import (
 )
 from custom_components.houseplan.marker_alerts import valid_marker_alerts
 from custom_components.houseplan.partition_promotion import (
+    same_partition_wall_chain_promotion,
     same_partition_wall_promotion,
 )
 from custom_components.houseplan.room_appearance import (
@@ -215,6 +216,45 @@ def _wall_catalog_projection(config: dict) -> list[dict]:
     } for space in config.get("spaces") or []]
 
 
+def _existing_wall_room_ownership_only(config: dict, previous: dict) -> bool:
+    """Current clients may add/remove a room fully bounded by existing atoms.
+
+    Filling the last cavity changes ownership, not physical wall geometry.
+    Require complete explicit identities on each added/removed ring; editing
+    an existing contour or submitting a room without IDs remains invalid.
+    """
+    old_spaces = {space["id"]: space for space in previous.get("spaces") or []}
+    for space in config.get("spaces") or []:
+        old = old_spaces.get(space["id"])
+        if old is None:
+            return False
+        before = {room["id"]: room for room in old.get("rooms") or []}
+        after = {room["id"]: room for room in space.get("rooms") or []}
+        added, removed = after.keys() - before.keys(), before.keys() - after.keys()
+        if added and removed:
+            return False
+        common = before.keys() & after.keys()
+        def projection(source: dict, room_ids=common) -> list[dict]:
+            filtered = {**source, "rooms": [room for room in source.get("rooms") or [] if room["id"] in room_ids]}
+            return _catalog_coupled_wall_geometry_projection({"spaces": [filtered]})
+        if projection(space) != projection(old):
+            return False
+        walls = {wall["id"]: wall for wall in old.get("wall_segments") or []}
+        for room in [*(after[key] for key in added), *(before[key] for key in removed)]:
+            poly, ids = room.get("poly") or [], room.get("wall_ids") or []
+            if len(poly) < 3 or len(poly) != len(ids):
+                return False
+            for index, wall_id in enumerate(ids):
+                wall = walls.get(wall_id)
+                a, b = poly[index], poly[(index + 1) % len(poly)]
+                if wall is None or not any(
+                    a == wall[first] and b == wall[second]
+                    for first, second in (("a", "b"), ("b", "a"))
+                ):
+                    return False
+    return True
+
+
 def _restore_wall_model_fields(config: dict, previous: dict) -> None:
     """Hydrate only v8 identity fields after an exact legacy round-trip."""
     config["model_version"] = previous["model_version"]
@@ -338,7 +378,9 @@ def validate_wall_model_transition(
         # first write of a newer client legitimately drops legacy projection
         # fields (an orphan open_span/open_to) without touching the catalogue;
         # treating that as "outdated" wedged every structural write forever.
-        if not _projection_differs(config, previous, _wall_catalog_projection, touched):
+        if (not _projection_differs(config, previous, _wall_catalog_projection, touched)
+                and not (old_model >= 10 and new_model >= 10
+                         and _existing_wall_room_ownership_only(config, previous or {}))):
             raise WallModelClientOutdatedError(
                 f"stored model={old_model}; unchanged wall catalogue"
             )
@@ -875,10 +917,17 @@ def validate_partition_opening_hosts(
                     and host.get("id") not in partitions
                     and host.get("id") in room_wall_ids
                     and space.get("cell_cm", 5) == old_space.get("cell_cm", 5)
-                    and same_partition_wall_promotion(
+                    and (same_partition_wall_promotion(
                         old, opening, old_partitions.get(str(old_host.get("id", ""))),
                         walls.get(str(host.get("id", ""))),
-                    )
+                    ) or (
+                        str(old_host.get("id", "")) not in partitions
+                        and same_partition_wall_chain_promotion(
+                            old, opening, old_partitions.get(str(old_host.get("id", ""))),
+                            list(walls.values()), room_wall_ids,
+                            [*old_partitions.values(), *((old_space or {}).get("wall_segments") or [])],
+                        )
+                    ))
                 )
                 proved = same_partition or same_wall or (
                     allow_optimize_rehost and old_space is not None

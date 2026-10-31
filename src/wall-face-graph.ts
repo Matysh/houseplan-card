@@ -13,11 +13,18 @@
  * The editor invokes it only for accepted clicks, never for pointermove/hover.
  */
 
+import { NORM_W } from './canvas-constants';
+import { sameStoredWallPoint, storedWallContact } from './stored-wall-contact';
+import { WALL_INCIDENT_EPS } from './wall-incidence';
+import { COORDINATE_FACTOR } from './coordinate-canonicalization';
+
 export interface WallGraphSourceSegment {
   a: readonly number[];
   b: readonly number[];
   /** Stable provenance key. More than one source may own the same atom. */
   key: string;
+  /** Existing room contour; a proved passing carrier owns a shared boundary. */
+  contour?: boolean;
 }
 
 export interface WallGraphAtom {
@@ -406,21 +413,75 @@ function discoverPairCuts(
   }
 }
 
-type SourceVertex = { point: [number, number]; sourceKey: string; endpoint: boolean };
+type SourceVertex = {
+  point: [number, number]; sourceKey: string; endpoint: boolean;
+  source: WallGraphSourceSegment;
+};
 
 /** Exact incident-source coordinates, separate from the topology epsilon key. */
-function sourceVertex(candidates: readonly SourceVertex[]): [number, number] | null {
+function sourceVertex(candidates: readonly SourceVertex[], coordinateScale: number): [number, number] | null {
   const ordered = [...candidates].sort((a, b) => Number(b.endpoint) - Number(a.endpoint)
     || a.sourceKey.localeCompare(b.sourceKey)
     || a.point[0] - b.point[0] || a.point[1] - b.point[1]);
   const point = ordered[0]?.point;
   if (!point) return null;
-  // Only arithmetic roundoff is interchangeable. Topologically close authored
-  // points with different coordinates are ambiguous, not a licence to move one.
   const roundoff = Number.EPSILON * 16
     * Math.max(1, ...ordered.flatMap(item => item.point.map(Math.abs)));
+  const same = (a: readonly number[], b: readonly number[]) =>
+    a.every((value, axis) => Math.abs(value - b[axis]) <= roundoff);
+  // A proved T has exactly one passing axis and one ending branch. Use the
+  // exact carrier cut, so subsequent partition promotion shares that same
+  // boundary instead of introducing a microscopic bend or overlap.
+  const axes: { direction: [number, number]; length: number; keys: Set<string>; sources: WallGraphSourceSegment[] }[] = [];
+  const seen = new Set<string>();
+  for (const item of ordered) {
+    if (seen.has(item.sourceKey)) continue;
+    seen.add(item.sourceKey);
+    const source = item.source;
+    const dx = source.b[0] - source.a[0], dy = source.b[1] - source.a[1];
+    const length = Math.hypot(dx, dy), direction: [number, number] = [dx / length, dy / length];
+    const axis = axes.find(value => Math.abs(value.direction[0] * direction[1]
+      - value.direction[1] * direction[0]) <= Math.SQRT2 * coordinateScale / COORDINATE_FACTOR
+        * (1 / value.length + 1 / length) + Number.EPSILON * 16);
+    if (axis) { axis.keys.add(item.sourceKey); axis.sources.push(source); }
+    else axes.push({ direction, length, keys: new Set([item.sourceKey]), sources: [source] });
+  }
+  const incidence = WALL_INCIDENT_EPS * coordinateScale;
+  const passing = axes.filter(axis => {
+    const along = axis.sources.flatMap(source => [source.a, source.b])
+      .filter(end => Math.hypot(end[0] - point[0], end[1] - point[1]) > incidence)
+      .map(end => (end[0] - point[0]) * axis.direction[0] + (end[1] - point[1]) * axis.direction[1]);
+    return along.some(value => value < 0) && along.some(value => value > 0);
+  });
+  if (axes.length === 2 && passing.length === 1) {
+    const carrier = passing[0];
+    const through = ordered.filter(item => carrier.keys.has(item.sourceKey));
+    const throughEnds = through.filter(item => item.endpoint);
+    const branchEnds = ordered.filter(item => item.endpoint && !carrier.keys.has(item.sourceKey));
+    if (throughEnds.some(item => !same(item.point, throughEnds[0].point))
+      || branchEnds.some(item => !same(item.point, branchEnds[0].point))) return null;
+    const preferred = [...(throughEnds.length ? throughEnds : through)]
+      .sort((a, b) => Number(!!b.source.contour) - Number(!!a.source.contour)
+        || a.sourceKey.localeCompare(b.sourceKey))[0]?.point;
+    if (!preferred || !branchEnds.length
+      || !carrier.sources.every(source => storedWallContact(preferred, source.a, source.b, coordinateScale, false))
+      || ordered.some(item => Math.hypot(item.point[0] - preferred[0], item.point[1] - preferred[1]) > incidence)) return null;
+    return [...preferred];
+  }
+  // Outside a proved T, independently authored endpoints remain exact. Only
+  // quantization of a derived cut can differ; topology keys grant no storage.
+  const hasEndpoint = ordered.some(item => item.endpoint);
+  const authoredSources = new Set(ordered.filter(item => item.endpoint).map(item => item.sourceKey));
+  const carriers = ordered.filter(item => !item.endpoint && !authoredSources.has(item.sourceKey));
+  // Two different nearby carriers are not a proved T. Their independently
+  // derived cuts must agree before the existing P4 incidence can be reused.
+  if (hasEndpoint && carriers.length > 1 && carriers.some(item =>
+    !item.point.every((value, axis) => Math.abs(value - carriers[0].point[axis]) <= roundoff)
+      && !sameStoredWallPoint(item.point, carriers[0].point, coordinateScale))) return null;
   return ordered.every(item => item.point.every((value, axis) =>
-    Math.abs(value - point[axis]) <= roundoff)) ? [...point] : null;
+    Math.abs(value - point[axis]) <= roundoff)
+    || (hasEndpoint && !item.endpoint
+      && storedWallContact(point, item.source.a, item.source.b, coordinateScale, false))) ? [...point] : null;
 }
 
 function atomize(
@@ -450,7 +511,7 @@ function atomize(
       const point = pointAt(source, t);
       const key = vertexKey(point, safeEpsilon);
       const candidates = vertices.get(key) || [];
-      candidates.push({ point, sourceKey: source.key, endpoint: t === 0 || t === 1 });
+      candidates.push({ point, sourceKey: source.key, endpoint: t === 0 || t === 1, source });
       vertices.set(key, candidates);
     }
     for (let j = 0; j + 1 < parameters.length; j++) {
@@ -488,12 +549,14 @@ export function atomizeWallSegments(
 export function buildWallFaceGraph(
   input: readonly WallGraphSourceSegment[],
   epsilon = DEFAULT_EPSILON,
+  coordinateScale = NORM_W,
 ): WallFaceGraph {
   const safeEpsilon = Number.isFinite(epsilon) && epsilon > 0 ? epsilon : DEFAULT_EPSILON;
   const vertices = new Map<string, SourceVertex[]>();
   const atoms = atomize(input, safeEpsilon, vertices);
   const sourcePoints = new Map<string, [number, number] | null>();
-  for (const [key, candidates] of vertices) sourcePoints.set(key, sourceVertex(candidates));
+  for (const [key, candidates] of vertices)
+    sourcePoints.set(key, sourceVertex(candidates, coordinateScale));
   const points = new Map<string, [number, number]>();
   const adjacency = new Map<string, Set<string>>();
   const atomsByKey = new Map(atoms.map((atom) => [atom.key, atom]));
