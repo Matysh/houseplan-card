@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "92805f2fe06bf22f9f16c5b9ccf3a38dc15d9c9dece956938de9464569068173",
+  "matchesSha256": "f7bf0a171e39a673c0451b3676d8ddd18d2701492a81173d47467fd258d81b01",
   "hits": [
     {
       "id": "7d34f2627cf92c5fbca93eda",
@@ -211,7 +211,7 @@
     {
       "id": "b02f95a29f995ec244b9b237",
       "path": "custom_components/houseplan/junction_limits.py",
-      "line": 321,
+      "line": 349,
       "text": "reports NO walls at all — a legacy space would answer \"no violations\"",
       "occurrence": 1,
       "kind": "branch",
@@ -221,7 +221,7 @@
     {
       "id": "99b000bb6cfd17109d137d9d",
       "path": "custom_components/houseplan/junction_limits.py",
-      "line": 335,
+      "line": 363,
       "text": "# catalogue-less legacy baseline against a migrated candidate; a",
       "occurrence": 1,
       "kind": "branch",
@@ -231,7 +231,7 @@
     {
       "id": "807420a2d77adea449b1ec06",
       "path": "custom_components/houseplan/junction_limits.py",
-      "line": 392,
+      "line": 420,
       "text": "A LEGACY document still goes through `commit_wall_segment_model` first,",
       "occurrence": 1,
       "kind": "branch",
@@ -241,7 +241,7 @@
     {
       "id": "a0eae451544c0c91c0abfeb8",
       "path": "custom_components/houseplan/junction_limits.py",
-      "line": 416,
+      "line": 444,
       "text": "# legacy document that is the whole cost of this step.",
       "occurrence": 1,
       "kind": "branch",
@@ -781,7 +781,7 @@
     {
       "id": "3b3caa9a887ec4e18cb9b1bc",
       "path": "custom_components/houseplan/validation.py",
-      "line": 99,
+      "line": 100,
       "text": "\"\"\"Reject new active-id ambiguity without stranding legacy documents.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -791,7 +791,7 @@
     {
       "id": "e499e18e0a86c5f06269b727",
       "path": "custom_components/houseplan/validation.py",
-      "line": 104,
+      "line": 105,
       "text": "``validate_all=True`` because they have no local legacy group to preserve.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -801,7 +801,7 @@
     {
       "id": "1bd99b20479c8f9a64a169bb",
       "path": "custom_components/houseplan/validation.py",
-      "line": 131,
+      "line": 132,
       "text": "# of regexing an English sentence; the legacy \"space=..;..\" format is",
       "occurrence": 1,
       "kind": "exclusion",
@@ -811,7 +811,7 @@
     {
       "id": "61b705eecd508f4632c12637",
       "path": "custom_components/houseplan/validation.py",
-      "line": 169,
+      "line": 170,
       "text": "def _legacy_wall_model_projection(config: dict) -> dict:",
       "occurrence": 1,
       "kind": "branch",
@@ -821,7 +821,7 @@
     {
       "id": "71c2ce7c255d2369445ccca7",
       "path": "custom_components/houseplan/validation.py",
-      "line": 188,
+      "line": 189,
       "text": "\"\"\"Legacy geometry whose edit must also update the v8 contour catalogue.",
       "occurrence": 1,
       "kind": "branch",
@@ -831,7 +831,7 @@
     {
       "id": "287b9e7a3ef1c108ce44c6c2",
       "path": "custom_components/houseplan/validation.py",
-      "line": 219,
+      "line": 259,
       "text": "\"\"\"Hydrate only v8 identity fields after an exact legacy round-trip.\"\"\"",
       "occurrence": 1,
       "kind": "branch",
@@ -841,7 +841,7 @@
     {
       "id": "4f908ef1246fb40495479bf3",
       "path": "custom_components/houseplan/validation.py",
-      "line": 308,
+      "line": 348,
       "text": "# does not have it; legacy left in storage is not a stale writer and is",
       "occurrence": 1,
       "kind": "branch",
@@ -851,7 +851,7 @@
     {
       "id": "55c7b462be1c3a905e984c23",
       "path": "custom_components/houseplan/validation.py",
-      "line": 311,
+      "line": 351,
       "text": "f\"stored model={old_model}; submitted legacy room_drafts model={new_model}\"",
       "occurrence": 1,
       "kind": "branch",
@@ -861,7 +861,7 @@
     {
       "id": "f6ec97efe81f5f9adc97cd17",
       "path": "custom_components/houseplan/validation.py",
-      "line": 338,
+      "line": 378,
       "text": "# first write of a newer client legitimately drops legacy projection",
       "occurrence": 1,
       "kind": "exclusion",
@@ -871,7 +871,7 @@
     {
       "id": "8538c29e9aeac441d2c9ff37",
       "path": "custom_components/houseplan/validation.py",
-      "line": 824,
+      "line": 866,
       "text": "\"\"\"Validate hosted-opening write deltas without rejecting legacy reads.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -881,7 +881,7 @@
     {
       "id": "395ca53ac6c3ab33b5480f6c",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1140,
+      "line": 1189,
       "text": "Change-aware like the badge validator above (#162): an untouched legacy or",
       "occurrence": 1,
       "kind": "exclusion",
@@ -891,7 +891,7 @@
     {
       "id": "4aa5179ae93c9bb8c22e923d",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1372,
+      "line": 1421,
       "text": "# New appearance entries are strict but preserve compatible future siblings.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -901,7 +901,7 @@
     {
       "id": "ee70c41959987d571c22f379",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1392,
+      "line": 1441,
       "text": "_LEGACY_MAX_ROOM_DRAFTS = 200",
       "occurrence": 1,
       "kind": "branch",
@@ -911,7 +911,7 @@
     {
       "id": "7d1de74563c645164bc3446f",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1393,
+      "line": 1442,
       "text": "_LEGACY_MAX_DRAFT_SEGMENTS = 2000",
       "occurrence": 1,
       "kind": "branch",
@@ -921,7 +921,7 @@
     {
       "id": "2d0a174b2571f743ca831bbe",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1396,
+      "line": 1445,
       "text": "# Open (virtual) wall stretches, legacy/docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.",
       "occurrence": 1,
       "kind": "branch",
@@ -931,7 +931,7 @@
     {
       "id": "648400d8b116f08dde9f2428",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1636,
+      "line": 1685,
       "text": "# and unit bounds below apply only to legacy beta.9 link fields, which remain",
       "occurrence": 1,
       "kind": "branch",
@@ -941,7 +941,7 @@
     {
       "id": "34c7c2a9546b3ee33d8790ff",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1693,
+      "line": 1742,
       "text": "# legacy font size ('s'|'m'|'l'). The dialog no longer offers it",
       "occurrence": 1,
       "kind": "branch",
@@ -951,7 +951,7 @@
     {
       "id": "2f3b3deb008da29c2b09b028",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1698,
+      "line": 1747,
       "text": "# Canonical physical font size plus the legacy scale. Both are",
       "occurrence": 1,
       "kind": "branch",
@@ -961,7 +961,7 @@
     {
       "id": "834503c5078bc03ebae74bf0",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1706,
+      "line": 1755,
       "text": "# Legacy one-value link (beta.9 and earlier). New labels store",
       "occurrence": 1,
       "kind": "branch",
@@ -971,7 +971,7 @@
     {
       "id": "3b6fabc3cbd7e53ae0bdc86c",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1708,
+      "line": 1757,
       "text": "# these stay accepted solely for backward compatibility.",
       "occurrence": 1,
       "kind": "branch",
@@ -981,7 +981,7 @@
     {
       "id": "9566c9e13cd0dfe69b4fcd2a",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1802,
+      "line": 1851,
       "text": "# key remains the compatibility lookup; endpoints preserve a",
       "occurrence": 1,
       "kind": "branch",
@@ -991,7 +991,7 @@
     {
       "id": "9ad30ef6f7902ec37a803dd7",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1833,
+      "line": 1882,
       "text": "def _legacy_room_draft_segments(value: dict) -> dict:",
       "occurrence": 1,
       "kind": "branch",
@@ -1001,7 +1001,7 @@
     {
       "id": "0b1a2b7016f6106139c1919b",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1842,
+      "line": 1891,
       "text": "_LEGACY_ROOM_DRAFT_SCHEMA = vol.All(",
       "occurrence": 1,
       "kind": "branch",
@@ -1011,7 +1011,7 @@
     {
       "id": "a6eee2a70e337a71f293880b",
       "path": "custom_components/houseplan/validation.py",
-      "line": 1858,
+      "line": 1907,
       "text": "_legacy_room_draft_segments,",
       "occurrence": 1,
       "kind": "branch",
@@ -1021,7 +1021,7 @@
     {
       "id": "bd2400c13cdd9750a59f707a",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2004,
+      "line": 2053,
       "text": "if draft_segments > _LEGACY_MAX_DRAFT_SEGMENTS:",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1031,7 +1031,7 @@
     {
       "id": "af9224c3d4133969cdc724c4",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2065,
+      "line": 2114,
       "text": "# uniform field remains a read-compatible fallback for both axes.",
       "occurrence": 1,
       "kind": "branch",
@@ -1041,7 +1041,7 @@
     {
       "id": "cec0a7ca1010c652f95f13ae",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2111,
+      "line": 2160,
       "text": "[_LEGACY_ROOM_DRAFT_SCHEMA], vol.Length(max=_LEGACY_MAX_ROOM_DRAFTS)",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1051,7 +1051,7 @@
     {
       "id": "a55d628b6c69b08029a5e119",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2121,
+      "line": 2170,
       "text": "# validates exactly as before, and the legacy `rooms[].open_to` index",
       "occurrence": 1,
       "kind": "branch",
@@ -1061,7 +1061,7 @@
     {
       "id": "96cdadd6c68b1b8fc4c02358",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2126,
+      "line": 2175,
       "text": "# Legacy: walls are derived from room outlines since v1.19.0 — a line has no",
       "occurrence": 1,
       "kind": "branch",
@@ -1071,7 +1071,7 @@
     {
       "id": "cd84e10d4023a594118c3fcb",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2130,
+      "line": 2179,
       "text": "# (HP-1454-05): relying on a modern client to strip an unbounded legacy",
       "occurrence": 1,
       "kind": "branch",
@@ -1081,7 +1081,7 @@
     {
       "id": "f7f4562f45702f4fb93995ea",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2187,
+      "line": 2236,
       "text": "# change-aware and must not reject untouched legacy data.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1091,7 +1091,7 @@
     {
       "id": "d5bca5021d4467a40af39e3c",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2253,
+      "line": 2302,
       "text": "# Structural reads preserve opaque legacy/future data; changed writes",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1101,7 +1101,7 @@
     {
       "id": "09e78890f0e717e886c42e8e",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2299,
+      "line": 2348,
       "text": "raise vol.Invalid(\"v9 config must not contain legacy open boundaries\")",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1111,7 +1111,7 @@
     {
       "id": "3fced10c8e5ee64bbbb226ac",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2338,
+      "line": 2387,
       "text": "raise vol.Invalid(\"wall compatibility projection requires exact endpoints\")",
       "occurrence": 1,
       "kind": "branch",
@@ -1121,7 +1121,7 @@
     {
       "id": "c4ff5f12c19ac278fa89a7b6",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2341,
+      "line": 2390,
       "text": "raise vol.Invalid(\"wall compatibility projection must be unique\")",
       "occurrence": 1,
       "kind": "branch",
@@ -1131,7 +1131,7 @@
     {
       "id": "f3c1c8106500a9ba785f5a7e",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2344,
+      "line": 2393,
       "text": "raise vol.Invalid(\"wall compatibility projection must match wall_segments\")",
       "occurrence": 1,
       "kind": "branch",
@@ -1141,7 +1141,7 @@
     {
       "id": "29eec53da2dc3046bb3d2172",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2494,
+      "line": 2654,
       "text": "\"\"\"Only newly introduced broken refs fail; stable-id legacy refs warn in UI.\"\"\"",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1151,7 +1151,7 @@
     {
       "id": "746c5d4814c63d93ca1ba72a",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2612,
+      "line": 2775,
       "text": "# legacy field so an existing stored config can still load; the",
       "occurrence": 1,
       "kind": "branch",
@@ -1161,7 +1161,7 @@
     {
       "id": "f1189ffbf12b66d6db25cc62",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2643,
+      "line": 2806,
       "text": "extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1171,7 +1171,7 @@
     {
       "id": "56eb2895ac18880a493ecab9",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2726,
+      "line": 2889,
       "text": "return OrdinaryWriteScope(set(), set(), \"legacy selectors\")",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1181,7 +1181,7 @@
     {
       "id": "5dd11c0d6be4232a7d847ef1",
       "path": "custom_components/houseplan/validation.py",
-      "line": 2777,
+      "line": 2940,
       "text": "# `canonical_config` ran as a no-op: a document with legacy selectors is a",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1231,7 +1231,7 @@
     {
       "id": "2a12744de935715f27c101ad",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 23,
+      "line": 26,
       "text": "LEGACY_DRAFT_POINT_EPSILON = 0.001",
       "occurrence": 1,
       "kind": "branch",
@@ -1241,7 +1241,7 @@
     {
       "id": "bb572585b04a226d258d8e75",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 24,
+      "line": 27,
       "text": "_LEGACY_NUMBER = re.compile(r\"^[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?$\")",
       "occurrence": 1,
       "kind": "branch",
@@ -1251,7 +1251,7 @@
     {
       "id": "d449af8d015329861b5ebbe2",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 37,
+      "line": 40,
       "text": "def _legacy_finite_number(value: Any) -> float | None:",
       "occurrence": 1,
       "kind": "branch",
@@ -1261,7 +1261,7 @@
     {
       "id": "f0c1e89f968bcc352993c0a7",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 40,
+      "line": 43,
       "text": "if isinstance(value, str) and not _LEGACY_NUMBER.fullmatch(value.strip()):",
       "occurrence": 1,
       "kind": "branch",
@@ -1271,7 +1271,7 @@
     {
       "id": "cee8f6441680719d56054106",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 49,
+      "line": 52,
       "text": "def _legacy_draft_point(value: Any) -> list[float] | None:",
       "occurrence": 1,
       "kind": "branch",
@@ -1281,7 +1281,7 @@
     {
       "id": "59c13fc46f1a36ad64f6c660",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 52,
+      "line": 55,
       "text": "x, y = _legacy_finite_number(value[0]), _legacy_finite_number(value[1])",
       "occurrence": 1,
       "kind": "branch",
@@ -1291,7 +1291,7 @@
     {
       "id": "6f5365d6a27f767d81ae65c0",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 56,
+      "line": 59,
       "text": "def _legacy_identity(value: Any) -> str:",
       "occurrence": 1,
       "kind": "branch",
@@ -1301,7 +1301,7 @@
     {
       "id": "7808ddccec03cfe6a9ce0e54",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 219,
+      "line": 222,
       "text": "legacy_segments: list[list[float]] = []",
       "occurrence": 1,
       "kind": "branch",
@@ -1311,7 +1311,7 @@
     {
       "id": "1f5b61a3fd933dbb30935206",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 222,
+      "line": 225,
       "text": "legacy_segments.append([",
       "occurrence": 1,
       "kind": "branch",
@@ -1321,7 +1321,7 @@
     {
       "id": "99daf558e859d3b465f924bd",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 226,
+      "line": 229,
       "text": "if not legacy_segments:",
       "occurrence": 1,
       "kind": "branch",
@@ -1331,7 +1331,7 @@
     {
       "id": "bf799bcca01a7853368a909a",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 240,
+      "line": 243,
       "text": "legacy_segments.append(shared)",
       "occurrence": 1,
       "kind": "branch",
@@ -1341,7 +1341,7 @@
     {
       "id": "e948b246b57998bbf3621f43",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 257,
+      "line": 260,
       "text": "# canonical zero cuts, legacy cuts, stored wall endpoints, opening edges.",
       "occurrence": 1,
       "kind": "branch",
@@ -1351,7 +1351,7 @@
     {
       "id": "bd5da6251c004ab08f24ea4a",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 260,
+      "line": 263,
       "text": "point for segment in [*canonical_zero_segments, *legacy_segments]",
       "occurrence": 1,
       "kind": "branch",
@@ -1361,7 +1361,7 @@
     {
       "id": "c54d08d5ca2b4fc0f0500135",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 265,
+      "line": 268,
       "text": "# #316 §3.1: a legacy open_spans/open_to cut never zeroes the atom that",
       "occurrence": 1,
       "kind": "branch",
@@ -1371,7 +1371,7 @@
     {
       "id": "66b13b3b1aba9ac256822090",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 268,
+      "line": 271,
       "text": "legacy_era_openings: list[dict[str, Any]] = []",
       "occurrence": 1,
       "kind": "branch",
@@ -1381,7 +1381,7 @@
     {
       "id": "1108540170964886656f046d",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 269,
+      "line": 272,
       "text": "if legacy_segments:",
       "occurrence": 1,
       "kind": "branch",
@@ -1391,7 +1391,7 @@
     {
       "id": "a9d0854716c16c30ee6ffa79",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 284,
+      "line": 287,
       "text": "# Only an opening that actually stands on a legacy cut changes the",
       "occurrence": 1,
       "kind": "branch",
@@ -1401,7 +1401,7 @@
     {
       "id": "f3a767ff215a60879ea535e5",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 288,
+      "line": 291,
       "text": "for cut in legacy_segments",
       "occurrence": 1,
       "kind": "branch",
@@ -1411,7 +1411,7 @@
     {
       "id": "856a6d825534052dfc909ace",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 291,
+      "line": 294,
       "text": "legacy_era_openings.append(",
       "occurrence": 1,
       "kind": "branch",
@@ -1421,7 +1421,7 @@
     {
       "id": "dd56215f5960523a282b9437",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 301,
+      "line": 304,
       "text": "for entry in legacy_era_openings:",
       "occurrence": 1,
       "kind": "branch",
@@ -1431,7 +1431,7 @@
     {
       "id": "ac679e4a126519aae51a8bd2",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 401,
+      "line": 408,
       "text": "# Canonical cm:0 atoms stay zero; a LEGACY cut spares the atom",
       "occurrence": 1,
       "kind": "branch",
@@ -1441,7 +1441,7 @@
     {
       "id": "a4ecacaf0a95cf2a8368af9b",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 404,
+      "line": 411,
       "text": "covered_by(legacy_segments) and not _atom_carries_opening(a, b)",
       "occurrence": 1,
       "kind": "branch",
@@ -1451,7 +1451,7 @@
     {
       "id": "c333c5f1241d20bde6c92f22",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 426,
+      "line": 433,
       "text": "def _legacy_thickness_at(walls: list[dict[str, Any]], a: list[float], b: list[float]) -> float:",
       "occurrence": 1,
       "kind": "branch",
@@ -1461,7 +1461,7 @@
     {
       "id": "fff41778ea33c200e058455a",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 429,
+      "line": 436,
       "text": "This is the final compatibility fallback, after exact/conflicting coverage.",
       "occurrence": 1,
       "kind": "branch",
@@ -1471,7 +1471,7 @@
     {
       "id": "d380c288458b2dc4bc7ceaef",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 519,
+      "line": 526,
       "text": "# This legacy thickness tie mirrors exactCoveringWall's raw JS string",
       "occurrence": 1,
       "kind": "branch",
@@ -1481,7 +1481,7 @@
     {
       "id": "29128f26b7c84089574f9813",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 553,
+      "line": 560,
       "text": "resolved = _legacy_thickness_at(space.get(\"walls\") or [], atom[\"a\"], atom[\"b\"])",
       "occurrence": 1,
       "kind": "branch",
@@ -1491,7 +1491,7 @@
     {
       "id": "b3314a2dbdbf463040d332a9",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 847,
+      "line": 854,
       "text": "draft_identity = _legacy_identity(draft.get(\"id\")) if isinstance(draft, dict) else \"\"",
       "occurrence": 1,
       "kind": "branch",
@@ -1501,7 +1501,7 @@
     {
       "id": "c45bbec1e5231916080a1b80",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 855,
+      "line": 862,
       "text": "a = _legacy_draft_point(points[index])",
       "occurrence": 1,
       "kind": "branch",
@@ -1511,7 +1511,7 @@
     {
       "id": "0cb7eb5160624d6b03527a6a",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 856,
+      "line": 863,
       "text": "b = _legacy_draft_point(points[index + 1])",
       "occurrence": 1,
       "kind": "branch",
@@ -1521,7 +1521,7 @@
     {
       "id": "79f84ba6e4a6ea2d6b1f5d1b",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 858,
+      "line": 865,
       "text": "abs(a[0] - b[0]) < LEGACY_DRAFT_POINT_EPSILON",
       "occurrence": 1,
       "kind": "branch",
@@ -1531,7 +1531,7 @@
     {
       "id": "85dc7eb2f6d7766432670718",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 859,
+      "line": 866,
       "text": "and abs(a[1] - b[1]) < LEGACY_DRAFT_POINT_EPSILON",
       "occurrence": 1,
       "kind": "branch",
@@ -1541,7 +1541,7 @@
     {
       "id": "df0f829e5e907c275d5f90dc",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 862,
+      "line": 869,
       "text": "cm = _legacy_finite_number(segment.get(\"cm\") if isinstance(segment, dict) else None)",
       "occurrence": 1,
       "kind": "branch",
@@ -1551,7 +1551,7 @@
     {
       "id": "e27c3acd351cc15858f5c89a",
       "path": "custom_components/houseplan/wall_segment_model.py",
-      "line": 868,
+      "line": 875,
       "text": "_legacy_identity(space.get(\"id\")), a, b,",
       "occurrence": 1,
       "kind": "branch",
@@ -1561,7 +1561,7 @@
     {
       "id": "901a3675f5d3c1959c0b88d0",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 178,
+      "line": 179,
       "text": "\"\"\"Log one low-noise diagnostic per legacy write command.\"\"\"",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1571,7 +1571,7 @@
     {
       "id": "1c3a35c5815af265d42c7aa5",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 441,
+      "line": 446,
       "text": "raise  # Preserve legacy callers; ZIP must also survive lost intent ACKs.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1581,7 +1581,7 @@
     {
       "id": "a84ab341afd915288a91f447",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 1010,
+      "line": 1015,
       "text": "only a legacy naming convention, however; an explicit real marker remains",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1591,7 +1591,7 @@
     {
       "id": "130ff95239f4d95f0167b4af",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 1793,
+      "line": 1798,
       "text": "# resolves to itself; only a legacy document still needs the copy.",
       "occurrence": 1,
       "kind": "branch",
@@ -1601,7 +1601,7 @@
     {
       "id": "c116337cce571bde8065deff",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 1806,
+      "line": 1811,
       "text": "# operational store. Compatibility/default on is the safe frame.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1611,7 +1611,7 @@
     {
       "id": "4c42c7652e5e69c9728970a9",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 1897,
+      "line": 1904,
       "text": "Only `/api/houseplan/content/plans/_/<name>` and the legacy static path",
       "occurrence": 1,
       "kind": "branch",
@@ -1621,7 +1621,7 @@
     {
       "id": "63c7f6c5ef4747e5a3cc0d15",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 2098,
+      "line": 2105,
       "text": "# write so an unrelated edit can still round-trip a legacy broken ref.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1631,7 +1631,7 @@
     {
       "id": "b630a503fcf42662259896fd",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 2189,
+      "line": 2196,
       "text": "# legacy urls are not ours to check and are left alone.",
       "occurrence": 1,
       "kind": "branch",
@@ -1641,7 +1641,7 @@
     {
       "id": "65899cbe10a7d387638a204d",
       "path": "custom_components/houseplan/websocket_api.py",
-      "line": 2916,
+      "line": 2935,
       "text": "# rule exactly as in config/set: repairing a legacy plan that",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1751,7 +1751,7 @@
     {
       "id": "d9b03839f549b7a243418c19",
       "path": "src/coincident-partitions.ts",
-      "line": 134,
+      "line": 136,
       "text": "const resolved = resolvePartitionOpeningCompat(",
       "occurrence": 1,
       "kind": "exclusion",
@@ -1761,7 +1761,7 @@
     {
       "id": "3c05b852825e1c67a40a4e4f",
       "path": "src/coincident-partitions.ts",
-      "line": 272,
+      "line": 274,
       "text": "resolved: resolvePartitionOpeningCompat(",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2061,7 +2061,7 @@
     {
       "id": "1638a8c512608bfa2518f107",
       "path": "src/device-presentation.ts",
-      "line": 368,
+      "line": 371,
       "text": "// not hijack a primary/owned light unless the legacy explicit cover action",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2071,7 +2071,7 @@
     {
       "id": "03534e926e876f2189af9f1c",
       "path": "src/device-presentation.ts",
-      "line": 826,
+      "line": 833,
       "text": "// Legacy inline humidity belongs only to a humidity-led marker. A random",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2621,7 +2621,7 @@
     {
       "id": "713f6fca4d4d8511a4b9f8bb",
       "path": "src/editors/properties/editor.ts",
-      "line": 171,
+      "line": 172,
       "text": "/** Canonical volatile IDs. `_decorSel` is only the compatible singleton projection. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2721,7 +2721,7 @@
     {
       "id": "05f00ae7d5e7518f5b00b6b5",
       "path": "src/editors/space-form.ts",
-      "line": 296,
+      "line": 298,
       "text": "try { filename = decodeURIComponent(filename); } catch { /* Keep a readable legacy URL even with malformed escaping. */ }",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2841,7 +2841,7 @@
     {
       "id": "b626bb591897adc19f86f99b",
       "path": "src/houseplan-card.ts",
-      "line": 14,
+      "line": 20,
       "text": "*  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2851,7 +2851,7 @@
     {
       "id": "cb82411d54f200abc88ed273",
       "path": "src/houseplan-card.ts",
-      "line": 177,
+      "line": 184,
       "text": "import { partitionOpeningFace, resolvePartitionOpeningCompat } from './partition-openings';",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2861,7 +2861,7 @@
     {
       "id": "b46b89930c283f76b6dbbb0b",
       "path": "src/houseplan-card.ts",
-      "line": 1091,
+      "line": 1205,
       "text": "preserveLegacy?: boolean;",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2871,7 +2871,7 @@
     {
       "id": "1ec636373f723268abb1cfa7",
       "path": "src/houseplan-card.ts",
-      "line": 1173,
+      "line": 1287,
       "text": "/** Legacy alias: markup machinery is active exactly in plan mode. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2881,7 +2881,7 @@
     {
       "id": "8c44f2e59f8f99d4e1550f74",
       "path": "src/houseplan-card.ts",
-      "line": 1991,
+      "line": 2120,
       "text": "/** Compatibility aliases keep the performance/smoke diagnostic contract. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2891,7 +2891,7 @@
     {
       "id": "8e59cd319341d6caed024898",
       "path": "src/houseplan-card.ts",
-      "line": 2038,
+      "line": 2167,
       "text": "/** Avoid opting a rounded legacy length into strict geometry on a binding-only edit. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2901,7 +2901,7 @@
     {
       "id": "08ee324332076e0032545433",
       "path": "src/houseplan-card.ts",
-      "line": 2344,
+      "line": 2473,
       "text": "/** UI projection. A legacy persisted `cover` is shown as `toggle`. */",
       "occurrence": 1,
       "kind": "branch",
@@ -2911,7 +2911,7 @@
     {
       "id": "19a9ce062383a29b80b0e3cf",
       "path": "src/houseplan-card.ts",
-      "line": 4241,
+      "line": 4380,
       "text": "// spaceModels(), and the twin missed the legacy-store fallbacks the shared",
       "occurrence": 1,
       "kind": "branch",
@@ -2921,7 +2921,7 @@
     {
       "id": "6840d52201f0947f6ddfa3e2",
       "path": "src/houseplan-card.ts",
-      "line": 7714,
+      "line": 7931,
       "text": "// evidence that retires the previous touch compatibility tail.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2931,7 +2931,7 @@
     {
       "id": "1fb92d164f4a81e1917a282b",
       "path": "src/houseplan-card.ts",
-      "line": 7716,
+      "line": 7933,
       "text": "// Touch owns pinch compatibility before any node-menu activation.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2941,7 +2941,7 @@
     {
       "id": "66a26ed49acf097440b1c580",
       "path": "src/houseplan-card.ts",
-      "line": 7917,
+      "line": 8134,
       "text": "// Writing on every mode/space change also migrates legacy",
       "occurrence": 1,
       "kind": "exclusion",
@@ -2951,7 +2951,7 @@
     {
       "id": "603bbd107092105eb9f4cef7",
       "path": "src/houseplan-card.ts",
-      "line": 8110,
+      "line": 8327,
       "text": "* Room-boundary walls are derived from rooms, so the legacy per-space",
       "occurrence": 1,
       "kind": "branch",
@@ -2961,7 +2961,7 @@
     {
       "id": "62a7fb12f4e1e34e5476209d",
       "path": "src/houseplan-card.ts",
-      "line": 8112,
+      "line": 8329,
       "text": "* `partitions` collection and must never be confused with that legacy field.",
       "occurrence": 1,
       "kind": "branch",
@@ -2971,7 +2971,7 @@
     {
       "id": "b9e2901843e8f2f30f4d64af",
       "path": "src/houseplan-card.ts",
-      "line": 8114,
+      "line": 8331,
       "text": "private _dropLegacySegments(): void {",
       "occurrence": 1,
       "kind": "branch",
@@ -2981,7 +2981,7 @@
     {
       "id": "d0ce2f596f2f161e3d4beae4",
       "path": "src/houseplan-card.ts",
-      "line": 8115,
+      "line": 8332,
       "text": "return this._editorRuntimeOrThrow()._dropLegacySegments();",
       "occurrence": 1,
       "kind": "branch",
@@ -2991,7 +2991,7 @@
     {
       "id": "a41860e06e9d28c2ceb8cee2",
       "path": "src/houseplan-card.ts",
-      "line": 8304,
+      "line": 8521,
       "text": "// Keep the compatibility click from this cancelled pointer blocked, but",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3001,7 +3001,7 @@
     {
       "id": "20e046f63814dbfcfcf7cda2",
       "path": "src/houseplan-card.ts",
-      "line": 8402,
+      "line": 8619,
       "text": "/** Rooms of the current space as render-unit polygons (legacy rects converted). */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3011,7 +3011,7 @@
     {
       "id": "bb23e5ef77183082f682dcdb",
       "path": "src/houseplan-card.ts",
-      "line": 8484,
+      "line": 8704,
       "text": "// stay the legacy render input until the Stage 4 graph renderer.",
       "occurrence": 1,
       "kind": "branch",
@@ -3021,7 +3021,7 @@
     {
       "id": "b0b0190f13608a7e2b749c79",
       "path": "src/houseplan-card.ts",
-      "line": 8486,
+      "line": 8706,
       "text": "const resolution = resolvePartitionOpeningCompat(",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3031,7 +3031,7 @@
     {
       "id": "5aed396a4dbe0df7a76cec2e",
       "path": "src/houseplan-card.ts",
-      "line": 9708,
+      "line": 9930,
       "text": "// Legacy/split dialog closure appends a render-only edge and records its",
       "occurrence": 1,
       "kind": "branch",
@@ -3041,7 +3041,7 @@
     {
       "id": "3db184bda1095ae0f3ca22ef",
       "path": "src/houseplan-card.ts",
-      "line": 9918,
+      "line": 10141,
       "text": "// #42: structured JSON details first; the legacy \"space=..;..\" format",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3051,7 +3051,7 @@
     {
       "id": "dcfa58161a3b2344c65c1e70",
       "path": "src/houseplan-card.ts",
-      "line": 9919,
+      "line": 10142,
       "text": "// stays accepted for one beta (deprecated 2026-08-30, remove with the",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3061,7 +3061,7 @@
     {
       "id": "74cb615b99e8a6dfd7c553b3",
       "path": "src/houseplan-card.ts",
-      "line": 9951,
+      "line": 10174,
       "text": "const match = raw.match(/margin_cm=([^;}\"]*)/); // legacy format, one beta",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3071,7 +3071,7 @@
     {
       "id": "889e6e1fb4d1f488ec62835b",
       "path": "src/houseplan-card.ts",
-      "line": 9979,
+      "line": 10202,
       "text": "/** Persist only deliberate role/appearance edits; untouched legacy absence stays absent. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3081,7 +3081,7 @@
     {
       "id": "71dbf891223a4859861fbc87",
       "path": "src/houseplan-card.ts",
-      "line": 9984,
+      "line": 10207,
       "text": "/** Preserve absent/default and legacy cover until the user edits the select. */",
       "occurrence": 1,
       "kind": "branch",
@@ -3091,7 +3091,7 @@
     {
       "id": "e4af6da576a50dfad01f0926",
       "path": "src/houseplan-card.ts",
-      "line": 11612,
+      "line": 11855,
       "text": "space-card, so the two renderers agree. The compatibility",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3101,7 +3101,7 @@
     {
       "id": "581d468ba9999368cb6c3d60",
       "path": "src/houseplan-card.ts",
-      "line": 13077,
+      "line": 13323,
       "text": "// A legacy/future writer may have left door bindings on a passage. They",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3151,7 +3151,7 @@
     {
       "id": "1b15fd07c022a3ff4cf4e13f",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 595,
+      "line": 601,
       "text": "_decorTextDialog: { id?: string; x: number; y: number; text: string; color: string; opacity: number; angle: string; sizeCm: number; pickerEntity?: string; preserveLegacy?: boolean; } | null;",
       "occurrence": 1,
       "kind": "branch",
@@ -3161,7 +3161,7 @@
     {
       "id": "835df0cae87f9bed96f88ba6",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 1753,
+      "line": 1764,
       "text": "public _dropLegacySegments(config = this.host._serverCfg): void {",
       "occurrence": 1,
       "kind": "branch",
@@ -3171,7 +3171,7 @@
     {
       "id": "ccdbde65c12e754d4ac33ce7",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 1754,
+      "line": 1765,
       "text": "if (config && !findGeometryRemoval(config)) normalizeLegacyGeometryInPlace(config);",
       "occurrence": 1,
       "kind": "branch",
@@ -3181,7 +3181,7 @@
     {
       "id": "9a06c308b76f795e093f2326",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 1794,
+      "line": 1805,
       "text": "public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigGeometry(config); }",
       "occurrence": 1,
       "kind": "branch",
@@ -3191,7 +3191,7 @@
     {
       "id": "ef0f61d57b53392d48b0c68f",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2041,
+      "line": 2051,
       "text": "public _hasLegacyZeroWallFields(config: any = this.host._serverCfg): boolean {",
       "occurrence": 1,
       "kind": "branch",
@@ -3201,7 +3201,7 @@
     {
       "id": "9574d5f5f9daf1e29b3ba2ee",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2051,
+      "line": 2061,
       "text": "const key = this._hasLegacyZeroWallFields()",
       "occurrence": 1,
       "kind": "branch",
@@ -3211,7 +3211,7 @@
     {
       "id": "a98dc277f8a524dfa70dfe55",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2104,
+      "line": 2114,
       "text": "// legacy space carries no wall catalogue at all, so comparing it raw with",
       "occurrence": 1,
       "kind": "branch",
@@ -3221,7 +3221,7 @@
     {
       "id": "acecd02fe3978e726ed091ef",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2108,
+      "line": 2118,
       "text": "// materialized, while legacy documents cross that barrier once.",
       "occurrence": 1,
       "kind": "branch",
@@ -3231,7 +3231,7 @@
     {
       "id": "3a215b5e5cfad95de2fcdef3",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2174,
+      "line": 2184,
       "text": "// repair/atomise a degraded legacy projection, but it must never be used to",
       "occurrence": 1,
       "kind": "branch",
@@ -3241,7 +3241,7 @@
     {
       "id": "c6d5ba704f2ea08f93680eed",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2178,
+      "line": 2188,
       "text": "let legacySafe = false;",
       "occurrence": 1,
       "kind": "branch",
@@ -3251,7 +3251,7 @@
     {
       "id": "1ecfed26a6aa0def645ac6f1",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2183,
+      "line": 2193,
       "text": "legacySafe = candidateProof.result.ok;",
       "occurrence": 1,
       "kind": "branch",
@@ -3261,7 +3261,7 @@
     {
       "id": "edf0e3fc3497136ebaa963f1",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2185,
+      "line": 2195,
       "text": "catch { legacySafe = false; }",
       "occurrence": 1,
       "kind": "branch",
@@ -3271,7 +3271,7 @@
     {
       "id": "e5cb6e4dec5a8f917dd5bdab",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2186,
+      "line": 2196,
       "text": "if (!legacySafe) {",
       "occurrence": 1,
       "kind": "branch",
@@ -3281,7 +3281,7 @@
     {
       "id": "c859106a778d2f12e09d6da7",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2200,
+      "line": 2210,
       "text": "// The first edit of a pre-v9 document must derive identity and legacy",
       "occurrence": 1,
       "kind": "branch",
@@ -3291,7 +3291,7 @@
     {
       "id": "7fbdb3ef309741914cbc00f7",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2203,
+      "line": 2213,
       "text": "// Materialise that baseline locally, then replay the edited legacy",
       "occurrence": 1,
       "kind": "branch",
@@ -3301,7 +3301,7 @@
     {
       "id": "e1bfb911226cbbbc07f7fbb4",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2219,
+      "line": 2229,
       "text": "// legacy `walls[]` projection. Replay it onto the baseline catalogue",
       "occurrence": 1,
       "kind": "branch",
@@ -3311,7 +3311,7 @@
     {
       "id": "50b74e55662a3941209f458f",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 2794,
+      "line": 2815,
       "text": "// truth and drawing can continue when malformed legacy geometry exists.",
       "occurrence": 1,
       "kind": "branch",
@@ -3321,7 +3321,7 @@
     {
       "id": "080706b5fde2bef93d56202a",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 3236,
+      "line": 3257,
       "text": "const newPoly = polys[id]; // compatibility records map whole user-facing runs",
       "occurrence": 1,
       "kind": "branch",
@@ -3331,7 +3331,7 @@
     {
       "id": "6b4fd9033997aa42bdbc1a37",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4036,
+      "line": 4061,
       "text": "// offset the shape already had: a legacy shape at 0.3013 stayed at 0.3013",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3341,7 +3341,7 @@
     {
       "id": "a6ae0ae5d36035282aa53d07",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4216,
+      "line": 4241,
       "text": "const legacyAttr = String(shape.attr ?? '').trim().toLowerCase() === 'state'",
       "occurrence": 1,
       "kind": "branch",
@@ -3351,7 +3351,7 @@
     {
       "id": "f9993219f010667b76854bf5",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4219,
+      "line": 4244,
       "text": "const legacyToken = !hasInline && !explicitUnit",
       "occurrence": 1,
       "kind": "branch",
@@ -3361,7 +3361,7 @@
     {
       "id": "0c17eed3f040e033f4d7cfe8",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4220,
+      "line": 4245,
       "text": "? liveTextToken(shape.entity, legacyAttr)",
       "occurrence": 1,
       "kind": "branch",
@@ -3371,7 +3371,7 @@
     {
       "id": "52b1b6e51cc0a60876c39eb1",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4222,
+      "line": 4247,
       "text": "const preserveLegacy = !!String(shape.entity ?? '').trim() && !hasInline",
       "occurrence": 1,
       "kind": "branch",
@@ -3381,7 +3381,7 @@
     {
       "id": "fc4c92040eaf2352c0c0fbc4",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4223,
+      "line": 4248,
       "text": "&& (!legacyToken || !!explicitUnit);",
       "occurrence": 1,
       "kind": "branch",
@@ -3391,7 +3391,7 @@
     {
       "id": "1d4af8a3fd11cf5576d0e960",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4224,
+      "line": 4249,
       "text": "if (legacyToken && !preserveLegacy) {",
       "occurrence": 1,
       "kind": "branch",
@@ -3401,7 +3401,7 @@
     {
       "id": "61585affe6c39169d0cb0fd7",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4227,
+      "line": 4252,
       "text": "? text.slice(0, slot) + legacyToken + text.slice(slot + 2)",
       "occurrence": 1,
       "kind": "branch",
@@ -3411,7 +3411,7 @@
     {
       "id": "f3ce97c145cdd44b91d31af0",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4228,
+      "line": 4253,
       "text": ": `${text}${text ? ' ' : ''}${legacyToken}`;",
       "occurrence": 1,
       "kind": "branch",
@@ -3421,7 +3421,7 @@
     {
       "id": "963fcca1ed3765dff058a951",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4237,
+      "line": 4262,
       "text": "preserveLegacy: preserveLegacy || undefined,",
       "occurrence": 1,
       "kind": "branch",
@@ -3431,7 +3431,7 @@
     {
       "id": "856a43f3b813481b7b1d0229",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4262,
+      "line": 4287,
       "text": "// unrepresentable legacy link; the stale side fields can now be dropped.",
       "occurrence": 1,
       "kind": "branch",
@@ -3441,7 +3441,7 @@
     {
       "id": "2b068f5df61666fd8546ddfe",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4263,
+      "line": 4288,
       "text": "this.host._decorTextDialog = { ...d, text, preserveLegacy: undefined };",
       "occurrence": 1,
       "kind": "branch",
@@ -3451,7 +3451,7 @@
     {
       "id": "0aa1f07331bc66fe65e5ab88",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4288,
+      "line": 4313,
       "text": "// A legacy unit or non-canonical attribute cannot be represented by",
       "occurrence": 1,
       "kind": "branch",
@@ -3461,7 +3461,7 @@
     {
       "id": "dbf96e260d48698c9b32e823",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4291,
+      "line": 4316,
       "text": "if (d.preserveLegacy) {",
       "occurrence": 1,
       "kind": "branch",
@@ -3471,7 +3471,7 @@
     {
       "id": "1661927b89da68e0d1eff6c6",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4346,
+      "line": 4371,
       "text": "const { width: _legacyWidth, line_style: _oldLineStyle, ...rest } = shape;",
       "occurrence": 1,
       "kind": "branch",
@@ -3481,7 +3481,7 @@
     {
       "id": "19d665f52557ae26d22fc708",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4359,
+      "line": 4384,
       "text": "const { width: _legacyWidth, angle: _oldAngle, flip_h: _oldFlipH,",
       "occurrence": 1,
       "kind": "branch",
@@ -3491,7 +3491,7 @@
     {
       "id": "c6fe0923d65b1e5f2347db5d",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4403,
+      "line": 4428,
       "text": "const { width: _legacyWidth, angle: _oldAngle, ...rest } = shape;",
       "occurrence": 1,
       "kind": "branch",
@@ -3501,7 +3501,7 @@
     {
       "id": "a922bc85f6931ab932d2ec83",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 4755,
+      "line": 4780,
       "text": "* transaction below and must never resurrect a compatibility mouse ghost. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3511,7 +3511,7 @@
     {
       "id": "0c07ce40c473ed6ff1ce1f9e",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 5697,
+      "line": 5722,
       "text": "// Remove exactly the carriers being restored before the compatibility",
       "occurrence": 1,
       "kind": "branch",
@@ -3521,7 +3521,7 @@
     {
       "id": "1568632378ff3fcf66627b38",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 5742,
+      "line": 5767,
       "text": "// explicit zero chosen by the user, not a missing compatibility record.",
       "occurrence": 1,
       "kind": "branch",
@@ -3531,7 +3531,7 @@
     {
       "id": "6ce0192a5efc80731b62b8c3",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 5929,
+      "line": 5954,
       "text": "const hosted = resolvePartitionOpeningCompat({",
       "occurrence": 1,
       "kind": "branch",
@@ -3541,7 +3541,7 @@
     {
       "id": "dc3e7f71e2cb05785e25bf0f",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 6252,
+      "line": 6350,
       "text": ": resolvePartitionOpeningCompat(",
       "occurrence": 1,
       "kind": "branch",
@@ -3551,7 +3551,7 @@
     {
       "id": "d1d14305d9827232f8dc865a",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 6273,
+      "line": 6371,
       "text": "const sibling = resolvePartitionOpeningCompat(",
       "occurrence": 1,
       "kind": "branch",
@@ -3561,7 +3561,7 @@
     {
       "id": "be2dfdcadb16b21781b7bdee",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 6476,
+      "line": 6574,
       "text": "// and rooms need not be grid-aligned (imported/legacy polygons), so snapping",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3571,7 +3571,7 @@
     {
       "id": "f2ebfdd8cc974f9c8f6723ab",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 7004,
+      "line": 7108,
       "text": "// full extent of legacy midpoint-only wall keys; after the mutation that",
       "occurrence": 1,
       "kind": "branch",
@@ -3581,7 +3581,7 @@
     {
       "id": "38b7b15b00c5141668dc6acb",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 7585,
+      "line": 7690,
       "text": "// effective projection; a legacy self-reference is not a light source.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3591,7 +3591,7 @@
     {
       "id": "aa243c10b488ad4d9527fe0e",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8104,
+      "line": 8209,
       "text": "// Rebinding or replacing a legacy tombstone changed the icon id.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3601,7 +3601,7 @@
     {
       "id": "7f9ed28fd0d689a022cefb54",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8728,
+      "line": 8834,
       "text": "|| !supportApiCompatible(this.host._haSupportApi)) return;",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3611,7 +3611,7 @@
     {
       "id": "6f7164f44f027488ca5fe160",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8839,
+      "line": 8945,
       "text": "if (!current || !supportApiCompatible(this.host._haSupportApi)) return;",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3621,7 +3621,7 @@
     {
       "id": "0fb61e586141c330fd29d6ca",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8913,
+      "line": 9019,
       "text": "const compatible = supportApiCompatible(this.host._haSupportApi);",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3631,7 +3631,7 @@
     {
       "id": "ffcdc556fa159a4e71d6df14",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8947,
+      "line": 9053,
       "text": "${compatible ? html`",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3641,7 +3641,7 @@
     {
       "id": "cb0d6db984755716927be9a2",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8973,
+      "line": 9079,
       "text": "<span>${st(packageVersion === 2 ? 'support.attach' : 'support.attach_legacy')}</span>",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3651,7 +3651,7 @@
     {
       "id": "0ee3401cf6427d5935ba07e5",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8975,
+      "line": 9081,
       "text": "<p id=\"support-attach-hint\" class=\"rhint\">${st(packageVersion === 2 ? 'support.attach_hint' : 'support.attach_hint_legacy')}</p>",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3661,7 +3661,7 @@
     {
       "id": "7a2b1a38f95536187108c8da",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 8976,
+      "line": 9082,
       "text": "${packageVersion === 1 ? html`<p class=\"rhint\" role=\"note\">${st('support.legacy_diagnostics')}</p>` : nothing}",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3671,7 +3671,7 @@
     {
       "id": "cb3e3419dfb1e145156ce7f4",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9063,
+      "line": 9169,
       "text": "${compatible && state.status !== 'success' ? html`",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3681,7 +3681,7 @@
     {
       "id": "1865934756602df8e07ee9e2",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9395,
+      "line": 9501,
       "text": "${d.kind === 'full' ? html`<div class=\"rhint\">${this._toolsT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3691,7 +3691,7 @@
     {
       "id": "bc49fdf7f85032e84f4712f3",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9446,
+      "line": 9552,
       "text": "const keptOffWalls = detachedOpenings + (Number(repairs.legacy_detached) || 0);",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3701,7 +3701,7 @@
     {
       "id": "963bf8c353351c78ebf2e121",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9492,
+      "line": 9598,
       "text": "virtual: String(p.bindings.virtual || 0), legacy: String(p.legacy_positions || 0),",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3711,7 +3711,7 @@
     {
       "id": "19f817187a86b0330fd0752a",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9640,
+      "line": 9746,
       "text": "// Legacy absence means static; new installations/spaces materialise daynight.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -3721,7 +3721,7 @@
     {
       "id": "99e359ec10b25e40d25655ae",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 9844,
+      "line": 9951,
       "text": "// HP-1540-04: legacy rectangle rooms (x/y/w/h) are still first-class;",
       "occurrence": 1,
       "kind": "branch",
@@ -3731,7 +3731,7 @@
     {
       "id": "cafcaae07d11dcf11169b819",
       "path": "src/houseplan-editor-runtime.ts",
-      "line": 10429,
+      "line": 10536,
       "text": ": resolvePartitionOpeningCompat(",
       "occurrence": 2,
       "kind": "branch",
@@ -4401,7 +4401,7 @@
     {
       "id": "441ce56efc7bbde015ef3053",
       "path": "src/physical-geometry.ts",
-      "line": 365,
+      "line": 366,
       "text": "// Keep the normal merged-floor semantics for overlapping legacy rooms.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -4889,19 +4889,9 @@
       "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
     },
     {
-      "id": "5e3ee32f706176deb8cbe73a",
-      "path": "src/space-geometry.ts",
-      "line": 20,
-      "text": "/** Static keeps the legacy wall output of doors/windows/gates. Only a passage",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
-    },
-    {
       "id": "16610afb4f24d9ed88426bfb",
       "path": "src/space-geometry.ts",
-      "line": 73,
+      "line": 46,
       "text": "*   plan_scale     — legacy uniform fallback for both sides;",
       "occurrence": 1,
       "kind": "branch",
@@ -4911,7 +4901,7 @@
     {
       "id": "3adbf6b6b8f0deb25be40186",
       "path": "src/space-geometry.ts",
-      "line": 126,
+      "line": 99,
       "text": "/** Legacy rectangle rooms, normalised: a negative size is the same rectangle",
       "occurrence": 1,
       "kind": "exclusion",
@@ -4921,7 +4911,7 @@
     {
       "id": "c8da4005f938a6a928e826d2",
       "path": "src/space-geometry.ts",
-      "line": 163,
+      "line": 136,
       "text": "// Missing remains the historical 5 cm for stored-config compatibility.",
       "occurrence": 1,
       "kind": "exclusion",
@@ -4931,7 +4921,7 @@
     {
       "id": "9f4129414228d46fbe779ee3",
       "path": "src/space-geometry.ts",
-      "line": 303,
+      "line": 276,
       "text": "/** The room's own bounding box as a content item (polygon or legacy rect). */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -4941,7 +4931,7 @@
     {
       "id": "d63cb44ba055ab63a445dc8d",
       "path": "src/space-geometry.ts",
-      "line": 487,
+      "line": 460,
       "text": "*  view_box HINT, else the legacy unit square (docs/CANVAS.md §4). */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5019,36 +5009,6 @@
       "reason": "Persisted representation: grp_<HA-area> and old/missing space references. A missing HA roster or ambiguous owner prevents a total migration. Current f1 hint alone is not ownership; keep refusal/proof paths."
     },
     {
-      "id": "6a3c2c68a3cbd6387366812f",
-      "path": "src/space-render.ts",
-      "line": 37,
-      "text": "partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpeningCompat,",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
-    },
-    {
-      "id": "68c4823347b53b34a20d8d38",
-      "path": "src/space-render.ts",
-      "line": 388,
-      "text": "// Contour-wall hosts keep the same saved x/y/angle projection as legacy",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
-    },
-    {
-      "id": "f1ed138e1e21655b9c17943b",
-      "path": "src/space-render.ts",
-      "line": 392,
-      "text": "const resolved = resolvePartitionOpeningCompat(",
-      "occurrence": 1,
-      "kind": "exclusion",
-      "owner": "current-feature",
-      "reason": "Current supported behavior/default, live safety/geometry proof or a canonical projection ABI; no superseded persisted representation."
-    },
-    {
       "id": "f9987f20fb3f344cfc5fe692",
       "path": "src/stairs.ts",
       "line": 127,
@@ -5081,7 +5041,7 @@
     {
       "id": "a8305cb9211bfaa30ea7a5e8",
       "path": "src/structural-space-record.ts",
-      "line": 41,
+      "line": 48,
       "text": "// The write canonicalizer drops these empty legacy collections. Both forms",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5091,7 +5051,7 @@
     {
       "id": "6edbac1df3984f4b011369bc",
       "path": "src/styles/devices.styles.ts",
-      "line": 113,
+      "line": 105,
       "text": "/* The surface resolves compatibility icon_size units once. The shared",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5101,7 +5061,7 @@
     {
       "id": "d18c09402235089346e062a3",
       "path": "src/styles/devices.styles.ts",
-      "line": 451,
+      "line": 443,
       "text": "background: rgba(62, 166, 255, 0.22); /* fallback for old WebViews */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5141,7 +5101,7 @@
     {
       "id": "7d9297ae93cee879828cf2a7",
       "path": "src/summary-panel-runtime-loaded.ts",
-      "line": 171,
+      "line": 175,
       "text": "/** Re-apply the per-card authority instead of the legacy kiosk seed. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5151,7 +5111,7 @@
     {
       "id": "4eee5b7c6e4dc2da267d7089",
       "path": "src/summary-panel-runtime-loaded.ts",
-      "line": 473,
+      "line": 459,
       "text": "let legacy: unknown = null;",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5161,7 +5121,7 @@
     {
       "id": "6c16a3e1dccc34ba3b0dd4da",
       "path": "src/summary-panel-runtime-loaded.ts",
-      "line": 476,
+      "line": 462,
       "text": "try { legacy = JSON.parse(localStorage.getItem(SUMMARY_PANEL_LEGACY_SCALE_KEY) || 'null'); } catch { storageAvailable = false; }",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5171,7 +5131,7 @@
     {
       "id": "0d39a6081972726c3cb3f8ac",
       "path": "src/summary-panel-runtime-loaded.ts",
-      "line": 479,
+      "line": 465,
       "text": "this.local = parseSummaryLocal(raw, legacy);",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5371,7 +5331,7 @@
     {
       "id": "4f667dd142049b4542927d8f",
       "path": "src/types.ts",
-      "line": 419,
+      "line": 420,
       "text": "/** Central registry decision. Virtual/legacy items are active. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5381,7 +5341,7 @@
     {
       "id": "73f2445df195f52b80a0eddb",
       "path": "src/types.ts",
-      "line": 455,
+      "line": 456,
       "text": "/** @deprecated Ignored since v1.38.1 — per-marker `tap_action` only.",
       "occurrence": 1,
       "kind": "branch",
@@ -5651,7 +5611,7 @@
     {
       "id": "5ead4e8f8c9d2172f36219b4",
       "path": "src/wall-face-graph.ts",
-      "line": 52,
+      "line": 59,
       "text": "/** Compatibility projection for a session token written by the old toolbar. */",
       "occurrence": 1,
       "kind": "exclusion",
@@ -5921,7 +5881,7 @@
     {
       "id": "f758520a8d53afcf3634496f",
       "path": "src/wall-segment-model.ts",
-      "line": 425,
+      "line": 431,
       "text": "// Canonical cm:0 atoms stay zero; a LEGACY cut spares the atom that",
       "occurrence": 1,
       "kind": "branch",
@@ -5931,7 +5891,7 @@
     {
       "id": "fc1a1e6c41d76ee0b550c9b3",
       "path": "src/wall-segment-model.ts",
-      "line": 428,
+      "line": 434,
       "text": "|| (coveredBy(legacyCuts) && !atomCarriesOpening(a, b));",
       "occurrence": 1,
       "kind": "branch",
@@ -5941,7 +5901,7 @@
     {
       "id": "b7222ada77bb3a1e2a3c0c5b",
       "path": "src/wall-segment-model.ts",
-      "line": 431,
+      "line": 437,
       "text": "// Re-add the owned field last on every pass.  Several legacy maintenance",
       "occurrence": 1,
       "kind": "branch",
@@ -5951,7 +5911,7 @@
     {
       "id": "e050befba45e8cc584d3fc13",
       "path": "src/wall-segment-model.ts",
-      "line": 741,
+      "line": 747,
       "text": "type LegacyRoomDraftSpace = {",
       "occurrence": 1,
       "kind": "branch",
@@ -5961,7 +5921,7 @@
     {
       "id": "e0767c0647279a3421eb269d",
       "path": "src/wall-segment-model.ts",
-      "line": 757,
+      "line": 763,
       "text": "const LEGACY_DRAFT_POINT_EPSILON = 0.001;",
       "occurrence": 1,
       "kind": "branch",
@@ -5971,7 +5931,7 @@
     {
       "id": "ea1821d0e228d233fb8f5596",
       "path": "src/wall-segment-model.ts",
-      "line": 758,
+      "line": 764,
       "text": "const LEGACY_NUMBER = /^[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?$/;",
       "occurrence": 1,
       "kind": "branch",
@@ -5981,7 +5941,7 @@
     {
       "id": "fe749cc1d2af51eeabe09f66",
       "path": "src/wall-segment-model.ts",
-      "line": 760,
+      "line": 766,
       "text": "const legacyFiniteNumber = (value: unknown): number | null => {",
       "occurrence": 1,
       "kind": "branch",
@@ -5991,7 +5951,7 @@
     {
       "id": "135b84fd9ea3a86457f31ae8",
       "path": "src/wall-segment-model.ts",
-      "line": 762,
+      "line": 768,
       "text": "if (typeof value === 'string' && !LEGACY_NUMBER.test(value.trim())) return null;",
       "occurrence": 1,
       "kind": "branch",
@@ -6001,7 +5961,7 @@
     {
       "id": "a8b58cb09ef08a8da9469e65",
       "path": "src/wall-segment-model.ts",
-      "line": 767,
+      "line": 773,
       "text": "const legacyDraftPoint = (value: unknown): Point | null => {",
       "occurrence": 1,
       "kind": "branch",
@@ -6011,7 +5971,7 @@
     {
       "id": "097a653be8f7f9e310be4ca8",
       "path": "src/wall-segment-model.ts",
-      "line": 769,
+      "line": 775,
       "text": "const x = legacyFiniteNumber(value[0]), y = legacyFiniteNumber(value[1]);",
       "occurrence": 1,
       "kind": "branch",
@@ -6021,7 +5981,7 @@
     {
       "id": "a73d03ab249afac8a5b920d1",
       "path": "src/wall-segment-model.ts",
-      "line": 773,
+      "line": 779,
       "text": "const legacyIdentity = (value: unknown): string => typeof value === 'string' ? value : '';",
       "occurrence": 1,
       "kind": "branch",
@@ -6031,7 +5991,7 @@
     {
       "id": "0264b7baee293bf21c8e8579",
       "path": "src/wall-segment-model.ts",
-      "line": 776,
+      "line": 782,
       "text": "space: LegacyRoomDraftSpace,",
       "occurrence": 1,
       "kind": "branch",
@@ -6041,7 +6001,7 @@
     {
       "id": "f59a2af62be450166d392252",
       "path": "src/wall-segment-model.ts",
-      "line": 804,
+      "line": 810,
       "text": "const draftIdentity = legacyIdentity(draft?.id);",
       "occurrence": 1,
       "kind": "branch",
@@ -6051,7 +6011,7 @@
     {
       "id": "a0c21f102a083f37b0d291d2",
       "path": "src/wall-segment-model.ts",
-      "line": 810,
+      "line": 816,
       "text": "const a = legacyDraftPoint(points[index]), b = legacyDraftPoint(points[index + 1]);",
       "occurrence": 1,
       "kind": "branch",
@@ -6061,7 +6021,7 @@
     {
       "id": "7ab3e164bb6ad800f9c1d6d6",
       "path": "src/wall-segment-model.ts",
-      "line": 812,
+      "line": 818,
       "text": "if (!a || !b || samePoint(a, b, LEGACY_DRAFT_POINT_EPSILON))",
       "occurrence": 1,
       "kind": "branch",
@@ -6071,7 +6031,7 @@
     {
       "id": "49ba4622943f1bcc3c1cf2a6",
       "path": "src/wall-segment-model.ts",
-      "line": 814,
+      "line": 820,
       "text": "const cm = legacyFiniteNumber(segment?.cm);",
       "occurrence": 1,
       "kind": "branch",
@@ -6081,7 +6041,7 @@
     {
       "id": "aa026f2224bad014213bf95c",
       "path": "src/wall-segment-model.ts",
-      "line": 820,
+      "line": 826,
       "text": "legacyIdentity(space.id), a, b,",
       "occurrence": 1,
       "kind": "branch",
@@ -6091,7 +6051,7 @@
     {
       "id": "5c2a113c50d877386a24431d",
       "path": "src/wall-segment-model.ts",
-      "line": 838,
+      "line": 844,
       "text": "* Narrow legacy adapter used before Optimize geometry repair. Unlike the full",
       "occurrence": 1,
       "kind": "branch",
@@ -6101,7 +6061,7 @@
     {
       "id": "04b8101381ae636a01c594a0",
       "path": "src/wall-segment-model.ts",
-      "line": 841,
+      "line": 847,
       "text": "export const migrateLegacyRoomDraftsToPartitionsInPlace = (",
       "occurrence": 1,
       "kind": "branch",
@@ -6111,7 +6071,7 @@
     {
       "id": "4ea1049fc3f67820a6c4f1a4",
       "path": "src/wall-segment-model.ts",
-      "line": 842,
+      "line": 848,
       "text": "space: LegacyRoomDraftSpace,",
       "occurrence": 2,
       "kind": "branch",

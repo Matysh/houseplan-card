@@ -37,7 +37,9 @@ import { partitionOpeningFace } from './partition-openings';
 import {
   openingVisibleBounds, renderOpeningVisibleGeometry, type OpeningVisibleSpec,
 } from './render/opening-symbol';
-import { activeRegistryHass, fullRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
+import {
+  activeRegistryHass, fullRegistryHass, renderOpeningEntityAvailable, type HaRegistrySnapshot,
+} from './ha-binding-status';
 import {
   deviceAccessibleLabel, deviceA11yState, resolveDevicePresentation,
   type PresentationActivityRuntime, type ResolvedDevicePresentation,
@@ -923,12 +925,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const openingSymbols = disp.hideOpenings ? [] : keyed(space.id, repeat<GeometryOpeningProjection>(
     projectedOpenings.filter((opening) => opening.type !== 'passage'),
     (opening, index) => opening.id || index, (opening) => {
-    const entity = opening.type === 'passage' || !opening.contact
+    const available = renderOpeningEntityAvailable(planHass, opening.contact);
+    const entity = opening.type === 'passage' || !opening.contact || !available
       ? null : planHass.states?.[opening.contact];
     const amount = openingAmount(
       opening.type, entity?.state, !!opening.invert, entity?.attributes?.current_position,
     );
-    const active = amount > 0 && !!opening.contact;
+    const active = amount > 0 && available;
     const spec = visibleSpec(opening, amount, wallStroke, active ? 'var(--hp-open)' : wallStroke);
     return svg`<g class="opening static-opening" data-hp="opening"
       data-id=${opening.id} data-kind=${opening.type} pointer-events="none"

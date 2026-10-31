@@ -61,6 +61,10 @@ const out=await page.evaluate(async ({fixture,diagonalFixture,beforeOnly})=>{
   const geometryBefore=root().querySelector('.wallbodies')?.innerHTML;
   await states('unavailable',null);
   result.contactDoesNotChangeMasonry=root().querySelector('.wallbodies')?.innerHTML===geometryBefore&&box()===stableBox;
+  const withoutContact={...c.hass.states};delete withoutContact['cover.synthetic_door'];
+  const missingHass={...c.hass,states:withoutContact};c.hass=missingHass;el.hass=missingHass;await update();
+  const leafFill=(r)=>opening('wall-door',r)?.querySelector('.op-leaf rect')?.getAttribute('fill');
+  result.missingContactHasFullPlanNeutralTone=leafFill(root())===leafFill(c.shadowRoot)&&box()===stableBox;
   await T.setServerConfig(cfg=>{cfg.spaces[0].openings[0].invert=true;});
   await until(()=>el._snap?.config?.spaces[0].openings[0].invert===true);
   await states('closed',0);

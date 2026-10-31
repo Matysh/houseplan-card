@@ -42,11 +42,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 11 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 103 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 106 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 67 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
-| Custom-element and HA browser lifecycle | 281 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **576 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| Custom-element and HA browser lifecycle | 282 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
+| **Total** | **580 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 
 
@@ -137,6 +137,10 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+- `static-room-opening-symbols-omitted-1171`
+- `static-frame-omits-opening-envelope-1171`
+- `static-opening-missing-contact-looks-active-1171`
 
 - `dialog-footer-leaks-into-body-1145`
 - `summary-touch-sticky-hover-1145`
@@ -700,6 +704,8 @@ The invariant depends on measured element boxes, responsive breakpoints, native/
 - `space-delete-block-leaves-focus-behind`
 
 ### Custom-element and HA browser lifecycle
+
+- `static-wall-cut-cache-ignores-opening-geometry-1171`
 
 - `header-menu-item-keeps-menu-open`
 - `header-menu-escape-ignored`
@@ -1344,9 +1350,11 @@ as a mutant; the ordinary fixed-source smoke must pass before handoff.
 
 #1171 registers `static-room-opening-symbols-omitted-1171`,
 `static-wall-cut-cache-ignores-opening-geometry-1171` and
-`static-frame-omits-opening-envelope-1171` against the actual space-card smoke.
+`static-frame-omits-opening-envelope-1171` and
+`static-opening-missing-contact-looks-active-1171` against the actual space-card smoke.
 These guard painted shared symbols, event-driven masonry freshness and measured
 leaf bounds at360/780px; pure projection/cache tests cannot prove those assembled
-browser results. The accepted-code BEFORE misses symbols/cuts/tunnels. Existing
+browser results. Missing-contact fill paint has an ordinary RED before its fix.
+The accepted-code BEFORE misses symbols/cuts/tunnels. Existing
 #764 identity anchors follow the replacement shared list. Definitions only:
 static readiness is not mutation execution or a caught verdict.

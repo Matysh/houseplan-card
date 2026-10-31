@@ -15390,6 +15390,13 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'static-opening-missing-contact-looks-active-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: the actual static leaf must retain full-plan neutral paint when its configured contact is absent from projected HA state.',
+    patches: [{file:'src/space-render.ts',find:'    const active = amount > 0 && available;',
+      replace:'    const active = amount > 0 && !!opening.contact;'}],
+  },
+  {
     id: 'static-wall-cut-cache-ignores-opening-geometry-1171',
     guard: 'node demo/smoke_static_wall_openings.mjs',
     because: '#1171: moving/resizing/deleting an opening must replace its old masonry cut on a retained configuration.',
