@@ -121,7 +121,7 @@ def limit_segments(space: dict[str, Any]) -> list[dict[str, Any]]:
 
 def check_nodes(segments: list[dict[str, Any]]) -> list[tuple[str, str, float, float]]:
     """П1 + П2: valence of a node and the narrowest wedge in it."""
-    rays: dict[str, list[tuple[float, list, list]]] = {}
+    rays: dict[str, list[tuple[float, list[float], list[float]]]] = {}
     for segment in segments:
         for start, end in ((segment["a"], segment["b"]), (segment["b"], segment["a"])):
             rays.setdefault(_key(start), []).append(
@@ -159,7 +159,7 @@ def check_nodes(segments: list[dict[str, Any]]) -> list[tuple[str, str, float, f
     return violations
 
 
-def _stored_wall_contact(point: list, a: list, b: list, *, finite: bool = True) -> bool:
+def _stored_wall_contact(point: list[float], a: list[float], b: list[float], *, finite: bool = True) -> bool:
     """Storage-only finite-ray proof; mirrors storedWallContact(..., false)."""
     def uncertainty(value: float) -> float:
         steps = value * LATTICE_GRID_N
