@@ -22089,7 +22089,7 @@ const roomContact1061Cases = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/room-contact-grid.test.mjs',
     because: '#1061: topology-close incompatible source endpoints cannot authorize a moved persisted representative; ordinary conflicting-source input must refuse deterministically.',
     patches: [{file:'src/wall-face-graph.ts',
-      find:'  return ordered.every(item => item.point.every((value, axis) =>\n    Math.abs(value - point[axis]) <= roundoff)) ? [...point] : null;',
+      find:'  return ordered.every(item => item.point.every((value, axis) =>\n    Math.abs(value - point[axis]) <= roundoff)\n    || (hasEndpoint && !item.endpoint\n      && storedWallContact(point, item.source.a, item.source.b, coordinateScale, false))) ? [...point] : null;',
       replace:'  return [...point];'}],
   },
   {
@@ -22538,7 +22538,25 @@ const uiPolish1145Cases = [
  {id:'disabled-kit-loses-pointer-hit-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC3: native disabled keeps not-allowed hit cursor and remains inert.',patches:[{file:'src/styles/dialogs.styles.ts',find:'.btn[disabled] {\n      opacity: 0.5;\n      cursor: not-allowed;',replace:'.btn[disabled] {\n      opacity: 0.5;\n      pointer-events: none;'}]},
  {id:'ordinary-color-target40-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC4: ordinary trigger is44px; compact swatch remains36px.',patches:[{file:'src/hp-color-opacity.ts',find:'.trigger {\n      width: 44px;\n      height: 44px;',replace:'.trigger {\n      width: 40px;\n      height: 40px;'}]},
 ];
-export const MUTANTS = [...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+// #1166: declarations for nightly; no mutant execution during this task.
+const wallContact1166Cases = [
+  {id:'stored-t-room-recognition-1166',guard:'node --test test/room-contact-storage.test.mjs',
+    because:'#1166 both original closed contours must be recognized without Optimize.',
+    patches:[{file:'src/wall-face-graph.ts',find:'return [...preferred];',replace:'return null;'}]},
+  {id:'optimize-independent-wall-ends-1166',guard:'node --test test/room-contact-storage.test.mjs',
+    because:'#1166 Optimize must preserve the finite shared T instead of rounding its Cartesian ends independently.',
+    patches:[{file:'src/align-grid.ts',find:'const wallPoint = alignedWallPoints(sp, snapN);',replace:'const wallPoint = (point: readonly number[]) => point.map(snapN);'}]},
+  {id:'shared-ray-angle-proof-1166',guard:'node --test test/junction-limits.test.mjs',
+    because:'#1166 distinguish a storage-rounded coincident carrier from a real authored acute angle.',
+    patches:[{file:'src/junction-limits.ts',find:'if (!sameRay && degrees > EPS && degrees < smallest)',replace:'if (degrees > EPS && degrees < smallest)'}]},
+  {id:'carrier-chain-gap-proof-1166',guard:'python -m pytest -q tests_backend/test_wall_contact_storage.py',
+    because:'#1166 an ordinary representation-only promotion must refuse a broken chain, changed host geometry or metadata.',
+    patches:[{file:'custom_components/houseplan/partition_promotion.py',find:'if abs(lo - covered) > _EPS:',replace:'if False:'}]},
+  {id:'existing-wall-ownership-proof-1166',guard:'python -m pytest -q tests_backend/test_wall_contact_storage.py',
+    because:'#1166 a new room on existing physical walls is allowed only with a complete exact identity ring.',
+    patches:[{file:'custom_components/houseplan/validation.py',find:'if len(poly) < 3 or len(poly) != len(ids):',replace:'if False:'}]},
+];
+export const MUTANTS = [...wallContact1166Cases,...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

@@ -13,6 +13,8 @@
 */
 
 import { GRID_STEP_N } from './space-geometry';
+import { WALL_INCIDENT_EPS as INCIDENT_EPS } from './wall-incidence';
+import { storedWallContact } from './stored-wall-contact';
 import {
   innerContourForRoom, multiWallNodesForGeometry, wallBodiesGeometry,
   type MultiWallNodeMap, type WallBodiesGeometryResult, type WallEntry,
@@ -133,7 +135,7 @@ const EPS = 1e-9;
  * orders above the storage grid (1e-9), orders below any meaningful plan
  * gap (the smallest rule threshold is 5 cm ≈ 4e-4).
  */
-const INCIDENT_EPS = 2e-7;
+// Shared with structural contact recognition; the existing bound is unchanged.
 const KEY_FACTOR = 1e7;
 /**
  * #331 §2.1: quantised with the repository's canonicalisation formula —
@@ -168,11 +170,11 @@ export function checkNodes(
   segments: readonly LimitSegment[],
   { minAngleDeg = MIN_JUNCTION_ANGLE_DEG, maxValence = MAX_JUNCTION_VALENCE } = {},
 ): JunctionLimitViolation[] {
-  const rays = new Map<string, number[]>();
+  const rays = new Map<string, { angle: number; from: number[]; to: number[] }[]>();
   for (const segment of usableSegments(segments)) {
     for (const [from, to] of [[segment.a, segment.b], [segment.b, segment.a]]) {
       const list = rays.get(key(from)) || [];
-      list.push(angleBetween(from, to));
+      list.push({ angle: angleBetween(from, to), from, to });
       rays.set(key(from), list);
     }
   }
@@ -182,13 +184,20 @@ export function checkNodes(
       violations.push({ rule: 'valence', subject: node, actual: angles.length, limit: maxValence });
     }
     if (angles.length < 2) continue;
-    const sorted = [...angles].sort((x, y) => x - y);
+    const sorted = [...angles].sort((x, y) => x.angle - y.angle);
     let smallest = Infinity;
     for (let index = 0; index < sorted.length; index++) {
-      const next = sorted[(index + 1) % sorted.length];
-      let delta = next - sorted[index];
+      const left = sorted[index], right = sorted[(index + 1) % sorted.length];
+      let delta = right.angle - left.angle;
       if (index === sorted.length - 1) delta += Math.PI * 2;
       const degrees = (delta * 180) / Math.PI;
+      // A short atom and its longer co-located carrier can differ after
+      // nine-decimal storage. Prove that same finite ray, rather than widening
+      // the angular tolerance for arbitrary authored walls or nearby nodes.
+      const sameOrigin = left.from.every((value, axis) => value === right.from[axis]);
+      const sameRay = degrees < 90 && sameOrigin && (
+        storedWallContact(left.to, right.from, right.to, 1, false)
+        || storedWallContact(right.to, left.from, left.to, 1, false));
       // A ~0° pair is NOT a violation — and cannot be (#331 revision 4,
       // learned in the field): a shared wall of two adjacent rooms is two
       // co-located owner atoms ON ONE LINE, so every shared-wall node
@@ -196,7 +205,7 @@ export function checkNodes(
       // until its wall lands on a neighbour's is an ordinary edit. An exact
       // duplicate wall is therefore indistinguishable from the shared-wall
       // model at this level and stays a KNOWN LIMITATION of П1.
-      if (degrees > EPS && degrees < smallest) smallest = degrees;
+      if (!sameRay && degrees > EPS && degrees < smallest) smallest = degrees;
     }
     if (smallest < minAngleDeg - 1e-9) {
       violations.push({ rule: 'angle', subject: node, actual: smallest, limit: minAngleDeg });

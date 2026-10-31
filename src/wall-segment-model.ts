@@ -8,7 +8,7 @@
  */
 
 import {
-  canonicalizeConfigGeometryInPlace, LATTICE_NOISE_STEPS,
+  canonicalizeConfigGeometryInPlace, canonicalizeLatticeCoordinate, LATTICE_NOISE_STEPS,
 } from './coordinate-canonicalization';
 import { compareCodePoints } from './codepoint-order';
 import { roomPoly, samePoint } from './logic';
@@ -360,6 +360,12 @@ const buildAtoms = (
       [...(space.walls || []), ...openingEdgeBreaks],
     );
     if (!atomic || atomic.poly.length < 3) throw new WallSegmentModelError('invalid-room', id);
+    // Derived cuts must cross the storage boundary BEFORE atom identity is
+    // assigned. Rounding two almost-equal atoms only at the final write could
+    // persist identical spans under different IDs and break the next edit.
+    atomic.poly = atomic.poly.map(p => [
+      Number(canonicalizeLatticeCoordinate(p[0])), Number(canonicalizeLatticeCoordinate(p[1])),
+    ]);
     const oldIds = Array.isArray(rawRoom.wall_ids) ? rawRoom.wall_ids : [];
     const indexedLineageIsValid = oldIds.length === original.length;
     let rigidDelta: [number, number] | null = null;

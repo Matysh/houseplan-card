@@ -1,5 +1,12 @@
 # Project status
 
+Room creation and Optimize (#1166) share proved stored wall contacts. Closed
+contours work without prior Optimize; derived cuts acquire identity after the
+existing storage canonicalization. Ordinary room writes retain unsafe partial
+opening hosts and independently prove full carrier promotion or ownership of
+existing wall atoms. Real gaps, stale contour edits and new geometry violations
+remain refusals. New Optimize diagnostics belong to #1170.
+
 Native Grep diagnostics (#1134) distinguish reported input-validation/tool errors
 without admitting missing journals. A pinned native pre-hook rejection path is
 reproduced with an isolated synthetic provider; historical refusals remain.
@@ -156,7 +163,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.83.0` |
 | Latest prerelease tag | `v1.83.0-beta.6` |
-| Tests | Node unit 5920 · pure backend 710 · HA-harness backend 613 · browser smokes 490 (`npm run inventory`) |
+| Tests | Node unit 5930 · pure backend 716 · HA-harness backend 614 · browser smokes 492 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

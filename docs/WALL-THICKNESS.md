@@ -991,6 +991,30 @@ wall search, authored-debt allowance, changed grid or relaxed off-grid counter
 is introduced. T/X/overlap provenance and the existing materialization/lineage
 barriers remain part of the same transaction.
 
+## Stored contacts in room creation and Optimize (#1166)
+
+The structural source graph distinguishes a topology key from a proved physical
+contact. A finite interior T may reuse the unchanged normalized P4 incidence
+quantum (2e-7); independent authored ends and ambiguous carriers may not. Source
+intersections are canonicalized at the existing storage boundary before atom
+identity selection. Only accepted vertices from a fresh source graph authorize
+inherited off-grid scalars during ordinary room materialization.
+
+Optimize aligns connected finite carriers and their incident ends together,
+including hosted-opening fit and overlap checks. Unsupported constraint cycles
+freeze that structural component; independent geometry remains eligible. No
+read, View update or pointermove rewrites the saved plan.
+
+Ordinary room creation retains partial opening carriers when their proposed
+rehost requires Optimize permission. Fully consumed carriers may become a
+continuous chain of room-owned atoms only after an independent server proof of
+coverage, thickness, stored axis, old interior T endpoints and unchanged opening
+geometry/metadata. An existing physical wall catalogue may acquire or lose a room
+owner only through a complete exact wall-ID ring, with common contours unchanged.
+The stale-client guard and real gap/host/angle negatives remain enforced. A
+storage-proved shorter ray on the same exact origin is one carrier, rather than
+an acute wedge; this does not increase the angular threshold.
+
 ## Physical writer proof reuse (#1099)
 
 The ordinary physical write barrier shares one successful wall pass per exact

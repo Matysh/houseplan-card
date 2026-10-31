@@ -39,6 +39,8 @@ export interface CoincidentPartitionOptions {
   coordScale: number;
   /** Room creation consumes every coincident carrier, including duplicates. */
   allowCoincidentPartitions?: boolean;
+  /** Ordinary room creation cannot use Optimize's partial rehost grant. */
+  preservePartialOpeningHosts?: boolean;
   /**
    * Optional writer-owned scope.  Optimize and room acceptance omit it and
    * retain their full-space behaviour; a completed wall chain supplies the
@@ -459,6 +461,13 @@ export function reconcileCoincidentPartitions(
       openingReplacement.set(opening.id, rebound);
     }
     if (!residualBindingsOk) continue;
+    // Unlike explicit Optimize, ordinary config/set grants no general rehost
+    // permission when the original partition still survives.
+    if (options.preservePartialOpeningHosts && nextPartitions.some(partition => partition.id === source.id)
+      && resolvedHosted.some(({ opening }) => {
+        const replacement = openingReplacement.get(opening.id);
+        return replacement?.host?.kind !== 'partition' || replacement.host.id !== source.id;
+      })) continue;
 
     const nextOpenings = openings.map((opening) => openingReplacement.get(opening.id) || opening);
     const convertedOpenings = [...rehosted.keys()].map((id) => openingReplacement.get(id)!);

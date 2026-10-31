@@ -68,7 +68,7 @@ function acceptFaces(before, options = {}, settle = true) {
     id: `accepted-${index}`, name: `Accepted ${index}`, area: null,
     poly: ring.map(normalized),
     wall_ids: selectWallFaceLineage(ring.map(modelPoint), initialModel.partitions,
-      new Set(), GRID_PITCH * 0.0002),
+      new Set(), GRID_PITCH * 0.0002, initialModel.wall_segments),
   }));
   space.rooms.push(...newRooms);
   for (const room of newRooms) {
@@ -83,6 +83,7 @@ function acceptFaces(before, options = {}, settle = true) {
   const reconciled = reconcileCoincidentPartitions(space, spaceModels(candidate)[0], space.walls, [], {
     pitch: GRID_STEP_N, cellCm: fixture.cellCm, gridPitch: GRID_PITCH,
     coordScale: NORM_W, allowCoincidentPartitions: true,
+    preservePartialOpeningHosts: true,
   });
   for (const key of ['walls', 'partitions', 'openings']) {
     if (reconciled[key].length) space[key] = reconciled[key];
@@ -250,12 +251,13 @@ if (process.argv.includes('--emit-backend-fixtures')) {
     const { host: oldHost, ...oldData } = oldOpening;
     const { host, ...data } = opening;
     assert.deepEqual(data, oldData, 'absolute geometry and all metadata are preserved');
-    if (options.openingY === 122) {
-      assert.equal(host.kind, 'wall');
-      assert.equal(space.wall_segments.filter((wall) => wall.id === host.id).length, 1);
+    if (options.openingY !== 100) {
+      assert.deepEqual(host, oldHost, 'retain the carrier when partial rehosting would fail ordinary config/set');
+      assert.deepEqual(space.partitions.find(wall => wall.id === oldHost.id),
+        before.spaces[0].partitions.find(wall => wall.id === oldHost.id));
     } else {
       assert.equal(host.kind, 'partition');
-      assert.equal(host.id === oldHost.id, options.openingY === 100);
+      assert.equal(host.id, oldHost.id);
       assert.notEqual(host.t, oldHost.t, 'the parameter changes to preserve world position');
       const resolved = resolvePartitionOpeningStrict(opening, space.partitions, 1,
         fixture.cellCm, GRID_STEP_N).resolved;
@@ -288,8 +290,13 @@ if (process.argv.includes('--emit-backend-fixtures')) {
       assert.deepEqual(captured.before, makeBefore(scenario.options), 'capture input matches the synthetic seed');
       const crossCm = captured.before.spaces[0].partitions.find((wall) => wall.id === 'top-source').cm;
       const replay = acceptFaces(captured.before, { crossCm });
-      assert.deepEqual(comparableNewIdentities(replay, captured.before),
-        comparableNewIdentities(captured.after, captured.before), 'capture matches current frontend stages');
+      if (captured.expectedPartitionHostResult === 'reject') {
+        assert.deepEqual(replay.spaces[0].openings, captured.before.spaces[0].openings,
+          'current producer avoids the historical rejected rehost; keep the frozen negative for Python');
+      } else {
+        assert.deepEqual(comparableNewIdentities(replay, captured.before),
+          comparableNewIdentities(captured.after, captured.before), 'capture matches current frontend stages');
+      }
       assertIdentity(captured.after.spaces[0]);
       assert.deepEqual(commitWallSegmentModel(captured.after).config, captured.after);
       assert.equal(checkSpacePhysicalGeometry(captured.after, captured.after.spaces[0].id).ok, true);
