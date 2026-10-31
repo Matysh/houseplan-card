@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   hexToRgb, hsvToHex, hsvToRgb, normalizeHexColor, normalizeHue, rgbToHex, rgbToHsv,
 } from '../test-build/color-picker.js';
+import { settingsActionsCss } from '../test-build/styles/settings-action.styles.js';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 test('hex drafts accept only three or six digits and normalize on commit', () => {
@@ -57,7 +58,8 @@ test('the shared component keeps its API and contains no nested native color pic
     'confirm: string', "confirm: 'OK'",
   ]) assert.match(component, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(component, /<button class="confirm" type="button"[^>]*@click=/);
-  assert.match(component, /\.confirm\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-height:\s*44px;/);
+  assert.match(component, /\.confirm\s*\{\s*width:\s*100%;/);
+  assert.match(settingsActionsCss('.confirm', ''), /min-height:var\(--hpf-action-height,44px\)/);
   assert.match(component, /@media \(forced-colors:\s*active\)[\s\S]*?\.confirm\s*\{[\s\S]*?background:\s*Highlight;/);
   assert.ok(component.indexOf('<button class="confirm"') > component.indexOf('this.showOpacity ? html`<div class="row">'),
     'the confirmation remains the final picker control after the optional opacity row');

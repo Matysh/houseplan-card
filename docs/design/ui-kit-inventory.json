@@ -622,7 +622,7 @@
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "help": [
-          "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
+          "L|hp-help.ts:trigger uses existing settings 22px / 1.06 hover adapter; no focus or help-text change|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ],
         "section-heading": [
           "K|styles/form-kit.styles.ts:shared heading; styles/form-kit-settings.styles.ts:heading values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -664,7 +664,7 @@
           "K|styles/form-kit.styles.ts:shared callout; styles/form-kit-settings.styles.ts:callout values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "help": [
-          "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
+          "L|hp-help.ts + settings-dialogs.styles.ts: existing settings help target/hover adapter|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -687,10 +687,10 @@
           "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
-          "L|editors/general-settings-dialog.ts:167-173 colorField() in .hpf-color-with-action|styles/settings-dialogs.styles.ts:33-34,styles/settings-dialogs.styles.ts:43,styles/settings-dialogs.styles.ts:44-45"
+          "K|editors/general-settings-dialog.ts + styles/form-kit.styles.ts:colorField/textFieldsCss and shared settingsActionsCss; duplicate 48px overrides removed|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-secondary": [
-          "L|editors/general-settings-dialog.ts:173 'btn ghost' gs-bg-reset|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|editors/general-settings-dialog.ts + styles/form-kit.styles.ts:colorField/textFieldsCss and shared settingsActionsCss; duplicate 48px overrides removed|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "card/group": [
           "N|editors/settings-background-previews.ts:7-15|styles/settings-dialogs.styles.ts:102,113-120"
@@ -710,7 +710,7 @@
       ],
       "cells": {
         "input": [
-          "L|editors/general-settings-dialog.ts:77-86 colorTile()/colorTiles()|styles/settings-dialogs.styles.ts:35,styles/settings-dialogs.styles.ts:36,styles/settings-dialogs.styles.ts:40"
+          "L|settings-dialogs.styles.ts:hpf-colortile-labelled finite label/meta/swatch dimensions over common colorTile; retained accepted compact tile composition|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ],
         "section-heading": [
           "K|editors/general-settings-dialog.ts:184-186 subsection()|styles/settings-dialogs.styles.ts:30"
@@ -734,10 +734,10 @@
       "cells": {
         "input": [
           "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
-          "M|editors/settings-north.ts:17-62 custom dial button role=slider + native range|styles/settings-dialogs.styles.ts:124-130,styles/settings-dialogs.styles.ts:181-182"
+          "L|settings-north.ts/settings-dialogs.styles.ts: specialized angular slider dial and SVG geometry retain local paint; no generic text field override|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ],
         "checkbox/radio": [
-          "M|sun-settings-view.ts:17-19 .hpf-ray-choice radio cards with svg previews|styles/settings-dialogs.styles.ts:103-112"
+          "L|sun-settings-view.ts + settings-dialogs.styles.ts:hpf-ray-choice graphical radio previews retain selected figure border and SVG painting|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ],
         "toggle": [
           "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -763,10 +763,10 @@
       ],
       "cells": {
         "toggle": [
-          "L|hp-zigbee-topology-settings.ts:505-508 hand-written <label class='hpf-toggle hpf-noico|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+          "K|hp-zigbee-topology-settings.ts:embedded product composition; common textFieldsCss, hpf-toggle, readingKitStyles heading/divider and Form Kit notes; one stylesheet owner per root|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "input": [
-          "L|hp-zigbee-topology-settings.ts:416-419 textarea.hpf-input|hp-zigbee-topology-settings.ts:104-105,hp-zigbee-topology-settings.ts:106"
+          "K|hp-zigbee-topology-settings.ts:embedded product composition; common textFieldsCss, hpf-toggle, readingKitStyles heading/divider and Form Kit notes; one stylesheet owner per root|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-secondary": [
           "K|hp-zigbee-topology-settings.ts:392,489 class='btn ghost' buttons|hp-zigbee-topology-settings.ts:84,hp-zigbee-topology-settings.ts:114"
@@ -778,16 +778,16 @@
           "K|hp-zigbee-topology-settings.ts:217 hp-help"
         ],
         "callout/note": [
-          "L|hp-zigbee-topology-settings.ts:512 .hpf-callout|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+          "K|hp-zigbee-topology-settings.ts:embedded product composition; common textFieldsCss, hpf-toggle, readingKitStyles heading/divider and Form Kit notes; one stylesheet owner per root|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "section-heading": [
-          "L|hp-zigbee-topology-settings.ts:487 .provider-heading h4 vs 498 .hpf-sub|hp-zigbee-topology-settings.ts:108-110"
+          "K|hp-zigbee-topology-settings.ts:embedded product composition; common textFieldsCss, hpf-toggle, readingKitStyles heading/divider and Form Kit notes; one stylesheet owner per root|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "separator": [
-          "L|hp-zigbee-topology-settings.ts:389 .scan-row|hp-zigbee-topology-settings.ts:115"
+          "K|hp-zigbee-topology-settings.ts:embedded product composition; common textFieldsCss, hpf-toggle, readingKitStyles heading/divider and Form Kit notes; one stylesheet owner per root|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "empty/loading/error": [
-          "M|hp-zigbee-topology-settings.ts:393,400,404,410,420 .status/.warning|hp-zigbee-topology-settings.ts:79,hp-zigbee-topology-settings.ts:93"
+          "K|hp-zigbee-topology-settings.ts:embedded product composition; common textFieldsCss, hpf-toggle, readingKitStyles heading/divider and Form Kit notes; one stylesheet owner per root|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -804,25 +804,25 @@
       ],
       "cells": {
         "list-row": [
-          "M|editors/external-screens.ts:83-85 .hp-screen-row/.hp-screen-edit|editors/external-screens.ts:70,editors/external-screens.ts:71-72"
+          "K|editors/external-screens.ts + styles/external-screens.styles.ts layout only; readingKitStyles block/empty and settingsActionsCss option/icon variants|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-icon": [
-          "L|editors/external-screens.ts:86,90 'btn ghost hp-screen-icon'|editors/external-screens.ts:67"
+          "K|editors/external-screens.ts + styles/external-screens.styles.ts layout only; readingKitStyles block/empty and settingsActionsCss option/icon variants|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-secondary": [
-          "L|editors/external-screens.ts:105 add|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|editors/external-screens.ts + styles/external-screens.styles.ts layout only; readingKitStyles block/empty and settingsActionsCss option/icon variants|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-primary": [
-          "L|editors/external-screens.ts:108 'btn on' create|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+          "K|editors/external-screens.ts + styles/external-screens.styles.ts layout only; readingKitStyles block/empty and settingsActionsCss option/icon variants|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "input": [
-          "L|editors/external-screens.ts:88 readonly hpf-input|editors/external-screens.ts:73"
+          "K|editors/external-screens.ts + styles/external-screens.styles.ts layout only; readingKitStyles block/empty and settingsActionsCss option/icon variants|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "empty/loading/error": [
-          "M|editors/external-screens.ts:107 .hp-screen-empty; 103 .hpf-error|editors/external-screens.ts:68-69"
+          "K|editors/external-screens.ts + styles/external-screens.styles.ts layout only; readingKitStyles block/empty and settingsActionsCss option/icon variants|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "callout/note": [
-          "L|editors/external-screens.ts:79,80 .hpf-hint|editors/external-screens.ts:68,styles/settings-dialogs.styles.ts:61"
+          "K|editors/external-screens.ts + styles/external-screens.styles.ts layout only; readingKitStyles block/empty and settingsActionsCss option/icon variants|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -853,10 +853,10 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
-          "L|editors/external-screens.ts:139 .hpf-note.hpf-hint.hp-screen-note|styles/settings-dialogs.styles.ts:148,editors/external-screens.ts:74"
+          "K|editors/external-screens.ts shared Form Kit fields/callout; external-screens.styles.ts composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "help": [
-          "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
+          "L|hp-help.ts + settings-dialogs.styles.ts: existing settings help target/hover adapter|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -872,13 +872,13 @@
       ],
       "cells": {
         "btn-secondary": [
-          "L|editors/general-settings-dialog.ts:260,270,274,279,283 class='btn' (+ha-icon)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|editors/general-settings-dialog.ts shared actions, hpf-link and hpf-callout; converter placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "text-link": [
-          "L|editors/general-settings-dialog.ts:288 a.hpf-link|styles/settings-dialogs.styles.ts:123"
+          "K|editors/general-settings-dialog.ts shared actions, hpf-link and hpf-callout; converter placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "callout/note": [
-          "M|editors/general-settings-dialog.ts:290 <p class=rhint>|styles/chrome.styles.ts:411-415"
+          "K|editors/general-settings-dialog.ts shared actions, hpf-link and hpf-callout; converter placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -895,26 +895,26 @@
       ],
       "cells": {
         "btn-primary": [
-          "M|hp-color-opacity.ts:1065 button.confirm|hp-color-opacity.ts:463-475,hp-color-opacity.ts:476-479,hp-color-opacity.ts:522"
+          "K|hp-color-opacity.ts shared color primitive; textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss, floatingSurfaceCss and controlSurfaceFrames; trigger/preview share one checkerboard rule|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "input": [
-          "M|hp-color-opacity.ts:1043-1049 hex text, 1055-1059 opacity number|hp-color-opacity.ts:426-436,hp-color-opacity.ts:446-453",
+          "K|hp-color-opacity.ts shared color primitive; textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss, floatingSurfaceCss and controlSurfaceFrames; trigger/preview share one checkerboard rule|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json",
           "N|hp-color-opacity.ts:1008-1041 SV field + HSV range tracks|hp-color-opacity.ts:306-425"
         ],
         "checkbox/radio": [
-          "M|hp-color-opacity.ts:1064 native checkbox (allowNoFill)"
+          "K|hp-color-opacity.ts shared color primitive; textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss, floatingSurfaceCss and controlSurfaceFrames; trigger/preview share one checkerboard rule|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-icon": [
-          "L|hp-color-opacity.ts:1088-1096 .trigger swatch button|hp-color-opacity.ts:186-228,hp-color-opacity.ts:230-237"
+          "K|hp-color-opacity.ts shared color primitive; textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss, floatingSurfaceCss and controlSurfaceFrames; trigger/preview share one checkerboard rule|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "menu": [
-          "M|hp-color-opacity.ts:1002 .picker popover role=dialog|hp-color-opacity.ts:238-259"
+          "K|hp-color-opacity.ts shared color primitive; textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss, floatingSurfaceCss and controlSurfaceFrames; trigger/preview share one checkerboard rule|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "motion-open-close": [
-          "M|hp-color-opacity.ts:694-697 WAAPI|hp-color-opacity.ts:694-697"
+          "K|hp-color-opacity.ts shared color primitive; textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss, floatingSurfaceCss and controlSurfaceFrames; trigger/preview share one checkerboard rule|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "empty/loading/error": [
-          "M|hp-color-opacity.ts:1050 .error|hp-color-opacity.ts:454-458"
+          "K|hp-color-opacity.ts shared color primitive; textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss, floatingSurfaceCss and controlSurfaceFrames; trigger/preview share one checkerboard rule|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -932,7 +932,7 @@
       "cells": {
         "input": [
           "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
-          "L|editors/space-form.ts:314,416 colorField()|styles/settings-dialogs.styles.ts:43-45"
+          "K|editors/space-form.ts and saved plans use readingKitStyles block/file-list and shared Form Kit fields/notes/links; local image geometry and grid placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "select": [
           "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -947,19 +947,19 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "card/group": [
-          "M|editors/space-form.ts:298 .hpf-plan-image|styles/settings-dialogs.styles.ts:77-78,styles/settings-dialogs.styles.ts:81"
+          "K|editors/space-form.ts and saved plans use readingKitStyles block/file-list and shared Form Kit fields/notes/links; local image geometry and grid placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "list-row": [
-          "M|houseplan-editor-runtime.ts:8390-8406 .savedplans/.savedplan|styles/dialogs.styles.ts:290-329"
+          "K|editors/space-form.ts and saved plans use readingKitStyles block/file-list and shared Form Kit fields/notes/links; local image geometry and grid placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "empty/loading/error": [
-          "M|houseplan-editor-runtime.ts:8386-8388 .savedplans.muted loading/empty|styles/dialogs.styles.ts:290-309"
+          "K|editors/space-form.ts and saved plans use readingKitStyles block/file-list and shared Form Kit fields/notes/links; local image geometry and grid placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "callout/note": [
-          "L|editors/space-form.ts:154,248,264 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+          "K|editors/space-form.ts and saved plans use readingKitStyles block/file-list and shared Form Kit fields/notes/links; local image geometry and grid placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "text-link": [
-          "L|editors/space-form.ts:421,435 textLink() in .hpf-context-links|styles/settings-dialogs.styles.ts:89"
+          "K|editors/space-form.ts and saved plans use readingKitStyles block/file-list and shared Form Kit fields/notes/links; local image geometry and grid placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -998,13 +998,13 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
-          "L|editors/room-settings-dialog.ts:208,265 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+          "K|editors/room-settings-dialog.ts shared callout/head and finite settings Form Kit recipe|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "card/group": [
           "N|editors/room-settings-dialog.ts:267 .hpf-tint.hpf-preview roomCardPreview|styles/settings-dialogs.styles.ts:139-140"
         ],
         "section-heading": [
-          "L|editors/room-settings-dialog.ts:127 single section|styles/settings-dialogs.styles.ts:131-135"
+          "K|editors/room-settings-dialog.ts shared callout/head and finite settings Form Kit recipe|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1025,14 +1025,14 @@
       "cells": {
         "input": [
           "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
-          "L|editors/marker-dialog.ts:610 ha-icon-picker + iconPickerKit()|styles/settings-dialogs.styles.ts:152,styles/settings-dialogs.styles.ts:153",
+          "K|editors/marker-dialog.ts shared fields/iconPickerKit/notes/chips and sections; duplicate note/chip/focus paint removed|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json",
           "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
           "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "segmented": [
-          "L|editors/marker-dialog.ts:272 segmented(name=bmode); 778 badge position|styles/settings-dialogs.styles.ts:143-144"
+          "L|settings-dialogs.styles.ts:hpf-seg bmode two-column caption fit; local 12px labels retained|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ],
         "toggle": [
           "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1041,13 +1041,13 @@
           "K|editors/marker-dialog.ts:250-254 label.hpf-check"
         ],
         "badge/chip": [
-          "L|editors/marker-dialog.ts:453-460,873-878 .hpf-chip|styles/settings-dialogs.styles.ts:151"
+          "K|editors/marker-dialog.ts shared fields/iconPickerKit/notes/chips and sections; duplicate note/chip/focus paint removed|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "list-row": [
           "K|editors/marker-dialog.ts:470-478 .hpf-panel/.hpf-list/.hpf-cand; 209 sourcePicker()"
         ],
         "callout/note": [
-          "L|editors/marker-dialog.ts:52-55 local note() -> .hpf-note; callout() 198,206,384,599,72|styles/settings-dialogs.styles.ts:148-149,styles/settings-dialogs.styles.ts:150,styles/settings-dialogs.styles.ts:58"
+          "K|editors/marker-dialog.ts shared fields/iconPickerKit/notes/chips and sections; duplicate note/chip/focus paint removed|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "text-link": [
           "K|editors/marker-dialog.ts:202,892 textLink()"
@@ -1062,13 +1062,13 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "empty/loading/error": [
-          "L|editors/marker-dialog.ts:826-829 tintBlock + .devicepreview-empty|styles/devices.styles.ts:663-675"
+          "K|editors/marker-dialog.ts shared fields/iconPickerKit/notes/chips and sections; duplicate note/chip/focus paint removed|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "separator": [
-          "L|editors/settings-sections.ts:49 <hr> before specialized sections|styles/settings-dialogs.styles.ts:22"
+          "K|editors/marker-dialog.ts shared fields/iconPickerKit/notes/chips and sections; duplicate note/chip/focus paint removed|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -1084,19 +1084,19 @@
       ],
       "cells": {
         "card/group": [
-          "M|hp-device-preview.ts:350 section.devicepreview|hp-device-preview.ts:419-427"
+          "K|hp-device-preview.ts:ensureFormKitStyles in its owning ShadowRoot, shared hpf-card/chip, settingsActionsCss demo actions and existing renderDeviceIssues disclosure/callout; preview scene remains its existing renderer|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "badge/chip": [
-          "M|hp-device-preview.ts:353 .previewbadge|hp-device-preview.ts:429-437"
+          "K|hp-device-preview.ts:ensureFormKitStyles in its owning ShadowRoot, shared hpf-card/chip, settingsActionsCss demo actions and existing renderDeviceIssues disclosure/callout; preview scene remains its existing renderer|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-secondary": [
-          "M|hp-device-preview.ts:397-410 button.previewdemo|hp-device-preview.ts:462-475"
+          "K|hp-device-preview.ts:ensureFormKitStyles in its owning ShadowRoot, shared hpf-card/chip, settingsActionsCss demo actions and existing renderDeviceIssues disclosure/callout; preview scene remains its existing renderer|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "callout/note": [
-          "M|hp-device-preview.ts:375 renderDeviceIssues() -> .device-issues|styles/dialogs.styles.ts:591-610"
+          "K|hp-device-preview.ts:ensureFormKitStyles in its owning ShadowRoot, shared hpf-card/chip, settingsActionsCss demo actions and existing renderDeviceIssues disclosure/callout; preview scene remains its existing renderer|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "disclosure": [
-          "M|hp-device-preview.ts:375 device issue <details><summary>|styles/dialogs.styles.ts:602-604"
+          "K|hp-device-preview.ts:ensureFormKitStyles in its owning ShadowRoot, shared hpf-card/chip, settingsActionsCss demo actions and existing renderDeviceIssues disclosure/callout; preview scene remains its existing renderer|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "list-row": [
           "N|hp-device-preview.ts:366-391 previewfacts/previewtable"
@@ -1114,26 +1114,26 @@
       ],
       "cells": {
         "btn-icon": [
-          "M|editors/marker-alerts.ts:148 button.alarm-add|styles/marker-alert-editor.styles.ts:5-6",
-          "M|editors/marker-alerts.ts:157 button.alarm-remove|styles/marker-alert-editor.styles.ts:16-18"
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json",
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "list-row": [
-          "M|editors/marker-alerts.ts:152-160 table.alarm-table (th inline style width:36px at 152 |styles/marker-alert-editor.styles.ts:7-10"
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "text-link": [
-          "M|editors/marker-alerts.ts:153 button.alarm-condition-edit|styles/marker-alert-editor.styles.ts:24-25"
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "empty/loading/error": [
-          "M|editors/marker-alerts.ts:160 .alarm-empty|styles/marker-alert-editor.styles.ts:11-12"
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-primary": [
-          "L|editors/marker-alerts.ts:160 'btn on alarm-create'|styles/marker-alert-editor.styles.ts:13,styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58"
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "section-heading": [
-          "L|editors/marker-alerts.ts:147 .hpf-head.alarm-heading|styles/marker-alert-editor.styles.ts:3-4,styles/settings-dialogs.styles.ts:26,styles/settings-dialogs.styles.ts:27"
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "card/group": [
-          "L|editors/marker-alerts.ts:147 section.hpf-card|styles/settings-dialogs.styles.ts:25,styles/settings-dialogs.styles.ts:133"
+          "K|editors/marker-alerts.ts uses iconActionStyles44, readingKitStyles hpf-table/label, Form Kit hint/link and common primary action; marker-alert-editor.styles.ts retains table composition only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -1159,7 +1159,7 @@
           "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
-          "L|editors/marker-alerts.ts:198 .hpf-callout.alarm-outcome|styles/marker-alert-editor.styles.ts:20-22"
+          "L|marker-alert-editor.styles.ts:alarm-outcome-heading retains accepted 16px nested icon/20px heading; outer callout is common Kit|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ],
         "btn-primary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1191,28 +1191,28 @@
           "K|editors/vacuum-settings-section.ts:119 disclosure(triggerClass 'btn ghostbtn')|styles/vacuum-settings.styles.ts:44"
         ],
         "list-row": [
-          "M|editors/vacuum-settings-section.ts:68,123 button.vacsource|styles/editor-dialogs.styles.ts:223-230,styles/vacuum-settings.styles.ts:42-43"
+          "K|editors/vacuum-settings-section.ts/vacuum-maps-section.ts shared callout, reading card/chip, settingsActionsCss picker/route actions and existing toggleRow; local map/route placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "select": [
           "K|editors/vacuum-settings-section.ts:146 hp-settings-select > select.areasel|styles/editor-dialogs.styles.ts:60-68"
         ],
         "btn-secondary": [
-          "L|editors/vacuum-settings-section.ts:178-182 'btn', 'btn ghostbtn' (no rule for ghostbtn|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|editors/vacuum-settings-section.ts/vacuum-maps-section.ts shared callout, reading card/chip, settingsActionsCss picker/route actions and existing toggleRow; local map/route placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "card/group": [
-          "M|editors/vacuum-maps-section.ts .vacroute|styles/vacuum-settings.styles.ts:26"
+          "K|editors/vacuum-settings-section.ts/vacuum-maps-section.ts shared callout, reading card/chip, settingsActionsCss picker/route actions and existing toggleRow; local map/route placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "badge/chip": [
-          "M|.vacroute-active|styles/vacuum-settings.styles.ts:28"
+          "K|editors/vacuum-settings-section.ts/vacuum-maps-section.ts shared callout, reading card/chip, settingsActionsCss picker/route actions and existing toggleRow; local map/route placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "callout/note": [
-          "M|editors/vacuum-settings-section.ts:103 div.warn, 115/138/141 .rhint|styles/chrome.styles.ts:411-415"
+          "K|editors/vacuum-settings-section.ts/vacuum-maps-section.ts shared callout, reading card/chip, settingsActionsCss picker/route actions and existing toggleRow; local map/route placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "toggle": [
-          "L|vacuum toggles via toggleRow()|styles/vacuum-settings.styles.ts:10,styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51"
+          "K|editors/vacuum-settings-section.ts/vacuum-maps-section.ts shared callout, reading card/chip, settingsActionsCss picker/route actions and existing toggleRow; local map/route placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "empty/loading/error": [
-          "M|.vacuum-history-status|styles/vacuum-settings.styles.ts:19"
+          "K|editors/vacuum-settings-section.ts/vacuum-maps-section.ts shared callout, reading card/chip, settingsActionsCss picker/route actions and existing toggleRow; local map/route placement only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -1228,25 +1228,25 @@
       ],
       "cells": {
         "card/group": [
-          "L|editors/radar-section.ts:281-282 fieldset.radargroup.hpf-card + legend.hpf-head|styles/settings-dialogs.styles.ts:155,styles/settings-dialogs.styles.ts:159,styles/editor-dialogs.styles.ts:109-125"
+          "L|settings-dialogs.styles.ts:radargroup/legend existing fieldset reset and radar setup heading dimensions|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ],
         "input": [
-          "M|editors/radar-section.ts:409-419 <input class=tempin> (X/Y/heading/range/fov)|styles/editor-dialogs.styles.ts:100-101,133-136,styles/settings-dialogs.styles.ts:164-166"
+          "K|editors/radar-section.ts:tempin hpf-input uses common textFieldsCss44; existing actions keep common settings painter and guards|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "select": [
           "K|editors/radar-section.ts:138,286,294,316,322,357,363,393,424 hp-settings-select > sele"
         ],
         "btn-danger": [
-          "L|editors/radar-section.ts:119,459 'btn danger'; 306,343,376 'btn ghost danger'|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68"
+          "K|editors/radar-section.ts:tempin hpf-input uses common textFieldsCss44; existing actions keep common settings painter and guards|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "btn-secondary": [
-          "L|editors/radar-section.ts:335,355,386,431-437|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|editors/radar-section.ts:tempin hpf-input uses common textFieldsCss44; existing actions keep common settings painter and guards|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "help": [
           "K|editors/radar-section.ts:306 .hpf-action-help"
         ],
         "empty/loading/error": [
-          "M|editors/radar-section.ts:442 <p class=error>; 443 .radarinspection|styles/editor-dialogs.styles.ts:137-144"
+          "L|editor-dialogs.styles.ts:radarinspection retains its specialized diagnostic code panel; ordinary fields use Kit44|#1149 explicit retained boundary; docs/design/ui-kit-audit-1149.json"
         ]
       }
     },
@@ -1266,7 +1266,7 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "toggle": [
-          "L|summary-panel-editor.ts:52-61,87-96 label.summary-switch|summary-panel-editor-style.ts:91-131,summary-panel-editor-style.ts:132-133"
+          "K|summary-panel-editor.ts common hpf-toggle, reading block/chip/chrome/divider, hpf-panel and shared error/hint/labelrow; native IDs/hooks/ARIA/handlers remain; editor stylesheet owns layout only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "input": [
           "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1285,16 +1285,16 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "list-row": [
-          "M|summary-panel-editor.ts:107 article.summary-editor-block, 196 .summary-editor-value, 2|summary-panel-editor-style.ts:154-171,summary-panel-editor-style.ts:212-223,summary-panel-editor-style.ts:274-291"
+          "K|summary-panel-editor.ts common hpf-toggle, reading block/chip/chrome/divider, hpf-panel and shared error/hint/labelrow; native IDs/hooks/ARIA/handlers remain; editor stylesheet owns layout only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "menu": [
-          "M|summary-panel-editor.ts:240 .summary-source-picker inline panel|summary-panel-editor-style.ts:251-266"
+          "K|summary-panel-editor.ts common hpf-toggle, reading block/chip/chrome/divider, hpf-panel and shared error/hint/labelrow; native IDs/hooks/ARIA/handlers remain; editor stylesheet owns layout only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "badge/chip": [
-          "M|summary-panel-editor.ts:103 .summary-block-count|summary-panel-editor-style.ts:145-153"
+          "K|summary-panel-editor.ts common hpf-toggle, reading block/chip/chrome/divider, hpf-panel and shared error/hint/labelrow; native IDs/hooks/ARIA/handlers remain; editor stylesheet owns layout only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "section-heading": [
-          "L|summary-panel-editor.ts:76,99 h3|summary-panel-editor-style.ts:46,summary-panel-editor-style.ts:134-144"
+          "K|summary-panel-editor.ts common hpf-toggle, reading block/chip/chrome/divider, hpf-panel and shared error/hint/labelrow; native IDs/hooks/ARIA/handlers remain; editor stylesheet owns layout only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ],
         "card/group": [
           "K|styles/form-kit.styles.ts:formKitCardsCss/extrasCss; styles/form-kit-settings.styles.ts:card values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1303,7 +1303,7 @@
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "empty/loading/error": [
-          "M|summary-panel-editor.ts:148,174,276-277,316 .summary-problem/.summary-empty/.summary-r|summary-panel-editor-style.ts:299-303"
+          "K|summary-panel-editor.ts common hpf-toggle, reading block/chip/chrome/divider, hpf-panel and shared error/hint/labelrow; native IDs/hooks/ARIA/handlers remain; editor stylesheet owns layout only|#1149 source ownership and native/golden proof in docs/design/ui-kit-audit-1149.json"
         ]
       }
     },

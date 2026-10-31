@@ -1,3 +1,4 @@
+import { formKitErrorCss, formKitTextareaCss } from './form-input.styles';
 import { settingsTextLinkCss } from './settings-action.styles';
 import { controlReducedMotionCss } from './ui-motion.styles';
 import { formKitValue, formKitRecipeCss, type FormKitRecipe } from './form-kit-parameters';
@@ -161,7 +162,7 @@ function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
  * вторую строку целыми кнопками (`flex-wrap`), а не ломает текст.
  */
 /** Shared field paint; legacy output remains compatible with the frozen API. */
-function textFieldsCss(options: FormKitCssOptions, selectors: string): string {
+export function textFieldsCss(options: FormKitCssOptions, selectors: string): string {
   const { tokens } = options;
   return `  ${selectors} {
     box-sizing: border-box;
@@ -209,7 +210,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-labelrow { display: flex; align-items: center; gap: 4px; min-height: ${formKitValue(options, 'label-min-height', '32px')}; font-size: ${formKitValue(options, 'label-font-size', '.875rem')}; font-weight: ${formKitValue(options, 'label-font-weight', '600')}; color: ${formKitValue(options, 'label-color', `var(${tokens.muted})`)}; }
   .${p}-labelrow > label { cursor: pointer; }
   .${p}-hint { margin: 0; font-size: ${formKitValue(options, 'hint-font-size', '.875rem')}; line-height: ${formKitValue(options, 'hint-line-height', '1.5')}; color: var(${tokens.muted}); }
-  .${p}-error { margin: 0; font-size: .875rem; line-height: 1.5; color: var(${tokens.danger}); }
+${formKitErrorCss(`.${p}-error`, tokens.danger)}
   .${p}-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .${p}-grid.${p}-grid-narrow { grid-template-columns: minmax(0, 1fr) 175px; }
 ${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (options.parameterized ? ',\n  hp-dialog.ui-dialog :is(input[type=text],input[type=search],.supportmessage,.supportraw)' : ''))}  ${form} .${p}-select {
@@ -397,9 +398,11 @@ ${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (optio
     padding: 3px 10px 3px 3px;
     border: 1px solid var(${tokens.line});
     border-radius: 9px;
-    background: var(${tokens.canvas});
+    background: ${formKitValue(options, 'colorfield-background', `var(${tokens.canvas})`)};
   }
-  .${p}-colorfield > hp-color-opacity { flex: 0 0 auto; }
+${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:border-color 160ms ease; }
+  .${p}-colorfield:hover { border-color:var(${tokens.accent}); }
+` : ''}  .${p}-colorfield > hp-color-opacity { flex: 0 0 auto; }
   .${p}-hex { font-size: .875rem; color: var(${tokens.muted}); font-variant-numeric: tabular-nums; }
   .${p}-colorfield > .${p}-opacity { display: flex; align-items: center; gap: 8px; font-size: .875rem; color: var(${tokens.muted}); }
   .${p}-colorfield > .${p}-opacity > .${p}-unit { height: 38px; }
@@ -516,7 +519,7 @@ ${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (optio
   .${p}-note-warning { color: var(--warning-color, #b87940); }
   .${p}-hint-line { display: block; }
   .${p}-chip-warning { border-color: var(--warning-color, #b87940); color: var(--warning-color, #b87940); }
-  ${form} textarea.${p}-input { min-height: 96px; resize: vertical; line-height: 1.5; }
+${formKitTextareaCss(`${form} textarea.${p}-input`)}
   .${p}-preview { display: flex; justify-content: center; }
   @media (max-width: 480px) {
     .${p}-body { padding: 0 14px 14px; }

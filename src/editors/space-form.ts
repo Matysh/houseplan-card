@@ -297,7 +297,7 @@ function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateRes
   let filename = d.planFile?.name || d.planUrl?.split(/[?#]/)[0].split('/').pop() || t('space.no_plan');
   try { filename = decodeURIComponent(filename); } catch { /* Keep a readable legacy URL even with malformed escaping. */ }
   return html`${port.northControl
-    ? html`<div class="hpf-plan-image">${image}${!d.planFile && d.planUrl ? html`<span class="hpf-plan-filename">${filename}</span>` : nothing}</div>
+    ? html`<div class="hpf-plan-image hpf-reading-block hpf-reading-padded">${image}${!d.planFile && d.planUrl ? html`<span class="hpf-plan-filename">${filename}</span>` : nothing}</div>
         <div class="hpf-plan-actions">${actions}</div>`
     : html`<div class="planrow hpf-plan-upload">${image}${actions}</div>`}
     ${d.pickSaved ? port.renderServerPlans(d) : nothing}`;

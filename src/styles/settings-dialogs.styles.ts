@@ -1,3 +1,4 @@
+import { externalScreensCss } from './external-screens.styles';
 import { vacuumSettingsCss } from './vacuum-settings.styles';
 /** Shared, editor-only presentation for the four approved settings forms (#944).
  * Menus are owned by hp-settings-select; its hidden native child holds values only.
@@ -25,9 +26,6 @@ hp-dialog:is([data-kind=space],[data-kind=marker])[settings-layout]{--hp-dialog-
 .hpf-settings-pane .hpf-colortile-labelled > .hpf-colortile-swatch{min-height:34px;}
 .hpf-settings-pane .hpf-colortile-labelled .hpf-colortile-meta{justify-content:flex-start;gap:4px;font-size:12px;}
 .hpf-settings-pane .hpf-colortile-labelled .hpf-hex{font-size:12px;}
-.hpf-settings-pane .hpf-colorfield{background:var(--hpf-surface);}
-.hpf-settings-pane .hpf-colorfield{cursor:pointer;transition:border-color 160ms;}
-.hpf-settings-pane .hpf-colorfield:hover{border-color:var(--hpf-accent);}
 hp-dialog[settings-layout] .hpf-footer .hpf-status{margin:0 auto 0 0;font-size:11px;}
 .hpf-footer .hpf-save-label{transform:none;align-self:center;}
 .hpf-settings-pane .hpf-balanced{text-wrap:balance;}
@@ -37,7 +35,7 @@ hp-dialog[settings-layout] .hpf-footer .hpf-status{margin:0 auto 0 0;font-size:1
 .hpf-temperature-range > .hpf-field{display:flex;flex:1;min-width:0;gap:8px;align-items:center;}
 .hpf-temperature-range .hpf-unit{flex:0 1 96px;min-width:0;}
 .hpf-temperature-range .hpf-label{flex:none;}
-.hpf-plan-image{display:flex;align-items:center;gap:10px;min-height:148px;padding:12px;box-sizing:border-box;background:var(--hpf-canvas);border:1px solid var(--hpf-line);border-radius:7px;}
+.hpf-plan-image{display:flex;align-items:center;gap:10px;min-height:148px;}
 .hpf-plan-image:has(> .planname.muted){align-items:flex-end;}
 hp-dialog[data-kind="space"] .hpf-callout:has([data-action="space-delete-devices"]){border-radius:0;}
 hp-dialog[data-kind="space"] [data-action="space-delete-devices"]{display:flex;width:fit-content;max-width:100%;margin-top:12px;white-space:normal;}
@@ -48,15 +46,12 @@ hp-dialog[data-kind="space"] [data-action="space-delete-devices"]{display:flex;w
 .hpf-inherited-swatch{display:inline-block;width:24px;height:24px;border:1px solid var(--hpf-line);border-radius:5px;}
 .hpf-inherited-color{display:flex;align-items:center;gap:8px;color:var(--hpf-muted);font-size:12px;}
 .hpf-room-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px;margin-top:10px;}
-.hpf-context-links .hpf-link{font-size:12px;}
 hp-dialog[settings-layout] .hpf-footer-object{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;column-gap:8px;row-gap:10px;padding:12px 16px;}
 hp-dialog[settings-layout] .hpf-footer-object .hpf-status{grid-column:1 / -1;grid-row:1;}
 hp-dialog[settings-layout] .hpf-footer-object .dialog-action-copy{grid-column:1;grid-row:2;}
 hp-dialog[settings-layout] .hpf-footer-object .dialog-action-danger{grid-column:2;grid-row:2;margin:0;}
 hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:4;grid-row:2;margin:0;}
 .hpf-color-with-action{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px;}
-.hpf-color-with-action > button{min-height:48px;}
-.hpf-color-with-action > .hpf-colorfield{box-sizing:border-box;min-height:48px;}
 .hpf-background-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;margin-top:17px;}
 .hpf-ray-examples{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px;}
 .hpf-ray-choice{position:relative;min-width:0;border-radius:8px;cursor:pointer;}
@@ -77,7 +72,7 @@ hp-dialog[settings-layout] .hpf-footer-object .dialog-action-commit{grid-column:
 .hpf-background-rules{margin-top:14px;}
 .hpf-background-rules .hpf-hint{margin:0 0 7px;}
 .hpf-settings-pane [data-card=data] .hpf-actions{gap:10px;}
-.hpf-converter .hpf-link{display:inline-block;font-size:12px;padding:0;margin-bottom:7px;}
+.hpf-converter .hpf-link{display:inline-block;margin-bottom:7px;}
 .hpf-north-control{display:grid;grid-template-columns:148px minmax(0,1fr);align-items:center;gap:18px;}
 .hpf-north-dial{width:148px;height:148px;min-width:0;border:0;padding:0;border-radius:50%;background:transparent;color:var(--primary-text-color);cursor:pointer;touch-action:none;}
 .hpf-north-dial svg{width:100%;height:100%;font-size:10px;}
@@ -100,12 +95,7 @@ hp-dialog[data-kind=room][settings-layout] .hpf-grid{grid-template-columns:minma
 .hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}
 .hpf-settings-form .hpf-toolbar{flex-wrap:wrap;}
 .hpf-settings-form .hpf-toolbar > .hpf-callout{flex-basis:100%;}
-.hpf-settings-form .hpf-note{display:block;border-inline-start:3px solid var(--info-color,var(--primary-color));background:color-mix(in srgb,var(--info-color,var(--primary-color)) 10%,var(--hpf-surface));padding:10px 12px;}
-.hpf-settings-form .hpf-note-warning{border-color:var(--warning-color);background:color-mix(in srgb,var(--warning-color) 10%,var(--hpf-surface));}
 .hpf-settings-pane[data-settings-section=details] .hpf-field > .hpf-hint{margin-top:12px;}
-.hpf-settings-form .hpf-chip > button{flex:0 0 28px;width:28px;height:28px;min-width:28px;min-height:28px;padding:0;border-radius:50%;}
-.hpf-settings-form .hpf-iconfield .hpf-input:focus-visible{outline:none;box-shadow:none;}
-.hpf-settings-form ha-icon-picker{--mdc-outlined-text-field-focus-outline-color:var(--hpf-accent);}
 .hpf-settings-pane [data-state-source]{display:grid;gap:18px;}
 .hpf-settings-pane .radargroup{border:0;margin:0;padding:0;min-width:0;display:block;}
 .hpf-settings-pane .radarsetup-head{height:112px;align-items:start;}
@@ -197,4 +187,5 @@ ${settingsActionsCss('.hpf-settings-nav button', '[aria-current=page]', { varian
 ${settingsActionsCss('hp-dialog.ui-dialog .device-inbox-tabs button', '[aria-selected=true]', { variant: 'choice' })}
 ${settingsActionsCss('hp-dialog.ui-dialog .device-inbox-chips .chip button')}
 ${vacuumSettingsCss}
+${externalScreensCss}
 `;

@@ -145,19 +145,19 @@ export class MarkerAlertsEditor implements ReactiveController {
     const current = () => !!owner && this.current(owner);
     const fields = this.fields(), disabled = !current() || !rows || rows.length >= MAX_MARKER_ALERTS || !fields.length;
     return html`<section class="hpf-card"><div class="hpf-head alarm-heading"><h3>${st('marker.alerts.section')}</h3>
-      <button type="button" class="alarm-add" data-hp="alarm-add" ?disabled=${disabled}
+      <button type="button" class="alarm-add hpf-icon-action" data-hp="alarm-add" ?disabled=${disabled}
         title=${st('marker.alerts.add')} aria-label=${st('marker.alerts.add')} @click=${() => { if (current()) this.open(); }}><ha-icon icon="mdi:plus"></ha-icon></button></div><div class="hpf-body">
       ${!rows ? html`<p class="hpf-error" role="alert">${st('marker.alerts.invalid_rules')}</p><button type="button" class="btn ghost" @click=${() => {
         if (current() && this.host._markerDialog && this.host._markerDialog.alertSources === raw) this.host._markerDialog = { ...this.host._markerDialog, alertSources: undefined };
-      }}>${st('marker.alerts.clear')}</button>` : html`<table class="alarm-table"><thead><tr><th>${st('marker.alerts.condition')}</th><th>${st('marker.alerts.action')}</th><th style="width:36px"></th></tr></thead>
-      <tbody>${rows.length ? rows.map(rule => html`<tr data-alert-rule=${rule.id}><td><button type="button" class="alarm-condition-edit" data-hp="alarm-edit"
+      }}>${st('marker.alerts.clear')}</button>` : html`<table class="alarm-table hpf-table"><thead><tr><th>${st('marker.alerts.condition')}</th><th>${st('marker.alerts.action')}</th><th style="width:36px"></th></tr></thead>
+      <tbody>${rows.length ? rows.map(rule => html`<tr data-alert-rule=${rule.id}><td><button type="button" class="alarm-condition-edit hpf-link" data-hp="alarm-edit"
         aria-label=${st('marker.alerts.edit')} @click=${() => { if (current()) this.open(rule); }}><span class="alarm-condition"><span>${rule.attribute || st('marker.alerts.state')} <strong>${ALERT_OPERATOR_LABELS[rule.operator]}</strong> ${alertOperandText(rule.value)}</span>
-        <small>${rule.entity_id}${rule.attribute ? ` · ${rule.attribute}` : ''}</small></span></button>
+        <small class="hpf-hint">${rule.entity_id}${rule.attribute ? ` · ${rule.attribute}` : ''}</small></span></button>
         ${!fields.some(field => field.key === fieldKey(rule)) ? html`<p class="hpf-error" role="status">${st('marker.alerts.invalid_source')}</p>` : nothing}</td><td>${st(`marker.alerts.${rule.level}`)}</td>
-        <td><button type="button" class="alarm-remove" data-hp="alarm-remove" title=${st('marker.alerts.remove')} aria-label=${st('marker.alerts.remove')}
+        <td><button type="button" class="alarm-remove hpf-icon-action hpf-icon-danger" data-hp="alarm-remove" title=${st('marker.alerts.remove')} aria-label=${st('marker.alerts.remove')}
           @click=${() => { const draft = this.host._markerDialog; if (!current() || !draft || !(this.rows() || []).some(row => JSON.stringify(row) === JSON.stringify(rule))) return; const next = (this.rows() || []).filter(item => item.id !== rule.id);
             this.host._markerDialog = { ...draft, alertSources: next.length ? next : undefined }; }}><ha-icon icon="mdi:delete-outline"></ha-icon></button></td></tr>`)
-        : html`<tr><td colspan="3" class="alarm-empty"><div class="alarm-empty-content"><span>${st('marker.alerts.empty')}</span><button type="button" class="btn on alarm-create" data-hp="alarm-create"
+        : html`<tr><td colspan="3" class="alarm-empty hpf-reading-label"><div class="alarm-empty-content"><span>${st('marker.alerts.empty')}</span><button type="button" class="btn on alarm-create" data-hp="alarm-create"
           ?disabled=${disabled} @click=${() => { if (current()) this.open(); }}>${st('marker.alerts.create')}</button></div></td></tr>`}</tbody></table>`}
       ${!fields.length ? html`<p class="hpf-hint">${st('marker.alerts.no_sources')}</p>` : rows && rows.length >= MAX_MARKER_ALERTS ? html`<p class="hpf-hint">${st('marker.alerts.limit')}</p>` : nothing}</div></section>`;
   }

@@ -196,9 +196,9 @@ test('подсказка вызывается из блока настройки
   const source = readFileSync(
     new URL('../src/hp-zigbee-topology-settings.ts', import.meta.url), 'utf8',
   );
-  // Standalone keeps its heading help. The approved embedded settings place
-  // contextual help on the toggle/topics without duplicating the card heading.
-  assert.match(source, /<div class="section">\$\{this\._t\('title'\)\}\$\{this\._help\(\)\}<\/div>/);
+  // #1149 retires the unused standalone composition. Contextual help stays
+  // on the shared toggle rather than duplicating the outer card heading.
+  assert.match(source, /<span class="hpf-toggle-title hpf-balanced"><span>\$\{this\._t\('toggle'\)\}<\/span>\$\{this\._help\(\)\}/);
   assert.match(source, /<hp-help[^>]*\.text=/);
   // Fail-closed: оба ключа обязательны, иначе не рисуется ничего.
   assert.match(source, /hasTopologyTranslation\(lang, key\)/);

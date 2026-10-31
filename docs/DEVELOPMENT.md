@@ -1576,6 +1576,13 @@ without patching product code or executing mutants. Both form smokes retain
 their existing colour, draft/save/cancel, footer and overflow assertions and
 attest their actual launched Chromium. No product styles or golden change.
 
+Settings content (#1149) shares field/action/toggle/popover painters and native
+44px targets. The unchanged #1146 v1 census decreases CSS from6871 to6655 lines;
+other counters stay in their bands. Registry settings M=0/L=10, with each retained
+boundary documented in docs/design/ui-kit-audit-1149.json. Reproduce the synthetic
+pinned HA matrix with node demo/ui-lab/settings-content-audit.mjs; it does not
+claim live HA or GPU acceptance. Compact editor migration remains #1150.
+
 The existing lazy form kit owns explicit sections, independent Help/action
 regions and disclosures; see [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). The measured
 joint editor graph reached 325007 B gzip during integration (previous lazy

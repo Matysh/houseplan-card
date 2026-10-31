@@ -19486,8 +19486,8 @@ const MUTANT_DEFINITIONS = [
       + 'свой, компонент внутри — свой. Встроенный режим обязан заголовок не рисовать',
     patches: [{
       file: 'src/hp-zigbee-topology-settings.ts',
-      find: '    if (this.embedded) return this._renderEmbedded();',
-      replace: '    if (this.embedded && this.savedEnabled) return this._renderEmbedded();',
+      find: '    return this._renderEmbedded();',
+      replace: "    return html`<div class=\"section\">${this._t('title')}</div>${this._renderEmbedded()}`;",
     }],
   },
   {

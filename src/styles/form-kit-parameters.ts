@@ -19,6 +19,7 @@ export type FormKitParameter =
   | 'colorrow-align'
   | 'colorrow-min-height'
   | 'body-inset'
+  | 'colorfield-background'
   | 'card-border'
   | 'card-radius'
   | 'card-background'
@@ -72,6 +73,7 @@ export function formKitValue(options: { parameterized?: boolean }, name: FormKit
 /** Only parameters are emitted here; common control declarations have one owner. */
 export function formKitRecipeCss({ selector, values }: FormKitRecipe): string {
   const declarations = [
+    values['colorfield-background'] === undefined ? '' : `--hpf-kit-colorfield-background: ${values['colorfield-background']};`,
     values['mobile-field-font-size'] === undefined ? '' : `--hpf-kit-mobile-field-font-size: ${values['mobile-field-font-size']};`,
     values['form-display'] === undefined ? '' : `--hpf-kit-form-display: ${values['form-display']};`,
     values['action-font-size'] === undefined ? '' : `--hpf-kit-action-font-size: ${values['action-font-size']};`,

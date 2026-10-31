@@ -50,7 +50,7 @@ const BADGE_POSITIONS: readonly ValueBadgePosition[] = ['top', 'right', 'bottom'
 
 /** Сообщение о состоянии рядом с полем: предупреждение или заметка с иконкой. */
 function note(text: string, kind: 'warning' | 'info', id?: string): TemplateResult {
-  return html`<span id=${id ?? nothing} class="hpf-note ${kind === 'warning' ? 'hpf-note-warning' : ''}"
+  return html`<span id=${id ?? nothing} class="hpf-note hpf-callout ${kind === 'warning' ? 'hpf-note-warning hpf-warning' : ''}"
     role=${kind === 'warning' ? 'status' : 'note'}>${text}</span>`;
 }
 
@@ -425,7 +425,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
               </option>`)}
           </select></hp-settings-select>`,
           hint: effectiveTapAction === 'toggle'
-            ? html`<span id="marker-toggle-hint" class="hpf-note" role="note">${toggleHintLines.map((line) => html`<span class="hpf-hint-line">${line}</span>`)}</span>
+            ? html`<span id="marker-toggle-hint" class="hpf-note hpf-callout" role="note">${toggleHintLines.map((line) => html`<span class="hpf-hint-line">${line}</span>`)}</span>
               <span class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</span>`
             : undefined,
         }),
@@ -825,7 +825,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
             </hp-device-preview>`
           : tintBlock({
               title: t('marker.preview.title'),
-              body: html`<div class="devicepreview-empty">
+              body: html`<div class="devicepreview-empty hpf-empty-state hpf-reading-block">
                 <ha-icon icon="mdi:eye-outline"></ha-icon>
                 <span>${t('marker.preview.select_source')}</span>
               </div>`,

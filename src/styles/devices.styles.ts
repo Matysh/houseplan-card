@@ -652,17 +652,5 @@ export const devicesStyles = css`
       background:transparent;cursor:pointer;transition:background 160ms;
     }
     :host([data-pointer-hover]) .vacuum-history-banner > button:hover {background:color-mix(in srgb,var(--primary-color) 12%,transparent);}
-    .devicepreview-empty {
-      min-height: 82px;
-      margin: 4px 0 14px;
-      padding: var(--sp-4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--sp-3);
-      border: 1px dashed var(--hp-line);
-      border-radius: var(--rad-m);
-      color: var(--hp-muted);
-      text-align: center;
-    }
+    .devicepreview-empty { margin:4px 0 14px; }
 `;

@@ -1,4 +1,4 @@
-import { SUMMARY_PANEL_FORM_KIT, formKitSwitchRowCss, formKitSwitchCaptionCss } from './styles/form-kit.styles';
+
 
 
 /** Summary content layout; dialog and controls are owned by UI Kit. */
@@ -25,14 +25,9 @@ export const summaryPanelEditorCss = `
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    color: var(--primary-text-color);
-    background: var(--hpf-surface);
-    font-size: 13px;
-    line-height: 1.5;
   }
   .summary-editor *,
   .summary-editor-footer * { box-sizing: border-box; }
-  .summary-editor h3 { margin: 0; font-size: 1rem; line-height: 1.3; }
   .summary-editor p { margin: 0; overflow-wrap: anywhere; }
   .summary-general-grid {
     display: grid;
@@ -43,51 +38,6 @@ export const summaryPanelEditorCss = `
   .summary-general-grid:has(> .summary-switch:only-child) { grid-template-columns: minmax(0, 1fr); }
   .summary-editor .summary-field { min-width: 0; }
   .summary-editor svg { display: block; flex: 0 0 auto; width: 20px; height: 20px; }
-${formKitSwitchRowCss(SUMMARY_PANEL_FORM_KIT)}
-${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
-  /* The native checkbox itself is the visible 44px hit target. No hidden
-     duplicate control or optimistic storage write is needed for the switch. */
-  hp-dialog[data-kind='summary'].ui-dialog .summary-switch input[type='checkbox'] {
-    appearance: none;
-    position: relative;
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    cursor: pointer;
-  }
-  .summary-switch input::before {
-    content: '';
-    position: absolute;
-    width: 36px;
-    height: 22px;
-    inset: 11px 4px;
-    border: 1px solid var(--summary-editor-line);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--summary-editor-surface) 65%, var(--secondary-text-color));
-  }
-  .summary-switch input::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 14px;
-    left: 7px;
-    border-radius: 50%;
-    background: var(--text-primary-color, #fff);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
-  }
-  .summary-switch input:checked::before {
-    background: var(--summary-editor-accent);
-    border-color: var(--summary-editor-accent);
-  }
-  .summary-switch input:checked::after { left: 21px; }
-  .summary-switch:has(input:disabled) { cursor: default; }
-  .summary-switch:has(input:disabled) .summary-switch-caption { opacity: .6; }
   .summary-blocks-heading {
     display: flex;
     min-width: 0;
@@ -100,20 +50,11 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
   .summary-blocks-heading > div { min-width: 0; flex: 1 1 220px; }
   .summary-blocks-heading p { margin-top: 4px; color: var(--secondary-text-color); font-size: .8125rem; }
   .summary-block-count {
-    padding: 4px 8px;
-    border-radius: 10px;
-    color: var(--primary-text-color);
-    background: var(--summary-editor-accent-soft);
-    font-size: .75rem;
-    font-weight: 600;
     overflow-wrap: anywhere;
   }
   .summary-editor-blocks { display: grid; min-width: 0; gap: 10px; }
   .summary-editor-block {
     min-width: 0;
-    border: 1px solid var(--summary-editor-line);
-    border-radius: 10px;
-    background: var(--summary-editor-muted);
   }
   .summary-block-head {
     display: grid;
@@ -122,9 +63,8 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
     gap: 8px;
     min-width: 0;
     padding: 8px;
-    border-bottom: 1px solid var(--summary-editor-line);
+
     border-radius: 10px 10px 0 0;
-    background: var(--summary-editor-surface);
   }
   .summary-drag { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; cursor:grab; user-select:none; }
   .summary-drag:active { cursor:grabbing; }
@@ -149,20 +89,12 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
     min-width: 0;
     padding: 5px;
     gap: 7px;
-    border: 1px solid var(--summary-editor-line);
-    border-radius: 8px;
-    background: var(--summary-editor-surface);
   }
   .summary-value-label,
   .summary-source-field { min-width: 0; }
   .summary-source-picker {
     min-width: 0;
     margin-top: 7px;
-    padding: 10px;
-    border: 1px solid var(--summary-editor-line);
-    border-radius: 10px;
-    background: var(--summary-editor-surface);
-    box-shadow: 0 6px 18px rgb(0 0 0 / 18%);
   }
   .summary-source-results {
     display: grid;
@@ -171,19 +103,10 @@ ${formKitSwitchCaptionCss(SUMMARY_PANEL_FORM_KIT)}
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-  .summary-source-group {
-    padding: 9px 8px 4px;
-    color: var(--secondary-text-color);
-    font-size: .8125rem;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-  }
-  .summary-refine { padding: 9px; color: var(--secondary-text-color); overflow-wrap: anywhere; }
-  .summary-problem { margin: 5px 0; font-size: .8125rem; overflow-wrap: anywhere; }
-  .summary-problem.error { color: var(--error-color, #db4437); }
-  .summary-problem.warning { color: var(--warning-color, #f59e0b); }
-  .summary-local-hint { color: var(--secondary-text-color); }
-  .summary-block-footer { display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--summary-editor-line); }
+  .summary-source-group { margin:9px 8px 4px; }
+  .summary-refine { margin:9px; }
+  .summary-problem { margin:5px 0; overflow-wrap:anywhere; }
+  .summary-block-footer { display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 9px;  }
   .summary-add-block { margin-top:10px; }
   .summary-reload { margin-top:8px; }
   @container summary-editor (max-width: 800px) {

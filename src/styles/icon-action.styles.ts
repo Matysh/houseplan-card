@@ -33,6 +33,8 @@ export const iconActionStyles = unsafeCSS(css`
   button.hpf-icon-action.hpf-icon-plain ha-icon { --mdc-icon-size:24px; }
   button.hpf-icon-action.hpf-icon-navigation { border-radius:50%; border-color:var(--primary-color); background:var(--card-background-color); color:var(--primary-color); opacity:.9; }
   button.hpf-icon-action.hpf-icon-navigation ha-icon { --mdc-icon-size:22px; }
+  button.hpf-icon-action.hpf-icon-danger { color:var(--error-color); border-color:var(--error-color); }
+  :host([data-pointer-hover]) button.hpf-icon-action.hpf-icon-danger:not(:disabled):hover { background:color-mix(in srgb,var(--error-color) 10%,transparent); color:var(--error-color); border-color:var(--error-color); }
 `.cssText + `
   button.hpf-icon-action { ${settingsActionTransition} }
   :host([data-pointer-hover]) button.hpf-icon-action:not(:disabled):hover { ${settingsActionHover} z-index:1; }

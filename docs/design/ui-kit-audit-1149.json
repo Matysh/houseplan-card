@@ -1,0 +1,559 @@
+{
+  "schema": "houseplan-ui-kit-audit/v1",
+  "issue": 1149,
+  "parentSource": "5f1258a3a61187df8ffd1288c4547a0320dc0176",
+  "method": "Unchanged #1146 AST census v1 and all seven caps; no CSS minification/count changes. Source ownership is audited per cell; N cells unchanged.",
+  "kind": "Author comparison on synthetic data and pinned HA UI Lab components; no baseline acceptance or live HA/GPU PASS claim",
+  "parentProductFingerprint": "0a89f0c4ce03f55f7167a23a2a3ab11079d16fccc41680735d9a2dd716d99a30",
+  "productFingerprint": "b02023b9fbd69749bab7b7b60f6ffc004f8adbd1ac674aada90f2fc1131a0914",
+  "before": {
+    "cssLines": 6871,
+    "keyframes": 13,
+    "transitions": 80,
+    "inlineDecorativeStyles": 27,
+    "hpDialogWithoutKit": 0,
+    "btnRulesOutsideKit": 14,
+    "registryOffKit": 193
+  },
+  "after": {
+    "cssLines": 6655,
+    "keyframes": 13,
+    "transitions": 79,
+    "inlineDecorativeStyles": 27,
+    "hpDialogWithoutKit": 0,
+    "btnRulesOutsideKit": 14,
+    "registryOffKit": 125
+  },
+  "settingsRegistry": {
+    "surfaces": 19,
+    "cells": 160,
+    "buckets": {
+      "K": 143,
+      "L": 10,
+      "M": 0,
+      "N": 7
+    },
+    "registryOffKit": 10
+  },
+  "retainedSettings": [
+    {
+      "surface": "settings-chrome",
+      "cell": "help",
+      "reason": "hp-help.ts:trigger uses existing settings 22px / 1.06 hover adapter; no focus or help-text change"
+    },
+    {
+      "surface": "gs-display",
+      "cell": "help",
+      "reason": "hp-help.ts + settings-dialogs.styles.ts: existing settings help target/hover adapter"
+    },
+    {
+      "surface": "gs-fills",
+      "cell": "input",
+      "reason": "settings-dialogs.styles.ts:hpf-colortile-labelled finite label/meta/swatch dimensions over common colorTile; retained accepted compact tile composition"
+    },
+    {
+      "surface": "gs-sun",
+      "cell": "input",
+      "reason": "settings-north.ts/settings-dialogs.styles.ts: specialized angular slider dial and SVG geometry retain local paint; no generic text field override"
+    },
+    {
+      "surface": "gs-sun",
+      "cell": "checkbox/radio",
+      "reason": "sun-settings-view.ts + settings-dialogs.styles.ts:hpf-ray-choice graphical radio previews retain selected figure border and SVG painting"
+    },
+    {
+      "surface": "external-screen-constructor",
+      "cell": "help",
+      "reason": "hp-help.ts + settings-dialogs.styles.ts: existing settings help target/hover adapter"
+    },
+    {
+      "surface": "device-settings",
+      "cell": "segmented",
+      "reason": "settings-dialogs.styles.ts:hpf-seg bmode two-column caption fit; local 12px labels retained"
+    },
+    {
+      "surface": "alarm-constructor",
+      "cell": "callout/note",
+      "reason": "marker-alert-editor.styles.ts:alarm-outcome-heading retains accepted 16px nested icon/20px heading; outer callout is common Kit"
+    },
+    {
+      "surface": "device-radar",
+      "cell": "card/group",
+      "reason": "settings-dialogs.styles.ts:radargroup/legend existing fieldset reset and radar setup heading dimensions"
+    },
+    {
+      "surface": "device-radar",
+      "cell": "empty/loading/error",
+      "reason": "editor-dialogs.styles.ts:radarinspection retains its specialized diagnostic code panel; ordinary fields use Kit44"
+    }
+  ],
+  "native": {
+    "command": "node demo/ui-lab/settings-content-audit.mjs",
+    "fixture": "demo/ui-lab/fixtures/settings-content.json",
+    "fixtureSha256": "ec9dfc8ca35ad1b0ea5a169a746df9c7db2dbb125bc7c50816a19b8869e8f34b",
+    "profiles": 6,
+    "states": 96,
+    "errors": 0,
+    "targets": "asserted44px: color inputs/confirm, Summary native inputs, alarm icons, preview demos, radar coordinates",
+    "geometry": "alarm heading space-between and constructor source spans all columns in every profile",
+    "textarea": "Zigbee enabled/long-topic native edits and96px minimum; original public topic values restored without saving",
+    "safety": "Preview native demo clicks assert unchanged HA-service call count; toggle/native checkbox hooks/disabled/ARIA preserved",
+    "artifact": "output/ui-kit-final-20261101/native-ownership-final-1149/captures.json",
+    "attestation": {
+      "ok": true,
+      "status": "ok",
+      "expected": {
+        "name": "chromium-headless-shell",
+        "revision": "1234",
+        "version": "151.0.7922.34"
+      },
+      "playwright": {
+        "pinned": "1.62.0",
+        "installed": "1.62.0"
+      },
+      "actual": {
+        "version": "151.0.7922.34",
+        "product": "HeadlessChrome/151.0.7922.34",
+        "mode": "headless-shell",
+        "selectedExecutable": "/home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/tmp/playwright_chromiumdev_profile-QwvLBY --remote-debugging-pipe --no-startup-window",
+        "resolvedExecutable": "/home/matysh/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell"
+      },
+      "problems": []
+    },
+    "scriptSha256": "f80e27c6cdb663b6b5a65a939d2ad4aad0b5f4ffd718168f3d9b51c9be7ca603",
+    "captureHygiene": "Clear document/card-root browser text selection before frames, same helper for before/after; no product/config/style override.",
+    "longTopics": "Five synthetic long topics retain the complete value in the96px common textarea; responsive topic heading/action columns wrap at narrow widths."
+  },
+  "golden": {
+    "command": "node demo/golden/run.mjs --mode=capture --scenario=<id>",
+    "comparison": "exact current dev archive versus author source, same pinned browser/fixtures; all19 before/after contact sheets inspected",
+    "results": [
+      {
+        "id": "approved-ui-summary-dark-1119",
+        "beforeSize": [
+          1280,
+          1000
+        ],
+        "afterSize": [
+          1280,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 202751,
+        "beforeSha256": "2c0837d6908ea6933418e5c320a310b691eb2605537af9067b09634a91a45d88",
+        "afterSha256": "2fa8b3dae49b637a29f3cbabdd8be349becb57b967865176ff013b9ccb74496c"
+      },
+      {
+        "id": "approved-ui-summary-light-1119",
+        "beforeSize": [
+          1280,
+          1000
+        ],
+        "afterSize": [
+          1280,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 196388,
+        "beforeSha256": "1bd3f267df26d0647cddbb300474926f0396587e60b3fee3f77c3d3a46562bff",
+        "afterSha256": "d54691aded83d725ef040bf20939c1bd7e4507db2ac62d594fbc774992e765fd"
+      },
+      {
+        "id": "decor-color-popover-desktop-en",
+        "beforeSize": [
+          760,
+          820
+        ],
+        "afterSize": [
+          760,
+          820
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 2696,
+        "beforeSha256": "07149a6281925ae9bd692d2a9aef8abd1c8ac13d66d2efcb478dab85eb77e683",
+        "afterSha256": "cf92853984a8581e70972b302efe20252ccaeacbe3a951269d5c0ffdd75624b4"
+      },
+      {
+        "id": "decor-color-popover-mobile-ru",
+        "beforeSize": [
+          390,
+          760
+        ],
+        "afterSize": [
+          390,
+          760
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 2683,
+        "beforeSha256": "80edb0f09de5e45666a5e22b9f29ed4773aa3a23cb5c1b660b383dd9e765cca7",
+        "afterSha256": "b16ecf1d6909f9d4d5dd0d87db14179090aff45910ae30901879c9f3de8f7c38"
+      },
+      {
+        "id": "device-alert-form-empty",
+        "beforeSize": [
+          1280,
+          1000
+        ],
+        "afterSize": [
+          1280,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 1904,
+        "beforeSha256": "e0f0d5d552581404e3c54f3b14be7403014a6c4ef70fb3ff1307bdda483e61de",
+        "afterSha256": "dc5adcf8cbb12e5e64459ae4be11a69260c8437b9deccfbaf61604079e3d662e"
+      },
+      {
+        "id": "device-alert-form-enum",
+        "beforeSize": [
+          390,
+          1000
+        ],
+        "afterSize": [
+          390,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "3a1435dbd3af0a7b073109fd075b399a8f5daf7181f9c1a675515cbf63fa7e5c",
+        "afterSha256": "3a1435dbd3af0a7b073109fd075b399a8f5daf7181f9c1a675515cbf63fa7e5c"
+      },
+      {
+        "id": "device-alert-form-numeric",
+        "beforeSize": [
+          1280,
+          1000
+        ],
+        "afterSize": [
+          1280,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 159,
+        "beforeSha256": "19c4b4ffec20be307949640b7a7497995647c7d35866516bee7cb90bcceb7a52",
+        "afterSha256": "24e43c60bac4e05b42fe6ebbe22c130105e33a4dc2faea8d4c14a4c78cfc7edd"
+      },
+      {
+        "id": "device-dialog-desktop-de",
+        "beforeSize": [
+          1180,
+          1200
+        ],
+        "afterSize": [
+          1180,
+          1200
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "7220569bb32d2b7c29f36dd34651e239f1f30e29fccaa41bd399655e8ed563d5",
+        "afterSha256": "7220569bb32d2b7c29f36dd34651e239f1f30e29fccaa41bd399655e8ed563d5"
+      },
+      {
+        "id": "device-dialog-desktop-en",
+        "beforeSize": [
+          1180,
+          1200
+        ],
+        "afterSize": [
+          1180,
+          1200
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "63cfc905862ad52f511b499e843c664544bbd9ecf608a0eb23c6777a798a482a",
+        "afterSha256": "63cfc905862ad52f511b499e843c664544bbd9ecf608a0eb23c6777a798a482a"
+      },
+      {
+        "id": "device-dialog-mobile-ru",
+        "beforeSize": [
+          390,
+          1000
+        ],
+        "afterSize": [
+          390,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "c38c59e8973befab8d879c4c621aa04d3cf84244bba48a686cf7b8dab81d8f90",
+        "afterSha256": "c38c59e8973befab8d879c4c621aa04d3cf84244bba48a686cf7b8dab81d8f90"
+      },
+      {
+        "id": "general-color-popover-desktop-en",
+        "beforeSize": [
+          900,
+          900
+        ],
+        "afterSize": [
+          900,
+          900
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 2986,
+        "beforeSha256": "8194ce9c207582363728d1f65b26ff6a22173af72a78c11860b86327202a1ee9",
+        "afterSha256": "152a501d55cb85730514abb719587941abb01a1caabd490b08bafebd3a602e4c"
+      },
+      {
+        "id": "ui-1051-color-dark",
+        "beforeSize": [
+          364,
+          894
+        ],
+        "afterSize": [
+          364,
+          894
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "7384bb6bf13cf4e55ffc2112817ae76fa51566a534ee5c9c9aca3090c5e26ee0",
+        "afterSha256": "7384bb6bf13cf4e55ffc2112817ae76fa51566a534ee5c9c9aca3090c5e26ee0"
+      },
+      {
+        "id": "ui-1051-color-light",
+        "beforeSize": [
+          364,
+          894
+        ],
+        "afterSize": [
+          364,
+          894
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "736e61071f5026481712b694c24dbccfdc43b03823d0cf282118e662a6aa5401",
+        "afterSha256": "736e61071f5026481712b694c24dbccfdc43b03823d0cf282118e662a6aa5401"
+      },
+      {
+        "id": "vacuum-history-dst-light",
+        "beforeSize": [
+          1000,
+          900
+        ],
+        "afterSize": [
+          1000,
+          900
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 12119,
+        "beforeSha256": "0fca3c39be02ccd6bff4c1d22e8718dec28ecb995488c4966eb1fce517983e1f",
+        "afterSha256": "afbac805c2626dcebf77f1a88470c8fb2f2a518906359166105bdad66d4c7baa"
+      },
+      {
+        "id": "vacuum-history-seconds-narrow",
+        "beforeSize": [
+          390,
+          844
+        ],
+        "afterSize": [
+          390,
+          844
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 16907,
+        "beforeSha256": "fc53a1890367b68b1cf15d51146612ba770b5790e3fe2ae9d3a94ee8b18b1e1a",
+        "afterSha256": "1afb8339d917e36c0e3f9c6d005214ff3150e7d03409aed2f3b5f9cc045da11f"
+      },
+      {
+        "id": "vacuum-history-shown-dark",
+        "beforeSize": [
+          416,
+          234
+        ],
+        "afterSize": [
+          416,
+          232
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 11226,
+        "beforeSha256": "5a3daafa0b7f05b47e553d61981fc0860ae0c757f162443a7d1356dbd3135cf2",
+        "afterSha256": "5f7f2d22ca08529d37bb14f45e4e13670d70a203ff59ac4bb5f4ff247a4e603c"
+      },
+      {
+        "id": "vacuum-history-shown-light",
+        "beforeSize": [
+          416,
+          234
+        ],
+        "afterSize": [
+          416,
+          232
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 11242,
+        "beforeSha256": "568d975be723da893ccd196ddf20b51b402b986a225d5f4dd41defb592ca602e",
+        "afterSha256": "d3fd9d446a7883f8128d8a0a5d7c29f918907da04ddcf9871552b3b1c5426c1e"
+      },
+      {
+        "id": "vacuum-live-tail-pending-dialog-dark",
+        "beforeSize": [
+          1200,
+          1000
+        ],
+        "afterSize": [
+          1200,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "50134a1c78611dfb955f8f28c4e21ae67880de541514b05c3edd15642c1e8e79",
+        "afterSha256": "50134a1c78611dfb955f8f28c4e21ae67880de541514b05c3edd15642c1e8e79"
+      },
+      {
+        "id": "vacuum-retained-path-diagnostics-dark",
+        "beforeSize": [
+          1200,
+          1000
+        ],
+        "afterSize": [
+          1200,
+          1000
+        ],
+        "comparison": "top-left alignment with black padding only if bounds differ; no scaling",
+        "changedPixels": 0,
+        "beforeSha256": "2d5d5120c685f383cab712b8dbba10478e1a3b0cb8c20be376d22c754b006fde",
+        "afterSha256": "2d5d5120c685f383cab712b8dbba10478e1a3b0cb8c20be376d22c754b006fde"
+      }
+    ],
+    "declaredChanges": [
+      "approved-ui-summary-dark-1119",
+      "approved-ui-summary-light-1119",
+      "decor-color-popover-desktop-en",
+      "decor-color-popover-mobile-ru",
+      "device-alert-form-empty",
+      "device-alert-form-numeric",
+      "general-color-popover-desktop-en",
+      "vacuum-history-dst-light",
+      "vacuum-history-seconds-narrow",
+      "vacuum-history-shown-dark",
+      "vacuum-history-shown-light"
+    ],
+    "unchangedVsParent": [
+      "device-alert-form-enum",
+      "device-dialog-desktop-de",
+      "device-dialog-desktop-en",
+      "device-dialog-mobile-ru",
+      "ui-1051-color-dark",
+      "ui-1051-color-light",
+      "vacuum-live-tail-pending-dialog-dark",
+      "vacuum-retained-path-diagnostics-dark"
+    ],
+    "unchangedBoundary": "Equal frames are parent comparisons, not strict checks against older pending baselines. Only actual author-delta scenes are declared; inherited Kit intents remain owned by previous issues."
+  },
+  "consumerAudit": {
+    "zigbee": "Only product constructor is editors/general-settings-dialog.ts: embedded. Runtime import and pointer-target selector are registration/delegation, not standalone creators. Existing job smoke now installs faithful embedded mode. All render paths use the same composition; diagnostics/status/actions retained.",
+    "externalScreens": "Inline style removed; external-screens.styles.ts contains placement/grid only, common reading/actions/form owners paint controls. Kiosk controls remain absent.",
+    "shadowRoots": "Preview Form Kit adoption is idempotent per root; Zigbee adopts common reading/fields and retains its existing settings adopter. No observer/timer/layout read added to render."
+  },
+  "guardProof": [
+    {
+      "ac": "AC2",
+      "provedBy": "105 targeted unit tests including invalid hex, native color/presentation smokes required by ledger",
+      "reddensBy": "ordinary invalid color inputs in test/color-picker.test.mjs; no implementation mutation executed"
+    },
+    {
+      "ac": "AC4",
+      "provedBy": "embedded Zigbee/native job and general form smoke",
+      "reddensBy": "topology-embedded-draws-its-own-heading definition reanchored to one-path render; static check only, not executed; caught unknown until nightly"
+    },
+    {
+      "ac": "AC6",
+      "provedBy": "ui-kit-metrics --check + inventory tests",
+      "reddensBy": "synthetic over-cap metric fixtures in existing UI Kit meter tests; all caps unchanged"
+    }
+  ],
+  "e2e": {
+    "verdict": "не надо",
+    "repository": "Matysh/houseplan-e2e",
+    "document": "task-impact/houseplan-card-1149.md",
+    "actualE2eEdits": 0,
+    "liveE2eExecuted": false,
+    "note": "Publication/readback is updated to the final CSS fingerprint before S7; pre-beta E2E remains release work.",
+    "commit": "99ea7174c6a28bf81313b47ddfd66ca546095fdd",
+    "publicationReadBack": true
+  },
+  "checks": {
+    "targetedUnits": {
+      "command": "node --test test/form-kit.test.mjs test/summary-panel*.test.mjs test/color*.test.mjs test/mutation-browser-offload.test.mjs test/zigbee-topology.test.mjs",
+      "pass": 105
+    },
+    "localGate": {
+      "command": "npm run gate:small -- --base=origin/dev --smokes",
+      "result": "PASS",
+      "seconds": 587,
+      "source": "2f4cfed371021e948f709c6ecad95106329f8936",
+      "rawLog": "output/ui-kit-final-20261101/gate-small-final-1149.log"
+    },
+    "firstFullGate": {
+      "source": "3e37b8270be7c90bb8b9dbbc9d999f7805dfa599",
+      "result": "failed3, all corrected before final S6 run",
+      "failures": [
+        "unused editbar.warn selector after last producer migration",
+        "two source-characterization anchors for retired standalone Zigbee markup",
+        "picker-motion old160/120 oracle replaced by exact shared180/140/ease-out/-10px and opacity-only exit"
+      ],
+      "rawLog": "output/ui-kit-final-20261101/gate-small-first-1149.log"
+    },
+    "requiredSmokes": {
+      "count": 44,
+      "result": "PASS",
+      "names": [
+        "smoke_activity_color_settings.mjs",
+        "smoke_approved_ui.mjs",
+        "smoke_bg_color.mjs",
+        "smoke_color_picker.mjs",
+        "smoke_color_picker_consumers.mjs",
+        "smoke_color_picker_presentation.mjs",
+        "smoke_device_copy.mjs",
+        "smoke_device_offline.mjs",
+        "smoke_device_preview_parity.mjs",
+        "smoke_device_settings_action.mjs",
+        "smoke_device_signal_topology.mjs",
+        "smoke_dialog_modal_recovery.mjs",
+        "smoke_dialog_picker_998.mjs",
+        "smoke_dialog_ui_kit.mjs",
+        "smoke_e2e_hooks.mjs",
+        "smoke_e2e_primitive_fields.mjs",
+        "smoke_editor_styles_lazy.mjs",
+        "smoke_external_screens.mjs",
+        "smoke_first_space_converter.mjs",
+        "smoke_general_settings_form.mjs",
+        "smoke_ha_form_shell_parity.mjs",
+        "smoke_info_card_confirm.mjs",
+        "smoke_lazy_editor_chunk.mjs",
+        "smoke_marker_alerts.mjs",
+        "smoke_picker_motion.mjs",
+        "smoke_radar_setup.mjs",
+        "smoke_room_appearance.mjs",
+        "smoke_settings_navigation.mjs",
+        "smoke_settings_polish_radar_vacuum_955.mjs",
+        "smoke_signal_visibility_device_policy.mjs",
+        "smoke_summary_dialog_scroll.mjs",
+        "smoke_summary_panel_polish.mjs",
+        "smoke_ui_1051.mjs",
+        "smoke_ui_lab_1081.mjs",
+        "smoke_ui_polish_1132.mjs",
+        "smoke_ui_polish_976.mjs",
+        "smoke_vacuum.mjs",
+        "smoke_vacuum_multifloor.mjs",
+        "smoke_vacuum_style_1002.mjs",
+        "smoke_view_hold_lifecycle.mjs",
+        "smoke_zigbee_hidden_placement.mjs",
+        "smoke_zigbee_incomplete_reasons.mjs",
+        "smoke_zigbee_topology_hover.mjs",
+        "smoke_zigbee_topology_job.mjs"
+      ]
+    },
+    "processGate": {
+      "command": "node scripts/process-gate.mjs --range origin/dev..HEAD --issues --report",
+      "result": "PASS",
+      "warnings": 0
+    },
+    "mutationRegistry": {
+      "command": "node scripts/mutation-gate.mjs --check",
+      "result": "PASS",
+      "execution": 0,
+      "caught": "unknown; nightly only"
+    }
+  },
+  "iterationCorrection": "Golden revealed an unmatched media brace after duplicate vacuum-style retirement, which nested subsequent desktop alarm CSS. Restored the original responsive diagnostic/action rules and added native heading/source-column oracles. Pre-fix frames/receipts remain in output/ui-kit-final-20261101/pre-media-fix-*. Final numeric constructor layout matches parent; only159 pixels differ. Native rich callout bodies preserve Xiaomi prose/code order. History uses the common heading class, keeping UA heading margins out of the panel; separate before/after bounds are recorded for clipped history captures."
+}

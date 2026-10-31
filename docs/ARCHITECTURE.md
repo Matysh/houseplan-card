@@ -1,5 +1,7 @@
 # House Plan architecture
 
+Settings content (#1149) shares textFieldsCss, settingsActionsCss, native checkbox/error and floating-surface painters. Color retains its HSV algorithms and completion/focus owner; one checkerboard rule serves both swatches. Device preview adopts Form Kit/disclosure CSS in its own ShadowRoot without importing editor commands. Summary keeps native checkbox hooks and ARIA under the common toggle. Zigbee has one Kit composition; its only product constructor remains embedded. Common multiline paint supplies96px textareas, and long-topic heading/action rows wrap within their available width. External screens keep a named layout-only sheet; radar fields and vacuum route/source controls retain their existing handlers.
+
 Dialog lifecycle (#1154): `HpDialog` only sends `hp-close` while connected. Its
 HA hide/closed handlers ignore a disconnected shell before touching the event
 or exit controller. Replacing Space settings with Copy can therefore retire

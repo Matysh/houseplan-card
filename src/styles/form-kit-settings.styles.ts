@@ -16,6 +16,7 @@ export const settingsFormKitCss = formKitCss(CARD_DIALOG_FORM_KIT, { recipes: [
   { selector: '.hpf-footer-object .dialog-action-danger', values: { 'action-idle-danger-border': 'transparent' } },
   { selector: '.hpf-settings-single .hpf-head', values: { 'head-padding': '0', 'head-margin': '0 0 18px', 'head-border-bottom': '0', 'heading-font-size': '14px' } },
   { selector: '.hpf-settings-pane', values: {
+    'colorfield-background': 'var(--hpf-surface)',
     'colorrow-columns': 'minmax(0,1fr)',
     'colorrow-align': 'stretch',
     'colorrow-min-height': '0',

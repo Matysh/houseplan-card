@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Settings content uses shared UI Kit fields, actions, toggles and surfaces: color/opacity, device preview, Summary, Zigbee, external screens, radar and vacuum. Regular settings targets remain 44px; preview demos keep HA services untouched. [#1149](https://github.com/Matysh/houseplan-card/issues/1149)
+
 - Show doors, windows and gates on room walls in the static dashboard card, with matching wall cuts, tunnel fills and stable framing. Update symbols and cuts after plan changes without rewriting saved geometry; a missing contact keeps the same neutral symbol as the full plan. Mixed line plans with gates retain the full plan's orientation for every opening. [#1171](https://github.com/Matysh/houseplan-card/issues/1171)
 
 - Use the shared UI Kit shell in every dialog and unify basic fields, actions and disabled states, including space copy, print export, Summary settings and variable insertion. Keep dialog actions, select and switch targets at least 44px. Preserve Summary scrolling and wide phone fields, plus save, copy, cancellation and download workflows. [#1148](https://github.com/Matysh/houseplan-card/issues/1148)

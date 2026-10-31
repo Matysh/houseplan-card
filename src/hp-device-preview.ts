@@ -2,6 +2,10 @@ import { renderDeviceIssues } from './device-issues-view';
 /** Live, read-only device display preview used by the marker editor. */
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { cardStyles } from './styles';
+import { ensureFormKitStyles } from './form-kit-styles';
+import { settingsActionsCss } from './styles/settings-action.styles';
+import { unsafeCSS } from 'lit';
+import { cardDialogFormKitTokens } from './styles/form-kit.styles';
 import {
   deviceFaceStyle, deviceTextScale, deviceThemeClass, legacySupplementalMetrics,
   renderDeviceFace,
@@ -219,6 +223,7 @@ class HpDevicePreview extends LitElement {
   }
 
   protected render(): TemplateResult | typeof nothing {
+    ensureFormKitStyles(this);
     const projection = this.presentation;
     if (!projection) return nothing;
     const actual = {...projection, scale:1};
@@ -346,10 +351,10 @@ class HpDevicePreview extends LitElement {
     ].filter(Boolean).join('. ');
 
     /* css-uses {"owner":"HpDevicePreview.render","kind":"class","values":["static-icon","alarm","unavail","power-off","on","open","lock-locked","lock-unlocked","activity-event","activity-presence","activity-transition","activity-running","pulse-gen2","activity-gen2","pulse-short","pulse-continuous"],"reason":"presentationClasses vocabulary plus the two explicit withDemoPulse preview classes"} */
-    return html`<section class="devicepreview">
+    return html`<section class="devicepreview hpf-card hpf-card-padded hpf-form">
       <div class="previewhead">
         <strong>${this._t('marker.preview.title')}</strong>
-        <span class="previewbadge ${demoActive ? 'example' : ''}">
+        <span class="previewbadge hpf-chip ${demoActive ? 'hpf-chip-warning' : ''}">
           ${this._t(demoActive ? 'marker.preview.example' : 'marker.preview.actual')}
         </span>
       </div>
@@ -365,16 +370,16 @@ class HpDevicePreview extends LitElement {
           </div></div>
         </div>
         <div class="previewfacts" aria-live="polite">
-          <div><span>${this._t('marker.preview.integration')}</span><b>${this._providerSummary(providers)}</b></div>
-          <div><span>${this._t('marker.preview.source')}</span><b>${this._sourceSummary(actual)}</b></div>
-          <div><span>${this._t('marker.preview.current_state')}</span><b>${this._stateSummary(actual)}</b></div>
-          <div><span>${this._t('marker.preview.result')}</span><b>${result}</b></div>
-          ${actual.stateSource ? html`<p class="previewnotice" data-state-source-explanation>${this._stateSourceExplanation(actual)}</p>` : nothing}
+          <div><span class="hpf-reading-label">${this._t('marker.preview.integration')}</span><b>${this._providerSummary(providers)}</b></div>
+          <div><span class="hpf-reading-label">${this._t('marker.preview.source')}</span><b>${this._sourceSummary(actual)}</b></div>
+          <div><span class="hpf-reading-label">${this._t('marker.preview.current_state')}</span><b>${this._stateSummary(actual)}</b></div>
+          <div><span class="hpf-reading-label">${this._t('marker.preview.result')}</span><b>${result}</b></div>
+          ${actual.stateSource ? html`<p class="previewnotice hpf-hint" data-state-source-explanation>${this._stateSourceExplanation(actual)}</p>` : nothing}
           ${actual.fallbackReason
-            ? html`<p class="previewnotice">${this._reason(actual.fallbackReason)}</p>` : nothing}
-          ${actual.explanation.notices.map((reason) => html`<p class="previewnotice">${this._reason(reason)}</p>`)}
+            ? html`<p class="previewnotice hpf-hint">${this._reason(actual.fallbackReason)}</p>` : nothing}
+          ${actual.explanation.notices.map((reason) => html`<p class="previewnotice hpf-hint">${this._reason(reason)}</p>`)}
           ${demoActive && this._reducedMotion
-            ? html`<p class="previewnotice">${this._t('marker.preview.reduced_motion')}</p>` : nothing}
+            ? html`<p class="previewnotice hpf-hint">${this._t('marker.preview.reduced_motion')}</p>` : nothing}
         </div>
       </div>
       ${renderDeviceIssues(actual, key => this._t(key), eid => this.dispatchEvent(
@@ -384,8 +389,8 @@ class HpDevicePreview extends LitElement {
         ? html`<div class="previewdetails">
             <div class="previewtable">
               ${[...actual.visualSources, ...actual.criticalSources].map((source) => html`
-                <div class="previewsource">
-                  <b>${source.name}</b><code>${source.eid}</code>
+                <div class="previewsource hpf-hint">
+                  <b>${source.name}</b><code class="hpf-hint hpf-mono">${source.eid}</code>
                   <span>${source.stateText || source.state}</span>
                   <span>${this._sourceProvider(source.eid)}</span>
                 </div>`)}
@@ -393,14 +398,14 @@ class HpDevicePreview extends LitElement {
           </div>` : nothing}
       ${actual.display === 'icon_ripple'
         ? html`<div class="previewdemos">
-            <button class="previewdemo" type="button"
+            <button class="previewdemo btn" type="button"
               ?disabled=${realEffect || this._demoKind === 'continuous'}
               title=${realEffect ? this._t('marker.preview.demo_already_visible') : ''}
               @click=${this._startShortDemo}>
               <ha-icon icon="mdi:motion-play-outline"></ha-icon>
               ${this._t('marker.preview.demo_short')}
             </button>
-            <button class="previewdemo" type="button"
+            <button class="previewdemo btn" type="button"
               ?disabled=${realEffect}
               title=${realEffect ? this._t('marker.preview.demo_already_visible') : ''}
               @click=${this._toggleContinuousDemo}>
@@ -414,27 +419,11 @@ class HpDevicePreview extends LitElement {
 
   static styles = [
     cardStyles,
+    unsafeCSS(cardDialogFormKitTokens.replace('hp-dialog .hpf-form', ':host') + settingsActionsCss('.previewdemo')),
     css`
       :host { display: block; min-width: 0; }
-      .devicepreview {
-        margin: 4px 0 14px;
-        padding: 14px;
-        border: 1px solid var(--divider-color, rgba(127, 127, 127, 0.28));
-        border-radius: 14px;
-        background: color-mix(in srgb, var(--card-background-color, #20232b) 92%, var(--primary-color, #03a9f4));
-        color: var(--primary-text-color, #fff);
-        overflow: hidden;
-      }
+      .devicepreview { margin:4px 0 14px; overflow:hidden; }
       .previewhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-      .previewbadge {
-        padding: 3px 9px;
-        border-radius: 999px;
-        color: var(--secondary-text-color, #9aa0aa);
-        background: color-mix(in srgb, var(--secondary-text-color, #9aa0aa) 12%, transparent);
-        font-size: 12px;
-        font-weight: 700;
-      }
-      .previewbadge.example { color: var(--warning-color, #ffb300); }
       .previewgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
       .previewcanvas { position:relative; min-width:100%; min-height:100%; margin:auto; }
       .previewstage {
@@ -454,29 +443,14 @@ class HpDevicePreview extends LitElement {
       :host([data-pointer-hover]) .previewstage .dev:hover { z-index: 2; }
       .previewfacts { min-width: 0; display: grid; align-content: start; gap: 8px; }
       .previewfacts > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; }
-      .previewfacts span { color: var(--secondary-text-color, #9aa0aa); }
       .previewfacts b { min-width: 0; overflow-wrap: anywhere; }
-      .previewnotice { margin: 2px 0 0; color: var(--secondary-text-color, #9aa0aa); font-size: 13px; }
+      .previewnotice { margin:2px 0 0; }
       .previewdetails { margin-top: 12px; }
       .previewtable { display: grid; gap: 8px; margin-top: 9px; }
-      .previewsource { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; font-size: 13px; }
+      .previewsource { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; }
       .previewsource > * { min-width: 0; overflow-wrap: anywhere; }
-      .previewsource code { color: var(--secondary-text-color, #9aa0aa); }
-      .previewdemo {
-        min-height: 40px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border: 1px solid var(--divider-color, rgba(127, 127, 127, 0.35));
-        border-radius: 10px;
-        background: transparent;
-        color: inherit;
-        cursor: pointer;
-      }
+
       .previewdemos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-      .previewdemo:focus-visible { outline: 2px solid var(--primary-color, #03a9f4); outline-offset: 2px; }
-      .previewdemo:disabled { opacity: 0.5; cursor: not-allowed; }
     `,
   ];
 }

@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "issue": 1149,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Existing stable settings content adopts the accepted shared Kit painters and native44px targets, without changing config, permissions, write boundaries or scene algorithms. Dense editor surfaces remain #1150.",
+  "summary": {
+    "ru": "Общие поля, тумблеры, предпросмотр и действия внутри настроек.",
+    "en": "Shared fields, toggles, preview and actions inside settings."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
+    "golden": [
+      {
+        "id": "approved-ui-summary-dark-1119",
+        "expectation": "change",
+        "reason": "#1149: shared settings content paint, color fields/popover, native toggle, preview and alarm actions; content/handlers preserved. Earlier pending Kit changes retain their own issue ownership; no blanket acceptance."
+      },
+      {
+        "id": "approved-ui-summary-light-1119",
+        "expectation": "change",
+        "reason": "#1149: shared settings content paint, color fields/popover, native toggle, preview and alarm actions; content/handlers preserved. Earlier pending Kit changes retain their own issue ownership; no blanket acceptance."
+      },
+      {
+        "id": "decor-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "#1149: shared settings content paint, color fields/popover, native toggle, preview and alarm actions; content/handlers preserved. Earlier pending Kit changes retain their own issue ownership; no blanket acceptance."
+      },
+      {
+        "id": "decor-color-popover-mobile-ru",
+        "expectation": "change",
+        "reason": "#1149: shared settings content paint, color fields/popover, native toggle, preview and alarm actions; content/handlers preserved. Earlier pending Kit changes retain their own issue ownership; no blanket acceptance."
+      },
+      {
+        "id": "device-alert-form-empty",
+        "expectation": "change",
+        "reason": "#1149: shared settings content paint, color fields/popover, native toggle, preview and alarm actions; content/handlers preserved. Earlier pending Kit changes retain their own issue ownership; no blanket acceptance."
+      },
+      {
+        "id": "device-alert-form-numeric",
+        "expectation": "change",
+        "reason": "#1149: shared settings content paint, color fields/popover, native toggle, preview and alarm actions; content/handlers preserved. Earlier pending Kit changes retain their own issue ownership; no blanket acceptance."
+      },
+      {
+        "id": "general-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "#1149: shared settings content paint, color fields/popover, native toggle, preview and alarm actions; content/handlers preserved. Earlier pending Kit changes retain their own issue ownership; no blanket acceptance."
+      },
+      {
+        "id": "vacuum-history-dst-light",
+        "expectation": "change",
+        "reason": "#1149: shared vacuum settings callout bodies, reading labels and history heading; routes/configuration/HA actions preserved."
+      },
+      {
+        "id": "vacuum-history-seconds-narrow",
+        "expectation": "change",
+        "reason": "#1149: shared vacuum settings callout bodies, reading labels and history heading; routes/configuration/HA actions preserved."
+      },
+      {
+        "id": "vacuum-history-shown-dark",
+        "expectation": "change",
+        "reason": "#1149: shared vacuum settings callout bodies, reading labels and history heading; routes/configuration/HA actions preserved."
+      },
+      {
+        "id": "vacuum-history-shown-light",
+        "expectation": "change",
+        "reason": "#1149: shared vacuum settings callout bodies, reading labels and history heading; routes/configuration/HA actions preserved."
+      }
+    ],
+    "smokes": [
+      "smoke_color_picker.mjs",
+      "smoke_general_settings_form.mjs",
+      "smoke_summary_panel_polish.mjs",
+      "smoke_summary_dialog_scroll.mjs",
+      "smoke_zigbee_topology_job.mjs",
+      "smoke_zigbee_incomplete_reasons.mjs",
+      "smoke_external_screens.mjs",
+      "smoke_vacuum_multifloor.mjs",
+      "smoke_editor_styles_lazy.mjs",
+      "smoke_color_picker_consumers.mjs",
+      "smoke_color_picker_presentation.mjs",
+      "smoke_activity_color_settings.mjs",
+      "smoke_device_preview_parity.mjs",
+      "smoke_marker_alerts.mjs",
+      "smoke_radar_setup.mjs",
+      "smoke_settings_polish_radar_vacuum_955.mjs"
+    ],
+    "captures": [
+      {
+        "id": "settings-content-1149",
+        "intent": "change",
+        "reason": "Settings content in its genuine pinned HA component roots, native demo safety and44px targets; explicit synthetic data.",
+        "entry": "demo/ui-lab/settings-content-audit.mjs",
+        "command": "node demo/ui-lab/settings-content-audit.mjs",
+        "profiles": "light/dark x1280/1024/390;16 native states each",
+        "proof": "docs/design/ui-kit-audit-1149.json#native"
+      }
+    ]
+  }
+}

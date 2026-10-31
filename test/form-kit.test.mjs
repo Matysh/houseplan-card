@@ -239,3 +239,11 @@ test('#615: подпись плитки цвета выбирается по в�
   assert.equal(colorTileInk('nope', 0.5), TILE_INK_DARK);
   assert.equal(colorTileInk('#0d1b2a', Number.NaN), TILE_INK_LIGHT);
 });
+
+
+test('#1149 common toggle keeps the native 44px hit target and disabled affordance', () => {
+  const css = formKitCss({ ...CARD_DIALOG_FORM_KIT, parameterized: true }, { withSwitch: false });
+  assert.match(css, /\.hpf-toggle > input \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/);
+  assert.match(css, /\.hpf-toggle:has\(input:disabled\) \{ cursor: default; \}/);
+  assert.match(css, /\.hpf-toggle > input:checked::after \{ left: 21px; \}/);
+});

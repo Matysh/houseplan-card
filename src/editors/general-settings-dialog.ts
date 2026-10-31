@@ -287,7 +287,7 @@ export function renderGeneralSettingsDialog(this: HouseplanEditorRuntime): Templ
           html`<div class="hpf-converter"><p class="hpf-hint">${st('gs.converter_description', { formats: planConverterFormats() })}</p>
             <a class="hpf-link" href=${PLAN_CONVERTER.url} target="_blank" rel="noopener noreferrer">${st('gs.converter_link')} ↗</a>
             <p class="hpf-hint">${st('gs.converter_result')}</p></div>`,
-          !host._canEdit || host._kiosk ? html`<p class="rhint">${st('gs.optimize_write_required')}</p>` : nothing,
+          !host._canEdit || host._kiosk ? html`<p class="hpf-callout">${st('gs.optimize_write_required')}</p>` : nothing,
         ]),
       })}` },
       ], st('dialog.section'))}

@@ -42,7 +42,7 @@ await page.exposeFunction('__scanRpc', async (message) => {
   throw new Error(`unexpected fixture RPC: ${message.type}`);
 });
 
-const install = async (embedded = false) => {
+const install = async (embedded = true) => {
   await installHpTestOnPage(page);
   return page.evaluate(async (isEmbedded) => {
   const card = window.__card;

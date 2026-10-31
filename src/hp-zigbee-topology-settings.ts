@@ -1,5 +1,8 @@
 import { LitElement, css, html, nothing, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
+import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, textFieldsCss } from './styles/form-kit.styles';
 import { settingsActionsCss } from './styles/settings-action.styles';
+import { formKitTextareaCss } from './styles/form-input.styles';
+import { readingKitStyles } from './styles/reading-kit.styles';
 import { langOf } from './i18n';
 import { hasTopologyTranslation, topologyT, type TopologyI18nKey } from './i18n/topology';
 import './hp-help';
@@ -66,49 +69,20 @@ export class HpZigbeeTopologySettings extends LitElement {
   private _loadGate = new ZigbeeTopologyLoadGate();
   private _loadContext?: { owner: object; identity: string; session?: object; active: boolean; enabled: boolean; topics: string };
 
-  static styles = [unsafeCSS(settingsActionsCss('button')), css`
+  static styles = [readingKitStyles, unsafeCSS(cardDialogFormKitTokens.replace('hp-dialog .hpf-form', ':host') + textFieldsCss({ ...CARD_DIALOG_FORM_KIT, parameterized: true }, 'textarea.hpf-input') + formKitTextareaCss('textarea.hpf-input') + settingsActionsCss('button')), css`
     :host { display: block; color: inherit; font: inherit; }
-    .section {
-      margin-top: 18px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
-    .toggle { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-    .hint, .status { color: var(--secondary-text-color, #9aa0aa); font-size: 12px; line-height: 1.45; }
-    .hint { margin-top: 6px; }
-    .providers { display: grid; gap: 14px; margin-top: 12px; padding-left: 34px; }
-    .provider, .scan-row { display: grid; gap: 7px; min-width: 0; }
-    .scan-row { overflow-wrap: anywhere; }
-    [data-hp="zigbee-scan-cancel"] { min-width: 44px; min-height: 44px; }
-    .provider-title { font-weight: 650; }
-    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-    textarea {
-      box-sizing: border-box; width: 100%; min-height: 58px; resize: vertical;
-      border: 1px solid var(--divider-color, #666); border-radius: 8px; padding: 8px;
-      color: var(--primary-text-color, inherit); background: var(--card-background-color, #202126);
-      font: inherit;
-    }
-    button:disabled, textarea:disabled { opacity: .5; cursor: default; }
-    .warning { color: var(--warning-color, #d89300); font-size: 12px; line-height: 1.45; }
-    /* #600 embedded: примитивы набора внутри карточки; правила набора, которые
-       привязаны к форме диалога, здесь недоступны — они повторены точечно. */
-    :host([embedded]) { display: grid; gap: 12px; }
-    :host([embedded]) textarea.hpf-input { min-height: 72px; border-radius: 7px; padding: 8px 10px;
-      border-color: var(--hpf-line, var(--divider-color, #666)); background: var(--hpf-surface, var(--card-background-color, #202126)); }
-    :host([embedded]) textarea[aria-invalid="true"] { border-color: var(--hpf-danger, var(--error-color, #db543d)); }
-    :host([embedded]) .hpf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
-    :host([embedded]) .hpf-hint { margin: 0; }
+    :host { display:grid; gap:12px; }
+    .scan-row { display:grid; gap:7px; min-width:0; overflow-wrap:anywhere; }
+    .hint,.status { margin:0; }
     .hpf-provider { display:grid; gap:12px; min-width:0; }
     .provider-heading { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; }
-    .provider-heading h4 { margin:0; font-size:14px; }
-    .provider-heading .hpf-hint { flex:1 1 220px; font-size:12px; }
+    .provider-heading h4 { margin:0; }
+    .provider-heading .hpf-hint { flex:1 1 220px; }
     .topic-meta { display:grid; gap:7px; min-width:0; }
-    .topic-head { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; }
+    .topic-head { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); gap:12px; align-items:center; }
     .topic-head strong { overflow-wrap:anywhere; }
     .save-and-load { white-space:normal; max-width:240px; }
-    .scan-row { border-top:1px solid var(--hpf-line,var(--divider-color)); padding-top:18px; margin-top:18px; }
+    .scan-row { padding-top:18px; margin-top:18px; }
     .scan-row .status,.scan-row .hint { grid-column:1/-1; }
     .incomplete { min-width:0; overflow-wrap:anywhere; }
     .incomplete-text { white-space:pre-wrap; padding-bottom:7px; }
@@ -386,28 +360,28 @@ export class HpZigbeeTopologySettings extends LitElement {
     const active = current?.phase === 'loading' && !!current.jobId;
     const canCancel = active && this._runtime?.zigbeeScanCanCancel(current);
     const disconnected = this._snapshot.backendConnected === false && !this._snapshot.backendError;
-    return html`<div class="scan-row" data-topic=${topic}>
+    return html`<div class="scan-row hpf-divider-before" data-topic=${topic}>
       <div class="topic-head">
-        <div class="topic-meta"><strong>${topic}</strong><span class="status" role="status">${this._status(key, diagnostics)}</span></div>
+        <div class="topic-meta"><strong>${topic}</strong><span class="status hpf-hint" role="status">${this._status(key, diagnostics)}</span></div>
         <button data-hp="action" data-action="zigbee-refresh-z2m" class=${`${embedded ? 'btn ghost' : ''} ${!this.savedEnabled && this.prepareLoad ? 'save-and-load' : ''}`}
           ?disabled=${!mayLoad || this._invalidTopic || this._busy(key)}
           @click=${() => this._refreshZ2m(topic)}><ha-icon icon="mdi:refresh"></ha-icon>${this._t(!this.savedEnabled && this.prepareLoad ? 'save_and_update' : 'z2m_update')}</button>
       </div>
-      ${!active ? html`<span class="hint">${this._t(this._snapshot.topologies.some(item => item.provider === 'z2m' && item.instanceId === topic)
+      ${!active ? html`<span class="hint hpf-hint">${this._t(this._snapshot.topologies.some(item => item.provider === 'z2m' && item.instanceId === topic)
         ? 'scan_replace_hint' : this._snapshot.backendConnected === true ? 'scan_new_hint' : 'scan_unknown_hint')}</span>` : nothing}
       ${active ? html`
-        <span class="status" role="status" data-hp="zigbee-scan-stage">${this._t(current.stage === 'connecting' ? 'scan_connecting' : 'scan_waiting')}</span>
-        <span class="status" aria-live="off" data-hp="zigbee-scan-elapsed">${this._t('scan_elapsed', {
+        <span class="status hpf-hint" role="status" data-hp="zigbee-scan-stage">${this._t(current.stage === 'connecting' ? 'scan_connecting' : 'scan_waiting')}</span>
+        <span class="status hpf-hint" aria-live="off" data-hp="zigbee-scan-elapsed">${this._t('scan_elapsed', {
           time: this._runtime!.formatZigbeeScanElapsed(this._runtime!.zigbeeScanElapsedMs(current)),
         })}</span>
-        <span class="hint" data-hp="zigbee-scan-background">${this._t('scan_background_hint')}</span>
-        ${disconnected ? html`<span class="warning" role="status">${this._t('scan_frontend_disconnected')}</span>` : nothing}
+        <span class="hint hpf-hint" data-hp="zigbee-scan-background">${this._t('scan_background_hint')}</span>
+        ${disconnected ? html`<span class="warning hpf-note hpf-note-warning" role="status">${this._t('scan_frontend_disconnected')}</span>` : nothing}
         ${canCancel ? html`
-          <span class="hint" data-hp="zigbee-scan-long-wait">${this._t('scan_long_wait')}</span>
+          <span class="hint hpf-hint" data-hp="zigbee-scan-long-wait">${this._t('scan_long_wait')}</span>
           <div><button class=${embedded ? 'btn ghost' : ''} data-hp="zigbee-scan-cancel" ?disabled=${disconnected || !mayLoad}
             @click=${() => { if (this._observing && current.jobId) void this._runtime?.cancelZ2mTopology(this.hass, topic, current.jobId); }}>${this._t('scan_cancel')}</button></div>
-          <span class="hint" data-hp="zigbee-scan-cancel-hint">${this._t('scan_cancel_hint')}</span>` : nothing}` : nothing}
-      ${this._admin && this._snapshot.backendError ? html`<span class="warning" role="status">${this._errorText(this._snapshot.backendError)}</span>` : nothing}
+          <span class="hint hpf-hint" data-hp="zigbee-scan-cancel-hint">${this._t('scan_cancel_hint')}</span>` : nothing}` : nothing}
+      ${this._admin && this._snapshot.backendError ? html`<span class="warning hpf-note hpf-note-warning" role="status">${this._errorText(this._snapshot.backendError)}</span>` : nothing}
     </div>`;
   }
 
@@ -417,56 +391,13 @@ export class HpZigbeeTopologySettings extends LitElement {
       <textarea data-hp="field" data-field="z2m-topics" id="z2m-topics" class=${embedded ? 'hpf-input' : ''} rows="2" spellcheck="false"
         ?disabled=${!this._admin || this._actionsBusy} aria-invalid=${this._invalidTopic ? 'true' : nothing}
         .value=${this._topicText} @input=${(event: Event) => this._editTopics((event.target as HTMLTextAreaElement).value)}></textarea>
-      ${this._invalidTopic ? html`<p class="warning" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
+      ${this._invalidTopic ? html`<p class="warning hpf-note hpf-note-warning" role="alert">${this._t('error_invalid_topic')}</p>` : nothing}
     </div>`;
   }
 
   protected render() {
     ensureSettingsDialogStyles(this);
-    if (this.embedded) return this._renderEmbedded();
-    const admin = this._admin;
-    const enabled = this.value.enabled;
-    const mayLoad = this._mayLoad;
-    const topics = this._topics();
-    const diagnostics = this._diagnosticModels();
-    return html`
-      <div class="section">${this._t('title')}${this._help()}</div>
-      <label class="toggle">
-        ${customElements.get('ha-switch')
-          ? html`<ha-switch data-hp="field" data-field="zigbee-enabled" .checked=${enabled} .disabled=${!admin || this._actionsBusy}
-              @change=${(event: Event) => this._emit({ ...this.value,
-                enabled: !!(event.target as HTMLInputElement).checked })}></ha-switch>`
-          : html`<input data-hp="field" data-field="zigbee-enabled" type="checkbox" .checked=${enabled} ?disabled=${!admin || this._actionsBusy}
-              @change=${(event: Event) => this._emit({ ...this.value,
-                enabled: (event.target as HTMLInputElement).checked })} />`}
-        <span>${this._t('toggle')}</span>
-      </label>
-      <div class="hint">${this._t('hint')}</div>
-      ${!admin ? html`<div class="hint">${this._t('admin_only')}</div>` : nothing}
-      ${this._topicInput(false)}
-      ${enabled ? html`<div class="providers">
-        ${!this.savedEnabled ? html`<div class="hint">${this._t(this.prepareLoad ? 'save_and_load_help' : 'save_first')}</div>` : nothing}
-        <div class="provider">
-          <div class="provider-title">${this._t('zha')}</div>
-          <div class="hint">${this._t('zha_hint')}</div>
-          <div class="actions">
-            <button data-hp="action" data-action="zigbee-read-zha" class=${!this.savedEnabled && this.prepareLoad ? 'save-and-load' : ''} ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
-              <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t(!this.savedEnabled && this.prepareLoad ? 'save_and_read_zha' : 'zha_read')}
-            </button>
-            <span class="status">${this._status('zha', diagnostics.get('zha')!)}</span>
-          </div>
-          ${this._incompleteDetails('zha', diagnostics)}
-          ${this._incompleteDetails('zha', diagnostics, true)}
-        </div>
-        <div class="provider">
-          <div class="provider-title">${this._t('z2m')}</div>
-          <div class="warning">${this._t('z2m_warning')}</div>
-          ${topics.map(topic => this._z2mRow(topic, mayLoad, false, diagnostics.get(`z2m:${topic}`)!))}
-          ${this._incompleteDetails('z2m', diagnostics)}
-          ${this._incompleteDetails('z2m', diagnostics, true)}
-        </div>
-      </div>` : nothing}
-    `;
+    return this._renderEmbedded();
   }
 
   /**
@@ -484,8 +415,8 @@ export class HpZigbeeTopologySettings extends LitElement {
     const storedZha = this._snapshot.topologies.some(item => item.provider === 'zha') || !!this._snapshot.states.zha;
     const storedZ2m = this.value.z2mBaseTopics.length > 0 || this._snapshot.topologies.some(item => item.provider === 'z2m');
     const zha = html`<section class="hpf-provider">
-      <div class="provider-heading"><h4>${this._t('zha')}</h4><p class="hpf-hint">${this._t('zha_hint')}</p></div>
-      <p class="status" role="status">${this._status('zha', diagnostics.get('zha')!)}</p>
+      <div class="provider-heading"><h4 class="hpf-heading">${this._t('zha')}</h4><p class="hpf-hint">${this._t('zha_hint')}</p></div>
+      <p class="status hpf-hint" role="status">${this._status('zha', diagnostics.get('zha')!)}</p>
       <div class="hpf-actions">
         <button data-hp="action" data-action="zigbee-read-zha" class=${`btn ghost ${!this.savedEnabled && this.prepareLoad ? 'save-and-load' : ''}`} ?disabled=${!mayLoad || this._busy('zha')} @click=${this._readZha}>
           <ha-icon icon="mdi:access-point-network"></ha-icon>${this._t(!this.savedEnabled && this.prepareLoad ? 'save_and_read_zha' : 'zha_read')}
@@ -495,7 +426,7 @@ export class HpZigbeeTopologySettings extends LitElement {
       ${this._incompleteDetails('zha', diagnostics, true)}
     </section>`;
     const z2m = html`<section class="hpf-provider">
-      <div class="hpf-sub"><h4>${this._t('z2m')}</h4></div>
+      <div class="hpf-sub"><h4 class="hpf-heading">${this._t('z2m')}</h4></div>
       <p class="hpf-hint">${this._t('z2m_duration')}</p>
       ${this._topics().map(topic => this._z2mRow(topic, mayLoad, true, diagnostics.get(`z2m:${topic}`)!))}
       ${this._incompleteDetails('z2m', diagnostics)}

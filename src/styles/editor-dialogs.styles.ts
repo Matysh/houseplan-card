@@ -223,14 +223,9 @@ export const editorDialogsStyles = css`
     .vacsource-list { display: grid; gap: 6px; margin-top: 8px; }
     .vacsource-list details { padding: 6px 0 0; }
     .vacsource-list details > summary { cursor: pointer; font-weight: 600; }
-    .vacsource { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid var(--divider-color);
-      border-radius: 10px; color: var(--primary-text-color); background: var(--secondary-background-color);
-      text-align: left; cursor: pointer; }
-    .vacsource.on { border-color: var(--accent-color); box-shadow: inset 3px 0 var(--accent-color); }
     .vacsource > span:first-child { min-width: 0; display: grid; gap: 2px; }
     .vacsource small { color: var(--secondary-text-color); overflow-wrap: anywhere; }
-    .vacsource-meta { color: var(--secondary-text-color); text-align: right; font-size: 0.82em; }
+    .vacsource-meta { text-align: right; }
     .vacxcme pre { margin: 8px 0 0; white-space: pre-wrap; user-select: text; }
     .vacfit {
       position: absolute;

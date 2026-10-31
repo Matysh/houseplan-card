@@ -1,5 +1,9 @@
 import { LitElement, css, html, nothing, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
-import { settingsActionTransition, settingsPrimaryActionHover } from './styles/settings-action.styles';
+import { settingsActionsCss } from './styles/settings-action.styles';
+import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, textFieldsCss } from './styles/form-kit.styles';
+import { controlMotion, controlSurfaceFrames } from './ui-motion';
+import { formKitCheckboxCss, formKitErrorCss } from './styles/form-input.styles';
+import { floatingSurfaceCss } from './styles/floating-surface.styles';
 import { safeStoredColor } from './color';
 import { hexToRgb, hsvToHex, normalizeHexColor, rgbToHsv } from './color-picker';
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
@@ -167,7 +171,9 @@ export class HpColorOpacity extends LitElement {
     _hexInvalid: { state: true },
   };
 
-  static styles = [css`
+  static styles = [unsafeCSS(cardDialogFormKitTokens.replace('hp-dialog .hpf-form', ':host')
+    + textFieldsCss({ ...CARD_DIALOG_FORM_KIT, parameterized: true }, `input[type=text], input[type=number]`)
+    + settingsActionsCss('.confirm', '') + formKitCheckboxCss('input[type=checkbox]') + formKitErrorCss('.error') + floatingSurfaceCss('.picker')), css`
     :host {
       position: relative;
       display: inline-flex;
@@ -191,12 +197,15 @@ export class HpColorOpacity extends LitElement {
       padding: 3px;
       border: 1px solid var(--divider-color, #666);
       border-radius: 7px;
+
+      cursor: pointer;
+    }
+    .trigger, .preview {
       background:
         linear-gradient(45deg, #b8b8b8 25%, transparent 25%) 0 0 / 10px 10px,
         linear-gradient(45deg, transparent 75%, #b8b8b8 75%) 0 0 / 10px 10px,
         linear-gradient(45deg, transparent 75%, #b8b8b8 75%) 5px -5px / 10px 10px,
         linear-gradient(45deg, #b8b8b8 25%, #eee 25%) 5px 5px / 10px 10px;
-      cursor: pointer;
     }
     .trigger.solid { background: none; }
     :host([cover-swatch]), :host([compact-swatch]) { display: block; width: 100%; height: 100%; }
@@ -249,13 +258,7 @@ export class HpColorOpacity extends LitElement {
       box-sizing: border-box;
       display: grid;
       gap: 10px;
-      padding: 12px;
       overflow: auto;
-      color: var(--primary-text-color, #fff);
-      background: var(--card-background-color, #202126);
-      border: 1px solid var(--primary-color, #03a9f4);
-      border-radius: 10px;
-      box-shadow: 0 10px 28px rgb(0 0 0 / 0.34);
     }
     .picker[popover]:not(:popover-open) {
       /* Keep the author-level display:grid from exposing the surface for one
@@ -290,11 +293,7 @@ export class HpColorOpacity extends LitElement {
       padding: 3px;
       border: 1px solid var(--divider-color, #666);
       border-radius: 7px;
-      background:
-        linear-gradient(45deg, #b8b8b8 25%, transparent 25%) 0 0 / 10px 10px,
-        linear-gradient(45deg, transparent 75%, #b8b8b8 75%) 0 0 / 10px 10px,
-        linear-gradient(45deg, transparent 75%, #b8b8b8 75%) 5px -5px / 10px 10px,
-        linear-gradient(45deg, #b8b8b8 25%, #eee 25%) 5px 5px / 10px 10px;
+
     }
     .row > .caption { flex: none; }
     .preview > span {
@@ -423,17 +422,6 @@ export class HpColorOpacity extends LitElement {
       cursor: grabbing;
       --hp-picker-thumb-shadow: 0 0 0 1px rgb(0 0 0 / .8), 0 0 0 4px color-mix(in srgb, var(--primary-color, #03a9f4) 65%, transparent);
     }
-    input[type='text'],
-    input[type='number'] {
-      min-height: 44px;
-      box-sizing: border-box;
-      border: 1px solid var(--divider-color, #666);
-      border-radius: 6px;
-      padding: 6px 8px;
-      color: var(--primary-text-color, #fff);
-      background: var(--input-fill-color, transparent);
-      font: inherit;
-    }
     input[type='text'] {
       width: 100%;
     }
@@ -451,32 +439,11 @@ export class HpColorOpacity extends LitElement {
     input[aria-invalid='true'] {
       border-color: var(--error-color, #db4437);
     }
-    .error {
-      color: var(--error-color, #db4437);
-      font-size: 11px;
-      line-height: 1.25;
-    }
     .pct {
       color: var(--secondary-text-color, #9aa4ad);
       font-size: 12px;
     }
-    .confirm {
-      width: 100%;
-      min-height: 44px;
-      box-sizing: border-box;
-      border: 1px solid var(--primary-color, #03a9f4);
-      border-radius: 6px;
-      padding: 8px 12px;
-      color: var(--text-primary-color, #fff);
-      background: var(--primary-color, #03a9f4);
-      cursor: pointer;
-      font: inherit;
-      font-weight: 600;
-    }
-    .confirm:focus-visible {
-      outline: 2px solid var(--primary-text-color, #fff);
-      outline-offset: -4px;
-    }
+    .confirm { width: 100%; }
     :host([disabled]) {
       opacity: .5;
       pointer-events: none;
@@ -519,7 +486,7 @@ export class HpColorOpacity extends LitElement {
         forced-color-adjust: none;
       }
     }
-  `, unsafeCSS(`.confirm { ${settingsActionTransition} } :host([data-pointer-hover]) .confirm:hover, .confirm:focus-visible { ${settingsPrimaryActionHover} }`)];
+  `];
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -683,18 +650,16 @@ export class HpColorOpacity extends LitElement {
     const popup = this._surface(), win = this._window();
     const epoch = ++this._motionEpoch;
     const current = popup && win?.getComputedStyle(popup);
-    const opacity = current?.opacity || '1', transform = current?.transform || 'none';
+    const opacity = current?.opacity || '1', translate = current?.translate || '0 0';
     this._motion?.cancel(); this._motion = null;
     if (!popup || !win || win.matchMedia('(prefers-reduced-motion: reduce)').matches || !popup.animate) {
       if (closing) this._finishPickerClose();
       return;
     }
     popup.inert = closing;
-    const offset = popup.dataset.side === 'top' ? 'translateY(4px)' : 'translateY(-4px)';
-    const motion = popup.animate(closing
-      ? [{ opacity, transform }, { opacity: 0, transform: offset }]
-      : [{ opacity: 0, transform: offset }, { opacity: 1, transform: 'none' }],
-    { duration: closing ? 120 : 160, easing: closing ? 'ease-in' : 'cubic-bezier(.2,.7,.2,1)', fill: 'both' });
+    const timing = closing ? controlMotion.leave : controlMotion.appear;
+    const motion = popup.animate(controlSurfaceFrames(!closing, closing ? { opacity, translate } : undefined),
+      { ...timing, fill: 'both' });
     this._motion = motion;
     void motion.finished.then(() => {
       if (epoch !== this._motionEpoch) return;

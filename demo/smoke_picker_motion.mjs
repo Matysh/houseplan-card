@@ -21,10 +21,10 @@ try {
       const surface = picker.shadowRoot.querySelector('.picker') || document.querySelector('[data-hp-overlay="color-opacity"]')?.shadowRoot.querySelector('.picker');
       const animation = surface.getAnimations()[0];
       return { duration: animation?.effect.getTiming().duration, easing: animation?.effect.getTiming().easing,
-        frames: animation?.effect.getKeyframes().map(frame => [frame.opacity, frame.transform]), popover: surface.hasAttribute('popover') };
+        frames: animation?.effect.getKeyframes().map(frame => [frame.opacity, frame.translate]), popover: surface.hasAttribute('popover') };
     });
-    check(`${family}.enter_160ms`, state.duration, 160); check(`${family}.entry_easing`, state.easing, 'cubic-bezier(0.2, 0.7, 0.2, 1)');
-    check(`${family}.entry_side_translation`, state.frames?.[0]?.[1], 'translateY(-4px)'); check(`${family}.capability_path`, state.popover, !fallback);
+    check(`${family}.enter_180ms`, state.duration, 180); check(`${family}.entry_easing`, state.easing, 'ease-out');
+    check(`${family}.entry_kit_translation`, state.frames?.[0]?.[1], '0px -10px'); check(`${family}.capability_path`, state.popover, !fallback);
     await picker.evaluate(async picker => {
       const surface = picker.shadowRoot.querySelector('.picker') || document.querySelector('[data-hp-overlay="color-opacity"]')?.shadowRoot.querySelector('.picker');
       await Promise.all(surface.getAnimations().map(animation => animation.finished)); surface.querySelector('input[type="text"]').focus();
@@ -33,10 +33,11 @@ try {
     const exit = await picker.evaluate(picker => {
       const surface = picker.shadowRoot.querySelector('.picker') || document.querySelector('[data-hp-overlay="color-opacity"]')?.shadowRoot.querySelector('.picker');
       const trigger = picker.shadowRoot.querySelector('.trigger');
-      return { open: picker.pickerOpen, inert: surface?.inert, duration: surface?.getAnimations()[0]?.effect.getTiming().duration,
+      return { frames: surface?.getAnimations()[0]?.effect.getKeyframes(), open: picker.pickerOpen, inert: surface?.inert, duration: surface?.getAnimations()[0]?.effect.getTiming().duration,
         suppressed: trigger.hasAttribute('data-restored-focus'), outline: getComputedStyle(trigger).outlineStyle };
     });
-    check(`${family}.exit_120ms`, exit.duration, 120); check(`${family}.exit_inert`, exit.inert, true);
+    check(`${family}.exit_140ms`, exit.duration, 140);
+    check(`${family}.exit_opacity_only`, exit.frames?.every(frame => frame.translate === exit.frames[0].translate) && exit.frames?.at(-1)?.opacity === '0', true); check(`${family}.exit_inert`, exit.inert, true);
     check(`${family}.escape_closes`, exit.open, false); check(`${family}.restored_focus_no_ring`, exit.suppressed && exit.outline === 'none', true);
     await picker.locator('.trigger').click();
     check(`${family}.rapid_reopen_one_surface`, await picker.evaluate(picker => {

@@ -7,7 +7,7 @@
  * than in a core file.
  */
 import { TemplateResult, html, nothing } from 'lit';
-import { disclosure } from './form-kit';
+import { disclosure, callout } from './form-kit';
 import type { HpConfirmRequest } from '../danger-confirm';
 import type { DevItem, Marker, ServerConfig } from '../types';
 import type { VacSourceCandidate, VacSourceResolution } from '../vacuum';
@@ -267,16 +267,16 @@ export function renderVacuumMapsSection(
   };
 
   const renderRoute = (route: VacuumMapRoute): TemplateResult => html`
-    <li class="vacroute ${route.id === activeId ? 'on' : ''}" data-route-id=${route.id}>
+    <li class="vacroute hpf-reading-block hpf-reading-padded ${route.id === activeId ? 'on' : ''}" data-route-id=${route.id}>
       <div class="vacroute-head">
         <b>${routes.findIndex((item) => item.id === route.id) === 0
           ? st('marker.vacuum_first_map')
           : st('marker.vacuum_map_number', { number: routes.findIndex((item) => item.id === route.id) + 1 })}</b>
         ${route.id === activeId
-          ? html`<span class="vacroute-active">${t('vac.route_active')}</span>` : nothing}
+          ? html`<span class="vacroute-active hpf-chip">${t('vac.route_active')}</span>` : nothing}
       </div>
-      <small>${route.source}</small>
-      <div class="vacroute-status">${statusOf(route)}</div>
+      <small class="hpf-hint">${route.source}</small>
+      <div class="vacroute-status hpf-hint">${statusOf(route)}</div>
       <label class="srcrow">
         <span>${t('vac.route_space')}</span>
         <hp-settings-select><select data-hp="field" data-field="vacuum-map-action" class="areasel" @change=${(event: Event) => {
@@ -303,7 +303,7 @@ export function renderVacuumMapsSection(
     <section class="hpf-profile-maproutes"><div class="hpf-sub"><h4>${title || t('vac.routes_section')}</h4></div>
     <div class="bindbox vacroutes">
       ${routes.length === 1 && resolution.kind === 'ready'
-        ? html`<p class="vacuum-map-summary" role="status">${st('marker.vacuum_one_map_ready')}</p>`
+        ? html`<p class="vacuum-map-summary hpf-hint" role="status">${st('marker.vacuum_one_map_ready')}</p>`
         : html`<div class="vacdiag" role="status">
         <div><span>${t('vac.routes_current_map')}</span><b>${currentMapId === undefined
           ? t('vac.routes_no_map') : (currentMapId || t('vac.route_map_default'))}</b></div>
@@ -311,9 +311,9 @@ export function renderVacuumMapsSection(
       </div>`}
       ${validRows.length || draft ? html`<ul class="vacroute-list">
         ${draft ? html`
-          <li class="vacroute pending">
+          <li class="vacroute pending hpf-reading-block hpf-reading-padded">
             <div class="vacroute-head"><b>${draft.mapId || t('vac.route_map_default')}</b></div>
-            <small>${draft.source}</small>
+            <small class="hpf-hint">${draft.source}</small>
             <label class="srcrow">
               <span>${t('vac.route_space')}</span>
               <hp-settings-select><select data-hp="field" data-field="vacuum-map-space" class="areasel vacroute-draft-space" ?disabled=${!!draft.saving}
@@ -341,7 +341,7 @@ export function renderVacuumMapsSection(
           </h4>
           <ul class="vacroute-list">${missingRows.map(renderRoute)}</ul>
         </section>` : nothing}
-      ${!rows.length && !draft ? html`<div class="rhint">${t('vac.routes_empty')}</div>` : nothing}
+      ${!rows.length && !draft ? html`${callout({text:html`${t('vac.routes_empty')}`})}` : nothing}
       <div class="vacbtns vacuum-add-current">
         <button data-hp="action" data-action="vacuum-route-add-current" type="button" class="btn vacroute-add-current" ?disabled=${!canAddCurrent || !!draft}
           @click=${addCurrent}>${t('vac.route_add_current')}</button>
@@ -350,25 +350,25 @@ export function renderVacuumMapsSection(
         ? 'marker.vacuum_add_pending' : !rootSource ? 'marker.vacuum_add_no_source'
           : currentMapId === undefined ? 'marker.vacuum_add_no_map' : 'marker.vacuum_add_current_already')}</p>` : nothing}
       ${spare.length ? disclosure({className:'vacroute-sources',title:t('vac.route_add_source'),
-        content:html`<div class="rhint">${t('vac.route_add_source_hint')}</div>
+        content:html`${callout({text:html`${t('vac.route_add_source_hint')}`})}
         <div class="vacsource-list">
           ${spare.map((candidate) => {
             const mapId = host._vacObservedMapId(dev, candidate.entityId);
-            return html`<button data-hp="action" data-action="vacuum-route-add-source" data-value=${candidate.entityId} type="button" class="vacsource"
+            return html`<button data-hp="action" data-action="vacuum-route-add-source" data-value=${candidate.entityId} type="button" class="btn hpf-action-picker vacsource"
               ?disabled=${mapId === undefined || !!draft}
               @click=${() => addSource(candidate)}>
-              <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>
-              <span class="vacsource-meta">${mapId === undefined
+              <span><b>${candidate.name}</b><small class="hpf-hint">${candidate.entityId}</small></span>
+              <span class="vacsource-meta hpf-hint">${mapId === undefined
                 ? t('vac.route_source_no_map')
                 : (mapId || t('vac.route_map_default'))}</span>
             </button>`;
           })}
         </div>`}) : nothing}
       ${rows.some((route) => !spaceIds.has(route.space)) ? html`
-        <div class="warn">${t('vac.route_missing_space_hint')}</div>` : nothing}
+        ${callout({kind:'warning',text:t('vac.route_missing_space_hint')})}` : nothing}
       ${routes.some((route) => route.map_id === 'default') ? html`
-        <div class="rhint">${t('vac.route_default_hint')}</div>` : nothing}
-      ${rows.length ? html`<div class="vacuum-map-note">${st('marker.vacuum_dock_space_hint', {
+        ${callout({text:html`${t('vac.route_default_hint')}`})}` : nothing}
+      ${rows.length ? html`<div class="vacuum-map-note hpf-hint">${st('marker.vacuum_dock_space_hint', {
         space: spaceName(host, dev.space),
       })}</div>` : nothing}
     </div></section>`;

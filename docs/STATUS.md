@@ -1,5 +1,7 @@
 # Project status
 
+UI Kit settings content (#1149) uses common color fields/popovers, preview actions, Summary toggles, Zigbee notes, external-screen controls, radar fields and vacuum callouts/actions. Settings registry has M=0 and10 explicit L boundaries. Shared paint adopts once per ShadowRoot; configuration and HA-write contracts remain unchanged. Editor compact variants and legacy button retirement are the dependent #1150 package.
+
 Static dashboard openings (#1171) use the full plan's room-wall/partition/legacy
 projection for symbols, masonry cuts, tunnel fills and state-independent frames.
 Existing borders visibility and read-only input remain. Structural keys include
@@ -168,7 +170,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.83.0` |
 | Latest prerelease tag | `v1.83.0-beta.6` |
-| Tests | Node unit 5931 · pure backend 716 · HA-harness backend 614 · browser smokes 491 (`npm run inventory`) |
+| Tests | Node unit 5935 · pure backend 716 · HA-harness backend 614 · browser smokes 492 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions

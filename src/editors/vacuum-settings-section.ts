@@ -7,7 +7,7 @@ import {readVacTelemetry,vacTrailMode,vacRoomNameMatchCount,type VacSourceCandid
 import {subst} from '../logic';
 import {renderVacuumMapsSection} from './vacuum-maps-section';
 import {renderVacuumPathDiagnostics} from './vacuum-path-diagnostics';
-import {field,formCard,subsection,toggleRow, formSections, disclosure, actionHelp,
+import {field,formCard,subsection,toggleRow,callout, formSections, disclosure, actionHelp,
 } from './form-kit';
 import {settingsCopy} from './settings-copy';
 import {saveVacuumDockRestart,vacuumDockRestartPending} from '../vacuum-dock-restart-write';
@@ -65,10 +65,10 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
       candidate.hasMapId ? runtime.host._t('vac.cap_map') : '',
     ].filter(Boolean).join(' · ') || runtime.host._t('vac.cap_none');
     const candidateButton = (candidate: VacSourceCandidate) => html`
-      <button data-hp="field-option" data-field="vacuum-source" data-value=${candidate.entityId} type="button" class="vacsource ${candidate.entityId === src ? 'on' : ''}"
+      <button data-hp="field-option" data-field="vacuum-source" data-value=${candidate.entityId} type="button" class="btn hpf-action-picker vacsource ${candidate.entityId === src ? 'on' : ''}"
         @click=${() => setVac({ source: candidate.entityId })}>
         <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>
-        <span class="vacsource-meta">${candidate.platform || runtime.host._t('vac.platform_unknown')} · ${capability(candidate)}</span>
+        <span class="vacsource-meta hpf-hint">${candidate.platform || runtime.host._t('vac.platform_unknown')} · ${capability(candidate)}</span>
       </button>`;
     const knownSameDeviceXcme = resolution.candidates.some((candidate) =>
       sameDevice.has(candidate.entityId) && candidate.category === 'known_xcme_incomplete');
@@ -97,22 +97,22 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
             ? st('marker.vacuum_map_number',{number:index+1}) : st('marker.vacuum_first_map')}</span><b>${route.map_id} · ${route.source}</b></div>`)}
         </div>`;
     return html`<div class="vacbox vacuum-profile">${formCard({id:'vacuum',title:st('marker.section_vacuum'),
-      help:html`<div class="vacuum-source-status">${st('marker.vacuum_status_inline',{status:runtime.host._t((`vac.source_status_${resolution.status}`) as I18nKey)})}</div>`,body:formSections([
+      help:html`<div class="vacuum-source-status hpf-hint">${st('marker.vacuum_status_inline',{status:runtime.host._t((`vac.source_status_${resolution.status}`) as I18nKey)})}</div>`,body:formSections([
           field({label:runtime.host._t('vac.diag_source'),control:html`<span>${src || runtime.host._t('vac.source_none')}</span>`}),
           html`${subsection({title:st('marker.vacuum_source_path')})}${(resolution.status === 'missing' || resolution.status === 'disabled' || resolution.status === 'unverified')
-          ? html`<div class="warn vacsource-warning">
+          ? callout({kind:'warning',body:html`<div class="vacsource-warning">
               <span>${runtime.host._t((`vac.source_banner_${resolution.status}`) as I18nKey)}</span>
               <button data-hp="action" data-action="vacuum-source-open" type="button" class="btn ghostbtn" @click=${openPicker}>${runtime.host._t('vac.choose_source')}</button>
-            </div>` : nothing}
-          ${showXcmeHint ? html`<div class="warn vacxcme">
+            </div>`}) : nothing}
+          ${showXcmeHint ? callout({kind:'warning',body:html`<div class="vacxcme">
           <b>${runtime.host._t('vac.xcme_hint')}</b>
           <pre>attributes:
   - vacuum_position
   - rooms
   - path
   - map_name</pre>
-        </div>` : nothing}
-          ${ecovacs ? html`<div class="rhint" data-hp="ecovacs-source-hint">${runtime.host._t(
+        </div>`}) : nothing}
+          ${ecovacs ? html`<div class="hpf-callout" data-hp="ecovacs-source-hint">${runtime.host._t(
           !allowed ? 'vac.ecovacs_wrong_device' : !ecovacs.supported ? 'vac.ecovacs_update_backend'
             : ecovacs.frame?.reason ? 'vac.ecovacs_unsupported'
               : !tele && v.live !== false ? 'vac.ecovacs_waiting' : 'vac.ecovacs_manual_hint')}</div>` : nothing}
@@ -120,7 +120,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
             title:runtime.host._t('vac.choose_source'),triggerClass:'btn ghostbtn',
             help:help('marker.vacuum_source_help',runtime.host._t('vac.choose_source')),
             content:html`<div class="vacsource-list">
-            <button data-hp="field-option" data-field="vacuum-source" data-value="" type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
+            <button data-hp="field-option" data-field="vacuum-source" data-value="" type="button" class="btn hpf-action-picker vacsource ${!resolution.pinned ? 'on' : ''}"
               @click=${() => setVac({ source: null })}>
               <span><b>${runtime.host._t('vac.source_auto')}</b><small>${runtime.host._t('vac.source_auto_hint')}</small></span>
             </button>
@@ -135,10 +135,10 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
                 }
               }}>
               <summary data-hp="action" data-action="vacuum-details">${runtime.host._t('vac.all_cameras')}</summary>
-              <div class="rhint">${runtime.host._t('vac.all_cameras_warn')}</div>
+              ${callout({text:html`${runtime.host._t('vac.all_cameras_warn')}`})}
               ${includeAllCameras
                 ? (globalCandidates.length ? globalCandidates.map(candidateButton)
-                  : html`<div class="rhint">${runtime.host._t('vac.all_cameras_empty')}</div>`)
+                  : html`${callout({text:html`${runtime.host._t('vac.all_cameras_empty')}`})}`)
                 : nothing}
             </details>
           </div>`})}</div>`,
@@ -149,7 +149,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${runtime.host._t(('vac.trail_' + mv) as I18nKey)}</option>`)}
           </select></hp-settings-select>`}) : nothing,
           html`<div class="vacuum-trail-color">
-          <span>${st('marker.vacuum_trail_color')}</span>
+          <span class="hpf-labelrow">${st('marker.vacuum_trail_color')}</span>
           <hp-color-opacity data-hp="field" data-field="vacuum-trail-color" .label=${st('marker.vacuum_trail_color')} .hideLabel=${true}
             .triggerLabel=${st('marker.vacuum_trail_color_action')} .nativeTooltip=${false}
             .color=${trailStyle.color} .opacity=${trailStyle.opacity} .showOpacity=${true}
@@ -161,7 +161,7 @@ export function renderVacuumSettingsSection(runtime:HouseplanEditorRuntime,dlg:N
               runtime.host._markerDialog={...current,vacuumTrail:{...event.detail}};
               runtime.host.requestUpdate();
             }}></hp-color-opacity>
-          <span class="vacuum-trail-readout">${st('marker.vacuum_trail_color_summary',{
+          <span class="vacuum-trail-readout hpf-hint">${st('marker.vacuum_trail_color_summary',{
             hex:trailStyle.color,transparency:100-Math.round(trailStyle.opacity*100),
           })}</span>
         </div>`,

@@ -406,17 +406,17 @@ export function renderRadarSection(
       (availabilityEntity) => change({ availabilityEntity }), 'radar.source_optional')}),
           html`${subsection({title:options.t('radar.mount')})}${callout({text:options.t('radar.mount_hint')})}`,
           html`<div class="colorrow radarcoordinates">
-      <label>X <input data-hp="field" data-field="radar-mount-x" class="tempin" inputmode="decimal" .value=${radar.mountX}
+      <label>X <input data-hp="field" data-field="radar-mount-x" class="tempin hpf-input" inputmode="decimal" .value=${radar.mountX}
         @input=${(event: Event) => change({ mountX: (event.target as HTMLInputElement).value })}></label>
-      <label>Y <input data-hp="field" data-field="radar-mount-y" class="tempin" inputmode="decimal" .value=${radar.mountY}
+      <label>Y <input data-hp="field" data-field="radar-mount-y" class="tempin hpf-input" inputmode="decimal" .value=${radar.mountY}
         @input=${(event: Event) => change({ mountY: (event.target as HTMLInputElement).value })}></label>
-      <label>${options.t('radar.heading')} <input data-hp="field" data-field="radar-heading" class="tempin" type="number" min="0" max="359.999" step="1"
+      <label>${options.t('radar.heading')} <input data-hp="field" data-field="radar-heading" class="tempin hpf-input" type="number" min="0" max="359.999" step="1"
         .value=${radar.heading} @input=${(event: Event) => change({ heading: (event.target as HTMLInputElement).value })}></label>
     </div>`,
           html`<div class="colorrow radarcoordinates">
-      <label>${options.t('radar.range_cm')} <input data-hp="field" data-field="radar-range" class="tempin" type="number" min="1" max="10000"
+      <label>${options.t('radar.range_cm')} <input data-hp="field" data-field="radar-range" class="tempin hpf-input" type="number" min="1" max="10000"
         .value=${radar.rangeCm} @input=${(event: Event) => change({ rangeCm: (event.target as HTMLInputElement).value })}></label>
-      <label>${options.t('radar.fov_deg')} <input data-hp="field" data-field="radar-fov" class="tempin" type="number" min="1" max="360"
+      <label>${options.t('radar.fov_deg')} <input data-hp="field" data-field="radar-fov" class="tempin hpf-input" type="number" min="1" max="360"
         .value=${radar.fovDeg} @input=${(event: Event) => change({ fovDeg: (event.target as HTMLInputElement).value })}></label>
     </div>`,
           radar.profile !== 'esphome_ld2450_v1' && radar.profile !== 'zones_v1'

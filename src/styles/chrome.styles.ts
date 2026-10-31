@@ -221,9 +221,6 @@ const chromeCoreStyles = unsafeCSS(css`
     .editorchrome.transitioning .editorchrome-inner {
       will-change: opacity;
     }
-    .editbar .warn {
-      color: #ffc14d;
-    }
     .editbar input {
       width: 74px;
       background: transparent;

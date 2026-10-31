@@ -4,6 +4,11 @@ import { controlReducedMotionCss } from './ui-motion.styles';
 
 /** Read-only kit: headings, cards, labelled values, status and floating badges. */
 export const readingKitStyles = unsafeCSS(css`
+  .hpf-divider-before { border-block-start:1px solid var(--divider-color); }
+  .hpf-table { width:100%; border-collapse:collapse; font-size:14px; }
+  .hpf-table th { padding:10px 12px; text-align:start; font-size:12px; font-weight:600; color:var(--secondary-text-color); border-bottom:1px solid var(--divider-color); }
+  .hpf-table td { padding:12px; border-bottom:1px solid var(--divider-color); vertical-align:middle; }
+  .hpf-table tr:last-child td { border-bottom:0; }
   .hpf-heading { box-sizing:border-box; margin:0; color:var(--primary-text-color); font-size:16px; font-weight:600; line-height:1.4; overflow-wrap:anywhere; }
   .hpf-heading-inline { display:flex; align-items:center; gap:8px; white-space:nowrap; }
   .hpf-heading-inline ha-icon { color:var(--primary-color); --mdc-icon-size:20px; flex:none; }
@@ -14,6 +19,7 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-reading-surface { box-sizing:border-box; color:var(--primary-text-color); background:var(--secondary-background-color); border:1px solid var(--divider-color); border-radius:12px; box-shadow:0 8px 26px rgb(0 0 0 / 16%); font-size:14px; line-height:1.4; }
   .hpf-reading-scroll { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:10px; }
   .hpf-reading-block { min-width:0; border:1px solid var(--divider-color); border-radius:11px; background:var(--card-background-color); }
+  .hpf-reading-padded { padding:14px; }
   .hpf-reading-entry { min-width:0; padding:12px 0; overflow-wrap:anywhere; }
   .hpf-reading-entry + .hpf-reading-entry { border-top:1px solid var(--divider-color); }
   .hpf-reading-entry > p { margin:4px 0; font-size:14px; line-height:1.5; white-space:pre-wrap; }

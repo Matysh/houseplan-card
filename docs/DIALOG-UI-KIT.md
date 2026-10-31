@@ -1,5 +1,7 @@
 # Общий UI-кит диалогов
 
+Пакет #1149 переводит содержимое настроек на общие владельцы: textFieldsCss, settingsActionsCss, formKitCheckboxCss/formKitErrorCss и floatingSurfaceCss. Поповер цвета использует controlSurfaceFrames и прежний владелец фокуса/подтверждения; шахматка общая для trigger/preview. Предпросмотр подключает Form Kit/disclosure в собственном ShadowRoot; демо не вызывает сервисы. Сводная сохраняет native hooks/aria, используя общую hpf-toggle. Радарные tempin получают hpf-input44px; пылесос использует callout/общие действия. Внешние экраны оставляют только раскладку в именованном листе. Проверка demo/ui-lab/settings-content-audit.mjs воспроизводит96 синтетических состояний в pinned HA UI Lab, без заявления о live HA/GPU.
+
 Контракт [#1007](https://github.com/Matysh/houseplan-card/issues/1007).
 
 Дополнение [#1147](https://github.com/Matysh/houseplan-card/issues/1147): набор
