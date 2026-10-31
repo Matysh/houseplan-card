@@ -1,0 +1,35 @@
+{
+  "scenes": [
+    {
+      "id": "static-wall-openings-house-phone-light",
+      "exit": 0,
+      "result": "missing-baseline  static-wall-openings-house-phone-light sha256=34489ace59fc49eef929ef402e67f5977b94a8c4d85ad948c4aabd4afe3ec290",
+      "sha256": "34489ace59fc49eef929ef402e67f5977b94a8c4d85ad948c4aabd4afe3ec290"
+    },
+    {
+      "id": "static-wall-openings-content-desktop-light",
+      "exit": 0,
+      "result": "missing-baseline  static-wall-openings-content-desktop-light sha256=c86fd50cab9e09b7d3c094cb4d50ef2400394d18a472730c47beac50a67225d2",
+      "sha256": "c86fd50cab9e09b7d3c094cb4d50ef2400394d18a472730c47beac50a67225d2"
+    },
+    {
+      "id": "static-wall-openings-diagonal-house-dark",
+      "exit": 0,
+      "result": "missing-baseline  static-wall-openings-diagonal-house-dark sha256=ffaf2d77e34425cb8402ba8ee2bcf09fa6ee1e8658c3675c1be16d5f840b4607",
+      "sha256": "ffaf2d77e34425cb8402ba8ee2bcf09fa6ee1e8658c3675c1be16d5f840b4607"
+    },
+    {
+      "id": "opening-symbol-room-wall-light",
+      "exit": 0,
+      "result": "passed            opening-symbol-room-wall-light sha256=319db5de85bce008c9f11c492261d6c82e9630d2827fb499b7c07eaec6968ea0 diff=0px ratio=0.000000 maxDelta=0",
+      "sha256": "319db5de85bce008c9f11c492261d6c82e9630d2827fb499b7c07eaec6968ea0"
+    },
+    {
+      "id": "opening-symbol-diagonal-partition-dark",
+      "exit": 0,
+      "result": "passed            opening-symbol-diagonal-partition-dark sha256=4650af34580f99eec27371116b097c80ad7fcca000f1fac717c34d604e834046 diff=0px ratio=0.000000 maxDelta=0",
+      "sha256": "4650af34580f99eec27371116b097c80ad7fcca000f1fac717c34d604e834046"
+    }
+  ],
+  "baselineAcceptance": false
+}
