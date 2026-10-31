@@ -1,5 +1,15 @@
 # Development and deployment
 
+Static room-wall openings (#1171): `node demo/smoke_static_wall_openings.mjs`
+exercises real full/space cards through config events, contact changes, rehosting,
+space identity, phone/desktop frames and mouse/touch passivity. `--before` limits
+the same oracle to its initial accepted-code regression; failures remain exit1.
+Three `static-wall-openings-*` Golden scenes capture the actual space-card custom
+element. Pure projection, in-place render and structural cache tests live in
+`test/static-wall-openings.test.mjs` and `test/space-render-caches.test.mjs`.
+The replaced passage-only reader and its obsolete door-cut prohibition are
+removed. Mutation definitions are static-checked only; nightly owns execution.
+
 CI flake evidence (#1133): preserve the first FAIL and its immutable artifact.
 `ci-flake-evidence.mjs` reports bounded differences but never replaces the strict
 Cancel oracle. The vacuum/radar polish smoke collects client/persisted deltas

@@ -21,22 +21,19 @@ import {
   type ResolvedRoomFill,
 } from './logic';
 import {
-  openingTunnelGeometries, wallBodiesUnionPath, wallBodyNeedsSolid, wallHatchNeedsSolid,
-  wallHatchStepUnits, wallIntervals, innerContourForRoom, HATCH_BASE_STEP_UNITS,
-  type WallEntry,
+  openingTunnelGeometriesFromIndex, wallBodiesUnionPath, wallBodyNeedsSolid, wallHatchNeedsSolid,
+  wallHatchStepUnits, innerContourForRoom, HATCH_BASE_STEP_UNITS,
+  openingWallIndex, openingInnerFaceOffsetFromIndex,
+  type OpeningWallIndex, type WallEntry,
 } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules } from './rules';
 import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
 import { moonLayer, moonSkyState, type MoonHost } from './moon-gate';
 import { renderDayCycleEnvironment } from './day-cycle-render';
-import type { DevItem, OpeningCfg, ServerConfig } from './types';
+import type { DevItem, ServerConfig } from './types';
 import { floorMinusBodies, physicalBodyParts, polyclipPathD } from './physical-geometry';
-import {
-  materializePartitionOpening, partitionOpeningCut,
-  partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpeningCompat,
-  type ResolvedPartitionOpening,
-} from './partition-openings';
+import { partitionOpeningFace } from './partition-openings';
 import {
   openingVisibleBounds, renderOpeningVisibleGeometry, type OpeningVisibleSpec,
 } from './render/opening-symbol';
@@ -59,7 +56,7 @@ import { renderPaperShapes, type PaperShape } from './render/paper-scene';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import {
   spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, iconUnit, NORM_W,
-  GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
+  GRID_STEP_N, GRID_PITCH,
   decorBoxItem, expandItem, itemOfGeometry, roomItem, structuralFrame, resolveSpaceCardFit,
   type Layout, type ContentItem, type SpaceCardFit,
 } from './space-geometry';
@@ -68,7 +65,10 @@ import { ledAnchor, ledRelease, ledRuntime, ledStripsByMarker, ledVisible } from
 import { createDeviceBatteryContext } from './device-battery';
 import { deviceBatteryModeOf, showDeviceBatteryOf } from './device-battery-settings';
 import { effectiveShowLqi } from './signal-visibility';
-import { geometryOpenings } from './plan-geometry-preflight';
+import {
+  geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs,
+  type GeometryOpeningProjection,
+} from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
 import type { DecorShape } from './editors/decor/types';
@@ -88,6 +88,9 @@ type StaticWallGeometryEntry = { fingerprint: string; value: StaticWallGeometry 
 const staticWallGeometryCache = new WeakMap<object, Map<string, StaticWallGeometryEntry>>();
 type StaticPhysicalBodiesEntry = { fingerprint: string; value: number[][][] };
 const staticPhysicalBodiesCache = new WeakMap<object, Map<string, StaticPhysicalBodiesEntry>>();
+const staticOpeningIndexCache = new WeakMap<object, Map<string, {
+  fingerprint: string; value: OpeningWallIndex;
+}>>();
 // #375: the scene cache is an LRU of 8 per space — parity with the full
 // card's _lightBarrierPool. A single-entry cache made a door flipping
 // open<->close rebuild the scene on every state change (fingerprint ping-pong).
@@ -112,7 +115,7 @@ function lruSet<V>(cache: Map<string, V>, key: string, value: V, limit: number):
 }
 
 /** Static cards receive the same immutable server-config object on HA ticks. */
-function cachedStaticWallGeometry(
+export function cachedStaticWallGeometry(
   cfg: ServerConfig,
   spaceId: string,
   fingerprint: string,
@@ -123,6 +126,20 @@ function cachedStaticWallGeometry(
     spaces = new Map<string, StaticWallGeometryEntry>();
     staticWallGeometryCache.set(cfg as object, spaces);
   }
+  const cached = spaces.get(spaceId);
+  if (cached?.fingerprint === fingerprint) return cached.value;
+  const value = build();
+  spaces.set(spaceId, { fingerprint, value });
+  return value;
+}
+
+/** One wall-face index per retained geometry, never per contact-state tick. */
+function cachedStaticOpeningIndex(
+  cfg: ServerConfig, spaceId: string, fingerprint: string,
+  build: () => OpeningWallIndex,
+): OpeningWallIndex {
+  let spaces = staticOpeningIndexCache.get(cfg);
+  if (!spaces) { spaces = new Map(); staticOpeningIndexCache.set(cfg, spaces); }
   const cached = spaces.get(spaceId);
   if (cached?.fingerprint === fingerprint) return cached.value;
   const value = build();
@@ -384,30 +401,19 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
   const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
   const zeroWalls = resolveZeroWalls(spCfg, space, NORM_W, GRID_PITCH * 0.02);
-  const resolvedHosted = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
-    // Contour-wall hosts keep the same saved x/y/angle projection as legacy
-    // room openings. Only independent partitions need to be materialised from
-    // their host because that geometry is stored separately from the opening.
-    if (opening.host?.kind !== 'partition') return [];
-    const resolved = resolvePartitionOpeningCompat(
-      opening, space.partitions, NORM_W, cellCm, GRID_PITCH,
-    ).resolved;
-    return resolved ? [resolved] : [];
-  });
+  const projectedOpenings = geometryOpenings(spCfg, space, cellCm, GRID_PITCH, NORM_W);
+  const partitionCuts = geometryPartitionOpeningCuts(projectedOpenings);
   const physicalFingerprint = contentFingerprint({
     partitions: space.partitions,
     columns: space.wall_columns,
     cellCm,
-    hostedOpenings: resolvedHosted.map((resolved) => ({
-      id: resolved.opening.id, host: resolved.host,
-      length: resolved.length, type: resolved.opening.type,
-    })),
+    partitionCuts,
   });
   const extras = cachedStaticPhysicalBodies(
     o.cfg, space.id, physicalFingerprint,
     () => physicalBodyParts(
       space, cellCm, GRID_PITCH, GRID_PITCH * 0.0002,
-      resolvedHosted.map(partitionOpeningCut),
+      partitionCuts,
     ).all,
   );
   for (const body of extras) {
@@ -432,44 +438,49 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
 
   // Resolve architectural opening hosts before framing: tight house mode must
   // include their maximum painted envelope without consulting live state.
-  const resolvedRawOpenings = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
-    if (!opening.host || opening.host.kind === 'wall') return [opening];
-    const resolved = resolvedHosted.find((item) => item.opening.id === opening.id);
-    return resolved ? [materializePartitionOpening(opening, resolved, NORM_W)] : [];
-  });
-  const staticPassages = staticPassageOpenings(resolvedRawOpenings, NORM_W);
-  const roomIntervals = wallIntervals(
-    space.rooms, walls, zeroWalls.contour, GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+  const roomOpenings = geometryRoomOpeningInputs(
+    projectedOpenings, space, walls, zeroWalls.contour,
+    GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
   );
-  const hostedCompositeOpenings = resolvedHosted
-    .filter((resolved) => partitionOpeningHasCompositeRoomWall(
-      resolved, roomIntervals, GRID_PITCH * 0.0002,
-    ))
-    .map((resolved) => ({
-      x: resolved.center[0], y: resolved.center[1],
-      angle: resolved.angle, length: resolved.length,
-    }));
+  const structureFingerprint = contentFingerprint({
+    rooms: space.rooms, walls, cellCm, zero: zeroWalls.contour,
+  });
+  const openingIndex = projectedOpenings.some(
+    (opening) => walls.length || (!opening.partitionHost && opening.type === 'gate'),
+  ) ? cachedStaticOpeningIndex(o.cfg, space.id, structureFingerprint, () => openingWallIndex(
+      space.rooms, walls, zeroWalls.contour, GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+    )) : null;
+  const visibleSpec = (
+    opening: GeometryOpeningProjection, amount: number, base = '', tone = '',
+  ): OpeningVisibleSpec => {
+    const flipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
+    const face = opening.partitionHost
+      ? partitionOpeningFace(opening.partitionHost, flipV)
+      : openingIndex ? openingInnerFaceOffsetFromIndex(openingIndex, {
+          x: opening.rx, y: opening.ry, angle: opening.angle,
+          length: opening.rlen, flip_v: flipV,
+        }) : { ox: 0, oy: 0, cm: 0, side: -1 as const };
+    return { type: opening.type, length: opening.rlen, angle: opening.angle,
+      amount, flipH: !!opening.flip_h, flipV: !!opening.flip_v,
+      base, tone, cellCm, gridPitch: GRID_PITCH, face };
+  };
+  const openingBounds = disp.hideOpenings ? [] : projectedOpenings.flatMap((opening) => {
+    const bounds = openingVisibleBounds(visibleSpec(opening, 0), [opening.rx, opening.ry]);
+    return bounds ? [bounds] : [];
+  });
+  placed.push(...openingBounds);
   const fit = resolveSpaceCardFit(o.fit);
   const needsCanonicalWallGeometry = !!(
     walls.length || (extras.length && disp.showBorders)
   );
   const wallGeometryFingerprint = needsCanonicalWallGeometry
-    ? contentFingerprint(staticPassages.length
-      ? { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour,
-          passages: staticPassages.map((opening) => ({
-          x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-        })), hostedCompositeOpenings }
-      : { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour })
+    ? contentFingerprint({ structureFingerprint, extras, openings: roomOpenings })
     : '';
   const canonicalWallGeometry = needsCanonicalWallGeometry
     ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => {
       const built = wallBodiesUnionPath(
-        space.rooms, walls, zeroWalls.contour, [
-          ...staticPassages.filter((opening) => opening.host?.kind !== 'partition').map((opening) => ({
-            x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-          })),
-          ...hostedCompositeOpenings,
-        ], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
+        space.rooms, walls, zeroWalls.contour, roomOpenings,
+        GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
       );
       // #375: keep the full-card fingerprint on the geometry even though #373
       // needs to build it before choosing the static card frame.
@@ -516,24 +527,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       };
       structure.push(expandItem(item, roomStrokeHalf));
     }
-    if (!disp.hideOpenings) for (const resolved of resolvedHosted) {
-      const opening = resolved.opening;
-      const faceFlipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
-      const bounds = openingVisibleBounds({
-        type: opening.type,
-        length: resolved.length,
-        angle: resolved.angle,
-        amount: 0,
-        flipH: !!opening.flip_h,
-        flipV: !!opening.flip_v,
-        base: '',
-        tone: '',
-        cellCm,
-        gridPitch: GRID_PITCH,
-        face: partitionOpeningFace(resolved, faceFlipV),
-      }, resolved.center);
-      if (bounds) structure.push(bounds);
-    }
+    structure.push(...openingBounds);
     fr = structuralFrame(structure) || fr;
   }
   const rotation = o.rotation || 0;
@@ -636,8 +630,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }) : nothing;
   // #764: markers and opening symbols are keyed like the rooms above (#745): `.device-core`
   // and `.op-leaf`/`.op-arc` transition, and a positional node animated a stranger's state.
-  // Static's cheap paint union historically cuts only passages. Contact/hit
-  // safety uses the shared canonical inputs for every door/window opening.
+  // Paint and contact safety share the same canonical physical opening inputs.
   o.contactFrame?.({ key: `${space.id}|${contentFingerprint(spCfg)}|${disp.showBorders}`, enabled: true,
     space:space.id,layout:o.layout,rotation,
     floor: disp.showBorders ? { config: spCfg, model: space } : undefined,
@@ -733,19 +726,18 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // gaps between detached buildings, and an empty space has no paper at all,
   // image or no image. The picture is drawn ON the paper, one layer above.
 
-  const passageTunnelGeometry = staticPassages.length && walls.length
-    ? openingTunnelGeometries(
-      space.rooms,
-      staticPassages.map((opening) => ({
+  const tunnelGeometry = openingIndex && walls.length
+    ? openingTunnelGeometriesFromIndex(
+      openingIndex,
+      projectedOpenings.map((opening) => ({
         x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
       })),
-      walls, zeroWalls.contour, GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
     )
-    : staticPassages.map(() => null);
-  const passageDataTunnels = staticPassages.length
+    : projectedOpenings.map(() => null);
+  const openingDataTunnels = projectedOpenings.length
     ? renderOpeningTunnelFills({
-      openings: staticPassages,
-      geometries: passageTunnelGeometry,
+      openings: projectedOpenings,
+      geometries: tunnelGeometry,
       fillsByRoomId: roomFillsById,
       idPrefix: `${space.id}-static-data`,
       groupClass: 'opening-tunnels static-opening-tunnels',
@@ -769,7 +761,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   if (!o.lightPools || !glowRuntime || !glowEnabledRooms.length) {
     if (glowRuntime) forgetGlowSpace(glowRuntime.state, glowRuntime.host, space.id);
   } else {
-    const lightOpenings = geometryOpenings(spCfg, space, cellCm, GRID_PITCH, NORM_W);
+    const lightOpenings = projectedOpenings;
     const revision = resolveLightBarrierRevision({
       rawSpaceConfig: spCfg,
       space,
@@ -928,32 +920,19 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       });
     }
   }
-  const hostedOpeningSymbols = disp.hideOpenings ? [] : keyed(space.id, repeat<ResolvedPartitionOpening>(
-    resolvedHosted, (resolved, index) => resolved.opening.id || index, (resolved) => {
-    const opening = resolved.opening;
+  const openingSymbols = disp.hideOpenings ? [] : keyed(space.id, repeat<GeometryOpeningProjection>(
+    projectedOpenings.filter((opening) => opening.type !== 'passage'),
+    (opening, index) => opening.id || index, (opening) => {
     const entity = opening.type === 'passage' || !opening.contact
       ? null : planHass.states?.[opening.contact];
     const amount = openingAmount(
       opening.type, entity?.state, !!opening.invert, entity?.attributes?.current_position,
     );
     const active = amount > 0 && !!opening.contact;
-    const faceFlipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
-    const spec: OpeningVisibleSpec = {
-      type: opening.type,
-      length: resolved.length,
-      angle: resolved.angle,
-      amount,
-      flipH: !!opening.flip_h,
-      flipV: !!opening.flip_v,
-      base: wallStroke,
-      tone: active ? 'var(--hp-open)' : wallStroke,
-      cellCm,
-      gridPitch: GRID_PITCH,
-      face: partitionOpeningFace(resolved, faceFlipV),
-    };
+    const spec = visibleSpec(opening, amount, wallStroke, active ? 'var(--hp-open)' : wallStroke);
     return svg`<g class="opening static-opening" data-hp="opening"
       data-id=${opening.id} data-kind=${opening.type} pointer-events="none"
-      transform="translate(${resolved.center[0]} ${resolved.center[1]}) rotate(${resolved.angle})">
+      transform="translate(${opening.rx} ${opening.ry}) rotate(${opening.angle})">
       ${renderOpeningVisibleGeometry(spec)}
     </g>`;
   }));
@@ -1012,7 +991,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
               })}
             </g>`
           : nothing}
-        ${passageDataTunnels}
+        ${openingDataTunnels}
         <g class="decorlayer" pointer-events="none">${decorImages}</g>
         <g class="hp-stairs-layer" pointer-events="none">${stairShapes}</g>
         ${glowPools}
@@ -1049,7 +1028,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
                   ? `${gridVisualUnits(7, cellCm)} ${gridVisualUnits(7, cellCm)}` : nothing}></line>`)}
             </g>`
           : nothing}
-        ${hostedOpeningSymbols}
+        ${openingSymbols}
         </g>
       </svg>
       ${''/* docs/CANVAS.md §6: the same expression as the full card. The

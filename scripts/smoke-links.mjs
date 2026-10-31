@@ -778,7 +778,7 @@ export const SMOKE_LINKS = [
   {
     symbols: ['renderSpaceStatic'],
     files: ['src/space-render.ts'],
-    smokes: ['smoke_space_card.mjs', 'smoke_space_card_identity.mjs'],
+    smokes: ['smoke_space_card.mjs', 'smoke_space_card_identity.mjs', 'smoke_static_wall_openings.mjs'],
     because: '#812: static-render changes need the baseline space-card contract as well as '
       + '#764 list identity on the read-only space card. The identity smoke '
       + 'drives a real houseplan-space-card through setConfig and a server config push and reads '

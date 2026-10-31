@@ -399,6 +399,13 @@ safe physical fallback. The full card keeps the structural result in
 structural geometry fingerprint, and cursor or HA state updates never repeat the
 O(N²) `physicalBodySet()` node search.
 
+Static's room masonry also consumes `geometryRoomOpeningInputs` (#1171),
+including door/window/gate cuts as well as passages. Partition cuts still reach
+room masonry only under the shared exact composite-wall rule. The structural
+cache fingerprints actual cut geometry, so moving, resizing, rehosting or
+deleting an opening cannot retain its old aperture. A retained wall-face index
+serves symbols and tunnel association; contact ticks leave this structure warm.
+
 ## 3. Body render
 
 Production body is the **ring** `outset(poly, half) − inset(poly, half)` per

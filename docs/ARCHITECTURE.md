@@ -70,6 +70,13 @@ wall faces, opening depth and raised overlays use the same fixed quarter camera.
 Static shares the frame helper and device preference; PDF turns its immutable
 print scene before fitting. No space/layout field or backend write is introduced.
 
+Static openings (#1171) use the full renderer's pure geometry projection for
+room-wall, partition and legacy records. Symbols, physical cuts, tunnel fills
+and maximum painted bounds consume that projection; the shared wall-face index
+is cached by structural geometry. Contact state changes paint, without changing
+the frame or rebuilding masonry. The existing borders choice also owns symbol
+visibility. Reading a plan never rehosts or rewrites an opening.
+
 `plan-rotation-motion` (#1119) owns queued 280 ms presentation around that unchanged
 quarter-turn endpoint. The temporary wrapper transform leaves the background still;
 its generation/authority lease restores styles and input ownership on retirement.

@@ -1,5 +1,10 @@
 # Project status
 
+Static dashboard openings (#1171) use the full plan's room-wall/partition/legacy
+projection for symbols, masonry cuts, tunnel fills and state-independent frames.
+Existing borders visibility and read-only input remain. Structural keys include
+actual cuts; HA contact ticks retain masonry. No saved geometry is rewritten.
+
 Room creation and Optimize (#1166) share proved stored wall contacts. Closed
 contours work without prior Optimize; derived cuts acquire identity after the
 existing storage canonicalization. Ordinary room writes retain unsafe partial

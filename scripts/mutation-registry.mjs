@@ -12109,18 +12109,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'passage-static-door-cut-leak',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test test/space-geometry.test.mjs',
-    because: 'Static обязан менять masonry только для нового passage; добавление обычной двери '
-      + 'в cuts сломает сохранённую совместимость старых планов',
-    patches: [{
-      file: 'src/space-geometry.ts',
-      find: "    if (opening?.type !== 'passage') continue;",
-      replace: "    if (opening?.type !== 'passage' && opening?.type !== 'door') continue;",
-    }],
-  },
-  {
     id: 'passage-iso-door-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/iso-openings.test.mjs',
@@ -15373,9 +15361,10 @@ const MUTANT_DEFINITIONS = [
       + 'swing for 0.6s from the neighbour\'s angle — a door that never moved (#764 AC1)',
     patches: [{
       file: 'src/space-render.ts',
-      find: 'keyed(space.id, repeat<ResolvedPartitionOpening>(\n'
-        + '    resolvedHosted, (resolved, index) => resolved.opening.id || index, (resolved) => {',
-      replace: 'keyed(space.id, resolvedHosted.map((resolved: ResolvedPartitionOpening) => {',
+      find: 'keyed(space.id, repeat<GeometryOpeningProjection>(\n'
+        + "    projectedOpenings.filter((opening) => opening.type !== 'passage'),\n"
+        + '    (opening, index) => opening.id || index, (opening) => {',
+      replace: "keyed(space.id, projectedOpenings.filter((opening) => opening.type !== 'passage').map((opening: GeometryOpeningProjection) => {",
     }],
   },
   {
@@ -15386,9 +15375,36 @@ const MUTANT_DEFINITIONS = [
       + 'keeps the node, and its leaf swings from the other floor\'s state (#764 AC2, same-id case)',
     patches: [{
       file: 'src/space-render.ts',
-      find: 'keyed(space.id, repeat<ResolvedPartitionOpening>(\n',
-      replace: '(repeat<ResolvedPartitionOpening>(\n',
+      find: 'keyed(space.id, repeat<GeometryOpeningProjection>(\n',
+      replace: '(repeat<GeometryOpeningProjection>(\n',
     }],
+  },
+  {
+    id: 'static-room-opening-symbols-omitted-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: the production space card must paint room-wall and legacy symbols as well as partition neighbors.',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: "    projectedOpenings.filter((opening) => opening.type !== 'passage'),",
+      replace: "    projectedOpenings.filter((opening) => opening.type !== 'passage' && !!opening.partitionHost),",
+    }],
+  },
+  {
+    id: 'static-wall-cut-cache-ignores-opening-geometry-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: moving/resizing/deleting an opening must replace its old masonry cut on a retained configuration.',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: '    ? contentFingerprint({ structureFingerprint, extras, openings: roomOpenings })',
+      replace: '    ? contentFingerprint({ structureFingerprint, extras, openings: [] })',
+    }],
+  },
+  {
+    id: 'static-frame-omits-opening-envelope-1171',
+    guard: 'node demo/smoke_static_wall_openings.mjs',
+    because: '#1171: both content and house must contain the maximum visible exterior leaf at phone/desktop widths.',
+    patches: [{file:'src/space-render.ts',find:'  placed.push(...openingBounds);',replace:'  // opening bounds omitted'},
+      {file:'src/space-render.ts',find:'    structure.push(...openingBounds);',replace:'    // opening bounds omitted'}],
   },
   {
     id: 'live-editor-devices-drops-align-guides',

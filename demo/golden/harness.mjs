@@ -23,6 +23,8 @@ import { makeDeviceOfflineFixture } from '../fixtures/device-offline.mjs';
 import { prepareDeviceOfflineBoard } from './device-offline.mjs';
 import { makeVacuumHistoryFixture, prepareVacuumHistoryGolden } from './vacuum-history.mjs';
 import { prepareViewDeviceMenu } from './view-device-menu.mjs';
+import { makeStaticWallOpeningsFixture } from '../fixtures/static-wall-openings.mjs';
+import { prepareStaticWallOpenings } from './static-wall-openings.mjs';
 
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
@@ -63,7 +65,9 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = '0.0.0-golden';
 const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
-const fixtureFor = (scenario) => scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
+const fixtureFor = (scenario) => scenario.staticWallOpenings ? {
+  config:makeStaticWallOpeningsFixture(scenario.staticWallOpenings),layout:{},devices:{},entities:{},states:{},areas:{},
+} : scenario.deviceAlerts ? makeMarkerAlertsFixture(scenario.deviceAlerts) : scenario.deviceIssues ? (() => {
   const fixture = makeVisualMatrixFixture(), sample = makeDeviceIssuesFixture();
   fixture.devices = sample.devices; fixture.entities = sample.entities; fixture.states = sample.states;
   fixture.devices.appliance.area_id = 'golden_light_left';
@@ -3104,6 +3108,7 @@ export async function prepareGoldenScenario(page, scenario) {
   );
   if(scenario.sunTransparent)result.sunTransparent=await prepareSunTransparent(page,!!scenario.sunTransparent.sealed);
   if (scenario.externalScreens) await prepareExternalScreens(page, scenario);
+  if (scenario.staticWallOpenings) result.staticWallOpenings = await prepareStaticWallOpenings(page,scenario);
   return result;
 }
 
@@ -3112,7 +3117,7 @@ export async function goldenClip(page, capture) {
   if (capture === 'battery-zigbee-overlap') return batteryZigbeeClip(await batteryZigbeeProbe(page), page.viewportSize());
   return page.evaluate((captureKind) => {
     const card = window.__goldenCard;
-    const selector=captureKind==='vacuum-history'?'.vacuum-history':captureKind==='ui-1051-color'?'.hp-properties':captureKind==='ui-1051-menu'?'.hpf-context-menu'
+    const selector=captureKind==='static-wall-openings'?'.hp-static-stage':captureKind==='vacuum-history'?'.vacuum-history':captureKind==='ui-1051-color'?'.hp-properties':captureKind==='ui-1051-menu'?'.hpf-context-menu'
       :captureKind==='ui-1051-device'?'.dev[data-id="ui1051-lamp"]':'.stage';
     const target = card?.renderRoot?.querySelector(selector);
     if (!target) throw new Error('golden stage capture target missing');

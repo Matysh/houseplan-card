@@ -3,8 +3,27 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolvedLightSources } from '../test-build/devices.js';
 import {
-  cachedStaticLightBarriers, cachedStaticEnabledClip,
+  cachedStaticLightBarriers, cachedStaticEnabledClip, cachedStaticWallGeometry,
 } from '../test-build/space-render.js';
+
+test('#1171 masonry cache reuses contact ticks and replaces changed geometry per space', () => {
+  const cfg = { spaces: [] };
+  let builds = 0;
+  const build = () => ({ built: ++builds });
+  const original = cachedStaticWallGeometry(cfg, 'a', 'geometry-1', build);
+  for (let tick = 0; tick < 5; tick++)
+    assert.equal(cachedStaticWallGeometry(cfg, 'a', 'geometry-1', build), original);
+  assert.equal(builds, 1, 'paint/contact ticks do not rebuild structural geometry');
+  const moved = cachedStaticWallGeometry(cfg, 'a', 'geometry-2', build);
+  assert.notEqual(moved, original, 'an in-place configuration edit replaces the cached cut');
+  assert.equal(builds, 2);
+  assert.notEqual(cachedStaticWallGeometry(cfg, 'b', 'geometry-2', build), moved);
+  assert.notEqual(cachedStaticWallGeometry({ spaces: [] }, 'a', 'geometry-2', build), moved);
+  assert.equal(builds, 4, 'config and space identities are separate namespaces');
+  assert.notEqual(cachedStaticWallGeometry(cfg, 'a', 'geometry-1', build), original,
+    'only the latest structural geometry is retained per config/space');
+  assert.equal(builds, 5);
+});
 
 // #375 AC1: the light-graph cache is keyed by the ARRAY IDENTITY. The glow
 // scene must therefore pass the caller's array as-is; a fresh spread would

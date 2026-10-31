@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "issue": 1171,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Restores existing room-wall openings omitted by the v1.83.0 static dashboard renderer. Shares the full plan projection, physical cuts and face math; no new settings, interactions, schema or migration. Existing borders/opening visibility is retained.",
+  "summary": {
+    "ru": "Двери, окна и ворота в стенах комнат видны в статической карточке с правильными вырезами и устойчивым кадром.",
+    "en": "Room-wall doors, windows and gates appear in the static card with correct cuts and stable framing."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
+    "golden": [
+      { "id": "static-wall-openings-house-phone-light", "expectation": "new", "reason": "#1171: actual read-only space card at360px, tight house frame includes room-wall leaf, neighboring partition opening and physical cuts/tunnels." },
+      { "id": "static-wall-openings-content-desktop-light", "expectation": "new", "reason": "#1171: actual space card content frame includes the maximum opening envelope, with shared/exterior wall cuts and tunnel fills." },
+      { "id": "static-wall-openings-diagonal-house-dark", "expectation": "new", "reason": "#1171: actual space card on independently rotated synthetic walls, preserving wall-side geometry and complete tight frame." }
+    ],
+    "goldenChecks": [
+      { "id": "opening-symbol-room-wall-light", "reason": "#1171 leaves full-plan room-wall symbols unchanged; exact baseline check." },
+      { "id": "opening-symbol-diagonal-partition-dark", "reason": "#1171 leaves full-plan partition symbols unchanged; exact baseline check." }
+    ],
+    "smokes": ["smoke_static_wall_openings.mjs", "smoke_open_passage.mjs", "smoke_space_card_identity.mjs", "smoke_space_card.mjs"]
+  }
+}

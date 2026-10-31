@@ -277,6 +277,7 @@ test('в корпусе настоящего репозитория все canon
     'demo/golden/matrix.mjs', 'demo/golden/run.mjs',
     'demo/golden/scene-repaint.mjs',
     'demo/golden/static-stability.mjs',
+    'demo/golden/static-wall-openings.mjs',
     'demo/golden/sun-transparent.mjs',
     'demo/golden/ui-lab-1081.mjs',
     'demo/golden/vacuum-history.mjs',

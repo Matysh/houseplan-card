@@ -2,7 +2,7 @@ import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
 // Keyboard-state preparation is part of these three existing Plan scene definitions.
-export const GOLDEN_MATRIX_VERSION = 107;
+export const GOLDEN_MATRIX_VERSION = 108;
 
 // Hundreds of actual input samples, same independently known waypoints. The
 // renderer must retain corners and the explicit gap, not choose by index.
@@ -791,6 +791,15 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'opening-symbol-room-wall-light', fixture: 'visual', space: 'golden-opening-symbols',
     mode: 'view', openingSymbolContract: openingRoomContract,
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  ...[
+    ['static-wall-openings-house-phone-light','house',360,false,'light'],
+    ['static-wall-openings-content-desktop-light','content',780,false,'light'],
+    ['static-wall-openings-diagonal-house-dark','house',780,true,'dark'],
+  ].map(([id,fit,width,diagonal,theme])=>({
+    id,fixture:'visual',space:'f1',mode:'view',staticWallOpenings:{fit,width,diagonal},
+    theme,viewport:{width:width+40,height:1100},capture:'static-wall-openings',
+    threshold:{maxChannelDelta:10,maxDiffRatio:.0005},
+  })),
   ...[
     ['static-hatch-openings-132-dpr1-light', 1.32, 1, 'light'],
     ['static-hatch-openings-140-dpr1-dark', 1.40, 1, 'dark'],

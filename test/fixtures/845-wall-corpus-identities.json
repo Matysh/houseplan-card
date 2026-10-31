@@ -307,6 +307,10 @@
       "configs": 0
     },
     {
+      "file": "demo/fixtures/static-wall-openings.mjs",
+      "configs": 1
+    },
+    {
       "file": "demo/fixtures/sun-transparent.mjs",
       "configs": 1
     },
@@ -13422,6 +13426,92 @@
             }
           ],
           "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "demo/fixtures/static-wall-openings.mjs:makeStaticWallOpeningsFixture",
+      "fingerprint": "2e49f98a62e8d0700736c057bee0ed93afac5e9ea98e3856e8c2b89db4f9b3c8",
+      "ok": true,
+      "identity": [
+        {
+          "space": "f1",
+          "catalogue": [
+            "west",
+            "north",
+            "south",
+            "shared",
+            "north-east",
+            "south-east",
+            "east"
+          ],
+          "rooms": [
+            {
+              "id": "Alpha",
+              "walls": [
+                "north",
+                "shared",
+                "south",
+                "west"
+              ]
+            },
+            {
+              "id": "Beta",
+              "walls": [
+                "north-east",
+                "east",
+                "south-east",
+                "shared"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "wall-door",
+              "host": {
+                "kind": "wall",
+                "id": "north"
+              }
+            },
+            {
+              "id": "shared-window",
+              "host": {
+                "kind": "wall",
+                "id": "shared"
+              }
+            },
+            {
+              "id": "outer-gate",
+              "host": {
+                "kind": "wall",
+                "id": "south-east"
+              }
+            },
+            {
+              "id": "shared-passage",
+              "host": {
+                "kind": "wall",
+                "id": "shared"
+              }
+            },
+            {
+              "id": "legacy-window",
+              "host": {
+                "kind": "wall",
+                "id": "east"
+              }
+            },
+            {
+              "id": "partition-door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "divider"
+          ]
         }
       ]
     },

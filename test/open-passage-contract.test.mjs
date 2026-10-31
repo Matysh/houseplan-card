@@ -6,7 +6,6 @@ import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const card = readHouseplanProductionSource();
 const styles = readAllStylesSource();
-const staticRender = readFileSync(new URL('../src/space-render.ts', import.meta.url), 'utf8');
 const backend = readFileSync(new URL('../custom_components/houseplan/websocket_api.py', import.meta.url), 'utf8');
 const importer = readFileSync(new URL('../custom_components/houseplan/import_export.py', import.meta.url), 'utf8');
 const en = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url)));
@@ -44,17 +43,6 @@ test('passage bindings cannot reach subscriptions, locks or the info card', () =
   const info = card.slice(card.indexOf('private _renderOpeningInfoCard()'), card.indexOf('private _renderOpeningDialog()'));
   assert.match(info, /o\.type !== 'passage' && o\.contact/);
   assert.match(info, /\(o\.type === 'door' \|\| o\.type === 'gate'\) && o\.lock/);
-});
-
-test('static passage cuts and tunnels are passage-only additions', () => {
-  assert.match(staticRender, /staticPassageOpenings\(resolvedRawOpenings, NORM_W\)/);
-  assert.match(staticRender, /opening\.host\?\.kind !== 'partition'/,
-    'only independent-wall hosts go through the partition resolver');
-  assert.match(staticRender, /!opening\.host \|\| opening\.host\.kind === 'wall'/,
-    'stable contour-wall hosts retain the legacy raw-opening projection');
-  assert.match(staticRender, /passages: staticPassages\.map/);
-  assert.match(staticRender, /renderOpeningTunnelFills/);
-  assert.match(staticRender, /passageDataTunnels/);
 });
 
 test('placement preview adds passage-only cut geometry without changing saved symbols', () => {

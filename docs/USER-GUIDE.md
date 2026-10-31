@@ -1380,8 +1380,10 @@ settings (inner is the default). Only exterior room windows cast sun; internal
 windows and windows on independent walls do not.
 
 Openings may slide along joined corners. Double-click in Plan opens properties.
-The static card also cuts an open passage through the wall and carries the
-current room fill through its tunnel.
+The static card shows doors, windows and gates on room walls and independent
+partitions with the same symbol, opening direction and physical cut as the full
+plan. An open passage has a cut without a leaf. The current room fill continues
+through the tunnel. The borders switch hides both architecture and opening symbols.
 
 <!-- docs-section: devices -->
 
@@ -2702,6 +2704,11 @@ and pan return after cold boot. A deleted floor falls back normally without
 copying that floor's coordinates to another one.
 
 ## 18. Static space card
+
+Doors, windows and gates appear on both room walls and independent partitions.
+The frame includes their complete painted envelope and does not jump when a
+contact changes state. Hiding borders also hides opening symbols; showing them
+again restores the symbols and their physical cuts. The plan remains read-only.
 
 `custom:houseplan-space-card` renders one space as a non-interactive live
 diagram. Markers use the same states, values, alarms and effects as the full

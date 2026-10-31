@@ -1341,3 +1341,12 @@ as a mutant; the ordinary fixed-source smoke must pass before handoff.
 #1120 owner correction adds two native close witnesses: actual SVG path paint and the24px close target share the active pill centre in all3editors. The natural9f glyph+6px/slot-1.5px failure and native corrected screenshots are preserved. These require actual computed SVG screen geometry; no mutant is executed during development.
 
 #1145 adds four browser-only witnesses: computed footer/body cascade, pointer-events and disabled hit cursor, native sticky touch hover versus desktop hover, and real44px/compact36px ShadowRoot targets. Two negative43px inputs exercise the size oracle without patching the implementation. Declarations only; no development mutant execution.
+
+#1171 registers `static-room-opening-symbols-omitted-1171`,
+`static-wall-cut-cache-ignores-opening-geometry-1171` and
+`static-frame-omits-opening-envelope-1171` against the actual space-card smoke.
+These guard painted shared symbols, event-driven masonry freshness and measured
+leaf bounds at360/780px; pure projection/cache tests cannot prove those assembled
+browser results. The accepted-code BEFORE misses symbols/cuts/tunnels. Existing
+#764 identity anchors follow the replacement shared list. Definitions only:
+static readiness is not mutation execution or a caught verdict.
