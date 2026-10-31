@@ -158,6 +158,12 @@ try {
   const text=panel.locator('textarea');await text.fill('На кухне ');
   await panel.locator('.hp-prop-variable').click();
   const variable=card.locator('hp-dialog[data-kind="properties-variable"]');
+  const variableFooter = await variable.locator('.hp-prop-variable-footer button').evaluateAll(buttons =>
+    buttons.map(button => { const rect = button.getBoundingClientRect(), style = getComputedStyle(button);
+      return { width: rect.width, height: rect.height, radius: style.borderRadius,
+        background: style.backgroundColor, primary: getComputedStyle(button.closest('hp-dialog')).getPropertyValue('--hpf-accent').trim() }; }));
+  check('properties.variable_footer_targets_44', variableFooter.length === 2 && variableFooter.every(button => button.height >= 44 && button.width >= 44), true);
+  check('properties.variable_footer_common_radius', variableFooter.every(button => button.radius === '7px'), true);
   await variable.locator('.hpf-pick').click();
   await variable.locator('.hpf-cand').filter({hasText:'sensor.kitchen_temperature'}).click();
   check('properties.variable_preview_resolves',await variable.locator('.hp-prop-preview strong').innerText(),'На кухне 22.4 °C');

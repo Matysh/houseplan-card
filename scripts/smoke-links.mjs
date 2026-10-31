@@ -30,6 +30,11 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    files: ['src/editors/properties/editor.ts', 'src/editors/properties/styles.ts'],
+    smokes: ['smoke_properties_panel.mjs'],
+    because: '#1148 F1: native variable insertion/cancellation and computed footer target size/radius protect the shared dialog actions; the approved-UI smoke does not observe this footer.',
+  },
+  {
     files: ['src/styles/devices.styles.ts', 'src/styles/panel-header.styles.ts', 'src/pdf/hp-pdf-dialog.ts'],
     smokes: ['smoke_ui_polish_1132.mjs'],
     because: '#1132: native editor/Escape/print input and overlapping LQI/room-text pixels in both themes and projections observe shared style consequences without calling CSS internals.',

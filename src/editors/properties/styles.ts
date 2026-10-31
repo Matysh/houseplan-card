@@ -156,11 +156,7 @@ export const propertiesStyles = unsafeCSS(css`
   .hp-prop-preview { background: var(--secondary-background-color,#f1f7f8); border: 1px solid var(--divider-color,#e2edef); border-radius: 6px; padding: 12px 14px; margin-top: 20px; overflow-wrap: anywhere; }
   .hp-prop-preview > div { font-size: 12px; color: var(--secondary-text-color,#78909a); margin-bottom: 6px; }
   .hp-prop-preview strong { font-size: 16px; font-weight: 500; color: var(--primary-text-color,#355460); }
-  .hp-prop-variable-footer { display: flex; justify-content: flex-end; gap: 10px; width: 100%; padding: 16px 24px; }
-  .hp-prop-variable-footer button { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 19px; border: 1px solid var(--divider-color,#d3dfe3); border-radius: 5px; font: 13px/1.4 'Segoe UI',Arial,sans-serif; background: var(--card-background-color,#fff); color: inherit; cursor: pointer; }
-  .hp-prop-variable-footer .insert { background: #078a9e; color: #fff; border-color: #078a9e; }
   .hp-prop-variable-footer .hp-prop-icon { width:16px; height:16px; }
-  .hp-prop-variable-footer button:disabled { opacity: .45; cursor: default; }
 `.cssText + `
 .hp-properties button{${settingsActionTransition}}
 .hp-properties button:not(:disabled):not([aria-disabled="true"]):is(:hover,:focus-visible){${settingsActionHover}}

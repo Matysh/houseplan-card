@@ -825,8 +825,8 @@ export class PropertiesEditor {
         ${text.length > 200 ? html`<p role="alert" class="hp-prop-error">${this.t('text_limit')}</p>` : nothing}
         ${error ? html`<p role="alert" class="hp-prop-error">${this.t(error.key as PropertiesString, error.values)}</p>` : nothing}
       </div>
-      <div class="hp-prop-variable-footer" slot="footer"><button data-hp="dialog-cancel" type="button" @click=${() => this.closeVariable()}>${this.t('cancel')}</button>
-        <button data-hp="dialog-confirm" type="button" class="insert" ?disabled=${!valid || !!this.fields.draft?.pending || !!error}
+      <div class="row hpf-footer hp-prop-variable-footer" slot="footer"><button data-hp="dialog-cancel" type="button" class="btn ghost" @click=${() => this.closeVariable()}>${this.t('cancel')}</button>
+        <button data-hp="dialog-confirm" type="button" class="btn on insert" ?disabled=${!valid || !!this.fields.draft?.pending || !!error}
           @click=${async () => {
             if (this.variable !== dialog || !valid) return;
             this.fields.edit('text', text);

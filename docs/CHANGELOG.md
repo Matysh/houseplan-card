@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Use the shared UI Kit shell in every dialog and unify basic fields, actions and disabled states, including space copy, print export and Summary settings. Keep select and switch targets at least 44px. Preserve Summary scrolling and wide phone fields, plus save, copy, cancellation and download workflows. [#1148](https://github.com/Matysh/houseplan-card/issues/1148)
+- Use the shared UI Kit shell in every dialog and unify basic fields, actions and disabled states, including space copy, print export, Summary settings and variable insertion. Keep dialog actions, select and switch targets at least 44px. Preserve Summary scrolling and wide phone fields, plus save, copy, cancellation and download workflows. [#1148](https://github.com/Matysh/houseplan-card/issues/1148)
 
 - Unify View and kiosk controls, notices, device issue details and onboarding with the shared UI Kit and reduced-motion behavior. Show the oversized-plan warning during first-space setup and retain the draft on cancellation. Keep device-card spacing independent of whether settings were opened first. [#1147](https://github.com/Matysh/houseplan-card/issues/1147)
 
