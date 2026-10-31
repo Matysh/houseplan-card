@@ -1,0 +1,557 @@
+"""Storage helpers: versioned stores and per-entry runtime data."""
+from __future__ import annotations
+
+import asyncio
+import copy
+import logging
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.storage import Store
+
+from .build_identity import UNKNOWN_BUILD, BuildIdentity
+from .config_migrations import (
+    CONFIG_MIGRATION_BACKUP,
+    CONFIG_MIGRATION_PASSPORT,
+    CONFIG_MIGRATION_VERSION,
+    migrate_pair,
+    migration_version,
+)
+from .const import (
+    DOMAIN,
+    OPTIMIZE_PENDING,
+    STORAGE_CONFIG_KEY,
+    STORAGE_KEY,
+    STORAGE_MINOR_VERSION,
+    STORAGE_VERSION,
+    STORAGE_VIRTUAL_LIGHTS_KEY,
+)
+from .coordinate_canonicalization import (
+    canonicalize_config_geometry,
+    canonicalize_layout_geometry,
+)
+
+_LOGGER = logging.getLogger(__name__)
+_BG_MODES = frozenset({"static", "daynight"})
+
+
+def migrate_config_background_mode(old_data: dict[str, Any]) -> dict[str, Any]:
+    """Materialize the legacy implicit background mode without changing its view.
+
+    Only the config-store document has a top-level ``config`` object. Layout
+    and virtual-light stores pass through this helper unchanged even though
+    they share the same Store subclass and minor version.
+    """
+    config = old_data.get("config")
+    if not isinstance(config, dict):
+        return old_data
+    settings = config.get("settings")
+    mode = settings.get("bg_mode") if isinstance(settings, dict) else None
+    if mode in _BG_MODES:
+        return old_data
+
+    data = copy.deepcopy(old_data)
+    migrated_config = data["config"]
+    migrated_settings = migrated_config.get("settings")
+    if not isinstance(migrated_settings, dict):
+        migrated_settings = {}
+        migrated_config["settings"] = migrated_settings
+    migrated_settings["bg_mode"] = "static"
+    return data
+
+
+class HouseplanStore(Store):
+    """Store with a migration hook.
+
+    Bump STORAGE_MINOR_VERSION for backward-compatible schema additions and
+    STORAGE_VERSION for breaking changes, then handle them here. Keeping the
+    skeleton in place from day one means old installations always pass through
+    a single, tested upgrade path.
+    """
+
+    async def _async_migrate_func(
+        self,
+        old_major_version: int,
+        old_minor_version: int,
+        old_data: dict[str, Any],
+    ) -> dict[str, Any]:
+        if old_major_version == 1 and old_minor_version < 2:
+            return migrate_config_background_mode(old_data)
+        return old_data
+
+
+@dataclass
+class HouseplanData:
+    """Runtime data of the single config entry (entry.runtime_data)."""
+
+    store: HouseplanStore
+    config_store: HouseplanStore
+    virtual_light_store: HouseplanStore
+    virtual_lights: Any | None = None
+    # One lock for every load→modify→save cycle of both stores: prevents
+    # lost updates from concurrent WS calls and makes the rev check atomic.
+    write_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    # A separate, narrower lock for the check-quota→write-file pair of an
+    # upload. Without it N parallel uploads all measure the store BEFORE any
+    # of them writes, and all pass a quota only one of them fits under
+    # (HP-1490-02). Separate from write_lock so a slow directory scan does not
+    # stall config/layout commits.
+    upload_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    # Collect files nothing references any more. Set during setup, which also
+    # runs it once and schedules it daily. Exposed so it can be invoked
+    # directly — a test that fakes a 24 h jump proves the timer fires, not that
+    # the work happens, and those are different claims.
+    sweep: Callable[[], Awaitable[None]] | None = None
+    # Stable HA instance id used only through a one-way export fingerprint.
+    instance_id: str = ""
+    # Parsed import candidates are short-lived, user-bound and memory-only.
+    # dict keeps insertion order, which lets the preview service evict oldest.
+    import_previews: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # #43/#942: sanitized bytes plus a private TTL read-scope for ACL rechecks.
+    # The scope is never part of the attachment, transport or logs. Raw config/layout is
+    # never retained here; the write lock below is used to take one coherent
+    # deep copy and the privacy projection immediately replaces it.
+    support_previews: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # #330 §4.2: junction-limit violation counts of the STORED document,
+    # keyed by its rev — (rev, {space_id: {rule: count}}). One slot,
+    # memory-only, invalidated by a rev mismatch; the previous document is
+    # not re-judged on every write. Counts only — documents are never held.
+    junction_baseline: tuple[int, dict[str, dict[str, int]]] | None = None
+    # #1096: rev of the stored document that an ordinary config/set of this
+    # runtime validated through the full CONFIG_SCHEMA of this version. The
+    # next ordinary write at that rev may validate only what it touched. Any
+    # other writer bumps the rev and retires the stamp; a restart starts
+    # without one. Memory-only, never serialised.
+    schema_clean_rev: int | None = None
+    # Runtime-only #485 authority; never serialized by HouseplanStore.
+    radar_coordinator: Any | None = None
+    # #912: volatile MQTT jobs own a separate entry-scoped durable map Store.
+    zigbee_coordinator: Any | None = None
+    # #1029: independent volatile passive own-radio values, never a Store.
+    zigbee_lqi: Any | None = None
+    # #936: private ZIP sessions; no archive bytes or tokens enter config/export.
+    backup_service: Any | None = None
+    backup_root: str = ""
+    # #1073: bounded connection-owned marker history; never part of config/export.
+    marker_history: Any | None = None
+    marker_history_owner: Any | None = None
+    # #836: frontend fingerprint and dev label, read once at entry setup.
+    build_identity: BuildIdentity = UNKNOWN_BUILD
+
+
+HouseplanConfigEntry = ConfigEntry[HouseplanData]
+
+
+def create_data(hass: HomeAssistant) -> HouseplanData:
+    """Create the stores for a config entry."""
+    data = HouseplanData(
+        store=HouseplanStore(hass, STORAGE_VERSION, STORAGE_KEY, minor_version=STORAGE_MINOR_VERSION),
+        config_store=HouseplanStore(
+            hass, STORAGE_VERSION, STORAGE_CONFIG_KEY, minor_version=STORAGE_MINOR_VERSION
+        ),
+        virtual_light_store=HouseplanStore(
+            hass,
+            STORAGE_VERSION,
+            STORAGE_VIRTUAL_LIGHTS_KEY,
+            minor_version=STORAGE_MINOR_VERSION,
+        ),
+    )
+    from .virtual_lights import VirtualLightController
+
+    data.virtual_lights = VirtualLightController(hass, data.virtual_light_store)
+    return data
+
+
+def get_data(hass: HomeAssistant) -> HouseplanData | None:
+    """Runtime data of the loaded entry, or None when not set up."""
+    entries = hass.config_entries.async_loaded_entries(DOMAIN)
+    return entries[0].runtime_data if entries else None
+
+
+def get_entry(hass: HomeAssistant) -> ConfigEntry | None:
+    """The loaded config entry, or None."""
+    entries = hass.config_entries.async_loaded_entries(DOMAIN)
+    return entries[0] if entries else None
+
+
+OPTIMIZE_BACKUP = "optimize_backup"
+LAYOUT_STORE_CORE_KEYS = frozenset({"layout", "rev"})
+
+
+def layout_store_payload(
+    stored: dict[str, Any],
+    layout: dict[str, Any],
+    rev: int,
+    *,
+    metadata: dict[str, Any] | None = None,
+    remove: tuple[str, ...] = (),
+    replace_metadata: bool = False,
+) -> dict[str, Any]:
+    """Build one layout-store write without silently dropping metadata.
+
+    Layout used to be saved by several independent dict comprehensions.  Every
+    new metadata key therefore had to be added to every caller or was lost on
+    the next drag.  All writers now express only the metadata they intentionally
+    add/remove and this helper preserves the rest.
+    """
+    excluded = {*LAYOUT_STORE_CORE_KEYS, *remove}
+    out = {} if replace_metadata else {
+        key: value for key, value in stored.items() if key not in excluded
+    }
+    if metadata:
+        out.update(metadata)
+    out["layout"] = canonicalize_layout_geometry(layout)
+    out["rev"] = rev
+    return out
+
+
+async def async_save_layout_state(
+    runtime: HouseplanData,
+    stored: dict[str, Any],
+    layout: dict[str, Any],
+    rev: int,
+    *,
+    metadata: dict[str, Any] | None = None,
+    remove: tuple[str, ...] = (),
+    replace_metadata: bool = False,
+) -> dict[str, Any]:
+    """Persist layout and return the exact store document written."""
+    payload = layout_store_payload(
+        stored,
+        layout,
+        rev,
+        metadata=metadata,
+        remove=remove,
+        replace_metadata=replace_metadata,
+    )
+    await runtime.store.async_save(payload)
+    return payload
+
+
+async def async_save_config_state(
+    runtime: HouseplanData,
+    config: dict[str, Any],
+    rev: int,
+    *,
+    previous_rev: int | None = None,
+    observe_history: bool = True,
+    previous: dict[str, Any] | None = None,
+    canonical: bool = False,
+) -> dict[str, Any]:
+    """Persist configuration and reconcile dependent operational state.
+
+    Callers already hold ``runtime.write_lock``.  Reading the previous
+    revision here keeps less common writers (import recovery and undo) on the
+    same path as ordinary editor saves without duplicating lifecycle rules.
+
+    `previous` (#1096): the store payload the caller already loaded under the
+    same lock, so it is not read from disk a second time. `canonical=True`:
+    the caller's `config` is already the output of `canonicalize_config_geometry`
+    (CONFIG_SCHEMA ran on it); it is stored as is instead of being copied and
+    canonicalised again — a no-op by construction.
+    """
+    if previous is None:
+        previous = await runtime.config_store.async_load() or {}
+    if previous_rev is None:
+        try:
+            previous_rev = int(previous.get("rev", 0))
+        except (TypeError, ValueError):
+            previous_rev = 0
+
+    if canonical:
+        # The ordinary write path hands over the output of CONFIG_SCHEMA, which
+        # ran `canonicalize_config_geometry` itself (#1096); the coordinate
+        # write-barrier guard pins that `canonical=True` has that one caller.
+        canonical_config = config
+    else:
+        canonical_config = canonicalize_config_geometry(config)
+    payload = {**previous, "config": canonical_config, "rev": rev}
+    # #1096: whatever this writer stores was not validated whole by the
+    # ordinary write path of this runtime; the next ordinary write validates
+    # the whole document again. `ws_config_set` re-stamps after its own commit.
+    runtime.schema_clean_rev = None
+
+    async def save_config() -> None:
+        await runtime.config_store.async_save(payload)
+
+    zigbee = getattr(runtime, "zigbee_coordinator", None)
+    if zigbee is not None:
+        await zigbee.async_save_config(canonical_config, save_config)
+    else:
+        await save_config()
+
+    if observe_history and getattr(runtime, "marker_history", None) is not None:
+        runtime.marker_history.observe_identity({}, canonical_config)
+
+    lqi = getattr(runtime, "zigbee_lqi", None)
+    if lqi is not None:
+        await lqi.async_config_saved(canonical_config)
+
+    # The config is already durable at this point.  Reconciliation remains a
+    # separate Store write; an interrupted pair is detected from config_rev on
+    # the next read and fails safe to the compatibility default (all on).
+    from .virtual_lights import async_reconcile_virtual_lights
+
+    try:
+        controller = getattr(runtime, "virtual_lights", None)
+        if controller is not None:
+            await controller.async_flush()
+        await async_reconcile_virtual_lights(
+            runtime.virtual_light_store,
+            canonical_config,
+            rev,
+            previous_config_rev=previous_rev,
+        )
+        if controller is not None:
+            controller.reset()
+    except Exception:  # noqa: BLE001 - config commit already stands
+        _LOGGER.exception("House Plan: virtual-light state reconciliation failed")
+    return payload
+
+
+@dataclass(frozen=True)
+class ResolvedStorePair:
+    """One coherent config/layout read, optionally after pending recovery."""
+
+    config_data: dict[str, Any]
+    layout_data: dict[str, Any]
+    recovered_kind: str | None = None
+
+
+def _pending_target(
+    layout_data: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Return a structurally usable paired-write intent, if one is present."""
+    pending = layout_data.get(OPTIMIZE_PENDING)
+    if not isinstance(pending, dict):
+        return None
+    if not isinstance(pending.get("config"), dict):
+        return None
+    if not isinstance(pending.get("layout"), dict):
+        return None
+    return pending
+
+
+async def async_converge_store_pair(
+    runtime: HouseplanData,
+    pending: dict[str, Any],
+    *,
+    config_data: dict[str, Any] | None = None,
+    layout_data: dict[str, Any] | None = None,
+) -> ResolvedStorePair:
+    """Converge legacy pairs, or one fenced ZIP files/cache/config/layout unit."""
+    archive = pending.get("archive")
+    if archive is None:
+        return await _async_converge_pair_documents(
+            runtime, pending, config_data=config_data, layout_data=layout_data,
+        )
+    if not isinstance(archive, dict) or archive.get("action") not in {"publish", "rollback", "cache"}:
+        raise ValueError("invalid backup intent")
+    coordinator = runtime.zigbee_coordinator
+    if coordinator is None or not runtime.backup_root:
+        raise ValueError("backup recovery unavailable")
+    from .backup_files import check_files, durable_file_job, rollback_files
+
+    async def converge_archive() -> ResolvedStorePair:
+        if archive["action"] in {"publish", "rollback"}:
+            if archive["action"] == "publish":
+                await durable_file_job(coordinator.hass,
+                    lambda: check_files(Path(runtime.backup_root), archive, publish=True)
+                )
+            else:
+                await durable_file_job(coordinator.hass, rollback_files, Path(runtime.backup_root), archive)
+        await coordinator.async_backup_cache(pending["config"], archive["snapshot"])
+        resolved = await _async_converge_pair_documents(
+            runtime, pending, config_data=config_data, layout_data=layout_data,
+        )
+        coordinator.finish_backup_transaction()
+        return resolved
+
+    if coordinator.backup_owned():
+        # The new writer already owns write -> upload -> lifecycle, before
+        # persisting intent. Recovery enters the same order here.
+        return await converge_archive()
+    async with runtime.upload_lock:
+        async with coordinator.backup_transaction():
+            return await converge_archive()
+
+
+async def _async_converge_pair_documents(
+    runtime: HouseplanData,
+    pending: dict[str, Any],
+    *,
+    config_data: dict[str, Any] | None = None,
+    layout_data: dict[str, Any] | None = None,
+) -> ResolvedStorePair:
+    """Converge both stores on one durable paired-write intent.
+
+    Callers hold ``runtime.write_lock``.  Store may raise after bytes reached
+    disk, so each failed half is reloaded and compared with the exact payload
+    before the exception is allowed to escape.
+    """
+    if config_data is None:
+        config_data = await runtime.config_store.async_load() or {}
+    if layout_data is None:
+        layout_data = await runtime.store.async_load() or {}
+
+    target_config = canonicalize_config_geometry(pending["config"])
+    target_layout = canonicalize_layout_geometry(pending["layout"])
+    config_rev = int(config_data.get("rev", 0))
+    layout_rev = int(layout_data.get("rev", 0))
+    target_config_rev = int(pending.get(
+        "config_rev", config_rev + (config_data.get("config") != target_config)
+    ))
+    target_layout_rev = int(pending.get(
+        "layout_rev", layout_rev + (layout_data.get("layout", {}) != target_layout)
+    ))
+
+    exact_metadata = pending.get("final_metadata")
+    replace_metadata = isinstance(exact_metadata, dict)
+    config_needs_write = (
+        config_data.get("config") != target_config
+        or (
+            config_rev != target_config_rev
+            if replace_metadata
+            else config_rev < target_config_rev
+        )
+    )
+    if config_needs_write:
+        previous_config_rev = config_rev
+        config_rev = (
+            target_config_rev
+            if replace_metadata
+            else max(config_rev, target_config_rev)
+        )
+        expected_config = {**config_data, "config": target_config, "rev": config_rev}
+        try:
+            config_data = await async_save_config_state(
+                runtime,
+                target_config,
+                config_rev,
+                previous_rev=previous_config_rev,
+                observe_history=False,
+            )
+        except Exception:
+            # A Store write is allowed to fail after its atomic replacement.
+            # Exact reload distinguishes that case from a half that never
+            # reached disk; no inference is made from the exception itself.
+            config_data = await runtime.config_store.async_load() or {}
+            if config_data != expected_config:
+                raise
+
+    layout_rev = (
+        target_layout_rev
+        if replace_metadata
+        else max(layout_rev, target_layout_rev)
+    )
+    metadata = dict(exact_metadata) if replace_metadata else None
+    if (
+        not replace_metadata
+        and not pending.get("clear_backup")
+        and OPTIMIZE_BACKUP in layout_data
+    ):
+        metadata = {OPTIMIZE_BACKUP: layout_data[OPTIMIZE_BACKUP]}
+    remove_metadata = [OPTIMIZE_PENDING, OPTIMIZE_BACKUP]
+    if pending.get("clear_backup"):
+        # A recovered whole-plan undo replaces the complete layout; a nested
+        # repair snapshot from that replaced layout must not survive it.
+        remove_metadata.append("repair_backup")
+    expected_layout = layout_store_payload(
+        layout_data,
+        target_layout,
+        layout_rev,
+        metadata=metadata,
+        remove=tuple(remove_metadata),
+        replace_metadata=replace_metadata,
+    )
+    try:
+        layout_data = await async_save_layout_state(
+            runtime,
+            layout_data,
+            target_layout,
+            layout_rev,
+            metadata=metadata,
+            remove=tuple(remove_metadata),
+            replace_metadata=replace_metadata,
+        )
+    except Exception:
+        layout_data = await runtime.store.async_load() or {}
+        if layout_data != expected_layout:
+            raise
+
+    # Return fresh durable documents.  A following writer must never continue
+    # with pre-recovery revisions or a pre-recovery layout snapshot.
+    config_data = await runtime.config_store.async_load() or {}
+    layout_data = await runtime.store.async_load() or {}
+    if getattr(runtime, "marker_history", None) is not None and not str(pending.get("kind", "")).endswith("_rollback"):
+        runtime.marker_history.observe_identity({}, config_data.get("config") or {},
+                                               exclude_session=getattr(runtime, "marker_history_owner", None))
+    return ResolvedStorePair(
+        config_data=config_data,
+        layout_data=layout_data,
+        recovered_kind=str(pending.get("kind") or "plan optimization"),
+    )
+
+
+async def async_resolve_pending_pair(runtime: HouseplanData) -> ResolvedStorePair:
+    """One locked load/write fence: recovery, then versioned canonical decode."""
+    config_data = await runtime.config_store.async_load() or {}
+    layout_data = await runtime.store.async_load() or {}
+    migration_version(layout_data.get(CONFIG_MIGRATION_PASSPORT))
+    pending = _pending_target(layout_data)
+    recovered_kind = None
+    if pending is not None:
+        recovered = await async_converge_store_pair(
+            runtime, pending, config_data=config_data, layout_data=layout_data,
+        )
+        config_data, layout_data = recovered.config_data, recovered.layout_data
+        recovered_kind = recovered.recovered_kind
+    config = config_data.get("config")
+    if isinstance(config, dict):
+        migrated = migrate_pair(config, layout_data.get("layout") or {},
+            passport=layout_data.get(CONFIG_MIGRATION_PASSPORT),
+            square_pending=layout_data.get("geom_pending"))
+        config_changed = migrated.config != config
+        layout_changed = migrated.layout != (layout_data.get("layout") or {})
+        if config_changed or layout_changed or "geom_pending" in layout_data:
+            # Stored reads retain their existing tolerant contract (including
+            # historical omitted titles). Strict input schema/host validators
+            # remain at import and write boundaries. This decoder changes only
+            # proven values; applying today's full schema here would drop old
+            # fields or add unrelated defaults before a user edits anything.
+            config_rev = int(config_data.get("rev", 0))
+            layout_rev = int(layout_data.get("rev", 0))
+            metadata = {key: value for key, value in layout_data.items()
+                if key not in {*LAYOUT_STORE_CORE_KEYS, OPTIMIZE_PENDING, "geom_pending"}}
+            metadata.setdefault(CONFIG_MIGRATION_BACKUP, {
+                "version": CONFIG_MIGRATION_VERSION,
+                "config_data": copy.deepcopy(config_data),
+                "layout_data": copy.deepcopy(layout_data),
+            })
+            metadata[CONFIG_MIGRATION_PASSPORT] = {
+                **(layout_data.get(CONFIG_MIGRATION_PASSPORT) or {}),
+                "version": CONFIG_MIGRATION_VERSION, "steps": list(migrated.steps),
+            }
+            target = {
+                "kind": "config_migration", "config": migrated.config,
+                "layout": migrated.layout, "config_rev": config_rev + config_changed,
+                "layout_rev": layout_rev + layout_changed, "final_metadata": metadata,
+            }
+            # The original pair and target are durable before either half can
+            # change. The common resolver resumes this exact intent after a
+            # crash; success is not published while only one half is saved.
+            await async_save_layout_state(runtime, layout_data,
+                layout_data.get("layout") or {}, layout_rev,
+                metadata={**metadata, OPTIMIZE_PENDING: target}, replace_metadata=True)
+            return await async_converge_store_pair(runtime, target,
+                config_data=config_data,
+                layout_data=await runtime.store.async_load() or {})
+    if getattr(runtime, "marker_history", None) is not None:
+        runtime.marker_history.observe_identity({}, config_data.get("config") or {},
+            exclude_session=getattr(runtime, "marker_history_owner", None))
+    return ResolvedStorePair(config_data=config_data, layout_data=layout_data,
+        recovered_kind=recovered_kind)

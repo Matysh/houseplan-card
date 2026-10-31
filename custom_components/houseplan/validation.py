@@ -1,0 +1,2956 @@
+"""Pure House Plan validation and sanitizers — no Home Assistant dependencies.
+
+Kept separate so it can be covered by unit tests (only voluptuous is needed).
+"""
+from __future__ import annotations
+
+import copy
+import json
+import math
+import re
+from collections import Counter
+
+import voluptuous as vol
+
+from custom_components.houseplan.config_migrations import (
+    canonical_config,
+    needs_canonical_config,
+)
+from custom_components.houseplan.const import MAX_CONFIG_TEXT
+from custom_components.houseplan.coordinate_canonicalization import (
+    canonicalize_config_geometry,
+    canonicalize_lattice_coordinate,
+    canonicalize_layout_geometry,
+    canonicalize_number,
+    canonicalize_position,
+)
+from custom_components.houseplan.led_strips import (
+    LED_STRIPS_SCHEMA,
+    config_led_strip_links,
+    preserve_led_strips,
+)
+from custom_components.houseplan.marker_alerts import valid_marker_alerts
+from custom_components.houseplan.partition_promotion import (
+    same_partition_wall_chain_promotion,
+    same_partition_wall_promotion,
+)
+from custom_components.houseplan.room_appearance import (
+    materialize_space_appearance,
+    preserve_space_appearance,
+)
+from custom_components.houseplan.vacuum_routes import validate_marker_routes
+
+# ---------- limits and extension sets ----------
+PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
+MAX_PLAN_BYTES = 8 * 1024 * 1024
+FILE_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "webp", "txt"}
+MAX_FILE_BYTES = 50 * 1024 * 1024
+
+SPACE_ID_RE = re.compile(r"^[a-z0-9_-]{1,64}$")
+_SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
+# The name length the content view will accept back in a request. Anything a
+# generated name must fit inside, collision tag included (HP-1460-01).
+MAX_FILENAME = 120
+MARKER_CONTROL_PREFIX = "marker:"
+_CONTROL_ENTITY_ID_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+\Z")
+
+
+class MarkerControlError(ValueError):
+    """Semantic marker-link error with a stable public code."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
+class DuplicateMarkerIdError(ValueError):
+    """A write introduced or retained a changed duplicate active marker id."""
+
+    code = "invalid_config"
+
+    def __init__(self) -> None:
+        # Marker ids may contain user-controlled entity/device identifiers. A
+        # stable message is enough and does not leak the value into logs.
+        super().__init__("duplicate active marker id")
+
+
+def _active_marker_groups(config: dict | None) -> dict[str, list[str]]:
+    """Return order-independent structural signatures grouped by live id."""
+    groups: dict[str, list[str]] = {}
+    for marker in (config or {}).get("markers") or []:
+        if not isinstance(marker, dict) or marker.get("removed") is True:
+            continue
+        marker_id = marker.get("id")
+        if not isinstance(marker_id, str) or not marker_id:
+            continue
+        groups.setdefault(marker_id, []).append(
+            json.dumps(marker, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        )
+    for signatures in groups.values():
+        signatures.sort()
+    return groups
+
+
+def validate_active_marker_ids(
+    config: dict,
+    previous: dict | None = None,
+    *,
+    validate_all: bool = False,
+) -> None:
+    """Reject new active-id ambiguity without stranding legacy documents.
+
+    Existing duplicate groups may round-trip unchanged so an unrelated save
+    remains possible. Once any member changes, the candidate must repair the
+    group down to at most one active marker. Authoritative imports pass
+    ``validate_all=True`` because they have no local legacy group to preserve.
+    """
+    candidate = _active_marker_groups(config)
+    duplicates = {
+        marker_id: signatures
+        for marker_id, signatures in candidate.items()
+        if len(signatures) > 1
+    }
+    if not duplicates:
+        return
+    if validate_all or previous is None:
+        raise DuplicateMarkerIdError()
+    old = _active_marker_groups(previous)
+    if any(old.get(marker_id) != signatures for marker_id, signatures in duplicates.items()):
+        raise DuplicateMarkerIdError()
+
+
+class OpeningPassageError(ValueError):
+    """Semantic open-passage error with a stable public code and payload."""
+
+    code = "invalid_passage_fields"
+
+    def __init__(self, space_id: str, opening_id: str, fields: list[str]) -> None:
+        self.space_id = space_id
+        self.opening_id = opening_id
+        self.fields = tuple(sorted(fields))
+        # #42: structured details as JSON — the frontend parses this instead
+        # of regexing an English sentence; the legacy "space=..;.." format is
+        # still accepted there for one beta.
+        super().__init__(json.dumps({
+            "space": space_id, "opening": opening_id, "fields": list(self.fields),
+        }, ensure_ascii=False))
+
+
+class PartitionOpeningHostError(ValueError):
+    """A write tried to strip explicit host identity from a surviving opening."""
+
+    code = "invalid_partition_opening_host"
+
+
+class PartitionOpeningJambMarginError(ValueError):
+    """A direct geometry write leaves no physical jamb at a wall endpoint."""
+
+    code = "invalid_partition_opening_jamb_margin"
+
+    def __init__(
+        self, space_id: str, opening_id: str, margin: float, margin_cm: float
+    ) -> None:
+        self.space_id = space_id
+        self.opening_id = opening_id
+        self.margin = margin
+        self.margin_cm = margin_cm
+        # #42: structured details as JSON (see OpeningPassageError).
+        super().__init__(json.dumps({
+            "space": space_id, "opening": opening_id,
+            "margin": round(margin, 12), "margin_cm": round(margin_cm, 12),
+        }, ensure_ascii=False))
+
+
+class WallModelClientOutdatedError(ValueError):
+    """A stale client tried to replace an already-migrated v8 document."""
+
+    code = "wall_model_client_outdated"
+
+
+def _legacy_wall_model_projection(config: dict) -> dict:
+    """Structural view an older client can faithfully round-trip."""
+    projected = copy.deepcopy(config)
+    projected.pop("model_version", None)
+    for space in projected.get("spaces") or []:
+        space.pop("wall_segments", None)
+        for room in space.get("rooms") or []:
+            room.pop("wall_ids", None)
+        for draft in space.get("room_drafts") or []:
+            for segment in draft.get("segments") or []:
+                segment.pop("id", None)
+        for opening in space.get("openings") or []:
+            host = opening.get("host")
+            if isinstance(host, dict) and host.get("kind") == "wall":
+                opening.pop("host", None)
+    return projected
+
+
+def _catalog_coupled_wall_geometry_projection(config: dict) -> list[dict]:
+    """Legacy geometry whose edit must also update the v8 contour catalogue.
+
+    Drafts, partitions and columns carry their own ids. Openings carry an
+    explicit v8 host and are checked against it by CONFIG_SCHEMA. None of those
+    independent objects requires a different contour wall_segments catalogue.
+    """
+    result: list[dict] = []
+    for space in config.get("spaces") or []:
+        rooms = []
+        for room in space.get("rooms") or []:
+            rooms.append({key: copy.deepcopy(room.get(key)) for key in (
+                "id", "poly", "x", "y", "w", "h", "open_to"
+            ) if key in room})
+        result.append({
+            "id": space.get("id"),
+            "rooms": rooms,
+            "walls": copy.deepcopy(space.get("walls") or []),
+            "open_spans": copy.deepcopy(space.get("open_spans") or []),
+        })
+    return result
+
+
+def _wall_catalog_projection(config: dict) -> list[dict]:
+    """Authoritative part a current v8 structural writer must update."""
+    return [{
+        "id": space.get("id"),
+        "wall_segments": copy.deepcopy(space.get("wall_segments")),
+    } for space in config.get("spaces") or []]
+
+
+def _existing_wall_room_ownership_only(config: dict, previous: dict) -> bool:
+    """Current clients may add/remove a room fully bounded by existing atoms.
+
+    Filling the last cavity changes ownership, not physical wall geometry.
+    Require complete explicit identities on each added/removed ring; editing
+    an existing contour or submitting a room without IDs remains invalid.
+    """
+    old_spaces = {space["id"]: space for space in previous.get("spaces") or []}
+    for space in config.get("spaces") or []:
+        old = old_spaces.get(space["id"])
+        if old is None:
+            return False
+        before = {room["id"]: room for room in old.get("rooms") or []}
+        after = {room["id"]: room for room in space.get("rooms") or []}
+        added, removed = after.keys() - before.keys(), before.keys() - after.keys()
+        if added and removed:
+            return False
+        common = before.keys() & after.keys()
+        def projection(source: dict, room_ids=common) -> list[dict]:
+            filtered = {**source, "rooms": [room for room in source.get("rooms") or [] if room["id"] in room_ids]}
+            return _catalog_coupled_wall_geometry_projection({"spaces": [filtered]})
+        if projection(space) != projection(old):
+            return False
+        walls = {wall["id"]: wall for wall in old.get("wall_segments") or []}
+        for room in [*(after[key] for key in added), *(before[key] for key in removed)]:
+            poly, ids = room.get("poly") or [], room.get("wall_ids") or []
+            if len(poly) < 3 or len(poly) != len(ids):
+                return False
+            for index, wall_id in enumerate(ids):
+                wall = walls.get(wall_id)
+                a, b = poly[index], poly[(index + 1) % len(poly)]
+                if wall is None or not any(
+                    a == wall[first] and b == wall[second]
+                    for first, second in (("a", "b"), ("b", "a"))
+                ):
+                    return False
+    return True
+
+
+def _restore_wall_model_fields(config: dict, previous: dict) -> None:
+    """Hydrate only v8 identity fields after an exact legacy round-trip."""
+    config["model_version"] = previous["model_version"]
+    old_spaces = {str(space.get("id")): space for space in previous.get("spaces") or []}
+    for space in config.get("spaces") or []:
+        old_space = old_spaces.get(str(space.get("id")))
+        if old_space is None:
+            continue
+        space["wall_segments"] = copy.deepcopy(old_space.get("wall_segments") or [])
+        old_rooms = {str(room.get("id")): room for room in old_space.get("rooms") or []}
+        for room in space.get("rooms") or []:
+            old_room = old_rooms.get(str(room.get("id")))
+            if old_room is not None and "wall_ids" in old_room:
+                room["wall_ids"] = copy.deepcopy(old_room["wall_ids"])
+        old_drafts = {str(draft.get("id")): draft for draft in old_space.get("room_drafts") or []}
+        for draft in space.get("room_drafts") or []:
+            old_draft = old_drafts.get(str(draft.get("id")))
+            if old_draft is None:
+                continue
+            old_segments = old_draft.get("segments") or []
+            for index, segment in enumerate(draft.get("segments") or []):
+                if index < len(old_segments) and old_segments[index].get("id"):
+                    segment["id"] = old_segments[index]["id"]
+        old_openings = {
+            str(opening.get("id")): opening for opening in old_space.get("openings") or []
+        }
+        for opening in space.get("openings") or []:
+            old_opening = old_openings.get(str(opening.get("id")))
+            old_host = (old_opening or {}).get("host")
+            if isinstance(old_host, dict) and old_host.get("kind") == "wall":
+                opening["host"] = copy.deepcopy(old_host)
+
+
+def _projection_differs(config: dict, previous: dict, projection, touched: set[str] | None) -> bool:
+    """`projection(config) != projection(previous)` without projecting untouched spaces.
+
+    The projections are per-space lists in document order, so two documents
+    differ exactly when their space id order differs or a touched space's
+    projection differs; an untouched space equals its stored record and so
+    does its projection (#1096). `touched is None` keeps the whole comparison.
+    """
+    if touched is None:
+        return projection(config) != projection(previous)
+    new_spaces = [s for s in config.get("spaces") or [] if isinstance(s, dict)]
+    old_spaces = [s for s in previous.get("spaces") or [] if isinstance(s, dict)]
+    if [s.get("id") for s in new_spaces] != [s.get("id") for s in old_spaces]:
+        return True
+    for new_space, old_space in zip(new_spaces, old_spaces, strict=True):
+        key = str(new_space.get("id"))
+        if key not in touched and new_space.get("id") is not None:
+            continue
+        if projection({"spaces": [new_space]}) != projection({"spaces": [old_space]}):
+            return True
+    return False
+
+
+def validate_wall_model_transition(
+    config: dict, previous: dict | None, *, touched: set[str] | None = None,
+) -> None:
+    """Do not let omission of model_version bypass v8 semantic validation.
+
+    `touched` (#1096): ids of the spaces an ordinary write changed; the
+    catalogue projections are then compared for those spaces only, with the
+    same verdict as the whole-document comparison.
+    """
+    try:
+        old_model = int((previous or {}).get("model_version", 0))
+        new_model = int(config.get("model_version", 0))
+    except (TypeError, ValueError):
+        return  # CONFIG_SCHEMA owns malformed values.
+    previous = previous or {}
+    stored_drafts = any(
+        "room_drafts" in space for space in previous.get("spaces") or []
+        if isinstance(space, dict)
+    )
+    if old_model >= 10 and not stored_drafts and any(
+        "room_drafts" in space for space in config.get("spaces") or []
+        if isinstance(space, dict)
+    ):
+        # A v9 card can echo a cached draft without changing the contour
+        # projection at all. The old catalogue guard therefore cannot see the
+        # destructive downgrade, but v10 must never persist the removed
+        # carrier again (#478 AC2).
+        #
+        # #529: the submitted model number is not the tell. A stale card
+        # echoes back the `model_version` it was given — the current one — so
+        # the old `new_model < 10` condition let exactly the outdated client
+        # through and the user met an unrelated "conflicting wall identifiers"
+        # instead of "update the card and reload the page". What identifies the
+        # stale writer is the carrier itself appearing over a stored plan that
+        # does not have it; legacy left in storage is not a stale writer and is
+        # healed by the migration instead (#529 K4).
+        raise WallModelClientOutdatedError(
+            f"stored model={old_model}; submitted legacy room_drafts model={new_model}"
+        )
+    contour_geometry_changed = _projection_differs(
+        config, previous, _catalog_coupled_wall_geometry_projection, touched,
+    )
+    if old_model >= 8 and new_model < 8:
+        if not contour_geometry_changed:
+            _restore_wall_model_fields(config, previous or {})
+            # Re-run semantic parity after hydration; previous identity is
+            # accepted only when it still matches the submitted projections.
+            validated = CONFIG_SCHEMA(config)
+            config.clear()
+            config.update(validated)
+            return
+        raise WallModelClientOutdatedError(
+            f"stored model={old_model}; submitted model={new_model}"
+        )
+    if old_model >= 8 and 8 <= new_model <= old_model and contour_geometry_changed:
+        # The realistic stale-client case echoes model_version and the unknown
+        # catalogue verbatim while changing room/contour geometry. Let the
+        # frontend show the dedicated reload guidance instead of a generic
+        # schema error. Independent drafts, partitions, columns and explicitly
+        # hosted openings are validated by CONFIG_SCHEMA without requiring a
+        # contour catalogue change (#314).
+        #
+        # A submitted model ABOVE the stored one is excluded on purpose (#319):
+        # a stale client can only echo the stored version, never raise it. The
+        # first write of a newer client legitimately drops legacy projection
+        # fields (an orphan open_span/open_to) without touching the catalogue;
+        # treating that as "outdated" wedged every structural write forever.
+        if (not _projection_differs(config, previous, _wall_catalog_projection, touched)
+                and not (old_model >= 10 and new_model >= 10
+                         and _existing_wall_room_ownership_only(config, previous or {}))):
+            raise WallModelClientOutdatedError(
+                f"stored model={old_model}; unchanged wall catalogue"
+            )
+
+
+# One normalized canvas width contains this many physical grid cells. Keep in
+# sync with GRID_STEP_N/NORM_W in the frontend; it is a geometry scale, not a
+# user setting.
+NORMALIZED_CANVAS_CELLS = 240.0
+_DEFAULT_ROOM_WALL_CM = 15.0
+_OPTIMIZE_REHOST_EPSILON = 1e-8
+
+
+def _room_polygon(room: dict) -> list[list[float]]:
+    poly = room.get("poly")
+    if isinstance(poly, list) and len(poly) >= 3:
+        return poly
+    if all(key in room for key in ("x", "y", "w", "h")):
+        x, y = float(room["x"]), float(room["y"])
+        w, h = float(room["w"]), float(room["h"])
+        return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
+    return []
+
+
+def _segment_metrics(a: list, b: list) -> tuple[float, float, float]:
+    dx, dy = float(b[0]) - float(a[0]), float(b[1]) - float(a[1])
+    return dx, dy, math.hypot(dx, dy)
+
+
+def _line_distance(point: list, a: list, b: list) -> float:
+    dx, dy, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return math.inf
+    return abs((float(point[0]) - float(a[0])) * dy
+               - (float(point[1]) - float(a[1])) * dx) / length
+
+
+def _projection(point: list, a: list, b: list) -> float:
+    dx, dy, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return math.inf
+    return ((float(point[0]) - float(a[0])) * dx
+            + (float(point[1]) - float(a[1])) * dy) / length
+
+
+def _segment_covers(a: list, b: list, target_a: list, target_b: list) -> bool:
+    """Return whether one exact collinear segment covers the target."""
+    _, _, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return False
+    if (_line_distance(target_a, a, b) > _OPTIMIZE_REHOST_EPSILON
+            or _line_distance(target_b, a, b) > _OPTIMIZE_REHOST_EPSILON):
+        return False
+    for point in (target_a, target_b):
+        along = _projection(point, a, b)
+        if along < -_OPTIMIZE_REHOST_EPSILON or along > length + _OPTIMIZE_REHOST_EPSILON:
+            return False
+    return True
+
+
+def _segments_overlap_on_axis(a: list, b: list, other_a: list, other_b: list) -> bool:
+    if (_line_distance(other_a, a, b) > _OPTIMIZE_REHOST_EPSILON
+            or _line_distance(other_b, a, b) > _OPTIMIZE_REHOST_EPSILON):
+        return False
+    _, _, length = _segment_metrics(a, b)
+    lo, hi = sorted((_projection(other_a, a, b), _projection(other_b, a, b)))
+    return min(length, hi) - max(0.0, lo) > _OPTIMIZE_REHOST_EPSILON
+
+
+def _angle_delta_mod_180(first: float, second: float) -> float:
+    return abs((first - second + 90.0) % 180.0 - 90.0)
+
+
+def _segments_cover_target(segments: list[tuple[list, list]], target_a: list, target_b: list) -> bool:
+    """Whether a collinear union covers one complete positive target span."""
+    dx, dy, length = _segment_metrics(target_a, target_b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return False
+    ranges = []
+    for a, b in segments:
+        if (_line_distance(a, target_a, target_b) > _OPTIMIZE_REHOST_EPSILON
+                or _line_distance(b, target_a, target_b) > _OPTIMIZE_REHOST_EPSILON):
+            continue
+        lo, hi = sorted((_projection(a, target_a, target_b),
+                         _projection(b, target_a, target_b)))
+        lo, hi = max(0.0, lo), min(length, hi)
+        if hi - lo > _OPTIMIZE_REHOST_EPSILON:
+            ranges.append((lo, hi))
+    reached = 0.0
+    for lo, hi in sorted(ranges):
+        if lo > reached + _OPTIMIZE_REHOST_EPSILON:
+            return False
+        reached = max(reached, hi)
+        if reached >= length - _OPTIMIZE_REHOST_EPSILON:
+            return True
+    return False
+
+
+_OPTIMIZE_PARTITION_KEYS = {"id", "a", "b", "cm"}
+
+
+def _known_optimize_partition(partition: dict) -> bool:
+    return isinstance(partition, dict) and set(partition).issubset(_OPTIMIZE_PARTITION_KEYS)
+
+
+def _axis_range(a: list, b: list, axis_a: list, axis_b: list) -> tuple[float, float] | None:
+    """Project one positive collinear overlap onto ``axis_a -> axis_b``."""
+    if not (isinstance(a, list) and len(a) == 2
+            and isinstance(b, list) and len(b) == 2):
+        return None
+    if (_line_distance(a, axis_a, axis_b) > _OPTIMIZE_REHOST_EPSILON
+            or _line_distance(b, axis_a, axis_b) > _OPTIMIZE_REHOST_EPSILON):
+        return None
+    _, _, length = _segment_metrics(axis_a, axis_b)
+    lo, hi = sorted((_projection(a, axis_a, axis_b),
+                     _projection(b, axis_a, axis_b)))
+    lo, hi = max(0.0, lo), min(length, hi)
+    return (lo, hi) if hi - lo > _OPTIMIZE_REHOST_EPSILON else None
+
+
+def _axis_point(a: list, b: list, along: float) -> list[float]:
+    dx, dy, length = _segment_metrics(a, b)
+    return [float(a[0]) + dx / length * along,
+            float(a[1]) + dy / length * along]
+
+
+def _optimize_partition_needs_proof(old_partition: dict, space: dict, old_space: dict) -> bool:
+    """Select #296 removal/splitting, not ordinary Optimize grid alignment."""
+    partition_id = str(old_partition.get("id", ""))
+    current = next((item for item in space.get("partitions") or []
+                    if str(item.get("id", "")) == partition_id), None)
+    if current == old_partition:
+        return False
+    if current is None:
+        return True
+    if _exact_partition_align(old_partition, current, old_space, space):
+        return False
+    try:
+        old_a, old_b = old_partition["a"], old_partition["b"]
+        current_range = _axis_range(current["a"], current["b"], old_a, old_b)
+        _, _, old_length = _segment_metrics(old_a, old_b)
+    except (KeyError, TypeError, ValueError):
+        return False
+    return current_range is not None and (
+        current_range[0] > _OPTIMIZE_REHOST_EPSILON
+        or current_range[1] < old_length - _OPTIMIZE_REHOST_EPSILON
+    )
+
+
+def _exact_partition_align(before: dict, after: dict, old_space: dict, space: dict) -> bool:
+    """Prove the existing TS Align + storage result, never an arbitrary trim.
+
+    Optimize canonicalizes its input before snapN, then canonicalizes storage.
+    The ordinary config/set owner never calls this Optimize-only predicate.
+    Unknown semantics, changed identity/thickness and collapsed axes cannot use
+    this exception; their structural loss still needs the original full proof.
+    """
+    if set(before) != _OPTIMIZE_PARTITION_KEYS or set(after) != _OPTIMIZE_PARTITION_KEYS:
+        return False
+    if not isinstance(before["id"], str) or not before["id"]:
+        return False
+    cm = before["cm"]
+    if isinstance(cm, bool) or not isinstance(cm, (int, float)) or not math.isfinite(cm) or cm < 0:
+        return False
+    if ({key: value for key, value in before.items() if key not in {"a", "b"}}
+            != {key: value for key, value in after.items() if key not in {"a", "b"}}):
+        return False
+    step = 1 / NORMALIZED_CANVAS_CELLS
+    expected = []
+    for field in ("a", "b"):
+        point = before.get(field)
+        if not isinstance(point, list) or len(point) != 2:
+            return False
+        if any(isinstance(value, bool) or not isinstance(value, (int, float))
+               or not math.isfinite(value) for value in point):
+            return False
+        # Math.round ties toward +infinity, unlike Python's round().
+        expected.append([canonicalize_lattice_coordinate(
+            math.floor(canonicalize_lattice_coordinate(value) / step + 0.5) * step
+        ) for value in point])
+    span = math.dist(*expected)
+    epsilon = step * 1e-6  # Existing align-grid.ts EPS, not a new fit tolerance.
+    if after.get("a") != expected[0] or after.get("b") != expected[1] or span <= epsilon:
+        return False
+    for opening in old_space.get("openings") or []:
+        if not isinstance(opening, dict):
+            return False
+        host = opening.get("host")
+        if not isinstance(host, dict) or host.get("kind") != "partition" or host.get("id") != before["id"]:
+            continue
+        try:
+            length = float(canonicalize_number(opening["length"]))
+            t = float(canonicalize_number(host["t"]))
+        except (KeyError, TypeError, ValueError, OverflowError):
+            return False
+        along = t * span
+        if (not math.isfinite(length) or length <= 0 or not math.isfinite(t) or not 0 <= t <= 1
+                or along - length / 2 < -epsilon or along + length / 2 > span + epsilon):
+            return False
+        # This narrow exception cannot use an omitted/replaced source opening
+        # to authorize a carrier trim. Other Optimize repairs still use their
+        # original full structural/rehost proof outside this exception.
+        retained = [item for item in space.get("openings") or []
+                    if isinstance(item, dict) and item.get("id") == opening.get("id")]
+        if not opening.get("id") or len(retained) != 1:
+            return False
+        retained_host = retained[0].get("host")
+        if (not isinstance(retained_host, dict) or retained_host.get("kind") != "partition"
+                or retained_host.get("id") != before["id"]):
+            return False
+    return True
+
+
+def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:
+    """Independently prove every removed atom of one old partition axis."""
+    if not _known_optimize_partition(old_partition):
+        return False
+    try:
+        old_a, old_b = old_partition["a"], old_partition["b"]
+        old_cm = float(old_partition["cm"])
+        _, _, length = _segment_metrics(old_a, old_b)
+    except (KeyError, TypeError, ValueError):
+        return False
+    if length <= _OPTIMIZE_REHOST_EPSILON or old_cm <= 0:
+        return False
+
+    rooms: list[tuple[str, list[tuple[list, list]]]] = []
+    for room in space.get("rooms") or []:
+        poly = _room_polygon(room)
+        if len(poly) < 3:
+            return False
+        rooms.append((str(room.get("id", "")), [
+            (poly[index], poly[(index + 1) % len(poly)])
+            for index in range(len(poly))
+        ]))
+
+    candidate_partitions = space.get("partitions") or []
+    retained: list[tuple[float, float]] = []
+    breakpoints = [0.0, length]
+
+    def note_segment(a: list, b: list) -> tuple[float, float] | None:
+        projected = _axis_range(a, b, old_a, old_b)
+        if projected:
+            breakpoints.extend(projected)
+        return projected
+
+    for partition in candidate_partitions:
+        try:
+            projected = note_segment(partition["a"], partition["b"])
+            candidate_cm = float(partition["cm"])
+        except (KeyError, TypeError, ValueError):
+            return False
+        if projected and _known_optimize_partition(partition) and candidate_cm == old_cm:
+            retained.append(projected)
+    for _, edges in rooms:
+        for edge_a, edge_b in edges:
+            note_segment(edge_a, edge_b)
+    for collection in (space.get("walls") or [], space.get("open_spans") or []):
+        for segment in collection:
+            try:
+                note_segment(segment["a"], segment["b"])
+            except (KeyError, TypeError, ValueError):
+                return False
+
+    points = sorted(set(round(point, 12) for point in breakpoints
+                        if -_OPTIMIZE_REHOST_EPSILON <= point
+                        <= length + _OPTIMIZE_REHOST_EPSILON))
+    for lo, hi in zip(points, points[1:], strict=False):  # #42 B905: adjacent pairs, unequal length is the point
+        if hi - lo <= _OPTIMIZE_REHOST_EPSILON:
+            continue
+        if any(start <= lo + _OPTIMIZE_REHOST_EPSILON
+               and end >= hi - _OPTIMIZE_REHOST_EPSILON
+               for start, end in retained):
+            continue
+        target_a, target_b = _axis_point(old_a, old_b, lo), _axis_point(old_a, old_b, hi)
+        owners = {room_id for room_id, edges in rooms
+                  if _segments_cover_target(edges, target_a, target_b)}
+        collinear = {room_id for room_id, edges in rooms
+                     if any(_segments_overlap_on_axis(
+                         target_a, target_b, edge_a, edge_b
+                     ) for edge_a, edge_b in edges)}
+        if len(owners) not in (1, 2) or collinear != owners:
+            return False
+        if any(_segments_overlap_on_axis(
+                target_a, target_b, span["a"], span["b"]
+        ) for span in space.get("open_spans") or []):
+            return False
+        if any(_segments_overlap_on_axis(
+                target_a, target_b, partition["a"], partition["b"]
+        ) for partition in candidate_partitions):
+            return False
+
+        covering_walls = []
+        for wall in space.get("walls") or []:
+            try:
+                wall_a, wall_b = wall["a"], wall["b"]
+                if _segment_covers(wall_a, wall_b, target_a, target_b):
+                    covering_walls.append((
+                        _segment_metrics(wall_a, wall_b)[2], float(wall["cm"]),
+                    ))
+            except (KeyError, TypeError, ValueError):
+                return False
+        effective_cm = (min(covering_walls, key=lambda item: item[0])[1]
+                        if covering_walls else _DEFAULT_ROOM_WALL_CM)
+        if effective_cm + _OPTIMIZE_REHOST_EPSILON < old_cm:
+            return False
+    return True
+
+
+def _hosted_opening_geometry(opening: dict, partition: dict) -> tuple[float, float, float, float] | None:
+    host = opening.get("host")
+    try:
+        if not isinstance(host, dict) or host.get("kind") != "partition":
+            return None
+        t = float(host["t"])
+        a, b = partition["a"], partition["b"]
+        dx, dy, length = _segment_metrics(a, b)
+        opening_length = float(opening["length"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not 0 <= t <= 1 or length <= _OPTIMIZE_REHOST_EPSILON or opening_length <= 0:
+        return None
+    angle = math.degrees(math.atan2(dy, dx))
+    if angle >= 90:
+        angle -= 180
+    elif angle < -90:
+        angle += 180
+    return float(a[0]) + dx * t, float(a[1]) + dy * t, angle, opening_length
+
+
+def _safe_optimize_residual_rehost(
+    space: dict, old_space: dict, opening: dict, old_opening: dict,
+) -> bool:
+    """Prove a hosted opening rebound to a newly-created residual id."""
+    old_host, new_host = old_opening.get("host"), opening.get("host")
+    if not (isinstance(old_host, dict) and isinstance(new_host, dict)
+            and old_host.get("kind") == new_host.get("kind") == "partition"):
+        return False
+    old_partition = next((item for item in old_space.get("partitions") or []
+                          if str(item.get("id", "")) == str(old_host.get("id", ""))), None)
+    new_partition = next((item for item in space.get("partitions") or []
+                          if str(item.get("id", "")) == str(new_host.get("id", ""))), None)
+    if old_partition is None or new_partition is None:
+        return False
+    if not _safe_optimize_partition_delta(space, old_partition):
+        return False
+    ignored = {"host", "x", "y", "angle"}
+    if ({key: value for key, value in old_opening.items() if key not in ignored}
+            != {key: value for key, value in opening.items() if key not in ignored}):
+        return False
+    old_geometry = _hosted_opening_geometry(old_opening, old_partition)
+    new_geometry = _hosted_opening_geometry(opening, new_partition)
+    if old_geometry is None or new_geometry is None:
+        return False
+    old_x, old_y, old_angle, old_length = old_geometry
+    new_x, new_y, new_angle, new_length = new_geometry
+    try:
+        explicit_x, explicit_y = float(opening["x"]), float(opening["y"])
+        explicit_angle = float(opening["angle"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return (
+        abs(old_x - new_x) <= _OPTIMIZE_REHOST_EPSILON
+        and abs(old_y - new_y) <= _OPTIMIZE_REHOST_EPSILON
+        and abs(old_length - new_length) <= _OPTIMIZE_REHOST_EPSILON
+        and _angle_delta_mod_180(old_angle, new_angle) <= 1e-7
+        and abs(explicit_x - new_x) <= _OPTIMIZE_REHOST_EPSILON
+        and abs(explicit_y - new_y) <= _OPTIMIZE_REHOST_EPSILON
+        and _angle_delta_mod_180(explicit_angle, new_angle) <= 1e-7
+    )
+
+
+def _safe_optimize_partition_rehost(
+    space: dict, old_space: dict, opening: dict, old_opening: dict,
+) -> bool:
+    """Independently prove the #276/#296 partition-to-room-wall transition."""
+    old_host = old_opening.get("host")
+    if not isinstance(old_host, dict) or old_host.get("kind") != "partition":
+        return False
+    partition_id = str(old_host.get("id", ""))
+    old_partition = next((item for item in old_space.get("partitions") or []
+                          if str(item.get("id", "")) == partition_id), None)
+    if old_partition is None:
+        return False
+    if not _safe_optimize_partition_delta(space, old_partition):
+        return False
+    a, b = old_partition.get("a"), old_partition.get("b")
+    if not (isinstance(a, list) and len(a) == 2 and isinstance(b, list) and len(b) == 2):
+        return False
+    dx, dy, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return False
+
+    ignored = {"host", "x", "y", "angle"}
+    old_stable = {key: value for key, value in old_opening.items() if key not in ignored}
+    new_stable = {key: value for key, value in opening.items() if key not in ignored}
+    if old_stable != new_stable:
+        return False
+    try:
+        t = float(old_host["t"])
+        x, y = float(opening["x"]), float(opening["y"])
+        opening_angle = float(opening["angle"])
+        opening_length = float(opening["length"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if not (0 <= t <= 1 and opening_length > 0):
+        return False
+    expected_x, expected_y = float(a[0]) + dx * t, float(a[1]) + dy * t
+    expected_angle = math.degrees(math.atan2(dy, dx))
+    if expected_angle >= 90:
+        expected_angle -= 180
+    elif expected_angle < -90:
+        expected_angle += 180
+    if (abs(x - expected_x) > _OPTIMIZE_REHOST_EPSILON
+            or abs(y - expected_y) > _OPTIMIZE_REHOST_EPSILON
+            or _angle_delta_mod_180(opening_angle, expected_angle) > 1e-7):
+        return False
+    along = t * length
+    if (along - opening_length / 2 < -_OPTIMIZE_REHOST_EPSILON
+            or along + opening_length / 2 > length + _OPTIMIZE_REHOST_EPSILON):
+        return False
+
+    half_dx, half_dy = dx / length * opening_length / 2, dy / length * opening_length / 2
+    target_a = [expected_x - half_dx, expected_y - half_dy]
+    target_b = [expected_x + half_dx, expected_y + half_dy]
+    owners: set[str] = set()
+    collinear_rooms: set[str] = set()
+    for room in space.get("rooms") or []:
+        poly = _room_polygon(room)
+        room_id = str(room.get("id", ""))
+        edges = [(poly[index], poly[(index + 1) % len(poly)])
+                 for index in range(len(poly))]
+        if _segments_cover_target(edges, target_a, target_b):
+            owners.add(room_id)
+        if any(_segments_overlap_on_axis(target_a, target_b, edge_a, edge_b)
+               for edge_a, edge_b in edges):
+            collinear_rooms.add(room_id)
+    if len(owners) not in (1, 2) or collinear_rooms != owners:
+        return False
+    if any(_segments_overlap_on_axis(target_a, target_b, span["a"], span["b"])
+           for span in space.get("open_spans") or []):
+        return False
+    if any(_segments_overlap_on_axis(target_a, target_b, item["a"], item["b"])
+           for item in space.get("partitions") or []):
+        return False
+
+    covering_walls = []
+    for wall in space.get("walls") or []:
+        wall_a, wall_b = wall.get("a"), wall.get("b")
+        if not (isinstance(wall_a, list) and isinstance(wall_b, list)):
+            continue
+        if _segment_covers(wall_a, wall_b, target_a, target_b):
+            covering_walls.append((_segment_metrics(wall_a, wall_b)[2], float(wall["cm"])))
+    effective_cm = min(covering_walls, key=lambda item: item[0])[1] \
+        if covering_walls else _DEFAULT_ROOM_WALL_CM
+    if effective_cm + _OPTIMIZE_REHOST_EPSILON < float(old_partition.get("cm", 0)):
+        return False
+
+    for other in space.get("openings") or []:
+        if other is opening or str(other.get("id", "")) == str(opening.get("id", "")):
+            continue
+        try:
+            center = [float(other["x"]), float(other["y"])]
+            other_angle = float(other["angle"])
+            other_length = float(other["length"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if (_line_distance(center, a, b) > _OPTIMIZE_REHOST_EPSILON
+                or _angle_delta_mod_180(other_angle, expected_angle) > 1e-7):
+            continue
+        other_along = _projection(center, a, b)
+        if (min(along + opening_length / 2, other_along + other_length / 2)
+                - max(along - opening_length / 2, other_along - other_length / 2)
+                > _OPTIMIZE_REHOST_EPSILON):
+            return False
+    return True
+
+
+def validate_partition_opening_hosts(
+    config: dict, previous: dict | None = None, *, allow_optimize_rehost: bool = False,
+    allow_room_wall_promotion: bool = False,
+) -> None:
+    """Validate hosted-opening write deltas without rejecting legacy reads.
+
+    Deleting the opening together with its partition remains valid. Surviving
+    records keep their host, while new/direct geometry changes reserve half the
+    actual wall depth at both endpoints. Rigid host translation and unrelated
+    edits round-trip existing near-end records unchanged. Ordinary config/set
+    may separately enable a full same-ID room-wall promotion proof; import and
+    Optimize never inherit that writer capability.
+    """
+    old_spaces = {
+        str(space.get("id")): space for space in (previous or {}).get("spaces") or []
+    }
+    for space in config.get("spaces") or []:
+        space_id = str(space.get("id", ""))
+        old_space = old_spaces.get(space_id)
+        old_openings = {
+            str(opening.get("id")): opening
+            for opening in (old_space or {}).get("openings") or []
+        }
+        partitions = {
+            str(partition.get("id")): partition
+            for partition in space.get("partitions") or []
+        }
+        old_partitions = {
+            str(partition.get("id")): partition
+            for partition in (old_space or {}).get("partitions") or []
+        }
+        walls = {str(wall.get("id")): wall for wall in space.get("wall_segments") or []}
+        room_wall_ids = {wall_id for room in space.get("rooms") or []
+                         for wall_id in room.get("wall_ids") or []}
+        for opening in space.get("openings") or []:
+            opening_id = str(opening.get("id", ""))
+            old = old_openings.get(opening_id)
+            old_host = (old or {}).get("host")
+            host = opening.get("host")
+            if (old and isinstance(old_host, dict)
+                    and old_host.get("kind") == "partition"):
+                same_partition = (
+                    isinstance(host, dict) and host.get("kind") == "partition"
+                    and str(host.get("id", "")) == str(old_host.get("id", ""))
+                )
+                residual_rehost = (
+                    isinstance(host, dict) and host.get("kind") == "partition"
+                    and not same_partition
+                )
+                # #996: Undo/recreation may promote the exact same physical
+                # carrier back into a room wall. This is not Optimize's broader
+                # rehost permission and cannot transfer or reshape a carrier.
+                same_wall = (
+                    allow_room_wall_promotion and old_space is not None and isinstance(host, dict)
+                    and host.get("kind") == "wall"
+                    and host.get("id") not in partitions
+                    and host.get("id") in room_wall_ids
+                    and space.get("cell_cm", 5) == old_space.get("cell_cm", 5)
+                    and (same_partition_wall_promotion(
+                        old, opening, old_partitions.get(str(old_host.get("id", ""))),
+                        walls.get(str(host.get("id", ""))),
+                    ) or (
+                        str(old_host.get("id", "")) not in partitions
+                        and same_partition_wall_chain_promotion(
+                            old, opening, old_partitions.get(str(old_host.get("id", ""))),
+                            list(walls.values()), room_wall_ids,
+                            [*old_partitions.values(), *((old_space or {}).get("wall_segments") or [])],
+                        )
+                    ))
+                )
+                proved = same_partition or same_wall or (
+                    allow_optimize_rehost and old_space is not None
+                    and (_safe_optimize_residual_rehost(
+                        space, old_space, opening, old
+                    ) if residual_rehost else _safe_optimize_partition_rehost(
+                        space, old_space, opening, old
+                    ))
+                )
+                if not proved:
+                    raise PartitionOpeningHostError(
+                        f"space={space_id}; opening={opening_id}; host changed"
+                    )
+            if host is None:
+                continue
+            if host.get("kind") != "partition":
+                continue
+            partition = partitions.get(str(host.get("id", "")))
+            if partition is None:
+                # SPACE_SCHEMA owns missing-host diagnostics.
+                continue
+            old_partition = old_partitions.get(str((old_host or {}).get("id", "")))
+            ax, ay = partition["a"]
+            bx, by = partition["b"]
+            span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+            old_span = None
+            if old_partition is not None:
+                old_ax, old_ay = old_partition["a"]
+                old_bx, old_by = old_partition["b"]
+                old_span = ((old_bx - old_ax) ** 2 + (old_by - old_ay) ** 2) ** 0.5
+            strict = (
+                old is None
+                or old_host is None
+                or old_host.get("id") != host.get("id")
+                or old_host.get("t") != host.get("t")
+                or old.get("length") != opening.get("length")
+                or old_partition is None
+                or old_partition.get("cm") != partition.get("cm")
+                or abs(old_span - span) > 1e-9
+            )
+            if not strict:
+                continue
+            cell_cm = float(space.get("cell_cm", 5))
+            margin_cm = float(partition["cm"]) / 2
+            margin = margin_cm / cell_cm / NORMALIZED_CANVAS_CELLS
+            along = float(host["t"]) * span
+            half = float(opening["length"]) / 2
+            if (along - half < margin - 1e-9
+                    or along + half > span - margin + 1e-9):
+                raise PartitionOpeningJambMarginError(
+                    space_id, opening_id, margin, margin_cm
+                )
+        if allow_optimize_rehost and old_space:
+            for old_partition in old_space.get("partitions") or []:
+                if (_optimize_partition_needs_proof(old_partition, space, old_space)
+                        and not _safe_optimize_partition_delta(space, old_partition)):
+                    raise PartitionOpeningHostError(
+                        f"space={space_id}; partition={old_partition.get('id', '')}; "
+                        "optimize delta unproved"
+                    )
+
+
+PASSAGE_FORBIDDEN_FIELDS = {"contact", "lock", "invert", "flip_h", "flip_v"}
+
+
+def validate_opening_passages(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Reject new/changed inapplicable fields while preserving dormant bad data.
+
+    A passage read from an older/future writer may already contain door-only
+    keys. Unrelated writes must remain possible, but imports and any write that
+    introduces or changes such a key are fail-closed.
+    """
+    old_spaces = {
+        str(space.get("id")): space for space in (previous or {}).get("spaces") or []
+    }
+    for space in config.get("spaces") or []:
+        space_id = str(space.get("id", ""))
+        old_space = None if validate_all else old_spaces.get(space_id)
+        old_openings = {
+            str(opening.get("id")): opening
+            for opening in (old_space or {}).get("openings") or []
+        }
+        for opening in space.get("openings") or []:
+            if opening.get("type") != "passage":
+                continue
+            opening_id = str(opening.get("id", ""))
+            present = sorted(PASSAGE_FORBIDDEN_FIELDS & set(opening))
+            if not present:
+                continue
+            old_opening = None if validate_all else old_openings.get(opening_id)
+            if not old_opening or old_opening.get("type") != "passage":
+                raise OpeningPassageError(space_id, opening_id, present)
+            changed = [
+                field for field in present
+                if field not in old_opening or opening[field] != old_opening[field]
+            ]
+            if changed:
+                raise OpeningPassageError(space_id, opening_id, changed)
+
+
+VALUE_BADGE_ATTRIBUTES = {
+    "current_temperature", "temperature", "current_humidity", "humidity",
+    "current_position", "percentage", "brightness", "volume_level",
+    "battery_level", "fan_speed",
+}
+VALUE_BADGE_POSITIONS = {"right", "bottom", "left", "top"}
+VALUE_BADGE_SOURCE_KINDS = {
+    "entity_state", "entity_attribute", "derived_lqi", "derived_marker_state",
+}
+_LIGHT_ENTITY_RE = re.compile(r"^(?:light|switch)\.[a-z0-9_]+\Z")
+
+
+def _matching_previous_marker(
+    marker: dict, marker_id: str, old_by_id: dict[str, dict], old_markers: list[dict],
+    new_ids: set[str], consumed_old_ids: set[str], validate_all: bool,
+) -> dict | None:
+    """Match the previous marker across the binding-stable id rename path."""
+    old_marker = old_by_id.get(marker_id)
+    if old_marker is not None:
+        consumed_old_ids.add(marker_id)
+        return old_marker
+    if validate_all:
+        return None
+    binding = marker.get("binding")
+    matches = [
+        old for old in old_markers
+        if binding not in (None, "virtual")
+        and old.get("binding") == binding
+        and str(old.get("id")) not in new_ids
+        and str(old.get("id")) not in consumed_old_ids
+    ]
+    if len(matches) == 1:
+        consumed_old_ids.add(str(matches[0].get("id")))
+        return matches[0]
+    return None
+
+
+def validate_marker_value_badges(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Validate changed badge/face sources; dormant future data round-trips."""
+    markers = config.get("markers") or []
+    by_id = {str(marker.get("id")): marker for marker in markers}
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {str(marker.get("id")): marker for marker in old_markers}
+    new_ids = set(by_id)
+    consumed_old_ids: set[str] = set()
+    known_source_fields = {"kind", "entity_id", "attribute", "ref"}
+
+    def validate_source(source: object, field: str) -> None:
+        prefix = "value_badge" if field == "value_badge" else "value_source"
+        source_error = "invalid_value_badge_source" if field == "value_badge" \
+            else "invalid_value_source"
+        attribute_error = "invalid_value_badge_attribute" if field == "value_badge" \
+            else "invalid_value_source_attribute"
+        if not isinstance(source, dict) or source.get("kind") not in VALUE_BADGE_SOURCE_KINDS:
+            raise MarkerControlError(source_error, f"Invalid {field} source")
+        kind = source["kind"]
+        allowed_fields = {
+            "entity_state": {"kind", "entity_id"},
+            "entity_attribute": {"kind", "entity_id", "attribute"},
+            "derived_lqi": {"kind"},
+            "derived_marker_state": {"kind", "ref"},
+        }[kind]
+        if (known_source_fields & set(source)) - allowed_fields:
+            raise MarkerControlError(source_error, f"Inconsistent {field} source")
+        if kind in {"entity_state", "entity_attribute"}:
+            entity_id = source.get("entity_id")
+            if not isinstance(entity_id, str) or not _CONTROL_ENTITY_ID_RE.fullmatch(entity_id):
+                raise MarkerControlError(source_error, f"Invalid {field} entity id")
+        if kind == "entity_attribute" and source.get("attribute") not in VALUE_BADGE_ATTRIBUTES:
+            raise MarkerControlError(attribute_error, f"Invalid {field} attribute")
+        if kind == "derived_marker_state":
+            ref = source.get("ref")
+            if not isinstance(ref, str) or not ref.startswith(MARKER_CONTROL_PREFIX) \
+                    or not ref[len(MARKER_CONTROL_PREFIX):]:
+                raise MarkerControlError(source_error, f"Invalid {field} target")
+            target = by_id.get(ref[len(MARKER_CONTROL_PREFIX):])
+            if target is None or target.get("removed") is True:
+                raise MarkerControlError(f"{prefix}_marker_missing", f"{field} target does not exist")
+            if target.get("is_light") is not True:
+                raise MarkerControlError(f"{prefix}_marker_not_light", f"{field} target is not a forced light")
+
+    for marker_id, marker in by_id.items():
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        badge = marker.get("value_badge")
+        old_badge = None if validate_all else (old_marker or {}).get("value_badge")
+        if validate_all or badge != old_badge:
+            if badge is not None:
+                if not isinstance(badge, dict):
+                    raise MarkerControlError("invalid_value_badge", "Value badge must be an object")
+                if not isinstance(badge.get("enabled"), bool):
+                    raise MarkerControlError("invalid_value_badge", "Value badge enabled must be boolean")
+                if badge.get("position") not in VALUE_BADGE_POSITIONS:
+                    raise MarkerControlError("invalid_value_badge_position", "Invalid value badge position")
+                source = badge.get("source")
+                if badge["enabled"] and not isinstance(source, dict):
+                    raise MarkerControlError(
+                        "value_badge_source_required", "Enabled value badge needs a source"
+                    )
+                if source is not None:
+                    validate_source(source, "value_badge")
+
+        source = marker.get("value_source")
+        old_source = None if validate_all else (old_marker or {}).get("value_source")
+        if (validate_all or source != old_source) and source is not None:
+            validate_source(source, "value_source")
+
+        state_source = marker.get("state_source")
+        old_state_source = None if validate_all else (old_marker or {}).get("state_source")
+        if state_source is not None and (validate_all or state_source != old_state_source):
+            valid = isinstance(state_source, dict)
+            entity_id = state_source.get("entity_id") if valid else None
+            valid = valid and isinstance(entity_id, str) and bool(_CONTROL_ENTITY_ID_RE.fullmatch(entity_id))
+            if valid and "active_states" in state_source:
+                states = state_source["active_states"]
+                valid = isinstance(states, list) and all(
+                    isinstance(state, str) and 1 <= len(state.strip()) <= 255
+                    and "\r" not in state and "\n" not in state
+                    and state.strip().lower() not in {"unknown", "unavailable", "__missing__"}
+                    for state in states
+                )
+                valid = valid and 1 <= len({state.strip() for state in states}) <= 32
+            if not valid:
+                raise MarkerControlError("invalid_state_source", "Invalid icon state source or active states")
+
+        more_info = marker.get("more_info_entity")
+        old_more_info = (old_marker or {}).get("more_info_entity")
+        if more_info is not None and (
+            validate_all or more_info != old_more_info
+            or marker.get("binding") != (old_marker or {}).get("binding")
+        ):
+            binding = marker.get("binding", "")
+            valid = isinstance(more_info, str) and bool(_CONTROL_ENTITY_ID_RE.fullmatch(more_info))
+            valid = valid and (
+                binding.startswith("device:") and bool(binding[7:])
+                or binding.startswith("entity:") and binding[7:] == more_info
+            )
+            if not valid:
+                raise MarkerControlError("invalid_more_info_entity", "Invalid Home Assistant dialog entity")
+        # Reads retain opaque future blocks; a changed/new block must be valid.
+        if "alert_sources" in marker and (validate_all or old_marker is None
+                or "alert_sources" not in old_marker or marker["alert_sources"] != old_marker["alert_sources"]):
+            if not valid_marker_alerts(marker["alert_sources"]):
+                raise MarkerControlError("invalid_alert_sources", "Invalid device alert conditions")
+
+
+def validate_marker_vacuum_routes(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False,
+    allow_inactive_missing_space: bool = False,
+) -> None:
+    """Validate changed vacuum map routes; dormant future data round-trips.
+
+    Change-aware like the badge validator above (#162): an untouched legacy or
+    future-shaped block must not block an unrelated save, but any edit to
+    routing has to leave the marker in a state the resolver can answer for —
+    unique identities, six-number matrices and target spaces that exist.
+    """
+    markers = config.get("markers") or []
+    spaces = config.get("spaces")
+    space_ids = None
+    if isinstance(spaces, list):
+        space_ids = {
+            str(space.get("id")) for space in spaces
+            if isinstance(space, dict) and isinstance(space.get("id"), str)
+        }
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {str(marker.get("id")): marker for marker in old_markers}
+    by_id = {str(marker.get("id")): marker for marker in markers}
+    new_ids = set(by_id)
+    consumed_old_ids: set[str] = set()
+    for marker_id, marker in by_id.items():
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        routes = (marker.get("vacuum") or {}).get("map_routes")
+        old_routes = None if validate_all else ((old_marker or {}).get("vacuum") or {}).get("map_routes")
+        if not validate_all and routes == old_routes:
+            continue
+        problems = validate_marker_routes(marker_id, routes, space_ids)
+        if allow_inactive_missing_space and (marker.get("vacuum") or {}).get("live") is False:
+            problems = [problem for problem in problems if problem["reason"] != "unknown_space"]
+        if problems:
+            reasons = ", ".join(sorted({problem["reason"] for problem in problems}))
+            # Literal, not the constant: the #42 scanner proves the emitted
+            # code against ERROR_CODES by reading the source, and it cannot
+            # follow a name. The pair is pinned by a test below.
+            raise MarkerControlError(
+                "invalid_vacuum_map_route",
+                f"Invalid vacuum map routes on {marker_id}: {reasons}",
+            )
+
+
+def validate_marker_light_entities(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Validate new/changed light/switch choices without rejecting dormant data.
+
+    The top-level schema must stay lossless: an old or future literal that the
+    current frontend cannot edit may round-trip unchanged. Imports validate the
+    whole incoming document because every imported value is new to this plan.
+    """
+    markers = config.get("markers") or []
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {str(marker.get("id")): marker for marker in old_markers}
+    new_ids = {str(marker.get("id")) for marker in markers}
+    consumed_old_ids: set[str] = set()
+    for marker in markers:
+        marker_id = str(marker.get("id"))
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        for field, code, message in (
+            (
+                "light_entity",
+                "invalid_light_entity",
+                "Leading light entity must be light.* or switch.*",
+            ),
+            (
+                "toggle_entity",
+                "invalid_toggle_entity",
+                "Toggle entity must be light.* or switch.*",
+            ),
+        ):
+            value = marker.get(field)
+            old_value = None if validate_all else (old_marker or {}).get(field)
+            if not validate_all and value == old_value:
+                continue
+            if value is None:
+                continue
+            if not isinstance(value, str) or not _LIGHT_ENTITY_RE.fullmatch(value):
+                raise MarkerControlError(code, message)
+
+
+def validate_marker_controls(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Validate newly introduced marker:* edges without rewriting old data.
+
+    Existing broken refs remain editable and round-trip losslessly. Imports use
+    validate_all because their complete candidate graph is new to this plan.
+    """
+    markers = config.get("markers") or []
+    by_id = {str(marker.get("id")): marker for marker in markers}
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {
+        str(marker.get("id")): marker for marker in (previous or {}).get("markers") or []
+    }
+    new_ids = set(by_id)
+    consumed_old_ids: set[str] = set()
+    graph: dict[str, list[str]] = {}
+    added: list[tuple[str, str]] = []
+    for marker_id, marker in by_id.items():
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        raw_controls = [
+            ref for ref in marker.get("controls") or [] if isinstance(ref, str)
+        ]
+        old_controls = [] if validate_all else [
+            ref for ref in (old_marker or {}).get("controls") or [] if isinstance(ref, str)
+        ]
+        refs = [
+            ref for ref in raw_controls
+            if isinstance(ref, str) and ref.startswith(MARKER_CONTROL_PREFIX)
+        ]
+        graph[marker_id] = [ref[len(MARKER_CONTROL_PREFIX):] for ref in refs]
+        old_refs = [
+            ref for ref in old_controls
+            if isinstance(ref, str) and ref.startswith(MARKER_CONTROL_PREFIX)
+        ]
+        remaining = list(old_refs)
+        for ref in refs:
+            if ref in remaining:
+                remaining.remove(ref)
+            else:
+                added.append((marker_id, ref[len(MARKER_CONTROL_PREFIX):]))
+        new_counts, old_counts = Counter(refs), Counter(old_refs)
+        if any(count > 1 and count > old_counts[ref] for ref, count in new_counts.items()):
+            raise MarkerControlError("duplicate_marker_control", "Duplicate marker light target")
+        remaining_controls = list(old_controls)
+        for ref in raw_controls:
+            if ref in remaining_controls:
+                remaining_controls.remove(ref)
+            elif not ref.startswith(MARKER_CONTROL_PREFIX) and not _CONTROL_ENTITY_ID_RE.fullmatch(ref):
+                raise MarkerControlError("invalid_marker_control", f"Invalid entity target: {ref}")
+
+    def reaches(start: str, wanted: str) -> bool:
+        stack, seen = [start], set()
+        while stack:
+            node = stack.pop()
+            if node == wanted:
+                return True
+            if node in seen:
+                continue
+            seen.add(node)
+            stack.extend(graph.get(node, []))
+        return False
+
+    for controller, target in added:
+        if not target:
+            raise MarkerControlError("invalid_marker_control", "Marker target id is empty")
+        if target == controller:
+            raise MarkerControlError("marker_control_self", "A marker cannot control itself")
+        target_marker = by_id.get(target)
+        if target_marker is None or target_marker.get("removed") is True:
+            raise MarkerControlError("marker_control_missing", f"Marker target does not exist: {target}")
+        if target_marker.get("is_light") is not True:
+            raise MarkerControlError("marker_control_not_light", f"Marker target is not a forced light: {target}")
+        if reaches(target, controller):
+            raise MarkerControlError("marker_control_cycle", "Marker light controls contain a cycle")
+
+# ---------- sanitizers ----------
+
+
+def sanitize_marker_id(value: str) -> str:
+    """Safe marker identifier for a folder name.
+
+    Strips path separators and leading dots to rule out directory traversal
+    (e.g. '..', '../x'); an empty/dots-only result → 'misc'.
+    """
+    cleaned = _SAFE_NAME_RE.sub("_", value).lstrip(".")[:64]
+    return cleaned or "misc"
+
+
+def sanitize_filename(value: str) -> str:
+    """Drop the path and leading dots, keep a safe file name."""
+    raw = value.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+    return _SAFE_NAME_RE.sub("_", raw).lstrip(".")[:MAX_FILENAME] or "file"
+
+
+def file_ext(filename: str) -> str:
+    """Lowercase file extension ('' if none)."""
+    raw = filename.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+    return raw.rsplit(".", 1)[-1].lower() if "." in raw else ""
+
+
+def valid_space_id(value: str) -> bool:
+    return bool(SPACE_ID_RE.match(value))
+
+
+# ---------- voluptuous schemas ----------
+def _finite(value):
+    """Coerce to float and reject NaN/Infinity (audit B5).
+
+    'NaN' and 'Infinity' pass Coerce(float) and serialize to null on write,
+    silently corrupting a stored position forever.
+    """
+    f = float(value)
+    if f != f or f in (float("inf"), float("-inf")):
+        raise vol.Invalid("coordinate must be a finite number")
+    return f
+
+
+def _finite_number_or_none(value):
+    """A persisted optional number: do not coerce strings or booleans."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise vol.Invalid("temperature threshold must be a finite number or null")
+    return _finite(value)
+
+
+def _finite_number(value):
+    """Strict numeric fields: neither null, strings nor bools are numbers."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise vol.Invalid("value must be a finite number")
+    return _finite(value)
+
+
+# Persisted colours deliberately use one small, browser-independent format.
+# Keep this exact contract in sync with src/color.ts.
+# `^...$` accepts a trailing newline in Python. Persisted CSS tokens must
+# match the whole string exactly, in parity with the frontend validator.
+_COLOR = vol.Match(r"\A#[0-9a-fA-F]{6}\Z")
+_CUSTOM_FILL = vol.Schema(
+    {
+        vol.Required("c"): _COLOR,
+        vol.Required("a"): vol.All(_finite, vol.Range(min=0.0, max=1.0)),
+    }
+)
+
+# New appearance entries are strict but preserve compatible future siblings.
+_APPEARANCE_COLOR = vol.Schema(
+    {vol.Required("c"): _COLOR,
+     vol.Required("a"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0))},
+    extra=vol.ALLOW_EXTRA,
+)
+
+
+# generous caps: the product targets 20-200 devices and a handful of floors
+MAX_SPACES = 50
+MAX_ROOMS = 400
+MAX_MARKERS = 2000
+MAX_OPENINGS = 500
+MAX_DECOR = 1000
+MAX_STAIRS = 250
+# v8 atomises room boundaries. The 2 MiB wire cap is the practical bound; this
+# structural cap mirrors MAX_ROOMS * MAX_POLY_POINTS without depending on the
+# later constant declaration.
+MAX_WALLS = 200_000
+MAX_WALL_SEGMENTS = 200_000
+_LEGACY_MAX_ROOM_DRAFTS = 200
+_LEGACY_MAX_DRAFT_SEGMENTS = 2000
+MAX_PARTITIONS = 2000
+MAX_WALL_COLUMNS = 500
+# Open (virtual) wall stretches, legacy/docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.
+# Every span is a piece of a shared boundary, so there can never be more of
+# them than there are wall segments — the cap is the walls' one (AUD-159B6-03).
+MAX_OPEN_SPANS = 500
+MAX_LAYOUT = 5000
+# Inner limits (HP-1454-05). The outer collections were capped, the collections
+# INSIDE them were not: a 150 000-point polygon or a 100 000-entry known_devices
+# list passed validation, then made the card build gigantic SVG attributes and
+# walk them on every render. Any authenticated writer could store one, and with
+# `admin_only` off that is every user. These are product limits, not guesses: a
+# hand-drawn room does not need 500 vertices, and no home has 200 lights behind
+# one switch.
+MAX_POLY_POINTS = 500
+MAX_OPEN_TO = 50
+MAX_CONTROLS = 200
+MAX_PDFS = 50
+MAX_KNOWN_DEVICES = 20000
+MAX_MARKER_AREA_SNAPSHOT = MAX_KNOWN_DEVICES
+MAX_TEXT = MAX_CONFIG_TEXT  # names, models, ids; same strict bound at the old-form decoder
+MAX_DESCRIPTION = 4000
+MAX_URL = 2000
+# Comfortably below the WebSocket frame limit (aiohttp's default is 4 MB): a
+# payload larger than the frame never reaches the handler at all — the socket
+# closes with 1009 and the user sees a dropped connection instead of an error
+# they can act on. For scale, a real three-floor home with ~200 devices stores
+# about 70 KB, so this is ~30x headroom.
+MAX_CONFIG_BYTES = 2 * 1024 * 1024
+CELL_CM_MIN = 0.1
+CELL_CM_MAX = 1000.0
+
+_TEXT = vol.All(str, vol.Length(max=MAX_TEXT))
+_NONEMPTY_TEXT = vol.All(str, vol.Length(min=1, max=MAX_TEXT))
+_TEXT_OR_NONE = vol.Any(None, _TEXT)
+_URL = vol.All(str, vol.Length(max=MAX_URL))
+
+# The canvas is UNBOUNDED (docs/CANVAS.md). Coordinates are still normalised —
+# 1.0 is still one canvas width — but there is no frame any more, so a plan may
+# legitimately live at 2.7 or -1.4. The range below is GARBAGE INSURANCE, not a
+# boundary: at the product's own scale (cell_cm=5, 240 cells across the unit
+# width) 5000 is about 60 km of plan, unreachable in a home, while a stored
+# 1e100 still cannot stretch every client's view until the plan is invisible
+# (HP-1500-03 / HP-1501-01). Widened from +/-4 on 2026-08-03.
+CANVAS_LIMIT = 5000.0
+_COORD = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
+
+POS_SCHEMA = vol.All(
+    vol.Schema(
+        {vol.Required("x"): _COORD, vol.Required("y"): _COORD},
+        extra=vol.ALLOW_EXTRA,  # v2 records carry the "s" key (space id)
+    ),
+    canonicalize_position,
+)
+LAYOUT_SCHEMA = vol.All(
+    vol.Schema({str: POS_SCHEMA}),
+    vol.Length(max=MAX_LAYOUT),
+    canonicalize_layout_geometry,
+)
+
+# Room/opening geometry: same story, same range (docs/CANVAS.md). A vertex at
+# 2.5 is a plan that grew past the old square, not corruption; 1e100 is
+# corruption (HP-1501-01, the room-geometry twin of HP-1500-03).
+_GEOM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
+
+# A SIZE is not a coordinate (HP-1502-01): SVG requires positive width/height,
+# and the clients divide by these. `view_box: [0,0,0,0]` passed the shared
+# validator and serialised into viewBox="0 0 0 0" — a blank plan on every
+# client. The floor is one thousandth of the canvas (1 render unit): far below
+# any real room, but keeps the maths finite. The CEILING follows the canvas
+# (docs/CANVAS.md) — a room on an unbounded plane may legitimately be wider
+# than the old unit square — while staying strictly positive.
+_EXTENT = vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT))
+
+# The backdrop's uniform scale (docs/DECOR-EDITOR.md §3). A MULTIPLIER, not a
+# coordinate: strictly positive, and bounded by what a person could mean —
+# a hundredth of the canvas is already a thumbnail, a hundred canvases is
+# already absurd. Mirrored by PLAN_SCALE_MIN/MAX in src/space-geometry.ts.
+PLAN_SCALE_MIN = 0.01
+PLAN_SCALE_MAX = 100.0
+
+
+def _view_box(value):
+    """[x, y, w, h]: the first two are coordinates, the last two are sizes."""
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        raise vol.Invalid("view_box must be [x, y, w, h]")
+    return [_GEOM(value[0]), _GEOM(value[1]), _EXTENT(value[2]), _EXTENT(value[3])]
+
+
+POINT = vol.All([_GEOM], vol.Length(min=2, max=2))
+
+# A virtual stretch shorter than this is a click, not a span. Mirrors
+# OPEN_SPAN_MIN_UNITS in src/open-spans.ts (normalised units).
+OPEN_SPAN_MIN_LEN = 1e-3
+
+
+def _open_span(value):
+    """One virtual stretch: exactly two distinct finite points a/b.
+
+    AUD-159B6-03: the field used to ride on `extra=ALLOW_EXTRA` — any shape
+    passed the backend and the card crashed reading `e.a[0]` on render, for
+    every reader of that space. A degenerate span (a == b) is not a stretch
+    either: it can never be hit, closed or drawn, so it is corruption, not data.
+    """
+    if not isinstance(value, dict):
+        raise vol.Invalid("open_span must be an object with a/b points")
+    a = POINT(value.get("a"))
+    b = POINT(value.get("b"))
+    if abs(a[0] - b[0]) < OPEN_SPAN_MIN_LEN and abs(a[1] - b[1]) < OPEN_SPAN_MIN_LEN:
+        raise vol.Invalid("open_span: a and b must differ")
+    out = {k: v for k, v in value.items() if k not in ("a", "b")}
+    out["a"] = a
+    out["b"] = b
+    return out
+
+
+def _dedupe_open_spans(value):
+    """Drop repeats of the same stretch (either direction) — one wall, one span."""
+    seen = set()
+    out = []
+    for span in value:
+        a, b = span["a"], span["b"]
+        fwd = (round(a[0], 6), round(a[1], 6), round(b[0], 6), round(b[1], 6))
+        key = min(fwd, (fwd[2], fwd[3], fwd[0], fwd[1]))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(span)
+    return out
+
+
+def _require_geometry(room: dict) -> dict:
+    if "poly" in room or all(k in room for k in ("x", "y", "w", "h")):
+        return room
+    raise vol.Invalid("room: poly or x/y/w/h is required")
+
+
+ROOM_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): _TEXT,
+            vol.Required("name"): _TEXT,
+            vol.Optional("area"): _TEXT_OR_NONE,
+            vol.Optional("open_to"): vol.All([_TEXT], vol.Length(max=MAX_OPEN_TO)),
+            vol.Optional("settings"): vol.Any(
+                None,
+                vol.Schema(
+                    {
+                        vol.Optional("fill_mode"): vol.Any(None, vol.In(["none", "lqi", "light", "temp", "custom", "glow"])),
+                        vol.Optional("custom_fill"): vol.Any(None, _CUSTOM_FILL),
+                        vol.Optional("name_color"): vol.Any(None, _APPEARANCE_COLOR),
+                        vol.Optional("glow"): vol.Any(bool, None),
+                        vol.Optional("sun_transparent"): bool,
+                        vol.Optional("temp_source"): vol.Any(str, None),
+                        vol.Optional("hum_source"): vol.Any(str, None),
+                        vol.Optional("co2_source"): vol.Any(str, None),
+                        vol.Optional("temp_min"): _finite_number_or_none,
+                        vol.Optional("temp_max"): _finite_number_or_none,
+                        vol.Optional("name_scale"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3))),
+                        vol.Optional("label_scale"): vol.Any(None, vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3))),
+                    },
+                    extra=vol.ALLOW_EXTRA,
+                ),
+            ),
+            vol.Optional("x"): _GEOM,
+            vol.Optional("y"): _GEOM,
+            vol.Optional("w"): _EXTENT,
+            vol.Optional("h"): _EXTENT,
+            vol.Optional("poly"): vol.All([POINT], vol.Length(min=3, max=MAX_POLY_POINTS)),
+            vol.Optional("wall_ids"): vol.All(
+                [vol.All(str, vol.Length(min=1, max=64))],
+                vol.Length(min=3, max=MAX_POLY_POINTS),
+            ),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _require_geometry,
+)
+
+def _north_deg(value):
+    """Compass (docs/SUN.md): strict integer degrees, 0..359.
+
+    Strict on purpose: Coerce(int) would take "90" and 1.5, and a bool is an
+    int in Python — none of those is a compass reading a client stored.
+    """
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise vol.Invalid("north_deg must be an integer in 0..359")
+    if not 0 <= value <= 359:
+        raise vol.Invalid("north_deg must be an integer in 0..359")
+    return value
+
+
+_BG_MODE = vol.In(["static", "daynight"])
+_SUN_RAY_ORIGIN = vol.In(["inner", "outer"])
+# #792/#807: absent = every battery device, exact False = none, "low" = only
+# the red low state. Strings other than "low" and truthy numbers are refused.
+_DEVICE_BATTERY = vol.Any(bool, "low")
+
+SPACE_DISPLAY_SCHEMA = vol.Schema(
+    {
+        vol.Optional("show_borders"): bool,
+        vol.Optional("show_names"): bool,
+        vol.Optional("room_color"): _COLOR,
+        vol.Optional("name_color"): _APPEARANCE_COLOR,
+        vol.Optional("wall_fill"): _APPEARANCE_COLOR,
+        # per-space background around the plan; absent = inherit the global one
+        vol.Optional("bg_color"): _COLOR,
+        vol.Optional("room_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+        vol.Optional("fill_mode"): vol.In(["none", "lqi", "light", "temp", "custom", "glow"]),
+        vol.Optional("custom_fill"): vol.Any(None, _CUSTOM_FILL),
+        vol.Optional("glow_enabled"): bool,
+        vol.Optional("temp_min"): vol.Coerce(float),
+        vol.Optional("temp_max"): vol.Coerce(float),
+        vol.Optional("show_lqi"): bool,
+        vol.Optional("show_lqi_mode"): vol.In(["inherit", "on", "off"]),
+        vol.Optional("show_device_battery_mode"): vol.In(["inherit", "all", "low", "off"]),
+        # "draw less" switches; absent = False = everything is drawn as before
+        vol.Optional("hide_decor"): bool,
+        vol.Optional("hide_openings"): bool,
+        vol.Optional("label_temp"): bool,
+        vol.Optional("label_hum"): bool,
+        vol.Optional("label_co2"): bool,
+        vol.Optional("label_lqi"): bool,
+        vol.Optional("label_light"): bool,
+        vol.Optional("card_font_scale"): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=3)),
+        vol.Optional("card_name_scale"): vol.All(_finite_number_or_none, vol.Range(min=0.5, max=3)),
+        vol.Optional("card_label_scale"): vol.All(_finite_number_or_none, vol.Range(min=0.5, max=3)),
+        # sun on the plan (docs/SUN.md): per-space overrides, absent = inherit
+        vol.Optional("north_deg"): vol.Any(None, _north_deg),
+        vol.Optional("bg_mode"): vol.Any(None, _BG_MODE),
+        vol.Optional("sun_rays"): vol.Any(None, bool),
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
+# Live text on a decor label (docs/DECOR-EDITOR.md §5). An entity id is
+# `<domain>.<object_id>`; HA itself allows only lowercase letters, digits and
+# underscores in both halves. The bound is a sanity limit, not a policy.
+MAX_ENTITY_ID = 255
+_ENTITY_ID = vol.All(str, vol.Length(min=3, max=MAX_ENTITY_ID),
+                     vol.Match(r"^[a-z0-9_]+\.[a-z0-9_]+$"))
+# A caption is a caption: the inline-reference template is bounded. Attribute
+# and unit bounds below apply only to legacy beta.9 link fields, which remain
+# accepted so an older saved plan can reach the frontend and migrate on edit.
+MAX_DECOR_TEXT = 200
+MAX_DECOR_ATTR = 64
+MAX_DECOR_UNIT = 16
+# The text block is scaled by dragging its corners; the range is what a human
+# could mean on a 1000-unit canvas, the rest is garbage insurance.
+DECOR_TEXT_SCALE_MIN = 0.15
+DECOR_TEXT_SCALE_MAX = 20.0
+DECOR_TEXT_CM_MAX = 2000.0
+# A furniture symbol id (docs/FURNITURE.md). Deliberately NOT the card's list:
+# the backend must accept a plan written by a NEWER card, and a card that has
+# learnt a new symbol must not have to wait for the integration to be updated
+# before the user can save. What is enforced is the shape of the id — a flat
+# lowercase name — and its length; an id this backend has never heard of simply
+# renders as nothing in an older card.
+MAX_FURN_SYMBOL = 32
+_FURN_SYMBOL = vol.All(str, vol.Length(min=1, max=MAX_FURN_SYMBOL),
+                       vol.Match(r"^[a-z0-9_]+$"))
+# …and its size: strictly positive, capped by the same canvas insurance limit
+# an opening's length is. A piece of furniture is a SIZE, not a coordinate.
+_FURN_SIZE = vol.All(_finite, vol.Range(min=0.0000001, max=CANVAS_LIMIT))
+_DECOR_ASSET_ID = vol.All(str, vol.Match(r"^[0-9a-f]{64}$"))
+
+_DECOR_COMMON = {
+    vol.Required("id"): str,
+    vol.Optional("color"): _COLOR,
+    vol.Optional("opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0)),
+    # Physical centimetres are canonical. `width` remains accepted so plans
+    # written by older cards keep their exact appearance until edited.
+    vol.Optional("width_cm"): vol.All(_finite, vol.Range(min=0.1, max=100)),
+    vol.Optional("width"): vol.All(vol.Coerce(float), vol.Range(min=0.1, max=30)),
+}
+# Decor lives on the same unbounded canvas as everything else (docs/CANVAS.md):
+# it used to be pinned to -1..2, i.e. "one canvas of slack around the square".
+_NORM = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
+DECOR_SCHEMA = vol.Any(
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "line",
+                vol.Required("x1"): _NORM, vol.Required("y1"): _NORM,
+                vol.Required("x2"): _NORM, vol.Required("y2"): _NORM,
+                vol.Optional("line_style"): vol.In(["solid", "dashed"])},
+               extra=vol.ALLOW_EXTRA),
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): vol.In(["rect", "ellipse"]),
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                # sizes are extents — negative/zero is garbage, not "canvas slack"
+                vol.Required("w"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
+                vol.Required("h"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
+                vol.Optional("fill"): bool,
+                vol.Optional("fill_color"): _COLOR,
+                vol.Optional("fill_opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0))},
+               extra=vol.ALLOW_EXTRA),
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "text",
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                # the template: newlines are the user's own line breaks and are
+                # kept verbatim (docs/DECOR-EDITOR.md §5); the label never wraps itself
+                vol.Required("text"): vol.All(str, vol.Length(min=1, max=MAX_DECOR_TEXT)),
+                # legacy font size ('s'|'m'|'l'). The dialog no longer offers it
+                # — the block is scaled by its corner handles — but a plan
+                # written before that keeps it, and it is read as the scale it
+                # used to render at. Kept in the schema so it stays BOUNDED.
+                vol.Optional("size"): vol.In(["s", "m", "l"]),
+                # Canonical physical font size plus the legacy scale. Both are
+                # accepted so older plans remain pixel-identical until edited
+                # or explicitly optimized.
+                vol.Optional("size_cm"): vol.All(
+                    _finite, vol.Range(min=0.1, max=DECOR_TEXT_CM_MAX)),
+                vol.Optional("scale"): vol.All(
+                    _finite, vol.Range(min=DECOR_TEXT_SCALE_MIN, max=DECOR_TEXT_SCALE_MAX)),
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
+                # Legacy one-value link (beta.9 and earlier). New labels store
+                # every `{entity[:attribute]}` reference directly in `text`;
+                # these stay accepted solely for backward compatibility.
+                vol.Optional("entity"): vol.Any(None, _ENTITY_ID),
+                vol.Optional("attr"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_ATTR))),
+                vol.Optional("unit"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DECOR_UNIT)))},
+               extra=vol.ALLOW_EXTRA),
+    # A piece of furniture (docs/FURNITURE.md): a symbol id, a normalised box
+    # and an optional rotation. It is a NEW kind, so no existing plan carries
+    # it, nothing is migrated, and an integration that has this branch reads
+    # every older config byte-for-byte as before.
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "furniture",
+                vol.Required("symbol"): _FURN_SYMBOL,
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
+                vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
+               extra=vol.ALLOW_EXTRA),
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "image",
+                vol.Required("asset_id"): _DECOR_ASSET_ID,
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
+                vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
+               extra=vol.ALLOW_EXTRA),
+)
+
+
+def _strict_stair(value: dict) -> dict:
+    """A discriminated stair record carries dimensions for exactly one kind."""
+    if value["kind"] == "straight":
+        if "radius" in value:
+            raise vol.Invalid("radius is allowed only for spiral stairs")
+        if value["direction"] not in ("forward", "backward"):
+            raise vol.Invalid("straight stair direction must be forward or backward")
+    else:
+        if "length" in value or "width" in value:
+            raise vol.Invalid("length and width are allowed only for straight stairs")
+        if value["direction"] not in ("clockwise", "counterclockwise"):
+            raise vol.Invalid("spiral stair direction must be clockwise or counterclockwise")
+    return value
+
+
+def _stair_dimensions(value: dict) -> dict:
+    """Require the dimension fields owned by the selected stair kind."""
+    complete = (
+        value["kind"] == "straight" and "length" in value and "width" in value
+        or value["kind"] == "spiral" and "radius" in value
+    )
+    if not complete:
+        raise vol.Invalid("stair kind requires its dimensions")
+    return value
+
+
+STAIR_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("kind"): vol.In(["straight", "spiral"]),
+            vol.Required("x"): _NORM,
+            vol.Required("y"): _NORM,
+            vol.Required("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
+            vol.Required("direction"): vol.In([
+                "forward", "backward", "clockwise", "counterclockwise",
+            ]),
+            vol.Optional("target_space_id"): vol.Any(
+                None, vol.All(str, vol.Match(SPACE_ID_RE.pattern))
+            ),
+            vol.Optional("length"): _FURN_SIZE,
+            vol.Optional("width"): _FURN_SIZE,
+            vol.Optional("radius"): _FURN_SIZE,
+            vol.Optional("color"): _COLOR,
+            vol.Optional("opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0)),
+            vol.Optional("fill_color"): _COLOR,
+            vol.Optional("fill_opacity"): vol.All(_finite, vol.Range(min=0.0, max=1.0)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _stair_dimensions,
+    _strict_stair,
+)
+
+
+def _wall_endpoints_pair(entry: dict) -> dict:
+    """Exact wall endpoints are useful only as a complete a/b pair."""
+    if ("a" in entry) != ("b" in entry):
+        raise vol.Invalid("wall exact endpoints require both a and b")
+    return entry
+
+
+WALL_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("key"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
+            # New writes retain exact normalized interval endpoints. The old
+            # key remains the compatibility lookup; endpoints preserve a
+            # differing-thickness breakpoint after a virtual span is closed.
+            vol.Optional("a"): vol.All([_NORM], vol.Length(min=2, max=2)),
+            vol.Optional("b"): vol.All([_NORM], vol.Length(min=2, max=2)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _wall_endpoints_pair,
+)
+
+
+def _wall_segment_nonzero(value: dict) -> dict:
+    if value["a"] == value["b"]:
+        raise vol.Invalid("wall segment endpoints must differ")
+    return value
+
+
+WALL_SEGMENT_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("a"): POINT,
+            vol.Required("b"): POINT,
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=0, max=100)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _wall_segment_nonzero,
+)
+
+
+def _legacy_room_draft_segments(value: dict) -> dict:
+    """An open draft has exactly one thickness per consecutive edge."""
+    if len(value.get("segments", [])) != max(0, len(value.get("points", [])) - 1):
+        raise vol.Invalid("room draft segments must match consecutive point pairs")
+    if any(a == b for a, b in zip(value.get("points", []), value.get("points", [])[1:], strict=False)):  # #42 B905: adjacent pairs
+        raise vol.Invalid("room draft consecutive points must differ")
+    return value
+
+
+_LEGACY_ROOM_DRAFT_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("points"): vol.All([POINT], vol.Length(min=2, max=500)),
+            vol.Required("segments"): vol.All(
+                [vol.Schema({
+                    vol.Optional("id"): vol.All(str, vol.Length(min=1, max=64)),
+                    vol.Required("cm"): vol.All(_finite, vol.Range(min=0, max=100)),
+                },
+                            extra=vol.ALLOW_EXTRA)],
+                vol.Length(min=1, max=499),
+            ),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _legacy_room_draft_segments,
+)
+
+def _partition_nonzero(value: dict) -> dict:
+    if value["a"] == value["b"]:
+        raise vol.Invalid("partition endpoints must differ")
+    return value
+
+
+PARTITION_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("a"): POINT,
+            vol.Required("b"): POINT,
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=0, max=100)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _partition_nonzero,
+)
+
+def _strict_wall_column(value: dict) -> dict:
+    """Reject shape-inapplicable or non-canonical column fields."""
+    if value["shape"] == "circle" and "angle" in value:
+        raise vol.Invalid("angle is allowed only for square wall columns")
+    if value["shape"] == "square" and value.get("angle", 0) >= 90:
+        raise vol.Invalid("square wall column angle must be in [0, 90)")
+    return value
+
+
+WALL_COLUMN_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("shape"): vol.In(["square", "circle"]),
+            vol.Required("center"): POINT,
+            # Outer side for a square, outer diameter for a circle.
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=150)),
+            vol.Optional("angle"): vol.All(
+                _finite, vol.Range(min=0, max=90)
+            ),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _strict_wall_column,
+)
+
+PARTITION_OPENING_HOST_SCHEMA = vol.Schema(
+    {
+        vol.Required("kind"): vol.Equal("partition"),
+        vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+        vol.Required("t"): vol.All(_finite, vol.Range(min=0, max=1)),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+WALL_OPENING_HOST_SCHEMA = vol.Schema(
+    {
+        vol.Required("kind"): vol.Equal("wall"),
+        vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+        vol.Required("t"): vol.All(_finite, vol.Range(min=0, max=1)),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+OPENING_HOST_SCHEMA = vol.Any(PARTITION_OPENING_HOST_SCHEMA, WALL_OPENING_HOST_SCHEMA)
+
+
+def _reserve_host_interval(
+    opening: dict, span: float, along: float, occupied: list[tuple[float, float]],
+    *, fit: str, overlap: str,
+) -> str | None:
+    length = float(opening["length"])
+    if length > span or along - length / 2 < -1e-9 or along + length / 2 > span + 1e-9:
+        return fit
+    lo, hi = along - length / 2, along + length / 2
+    if any(max(lo, old_lo) < min(hi, old_hi) - 1e-9 for old_lo, old_hi in occupied):
+        return overlap
+    occupied.append((lo, hi))
+    return None
+
+
+def partition_opening_host_fault(
+    opening: dict, partition: dict | None, occupied: list[tuple[float, float]],
+) -> str | None:
+    """The schema's partition-host checks as one predicate (#1033).
+
+    Returns the schema message of the first failed check. On success the
+    opening's interval is reserved in ``occupied``. The import repair asks the
+    same question as the schema, so a repaired file cannot fail it again.
+    """
+    if partition is None:
+        return "partition opening host must exist in the same space"
+    ax, ay = partition["a"]
+    bx, by = partition["b"]
+    span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+    return _reserve_host_interval(
+        opening, span, float(opening["host"]["t"]) * span, occupied,
+        fit="partition opening must fit inside its host",
+        overlap="partition openings must not overlap",
+    )
+
+
+def wall_opening_host_fault(
+    opening: dict, segment: dict | None, occupied: list[tuple[float, float]],
+) -> str | None:
+    """The v8+ wall-host checks as one predicate (#1033); see above."""
+    if segment is None:
+        return "wall opening host must exist in the same space"
+    if float(segment["cm"]) <= 0:
+        return "opening host must have positive thickness"
+    t = float(opening["host"]["t"])
+    x = float(segment["a"][0]) + (float(segment["b"][0]) - float(segment["a"][0])) * t
+    y = float(segment["a"][1]) + (float(segment["b"][1]) - float(segment["a"][1])) * t
+    if abs(x - float(opening["x"])) > 2e-8 or abs(y - float(opening["y"])) > 2e-8:
+        return "wall opening geometry must match its host"
+    expected_angle = math.degrees(math.atan2(
+        float(segment["b"][1]) - float(segment["a"][1]),
+        float(segment["b"][0]) - float(segment["a"][0]),
+    ))
+    if _angle_delta_mod_180(float(opening["angle"]), expected_angle) > 8:
+        return "wall opening angle must match its host"
+    span = ((segment["b"][0] - segment["a"][0]) ** 2
+            + (segment["b"][1] - segment["a"][1]) ** 2) ** 0.5
+    return _reserve_host_interval(
+        opening, span, t * span, occupied,
+        fit="wall opening must fit inside its host",
+        overlap="wall openings must not overlap",
+    )
+
+
+def _space_geometry_invariants(value: dict) -> dict:
+    """All stored geometry shares ids; draft segments also have a space cap."""
+    seen: set[str] = set()
+    for key in ("rooms", "openings", "decor", "stairs", "room_drafts", "partitions", "wall_columns", "wall_segments"):
+        for item in value.get(key, []):
+            item_id = item.get("id")
+            if not item_id:
+                continue
+            if item_id in seen:
+                raise vol.Invalid("geometry object ids must be unique within a space")
+            seen.add(item_id)
+    draft_segments = sum(
+        len(item.get("segments", [])) for item in value.get("room_drafts", [])
+    )
+    if draft_segments > _LEGACY_MAX_DRAFT_SEGMENTS:
+        raise vol.Invalid("too many saved room-draft segments")
+    for draft in value.get("room_drafts", []):
+        for segment in draft.get("segments", []):
+            segment_id = segment.get("id")
+            if not segment_id:
+                continue
+            if segment_id in seen:
+                raise vol.Invalid("geometry object ids must be unique within a space")
+            seen.add(segment_id)
+    partitions = {
+        item.get("id"): item for item in value.get("partitions", []) if item.get("id")
+    }
+    hosted_intervals: dict[str, list[tuple[float, float]]] = {}
+    for opening in value.get("openings", []):
+        host = opening.get("host")
+        if host is None:
+            continue
+        if host["kind"] != "partition":
+            continue
+        fault = partition_opening_host_fault(
+            opening, partitions.get(host["id"]), hosted_intervals.setdefault(host["id"], []),
+        )
+        if fault:
+            raise vol.Invalid(fault)
+    return value
+
+
+SPACE_SCHEMA = vol.All(vol.Schema(
+    {
+        vol.Required("id"): vol.All(str, vol.Match(SPACE_ID_RE.pattern)),
+        vol.Required("title"): str,
+        # Physical grid scale. It feeds every px/cell -> centimetres migration,
+        # so NaN/Infinity or an absurd value must not be allowed to manufacture
+        # invalid decor sizes later.
+        vol.Optional("cell_cm"): vol.All(
+            _finite, vol.Range(min=CELL_CM_MIN, max=CELL_CM_MAX)
+        ),
+        vol.Optional("settings"): SPACE_DISPLAY_SCHEMA,
+        vol.Optional("plan_url"): vol.Any(str, None),
+        # The canvas is square since v1.48.0. What used to be the space's own
+        # `aspect` is gone; the background image keeps its own proportions and
+        # is centred, so only the IMAGE's ratio is stored. A stale tab may still
+        # send the old field — it is dropped rather than trusted, because the
+        # coordinates it comes with were normalised against a different box.
+        vol.Remove("aspect"): object,
+        vol.Optional("plan_aspect"): vol.Any(
+            None, vol.All(vol.Coerce(float), vol.Range(min=0.05, max=20))
+        ),
+        # Backdrop placement (docs/DECOR-EDITOR.md §3): the picture may be moved,
+        # resized per axis and rotated. Every transform field is optional; its
+        # complete absence is the pre-v1.58.0 behaviour exactly, and an old
+        # config validates unchanged. The offset is a normalised
+        # coordinate like every other one (the ±CANVAS_LIMIT garbage guard);
+        # the scale is a positive multiplier in a range a human could mean.
+        vol.Optional("plan_x"): vol.Any(None, _COORD),
+        vol.Optional("plan_y"): vol.Any(None, _COORD),
+        vol.Optional("plan_scale"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=PLAN_SCALE_MIN, max=PLAN_SCALE_MAX))
+        ),
+        # New writes may stretch each axis independently and rotate. The old
+        # uniform field remains a read-compatible fallback for both axes.
+        vol.Optional("plan_scale_x"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=PLAN_SCALE_MIN, max=PLAN_SCALE_MAX))
+        ),
+        vol.Optional("plan_scale_y"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=PLAN_SCALE_MIN, max=PLAN_SCALE_MAX))
+        ),
+        vol.Optional("plan_angle"): vol.Any(
+            None, vol.All(_finite, vol.Range(min=-360.0, max=360.0))
+        ),
+        # #931: absence is fully opaque; null is not a stored alpha value.
+        vol.Optional("plan_opacity"): vol.All(_finite_number, vol.Range(min=0.0, max=1.0)),
+        vol.Required("view_box"): _view_box,
+        vol.Required("rooms"): vol.All([ROOM_SCHEMA], vol.Length(max=MAX_ROOMS)),
+        vol.Optional("decor"): vol.All([DECOR_SCHEMA], vol.Length(max=MAX_DECOR)),
+        vol.Optional("stairs"): vol.All([STAIR_SCHEMA], vol.Length(max=MAX_STAIRS)),
+        vol.Optional("openings"): vol.All([
+            vol.Schema(
+                {
+                    vol.Required("id"): str,
+                    vol.Required("type"): vol.Any("door", "window", "gate", "passage"),
+                    vol.Required("x"): _GEOM,
+                    vol.Required("y"): _GEOM,
+                    vol.Required("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0)),
+                    # a SIZE: strictly positive, capped by the canvas insurance
+                    # limit rather than by the old unit square (docs/CANVAS.md)
+                    vol.Required("length"): vol.All(_finite, vol.Range(min=0.001, max=CANVAS_LIMIT)),
+                    vol.Optional("contact"): vol.Any(str, None),
+                    vol.Optional("lock"): vol.Any(str, None),
+                    vol.Optional("invert"): bool,
+                    vol.Optional("flip_h"): bool,
+                    vol.Optional("flip_v"): bool,
+                    vol.Optional("host"): OPENING_HOST_SCHEMA,
+                },
+                extra=vol.ALLOW_EXTRA,
+            )
+        ], vol.Length(max=MAX_OPENINGS)),
+        # Wall thickness (docs/WALL-THICKNESS.md): keyed by a segment identity
+        # (midpoint + direction), thickness always in centimetres. Optional —
+        # a space without `walls` validates and renders exactly as before.
+        vol.Optional("walls"): vol.All([WALL_SCHEMA], vol.Length(max=MAX_WALLS)),
+        vol.Optional("wall_segments"): vol.All(
+            [WALL_SEGMENT_SCHEMA], vol.Length(max=MAX_WALL_SEGMENTS)
+        ),
+        vol.Optional("zero_wall_style"): vol.In(["dashed", "solid"]),
+        vol.Optional("room_drafts"): vol.All(
+            [_LEGACY_ROOM_DRAFT_SCHEMA], vol.Length(max=_LEGACY_MAX_ROOM_DRAFTS)
+        ),
+        vol.Optional("partitions"): vol.All(
+            [PARTITION_SCHEMA], vol.Length(max=MAX_PARTITIONS)
+        ),
+        vol.Optional("wall_columns"): vol.All(
+            [WALL_COLUMN_SCHEMA], vol.Length(max=MAX_WALL_COLUMNS)
+        ),
+        # Open (virtual) wall stretches: a piece of a shared boundary that the
+        # user opened. Optional and bounded — a space without `open_spans`
+        # validates exactly as before, and the legacy `rooms[].open_to` index
+        # keeps working on its own (AUD-159B6-03).
+        vol.Optional("open_spans"): vol.All(
+            vol.Length(max=MAX_OPEN_SPANS), [_open_span], _dedupe_open_spans,
+        ),
+        # Legacy: walls are derived from room outlines since v1.19.0 — a line has no
+        # independent existence. Still accepted so a stale browser tab cannot fail a save;
+        # the card strips the field on every write.
+        # Accepted so a stale browser tab cannot fail a save, then DROPPED here
+        # (HP-1454-05): relying on a modern client to strip an unbounded legacy
+        # list is not a limit, it is a hope. `Remove` returns the key stripped.
+        vol.Remove("segments"): object,
+        # #780: optional LED strip shapes of the space (led_strips.py).
+        vol.Optional("led_strips"): LED_STRIPS_SCHEMA,
+    },
+    extra=vol.ALLOW_EXTRA,
+), _space_geometry_invariants)
+MARKER_SCHEMA = vol.Schema(
+    {
+        vol.Required("id"): str,
+        # 'device:<device_id>' | 'entity:<entity_id>' | 'virtual'
+        vol.Required("binding"): vol.All(
+            str,
+            vol.Length(min=1, max=MAX_TEXT),
+            vol.Match(r"^(device:.+|entity:.+|virtual)$"),
+        ),
+        vol.Optional("space"): vol.Any(str, None),
+        vol.Optional("area"): vol.Any(str, None),
+        vol.Optional("hidden"): bool,
+        # A binding-level tombstone: not rendered or aggregated, but retained
+        # so automatic discovery does not put a deleted device straight back.
+        vol.Optional("removed"): bool,
+        vol.Optional("name"): _TEXT_OR_NONE,
+        vol.Optional("icon"): _TEXT_OR_NONE,
+        vol.Optional("model"): _TEXT_OR_NONE,
+        vol.Optional("link"): vol.Any(None, _URL),
+        vol.Optional("description"): vol.Any(None, vol.All(str, vol.Length(max=MAX_DESCRIPTION))),
+        vol.Optional("tap_action"): vol.Any("info", "more-info", "settings", "toggle", "run", "none", "cover", None),
+        # the 'run' target: only the runnable domains, nothing else is callable
+        vol.Optional("tap_target"): vol.Any(
+            None, vol.All(str, vol.Length(max=MAX_TEXT), vol.Match(r"^(automation|script|scene)\.[A-Za-z0-9_]+$"))
+        ),
+        vol.Optional("tap_confirm"): vol.Any(bool, None),
+        # live robot vacuums (docs/VACUUM.md): everything optional so configs
+        # from older versions stay valid untouched
+        vol.Optional("vacuum"): vol.Any(
+            None,
+            vol.Schema({
+                vol.Optional("live"): vol.Any(bool, None),
+                vol.Optional("trail"): vol.Any(bool, None),
+                vol.Optional("trail_color"): vol.Any(None, _COLOR),
+                vol.Optional("trail_opacity"): vol.Any(None, vol.All(_finite_number, vol.Range(min=0.0, max=1.0))),
+                vol.Optional("new_run_after_dock"): vol.Any(bool, None),
+                vol.Optional("trail_mode"): vol.Any(
+                    None, vol.In(["never", "cleaning", "always"])
+                ),
+                vol.Optional("room_highlight"): vol.Any(bool, None),
+                vol.Optional("source"): vol.Any(str, None),
+                # one 6-number affine per robot map; numbers must be finite
+                vol.Optional("calibration"): vol.Schema(
+                    {str: vol.All([_finite], vol.Length(min=6, max=6))}
+                ),
+                vol.Optional("segment_map"): vol.Schema({str: str}),
+                # #162: canonical map -> space routing. The schema checks the
+                # shape only; identity uniqueness and the referential space
+                # check live in validate_marker_vacuum_routes, which is
+                # change-aware and must not reject untouched legacy data.
+                vol.Optional("map_routes"): vol.Any(
+                    None,
+                    vol.All([vol.Schema({
+                        vol.Required("id"): vol.All(str, vol.Length(min=1, max=128)),
+                        vol.Required("source"): vol.All(str, vol.Length(min=1, max=255)),
+                        vol.Required("map_id"): vol.All(str, vol.Length(max=255)),
+                        vol.Required("space"): vol.All(str, vol.Length(min=1, max=64)),
+                        vol.Optional("calibration"): vol.Any(
+                            None, vol.All([_finite], vol.Length(min=6, max=6)),
+                        ),
+                    }, extra=vol.ALLOW_EXTRA)], vol.Length(max=32)),
+                ),
+            }),
+        ),
+        # #485: kept structurally open here so untouched future versions and
+        # unknown siblings survive. validate_marker_radars performs the strict,
+        # change-aware semantic validation at every write/import seam.
+        vol.Optional("radar"): vol.Any(None, vol.Schema({}, extra=vol.ALLOW_EXTRA)),
+        vol.Optional("controls"): vol.Any(None, vol.All([_TEXT], vol.Length(max=MAX_CONTROLS))),
+        vol.Optional("glow_radius_cm"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)), None),
+        vol.Optional("glow_color"): vol.Any(
+            None,
+            vol.Schema(
+                {
+                    vol.Required("c"): _COLOR,
+                    vol.Optional("bri"): vol.Any(
+                        None,
+                        vol.All(_finite, vol.Range(min=0.01, max=1.0)),
+                    ),
+                }
+            ),
+        ),
+        vol.Optional("is_light"): vol.Any(bool, None),
+        # Explicit leading entity for composite Always sources. It is kept
+        # literally when temporarily absent; runtime falls back without
+        # deleting the user's choice.
+        # Semantic delta validation below the schema preserves unknown/future
+        # literals until that exact field is edited (lossless config doctrine).
+        vol.Optional("light_entity"): object,
+        # Exact own entity selected for Toggle. Delta validation preserves an
+        # untouched future literal while bounding every new/changed value.
+        vol.Optional("toggle_entity"): object,
+        vol.Optional("value_badge"): vol.Any(
+            None,
+            vol.Schema(
+                {
+                    # Required semantically for changed/new data. Optional here
+                    # keeps old/future configs readable until the user edits it.
+                    vol.Optional("enabled"): object,
+                    vol.Optional("position"): object,
+                    vol.Optional("source"): vol.Any(
+                        None,
+                        vol.Schema({}, extra=vol.ALLOW_EXTRA),
+                    ),
+                },
+                extra=vol.ALLOW_EXTRA,
+            ),
+        ),
+        # Explicit source for display:value. Semantic delta validation shares
+        # the badge source contract while keeping untouched future literals.
+        vol.Optional("value_source"): vol.Any(
+            None,
+            vol.Schema({}, extra=vol.ALLOW_EXTRA),
+        ),
+        # climate current_temperature: badge + room-average vote (off unless True)
+        # Structural reads preserve opaque legacy/future data; changed writes
+        # are checked by validate_marker_value_badges, without a live registry.
+        vol.Optional("state_source"): object,
+        vol.Optional("more_info_entity"): object,
+        vol.Optional("alert_sources"): object,
+        vol.Optional("use_climate_temp"): vol.Any(bool, None),
+        # Per-marker battery indicator override; absence/False keeps global policy.
+        vol.Optional("hide_battery"): bool,
+        # Local system LQI line only; diagnostics/actions are not persisted here.
+        vol.Optional("hide_signal"): bool,
+        vol.Optional("room_id"): vol.Any(str, None),
+        # Keep in sync with DISPLAY_MODES in src/logic.ts. `ripple` is no longer
+        # offered, but remains accepted while old stores migrate to icon_ripple.
+        vol.Optional("display"): vol.Any("badge", "ripple", "icon_ripple", "value", "static_icon", "value_static_icon", None),
+        vol.Optional("ripple_color"): vol.Any(None, _COLOR),
+        vol.Optional("ripple_size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=1, max=20)), None),
+        vol.Optional("size"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=0.2, max=6)), None),
+        vol.Optional("angle"): vol.Any(vol.All(vol.Coerce(float), vol.Range(min=-360, max=360)), None),
+        vol.Optional("pdfs"): vol.All(
+            [vol.Schema({vol.Required("name"): _TEXT, vol.Required("url"): _URL}, extra=vol.ALLOW_EXTRA)],
+            vol.Length(max=MAX_PDFS),
+        ),
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
+
+def _canonical_segment_key(a: list, b: list) -> tuple:
+    """Endpoint-order-independent exact key after the shared canonicalizer."""
+    pa = (round(float(a[0]), 12), round(float(a[1]), 12))
+    pb = (round(float(b[0]), 12), round(float(b[1]), 12))
+    return (pa, pb) if pa <= pb else (pb, pa)
+
+
+def _config_wall_segment_invariants(value: dict) -> dict:
+    """Fail closed when a v8+ writer sends stale ids or wall projections."""
+    try:
+        model = int(value.get("model_version", 0))
+    except (TypeError, ValueError):
+        raise vol.Invalid("model_version must be an integer") from None
+    if model < 8:
+        return value
+
+    for space in value.get("spaces", []):
+        if model >= 9:
+            if "open_spans" in space or any("open_to" in room for room in space.get("rooms", [])):
+                raise vol.Invalid("v9 config must not contain legacy open boundaries")
+        # #529: пустой ключ данных не несёт и записи не стоит. Непустой
+        # остаётся отказом — это последняя линия против устаревшего клиента,
+        # и к ней человек приходит уже с понятным сообщением от сторожа
+        # переходов.
+        if model >= 10 and space.get("room_drafts"):
+            raise vol.Invalid("v10 config must not contain room_drafts")
+        segments = space.get("wall_segments")
+        if segments is None:
+            raise vol.Invalid("v8+ space requires wall_segments")
+        by_id = {segment["id"]: segment for segment in segments}
+        if len(by_id) != len(segments):
+            raise vol.Invalid("wall segment ids must be unique")
+
+        owners: dict[str, set[str]] = {segment_id: set() for segment_id in by_id}
+        for room in space.get("rooms", []):
+            poly = room.get("poly")
+            wall_ids = room.get("wall_ids")
+            if not poly or not wall_ids or len(poly) != len(wall_ids):
+                raise vol.Invalid("v8+ room wall_ids must match poly edges")
+            room_id = room["id"]
+            for index, segment_id in enumerate(wall_ids):
+                segment = by_id.get(segment_id)
+                if segment is None:
+                    raise vol.Invalid("room wall id must reference the same space")
+                edge_key = _canonical_segment_key(poly[index], poly[(index + 1) % len(poly)])
+                if edge_key != _canonical_segment_key(segment["a"], segment["b"]):
+                    raise vol.Invalid("room wall reference geometry must match its edge")
+                owners[segment_id].add(room_id)
+        if any(len(room_ids) not in (1, 2) for room_ids in owners.values()):
+            raise vol.Invalid("wall segment must have one or two room owners")
+
+        expected_walls = {
+            _canonical_segment_key(segment["a"], segment["b"]): float(segment["cm"])
+            for segment in segments if float(segment["cm"]) > 0
+        }
+        actual_walls: dict[tuple, float] = {}
+        for wall in space.get("walls", []):
+            if "a" not in wall or "b" not in wall:
+                raise vol.Invalid("wall compatibility projection requires exact endpoints")
+            key = _canonical_segment_key(wall["a"], wall["b"])
+            if key in actual_walls:
+                raise vol.Invalid("wall compatibility projection must be unique")
+            actual_walls[key] = float(wall["cm"])
+        if actual_walls != expected_walls:
+            raise vol.Invalid("wall compatibility projection must match wall_segments")
+
+        if model < 10:
+            for draft in space.get("room_drafts", []):
+                if any(not segment.get("id") for segment in draft.get("segments", [])):
+                    raise vol.Invalid("v8+ draft wall segments require ids")
+
+        partitions = {item["id"]: item for item in space.get("partitions", [])}
+        wall_opening_intervals: dict[str, list[tuple[float, float]]] = {}
+        for opening in space.get("openings", []):
+            host = opening.get("host")
+            if host is None:
+                # #316 §3.3: a degraded migration may leave a contour opening
+                # unhosted. It is inert (no body/tunnel/cut) and excluded from
+                # the interval checks; a later edit can re-place it.
+                continue
+            if host["kind"] == "partition":
+                if host["id"] not in partitions:
+                    raise vol.Invalid("partition opening host must exist in the same space")
+                if float(partitions[host["id"]]["cm"]) <= 0:
+                    raise vol.Invalid("opening host must have positive thickness")
+                continue
+            fault = wall_opening_host_fault(
+                opening, by_id.get(host["id"]),
+                wall_opening_intervals.setdefault(host["id"], []),
+            )
+            if fault:
+                raise vol.Invalid(fault)
+    return value
+
+
+# #437: the summary is shared configuration, so its wire shape is validated by
+# the integration rather than trusted to whichever browser happened to save it.
+def _summary_text(max_length: int):
+    """Trim user text and reject whitespace-only/raw oversized WS values."""
+    def validate(value: object) -> str:
+        if not isinstance(value, str):
+            raise vol.Invalid("summary text must be a string")
+        text = value.strip()
+        if not text or len(text) > max_length:
+            raise vol.Invalid("summary text length is invalid")
+        return text
+    return validate
+
+
+_SUMMARY_ID = _summary_text(64)
+_SUMMARY_TITLE = _summary_text(48)
+_SUMMARY_LABEL = _summary_text(64)
+_SUMMARY_SCOPE = vol.Any(
+    vol.Schema({vol.Required("type"): vol.Equal("all")}, extra=vol.ALLOW_EXTRA),
+    vol.Schema({
+        vol.Required("type"): vol.Equal("space"),
+        vol.Required("space_id"): _SUMMARY_ID,
+    }, extra=vol.ALLOW_EXTRA),
+)
+_SUMMARY_SOURCE = vol.Any(
+    vol.Schema({
+        vol.Required("type"): vol.Equal("system"),
+        vol.Required("key"): vol.In(["device_count", "total_area", "datetime"]),
+    }, extra=vol.ALLOW_EXTRA),
+    vol.Schema({
+        vol.Required("type"): vol.Equal("entity"),
+        vol.Required("entity_id"): _summary_text(500),
+    }, extra=vol.ALLOW_EXTRA),
+)
+_SUMMARY_VALUE_SCHEMA = vol.Schema({
+    vol.Required("id"): _SUMMARY_ID,
+    vol.Required("label"): _SUMMARY_LABEL,
+    vol.Required("source"): _SUMMARY_SOURCE,
+}, extra=vol.ALLOW_EXTRA)
+_SUMMARY_BLOCK_SCHEMA = vol.Schema({
+    vol.Required("id"): _SUMMARY_ID,
+    vol.Required("title"): _SUMMARY_TITLE,
+    vol.Required("visible"): bool,
+    vol.Required("scope"): _SUMMARY_SCOPE,
+    vol.Required("values"): vol.All([_SUMMARY_VALUE_SCHEMA], vol.Length(max=20)),
+}, extra=vol.ALLOW_EXTRA)
+
+
+def _summary_panel_invariants(value: dict) -> dict:
+    """Stable block/value ids are the reference identity used by the editor."""
+    block_ids: set[str] = set()
+    value_ids: set[str] = set()
+    for block in value.get("blocks", []):
+        block_id = block["id"]
+        if block_id in block_ids:
+            raise vol.Invalid("summary block ids must be unique")
+        block_ids.add(block_id)
+        for item in block.get("values", []):
+            value_id = item["id"]
+            if value_id in value_ids:
+                raise vol.Invalid("summary value ids must be unique")
+            value_ids.add(value_id)
+    return value
+
+
+SUMMARY_PANEL_SCHEMA = vol.All(vol.Schema({
+    vol.Required("version"): vol.Equal(1),
+    vol.Required("title"): _SUMMARY_TITLE,
+    vol.Required("show_on_mobile"): bool,
+    vol.Required("blocks"): vol.All([_SUMMARY_BLOCK_SCHEMA], vol.Length(max=10)),
+}, extra=vol.ALLOW_EXTRA), _summary_panel_invariants)
+
+
+def _future_summary_panel(value: object) -> dict:
+    """Keep a newer opaque namespace losslessly, with a bounded data envelope."""
+    if not isinstance(value, dict):
+        raise vol.Invalid("summary panel must be an object")
+    version = value.get("version")
+    if not isinstance(version, int) or isinstance(version, bool) or version <= 1:
+        raise vol.Invalid("unsupported summary panel version")
+    if len(json.dumps(value, separators=(",", ":"), ensure_ascii=False)) > 128 * 1024:
+        raise vol.Invalid("summary panel is too large")
+    return value
+
+
+SUMMARY_PANEL_WIRE_SCHEMA = vol.Any(SUMMARY_PANEL_SCHEMA, _future_summary_panel)
+
+
+def preserve_summary_panel_namespace(config: dict, previous: dict | None) -> None:
+    """A stale client that does not know #437 cannot erase the shared panel."""
+    old_settings = (previous or {}).get("settings")
+    new_settings = config.get("settings")
+    if not isinstance(old_settings, dict) or "summary_panel" not in old_settings:
+        return
+    if not isinstance(new_settings, dict):
+        new_settings = {}
+        config["settings"] = new_settings
+    if "summary_panel" not in new_settings:
+        new_settings["summary_panel"] = copy.deepcopy(old_settings["summary_panel"])
+
+
+
+# #1113: screen numbers are links, not reusable list positions.
+def _screen_int(value: object) -> int:
+    if type(value) is not int or value < 1 or value > 9007199254740991:
+        raise vol.Invalid("screen number must be a positive safe integer")
+    return value
+
+
+def _screen_seconds(value: object) -> int:
+    if type(value) is not int or not 0 <= value <= 3600:
+        raise vol.Invalid("screen interval must be an integer from 0 to 3600")
+    return value
+
+
+def _screen_scale(value: object) -> float | None:
+    if value is None:
+        return None
+    if type(value) not in (int, float) or not math.isfinite(value) or not .5 <= value <= 3 or abs(value * 20 - round(value * 20)) > 1e-8:
+        raise vol.Invalid("screen scale must use steps of 0.05 from 0.5 to 3")
+    return value
+
+
+def _screen_rotation(value: object) -> int:
+    if type(value) is not int or value not in (0, 90, 180, 270):
+        raise vol.Invalid("screen rotation must be a quarter turn")
+    return value
+
+
+def _external_screen_invariants(value: dict) -> dict:
+    ids = [screen["id"] for screen in value["screens"]]
+    if len(ids) != len(set(ids)):
+        raise vol.Invalid("screen ids must be unique")
+    if any(item >= value["next_id"] for item in ids):
+        raise vol.Invalid("screen ids must precede next_id")
+    return value
+
+
+_EXTERNAL_SCREEN_SCHEMA = vol.Schema({
+    vol.Required("id"): _screen_int,
+    vol.Required("space"): vol.Any(None, _NONEMPTY_TEXT),
+    vol.Required("rotation"): _screen_rotation,
+    vol.Required("cycle"): _screen_seconds,
+    vol.Required("idle"): _screen_seconds,
+    vol.Required("summary"): vol.In(("local", "show", "hide")),
+    vol.Required("hidden_devices"): vol.In(("local", "show", "hide")),
+    vol.Required("icon_scale"): _screen_scale,
+    vol.Required("font_scale"): _screen_scale,
+    vol.Required("controls"): bool,
+}, extra=vol.ALLOW_EXTRA)
+EXTERNAL_SCREENS_SCHEMA = vol.All(vol.Schema({
+    vol.Required("version"): vol.All(_screen_int, vol.Equal(1)),
+    vol.Required("next_id"): _screen_int,
+    vol.Required("screens"): vol.All([_EXTERNAL_SCREEN_SCHEMA], vol.Length(max=20)),
+}, extra=vol.ALLOW_EXTRA), _external_screen_invariants)
+
+
+def _future_external_screens(value: object) -> dict:
+    if not isinstance(value, dict) or type(value.get("version")) is not int or value["version"] <= 1:
+        raise vol.Invalid("unsupported external screens version")
+    if len(json.dumps(value, separators=(",", ":"), ensure_ascii=False)) > 128 * 1024:
+        raise vol.Invalid("external screens are too large")
+    return value
+
+
+EXTERNAL_SCREENS_WIRE_SCHEMA = vol.Any(EXTERNAL_SCREENS_SCHEMA, _future_external_screens)
+
+
+def external_screens_config_event(previous: dict, current: dict, base_rev: int, rev: int) -> dict:
+    """Add a bounded screen-only delta; old and mixed writers retain normal reload."""
+    event = {"rev": rev}
+    old_settings, settings = previous.get("settings") or {}, current.get("settings") or {}
+    if rev != base_rev + 1 or "external_screens" not in settings or old_settings.get("external_screens") == settings["external_screens"]:
+        return event
+    before = {**previous, "settings": {k: v for k, v in old_settings.items() if k != "external_screens"}}
+    after = {**current, "settings": {k: v for k, v in settings.items() if k != "external_screens"}}
+    if before == after:
+        event["external_screens_update"] = {"version": 1, "base_rev": base_rev,
+                                            "value": copy.deepcopy(settings["external_screens"])}
+    return event
+
+
+def preserve_external_screens_namespace(config: dict, previous: dict | None) -> None:
+    old = (previous or {}).get("settings") or {}
+    if "external_screens" not in old:
+        return
+    settings = config.get("settings")
+    if not isinstance(settings, dict):
+        settings = {}
+        config["settings"] = settings
+    if "external_screens" not in settings:
+        settings["external_screens"] = copy.deepcopy(old["external_screens"])
+
+
+def validate_external_screens_references(config: dict, previous: dict | None) -> None:
+    value = (config.get("settings") or {}).get("external_screens")
+    if not isinstance(value, dict) or value.get("version") != 1:
+        return
+    old = ((previous or {}).get("settings") or {}).get("external_screens")
+    old = old if isinstance(old, dict) and old.get("version") == 1 else {}
+    if value["next_id"] < old.get("next_id", 1):
+        raise vol.Invalid("external screen next_id cannot decrease")
+    old_rows = {row["id"]: row for row in old.get("screens", [])}
+    spaces = {space["id"] for space in config.get("spaces", [])}
+    for screen in value["screens"]:
+        before = old_rows.get(screen["id"])
+        if before is None and screen["id"] < old.get("next_id", 1):
+            raise vol.Invalid("external screen number cannot be reused")
+        if screen != before and screen["space"] is not None and screen["space"] not in spaces:
+            raise vol.Invalid("new or changed external screen space must exist")
+
+
+def summary_panel_entity_ids(panel: object) -> set[str]:
+    """Entity ids a summary panel's value blocks reference (#1096)."""
+    ids: set[str] = set()
+    if not isinstance(panel, dict):
+        return ids
+    for block in panel.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        for item in block.get("values") or []:
+            source = item.get("source") if isinstance(item, dict) else None
+            if isinstance(source, dict) and source.get("type") == "entity" and isinstance(source.get("entity_id"), str):
+                ids.add(source["entity_id"])
+    return ids
+
+
+def validate_summary_panel_references(
+    config: dict, previous: dict | None, readable_entity_ids: set[str]
+) -> None:
+    """Only newly introduced broken refs fail; stable-id legacy refs warn in UI."""
+    panel = (config.get("settings") or {}).get("summary_panel")
+    if not isinstance(panel, dict) or panel.get("version") != 1:
+        return
+    old_panel = ((previous or {}).get("settings") or {}).get("summary_panel")
+    old_blocks = {
+        block.get("id"): block for block in (old_panel or {}).get("blocks", [])
+        if isinstance(block, dict) and block.get("id")
+    } if isinstance(old_panel, dict) and old_panel.get("version") == 1 else {}
+    old_values = {
+        item.get("id"): item
+        for block in old_blocks.values()
+        for item in block.get("values", [])
+        if isinstance(item, dict) and item.get("id")
+    }
+    spaces = {space.get("id") for space in config.get("spaces", []) if isinstance(space, dict)}
+    for block in panel.get("blocks", []):
+        scope = block.get("scope") or {}
+        if scope.get("type") == "space" and scope.get("space_id") not in spaces:
+            old_scope = (old_blocks.get(block.get("id"), {}).get("scope") or {})
+            if old_scope.get("type") != "space" or old_scope.get("space_id") != scope.get("space_id"):
+                raise vol.Invalid("new summary space reference must exist")
+        for item in block.get("values", []):
+            source = item.get("source") or {}
+            entity_id = source.get("entity_id") if source.get("type") == "entity" else None
+            if entity_id and entity_id not in readable_entity_ids:
+                old_source = (old_values.get(item.get("id"), {}).get("source") or {})
+                if old_source.get("type") != "entity" or old_source.get("entity_id") != entity_id:
+                    raise vol.Invalid("new summary entity reference must be readable")
+
+
+def prepare_ordinary_summary_candidate(
+    candidate: dict,
+    previous: dict | None,
+    readable_entity_ids: set[str],
+    normalize,
+) -> dict:
+    """Apply the one preservation contract shared by ordinary config writers.
+
+    `normalize` owns the writer-specific schema/migration sequence. Preservation
+    must happen before it; change-aware reference validation must happen after
+    it. Authoritative full import/restore intentionally does not use this helper.
+    Preserved: the summary panel namespace (#437) and the LED strip shapes of a
+    space an older writer sent without the field (#780).
+    """
+    preserve_summary_panel_namespace(candidate, previous)
+    preserve_external_screens_namespace(candidate, previous)
+    preserve_led_strips(candidate, previous)
+    preserve_space_appearance(candidate, previous)
+    checked = normalize(candidate)
+    # The schema returned a fresh document: materialise in place instead of
+    # copying it once more (#1096). Present fields stay as `setdefault` kept them.
+    general = checked.get("settings") or {}
+    for space in checked.get("spaces") or []:
+        materialize_space_appearance(space, general)
+    validate_summary_panel_references(checked, previous, readable_entity_ids)
+    validate_external_screens_references(checked, previous)
+    return checked
+
+
+def normalize_space_display(config: dict) -> dict:
+    """#945: normalise the validated copy; persistence belongs to an ordinary write."""
+    general = config.get("settings") or {}
+    global_mode = general.get("bg_mode") or "static"
+    for space in config.get("spaces", []):
+        settings = space.get("settings", {})
+        borders = settings.get("show_borders", not bool(space.get("plan_url")))
+        # Absence already means visible. Do not add an empty settings object or
+        # a redundant false to unrelated geometry-only writes.
+        if "hide_openings" in settings or not borders:
+            settings["hide_openings"] = not borders
+            space["settings"] = settings
+        if settings.get("bg_mode") not in ("static", "daynight") and settings.get("bg_color") and global_mode == "static":
+            settings["bg_mode"] = "static"
+    return config
+
+
+# #1096: the type schema is its own object so the scoped ordinary write can run
+# it over a projection (touched spaces/markers only) and compose the remaining
+# whole-document steps itself. `CONFIG_SCHEMA` below is unchanged for every
+# other caller: the same schema followed by the same steps in the same order.
+CONFIG_TYPE_SCHEMA = vol.Schema(
+        {
+            vol.Optional("model_version"): vol.All(
+                vol.Coerce(int), vol.Range(min=0, max=1_000_000)
+            ),
+            vol.Required("spaces"): vol.All([SPACE_SCHEMA], vol.Length(max=MAX_SPACES)),
+            vol.Optional("markers", default=list): vol.All([MARKER_SCHEMA], vol.Length(max=MAX_MARKERS)),
+            vol.Optional("settings", default=dict): vol.Schema(
+                {
+                    vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
+                    # background around the plan, all spaces (a space may override)
+                    vol.Optional("bg_color"): _COLOR,
+                    # #377: the Background editor's default style for new decor
+                    # objects; absence of the key means the built-in default
+                    vol.Optional("decor_default_style"): vol.Schema(
+                        {
+                            vol.Optional("color"): _COLOR,
+                            vol.Optional("opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                            vol.Optional("width_cm"): vol.All(vol.Coerce(float), vol.Range(min=0.1, max=100)),
+                            vol.Optional("fill"): bool,
+                            vol.Optional("fill_color"): _COLOR,
+                            vol.Optional("fill_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                        }
+                    ),
+                    # sun on the plan (docs/SUN.md): global defaults
+                    vol.Optional("north_deg"): _north_deg,
+                    vol.Optional("bg_mode"): _BG_MODE,
+                    vol.Optional("sun_rays"): bool,
+                    vol.Optional("sun_ray_origin"): _SUN_RAY_ORIGIN,
+                    vol.Optional("show_room_tooltip"): bool,
+                    vol.Optional("show_lqi"): bool,
+                    vol.Optional("show_device_battery"): _DEVICE_BATTERY,
+                    # #649: installation-wide 2.5D View; absent/false keeps Flat.
+                    vol.Optional("volumetric_view"): bool,
+                    # #661: the moon on the "Follow the Sun" background; absent/false = off.
+                    vol.Optional("moon"): bool,
+                    vol.Optional("summary_panel"): SUMMARY_PANEL_WIRE_SCHEMA,
+                    vol.Optional("external_screens"): EXTERNAL_SCREENS_WIRE_SCHEMA,
+                    vol.Optional("radar"): vol.Schema({}, extra=vol.ALLOW_EXTRA),
+                    # Removed from the UI/runtime in 2026-08-08. Keep accepting the
+                    # legacy field so an existing stored config can still load; the
+                    # frontend ignores it and removes it on the next settings save.
+                    vol.Optional("weather_entity"): vol.Any(None, _TEXT),
+                    vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
+                    vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
+                    vol.Optional("marker_area_snapshot"): vol.All(
+                        vol.Schema({
+                            _NONEMPTY_TEXT: vol.Schema({
+                                vol.Required("binding"): vol.All(
+                                    _NONEMPTY_TEXT,
+                                    vol.Match(r"^(?:device|entity):.+$"),
+                                ),
+                                vol.Required("area"): _NONEMPTY_TEXT,
+                            }),
+                        }),
+                        vol.Length(max=MAX_MARKER_AREA_SNAPSHOT),
+                    ),
+                    vol.Optional("fill_colors"): vol.Schema(
+                        {
+                            str: vol.Schema(
+                                {
+                                    vol.Required("c"): _COLOR,
+                                    vol.Required("a"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                                }
+                            )
+                        }
+                    ),
+                },
+                extra=vol.ALLOW_EXTRA,
+            ),
+        },
+        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading
+)
+
+CONFIG_SCHEMA = vol.All(
+    CONFIG_TYPE_SCHEMA,
+    canonical_config,
+    canonicalize_config_geometry,
+    _config_wall_segment_invariants,
+    # #780: after canonicalisation — shape invariants judge stored numbers;
+    # orphan links become unbound strips, foreign/duplicate links reject.
+    config_led_strip_links,
+    normalize_space_display,
+)
+
+
+# ---------- #1096: scoped ordinary write ----------
+#
+# An ordinary `config/set` validates and canonicalises only what the write
+# touched. The stored document already is the output of this very schema
+# (every ordinary write stores `CONFIG_SCHEMA(candidate)`, and the schema is
+# idempotent on its own output — `test_issue_1096_config_schema_is_idempotent_on_its_own_output`), so a
+# space or marker record that equals its stored record IS its own validated
+# form. Per-record steps run for touched records only; every step that reads
+# more than one record runs on the merged whole document, exactly as before.
+#
+# Steps and where they run in the scoped pass:
+#   CONFIG_TYPE_SCHEMA            top level + settings whole; SPACE_SCHEMA and
+#                                 MARKER_SCHEMA for touched records only
+#   canonical_config              whole merged document (selector scan)
+#   canonicalize_config_geometry  touched spaces only (per space)
+#   _config_wall_segment_invariants touched spaces only (per space + model_version)
+#   config_led_strip_links        whole merged document (marker ↔ strip, cross-space)
+#   normalize_space_display       whole merged document (reads global bg_mode)
+# Adding a step to CONFIG_SCHEMA that reads several spaces or markers at once
+# must add it to the "whole document" group here — docs/DEVELOPMENT.md, #1096.
+
+_RECORD_CAPS = vol.Schema({
+    vol.Required("spaces"): vol.Length(max=MAX_SPACES),
+    vol.Required("markers"): vol.Length(max=MAX_MARKERS),
+})
+
+
+class OrdinaryWriteScope:
+    """What an ordinary write touched, judged after the preservation steps."""
+
+    __slots__ = ("touched_spaces", "touched_markers", "full_reason")
+
+    def __init__(self, touched_spaces: set[str], touched_markers: set[str], full_reason: str | None) -> None:
+        self.touched_spaces = touched_spaces
+        self.touched_markers = touched_markers
+        self.full_reason = full_reason
+
+    @property
+    def full(self) -> bool:
+        return self.full_reason is not None
+
+
+def _record_key(record: object) -> str | None:
+    return str(record.get("id")) if isinstance(record, dict) and record.get("id") is not None else None
+
+
+def ordinary_write_scope(candidate: dict, stored: dict | None) -> OrdinaryWriteScope:
+    """Touched spaces/markers of `candidate` against `stored`, or why the
+    whole document must be validated.
+
+    Full pass when: no stored document; `model_version` differs (every
+    per-space invariant reads it); global `settings.bg_mode` differs
+    (`normalize_space_display` reads it for every space). Records without an
+    id are always touched. Removed records are not "touched" — the steps that
+    care about them read the whole merged document.
+    """
+    if not isinstance(stored, dict) or not stored:
+        return OrdinaryWriteScope(set(), set(), "no stored document")
+    if (not isinstance(candidate.get("spaces"), list) or not isinstance(candidate.get("markers", []), list)
+            or not isinstance(candidate.get("settings", {}), dict)):
+        # The type schema words the refusal of a malformed top level.
+        return OrdinaryWriteScope(set(), set(), "malformed top level")
+    if candidate.get("model_version") != stored.get("model_version"):
+        return OrdinaryWriteScope(set(), set(), "model_version differs")
+    if ((candidate.get("settings") or {}).get("bg_mode")
+            != (stored.get("settings") or {}).get("bg_mode")):
+        return OrdinaryWriteScope(set(), set(), "global bg_mode differs")
+    if needs_canonical_config(candidate) or needs_canonical_config(stored):
+        return OrdinaryWriteScope(set(), set(), "legacy selectors")
+    old_spaces = {_record_key(s): s for s in stored.get("spaces") or [] if _record_key(s)}
+    old_markers = {_record_key(m): m for m in stored.get("markers") or [] if _record_key(m)}
+    touched_spaces: set[str] = set()
+    for space in candidate.get("spaces") or []:
+        key = _record_key(space)
+        if key is None or old_spaces.get(key) != space:
+            touched_spaces.add(key if key is not None else "")
+    touched_markers: set[str] = set()
+    for marker in candidate.get("markers") or []:
+        key = _record_key(marker)
+        if key is None or old_markers.get(key) != marker:
+            touched_markers.add(key if key is not None else "")
+    return OrdinaryWriteScope(touched_spaces, touched_markers, None)
+
+
+def validate_scoped_candidate(candidate: dict, stored: dict, scope: OrdinaryWriteScope) -> dict:
+    """`CONFIG_SCHEMA(candidate)` with per-record work for touched records only.
+
+    Returns a new document equal to what `CONFIG_SCHEMA(candidate)` returns
+    (`test_issue_1096_scoped_candidate_equals_config_schema`). Untouched records come from
+    the candidate itself — equal to the stored record by definition of the
+    scope — so the stored objects are never aliased or mutated.
+    """
+    if scope.full:
+        return CONFIG_SCHEMA(candidate)
+    all_spaces = candidate.get("spaces") or []
+    all_markers = candidate.get("markers") or []
+    is_touched_space = [(_record_key(s) is None) or (_record_key(s) in scope.touched_spaces) for s in all_spaces]
+    is_touched_marker = [(_record_key(m) is None) or (_record_key(m) in scope.touched_markers) for m in all_markers]
+    head = {key: value for key, value in candidate.items() if key not in ("spaces", "markers")}
+    head["spaces"] = [s for s, touched in zip(all_spaces, is_touched_space, strict=True) if touched]
+    head["markers"] = [m for m, touched in zip(all_markers, is_touched_marker, strict=True) if touched]
+    document_index = {
+        "spaces": [index for index, touched in enumerate(is_touched_space) if touched],
+        "markers": [index for index, touched in enumerate(is_touched_marker) if touched],
+    }
+    try:
+        checked = CONFIG_TYPE_SCHEMA(head)
+    except vol.Invalid as err:
+        # The error names the record by its index in the whole document, as
+        # the full pass does, not by its index in the projection.
+        for error in (err.errors if isinstance(err, vol.MultipleInvalid) else [err]):
+            path = error.path
+            if len(path) >= 2 and path[0] in document_index and isinstance(path[1], int) \
+                    and path[1] < len(document_index[path[0]]):
+                path[1] = document_index[path[0]][path[1]]
+        raise
+    # The list caps judge the whole document, not the projection; after the
+    # records, as in the type schema, and worded by the same dict schema.
+    _RECORD_CAPS({"spaces": all_spaces, "markers": all_markers})
+    # `canonical_config` ran as a no-op: a document with legacy selectors is a
+    # full pass (`ordinary_write_scope`), so the step order of CONFIG_SCHEMA
+    # (migrate, then canonicalise) is preserved without a whole-document copy.
+    # Per-space steps on the touched projection only.
+    projection = canonicalize_config_geometry({
+        **({"model_version": checked["model_version"]} if "model_version" in checked else {}),
+        "spaces": checked["spaces"],
+    })
+    _config_wall_segment_invariants(projection)
+    touched_iter = iter(projection["spaces"])
+    marker_iter = iter(checked["markers"])
+    merged = dict(checked)
+    merged["spaces"] = [next(touched_iter) if touched else s for s, touched in zip(all_spaces, is_touched_space, strict=True)]
+    merged["markers"] = [next(marker_iter) if touched else m for m, touched in zip(all_markers, is_touched_marker, strict=True)]
+    # Whole-document steps, in CONFIG_SCHEMA order.
+    merged = config_led_strip_links(merged)
+    return normalize_space_display(merged)
