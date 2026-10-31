@@ -1,8 +1,13 @@
 /** Host, variables, resets and cross-surface rules (#266, split from styles.ts). */
 import { css } from 'lit';
 import {toastStyles} from './toast.styles';
+import { controlMotionStyles } from './ui-motion.styles';
+import { noticeStyles } from './notice.styles';
+import { iconActionStyles } from './icon-action.styles';
+import { navigationStyles } from './navigation.styles';
+import { readingKitStyles } from './reading-kit.styles';
 
-export const baseStyles = [toastStyles, css`
+export const baseStyles = [readingKitStyles, navigationStyles, iconActionStyles, noticeStyles, toastStyles, controlMotionStyles, css`
     .hp-dialog-return-focus:focus-visible { outline:none!important; }
     :host {
       --hp-bg: var(--card-background-color, #16212e);
@@ -91,28 +96,6 @@ export const baseStyles = [toastStyles, css`
     ha-card {
       overflow: visible; /* overflow:hidden breaks position:sticky on the header */
     }
-    .empty {
-      padding: 40px 24px;
-      color: var(--hp-txt);
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--sp-4);
-    }
-    .empty .big {
-      --mdc-icon-size: 56px;
-      color: var(--hp-accent);
-      opacity: 0.7;
-    }
-    .empty .muted {
-      color: var(--hp-muted);
-      font-size: var(--fs-m);
-      margin: 0;
-    }
-    .empty .btn {
-      margin-top: var(--sp-4);
-    }
     .empty-actions {
       display: flex;
       flex-wrap: wrap;
@@ -122,12 +105,6 @@ export const baseStyles = [toastStyles, css`
     }
     .empty-actions .empty-backup-upload { display: contents; }
     .empty-actions input[type='file'] { display: none; }
-    .empty-actions .btn {
-      min-height: 44px;
-      max-width: 100%;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
     .version-recovery {
       position: absolute;
       z-index: 72;
@@ -139,13 +116,12 @@ export const baseStyles = [toastStyles, css`
       margin-left: auto;
       box-sizing: border-box;
       pointer-events: none;
-      color: var(--hp-txt);
     }
     .version-recovery.phase-visible {
-      animation: hp-version-recovery-in 160ms ease-out both;
+      animation: hp-ui-appear var(--hpf-appear-duration) var(--hpf-appear-easing) both;
     }
     .version-recovery.phase-leaving {
-      animation: hp-version-recovery-out 140ms ease-in both;
+      animation: hp-ui-leave var(--hpf-leave-duration) var(--hpf-leave-easing) both;
     }
     .version-recovery-card {
       pointer-events: auto;
@@ -153,29 +129,12 @@ export const baseStyles = [toastStyles, css`
       grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
       gap: var(--sp-5);
-      padding: var(--sp-5);
-      border: 1px solid var(--hp-accent);
-      border-radius: var(--rad-l);
-      background: var(--card-background-color, #16212e);
-      box-shadow: var(--shadow-2);
     }
     .phase-leaving .version-recovery-card {
       pointer-events: none;
     }
     .version-recovery-card > ha-icon {
       align-self: start;
-      color: var(--hp-accent);
-    }
-    .version-recovery-copy {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-      font-size: var(--fs-m);
-      line-height: 1.35;
-    }
-    .version-recovery-copy > span {
-      color: var(--hp-muted);
     }
     .version-recovery-versions {
       display: flex;
@@ -186,18 +145,6 @@ export const baseStyles = [toastStyles, css`
     .version-recovery-versions b {
       overflow-wrap: anywhere;
     }
-    .version-recovery-reload {
-      min-height: 44px;
-      white-space: normal;
-    }
-    @keyframes hp-version-recovery-in {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes hp-version-recovery-out {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
     @media (max-width: 520px) {
       .version-recovery-card {
         grid-template-columns: auto minmax(0, 1fr);
@@ -206,9 +153,6 @@ export const baseStyles = [toastStyles, css`
         grid-column: 1 / -1;
         width: 100%;
       }
-    }
-    @keyframes fixedfloor-spin {
-      to { transform: rotate(360deg); }
     }
     .spacer {
       flex: 1;
@@ -220,35 +164,10 @@ export const baseStyles = [toastStyles, css`
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--hp-bg, #16212e);
-      opacity: 1;
-      transition: opacity 0.15s ease;
       pointer-events: none;
-    }
-    .bootveil.off {
-      opacity: 0;
     }
     .bootveil .boothouse {
       position: static; /* the main .zoomwrap SVG is pinned to inset:0 — not this icon */
-      width: 56px;
-      height: 56px;
-      fill: var(--hp-accent);
-      opacity: 0.85;
-      animation: hp-boot-pulse 1.3s ease-in-out infinite;
-    }
-    @keyframes hp-boot-pulse {
-      0%, 100% { opacity: 0.3; transform: scale(0.94); }
-      50% { opacity: 0.9; transform: scale(1); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .bootveil .boothouse {
-        animation: none;
-        opacity: 0.7;
-      }
-      .version-recovery.phase-visible,
-      .version-recovery.phase-leaving {
-        animation: none;
-      }
     }
     @keyframes hp-pulse-short {
       0% { transform: scale(1); opacity: 0.55; }

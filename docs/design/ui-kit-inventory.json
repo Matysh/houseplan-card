@@ -23,32 +23,32 @@
       ],
       "cells": {
         "segmented": [
-          "M|header-space-select.ts:60-81 (nav.tabs > button.tab)|styles/chrome.styles.ts:20-41,styles/chrome.styles.ts:47-54,styles/chrome.styles.ts:179-209",
-          "M|houseplan-card.ts:11493-11508 (.modes > .modetab, writers only, visible in View)|styles/chrome.styles.ts:245-275,styles/chrome.styles.ts:335-364"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json",
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "select": [
-          "L|header-space-select.ts:48-54 (<hp-settings-select> = kit)|styles/chrome.styles.ts:181-182,styles/chrome.styles.ts:44-45"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses hp-settings-select.ts:HpSettingsSelect named header/header-panel variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-icon": [
-          "M|houseplan-card.ts:11512-11522 (zoom-out/fit/in .btn.zb), view-frame-view.ts:17-20 |styles/dialogs.styles.ts:34-65,styles/chrome.styles.ts:169-175,styles/chrome.styles.ts:116-121"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "menu": [
-          "M|header-menu.ts:147-164 (.header-menu / .header-menu-item, ≤480 only)|styles/chrome.styles.ts:122-164"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses editor-context-menu.ts:EditorContextMenu + editor-context-menu.styles.ts (touch44)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "motion-open-close": [
-          "M|header-menu.ts:153-163 (menu rendered/removed instantly)"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses ui-motion.ts + control-surface-presentation.ts:ControlSurfacePresentation; caller retains guards|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on header buttons: houseplan-card.ts:11514-11520, header-menu.ts:1"
         ],
         "section-heading": [
-          "M|houseplan-card.ts:11477-11480 (.title)|styles/dialogs.styles.ts:18-33"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles hpf-heading variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "card/group": [
-          "M|houseplan-card.ts:11472-11476 (.hdr > .head)|styles/chrome.styles.ts:6-15,styles/dialogs.styles.ts:10-17"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "separator": [
-          "M|styles/dialogs.styles.ts:15 (.head border-bottom)|styles/dialogs.styles.ts:15"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles entry/pair/header separators|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       }
     },
@@ -65,17 +65,17 @@
       ],
       "cells": {
         "btn-icon": [
-          "M|panel-header-menu.ts:36-40 (button.panel-menu)|styles/panel-header.styles.ts:138-147",
-          "M|zoom/rotate group in panel (same markup as card header)|styles/panel-header.styles.ts:104,114-118"
+          "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json",
+          "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "select": [
-          "L|header-space-select.ts:48-54|styles/panel-header.styles.ts:80-82"
+          "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses hp-settings-select.ts:HpSettingsSelect named header/header-panel variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "segmented": [
-          "M|houseplan-card.ts:11497-11509; #1132 outlined floor/mode controls are local CSS, even at 44px|styles/panel-header.styles.ts:9-59"
+          "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "menu": [
-          "M|panel-header-menu.ts:34-42 native HA sidebar launcher; card gear menu is not the main-panel overflow after #1132|styles/panel-header.styles.ts:139-147"
+          "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses styles/icon-action.styles.ts:hpf-icon-plain; panel-header-menu.ts:public hass-toggle-menu|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "card/group": [
           "N|houseplan-panel.ts:128-165 (shell <style>: host/page/content layout)"
@@ -91,14 +91,14 @@
       "frames": [],
       "cells": {
         "badge/chip": [
-          "M|houseplan-card.ts:6909-6913 (.farhint)|styles/chrome.styles.ts:58-86",
-          "M|houseplan-card.ts:11878 (.zoombadge)|styles/plan.styles.ts:167-181"
+          "K|houseplan-card.ts:_renderFarHint/_renderBody; view-frame-view.ts:renderHomeArrow uses styles/reading-kit.styles.ts:readingKitStyles floating-badge/state-chip/dot variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json",
+          "K|houseplan-card.ts:_renderFarHint/_renderBody; view-frame-view.ts:renderHomeArrow uses styles/reading-kit.styles.ts:readingKitStyles floating-badge/state-chip/dot variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|houseplan-card.ts:6912 (button.btn.ghostbtn)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderFarHint/_renderBody; view-frame-view.ts:renderHomeArrow uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-icon": [
-          "M|view-frame-view.ts:8-12 (button.homearrow)|styles/plan.styles.ts:146-166"
+          "K|houseplan-card.ts:_renderFarHint/_renderBody; view-frame-view.ts:renderHomeArrow uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "tooltip": [
           "N|plan scene itself (markers, light, walls, stairs, LED, SVG)"
@@ -119,7 +119,7 @@
       ],
       "cells": {
         "badge/chip": [
-          "M|houseplan-card.ts:11951-11953 (.kioskdots > .kdot)|styles/devices.styles.ts:70-77"
+          "K|houseplan-card.ts:_renderBody (.kioskdots > .hpf-dot) uses styles/reading-kit.styles.ts:readingKitStyles floating-badge/state-chip/dot variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       }
     },
@@ -135,22 +135,22 @@
           "K|houseplan-card.ts:11204-11205 (<hp-dialog data-kind=kiosk> without class ui-dialog / s"
         ],
         "dialog-footer": [
-          "M|houseplan-card.ts:11211-11215 (.row slot=footer + .spacer)|styles/dialogs.styles.ts:496-510"
+          "K|houseplan-card.ts:_renderKioskDialog/_renderRoot uses compact-dialog-styles.ts:compactDialogCss + styles/dialog-composition.styles.ts:dialogCompositionCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|houseplan-card.ts:11212 (.btn.ghost reset)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderKioskDialog/_renderRoot uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|houseplan-card.ts:11214 (.btn.on close)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderKioskDialog/_renderRoot uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "input": [
-          "M|houseplan-card.ts:11196-11202 (<label> + .colorrow > input[type=range] + .opv)|styles/dialogs.styles.ts:275-282,styles/dialogs.styles.ts:491-495"
+          "K|houseplan-card.ts:_renderKioskDialog/_renderRoot uses editors/form-kit.ts:field/rangeLine(readOnlyValue); styles/form-kit.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "callout/note": [
-          "M|houseplan-card.ts:11201,11207 (.rhint)|styles/chrome.styles.ts:411-415"
+          "K|houseplan-card.ts:_renderKioskDialog/_renderRoot uses editors/form-kit.ts:callout; styles/form-kit.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "card/group": [
-          "M|houseplan-card.ts:11206 (.body)|styles/dialogs.styles.ts:357-360,471-476"
+          "K|houseplan-card.ts:_renderKioskDialog/_renderRoot uses styles/reading-kit.styles.ts:readingKitStyles|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "kiosk-size-dialog"
@@ -168,13 +168,13 @@
       ],
       "cells": {
         "card/group": [
-          "M|version-recovery-card.ts:290-303 (.version-recovery-card)|styles/base.styles.ts:150-188"
+          "K|version-recovery-card.ts:renderVersionBanner uses styles/notice.styles.ts:noticeStyles + styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|version-recovery-card.ts:300-302 (.btn.on.version-recovery-reload)|styles/dialogs.styles.ts:34-65,styles/base.styles.ts:189-192,205-208"
+          "K|version-recovery-card.ts:renderVersionBanner uses styles/notice.styles.ts:noticeStyles + styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "motion-open-close": [
-          "M|version-recovery-card.ts:281-288 (phase-visible/phase-leaving + animationend)|styles/base.styles.ts:144-149,193-200,248-251"
+          "K|version-recovery-card.ts:renderVersionBanner uses ui-motion.ts + control-surface-presentation.ts:ControlSurfacePresentation; caller retains guards|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       }
     },
@@ -187,10 +187,10 @@
       "frames": [],
       "cells": {
         "card/group": [
-          "M|view-runtimes.ts:199 (aside.view-runtime-notice)|styles/chrome.styles.ts:502-524"
+          "K|view-runtimes.ts:ViewRuntimes.render uses styles/notice.styles.ts:noticeStyles + styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|view-runtimes.ts:202-206 (.btn retry/reload)|styles/dialogs.styles.ts:34-65,styles/chrome.styles.ts:525"
+          "K|view-runtimes.ts:ViewRuntimes.render uses styles/notice.styles.ts:noticeStyles + styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "view-runtime-notice"
@@ -204,10 +204,10 @@
       "frames": [],
       "cells": {
         "empty/loading/error state": [
-          "M|houseplan-card.ts:4246-4256 (.recoveryoverlay)|styles/dialogs.styles.ts:66-102"
+          "K|houseplan-card.ts:_renderRecoveryOverlay; space-card.ts:_renderRecoveryOverlay uses styles/reading-kit.styles.ts:readingKitStyles + styles/ui-motion.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|houseplan-card.ts:4254 and space-card.ts:921 (.btn.on retry)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderRecoveryOverlay; space-card.ts:_renderRecoveryOverlay uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "continuity-recovery-overlay"
@@ -221,9 +221,9 @@
       "frames": [],
       "cells": {
         "empty/loading/error state": [
-          "M|houseplan-card.ts:11886-11888 (.bootveil > svg.boothouse)|styles/base.styles.ts:216-247",
-          "M|houseplan-card.ts:4290-4294 (.editorloading pill)|styles/dialogs.styles.ts:103-139",
-          "M|houseplan-card.ts:11308-11311, 11318-11322 (.empty + .fixedfloor-loading / .fixedfloor|styles/base.styles.ts:94-112,styles/plan.styles.ts:5-16"
+          "K|houseplan-card.ts:_renderEditorRuntimeLoading/_renderBody uses styles/reading-kit.styles.ts:readingKitStyles + styles/ui-motion.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json",
+          "K|houseplan-card.ts:_renderEditorRuntimeLoading/_renderBody uses styles/reading-kit.styles.ts:readingKitStyles + styles/ui-motion.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json",
+          "K|houseplan-card.ts:_renderEditorRuntimeLoading/_renderBody uses styles/reading-kit.styles.ts:readingKitStyles + styles/ui-motion.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "boot-loading-states"
@@ -264,16 +264,16 @@
           "K|houseplan-card.ts:13518-13520 (<hp-dialog class=ui-dialog form-shell settings-layout c"
         ],
         "card/group": [
-          "L|houseplan-card.ts:13521 (.body.hpf-form.hpf-settings-form)|styles/dialogs.styles.ts:357-360,365-371,471-476"
+          "K|houseplan-card.ts:_renderInfoCard; info-card-styles.ts:ensureInfoCardStyles uses styles/reading-kit.styles.ts:readingKitStyles|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "list-row": [
           "K|houseplan-card.ts:13528-13550 (.entlist > .entrow), 13548-13578 (.inforow.hpf-row)"
         ],
         "btn-primary": [
-          "L|houseplan-card.ts:13542-13546 (.btn.entbtn .on/.ghost)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderInfoCard; info-card-styles.ts:ensureInfoCardStyles uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "L|houseplan-card.ts:13588-13597 (footer .btn / .btn.ghost close)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderInfoCard; info-card-styles.ts:ensureInfoCardStyles uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "text-link": [
           "K|houseplan-card.ts:13561,13567 (a.hpf-link)"
@@ -282,7 +282,7 @@
           "K|houseplan-card.ts:13563,13584 (.infodesc.hpf-note)"
         ],
         "badge/chip": [
-          "M|houseplan-card.ts:13573-13580 (.ctrlstates > .ctrlstate)|styles/dialogs.styles.ts:248-251"
+          "K|houseplan-card.ts:_renderInfoCard; info-card-styles.ts:ensureInfoCardStyles uses styles/reading-kit.styles.ts:readingKitStyles floating-badge/state-chip/dot variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "dialog-footer": [
           "K|houseplan-card.ts:13587 (.row.infofooter.hpf-footer)"
@@ -308,22 +308,22 @@
       ],
       "cells": {
         "card/group": [
-          "M|device-issues-view.ts:14,19 (section.device-issues)|styles/dialogs.styles.ts:591-594"
+          "K|device-issues-view.ts:renderDeviceIssues uses editors/form-kit.ts:callout structured body/danger variant; styles/form-kit.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "section-heading": [
-          "M|device-issues-view.ts:14,20-21 (h3)|styles/dialogs.styles.ts:595-597"
+          "K|device-issues-view.ts:renderDeviceIssues uses styles/reading-kit.styles.ts:readingKitStyles hpf-heading variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "disclosure": [
-          "M|device-issues-view.ts:26-31 (native details/summary)|styles/dialogs.styles.ts:602-604,609"
+          "K|device-issues-view.ts:renderDeviceIssues uses editors/form-kit.ts:disclosure; editors/disclosure-motion.ts; styles/dialog-composition.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|device-issues-view.ts:28-30 (button inside details)|styles/dialogs.styles.ts:606-610"
+          "K|device-issues-view.ts:renderDeviceIssues uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "separator": [
-          "M|styles/dialogs.styles.ts:599|styles/dialogs.styles.ts:599"
+          "K|device-issues-view.ts:renderDeviceIssues uses styles/reading-kit.styles.ts:readingKitStyles entry/pair/header separators|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "list-row": [
-          "M|device-issues-view.ts:22-32 (article.device-issue)|styles/dialogs.styles.ts:598-601,605"
+          "K|device-issues-view.ts:renderDeviceIssues uses styles/reading-kit.styles.ts:readingKitStyles row/entry/file variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       }
     },
@@ -340,10 +340,10 @@
       ],
       "cells": {
         "tooltip": [
-          "L|houseplan-card.ts:11949 (.tip[data-hp-live-tip]) + styles/chrome.styles.ts:526 (helpSurfaceSt|styles/chrome.styles.ts:497-501,live-hover.ts:191"
+          "K|live-hover.ts:syncTip/resetHouseplanHover uses styles/help-surface.styles.ts:helpSurfaceStyle/helpSurfaceMetaStyle; control-surface-presentation.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "motion-open-close": [
-          "M|live-hover.ts:200-204,224 (hidden toggled instantly)"
+          "K|live-hover.ts:syncTip/resetHouseplanHover uses styles/help-surface.styles.ts:helpSurfaceStyle/helpSurfaceMetaStyle; control-surface-presentation.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       }
     },
@@ -378,22 +378,22 @@
       ],
       "cells": {
         "card/group": [
-          "M|summary-panel-runtime-loaded.ts:261-284 (aside.summary-overlay > section.summary-block|summary-panel-style.ts:47-57,summary-panel-style.ts:100-113"
+          "K|summary-panel-runtime-loaded.ts:renderPanel/renderMeasure/renderControls uses styles/reading-kit.styles.ts:readingKitStyles|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "section-heading": [
-          "M|summary-panel-runtime-loaded.ts:267,270 (h2, h3)|summary-panel-style.ts:87-99,114-123"
+          "K|summary-panel-runtime-loaded.ts:renderPanel/renderMeasure/renderControls uses styles/reading-kit.styles.ts:readingKitStyles hpf-heading variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "list-row": [
-          "M|summary-panel-runtime-loaded.ts:276-280 (.summary-value)|summary-panel-style.ts:124-139"
+          "K|summary-panel-runtime-loaded.ts:renderPanel/renderMeasure/renderControls uses styles/reading-kit.styles.ts:readingKitStyles row/entry/file variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "empty/loading/error state": [
-          "M|summary-panel-runtime-loaded.ts:278,281-282 (skeleton, .summary-empty)|summary-panel-style.ts:140-173"
+          "K|summary-panel-runtime-loaded.ts:renderPanel/renderMeasure/renderControls uses styles/reading-kit.styles.ts:readingKitStyles + styles/ui-motion.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "motion-open-close": [
-          "M|summary-panel-presentation.ts:61-64 (WAAPI opacity+translate 18px, 190ms ease)"
+          "K|summary-panel-runtime-loaded.ts:renderPanel/renderMeasure/renderControls uses ui-motion.ts + control-surface-presentation.ts:ControlSurfacePresentation; caller retains guards|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-icon": [
-          "M|summary-panel-runtime-loaded.ts:315-328 (header .summary-control > button)|summary-panel-style.ts:14-38,summary-panel-style.ts:196-203"
+          "K|summary-panel-runtime-loaded.ts:renderPanel/renderMeasure/renderControls uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip (summary-panel-runtime-loaded.ts:319,324)"
@@ -412,7 +412,7 @@
           "K|toast-presentation.ts:51-55 (div.toast) styled only by kit owner styles/toast.styl"
         ],
         "motion-open-close": [
-          "M|toast-presentation.ts:48-76 (appear/remove instantly)"
+          "K|toast-presentation.ts:ToastPresentation uses toast-presentation.ts:finite single-node notice paint + ui-motion.ts; immediate announcement retirement|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "toasts"
@@ -447,16 +447,16 @@
       ],
       "cells": {
         "empty/loading/error state": [
-          "M|houseplan-card.ts:11343-11364 (.empty)|styles/base.styles.ts:94-112"
+          "K|houseplan-card.ts:_renderBody; hp-plan-converter-info.ts:HpPlanConverterInfo uses styles/reading-kit.styles.ts:readingKitStyles + styles/ui-motion.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|houseplan-card.ts:11349-11352 (.btn.on create-space)|styles/dialogs.styles.ts:34-65,styles/base.styles.ts:113-115,125-130"
+          "K|houseplan-card.ts:_renderBody; hp-plan-converter-info.ts:HpPlanConverterInfo uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|houseplan-card.ts:11354-11357 (.btn import-backup)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderBody; hp-plan-converter-info.ts:HpPlanConverterInfo uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "text-link": [
-          "L|hp-plan-converter-info.ts:10-14 (a.hpf-link in own shadow root) + settingsTextLinkCss |hp-plan-converter-info.ts:29-31"
+          "K|houseplan-card.ts:_renderBody; hp-plan-converter-info.ts:HpPlanConverterInfo uses styles/settings-action.styles.ts:settingsInlineLinkCss/settingsTextLinkCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       }
     },
@@ -478,19 +478,19 @@
           "K|houseplan-onboarding-runtime.ts:40-46 (<hp-help>)"
         ],
         "dialog-footer": [
-          "M|editors/space-form.ts:164-194 (.row.dialog-action-footer.hpf-footer.hpf-footer-space)|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:516-589"
+          "K|houseplan-onboarding-runtime.ts:_renderSpaceDialog/_renderServerPlans; editors/space-form.ts:renderSpaceForm uses compact-dialog-styles.ts:compactDialogCss + styles/dialog-composition.styles.ts:dialogCompositionCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|editors/space-form.ts:189-192 (.btn.on save)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-onboarding-runtime.ts:_renderSpaceDialog/_renderServerPlans; editors/space-form.ts:renderSpaceForm uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|editors/space-form.ts:186-188, 283-293 (.btn.ghost cancel/skip, .btn.filebtn upload, s|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-onboarding-runtime.ts:_renderSpaceDialog/_renderServerPlans; editors/space-form.ts:renderSpaceForm uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-danger": [
-          "M|houseplan-onboarding-runtime.ts:181-186 (.btn.ghost.danger delete saved plan)|styles/dialogs.styles.ts:350-353,328-329"
+          "K|houseplan-onboarding-runtime.ts:_renderSpaceDialog/_renderServerPlans; editors/space-form.ts:renderSpaceForm uses styles/settings-action.styles.ts:settingsActionsCss danger variant|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "list-row": [
-          "M|houseplan-onboarding-runtime.ts:169-187 (.savedplans > .savedplan)|styles/dialogs.styles.ts:290-329"
+          "K|houseplan-onboarding-runtime.ts:_renderSpaceDialog/_renderServerPlans; editors/space-form.ts:renderSpaceForm uses styles/reading-kit.styles.ts:hpf-file-list/hpf-file-row/hpf-file-thumbnail; shared runtime ports|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "onboarding-space-dialog"
@@ -507,16 +507,16 @@
           "K|houseplan-card.ts:11969-11972 (<hp-dialog data-kind=confirm>, no ui-dialog)"
         ],
         "card/group": [
-          "M|houseplan-card.ts:11973-11978 (.body.tapconfirm-body)|styles/dialogs.styles.ts:471-490"
+          "K|houseplan-card.ts:_renderBody/_renderRoot (_tapConfirm) uses styles/reading-kit.styles.ts:readingKitStyles|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "dialog-footer": [
-          "M|houseplan-card.ts:11979-11985|styles/dialogs.styles.ts:496-510"
+          "K|houseplan-card.ts:_renderBody/_renderRoot (_tapConfirm) uses compact-dialog-styles.ts:compactDialogCss + styles/dialog-composition.styles.ts:dialogCompositionCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|houseplan-card.ts:11982-11984 (.btn.on)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderBody/_renderRoot (_tapConfirm) uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|houseplan-card.ts:11981 (.btn.ghost)|styles/dialogs.styles.ts:34-65"
+          "K|houseplan-card.ts:_renderBody/_renderRoot (_tapConfirm) uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "tap-confirm-dialog"
@@ -533,13 +533,13 @@
           "K|backdrop-pick.ts:309-311 (<hp-dialog data-kind=decor>, no ui-dialog)"
         ],
         "dialog-footer": [
-          "M|backdrop-pick.ts:317-331|styles/dialogs.styles.ts:496-510"
+          "K|backdrop-pick.ts:renderBackdropGuard; houseplan-card.ts:_renderBody/_renderRoot uses compact-dialog-styles.ts:compactDialogCss + styles/dialog-composition.styles.ts:dialogCompositionCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|backdrop-pick.ts:327-330|styles/dialogs.styles.ts:34-65"
+          "K|backdrop-pick.ts:renderBackdropGuard; houseplan-card.ts:_renderBody/_renderRoot uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|backdrop-pick.ts:318-326 (.btn.ghost)|styles/dialogs.styles.ts:34-65"
+          "K|backdrop-pick.ts:renderBackdropGuard; houseplan-card.ts:_renderBody/_renderRoot uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       },
       "captureScenario": "onboarding-backdrop-guard"
@@ -553,16 +553,16 @@
       "frames": [],
       "cells": {
         "section-heading": [
-          "M|space-card.ts:1012 (.hp-static-title)|space-card.ts:1040-1045"
+          "K|space-card.ts:render/_errorCard/_renderRecoveryOverlay uses styles/reading-kit.styles.ts:readingKitStyles hpf-heading variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-primary": [
-          "M|space-card.ts:1024-1026 (.hp-static-btn go-to-space)|space-card.ts:1112-1127"
+          "K|space-card.ts:render/_errorCard/_renderRecoveryOverlay uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-secondary": [
-          "M|space-card.ts:1015-1017 (.hp-static-btn retry in runtime-failure foot)|space-card.ts:1112-1127"
+          "K|space-card.ts:render/_errorCard/_renderRecoveryOverlay uses styles/settings-action.styles.ts:settingsActionsCss|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "empty/loading/error state": [
-          "M|space-card.ts:888 (.hp-static-error), 912-924 (.recoveryoverlay + legacy .btn.on via c|space-card.ts:1128-1132,styles/dialogs.styles.ts:34-65"
+          "K|space-card.ts:render/_errorCard/_renderRecoveryOverlay uses styles/reading-kit.styles.ts:readingKitStyles + styles/ui-motion.styles.ts|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "card/group": [
           "N|space-card.ts:1049-1107 (.hp-static-stage, plan SVG)"
@@ -2549,7 +2549,8 @@
       "#1132 removed kiosk summary buttons: remove those two cells, retain the carousel dots surface.",
       "#1132 PDF checkbox now L (hpf-toggle + local label/input paint); resolve unknown PDF color control as M (own shadow CSS).",
       "#1145 stairs warning now K; hpf-actions layout does not make the legacy .btn controls kit.",
-      "#1145 disabled/hover/error-token and wrapping fixes do not change other buckets; #1154 dialog-retirement guard and #1159/#1161 render reuse do not change surfaces."
+      "#1145 disabled/hover/error-token and wrapping fixes do not change other buckets; #1154 dialog-retirement guard and #1159/#1161 render reuse do not change surfaces.",
+      "#1147: 74 View/kiosk cells adopt named shared Kit owners; 6 existing N cells retained. Initial audit/base anchors remain historical for unmigrated packages. Proof: docs/design/ui-kit-audit-1147.json and UI-KIT-METRICS.md."
     ],
     "unresolvedHistoricalFiles": []
   },

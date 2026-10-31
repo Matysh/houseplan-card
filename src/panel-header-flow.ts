@@ -1,3 +1,5 @@
+import { headerNavigationGroup, headerNavigationItem, headerNavigationIconSize } from './header-navigation-kit';
+
 export type PanelHeaderPhase = 0 | 1 | 2 | 3 | 4;
 export interface PanelHeaderChoice { phase: PanelHeaderPhase; phone: boolean }
 export interface PanelHeaderMeasurement extends PanelHeaderChoice { height: number }
@@ -95,19 +97,19 @@ function nativeMetric(node: Node, doc: Document): Node | null {
 
 function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean): HTMLElement {
   const tabs = doc.createElement('nav');
-  tabs.className = 'tabs' + (compact ? ' compact-spaces' : '');
+  tabs.className = headerNavigationGroup(compact);
   const button = (className: string): HTMLButtonElement => {
-    const value = doc.createElement('button'); value.className = className; value.type = 'button';
+    const value = doc.createElement('button'); value.className = headerNavigationItem + ' ' + className; value.type = 'button';
     tabs.appendChild(value); return value;
   };
   if (compact) {
     const field = doc.createElement('span'); field.className = 'compact-space-select';
     field.style.cssText = 'display:block;flex:0 0 180px;width:180px;min-width:180px;height:44px;';
     tabs.appendChild(field);
-    if (nav.configure) button('tab tabedit compact-space-settings').appendChild(iconMetric(doc, 24));
+    if (nav.configure) button('tabedit compact-space-settings').appendChild(iconMetric(doc, headerNavigationIconSize));
   } else {
     for (const space of nav.spaces) {
-      const tab = button('tab' + (space.id === nav.current ? ' active' : ''));
+      const tab = button(space.id === nav.current ? 'active' : '');
       const label = doc.createElement('span'); label.className = 'tabtitle'; label.textContent = space.title;
       tab.appendChild(label);
       if (nav.configure) {
@@ -117,7 +119,7 @@ function spaceMetrics(doc: Document, nav: PanelHeaderSpaces, compact: boolean): 
       }
     }
   }
-  if (nav.create) button('tab tabadd').appendChild(iconMetric(doc, 15));
+  if (nav.create) button('tabadd').appendChild(iconMetric(doc, headerNavigationIconSize));
   return tabs;
 }
 

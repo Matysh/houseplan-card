@@ -13,6 +13,9 @@ import { createLabServer } from './server.mjs';
 import { attestLaunchedBrowser } from '../../scripts/browser-attestation.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { parseCss } from '../../scripts/css-lex.mjs';
+import { largePlanFile } from '../helpers/large-plan-file.mjs';
+import { waitForUiKitPaint } from '../helpers/ui-kit-paint.mjs';
+import { loadForeignCss, assertForeignCssWitness } from '../../scripts/css-foreign.mjs';
 
 const { values } = parseArgs({ options: { output: { type: 'string', default: 'artifacts/ui-kit-audit' },
   'ha-cache': { type: 'string' }, width: { type: 'string' }, theme: { type: 'string' } } });
@@ -28,6 +31,8 @@ server.listen(0, '127.0.0.1'); await once(server, 'listening');
 const origin = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 const profiles = [], sheets = new Map(), errors = [];
+const foreign = loadForeignCss(root);
+const modalForeign = { ...foreign, entries: foreign.entries.filter(row => row.file === 'src/ha-dialog-motion.ts') };
 const hash = text => createHash('sha256').update(text).digest('hex');
 try {
   const attestation = await attestLaunchedBrowser(browser, { reason: '#1146 UI Kit CSS coverage and control measurements' });
@@ -41,6 +46,21 @@ try {
         return url.origin === origin || ['data:', 'blob:'].includes(url.protocol) ? route.continue() : route.abort();
       });
       const page = await context.newPage(), cdp = await context.newCDPSession(page);
+      // Read-only genuine-component vocabulary witness, including short exit
+      // states that have gone by the time a settled screenshot is taken.
+      await page.addInitScript(() => {
+        const observed = new Set();
+        window.__uiKitForeignClasses = observed;
+        const sample = root => {
+          for (const element of root.querySelectorAll('*')) {
+            if (element.localName === 'wa-dialog') for (const node of element.shadowRoot?.querySelectorAll('*') ?? [])
+              for (const name of node.classList) observed.add(name);
+            if (element.shadowRoot) sample(element.shadowRoot);
+          }
+        };
+        const tick = () => { sample(document); requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+      });
       page.on('pageerror', error => errors.push({ profile: id, message: error.message }));
       const headers = new Map(), cache = new Map(), pending = new Set(), usage = [];
       const readSheet = async styleSheetId => {
@@ -55,11 +75,9 @@ try {
       await page.goto(origin); await page.waitForFunction(() => window.__lab?.card?._devices?.length > 0);
       profile.fingerprints.push(await assertFreshDemoBundle(page, root));
       await page.locator('#lab-launcher').click(); await page.locator('#lab-theme').selectOption(theme); await page.locator('#lab-close').click();
+      await page.mouse.move(0, 0);
       const capture = async name => {
-        await page.locator('hp-dialog dialog').evaluateAll(async elements => {
-          await Promise.allSettled(elements.flatMap(e => e.getAnimations()).filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished));
-        });
-        await page.evaluate(async () => { await document.fonts.ready; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); });
+        await waitForUiKitPaint(page);
         const file = `${id}-${name}.png`;
         await page.screenshot({ path: resolve(output, file) });
         profile.stages.push({ name, frame: file });
@@ -73,6 +91,14 @@ try {
       const close = async shell => {
         await shell.locator('[data-hp="dialog-cancel"]').first().click(); await expect(shell).toHaveCount(0);
       };
+      // Devices can resolve before View is presented. Genuine cold boot is
+      // captured by capture_ui_kit_transients; this matrix starts at ready View.
+      await page.waitForFunction(() => {
+        const card = window.__lab?.card, root = card?.shadowRoot;
+        return root?.querySelector('ha-card[data-hp-state="ready"]')
+          && !root.querySelector('.bootveil') && !root.querySelector('.stage.hpboot');
+      });
+      await page.mouse.move(0, 0);
       await capture('view');
       await page.locator('houseplan-card button[data-hp-tooltip]').filter({ visible: true }).first().hover();
       await expect(page.locator('.hp-chrome-tooltip')).toBeVisible(); await capture('chrome-tooltip');
@@ -121,8 +147,7 @@ try {
             await sourceControl.locator(`[role="option"][data-id="${value}"]`).click();
           };
           await chooseSource('file');
-          const png = Buffer.from('89504e470d0a1a0a0000000d4948445200002710000027100802000000000000000000000049454e4400000000', 'hex');
-          await shell.locator('[data-hp="image-upload"]').setInputFiles({ name: 'large-synthetic.png', mimeType: 'image/png', buffer: png });
+          await shell.locator('[data-hp="image-upload"]').setInputFiles(await largePlanFile(page));
           const guard = page.locator('hp-dialog[data-kind="decor"]'); await expect(guard).toBeVisible();
           await capture('backdrop-guard'); await close(guard);
           await chooseSource(source);
@@ -156,6 +181,9 @@ try {
           }
         }
       }
+      profile.foreignModalClasses = await page.evaluate(() => [...window.__uiKitForeignClasses].sort());
+      if (modalForeign.entries.length) assertForeignCssWitness(modalForeign, server.provenance,
+        profile.foreignModalClasses.map(name => ({ component:'wa-dialog', name })));
       usage.push(...(await cdp.send('CSS.stopRuleUsageTracking')).ruleUsage);
       await Promise.all([...pending]);
       for (const styleSheetId of headers.keys()) await readSheet(styleSheetId);

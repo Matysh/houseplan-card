@@ -20,7 +20,7 @@ import { summaryPanelCss } from './summary-panel-style';
 import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { summaryPanelDialogCss } from './summary-panel-dialog-style';
 import { summaryIcon } from './summary-panel-icons';
-import { SummaryPanelPresentation } from './summary-panel-presentation';
+import { ControlSurfacePresentation } from './control-surface-presentation';
 import { summaryPanelText } from './summary-panel-i18n';
 import type { SummaryPanelHost } from './summary-panel-host';
 import type { HeaderMenuItem } from './header-menu';
@@ -118,7 +118,7 @@ export class LoadedSummaryPanelRuntime {
   private lifecycleGeneration = 0;
   private lifecycleIdentity = '';
   private connected = false;
-  private readonly presentation = new SummaryPanelPresentation(() => this.host.requestUpdate());
+  private readonly presentation = new ControlSurfacePresentation(() => this.host.requestUpdate());
   private dialogStyleSheet: CSSStyleSheet | null = null;
   private readonly styledDialogRoots = new WeakSet<ShadowRoot>();
 
@@ -241,9 +241,9 @@ export class LoadedSummaryPanelRuntime {
   public renderMeasure(): TemplateResult | typeof nothing {
     const title = this.config().config?.title;
     if (!title || this.host._mode !== 'view') return nothing;
-    return html`<div class="summary-measure" aria-hidden="true" inert>
-      <h2>${title}</h2><div class="summary-scroll"><section class="summary-block"><h3>${this.t('summary.measure_block')}</h3>
-      <div class="summary-value"><span>${this.t('summary.measure_label')}</span>
+    return html`<div class="summary-measure hpf-reading-surface" aria-hidden="true" inert>
+      <h2 class="hpf-heading hpf-heading-pane">${title}</h2><div class="summary-scroll hpf-reading-scroll"><section class="summary-block hpf-reading-block"><h3 class="hpf-heading hpf-heading-section">${this.t('summary.measure_block')}</h3>
+      <div class="summary-value hpf-reading-pair"><span>${this.t('summary.measure_label')}</span>
         <strong>${this.t('summary.unavailable')}</strong></div></section></div>
     </div><div class="summary-safe-probe" aria-hidden="true" inert></div>`;
   }
@@ -258,28 +258,28 @@ export class LoadedSummaryPanelRuntime {
     this.ensureMetrics();
     const blocks = visibleSummaryBlocks(config, this.host._space);
     const stop = (event: Event) => event.stopPropagation();
-    return html`<aside class="summary-overlay ${layout.side}" data-hp="summary-panel" aria-label=${config.title}
+    return html`<aside class="summary-overlay hpf-reading-surface ${layout.side}" data-hp="summary-panel" aria-label=${config.title}
         data-phase=${this.presentation.phase} ?inert=${!this.presentation.interactive}
         aria-hidden=${this.presentation.interactive ? 'false' : 'true'}
         style="--summary-height-cap:${Math.floor(layout.heightCap)}px;--summary-width-cap:${Math.floor(layout.availableWidth)}px;--summary-top:${layout.top}px;--summary-bottom:${layout.bottom}px"
         @click=${stop} @dblclick=${stop} @pointerdown=${stop} @pointerup=${stop}
         @pointermove=${stop} @wheel=${stop}>
-      <h2>${config.title}</h2>
-      <div class="summary-scroll">
-        ${blocks.length ? blocks.map((block) => html`<section class="summary-block">
-          <h3>${block.title}</h3>
+      <h2 class="hpf-heading hpf-heading-pane">${config.title}</h2>
+      <div class="summary-scroll hpf-reading-scroll">
+        ${blocks.length ? blocks.map((block) => html`<section class="summary-block hpf-reading-block">
+          <h3 class="hpf-heading hpf-heading-section">${block.title}</h3>
           ${block.values.length ? block.values.map((value) => {
             const state = this.valueState(value);
             // Скелет вместо текста ошибки, пока значения нет (#509): та же
             // плашка и та же высота строки, пульсирующий прямоугольник на
             // месте значения, плавная замена по готовности.
-            return html`<div class="summary-value" data-hp="summary-metric" data-id=${value.id}>
-              <span>${value.label}</span>${state.kind === 'pending'
-                ? html`<strong class="summary-value-pending" aria-hidden="true"><i></i></strong>`
-                : html`<strong>${state.kind === 'ready' ? state.text : this.t('summary.unavailable')}</strong>`}
+            return html`<div class="summary-value hpf-reading-pair" data-hp="summary-metric" data-id=${value.id}>
+              <span class="hpf-reading-label">${value.label}</span>${state.kind === 'pending'
+                ? html`<strong class="summary-value-pending hpf-loading-value" aria-hidden="true"><i></i></strong>`
+                : html`<strong class="hpf-reading-value">${state.kind === 'ready' ? state.text : this.t('summary.unavailable')}</strong>`}
             </div>`;
-          }) : html`<div class="summary-empty">${this.t('summary.empty_block')}</div>`}
-        </section>`) : html`<div class="summary-empty">${this.t('summary.empty_space')}</div>`}
+          }) : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_block')}</div>`}
+        </section>`) : html`<div class="summary-empty hpf-reading-empty">${this.t('summary.empty_space')}</div>`}
       </div>
     </aside>`;
   }
@@ -312,14 +312,14 @@ export class LoadedSummaryPanelRuntime {
     if (this.host._kiosk) return nothing;
     const toggleTitle = this.toggleTitle();
     const stop = (event: Event) => event.stopPropagation();
-    return html`<div class="summary-control" role="group"
+    return html`<div class="summary-control hpf-icon-group" role="group"
         aria-label=${this.t('summary.controls')} @click=${stop} @dblclick=${stop}
         @pointerdown=${stop} @pointerup=${stop} @pointermove=${stop} @wheel=${stop}>
-      <button type="button" data-hp="summary-settings" @click=${() => void this.openDialog()}
+      <button type="button" class="hpf-icon-action" data-hp="summary-settings" @click=${() => void this.openDialog()}
           data-hp-tooltip=${this.t('summary.settings')} aria-label=${this.t('summary.settings')}>
         ${summaryIcon('settings')}
       </button>
-      <button type="button" data-hp="summary-toggle" class=${this.effectiveShow ? 'on' : ''}
+      <button type="button" data-hp="summary-toggle" class=${`hpf-icon-action ${this.effectiveShow ? 'on' : ''}`}
         aria-pressed=${this.effectiveShow ? 'true' : 'false'}
           data-hp-tooltip=${toggleTitle} aria-label=${toggleTitle}
         @click=${() => this.saveLocal({ show: !this.effectiveShow })}>

@@ -3,58 +3,7 @@ import { summaryPanelEditorCss, summaryPanelUiKitCss } from './summary-panel-edi
 
 /** Lazy screen-space styles. The stage, not the viewport, chooses the anchor. */
 export const summaryPanelCss = `
-  ${css`.summary-control {
-    display: inline-flex;
-    flex: 0 0 auto;
-    border: 1px solid var(--divider-color);
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--card-background-color, #fff);
-  }
-  .summary-control > button {
-    width: 44px;
-    height: 44px;
-    margin: 0;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-right: 1px solid var(--divider-color);
-    color: var(--primary-text-color);
-    background: transparent;
-    cursor: pointer;
-    transition: background-color 160ms ease;
-  }
-  .summary-control > button:last-child { border-right: 0; }
-  :host([data-pointer-hover]) .summary-control > button:hover { background: var(--secondary-background-color); }
-  .summary-control > button.on {
-    color: var(--primary-text-color);
-    background: transparent;
-  }
-  .summary-control > button:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -3px;
-  }
-  svg.summary-icon {
-    display: block;
-    width: 20px;
-    height: 20px;
-    flex: 0 0 auto;
-    fill: none;
-  }
-  svg.summary-settings-icon { width:24px; height:24px; }
-  .summary-overlay,
-  .summary-measure {
-    box-sizing: border-box;
-    font-size: .875rem;
-    line-height: 1.35;
-    color: var(--primary-text-color);
-    background: var(--secondary-background-color);
-    border: 1px solid var(--divider-color);
-    border-radius: 12px;
-    box-shadow: 0 8px 26px rgb(0 0 0 / 16%);
-  }
+  ${css`
   .summary-overlay {
     position: absolute;
     z-index: 24;
@@ -84,93 +33,9 @@ export const summaryPanelCss = `
     max-width: var(--summary-width-cap);
     transform: translateX(-50%);
   }
-  .summary-overlay h2,
-  .summary-measure h2 {
-    box-sizing: border-box;
-    flex: 0 0 auto;
-    min-height: 48px;
-    margin: 0;
-    padding: 14px;
-    font-size: 1rem;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-    background: var(--card-background-color, #fff);
-    border-bottom: 1px solid var(--divider-color);
-  }
-  .summary-scroll {
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 10px;
-  }
-  .summary-block {
-    min-width: 0;
-    margin: 0 0 9px;
-    border: 1px solid var(--divider-color);
-    border-radius: 11px;
-    background: var(--card-background-color, #fff);
-  }
-  .summary-block:last-child { margin-bottom: 0; }
-  .summary-block h3 {
-    box-sizing: border-box;
-    min-height: 43px;
-    margin: 0;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--divider-color);
-    font-size: .875rem;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
-  }
-  .summary-value {
-    box-sizing: border-box;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
-    gap: 10px;
-    align-items: baseline;
-    min-height: 36px;
-    margin: 0 11px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--divider-color);
-  }
-  .summary-value:last-child { border-bottom: 0; }
-  .summary-value span,
-  .summary-value strong { min-width: 0; overflow-wrap: anywhere; }
-  .summary-value span { color: var(--secondary-text-color); }
-  .summary-value strong { text-align: right; font-weight: 700; }
-  /* Значение появляется плавно, а не скачком после скелета (#509). */
-  .summary-value strong:not(.summary-value-pending) { animation: summary-value-in 140ms ease both; }
-  /* Скелет: прямоугольник в высоту строки на месте значения. Плашка, сетка и
-     высота строки те же, что с готовым значением, — панель не прыгает. */
-  .summary-value-pending {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    min-height: 1.2em;
-  }
-  .summary-value-pending i {
-    display: block;
-    width: 4.5em;
-    max-width: 100%;
-    height: 1.2em;
-    border-radius: 5px;
-    background: var(--secondary-text-color, #7a7f87);
-    opacity: 0.18;
-    animation: summary-skeleton-pulse 1200ms ease-in-out infinite;
-  }
-  @keyframes summary-skeleton-pulse {
-    0%, 100% { opacity: 0.12; }
-    50% { opacity: 0.28; }
-  }
-  @keyframes summary-value-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    /* Прямоугольник остаётся — исчезает только моторика (#509). */
-    .summary-value-pending i { animation: none; opacity: 0.18; }
-    .summary-value strong:not(.summary-value-pending) { animation: none; }
-  }
-  .summary-empty { margin: 0; padding: 10px 11px; color: var(--secondary-text-color); }
+  .summary-block { margin:0 0 9px; }
+  .summary-block:last-child { margin-bottom:0; }
+  .summary-value { margin:0 11px; }
   .summary-measure {
     position: fixed;
     z-index: -1;
@@ -190,17 +55,6 @@ export const summaryPanelCss = `
     visibility: hidden;
     pointer-events: none;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .hdr > .head .summary-control > button { transition: none; }
-  }
-    .hdr > .head .summary-control { height: 44px; box-sizing: border-box; gap: 0; border: 0; border-radius: var(--rad-m); background: transparent; overflow: visible; }
-    .hdr > .head .summary-control > button { position: relative; box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--hp-line); border-radius: 0; color: var(--hp-txt); background: transparent; }
-    .hdr > .head .summary-control > button:first-child { overflow: visible; border-radius: var(--rad-m) 0 0 var(--rad-m); }
-    .hdr > .head .summary-control > button:first-child > svg.summary-settings-icon { transform:translate(1.5px,1.5px); pointer-events:none; }
-    .hdr > .head .summary-control > button:last-child { margin-inline-start: -1px; border-radius: 0 var(--rad-m) var(--rad-m) 0; }
-    .hdr > .head .summary-control > button.on { z-index:1; background:transparent; color:var(--hp-txt); border-color:var(--hp-accent); }
-    :host([data-pointer-hover]) .hdr > .head .summary-control > button:not(:disabled):hover { border-color: var(--hp-accent); z-index: 1; }
-    .hdr > .head .summary-control > button:focus-visible { z-index: 2; }
 `.cssText}
   ${summaryPanelEditorCss}${summaryPanelUiKitCss}
 `;

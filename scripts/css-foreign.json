@@ -13,5 +13,8 @@
       "ha-generic-picker": ["container"],
       "ha-picker-combo-box": ["list-wrapper", "combo-box-row", "current-value", "selected"]
     }
+  }, {
+    "file": "src/ha-dialog-motion.ts",
+    "components": { "wa-dialog": ["show", "hide"] }
   }]
 }

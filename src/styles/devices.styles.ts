@@ -67,14 +67,6 @@ export const devicesStyles = css`
       z-index: 5;
       pointer-events: none;
     }
-    .kdot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--hp-muted);
-      opacity: 0.55;
-    }
-    .kdot.on { background: var(--hp-accent); opacity: 1; }
     .dev.valonly {
       /* Saved coordinates remain the centre of a Text shell. The shell may
          expand, while the invisible anchor stays one core diameter wide. */

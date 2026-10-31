@@ -19,6 +19,9 @@
 import { css } from 'lit';
 
 export const editorDialogsStyles = css`
+    .colorrow { display:flex; align-items:center; gap:var(--sp-4); }
+    .colorrow input[type='range'] { flex:1; }
+    .colorrow ha-slider { flex:1; min-width:0; }
     hp-dialog .dfill {
       display: inline-flex;
       align-items: center;

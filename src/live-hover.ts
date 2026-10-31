@@ -6,6 +6,7 @@ import type { DevItem, ValueBadgeSource } from './types';
 import { placeDeviceTooltip } from './live-tip-placement';
 import { floatingViewport } from './floating-surface';
 import { roomCo2Text } from './room-co2';
+import { ControlSurfacePresentation } from './control-surface-presentation';
 import {
   createDeviceBatteryContext, deviceBatteryReading,
   type DeviceBatteryContext, type DeviceBatteryDevice, type DeviceBatteryHass,
@@ -194,13 +195,24 @@ const appendMeta = (tip: HTMLElement, label: string, value?: string, color?: str
   tip.append(row);
 };
 
+const tipPresentations = new WeakMap<object, { element:HTMLElement; motion:ControlSurfacePresentation }>();
+
 const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   const element = root.querySelector<HTMLElement>('[data-hp-live-tip]');
   if (!element) return;
+  let state = tipPresentations.get(host);
+  if (state?.element !== element) {
+    state?.motion.reset();
+    const motion = new ControlSurfacePresentation(() => {
+      if (!motion.mounted) { element.hidden = true; element.replaceChildren(); }
+    });
+    state = { element, motion }; tipPresentations.set(host, state);
+  }
   const tip = host._tip as LiveTip | null;
   if (!tip) {
-    element.hidden = true;
-    element.replaceChildren();
+    element.setAttribute('aria-hidden', 'true');
+    state.motion.sync(false, 'bottom'); state.motion.updated(element);
+    if (!state.motion.mounted) { element.hidden = true; element.replaceChildren(); }
     return;
   }
   const gap = 12;
@@ -220,12 +232,14 @@ const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   appendMeta(element, host._t('tip.lqi'), tip.lqi == null ? '' : String(tip.lqi),
     tip.lqi == null ? undefined : lqiColor(tip.lqi));
   element.hidden = false;
+  element.removeAttribute('aria-hidden');
   const box = element.getBoundingClientRect();
   const maxLeft = Math.max(margin, window.innerWidth - box.width - margin);
   const maxTop = Math.max(margin, window.innerHeight - box.height - margin);
   element.style.left = `${Math.min(maxLeft, Math.max(margin, tip.x + gap))}px`;
   element.style.top = `${Math.min(maxTop, Math.max(margin, tip.y + gap))}px`;
   avoidTopologyCaptions(root, element, tip);
+  state.motion.sync(!element.hidden, 'bottom'); state.motion.updated(element);
 };
 
 /** Both layers are measured after paint in screen coordinates, including 2.5D. */
@@ -293,4 +307,8 @@ export function syncHouseplanHover(value: object): void {
 
 export function resetHouseplanHover(host: object): void {
   states.delete(host);
+  const tip = tipPresentations.get(host);
+  tip?.motion.reset();
+  if (tip) { tip.element.hidden = true; tip.element.replaceChildren(); }
+  tipPresentations.delete(host);
 }

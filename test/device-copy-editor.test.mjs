@@ -35,7 +35,7 @@ function fixture(pdfs=[]) {
   const action=()=>{
     // UI-031 keeps the guarded command in the shared presentation's menuitem.
     const find=value=>Array.isArray(value)?value.flatMap(find):value?.values
-      ?Array.isArray(value.strings)&&value.strings.join('').includes('role="menuitem"')?[value]:value.values.flatMap(find):[];
+      ?Array.isArray(value.strings)&&value.strings.join('').includes('<button')?[value]:value.values.flatMap(find):[];
     return find(editor.render()).find(item=>item.values.includes('device-copy')).values.find(v=>typeof v==='function');
   };
   return {h,editor,messages,toasts,adoptions,open,action};

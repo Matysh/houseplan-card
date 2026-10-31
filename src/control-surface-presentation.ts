@@ -1,9 +1,11 @@
-export type SummaryPanelPhase = 'hidden' | 'entering' | 'visible' | 'exiting';
+import { controlMotion, controlSurfaceFrames } from './ui-motion';
+
+export type ControlSurfacePhase = 'hidden' | 'entering' | 'visible' | 'exiting';
 type Side = 'right' | 'bottom';
 
 /** Transient presentation only: never writes the user's visibility intent. */
-export class SummaryPanelPresentation {
-  public phase: SummaryPanelPhase = 'hidden';
+export class ControlSurfacePresentation {
+  public phase: ControlSurfacePhase = 'hidden';
   private wanted = false;
   private side: Side | null = null;
   private pending = false;
@@ -51,17 +53,14 @@ export class SummaryPanelPresentation {
     // Snapshot a running animation BEFORE cancellation. An ordinary rerender
     // does not touch this path and cannot restart motion or reset scroll.
     const oldStyle = this.element === element ? view.getComputedStyle(element) : null;
-    const offset = this.side === 'bottom' ? '0px 18px' : '18px 0px';
-    const from = { opacity: oldStyle?.opacity || '0', translate: oldStyle?.translate || offset };
+    const from = oldStyle ? { opacity: oldStyle.opacity, translate: oldStyle.translate } : undefined;
     this.cancel();
     this.element = element;
     const token = this.generation;
     this.media = media || null;
     this.media?.addEventListener('change', this.motionChanged);
-    const animation = element.animate([
-      from,
-      { opacity: this.wanted ? '1' : '0', translate: this.wanted ? '0px 0px' : offset },
-    ], { duration: 190, easing: 'ease', fill: 'both' });
+    const timing = this.wanted ? controlMotion.appear : controlMotion.leave;
+    const animation = element.animate(controlSurfaceFrames(this.wanted, from), { ...timing, fill: 'both' });
     this.animation = animation;
     const finish = () => {
       if (token !== this.generation || animation !== this.animation) return;
@@ -70,7 +69,7 @@ export class SummaryPanelPresentation {
     };
     void animation.finished.then(finish, () => undefined);
     // Cancellation/background throttling must not strand an inert ghost.
-    this.timeout = setTimeout(finish, 250);
+    this.timeout = setTimeout(finish, timing.duration + 70);
   }
 
   public reset(): void {

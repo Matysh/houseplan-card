@@ -8,6 +8,18 @@ const {PNG}=createRequire(import.meta.url)('playwright-core/lib/utilsBundle');
 // Only foreground glyph pixels are compared;
 // a visible box, orange border or DOM presence cannot pass a covered message.
 export async function toastPaint(page,notice,path){
+ // Measure settled pixels without suppressing real presentation. Composed
+ // ancestors include the actual HA/native modal containing the toast portal.
+ await notice.evaluate(async element=>{
+  await document.fonts.ready;
+  const animations=[];
+  for(let node=element;node;){
+   if(node instanceof Element)animations.push(...node.getAnimations());
+   node=node.assignedSlot||node.parentNode||(node instanceof ShadowRoot?node.host:null);
+  }
+  await Promise.allSettled(animations.filter(animation=>animation.effect?.getTiming().iterations!==Infinity).map(animation=>animation.finished));
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ });
  const spec=await notice.evaluate(n=>{
   const r=n.getBoundingClientRect(),s=getComputedStyle(n);
   return {text:n.textContent,css:[...s].map(k=>[k,s.getPropertyValue(k)]),

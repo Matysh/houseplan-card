@@ -2892,7 +2892,7 @@ export async function prepareGoldenScenario(page, scenario) {
       const button = root.querySelector('[data-hp="select-trigger"]');
       const bounds = button.getBoundingClientRect(), style = getComputedStyle(button);
       if (field.value !== scenario.space || !button.textContent.includes(scenario.headerSpaces.title)
-          || Math.abs(bounds.height - 44) > .5 || style.borderRadius !== '8px'
+          || Math.abs(bounds.height - 44) > .5 || host.getAttribute('variant') !== 'header' || style.borderRadius !== '7px'
           || style.visibility !== 'visible' || style.opacity === '0')
         throw new Error(`compact floor field is not visibly usable: ${scenario.id}`);
       if (scenario.headerSpaces.open) {

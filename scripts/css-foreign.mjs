@@ -31,7 +31,7 @@ export function loadForeignCss(root = process.cwd()) {
     requireThat(record(consumer.components) && Object.keys(consumer.components).length > 0, 'Empty foreign CSS components');
     const names = new Set();
     for (const [component, classes] of Object.entries(consumer.components)) {
-      requireThat(/^ha-[a-z][a-z0-9-]*$/.test(component) && Array.isArray(classes) && classes.length > 0, 'Invalid foreign component vocabulary');
+      requireThat(/^(?:ha|wa)-[a-z][a-z0-9-]*$/.test(component) && Array.isArray(classes) && classes.length > 0, 'Invalid foreign component vocabulary');
       for (const name of classes) {
         requireThat(typeof name === 'string' && /^[a-zA-Z_][\w-]*$/.test(name) && !names.has(name), 'Invalid or duplicate foreign class');
         names.add(name); entries.push({ file: consumer.file, component, name });

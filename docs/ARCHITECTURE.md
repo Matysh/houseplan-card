@@ -935,7 +935,26 @@ Dialog composition extends the existing form kit (#1007), documented in
 [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). Explicit sections own separators and outer
 spacing; fields own only their internal layout. Actions and independent Help
 reuse shared generators across shadow roots. Composition CSS is adopted with
-the lazy form kit and does not enter the eager View styles.
+the shared form-kit adopter. Full editor runtime remains lazy.
+
+Since #1147 the cold card also imports the common form primitives/styles for
+kiosk scale and confirmations; it adopts the sheet only when they open. The
+context-menu presentation has its own chunk, separated from editor commands
+and tools dictionaries. Against parent dfac7a91c the initial View graph grows
+366033→384291 B gzip; editor383202→366698 and onboarding46145→32359 shrink.
+The owner-authorized rolling ceiling carries this cost; the absolute wall and
+UI Kit census limits stay unchanged. This is a payload tradeoff, not a speedup.
+
+View/kiosk controls (#1147) use the same action generator, plus named icon-action,
+navigation, notice and reading-kit owners. Surface modules retain placement and
+content, not local control paint. Header live markup and the inert intrinsic
+measurement tree share navigation classes. The optional kiosk-size form imports
+pure Kit primitives; opening it does not request the full editor chunk.
+`ui-motion.ts` and its stylesheet own control timings, four keyframes and reduced
+motion. `ControlSurfacePresentation` handles finite reversible paint only; each
+surface retains its input, identity, announcements and command guards. The scoped
+`haDialogMotion` directive adapts known genuine HA internals after Lit readiness,
+without observers, global hooks or modal/focus ownership.
 
 The lazy `hp-settings-select` enhances a light-DOM select while retaining its
 value/change and option contract. It owns one accessible animated listbox;

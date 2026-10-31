@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Unify View and kiosk controls, notices, device issue details and onboarding with the shared UI Kit and reduced-motion behavior. Show the oversized-plan warning during first-space setup and retain the draft on cancellation. [#1147](https://github.com/Matysh/houseplan-card/issues/1147)
 
 ## v1.83.0 — 2026-10-30
 

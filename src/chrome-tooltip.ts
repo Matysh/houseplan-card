@@ -1,5 +1,6 @@
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
 import { helpSurfaceStyle } from './styles/help-surface.styles';
+import { ControlSurfacePresentation } from './control-surface-presentation';
 
 let sequence = 0;
 /** One non-interactive top-layer bubble for the current mounted card. */
@@ -8,13 +9,17 @@ export class ChromeTooltip {
   private readonly style: HTMLStyleElement;
   private owner: Element | null = null;
   private openTimer = 0;
-  private closeTimer = 0;
   private frame = 0;
   private epoch = 0;
+  private readonly presentation = new ControlSurfacePresentation(() => {
+    if (this.presentation.mounted) return;
+    if (this.bubble.matches(':popover-open')) this.bubble.hidePopover();
+    this.bubble.hidden = true;
+  });
   constructor(private readonly root: ShadowRoot) {
     const doc = root.ownerDocument;
     this.style = doc.createElement('style');
-    this.style.textContent = `.hp-chrome-tooltip{${helpSurfaceStyle}position:fixed;inset:auto;margin:0;z-index:2147483647;pointer-events:none;opacity:0;transform:translateY(3px);transition:opacity 120ms ease,transform 120ms ease;}.hp-chrome-tooltip.visible{opacity:1;transform:none}.hp-chrome-tooltip[hidden],.hp-chrome-tooltip[popover]:not(:popover-open){display:none}@media(prefers-reduced-motion:reduce){.hp-chrome-tooltip{transition:none;transform:none}}`;
+    this.style.textContent = `.hp-chrome-tooltip{${helpSurfaceStyle}position:fixed;inset:auto;margin:0;z-index:2147483647;pointer-events:none;}.hp-chrome-tooltip[hidden],.hp-chrome-tooltip[popover]:not(:popover-open){display:none}`;
     this.bubble = doc.createElement('div'); this.bubble.className = 'hp-chrome-tooltip';
     this.bubble.id = `hp-chrome-tooltip-${++sequence}`; this.bubble.setAttribute('role','tooltip');
     this.bubble.setAttribute('popover','manual'); this.bubble.hidden = true;
@@ -41,28 +46,34 @@ export class ChromeTooltip {
       this.bubble.style.left = `${position.left}px`; this.bubble.style.top = `${position.top}px`;
       const descriptions = new Set((owner.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean));
       descriptions.add(this.bubble.id); owner.setAttribute('aria-describedby',[...descriptions].join(' '));
-      this.frame = win.requestAnimationFrame(() => { this.frame = 0; if (epoch === this.epoch) this.bubble.classList.add('visible'); });
+      this.frame = win.requestAnimationFrame(() => {
+        this.frame = 0;
+        if (epoch !== this.epoch) return;
+        this.bubble.classList.add('visible'); this.bubble.removeAttribute('aria-hidden');
+        this.presentation.sync(true, 'bottom'); this.presentation.updated(this.bubble);
+      });
     },300);
   }
   hide(): void {
     this.epoch++;
     const win = this.root.ownerDocument.defaultView!;
-    win.clearTimeout(this.openTimer); win.clearTimeout(this.closeTimer); win.cancelAnimationFrame(this.frame);
-    this.openTimer = this.closeTimer = this.frame = 0;
+    win.clearTimeout(this.openTimer); win.cancelAnimationFrame(this.frame);
+    this.openTimer = this.frame = 0;
     if (this.owner) {
       const descriptions = (this.owner.getAttribute('aria-describedby') || '').split(/\s+/).filter(id=>id && id!==this.bubble.id);
       if (descriptions.length) this.owner.setAttribute('aria-describedby',descriptions.join(' '));
       else this.owner.removeAttribute('aria-describedby');
     }
     this.owner = null; this.bubble.classList.remove('visible');
-    this.closeTimer = win.setTimeout(() => {
-      this.closeTimer = 0;
+    this.bubble.setAttribute('aria-hidden', 'true');
+    this.presentation.sync(false, 'bottom'); this.presentation.updated(this.bubble);
+    if (!this.presentation.mounted) {
       if (this.bubble.matches(':popover-open')) this.bubble.hidePopover();
       this.bubble.hidden = true;
-    },120);
+    }
   }
   dispose(): void {
-    this.hide(); this.root.ownerDocument.defaultView!.clearTimeout(this.closeTimer);
+    this.hide(); this.presentation.reset();
     this.bubble.remove(); this.style.remove();
   }
 }

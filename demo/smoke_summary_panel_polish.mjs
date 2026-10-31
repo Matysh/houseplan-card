@@ -211,11 +211,15 @@ try {
       const entry = await f.sample(240);
       results[`${side}_entry_has_real_progress`] = entry.some((row) => row.opacity > .02 && row.opacity < .98)
         && entry.at(-1).opacity >= .99;
-      results[`${side}_entry_uses_190ms`] = entryDurations.length > 0
-        && entryDurations.every((duration) => duration === 190);
+      results[`${side}_entry_uses_180ms`] = entryDurations.length > 0
+        && entryDurations.every((duration) => duration === 180);
+      results[`${side}_entry_moves_up_ten_to_rest`] = entry.some(row => row.dy < -2)
+        && entry.every(row => row.dy >= -10.5 && row.dy <= .5) && Math.abs(entry.at(-1).dy) <= .1;
       const original = f.panel();
       const exitStarted = performance.now();
       await f.show(false);
+      results[`${side}_leave_uses_140ms`] = f.panel()?.getAnimations().some(animation =>
+        animation.effect?.getTiming().duration === 140) === true;
       const immediate = f.snapshot();
       results[`${side}_exit_retains_inert_same_node`] = f.panel() === original && !!original
         && immediate.inert && immediate.hidden && immediate.opacity > .8;
@@ -223,9 +227,9 @@ try {
       const gone = exit.find((row) => !row.present);
       results[`${side}_exit_progress_then_bounded_removal`] = exit.some((row) => row.opacity > .02 && row.opacity < .98)
         && !!gone && gone.ms >= 100 && performance.now() - exitStarted < 380 && gone.ms <= 320;
-      const movement = exit.filter((row) => row.present).map((row) => side === 'right' ? row.dx : row.dy);
-      results[`${side}_edge_motion_is_18px`] = movement.some((value) => value > 12 && value <= 18.5)
-        && movement.every((value) => value >= -.5 && value <= 18.5);
+      const painted = exit.filter(row => row.present);
+      results[`${side}_leave_is_opacity_only`] = painted.every(row =>
+        Math.abs(row.dx - immediate.dx) <= .1 && Math.abs(row.dy - immediate.dy) <= .1);
       results[`${side}_one_subtree`] = [...entry, ...exit].every((row) => row.count <= 1);
       results[`${side}_camera_and_stage_unchanged`] = JSON.stringify(stage.getBoundingClientRect().toJSON()) === before.box
         && camera?.getAttribute('style') === before.camera && scrollX === before.x && scrollY === before.y;

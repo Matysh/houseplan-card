@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { HeaderMenu } from '../test-build/header-menu.js';
 
 const source = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const contains = (file, ...parts) => {
@@ -92,13 +93,14 @@ test('#659 Glow fallbacks, blockers and feather remain explicit pure contracts',
 });
 
 test('#659 header menu state transitions are guarded without rendering a browser menu', () => {
-  contains('src/header-menu.ts',
-    'const run = (item: HeaderMenuItem) => { this.close(false); item.run(); };',
-    "if (event.key !== 'Escape' || !this.open) return;",
-    'if (!nav || !tab) return;\n'
-      + "    const id = tab.dataset.id || '';\n"
-      + '    if (id === this.revealedFor || nav.clientWidth === 0) return;',
-  );
+  let updates = 0, focused = 0;
+  const menu = new HeaderMenu({ requestUpdate() { updates++; },
+    renderRoot: { querySelector() { return { focus() { focused++; } }; } } });
+  menu.toggle(); assert.equal(menu.open, true);
+  menu.close(true); assert.equal(menu.open, false); assert.equal(focused, 1);
+  menu.close(true); assert.equal(focused, 1, 'retired menu cannot restore focus twice');
+  menu.toggle(); menu.disconnect(); assert.equal(menu.open, false);
+  assert.equal(updates, 3);
 });
 
 test('#659 live editor templates own guides in every editor and hide settled copies', () => {

@@ -1,3 +1,5 @@
+import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
+
 /** One notice node per card, owned by its last active, ready modal. */
 export type ToastOwner = { host: HTMLElement; portal: () => HTMLElement | null };
 type Scope = { owners: ToastOwner[]; refresh?: () => void };
@@ -24,6 +26,9 @@ export class ToastPresentation {
   private _root?: ShadowRoot;
   private _notice?: HTMLDivElement;
   private _frame = 0;
+  private _animation: Animation | null = null;
+  private _generation = 0;
+  private _leaving = false;
   private readonly _route = (): void => {
     const root = this._root, notice = this._notice;
     if (!root || !notice) return;
@@ -48,8 +53,11 @@ export class ToastPresentation {
   show(message: string, id = 'message'): void {
     if (!this._root) return;
     cancelAnimationFrame(this._frame);
+    const generation = ++this._generation;
+    this._animation?.cancel(); this._animation = null; this._leaving = false;
     const notice = this._notice ||= document.createElement('div');
-    notice.className = 'toast';
+    notice.className = 'toast hpf-notice';
+    notice.inert = false; notice.removeAttribute('aria-hidden');
     notice.dataset.hp = 'toast';
     notice.dataset.kind = 'message';
     notice.dataset.id = id;
@@ -62,21 +70,43 @@ export class ToastPresentation {
     // occurrence of the same text. Ordinary card renders never touch this node.
     this._frame = requestAnimationFrame(() => {
       this._frame = 0;
+      if (generation !== this._generation || notice !== this._notice) return;
       notice.setAttribute('role', 'alert');
       notice.setAttribute('aria-live', 'assertive');
       notice.textContent = message;
+      if (typeof notice.animate === 'function' && !controlMotionReduced(notice.ownerDocument?.defaultView ?? null)) {
+        this._animation = notice.animate(controlSurfaceFrames(true), controlMotion.appear);
+        void this._animation.finished.catch(() => undefined);
+      }
     });
   }
 
-  clear(): void {
+  clear(immediate = false): void {
+    if (this._leaving && !immediate) return;
     cancelAnimationFrame(this._frame);
     this._frame = 0;
-    this._notice?.remove();
-    this._notice = undefined;
+    const notice = this._notice, generation = ++this._generation;
+    const view = notice?.ownerDocument?.defaultView;
+    const style = notice && view ? view.getComputedStyle(notice) : null;
+    const current = style ? { opacity: style.opacity, translate: style.translate } : undefined;
+    this._animation?.cancel(); this._animation = null;
+    if (!notice) return;
+    this._leaving = true;
+    notice.inert = true; notice.setAttribute('aria-hidden', 'true');
+    notice.setAttribute('aria-live', 'off'); notice.removeAttribute('role');
+    const remove = (): void => {
+      if (generation !== this._generation || notice !== this._notice) return;
+      notice.remove(); this._notice = undefined; this._animation = null; this._leaving = false;
+    };
+    if (immediate || !notice.isConnected || !notice.textContent || typeof notice.animate !== 'function' || controlMotionReduced(view ?? null)) {
+      remove(); return;
+    }
+    this._animation = notice.animate(controlSurfaceFrames(false, current), { ...controlMotion.leave, fill: 'both' });
+    void this._animation.finished.then(remove, remove);
   }
 
   disconnect(): void {
-    this.clear();
+    this.clear(true);
     if (this._root) scopeFor(this._root).refresh = undefined;
     this._root = undefined;
   }

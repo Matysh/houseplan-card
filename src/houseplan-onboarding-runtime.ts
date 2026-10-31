@@ -161,15 +161,15 @@ export class HouseplanOnboardingRuntime {
   public _renderServerPlans(
     dialog: NonNullable<HouseplanEditorHostPort['_spaceDialog']>,
   ): TemplateResult {
-    if (dialog.savedBusy) return html`<div class="savedplans muted">${this.host._t('space.loading')}</div>`;
+    if (dialog.savedBusy) return html`<div class="savedplans hpf-file-list hpf-reading-label">${this.host._t('space.loading')}</div>`;
     const list = dialog.saved || [];
-    if (!list.length) return html`<div class="savedplans muted">${this.host._t('space.no_saved')}</div>`;
+    if (!list.length) return html`<div class="savedplans hpf-file-list hpf-reading-label">${this.host._t('space.no_saved')}</div>`;
     const kb = (size: number) => (size >= 1048576
       ? `${(size / 1048576).toFixed(1)} MB` : `${Math.round(size / 1024)} KB`);
-    return html`<div class="savedplans">
+    return html`<div class="savedplans hpf-file-list">
       ${list.map((plan) => html`
-        <div class="savedplan ${plan.url === dialog.planUrl ? 'cur' : ''}">
-          <img src=${this.host._display(plan.url)} alt="" loading="lazy" decoding="async" />
+        <div class="savedplan hpf-file-row ${plan.url === dialog.planUrl ? 'cur' : ''}">
+          <img class="hpf-file-thumbnail" src=${this.host._display(plan.url)} alt="" loading="lazy" decoding="async" />
           <div class="savedmeta">
             <b>${plan.name}</b>
             <span class="muted">${kb(plan.size)}${plan.used_by.length
@@ -372,7 +372,7 @@ export class HouseplanOnboardingRuntime {
       save: () => this._saveSpaceDialog(),
       skipImport: () => this._skipImport(),
     });
-    return html`<hp-dialog .hass=${this.host.hass} data-kind="onboarding" form-shell wide
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="onboarding" class="ui-dialog" form-shell settings-layout wide
         .title=${form.title} .badge=${form.badge} icon="mdi:floor-plan" @hp-close=${form.requestClose}>
       ${form.body}${form.footer}
     </hp-dialog>`;

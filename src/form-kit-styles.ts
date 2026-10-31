@@ -1,5 +1,6 @@
 /** One shared stylesheet owner for editable and read-only UI Kit surfaces.
- * Loaded by the existing optional View/editor graphs, never the eager card.
+ * Shared with cold kiosk/confirmation rendering; adoption happens only when
+ * a surface opens. The full editor runtime and its commands remain lazy.
  */
 import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from './styles/form-kit.styles';
 import { dialogCompositionCss } from './styles/dialog-composition.styles';

@@ -190,9 +190,13 @@ const MUTANT_DEFINITIONS = [
     id: 'plan-rotation-phone-close-white-on-light-1070',
     guard: 'node demo/golden/run.mjs --mode=capture --scenario=plan-rotation-phone-editor-320-1070',
     because: '#1070 AC12: the actual captured light phone header must paint a contrasting close glyph while desktop active-tab colour stays intact. Pixel witness, registered only; nightly execution.',
-    patches: [{ file: 'src/styles/chrome.styles.ts',
-      find: '    @media (min-width: 481px) {\n      .modetab.active + .editor-close-slot .closex {',
-      replace: '    @media (min-width: 0px) {\n      .modetab.active + .editor-close-slot .closex {' }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "@media(min-width:481px) {",
+    "replace": "@media(min-width:0px) {"
+  }
+],
   },
   {
     id: 'plan-rotation-mode-fractional-height-unquantized-1070',
@@ -5347,11 +5351,13 @@ const MUTANT_DEFINITIONS = [
       + 'test/summary-panel-presentation.test.mjs',
     because: '#505 AC3/AC4: a cancelled animation promise or timeout must not settle or remove '
       + 'the newer run after an in-place reversal; both completion ownership checks are removed',
-    patches: [{
-      file: 'src/summary-panel-presentation.ts',
-      find: '      if (token !== this.generation || animation !== this.animation) return;',
-      replace: '      void token; // mutant: stale completion can settle the current run',
-    }],
+    patches: [
+  {
+    "file": "src/control-surface-presentation.ts",
+    "find": "      if (token !== this.generation || animation !== this.animation) return;",
+    "replace": "      void token; // mutant: stale completion can settle the current run"
+  }
+],
   },
   {
     id: 'summary-animation-reset-keeps-presentation',
@@ -5360,11 +5366,13 @@ const MUTANT_DEFINITIONS = [
       + 'test/summary-panel-presentation.test.mjs',
     because: '#505 AC4: an identity/route/disconnect reset must hide the old presentation, '
       + 'release its animation/timer/listener and prevent a late repaint into the new context',
-    patches: [{
-      file: 'src/summary-panel-presentation.ts',
-      find: '  public reset(): void {\n    this.settle(false);\n    this.side = null;',
-      replace: '  public reset(): void {\n    this.side = null; // mutant: old presentation survives reset',
-    }],
+    patches: [
+  {
+    "file": "src/control-surface-presentation.ts",
+    "find": "  public reset(): void {\n    this.settle(false);\n    this.side = null;",
+    "replace": "  public reset(): void {\n    this.side = null; // mutant: old presentation survives reset"
+  }
+],
   },
   {
     id: 'summary-animation-ignores-reduced-motion',
@@ -5373,11 +5381,13 @@ const MUTANT_DEFINITIONS = [
       + 'test/summary-panel-presentation.test.mjs',
     because: '#505 AC4: an already enabled reduced-motion preference must settle entering '
       + 'and exiting immediately without starting a WAAPI animation or delayed removal timer',
-    patches: [{
-      file: 'src/summary-panel-presentation.ts',
-      find: "    if (!view || media?.matches || typeof element.animate !== 'function') {",
-      replace: "    if (!view || typeof element.animate !== 'function') {",
-    }],
+    patches: [
+  {
+    "file": "src/control-surface-presentation.ts",
+    "find": "    if (!view || media?.matches || typeof element.animate !== 'function') {",
+    "replace": "    if (!view || typeof element.animate !== 'function') {"
+  }
+],
   },
   {
     id: 'room-temperature-blank-becomes-zero',
@@ -6543,15 +6553,13 @@ const MUTANT_DEFINITIONS = [
     guard: 'node demo/smoke_dialog_modal_recovery.mjs',
     because: 'an HA shell may close outside Lit; rejected close must force live() to reconcile the '
       + 'same physical modal instead of leaving its preserved draft invisible (#607)',
-    patches: [{
-      file: 'src/hp-dialog.ts',
-      find: '      return html`<ha-dialog\n'
-        + '        .hass=${this.hass}\n'
-        + '        .open=${live(!this._closing)}',
-      replace: '      return html`<ha-dialog\n'
-        + '        .hass=${this.hass}\n'
-        + '        .open=${true}',
-    }],
+    patches: [
+  {
+    "file": "src/hp-dialog.ts",
+    "find": "      return html`<ha-dialog ${haDialogMotion()}\n        .hass=${this.hass}\n        .open=${live(!this._closing)}",
+    "replace": "      return html`<ha-dialog ${haDialogMotion()}\n        .hass=${this.hass}\n        .open=${true}"
+  }
+],
   },
   {
     id: 'dialog-ha-disconnected-reject-reopen-enabled',
@@ -13278,11 +13286,13 @@ const MUTANT_DEFINITIONS = [
     id: 'toolbar-close-slot-collapses-outside-editor',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC2: an empty slot that collapses outside an editor brings back the header width jump',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "    .editor-close-slot[aria-hidden='true'] { pointer-events: none; }",
-      replace: "    .editor-close-slot[aria-hidden='true'] { pointer-events: none; display: none; }",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": ".hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { pointer-events:none; }",
+    "replace": ".hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { pointer-events:none; display:none; }"
+  }
+],
   },
   {
     id: 'toolbar-close-back-inside-tab',
@@ -13298,11 +13308,13 @@ const MUTANT_DEFINITIONS = [
     id: 'toolbar-active-highlight-stops-at-tab',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#666: the active editor tab highlight must cover the gap and the X slot, measured as painted pixels',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "      right: calc(-1 * (var(--sp-1) + var(--hp-editor-close-size)));",
-      replace: "      right: 0;",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "inset:0 calc(-1 * (4px + var(--hp-editor-close-size))) 0 0;",
+    "replace": "inset:0;"
+  }
+],
   },
   {
     id: 'toolbar-close-slot-idle-focusable',
@@ -13318,21 +13330,25 @@ const MUTANT_DEFINITIONS = [
     id: 'toolbar-close-target-below-24',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC5 / #195: the X keeps a hit target of at least 24 x 24 px around its 13 px glyph',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "      --hp-editor-close-size: 24px;",
-      replace: "      --hp-editor-close-size: 13px;",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "--hp-editor-close-size:24px;",
+    "replace": "--hp-editor-close-size:13px;"
+  }
+],
   },
   {
     id: 'toolbar-close-hidden-at-medium-width',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
     because: '#647 AC6: the X must stay visible on ordinary 721-1100 px windows, where the old count was hidden',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: "    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }",
-      replace: "    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }\n    @media (max-width: 1100px) { .editor-close-slot .closex { display: none; } }",
-    }],
+    patches: [
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; }",
+    "replace": ".hpf-nav-modes .closex ha-icon { --mdc-icon-size:13px; }\n@media(max-width:1100px) { .hpf-nav-modes .closex { display:none; } }"
+  }
+],
   },
   // #660: compact stable header, desktop summary controls and neutral Escape.
   {
@@ -13458,31 +13474,42 @@ const MUTANT_DEFINITIONS = [
     id: 'header-menu-item-keeps-menu-open',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC3: an item does what its button did and closes the menu; a menu left open covers the plan',
-    patches: [{
-      file: 'src/header-menu.ts',
-      find: '    const run = (item: HeaderMenuItem) => { this.close(false); item.run(); };',
-      replace: '    const run = (item: HeaderMenuItem) => { item.run(); };',
-    }],
+    patches: [
+  {
+    "file": "src/header-menu.ts",
+    "find": "invoke:() => { this.close(false); item.run(); },",
+    "replace": "invoke:() => { item.run(); },"
+  },
+  {
+    "file": "src/editor-context-menu.ts",
+    "find": "          item.invoke();\n          this.close(false);",
+    "replace": "          item.invoke();"
+  }
+],
   },
   {
     id: 'header-menu-outside-tap-reaches-plan',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC4: the tap that dismisses the menu must not toggle a light under it',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: '      position: fixed;\n      inset: 0;\n      z-index: 1;\n      background: transparent;',
-      replace: '      position: fixed;\n      inset: auto;\n      z-index: 1;\n      background: transparent;',
-    }],
+    patches: [
+  {
+    "file": "src/editor-context-menu.styles.ts",
+    "find": ".hpf-context-menu-scrim { position:fixed; inset:0;",
+    "replace": ".hpf-context-menu-scrim { position:fixed; inset:auto;"
+  }
+],
   },
   {
     id: 'header-menu-escape-ignored',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC4: Escape closes the menu and returns focus to the gear',
-    patches: [{
-      file: 'src/header-menu.ts',
-      find: "    if (event.key !== 'Escape' || !this.open) return;",
-      replace: "    if (event.key !== 'Esc' || !this.open) return;",
-    }],
+    patches: [
+  {
+    "file": "src/editor-context-menu.ts",
+    "find": "if (event.key === 'Escape') {",
+    "replace": "if (event.key === 'Esc') {"
+  }
+],
   },
   {
     id: 'active-tab-not-revealed',
@@ -13498,11 +13525,13 @@ const MUTANT_DEFINITIONS = [
     id: 'header-menu-item-below-44',
     guard: 'node demo/smoke_mobile_view_header.mjs',
     because: '#616 AC6: menu items are touch targets of at least 44 px',
-    patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: '      min-height: 44px;\n      padding: 0 var(--sp-4);',
-      replace: '      min-height: 30px;\n      padding: 0 var(--sp-4);',
-    }],
+    patches: [
+  {
+    "file": "src/editor-context-menu.styles.ts",
+    "find": ".hpf-context-menu-touch > button { min-height:44px;",
+    "replace": ".hpf-context-menu-touch > button { min-height:30px;"
+  }
+],
   },
   {
     id: 'phone-header-at-tablet-width',
@@ -21602,8 +21631,6 @@ const UNIT_GUARD_GROUPS = [
     'registryless-opening-requires-registry-row',
   ]],
   [unitGuard('test/header-menu.test.mjs'), [
-    'header-menu-item-keeps-menu-open',
-    'header-menu-escape-ignored',
     'active-tab-not-revealed',
   ]],
   [unitGuard('test/iso-scene-render.test.mjs', 'test/iso-stage6.test.mjs'), [
@@ -21685,10 +21712,13 @@ const discardConfirmMotionGuardCases = [
     id: 'discard-confirm-ignores-reduced-motion-990',
     guard: 'node demo/smoke_discard_dialog_polish.mjs',
     because: '#990 AC1/AC3: reduced motion must remove the real native entrance and close-hover transform, without removing ordinary motion.',
-    patches: [{ file: 'src/hp-dialog.ts',
-      find: '      :host(.discard-confirm-dialog) .surface { animation: none; }',
-      replace: '      :host(.discard-confirm-dialog) .surface { animation: hp-discard-in 180ms ease; }',
-    }],
+    patches: [
+  {
+    "file": "src/styles/ui-motion.styles.ts",
+    "find": "controlReducedMotionCss('.hpf-motion, .hpf-motion::before, .hpf-motion::after')",
+    "replace": "controlReducedMotionCss('.hpf-retired-motion')"
+  }
+],
   },
 ];
 const contact1003GuardCases=[
@@ -22462,7 +22492,13 @@ const panelHeader1120Cases = [
     patches:[{file:'src/styles/panel-header.styles.ts',find:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:inline-flex; }',replace:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:block; }'}]},
   {id:'panel-editor-close-target-top-aligned-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1132 replaces the24px close with the common44px target; actual glyph and target centres must still align with the editor pill. Static declaration only.',
-    patches:[{file:'src/styles/panel-header.styles.ts',find:'position:absolute; inset:-1px; width:44px; height:44px;',replace:'position:absolute; inset:1px; width:44px; height:44px;'}]},
+    patches:[
+  {
+    "file": "src/styles/navigation.styles.ts",
+    "find": "position:absolute; inset:-1px; width:44px; height:44px;",
+    "replace": "position:absolute; inset:1px; width:44px; height:44px;"
+  }
+]},
   {id:'panel-header-measures-outer-owner-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1120 AC3/5: Properties reserves360px; native all-three-wide-editor containment and real centre-hit must use the allocated head, not the wider hdr. Original9849 clipped Golden is preserved.',
     patches:[{file:'src/houseplan-card.ts',find:'const available = panelHeaderWidth(head);',replace:'const available = headerWidth;'}]},
@@ -22492,7 +22528,13 @@ const panelHeader1120Cases = [
 // #1145: declarations only; ordinary browser evidence is run, mutants are nightly.
 const uiPolish1145Cases = [
  {id:'dialog-footer-leaks-into-body-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC5: actual stairs/physical/Optimize rows must not inherit footer padding and divider.',patches:[{file:'src/styles/dialogs.styles.ts',find:"hp-dialog > .row[slot='footer'] {\n      justify-content: flex-end;",replace:'hp-dialog .row {\n      justify-content: flex-end;'}]},
- {id:'summary-touch-sticky-hover-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC6: native touch cannot retain mouse hover paint, while desktop mouse still paints.',patches:[{file:'src/summary-panel-style.ts',find:':host([data-pointer-hover]) .summary-control > button:hover',replace:'.summary-control > button:hover'}]},
+ {id:'summary-touch-sticky-hover-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC6: native touch cannot retain mouse hover paint, while desktop mouse still paints.',patches:[
+  {
+    "file": "src/styles/icon-action.styles.ts",
+    "find": ":host([data-pointer-hover]) button.hpf-icon-action:not(:disabled):hover",
+    "replace": "button.hpf-icon-action:not(:disabled):hover"
+  }
+]},
  {id:'disabled-kit-loses-pointer-hit-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC3: native disabled keeps not-allowed hit cursor and remains inert.',patches:[{file:'src/styles/dialogs.styles.ts',find:'.btn[disabled] {\n      opacity: 0.5;\n      cursor: not-allowed;',replace:'.btn[disabled] {\n      opacity: 0.5;\n      pointer-events: none;'}]},
  {id:'ordinary-color-target40-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC4: ordinary trigger is44px; compact swatch remains36px.',patches:[{file:'src/hp-color-opacity.ts',find:'.trigger {\n      width: 44px;\n      height: 44px;',replace:'.trigger {\n      width: 40px;\n      height: 40px;'}]},
 ];

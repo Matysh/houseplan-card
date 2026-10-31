@@ -75,8 +75,13 @@ test('issue 266 the media wrappers survived the move', () => {
   // with its lazy runtime and has its own source contract, so the five eager
   // surface owners retain 12 wrappers; #1120 adds one panel-menu-only wrapper.
   // #1132 adds the panel editor/group transition wrapper.
-  assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 14,
-    'reduced-motion wrappers must survive — golden always shoots reduced');
+  // #1147 replaces local copies with the common policy; test its emitted
+  // consumers rather than requiring the historical number of source copies.
+  const reduced = parseRules(cardStyles.flat(Infinity).map(sheet => sheet.cssText).join('\n'))
+    .filter(rule => rule.kind === 'rule' && rule.scope.some(scope => scope.includes('prefers-reduced-motion: reduce')))
+    .flatMap(rule => rule.selectors);
+  for (const selector of ['.hpf-boot > svg', '.hpf-loading-pill', 'button.hpf-icon-action', '.hpf-navigation > .hpf-nav-item'])
+    assert.ok(reduced.includes(selector), `${selector}: missing common reduced-motion rule`);
 });
 
 test('#1120 the appended panel header sheet owns only panel selectors and its native metrics', () => {

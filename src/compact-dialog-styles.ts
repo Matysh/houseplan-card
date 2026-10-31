@@ -11,7 +11,7 @@ export const compactDialogCss = cardDialogFormKitTokens.replace('hp-dialog .hpf-
 hp-dialog[settings-layout]{--hp-dialog-close-transition:160ms ease;--hp-dialog-close-hover-transform:rotate(90deg) scale(1.12);}
 hp-dialog.ui-dialog[compact]{--hp-dialog-wide-width:560px;}
 hp-dialog.ui-dialog *:is(.body,.device-inbox){box-sizing:border-box;min-width:0;max-height:none;overflow:visible;padding:20px;background:var(--hpf-surface);font-size:13px;line-height:1.5;}
-hp-dialog.ui-dialog .row[slot=footer]{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0;padding:12px 16px;border:0;background:var(--hpf-surface);}
+hp-dialog.ui-dialog .row[slot=footer]:not(.hpf-footer-space){display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0;padding:12px 16px;border:0;background:var(--hpf-surface);}
 hp-dialog.ui-dialog .row[slot=footer] .spacer{flex:1;}
 hp-dialog.ui-dialog input[type=checkbox]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--hpf-accent);cursor:pointer;}
 hp-dialog.ui-dialog .rhint{margin:0 0 18px;padding:8px 10px;border-inline-start:3px solid var(--info-color,var(--hpf-accent));background:color-mix(in srgb,var(--info-color,var(--hpf-accent)) 10%,var(--hpf-surface));font-size:12px;line-height:1.5;}
@@ -24,7 +24,7 @@ hp-dialog[data-kind=import].ui-dialog .floorrow:hover{background:var(--hpf-canva
 hp-dialog[data-kind=import].ui-dialog .floorlvl{margin-inline-start:auto;color:var(--secondary-text-color);}
 @media(max-width:680px){
 hp-dialog.ui-dialog *:is(.body,.device-inbox){padding:18px 14px;}
-hp-dialog.ui-dialog .row[slot=footer]{padding:12px 14px;}
+hp-dialog.ui-dialog .row[slot=footer]:not(.hpf-footer-space){padding:12px 14px;}
 }
 @media(prefers-reduced-motion:reduce){
 hp-dialog[settings-layout]{--hp-dialog-close-transition:none;--hp-dialog-close-hover-transform:none;}

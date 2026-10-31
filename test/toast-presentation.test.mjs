@@ -50,3 +50,32 @@ test('detached owners are excluded; nested shadow roots resolve to the same card
  setToastOwner(root,a,true);a.host.isConnected=false;p.show('root message');flush();assert.equal(root.portal.children[0].textContent,'root message');
  assert.equal(a.portal().children.length,0);p.disconnect();
 });
+
+test('#1147 exit retires announcements immediately; replacement reuses one node and rejects old completion',async t=>{
+ const animations=[];
+ class AnimatedNode extends NodeStub {
+  ownerDocument={defaultView:{matchMedia:()=>({matches:false}),getComputedStyle:()=>({opacity:'0.5',translate:'0 -3px'})}};
+  animate(frames,options){
+   let resolve,reject;
+   const animation={frames,options,finished:new Promise((yes,no)=>{resolve=yes;reject=no;}),
+    finish:()=>resolve(),cancel:()=>reject(new Error('Cancelled'))};
+   animations.push(animation);return animation;
+  }
+ }
+ t.mock.method(globalThis.document,'createElement',()=>new AnimatedNode());
+ const {root,p}=setup();p.show('first');flush();const notice=root.portal.children[0];
+ assert.equal(animations[0].options.duration,180);
+ p.clear();const oldExit=animations.at(-1);
+ assert.equal(oldExit.options.duration,140);
+ assert.equal(notice.inert,true);assert.equal(notice.attributes.get('aria-hidden'),'true');
+ assert.equal(notice.attributes.get('aria-live'),'off');assert.equal(notice.attributes.has('role'),false);
+ assert.equal(root.portal.children.length,1,'retain only exit paint');
+ p.show('replacement');flush();oldExit.finish();await Promise.resolve();await Promise.resolve();
+ assert.deepEqual(root.portal.children,[notice],'a late exit cannot remove the replacement or create a second notice');
+ assert.equal(notice.inert,false);assert.equal(notice.textContent,'replacement');
+ assert.equal(notice.attributes.get('role'),'alert');assert.equal(notice.attributes.has('aria-hidden'),false);
+ p.clear();animations.at(-1).finish();await Promise.resolve();await Promise.resolve();
+ assert.equal(root.portal.children.length,0);
+ p.show('pending detach');flush();p.disconnect();await Promise.resolve();
+ assert.equal(root.portal.children.length,0,'disconnect cancels presentation without leaving a ghost');
+});

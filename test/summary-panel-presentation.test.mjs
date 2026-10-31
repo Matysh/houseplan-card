@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { nothing } from 'lit';
 
-import { SummaryPanelPresentation } from '../test-build/summary-panel-presentation.js';
+import { ControlSurfacePresentation } from '../test-build/control-surface-presentation.js';
 import { LoadedSummaryPanelRuntime } from '../test-build/summary-panel-runtime-loaded.js';
 import { summaryLocalKey } from '../test-build/summary-panel.js';
 
@@ -76,13 +76,13 @@ function animationEnvironment(t) {
 function presentationFixture(t) {
   const env = animationEnvironment(t);
   let repaints = 0;
-  const presentation = new SummaryPanelPresentation(() => repaints++);
+  const presentation = new ControlSurfacePresentation(() => repaints++);
   t.after(() => presentation.reset());
   return { ...env, presentation, repaints: () => repaints };
 }
 
-for (const [side, offset] of [['right', '18px 0px'], ['bottom', '0px 18px']]) {
-  test(`#505 ${side} entry/exit own one 190ms animation and preserve the mounted exit`, async (t) => {
+for (const side of ['right', 'bottom']) {
+  test(`#1147/#505 ${side} shares180ms entry and140ms opacity exit, retaining the mounted owner`, async (t) => {
     const f = presentationFixture(t);
     const p = f.presentation;
     assert.deepEqual([p.phase, p.mounted, p.interactive], ['hidden', false, false]);
@@ -91,9 +91,9 @@ for (const [side, offset] of [['right', '18px 0px'], ['bottom', '0px 18px']]) {
     p.updated(f.element);
     const enter = f.animations[0];
     assert.deepEqual(enter.frames, [
-      { opacity: '0', translate: offset }, { opacity: '1', translate: '0px 0px' },
+      { opacity: 0, translate: '0 -10px' }, { opacity: 1, translate: '0 0' },
     ]);
-    assert.deepEqual(enter.options, { duration: 190, easing: 'ease', fill: 'both' });
+    assert.deepEqual(enter.options, { duration: 180, easing: 'ease-out', fill: 'both' });
     assert.equal(f.timers.size, 1);
     assert.equal(f.listeners.size, 1);
     enter.finish();
@@ -109,8 +109,9 @@ for (const [side, offset] of [['right', '18px 0px'], ['bottom', '0px 18px']]) {
     p.updated(f.element);
     const exit = f.animations[1];
     assert.deepEqual(exit.frames, [
-      { opacity: '1', translate: 'none' }, { opacity: '0', translate: offset },
+      { opacity: '1', translate: 'none' }, { opacity: 0, translate: 'none' },
     ]);
+    assert.deepEqual(exit.options, { duration: 140, easing: 'ease', fill: 'both' });
     assert.equal(exit.element, enter.element);
     assert.equal(p.mounted, true, 'rendering/starting exit is not completion');
     exit.finish();
@@ -203,7 +204,7 @@ test('#505 reset releases resources and stale callbacks cannot revive or remove 
   p.sync(true, 'bottom');
   p.updated(f.element);
   assert.equal(p.phase, 'entering', 'reset forgets the old anchor instead of settling a false direction change');
-  assert.deepEqual(f.animations[1].frames[0], { opacity: '0', translate: '0px 18px' });
+  assert.deepEqual(f.animations[1].frames[0], { opacity: 0, translate: '0 -10px' });
   staleTimeout();
   await flushFinished();
   assert.equal(p.phase, 'entering');
@@ -458,7 +459,7 @@ test('#505 runtime anchor change settles in place and an ineligible panel can en
   f.runtime.renderPanel();
   f.runtime.updated();
   assert.equal(p.phase, 'entering');
-  assert.deepEqual(f.animations[1].frames[0], { opacity: '0', translate: '0px 18px' });
+  assert.deepEqual(f.animations[1].frames[0], { opacity: 0, translate: '0 -10px' });
   f.animations[0].finish();
   await flushFinished();
   assert.equal(p.phase, 'entering');

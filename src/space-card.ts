@@ -1,3 +1,5 @@
+import { unsafeCSS } from 'lit';
+import { settingsActionsCss } from './styles/settings-action.styles';
 /**
  * houseplan-space-card — a READ-ONLY, static schematic of a single houseplan space,
  * embeddable on any dashboard. Renders exactly what is configured (plan + configured
@@ -885,7 +887,7 @@ class HouseplanSpaceCard extends LitElement {
       data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
       data-recovery-reason=${(this._continuity.overlayVisible || this._continuity.state === 'recovery-error')
         ? this._continuity.recoveryReason || nothing : nothing}>
-        <div class="hp-static-error">${msg}</div>
+        <div class="hp-static-error hpf-empty-state hpf-empty-state-error">${msg}</div>
       </ha-card>`;
   }
 
@@ -912,7 +914,7 @@ class HouseplanSpaceCard extends LitElement {
   private _renderRecoveryOverlay(): TemplateResult | typeof nothing {
     if (!this._continuity.overlayVisible && this._continuity.state !== 'recovery-error') return nothing;
     const connection = this._continuity.recoveryReason === 'connection';
-    return html`<div class="recoveryoverlay phase-${this._continuity.overlayPhase}"
+    return html`<div class="recoveryoverlay hpf-empty-state hpf-empty-state-overlay phase-${this._continuity.overlayPhase}"
       role="status" aria-live="polite" aria-atomic="true">
         <ha-icon icon="mdi:home-sync-outline"></ha-icon>
         <span>${t(this._lang, connection
@@ -1009,7 +1011,7 @@ class HouseplanSpaceCard extends LitElement {
         @pointerover=${(event: PointerEvent) => this._pointerModality.note(event)}
         @pointerdown=${(event: PointerEvent) => this._pointerModality.note(event)}
         @pointermove=${(event: PointerEvent) => this._pointerModality.note(event)}>
-        ${title ? html`<div class="hp-static-title">${title}</div>` : nothing}
+        ${title ? html`<div class="hp-static-title hpf-heading hpf-heading-banner">${title}</div>` : nothing}
         ${this._contactBoundary.unavailable ? html`<div class="hp-static-foot" role="status">
           ${t(this._lang, 'view.runtime_failed')}
           ${this._contactBoundary.canRetry ? html`<button class="hp-static-btn" @click=${(e: Event) => {
@@ -1022,7 +1024,7 @@ class HouseplanSpaceCard extends LitElement {
         </div>
         ${showButton
           ? html`<div class="hp-static-foot">
-              <button class="hp-static-btn" @click=${this._goToSpace}>${label}</button>
+              <button class="hp-static-btn on" @click=${this._goToSpace}>${label}</button>
             </div>`
           : nothing}
       </ha-card>
@@ -1036,13 +1038,8 @@ class HouseplanSpaceCard extends LitElement {
 
   static styles = [
     cardStyles,
+    unsafeCSS(settingsActionsCss('button.hp-static-btn')),
     css`
-      .hp-static-title {
-        font-weight: 700;
-        padding: 10px 14px 6px;
-        font-size: 16px;
-        color: var(--primary-text-color);
-      }
       .hp-static-body {
         position: relative;
       }
@@ -1109,27 +1106,7 @@ class HouseplanSpaceCard extends LitElement {
         padding: 8px 12px 12px;
         pointer-events: auto; /* the button stays clickable */
       }
-      .hp-static-btn {
-        width: 100%;
-        min-height: 44px;
-        box-sizing: border-box;
-        padding: 9px 14px;
-        border: none;
-        border-radius: 10px;
-        background: var(--primary-color, #3ea6ff);
-        color: var(--text-primary-color, #fff);
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      :host([data-pointer-hover]) .hp-static-btn:hover {
-        filter: brightness(1.08);
-      }
-      .hp-static-error {
-        padding: 24px;
-        text-align: center;
-        color: var(--secondary-text-color, #9aa4ad);
-      }
+      .hp-static-btn { width:100%; }
     `,
   ];
 }

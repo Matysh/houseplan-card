@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { iconActionStyles } from '../test-build/styles/icon-action.styles.js';
+import { parseRules } from '../scripts/css-lex.mjs';
 
 const source = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -26,8 +28,10 @@ test('#1120 the full-height shell delegates the accessible HA menu to every ordi
   assert.match(menu, /data-hp="panel-menu"/);
   assert.match(menu, /aria-label=\$\{state.label\}/);
   assert.match(menu, /new CustomEvent\('hass-toggle-menu', \{\s*bubbles: true, composed: true,\s*\}\)/);
-  assert.match(styles, /width:44px; height:44px; min-width:44px; min-height:44px/);
-  assert.match(styles, /\.panel-menu:focus-visible/);
+  const action = parseRules(iconActionStyles.cssText).find(rule => rule.kind === 'rule' && rule.selectors.includes('button.hpf-icon-action'));
+  for (const property of ['width', 'height', 'min-width', 'min-height'])
+    assert.ok(action.declarations.includes(`${property}:44px`));
+  assert.match(iconActionStyles.cssText, /button\.hpf-icon-action:focus-visible/);
   assert.match(card, /private _renderPanelMenu\(\)[^{]*\{\s*if \(!this.panelHost\) return nothing;\s*return renderPanelMenu\(panelMenuState\(this.hass, !!this.narrow, this._kiosk,/);
   assert.match(card, /private _renderEmptyPanelHeader\(\)[^{]*\{\s*if \(!this.panelHost \|\| this._kiosk\) return nothing;[\s\S]*?if \(!menu.visible\) return nothing;/);
   assert.equal((card.match(/\$\{this\.panelHost \? this\._renderEmptyPanelHeader\(\) :/g) || []).length, 3,

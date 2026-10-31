@@ -1,8 +1,10 @@
 #!/usr/bin/env node
+import { largePlanFile } from './helpers/large-plan-file.mjs';
+import { applyUiKitTheme } from './helpers/ui-kit-theme.mjs';
 // #1146: rare-state comparison frames, not lifecycle acceptance or golden accept.
 // Native input/public HA ports, with one declared recovery-controller fixture.
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { launchColdView, launchPanelCold, captureUiKitSurface, finish } from './serve.mjs';
@@ -22,9 +24,21 @@ for (const theme of themes) for (const width of widths) {
   // waits for the veil to leave. Every context starts without persisted data.
   const { page, browser } = await launchColdView({ width, height: 1000 }, 1, [], {}, undefined, undefined, undefined, false);
   try {
+    // The general smoke harness defaults to a 780px host. This matrix measures
+    // the actual requested card width, including while its boot veil owns it.
+    await page.locator('#host').evaluate(host => { host.style.cssText = 'width:100%;max-width:100%;margin:0;padding:0'; });
+    const bootGeometry = await page.locator('houseplan-card .bootveil').evaluate(element => {
+      const frame = element.getBoundingClientRect(), glyph = element.querySelector('svg').getBoundingClientRect();
+      return { width:frame.width, glyphWidth:glyph.width, glyphHeight:glyph.height,
+        dx:(glyph.left+glyph.right-frame.left-frame.right)/2, dy:(glyph.top+glyph.bottom-frame.top-frame.bottom)/2 };
+    });
+    assert.ok(bootGeometry.width <= width && Math.abs(bootGeometry.glyphWidth-56)<.1
+      && Math.abs(bootGeometry.glyphHeight-56)<.1 && Math.abs(bootGeometry.dx)<1 && Math.abs(bootGeometry.dy)<1,
+      JSON.stringify(bootGeometry));
     await captureUiKitSurface(page, 'boot-loading-states', 'houseplan-card .bootveil');
     await assertFreshDemoBundle(page);
     await page.waitForFunction(() => window.__card?._loadOk && !window.__card._booting && window.__card._continuity.hasCompleteFrame);
+    await applyUiKitTheme(page, theme);
     await page.evaluate(async theme => {
       const card = window.__card, events = new EventTarget();
       window.__uiKitEvents = events;
@@ -62,36 +76,18 @@ for (const theme of themes) for (const width of widths) {
   const first = await launchPanelCold({ width, height: 1000 });
   try {
     await mountFirstSpace(first.page);
-    await first.page.locator('houseplan-card').evaluate((card, theme) => {
-      card.hass = { ...card.hass, themes: { ...card.hass.themes, darkMode: theme === 'dark' } };
-    }, theme);
+    await applyUiKitTheme(first.page, theme);
     const floors = first.page.locator('hp-dialog[data-kind="import"]');
     await floors.locator('[data-action="import-manual"]').click();
     const onboarding = first.page.locator('hp-dialog[data-kind="onboarding"]'); await onboarding.waitFor();
     await captureUiKitSurface(first.page, 'onboarding-space-dialog', 'hp-dialog[data-kind="onboarding"]');
     await onboarding.locator('input[name="plansrc"][data-value="file"]').check();
-    const png = Buffer.from('89504e470d0a1a0a0000000d4948445200002710000027100802000000000000000000000049454e4400000000', 'hex');
-    await onboarding.locator('[data-hp="image-upload"]').setInputFiles({ name: 'large-synthetic.png', mimeType: 'image/png', buffer: png });
-    await first.page.waitForFunction(() => !!window.__card._backdropGuard);
+    await onboarding.locator('[data-hp="image-upload"]').setInputFiles(await largePlanFile(first.page));
     const guard = first.page.locator('hp-dialog[data-kind="decor"]');
-    if (await guard.count()) {
-      await captureUiKitSurface(first.page, 'onboarding-backdrop-guard', 'hp-dialog[data-kind="decor"]');
-      await guard.locator('[data-hp="dialog-cancel"]').click();
-      assert.equal(await onboarding.isVisible(), true);
-    } else {
-      // #1147 owns the empty-plan render path. Preserve a visible baseline of
-      // its existing omission; this is a missing-surface witness, never a pass
-      // or a screenshot of the expected guard. After migration the branch
-      // above must run, and #1147's regression smoke must require that dialog.
-      const name = `onboarding-backdrop-guard-missing-before-${theme}-${width}`;
-      await first.page.screenshot({ path: resolve(process.env.HP_UI_KIT_CAPTURE_DIR, name + '.png') });
-      writeFileSync(resolve(process.env.HP_UI_KIT_CAPTURE_DIR, name + '.json'), JSON.stringify({
-        surface: 'onboarding-backdrop-guard', status: 'missing-before-1147', theme, width,
-        expected: 'hp-dialog[data-kind="decor"]', observed: 'guard state exists; guard dialog absent on empty-plan render path',
-        frame: name + '.png', acceptance: false,
-      }, null, 2) + '\n');
-      console.log(`MISSING before #1147: onboarding backdrop guard ${theme}/${width}`);
-    }
+    await guard.waitFor({state:'visible'});
+    await captureUiKitSurface(first.page, 'onboarding-backdrop-guard', 'hp-dialog[data-kind="decor"]');
+    await guard.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();
+    assert.equal(await onboarding.isVisible(), true);
   } catch (error) {
     console.log('onboarding capture diagnostics', JSON.stringify(await first.page.evaluate(() => {
       const c=window.__card;

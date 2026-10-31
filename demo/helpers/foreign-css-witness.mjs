@@ -1,8 +1,10 @@
 import { loadForeignCss, assertForeignCssWitness } from '../../scripts/css-foreign.mjs';
 
 /** Observe actual HA shadow trees. Does not create nodes/classes or alter state. */
-export function createForeignCssWitness(provenance, root = process.cwd()) {
-  const contract = loadForeignCss(root), observed = new Map();
+export function createForeignCssWitness(provenance, root = process.cwd(), files) {
+  const loaded = loadForeignCss(root);
+  const contract = files ? { ...loaded, entries: loaded.entries.filter(row => files.includes(row.file)) } : loaded;
+  const observed = new Map();
   const vocabulary = [...new Set(contract.entries.map(row => row.component))];
   return {
     async observe(picker) {

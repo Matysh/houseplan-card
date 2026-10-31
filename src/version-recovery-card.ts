@@ -279,20 +279,20 @@ export function renderVersionBanner(
     if (event.isTrusted && controller.hasCurrentMismatchNotice) host._reloadDocument();
   };
   const finish = (event: AnimationEvent) => {
-    if (event.target === event.currentTarget && event.animationName === 'hp-version-recovery-out') {
+    if (event.target === event.currentTarget && event.animationName === 'hp-ui-leave') {
       controller.finishBannerExit(notice.token);
     }
   };
-  return html`<div class="version-recovery phase-${notice.phase}"
+  return html`<div class="version-recovery hpf-motion phase-${notice.phase}"
       data-version-recovery-target=${notice.target} role="status"
       aria-live="polite" aria-atomic="true" aria-hidden=${leaving ? 'true' : nothing}
       ?inert=${leaving} @animationend=${finish}>
-    <div class="version-recovery-card">
-      <ha-icon icon="mdi:update" aria-hidden="true"></ha-icon>
-      <div class="version-recovery-copy">
+    <div class="version-recovery-card hpf-notice">
+      <ha-icon class="hpf-notice-icon" icon="mdi:update" aria-hidden="true"></ha-icon>
+      <div class="version-recovery-copy hpf-notice-copy">
         <strong>${host._t('version_mismatch.title')}</strong>
-        <span>${host._t('version_mismatch.body')}</span>
-        <span class="version-recovery-versions">
+        <span class="hpf-notice-muted">${host._t('version_mismatch.body')}</span>
+        <span class="version-recovery-versions hpf-notice-muted">
           <span>${host._t('version_mismatch.frontend')}: <b>${notice.frontend}</b></span>
           <span>${host._t('version_mismatch.backend')}: <b>${notice.backend}</b></span>
         </span>

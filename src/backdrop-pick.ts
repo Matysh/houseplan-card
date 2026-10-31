@@ -306,10 +306,10 @@ export function renderBackdropGuard(
       host._showToast(host._t('backdrop.downscale_failed'), 'backdrop.downscale_failed');
     }
   };
-  return html`<hp-dialog .hass=${hass} data-kind="decor"
+  return html`<hp-dialog .hass=${hass} data-kind="decor" class="ui-dialog" compact settings-layout
       .title=${host._t(hard ? 'backdrop.too_large_title' : 'backdrop.large_title')}
       icon="mdi:image-size-select-large" dismiss-on-scrim @hp-close=${() => dismiss()}>
-    <div class="body"><p>${body}</p>
+    <div class="body hpf-reading-copy"><p>${body}</p>
       ${reducedDimensions ? html`<p>${host._t('backdrop.reduced_dimensions', {
         w: reducedDimensions.width, h: reducedDimensions.height,
       })}</p>` : null}

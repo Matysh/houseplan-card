@@ -402,8 +402,10 @@ export function radioRow<T extends string>({ label, help, name, value, options, 
 }
 
 export interface CalloutOptions {
-  text: string | TemplateResult;
-  kind?: 'info' | 'warning';
+  text?: string | TemplateResult;
+  /** Structured content is a div, never an invalid block tree inside a p. */
+  body?: FormSectionContent;
+  kind?: 'info' | 'warning' | 'danger';
   icon?: string;
   /** Ссылка-действие в конце текста. */
   action?: TemplateResult | typeof nothing;
@@ -418,11 +420,12 @@ export interface CalloutOptions {
  * уезжает. Это не пояснение к настройке, а сигнал, что прямо сейчас что-то
  * сломано или изменится при сохранении.
  */
-export function callout({ text, kind = 'info', icon, action, role, id, focusable }: CalloutOptions): TemplateResult {
-  return html`<div id=${id ?? nothing} class="hpf-callout ${kind === 'warning' ? 'hpf-warning' : ''}" role=${role ?? nothing}
+export function callout({ text, body, kind = 'info', icon, action, role, id, focusable }: CalloutOptions): TemplateResult {
+  return html`<div id=${id ?? nothing} class="hpf-callout ${kind === 'info' ? '' : `hpf-${kind}`}" role=${role ?? nothing}
     tabindex=${focusable ? '-1' : nothing}>
-    <ha-icon icon=${icon ?? (kind === 'warning' ? 'mdi:alert-outline' : 'mdi:information-outline')}></ha-icon>
-    <p>${text}${action ? html` ${action}` : nothing}</p>
+    <ha-icon icon=${icon ?? (kind === 'info' ? 'mdi:information-outline' : 'mdi:alert-outline')}></ha-icon>
+    ${body !== undefined ? html`<div class="hpf-callout-body">${body}</div>`
+      : html`<p>${text}${action ? html` ${action}` : nothing}</p>`}
   </div>`;
 }
 
@@ -483,6 +486,8 @@ export interface RangeLineOptions {
   onInput: (value: number) => void;
   /** `id` числового поля — цель `<label for>` строки. */
   id?: string;
+  /** Display-only value, preserving slider-only editing on existing surfaces. */
+  readOnlyValue?: boolean;
 }
 
 function stepPrecision(step: number): number {
@@ -507,10 +512,10 @@ export function committedRangeLineValue(
 }
 
 /** Слайдер + числовое поле с единицей в одну строку (§3.1 «range-line»). */
-export function rangeLine({ min, max, step, value, unit, ariaLabel, disabled, slider, onInput, id }: RangeLineOptions): TemplateResult {
+export function rangeLine({ min, max, step, value, unit, ariaLabel, disabled, slider, onInput, id, readOnlyValue }: RangeLineOptions): TemplateResult {
   return html`<div class="hpf-range">
     ${slider}
-    ${unitInput({
+    ${readOnlyValue ? html`<output class="hpf-range-output">${value}${unit}</output>` : unitInput({
       id, value: String(value), unit, min, max, step, ariaLabel, disabled,
       // A partial string is not product state. Commit it atomically on change;
       // Lit preserves it across renders while the confirmed value is stable,

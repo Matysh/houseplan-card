@@ -19,7 +19,7 @@ const paths = {
 } as const;
 
 export function summaryIcon(name: keyof typeof paths): TemplateResult {
-  if (name === 'settings') return svg`<svg class="summary-icon summary-settings-icon" data-summary-icon="settings"
+  if (name === 'settings') return svg`<svg class="summary-icon summary-settings-icon hpf-icon-glyph hpf-icon-glyph-large" data-summary-icon="settings"
     viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
     <g style="clip-path:path('M0 0H24V10.5H10.5V24H0Z')"><g transform="translate(-1 -1) scale(.9)">
@@ -27,7 +27,7 @@ export function summaryIcon(name: keyof typeof paths): TemplateResult {
     </g></g>
     <rect x="12.5" y="12.5" width="9" height="8" rx="1.2"></rect><path d="M18.5 12.5v8"></path>
   </svg>`;
-  return svg`<svg class="summary-icon" data-summary-icon=${name} viewBox="0 0 24 24"
+  return svg`<svg class="summary-icon hpf-icon-glyph" data-summary-icon=${name} viewBox="0 0 24 24"
     width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
     ${paths[name].map((d) => svg`<path d=${d}></path>`)}

@@ -54,11 +54,14 @@ const menuState = () => page.evaluate(() => {
   const gear = sr.querySelector('[data-hp="header-menu"]');
   const items = [...sr.querySelectorAll('[data-hp="header-menu-item"]')];
   return {
-    open: !!menu, expanded: gear?.getAttribute('aria-expanded'),
+    open: !!menu && !menu.inert, expanded: gear?.getAttribute('aria-expanded'),
     ids: items.map((el) => el.dataset.id),
     pressed: Object.fromEntries(items.filter((el) => el.hasAttribute('aria-pressed')).map((el) => [el.dataset.id, el.getAttribute('aria-pressed')])),
     current: items.filter((el) => el.getAttribute('aria-current') === 'true').map((el) => el.dataset.id),
-    items44: items.every((el) => el.getBoundingClientRect().height >= 44),
+    // The same 0.001px rounding allowance as header targets: translating a
+    // 44px box can produce43.999996 in Chromium's viewport coordinates.
+    items44: items.every((el) => el.getBoundingClientRect().height >= 43.999),
+    geometry: { menu:menu?.getBoundingClientRect().toJSON(), heights:items.map(el => el.getBoundingClientRect().height) },
     inViewport: !menu || (() => { const r = menu.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5; })(),
   };
 });
@@ -107,7 +110,7 @@ for (const width of [390, 360, 320]) {
   await openMenu();
   const m = await menuState();
   out[`admin${width}_menuItems`] = m.ids.join(',') === ADMIN_VIEW.join(',') ? true : m.ids.join(',');
-  out[`admin${width}_menuTargets`] = m.items44 && m.inViewport && m.expanded === 'true';
+  out[`admin${width}_menuTargets`] = m.items44 && m.inViewport && m.expanded === 'true' ? true : JSON.stringify(m);
   const eyeBefore = m.pressed['hidden-devices'];
   await clickAt('[data-hp="header-menu-item"][data-id="hidden-devices"]');
   out[`admin${width}_eyeClosesMenu`] = !(await menuState()).open;
@@ -171,6 +174,11 @@ out.crossClosesOnPhone = (await mode()) === 'view';
 await openMenu();
 await page.keyboard.press('Escape');
 await settle();
+out.escapeImmediatelyRetires = await page.evaluate(() => {
+  const sr = window.__card.shadowRoot, menu = sr.querySelector('#hp-header-menu');
+  return (!menu || menu.inert) && sr.activeElement === sr.querySelector('[data-hp="header-menu"]');
+});
+await page.locator('#hp-header-menu').waitFor({ state: 'detached' });
 out.escapeClosesAndFocuses = await page.evaluate(() => {
   const sr = window.__card.shadowRoot;
   return !sr.querySelector('#hp-header-menu') && sr.activeElement === sr.querySelector('[data-hp="header-menu"]');

@@ -93,7 +93,7 @@ const kioskState = (page) => page.evaluate(({ selector, prefix }) => {
   return {
     open: !!dialog,
     sliders: dialog ? [...dialog.querySelectorAll('input[type="range"]')].map((input) => Number(input.value)) : [],
-    labels: dialog ? [...dialog.querySelectorAll('.opv')].map((node) => node.textContent.trim()) : [],
+    labels: dialog ? [...dialog.querySelectorAll('output')].map((node) => node.textContent.trim()) : [],
     iconSize: Number.parseFloat(style.match(/--icon-size:([\d.]+)/)?.[1]),
     labelFont: Number.parseFloat(style.match(/--rl-font:([\d.]+)/)?.[1]),
     stored,

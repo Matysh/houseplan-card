@@ -103,7 +103,7 @@ export class ViewDeviceMenu {
     const item = (key: Command, label: string, disabled = false, title = '') => ({ key,
       action: `view-device-${key}`, label, disabled, title, invoke: () => { void this.invoke(key, owner); } });
     const rect = owner.target?.getBoundingClientRect();
-    return this.presentation.render({ token: owner, hp: 'device-context-menu', minWidth: 180,
+    return this.presentation.render({ token: owner, hp: 'device-context-menu', density: 'touch', minWidth: 180,
       anchor: owner.x || owner.y || !rect ? menuPoint(owner.x, owner.y) : rect,
       returnFocus: owner.target, current: () => this.menu === owner && !!owner.current(), close: () => this.close(),
       outside: event => { this.closingPointer = event.pointerId; event.preventDefault(); event.stopImmediatePropagation(); },

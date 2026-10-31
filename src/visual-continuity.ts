@@ -7,11 +7,13 @@
  * lifecycle diagnostics.
  */
 
+import { controlMotion } from './ui-motion';
+
 export const CONTINUITY_LONG_HIDDEN_MS = 15_000;
 export const RECOVERY_OVERLAY_DELAY_MS = 150;
-export const RECOVERY_OVERLAY_FADE_IN_MS = 150;
+export const RECOVERY_OVERLAY_FADE_IN_MS = controlMotion.appear.duration;
 export const RECOVERY_OVERLAY_MIN_OPAQUE_MS = 250;
-export const RECOVERY_OVERLAY_FADE_OUT_MS = 180;
+export const RECOVERY_OVERLAY_FADE_OUT_MS = controlMotion.leave.duration;
 export const PAINT_BARRIER_MAX_MS = 2_000;
 
 export type ContinuityState =

@@ -9,8 +9,12 @@ try {
  const trigger=navigation.locator('button');
  await trigger.click();
  out.openListbox=await navigation.locator('[role="listbox"]').isVisible();
- out.openAnimation=await navigation.locator('[role="listbox"]').evaluate(el=>getComputedStyle(el).transitionDuration==='0.16s, 0.16s');
- out.optionHoverTransition=await navigation.locator('[role="option"]').first().evaluate(el=>getComputedStyle(el).transitionDuration==='0.16s, 0.16s');
+ out.openAnimation=await navigation.locator('[role="listbox"]').evaluate(async el=>{
+  await new Promise(requestAnimationFrame);
+  const animation=el.getAnimations().find(a=>a.effect?.getTiming().duration===180);
+  return animation?.effect.getTiming().easing==='ease-out' && animation.effect.getKeyframes()[0].translate==='0px -10px';
+ });
+ out.optionHoverTransition=await navigation.locator('[role="option"]').first().evaluate(el=>getComputedStyle(el).transitionDuration.split(',').every(value=>value.trim()==='0.16s'));
  await navigation.locator('[role="listbox"]').press('End');
  await navigation.locator('[role="listbox"]').press('Enter');
  out.keyboardChoosesSection=await dialog.locator('[data-settings-section="data"]').isVisible();
@@ -37,7 +41,11 @@ try {
  const colours=[];
  for(const [surface,text,accent] of [['#ffffff','#17212b','#007d93'],['#17212b','#ffffff','#5bcce6'],['#f5f0ff','#231235','#a32191']]){
   await card.evaluate((el,{surface,text,accent})=>{el.style.setProperty('--card-background-color',surface);el.style.setProperty('--primary-text-color',text);el.style.setProperty('--primary-color',accent);},{surface,text,accent});
-  colours.push(await menu.locator('button').evaluate(el=>getComputedStyle(el).color));
+  colours.push(await menu.locator('button').evaluate(async el=>{
+   await new Promise(requestAnimationFrame);
+   await Promise.allSettled(el.getAnimations().map(animation=>animation.finished));
+   return getComputedStyle(el).color;
+  }));
  }
  out.dynamicTheme=new Set(colours).size===3;
  await menu.locator('button').click();

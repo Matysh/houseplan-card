@@ -4,6 +4,10 @@ import {setToastOwner, toastRootOf, type ToastOwner} from './toast-presentation'
 import {toastStyles} from './styles/toast.styles';
 import { prepareDialogReturnFocus } from './dialog-return-focus';
 import { DialogExitController } from './dialog-exit';
+import { controlMotion, controlSurfaceFrames } from './ui-motion';
+import { controlMotionStyles } from './styles/ui-motion.styles';
+import { noticeStyles } from './styles/notice.styles';
+import { haDialogMotion } from './ha-dialog-motion';
 
 type FocusSession = {
   dialogs: Set<HpDialog>;
@@ -60,7 +64,7 @@ export class HpDialog extends LitElement {
 
   iconBadge = '';
 
-  static styles = [toastStyles, css`
+  static styles = [noticeStyles, toastStyles, controlMotionStyles, css`
     .context-icon { position:relative; display:inline-flex; flex:none; }
     .context-icon ha-icon:last-child { position:absolute; inset:auto -4px -4px auto; --mdc-icon-size:20px; border-radius:4px; background:var(--card-background-color,var(--hp-bg,#202126)); }
     :host {
@@ -70,6 +74,8 @@ export class HpDialog extends LitElement {
     }
 
     ha-dialog {
+      --ha-dialog-show-duration: var(--hpf-appear-duration);
+      --ha-dialog-hide-duration: var(--hpf-leave-duration);
       --dialog-content-padding: 0;
       --dialog-surface-background: var(--card-background-color, var(--hp-bg, #202126));
       --ha-dialog-border-radius: var(--rad-l, 18px);
@@ -204,20 +210,16 @@ export class HpDialog extends LitElement {
 
     /* #990: the existing native exit reversed, only for unsaved-draft prompts. */
     :host(.discard-confirm-dialog) {
-      --hp-dialog-close-transition: 160ms ease;
+      --hp-dialog-close-transition: var(--hpf-paint-duration) var(--hpf-paint-easing);
       --hp-dialog-close-hover-transform: rotate(90deg) scale(1.12);
     }
-    :host(.discard-confirm-dialog) .surface { animation: hp-discard-in 180ms ease; }
-    @keyframes hp-discard-in {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .surface { animation: hp-ui-appear var(--hpf-appear-duration) var(--hpf-appear-easing) both; }
+    dialog.exiting .surface { animation: none; }
     @media (prefers-reduced-motion: reduce) {
       :host(.discard-confirm-dialog) {
         --hp-dialog-close-transition: none;
         --hp-dialog-close-hover-transform: none;
       }
-      :host(.discard-confirm-dialog) .surface { animation: none; }
     }
 
     /* #600: диалоги настроек (атрибут form-shell) — оболочка референса. Ширина 560
@@ -329,10 +331,9 @@ export class HpDialog extends LitElement {
     }
     .close ha-icon { transition:var(--hp-dialog-close-transition,none); }
     .hp-dialog-return-focus:focus-visible { outline:none!important; }
-    @keyframes hp-backdrop-out { to { background:transparent; } }
     dialog.exiting { pointer-events:none; }
     dialog.exiting:popover-open { display:block; }
-    dialog.exiting::backdrop { pointer-events:none; animation:hp-backdrop-out 180ms ease forwards; }
+    dialog.exiting::backdrop { pointer-events:none; animation:hp-ui-leave var(--hpf-leave-duration) var(--hpf-leave-easing) both; }
 
     :host([data-pointer-hover]) .close:hover,
     .close:focus-visible {
@@ -647,6 +648,8 @@ export class HpDialog extends LitElement {
       this.requestUpdate();
     } else {
       const surface = this.renderRoot.querySelector<HTMLElement>('.surface');
+      const style = surface ? getComputedStyle(surface) : null;
+      const current = style ? { opacity: style.opacity, translate: style.translate } : undefined;
       const dialog = this.renderRoot.querySelector('dialog');
       dialog?.classList.add('exiting');
       // Retain only paint, not native modal authority. A modeless top-layer
@@ -660,10 +663,7 @@ export class HpDialog extends LitElement {
         try { dialog.showPopover(); }
         catch { run.complete(); return run.finished; }
       }
-      this._exitAnimation = surface?.animate([
-        { opacity: 1, transform: 'translateY(0)' },
-        { opacity: 0, transform: 'translateY(12px)' },
-      ], { duration: 180, easing: 'ease', fill: 'forwards' });
+      this._exitAnimation = surface?.animate(controlSurfaceFrames(false, current), { ...controlMotion.leave, fill: 'forwards' });
       if (this._exitAnimation) void this._exitAnimation.finished.then(
         run.complete, run.complete,
       );
@@ -814,7 +814,7 @@ export class HpDialog extends LitElement {
 
     if (this._usesHaDialog()) {
       if (this.describedBy) {
-        return html`<ha-dialog
+        return html`<ha-dialog ${haDialogMotion()}
           .hass=${this.hass}
           .open=${live(!this._closing)}
           width=${this.wide ? 'medium' : 'small'}
@@ -831,7 +831,7 @@ export class HpDialog extends LitElement {
           <span class="footer toast-portal" slot="footer"><slot name="footer"></slot></span>
         </ha-dialog><div class="overlay-portal"></div>`;
       }
-      return html`<ha-dialog
+      return html`<ha-dialog ${haDialogMotion()}
         .hass=${this.hass}
         .open=${live(!this._closing)}
         width=${this.wide ? 'medium' : 'small'}
@@ -856,7 +856,7 @@ export class HpDialog extends LitElement {
       @cancel=${this._onFallbackCancel}
       @click=${this._onFallbackClick}
     >
-      <section class="surface" tabindex="-1">
+      <section class="surface hpf-motion" tabindex="-1">
         ${heading()}
         <div class="content"><slot></slot></div>
         <div class="footer toast-portal"><slot name="footer"></slot></div>

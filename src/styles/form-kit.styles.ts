@@ -1,5 +1,6 @@
 import { css } from 'lit';
 import { settingsTextLinkCss } from './settings-action.styles';
+import { controlReducedMotionCss } from './ui-motion.styles';
 /**
  * Общий набор контролов формы (#594, шаг 1 эпика #591).
  *
@@ -289,7 +290,7 @@ function extrasCss(options: FormKitCssOptions): string {
     background: var(--text-primary-color, #fff);
     box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
     transform: translateY(-50%);
-    transition: left .15s;
+    transition: left var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);
   }
   .`.cssText}${p}-toggle > input:checked::before { background: var(${tokens.accent}); border-color: var(${tokens.accent}); }
   .${p}-toggle > input:checked::after { left: 21px; }
@@ -395,7 +396,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colorrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; min-height: 56px; }
   .${p}-colorrow > .${p}-colorfield { justify-self: end; }
   .${p}-colorrow > .${p}-labelrow { min-height: 0; }
-  .${p}-link:not(.btn) { padding: 5px 0; border: 0 none transparent; background: transparent; box-shadow:none; color: var(${tokens.accent}); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; transition:color 150ms ease; }
+  .${p}-link:not(.btn) { padding: 5px 0; border: 0 none transparent; background: transparent; box-shadow:none; color: var(${tokens.accent}); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; }
   ${settingsTextLinkCss(`:is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn))`, `var(${tokens.accent})`)}
   .${p}-link:disabled { opacity: .5; cursor: default; }
   .${p}-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -422,6 +423,11 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-callout.${p}-warning { background: color-mix(in srgb, var(--warning-color, #ff9800) 14%, var(${tokens.surface})); }
   .${p}-callout.${p}-warning > ha-icon { color: var(--warning-color, #ff9800); }
   .${p}-callout .${p}-link { padding: 0; font-weight: 600; }
+  .${p}-callout > .${p}-callout-body { min-width:0; flex:1; }
+  .${p}-callout-body > p { margin:8px 0 0; }
+  .${p}-callout.${p}-danger { background:color-mix(in srgb,var(${tokens.danger}) 14%,var(${tokens.surface})); }
+  .${p}-callout.${p}-danger > ha-icon { color:var(${tokens.danger}); }
+  .${p}-range > .${p}-range-output { display:flex; align-items:center; justify-content:center; box-sizing:border-box; min-width:70px; min-height:44px; padding:8px 10px; border:1px solid var(${tokens.line}); border-radius:7px; color:var(--primary-text-color); font-size:14px; font-variant-numeric:tabular-nums; }
   .${p}-range { --hpf-range-value-width: 84px; display: grid; grid-template-columns: minmax(0, 1fr) var(--hpf-range-value-width); align-items: center; gap: 15px; }
   .${p}-range > input[type="range"], .${p}-range > ha-slider { box-sizing: border-box; width: 100%; min-width: 0; margin-inline: 0; accent-color: var(${tokens.accent}); }
   .${p}-range > .${p}-unit { box-sizing: border-box; width: var(--hpf-range-value-width); min-width: 0; }
@@ -453,10 +459,10 @@ function extrasCss(options: FormKitCssOptions): string {
   ${form} .${p}-pick { position: relative; box-sizing: border-box; display: flex; align-items: center; gap: 8px; text-align: start;
     width: 100%; min-width: 0; min-height: 44px; padding: 10px 46px 10px 14px;
     border: 1px solid var(${tokens.line}); border-radius: 8px; background: var(--hpf-control-surface, var(${tokens.surface})); background-image: none;
-    color: var(--primary-text-color); font: inherit; line-height: 22px; cursor: pointer; transition: background 160ms, border-color 160ms; }
+    color: var(--primary-text-color); font: inherit; line-height: 22px; cursor: pointer; transition: background var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), border-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); }
   ${form} .${p}-pick > b { font: inherit; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .${p}-pick::after { content: ''; position: absolute; right: 14px; top: calc(50% - 9px); width: 18px; height: 18px;
-    background: currentColor; clip-path: polygon(29.1667% 41.6667%, 50% 62.5%, 70.8333% 41.6667%); transition: transform 160ms; pointer-events: none; }
+    background: currentColor; clip-path: polygon(29.1667% 41.6667%, 50% 62.5%, 70.8333% 41.6667%); transition: transform var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); pointer-events: none; }
   .${p}-pick[aria-expanded=true]::after { transform: rotate(180deg); }
   ${form} .${p}-pick:not(:disabled):hover { border-color: var(${tokens.accent}); background: var(${tokens.tint}); }
   .${p}-pick-ref { min-width: 0; font-size: .8125rem; color: var(${tokens.muted}); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -467,7 +473,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-list { display: flex; flex-direction: column; gap: 0; min-width: 0; max-height: 220px; margin-top: 0; overflow: auto; overflow-x: hidden; }
   .${p}${css`-cand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; text-align: left; cursor: pointer; }
   .`.cssText}${p}-cand > small { font-size: .8125rem; color: var(${tokens.muted}); }
-  .${p}-panel .${p}-cand { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 10px 12px; border-radius: 6px; font: inherit; line-height: 20px; overflow-wrap: anywhere; white-space: normal; transition: background-color 160ms, color 160ms; }
+  .${p}-panel .${p}-cand { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 10px 12px; border-radius: 6px; font: inherit; line-height: 20px; overflow-wrap: anywhere; white-space: normal; transition: background-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); }
   .${p}-panel .${p}-cand > :is(span, small) { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
   .${p}-cand.sel { background: transparent; color: var(${tokens.accent}); }
   .${p}-cand:is(:hover, :focus-visible) { background: var(${tokens.tint}); }
@@ -511,10 +517,7 @@ function extrasCss(options: FormKitCssOptions): string {
     .${p}-seg { flex-wrap: wrap; }
     .${p}-seg label { flex-basis: 42%; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .${p}-toggle > input::after { transition: none; }
-    .${p}-pick, .${p}-pick::after, .${p}-panel .${p}-cand { transition: none; }
-  }
+  ${controlReducedMotionCss(`.${p}-toggle > input::after, .${p}-pick, .${p}-pick::after, .${p}-panel .${p}-cand`)}
   @media (max-width: 550px) {
     ${form} .${p}-pick { font-size: 16px; }
   }

@@ -17,7 +17,8 @@ test('#565 View keeps native space buttons and exposes one current page', () => 
     : value?.strings ? [value, ...value.values.flatMap(templates)] : [];
   const binding = (template, attribute) => template.values[
     template.strings.findIndex(chunk => chunk.endsWith(`${attribute}=`))];
-  assert.match(rendered.strings[0], /<nav class="tabs/);
+  assert.match(rendered.strings[0], /<nav class=/);
+  assert.match(binding(rendered, 'class'), /\btabs\b/);
   assert.equal(binding(rendered, 'aria-label'), 'Floors');
   const output = templates(rendered);
   const buttons = output.filter(template => template.strings.join('').includes('data-hp="space-tab"'));

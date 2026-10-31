@@ -1,3 +1,5 @@
+import { callout, field, rangeLine, ensureFormKitStyles } from './editors/form-kit';
+import { ensureCompactDialogStyles } from './compact-dialog-styles';
 import { subscribeExternalScreenConfig, ExternalConfigStreamRecovery } from './external-screens-events';
 import { renderDeviceIssues } from './device-issues-view';
 import { DeviceSignalController } from './device-signal-runtime';
@@ -1018,7 +1020,7 @@ export class HouseplanCard extends LitElement {
     const menu = panelMenuState(this.hass, !!this.narrow, false, this._t('panel.sidebar_menu'));
     if (!menu.visible) return nothing;
     return html`<div class="hdr" data-panel-flow="0" data-panel-mode=${this._mode}>
-      <div class="head">${renderPanelMenu(menu)}</div></div>`;
+      <div class="head hpf-chrome-group">${renderPanelMenu(menu)}</div></div>`;
   }
   /** The loaded mode owner may measure View before Lit replaces the editor DOM. */
   public _panelHeaderNaturalHeight(mode: HouseplanMode): number | null {
@@ -4243,7 +4245,7 @@ export class HouseplanCard extends LitElement {
   private _renderRecoveryOverlay(): TemplateResult | typeof nothing {
     if (!this._continuity.overlayVisible && this._continuity.state !== 'recovery-error') return nothing;
     const connection = this._continuity.recoveryReason === 'connection';
-    return html`<div class="recoveryoverlay phase-${this._continuity.overlayPhase}"
+    return html`<div class="recoveryoverlay hpf-empty-state hpf-empty-state-overlay phase-${this._continuity.overlayPhase}"
       role="status" aria-live="polite" aria-atomic="true"
       @pointerdown=${(event: Event) => event.stopPropagation()}
       @click=${(event: Event) => event.stopPropagation()}
@@ -4287,7 +4289,7 @@ export class HouseplanCard extends LitElement {
 
   private _renderEditorRuntimeLoading(): TemplateResult | typeof nothing {
     if (!this._editorRuntimeLoadingVisible) return nothing;
-    return html`<div class="editorloading" role="status" aria-live="polite"
+    return html`<div class="editorloading hpf-loading-pill hpf-motion" role="status" aria-live="polite"
       aria-label=${this._t('editor.loading_aria')}>
         <ha-icon icon="mdi:loading"></ha-icon>
         <span>${this._t('editor.loading')}</span>
@@ -6906,7 +6908,7 @@ export class HouseplanCard extends LitElement {
    *  a chip with one action (docs/CANVAS.md §4.1). */
   private _renderFarHint(): TemplateResult | typeof nothing {
     if (this._kiosk || this._mode !== 'view' || this._booting || !this._outliers) return nothing;
-    return html`<div class="farhint">
+    return html`<div class="farhint hpf-floating-badge">
       <ha-icon icon="mdi:map-marker-alert-outline"></ha-icon>
       <span>${this._t('canvas.far_objects', { n: this._outliers })}</span>
       <button class="btn ghost" @click=${() => this._fitFar()}>${this._t('canvas.show_far')}</button>
@@ -11185,6 +11187,7 @@ export class HouseplanCard extends LitElement {
 
   /** Per-SCREEN size settings (wall tablets differ) — stored locally. */
   private _renderKioskDialog(): TemplateResult {
+    ensureFormKitStyles(this);
     const k = this._effectiveKioskScale;
     const locked = { icon: this._externalScreen.icon_scale !== undefined, font: this._externalScreen.font_scale !== undefined };
     const row = (key: 'icon' | 'font', label: string) => {
@@ -11193,18 +11196,17 @@ export class HouseplanCard extends LitElement {
         const next = Number((event.target as HTMLInputElement).value);
         if (Number.isFinite(next)) this._saveKioskScale({ [key]: next / 100 });
       };
-      return html`<label>${label}</label>
-        <div class="colorrow">
-          <input type="range" min="50" max="300" step="5" .value=${String(value)}
-            @input=${input} aria-label=${label} ?disabled=${locked[key]} />
-          <span class="opv">${value}%</span>
-          ${locked[key] ? html`<span class="rhint">${this._t('kiosk.profile_locked')}</span>` : nothing}
-        </div>`;
+      return field({ label, htmlFor:`kiosk-scale-${key}`,
+        hint:locked[key] ? this._t('kiosk.profile_locked') : nothing,
+        control:rangeLine({ min:50, max:300, step:5, value, unit:'%', ariaLabel:label,
+          disabled:locked[key], readOnlyValue:true, onInput:next => this._saveKioskScale({ [key]:next / 100 }),
+          slider:html`<input id=${`kiosk-scale-${key}`} type="range" min="50" max="300" step="5"
+            .value=${String(value)} @input=${input} aria-label=${label} ?disabled=${locked[key]} />` }) });
     };
-    return html`<hp-dialog .hass=${this.hass} data-kind="kiosk" .title=${this._t('kiosk.title')} icon="mdi:tablet"
+    return html`<hp-dialog .hass=${this.hass} data-kind="kiosk" class="ui-dialog" compact settings-layout .title=${this._t('kiosk.title')} icon="mdi:tablet"
       dismiss-on-scrim @hp-close=${() => (this._kioskDialog = false)}>
-        <div class="body">
-          <div class="rhint">${this._t('kiosk.hint')}</div>
+        <div class="body hpf-form">
+          ${callout({ text:this._t('kiosk.hint') })}
           ${row('icon', this._t('kiosk.icon_scale'))}
           ${row('font', this._t('kiosk.font_scale'))}
         </div>
@@ -11242,6 +11244,7 @@ export class HouseplanCard extends LitElement {
    *  instance: a branch added later cannot lose the confirmation again. */
   private _renderDangerConfirm(): TemplateResult | typeof nothing {
     if (!this._dangerConfirm) return nothing;
+    ensureFormKitStyles(this); // Shared footer composition also owns a cold View confirmation.
     return html`<hp-confirm .hass=${this.hass}
         .request=${this._dangerConfirm.request}
         .token=${this._dangerConfirm.token}
@@ -11252,6 +11255,7 @@ export class HouseplanCard extends LitElement {
   /** One stable Lit template site lets a nested `noChange` retain the body
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
+    if (this._tapConfirm || this._kioskDialog || this._backdropGuard) ensureCompactDialogStyles(this);
     return html`${body}${this._viewRuntimes.render()}${this._viewRuntimes.renderDeviceMenu()}${this._renderVersionBanner()}${dialogPresence(this._renderDangerConfirm(), this._dangerConfirmAnimateExit)}`;
   }
 
@@ -11302,11 +11306,11 @@ export class HouseplanCard extends LitElement {
     const fixed = this._fixedFloorState(model);
     if (fixed.kind === 'pending') {
       return html`<ha-card data-fixed-floor-state="pending" data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}>
-        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head">
-          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head hpf-chrome-group">
+          <div class="title hpf-heading hpf-heading-inline"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
-        <div class="empty" data-hp="empty" role="status" aria-live="polite">
-          <ha-icon icon="mdi:loading" class="big fixedfloor-loading"></ha-icon>
+        <div class="empty hpf-empty-state" data-hp="empty" role="status" aria-live="polite">
+          <ha-icon icon="mdi:loading" class="big fixedfloor-loading hpf-spinner"></ha-icon>
           <p>${this._t('fixed_floor.loading')}</p>
         </div>
       </ha-card>`;
@@ -11316,10 +11320,10 @@ export class HouseplanCard extends LitElement {
         data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-fixed-floor-state="invalid"
         data-fixed-floor-reason=${fixed.reason}>
-        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head">
-          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head hpf-chrome-group">
+          <div class="title hpf-heading hpf-heading-inline"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
-        <div class="empty fixedfloor-error" data-hp="empty" role="alert" aria-live="assertive">
+        <div class="empty hpf-empty-state fixedfloor-error" data-hp="empty" role="alert" aria-live="assertive">
           <ha-icon icon="mdi:alert-circle-outline" class="big"></ha-icon>
           <p><b>${this._t('fixed_floor.invalid_title')}</b></p>
           <p>${this._t('fixed_floor.invalid_body', { value: this._fixedFloorValue(fixed.value) })}</p>
@@ -11337,10 +11341,10 @@ export class HouseplanCard extends LitElement {
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
         data-ha-unverified-bindings=${diagnostics.bindings.unverified}>
-        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head">
-          <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
+        ${this.panelHost ? this._renderEmptyPanelHeader() : html`<div class="head hpf-chrome-group">
+          <div class="title hpf-heading hpf-heading-inline"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
-        <div class="empty" data-hp="empty">
+        <div class="empty hpf-empty-state" data-hp="empty">
           <ha-icon icon="mdi:floor-plan" class="big"></ha-icon>
           <p>${this._t('empty.no_spaces')}</p>
           ${this._serverStorage && this._canManageConfiguration && !this._kiosk
@@ -11367,6 +11371,11 @@ export class HouseplanCard extends LitElement {
           : nothing, animateDialogExit(this, 'space'))}
         ${dialogPresence(this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing)}
         ${dialogPresence(this._backupImportDialog && this._editorRuntime ? this._renderBackupImportDialog() : nothing)}
+        ${dialogPresence(this._backdropGuard
+          ? (this._editorRuntime
+            ? this._editorRuntime._renderBackdropGuard()
+            : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
+          : nothing)}
         <div data-hp="toast-portal"></div>
       </ha-card>`;
     }
@@ -11473,13 +11482,13 @@ export class HouseplanCard extends LitElement {
           data-panel-flow=${this.panelHost ? this._panelHeaderChoice.phase : nothing}
           ?data-panel-phone=${this.panelHost && this._panelHeaderChoice.phone}
           data-panel-mode=${this.panelHost ? this._mode : nothing} style=${warmHeaderHeight ? `min-height:${warmHeaderHeight}px` : nothing}>
-        <div class="head" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:${this._headerMenu.open ? 'visible' : 'hidden'}` : nothing}>
-          ${this.panelHost ? this._renderPanelMenu() : html`<div class="title">
+        <div class="head hpf-chrome-group" style=${modeVisual ? `height:${modeVisual.headerHeight}px;overflow:${this._headerMenu.open ? 'visible' : 'hidden'}` : nothing}>
+          ${this.panelHost ? this._renderPanelMenu() : html`<div class="title hpf-heading hpf-heading-inline">
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}
           </div>`}
           ${renderHeaderSpaceNavigation({
-            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces,
+            spaces: navigationSpaces, current: this._space, mode: this._mode, compact: compactSpaces, panel: this.panelHost,
             labels: { spaces: this._t('nav.spaces'), configure: this._t('title.configure_space'), add: this._t('title.add_space') },
             reorderable: this._canReorderTabs && navigationSpaces.length > 1 && this._mode !== 'view', drag: this._tabDrag,
             pick: id => this._pickSpace(id), tabClick: id => this._tabClick(id),
@@ -11490,9 +11499,9 @@ export class HouseplanCard extends LitElement {
             create: this._canEdit && !this._kiosk && !this._hasFixedFloor ? () => this._openSpaceDialog('create') : null,
           })}
           ${this._canEdit
-            ? html`<div class="modes">
+            ? html`<div class="modes hpf-navigation hpf-nav-modes">
                 ${([['plan', 'mdi:floor-plan'], ['devices', 'mdi:tune-variant'], ['decor', 'mdi:draw']] as const).map(
-                  ([m, ic]) => html`<button class="modetab ${this._mode === m ? 'active' : ''}"
+                  ([m, ic]) => html`<button class="modetab hpf-nav-item ${this._mode === m ? 'active' : ''}"
                     data-hp="mode-tab" data-mode=${m} data-editor-navigation=${m}
                     title=${this._t(('mode.' + m + '_tip') as any)}
                     aria-label=${this._t(`mode.${m}` as const)}
@@ -11509,15 +11518,15 @@ export class HouseplanCard extends LitElement {
             : nothing}
           <span class="spacer"></span>
           <div class="header-actions">
-          <div class="zoomctl">
+          <div class="zoomctl hpf-icon-group hpf-camera-group">
             ${this._kiosk ? nothing : renderPlanRotationControls(key => this._t(key), direction => this._rotatePlan(direction))}
-            <button class="btn zb" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
+            <button class="btn zb hpf-icon-action" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} data-hp-tooltip=${this._t('title.zoom_out')} aria-label=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
             ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
                    zoom" renamed rather than duplicated. No longer disabled at
                    zoom 1: at zoom 1 panned off to the side it still has work. */}
-            <button class="btn zb" data-hp="zoom-fit" @click=${() => this._fitAll()}
+            <button class="btn zb hpf-icon-action" data-hp="zoom-fit" @click=${() => this._fitAll()}
               data-hp-tooltip=${this._t('title.zoom_fit')} aria-label=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
-            <button class="btn zb" data-hp="zoom-in" @click=${() => this._stepZoom(1)} data-hp-tooltip=${this._t('title.zoom_in')} aria-label=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
+            <button class="btn zb hpf-icon-action" data-hp="zoom-in" @click=${() => this._stepZoom(1)} data-hp-tooltip=${this._t('title.zoom_in')} aria-label=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._kiosk ? nothing : renderHiddenDevicesToggle((k) => this._t(k), this._showHidden, () => this._setShowHidden(!this._showHidden))}
           ${this._norm && this._canEdit ? renderHeaderActions((k) => this._t(k), { settings: this._openSettingsDialog, pdf: this._openPdfDialog, support: this._openSupportDialog }) : nothing}
@@ -11875,7 +11884,7 @@ export class HouseplanCard extends LitElement {
           </div>
           ${renderVacuumHistoryBanner(this._vacHistory, this._t.bind(this))}
           ${dialogPresence(this._wallDialog ? this._renderWallThickDialog() : nothing)}
-          <div class="zoombadge" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
+          <div class="zoombadge hpf-floating-badge hpf-floating-badge-scale" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
           ${this._renderFarHint()}
           ${this._renderHomeArrow(this._baseVb(projection, isoScene))}
           ${this._renderEditorRuntimeLoading()}
@@ -11883,7 +11892,7 @@ export class HouseplanCard extends LitElement {
           ${this._summary?.renderMeasure()}
           ${this._summary?.renderPanel()}
           ${this._booting || this._bootFading || isoFirstFramePending
-            ? html`<div class="bootveil ${this._booting || isoFirstFramePending ? '' : 'off'}" aria-hidden="true">
+            ? html`<div class="bootveil hpf-boot hpf-motion ${this._booting || isoFirstFramePending ? '' : 'off'}" aria-hidden="true">
                 <svg class="boothouse" viewBox="0 0 24 24"><path d="${mdiHomeCityOutline}"></path></svg>
               </div>`
             : nothing}
@@ -11949,7 +11958,7 @@ export class HouseplanCard extends LitElement {
         <div class="tip" data-hp-live-tip hidden></div>
         ${this._kiosk && !this._hasFixedFloor && this._kioskDots && this._model.length > 1
           ? html`<div class="kioskdots">
-              ${this._model.map((m) => html`<span class="kdot ${m.id === this._space ? 'on' : ''}"></span>`)}
+              ${this._model.map((m) => html`<span class="kdot hpf-dot ${m.id === this._space ? 'on' : ''}"></span>`)}
             </div>`
           : nothing}
         ${dialogPresence(this._kioskDialog ? this._renderKioskDialog() : nothing)}
@@ -11966,15 +11975,15 @@ export class HouseplanCard extends LitElement {
             @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${dialogPresence(this._tapConfirm
-          ? html`<hp-dialog .hass=${this.hass} data-kind="confirm"
+          ? html`<hp-dialog .hass=${this.hass} data-kind="confirm" class="ui-dialog" compact settings-layout
               .title=${this._tapConfirm.kind === 'toggle' ? this._tapConfirm.text : this._t('btn.run')}
               icon="mdi:alert-outline"
               dismiss-on-scrim @hp-close=${() => (this._tapConfirm = null)}>
-                <div class="body ${this._tapConfirm.kind === 'toggle' ? 'tapconfirm-body' : ''}">
+                <div class="body hpf-reading-copy ${this._tapConfirm.kind === 'toggle' ? 'tapconfirm-body' : ''}">
                   ${this._tapConfirm.kind === 'run'
                     ? html`<p>${this._tapConfirm.text}</p>`
                     : this._tapConfirm.lines.map((line, index) => html`
-                        <p class="tapconfirm-line" data-line=${index}>${line}</p>`)}
+                        <p class="tapconfirm-line hpf-reading-label" data-line=${index}>${line}</p>`)}
                 </div>
                 <div class="row" slot="footer">
                   <span class="spacer"></span>
@@ -13532,19 +13541,19 @@ export class HouseplanCard extends LitElement {
                   || est?.attributes?.friendly_name || eid;
                 const val = est ? hassValue(this.hass, eid)?.text ?? est.state : '';
                 const on = est?.state === 'on' || ['open', 'unlocked', 'playing', 'cleaning'].includes(est?.state);
-                return html`<div class="entrow ${on ? 'on' : ''}">
+                return html`<div class="entrow hpf-reading-entry hpf-reading-row ${on ? 'on' : ''}">
                   <ha-icon icon=${stateIcon(
                     iconFor(name, '', this._iconRules), eid.split('.')[0],
                     est?.attributes?.device_class, est?.state, false,
                   )}></ha-icon>
-                  <span class="en">${name}</span>
+                  <span class="en hpf-reading-label">${name}</span>
                   ${kind === 'toggle'
-                    ? html`<button class="btn entbtn ${on ? 'on' : 'ghost'}"
+                    ? html`<button class="btn hpf-action-wide entbtn ${on ? 'on' : 'ghost'}"
                         @click=${() => this._cardToggle(eid)}>${val}</button>`
                     : kind === 'open'
-                      ? html`<button class="btn entbtn ghost"
+                      ? html`<button class="btn hpf-action-wide entbtn ghost"
                           @click=${() => { this._closeInfoCard(); this._openMoreInfo(eid); }}>${val}</button>`
-                      : html`<span class="ev">${val}</span>`}
+                      : html`<span class="ev hpf-reading-value">${val}</span>`}
                 </div>`;
               })}
             </div>`;
@@ -13574,7 +13583,7 @@ export class HouseplanCard extends LitElement {
                   ${controls.map((eid) => {
                     const cs = this.hass.states[eid];
                     const on = cs?.state === 'on';
-                    return html`<span class="ctrlstate ${on ? 'on' : ''}">
+                    return html`<span class="ctrlstate hpf-state-chip ${on ? 'on' : ''}">
                       <ha-icon icon=${on ? 'mdi:lightbulb-on' : 'mdi:lightbulb-outline'}></ha-icon>
                       ${cs?.attributes?.friendly_name || eid}</span>`;
                   })}

@@ -464,7 +464,13 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // #1120, owner-authorized exact own-cost carry from accepted1121 d91b/2f52:
 // initial View361029 ->364973 (+3944 B gzip), accepted1121 d91b/2f52. Preserve2000 B band and the
 // absolute387200 B wall; lazy graphs remain inside their existing reserves.
-export const INITIAL_VIEW_GZIP_CEILING = 366_017;
+// #1147, owner permits resource-limit increases: matched parent dfac7a91c
+// 366033 ->384291 B gzip (+18258). View now owns shared form/reading/action
+// controls; editor383202 ->366698 and onboarding46145 ->32359 shrink.
+// Context-menu presentation has its own chunk: editor commands and tools/en
+// remain lazy. Carry only the measured own cost, retaining the inherited16-B
+// excess,2000-B band and387200-B absolute wall. UI Kit's seven caps unchanged.
+export const INITIAL_VIEW_GZIP_CEILING = 384_275;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не

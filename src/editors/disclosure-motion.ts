@@ -1,8 +1,8 @@
 import { nothing, type ElementPart } from 'lit';
 import { AsyncDirective, directive } from 'lit/async-directive.js';
+import { controlMotion } from '../ui-motion';
 
-const duration = 220;
-const easing = 'cubic-bezier(.2,0,.2,1)';
+const { duration, easing } = controlMotion.disclosure;
 
 /** Follow slot assignment, including the authentic HA shell, without private
  * HA selectors. Never fall through to scrolling the host page. */

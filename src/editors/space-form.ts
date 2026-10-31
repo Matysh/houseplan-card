@@ -3,6 +3,7 @@
  * controls are injected by the editor, keeping its graph out of onboarding. */
 import { html, nothing, type TemplateResult } from 'lit';
 
+import { ensureCompactDialogStyles } from '../compact-dialog-styles';
 import type { settingsNorth } from './settings-north';
 import { deviceBatteryModeOf, type SpaceDeviceBatteryMode } from '../device-battery-settings';
 import { roomCardPreview } from './room-card-preview';
@@ -103,6 +104,7 @@ export interface SpaceFormParts {
  */
 export function renderSpaceForm(port: SpaceFormPort): SpaceFormParts {
   ensureFormKitStyles(port.host);
+  ensureCompactDialogStyles(port.host);
   const { host } = port;
   const d = host._spaceDialog!;
   const t = host._t.bind(host);
@@ -276,8 +278,8 @@ function renderPlanUpload(port: SpaceFormPort, d: SpaceDialogState): TemplateRes
   const image = d.planFile
         ? html`<span class="planname">${d.planFile.name}</span>`
         : d.planUrl
-          ? html`<img class="planprev" src=${host._display(d.planUrl)} alt=${t('space.plan_alt')} />`
-          : html`<span class="planname muted">${t('space.no_plan')}</span>`;
+          ? html`<img class="planprev hpf-file-preview" src=${host._display(d.planUrl)} alt=${t('space.plan_alt')} />`
+          : html`<span class="planname muted hpf-reading-label">${t('space.no_plan')}</span>`;
   const actions = html`
       <span class="fileupload">
         <button data-hp="action" data-action="backdrop-upload-open" class="btn filebtn" type="button" @click=${(e: Event) =>

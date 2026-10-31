@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
+import { headerNavigationGroup, headerNavigationItem } from './header-navigation-kit';
 
 interface SpaceChoice { id: string; title: string }
 
@@ -19,6 +20,7 @@ interface HeaderSpaceNavigation {
   current: string;
   mode: string;
   compact: boolean;
+  panel?: boolean;
   labels: { spaces: string; configure: string; add: string };
   reorderable: boolean;
   drag: { id: string; moved: boolean; targetId: string | null; placement: 'before' | 'after' | null } | null;
@@ -43,9 +45,9 @@ export function chooseHeaderSpace(
 
 /** Shared UI Kit control without importing the editor form or style graph. */
 export function renderHeaderSpaceSelect(
-  spaces: readonly SpaceChoice[], current: string, label: string, pick: (id: string) => void,
+  spaces: readonly SpaceChoice[], current: string, label: string, pick: (id: string) => void, panel = false,
 ): TemplateResult {
-  return html`<hp-settings-select class="compact-space-select" data-hp="space-select"
+  return html`<hp-settings-select class="compact-space-select" variant=${panel ? 'header-panel' : 'header'} data-hp="space-select"
       title=${spaces.find(space => space.id === current)?.title || ''}>
     <select data-hp="space-select-value" data-field="header-space" .value=${current} aria-label=${label}
       @change=${(event: Event) => chooseHeaderSpace(event.currentTarget as HTMLSelectElement, current, pick)}>
@@ -57,11 +59,11 @@ export function renderHeaderSpaceSelect(
 /** One navigation owner for compact selection and the established wide tabs. */
 export function renderHeaderSpaceNavigation(nav: HeaderSpaceNavigation): TemplateResult {
   const { spaces, current, compact, labels, drag } = nav;
-  return html`<nav class="tabs ${compact ? 'compact-spaces' : ''}" aria-label=${labels.spaces}
+  return html`<nav class=${headerNavigationGroup(compact)} aria-label=${labels.spaces}
       @pointermove=${nav.pointerMove}>
-    ${compact ? keyed(nav.mode, renderHeaderSpaceSelect(spaces, current, labels.spaces, nav.pick))
+    ${compact ? keyed(nav.mode, renderHeaderSpaceSelect(spaces, current, labels.spaces, nav.pick, nav.panel))
       : spaces.map(space => html`<button data-hp="space-tab" data-space=${space.id} data-id=${space.id}
-          class="tab ${current === space.id ? 'active' : ''}${drag?.moved && drag.id === space.id ? ' dragging' : ''}${
+          class="${headerNavigationItem} ${current === space.id ? 'active' : ''}${drag?.moved && drag.id === space.id ? ' dragging' : ''}${
             drag?.moved && drag.targetId === space.id ? ` drop-${drag.placement}` : ''}"
           ?data-reorderable=${nav.reorderable}
           aria-current=${current === space.id ? 'page' : nothing}
@@ -73,10 +75,10 @@ export function renderHeaderSpaceNavigation(nav: HeaderSpaceNavigation): Templat
                 event.stopPropagation(); nav.configure?.(space.id);
               }}></ha-icon>` : nothing}
       </button>`)}
-    ${compact && nav.configure ? html`<button class="tab tabedit compact-space-settings"
+    ${compact && nav.configure ? html`<button class="${headerNavigationItem} tabedit compact-space-settings"
         data-hp="space-settings" data-id=${current} title=${labels.configure} aria-label=${labels.configure}
         @click=${() => nav.configure?.(current)}><ha-icon icon="mdi:cog-outline"></ha-icon></button>` : nothing}
-    ${nav.create ? html`<button class="tab tabadd" data-hp="space-add" title=${labels.add}
+    ${nav.create ? html`<button class="${headerNavigationItem} tabadd" data-hp="space-add" title=${labels.add}
         @click=${nav.create}><ha-icon icon="mdi:plus"></ha-icon></button>` : nothing}
   </nav>`;
 }

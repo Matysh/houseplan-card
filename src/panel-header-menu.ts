@@ -33,7 +33,7 @@ export function panelMenuKey(
 
 export function renderPanelMenu(state: { visible: boolean; label: string }): TemplateResult | typeof nothing {
   if (!state.visible) return nothing;
-  return html`<button class="panel-menu" type="button" data-hp="panel-menu"
+  return html`<button class="panel-menu hpf-icon-action hpf-icon-plain" type="button" data-hp="panel-menu"
     aria-label=${state.label} title=${state.label}
     @click=${(event: Event) => event.currentTarget?.dispatchEvent(new CustomEvent('hass-toggle-menu', {
       bubbles: true, composed: true,

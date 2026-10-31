@@ -18,7 +18,7 @@ const browser = await chromium.launch();
 const output = new URL('../../artifacts/dialog-picker-998/', import.meta.url);
 mkdirSync(output, { recursive: true });
 const errors = [], external = [], results = [];
-const cssWitness = createForeignCssWitness(server.provenance);
+const cssWitness = createForeignCssWitness(server.provenance, undefined, ['src/editors/ha-icon-picker-kit.ts']);
 try {
   const attestation = await attestLaunchedBrowser(browser, { reason: '#998 authentic HA dialog picker' });
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });

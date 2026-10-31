@@ -11,6 +11,8 @@
  */
 import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from './i18n';
+import { EditorContextMenu } from './editor-context-menu';
+import { adoptEditorContextMenuStyles } from './editor-context-menu-adoption';
 
 export type HeaderMode = 'view' | 'plan' | 'devices' | 'decor';
 
@@ -85,32 +87,29 @@ export function headerMenuItems(input: HeaderMenuInput): HeaderMenuItem[] {
 }
 
 /** What the menu needs from the card: a re-render and its shadow root — not the editor host port. */
-type MenuOwner = { requestUpdate(): void; renderRoot: ParentNode };
+type MenuOwner = { requestUpdate(): void; renderRoot: DocumentFragment | HTMLElement };
 
 export class HeaderMenu {
   open = false;
   private revealedFor = '';
-  private readonly onKey = (event: KeyboardEvent): void => {
-    if (event.key !== 'Escape' || !this.open) return;
-    event.stopPropagation();
-    this.close(true);
-  };
+  private token: object = {};
+  private readonly presentation = new EditorContextMenu(() => this.owner.requestUpdate());
 
   constructor(private readonly owner: MenuOwner) {}
 
   toggle(): void {
     if (this.open) this.close(false);
     else {
+      this.token = {};
       this.open = true;
-      window.addEventListener('keydown', this.onKey, true);
       this.owner.requestUpdate();
     }
   }
 
   close(focusButton: boolean): void {
+    this.presentation.retire();
     if (!this.open) return;
     this.open = false;
-    window.removeEventListener('keydown', this.onKey, true);
     this.owner.requestUpdate();
     if (focusButton) {
       (this.owner.renderRoot.querySelector('[data-hp="header-menu"]') as HTMLElement | null)?.focus();
@@ -119,7 +118,7 @@ export class HeaderMenu {
 
   disconnect(): void {
     this.open = false;
-    window.removeEventListener('keydown', this.onKey, true);
+    this.presentation.dispose();
   }
 
   /**
@@ -142,32 +141,36 @@ export class HeaderMenu {
   }
 
   render(items: HeaderMenuItem[], label: string): TemplateResult | typeof nothing {
-    if (!items.length) return nothing;
-    const run = (item: HeaderMenuItem) => { this.close(false); item.run(); };
+    if (!items.length) { this.presentation.dispose(); return nothing; }
+    adoptEditorContextMenuStyles(this.owner);
+    const gear = this.owner.renderRoot.querySelector<HTMLButtonElement>('[data-hp="header-menu"]');
+    const token = this.token;
+    const menu = this.presentation.render(this.open && gear ? {
+      token, hp:'header-menu', density:'touch', label, minWidth:220, gap:4,
+      anchor:() => gear.getBoundingClientRect(), localTo:gear.parentElement ?? undefined, returnFocus:gear,
+      current:() => this.open && this.token === token,
+      close:focus => this.close(focus),
+      items:items.map(item => ({ key:item.id, hp:'header-menu-item', current:item.current, pressed:item.pressed,
+        label:html`${item.glyph ?? html`<ha-icon icon=${item.icon ?? 'mdi:circle-small'}></ha-icon>`}<span>${item.label}</span>`,
+        invoke:() => { this.close(false); item.run(); },
+      })),
+    } : null);
     return html`<span class="header-menu-wrap">
-      <button class="btn header-menu-button ${this.open ? 'on' : ''}" data-hp="header-menu"
+      <button class="btn hpf-icon-action header-menu-button ${this.open ? 'on' : ''}" data-hp="header-menu"
         aria-haspopup="true" aria-expanded=${this.open ? 'true' : 'false'} aria-controls="hp-header-menu"
         data-hp-tooltip=${label} aria-label=${label} @click=${() => this.toggle()}>
         <ha-icon icon="mdi:cog-outline"></ha-icon>
       </button>
-      ${this.open ? html`<div class="header-menu-scrim" data-hp="header-menu-scrim"
-          @click=${(event: Event) => { event.stopPropagation(); this.close(false); }}></div>
-        <div class="header-menu" id="hp-header-menu" role="group" aria-label=${label}>
-          ${items.map((item) => html`<button type="button" class="header-menu-item ${item.current || item.pressed ? 'on' : ''}"
-            data-hp="header-menu-item" data-id=${item.id}
-            aria-current=${item.current ? 'true' : nothing}
-            aria-pressed=${item.pressed === undefined ? nothing : item.pressed ? 'true' : 'false'}
-            @click=${() => run(item)}>
-            ${item.glyph ?? html`<ha-icon icon=${item.icon ?? 'mdi:circle-small'}></ha-icon>`}<span>${item.label}</span>
-          </button>`)}
-        </div>` : nothing}
+      ${this.open ? html`<div class="header-menu-scrim hpf-context-menu-scrim" data-hp="header-menu-scrim"
+          @click=${(event: Event) => { event.stopPropagation(); this.close(false); }}></div>` : nothing}
+      ${menu}
     </span>`;
   }
 }
 
 /** Прежние кнопки шапки (> 480 px): вынесены сюда, чтобы шапка карточки не росла. */
 export function renderHiddenDevicesToggle(t: (key: I18nKey) => string, shown: boolean, run: () => void): TemplateResult {
-  return html`<button class="btn header-action hidden-devices-button ${shown ? 'on' : ''}" data-hp="hidden-devices"
+  return html`<button class="btn hpf-icon-action header-action hidden-devices-button ${shown ? 'on' : ''}" data-hp="hidden-devices"
     data-hp-tooltip=${t('hidden_devices.show')} aria-label=${t('hidden_devices.show')} aria-pressed=${String(shown)} @click=${run}>
     <ha-icon icon=${shown ? 'mdi:eye-outline' : 'mdi:eye-off-outline'}></ha-icon></button>`;
 }
@@ -175,14 +178,14 @@ export function renderHiddenDevicesToggle(t: (key: I18nKey) => string, shown: bo
 export function renderHeaderActions(
   t: (key: I18nKey) => string, open: { settings(): void; pdf(): void; support(): void },
 ): TemplateResult {
-  return html`<button class="btn header-action settings-button" data-hp="settings" @click=${open.settings} data-hp-tooltip=${t('title.general_settings')} aria-label=${t('title.general_settings')}>
+  return html`<button class="btn hpf-icon-action header-action settings-button" data-hp="settings" @click=${open.settings} data-hp-tooltip=${t('title.general_settings')} aria-label=${t('title.general_settings')}>
       <ha-icon icon="mdi:cog-outline"></ha-icon>
     </button>
-    <button class="btn header-action pdf-button" data-hp="pdf" @click=${open.pdf}
+    <button class="btn hpf-icon-action header-action pdf-button" data-hp="pdf" @click=${open.pdf}
       data-hp-tooltip=${t('title.export_pdf')} aria-label=${t('title.export_pdf')}>
       <ha-icon icon="mdi:printer-outline"></ha-icon>
     </button>
-    <button class="btn header-action support-button" data-hp="support" @click=${open.support}
+    <button class="btn hpf-icon-action header-action support-button" data-hp="support" @click=${open.support}
       data-hp-tooltip=${t('support.title')} aria-label=${t('support.title')}>
       <ha-icon icon="mdi:help-circle-outline"></ha-icon>
     </button>`;

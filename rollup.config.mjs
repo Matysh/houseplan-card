@@ -42,8 +42,10 @@ export default {
       if (['/src/pointer-move-queue.ts', '/src/live-editor.ts', '/src/i18n/tools.ts', '/src/wall-segment-model.ts',
         '/src/wall-end-align.ts', '/src/wall-merge.ts', '/src/coincident-partitions.ts',
         '/src/device-contact-collision.ts', '/src/device-inbox-i18n.ts',
-        // #1045: the node Select boundary uses the same menu as the runtime.
-        '/src/editor-context-menu.ts', '/src/prior-config-write.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
+        '/src/prior-config-write.ts'].some((suffix) => path.endsWith(suffix))) return 'editor-shared';
+      // #1147: View also uses this presentation. Its chunk must not bring the
+      // editor commands or tools dictionary into the cold View graph.
+      if (path.endsWith('/src/editor-context-menu.ts')) return 'context-menu';
     },
     format: 'es',
     sourcemap: DIAGNOSTIC_COVERAGE ? 'hidden' : false,

@@ -176,12 +176,15 @@ test('overlay is delayed, never covers a complete stale frame, and fades after c
   assert.equal(controller.overlayPhase, 'entering');
   clock.frame();
   assert.equal(controller.overlayPhase, 'fading-in');
-  clock.advance(150);
+  clock.advance(180); // #1147: the shared surface appearance timing.
   assert.equal(controller.overlayPhase, 'opaque');
+  const opaqueAt = clock.now();
   assert.equal(await commit(controller, clock, token), true);
-  clock.advance(250);
+  clock.advance(opaqueAt + 250 - clock.now());
   assert.equal(controller.overlayPhase, 'leaving');
-  clock.advance(180);
+  clock.advance(139);
+  assert.equal(controller.overlayVisible, true);
+  clock.advance(1); // Shared 140ms opacity-only leave, without shortening the hold.
   assert.equal(controller.state, 'steady');
   assert.equal(controller.overlayVisible, false);
 });

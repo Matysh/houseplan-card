@@ -2,16 +2,12 @@
 import { css } from 'lit';
 
 export const planStyles = css`
-    .fixedfloor-loading {
-      animation: fixedfloor-spin 1.1s linear infinite;
-    }
     .fixedfloor-error p {
       max-width: 42rem;
       margin: 0;
       overflow-wrap: anywhere;
     }
     @media (prefers-reduced-motion: reduce) {
-      .fixedfloor-loading { animation: none; }
       .radar-target { transition: none; }
     }
     .stage.noplan {
@@ -147,37 +143,13 @@ export const planStyles = css`
       position: absolute;
       z-index: 12;
       transform: translate(-50%, -50%);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      background: var(--card-background-color, var(--hp-bg));
-      color: var(--hp-accent);
-      border: 1px solid var(--hp-accent);
-      opacity: 0.9;
-      padding: 0;
-    }
-    .homearrow ha-icon {
-      --mdc-icon-size: 22px;
-      line-height: 1;
     }
     .zoombadge {
       position: absolute;
       z-index: 12;
       left: var(--sp-4);
       bottom: var(--sp-4);
-      background: var(--card-background-color, var(--hp-bg));
-      opacity: 0.92;
-      color: var(--hp-txt);
-      border: 1px solid var(--hp-accent);
-      border-radius: var(--rad-m);
-      padding: var(--sp-1) var(--sp-4);
-      font-size: var(--fs-s);
-      font-weight: 600;
-      pointer-events: none;
+      pointer-events:none;
     }
     /* Only the plan canvas owns the whole zoom wrapper. Context trays now live
        inside .stage as well, and may contain small SVG previews (furniture in

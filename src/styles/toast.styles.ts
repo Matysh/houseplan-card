@@ -8,18 +8,8 @@ export const toastStyles = css`
     left: 50%;
     bottom: 22px;
     transform: translateX(-50%);
-    background: var(--hp-bg);
-    border: 1px solid var(--hp-accent);
-    color: var(--hp-txt);
-    padding: var(--sp-4) var(--sp-6);
-    border-radius: var(--rad-l);
-    font-size: var(--fs-m);
-    box-shadow: var(--shadow-2);
     z-index: 120;
     max-width: 90vw;
-    box-sizing: border-box;
-    overflow-wrap: anywhere;
-    white-space: normal;
   }
   .toast-portal { position: relative; }
   .toast-portal .toast {

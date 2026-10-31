@@ -12,25 +12,9 @@ export const dialogsStyles = css`
       align-items: center;
       gap: 10px;
       padding: 10px var(--sp-5);
-      border-bottom: 1px solid var(--hp-line);
       flex-wrap: wrap;
     }
-    .title {
-      font-size: var(--fs-l);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      white-space: nowrap;
-    }
-    .title ha-icon {
-      color: var(--hp-accent);
-      --mdc-icon-size: 18px;
-    }
-    @media (max-width: 620px) {
-      .head { gap: var(--sp-3); padding: var(--sp-4) 10px; }
-      .head .title { font-size: var(--fs-m); }
-    }
+    @media (max-width:620px) { .head { gap:var(--sp-3); padding:var(--sp-4) 10px; } }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -70,73 +54,9 @@ export const dialogsStyles = css`
          which every stage-editing surface must be inert. Dialogs live outside
          the stage and retain their own higher card-level stacking context. */
       z-index: 75;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: var(--sp-4);
-      padding: var(--sp-6);
-      box-sizing: border-box;
-      /* The final solid layer guarantees an opaque recovery surface even when
-         a custom HA theme exposes its card colour as rgba(). */
-      background:
-        linear-gradient(var(--ha-card-background, var(--card-background-color, #111)),
-          var(--ha-card-background, var(--card-background-color, #111))),
-        #111;
-      color: var(--primary-text-color, #fff);
-      text-align: center;
-      pointer-events: auto;
-      transition: opacity 0.15s ease;
+      pointer-events:auto;
     }
-    .recoveryoverlay.phase-entering,
-    .recoveryoverlay.phase-leaving {
-      opacity: 0;
-    }
-    .recoveryoverlay.phase-fading-in,
-    .recoveryoverlay.phase-opaque {
-      opacity: 1;
-    }
-    .recoveryoverlay ha-icon {
-      --mdc-icon-size: 44px;
-      color: var(--hp-accent);
-    }
-    .editorloading {
-      position: absolute;
-      z-index: 74;
-      left: 50%;
-      top: 50%;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      padding: var(--sp-3) var(--sp-5);
-      border: 1px solid color-mix(in srgb, var(--hp-accent) 45%, transparent);
-      border-radius: 999px;
-      background: color-mix(in srgb,
-        var(--ha-card-background, var(--card-background-color, #111)) 92%, transparent);
-      color: var(--primary-text-color);
-      box-shadow: 0 6px 22px rgb(0 0 0 / 18%);
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      animation: editor-loading-in 0.15s ease both;
-    }
-    .editorloading ha-icon {
-      --mdc-icon-size: 22px;
-      color: var(--hp-accent);
-      animation: editor-loading-spin 0.9s linear infinite;
-    }
-    @keyframes editor-loading-in {
-      from { opacity: 0; transform: translate(-50%, calc(-50% + 4px)); }
-      to { opacity: 1; transform: translate(-50%, -50%); }
-    }
-    @keyframes editor-loading-spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) {
-      .recoveryoverlay,
-      .editorloading,
-      .editorloading ha-icon {
-        transition: none;
-        animation: none;
-      }
-    }
+    .editorloading { position:absolute; z-index:74; left:50%; top:50%; transform:translate(-50%,-50%); pointer-events:none; }
     .oplock {
       --oplock-size: calc(var(--icon-size, 2.5cqw) * 0.62);
       --oplock-core-size: calc(var(--oplock-size) / 1.26875);
@@ -246,9 +166,6 @@ export const dialogsStyles = css`
     .oprow.ok b { color: #66d17a; }
     .oprow.warn b { color: var(--hp-open); }
     .ctrlstates { display: flex; flex-direction: column; gap: var(--sp-2); }
-    .ctrlstate { display: inline-flex; align-items: center; gap: var(--sp-3); color: var(--hp-muted); }
-    .ctrlstate.on { color: var(--hp-txt); }
-    .ctrlstate ha-icon { --mdc-icon-size: 15px; }
     .cardpreview {
       display: flex;
       flex-direction: column;
@@ -272,14 +189,6 @@ export const dialogsStyles = css`
     }
     .cardpreview .cpco2 { display: inline-flex; align-items: center; white-space: nowrap; }
     .cardpreview .cpmeta ha-icon { --mdc-icon-size: 1.05em; }
-  .colorrow {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-  }
-    .colorrow input[type='range'] { flex: 1; }
-    .colorrow ha-slider { flex: 1; min-width: 0; }
-    .colorrow .opv { font-size: var(--fs-s); min-width: 34px; text-align: right; }
     .planrow {
       display: flex;
       align-items: center;
@@ -287,65 +196,13 @@ export const dialogsStyles = css`
     }
     /* the "already uploaded" picker: a plan is never deleted for being
        unreferenced, so it has to be findable again */
-    .savedplans {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-3);
-      max-height: 240px;
-      overflow: auto;
-      margin: var(--sp-3) 0 var(--sp-1);
-      padding: var(--sp-3);
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-m);
-      background: var(--hp-bg2, rgba(255, 255, 255, 0.03));
-      /* The same collapse that ate .candlist (v1.53.1): a scroll box is a
-         flex item whose automatic minimum size is ZERO (overflow != visible),
-         so inside hp-dialog .body — a flex column taller than its 66vh cap —
-         it shrank to a 14px sliver: the rows were in the DOM, the owner saw
-         a thin rounded stripe under the "Already uploaded" button. Don't
-         shrink, and keep a floor even when the box is empty or loading. */
-      flex: 0 0 auto;
-      min-height: 2.6em;
-    }
-    .savedplan {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .savedplan.cur { outline: 1px solid var(--hp-accent); border-radius: var(--rad-s); }
-    .savedplan img {
-      width: 56px;
-      height: 40px;
-      object-fit: contain;
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
-      background: #fff;
-      flex: none;
-    }
     .savedmeta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
     .savedmeta b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .savedmeta .muted { font-size: var(--fs-s); }
-    .savedplan .btn.danger ha-icon { color: #f25a4a; }
-    .savedplan .btn[disabled] { opacity: 0.4; pointer-events: none; }
-    .planprev {
-      max-width: 120px;
-      max-height: 70px;
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
-      background: #fff;
-    }
     .planname {
-      font-size: var(--fs-m);
       max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-    .planname.muted {
-      color: var(--hp-muted);
-    }
-    .filebtn {
-      cursor: pointer;
     }
     .btn.danger {
       border-color: var(--error-color, #db4437);
@@ -474,20 +331,6 @@ export const dialogsStyles = css`
       flex-direction: column;
       gap: var(--sp-3);
     }
-    hp-dialog .tapconfirm-body {
-      min-width: 0;
-      overflow-x: hidden;
-    }
-    hp-dialog .tapconfirm-body p {
-      max-width: 100%;
-      min-width: 0;
-      margin: 0;
-      overflow-wrap: anywhere;
-      white-space: normal;
-    }
-    hp-dialog .tapconfirm-line {
-      color: var(--hp-muted);
-    }
     hp-dialog .body label {
       font-size: var(--fs-s);
       color: var(--hp-muted);
@@ -508,104 +351,5 @@ export const dialogsStyles = css`
     hp-dialog > .row[slot='footer'] button {
       min-height: 44px;
     }
-    /* Stable destructive/commit footer contract.  A flex spacer cannot react
-       when translated labels no longer fit: justify-content then overflows
-       the destructive button through the left inset.  Two real groups wrap
-       as units instead — destructive actions stay left, while Cancel/Save
-       move together to a right-aligned second row when necessary. */
-    hp-dialog .row.dialog-action-footer {
-      align-items: center;
-      justify-content: flex-start;
-      flex-wrap: wrap;
-      row-gap: var(--sp-4);
-    }
-    hp-dialog .dialog-action-group {
-      display: flex;
-      flex: 0 1 auto;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--sp-4);
-      max-width: 100%;
-      min-width: 0;
-    }
-    hp-dialog .dialog-action-group .btn {
-      flex: 0 0 auto;
-      min-height: 44px;
-    }
-    hp-dialog .dialog-action-danger {
-      margin-right: auto;
-    }
-    hp-dialog .dialog-action-commit {
-      margin-left: auto;
-      justify-content: flex-end;
-    }
-    /* #602: all four Space actions are one visual row.  Validation occupies a
-       separate row without changing the order of the actions themselves. */
-    hp-dialog .hpf-footer-space {
-      display: grid;
-      grid-template-columns: auto auto minmax(0, 1fr) auto;
-      align-items: center;
-      column-gap: var(--sp-3);
-      row-gap: var(--sp-2);
-    }
-    hp-dialog .hpf-footer-space .dialog-action-copy { grid-column: 1; grid-row: 2; }
-    hp-dialog .hpf-footer-space .dialog-action-danger { grid-column: 2; grid-row: 2; margin-right: 0; }
-    hp-dialog .hpf-footer-space .hpf-status { grid-column: 1 / -1; grid-row: 1; margin-left: 0; }
-    hp-dialog .hpf-footer-space .hpf-status:empty { display: none; }
-    hp-dialog .hpf-footer-space .dialog-action-commit { grid-column: 4; grid-row: 2; margin-left: 0; flex-wrap: nowrap; }
-    hp-dialog .danger-confirm-footer .dialog-action-commit { flex-wrap: nowrap; }
-    hp-dialog .danger-confirm-footer .btn { min-width: 0; white-space: normal; }
-    @media (max-width: 480px) {
-      hp-dialog .hpf-footer-space {
-        grid-template-columns: 44px 44px minmax(0, 1fr) auto;
-        column-gap: 6px;
-        padding: var(--sp-4);
-      }
-      hp-dialog .hpf-footer-space .dialog-action-group { flex-wrap: nowrap; gap: 6px; }
-      hp-dialog .hpf-footer-space .hpf-mobile-icon {
-        box-sizing: border-box;
-        width: 44px;
-        min-width: 44px;
-        padding-inline: 0;
-        justify-content: center;
-      }
-      hp-dialog .hpf-footer-space .hpf-mobile-icon .hpf-action-label { display: none; }
-      hp-dialog .hpf-footer-space .dialog-action-commit .btn {
-        min-width: 0;
-        padding-inline: 8px;
-        white-space: normal;
-      }
-      hp-dialog .danger-confirm-footer .dialog-action-commit {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        margin-left: 0;
-      }
-      hp-dialog .danger-confirm-footer .dialog-action-commit .btn {
-        width: 100%;
-        padding-inline: 8px;
-        line-height: 1.25;
-      }
-    }
-
   .device-issue-groups { display:grid; gap:12px; margin-bottom:16px; }
-  .device-issues { color:var(--primary-text-color); border:1px solid var(--divider-color);
-    border-left:4px solid #F0A00C; border-radius:10px; padding:12px; min-width:0; }
-  .device-issues.alarm { border-left-color:#F0410C; }
-  .device-issues h3 { display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:15px; }
-  .device-issues h3 ha-icon { color:#F0A00C; --mdc-icon-size:22px; flex:none; line-height:0; }
-  .device-issues.alarm h3 ha-icon { color:#F0410C; }
-  .device-issue { padding:8px 0; overflow-wrap:anywhere; }
-  .device-issue + .device-issue { border-top:1px solid var(--divider-color); }
-  .device-issue p { margin:4px 0; font-size:14px; white-space:pre-wrap; }
-  .device-issue-state { font-size:13px; color:var(--secondary-text-color); }
-  .device-issue summary { min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:13px; }
-  .device-issue summary::before { content:'▸'; margin-right:8px; }
-  .device-issue details[open] summary::before { content:'▾'; }
-  .device-issue code { display:block; font-size:12px; white-space:pre-wrap; margin:4px 0; }
-  .device-issue button { display:flex; align-items:center; gap:8px; min-height:44px; max-width:100%;
-    padding:8px 10px; border:1px solid var(--divider-color); border-radius:8px; cursor:pointer;
-    font:inherit; color:var(--primary-text-color); background:var(--card-background-color); text-align:left; }
-  .device-issue button:focus-visible, .device-issue summary:focus-visible { outline:2px solid var(--primary-color); }
-  .device-issue button ha-icon { flex:none; --mdc-icon-size:18px; }
 `;

@@ -72,6 +72,7 @@
     "demo/helpers/stacked-fields.mjs",
     "demo/helpers/toast-paint-956.mjs",
     "demo/helpers/ui-kit-capture.mjs",
+    "demo/helpers/ui-kit-paint.mjs",
     "demo/helpers/vacuum-history.mjs",
     "demo/iso-runtime-compat.mjs",
     "demo/performance/budgets-led-strips.json",

@@ -8383,14 +8383,14 @@ public async _deleteServerPlan(name: string): Promise<void> {
   }
 
 public _renderServerPlans(d: NonNullable<typeof this.host._spaceDialog>): TemplateResult {
-    if (d.savedBusy) return html`<div class="savedplans muted">${this.host._t('space.loading')}</div>`;
+    if (d.savedBusy) return html`<div class="savedplans hpf-file-list hpf-reading-label">${this.host._t('space.loading')}</div>`;
     const list = d.saved || [];
-    if (!list.length) return html`<div class="savedplans muted">${this.host._t('space.no_saved')}</div>`;
+    if (!list.length) return html`<div class="savedplans hpf-file-list hpf-reading-label">${this.host._t('space.no_saved')}</div>`;
     const kb = (n: number) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB');
-    return html`<div class="savedplans">
+    return html`<div class="savedplans hpf-file-list">
       ${list.map((p) => html`
-        <div class="savedplan ${p.url === d.planUrl ? 'cur' : ''}">
-          <img src=${this.host._display(p.url)} alt="" loading="lazy" decoding="async" />
+        <div class="savedplan hpf-file-row ${p.url === d.planUrl ? 'cur' : ''}">
+          <img class="hpf-file-thumbnail" src=${this.host._display(p.url)} alt="" loading="lazy" decoding="async" />
           <div class="savedmeta">
             <b>${p.name}</b>
             <span class="muted">${kb(p.size)}${p.used_by.length

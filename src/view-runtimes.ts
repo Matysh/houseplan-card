@@ -1,5 +1,7 @@
 /** Per-card optional View boundaries. No editor chunk or second reload budget. */
 import { html, nothing, type TemplateResult } from 'lit';
+import { ref } from 'lit/directives/ref.js';
+import { ControlSurfacePresentation } from './control-surface-presentation';
 import type { I18nKey } from './i18n';
 import type { ServerConfig } from './types';
 import type { ConfigWriteContext } from './config-write-context';
@@ -65,6 +67,8 @@ interface FailedViewRuntime {
 
 export class ViewRuntimes {
   private active = false;
+  private readonly notice = new ControlSurfacePresentation(() => this.host.requestUpdate());
+  private noticeFailures: FailedViewRuntime[] = [];
   readonly live: ViewRuntimeBoundary<object, LiveRuntime>;
   readonly summary: ViewRuntimeBoundary<unknown, LoadedSummaryPanelRuntime>;
   readonly zigbee: ViewRuntimeBoundary<object, true>;
@@ -109,6 +113,7 @@ export class ViewRuntimes {
   }
   disconnect(): void {
     this.active = false;
+    this.notice.reset(); this.noticeFailures = [];
     this.deviceMenu.disconnect(); this.menu?.disconnect();
     this.live.disconnect(); this.summary.disconnect(); this.zigbee.disconnect(); this.converter.disconnect();
     this.host._summary?.disconnect();
@@ -194,16 +199,22 @@ export class ViewRuntimes {
   }
   render(): TemplateResult | typeof nothing {
     const failures = this.failures();
-    if (!failures.length) return nothing;
-    const retryable = failures.filter(item => item.boundary.canRetry);
-    return html`<aside class="view-runtime-notice" data-hp="view-runtime-notice" role="status" aria-live="polite">
-      <span>${this.host._t('view.runtime_failed')}
-        <span class="view-runtime-functions">${failures.map(item => this.host._t(item.name)).join(' · ')}</span>
+    if (failures.length) this.noticeFailures = failures;
+    this.notice.sync(this.active && failures.length > 0, 'bottom');
+    if (!this.notice.mounted) { this.noticeFailures = []; return nothing; }
+    const shown = this.noticeFailures, interactive = this.notice.interactive;
+    const retryable = shown.filter(item => item.boundary.canRetry);
+    return html`<aside class="view-runtime-notice hpf-notice" data-hp="view-runtime-notice" role="status"
+      .inert=${!interactive} aria-hidden=${interactive ? nothing : 'true'} aria-live=${interactive ? 'polite' : 'off'}
+      ${ref(element => this.notice.updated(element instanceof HTMLElement ? element : null))}>
+      <span class="hpf-notice-copy">${this.host._t('view.runtime_failed')}
+        <span class="view-runtime-functions hpf-notice-muted">${shown.map(item => this.host._t(item.name)).join(' · ')}</span>
       </span>
       <div>${retryable.length ? html`<button class="btn" type="button" data-hp="view-runtime-retry"
-        @click=${(event: Event) => { event.stopPropagation(); if (event.isTrusted) for (const item of retryable) void item.boundary.retry(); }}
+        @click=${(event: Event) => { event.stopPropagation(); if (event.isTrusted && this.notice.interactive)
+          for (const item of this.failures().filter(item => item.boundary.canRetry)) void item.boundary.retry(); }}
         >${this.host._t('view.runtime_retry')}</button>` : nothing}
-      <button class="btn" type="button" data-hp="view-runtime-reload" @click=${(event: Event) => this.reload(event)}
+      <button class="btn" type="button" data-hp="view-runtime-reload" @click=${(event: Event) => { if (this.notice.interactive) this.reload(event); }}
         >${this.host._t('view.runtime_reload')}</button></div>
     </aside>`;
   }

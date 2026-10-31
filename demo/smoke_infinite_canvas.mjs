@@ -240,6 +240,12 @@ Object.assign(out, await page.evaluate(async () => {
   const arrow = sr.querySelector('.homearrow');
   o.homeArrowAppears = !!arrow;
   if (arrow) {
+    const target = arrow.getBoundingClientRect(), stage = sr.querySelector('.stage').getBoundingClientRect();
+    o.homeArrowIsAnAbsolute44pxStageTarget = getComputedStyle(arrow).position === 'absolute'
+      && target.width >= 44 && target.height >= 44
+      && target.left >= stage.left && target.right <= stage.right
+      && target.top >= stage.top && target.bottom <= stage.bottom
+      && sr.elementFromPoint(target.x + target.width / 2, target.y + target.height / 2)?.closest('.homearrow') === arrow;
     arrow.click();
     await window.__waitForCamera(c);
     o.homeArrowFitsBack = Math.abs(c._view.x - fit.x) < 2 && Math.abs(c._view.w - fit.w) < 2;

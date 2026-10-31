@@ -1,0 +1,201 @@
+{
+  "schema": 1,
+  "issue": 1147,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "View/kiosk, onboarding, confirmation and read-only device/summary surfaces already exist in stable1.83.0. Adopt the accepted UI Kit and repair the missing first-space oversized-plan warning, preserving models, writes, geometry and permissions.",
+  "summary": {
+    "ru": "Единый UI Kit в Просмотре и киоске; предупреждение о большом плане работает и при первом пространстве.",
+    "en": "Shared UI Kit for View and kiosk; oversized-plan warning also works during first-space setup."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
+    "golden": [
+      {
+        "id": "approved-ui-summary-light-1119",
+        "expectation": "change",
+        "reason": "#1147: shared shell/motion, common header actions and read-only Kit primitives; summary draft and save semantics remain."
+      },
+      {
+        "id": "approved-ui-summary-dark-1119",
+        "expectation": "change",
+        "reason": "#1147: shared shell/motion, common header actions and read-only Kit primitives; summary draft and save semantics remain."
+      },
+      {
+        "id": "panel-wide-view-light-en",
+        "expectation": "change",
+        "reason": "#1147: shared 44px icon/navigation variants and header select paint; accepted content-based adaptation and command set remain."
+      },
+      {
+        "id": "panel-compact-ui-1132",
+        "expectation": "change",
+        "reason": "#1147: shared 44px icon/navigation variants and header select paint; accepted content-based adaptation and command set remain."
+      },
+      {
+        "id": "panel-three-rows-ui-1132",
+        "expectation": "change",
+        "reason": "#1147: shared 44px icon/navigation variants and header select paint; accepted content-based adaptation and command set remain."
+      },
+      {
+        "id": "header-spaces-phone-light-997",
+        "expectation": "change",
+        "reason": "#1147: header select uses its named 44px/radius7 Kit variant and shared menu motion; full titles and native value/focus contract remain."
+      },
+      {
+        "id": "header-spaces-menu-dark-997",
+        "expectation": "change",
+        "reason": "#1147: header select uses its named 44px/radius7 Kit variant and shared menu motion; full titles and native value/focus contract remain."
+      },
+      {
+        "id": "panel-wide-plan-editor-dark-en",
+        "expectation": "change",
+        "reason": "#1147: shared 44px icon/navigation variants and header select paint; accepted content-based adaptation and command set remain."
+      },
+      {
+        "id": "panel-narrow-read-only-empty-light-en",
+        "expectation": "change",
+        "reason": "#1147: shared empty-state spacing/typography and 44px header action paint; existing read-only text, HA exit and lack of editing actions remain."
+      },
+      {
+        "id": "version-mismatch-desktop-dark-en",
+        "expectation": "change",
+        "reason": "#1147: one shared notice card and action paint; version text, reload guard and placement remain."
+      },
+      {
+        "id": "version-mismatch-touch-light-ru",
+        "expectation": "change",
+        "reason": "#1147: one shared notice card and action paint; version text, reload guard and placement remain."
+      },
+      {
+        "id": "version-mismatch-kiosk-attempted-dark-de",
+        "expectation": "change",
+        "reason": "#1147: one shared notice card and action paint; version text, reload guard and placement remain."
+      },
+      {
+        "id": "device-alert-reasons",
+        "expectation": "change",
+        "reason": "#1147: shared callout/disclosure, read-only rows/headings and actions; full alarm/maintenance reasons and source navigation remain."
+      },
+      {
+        "id": "device-issues-maintenance-card",
+        "expectation": "change",
+        "reason": "#1147: shared callout/disclosure, read-only rows/headings and actions; full alarm/maintenance reasons and source navigation remain."
+      },
+      {
+        "id": "device-issues-alarm-card",
+        "expectation": "change",
+        "reason": "#1147: shared callout/disclosure, read-only rows/headings and actions; full alarm/maintenance reasons and source navigation remain."
+      },
+      {
+        "id": "ui-1081-device-confirm-light",
+        "expectation": "change",
+        "reason": "#1147: shared dialog motion/footer composition and View header paint; confirmation semantics and keyboard/focus remain."
+      },
+      {
+        "id": "ui-1081-device-confirm-dark",
+        "expectation": "change",
+        "reason": "#1147: shared dialog motion/footer composition and View header paint; confirmation semantics and keyboard/focus remain."
+      },
+      {
+        "id": "ui-1081-new-space-light",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "ui-1081-new-space-dark",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-light",
+        "expectation": "change",
+        "reason": "#1147: shared dialog motion/footer composition and View header paint; confirmation semantics and keyboard/focus remain."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-dark",
+        "expectation": "change",
+        "reason": "#1147: shared dialog motion/footer composition and View header paint; confirmation semantics and keyboard/focus remain."
+      },
+      {
+        "id": "first-space-empty-light",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "first-space-empty-dark",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "first-space-floors-light",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "first-space-floors-dark",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "first-space-no-storage-light",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "first-space-no-storage-dark",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "first-space-floors-narrow-light",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      },
+      {
+        "id": "first-space-floors-narrow-dark",
+        "expectation": "change",
+        "reason": "#1147: shared first-space/onboarding shell, footer/actions, empty-state and heading paint; existing text, import/manual choice and draft semantics remain."
+      }
+    ],
+    "goldenChecks": [
+      {
+        "id": "panel-wide-kiosk-all",
+        "reason": "View/kiosk scene content and geometry are unchanged; the transient zoom badge must stay hidden at rest."
+      },
+      {
+        "id": "panel-narrow-kiosk-fixed",
+        "reason": "View/kiosk scene content and geometry are unchanged; the transient zoom badge must stay hidden at rest."
+      },
+      {
+        "id": "geometry-view-light-fit",
+        "reason": "View/kiosk scene content and geometry are unchanged; the transient zoom badge must stay hidden at rest."
+      },
+      {
+        "id": "geometry-view-dark-fit",
+        "reason": "View/kiosk scene content and geometry are unchanged; the transient zoom badge must stay hidden at rest."
+      }
+    ],
+    "smokes": [
+      "smoke_mobile_view_header.mjs",
+      "smoke_panel_header_overflow.mjs",
+      "smoke_header_compact_spaces.mjs",
+      "smoke_ui_kit_motion.mjs",
+      "smoke_ui_polish_1145.mjs",
+      "smoke_zoom_badge_visibility.mjs",
+      "smoke_device_issue_reasons.mjs",
+      "smoke_summary_panel_polish.mjs",
+      "smoke_kiosk_scale_no_editor.mjs",
+      "smoke_first_space_large_plan.mjs",
+      "smoke_toggle_confirmation.mjs",
+      "smoke_room_tooltip_toggle.mjs",
+      "smoke_space_card.mjs",
+      "smoke_settings_select.mjs",
+      "smoke_version_recovery.mjs",
+      "smoke_view_runtime_kiosk_recovery.mjs",
+      "smoke_modal_toast_956.mjs",
+      "smoke_infinite_canvas.mjs",
+      "smoke_danger_confirmation.mjs"
+    ]
+  }
+}

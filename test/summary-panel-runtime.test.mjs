@@ -529,7 +529,7 @@ const panelGeometry = (template) => {
     + (index < template.values.length ? String(template.values[index]) : ''), '');
   const value = (name) => Number(new RegExp(`--summary-${name}:(-?[\\d.]+)px`).exec(markup)?.[1]);
   return {
-    side: /class="summary-overlay (\w+)"/.exec(markup)?.[1],
+    side: /class="summary-overlay[^\"]*\b(right|bottom)\b/.exec(markup)?.[1],
     heightCap: value('height-cap'), widthCap: value('width-cap'), top: value('top'), bottom: value('bottom'),
   };
 };

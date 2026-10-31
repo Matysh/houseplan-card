@@ -1,4 +1,7 @@
-import { LitElement, css, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, css, unsafeCSS, html, nothing, type TemplateResult } from 'lit';
+import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
+import { settingsActionTransition } from './styles/settings-action.styles';
+import { controlReducedMotionCss } from './styles/ui-motion.styles';
 import { FloatingSurfaceController } from './floating-surface-controller';
 import { floatingViewport, placeFloatingSurface } from './floating-surface';
 
@@ -12,7 +15,7 @@ export class HpSettingsSelect extends LitElement {
     _version: { state: true }, _open: { state: true }, _active: { state: true },
     pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
   };
-  static styles = css`
+  static styles = unsafeCSS(css`
     :host { display:block; position:relative; min-width:0; font:inherit; }
     ::slotted(select) { position:absolute!important; width:1px!important; height:1px!important;
       min-width:0!important; min-height:0!important; padding:0!important; margin:0!important;
@@ -22,9 +25,9 @@ export class HpSettingsSelect extends LitElement {
       display:flex; align-items:center; gap:14px; text-align:start; border:1px solid var(--hpf-line,var(--divider-color,#7776));
       border-radius:8px; background:var(--hpf-control-surface,var(--hpf-canvas,var(--secondary-background-color,color-mix(in srgb,var(--card-background-color,#202126) 90%,var(--primary-text-color,#e6e7eb)))));
       color:var(--primary-text-color,#e6e7eb); font:inherit; cursor:pointer;
-      transition:background 160ms,border-color 160ms; }
+    }
     button span { flex:1; min-width:0; overflow-wrap:anywhere; }
-    button svg { width:18px; height:18px; flex:none; fill:currentColor; transition:transform 160ms; }
+    button svg { width:18px; height:18px; flex:none; fill:currentColor; }
     button[aria-expanded=true] svg { transform:rotate(180deg); }
     :host([data-pointer-hover]) button:hover { border-color:var(--hpf-accent,var(--primary-color,#03a9f4)); background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,var(--card-background-color,#202126))); }
     button:focus-visible,.menu:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color,#03a9f4)); outline-offset:2px; }
@@ -33,19 +36,25 @@ export class HpSettingsSelect extends LitElement {
       max-height:320px; overflow:auto; overscroll-behavior:contain; padding:5px; border-radius:10px;
       border:1px solid var(--hpf-line,var(--divider-color,#7776));
       background:var(--hpf-surface,var(--card-background-color,#202126)); color:var(--primary-text-color,#e6e7eb);
-      box-shadow:0 8px 28px #0003; font:inherit; opacity:0; transform:translateY(-5px) scale(.985);
-      transition:opacity 160ms,transform 160ms; transform-origin:top; }
-    .menu.visible { opacity:1; transform:none; }
+      box-shadow:0 8px 28px #0003; font:inherit; opacity:0; }
+    .menu.visible { opacity:1; }
     .menu:not(.visible) { pointer-events:none; }
     [role=option] { display:flex; gap:12px; align-items:center; min-height:44px; box-sizing:border-box;
-      padding:10px 12px; border-radius:6px; cursor:pointer; overflow-wrap:anywhere; transition:background-color 160ms,color 160ms; }
+      padding:10px 12px; border-radius:6px; cursor:pointer; overflow-wrap:anywhere; }
     [role=option] span { flex:1; min-width:0; }
     [role=option][aria-selected=true] { color:var(--hpf-accent,var(--primary-color,#03a9f4)); }
     [role=option].active,[role=option]:hover { background:var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 12%,transparent)); }
     [role=option][aria-disabled=true] { opacity:.45; cursor:not-allowed; background:transparent; }
     @media(max-width:550px) { button { font-size:16px; } }
-    @media(prefers-reduced-motion:reduce) { button,button svg,.menu,[role=option] { transition:none; } }
-  `;
+    :host([variant^='header']) button { height:44px; min-height:44px; padding:10px 14px; border-radius:7px; font-size:13px; }
+    :host([variant^='header']) button span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    :host([variant='header-panel']) button { padding-inline:12px; gap:8px; background:transparent; border-radius:7px 0 0 7px; }
+    @media(max-width:480px) { :host([variant='header']) button { min-width:44px; padding-inline:4px; gap:0; } }
+  `.cssText + `
+    button, [role=option] { ${settingsActionTransition} }
+    button svg { transition:transform ${controlMotion.paint.duration}ms ${controlMotion.paint.easing}; }
+    ${controlReducedMotionCss('button,button svg,.menu,[role=option]')}
+  `);
   declare private _version: number;
   private _open = false;
   private _active = -1;
@@ -55,6 +64,7 @@ export class HpSettingsSelect extends LitElement {
   private observer?: MutationObserver;
   private dispose?: () => void;
   private closeTimer?: number;
+  private motion?: Animation;
   private fallback = false;
   private typeahead = '';
   private lastType = 0;
@@ -117,6 +127,7 @@ export class HpSettingsSelect extends LitElement {
     if (this._open || !this.native || this.native.disabled) return;
     const win = this.floating.window(); if (!win) return;
     if (this.closeTimer) win.clearTimeout(this.closeTimer);
+    this.motion?.cancel(); this.motion = undefined;
     this.closeTimer = undefined; this.floating.destroy();
     this._open = true; this._active = this.options.findIndex(o => o.selected && !this.disabled(o));
     if (this._active < 0) this._active = this.options.findIndex(o => !this.disabled(o));
@@ -127,6 +138,8 @@ export class HpSettingsSelect extends LitElement {
       try { this.surface()?.showPopover(); } catch { this.fallback = true; }
     }
     if (this.fallback) this.renderFallback();
+    const surface = this.surface();
+    if (surface) surface.inert = false;
     this.position();
     this.dispose = this.floating.dialog()?.registerOverlay({ owner:this, group:'transient',
       close: reason => this.close(reason === 'escape') });
@@ -136,7 +149,14 @@ export class HpSettingsSelect extends LitElement {
     win.addEventListener('resize', this.position); win.visualViewport?.addEventListener('resize', this.position);
     win.visualViewport?.addEventListener('scroll', this.position);
     this.surface()?.focus({preventScroll:true});
-    win.requestAnimationFrame(() => { if (this._open) this.surface()?.classList.add('visible'); });
+    win.requestAnimationFrame(() => {
+      if (!this._open) return;
+      const surface = this.surface();
+      surface?.classList.add('visible');
+      if (surface && !controlMotionReduced(win)) {
+        this.motion = surface.animate(controlSurfaceFrames(true), { ...controlMotion.appear, fill:'both' });
+      }
+    });
   }
   private close(refocus = false, immediate = false): void {
     this._open = false; this.dispose?.(); this.dispose = undefined;
@@ -146,14 +166,24 @@ export class HpSettingsSelect extends LitElement {
     const win = this.floating.window();
     win?.removeEventListener('resize', this.position); win?.visualViewport?.removeEventListener('resize', this.position);
     win?.visualViewport?.removeEventListener('scroll', this.position);
-    const surface = this.surface(); surface?.classList.remove('visible');
+    const surface = this.surface();
+    const style = surface && win ? win.getComputedStyle(surface) : null;
+    const from = style ? { opacity:style.opacity, translate:style.translate } : undefined;
+    this.motion?.cancel(); this.motion = undefined;
+    surface?.classList.remove('visible');
+    if (surface) surface.inert = true;
     const finish = () => {
       if (!this.fallback) { try { surface?.hidePopover(); } catch { /* detached native surface */ } }
       this.floating.destroy(); this.closeTimer = undefined;
+      this.motion?.cancel(); this.motion = undefined;
+      if (surface) surface.inert = false;
     };
     if (this.closeTimer) win?.clearTimeout(this.closeTimer);
-    if (immediate || !win || win.matchMedia('(prefers-reduced-motion:reduce)').matches) finish();
-    else this.closeTimer = win.setTimeout(finish, 160);
+    if (immediate || !win || controlMotionReduced(win)) finish();
+    else {
+      this.motion = surface?.animate(controlSurfaceFrames(false, from), { ...controlMotion.leave, fill:'both' });
+      this.closeTimer = win.setTimeout(finish, controlMotion.leave.duration);
+    }
     if (refocus) this.renderRoot.querySelector<HTMLButtonElement>('button')?.focus();
   }
   private choose(index: number): void {

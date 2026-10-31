@@ -1,15 +1,18 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { floatingViewport, placeFloatingSurface, type FloatingViewport, type RectLike } from './floating-surface';
+import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
 
 export interface EditorMenuItem {
   key: string; label: string | TemplateResult; disabled?: boolean;
-  hp?: 'action' | 'device-copy'; action?: string; value?: string; title?: string;
+  hp?: 'action' | 'device-copy' | 'header-menu-item'; action?: string; value?: string; title?: string;
+  current?: boolean; pressed?: boolean;
   invoke(): void;
 }
 export interface EditorMenuModel {
   /** A new opening always gets a new owner token, even for the same object. */
-  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu'; items: EditorMenuItem[];
+  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu' | 'header-menu'; items: EditorMenuItem[];
+  density?: 'compact' | 'touch'; label?: string;
   anchor: RectLike | (() => RectLike); gap?: number; minWidth?: number; viewport?: () => FloatingViewport;
   localTo?: HTMLElement;
   returnFocus?: Element | null;
@@ -102,9 +105,8 @@ export class EditorContextMenu {
       this.listening = true;
     }
     if (fresh) {
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        this.animation = element.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'translateY(0)' }],
-          { duration: 180, easing: 'ease-out' });
+      if (!controlMotionReduced()) {
+        this.animation = element.animate(controlSurfaceFrames(true), controlMotion.appear);
       }
       queueMicrotask(() => {
         if (this.active && this.model?.token === token && element.isConnected) {
@@ -134,12 +136,13 @@ export class EditorContextMenu {
       this.retire();
       if (this.view === nothing || this.exiting) return this.view;
       const element = this.element;
-      if (!element?.isConnected || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (!element?.isConnected || controlMotionReduced()) {
         this.dispose(); return nothing;
       }
-      const opacity = getComputedStyle(element).opacity;
+      const style = getComputedStyle(element);
+      const current = { opacity: style.opacity, translate: style.translate };
       this.exiting = true; this.animation?.cancel();
-      const animation = element.animate([{ opacity }, { opacity: 0 }], { duration: 140, easing: 'ease-out', fill: 'both' });
+      const animation = element.animate(controlSurfaceFrames(false, current), { ...controlMotion.leave, fill: 'both' });
       this.animation = animation;
       void animation.finished.then(() => {
         if (this.animation !== animation) return;
@@ -153,11 +156,19 @@ export class EditorContextMenu {
     }
     this.model = model;
     const token = model.token;
-    this.view = html`<div class="hpf-context-menu" data-hp=${model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu' : model.hp === 'node-context-menu' ? 'node-context-menu' : 'catalog-context-menu'} role="menu"
+    const header = model.hp === 'header-menu';
+    this.view = html`<div class="hpf-context-menu ${model.density === 'touch' ? 'hpf-context-menu-touch' : ''} ${header ? 'header-menu' : ''}"
+      id=${header ? 'hp-header-menu' : nothing} data-hp=${model.hp === 'header-menu' ? nothing
+        : model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu'
+          : model.hp === 'catalog-context-menu' ? 'catalog-context-menu' : 'node-context-menu'}
+      role=${header ? 'group' : 'menu'} aria-label=${model.label ?? nothing}
       ${ref(element => this.mount(element, token))}
       @pointerdown=${(event: Event) => event.stopPropagation()} @click=${(event: Event) => event.stopPropagation()}
       @contextmenu=${(event: Event) => event.preventDefault()}>
-      ${model.items.map(item => html`<button type="button" role="menuitem" data-hp=${item.hp === 'device-copy' ? 'device-copy' : 'action'} data-action=${item.action ?? nothing}
+      ${model.items.map(item => html`<button type="button" role=${header ? nothing : 'menuitem'}
+        class=${header ? 'header-menu-item' : nothing} data-id=${header ? item.key : nothing}
+        aria-current=${item.current ? 'true' : nothing} aria-pressed=${item.pressed === undefined ? nothing : String(item.pressed)}
+        data-hp=${item.hp === 'device-copy' ? 'device-copy' : item.hp === 'header-menu-item' ? 'header-menu-item' : 'action'} data-action=${item.action ?? nothing}
         data-value=${item.value ?? nothing} title=${item.title ?? nothing} ?disabled=${!!item.disabled}
         @click=${() => {
           if (!this.active || this.invoked || this.model?.token !== token || item.disabled) return;

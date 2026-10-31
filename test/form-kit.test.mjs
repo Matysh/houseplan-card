@@ -88,6 +88,30 @@ const RETIRED_DIALOG_RULES = new Set([
 function acceptedDialogCss(text) {
   const retired = parseRules(text).filter(rule => RETIRED_DIALOG_RULES.has(rule.header));
   assert.equal(retired.length, 0, 'retired #1019 rules must not return in UI-029');
+  // #1147 adds named read-only/structured variants and shared motion; keep the
+  // independent UI-029 snapshot and allow precisely this declared delta.
+  const changes = [
+    ['transition: left .15s;', 'transition: left var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);'],
+    ['cursor: pointer; transition:color 150ms ease;', 'cursor: pointer;'],
+    ['transition: background 160ms, border-color 160ms;', 'transition: background var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), border-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);'],
+    ['transition: transform 160ms;', 'transition: transform var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);'],
+    ['transition: background-color 160ms, color 160ms;', 'transition: background-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);'],
+    ['  @media (prefers-reduced-motion: reduce) {\n    .hpf-toggle > input::after { transition: none; }\n    .hpf-pick, .hpf-pick::after, .hpf-panel .hpf-cand { transition: none; }\n  }',
+      '  @media (prefers-reduced-motion: reduce) {\n    .hpf-toggle > input::after, .hpf-pick, .hpf-pick::after, .hpf-panel .hpf-cand { animation: none !important; transition: none !important; }\n  }'],
+    ['cursor:pointer; transition:color 150ms ease; }', 'cursor:pointer; transition:color 160ms ease; }'],
+    ['@media(prefers-reduced-motion:reduce) { :is(a[href]:not(.btn):not([role=button]),.hpf-link:not(.btn)) { transition:none; } }',
+      '@media (prefers-reduced-motion: reduce) {\n    :is(a[href]:not(.btn):not([role=button]),.hpf-link:not(.btn)) { animation: none !important; transition: none !important; }\n  }'],
+    ['  .hpf-range { --hpf-range-value-width:', `  .hpf-callout > .hpf-callout-body { min-width:0; flex:1; }
+  .hpf-callout-body > p { margin:8px 0 0; }
+  .hpf-callout.hpf-danger { background:color-mix(in srgb,var(--hpf-danger) 14%,var(--hpf-surface)); }
+  .hpf-callout.hpf-danger > ha-icon { color:var(--hpf-danger); }
+  .hpf-range > .hpf-range-output { display:flex; align-items:center; justify-content:center; box-sizing:border-box; min-width:70px; min-height:44px; padding:8px 10px; border:1px solid var(--hpf-line); border-radius:7px; color:var(--primary-text-color); font-size:14px; font-variant-numeric:tabular-nums; }
+  .hpf-range { --hpf-range-value-width:`],
+  ];
+  for (const [before, after] of changes) {
+    assert.equal(text.split(before).length - 1, 1, 'named #1147 change targets exactly one historical rule');
+    text = text.replace(before, after);
+  }
   return text;
 }
 

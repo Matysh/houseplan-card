@@ -1,6 +1,6 @@
 /** Editor chrome: toolbars, tabs, menus and hints (#266, split from styles.ts). */
 import { css, unsafeCSS, type CSSResultGroup } from 'lit';
-import { helpSurfaceStyle } from './help-surface.styles';
+import { helpSurfaceStyle, helpSurfaceMetaStyle } from './help-surface.styles';
 
 const chromeCoreStyles = unsafeCSS(css`
     .hdr {
@@ -10,48 +10,16 @@ const chromeCoreStyles = unsafeCSS(css`
       position: sticky;
       top: var(--header-height, 56px);
       z-index: 20;
-      background: var(--card-background-color, var(--hp-bg));
-      border-radius: var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0 0;
     }
     /* Keep the header and its menu above the sibling editor toolbar after
        animation opacity stops creating a toolbar stacking context. The menu
        remains anchored by its positioned .header-menu-wrap. */
     .hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }
-    .tabs {
-      display: flex;
-      gap: var(--sp-2);
-      background: rgba(127, 127, 127, 0.12);
-      padding: var(--sp-2);
-      border-radius: var(--rad-l);
-      flex-wrap: wrap;
-    }
-    .tab {
-      border: 0;
-      background: transparent;
-      color: var(--hp-muted);
-      display: inline-flex;
-      align-items: center;
-      padding: var(--sp-3) var(--sp-5);
-      border-radius: var(--rad-m);
-      font-size: var(--fs-m);
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.15s;
-      font-family: inherit;
-    }
-    .tabs.compact-spaces { min-width:0; max-width:350px; padding:0; gap:4px;
-      align-items:center; flex-wrap:nowrap; background:transparent; }
+    .tabs { display:flex; flex-wrap:wrap; }
+    .tabs.compact-spaces { min-width:0; max-width:350px; align-items:center; flex-wrap:nowrap; }
     .compact-space-select { flex:1 1 180px; width:180px; min-width:0; max-width:254px; }
-    .compact-space-select::part(label) { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .compact-spaces > .tab { min-width:44px; min-height:44px; padding:10px; flex:none; justify-content:center; }
-    :host([data-pointer-hover]) .tab:hover {
-      color: var(--hp-txt);
-    }
-    .tab .tabtitle { pointer-events: none; }
-    .tab.active {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-    }
+    .compact-spaces > .tab { flex:none; }
+    .tab .tabtitle { pointer-events:none; }
     /* docs/CANVAS.md §4.1: objects an order of magnitude away from the plan
        do not decide the opening view — one quiet chip says so and offers to
        take them in. Never a modal (owner). */
@@ -61,28 +29,7 @@ const chromeCoreStyles = unsafeCSS(css`
       transform: translateX(-50%);
       bottom: var(--sp-4);
       z-index: 12;
-      display: flex;
-      align-items: center;
-      gap: var(--sp-2);
       max-width: calc(100% - 2 * var(--sp-4));
-      box-sizing: border-box;
-      background: var(--card-background-color, var(--hp-bg));
-      opacity: 0.94;
-      color: var(--hp-txt);
-      border: 1px solid var(--divider-color, #33404d);
-      border-radius: var(--rad-m);
-      padding: var(--sp-1) var(--sp-3);
-      font-size: var(--fs-s);
-    }
-    .farhint ha-icon {
-      --mdc-icon-size: 18px;
-      color: var(--hp-warn, #e2a03f);
-      flex: none;
-    }
-    .farhint span {
-      min-width: 0;
-      white-space: normal;
-      overflow-wrap: anywhere;
     }
     .farhint .btn { flex: none; }
     .dropbtn {
@@ -113,73 +60,15 @@ const chromeCoreStyles = unsafeCSS(css`
     }
     .hdr.kioskhide { display: none; }
     .header-menu-wrap { display: none; position: relative; flex: none; }
-    .header-menu-button {
-      min-width: 44px;
-      min-height: 44px;
-      justify-content: center;
-      padding: var(--sp-3);
-    }
-    .header-menu-scrim {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      background: transparent;
-    }
-    .header-menu {
-      position: absolute;
-      top: calc(100% + var(--sp-2));
-      right: 0;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      width: max-content;
-      min-width: 220px;
-      max-width: calc(100vw - 16px);
-      max-height: calc(100dvh - 120px);
-      overflow-y: auto;
-      padding: var(--sp-2);
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-m);
-      background: var(--card-background-color, var(--hp-bg));
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-    }
-    .header-menu-item {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-      min-height: 44px;
-      padding: 0 var(--sp-4);
-      border: 0;
-      border-radius: var(--rad-s);
-      background: transparent;
-      color: var(--hp-txt);
-      font: inherit;
-      font-size: var(--fs-m);
-      text-align: start;
-      cursor: pointer;
-    }
-    .header-menu-item ha-icon, .header-menu-item svg { --mdc-icon-size: 20px; width: 20px; height: 20px; flex: none; }
-    .header-menu-item.on { color: var(--hp-accent); font-weight: 600; }
-    :host([data-pointer-hover]) .header-menu-item:hover { background: rgba(127, 127, 127, 0.14); }
-    .header-menu-item:focus-visible { outline: 2px solid var(--hp-accent); outline-offset: -2px; }
     .head > .spacer { flex: 0 0 30px; }
     .head > .header-actions { display: inline-flex; align-items: center; flex: 0 0 auto; flex-wrap: nowrap; gap: 10px; max-width: 100%; }
     .head > .header-actions > * { flex-shrink: 0; }
-    .head .hidden-devices-button.on { background:transparent; color:var(--hp-txt); border-color:var(--hp-accent); }
-    .hdr > .head .zoomctl { display: inline-flex; height: 44px; box-sizing: border-box; gap: 0; padding: 0; overflow: visible; border: 0; border-radius: var(--rad-m); background: transparent; }
-    .hdr > .head .zoomctl .zb { box-sizing: border-box; width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; position: relative; border: 1px solid var(--hp-line); border-radius: 0; background: transparent; color: var(--hp-txt); }
-    .hdr > .head .zoomctl .zb + .zb { margin-inline-start: -1px; }
-    .hdr > .head .zoomctl .zb:first-child { border-radius: var(--rad-m) 0 0 var(--rad-m); }
-    .hdr > .head .zoomctl .zb:last-child { border-radius: 0 var(--rad-m) var(--rad-m) 0; }
-    :host([data-pointer-hover]) .hdr > .head .zoomctl .zb:not(:disabled):hover { border-color: var(--hp-accent); z-index: 1; }
-    .hdr > .head .zoomctl .zb:focus-visible { z-index: 2; }
     @media (max-width: 620px) and (min-width: 481px) {
       .head > .spacer { flex-basis: 28.5px; }
     }
     @media (max-width: 480px) {
       .hdr > .head { flex-wrap: nowrap; padding: 5px 8px; gap: 6px; }
       .compact-space-select { min-width: 44px; }
-      .compact-space-select::part(control) { min-width: 44px; padding-inline: 4px; gap: 0; }
       .head > .title, .head > .spacer, .head > .header-action,
       .head > .summary-control, .header-actions > .header-action, .header-actions > .summary-control { display: none; }
       .head > .header-actions { gap: 6px; }
@@ -242,78 +131,11 @@ const chromeCoreStyles = unsafeCSS(css`
       padding: 0;
     }
     .decorbar hp-color-opacity { flex: 0 0 auto; }
-    .modes {
-      /* #666: one source for the X slot size — the slot and the active tab's
-         highlight both read it. */
-      --hp-editor-close-size: 24px;
-      display: inline-flex;
-      gap: var(--sp-1);
-      background: rgba(127, 127, 127, 0.12);
-      border-radius: var(--rad-l);
-      padding: var(--sp-2);
-      /* #666: a stacking context of its own, so the active tab's highlight
-         (z-index -1) paints above the group background and below the tab and
-         X contents. */
-      isolation: isolate;
-    }
-    .modetab {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-3);
-      border: 0;
-      background: transparent;
-      color: var(--hp-muted);
-      padding: var(--sp-3) 10px; /* 10px h-padding kept: +2px would wrap the header modes row */
-      border-radius: var(--rad-m);
-      font-size: var(--fs-m);
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
-    }
-    .modetab:active { transform: scale(0.97); }
-    .modetab ha-icon { --mdc-icon-size: 15px; }
     /* issue #220: a tab can be dragged to a new position in the editors */
     .tab[data-reorderable] { cursor: grab; }
     .tab.dragging { cursor: grabbing; opacity: 0.55; }
     .tab.drop-before { box-shadow: inset 2px 0 0 0 var(--primary-color, #03a9f4); }
     .tab.drop-after { box-shadow: inset -2px 0 0 0 var(--primary-color, #03a9f4); }
-    /* #660: the fixed X slot lives inside the mode group, immediately after
-       the active editor; in View the same reserve sits at the group end. */
-    .editor-close-slot {
-      box-sizing: border-box;
-      display: inline-flex;
-      flex: none;
-      align-items: center;
-      justify-content: center;
-      width: var(--hp-editor-close-size);
-      height: var(--hp-editor-close-size);
-    }
-    .editor-close-slot[aria-hidden='true'] { pointer-events: none; }
-    .editor-close-slot .closex {
-      box-sizing: border-box;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      color: var(--hp-muted);
-      opacity: 0.75;
-      cursor: pointer;
-      border-radius: var(--rad-s);
-      font: inherit;
-    }
-    .editor-close-slot .closex ha-icon { --mdc-icon-size: 13px; }
-    :host([data-pointer-hover]) .editor-close-slot .closex:hover { opacity: 1; }
-    .editor-close-slot .closex:focus-visible {
-      outline: 2px solid var(--primary-color, #03a9f4);
-      outline-offset: 1px;
-      opacity: 1;
-    }
     .editbar .barclose {
       box-sizing: border-box;
       width: 40px;
@@ -327,41 +149,6 @@ const chromeCoreStyles = unsafeCSS(css`
       line-height: 0;
     }
     .editbar .barclose ha-icon { flex: none; margin: 0; }
-    /* #666: the highlight of the active editor tab also covers the X that
-       closes it. It is a pseudo-element stretched over the group gap and the
-       fixed X slot, so no box moves: the tab, the slot and the X keep their
-       #660 geometry, and the X keeps its own 24 px target. On a phone the mode
-       tabs are hidden, and with them the highlight. */
-    .modetab.active {
-      position: relative;
-      background: transparent;
-      color: var(--text-primary-color, #fff);
-    }
-    .modetab.active::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: calc(-1 * (var(--sp-1) + var(--hp-editor-close-size)));
-      z-index: -1;
-      border-radius: var(--rad-m);
-      background: var(--hp-accent);
-      pointer-events: none;
-    }
-    /* The keyboard focus ring follows the highlight, so it does not cut the
-       zone between the tab and its X; the UA ring style is kept. */
-    .modetab.active:focus-visible { outline: none; }
-    .modetab.active:focus-visible::after { outline: auto; }
-    @media (min-width: 481px) {
-      .modetab.active + .editor-close-slot .closex {
-        color: var(--text-primary-color, #fff);
-        opacity: 0.9;
-      }
-      .modetab.active + .editor-close-slot .closex:focus-visible {
-        outline-color: var(--text-primary-color, #fff);
-      }
-    }
     /* #993: ≤ 1024 px of header — icon only; the label stays in aria-label and
        the tooltip. The ≤ 480 px window rules above (#616) are unchanged. */
     @container hp-head (max-width: 1024px) {
@@ -391,22 +178,6 @@ const chromeCoreStyles = unsafeCSS(css`
       background: var(--card-background-color, var(--hp-bg));
       position: relative;
       z-index: 2;
-    }
-    .tab .tabedit {
-      --mdc-icon-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      margin-left: var(--sp-3);
-      opacity: 0.4;
-    }
-    :host([data-pointer-hover]) .tab:hover .tabedit {
-      opacity: 0.9;
-    }
-    .tab.tabadd {
-      padding: var(--sp-3) var(--sp-4);
-    }
-    .tab.tabadd ha-icon {
-      --mdc-icon-size: 15px;
     }
     .rhint {
       font-size: var(--fs-s);
@@ -450,9 +221,6 @@ const chromeCoreStyles = unsafeCSS(css`
     .editorchrome.transitioning .editorchrome-inner {
       will-change: opacity;
     }
-    @media (prefers-reduced-motion: reduce) {
-      .modetab { transition: none; }
-    }
     .editbar .warn {
       color: #ffc14d;
     }
@@ -494,11 +262,6 @@ const chromeCoreStyles = unsafeCSS(css`
       pointer-events: none;
       z-index: 60;
     }
-    .tip .m {
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
-      display: block;
-    }
     .view-runtime-notice {
       position: absolute;
       inset-inline: 8px;
@@ -509,21 +272,13 @@ const chromeCoreStyles = unsafeCSS(css`
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 8px 12px;
-      border: 1px solid var(--hp-accent);
-      border-radius: 10px;
-      background: var(--hp-bg);
-      color: var(--hp-txt);
-      box-shadow: var(--shadow-2);
-      font-size: var(--fs-s);
       max-height: min(50%, 220px);
       overflow: auto;
     }
     .view-runtime-notice > span { flex: 1 1 200px; }
     .view-runtime-notice > div { display: flex; flex-wrap: wrap; gap: 8px; }
-    .view-runtime-functions { display: block; color: var(--hp-muted); }
-    .view-runtime-notice .btn { min-width: 44px; min-height: 44px; }
-`.cssText + `.tip[data-hp-live-tip]{${helpSurfaceStyle}}`);
+    .view-runtime-functions { display: block; }
+`.cssText + `.tip[data-hp-live-tip]{${helpSurfaceStyle}}.tip .m{${helpSurfaceMetaStyle}}`);
 
 /** #437 summary CSS lives with its lazy runtime in summary-panel-style.ts. */
 export const chromeStyles: CSSResultGroup = chromeCoreStyles;
