@@ -1,0 +1,22 @@
+{
+  "sourceCommit": "cb2c71ab7b5943e607b83a4f052a734eb36b22f7",
+  "noHomeAssistantTransport": true,
+  "original": {
+    "smvw6633p": {}
+  },
+  "candidate": {
+    "smvw6633p": {
+      "distance": 2
+    }
+  },
+  "accepted": false,
+  "error": "space=smvw6633p; rule=distance; subject=0.6583333,0.4083333 \u2192 partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc; actual=0.432966683219; limit=5",
+  "errorFields": {
+    "space_id": "smvw6633p",
+    "rule": "distance",
+    "subject": "0.6583333,0.4083333 \u2192 partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+    "actual": 0.43296668321926757,
+    "limit": 5.0,
+    "code": "junction_limit_distance"
+  }
+}

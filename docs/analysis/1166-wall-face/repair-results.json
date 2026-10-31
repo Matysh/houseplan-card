@@ -1,0 +1,32 @@
+[
+  {
+    "maxDistance": 5,
+    "result": {
+      "kind": "none"
+    }
+  },
+  {
+    "maxDistance": 8.333333333333334,
+    "result": {
+      "kind": "none"
+    }
+  },
+  {
+    "maxDistance": 25,
+    "result": {
+      "kind": "none"
+    }
+  },
+  {
+    "maxDistance": 50,
+    "result": {
+      "kind": "none"
+    }
+  },
+  {
+    "maxDistance": 83.3333333333,
+    "result": {
+      "kind": "none"
+    }
+  }
+]

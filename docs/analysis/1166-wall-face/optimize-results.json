@@ -1,0 +1,981 @@
+{
+  "sourceCommit": "cb2c71ab7b5943e607b83a4f052a734eb36b22f7",
+  "NORM_W": 1000,
+  "GRID_PITCH": 4.166666666666667,
+  "inputUnchanged": true,
+  "originalConfig": {
+    "spaces": [
+      {
+        "id": "smvw6633p",
+        "title": "test",
+        "plan_url": null,
+        "view_box": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "rooms": [],
+        "wall_segments": [],
+        "settings": {
+          "room_color": "#55606c",
+          "room_opacity": 0.55,
+          "name_color": {
+            "c": "#55606c",
+            "a": 0.8
+          },
+          "wall_fill": {
+            "c": "#ffffff",
+            "a": 1
+          },
+          "fill_mode": "custom",
+          "custom_fill": {
+            "c": "#607d8b",
+            "a": 0
+          },
+          "show_borders": true,
+          "show_names": true,
+          "bg_mode": "daynight",
+          "glow_enabled": true,
+          "temp_min": 20,
+          "temp_max": 25,
+          "card_name_scale": 1,
+          "card_label_scale": 1,
+          "label_temp": false,
+          "label_hum": false,
+          "label_co2": false,
+          "label_lqi": false,
+          "label_light": false
+        },
+        "plan_aspect": null,
+        "zero_wall_style": "dashed",
+        "cell_cm": 1,
+        "partitions": [
+          {
+            "id": "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "a": [
+              0.06666666666666667,
+              0.1625
+            ],
+            "b": [
+              0.05416666666666667,
+              0.5125
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "a": [
+              0.05416666666666667,
+              0.5125
+            ],
+            "b": [
+              0.6541666666666667,
+              0.6375
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "a": [
+              0.6541666666666667,
+              0.6375
+            ],
+            "b": [
+              0.6583333333333333,
+              0.23333333333333334
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "a": [
+              0.6583333333333333,
+              0.23333333333333334
+            ],
+            "b": [
+              0.06666666666666667,
+              0.1625
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "a": [
+              0.6541666666666667,
+              0.6375
+            ],
+            "b": [
+              1.2166666666666666,
+              1.0333333333333334
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "a": [
+              1.425,
+              0.5291666666666667
+            ],
+            "b": [
+              0.656529084,
+              0.40834551
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "a": [
+              0.3625,
+              1.0291666666666666
+            ],
+            "b": [
+              0.396809814,
+              0.583883989
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "a": [
+              -0.5666666666666667,
+              0.3375
+            ],
+            "b": [
+              0.06249469,
+              0.279315334
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "a": [
+              -0.6541666666666667,
+              0.9333333333333333
+            ],
+            "b": [
+              -0.7,
+              1.4458333333333333
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "a": [
+              -0.7,
+              1.4458333333333333
+            ],
+            "b": [
+              0.3625,
+              1.55
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "a": [
+              0.3625,
+              1.55
+            ],
+            "b": [
+              0.2,
+              1.0125
+            ],
+            "cm": 15
+          },
+          {
+            "id": "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+            "a": [
+              0.2,
+              1.0125
+            ],
+            "b": [
+              -0.6541666666666667,
+              0.9333333333333333
+            ],
+            "cm": 15
+          }
+        ]
+      }
+    ],
+    "markers": [],
+    "model_version": 10
+  },
+  "original": {
+    "sources": [
+      {
+        "a": [
+          -700,
+          1445.8333333333333
+        ],
+        "b": [
+          -654.1666666666666,
+          933.3333333333334
+        ],
+        "key": "static:partition|partition-34be4beb-76b9-4438-964d-bba89dda8778|-700.000000,1445.833333|-654.166667,933.333333|-700.000000,1445.833333|-654.166667,933.333333"
+      },
+      {
+        "a": [
+          654.1666666666666,
+          637.5
+        ],
+        "b": [
+          658.3333333333334,
+          233.33333333333334
+        ],
+        "key": "static:partition|partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc|654.166667,637.500000|658.333333,233.333333|654.166667,637.500000|658.333333,233.333333"
+      },
+      {
+        "a": [
+          54.16666666666667,
+          512.5
+        ],
+        "b": [
+          66.66666666666667,
+          162.5
+        ],
+        "key": "static:partition|partition-5e040308-c56c-451d-9bbb-5113b8b91ef9|54.166667,512.500000|66.666667,162.500000|54.166667,512.500000|66.666667,162.500000"
+      },
+      {
+        "a": [
+          -700,
+          1445.8333333333333
+        ],
+        "b": [
+          362.5,
+          1550
+        ],
+        "key": "static:partition|partition-60652b45-7705-4b45-afe7-741f17e8ac0c|-700.000000,1445.833333|362.500000,1550.000000|-700.000000,1445.833333|362.500000,1550.000000"
+      },
+      {
+        "a": [
+          -654.1666666666666,
+          933.3333333333334
+        ],
+        "b": [
+          200,
+          1012.5
+        ],
+        "key": "static:partition|partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff|-654.166667,933.333333|200.000000,1012.500000|-654.166667,933.333333|200.000000,1012.500000"
+      },
+      {
+        "a": [
+          -566.6666666666666,
+          337.5
+        ],
+        "b": [
+          62.49469,
+          279.315334
+        ],
+        "key": "static:partition|partition-8be3ef18-fc09-486d-b36a-7f206cacb19f|-566.666667,337.500000|62.494690,279.315334|-566.666667,337.500000|62.494690,279.315334"
+      },
+      {
+        "a": [
+          654.1666666666666,
+          637.5
+        ],
+        "b": [
+          1216.6666666666665,
+          1033.3333333333335
+        ],
+        "key": "static:partition|partition-90834f9f-20b5-44bf-8f8a-23a7ff939681|654.166667,637.500000|1216.666667,1033.333333|654.166667,637.500000|1216.666667,1033.333333"
+      },
+      {
+        "a": [
+          200,
+          1012.5
+        ],
+        "b": [
+          362.5,
+          1550
+        ],
+        "key": "static:partition|partition-c811d976-823f-4347-9347-1d0691a21795|200.000000,1012.500000|362.500000,1550.000000|200.000000,1012.500000|362.500000,1550.000000"
+      },
+      {
+        "a": [
+          362.5,
+          1029.1666666666665
+        ],
+        "b": [
+          396.80981399999996,
+          583.883989
+        ],
+        "key": "static:partition|partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b|362.500000,1029.166667|396.809814,583.883989|362.500000,1029.166667|396.809814,583.883989"
+      },
+      {
+        "a": [
+          66.66666666666667,
+          162.5
+        ],
+        "b": [
+          658.3333333333334,
+          233.33333333333334
+        ],
+        "key": "static:partition|partition-e6061130-cdae-4553-9f53-6ea5b023e54b|66.666667,162.500000|658.333333,233.333333|66.666667,162.500000|658.333333,233.333333"
+      },
+      {
+        "a": [
+          54.16666666666667,
+          512.5
+        ],
+        "b": [
+          654.1666666666666,
+          637.5
+        ],
+        "key": "static:partition|partition-e74c41c4-5224-41ca-8132-2743d3949676|54.166667,512.500000|654.166667,637.500000|54.166667,512.500000|654.166667,637.500000"
+      },
+      {
+        "a": [
+          656.529084,
+          408.34551000000005
+        ],
+        "b": [
+          1425,
+          529.1666666666666
+        ],
+        "key": "static:partition|partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e|656.529084,408.345510|1425.000000,529.166667|656.529084,408.345510|1425.000000,529.166667"
+      }
+    ],
+    "faces": 1,
+    "top": false,
+    "bottom": true,
+    "physicalPreflight": {
+      "fingerprint": "0dd15a507f8105d6",
+      "spaces": [
+        {
+          "spaceId": "smvw6633p",
+          "displayName": "test",
+          "status": "ok"
+        }
+      ],
+      "failures": [],
+      "ok": true
+    }
+  },
+  "first": {
+    "changed": true,
+    "report": {
+      "moved": 3,
+      "coordsCanonicalized": 1,
+      "total": 12,
+      "maxShift": 0.001804290422311474,
+      "maxShiftCm": 0.43302970135475377,
+      "maxSpace": "smvw6633p",
+      "rotated": 0,
+      "currentPositions": 0,
+      "archivedPositions": 0,
+      "currentPositionsMoved": 0,
+      "archivedPositionsMoved": 0,
+      "modelFrom": 10,
+      "modelTo": 10,
+      "migrated": 0,
+      "glowSpacesMigrated": 0,
+      "glowRoomsMigrated": 0,
+      "canonicalized": 0,
+      "wallSegmentsMigrated": 0,
+      "roomDraftsMigrated": 0,
+      "roomDraftSegmentsMigrated": 0,
+      "legacyZeroWallsMigrated": 0,
+      "wallsMerged": 0,
+      "spansMerged": 0,
+      "partitionsMerged": 0,
+      "partitionsReconciled": 0,
+      "openingsRehosted": 0,
+      "wallsStraightened": 0,
+      "wallsStraightenSkipped": 0,
+      "maxStraightenShiftCm": 0,
+      "maxStraightenSpace": "",
+      "latticeCoordinatesCanonicalized": 4,
+      "latticeCoordinatesFar": 6,
+      "latticeMaxShift": 0,
+      "latticeMaxShiftCm": 0,
+      "latticeSpaces": [
+        {
+          "spaceId": "smvw6633p",
+          "space": "test",
+          "canonicalized": 4,
+          "far": 6,
+          "maxShift": 0,
+          "maxShiftCm": 0
+        }
+      ],
+      "spaceRefsRemapped": 0,
+      "roomRefsRemapped": 0,
+      "positionsRemapped": 0,
+      "markersDetached": 0,
+      "positionsUnresolved": 0,
+      "nestedRefsUnresolved": 0,
+      "deadSpaceIds": [],
+      "orphanRoomLabelsRemoved": 0,
+      "orphanDevicePositionsRemoved": 0,
+      "orphanGroupPositionsRemoved": 0,
+      "liveMissingPositionsRemoved": 0,
+      "removedPositions": [],
+      "liveMissingPositions": [],
+      "unverifiedPositions": [],
+      "registryAuthoritative": false,
+      "invalidPositionsEligible": [],
+      "invalidPositionsRemoved": [],
+      "invalidPositionsRetained": []
+    },
+    "config": {
+      "spaces": [
+        {
+          "id": "smvw6633p",
+          "title": "test",
+          "plan_url": null,
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "rooms": [],
+          "wall_segments": [],
+          "settings": {
+            "room_color": "#55606c",
+            "room_opacity": 0.55,
+            "name_color": {
+              "c": "#55606c",
+              "a": 0.8
+            },
+            "wall_fill": {
+              "c": "#ffffff",
+              "a": 1
+            },
+            "fill_mode": "custom",
+            "custom_fill": {
+              "c": "#607d8b",
+              "a": 0
+            },
+            "show_borders": true,
+            "show_names": true,
+            "bg_mode": "daynight",
+            "glow_enabled": true,
+            "temp_min": 20,
+            "temp_max": 25,
+            "card_name_scale": 1,
+            "card_label_scale": 1,
+            "label_temp": false,
+            "label_hum": false,
+            "label_co2": false,
+            "label_lqi": false,
+            "label_light": false
+          },
+          "plan_aspect": null,
+          "zero_wall_style": "dashed",
+          "cell_cm": 1,
+          "partitions": [
+            {
+              "id": "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+              "a": [
+                0.06666666666666667,
+                0.1625
+              ],
+              "b": [
+                0.05416666666666667,
+                0.5125
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+              "a": [
+                0.05416666666666667,
+                0.5125
+              ],
+              "b": [
+                0.6541666666666667,
+                0.6375
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+              "a": [
+                0.6541666666666667,
+                0.6375
+              ],
+              "b": [
+                0.6583333333333333,
+                0.23333333333333334
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+              "a": [
+                0.6583333333333333,
+                0.23333333333333334
+              ],
+              "b": [
+                0.06666666666666667,
+                0.1625
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+              "a": [
+                0.6541666666666667,
+                0.6375
+              ],
+              "b": [
+                1.2166666666666666,
+                1.0333333333333334
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+              "a": [
+                1.425,
+                0.5291666666666667
+              ],
+              "b": [
+                0.6583333333333333,
+                0.4083333333333333
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+              "a": [
+                0.3625,
+                1.0291666666666666
+              ],
+              "b": [
+                0.3958333333333333,
+                0.5833333333333334
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+              "a": [
+                -0.5666666666666667,
+                0.3375
+              ],
+              "b": [
+                0.0625,
+                0.2791666666666667
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+              "a": [
+                -0.6541666666666667,
+                0.9333333333333333
+              ],
+              "b": [
+                -0.7,
+                1.4458333333333333
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+              "a": [
+                -0.7,
+                1.4458333333333333
+              ],
+              "b": [
+                0.3625,
+                1.55
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-c811d976-823f-4347-9347-1d0691a21795",
+              "a": [
+                0.3625,
+                1.55
+              ],
+              "b": [
+                0.2,
+                1.0125
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+              "a": [
+                0.2,
+                1.0125
+              ],
+              "b": [
+                -0.6541666666666667,
+                0.9333333333333333
+              ],
+              "cm": 15
+            }
+          ]
+        }
+      ],
+      "markers": [],
+      "model_version": 10
+    },
+    "layout": {},
+    "probe": {
+      "sources": [
+        {
+          "a": [
+            -700,
+            1445.8333333333333
+          ],
+          "b": [
+            -654.1666666666666,
+            933.3333333333334
+          ],
+          "key": "static:partition|partition-34be4beb-76b9-4438-964d-bba89dda8778|-700.000000,1445.833333|-654.166667,933.333333|-700.000000,1445.833333|-654.166667,933.333333"
+        },
+        {
+          "a": [
+            654.1666666666666,
+            637.5
+          ],
+          "b": [
+            658.3333333333334,
+            233.33333333333334
+          ],
+          "key": "static:partition|partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc|654.166667,637.500000|658.333333,233.333333|654.166667,637.500000|658.333333,233.333333"
+        },
+        {
+          "a": [
+            54.16666666666667,
+            512.5
+          ],
+          "b": [
+            66.66666666666667,
+            162.5
+          ],
+          "key": "static:partition|partition-5e040308-c56c-451d-9bbb-5113b8b91ef9|54.166667,512.500000|66.666667,162.500000|54.166667,512.500000|66.666667,162.500000"
+        },
+        {
+          "a": [
+            -700,
+            1445.8333333333333
+          ],
+          "b": [
+            362.5,
+            1550
+          ],
+          "key": "static:partition|partition-60652b45-7705-4b45-afe7-741f17e8ac0c|-700.000000,1445.833333|362.500000,1550.000000|-700.000000,1445.833333|362.500000,1550.000000"
+        },
+        {
+          "a": [
+            -654.1666666666666,
+            933.3333333333334
+          ],
+          "b": [
+            200,
+            1012.5
+          ],
+          "key": "static:partition|partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff|-654.166667,933.333333|200.000000,1012.500000|-654.166667,933.333333|200.000000,1012.500000"
+        },
+        {
+          "a": [
+            -566.6666666666666,
+            337.5
+          ],
+          "b": [
+            62.5,
+            279.1666666666667
+          ],
+          "key": "static:partition|partition-8be3ef18-fc09-486d-b36a-7f206cacb19f|-566.666667,337.500000|62.500000,279.166667|-566.666667,337.500000|62.500000,279.166667"
+        },
+        {
+          "a": [
+            654.1666666666666,
+            637.5
+          ],
+          "b": [
+            1216.6666666666665,
+            1033.3333333333335
+          ],
+          "key": "static:partition|partition-90834f9f-20b5-44bf-8f8a-23a7ff939681|654.166667,637.500000|1216.666667,1033.333333|654.166667,637.500000|1216.666667,1033.333333"
+        },
+        {
+          "a": [
+            200,
+            1012.5
+          ],
+          "b": [
+            362.5,
+            1550
+          ],
+          "key": "static:partition|partition-c811d976-823f-4347-9347-1d0691a21795|200.000000,1012.500000|362.500000,1550.000000|200.000000,1012.500000|362.500000,1550.000000"
+        },
+        {
+          "a": [
+            362.5,
+            1029.1666666666665
+          ],
+          "b": [
+            395.8333333333333,
+            583.3333333333334
+          ],
+          "key": "static:partition|partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b|362.500000,1029.166667|395.833333,583.333333|362.500000,1029.166667|395.833333,583.333333"
+        },
+        {
+          "a": [
+            66.66666666666667,
+            162.5
+          ],
+          "b": [
+            658.3333333333334,
+            233.33333333333334
+          ],
+          "key": "static:partition|partition-e6061130-cdae-4553-9f53-6ea5b023e54b|66.666667,162.500000|658.333333,233.333333|66.666667,162.500000|658.333333,233.333333"
+        },
+        {
+          "a": [
+            54.16666666666667,
+            512.5
+          ],
+          "b": [
+            654.1666666666666,
+            637.5
+          ],
+          "key": "static:partition|partition-e74c41c4-5224-41ca-8132-2743d3949676|54.166667,512.500000|654.166667,637.500000|54.166667,512.500000|654.166667,637.500000"
+        },
+        {
+          "a": [
+            658.3333333333334,
+            408.3333333333333
+          ],
+          "b": [
+            1425,
+            529.1666666666666
+          ],
+          "key": "static:partition|partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e|658.333333,408.333333|1425.000000,529.166667|658.333333,408.333333|1425.000000,529.166667"
+        }
+      ],
+      "faces": 1,
+      "top": false,
+      "bottom": true,
+      "physicalPreflight": {
+        "fingerprint": "92c4ceeea343d590",
+        "spaces": [
+          {
+            "spaceId": "smvw6633p",
+            "displayName": "test",
+            "status": "ok"
+          }
+        ],
+        "failures": [],
+        "ok": true
+      }
+    }
+  },
+  "second": {
+    "changed": false,
+    "report": {
+      "moved": 0,
+      "coordsCanonicalized": 0,
+      "total": 12,
+      "maxShift": 0,
+      "maxShiftCm": 0,
+      "maxSpace": "",
+      "rotated": 0,
+      "currentPositions": 0,
+      "archivedPositions": 0,
+      "currentPositionsMoved": 0,
+      "archivedPositionsMoved": 0,
+      "modelFrom": 10,
+      "modelTo": 10,
+      "migrated": 0,
+      "glowSpacesMigrated": 0,
+      "glowRoomsMigrated": 0,
+      "canonicalized": 0,
+      "wallSegmentsMigrated": 0,
+      "roomDraftsMigrated": 0,
+      "roomDraftSegmentsMigrated": 0,
+      "legacyZeroWallsMigrated": 0,
+      "wallsMerged": 0,
+      "spansMerged": 0,
+      "partitionsMerged": 0,
+      "partitionsReconciled": 0,
+      "openingsRehosted": 0,
+      "wallsStraightened": 0,
+      "wallsStraightenSkipped": 0,
+      "maxStraightenShiftCm": 0,
+      "maxStraightenSpace": "",
+      "latticeCoordinatesCanonicalized": 0,
+      "latticeCoordinatesFar": 0,
+      "latticeMaxShift": 0,
+      "latticeMaxShiftCm": 0,
+      "latticeSpaces": [],
+      "spaceRefsRemapped": 0,
+      "roomRefsRemapped": 0,
+      "positionsRemapped": 0,
+      "markersDetached": 0,
+      "positionsUnresolved": 0,
+      "nestedRefsUnresolved": 0,
+      "deadSpaceIds": [],
+      "orphanRoomLabelsRemoved": 0,
+      "orphanDevicePositionsRemoved": 0,
+      "orphanGroupPositionsRemoved": 0,
+      "liveMissingPositionsRemoved": 0,
+      "removedPositions": [],
+      "liveMissingPositions": [],
+      "unverifiedPositions": [],
+      "registryAuthoritative": false,
+      "invalidPositionsEligible": [],
+      "invalidPositionsRemoved": [],
+      "invalidPositionsRetained": []
+    },
+    "probe": {
+      "sources": [
+        {
+          "a": [
+            -700,
+            1445.8333333333333
+          ],
+          "b": [
+            -654.1666666666666,
+            933.3333333333334
+          ],
+          "key": "static:partition|partition-34be4beb-76b9-4438-964d-bba89dda8778|-700.000000,1445.833333|-654.166667,933.333333|-700.000000,1445.833333|-654.166667,933.333333"
+        },
+        {
+          "a": [
+            654.1666666666666,
+            637.5
+          ],
+          "b": [
+            658.3333333333334,
+            233.33333333333334
+          ],
+          "key": "static:partition|partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc|654.166667,637.500000|658.333333,233.333333|654.166667,637.500000|658.333333,233.333333"
+        },
+        {
+          "a": [
+            54.16666666666667,
+            512.5
+          ],
+          "b": [
+            66.66666666666667,
+            162.5
+          ],
+          "key": "static:partition|partition-5e040308-c56c-451d-9bbb-5113b8b91ef9|54.166667,512.500000|66.666667,162.500000|54.166667,512.500000|66.666667,162.500000"
+        },
+        {
+          "a": [
+            -700,
+            1445.8333333333333
+          ],
+          "b": [
+            362.5,
+            1550
+          ],
+          "key": "static:partition|partition-60652b45-7705-4b45-afe7-741f17e8ac0c|-700.000000,1445.833333|362.500000,1550.000000|-700.000000,1445.833333|362.500000,1550.000000"
+        },
+        {
+          "a": [
+            -654.1666666666666,
+            933.3333333333334
+          ],
+          "b": [
+            200,
+            1012.5
+          ],
+          "key": "static:partition|partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff|-654.166667,933.333333|200.000000,1012.500000|-654.166667,933.333333|200.000000,1012.500000"
+        },
+        {
+          "a": [
+            -566.6666666666666,
+            337.5
+          ],
+          "b": [
+            62.5,
+            279.1666666666667
+          ],
+          "key": "static:partition|partition-8be3ef18-fc09-486d-b36a-7f206cacb19f|-566.666667,337.500000|62.500000,279.166667|-566.666667,337.500000|62.500000,279.166667"
+        },
+        {
+          "a": [
+            654.1666666666666,
+            637.5
+          ],
+          "b": [
+            1216.6666666666665,
+            1033.3333333333335
+          ],
+          "key": "static:partition|partition-90834f9f-20b5-44bf-8f8a-23a7ff939681|654.166667,637.500000|1216.666667,1033.333333|654.166667,637.500000|1216.666667,1033.333333"
+        },
+        {
+          "a": [
+            200,
+            1012.5
+          ],
+          "b": [
+            362.5,
+            1550
+          ],
+          "key": "static:partition|partition-c811d976-823f-4347-9347-1d0691a21795|200.000000,1012.500000|362.500000,1550.000000|200.000000,1012.500000|362.500000,1550.000000"
+        },
+        {
+          "a": [
+            362.5,
+            1029.1666666666665
+          ],
+          "b": [
+            395.8333333333333,
+            583.3333333333334
+          ],
+          "key": "static:partition|partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b|362.500000,1029.166667|395.833333,583.333333|362.500000,1029.166667|395.833333,583.333333"
+        },
+        {
+          "a": [
+            66.66666666666667,
+            162.5
+          ],
+          "b": [
+            658.3333333333334,
+            233.33333333333334
+          ],
+          "key": "static:partition|partition-e6061130-cdae-4553-9f53-6ea5b023e54b|66.666667,162.500000|658.333333,233.333333|66.666667,162.500000|658.333333,233.333333"
+        },
+        {
+          "a": [
+            54.16666666666667,
+            512.5
+          ],
+          "b": [
+            654.1666666666666,
+            637.5
+          ],
+          "key": "static:partition|partition-e74c41c4-5224-41ca-8132-2743d3949676|54.166667,512.500000|654.166667,637.500000|54.166667,512.500000|654.166667,637.500000"
+        },
+        {
+          "a": [
+            658.3333333333334,
+            408.3333333333333
+          ],
+          "b": [
+            1425,
+            529.1666666666666
+          ],
+          "key": "static:partition|partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e|658.333333,408.333333|1425.000000,529.166667|658.333333,408.333333|1425.000000,529.166667"
+        }
+      ],
+      "faces": 1,
+      "top": false,
+      "bottom": true,
+      "physicalPreflight": {
+        "fingerprint": "92c4ceeea343d590",
+        "spaces": [
+          {
+            "spaceId": "smvw6633p",
+            "displayName": "test",
+            "status": "ok"
+          }
+        ],
+        "failures": [],
+        "ok": true
+      }
+    }
+  }
+}
