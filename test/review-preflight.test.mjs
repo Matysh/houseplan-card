@@ -144,7 +144,7 @@ test('#855 actual workflow shell: valid format reaches reviewer; malformed ledge
   git('init', '-q');
   cpSync(join(ROOT, 'scripts'), join(dir, 'scripts'), { recursive: true });
   mkdirSync(join(dir, 'docs/release-ledger/v1.80.1'), { recursive: true });
-  writeFileSync(join(dir, 'docs/release-ledger/cycle.json'), JSON.stringify({ schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81' } }));
+  writeFileSync(join(dir, 'docs/release-ledger/cycle.json'), JSON.stringify({ schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81.0' } }));
   git('add', '.'); git('commit', '-qm', 'base'); git('tag', 'v1.80.1'); const base = git('rev-parse', 'HEAD');
   const ledger = join(dir, 'docs/release-ledger/v1.80.1/7.json');
   writeFileSync(ledger, JSON.stringify({ schema: 1, issue: 7, baseStable: 'v1.80.1', category: 'infra', rationale: 'tooling' }));

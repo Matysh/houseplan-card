@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { milestoneQuery } from '../scripts/release-ledger.mjs';
+import { milestoneLink } from '../scripts/release-ledger.mjs';
 import { narrativeLanguages, validateNarrative, stableHeading } from '../scripts/release-narrative.mjs';
 import { markdownToTelegram, telegramPayload, TELEGRAM_LIMIT } from '../scripts/telegram-release.mjs';
 import { changelogContainsVersion, validateReleaseNotes } from '../scripts/release-contract.mjs';
 
 const tag = 'v1.81.0', repo = 'x/y';
-const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: tag, milestone: { number: 3, title: '1.81' } };
+const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: tag, milestone: { number: 3, title: '1.81.0' } };
 const catalogue = { cycle, entries: [{ issue: 1, category: 'major' }, { issue: 2, category: 'stable-fix' }, { issue: 3, category: 'line-fix' }, { issue: 4, category: 'infra' }] };
 const issueLink = (n) => `[#${n}](https://github.com/${repo}/issues/${n})`;
-const collection = `[Все изменения](${milestoneQuery(repo, cycle)})`;
+const collection = `[Все изменения](${milestoneLink(repo, cycle)})`;
 const notes = (body) => `<!-- release: ${tag} -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.80.1 -->\n<!-- language: ru -->\n${stableHeading(tag, 'ru')}\n\n${body}\n<!-- language: en -->\n${stableHeading(tag, 'en')}\n\n${body}\n`;
 const mixed = notes(`Теперь редактировать план удобнее.\n\n🧱 **Новая возможность.** Двигайте стены. ${issueLink(1)}\n\nТакже устранены задержки существовавшего редактора.\n\n${collection}`);
 const check = (text, cat = catalogue) => validateNarrative(text, { tag, repo, catalogue: cat });
@@ -49,6 +49,13 @@ test('stable refuses beta-only, infrastructure, foreign, raw and misplaced links
   assert.throws(() => check(mixed.replaceAll(`Двигайте стены. ${issueLink(1)}`, `${issueLink(1)} Двигайте стены.`)), /end with/);
   assert.throws(() => check(mixed.replace('Теперь', 'https://github.com/x/y Теперь')), /introductory/);
   assert.throws(() => check(mixed.replaceAll(collection, '[Все](https://github.com/x/y/milestone/3)')), /including closed/);
+  assert.throws(() => check(mixed.replaceAll(collection, '[Все](https://github.com/x/y/milestone/4?closed=1)')), /by number/);
+  const titleQuery = '[Все](https://github.com/x/y/issues?q=is%3Aissue%20milestone%3A%221.81.0%22)';
+  assert.throws(() => check(mixed.replaceAll(collection, titleQuery)), /by number/, 'title queries break on rename');
+  // Only an immutable published body (v1.81.0…v1.83.0) may keep the legacy query of its own cycle title.
+  const legacy = mixed.replaceAll(collection, '[Все изменения](https://github.com/x/y/issues?q=is%3Aissue%20milestone%3A%221.81.0%22)');
+  assert.equal(validateNarrative(legacy, { tag, repo, catalogue, published: true }), legacy);
+  assert.throws(() => validateNarrative(legacy.replaceAll('1.81.0%22', '1.82.0%22'), { tag, repo, catalogue, published: true }), /by number/);
   assert.throws(() => check(mixed.replace('<!-- base: v1.80.1 -->', '<!-- base: v1.79.0 -->')), /previous stable/);
 });
 

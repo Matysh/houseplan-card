@@ -306,7 +306,7 @@ test('#858 candidate inspects actual first-parent merge delta and committed bund
   for (const p of ['package.json','package-lock.json','.nvmrc','.python-version','tests_backend/requirements.txt','.github/workflows/validate.yml','demo/golden/matrix.mjs',
     ...new Set(Object.values(NATIVE_PROFILES).flat().map(c => c.script))]) put(p, readFileSync(join(root,p)));
   put('src/dummy.ts','export const a = 1;');
-  put('docs/release-ledger/cycle.json', JSON.stringify({ schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 1, title: '1.81' } }));
+  put('docs/release-ledger/cycle.json', JSON.stringify({ schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 1, title: '1.81.0' } }));
   const sync = () => { const m = JSON.parse(readFileSync(join(dir,'custom_components/houseplan/frontend/houseplan-assets.json'))); m.fingerprint = sourceFingerprint(dir);
     put('custom_components/houseplan/frontend/houseplan-assets.json', JSON.stringify(m)); };
   sync(); git(dir,'add','.'); git(dir,'commit','-qm','base'); git(dir,'tag','v1.80.1');

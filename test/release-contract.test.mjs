@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { milestoneQuery } from '../scripts/release-ledger.mjs';
+import { milestoneLink } from '../scripts/release-ledger.mjs';
 import { readStableFieldDecision } from '../scripts/stable-field-decision.mjs';
 import { narrativeLanguages } from '../scripts/release-narrative.mjs';
 import { TELEGRAM_LIMIT } from '../scripts/telegram-release.mjs';
@@ -133,9 +133,9 @@ test('#838/#917 real candidate contract checks publication and previous-stable m
   // Keep the complete publication/version-authority fixture with its contract tests.
   // Narrative-unit tests operate on exported behaviour, not frontend source paths.
   const tag = 'v1.81.0', repo = 'x/y';
-  const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: tag, milestone: { number: 3, title: '1.81' } };
+  const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: tag, milestone: { number: 3, title: '1.81.0' } };
   const entries = [{ issue: 1, category: 'major' }, { issue: 2, category: 'stable-fix' }, { issue: 3, category: 'line-fix' }, { issue: 4, category: 'infra' }];
-  const body = `Теперь редактировать план удобнее.\n\n🧱 **Новая возможность.** Двигайте стены. [#1](https://github.com/${repo}/issues/1)\n\nТакже устранены задержки существовавшего редактора.\n\n[Все изменения](${milestoneQuery(repo, cycle)})`;
+  const body = `Теперь редактировать план удобнее.\n\n🧱 **Новая возможность.** Двигайте стены. [#1](https://github.com/${repo}/issues/1)\n\nТакже устранены задержки существовавшего редактора.\n\n[Все изменения](${milestoneLink(repo, cycle)})`;
   const mixed = `<!-- release: ${tag} -->\n<!-- stable-notes: 1 -->\n<!-- base: v1.80.1 -->\n<!-- language: ru -->\n## Релиз Houseplan 1.81.0\n\n${body}\n<!-- language: en -->\n## Houseplan 1.81.0 release\n\n${body}\n`;
   const root = mkdtempSync(join(tmpdir(), 'hp-narrative-contract-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -184,7 +184,7 @@ test('#838/#917 real candidate contract checks publication and previous-stable m
   git('add', '.'); git('commit', '--allow-empty', '-qm', 'published stable metadata');
   const published = git('rev-parse', 'HEAD').trim();
   git('tag', tag);
-  const nextCycle = { schema: 1, baseStable: tag, targetStable: 'v1.82.0', milestone: { number: 7, title: '1.82' } };
+  const nextCycle = { schema: 1, baseStable: tag, targetStable: 'v1.82.0', milestone: { number: 7, title: '1.82.0' } };
   write('docs/release-ledger/cycle.json', JSON.stringify(nextCycle));
   git('add', '.'); git('commit', '-qm', 'open next accounting cycle');
   const verify = () => assertReleaseContract({ root, tag, repo, requirePrerelease: false,

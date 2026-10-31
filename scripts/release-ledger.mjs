@@ -23,6 +23,20 @@ export function validateCycle(cycle) {
   return cycle;
 }
 
+/** Permanent milestone naming (owner decision 2026-10-31): the target stable without `v`, e.g. `1.84.0`. */
+export const milestoneTitle = (targetStable) => targetStable.slice(1);
+
+/**
+ * The cycle being merged into or released must follow the permanent naming.
+ * Published history (cycle.json at v1.81.0…v1.83.0 tags) keeps its original titles and stays readable.
+ */
+export function assertMilestoneNaming(cycle) {
+  validateCycle(cycle);
+  if (cycle.milestone.title !== milestoneTitle(cycle.targetStable))
+    throw new Error(`Milestone ${cycle.milestone.number} must be titled ${milestoneTitle(cycle.targetStable)}: permanent X.Y.Z naming of the target stable`);
+  return cycle;
+}
+
 export function validateEntry(entry, { issue, baseStable } = {}) {
   if (entry?.schema !== 1 || !positive(entry.issue) || !stable(entry.baseStable)
     || !CATEGORIES.includes(entry.category) || !nonempty(entry.rationale))
@@ -37,7 +51,14 @@ export function validateEntry(entry, { issue, baseStable } = {}) {
   return entry;
 }
 
-export function milestoneQuery(repo, cycle) {
+/** Release collection link: the milestone page by number with closed issues; a rename cannot break it. */
+export function milestoneLink(repo, cycle) {
+  validateCycle(cycle);
+  return `https://github.com/${repo}/milestone/${cycle.milestone.number}?closed=1`;
+}
+
+/** Title query used by bodies published before 2026-10-31 (v1.81.0…v1.83.0); accepted only for immutable published notes. */
+export function legacyMilestoneQuery(repo, cycle) {
   validateCycle(cycle);
   return `https://github.com/${repo}/issues?q=${encodeURIComponent(`is:issue milestone:"${cycle.milestone.title}"`)}`;
 }
@@ -48,7 +69,7 @@ export const git = (args) => execFileSync('git', args, {
 
 export function readMergeEntry(candidate, issue, gitRunner = git) {
   candidate = gitRunner(['rev-parse', `${candidate}^{commit}`]).trim();
-  const cycle = validateCycle(JSON.parse(gitRunner(['show', `${candidate}:${LEDGER}/cycle.json`])));
+  const cycle = assertMilestoneNaming(JSON.parse(gitRunner(['show', `${candidate}:${LEDGER}/cycle.json`])));
   const tags = gitRunner(['tag', '--merged', candidate, '--list', 'v*']).split('\n');
   if (tags.includes(cycle.targetStable)) throw new Error('This stable cycle has shipped; open the next cycle before merging tasks');
   if (previousStableTag(cycle.targetStable, tags) !== cycle.baseStable)
@@ -140,11 +161,11 @@ export function readCatalogue({ candidate = 'HEAD', tag, gitRunner = git } = {})
 }
 
 export function reconcileEntry({ cycle, entry, api, repo }) {
-  validateCycle(cycle);
+  assertMilestoneNaming(cycle);
   validateEntry(entry, { baseStable: cycle.baseStable });
   const milestone = api('GET', `repos/${repo}/milestones/${cycle.milestone.number}`);
   if (milestone.title !== cycle.milestone.title || milestone.state !== 'open')
-    throw new Error('Configured milestone was renamed or closed; update the release cycle explicitly');
+    throw new Error('Configured milestone was renamed or closed: it must be open and titled X.Y.Z of the target stable; restore the title or update the release cycle explicitly');
   const current = api('GET', `repos/${repo}/issues/${entry.issue}`);
   const desired = isUserReleaseEntry(entry) ? cycle.milestone.number : null;
   if ((current.milestone?.number ?? null) === desired) return { changed: false, milestone: desired };
@@ -163,8 +184,10 @@ export const ghApi = (method, endpoint, body, execute = execFileSync) => JSON.pa
 
 export function verifyMilestone({ catalogue, repo, api = ghApi }) {
   const { cycle, userIssues } = catalogue;
+  assertMilestoneNaming(cycle);
   const milestone = api('GET', `repos/${repo}/milestones/${cycle.milestone.number}`);
-  if (milestone.title !== cycle.milestone.title) throw new Error('Milestone title no longer matches the authored collection link');
+  if (milestone.title !== cycle.milestone.title)
+    throw new Error('Milestone title must stay X.Y.Z of the target stable (permanent naming); restore it or fix the release cycle');
   const actual = [];
   for (let page = 1; ; page++) {
     const rows = api('GET', `repos/${repo}/issues?milestone=${cycle.milestone.number}&state=all&per_page=100&page=${page}`);

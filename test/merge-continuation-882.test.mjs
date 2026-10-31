@@ -56,7 +56,7 @@ function fixture(t, { tamper = false, material: sealedMaterial, counters = false
   write(work, 'a.mjs', 'export const a = 20;\n');
   write(work, 'b.mjs', 'export const b = 1;\n');
   write(work, 'docs/release-ledger/cycle.json', JSON.stringify({ schema: 1, baseStable: 'v1.0.0', targetStable: 'v1.1.0',
-    milestone: { number: 1, title: '1.1' } }));
+    milestone: { number: 1, title: '1.1.0' } }));
   commitAll(work, 'base');
   git(work, 'branch', '-M', 'dev');
   git(work, 'tag', 'v1.0.0');

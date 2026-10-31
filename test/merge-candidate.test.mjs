@@ -51,7 +51,7 @@ test('#838: trusted realOps reads classification from accepted git blobs, ignori
   git('init', '-q');
   const ledger = join(work, 'docs/release-ledger');
   mkdirSync(join(ledger, 'v1.80.1'), { recursive: true });
-  const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81' } };
+  const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81.0' } };
   writeFileSync(join(ledger, 'cycle.json'), JSON.stringify(cycle));
   git('add', '.'); git('commit', '-qm', 'base'); git('tag', 'v1.80.1');
   const entry = { schema: 1, issue: 838, baseStable: 'v1.80.1', category: 'major', rationale: 'New compared to stable', summary: { ru: 'Новая фича', en: 'New feature' } };
@@ -63,7 +63,7 @@ test('#838: trusted realOps reads classification from accepted git blobs, ignori
   const ops = realOps({ repo: 'x/y', token: 'none', issue: 838,
     exec: (command, args) => spawnSync(command, args, { cwd: work, encoding: 'utf8' }),
     releaseApi: (method, path, body) => {
-      if (path.includes('/milestones/')) return { title: '1.81', state: 'open' };
+      if (path.includes('/milestones/')) return { title: '1.81.0', state: 'open' };
       if (method === 'PATCH') { current = { number: body.milestone }; writes++; }
       return { milestone: current };
     },

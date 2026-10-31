@@ -15,7 +15,7 @@ import { findingsPolicy, findingsHeader, findingsLink } from '../scripts/review-
 import { retainReviewMaterial, reviewMaterialRef } from '../scripts/review-material.mjs';
 import { findStep } from './helpers/workflow-step.mjs';
 
-const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81' } };
+const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81.0' } };
 const publisher = 'claude[bot] <209825114+claude[bot]@users.noreply.github.com>';
 const phase = 'Delivery-Phase: spec-review/v1';
 const classification = rationale => ({ schema: 1, issue: 2, baseStable: 'v1.80.1', category: 'infra', rationale });

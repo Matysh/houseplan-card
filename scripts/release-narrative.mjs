@@ -1,5 +1,5 @@
 /** Stable release prose belongs to the agent. This module checks, never drafts. */
-import { isUserReleaseEntry, milestoneQuery } from './release-ledger.mjs';
+import { isUserReleaseEntry, legacyMilestoneQuery, milestoneLink } from './release-ledger.mjs';
 
 export const NARRATIVE_MARKER = '<!-- stable-notes: 1 -->';
 const languageMarker = (language) => `<!-- language: ${language} -->`;
@@ -32,7 +32,7 @@ export function narrativeLanguages(notes, { tag } = {}) {
   };
 }
 
-export function validateNarrative(notes, { tag, repo = 'Matysh/houseplan-card', catalogue }) {
+export function validateNarrative(notes, { tag, repo = 'Matysh/houseplan-card', catalogue, published = false }) {
   const { cycle, entries } = catalogue;
   if (tag !== cycle.targetStable) throw new Error('Narrative tag differs from the classified release cycle');
   const baseMarker = `<!-- base: ${cycle.baseStable} -->`;
@@ -41,7 +41,8 @@ export function validateNarrative(notes, { tag, repo = 'Matysh/houseplan-card', 
   const fixes = entries.filter((entry) => entry.category === 'stable-fix');
   const allowedIssues = new Set(entries.filter(isUserReleaseEntry).map((entry) => entry.issue));
   const languages = narrativeLanguages(notes, { tag });
-  const query = milestoneQuery(repo, cycle);
+  // An already published body is immutable and may keep the legacy title query; new notes link by number.
+  const accepted = [milestoneLink(repo, cycle), ...(published ? [legacyMilestoneQuery(repo, cycle)] : [])];
   const issueSets = [];
   for (const [language, body] of Object.entries(languages)) {
     const blocks = body.split(/\n\s*\n/);
@@ -53,8 +54,8 @@ export function validateNarrative(notes, { tag, repo = 'Matysh/houseplan-card', 
       throw new Error(`${language}: first block must be a plain human-readable introductory paragraph`);
     if (isFeature(blocks[0])) throw new Error(`${language}: introductory paragraph must precede the features`);
     const collection = blocks.pop();
-    if (links(collection).length !== 1 || collection !== links(collection)[0][0] || links(collection)[0][2] !== query)
-      throw new Error(`${language}: final compact link must select the exact milestone, including closed issues`);
+    if (links(collection).length !== 1 || collection !== links(collection)[0][0] || !accepted.includes(links(collection)[0][2]))
+      throw new Error(`${language}: final compact link must open the cycle milestone by number, including closed issues (/milestone/N?closed=1)`);
     blocks.shift();
     let bullets = [];
     while (blocks.length && isFeature(blocks[0])) bullets.push(blocks.shift());
@@ -79,7 +80,7 @@ export function validateNarrative(notes, { tag, repo = 'Matysh/houseplan-card', 
     if (blocks.some((block) => /^[-*]|\n- /.test(block))) throw new Error(`${language}: fixes-only notes have paragraphs, not a list`);
     const allAnchors = links(body);
     for (const [, label, url] of allAnchors) {
-      if (url === query) continue;
+      if (accepted.includes(url)) continue;
       const issue = Number(label.slice(1));
       if (!/^#\d+$/.test(label) || url !== `https://github.com/${repo}/issues/${issue}` || !allowedIssues.has(issue))
         throw new Error(`${language}: foreign/infra/within-line issue or noncompact link in stable body`);

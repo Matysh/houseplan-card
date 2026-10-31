@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { catalogueFromCommits, ghApi, readCatalogue, readMergeEntry, reconcileEntry, validateEntry, verifyMilestone } from '../scripts/release-ledger.mjs';
+import { catalogueFromCommits, ghApi, assertMilestoneNaming, milestoneLink, milestoneTitle, readCatalogue, readMergeEntry, reconcileEntry, validateCycle, validateEntry, verifyMilestone } from '../scripts/release-ledger.mjs';
 
-const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81' } };
+const cycle = { schema: 1, baseStable: 'v1.80.1', targetStable: 'v1.81.0', milestone: { number: 3, title: '1.81.0' } };
 const entry = (issue, category) => ({ schema: 1, issue, baseStable: cycle.baseStable, category,
   rationale: 'Evidence relative to previous stable, reviewed by the agent.',
   summary: { ru: 'Изменение', en: 'Change' }, ...(category === 'line-fix' ? { introducedBy: 1 } : {}) });
@@ -58,7 +58,7 @@ test('milestone writes are idempotent, excluded categories remove only the relea
   const calls = [];
   const api = (method, path, body) => {
     calls.push([method, path, body]);
-    if (path.includes('/milestones/')) return { title: '1.81', state: 'open' };
+    if (path.includes('/milestones/')) return { title: '1.81.0', state: 'open' };
     if (method === 'PATCH') { current = body.milestone === null ? null : { number: body.milestone }; return {}; }
     return { milestone: current };
   };
@@ -74,10 +74,30 @@ test('milestone writes are idempotent, excluded categories remove only the relea
 
 test('public collection includes closed issues and rejects extra unmerged/infra issues', () => {
   const catalogue = catalogueFromCommits({ cycle, entries, commits });
-  const api = (method, path) => path.includes('/milestones/') ? { title: '1.81' } : [{ number: 1, state: 'closed' }, { number: 3, state: 'closed' }];
+  const api = (method, path) => path.includes('/milestones/') ? { title: '1.81.0' } : [{ number: 1, state: 'closed' }, { number: 3, state: 'closed' }];
   assert.doesNotThrow(() => verifyMilestone({ catalogue, repo: 'x/y', api }));
-  const extra = (method, path) => path.includes('/milestones/') ? { title: '1.81' } : [...api(method, path), { number: 2 }];
+  const extra = (method, path) => path.includes('/milestones/') ? { title: '1.81.0' } : [...api(method, path), { number: 2 }];
   assert.throws(() => verifyMilestone({ catalogue, repo: 'x/y', api: extra }), /exactly candidate/);
+});
+
+test('milestone naming is permanently X.Y.Z of the target stable and the collection link is by number', () => {
+  // Owner decision 2026-10-31: titles never carry `v` or drop the patch part; links survive renames.
+  assert.equal(milestoneTitle('v1.84.0'), '1.84.0');
+  assert.equal(assertMilestoneNaming(cycle), cycle);
+  for (const title of ['1.81', 'v1.81.0', '1.81.0 ', '1.81.1'])
+    assert.throws(() => assertMilestoneNaming({ ...cycle, milestone: { number: 3, title } }), /must be titled 1\.81\.0/);
+  assert.throws(() => assertMilestoneNaming({ ...cycle, milestone: { title: '1.81.0' } }), /Invalid release cycle/);
+  // Published history (v1.81.0…v1.83.0 tags carry `1.81`…`1.83`) stays readable; its links work by number.
+  const published = { ...cycle, milestone: { number: 3, title: '1.81' } };
+  assert.equal(validateCycle(published), published);
+  assert.equal(milestoneLink('x/y', published), 'https://github.com/x/y/milestone/3?closed=1');
+  assert.equal(milestoneLink('x/y', cycle), 'https://github.com/x/y/milestone/3?closed=1');
+  assert.equal(milestoneLink('x/y', { ...cycle, milestone: { number: 11, title: '1.81.0' } }), 'https://github.com/x/y/milestone/11?closed=1');
+  const renamed = (method, path) => path.includes('/milestones/') ? { title: '1.81', state: 'open' } : [];
+  assert.throws(() => verifyMilestone({ catalogue: catalogueFromCommits({ cycle, entries, commits }), repo: 'x/y', api: renamed }), /permanent naming/);
+  assert.throws(() => reconcileEntry({ cycle, entry: entries.get(1), repo: 'x/y', api: renamed }), /renamed or closed/);
+  const stale = { ...cycle, milestone: { number: 3, title: '1.81' } };
+  assert.throws(() => verifyMilestone({ catalogue: catalogueFromCommits({ cycle: stale, entries, commits }), repo: 'x/y', api: renamed }), /must be titled/);
 });
 
 test('#916 GitHub transport reads a full >1 MiB child response and fails closed on malformed/failed/oversized output', () => {

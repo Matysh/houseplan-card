@@ -5514,6 +5514,12 @@ their existing per-commit contract.
 `docs/release-ledger/cycle.json` explicitly binds the previous stable, the
 intended stable tag and an existing GitHub milestone number/title. Do not guess
 a milestone from an issue label or whichever milestone happens to be open.
+Milestone titles use one permanent format (owner decision 2026-10-31): the
+target stable without `v`, always with all three parts — `1.84.0`, never
+`1.84` or `v1.84.0`. For the current cycle, merge, reconcile and
+`verify-milestone` refuse any other title in `cycle.json` or on GitHub
+(`assertMilestoneNaming`). Cycles published at earlier tags keep their original
+titles (`1.81`…`1.83`) and stay readable; their links work by number.
 Current planning binds `v1.84.0` to milestone 11 (`1.84.0`), with `v1.83.0` as the
 previous stable. The next cycle opens with #1146 after the 1.83.0 publication;
 the planned target can be changed before release. The preceding 1.83.0 cycle
@@ -5604,11 +5610,14 @@ node scripts/release-contract.mjs vX.Y.Z --stable
 ```
 
 Extra unmerged/infra issues in the milestone must be investigated and removed or
-reassigned by the curator; never advertise unshipped work. The query omits state
-filters so closed issues remain visible. Publication verifies this equality
-again. The agent writes both user changelog sections using this format
-(one language per file; the English file has the equivalent English heading
-and prose):
+reassigned by the curator; never advertise unshipped work. The public collection
+link is the milestone page by number with closed issues,
+`https://github.com/<repo>/milestone/<number>?closed=1` (`milestoneLink()`): it
+does not depend on the title, so a rename cannot break published links. By
+stable publication every user issue of the cycle has closed after its beta.
+Publication verifies the membership equality again. The agent writes both user
+changelog sections using this format (one language per file; the English file
+has the equivalent English heading and prose):
 
 ```md
 <!-- release: vX.Y.Z -->
@@ -5623,7 +5632,7 @@ and prose):
 
 Коротко о других исправлениях уже существовавшего поведения.
 
-[Все пользовательские изменения](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%22TITLE%22)
+[Все пользовательские изменения](https://github.com/Matysh/houseplan-card/milestone/NUMBER?closed=1)
 ```
 
 `--write` mechanically copies these already-authored RU/EN sections into
@@ -5634,7 +5643,7 @@ two user files exactly; missing locales/tags, stale bases and divergence fail
 closed. This is the GitHub release body consumed by the HACS/HA update dialog;
 there is no separate updater inside the card and no new runtime fetch path.
 
-Use the actual tag/base and `milestoneQuery()` URL, not the placeholders. Zero
+Use the actual tag/base and `milestoneLink()` URL, not the placeholders. Zero
 major issues means zero bullets; up to five bullets can group multiple major
 issues using compact number links. No obligatory small-fixes line, full raw URLs,
 engineering headings or internal tasks. The agreed release title is the only

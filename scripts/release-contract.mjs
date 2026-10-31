@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { NARRATIVE_MARKER, validateNarrative } from './release-narrative.mjs';
-import { readCatalogue } from './release-ledger.mjs';
+import { legacyMilestoneQuery, milestoneLink, readCatalogue } from './release-ledger.mjs';
 import { telegramPayload } from './telegram-release.mjs';
 import { readUserStableNotes } from './user-stable-changelog.mjs';
 
@@ -93,10 +93,10 @@ export function changelogContainsVersion(changelog, tag, { allowParagraphs = fal
   return false;
 }
 
-export function validateReleaseNotes(notes, { tag, repo, catalogue }) {
+export function validateReleaseNotes(notes, { tag, repo, catalogue, published = false }) {
   if (catalogue || notes.includes(NARRATIVE_MARKER)) {
     if (!catalogue) throw new Error('Stable narrative needs candidate-bound release classifications');
-    return validateNarrative(notes, { tag, repo, catalogue });
+    return validateNarrative(notes, { tag, repo, catalogue, published });
   }
   const marker = `<!-- release: ${tag} -->`;
   if (notes.split(/\r?\n/, 1)[0] !== marker)
@@ -179,20 +179,25 @@ export function assertReleaseContract({
   if (!changelogContainsVersion(contract.changelogEn, tag, { allowParagraphs: narrative }))
     throw new Error(`docs/CHANGELOG.md has no dated ${tag} section`);
   let candidate = 'HEAD';
+  let published = false;
   if (narrative && verifyPublishedStable && !parsed.prerelease) {
     const cycle = JSON.parse(gitRunner(['show', 'HEAD:docs/release-ledger/cycle.json']));
     if (tag === cycle.baseStable && tag !== cycle.targetStable) {
       candidate = `refs/tags/${tag}`;
+      published = true;
       gitRunner(['merge-base', '--is-ancestor', candidate, 'HEAD']);
       if (contract.notes.trim() !== gitRunner(['show', `${candidate}:docs/RELEASE-NOTES.md`]))
         throw new Error('Published stable notes must match their immutable tag');
     }
   }
   const catalogue = narrative ? readCatalogue({ tag, candidate, gitRunner }) : null;
-  validateReleaseNotes(contract.notes, { tag, repo, ...(narrative ? { catalogue } : {}) });
+  validateReleaseNotes(contract.notes, { tag, repo, ...(narrative ? { catalogue, published } : {}) });
   if (narrative) {
     const authored = readUserStableNotes(root, { tag, baseStable: catalogue.cycle.baseStable });
-    if (contract.notes.trim() !== authored.trim())
+    // The user changelog may carry the by-number link where the immutable published body kept the title query.
+    const body = published ? contract.notes.replaceAll(`(${legacyMilestoneQuery(repo, catalogue.cycle)})`,
+      `(${milestoneLink(repo, catalogue.cycle)})`) : contract.notes;
+    if (body.trim() !== authored.trim())
       throw new Error('Stable release body must preserve the exact authored user changelog RU/EN sections');
     // Dry rendering only: reject an oversized announcement before publication,
     // not after the release has become public. No network or file writes here.

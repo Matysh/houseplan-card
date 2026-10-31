@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1164,
+  "baseStable": "v1.83.0",
+  "category": "infra",
+  "rationale": "Compared with v1.83.0, changes only release accounting: user-changelog collection links point to milestone pages by number, and the permanent X.Y.Z milestone naming is checked for the current cycle. No shipped product code, persisted configuration or runtime behaviour changes."
+}

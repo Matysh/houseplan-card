@@ -5,8 +5,10 @@ Rules and commands: [DEVELOPMENT.md](DEVELOPMENT.md#agent-authored-stable-notes-
 Technical history and betas: [CHANGELOG.md](CHANGELOG.md).
 
 The 1.80.1 entry below is the owner's approved style example, translated into
-English. It does not rewrite the published release; its historical milestone
-collection has not yet been curated under the new rules.
+English. It does not rewrite the published release.
+
+Each entry's final link opens the milestone page by number with closed issues
+(`…/milestone/N?closed=1`), so it does not depend on the milestone title.
 
 <!-- release: v1.83.0 -->
 <!-- base: v1.82.0 -->
@@ -26,7 +28,7 @@ House Plan is easier to edit, display on home screens and use for quick actions.
 
 Saving and editing large plans, Undo/Redo and state updates are faster. Connection recovery, dialogs, backups and narrow-screen styling have also been improved.
 
-[All user-facing changes](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.83%22)
+[All user-facing changes](https://github.com/Matysh/houseplan-card/milestone/9?closed=1)
 
 <!-- release: v1.82.0 -->
 <!-- base: v1.81.0 -->
@@ -46,7 +48,7 @@ A major editor and settings update makes plans easier to style, devices easier t
 
 Fixed restoring vacuum trails, rooms with retained openings and backups with stale links. Device cards explain alarm causes; Home Connect service reminders no longer trigger red pulsing. Removed Home darkness while keeping lamp glow.
 
-[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.82%22)
+[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/milestone/7?closed=1)
 
 
 <!-- release: v1.81.0 -->
@@ -67,7 +69,7 @@ Aligning your plan is easier, vacuum maps show more detail, and Zigbee indicator
 
 Large-plan updates and wall-node dragging are faster. Undo and saving after errors are more reliable, and Optimize explains how to clean up old records. You can move the wall-thickness dialog while the wall being edited stays highlighted.
 
-[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.81%22)
+[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/milestone/3?closed=1)
 
 <!-- release: v1.80.1 -->
 <!-- base: v1.79.0 -->
@@ -87,7 +89,7 @@ Editing your plan is easier: move walls by dragging their nodes and remove unuse
 
 Switching floors and resizing rooms is faster on large plans. LED strips cause less slowdown when zooming. We also fixed the room outline during radar setup and device and opening updates in space cards.
 
-[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.80.1%22)
+[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/milestone/4?closed=1)
 
 <!-- release: v1.79.0 -->
 <!-- base: v1.78.0 -->
@@ -101,7 +103,7 @@ Show light right where it belongs: draw an LED strip on the plan and link it to 
 
 In 2.5D, furniture no longer shifts when switching views, and device icons stay put when their states change. Updates and floor switching are faster, and room fills no longer flicker. Returning to the editor after the card reloads is more reliable; failed loads no longer retry without your action.
 
-[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.79.0%22)
+[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/milestone/5?closed=1)
 
 <!-- release: v1.78.0 -->
 <!-- base: v1.77.0 -->
@@ -121,4 +123,4 @@ Your plan is clearer and easier to use every day. Volumetric view is now in Gene
 
 Panning and swiping between spaces no longer compete, and double-tap fits the plan again. Translucent device icons help you line things up in the Plan editor. We fixed number entry, Home Assistant dialogs, large-plan uploads and vacuum route links during import. Virtual lights save their latest changes more reliably when Home Assistant stops.
 
-[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.78.0%22)
+[All user-facing changes in this release](https://github.com/Matysh/houseplan-card/milestone/6?closed=1)

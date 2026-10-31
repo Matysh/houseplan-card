@@ -24,8 +24,8 @@ test('approved 1.80.1 example is preserved as separate RU/EN user prose, not a t
     assert.equal(body.split(/\n\n(?=🧱|🔋|📡|🗑️|💾)/).length, 6);
     assert.doesNotMatch(body, /\n[-*] |#834|#832|## Основное|## Highlights/);
   }
-  // A format fixture, not a retrospective assertion about milestone membership.
-  const catalogue = { cycle: { schema: 1, baseStable, targetStable: tag, milestone: { number: 1, title: '1.80.1' } },
+  // A format fixture, not a retrospective assertion about milestone membership; 4 is the real 1.80.1 milestone.
+  const catalogue = { cycle: { schema: 1, baseStable, targetStable: tag, milestone: { number: 4, title: '1.80.1' } },
     entries: [803,792,806,807,817,798,800,819,820].map((issue) => ({ issue, category: 'major' }))
       .concat({ issue: 814, category: 'stable-fix' }) };
   assert.equal(validateNarrative(compose(), { tag, catalogue }), compose());
@@ -64,7 +64,7 @@ test('retrospective 1.78/1.79 have equivalent locale coverage and links only to 
     for (const body of Object.values(narrativeLanguages(source))) {
       const issues = [...body.matchAll(/\[#(\d+)\]/g)].map((match) => Number(match[1]));
       assert.deepEqual(issues, entry.majors);
-      assert.match(body, new RegExp(`milestone%3A%22${entry.tag.slice(1)}%22\\)`));
+      assert.ok(body.endsWith(`(https://github.com/Matysh/houseplan-card/milestone/${entry.milestone}?closed=1)`));
     }
   }
 });
