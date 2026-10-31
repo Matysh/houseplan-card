@@ -110,7 +110,9 @@ Object.assign(out,await page.evaluate(async()=>{
   const kiosk=document.querySelector('houseplan-card'), dialog=kiosk.renderRoot.querySelector('hp-dialog[data-kind="kiosk"]');
   const result={profileScaleSlidersLocked:[...dialog.querySelectorAll('input[type="range"]')].length===2&&[...dialog.querySelectorAll('input[type="range"]')].every(input=>input.disabled),
     bothLockedDisableReset:dialog.querySelector('.btn.ghost').disabled,
-    lockReasonIsVisible:[...dialog.querySelectorAll('.rhint')].some(el=>el.textContent.includes(kiosk._t('kiosk.profile_locked')))};
+    lockReasonIsVisible:[...dialog.querySelectorAll('.hpf-hint')].some(el=>
+      el.textContent.includes(kiosk._t('kiosk.profile_locked'))
+      && el.getBoundingClientRect().height>0 && getComputedStyle(el).visibility!=='hidden')};
   dialog.querySelector('[data-hp="dialog-cancel"]').click();await kiosk.updateComplete;
   const removed=structuredClone(kiosk._serverCfg);removed.settings.external_screens.screens=removed.settings.external_screens.screens.filter(s=>s.id!==2);
   const rev=window.__pushServerConfig(removed), end=performance.now()+10000;

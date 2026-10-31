@@ -17,7 +17,7 @@ hp-dialog.ui-dialog *:is(.body,.device-inbox){box-sizing:border-box;min-width:0;
 :where(hp-dialog.ui-dialog) .row{display:flex;gap:12px;min-width:0;}
 :where(hp-dialog.ui-dialog) .row .spacer{flex:1;}
 :where(hp-dialog.ui-dialog) > .row[slot=footer]:where(:not(.hpf-footer-space)){display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;margin:0;padding:12px 16px;border:0;background:var(--hpf-surface);}
-hp-dialog.ui-dialog input[type=checkbox]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--hpf-accent);cursor:pointer;}
+:where(hp-dialog.ui-dialog input[type=checkbox]){width:18px;height:18px;margin:0;flex:none;accent-color:var(--hpf-accent);cursor:pointer;}
 hp-dialog.ui-dialog .rhint{margin:0 0 18px;padding:8px 10px;border-inline-start:3px solid var(--info-color,var(--hpf-accent));background:color-mix(in srgb,var(--info-color,var(--hpf-accent)) 10%,var(--hpf-surface));font-size:12px;line-height:1.5;}
 /* Existing floor-import presentation, shared by both runtime entry paths. */
 hp-dialog[data-kind=import].ui-dialog{--hp-dialog-icon-size:32px;}

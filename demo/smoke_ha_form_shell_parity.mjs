@@ -45,13 +45,24 @@ const HA_DIALOG_STUB = String.raw`
 
 const { page, browser } = await launch({ width: 1600, height: 1000 });
 
-const setup = await page.evaluate(async (stub) => {
+await page.evaluate(stub => {
   // eslint-disable-next-line no-new-func
   new Function(stub)();
+}, HA_DIALOG_STUB);
+// Load the real common Kit through the ordinary native settings entry before
+// constructing this declared fixture. The retired legacy sheet is not its owner.
+await page.locator('houseplan-card [data-hp="settings"]').click();
+const settings = page.locator('houseplan-card hp-dialog[data-kind="settings"]');
+await settings.waitFor({ state:'visible' });
+await settings.locator('[data-hp="dialog-cancel"]').first().click();
+await settings.waitFor({ state:'detached' });
+
+const setup = await page.evaluate(async () => {
   const root = window.__card.shadowRoot || window.__card.renderRoot;
   const kinds = ['space', 'settings', 'room', 'marker', 'onboarding'];
   for (const kind of kinds) {
     const shell = document.createElement('hp-dialog');
+    shell.className = 'ui-dialog';
     shell.dataset.kind = kind;
     shell.setAttribute('form-shell', '');
     shell.wide = true;
@@ -70,7 +81,7 @@ const setup = await page.evaluate(async (stub) => {
   await generic.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   return { formCount: kinds.length };
-}, HA_DIALOG_STUB);
+});
 
 const inspect = () => page.evaluate(() => {
   const root = window.__card.shadowRoot || window.__card.renderRoot;
@@ -91,6 +102,7 @@ const inspect = () => page.evaluate(() => {
       haScrolls: haBody.scrollHeight > haBody.clientHeight,
       formOverflow: formBody ? getComputedStyle(formBody).overflowY : null,
       formBackground: formBody ? getComputedStyle(formBody).backgroundColor : null,
+      cardBackground: getComputedStyle(shell.querySelector('.hpf-card')).backgroundColor,
       surfaceBackground: getComputedStyle(panel).backgroundColor,
       footerInside: !footerBox || footerBox.bottom <= box.bottom + 1,
       noHorizontalOverflow: panel.scrollWidth <= panel.clientWidth + 1,
@@ -120,8 +132,8 @@ checkAll({
   desktopHeightCappedAt940: every(desktop.forms, (item) => item.height <= 941),
   oneHaScrollerWithoutDoublePadding: every(desktop.forms, (item) => item.haPadding === '0px'
     && item.haOverflow === 'auto' && item.haScrolls && item.formOverflow === 'visible'),
-  canvasSurroundsDistinctSurface: every(desktop.forms, (item) => item.formBackground !== 'rgba(0, 0, 0, 0)'
-    && item.formBackground !== item.surfaceBackground),
+  commonKitBodyAndCardUseOpaqueSurface: every(desktop.forms, (item) => item.formBackground !== 'rgba(0, 0, 0, 0)'
+    && item.formBackground === item.cardBackground),
   desktopFooterInside: every(desktop.forms, (item) => item.footerInside),
   genericWideDialogUnchanged: Math.abs(desktop.genericWidth - 580) <= 1,
   edge480IsFullscreen: every(edge480.forms, (item) => Math.abs(item.width - 480) <= 1
