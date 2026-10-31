@@ -5133,6 +5133,16 @@ SHA is the authority; these are sandbox numbers.
 
 ## Release
 
+Emergency 1.83.1 (#1166) is built on v1.83.0, with no unrelated development UI.
+The Select-only source and isolation assertions remain unchanged; the shared
+geometry chunk/import allocation changes its compressed adapter from 21,444 to
+21,494 bytes, exceeding the old 21,462-byte cap by 32 bytes. The candidate records
+only the measured 21,494-byte cap, without headroom or byte golfing. This is bundle
+accounting, not a runtime/performance budget change. After replacing generated
+frontend chunks, regenerate the Git-backed CI registry inventory from the staged
+file list before checking it. The initial local gate failure remains recorded in
+the #1166 handoff; it is not a passing receipt.
+
 Source replacement accounting (#1014): `node scripts/process-metrics.mjs
 --source-range=v1.82.0..origin/dev --output=artifacts/source-growth.md
 --json=artifacts/source-growth.json` reads the exact Git range locally, without
