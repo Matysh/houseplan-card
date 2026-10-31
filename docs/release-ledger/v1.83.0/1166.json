@@ -4,6 +4,10 @@
   "baseStable": "v1.83.0",
   "category": "stable-fix",
   "rationale": "Restores room recognition and ordinary room saves for closed contours affected by stored T-incidence and derived-cut identity disagreement in v1.83.0. Optimize aligns connected structural contacts together and preserves hosted openings. Narrow backend proofs accept only lossless carrier promotion and ownership of existing exact wall identities; stale-client, real-gap and host-corruption refusals remain. No new UI, settings, schema or coordinate-model migration. Owner requested patch-only 1.83.1; new Optimize diagnostics are deferred to #1170.",
+  "summary": {
+    "ru": "Комнаты создаются в допустимых замкнутых контурах сразу после обновления, без предварительного Optimize. Оптимизация сохраняет примыкания стен и проёмы и не вызывает связанную ошибку сохранения.",
+    "en": "Create rooms in valid closed contours immediately after updating, without running Optimize first. Optimize preserves wall contacts and openings and avoids the related save error."
+  },
   "visual": {
     "schema": 1,
     "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
