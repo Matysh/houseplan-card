@@ -57,6 +57,7 @@
 
 import { GRID_N, GRID_STEP_N } from './space-geometry';
 import { snapToWall } from './logic';
+import { alignedWallPoints } from './align-wall-contacts';
 
 /** Anything closer than this to a node already counts as being on it. */
 const EPS = GRID_STEP_N * 1e-6;
@@ -195,6 +196,7 @@ export function alignAllToGrid(
   for (const sp of spaces) {
     const cell = cellCmOf(sp);
     const sid = sp?.id != null ? String(sp.id) : '';
+    const wallPoint = alignedWallPoints(sp, snapN);
 
     // ---- rooms: every vertex to the nearest node ----------------------
     for (const r of sp.rooms || []) {
@@ -202,7 +204,7 @@ export function alignAllToGrid(
       let d = 0;
       if (r.poly?.length) {
         r.poly = r.poly.map((p: number[]) => {
-          const q = [snapN(p[0]), snapN(p[1])];
+          const q = wallPoint(p);
           d = Math.max(d, dist(p[0], p[1], q[0], q[1]));
           noteCanonicalPoint(p, q);
           return q;
@@ -212,8 +214,8 @@ export function alignAllToGrid(
         // as corners and not as sizes (a snapped size on an off-grid origin
         // would leave the other side between the nodes).
         const x0 = r.x, y0 = r.y, w0 = r.w || 0, h0 = r.h || 0;
-        const x2 = snapN(x0 + w0), y2 = snapN(y0 + h0);
-        const nx = snapN(x0), ny = snapN(y0);
+        const [x2, y2] = wallPoint([x0 + w0, y0 + h0]);
+        const [nx, ny] = wallPoint([x0, y0]);
         const nw = Math.max(GRID_STEP_N, x2 - nx), nh = Math.max(GRID_STEP_N, y2 - ny);
         d = boxShift(x0, y0, w0, h0, nx, ny, nw, nh);
         r.x = nx; r.y = ny; r.w = nw; r.h = nh;
@@ -229,8 +231,8 @@ export function alignAllToGrid(
     for (const p of sp.partitions || []) {
       total++;
       const beforeA = [p.a[0], p.a[1]], beforeB = [p.b[0], p.b[1]];
-      const a = [snapN(beforeA[0]), snapN(beforeA[1])];
-      const b = [snapN(beforeB[0]), snapN(beforeB[1])];
+      const a = wallPoint(beforeA);
+      const b = wallPoint(beforeB);
       let d = Math.max(dist(beforeA[0], beforeA[1], a[0], a[1]),
         dist(beforeB[0], beforeB[1], b[0], b[1]));
       const snappedLength = dist(a[0], a[1], b[0], b[1]);

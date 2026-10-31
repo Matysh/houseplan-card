@@ -22,6 +22,15 @@ const rayAt = (degrees, lengthCm = 100) => {
   return { a: [0, 0], b: [Math.cos(radians) * cm(lengthCm), Math.sin(radians) * cm(lengthCm)] };
 };
 
+test('#1166 a stored shared sub-ray is not an authored acute wedge',()=>{
+  const carrier={a:[0,0],b:[1,.1]};
+  assert.deepEqual(checkNodes([carrier,{a:[0,0],b:[.333333333,.033333333]}]),[]);
+  assert.equal(checkNodes([carrier,{a:[0,0],b:[.333333333,.033333343]}])
+    .filter(item=>item.rule==='angle').length,1,'a genuine small angle still fails');
+  assert.equal(checkNodes([carrier,{a:[0,1e-8],b:[.333333333,.033333333]}])
+    .filter(item=>item.rule==='angle').length,1,'a nearby independent origin grants no shared-ray proof');
+});
+
 test('П1: угол ниже 15° отклоняется, 15° и выше проходит', () => {
   assert.equal(MIN_JUNCTION_ANGLE_DEG, 15);
   const narrow = checkNodes([rayAt(0), rayAt(14)]);

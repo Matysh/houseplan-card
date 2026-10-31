@@ -21,8 +21,10 @@ from __future__ import annotations
 
 import logging
 import math
+import sys
 from typing import Any
 
+from .coordinate_canonicalization import COORDINATE_FACTOR, LATTICE_GRID_N
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
@@ -119,11 +121,11 @@ def limit_segments(space: dict[str, Any]) -> list[dict[str, Any]]:
 
 def check_nodes(segments: list[dict[str, Any]]) -> list[tuple[str, str, float, float]]:
     """П1 + П2: valence of a node and the narrowest wedge in it."""
-    rays: dict[str, list[float]] = {}
+    rays: dict[str, list[tuple[float, list, list]]] = {}
     for segment in segments:
         for start, end in ((segment["a"], segment["b"]), (segment["b"], segment["a"])):
             rays.setdefault(_key(start), []).append(
-                math.atan2(end[1] - start[1], end[0] - start[0])
+                (math.atan2(end[1] - start[1], end[0] - start[0]), start, end)
             )
     violations: list[tuple[str, str, float, float]] = []
     for node, angles in rays.items():
@@ -133,23 +135,49 @@ def check_nodes(segments: list[dict[str, Any]]) -> list[tuple[str, str, float, f
             )
         if len(angles) < 2:
             continue
-        ordered = sorted(angles)
+        ordered = sorted(angles, key=lambda ray: ray[0])
         smallest = math.inf
-        for index, value in enumerate(ordered):
-            delta = ordered[(index + 1) % len(ordered)] - value
+        for index, left in enumerate(ordered):
+            right = ordered[(index + 1) % len(ordered)]
+            delta = right[0] - left[0]
             if index == len(ordered) - 1:
                 delta += math.pi * 2
             degrees = (delta * 180) / math.pi
+            same_ray = degrees < 90 and left[1] == right[1] and (
+                _stored_wall_contact(left[2], right[1], right[2])
+                or _stored_wall_contact(right[2], left[1], left[2])
+            )
             # A ~0° pair is NOT a violation — and cannot be (#331 revision 4,
             # learned in the field): a shared wall of two adjacent rooms is
             # two co-located owner atoms ON ONE LINE, so every shared-wall
             # node carries a legitimate 0° pair by construction. An exact
             # duplicate stays a KNOWN LIMITATION of П1 at this level.
-            if _EPS < degrees < smallest:
+            if not same_ray and _EPS < degrees < smallest:
                 smallest = degrees
         if smallest < MIN_JUNCTION_ANGLE_DEG - 1e-9:
             violations.append(("angle", node, smallest, MIN_JUNCTION_ANGLE_DEG))
     return violations
+
+
+def _stored_wall_contact(point: list, a: list, b: list, *, finite: bool = True) -> bool:
+    """Storage-only finite-ray proof; mirrors storedWallContact(..., false)."""
+    def uncertainty(value: float) -> float:
+        steps = value * LATTICE_GRID_N
+        return (0.0 if abs(steps - round(steps)) <= sys.float_info.epsilon * 16 * max(1, abs(steps))
+                else .5 / COORDINATE_FACTOR)
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length2 = dx * dx + dy * dy
+    if length2 <= 0:
+        return False
+    ex = uncertainty(point[0]) + max(uncertainty(a[0]), uncertainty(b[0]))
+    ey = uncertainty(point[1]) + max(uncertainty(a[1]), uncertainty(b[1]))
+    roundoff = sys.float_info.epsilon * 16 * max(1, *(abs(v) for p in (point, a, b) for v in p)) ** 2
+    cross = abs(dx * (point[1] - a[1]) - dy * (point[0] - a[0]))
+    if cross > abs(dy) * ex + abs(dx) * ey + roundoff:
+        return False
+    t = ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length2
+    along = (abs(dx) * ex + abs(dy) * ey + roundoff) / length2
+    return not finite or -along <= t <= 1 + along
 
 
 def _axis_degrees(segment: dict[str, Any]) -> float:

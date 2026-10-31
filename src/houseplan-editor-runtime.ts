@@ -351,6 +351,7 @@ import { gridVisualUnits } from './grid-scale';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
 import { selectWallFaceLineage, settleWallFaceLineage } from './wall-face-lineage';
+import { wallFaceProvenPoints } from './stored-wall-contact';
 import { classifyWallFaceCandidates, selectWallFacePromotionIds } from './wall-face-room-split';
 import { finalizeWallChainSpace } from './writer-fixed-point';
 import {
@@ -2767,7 +2768,7 @@ public _activeWallSourceKey(index: number): string {
 public _wallGraphSources(_path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
     const staticGeometry = this._planStructuralGeometrySnapshot().value;
     return staticGeometry.segments.map((segment) => ({
-      a: segment.a, b: segment.b, key: `static:${segment.key}`,
+      a: segment.a, b: segment.b, key: `static:${segment.key}`, contour: segment.sourceKind === 'room',
     }));
   }
 
@@ -6880,7 +6881,7 @@ public _applyWallFaceBatch(): void {
     const activePartitionIds = new Set(batch.activePartitionIds);
     const epsilon = this.host._gridPitch * 0.0002;
     const roomLineage = accepted.map((decision) => selectWallFaceLineage(
-      decision.candidate.ring, model.partitions, activePartitionIds, epsilon,
+      decision.candidate.ring, model.partitions, activePartitionIds, epsilon, model.wall_segments,
     ));
     const sourceIntervals = wallIntervals(
       model.rooms, sp.walls, this.host._openCuts(),
@@ -6895,6 +6896,8 @@ public _applyWallFaceBatch(): void {
       this._restoreGeometryStateLocal(before);
       abort('toast.geometry_unsafe');
     };
+    const provenRings = this._wallFaceGraph(this._wallGraphSources(batch.activePath), epsilon)
+      .faces.map(face => face.ring.map(point => [point[0] / NORM_W, point[1] / NORM_W]));
     if (repairs[0] && !this._applyWallRepair(repairs[0], batch)) {
       abort('toast.wall_repair_changed');
       return;
@@ -7009,6 +7012,7 @@ public _applyWallFaceBatch(): void {
           gridPitch: this.host._gridPitch,
           coordScale: NORM_W,
           allowCoincidentPartitions: true, // #478 room acceptance consumes its wall carriers.
+          preservePartialOpeningHosts: true,
           partitionIds: selectWallFacePromotionIds(acceptedRings, model.partitions, epsilon),
         },
       );
@@ -7024,7 +7028,10 @@ public _applyWallFaceBatch(): void {
       }
     }
 
-    if (!this._commitPhysicalGeometry(this.host._t('history.wall_face_batch'), before)) {
+    // Reuse only vertices independently proved from the frozen source graph.
+    // A rounded topology key or arbitrary dialog point cannot grant debt.
+    const inheritedPoints = wallFaceProvenPoints(newRooms.map(({ room }) => room.poly), provenRings);
+    if (!this._commitPhysicalGeometry(this.host._t('history.wall_face_batch'), before, inheritedPoints)) {
       this._dismissWallFaceBatch();
       return;
     }

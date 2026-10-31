@@ -320,10 +320,12 @@ for (const opening of ['same-residual', 'absorbed', 'new-residual']) {
     await settleWrites(page);
     const after = await snapshot(page);
     if (opening !== 'same-residual') return {
-      actualBackendRejection: after.server.attempts.length === 1 && after.server.rejected.length === 1,
-      serverRetainsOriginal: after.server.accepted.length === 0 && equal(after.server.saved, before.server.saved),
-      optimisticGeometryRolledBack: equal(geometry(after.config), geometry(before.config)),
-      noRejectedHistory: after.history === before.history,
+      ordinaryWriteAccepted: after.server.attempts.length === 1 && after.server.accepted.length === 1
+        && after.server.rejected.length === 0,
+      roomCreated: after.config.spaces[0].rooms.length === before.config.spaces[0].rooms.length+1,
+      openingAndOriginalCarrierPreserved: equal(after.config.spaces[0].openings,before.config.spaces[0].openings)
+        && equal(after.config.spaces[0].partitions.find(p=>p.id==='long-source'),before.config.spaces[0].partitions.find(p=>p.id==='long-source')),
+      oneAcceptedHistoryStep: after.history === before.history+1,
     };
     const oldOpening = before.config.spaces[0].openings[0];
     const newOpening = after.config.spaces[0].openings[0];

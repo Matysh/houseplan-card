@@ -31,6 +31,18 @@
       "configs": 12
     },
     {
+      "file": "test/fixtures/1166-room-candidates.json",
+      "configs": 60
+    },
+    {
+      "file": "test/fixtures/1166-shared-cut.json",
+      "configs": 1
+    },
+    {
+      "file": "test/fixtures/1166-two-contours.json",
+      "configs": 1
+    },
+    {
       "file": "test/fixtures/197-junction-patch.json",
       "configs": 1
     },
@@ -3918,6 +3930,2722 @@
           ],
           "openings": [],
           "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/0/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/0/source",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/0/candidates/0",
+      "fingerprint": "bf1108256708655369a7c522fcadf0652ade7566c42740b41a61444d59a67191",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "wall-ordinal-17",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "wall-ordinal-18",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "wall-ordinal-19"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+                "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+                "wall-ordinal-17",
+                "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+                "wall-ordinal-19",
+                "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+                "wall-ordinal-18"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/0/candidates/1",
+      "fingerprint": "988709dc6e4f097ff115bb85fb1006056d84546066bef4bec2fe0dcdef125031",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "wall-ordinal-17",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "wall-ordinal-18",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "wall-ordinal-19"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+                "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+                "wall-ordinal-17",
+                "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+                "wall-ordinal-19",
+                "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+                "wall-ordinal-18"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+                "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+                "partition-c811d976-823f-4347-9347-1d0691a21795",
+                "partition-60652b45-7705-4b45-afe7-741f17e8ac0c"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/1/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/1/source",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/1/candidates/0",
+      "fingerprint": "93919b6ac9a5fe91055f9397aedf2ff0e1f6f7f1ba7b3aafec781d499044c08c",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+                "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+                "partition-c811d976-823f-4347-9347-1d0691a21795",
+                "partition-60652b45-7705-4b45-afe7-741f17e8ac0c"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/1/candidates/1",
+      "fingerprint": "142e740c5b1e34707917f4d8789099be254ae528dcc443ec1f5cef88c2c1e67d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "wall-ordinal-20",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "wall-ordinal-21",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "wall-ordinal-22"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+                "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+                "partition-c811d976-823f-4347-9347-1d0691a21795",
+                "partition-60652b45-7705-4b45-afe7-741f17e8ac0c"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+                "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+                "wall-ordinal-20",
+                "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+                "wall-ordinal-22",
+                "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+                "wall-ordinal-21"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/2/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/2/source",
+      "fingerprint": "66a3f275d2503021ec1d2c1e3be8967065b673d01b92ec3b7bd511bc956746a2",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/2/candidates/0",
+      "fingerprint": "96896275e919458204785f475e474f5a23b12b524d75b408b80e65d887716c4d",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "wall-ordinal-23",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "wall-ordinal-24",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "wall-ordinal-25"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+                "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+                "wall-ordinal-23",
+                "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+                "wall-ordinal-25",
+                "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+                "wall-ordinal-24"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/2/candidates/1",
+      "fingerprint": "8dec6c430a51d74cfe9a76d05658962f4855af48e5d0727c3ac55c5e2a661241",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "wall-ordinal-23",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "wall-ordinal-24",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "wall-ordinal-25"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+                "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+                "wall-ordinal-23",
+                "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+                "wall-ordinal-25",
+                "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+                "wall-ordinal-24"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+                "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+                "partition-c811d976-823f-4347-9347-1d0691a21795",
+                "partition-60652b45-7705-4b45-afe7-741f17e8ac0c"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/3/original",
+      "fingerprint": "0472f7e72a0773d0d03a21dcd44324a89c99883dde606260c71b65a7d66423ad",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/3/source",
+      "fingerprint": "66a3f275d2503021ec1d2c1e3be8967065b673d01b92ec3b7bd511bc956746a2",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/3/candidates/0",
+      "fingerprint": "f6a7a465c023e081584c78bb4f4f4075cf417a41134ce7b44d0b049ec5ed1fb9",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+                "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+                "partition-c811d976-823f-4347-9347-1d0691a21795",
+                "partition-60652b45-7705-4b45-afe7-741f17e8ac0c"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/3/candidates/1",
+      "fingerprint": "b00b9f016afe7c1f6f6d7f55a4d7830015746069702aa7a2d22f20aa2150eab0",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "wall-ordinal-26",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "wall-ordinal-27",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "wall-ordinal-28"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+                "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+                "partition-c811d976-823f-4347-9347-1d0691a21795",
+                "partition-60652b45-7705-4b45-afe7-741f17e8ac0c"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+                "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+                "wall-ordinal-26",
+                "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+                "wall-ordinal-28",
+                "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+                "wall-ordinal-27"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": [
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/4/original",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/4/source",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/4/candidates/0",
+      "fingerprint": "869f6b6a26ff63ec4303afbf72970f2050b76c723fcec3e654ce33486c8748bb",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-29",
+            "wall-ordinal-30",
+            "divider"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-29",
+                "divider",
+                "wall-ordinal-30"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/4/candidates/1",
+      "fingerprint": "37653f02834c35595bb600ac5f4ce9627658bcdad2afb1f97928e8fa5d2bc5e9",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-29",
+            "wall-ordinal-30",
+            "divider",
+            "top",
+            "bottom",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-29",
+                "divider",
+                "wall-ordinal-30"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "right",
+                "bottom",
+                "divider",
+                "top"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/5/original",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/5/source",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/5/candidates/0",
+      "fingerprint": "5058a19bcbf1aa2fdf8c126c5269a9d674be9ae3025563d2865609e5307b74cf",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "divider",
+            "wall-ordinal-31",
+            "wall-ordinal-32",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-32",
+                "divider",
+                "wall-ordinal-31"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "bottom",
+            "left"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/5/candidates/1",
+      "fingerprint": "2efe177bc631458264ca39c3e7dd2bf225a48c138e4b0be86cc6b6d65abf2b85",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "top",
+            "bottom",
+            "divider",
+            "wall-ordinal-31",
+            "wall-ordinal-32",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-32",
+                "divider",
+                "wall-ordinal-31"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "left",
+                "top",
+                "divider",
+                "bottom"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ordinal-31"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/6/original",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/6/source",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/6/candidates/0",
+      "fingerprint": "bd3c9a29761177fb9760fcd58ff0b1d4907fa254cfca1c12014e5344f652a278",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-33",
+            "wall-ordinal-34",
+            "divider"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-33",
+                "divider",
+                "wall-ordinal-34"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/6/candidates/1",
+      "fingerprint": "a205672aec53cfeb1a2cb5abc2252312e06dd16442d41cc221f2626ba99ae0e7",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-33",
+            "wall-ordinal-34",
+            "divider",
+            "top",
+            "bottom",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-33",
+                "divider",
+                "wall-ordinal-34"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "right",
+                "bottom",
+                "divider",
+                "top"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/7/original",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/7/source",
+      "fingerprint": "f1e47a57d7bf3fc8285978f323e56f70aa3b562da6826f544f6fb8fd4d3193cd",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/7/candidates/0",
+      "fingerprint": "ff8fb10512fab7e0817a8e0cc389a1105a38aa271995ac4e8705374476580d88",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "divider",
+            "wall-ordinal-35",
+            "wall-ordinal-36",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-36",
+                "divider",
+                "wall-ordinal-35"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "top"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "bottom",
+            "left"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/7/candidates/1",
+      "fingerprint": "824335e2da32e831a74bc662820ac7ce5f01ff96d19a79629f5a1664adf2844a",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "top",
+            "bottom",
+            "divider",
+            "wall-ordinal-35",
+            "wall-ordinal-36",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-36",
+                "divider",
+                "wall-ordinal-35"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "left",
+                "top",
+                "divider",
+                "bottom"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "wall-ordinal-35"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/8/original",
+      "fingerprint": "6e809b921a1ba2c25b2b91d05be19f7a630fb9c0f6a5c069f9e3b02a061c4eac",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/8/source",
+      "fingerprint": "6e809b921a1ba2c25b2b91d05be19f7a630fb9c0f6a5c069f9e3b02a061c4eac",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/8/candidates/0",
+      "fingerprint": "b4cb4f02f4ce59a5e8ace0a2abbef5af20624813962c4bf5dfa5343fa18ae148",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-37",
+            "wall-ordinal-38",
+            "divider"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-37",
+                "divider",
+                "wall-ordinal-38"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/8/candidates/1",
+      "fingerprint": "617970b80548d99cb46d34df4c2926955b9736e695e7b664ab1afdbd6e642ed3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-37",
+            "wall-ordinal-38",
+            "divider",
+            "top",
+            "bottom",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-37",
+                "divider",
+                "wall-ordinal-38"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "right",
+                "bottom",
+                "divider",
+                "top"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/9/original",
+      "fingerprint": "6e809b921a1ba2c25b2b91d05be19f7a630fb9c0f6a5c069f9e3b02a061c4eac",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/9/source",
+      "fingerprint": "6e809b921a1ba2c25b2b91d05be19f7a630fb9c0f6a5c069f9e3b02a061c4eac",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/9/candidates/0",
+      "fingerprint": "392c614f44d759d4d4349de4b071fe477dc5e89fa1ecef49c80a8a05f73dca6e",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "divider",
+            "wall-ordinal-39",
+            "wall-ordinal-40",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-40",
+                "divider",
+                "wall-ordinal-39"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "bottom",
+            "left"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/9/candidates/1",
+      "fingerprint": "d53b8b896bce23dccafb060de7022c702feb512df5e9cd05b39b15e479d635d3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "top",
+            "bottom",
+            "divider",
+            "wall-ordinal-39",
+            "wall-ordinal-40",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-40",
+                "divider",
+                "wall-ordinal-39"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "left",
+                "top",
+                "divider",
+                "bottom"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/10/original",
+      "fingerprint": "6e809b921a1ba2c25b2b91d05be19f7a630fb9c0f6a5c069f9e3b02a061c4eac",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/10/source",
+      "fingerprint": "f1e2651528f219f33d94eeae2ddaea26a8b75ae6193b4a65a6f16ec449a2cd45",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/10/candidates/0",
+      "fingerprint": "6d0d37cc455dab188dea77878b76eed4d064c63ddcda1b0e40f42ada4983df26",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-41",
+            "wall-ordinal-42",
+            "divider"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-41",
+                "divider",
+                "wall-ordinal-42"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/10/candidates/1",
+      "fingerprint": "de337c845c948a36dd2d7fd2257c66ed5e13e2945422b6db169f3eabd2eee155",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "wall-ordinal-41",
+            "wall-ordinal-42",
+            "divider",
+            "top",
+            "bottom",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "left",
+                "wall-ordinal-41",
+                "divider",
+                "wall-ordinal-42"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "right",
+                "bottom",
+                "divider",
+                "top"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/11/original",
+      "fingerprint": "6e809b921a1ba2c25b2b91d05be19f7a630fb9c0f6a5c069f9e3b02a061c4eac",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/11/source",
+      "fingerprint": "f1e2651528f219f33d94eeae2ddaea26a8b75ae6193b4a65a6f16ec449a2cd45",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "partition",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "divider"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/11/candidates/0",
+      "fingerprint": "d45de34c75db2d244e9d954439b9bb846d5c95d286bf000278a4c8d56e9cba63",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "divider",
+            "wall-ordinal-43",
+            "wall-ordinal-44",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-44",
+                "divider",
+                "wall-ordinal-43"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": [
+            "top",
+            "bottom",
+            "left"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/11/candidates/1",
+      "fingerprint": "03dc697008623b5e13fe8dc55126bd9f78c427b1408146a7fd8ccb88e527aa1f",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "left",
+            "top",
+            "bottom",
+            "divider",
+            "wall-ordinal-43",
+            "wall-ordinal-44",
+            "right"
+          ],
+          "rooms": [
+            {
+              "id": "created-room-0",
+              "walls": [
+                "right",
+                "wall-ordinal-44",
+                "divider",
+                "wall-ordinal-43"
+              ]
+            },
+            {
+              "id": "created-room-1",
+              "walls": [
+                "left",
+                "top",
+                "divider",
+                "bottom"
+              ]
+            }
+          ],
+          "openings": [
+            {
+              "id": "door",
+              "host": {
+                "kind": "wall",
+                "id": "divider"
+              }
+            }
+          ],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/12/original",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/12/source",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/12/candidates/0",
+      "fingerprint": "8cd79c270f09808126626011c82c466b2c0026703af6c09f704f9efcae9292f3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            },
+            {
+              "id": "created-room-0",
+              "walls": [
+                "wall-ordinal-50",
+                "wall-ordinal-51",
+                "wall-ordinal-57",
+                "wall-ordinal-53"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/13/original",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/13/source",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/13/candidates/0",
+      "fingerprint": "8cd79c270f09808126626011c82c466b2c0026703af6c09f704f9efcae9292f3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            },
+            {
+              "id": "created-room-0",
+              "walls": [
+                "wall-ordinal-50",
+                "wall-ordinal-51",
+                "wall-ordinal-57",
+                "wall-ordinal-53"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/14/original",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/14/source",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/14/candidates/0",
+      "fingerprint": "8cd79c270f09808126626011c82c466b2c0026703af6c09f704f9efcae9292f3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            },
+            {
+              "id": "created-room-0",
+              "walls": [
+                "wall-ordinal-50",
+                "wall-ordinal-51",
+                "wall-ordinal-57",
+                "wall-ordinal-53"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/15/original",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/15/source",
+      "fingerprint": "3d8c59f76d7f8c161afef712d89e0fe0582e61225fa74202a22bc71f4a046c54",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-room-candidates.json/15/candidates/0",
+      "fingerprint": "8cd79c270f09808126626011c82c466b2c0026703af6c09f704f9efcae9292f3",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "wall-ordinal-45",
+            "wall-ordinal-46",
+            "wall-ordinal-47",
+            "wall-ordinal-48",
+            "wall-ordinal-49",
+            "wall-ordinal-50",
+            "wall-ordinal-51",
+            "wall-ordinal-52",
+            "wall-ordinal-53",
+            "wall-ordinal-54",
+            "wall-ordinal-55",
+            "wall-ordinal-56",
+            "wall-ordinal-57",
+            "wall-ordinal-58",
+            "wall-ordinal-59",
+            "wall-ordinal-60"
+          ],
+          "rooms": [
+            {
+              "id": "west",
+              "walls": [
+                "wall-ordinal-46",
+                "wall-ordinal-48",
+                "wall-ordinal-50",
+                "wall-ordinal-52",
+                "wall-ordinal-47",
+                "wall-ordinal-45"
+              ]
+            },
+            {
+              "id": "east",
+              "walls": [
+                "wall-ordinal-56",
+                "wall-ordinal-60",
+                "wall-ordinal-59",
+                "wall-ordinal-58",
+                "wall-ordinal-57",
+                "wall-ordinal-55"
+              ]
+            },
+            {
+              "id": "north",
+              "walls": [
+                "wall-ordinal-49",
+                "wall-ordinal-55",
+                "wall-ordinal-51",
+                "wall-ordinal-48"
+              ]
+            },
+            {
+              "id": "south",
+              "walls": [
+                "wall-ordinal-53",
+                "wall-ordinal-58",
+                "wall-ordinal-54",
+                "wall-ordinal-52"
+              ]
+            },
+            {
+              "id": "created-room-0",
+              "walls": [
+                "wall-ordinal-50",
+                "wall-ordinal-51",
+                "wall-ordinal-57",
+                "wall-ordinal-53"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-shared-cut.json/source",
+      "fingerprint": "2bae3279e9d5a490992b5c1b6bb475e9fd729904863a9551b5aa75a4da63cca5",
+      "ok": true,
+      "identity": [
+        {
+          "space": "synthetic",
+          "catalogue": [
+            "west",
+            "north",
+            "south",
+            "east"
+          ],
+          "rooms": [
+            {
+              "id": "old",
+              "walls": [
+                "north",
+                "east",
+                "south",
+                "west"
+              ]
+            }
+          ],
+          "openings": [],
+          "partitions": []
+        }
+      ]
+    },
+    {
+      "label": "test/fixtures/1166-two-contours.json/payload/config",
+      "fingerprint": "b1aa15a90272607e2758039cdded9fbe2a6970fea32d8bb13b2c163affb14a70",
+      "ok": true,
+      "identity": [
+        {
+          "space": "smvw6633p",
+          "catalogue": [],
+          "rooms": [],
+          "openings": [],
+          "partitions": [
+            "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+            "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+            "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+            "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+            "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+            "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+            "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+            "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+            "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+            "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+            "partition-c811d976-823f-4347-9347-1d0691a21795",
+            "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff"
+          ]
         }
       ]
     },

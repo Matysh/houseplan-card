@@ -87,6 +87,7 @@ function setup({ floors = ['f', 'g'], configInput } = {}) {
     _saveConfigDebounced: deferred, _pendingPhysicalWrites: new Map(),
     _checkSpacePhysicalGeometry: () => ({ ok: true }), _maybeRebuildDevices() {},
     _modelCache: null, _frame: null, _regSignature: '', _path: [], _closingWallCm: null,
+    _wallFaceGraphCache: [],
     _decorDraft: null, _decorMove: null, _dtDrag: null,
     _cellCm: 1, _gridPitch: 1, _screenToVb: (x, y) => [x, y],
     _spaceModel: () => ({ ...host._serverCfg.spaces.find(space => space.id === host._space), wall_columns: [], vb: [0, 0, 1000, 1000] }),
@@ -241,6 +242,60 @@ test('#1061 existing off-grid faces cross the actual commit/write/history owners
     writeFileSync(process.env.HP_1061_ROOM_RECEIPT, JSON.stringify(receipts, null, 2) + '\n');
   } else assert.deepEqual(stableRoomReceiptIds(receipts),stableRoomReceiptIds(JSON.parse(
     readFileSync(new URL('./fixtures/1061-room-candidates.json', import.meta.url), 'utf8'))));
+});
+
+test('#1166 both public contours cross real room commit/write/history owners in either order', async () => {
+  const {readFileSync,writeFileSync}=await import('node:fs');
+  const {stableRoomReceiptIds}=await import('./helpers/room-contact-grid.mjs');
+  const {spaceModels,GRID_PITCH,GRID_STEP_N,NORM_W}=await import('../test-build/space-geometry.js');
+  const {normalizeWallIntervals,degradeWalls}=await import('../test-build/wall-thickness.js');
+  const {checkSpacePhysicalGeometry,spacePhysicalGeometryFingerprint}=await import('../test-build/plan-geometry-preflight.js');
+  const {findWallFaceAtPoint}=await import('../test-build/wall-face-graph.js');
+  const {optimizePlans}=await import('../test-build/plan-optimizer.js');
+  const exported=JSON.parse(readFileSync(new URL('./fixtures/1166-two-contours.json',import.meta.url),'utf8'));
+  const {roomContactCases}=await import('./helpers/room-contact-cases.mjs');
+  const scenarios=[{name:'public',config:{...clone(exported.payload.config),model_version:exported.model_version},
+    clicks:[[350,400],[-200,1240]]},...roomContactCases()];
+  const receipts=[];
+  for(const scenario of scenarios)for(const optimize of [false,true])for(const reverse of [false,true]){
+    const raw=clone(scenario.config),initialRooms=raw.spaces[0].rooms.length;
+    const input=optimize?optimizePlans(raw,{}).config:raw,id=input.spaces[0].id;
+    const s=setup({floors:[id],configInput:input});
+    Object.assign(s.host,{_spaceH:NORM_W,_cellCm:input.spaces[0].cell_cm,
+      _gridPitch:GRID_PITCH,_wallKeyPitch:GRID_STEP_N,_drawWallCm:15,
+      _spaceModel:()=>spaceModels(s.host._serverCfg).find(space=>space.id===id),
+      _openCuts:()=>[],_openingsR:[],
+      _checkSpacePhysicalGeometry:(config,spaceId)=>checkSpacePhysicalGeometry(config,spaceId),
+      _normalizeWalls(walls,cuts){return degradeWalls(normalizeWallIntervals(this._spaceModel().rooms,
+        walls,cuts,GRID_STEP_N,this._cellCm,GRID_PITCH,NORM_W),this._curSpaceCfg.rooms,GRID_STEP_N,1,
+        cuts.map(cut=>cut.map(value=>value/NORM_W)));},
+    });
+    Object.defineProperty(s.host,'_curSpaceCfg',{get:()=>s.spaceOf(id)});
+    const source=clone(s.server.config),candidates=[];
+    const clicks=clone(scenario.clicks);
+    if(reverse)clicks.reverse();
+    for(const [index,point]of clicks.entries()){
+      const graph=s.runtime._wallFaceGraph(s.runtime._wallGraphSources([]),GRID_PITCH*.0002);
+      const face=findWallFaceAtPoint(graph,point,GRID_PITCH*.0002);
+      assert.ok(face);
+      s.host._wallFaceBatch={spaceId:id,geometryFingerprint:spacePhysicalGeometryFingerprint(s.spaceOf(id)),
+        decisions:[{candidate:{...face,existing:true},create:true,name:`New ${index}`,area:null,settings:null}],
+        activePath:[],activeCms:[],activePartitionIds:[]};
+      s.runtime._applyWallFaceBatch();
+      assert.deepEqual(await s.writes(),{armed:true,sets:index+1});
+      assert.equal(s.server.config.spaces[0].rooms.length,initialRooms+index+1,scenario.name);
+      assert.equal(checkSpacePhysicalGeometry(s.server.config,id).ok,true);
+      candidates.push(clone(s.server.config));
+    }
+    const final=clone(s.server.config);
+    s.runtime._undoGeometry();await s.writes();assert.equal(s.server.config.spaces[0].rooms.length,initialRooms+clicks.length-1);
+    s.runtime._redoGeometry();await s.writes();assert.deepEqual(s.server.config,final);
+    assert.equal(s.toasts.some(message=>message.includes('geometry_unsafe')),false);
+    receipts.push({scenario:scenario.name,optimize,reverse,original:raw,source,candidates});
+  }
+  if(process.env.HP_1166_ROOM_RECEIPT)writeFileSync(process.env.HP_1166_ROOM_RECEIPT,JSON.stringify(stableRoomReceiptIds(receipts,{preserveSourceIdentities:true}),null,2)+'\n');
+  else assert.deepEqual(stableRoomReceiptIds(receipts,{preserveSourceIdentities:true}),JSON.parse(readFileSync(
+    new URL('./fixtures/1166-room-candidates.json',import.meta.url),'utf8')));
 });
 
 test('#1061 a genuinely new derived off-grid scalar still refuses atomically', async () => {

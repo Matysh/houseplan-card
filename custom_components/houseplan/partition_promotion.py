@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import math
 
+from .coordinate_canonicalization import canonicalize_lattice_coordinate
+from .junction_limits import _INCIDENT_EPS, _stored_wall_contact
+
 _EPS = 1e-8  # normalized storage/projection tolerance, as in Optimize rehosting
 _WALL_KEYS = {"id", "a", "b", "cm"}
 
@@ -94,5 +97,110 @@ def same_partition_wall_promotion(
                 and _point_equal(old[:2], new[:2]) and old[3] == new[3]
                 and _angle_equal(old[2], new[2]) and _angle_equal(angle, new[2])
                 and _point_equal([x, y], new[:2]))
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def same_partition_wall_chain_promotion(
+    old_opening: dict, opening: dict, partition: dict | None,
+    walls: list[dict], room_wall_ids: set[str], old_axes: list[dict],
+) -> bool:
+    """Prove a fully consumed carrier became an exact contiguous wall chain.
+
+    Room creation can atomize a carrier at existing T nodes. Its opening must
+    retain all metadata and physical geometry on one of those exact atoms;
+    neither a gap nor a changed thickness/carrier grants ordinary rehosting.
+    The caller proves the original partition no longer survives in this space.
+    """
+    if partition is None or not set(partition).issubset(_WALL_KEYS):
+        return False
+    old_host, host = old_opening.get("host"), opening.get("host")
+    if (not isinstance(old_host, dict) or not isinstance(host, dict)
+            or old_host.get("kind") != "partition" or host.get("kind") != "wall"
+            or old_host.get("id") != partition.get("id") or host.get("id") not in room_wall_ids):
+        return False
+    ignored = {"host", "x", "y", "angle"}
+    if not _same_json_fields(
+        {key: value for key, value in old_opening.items() if key not in ignored},
+        {key: value for key, value in opening.items() if key not in ignored},
+    ):
+        return False
+    try:
+        a, b = partition["a"], partition["b"]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        span = math.hypot(dx, dy)
+        cm = float(partition["cm"])
+        if not math.isfinite(span) or span <= _EPS or not math.isfinite(cm) or cm <= 0:
+            return False
+        def same_end(old: list, new: list) -> bool:
+            if _point_equal(old, new):
+                return True
+            if math.dist(old, new) > _INCIDENT_EPS:
+                return False
+            # Reuse the existing P4 incidence only for a proved old interior T.
+            # A near authored end or a general geometry move grants nothing.
+            for axis in old_axes:
+                if axis.get("id") == partition.get("id"):
+                    continue
+                left, right = axis["a"], axis["b"]
+                ux, uy = right[0] - left[0], right[1] - left[1]
+                length = math.hypot(ux, uy)
+                if length <= _EPS or abs(dx * uy - dy * ux) <= span * length * 1e-7:
+                    continue
+                t = ((old[0] - left[0]) * ux + (old[1] - left[1]) * uy) / length ** 2
+                q = [left[0] + t * ux, left[1] + t * uy]
+                if 0 < t < 1 and math.dist(old, q) <= _INCIDENT_EPS and _point_equal(q, new):
+                    return True
+            return False
+
+        ranges = []
+        target = None
+        for wall in walls:
+            if wall.get("id") not in room_wall_ids:
+                continue
+            ends = [wall["a"], wall["b"]]
+            if not all(math.isfinite(float(value)) for end in ends for value in end):
+                return False
+            if any(abs(dx * (p[1] - a[1]) - dy * (p[0] - a[0])) / span > _EPS for p in ends):
+                continue
+            lo, hi = sorted(((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / span for p in ends)
+            if hi <= _EPS or lo >= span - _EPS:
+                continue
+            if (lo < -_INCIDENT_EPS or hi > span + _INCIDENT_EPS or float(wall["cm"]) != cm
+                    or not set(wall).issubset(_WALL_KEYS)):
+                return False
+            ordered_ends = sorted(ends, key=lambda p: (p[0] - a[0]) * dx + (p[1] - a[1]) * dy)
+            ranges.append((lo, hi, ordered_ends))
+            if wall["id"] == host["id"]:
+                target = wall
+        ranges.sort(key=lambda item: item[0])
+        if len(ranges) == 1 and host["id"] != partition["id"]:
+            return False  # #996: a single unchanged carrier keeps its identity
+        if not ranges or not same_end(a, ranges[0][2][0]) or not same_end(b, ranges[-1][2][1]):
+            return False
+        covered = ranges[0][0]
+        for lo, hi, _ in ranges:
+            if abs(lo - covered) > _EPS:
+                return False  # a gap or overlapping physical atoms
+            covered = hi
+        if target is None:
+            return False
+        old, new = _geometry(old_opening, partition), _geometry(opening, target)
+        if old is None or new is None:
+            return False
+        x, y, angle = float(opening["x"]), float(opening["y"]), float(opening["angle"])
+        same_center = _point_equal(old[:2], new[:2]) or (
+            math.dist(old[:2], new[:2]) <= _INCIDENT_EPS
+            and [canonicalize_lattice_coordinate(value) for value in old[:2]]
+            == [canonicalize_lattice_coordinate(value) for value in new[:2]]
+        )
+        return (all(math.isfinite(value) for value in (x, y, angle))
+                and same_center and old[3] == new[3]
+                and _stored_wall_contact(target["a"], a, b, finite=False)
+                and _stored_wall_contact(target["b"], a, b, finite=False)
+                and _angle_equal(angle, old[2])
+                and (_point_equal([x, y], new[:2]) or _point_equal(
+                    [x, y], [canonicalize_lattice_coordinate(value) for value in new[:2]],
+                )))
     except (KeyError, TypeError, ValueError, OverflowError):
         return False

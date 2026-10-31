@@ -32,6 +32,9 @@ export default {
     onlyExplicitManualChunks: true,
     manualChunks(id) {
       const path = id.replaceAll('\\', '/');
+      // #1166: Optimize now shares the structural sweep with the editor.
+      // Keep that leaf outside the immutable-URL editor facade's named ABI.
+      if (path.endsWith('/src/wall-face-graph.ts')) return 'wall-face-graph';
       // #848: these leaves are also used by the nested summary editor. Keep
       // them out of its View root, whose named exports are consumed by the
       // immutable-URL retry as well as Rollup's literal dynamic import.
