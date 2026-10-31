@@ -1,0 +1,215 @@
+{
+  "format": "houseplan-export",
+  "export_version": 2,
+  "kind": "space",
+  "created_at": "2026-10-31T09:08:46.790964Z",
+  "source_fingerprint": "sha256:f2ca0ed682e4e72ff778b8bdbddc82b8b92ec4348ca1ec1151b1946d22cc706c",
+  "card_version": "1.83.0",
+  "integration_version": "1.83.0",
+  "model_version": 10,
+  "payload": {
+    "config": {
+      "spaces": [
+        {
+          "id": "smvw6633p",
+          "title": "test",
+          "plan_url": null,
+          "view_box": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "rooms": [],
+          "wall_segments": [],
+          "settings": {
+            "room_color": "#55606c",
+            "room_opacity": 0.55,
+            "name_color": {
+              "c": "#55606c",
+              "a": 0.8
+            },
+            "wall_fill": {
+              "c": "#ffffff",
+              "a": 1
+            },
+            "fill_mode": "custom",
+            "custom_fill": {
+              "c": "#607d8b",
+              "a": 0
+            },
+            "show_borders": true,
+            "show_names": true,
+            "bg_mode": "daynight",
+            "glow_enabled": true,
+            "temp_min": 20,
+            "temp_max": 25,
+            "card_name_scale": 1,
+            "card_label_scale": 1,
+            "label_temp": false,
+            "label_hum": false,
+            "label_co2": false,
+            "label_lqi": false,
+            "label_light": false
+          },
+          "plan_aspect": null,
+          "zero_wall_style": "dashed",
+          "cell_cm": 1,
+          "partitions": [
+            {
+              "id": "partition-5e040308-c56c-451d-9bbb-5113b8b91ef9",
+              "a": [
+                0.06666666666666667,
+                0.1625
+              ],
+              "b": [
+                0.05416666666666667,
+                0.5125
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-e74c41c4-5224-41ca-8132-2743d3949676",
+              "a": [
+                0.05416666666666667,
+                0.5125
+              ],
+              "b": [
+                0.6541666666666667,
+                0.6375
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-39c2dbcb-9779-44a7-a8a1-7c9519b12bdc",
+              "a": [
+                0.6541666666666667,
+                0.6375
+              ],
+              "b": [
+                0.6583333333333333,
+                0.23333333333333334
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-e6061130-cdae-4553-9f53-6ea5b023e54b",
+              "a": [
+                0.6583333333333333,
+                0.23333333333333334
+              ],
+              "b": [
+                0.06666666666666667,
+                0.1625
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-90834f9f-20b5-44bf-8f8a-23a7ff939681",
+              "a": [
+                0.6541666666666667,
+                0.6375
+              ],
+              "b": [
+                1.2166666666666666,
+                1.0333333333333334
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-f88b8c73-8a5d-40b7-98ca-82d20ca73d0e",
+              "a": [
+                1.425,
+                0.5291666666666667
+              ],
+              "b": [
+                0.656529084,
+                0.40834551
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-d1689429-17d5-485a-8ae3-2b0a23d2aa0b",
+              "a": [
+                0.3625,
+                1.0291666666666666
+              ],
+              "b": [
+                0.396809814,
+                0.583883989
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-8be3ef18-fc09-486d-b36a-7f206cacb19f",
+              "a": [
+                -0.5666666666666667,
+                0.3375
+              ],
+              "b": [
+                0.06249469,
+                0.279315334
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-34be4beb-76b9-4438-964d-bba89dda8778",
+              "a": [
+                -0.6541666666666667,
+                0.9333333333333333
+              ],
+              "b": [
+                -0.7,
+                1.4458333333333333
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-60652b45-7705-4b45-afe7-741f17e8ac0c",
+              "a": [
+                -0.7,
+                1.4458333333333333
+              ],
+              "b": [
+                0.3625,
+                1.55
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-c811d976-823f-4347-9347-1d0691a21795",
+              "a": [
+                0.3625,
+                1.55
+              ],
+              "b": [
+                0.2,
+                1.0125
+              ],
+              "cm": 15
+            },
+            {
+              "id": "partition-70ac32c0-7c41-4c55-8ad4-61a4d7bfb5ff",
+              "a": [
+                0.2,
+                1.0125
+              ],
+              "b": [
+                -0.6541666666666667,
+                0.9333333333333333
+              ],
+              "cm": 15
+            }
+          ]
+        }
+      ],
+      "markers": []
+    },
+    "layout": {}
+  },
+  "placement_manifest": [],
+  "content_manifest": [],
+  "transfer": {
+    "dropped_marker_links": 0
+  }
+}

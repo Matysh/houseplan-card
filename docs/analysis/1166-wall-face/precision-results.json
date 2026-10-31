@@ -1,0 +1,56 @@
+{
+  "sourceVersion": "1.83.0",
+  "sourceCommit": "cb2c71ab7b5943e607b83a4f052a734eb36b22f7",
+  "originalFileSha256": "75769f5c1fd870f733a54b48e742b5ccf7acea8e4ec5e88ff07db4644fd0ad34",
+  "moduleSha256": "c03d14fe6bd6a82fa588742ff1c64693c0d0afd15581d2efc845e1d691686196",
+  "comparisons": [
+    {
+      "branch": 6,
+      "carrier": 3,
+      "originalPoint": [
+        0.656529084,
+        0.40834551
+      ],
+      "projected": [
+        0.6565290840893376,
+        0.40834551000092106
+      ],
+      "distanceNormalized": 8.934239607511897e-11,
+      "roundoffThresholdNormalized": 3.552713678800501e-15
+    },
+    {
+      "branch": 7,
+      "carrier": 2,
+      "originalPoint": [
+        0.396809814,
+        0.583883989
+      ],
+      "projected": [
+        0.3968098139944537,
+        0.5838839890266223
+      ],
+      "distanceNormalized": 2.719385977571157e-11,
+      "roundoffThresholdNormalized": 3.552713678800501e-15
+    },
+    {
+      "branch": 8,
+      "carrier": 1,
+      "originalPoint": [
+        0.06249469,
+        0.279315334
+      ],
+      "projected": [
+        0.06249469045180467,
+        0.2793153340161359
+      ],
+      "distanceNormalized": 4.5209271859529094e-10,
+      "roundoffThresholdNormalized": 3.552713678800501e-15
+    }
+  ],
+  "exactProjectionInMemoryOnly": {
+    "faceCount": 2,
+    "top": true,
+    "bottom": true
+  },
+  "originalFileUnchanged": true
+}
