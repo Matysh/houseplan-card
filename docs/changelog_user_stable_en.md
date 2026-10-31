@@ -8,6 +8,16 @@ The 1.80.1 entry below is the owner's approved style example, translated into
 English. It does not rewrite the published release; its historical milestone
 collection has not yet been curated under the new rules.
 
+<!-- release: v1.83.1 -->
+<!-- base: v1.83.0 -->
+## Houseplan 1.83.1 release
+
+An urgent fix for room creation and plan optimization.
+
+After updating, create rooms immediately inside closed contours with storage-rounded joints, without running Optimize first. Optimize preserves wall contacts and openings and avoids the related save error. [#1166](https://github.com/Matysh/houseplan-card/issues/1166)
+
+[All user-facing changes](https://github.com/Matysh/houseplan-card/issues?q=is%3Aissue%20milestone%3A%221.83.1%22)
+
 <!-- release: v1.83.0 -->
 <!-- base: v1.82.0 -->
 ## Houseplan 1.83.0 release
