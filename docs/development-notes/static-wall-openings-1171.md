@@ -35,6 +35,22 @@ commands/results and the current source SHA are fixed in the new S6 handoff.
 The E2E assessment remains applicable: this is read-side face selection and adds
 no HA transport, writer or persisted field.
 
+M1 source commit: `19f75084f7bfc007eec3bd47e3ab8a2b8985245a`.
+Full revalidation on that source again passed product/build/budgets and all24
+selected native commands. Its tooling group had one unrelated first failure:
+the unchanged #1062 stalled-hydration unit expected `deadline exceeded` but got
+`spawnSync git ETIMEDOUT`. The first full log is retained with SHA256
+`f146a3be4dde1102b26d7233edda5b36b949f4fc2e039aaf3abb117835cf584c`;
+the separate finding is [#1177](https://github.com/Matysh/houseplan-card/issues/1177).
+One exact-name isolated run on unchanged source passed1/1. No test, deadline or
+guard was weakened. Ordinary pre-push and exact CI remain required before S7;
+the isolated result is not presented as a full-gate PASS.
+
+After that build finished, all six final captures were refreshed: the three
+original Static PNGs retain their earlier hashes, the line-plan scene is new,
+and both unchanged full-plan controls remain0px/0ratio/0maxDelta. The adjacent
+JSON receipt records those exact bytes. The new line-plan frame was inspected.
+
 ## Initial executed results before CODE r1
 
 All browser evidence uses pinned WSL Ubuntu, Node22.23.2, Playwright1.62.0 and
