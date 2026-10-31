@@ -1629,7 +1629,8 @@
     },
     "units": "48 targeted tests GREEN plus immutable generator parity8/8; full gate:small is required before push.",
     "regressions": "Native scroll caught collapsed Summary grid tracks: grid-auto-rows:max-content restores wheel/touch scroll. Visual inspection caught a duplicate class attribute on block title: combined classes restore its wide phone column, covered by responsive native checks. Native1145 caught missing footer right alignment: shared low-specificity footer now preserves default right alignment and specialized grid layouts.",
-    "save": "Actual prototype Save ink comparison passes four languages/two themes. Popup motion is verified via getAnimations() (Web Animations duration180/ease-out), including reduced motion; not an obsolete CSS transition oracle."
+    "save": "Actual prototype Save ink comparison passes four languages/two themes. Popup motion is verified via getAnimations() (Web Animations duration180/ease-out), including reduced motion; not an obsolete CSS transition oracle.",
+    "localGateRecovery": "The first full local gate caught incomplete fake ShadowRoot documents in Summary unit fixtures, the retired Summary sheet in smoke-links, a Support field oracle at its former owner and one unclassified descriptive CSS-API comment. Fixtures now expose ownerDocument/appendChild, Support checks actual Form Kit output, links point to the common shell and the comment is classified word-only. All65 focused runtime/Support/selector tests and5 lifecycle tests pass. Product source/fingerprint and the 24native/162UIlab/68golden proof are unchanged."
   },
   "mutation": {
     "reanchored": [

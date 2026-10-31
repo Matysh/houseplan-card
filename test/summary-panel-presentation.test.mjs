@@ -358,6 +358,8 @@ function runtimeFixture(t) {
     requestUpdate: () => undefined,
     isConnected: true,
   };
+  host.renderRoot.ownerDocument = host.ownerDocument;
+  host.renderRoot.appendChild = () => undefined;
   f.element.ownerDocument = host.ownerDocument;
   const runtime = new LoadedSummaryPanelRuntime(host);
   // Data loading is independent of presentation and already covered by the

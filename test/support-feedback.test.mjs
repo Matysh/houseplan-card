@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { settingsDialogCss } from '../test-build/styles/settings-dialogs.styles.js';
+import { CARD_DIALOG_FORM_KIT, formKitCss } from '../test-build/styles/form-kit.styles.js';
 import { parseRules } from '../scripts/css-lex.mjs';
 import { iconActionStyles } from '../test-build/styles/icon-action.styles.js';
 import {
@@ -133,12 +133,13 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
   assert.ok(actions.indexOf('open.settings') < actions.indexOf('open.pdf'));
   assert.ok(actions.indexOf('open.pdf') < actions.indexOf('open.support'));
   assert.match(iconActionStyles.cssText, /button\.hpf-icon-action\s*\{[\s\S]*?min-width:\s*44px;[\s\S]*?min-height:\s*44px;/);
-  // #1019: the lazy common kit already won over the retired local background.
-  // Check the emitted rule at its actual owner, not an unused legacy spelling.
-  const supportInput = parseRules(settingsDialogCss).find(rule => rule.kind === 'rule'
-    && rule.selectors.includes('hp-dialog.ui-dialog *:is(input[type=text],input[type=search],.supportmessage,.supportraw)'));
+  // #1148: the shared form field owns Support too; the local copy is retired.
+  const supportInput = parseRules(formKitCss({ ...CARD_DIALOG_FORM_KIT, parameterized: true }))
+    .find(rule => rule.kind === 'rule'
+      && rule.selectors.includes('hp-dialog.ui-dialog :is(input[type=text],input[type=search],.supportmessage,.supportraw)'));
   assert.ok(supportInput);
-  assert.ok(supportInput.declarations.includes('background:var(--hpf-surface)'));
+  assert.ok(supportInput.declarations.some(declaration =>
+    declaration.replace(/\s+/g, '') === 'background:var(--hpf-surface)'));
 });
 
 test('the consent copy names exact geometry, project relay, retention and network address', () => {

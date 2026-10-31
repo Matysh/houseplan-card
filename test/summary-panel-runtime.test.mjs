@@ -36,20 +36,23 @@ const installBrowserGlobals = () => {
 };
 
 const hostFixture = () => {
+  const ownerDocument = {
+    defaultView: undefined, visibilityState: 'visible',
+    createElement: () => ({ dataset: {}, textContent: '' }),
+  };
   const root = {
+    ownerDocument,
     adoptedStyleSheets: [], firstChild: null,
     querySelector: () => null,
     querySelectorAll: () => [],
     insertBefore: () => undefined,
+    appendChild: () => undefined,
   };
   return {
     localName: 'houseplan-card', parentNode: null,
     hass: { user: { id: 'alice', name: 'Alice', is_admin: true }, states: {}, config: {} },
     panelHost: true, narrow: false, renderRoot: root,
-    ownerDocument: {
-      defaultView: undefined, visibilityState: 'visible',
-      createElement: () => ({ dataset: {}, textContent: '' }),
-    },
+    ownerDocument,
     isConnected: true, updateComplete: Promise.resolve(), requestUpdate: () => undefined,
     _mode: 'view', _space: '', _settings: {}, _config: {}, _model: [], _markers: [],
     _serverCfg: { spaces: [], markers: [], settings: {} }, _cfgRev: 0, _cfgEpoch: 0,

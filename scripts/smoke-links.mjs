@@ -42,7 +42,7 @@ export const SMOKE_LINKS = [
   {
     files: ['src/plan-rotation-motion.ts', 'src/device-contact-screen.ts',
       'src/info-card-styles.ts', 'src/form-kit-styles.ts', 'src/device-power.ts',
-      'src/summary-panel-editor.ts', 'src/summary-panel-dialog-style.ts',
+      'src/summary-panel-editor.ts', 'src/compact-dialog-styles.ts',
       'src/summary-panel-editor-style.ts', 'src/styles/devices.styles.ts',
       'src/styles/plan.styles.ts', 'src/editors/properties/editor.ts'],
     smokes: ['smoke_approved_ui.mjs'],

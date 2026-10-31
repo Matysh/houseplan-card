@@ -6,7 +6,7 @@
     "src/**/*.ts",
     "custom_components/houseplan/**/*.py"
   ],
-  "matchesSha256": "e528667c01fd1281541cf83d90760a0bd56d7bf003a6146830d096c30c22f861",
+  "matchesSha256": "92805f2fe06bf22f9f16c5b9ccf3a38dc15d9c9dece956938de9464569068173",
   "hits": [
     {
       "id": "7d34f2627cf92c5fbca93eda",
@@ -5107,6 +5107,16 @@
       "kind": "exclusion",
       "owner": "provider-api",
       "reason": "HA/device/provider/API capability or telemetry compatibility, not House Plan config-form decoding."
+    },
+    {
+      "id": "d957a9f910b18db4b4a3f938",
+      "path": "src/styles/form-kit.styles.ts",
+      "line": 163,
+      "text": "/** Shared field paint; legacy output remains compatible with the frozen API. */",
+      "occurrence": 1,
+      "kind": "exclusion",
+      "owner": "word-only",
+      "reason": "#1148: descriptive comment about immutable CSS generator output/API fixtures; no persisted House Plan configuration or migration branch."
     },
     {
       "id": "c212a337cd81ceb2929f0197",
