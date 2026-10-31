@@ -54,7 +54,7 @@ async function scenario(name, config, body) {
       await new Promise(resolve => setTimeout(resolve, 500));
       await window.__hpTest.settled();
       const card = window.__card, fallback = card.hass.callWS.bind(card.hass);
-      const state = { saved: structuredClone(card._serverCfg), rev: card._cfgRev, writes: 0, rejected: 0, external: false };
+      const state = { saved: structuredClone(card._serverCfg), rev: card._cfgRev, writes: 0, rejected: 0, external: false, rejectNext: false };
       card.hass = { ...card.hass, callWS: async message => {
         if (message.type === 'houseplan/config/get') {
           if (state.external) {
@@ -65,6 +65,11 @@ async function scenario(name, config, body) {
           return { config: structuredClone(state.saved), rev: state.rev, can_write: true };
         }
         if (message.type !== 'houseplan/config/set') return fallback(message);
+        if (state.rejectNext) {
+          state.rejectNext = false; state.rejected++;
+          await new Promise(resolve => setTimeout(resolve, 30));
+          throw Object.assign(new Error('controlled split config/set refusal'), { code: 'invalid_format' });
+        }
         for (const oldSpace of state.saved.spaces) for (const opening of oldSpace.openings || []) {
           const next = message.config.spaces.find(s => s.id === oldSpace.id)?.openings?.find(o => o.id === opening.id);
           if (opening.host?.kind === 'partition' && next
@@ -236,14 +241,20 @@ await scenario('Synchronous refusal does not leave inert Save', seed({ added: tr
     explicitClickOffersFreshDraft: retry.dialog && retry.batch };
 });
 
-await scenario('Asynchronous forbidden opening host preserves original', seed({ added: true, opening: true }), async page => {
+await scenario('Controlled asynchronous refusal restores split parent and openings', seed({ added: true, opening: true }), async page => {
   const before = await snapshot(page);
+  await page.evaluate(() => { window.__closureSmoke.rejectNext = true; });
   await click(page, [.5, -.8]); await save(page);
   const after = await snapshot(page);
+  await click(page, [.5, -.8]); await save(page);
+  const retried = await snapshot(page);
   return { backendRefused: after.server.rejected === 1,
     noGhostRoomOrLostOpening: equal(geometry(after.config), geometry(before.config)),
     noAcceptedWriteOrHistory: after.server.writes === 0 && after.history === before.history,
-    dialogClosed: !after.dialog && !after.batch };
+    dialogClosed: !after.dialog && !after.batch,
+    safeRetryCreatesRoom: retried.config.spaces[0].rooms.length === before.config.spaces[0].rooms.length+1
+      && retried.server.writes === 1,
+    safeRetryRetainsOpeningHost: equal(retried.config.spaces[0].openings,before.config.spaces[0].openings) };
 });
 
 await scenario('Residual opening remains on its original carrier', seed({ added: true, opening: 'residual' }), async page => {
