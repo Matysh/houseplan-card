@@ -382,6 +382,7 @@
       "smoke_pdf_export.mjs",
       "smoke_physical_body_characterization.mjs",
       "smoke_picker_motion.mjs",
+      "smoke_properties_panel.mjs",
       "smoke_room_appearance.mjs",
       "smoke_room_co2.mjs",
       "smoke_settings_navigation.mjs",
@@ -405,6 +406,17 @@
       "smoke_warm_view_marker.mjs",
       "smoke_zigbee_hidden_placement.mjs",
       "smoke_zigbee_incomplete_reasons.mjs"
+    ],
+    "captures": [
+      {
+        "id": "properties-variable-dialog",
+        "intent": "change",
+        "reason": "CODEr1 F1: existing unbaselined variable footer adopts shared Kit44px actions/theme/disabled state; historical #931 screenshots remain history, no blanket golden acceptance",
+        "entry": "demo/ui-lab/variable-dialog-audit.mjs",
+        "command": "node demo/ui-lab/variable-dialog-audit.mjs",
+        "profiles": "light/dark x1280/1024; entry unavailable below1024",
+        "proof": "docs/design/ui-kit-audit-1148.json#behaviorChecks.variableNative"
+      }
     ]
   }
 }

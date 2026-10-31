@@ -1625,13 +1625,13 @@
           "M|editor.ts:824 div.hp-prop-preview|editors/properties/styles.ts:156-158"
         ],
         "dialog-footer": [
-          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
+          "K|editors/properties/editor.ts:renderVariable row.hpf-footer; compact-dialog-styles.ts:compactDialogCss shared footer|#1148 CODEr1 F1 corrected; local footer layout/paint removed; variable-dialog-audit native proof"
         ],
         "btn-secondary": [
-          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
+          "K|editors/properties/editor.ts:renderVariable btn ghost; styles/settings-action.styles.ts:settingsActionsCss through compact owning root|#1148 F1 corrected; 44px/radius/theme/disabled/native Cancel proof"
         ],
         "btn-primary": [
-          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
+          "K|editors/properties/editor.ts:renderVariable btn on insert; styles/settings-action.styles.ts:settingsActionsCss through compact owning root|#1148 F1 corrected; 44px/radius/theme/disabled/native insertion proof"
         ],
         "empty/loading/error state": [
           "M|editor.ts:825-826 p.hp-prop-error"
@@ -3268,6 +3268,13 @@
       "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=opening-info-dialog node demo/smoke_lock_action.mjs",
       "renderer": "existing offline synthetic smoke fixture; real product bundle; no real HA services",
       "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "properties-variable-dialog": {
+      "kind": "ui-lab",
+      "entry": "demo/ui-lab/variable-dialog-audit.mjs",
+      "command": "node demo/ui-lab/variable-dialog-audit.mjs",
+      "renderer": "genuine pinned HA, synthetic text fixture, native selection/Escape/insertion; Properties entry exists at card width >=1024",
+      "artifacts": "artifacts/ui-kit-variable-dialog/{light,dark}-{1280,1024}-{disabled,enabled}.png + captures.json"
     }
   }
 }
