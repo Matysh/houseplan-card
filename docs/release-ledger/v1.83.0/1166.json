@@ -10,8 +10,7 @@
     "golden": [],
     "smokes": [
       "smoke_room_contact_storage.mjs",
-      "smoke_wall_face_lineage.mjs",
-      "smoke_optimize_contact_preflight.mjs"
+      "smoke_wall_face_lineage.mjs"
     ]
   }
 }
