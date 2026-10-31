@@ -9,6 +9,19 @@ import { cardStyles, baseStyles, planStyles, devicesStyles, chromeStyles, dialog
 import { CARD_DIALOG_FORM_KIT, formKitCss } from '../test-build/styles/form-kit.styles.js';
 import { panelHeaderStyles } from '../test-build/styles/panel-header.styles.js';
 import { isoTilesStyles } from '../test-build/styles/iso-tiles.styles.js';
+import { compactDialogCss } from '../test-build/compact-dialog-styles.js';
+
+test('#1148 common compact dialog keeps its opaque Kit body', () => {
+  const body = parseRules(compactDialogCss).find(rule =>
+    rule.selectors.includes('hp-dialog.ui-dialog *:is(.body,.device-inbox)'));
+  assert.ok(body, 'the composed cold/HA body owner must exist');
+  const values = new Map(body.declarations.map(declaration => {
+    const colon = declaration.indexOf(':');
+    return [declaration.slice(0, colon).trim(), declaration.slice(colon + 1).trim()];
+  }));
+  assert.equal(values.get('background'), 'var(--hpf-surface)');
+  assert.equal(values.get('box-sizing'), 'border-box');
+});
 
 const FILES = ['base', 'plan', 'devices', 'chrome', 'dialogs', 'panel-header'];
 const sourceOf = (name) =>

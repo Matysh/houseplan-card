@@ -19,9 +19,12 @@ const res = await page.evaluate(async () => {
   sr().querySelector('.oplock').click(); await c.updateComplete;
   let btn = sr().querySelector('.btn.lockact');
   out.unlockBtnShown = !!btn && !btn.disabled;
-  out.unlockBtnDanger = btn?.classList.contains('warn');
+  out.unlockBtnDanger = btn?.classList.contains('danger');
+  await window.__hpUiCapture?.('opening-info-dialog', 'hp-dialog[data-kind="opening"]');
+  const actionBox = btn.getBoundingClientRect();
+  out.actionTarget44 = actionBox.width >= 44 && actionBox.height >= 44;
   btn.click(); await c.updateComplete;
-  sr().querySelector('hp-confirm .danger-confirm-footer .btn.warn, hp-confirm .danger-confirm-footer .btn.on')?.click();
+  sr().querySelector('hp-confirm .danger-confirm-footer .btn.danger, hp-confirm .danger-confirm-footer .btn.on')?.click();
   await c.updateComplete;
   out.unlockCalled = JSON.stringify(calls.at(-1)) === JSON.stringify(['lock', 'unlock', lockId]);
   // 2) замок открыт → кнопка "Lock"
@@ -35,6 +38,9 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   btn = sr().querySelector('.btn.lockact');
   out.pendingDisabled = !!btn && btn.disabled;
+  const beforePendingClick = calls.length;
+  btn?.click();
+  out.pendingClickIsInert = calls.length === beforePendingClick;
   // 4) недоступен → кнопки нет
   c.hass = { ...c.hass, states: { ...c.hass.states, [lockId]: { state: 'unavailable', attributes: {} } } };
   await c.updateComplete;

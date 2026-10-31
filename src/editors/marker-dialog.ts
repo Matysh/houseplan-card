@@ -908,7 +908,7 @@ export function renderMarkerDialog(this: HouseplanEditorRuntime): TemplateResult
           : !!previewDevice?.area && room.area === previewDevice.area);
     const deviceTitle = d.name.trim() || previewDevice?.name || t('info.device_header');
     const specialized = automaticRadar || (!!previewDevice && this.host._isVacDev(previewDevice));
-    return html`<hp-dialog class="ui-dialog" id="marker-dialog" .hass=${this.host.hass} lang=${langOf(this.host.hass,this.host._config?.language)} data-kind="marker" form-shell settings-layout
+    return html`<hp-dialog class="ui-dialog hpf-settings-dialog" id="marker-dialog" .hass=${this.host.hass} lang=${langOf(this.host.hass,this.host._config?.language)} data-kind="marker" form-shell settings-layout
       .title=${d.devId ? specialized ? deviceTitle : st('marker.settings_title',{name:deviceTitle}) : t('marker.new_device')}
       .subtitle=${[contextSpace?.title,contextRoom?.name].filter(Boolean).join(' / ')}
       icon="mdi:cog-outline" icon-badge="mdi:devices" wide @hp-close=${requestClose}>

@@ -45,9 +45,9 @@ test('#659 common dialogs and keyboard markers keep their source-level wiring', 
     '--ha-dialog-min-height: var(--safe-height, 100dvh);',
     '--ha-dialog-max-height: var(--safe-height, 100dvh);',
   );
-  contains('src/styles/dialogs.styles.ts',
-    'background: var(--hpf-canvas, var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000))));',
-  );
+  // #1148: body paint moved from the retired legacy canvas rule to the common
+  // compact Kit. Its composed CSS contract is checked by styles-split.
+  contains('src/compact-dialog-styles.ts', 'background:var(--hpf-surface);');
   contains('src/styles/devices.styles.ts',
     'transition: border-color .15s, opacity .2s;',
   );

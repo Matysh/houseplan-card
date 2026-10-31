@@ -70,9 +70,8 @@ export const dialogCompositionCss = css`
       max-width: 100%;
       min-width: 0;
     }
-    hp-dialog .dialog-action-group .btn {
+    hp-dialog .dialog-action-group > * {
       flex: 0 0 auto;
-      min-height: 44px;
     }
     hp-dialog .dialog-action-danger {
       margin-right: auto;
@@ -96,7 +95,6 @@ export const dialogCompositionCss = css`
     hp-dialog .hpf-footer-space .hpf-status:empty { display: none; }
     hp-dialog .hpf-footer-space .dialog-action-commit { grid-column: 4; grid-row: 2; margin-left: 0; flex-wrap: nowrap; }
     hp-dialog .danger-confirm-footer .dialog-action-commit { flex-wrap: nowrap; }
-    hp-dialog .danger-confirm-footer .btn { min-width: 0; white-space: normal; }
     @media (max-width: 480px) {
       hp-dialog .hpf-footer-space {
         grid-template-columns: 44px 44px minmax(0, 1fr) auto;
@@ -104,30 +102,14 @@ export const dialogCompositionCss = css`
         padding: var(--sp-4);
       }
       hp-dialog .hpf-footer-space .dialog-action-group { flex-wrap: nowrap; gap: 6px; }
-      hp-dialog .hpf-footer-space .hpf-mobile-icon {
-        box-sizing: border-box;
-        width: 44px;
-        min-width: 44px;
-        padding-inline: 0;
-        justify-content: center;
-      }
-      hp-dialog .hpf-footer-space .hpf-mobile-icon .hpf-action-label { display: none; }
-      hp-dialog .hpf-footer-space .dialog-action-commit .btn {
-        min-width: 0;
-        padding-inline: 8px;
-        white-space: normal;
-      }
+      hp-dialog .hpf-footer-space .dialog-action-commit { --hpf-kit-action-padding-inline:8px; }
       hp-dialog .danger-confirm-footer .dialog-action-commit {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         width: 100%;
         margin-left: 0;
       }
-      hp-dialog .danger-confirm-footer .dialog-action-commit .btn {
-        width: 100%;
-        padding-inline: 8px;
-        line-height: 1.25;
-      }
+      hp-dialog .danger-confirm-footer .dialog-action-commit { --hpf-kit-action-width:100%; --hpf-kit-action-padding-inline:8px; --hpf-kit-action-line-height:1.25; }
     }
 
 `.cssText + controlReducedMotionCss('.hpf-disclosure > summary,.hpf-disclosure > summary::before');

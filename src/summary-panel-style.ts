@@ -1,5 +1,5 @@
 import { css } from 'lit';
-import { summaryPanelEditorCss, summaryPanelUiKitCss } from './summary-panel-editor-style';
+import { summaryPanelEditorCss } from './summary-panel-editor-style';
 
 /** Lazy screen-space styles. The stage, not the viewport, chooses the anchor. */
 export const summaryPanelCss = `
@@ -56,5 +56,5 @@ export const summaryPanelCss = `
     pointer-events: none;
   }
 `.cssText}
-  ${summaryPanelEditorCss}${summaryPanelUiKitCss}
+  ${summaryPanelEditorCss}
 `;

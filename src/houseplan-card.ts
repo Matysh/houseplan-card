@@ -13342,7 +13342,7 @@ export class HouseplanCard extends LitElement {
       ? (amt > 0 ? 'mdi:gate-open' : 'mdi:gate')
       : (amt > 0 ? 'mdi:door-open' : 'mdi:door-closed');
     const row = (icon: string, label: string, value: string, cls = '') =>
-      html`<div class="oprow ${cls}"><ha-icon icon=${icon}></ha-icon><span>${label}</span><b>${value}</b></div>`;
+      html`<div class="oprow hpf-reading-row"><ha-icon icon=${icon}></ha-icon><span class="hpf-reading-label">${label}</span><b class="hpf-reading-value hpf-state-${cls}">${value}</b></div>`;
     return html`<hp-dialog form-shell settings-layout compact wide class="ui-dialog" .hass=${this.hass} data-kind="opening"
       .title=${title} icon=${openingIcon} dismiss-on-scrim
       @hp-close=${() => (this._openingInfo = null)}>

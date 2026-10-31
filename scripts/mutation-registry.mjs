@@ -1220,17 +1220,26 @@ const MUTANT_DEFINITIONS = [
   {
     id:'settings-led-actions-inherit-footer-border-955',
     guard:'node demo/smoke_settings_polish_955.mjs --case=led --geometry',
-    because:'#955: only the composed dialog cascade exposes the legacy footer border and inset inside the LED action row; actual border boxes and button geometry reveal the duplicate divider.',
-    patches:[{file:'src/styles/settings-dialogs.styles.ts',
-      find:'.hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}',
-      replace:'.hpf-settings-form .led-representation > .row{justify-content:flex-start;}',
-    }],
+    because:"#1148/#955: the retired broad footer no longer supplies body-row paint. Injecting an accidental divider/inset at the remaining LED layout row must fail the native border-box contract.",
+    patches:[
+  {
+    "file": "src/styles/settings-dialogs.styles.ts",
+    "find": ".hpf-settings-form .led-representation > .row{justify-content:flex-start;border:0;padding:0;}",
+    "replace": ".hpf-settings-form .led-representation > .row{justify-content:flex-start;border-top:1px solid var(--hpf-line);padding:12px 16px;}"
+  }
+],
   },
   {
     id:'settings-save-lettering-sits-low-955',
     guard:'node demo/smoke_ui_polish_963_reference.mjs',
-    because:'#963 supersedes the #955 optical shift with the approved unshifted footer. Paired PNG ink bounds use the frozen original prototype, genuine HA and identical four-language/two-theme rendering.',
-    patches:[{file:'src/styles/settings-dialogs.styles.ts',find:'.hpf-footer .hpf-save-label{transform:none;align-self:center;}',replace:'.hpf-footer .hpf-save-label{transform:translateY(.15em);align-self:center;}'}],
+    because:"#1148/#963: the common action line-box recipe preserves the approved unshifted Save ink. The earlier native negative check proved that restoring 20px moves ink by one pixel in all four languages and both themes.",
+    patches:[
+  {
+    "file": "src/styles/form-kit-settings.styles.ts",
+    "find": "'action-line-height': 'normal'",
+    "replace": "'action-line-height': '20px'"
+  }
+],
   },
   {
     id:'settings-help-orphans-last-line-955',
@@ -4992,13 +5001,14 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'ha-form-shell-loses-canvas',
     guard: 'node demo/smoke_ha_form_shell_parity.mjs',
-    because: '#609 AC3: forms in HA need the same canvas-and-card hierarchy as the reviewed '
-      + 'native shell; painting the body as the dialog surface erases that hierarchy',
-    patches: [{
-      file: 'src/styles/dialogs.styles.ts',
-      find: '      background: var(--hpf-canvas, var(--secondary-background-color, color-mix(in srgb, var(--card-background-color, var(--hp-bg, #202126)) 90%, var(--primary-text-color, #000))));',
-      replace: '      background: var(--card-background-color, var(--hp-bg, #202126));',
-    }],
+    because: "#1148 supersedes the legacy body/canvas painter with the common opaque Kit body. The composed compact-dialog CSS contract in styles-split checks that owner; native dialog/HA matrices cover actual palette and scrolling.",
+    patches: [
+  {
+    "file": "src/compact-dialog-styles.ts",
+    "find": "padding:var(--hpf-kit-body-inset,20px);background:var(--hpf-surface);",
+    "replace": "padding:var(--hpf-kit-body-inset,20px);background:transparent;"
+  }
+],
   },
   {
     id: 'ha-form-shell-mobile-keeps-desktop-inset',
@@ -19225,9 +19235,7 @@ const MUTANT_DEFINITIONS = [
     id: 'form-kit-fragment-drifts-from-panel',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#597" test/form-kit.test.mjs',
-    because: '#597: панель подставляет фрагменты набора, и у её настроек нет ни одного '
-      + 'golden-кадра — расхождение показать пикселями нечем. Если правка фрагмента не '
-      + 'краснит побайтовое сравнение, набор может молча увести вид панели',
+    because: "#1148 retains the immutable historical Summary/Card generator API fixtures while the actual Summary composition migrates to Kit. The #597 full Card output oracle still rejects drift of this shared fragment; actual Summary paint has native coverage.",
     patches: [{
       file: 'src/styles/form-kit.styles.ts',
       find: '  return `  ${cards.join(\',\\n  \')} {\n    min-width: 0;\n    padding: 14px;',
@@ -22527,7 +22535,13 @@ const panelHeader1120Cases = [
 
 // #1145: declarations only; ordinary browser evidence is run, mutants are nightly.
 const uiPolish1145Cases = [
- {id:'dialog-footer-leaks-into-body-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC5: actual stairs/physical/Optimize rows must not inherit footer padding and divider.',patches:[{file:'src/styles/dialogs.styles.ts',find:"hp-dialog > .row[slot='footer'] {\n      justify-content: flex-end;",replace:'hp-dialog .row {\n      justify-content: flex-end;'}]},
+ {id:'dialog-footer-leaks-into-body-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC5: actual stairs/physical/Optimize rows must not inherit footer padding and divider.',patches:[
+  {
+    "file": "src/compact-dialog-styles.ts",
+    "find": ":where(hp-dialog.ui-dialog) > .row[slot=footer]:where(:not(.hpf-footer-space)){display:flex",
+    "replace": ":where(hp-dialog.ui-dialog) .row:where(:not(.hpf-footer-space)){display:flex"
+  }
+]},
  {id:'summary-touch-sticky-hover-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC6: native touch cannot retain mouse hover paint, while desktop mouse still paints.',patches:[
   {
     "file": "src/styles/icon-action.styles.ts",
@@ -22535,7 +22549,13 @@ const uiPolish1145Cases = [
     "replace": "button.hpf-icon-action:not(:disabled):hover"
   }
 ]},
- {id:'disabled-kit-loses-pointer-hit-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC3: native disabled keeps not-allowed hit cursor and remains inert.',patches:[{file:'src/styles/dialogs.styles.ts',find:'.btn[disabled] {\n      opacity: 0.5;\n      cursor: not-allowed;',replace:'.btn[disabled] {\n      opacity: 0.5;\n      pointer-events: none;'}]},
+ {id:'disabled-kit-loses-pointer-hit-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC3: native disabled keeps not-allowed hit cursor and remains inert.',patches:[
+  {
+    "file": "src/styles/settings-action.styles.ts",
+    "find": "${selector}:disabled{cursor:not-allowed;opacity:.5;}",
+    "replace": "${selector}:disabled{cursor:not-allowed;opacity:.5;pointer-events:none;}"
+  }
+]},
  {id:'ordinary-color-target40-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC4: ordinary trigger is44px; compact swatch remains36px.',patches:[{file:'src/hp-color-opacity.ts',find:'.trigger {\n      width: 44px;\n      height: 44px;',replace:'.trigger {\n      width: 40px;\n      height: 40px;'}]},
 ];
 export const MUTANTS = [...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({

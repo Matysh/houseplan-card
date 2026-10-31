@@ -465,6 +465,9 @@ try {
         no_masked_horizontal_overflow: [surface, editor].every((node) => !!node && node.scrollWidth <= node.clientWidth + 1),
         every_actual_control_fits: boxes.length > 10 && boxes.every((box) => box.left >= -1 && box.right <= innerWidth + 1),
         every_target_is_touch_sized: boxes.every((box) => box.width >= 43.5 && box.height >= 43.5),
+        block_title_uses_available_column: [...dialog.querySelectorAll('.summary-block-title')].length > 0
+          && [...dialog.querySelectorAll('.summary-block-title')].every(input =>
+            input.getBoundingClientRect().width >= 100),
         footer_reachable: !!footerBox && footerBox.top >= 0 && footerBox.bottom <= innerHeight + 1,
       };
       await f.close();

@@ -23,6 +23,8 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-reading-row.on > ha-icon { color:var(--primary-color); }
   .hpf-reading-row > .hpf-reading-label { flex:1; }
   .hpf-reading-label { min-width:0; overflow-wrap:anywhere; color:var(--secondary-text-color); }
+  .hpf-state-ok { color:var(--success-color,#4caf50); }
+  .hpf-state-warn { color:var(--warning-color,#ff9800); }
   .hpf-reading-value { min-width:0; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; text-align:end; }
   .hpf-reading-pair { box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,auto); align-items:baseline; gap:10px; min-height:36px; padding:8px 0; border-bottom:1px solid var(--divider-color); }
   .hpf-reading-pair:last-child { border-bottom:0; }

@@ -1,6 +1,6 @@
-import { css } from 'lit';
 import { settingsTextLinkCss } from './settings-action.styles';
 import { controlReducedMotionCss } from './ui-motion.styles';
+import { formKitValue, formKitRecipeCss, type FormKitRecipe } from './form-kit-parameters';
 /**
  * Общий набор контролов формы (#594, шаг 1 эпика #591).
  *
@@ -17,6 +17,8 @@ import { controlReducedMotionCss } from './ui-motion.styles';
  */
 
 export interface FormKitCssOptions {
+  /** Opt into shared parameter slots; historical default recipes stay frozen. */
+  parameterized?: boolean;
   /** Класс контейнера формы: `.summary-editor` у панели, `.hpf-form` у диалогов. */
   form: string;
   /** Префикс частей: `summary` даёт `.summary-switch`, `hpf` — `.hpf-switch`. */
@@ -84,13 +86,14 @@ export const CARD_DIALOG_FORM_KIT: FormKitCssOptions = {
  * Отдельные фрагменты позволяют подставить каждый ровно туда, где он стоит
  * сейчас, и собранный лист совпадает с прежним побайтово.
  */
-export function formKitCardsCss({ cards, tokens }: FormKitCssOptions): string {
+export function formKitCardsCss(options: FormKitCssOptions): string {
+  const { cards, tokens } = options;
   return `  ${cards.join(',\n  ')} {
     min-width: 0;
     padding: 14px;
-    border: 1px solid var(${tokens.line});
-    border-radius: 11px;
-    background: var(${tokens.surface});
+    border: ${formKitValue(options, 'card-border', `1px solid var(${tokens.line})`)};
+    border-radius: ${formKitValue(options, 'card-radius', '11px')};
+    background: ${formKitValue(options, 'card-background', `var(${tokens.surface})`)};
   }`;
 }
 
@@ -106,15 +109,16 @@ export function formKitFocusCss({ form, footer, tokens }: FormKitCssOptions): st
 }
 
 /** Выключенные контролы. */
-export function formKitDisabledCss({ form }: FormKitCssOptions): string {
+export function formKitDisabledCss(options: FormKitCssOptions): string {
+  const { form } = options;
   return `  ${form} button:disabled,
   ${form} input:disabled,
-  ${form} select:disabled { opacity: .4; cursor: default; }`;
+  ${form} select:disabled { opacity: .4; cursor: ${options.parameterized ? 'not-allowed' : 'default'}; }`;
 }
 
 /** Ряд-переключатель: подпись слева, переключатель справа. */
 export function formKitSwitchRowCss({ form, prefix }: FormKitCssOptions): string {
-  return `  ${form} .${prefix}${css`-switch {
+  return `  ${form} .${prefix}-switch {
     display: flex;
     min-width: 0;
     min-height: 54px;
@@ -124,7 +128,7 @@ export function formKitSwitchRowCss({ form, prefix }: FormKitCssOptions): string
     margin: 0;
     color: var(--primary-text-color);
     cursor: pointer;
-  }`.cssText}`;
+  }`;
 }
 
 /** Подпись ряда-переключателя: заголовок и пояснение мелким шрифтом. */
@@ -156,49 +160,59 @@ function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
  * normal`), а если варианты не помещаются в ряд — сегмент переносится на
  * вторую строку целыми кнопками (`flex-wrap`), а не ломает текст.
  */
-function extrasCss(options: FormKitCssOptions): string {
-  const { form, prefix, tokens } = options;
-  const p = prefix;
-  return `  ${form} { display: grid; gap: 16px; }
-  ${form} label { margin: 0; font-size: inherit; color: inherit; }
-  ${form} .${p}-card { padding: 0; overflow: hidden; }
-  .${p}${css`-head {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: 4px;
-    margin: 0;
-    padding: 16px 16px 12px;
-  }
-  .`.cssText}${p}-head h3 { margin: 0; font-size: 1.25rem; line-height: 1.3; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
-  .${p}-body { display: grid; gap: 15px; padding: 0 16px 16px; }
-  .${p}-body:first-child { padding-top: 16px; }
-  .${p}-sub { display: flex; align-items: center; gap: 4px; min-height: 28px; margin: 7px 0 -3px; }
-  .${p}-sub h4 { margin: 0; font-size: 1rem; line-height: 1.4; font-weight: 600; }
-  .${p}-field { display: grid; gap: 7px; min-width: 0; }
-  .${p}-field > .${p}-label,
-  .${p}-labelrow { display: flex; align-items: center; gap: 4px; min-height: 32px; font-size: .875rem; font-weight: 600; color: var(${tokens.muted}); }
-  .${p}-labelrow > label { cursor: pointer; }
-  .${p}-hint { margin: 0; font-size: .875rem; line-height: 1.5; color: var(${tokens.muted}); }
-  .${p}-error { margin: 0; font-size: .875rem; line-height: 1.5; color: var(${tokens.danger}); }
-  .${p}-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  .${p}-grid.${p}-grid-narrow { grid-template-columns: minmax(0, 1fr) 175px; }
-  ${form} .${p}-input,
-  ${form} .${p}${css`-select {
+/** Shared field paint; legacy output remains compatible with the frozen API. */
+function textFieldsCss(options: FormKitCssOptions, selectors: string): string {
+  const { tokens } = options;
+  return `  ${selectors} {
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
     min-height: 44px;
-    padding: 8px 10px;
-    border: 1px solid var(`.cssText}${tokens.line});
+    padding: ${options.parameterized ? '10px 12px' : '8px 10px'};
+    border: 1px solid var(${tokens.line});
     border-radius: 7px;
     background: var(${tokens.surface});
     color: var(--primary-text-color);
     font: inherit;
-    font-size: .875rem;
-    line-height: 1.4;
+    font-size: ${options.parameterized ? '13px' : '.875rem'};
+    line-height: ${options.parameterized ? '22px' : '1.4'};
+  }${options.parameterized ? `
+  :is(${selectors}):not(select):not(:disabled) { cursor:text; }
+  :is(${selectors}):not(:disabled):hover { border-color:var(${tokens.accent}); }
+  :is(${selectors}):not(:disabled):focus { outline:none; border-color:var(${tokens.accent}); box-shadow:inset 0 0 0 1px var(${tokens.accent}); }
+  :is(${selectors})[aria-invalid=true], :is(${selectors}).bad { border-color:var(${tokens.danger}); }
+` : ''}
+`;
+}
+
+function extrasCss(options: FormKitCssOptions): string {
+  const { form, prefix, tokens } = options;
+  const p = prefix;
+  return `  ${form} { display: ${formKitValue(options, 'form-display', 'grid')}; gap: 16px; }
+  ${form} label { margin: 0; font-size: inherit; color: inherit; }
+  ${form} .${p}-card { padding: 0; overflow: ${formKitValue(options, 'card-overflow', 'hidden')}; }${options.parameterized ? `\n  ${form} .${p}-card.${p}-card-padded { padding:14px; }` : ''}
+  .${p}-head {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+    margin: ${formKitValue(options, 'head-margin', '0')};
+    padding: ${formKitValue(options, 'head-padding', '16px 16px 12px')};${options.parameterized ? `\n    border-bottom: ${formKitValue(options, 'head-border-bottom', '0')};` : ''}
   }
-  ${form} .${p}${css`-select {
+  .${p}-head h3 { margin: 0; font-size: ${formKitValue(options, 'heading-font-size', '1.25rem')}; line-height: ${formKitValue(options, 'heading-line-height', '1.3')}; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .${p}-body { display: grid; gap: ${formKitValue(options, 'body-gap', '15px')}; padding: ${formKitValue(options, 'body-padding', '0 16px 16px')}; }
+  .${p}-body:first-child { padding-top: ${formKitValue(options, 'body-first-padding-top', '16px')}; }
+  .${p}-sub { display: flex; align-items: center; gap: 4px; min-height: ${formKitValue(options, 'sub-min-height', '28px')}; margin: 7px 0 -3px; }
+  .${p}-sub h4 { margin: 0; font-size: ${formKitValue(options, 'subheading-font-size', '1rem')}; line-height: 1.4; font-weight: 600; }
+  .${p}-field { display: grid; gap: 7px; min-width: 0; }
+  .${p}-field > .${p}-label,
+  .${p}-labelrow { display: flex; align-items: center; gap: 4px; min-height: ${formKitValue(options, 'label-min-height', '32px')}; font-size: ${formKitValue(options, 'label-font-size', '.875rem')}; font-weight: ${formKitValue(options, 'label-font-weight', '600')}; color: ${formKitValue(options, 'label-color', `var(${tokens.muted})`)}; }
+  .${p}-labelrow > label { cursor: pointer; }
+  .${p}-hint { margin: 0; font-size: ${formKitValue(options, 'hint-font-size', '.875rem')}; line-height: ${formKitValue(options, 'hint-line-height', '1.5')}; color: var(${tokens.muted}); }
+  .${p}-error { margin: 0; font-size: .875rem; line-height: 1.5; color: var(${tokens.danger}); }
+  .${p}-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .${p}-grid.${p}-grid-narrow { grid-template-columns: minmax(0, 1fr) 175px; }
+${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (options.parameterized ? ',\n  hp-dialog.ui-dialog :is(input[type=text],input[type=search],.supportmessage,.supportraw)' : ''))}  ${form} .${p}-select {
     appearance: none;
     padding-right: 32px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -206,11 +220,11 @@ function extrasCss(options: FormKitCssOptions): string {
     background-repeat: no-repeat;
     background-size: 12px 7px;
     cursor: pointer;
-  }`.cssText}
+  }
   ${form} .${p}-input:hover, ${form} .${p}-select:hover { border-color: var(${tokens.muted}); }
   ${form} .${p}-input:focus, ${form} .${p}-select:focus { border-color: var(${tokens.accent}); outline: none; }
   ${form} [aria-invalid="true"] { border-color: var(${tokens.danger}) !important; }
-  .${p}-unit { display: inline-flex; align-items: center; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.surface}); }
+  .${p}-unit { ${options.parameterized ? 'box-sizing:border-box; ' : ''}display: inline-flex; align-items: center; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.surface}); }
   .${p}-unit > input { box-sizing: border-box; width: 5.5em; min-width: 5.5em; height: 100%; padding: 8px 9px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; font-variant-numeric: tabular-nums; }
   ${form} .${p}-unit > input:focus { outline: 0; }
   .${p}-unit > span { padding: 0 11px 0 3px; white-space: nowrap; color: var(${tokens.muted}); font-size: .875rem; }
@@ -219,7 +233,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-field > .${p}-unit:not(.${p}-unit-wide) { justify-self: start; }
   .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .${p}-actions > input[type="file"] { display: none; }
-  .${p}${css`-row {
+  .${p}-row {
     display: flex;
     min-width: 0;
     min-height: 44px;
@@ -227,35 +241,35 @@ function extrasCss(options: FormKitCssOptions): string {
     justify-content: space-between;
     gap: 12px;
   }
-  .`.cssText}${p}-row > .${p}-label { min-width: 0; overflow-wrap: anywhere; }
-  .${p}${css`-toggle {
+  .${p}-row > .${p}-label { min-width: 0; overflow-wrap: anywhere; }
+  .${p}-toggle {
     display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) 44px;
+    grid-template-columns: ${formKitValue(options, 'toggle-columns', `28px minmax(0, 1fr) 44px`)};
     grid-template-rows: auto auto;
     align-items: center;
     column-gap: 10px;
     row-gap: 4px;
-    min-height: 58px;
-    margin: 0;
-    padding: 11px 0;
+    min-height: ${formKitValue(options, 'toggle-min-height', `58px`)};
+    margin: ${formKitValue(options, 'toggle-margin', '0')};
+    padding: ${formKitValue(options, 'toggle-padding', `11px 0`)};
     color: var(--primary-text-color);
     cursor: pointer;
   }
-  .`.cssText}${p}-toggle.${p}-noicon { grid-template-columns: minmax(0, 1fr) 44px; }
-  .${p}-toggle > .${p}-toggle-icon { grid-column: 1; grid-row: 1; display: flex; align-items: center; justify-content: center; width: 28px; color: var(${tokens.muted}); --mdc-icon-size: 19px; }
-  .${p}-toggle > .${p}-toggle-title { grid-row: 1; display: flex; align-items: center; gap: 4px; min-width: 0; min-height: 28px; font-size: .875rem; font-weight: 600; line-height: 1.4; }
-  .${p}-toggle > .${p}-toggle-title > span { min-width: 0; overflow-wrap: anywhere; }
-  .${p}-toggle > .${p}-toggle-caption { grid-row: 2; margin: 0; font-size: .875rem; line-height: 1.5; color: var(${tokens.muted}); overflow-wrap: anywhere; }
-  .${p}-toggle:not(.${p}-noicon) > .${p}-toggle-title, .${p}-toggle:not(.${p}-noicon) > .${p}-toggle-caption { grid-column: 2; }
-  .${p}-toggle.${p}-noicon > .${p}-toggle-title, .${p}-toggle.${p}-noicon > .${p}-toggle-caption { grid-column: 1; }
-  .${p}-toggle > input { grid-column: -2; grid-row: 1 / 3; align-self: center; }
-  .${p}-toggle.${p}-compact { grid-template-rows: auto; min-height: 40px; padding: 2px 0; }
-  .${p}-toggle.${p}-compact > .${p}-toggle-title { font-weight: 500; min-height: 24px; }
+  .${p}-toggle.${p}-noicon { grid-template-columns: minmax(0, 1fr) 44px; }
+  .${p}-toggle > .${p}-toggle-icon { grid-column: 1; grid-row: 1; display: ${formKitValue(options, 'toggle-icon-display', `flex`)}; align-items: center; justify-content: center; width: 28px; color: var(${tokens.muted}); --mdc-icon-size: 19px; }
+  .${p}-toggle > .${p}-toggle-title { grid-row: 1; display: ${formKitValue(options, 'toggle-title-display', `flex`)}; align-items: center; gap: 4px; min-width: 0; min-height: ${formKitValue(options, 'toggle-title-min-height', `28px`)}; font-size: ${formKitValue(options, 'toggle-title-font-size', `.875rem`)}; font-weight: ${formKitValue(options, 'toggle-title-font-weight', '600')}; line-height: ${formKitValue(options, 'toggle-title-line-height', `1.4`)}; }
+  .${p}-toggle > .${p}-toggle-title > span { min-width: 0; overflow-wrap: ${formKitValue(options, 'toggle-title-wrap', `anywhere`)};${options.parameterized ? 'word-break:normal;' : ''} }
+  .${p}-toggle > .${p}-toggle-caption { grid-row: 2; margin: 0; font-size: ${formKitValue(options, 'hint-font-size', '.875rem')}; line-height: ${formKitValue(options, 'hint-line-height', '1.5')}; color: var(${tokens.muted}); overflow-wrap: anywhere; }
+  .${p}-toggle:not(.${p}-noicon) > .${p}-toggle-title, .${p}-toggle:not(.${p}-noicon) > .${p}-toggle-caption { grid-column: ${formKitValue(options, 'toggle-text-column', `2`)}; }
+  .${p}-toggle.${p}-noicon > .${p}-toggle-title, .${p}-toggle.${p}-noicon > .${p}-toggle-caption { grid-column: ${formKitValue(options, 'toggle-text-column', `1`)}; }
+  .${p}-toggle > input { grid-column: ${formKitValue(options, 'toggle-input-column', `-2`)}; grid-row: ${formKitValue(options, 'toggle-input-row', `1 / 3`)}; align-self: center; }
+  .${p}-toggle.${p}-compact { grid-template-rows: auto; min-height: ${formKitValue(options, 'toggle-min-height', `40px`)}; padding: ${formKitValue(options, 'toggle-padding', `2px 0`)}; }
+  .${p}-toggle.${p}-compact > .${p}-toggle-title { font-weight: 500; min-height: ${formKitValue(options, 'toggle-title-min-height', `24px`)}; }
   .${p}-toggle.${p}-compact > .${p}-toggle-icon { --mdc-icon-size: 18px; }
   .${p}-toggle:has(input:disabled) { cursor: default; }
   .${p}-toggle:has(input:disabled) > .${p}-toggle-title, .${p}-toggle:has(input:disabled) > .${p}-toggle-caption { opacity: .65; }
   .${p}-compact-list { display: grid; gap: 2px; }
-  .${p}${css`-toggle > input {
+  .${p}-toggle > input {
     appearance: none;
     position: relative;
     width: 44px;
@@ -268,18 +282,18 @@ function extrasCss(options: FormKitCssOptions): string {
     background: transparent;
     cursor: pointer;
   }
-  .`.cssText}${p}${css`-toggle > input::before {
+  .${p}-toggle > input::before {
     content: '';
     position: absolute;
     box-sizing: border-box;
     width: 36px;
     height: 22px;
     inset: 11px 4px;
-    border: 1px solid var(`.cssText}${tokens.line});
+    border: 1px solid var(${tokens.line});
     border-radius: 12px;
     background: color-mix(in srgb, var(${tokens.surface}) 65%, var(${tokens.muted}));
   }
-  .${p}${css`-toggle > input::after {
+  .${p}-toggle > input::after {
     content: '';
     position: absolute;
     width: 16px;
@@ -292,22 +306,22 @@ function extrasCss(options: FormKitCssOptions): string {
     transform: translateY(-50%);
     transition: left var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease);
   }
-  .`.cssText}${p}-toggle > input:checked::before { background: var(${tokens.accent}); border-color: var(${tokens.accent}); }
+  .${p}-toggle > input:checked::before { background: var(${tokens.accent}); border-color: var(${tokens.accent}); }
   .${p}-toggle > input:checked::after { left: 21px; }
   .${p}-toggle.${p}-compact > input { grid-row: 1; }
   .${p}-toggle > input:disabled { cursor: default; }
   .${p}-toggle > input:disabled::before { opacity: .4; }
-  .${p}${css`-seg {
+  .${p}-seg {
     display: flex;
     flex-wrap: wrap;
     min-width: 0;
     gap: 3px;
     padding: 3px;
-    border: 1px solid var(`.cssText}${tokens.line});
+    border: 1px solid var(${tokens.line});
     border-radius: 7px;
     background: var(${tokens.canvas});
   }
-  .${p}${css`-seg label {
+  .${p}-seg label {
     position: relative;
     display: flex;
     min-width: 0;
@@ -320,14 +334,14 @@ function extrasCss(options: FormKitCssOptions): string {
     padding: 4px 5px;
     border: 1px solid transparent;
     border-radius: 5px;
-    color: var(`.cssText}${tokens.muted}${css`);
+    color: var(${tokens.muted});
     font-size: .875rem;
     font-weight: 500;
     cursor: pointer;
     text-align: center;
     overflow-wrap: normal;
   }
-  .`.cssText}${p}-seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+  .${p}-seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
   .${p}-seg label:has(input:checked) {
     background: var(${tokens.tint});
     border-color: var(${tokens.tintLine});
@@ -341,7 +355,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-seg .${p}-line { width: 25px; border-top: 2px solid currentColor; }
   .${p}-seg .${p}-line-dashed { border-top-style: dashed; }
   .${p}-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  .${p}${css`-tile {
+  .${p}-tile {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -350,7 +364,7 @@ function extrasCss(options: FormKitCssOptions): string {
     gap: 6px;
     min-height: 72px;
     padding: 10px 6px 9px;
-    border: 1px solid var(`.cssText}${tokens.line});
+    border: 1px solid var(${tokens.line});
     border-radius: 8px;
     background: var(${tokens.surface});
     color: var(${tokens.muted});
@@ -372,7 +386,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-colortile > .${p}-colortile-swatch > hp-color-opacity { position: absolute; inset: 0; }
   .${p}-colortile-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
   .${p}-colortile-meta .${p}-hex { font-size: .8125rem; }
-  .${p}${css`-colorfield {
+  .${p}-colorfield {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -381,7 +395,7 @@ function extrasCss(options: FormKitCssOptions): string {
     max-width: 100%;
     min-height: 44px;
     padding: 3px 10px 3px 3px;
-    border: 1px solid var(`.cssText}${tokens.line});
+    border: 1px solid var(${tokens.line});
     border-radius: 9px;
     background: var(${tokens.canvas});
   }
@@ -393,7 +407,7 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; }
   .${p}-actions .btn { box-sizing: border-box; min-height: 44px; max-width: 100%; white-space: normal; text-align: left; }
   .${p}-actions .backupupload { max-width: 100%; }
-  .${p}-colorrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 16px; min-height: 56px; }
+  .${p}-colorrow { display: grid; grid-template-columns: ${formKitValue(options, 'colorrow-columns', 'minmax(0, 1fr) auto')}; align-items: ${formKitValue(options, 'colorrow-align', 'center')}; gap: 8px 16px; min-height: ${formKitValue(options, 'colorrow-min-height', '56px')}; }
   .${p}-colorrow > .${p}-colorfield { justify-self: end; }
   .${p}-colorrow > .${p}-labelrow { min-height: 0; }
   .${p}-link:not(.btn) { padding: 5px 0; border: 0 none transparent; background: transparent; box-shadow:none; color: var(${tokens.accent}); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; }
@@ -407,25 +421,25 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-radios label { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; font-size: .875rem; cursor: pointer; white-space: nowrap; }
   .${p}-radios input { width: 16px; height: 16px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-radios label:has(input:checked) { color: var(${tokens.accent}); }
-  .${p}${css`-callout {
+  .${p}-callout {
     display: flex;
     gap: 8px;
     margin: 0;
-    padding: 11px 12px;
-    border-radius: 8px;
-    background: var(`.cssText}${tokens.tint});
+    padding: ${formKitValue(options, 'callout-padding', `11px 12px`)};
+    border-radius: ${formKitValue(options, 'callout-radius', `8px`)};
+    background: ${formKitValue(options, 'callout-background', `var(${tokens.tint})`)};
     color: var(--primary-text-color);
-    font-size: .875rem;
-    line-height: 1.6;
+    font-size: ${formKitValue(options, 'callout-font-size', `.875rem`)};
+    line-height: ${formKitValue(options, 'callout-line-height', `1.6`)};${options.parameterized ? `\n    border-inline-start: ${formKitValue(options, 'callout-border', `0`)};` : ''}
   }
-  .${p}-callout > ha-icon { flex: none; margin-top: 2px; --mdc-icon-size: 16px; color: var(${tokens.accent}); }
+  .${p}-callout > ha-icon { ${options.parameterized ? `display:${formKitValue(options, 'callout-icon-display', `inline-flex`)};` : ''}flex: none; margin-top: 2px; --mdc-icon-size: 16px; color: var(${tokens.accent}); }
   .${p}-callout > p, .${p}-callout > span { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-  .${p}-callout.${p}-warning { background: color-mix(in srgb, var(--warning-color, #ff9800) 14%, var(${tokens.surface})); }
+  .${p}-callout.${p}-warning { background: ${formKitValue(options, 'callout-background', `color-mix(in srgb, var(--warning-color, #ff9800) 14%, var(${tokens.surface}))`)}; }
   .${p}-callout.${p}-warning > ha-icon { color: var(--warning-color, #ff9800); }
   .${p}-callout .${p}-link { padding: 0; font-weight: 600; }
   .${p}-callout > .${p}-callout-body { min-width:0; flex:1; }
   .${p}-callout-body > p { margin:8px 0 0; }
-  .${p}-callout.${p}-danger { background:color-mix(in srgb,var(${tokens.danger}) 14%,var(${tokens.surface})); }
+  .${p}-callout.${p}-danger { background:${formKitValue(options, 'callout-background', `color-mix(in srgb,var(${tokens.danger}) 14%,var(${tokens.surface}))`)}; }
   .${p}-callout.${p}-danger > ha-icon { color:var(${tokens.danger}); }
   .${p}-range > .${p}-range-output { display:flex; align-items:center; justify-content:center; box-sizing:border-box; min-width:70px; min-height:44px; padding:8px 10px; border:1px solid var(${tokens.line}); border-radius:7px; color:var(--primary-text-color); font-size:14px; font-variant-numeric:tabular-nums; }
   .${p}-range { --hpf-range-value-width: 84px; display: grid; grid-template-columns: minmax(0, 1fr) var(--hpf-range-value-width); align-items: center; gap: 15px; }
@@ -471,8 +485,8 @@ function extrasCss(options: FormKitCssOptions): string {
   .${p}-panel .${p}-toolbar { min-width: 0; padding: 5px 5px 8px; }
   .${p}-panel .${p}-toolbar .${p}-input { width: 100%; min-width: 0; border-radius: 8px; }
   .${p}-list { display: flex; flex-direction: column; gap: 0; min-width: 0; max-height: 220px; margin-top: 0; overflow: auto; overflow-x: hidden; }
-  .${p}${css`-cand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; text-align: left; cursor: pointer; }
-  .`.cssText}${p}-cand > small { font-size: .8125rem; color: var(${tokens.muted}); }
+  .${p}-cand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; text-align: left; cursor: pointer; }
+  .${p}-cand > small { font-size: .8125rem; color: var(${tokens.muted}); }
   .${p}-panel .${p}-cand { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 10px 12px; border-radius: 6px; font: inherit; line-height: 20px; overflow-wrap: anywhere; white-space: normal; transition: background-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); }
   .${p}-panel .${p}-cand > :is(span, small) { min-width: 0; max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
   .${p}-cand.sel { background: transparent; color: var(${tokens.accent}); }
@@ -519,9 +533,11 @@ function extrasCss(options: FormKitCssOptions): string {
   }
   ${controlReducedMotionCss(`.${p}-toggle > input::after, .${p}-pick, .${p}-pick::after, .${p}-panel .${p}-cand`)}
   @media (max-width: 550px) {
-    ${form} .${p}-pick { font-size: 16px; }
+    ${form} .${p}-pick { font-size: 16px; }${options.parameterized ? `
+    .${p}-settings-form :is(input,select,textarea) { font-size:var(--hpf-kit-mobile-field-font-size,16px)!important; }
+` : ''}
   }
-  @media (forced-colors: active) {
+${options.parameterized ? `  ${form} input[type=range]:not(:disabled) { cursor:pointer; }\n` : ''}  @media (forced-colors: active) {
     ${form} .${p}-select { appearance: auto; background-image: none; padding-right: 10px; }
   }`;
 }
@@ -534,8 +550,9 @@ function extrasCss(options: FormKitCssOptions): string {
  * получает их всегда — её ряд и есть образец, с которым сверяется фикстура.
  */
 export function formKitCss(
-  options: FormKitCssOptions, { withSwitch = true }: { withSwitch?: boolean } = {},
+  options: FormKitCssOptions, { withSwitch = true, recipes }: { withSwitch?: boolean; recipes?: readonly FormKitRecipe[] } = {},
 ): string {
+  if (recipes) return recipes.map(recipe => formKitRecipeCss(recipe)).join('\n');
   return `${sharedCss(options, withSwitch)}\n${extrasCss(options)}\n`;
 }
 

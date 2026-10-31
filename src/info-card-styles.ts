@@ -11,10 +11,10 @@ const infoCardCss = css`
   hp-dialog[data-kind="info"] .hpf-link { text-align:left; white-space:normal; overflow-wrap:anywhere; }
   hp-dialog[data-kind="info"] .infodesc { margin:0; white-space:pre-wrap; }
   hp-dialog[data-kind="info"] .entlist { display:grid; gap:0; margin:0; }
-  hp-dialog[data-kind="info"] .entrow .btn { flex-shrink:0; }
+  hp-dialog[data-kind="info"] .entrow > button { flex-shrink:0; }
   hp-dialog[data-kind="info"] .pdflist { display:grid; gap:8px; }
   hp-dialog[data-kind="info"] .pdflist .hpf-link { display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
-  hp-dialog[data-kind="info"] .infofooter .btn { flex-shrink:0; }
+  hp-dialog[data-kind="info"] .infofooter > button { flex-shrink:0; }
   hp-dialog[data-kind="info"] .infofooter .infofooter-close { margin-left:auto; }
   @media(max-width:480px) { hp-dialog[data-kind="info"] .inforow.hpf-row { grid-template-columns:1fr; gap:5px; } }
 `.cssText;

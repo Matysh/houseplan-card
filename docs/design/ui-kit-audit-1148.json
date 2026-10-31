@@ -1,0 +1,1655 @@
+{
+  "schema": "houseplan-ui-kit-audit/v1",
+  "issue": 1148,
+  "parentSource": "5bd7b73391143a07a3a503d9be78084c15f0b227",
+  "sourceComparisonParent": "aa2079df7e5cb4c597fc4d30256e9e17218c8a4f",
+  "parentProductFingerprint": "9ef8b868422d4814f6fc3890442846b55befa7d4ba3d2902f79770519a3b6638",
+  "productFingerprint": "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3",
+  "kind": "Author comparison and native checks; no blanket baseline acceptance and no live-HA/GPU validation claim",
+  "method": "Unchanged #1146 AST census v1; all seven baseline caps unchanged. Registry changes are source ownership findings, not selector-usage or byte-count guesses.",
+  "before": {
+    "metrics": {
+      "cssLines": 7216,
+      "keyframes": 13,
+      "transitions": 86,
+      "inlineDecorativeStyles": 27,
+      "hpDialogWithoutKit": 25,
+      "btnRulesOutsideKit": 36,
+      "registryOffKit": 298
+    },
+    "sourceTotals": {
+      "cssLinesStylesDir": 5141,
+      "cssLinesElsewhere": 2075,
+      "physicalStylesDir": 5507,
+      "decls": 7797,
+      "rules": 2853,
+      "filesWithCss": 55,
+      "inlineStatic": 74,
+      "inlineDynamic": 40,
+      "inlineLong": 17,
+      "keyframes": 13,
+      "keyframeNames": 13,
+      "transitionsInCss": 82,
+      "strayTransitions": 4,
+      "animations": 30,
+      "reducedMotion": 22,
+      "elements": {
+        "button": 298,
+        "input": 110,
+        "select": 38,
+        "textarea": 6,
+        "details": 10,
+        "dialog": 1,
+        "hp-dialog": 37,
+        "hp-settings-select": 37,
+        "hp-help": 18,
+        "ha-switch": 2,
+        "ha-icon-button": 0,
+        "role=switch": 0,
+        "role=menu": 0,
+        "role=tooltip": 2
+      },
+      "hpDialogSites": 37,
+      "hpDialogWithoutUiDialog": 25,
+      "inlineStyleAttrs": 76,
+      "inlineDecorative": 27,
+      "btnRulesOutsideKit": 36
+    }
+  },
+  "after": {
+    "metrics": {
+      "cssLines": 6875,
+      "keyframes": 13,
+      "transitions": 80,
+      "inlineDecorativeStyles": 27,
+      "hpDialogWithoutKit": 0,
+      "btnRulesOutsideKit": 14,
+      "registryOffKit": 193
+    },
+    "sourceTotals": {
+      "cssLinesStylesDir": 5065,
+      "cssLinesElsewhere": 1810,
+      "physicalStylesDir": 5521,
+      "decls": 7423,
+      "rules": 2867,
+      "filesWithCss": 55,
+      "inlineStatic": 74,
+      "inlineDynamic": 40,
+      "inlineLong": 17,
+      "keyframes": 13,
+      "keyframeNames": 13,
+      "transitionsInCss": 76,
+      "strayTransitions": 4,
+      "animations": 30,
+      "reducedMotion": 21,
+      "elements": {
+        "button": 298,
+        "input": 110,
+        "select": 38,
+        "textarea": 6,
+        "details": 10,
+        "dialog": 1,
+        "hp-dialog": 37,
+        "hp-settings-select": 37,
+        "hp-help": 18,
+        "ha-switch": 2,
+        "ha-icon-button": 0,
+        "role=switch": 0,
+        "role=menu": 0,
+        "role=tooltip": 2
+      },
+      "hpDialogSites": 37,
+      "hpDialogWithoutUiDialog": 0,
+      "inlineStyleAttrs": 76,
+      "inlineDecorative": 27,
+      "btnRulesOutsideKit": 14
+    }
+  },
+  "registry": {
+    "surfaces": 81,
+    "cells": 518,
+    "buckets": {
+      "K": 304,
+      "L": 54,
+      "M": 139,
+      "N": 21
+    },
+    "registryOffKit": 193
+  },
+  "registryChanges": {
+    "changedExistingCells": 147,
+    "newSurface": "opening-info-dialog (previously omitted; existing product surface)",
+    "noNewN": true,
+    "complexContentDeferred": "Color picker/tiles, device preview, Summary switch/list/menu/badges, Zigbee, alerts, radar/vacuum and remaining content ownership are #1149; editor controls are #1150."
+  },
+  "implementation": {
+    "shell": "Every hp-dialog has unconditional ui-dialog, including conditional confirm/decor branches. PDF adopts common styles in its own root; Summary retires its shadow shell sheet. Unused properties-shell branch removed.",
+    "form": "One parameterized Form Kit field/card/heading/toggle/callout painter. Full-settings values stay lazy; historical default generator fixtures remain immutable. Legacy whole-Summary equality oracle retired for the explicitly changed composition.",
+    "actions": "settingsActionsCss owns standard/primary/danger/disabled/icon/fill/picker/option/choice/navigation paint. Container layout remains near each surface; common footer uses low specificity and explicit right alignment.",
+    "copy1156": "UI-only copy shell/name/footer/buttons/spacing/theme/narrow migrated; #1154 lifecycle retained. Furniture/decor flags, defaults/categories/combinations remain #1156. Completion comment is due only after S8.",
+    "opening": "Existing opening-info surface added to inventory. Shared reading rows and semantic state colours; existing unlock confirmation, pending/stale/service guards remain."
+  },
+  "payload": {
+    "initialViewGzipBytes": 385902,
+    "initialViewBudget": 387200,
+    "lazyEditorGzipBytes": 366245,
+    "lazyOnboardingGzipBytes": 32336,
+    "limitsRaised": false,
+    "note": "Existing low-headroom warning retained. Retired support-label CSS marker replaced with the live editor-only supportbody layout marker; eager/onboarding exclusion and editor-presence assertions are unchanged."
+  },
+  "uiLab": {
+    "renderer": "Official pinned HA20260930.4 components with synthetic fixtures",
+    "browser": "151.0.7922.34",
+    "rawSha256": "48ae91837dc318886b471682e8102595a645a7cc5fe5f5c41267318c183bdb64",
+    "profiles": [
+      {
+        "id": "light-1280",
+        "theme": "light",
+        "width": 1280,
+        "stages": [
+          {
+            "name": "view",
+            "frame": "light-1280-view.png"
+          },
+          {
+            "name": "chrome-tooltip",
+            "frame": "light-1280-chrome-tooltip.png"
+          },
+          {
+            "name": "general-display",
+            "frame": "light-1280-general-display.png"
+          },
+          {
+            "name": "general-plan",
+            "frame": "light-1280-general-plan.png"
+          },
+          {
+            "name": "general-fills",
+            "frame": "light-1280-general-fills.png"
+          },
+          {
+            "name": "general-sun",
+            "frame": "light-1280-general-sun.png"
+          },
+          {
+            "name": "general-zigbee",
+            "frame": "light-1280-general-zigbee.png"
+          },
+          {
+            "name": "general-external-screens",
+            "frame": "light-1280-general-external-screens.png"
+          },
+          {
+            "name": "general-data",
+            "frame": "light-1280-general-data.png"
+          },
+          {
+            "name": "summary",
+            "frame": "light-1280-summary.png"
+          },
+          {
+            "name": "summary-source-picker",
+            "frame": "light-1280-summary-source-picker.png"
+          },
+          {
+            "name": "space",
+            "frame": "light-1280-space.png"
+          },
+          {
+            "name": "backdrop-guard",
+            "frame": "light-1280-backdrop-guard.png"
+          },
+          {
+            "name": "space-copy",
+            "frame": "light-1280-space-copy.png"
+          },
+          {
+            "name": "pdf",
+            "frame": "light-1280-pdf.png"
+          },
+          {
+            "name": "support",
+            "frame": "light-1280-support.png"
+          },
+          {
+            "name": "plan-toolbar",
+            "frame": "light-1280-plan-toolbar.png"
+          },
+          {
+            "name": "plan-tray-rooms",
+            "frame": "light-1280-plan-tray-rooms.png"
+          },
+          {
+            "name": "plan-tray-opening",
+            "frame": "light-1280-plan-tray-opening.png"
+          },
+          {
+            "name": "plan-tray-stairs",
+            "frame": "light-1280-plan-tray-stairs.png"
+          },
+          {
+            "name": "devices-toolbar",
+            "frame": "light-1280-devices-toolbar.png"
+          },
+          {
+            "name": "device-inbox",
+            "frame": "light-1280-device-inbox.png"
+          },
+          {
+            "name": "rules",
+            "frame": "light-1280-rules.png"
+          },
+          {
+            "name": "decor-toolbar",
+            "frame": "light-1280-decor-toolbar.png"
+          },
+          {
+            "name": "decor-tray-shapes",
+            "frame": "light-1280-decor-tray-shapes.png"
+          },
+          {
+            "name": "decor-tray-furniture",
+            "frame": "light-1280-decor-tray-furniture.png"
+          },
+          {
+            "name": "decor-tray-image",
+            "frame": "light-1280-decor-tray-image.png"
+          }
+        ],
+        "fingerprints": [
+          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+        ]
+      },
+      {
+        "id": "light-1024",
+        "theme": "light",
+        "width": 1024,
+        "stages": [
+          {
+            "name": "view",
+            "frame": "light-1024-view.png"
+          },
+          {
+            "name": "chrome-tooltip",
+            "frame": "light-1024-chrome-tooltip.png"
+          },
+          {
+            "name": "general-display",
+            "frame": "light-1024-general-display.png"
+          },
+          {
+            "name": "general-plan",
+            "frame": "light-1024-general-plan.png"
+          },
+          {
+            "name": "general-fills",
+            "frame": "light-1024-general-fills.png"
+          },
+          {
+            "name": "general-sun",
+            "frame": "light-1024-general-sun.png"
+          },
+          {
+            "name": "general-zigbee",
+            "frame": "light-1024-general-zigbee.png"
+          },
+          {
+            "name": "general-external-screens",
+            "frame": "light-1024-general-external-screens.png"
+          },
+          {
+            "name": "general-data",
+            "frame": "light-1024-general-data.png"
+          },
+          {
+            "name": "summary",
+            "frame": "light-1024-summary.png"
+          },
+          {
+            "name": "summary-source-picker",
+            "frame": "light-1024-summary-source-picker.png"
+          },
+          {
+            "name": "space",
+            "frame": "light-1024-space.png"
+          },
+          {
+            "name": "backdrop-guard",
+            "frame": "light-1024-backdrop-guard.png"
+          },
+          {
+            "name": "space-copy",
+            "frame": "light-1024-space-copy.png"
+          },
+          {
+            "name": "pdf",
+            "frame": "light-1024-pdf.png"
+          },
+          {
+            "name": "support",
+            "frame": "light-1024-support.png"
+          },
+          {
+            "name": "plan-toolbar",
+            "frame": "light-1024-plan-toolbar.png"
+          },
+          {
+            "name": "plan-tray-rooms",
+            "frame": "light-1024-plan-tray-rooms.png"
+          },
+          {
+            "name": "plan-tray-opening",
+            "frame": "light-1024-plan-tray-opening.png"
+          },
+          {
+            "name": "plan-tray-stairs",
+            "frame": "light-1024-plan-tray-stairs.png"
+          },
+          {
+            "name": "devices-toolbar",
+            "frame": "light-1024-devices-toolbar.png"
+          },
+          {
+            "name": "device-inbox",
+            "frame": "light-1024-device-inbox.png"
+          },
+          {
+            "name": "rules",
+            "frame": "light-1024-rules.png"
+          },
+          {
+            "name": "decor-toolbar",
+            "frame": "light-1024-decor-toolbar.png"
+          },
+          {
+            "name": "decor-tray-shapes",
+            "frame": "light-1024-decor-tray-shapes.png"
+          },
+          {
+            "name": "decor-tray-furniture",
+            "frame": "light-1024-decor-tray-furniture.png"
+          },
+          {
+            "name": "decor-tray-image",
+            "frame": "light-1024-decor-tray-image.png"
+          }
+        ],
+        "fingerprints": [
+          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+        ]
+      },
+      {
+        "id": "light-390",
+        "theme": "light",
+        "width": 390,
+        "stages": [
+          {
+            "name": "view",
+            "frame": "light-390-view.png"
+          },
+          {
+            "name": "chrome-tooltip",
+            "frame": "light-390-chrome-tooltip.png"
+          },
+          {
+            "name": "general-display",
+            "frame": "light-390-general-display.png"
+          },
+          {
+            "name": "general-plan",
+            "frame": "light-390-general-plan.png"
+          },
+          {
+            "name": "general-fills",
+            "frame": "light-390-general-fills.png"
+          },
+          {
+            "name": "general-sun",
+            "frame": "light-390-general-sun.png"
+          },
+          {
+            "name": "general-zigbee",
+            "frame": "light-390-general-zigbee.png"
+          },
+          {
+            "name": "general-external-screens",
+            "frame": "light-390-general-external-screens.png"
+          },
+          {
+            "name": "general-data",
+            "frame": "light-390-general-data.png"
+          },
+          {
+            "name": "summary",
+            "frame": "light-390-summary.png"
+          },
+          {
+            "name": "summary-source-picker",
+            "frame": "light-390-summary-source-picker.png"
+          },
+          {
+            "name": "space",
+            "frame": "light-390-space.png"
+          },
+          {
+            "name": "backdrop-guard",
+            "frame": "light-390-backdrop-guard.png"
+          },
+          {
+            "name": "space-copy",
+            "frame": "light-390-space-copy.png"
+          },
+          {
+            "name": "pdf",
+            "frame": "light-390-pdf.png"
+          },
+          {
+            "name": "support",
+            "frame": "light-390-support.png"
+          },
+          {
+            "name": "plan-toolbar",
+            "frame": "light-390-plan-toolbar.png"
+          },
+          {
+            "name": "plan-tray-rooms",
+            "frame": "light-390-plan-tray-rooms.png"
+          },
+          {
+            "name": "plan-tray-opening",
+            "frame": "light-390-plan-tray-opening.png"
+          },
+          {
+            "name": "plan-tray-stairs",
+            "frame": "light-390-plan-tray-stairs.png"
+          },
+          {
+            "name": "devices-toolbar",
+            "frame": "light-390-devices-toolbar.png"
+          },
+          {
+            "name": "device-inbox",
+            "frame": "light-390-device-inbox.png"
+          },
+          {
+            "name": "rules",
+            "frame": "light-390-rules.png"
+          },
+          {
+            "name": "decor-toolbar",
+            "frame": "light-390-decor-toolbar.png"
+          },
+          {
+            "name": "decor-tray-shapes",
+            "frame": "light-390-decor-tray-shapes.png"
+          },
+          {
+            "name": "decor-tray-furniture",
+            "frame": "light-390-decor-tray-furniture.png"
+          },
+          {
+            "name": "decor-tray-image",
+            "frame": "light-390-decor-tray-image.png"
+          }
+        ],
+        "fingerprints": [
+          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+        ]
+      },
+      {
+        "id": "dark-1280",
+        "theme": "dark",
+        "width": 1280,
+        "stages": [
+          {
+            "name": "view",
+            "frame": "dark-1280-view.png"
+          },
+          {
+            "name": "chrome-tooltip",
+            "frame": "dark-1280-chrome-tooltip.png"
+          },
+          {
+            "name": "general-display",
+            "frame": "dark-1280-general-display.png"
+          },
+          {
+            "name": "general-plan",
+            "frame": "dark-1280-general-plan.png"
+          },
+          {
+            "name": "general-fills",
+            "frame": "dark-1280-general-fills.png"
+          },
+          {
+            "name": "general-sun",
+            "frame": "dark-1280-general-sun.png"
+          },
+          {
+            "name": "general-zigbee",
+            "frame": "dark-1280-general-zigbee.png"
+          },
+          {
+            "name": "general-external-screens",
+            "frame": "dark-1280-general-external-screens.png"
+          },
+          {
+            "name": "general-data",
+            "frame": "dark-1280-general-data.png"
+          },
+          {
+            "name": "summary",
+            "frame": "dark-1280-summary.png"
+          },
+          {
+            "name": "summary-source-picker",
+            "frame": "dark-1280-summary-source-picker.png"
+          },
+          {
+            "name": "space",
+            "frame": "dark-1280-space.png"
+          },
+          {
+            "name": "backdrop-guard",
+            "frame": "dark-1280-backdrop-guard.png"
+          },
+          {
+            "name": "space-copy",
+            "frame": "dark-1280-space-copy.png"
+          },
+          {
+            "name": "pdf",
+            "frame": "dark-1280-pdf.png"
+          },
+          {
+            "name": "support",
+            "frame": "dark-1280-support.png"
+          },
+          {
+            "name": "plan-toolbar",
+            "frame": "dark-1280-plan-toolbar.png"
+          },
+          {
+            "name": "plan-tray-rooms",
+            "frame": "dark-1280-plan-tray-rooms.png"
+          },
+          {
+            "name": "plan-tray-opening",
+            "frame": "dark-1280-plan-tray-opening.png"
+          },
+          {
+            "name": "plan-tray-stairs",
+            "frame": "dark-1280-plan-tray-stairs.png"
+          },
+          {
+            "name": "devices-toolbar",
+            "frame": "dark-1280-devices-toolbar.png"
+          },
+          {
+            "name": "device-inbox",
+            "frame": "dark-1280-device-inbox.png"
+          },
+          {
+            "name": "rules",
+            "frame": "dark-1280-rules.png"
+          },
+          {
+            "name": "decor-toolbar",
+            "frame": "dark-1280-decor-toolbar.png"
+          },
+          {
+            "name": "decor-tray-shapes",
+            "frame": "dark-1280-decor-tray-shapes.png"
+          },
+          {
+            "name": "decor-tray-furniture",
+            "frame": "dark-1280-decor-tray-furniture.png"
+          },
+          {
+            "name": "decor-tray-image",
+            "frame": "dark-1280-decor-tray-image.png"
+          }
+        ],
+        "fingerprints": [
+          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+        ]
+      },
+      {
+        "id": "dark-1024",
+        "theme": "dark",
+        "width": 1024,
+        "stages": [
+          {
+            "name": "view",
+            "frame": "dark-1024-view.png"
+          },
+          {
+            "name": "chrome-tooltip",
+            "frame": "dark-1024-chrome-tooltip.png"
+          },
+          {
+            "name": "general-display",
+            "frame": "dark-1024-general-display.png"
+          },
+          {
+            "name": "general-plan",
+            "frame": "dark-1024-general-plan.png"
+          },
+          {
+            "name": "general-fills",
+            "frame": "dark-1024-general-fills.png"
+          },
+          {
+            "name": "general-sun",
+            "frame": "dark-1024-general-sun.png"
+          },
+          {
+            "name": "general-zigbee",
+            "frame": "dark-1024-general-zigbee.png"
+          },
+          {
+            "name": "general-external-screens",
+            "frame": "dark-1024-general-external-screens.png"
+          },
+          {
+            "name": "general-data",
+            "frame": "dark-1024-general-data.png"
+          },
+          {
+            "name": "summary",
+            "frame": "dark-1024-summary.png"
+          },
+          {
+            "name": "summary-source-picker",
+            "frame": "dark-1024-summary-source-picker.png"
+          },
+          {
+            "name": "space",
+            "frame": "dark-1024-space.png"
+          },
+          {
+            "name": "backdrop-guard",
+            "frame": "dark-1024-backdrop-guard.png"
+          },
+          {
+            "name": "space-copy",
+            "frame": "dark-1024-space-copy.png"
+          },
+          {
+            "name": "pdf",
+            "frame": "dark-1024-pdf.png"
+          },
+          {
+            "name": "support",
+            "frame": "dark-1024-support.png"
+          },
+          {
+            "name": "plan-toolbar",
+            "frame": "dark-1024-plan-toolbar.png"
+          },
+          {
+            "name": "plan-tray-rooms",
+            "frame": "dark-1024-plan-tray-rooms.png"
+          },
+          {
+            "name": "plan-tray-opening",
+            "frame": "dark-1024-plan-tray-opening.png"
+          },
+          {
+            "name": "plan-tray-stairs",
+            "frame": "dark-1024-plan-tray-stairs.png"
+          },
+          {
+            "name": "devices-toolbar",
+            "frame": "dark-1024-devices-toolbar.png"
+          },
+          {
+            "name": "device-inbox",
+            "frame": "dark-1024-device-inbox.png"
+          },
+          {
+            "name": "rules",
+            "frame": "dark-1024-rules.png"
+          },
+          {
+            "name": "decor-toolbar",
+            "frame": "dark-1024-decor-toolbar.png"
+          },
+          {
+            "name": "decor-tray-shapes",
+            "frame": "dark-1024-decor-tray-shapes.png"
+          },
+          {
+            "name": "decor-tray-furniture",
+            "frame": "dark-1024-decor-tray-furniture.png"
+          },
+          {
+            "name": "decor-tray-image",
+            "frame": "dark-1024-decor-tray-image.png"
+          }
+        ],
+        "fingerprints": [
+          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+        ]
+      },
+      {
+        "id": "dark-390",
+        "theme": "dark",
+        "width": 390,
+        "stages": [
+          {
+            "name": "view",
+            "frame": "dark-390-view.png"
+          },
+          {
+            "name": "chrome-tooltip",
+            "frame": "dark-390-chrome-tooltip.png"
+          },
+          {
+            "name": "general-display",
+            "frame": "dark-390-general-display.png"
+          },
+          {
+            "name": "general-plan",
+            "frame": "dark-390-general-plan.png"
+          },
+          {
+            "name": "general-fills",
+            "frame": "dark-390-general-fills.png"
+          },
+          {
+            "name": "general-sun",
+            "frame": "dark-390-general-sun.png"
+          },
+          {
+            "name": "general-zigbee",
+            "frame": "dark-390-general-zigbee.png"
+          },
+          {
+            "name": "general-external-screens",
+            "frame": "dark-390-general-external-screens.png"
+          },
+          {
+            "name": "general-data",
+            "frame": "dark-390-general-data.png"
+          },
+          {
+            "name": "summary",
+            "frame": "dark-390-summary.png"
+          },
+          {
+            "name": "summary-source-picker",
+            "frame": "dark-390-summary-source-picker.png"
+          },
+          {
+            "name": "space",
+            "frame": "dark-390-space.png"
+          },
+          {
+            "name": "backdrop-guard",
+            "frame": "dark-390-backdrop-guard.png"
+          },
+          {
+            "name": "space-copy",
+            "frame": "dark-390-space-copy.png"
+          },
+          {
+            "name": "pdf",
+            "frame": "dark-390-pdf.png"
+          },
+          {
+            "name": "support",
+            "frame": "dark-390-support.png"
+          },
+          {
+            "name": "plan-toolbar",
+            "frame": "dark-390-plan-toolbar.png"
+          },
+          {
+            "name": "plan-tray-rooms",
+            "frame": "dark-390-plan-tray-rooms.png"
+          },
+          {
+            "name": "plan-tray-opening",
+            "frame": "dark-390-plan-tray-opening.png"
+          },
+          {
+            "name": "plan-tray-stairs",
+            "frame": "dark-390-plan-tray-stairs.png"
+          },
+          {
+            "name": "devices-toolbar",
+            "frame": "dark-390-devices-toolbar.png"
+          },
+          {
+            "name": "device-inbox",
+            "frame": "dark-390-device-inbox.png"
+          },
+          {
+            "name": "rules",
+            "frame": "dark-390-rules.png"
+          },
+          {
+            "name": "decor-toolbar",
+            "frame": "dark-390-decor-toolbar.png"
+          },
+          {
+            "name": "decor-tray-shapes",
+            "frame": "dark-390-decor-tray-shapes.png"
+          },
+          {
+            "name": "decor-tray-furniture",
+            "frame": "dark-390-decor-tray-furniture.png"
+          },
+          {
+            "name": "decor-tray-image",
+            "frame": "dark-390-decor-tray-image.png"
+          }
+        ],
+        "fingerprints": [
+          "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3"
+        ]
+      }
+    ],
+    "states": 162,
+    "coverageIsNotWinningPaintProof": true
+  },
+  "golden": {
+    "comparisonOnly": true,
+    "parentCaptureSha256": "0854de20febdda54b57ad45fee8fdf3b525a6ace78e8cd07d3c462b4246655d3",
+    "candidateCaptureSha256": "ed2837faedef149cd2acdaca70c0c4f6c71398c7cef50089d91e733ebe5b40c3",
+    "changedFromParent": 50,
+    "results": [
+      {
+        "id": "approved-ui-info-light-1119",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 127866,
+        "baselineDiffRatio": 0.0998953125,
+        "actualSha256": "1de02c2c83170a316844e2fc00b9021ad21012ac7f2cb3053129d8e795eaf9aa"
+      },
+      {
+        "id": "approved-ui-summary-light-1119",
+        "strict": false,
+        "parentDifferentPixels": 344472,
+        "status": "different",
+        "baselineDifferentPixels": 118843,
+        "baselineDiffRatio": 0.09284609375,
+        "actualSha256": "1bd3f267df26d0647cddbb300474926f0396587e60b3fee3f77c3d3a46562bff"
+      },
+      {
+        "id": "approved-ui-info-dark-1119",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 146856,
+        "baselineDiffRatio": 0.11473125,
+        "actualSha256": "44a456ab69ace72ad4dc61fc1695cc6949288062a603abc150f738f697c60918"
+      },
+      {
+        "id": "approved-ui-summary-dark-1119",
+        "strict": false,
+        "parentDifferentPixels": 348570,
+        "status": "different",
+        "baselineDifferentPixels": 127502,
+        "baselineDiffRatio": 0.0996109375,
+        "actualSha256": "2c0837d6908ea6933418e5c320a310b691eb2605537af9067b09634a91a45d88"
+      },
+      {
+        "id": "vacuum-live-tail-pending-dialog-dark",
+        "strict": false,
+        "parentDifferentPixels": 71694,
+        "status": "different",
+        "baselineDifferentPixels": 165042,
+        "baselineDiffRatio": 0.137535,
+        "actualSha256": "50134a1c78611dfb955f8f28c4e21ae67880de541514b05c3edd15642c1e8e79"
+      },
+      {
+        "id": "vacuum-retained-path-diagnostics-dark",
+        "strict": false,
+        "parentDifferentPixels": 72327,
+        "status": "different",
+        "baselineDifferentPixels": 166392,
+        "baselineDiffRatio": 0.13866,
+        "actualSha256": "2d5d5120c685f383cab712b8dbba10478e1a3b0cb8c20be376d22c754b006fde"
+      },
+      {
+        "id": "device-inbox-desktop-en-light",
+        "strict": false,
+        "parentDifferentPixels": 3041,
+        "status": "different",
+        "baselineDifferentPixels": 52232,
+        "baselineDiffRatio": 0.049182674199623355,
+        "actualSha256": "e01c10a77cbed9ffc2ed096a8c3a5709147588478876fe64ad464007c72e3867"
+      },
+      {
+        "id": "css-migration-rules-invalid-dark",
+        "strict": false,
+        "parentDifferentPixels": 48258,
+        "status": "different",
+        "baselineDifferentPixels": 94400,
+        "baselineDiffRatio": 0.08888888888888889,
+        "actualSha256": "9819c0d251800ee5db695321fcd56658251eb2dc6705ed6ce37554f89cb149f2"
+      },
+      {
+        "id": "device-inbox-desktop-ru-dark",
+        "strict": false,
+        "parentDifferentPixels": 3197,
+        "status": "different",
+        "baselineDifferentPixels": 47343,
+        "baselineDiffRatio": 0.04457909604519774,
+        "actualSha256": "4d8d96d2b2c8d26f60d09d304048745b67f16c0d3a1d9955538f601641b32a5d"
+      },
+      {
+        "id": "device-inbox-narrow-ru-dark",
+        "strict": false,
+        "parentDifferentPixels": 2611,
+        "status": "different",
+        "baselineDifferentPixels": 2511,
+        "baselineDiffRatio": 0.007153846153846154,
+        "actualSha256": "6832f18a9a964deb79e2fae655ff56f59e637a2ad7c348cfc9505eda26b24591"
+      },
+      {
+        "id": "device-state-source-standard-en",
+        "strict": false,
+        "parentDifferentPixels": 28349,
+        "status": "different",
+        "baselineDifferentPixels": 133702,
+        "baselineDiffRatio": 0.09442231638418079,
+        "actualSha256": "87e4771d9378848232c95e9e817f7d27131c94cb3c9a84c1c84fd94caa2c5915"
+      },
+      {
+        "id": "device-state-source-manual-ru",
+        "strict": false,
+        "parentDifferentPixels": 30193,
+        "status": "different",
+        "baselineDifferentPixels": 132020,
+        "baselineDiffRatio": 0.09323446327683615,
+        "actualSha256": "aba4c1223917414930666124f6f4f4060f7885f8271e3131750fc4b584e83e83"
+      },
+      {
+        "id": "device-state-source-unknown-en",
+        "strict": false,
+        "parentDifferentPixels": 54401,
+        "status": "different",
+        "baselineDifferentPixels": 150137,
+        "baselineDiffRatio": 0.10602895480225989,
+        "actualSha256": "cdf2b1db8a148ef4f127a755fcdfb8b5eb3b341eb8163a913cb2242bef3f83b3"
+      },
+      {
+        "id": "device-state-source-protected-ru",
+        "strict": false,
+        "parentDifferentPixels": 59014,
+        "status": "different",
+        "baselineDifferentPixels": 163987,
+        "baselineDiffRatio": 0.11581002824858758,
+        "actualSha256": "563d9aabbf4bf07a00cfc302888b88eb1ba12c000d3419450dc2e677ac73bacd"
+      },
+      {
+        "id": "device-dialog-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 31219,
+        "status": "different",
+        "baselineDifferentPixels": 131852,
+        "baselineDiffRatio": 0.09311581920903955,
+        "actualSha256": "63cfc905862ad52f511b499e843c664544bbd9ecf608a0eb23c6777a798a482a"
+      },
+      {
+        "id": "device-dialog-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 84393,
+        "status": "different",
+        "baselineDifferentPixels": 80911,
+        "baselineDiffRatio": 0.20746410256410255,
+        "actualSha256": "f86ce441d3506029cbe56b21ce96b6fbc8c568d4cf460b4a9551687356dd240d"
+      },
+      {
+        "id": "device-dialog-desktop-de",
+        "strict": false,
+        "parentDifferentPixels": 40838,
+        "status": "different",
+        "baselineDifferentPixels": 145625,
+        "baselineDiffRatio": 0.10284251412429378,
+        "actualSha256": "7220569bb32d2b7c29f36dd34651e239f1f30e29fccaa41bd399655e8ed563d5"
+      },
+      {
+        "id": "room-temperature-dialog-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 13789,
+        "status": "different",
+        "baselineDifferentPixels": 25164,
+        "baselineDiffRatio": 0.031066666666666666,
+        "actualSha256": "ea8092523ac11061c8b3bbc56617e80ecb9ec932dbe1ece31894bad326276a07"
+      },
+      {
+        "id": "room-temperature-dialog-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 54361,
+        "status": "different",
+        "baselineDifferentPixels": 52720,
+        "baselineDiffRatio": 0.16485303314571606,
+        "actualSha256": "431ce0521dbef36a5f1bf7f46064f3cc5f8b30e5a726387bbc1f7f5c6c421e84"
+      },
+      {
+        "id": "room-discard-dialog-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 98090,
+        "status": "different",
+        "baselineDifferentPixels": 77679,
+        "baselineDiffRatio": 0.2960327743902439,
+        "actualSha256": "9a5e1b267667ed083a5e8574ed60ef1a3b5a3cfd9c8ad309a1b472d4ae23caa2"
+      },
+      {
+        "id": "more-info-dialog-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 33098,
+        "status": "different",
+        "baselineDifferentPixels": 113331,
+        "baselineDiffRatio": 0.10302818181818182,
+        "actualSha256": "0aa6228ac750579aa13103bbfc5afd8049fee6370f5baca8b93fe7635df202be"
+      },
+      {
+        "id": "more-info-dialog-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 94806,
+        "status": "different",
+        "baselineDifferentPixels": 51374,
+        "baselineDiffRatio": 0.14270555555555556,
+        "actualSha256": "90c3c97eb83995d1e4db3b71f095870344c384a6b40a9f8078071119fb160482"
+      },
+      {
+        "id": "toggle-entity-dialog-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 37393,
+        "status": "different",
+        "baselineDifferentPixels": 135350,
+        "baselineDiffRatio": 0.10427580893682589,
+        "actualSha256": "e607174c37f8c377cc23c3d4e0aba24147d4dc464e474125071b1f022ed9525c"
+      },
+      {
+        "id": "toggle-entity-dialog-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 95232,
+        "status": "different",
+        "baselineDifferentPixels": 90049,
+        "baselineDiffRatio": 0.23089487179487178,
+        "actualSha256": "0f35028f999fe1453b4e367c5b52f7ab184491a453d3d971aa225c66b92b537b"
+      },
+      {
+        "id": "device-help-popover-light-ru",
+        "strict": false,
+        "parentDifferentPixels": 67491,
+        "status": "different",
+        "baselineDifferentPixels": 84295,
+        "baselineDiffRatio": 0.12323830409356726,
+        "actualSha256": "8055e77279ad6ec2ea01deb290fcf86d0ba04be7f2fd1e018d27602e82b25955"
+      },
+      {
+        "id": "decor-color-popover-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 184413,
+        "status": "different",
+        "baselineDifferentPixels": 128810,
+        "baselineDiffRatio": 0.4345816464237517,
+        "actualSha256": "26f5bd347b5246738844f23fa4526de78dcea70587e7e005dd0f7592a5ed0ddd"
+      },
+      {
+        "id": "decor-color-popover-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 359115,
+        "status": "different",
+        "baselineDifferentPixels": 328933,
+        "baselineDiffRatio": 0.5278129011553273,
+        "actualSha256": "a6616fc49ecb1d8575a3f0d7b74480cfdb907655ced06f5d35157d54724c5ce5"
+      },
+      {
+        "id": "general-color-popover-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 24785,
+        "status": "different",
+        "baselineDifferentPixels": 27409,
+        "baselineDiffRatio": 0.03383827160493827,
+        "actualSha256": "7583188be735f4d9a173d2dace3bc769e49195cb7109582a4a31c12aa8b3aa42"
+      },
+      {
+        "id": "settings-help-zoom-200-en-light",
+        "strict": false,
+        "parentDifferentPixels": 53441,
+        "status": "different",
+        "baselineDifferentPixels": 39871,
+        "baselineDiffRatio": 0.11359259259259259,
+        "actualSha256": "1dd848afdb0342cc0921b56543a0aa40e9c6a64d0a6c845cc6d6b891056c5c15"
+      },
+      {
+        "id": "settings-help-zoom-200-ru-dark",
+        "strict": false,
+        "parentDifferentPixels": 51221,
+        "status": "different",
+        "baselineDifferentPixels": 33532,
+        "baselineDiffRatio": 0.09553276353276353,
+        "actualSha256": "b766a402911202cc07909a77f927442f762db23f9dfdf5ab6ca38e1ff244f2ce"
+      },
+      {
+        "id": "support-desktop-empty-light-en",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 10685,
+        "baselineDiffRatio": 0.010903061224489795,
+        "actualSha256": "bea20398917fc9d8dba84989a0eb1451a21580e20b9ec5a3764df2fdfcd124fb"
+      },
+      {
+        "id": "support-desktop-preview-dark-en",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 7538,
+        "baselineDiffRatio": 0.007691836734693877,
+        "actualSha256": "1135696fd6817f87db07104f26d1b62c83346b0a3453752ef9bf5db793ead114"
+      },
+      {
+        "id": "support-phone-validation-light-ru",
+        "strict": false,
+        "parentDifferentPixels": 416,
+        "status": "different",
+        "baselineDifferentPixels": 416,
+        "baselineDiffRatio": 0.0017105263157894738,
+        "actualSha256": "57e101e051329aee78185c72758c7735ef0fa1ff89f38f247d94e2c0b3dc3902"
+      },
+      {
+        "id": "support-phone-success-dark-en",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "6465d8fcaa1217f780c184c3c62f26b0c3cb31490cdb69fff0174d7188e2f12f"
+      },
+      {
+        "id": "support-relay-error-light-en",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 9069,
+        "baselineDiffRatio": 0.011196296296296296,
+        "actualSha256": "08426a096d1a6ef2193a0f108dd440317ac3c9ee7320c7d209282b15f17094c7"
+      },
+      {
+        "id": "support-tablet-preview-dark-ru",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 28298,
+        "baselineDiffRatio": 0.04094039351851852,
+        "actualSha256": "a741b08f2ecaa43195f438a053341ef0f1406e25c6bb09965a3d77870c4b7f58"
+      },
+      {
+        "id": "device-ripple-color-popover-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 141294,
+        "status": "different",
+        "baselineDifferentPixels": 91703,
+        "baselineDiffRatio": 0.23513589743589744,
+        "actualSha256": "1512d3ddca3dd65746f4593578303eb354aabce8badb896fd7a74f4867f65e8a"
+      },
+      {
+        "id": "space-room-color-popover-desktop-ru",
+        "strict": false,
+        "parentDifferentPixels": 103033,
+        "status": "different",
+        "baselineDifferentPixels": 98826,
+        "baselineDiffRatio": 0.10980666666666666,
+        "actualSha256": "8a3a1d8abf251b570a98afb17b338239e4aeb7bd1c9d1af59c821fd9b5c911cc"
+      },
+      {
+        "id": "backup-full-preview-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 265695,
+        "status": "different",
+        "baselineDifferentPixels": 214618,
+        "baselineDiffRatio": 0.23846444444444445,
+        "actualSha256": "b9bbfc5bef660c33da877184ec2fdc1135572e3e4ed74de4c6c920c6d6f975b9"
+      },
+      {
+        "id": "backup-plan-only-export-desktop-en",
+        "strict": false,
+        "parentDifferentPixels": 250131,
+        "status": "different",
+        "baselineDifferentPixels": 211989,
+        "baselineDiffRatio": 0.23554333333333333,
+        "actualSha256": "ff9afa54ae11e6b696f55897388118f844e45f78973802b0a20c7d5c1102d366"
+      },
+      {
+        "id": "backup-space-preview-mobile-ru",
+        "strict": false,
+        "parentDifferentPixels": 176902,
+        "status": "different",
+        "baselineDifferentPixels": 161659,
+        "baselineDiffRatio": 0.5055003126954346,
+        "actualSha256": "bf4b8801b1fe8a95ec8c53981fd67553dc72dd0c7833e818509e056678cde44d"
+      },
+      {
+        "id": "optimize-preflight-dialog-dark-en",
+        "strict": false,
+        "parentDifferentPixels": 240819,
+        "status": "different",
+        "baselineDifferentPixels": 192895,
+        "baselineDiffRatio": 0.2820102339181286,
+        "actualSha256": "4841aa4a4838cb0be36858129d9ae0c0916e6af18881a31b037c98879f0c16fc"
+      },
+      {
+        "id": "optimize-preflight-dialog-light-ru",
+        "strict": false,
+        "parentDifferentPixels": 236634,
+        "status": "different",
+        "baselineDifferentPixels": 191374,
+        "baselineDiffRatio": 0.27978654970760236,
+        "actualSha256": "fe296464d14b3c970029397509a8c54a8b9ea162c5cf241c186fcfae130e1fd9"
+      },
+      {
+        "id": "optimize-orphan-references-dark-en",
+        "strict": false,
+        "parentDifferentPixels": 305265,
+        "status": "different",
+        "baselineDifferentPixels": 251755,
+        "baselineDiffRatio": 0.368062865497076,
+        "actualSha256": "2ef0cec112d28fdf979fa652547633994980519627552a7b3007816a15bb3d66"
+      },
+      {
+        "id": "optimize-orphan-references-light-ru",
+        "strict": false,
+        "parentDifferentPixels": 370461,
+        "status": "different",
+        "baselineDifferentPixels": 322238,
+        "baselineDiffRatio": 0.4068661616161616,
+        "actualSha256": "3d565816104496d2adff158920ad9f0a08329f6ee16d1bae75cf83409bff70d8"
+      },
+      {
+        "id": "device-issues-maintenance-card",
+        "strict": false,
+        "parentDifferentPixels": 131,
+        "status": "different",
+        "baselineDifferentPixels": 109957,
+        "baselineDiffRatio": 0.17453492063492063,
+        "actualSha256": "c9fd8350b6f613623dc386c67fc5c68bcc9c408783f77f05dbec812b07408e0d"
+      },
+      {
+        "id": "device-issues-alarm-card",
+        "strict": false,
+        "parentDifferentPixels": 262,
+        "status": "different",
+        "baselineDifferentPixels": 195943,
+        "baselineDiffRatio": 0.3110206349206349,
+        "actualSha256": "d96c6d00773a7e29b023321f96796357972436f0787a1db2c5ea5aa2e772e59c"
+      },
+      {
+        "id": "ui-1081-device-confirm-light",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 142749,
+        "baselineDiffRatio": 0.13441525423728815,
+        "actualSha256": "7a117e9658fa3daf36070511e27e49a4f29b4425fbe2773108ffc2d5e20e6c1c"
+      },
+      {
+        "id": "ui-1081-device-confirm-dark",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 153437,
+        "baselineDiffRatio": 0.1444792843691149,
+        "actualSha256": "ae7dfdd01d0beba22c53333bdcebd97b0c41b795ecc81e45ce1bb0f0c4890821"
+      },
+      {
+        "id": "ui-1081-new-space-light",
+        "strict": false,
+        "parentDifferentPixels": 18723,
+        "status": "different",
+        "baselineDifferentPixels": 96483,
+        "baselineDiffRatio": 0.0908502824858757,
+        "actualSha256": "a754ed355df12c766be3b297836b1c095e9c64381923fb3efa13375e77a7a310"
+      },
+      {
+        "id": "ui-1081-new-space-dark",
+        "strict": false,
+        "parentDifferentPixels": 18774,
+        "status": "different",
+        "baselineDifferentPixels": 99913,
+        "baselineDiffRatio": 0.09408003766478343,
+        "actualSha256": "ad23ffae0d206f7174a45d707f9d7223178f33b8212c5f8a56d7fbb0dfb3989e"
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-light",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 856,
+        "baselineDiffRatio": 0.0026005589986632643,
+        "actualSha256": "7ef2626201483705b7126c93f7566333a19bf7cadf08dffe5409aebbe8ed51cc"
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-dark",
+        "strict": false,
+        "parentDifferentPixels": 0,
+        "status": "different",
+        "baselineDifferentPixels": 789,
+        "baselineDiffRatio": 0.0023970105723660224,
+        "actualSha256": "df3eeb3dd5f49f953fcbe6b9012f5ffd6ab307126f39ee6ae7719ec9c724f151"
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-light",
+        "strict": false,
+        "parentDifferentPixels": 45764,
+        "status": "different",
+        "baselineDifferentPixels": 43653,
+        "baselineDiffRatio": 0.1326193948231863,
+        "actualSha256": "60a9dc20f7572bcdb736e1272854a1ba8e61a6c657181820868f81d0cb6cf360"
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-dark",
+        "strict": false,
+        "parentDifferentPixels": 46082,
+        "status": "different",
+        "baselineDifferentPixels": 44250,
+        "baselineDiffRatio": 0.1344331024425811,
+        "actualSha256": "a427dd04d15818b683f95f67044324beb6dd49a5aa6b0b70db06744d7fdd6891"
+      },
+      {
+        "id": "settings-external-screens-empty-light",
+        "strict": false,
+        "parentDifferentPixels": 30549,
+        "status": "different",
+        "baselineDifferentPixels": 80262,
+        "baselineDiffRatio": 0.06815726902173913,
+        "actualSha256": "1b610e5c9f71db4e632977c6ee64a63340547ad8522ab1ccef3999fd699201b8"
+      },
+      {
+        "id": "settings-external-screens-empty-dark",
+        "strict": false,
+        "parentDifferentPixels": 30541,
+        "status": "different",
+        "baselineDifferentPixels": 87170,
+        "baselineDiffRatio": 0.0740234375,
+        "actualSha256": "ca200b11b5d30883d250b3d70afca06aea0d85c26483620e91ea1bf09d5f3735"
+      },
+      {
+        "id": "settings-external-screens-list-light",
+        "strict": false,
+        "parentDifferentPixels": 36492,
+        "status": "different",
+        "baselineDifferentPixels": 85515,
+        "baselineDiffRatio": 0.0726180366847826,
+        "actualSha256": "5f622a375171878b34ea1971887abed41324c9dedd48d9cd4183cc85df01d6b9"
+      },
+      {
+        "id": "settings-external-screens-list-dark",
+        "strict": false,
+        "parentDifferentPixels": 36464,
+        "status": "different",
+        "baselineDifferentPixels": 92320,
+        "baselineDiffRatio": 0.07839673913043478,
+        "actualSha256": "b801407f5406568a87e5625845bd22363f51e0c32baf90c749429f4ea5b23d6d"
+      },
+      {
+        "id": "settings-external-screens-constructor-light",
+        "strict": false,
+        "parentDifferentPixels": 182438,
+        "status": "different",
+        "baselineDifferentPixels": 145649,
+        "baselineDiffRatio": 0.12368291440217391,
+        "actualSha256": "d9eed23faf70084f1fe6bb69bd29825c7e63b86dc4bd569b9e93352940458d7c"
+      },
+      {
+        "id": "settings-external-screens-constructor-dark",
+        "strict": false,
+        "parentDifferentPixels": 168884,
+        "status": "different",
+        "baselineDifferentPixels": 150962,
+        "baselineDiffRatio": 0.12819463315217391,
+        "actualSha256": "a2268e576abfc8051aa1463f5f1ba8603d6d87f6f9058f72f4ce5fe184d1909f"
+      },
+      {
+        "id": "pdf-export-geometry-light",
+        "strict": true,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "c403a141cefb73e4653f2ffb9c346b4cfaa3de339b6c39c227ef1552ebde0048"
+      },
+      {
+        "id": "pdf-export-polish-light",
+        "strict": true,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "ed6685900355e20a4618e931d42d2e45a39ad44e4a2ab044fa5ee64ff56f12f4"
+      },
+      {
+        "id": "pdf-export-stepped-dimensions-light",
+        "strict": true,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "b9732b8b9c38153c564d0c93fbfbf44a8dd348c8667d2f8c2d14492e08e04f3e"
+      },
+      {
+        "id": "geometry-view-light-fit",
+        "strict": true,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "28482fd35c3b9d042ed8e8d522fd2d359e1b327b34685dd20ebfcb1252a1acee"
+      },
+      {
+        "id": "geometry-view-dark-fit",
+        "strict": true,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "f1cdb36b78fb967c51ebf7faa92fad1f66fa66c348afd7b92b6e6e209f2535d4"
+      },
+      {
+        "id": "panel-wide-kiosk-all",
+        "strict": true,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "acfe680ae0ee8084fd6d4fe2a1b117c507b0bf80582edb1da26b87b7aea16413"
+      },
+      {
+        "id": "panel-narrow-kiosk-fixed",
+        "strict": true,
+        "parentDifferentPixels": 0,
+        "status": "passed",
+        "baselineDifferentPixels": 0,
+        "baselineDiffRatio": 0,
+        "actualSha256": "781e524ceaeb8163e4b86aa56478ac8bbca289883b9ec0405913815ab1d4f806"
+      }
+    ],
+    "note": "Seven exported-document/scene/kiosk strict frames are exactly equal to the parent and baseline. support-phone-success-dark-en is an unchanged ordinary check. Other pending baseline deltas inherited from #1147 are not claimed as new #1148 deltas."
+  },
+  "behaviorChecks": {
+    "native": {
+      "productFingerprint": "6207868b936a4d3db9b29d372dfad12de0b88c89e13bd03b13e2ab16eddd50e3",
+      "declaredSmokes": 24,
+      "rawSha256": "be37404406980082b78f5c3ae2bffe6688b3bdf8476028e210e5ba7342bc3565",
+      "results": [
+        {
+          "name": "summary_panel_polish",
+          "args": [],
+          "code": 0,
+          "ms": 23206
+        },
+        {
+          "name": "summary_dialog_scroll",
+          "args": [],
+          "code": 0,
+          "ms": 5900
+        },
+        {
+          "name": "ui_polish_963_reference",
+          "args": [],
+          "code": 0,
+          "ms": 58995
+        },
+        {
+          "name": "settings_polish_955",
+          "args": [],
+          "code": 0,
+          "ms": 146391
+        },
+        {
+          "name": "dialog_ui_kit",
+          "args": [],
+          "code": 0,
+          "ms": 5056
+        },
+        {
+          "name": "space_copy",
+          "args": [],
+          "code": 0,
+          "ms": 2405
+        },
+        {
+          "name": "partition_openings",
+          "args": [],
+          "code": 0,
+          "ms": 2519
+        },
+        {
+          "name": "led_strip_bind",
+          "args": [],
+          "code": 0,
+          "ms": 11051
+        },
+        {
+          "name": "stairs",
+          "args": [],
+          "code": 0,
+          "ms": 16834
+        },
+        {
+          "name": "merge_split",
+          "args": [],
+          "code": 0,
+          "ms": 2244
+        },
+        {
+          "name": "physical_body_characterization",
+          "args": [],
+          "code": 0,
+          "ms": 6750
+        },
+        {
+          "name": "warm_view_marker",
+          "args": [],
+          "code": 0,
+          "ms": 23312
+        },
+        {
+          "name": "lock_action",
+          "args": [],
+          "code": 0,
+          "ms": 1811
+        },
+        {
+          "name": "lock_invariant",
+          "args": [],
+          "code": 0,
+          "ms": 1653
+        },
+        {
+          "name": "ui_polish_1145",
+          "args": [],
+          "code": 0,
+          "ms": 10728
+        },
+        {
+          "name": "pdf_export",
+          "args": [],
+          "code": 0,
+          "ms": 5098
+        },
+        {
+          "name": "svg_export",
+          "args": [],
+          "code": 0,
+          "ms": 7822
+        },
+        {
+          "name": "discard_dialog_polish",
+          "args": [],
+          "code": 0,
+          "ms": 5676
+        },
+        {
+          "name": "editor_styles_lazy",
+          "args": [],
+          "code": 0,
+          "ms": 18543
+        },
+        {
+          "name": "danger_confirm_branches",
+          "args": [],
+          "code": 0,
+          "ms": 4174
+        },
+        {
+          "name": "approved_ui",
+          "args": [],
+          "code": 0,
+          "ms": 27840
+        },
+        {
+          "name": "dialog_modal_recovery",
+          "args": [],
+          "code": 0,
+          "ms": 3396
+        },
+        {
+          "name": "furniture_polish",
+          "args": [],
+          "code": 0,
+          "ms": 1909
+        },
+        {
+          "name": "decor_images",
+          "args": [],
+          "code": 0,
+          "ms": 2218
+        }
+      ]
+    },
+    "units": "48 targeted tests GREEN plus immutable generator parity8/8; full gate:small is required before push.",
+    "regressions": "Native scroll caught collapsed Summary grid tracks: grid-auto-rows:max-content restores wheel/touch scroll. Visual inspection caught a duplicate class attribute on block title: combined classes restore its wide phone column, covered by responsive native checks. Native1145 caught missing footer right alignment: shared low-specificity footer now preserves default right alignment and specialized grid layouts.",
+    "save": "Actual prototype Save ink comparison passes four languages/two themes. Popup motion is verified via getAnimations() (Web Animations duration180/ease-out), including reduced motion; not an obsolete CSS transition oracle."
+  },
+  "mutation": {
+    "reanchored": [
+      "dialog-footer-leaks-into-body-1145",
+      "disabled-kit-loses-pointer-hit-1145",
+      "settings-led-actions-inherit-footer-border-955",
+      "settings-save-lettering-sits-low-955",
+      "ha-form-shell-loses-canvas",
+      "form-kit-fragment-drifts-from-panel"
+    ],
+    "retainedOtherAffectedDefinitions": 8,
+    "staticDefinitions": 2057,
+    "execution": 0,
+    "caught": "unknown",
+    "note": "Static readiness only. Shared body contract is checked on composed CSS; historical generator drift retains its API fixture guard. No mutant execution is claimed."
+  },
+  "boundaries": [
+    "No backend/model/API/configuration/i18n/permission changes.",
+    "No release, version, tracked frontend snapshot or golden baseline changes.",
+    "Rebase over #1164 changed release tooling/docs only; src tree and pinned product input were unchanged by that rebase.",
+    "Post-task E2E impact is assessed separately before S7."
+  ]
+}

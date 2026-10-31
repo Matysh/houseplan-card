@@ -6,7 +6,7 @@ import { CARD_DIALOG_FORM_KIT, cardDialogFormKitTokens, formKitCss } from './sty
 import { dialogCompositionCss } from './styles/dialog-composition.styles';
 
 const FORM_KIT_CSS = cardDialogFormKitTokens
-  + formKitCss(CARD_DIALOG_FORM_KIT, { withSwitch: false }) + dialogCompositionCss;
+  + formKitCss({ ...CARD_DIALOG_FORM_KIT, parameterized: true }, { withSwitch: false }) + dialogCompositionCss;
 const adopted = new WeakSet<ShadowRoot>();
 let sheet: CSSStyleSheet | null = null;
 

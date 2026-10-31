@@ -144,15 +144,6 @@ export const dialogsStyles = css`
       --oplock-stroke-ratio: .025;
     }
     .oplock.unknown { --oplock-core-fg: var(--hp-muted); }
-    .oprow {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-      padding: var(--sp-3) 0;
-    }
-    .oprow b { margin-left: auto; }
-    .oprow.ok b { color: #66d17a; }
-    .oprow.warn b { color: var(--hp-open); }
     .ctrlstates { display: flex; flex-direction: column; gap: var(--sp-2); }
     .cardpreview {
       display: flex;

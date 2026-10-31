@@ -154,7 +154,7 @@ try {
           await shell.locator('[data-action="space-copy"]').click();
           shell = page.locator('hp-dialog[data-kind="space"]'); await expect(shell.locator('#space-copy-name')).toBeVisible();
           await capture('space-copy');
-          await shell.locator('[data-hp="dialog-cancel"]').click();
+          await shell.locator('[slot="footer"] [data-hp="dialog-cancel"]').click();
           await expect(shell.locator('[data-action="space-copy"]')).toBeVisible();
         }
         await close(shell);

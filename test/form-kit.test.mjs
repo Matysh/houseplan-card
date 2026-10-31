@@ -6,7 +6,6 @@ import { parseRules } from './helpers/editor-style-ownership.mjs';
 import {
   CARD_DIALOG_FORM_KIT, SUMMARY_PANEL_FORM_KIT, formKitCss,
 } from '../test-build/styles/form-kit.styles.js';
-import { summaryPanelEditorCss } from '../test-build/summary-panel-editor-style.js';
 import {
   TILE_INK_DARK, TILE_INK_LIGHT, colorTileInk, isLightHex,
 } from '../test-build/editors/color-tile-ink.js';
@@ -24,44 +23,6 @@ import {
 const FROZEN_PANEL_CSS = readFileSync(
   new URL('./fixtures/summary-panel-editor.css', import.meta.url), 'utf8',
 );
-// #1119 UI-005 intentionally adopts the approved compact composition. Keep the
-// independent pre-UI snapshot, permit only these named substitutions, and
-// continue comparing every other byte (including all shared generator parts).
-function acceptedSummaryComposition(snapshot) {
-  const replacements = [
-    ['padding: 14px 17px 18px;', 'padding: 20px;'],
-    ['background: var(--summary-editor-muted);\n    font-size: .875rem;\n    line-height: 1.4;',
-      'background: var(--hpf-surface);\n    font-size: 13px;\n    line-height: 1.5;'],
-    [`.summary-editor .summary-switch input {`,
-      `hp-dialog[data-kind='summary'].ui-dialog .summary-switch input[type='checkbox'] {`],
-    [`  .summary-editor .summary-block-title { font-weight: 700; }\n`, ''],
-    [`    padding: 8px 10px;
-    color: var(--primary-text-color);
-    background: var(--summary-editor-surface);
-    border: 1px solid var(--summary-editor-line);
-    border-radius: 7px;
-    font: inherit;
-    font-size: .875rem;
-    line-height: 1.4;
-  }
-  .summary-editor select { cursor: pointer; }`,
-    `    color: var(--primary-text-color);
-    background: var(--summary-editor-surface);
-    border: 1px solid var(--summary-editor-line);
-    border-radius: 7px;
-    font: inherit;
-  }
-  .summary-editor select { padding:8px 10px; font-size:.875rem; line-height:1.4; cursor:pointer; }
-  hp-dialog[data-kind='summary'].ui-dialog input[type='text'],
-  hp-dialog[data-kind='summary'].ui-dialog input[type='search'] { padding:10px 12px; font-size:13px; line-height:22px; }`],
-  ];
-  for (const [before, after] of replacements) {
-    assert.equal(snapshot.split(before).length - 1, 1, 'accepted composition targets exactly one historical declaration');
-    snapshot = snapshot.replace(before, after);
-  }
-  return snapshot;
-}
-const ACCEPTED_PANEL_CSS = acceptedSummaryComposition(FROZEN_PANEL_CSS);
 /**
  * #597 M2 ревью ТЗ. К3 обещает, что разрез генератора на фрагменты не меняет
  * ни байта в листе диалогов, а сослаться было не на что: существующие тесты
@@ -160,39 +121,19 @@ test('#594 AC11 генератор воспроизводит правила п�
   }
 });
 
-/**
- * #597. Главное доказательство шага и единственное, которое ловит перестановку
- * правил: у настроек панели нет ни одного golden-кадра (в матрице нет сцены
- * `dialog: 'summary'`), поэтому «панель не изменилась» нельзя показать
- * пикселями. Сравнение собранного листа с замороженным — замена эталону.
- *
- * Фикстура `test/fixtures/summary-panel-editor.css` снята с `origin/dev` до
- * правки. Она живёт ровно до того шага эпика #591, который законно меняет вид
- * панели: там её обновляют вместе с кадрами и объясняют расхождение.
- */
-test('#1119 Summary UI-005 changes only named composition in the complete #597 snapshot', () => {
-  assert.equal(summaryPanelEditorCss.length, ACCEPTED_PANEL_CSS.length,
-    'длина листа панели изменилась — значит изменился и он сам');
-  assert.equal(summaryPanelEditorCss, ACCEPTED_PANEL_CSS);
-  // И фрагменты действительно пришли из набора, а не остались литералами:
-  // иначе тест выше сравнивал бы панель сама с собой.
-  const source = readFileSync(
-    new URL('../src/summary-panel-editor-style.ts', import.meta.url), 'utf8',
-  );
-  for (const fn of ['formKitCardsCss', 'formKitFocusCss', 'formKitDisabledCss',
-    'formKitSwitchRowCss', 'formKitSwitchCaptionCss']) {
-    assert.ok(source.includes(`\${${fn}(SUMMARY_PANEL_FORM_KIT)}`),
-      `${fn}: панель не подставляет фрагмент набора`);
-  }
-  // #597 M1 ревью ТЗ: проверять надо отсутствие ВСЕХ пяти фрагментов, а не одной
-  // характерной подстроки. `min-height: 54px` встречается только в ряду-
-  // переключателе, поэтому литерал, оставленный «на всякий случай» для любого из
-  // четырёх остальных, прошёл бы и это правило, и побайтовое сравнение выше:
-  // на собранный вывод лишний литерал не влияет, он просто вторая копия.
-  for (const [name, fragment] of Object.entries(PANEL_FRAGMENTS)) {
-    assert.ok(!source.includes(fragment),
-      `${name}: правило осталось литералом в листе панели — копия не устранена`);
-  }
+// #1148 replaces the Summary sheet with the common dialog/Form Kit. Its old
+// whole-sheet equality oracle is retired; the immutable historical generator
+// fixture above still guards the compatibility API. Native Summary smokes now
+// cover its actual controls, source selection, save/cancel and both shells.
+test('#1148 opt-in recipes change parameters without copying control rules', () => {
+  const css = formKitCss(CARD_DIALOG_FORM_KIT, { recipes: [
+    { selector: '.synthetic-settings', values: { 'body-gap': '0', 'toggle-min-height': '44px' } },
+  ] });
+  assert.deepEqual(parseRules(css).map(({ selectors, declarations }) => ({ selectors, declarations })), [
+    { selectors: ['.synthetic-settings'], declarations: [
+      '--hpf-kit-body-gap: 0', '--hpf-kit-toggle-min-height: 44px',
+    ] },
+  ]);
 });
 
 /**

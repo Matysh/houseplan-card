@@ -143,7 +143,17 @@ try{
        await button.hover();await page.waitForTimeout(180);
        out[prefix+'_select_hover']=await button.evaluate((el,before)=>{const s=getComputedStyle(el);return s.cursor==='pointer'&&(s.backgroundColor!==before.background||s.borderColor!==before.border);},before);
        await button.click();sawSelects++;
-       out[prefix+'_select_popup']=await select.locator('[role=listbox]').evaluate(el=>{const s=getComputedStyle(el);return el.getBoundingClientRect().height>0&&parseFloat(s.borderRadius)>0&&s.boxShadow!=='none'&&s.transitionDuration.split(',').some(n=>parseFloat(n)>0);});
+       out[prefix+'_select_popup']=await select.locator('[role=listbox]').evaluate(async el=>{
+        // The shared entrance uses the Web Animations API, including interrupted openings.
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const s=getComputedStyle(el),animations=el.getAnimations();
+        const entering=animations.some(animation=>{
+         const timing=animation.effect?.getTiming();
+         return timing?.duration===180&&timing.easing==='ease-out';
+        });
+        const motion=matchMedia('(prefers-reduced-motion:reduce)').matches?animations.length===0:entering;
+        return el.getBoundingClientRect().height>0&&parseFloat(s.borderRadius)>0&&s.boxShadow!=='none'&&motion;
+       });
        await page.keyboard.press('Escape');
        out[prefix+'_select_closed']=await button.getAttribute('aria-expanded')==='false';
       }

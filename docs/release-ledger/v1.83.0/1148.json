@@ -1,0 +1,377 @@
+{
+  "schema": 1,
+  "issue": 1148,
+  "baseStable": "v1.83.0",
+  "category": "stable-fix",
+  "rationale": "Existing stable dialogs adopt the accepted common Kit shell, basic form recipe and action painter. Copy/save/cancel/export/service guards, models, configuration and permissions remain; complex settings content is #1149 and editor controls are #1150.",
+  "summary": {
+    "ru": "Единая оболочка, основные поля и кнопки диалогов, включая копирование пространства, печать и сводную.",
+    "en": "Shared dialog shell, basic fields and actions for space copy, print export and Summary."
+  },
+  "visual": {
+    "schema": 2,
+    "baselineIndex": "9ceb3b026287b979ef2432aedcb09d96bff3ca96c6c26ffc54db855e7e05fad7",
+    "golden": [
+      {
+        "id": "approved-ui-info-light-1119",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "approved-ui-summary-light-1119",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "approved-ui-info-dark-1119",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "approved-ui-summary-dark-1119",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "vacuum-live-tail-pending-dialog-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "vacuum-retained-path-diagnostics-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-inbox-desktop-en-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "css-migration-rules-invalid-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-inbox-desktop-ru-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-inbox-narrow-ru-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-state-source-standard-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-state-source-manual-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-state-source-unknown-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-state-source-protected-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-dialog-desktop-de",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "room-temperature-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "room-temperature-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "room-discard-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "more-info-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "more-info-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "toggle-entity-dialog-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "toggle-entity-dialog-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-help-popover-light-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "decor-color-popover-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "decor-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "general-color-popover-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-help-zoom-200-en-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-help-zoom-200-ru-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "support-desktop-empty-light-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "support-desktop-preview-dark-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "support-phone-validation-light-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "support-relay-error-light-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "support-tablet-preview-dark-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-ripple-color-popover-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "space-room-color-popover-desktop-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "backup-full-preview-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "backup-plan-only-export-desktop-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "backup-space-preview-mobile-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "optimize-preflight-dialog-dark-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "optimize-preflight-dialog-light-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "optimize-orphan-references-dark-en",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "optimize-orphan-references-light-ru",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-issues-maintenance-card",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "device-issues-alarm-card",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-device-confirm-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-device-confirm-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-new-space-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-new-space-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-device-confirm-narrow-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "ui-1081-space-blocker-narrow-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-external-screens-empty-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-external-screens-empty-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-external-screens-list-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-external-screens-list-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-external-screens-constructor-light",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      },
+      {
+        "id": "settings-external-screens-constructor-dark",
+        "expectation": "change",
+        "reason": "#1148: migrate this existing dialog to the common shell/form/footer/action variants, preserving its content and actions. Inherited pending #1147 deltas remain owned by #1147; no blanket baseline acceptance."
+      }
+    ],
+    "goldenChecks": [
+      {
+        "id": "pdf-export-geometry-light",
+        "reason": "Exported document or View/kiosk scene geometry/content is outside dialog-paint migration; compare exact parent capture and existing strict contract."
+      },
+      {
+        "id": "pdf-export-polish-light",
+        "reason": "Exported document or View/kiosk scene geometry/content is outside dialog-paint migration; compare exact parent capture and existing strict contract."
+      },
+      {
+        "id": "pdf-export-stepped-dimensions-light",
+        "reason": "Exported document or View/kiosk scene geometry/content is outside dialog-paint migration; compare exact parent capture and existing strict contract."
+      },
+      {
+        "id": "geometry-view-light-fit",
+        "reason": "Exported document or View/kiosk scene geometry/content is outside dialog-paint migration; compare exact parent capture and existing strict contract."
+      },
+      {
+        "id": "geometry-view-dark-fit",
+        "reason": "Exported document or View/kiosk scene geometry/content is outside dialog-paint migration; compare exact parent capture and existing strict contract."
+      },
+      {
+        "id": "panel-wide-kiosk-all",
+        "reason": "Exported document or View/kiosk scene geometry/content is outside dialog-paint migration; compare exact parent capture and existing strict contract."
+      },
+      {
+        "id": "panel-narrow-kiosk-fixed",
+        "reason": "Exported document or View/kiosk scene geometry/content is outside dialog-paint migration; compare exact parent capture and existing strict contract."
+      },
+      {
+        "id": "support-phone-success-dark-en",
+        "reason": "Existing success state is unchanged in both the exact parent comparison and the baseline; keep this ordinary related check."
+      }
+    ],
+    "smokes": [
+      "smoke_summary_panel_polish.mjs",
+      "smoke_summary_dialog_scroll.mjs",
+      "smoke_ui_polish_963_reference.mjs",
+      "smoke_settings_polish_955.mjs",
+      "smoke_dialog_ui_kit.mjs",
+      "smoke_space_copy.mjs",
+      "smoke_partition_openings.mjs",
+      "smoke_led_strip_bind.mjs",
+      "smoke_stairs.mjs",
+      "smoke_merge_split.mjs",
+      "smoke_physical_body_characterization.mjs",
+      "smoke_warm_view_marker.mjs",
+      "smoke_lock_action.mjs",
+      "smoke_lock_invariant.mjs",
+      "smoke_ui_polish_1145.mjs",
+      "smoke_pdf_export.mjs",
+      "smoke_svg_export.mjs",
+      "smoke_discard_dialog_polish.mjs",
+      "smoke_editor_styles_lazy.mjs",
+      "smoke_danger_confirm_branches.mjs",
+      "smoke_approved_ui.mjs",
+      "smoke_dialog_modal_recovery.mjs",
+      "smoke_furniture_polish.mjs",
+      "smoke_decor_images.mjs"
+    ]
+  }
+}

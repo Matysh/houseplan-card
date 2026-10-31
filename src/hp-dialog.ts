@@ -263,18 +263,6 @@ export class HpDialog extends LitElement {
     :host([settings-layout][compact]) .surface { height:auto; max-height:calc(100dvh - 48px); }
     :host(.decor-properties-dialog) .header { gap:12px; }
     :host(.decor-properties-dialog) .title-text { line-height:24px; }
-    /* #931: the compact HA-variable surface, scoped away from existing dialogs. */
-    :host([properties-shell]) { --hp-dialog-wide-width:560px; }
-    :host([properties-shell]) ha-dialog { --ha-dialog-width-md:560px; --ha-dialog-border-radius:10px; --ha-dialog-max-height:calc(100dvh - 48px); }
-    :host([properties-shell]) .surface { border-color:var(--divider-color,#d2dce1); border-radius:10px; max-height:calc(100dvh - 48px); }
-    :host([properties-shell]) .header { padding:22px 24px; min-height:0; border-bottom:1px solid var(--divider-color,#e1e6e9); }
-    :host([properties-shell]) .title-text { font-size:18px; }
-    :host([properties-shell]) .title { line-height:1.4; }
-    :host([properties-shell]) .header .close { width:18px; height:18px; --mdc-icon-size:18px; }
-    :host([properties-shell]) .footer { padding:0; border-top:1px solid var(--divider-color,#e1e6e9); }
-    @media (min-height: 700px) {
-      :host([properties-shell]) .surface, :host([properties-shell]) ha-dialog::part(dialog) { transform:translateY(-16px); }
-    }
     @media (max-width: 480px) {
       :host([settings-layout]) .surface { height:100dvh; max-height:100dvh; }
       :host([settings-layout]) ha-dialog { --ha-dialog-max-height:100dvh; }
@@ -809,7 +797,7 @@ export class HpDialog extends LitElement {
     const heading = (slot?: string) => html`<header class="header" slot=${slot || nothing}>${title}${closeButton()}</header>`;
     // HA's public header slot lets both shells share the approved geometry and
     // close affordance. Modal lifecycle and the body scroller remain HA-owned.
-    const haHeading = this.hasAttribute('settings-layout') || this.hasAttribute('properties-shell')
+    const haHeading = this.hasAttribute('settings-layout')
       ? heading('header') : html`<span class="header-title-slot" slot="headerTitle">${title}</span>`;
 
     if (this._usesHaDialog()) {

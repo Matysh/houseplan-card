@@ -18,7 +18,7 @@ import { canonicalizeConfigGeometry } from './coordinate-canonicalization';
 import type { SummaryPanelEditorRenderer } from './summary-panel-editor';
 import { summaryPanelCss } from './summary-panel-style';
 import { ensureCompactDialogStyles } from './compact-dialog-styles';
-import { summaryPanelDialogCss } from './summary-panel-dialog-style';
+import { ensureFormKitStyles } from './form-kit-styles';
 import { summaryIcon } from './summary-panel-icons';
 import { ControlSurfacePresentation } from './control-surface-presentation';
 import { summaryPanelText } from './summary-panel-i18n';
@@ -119,8 +119,6 @@ export class LoadedSummaryPanelRuntime {
   private lifecycleIdentity = '';
   private connected = false;
   private readonly presentation = new ControlSurfacePresentation(() => this.host.requestUpdate());
-  private dialogStyleSheet: CSSStyleSheet | null = null;
-  private readonly styledDialogRoots = new WeakSet<ShadowRoot>();
 
   public constructor(host: unknown) {
     this.host = host as SummaryPanelHost;
@@ -204,7 +202,6 @@ export class LoadedSummaryPanelRuntime {
     this.loadLocal();
     this.measureIfInputsChanged();
     this.syncClock();
-    this.ensureDialogStyle();
     this.presentation.updated(this.host.renderRoot.querySelector<HTMLElement>('.summary-overlay'));
   }
 
@@ -363,6 +360,8 @@ export class LoadedSummaryPanelRuntime {
   private translate = (key: string): string => this.t(key);
 
   private ensureStyle(): void {
+    ensureFormKitStyles(this.host);
+    ensureCompactDialogStyles(this.host);
     const root = this.host.renderRoot as ShadowRoot;
     if (this.styleSheet && root.adoptedStyleSheets.includes(this.styleSheet)) return;
     const Sheet = this.host.ownerDocument.defaultView?.CSSStyleSheet;
@@ -376,25 +375,6 @@ export class LoadedSummaryPanelRuntime {
     const style = this.host.ownerDocument.createElement('style');
     style.dataset.hpSummary = 'true'; style.textContent = summaryPanelCss;
     root.insertBefore(style, root.firstChild);
-  }
-
-  private ensureDialogStyle(): void {
-    const root = this.host.renderRoot.querySelector('hp-dialog[data-kind="summary"]')?.shadowRoot;
-    if (!root || this.styledDialogRoots.has(root)) return;
-    const Sheet = this.host.ownerDocument.defaultView?.CSSStyleSheet;
-    if (Sheet && 'adoptedStyleSheets' in root) {
-      if (!this.dialogStyleSheet) {
-        this.dialogStyleSheet = new Sheet();
-        this.dialogStyleSheet.replaceSync(summaryPanelDialogCss);
-      }
-      root.adoptedStyleSheets = [...root.adoptedStyleSheets, this.dialogStyleSheet];
-    } else {
-      const style = this.host.ownerDocument.createElement('style');
-      style.dataset.hpSummaryShell = 'true';
-      style.textContent = summaryPanelDialogCss;
-      root.appendChild(style);
-    }
-    this.styledDialogRoots.add(root);
   }
 
   private placementSlot(): string | null {

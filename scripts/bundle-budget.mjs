@@ -559,7 +559,7 @@ export function assertSupportBundleOwnership(
  */
 export const EDITOR_STYLE_MARKERS = Object.freeze({
   lazy: Object.freeze([
-    '.radarcoordinates{', '.supportform>label:not(.srcrow){', '.device-inbox-row{', '.vacpicker{',
+    '.radarcoordinates{', '.supportbody{', '.device-inbox-row{', '.vacpicker{',
     '.editor-secondary-host{', '--hp-editor-tray-bg-fallback:',
   ]),
   eager: Object.freeze(['.btn{', '.editorloading{', '.recoveryoverlay{', '.vaccalbar{', '.floorrow{']),

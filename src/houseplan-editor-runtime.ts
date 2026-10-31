@@ -9896,11 +9896,11 @@ public _renderRulesDialog(): TemplateResult {
                   this._rulesSet(rules);
                 }} />
               <ha-icon class="rprev" icon=${r.icon || 'mdi:chip'}></ha-icon>
-              <button data-hp="action" data-action="icon-rule-up" data-value=${i} type="button" class="btn ract" aria-label=${this.host._t('btn.up')}
+              <button data-hp="action" data-action="icon-rule-up" data-value=${i} type="button" class="btn hpf-action-icon ract" aria-label=${this.host._t('btn.up')}
                 @click=${() => move(i, -1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
-              <button data-hp="action" data-action="icon-rule-down" data-value=${i} type="button" class="btn ract" aria-label=${this.host._t('btn.down')}
+              <button data-hp="action" data-action="icon-rule-down" data-value=${i} type="button" class="btn hpf-action-icon ract" aria-label=${this.host._t('btn.down')}
                 @click=${() => move(i, 1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
-              <button data-hp="action" data-action="icon-rule-delete" data-value=${i} type="button" class="btn ract del" aria-label=${this.host._t('btn.delete')}
+              <button data-hp="action" data-action="icon-rule-delete" data-value=${i} type="button" class="btn danger hpf-action-icon ract del" aria-label=${this.host._t('btn.delete')}
                 @click=${() => this._rulesSet(d.rules.filter((_, j) => j !== i))}><ha-icon icon="mdi:close"></ha-icon></button>
             </div>`;
           })}

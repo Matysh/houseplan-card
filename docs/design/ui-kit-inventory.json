@@ -598,37 +598,37 @@
       ],
       "cells": {
         "dialog-shell": [
-          "K|editors/general-settings-dialog.ts:99 <hp-dialog form-shell settings-layout wide> (no |styles/settings-dialogs.styles.ts:9-13,styles/settings-dialogs.styles.ts:185"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "menu": [
-          "M|editors/settings-sections.ts:47-51 <nav class=hpf-settings-nav><button aria-current>|styles/settings-dialogs.styles.ts:18,styles/settings-dialogs.styles.ts:19,styles/settings-dialogs.styles.ts:20"
+          "K|styles/settings-action.styles.ts:settingsActionsCss navigation variant; editors/settings-sections.ts:aria-current|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "L|editors/general-settings-dialog.ts:309 class='btn on' data-hp=dialog-confirm|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "L|editors/general-settings-dialog.ts:300,308 class='btn ghost' (Reset/Cancel in footer)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "L|editors/marker-dialog.ts:945 'btn ghost danger'; editors/space-form.ts:178 'btn da|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68,styles/settings-dialogs.styles.ts:98"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-icon": [
-          "L|editors/space-form.ts:170,178 .hpf-mobile-icon|styles/dialogs.styles.ts:565-571,styles/settings-dialogs.styles.ts:96"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "text-link": [
           "K|editors/general-settings-dialog.ts:297 textLink() review-fields in footerStatus"
         ],
         "dialog-footer": [
-          "L|editors/general-settings-dialog.ts:295-314 .row.dialog-action-footer.hpf-footer|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "help": [
           "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
         ],
         "section-heading": [
-          "L|editors/general-settings-dialog.ts:103 formCard() -> .hpf-head h3|styles/settings-dialogs.styles.ts:26,styles/settings-dialogs.styles.ts:27,styles/settings-dialogs.styles.ts:30"
+          "K|styles/form-kit.styles.ts:shared heading; styles/form-kit-settings.styles.ts:heading values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "card/group": [
-          "L|editors/general-settings-dialog.ts:103 formCard() -> .hpf-card|styles/settings-dialogs.styles.ts:25,styles/settings-dialogs.styles.ts:133"
+          "K|styles/form-kit.styles.ts:formKitCardsCss/extrasCss; styles/form-kit-settings.styles.ts:card values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "separator": [
           "K|editors/general-settings-dialog.ts:106 formSections()"
@@ -655,13 +655,13 @@
       ],
       "cells": {
         "toggle": [
-          "L|editors/general-settings-dialog.ts:107-116,133-137 toggleRow()|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+          "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
-          "K|editors/general-settings-dialog.ts:119 selectControl() -> hp-settings-select"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
-          "L|editors/general-settings-dialog.ts:132,138 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+          "K|styles/form-kit.styles.ts:shared callout; styles/form-kit-settings.styles.ts:callout values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "help": [
           "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
@@ -681,10 +681,10 @@
       ],
       "cells": {
         "toggle": [
-          "L|editors/general-settings-dialog.ts:145-149|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+          "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
-          "K|editors/general-settings-dialog.ts:152"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
           "L|editors/general-settings-dialog.ts:167-173 colorField() in .hpf-color-with-action|styles/settings-dialogs.styles.ts:33-34,styles/settings-dialogs.styles.ts:43,styles/settings-dialogs.styles.ts:44-45"
@@ -716,7 +716,7 @@
           "K|editors/general-settings-dialog.ts:184-186 subsection()|styles/settings-dialogs.styles.ts:30"
         ],
         "callout/note": [
-          "L|editors/general-settings-dialog.ts:183 <p class=hpf-hint>|styles/settings-dialogs.styles.ts:61"
+          "K|styles/form-kit.styles.ts:shared callout; styles/form-kit-settings.styles.ts:callout values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -733,17 +733,17 @@
       ],
       "cells": {
         "input": [
-          "L|editors/general-settings-dialog.ts:201-208 unitInput()|styles/settings-dialogs.styles.ts:46,styles/settings-dialogs.styles.ts:179",
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
           "M|editors/settings-north.ts:17-62 custom dial button role=slider + native range|styles/settings-dialogs.styles.ts:124-130,styles/settings-dialogs.styles.ts:181-182"
         ],
         "checkbox/radio": [
           "M|sun-settings-view.ts:17-19 .hpf-ray-choice radio cards with svg previews|styles/settings-dialogs.styles.ts:103-112"
         ],
         "toggle": [
-          "L|editors/general-settings-dialog.ts:223-227,229-231|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+          "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
-          "L|editors/general-settings-dialog.ts:208,211,220,232 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+          "K|styles/form-kit.styles.ts:shared callout; styles/form-kit-settings.styles.ts:callout values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "empty/loading/error": [
           "K|editors/general-settings-dialog.ts:222 <p class=hpf-error>"
@@ -838,19 +838,19 @@
       ],
       "cells": {
         "dialog-shell": [
-          "L|editors/external-screens.ts:129 hp-dialog form-shell settings-layout compact (no ui-di|editors/external-screens.ts:75"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
           "K|editors/external-screens.ts:120 hp-settings-select > .hpf-select"
         ],
         "dialog-footer": [
-          "L|editors/external-screens.ts:140-143|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "L|editors/external-screens.ts:142|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "L|editors/external-screens.ts:141|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
           "L|editors/external-screens.ts:139 .hpf-note.hpf-hint.hp-screen-note|styles/settings-dialogs.styles.ts:148,editors/external-screens.ts:74"
@@ -931,20 +931,20 @@
       ],
       "cells": {
         "input": [
-          "K|editors/space-form.ts:220 hpf-input",
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
           "L|editors/space-form.ts:314,416 colorField()|styles/settings-dialogs.styles.ts:43-45"
         ],
         "select": [
-          "K|editors/space-form.ts:251,339,346 selectControl()"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "toggle": [
-          "L|editors/space-form.ts:266,337,376,380 toggleRow()|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+          "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "L|editors/space-form.ts:283 'btn filebtn', 290 'btn ghost'|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "L|editors/space-form.ts:156 'btn danger' (delete with devices), 178 footer|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68,styles/settings-dialogs.styles.ts:79-80"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "card/group": [
           "M|editors/space-form.ts:298 .hpf-plan-image|styles/settings-dialogs.styles.ts:77-78,styles/settings-dialogs.styles.ts:81"
@@ -962,7 +962,7 @@
           "L|editors/space-form.ts:421,435 textLink() in .hpf-context-links|styles/settings-dialogs.styles.ts:89"
         ],
         "dialog-footer": [
-          "L|editors/space-form.ts:164-193 .hpf-footer-space|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -979,23 +979,23 @@
       ],
       "cells": {
         "input": [
-          "K|editors/room-settings-dialog.ts:136 hpf-input",
-          "L|editors/room-settings-dialog.ts:185-206 unitInput() temperature range|styles/settings-dialogs.styles.ts:73-76,styles/settings-dialogs.styles.ts:136-137"
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
-          "K|editors/room-settings-dialog.ts:142 hp-settings-select, 243 selectControl()|styles/settings-dialogs.styles.ts:138"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "toggle": [
-          "L|editors/room-settings-dialog.ts:220|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+          "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "list-row": [
           "K|editors/room-settings-dialog.ts:54 sourcePicker()"
         ],
         "btn-secondary": [
-          "L|editors/room-settings-dialog.ts:210 range reset, 275 keep-as-partitions|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "L|editors/room-settings-dialog.ts:286-295|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
           "L|editors/room-settings-dialog.ts:208,265 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
@@ -1007,7 +1007,7 @@
           "L|editors/room-settings-dialog.ts:127 single section|styles/settings-dialogs.styles.ts:131-135"
         ],
         "dialog-footer": [
-          "L|editors/room-settings-dialog.ts:272-296|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -1024,18 +1024,18 @@
       ],
       "cells": {
         "input": [
-          "K|editors/marker-dialog.ts:265,386,467,851,858 .hpf-input; 865 textarea",
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
           "L|editors/marker-dialog.ts:610 ha-icon-picker + iconPickerKit()|styles/settings-dialogs.styles.ts:152,styles/settings-dialogs.styles.ts:153",
-          "K|editors/marker-dialog.ts:798,809 rangeLine()"
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
-          "K|editors/marker-dialog.ts:312,345,413,549,643,696,751 hp-settings-select > native .hpf-"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "segmented": [
           "L|editors/marker-dialog.ts:272 segmented(name=bmode); 778 badge position|styles/settings-dialogs.styles.ts:143-144"
         ],
         "toggle": [
-          "L|editors/marker-dialog.ts:441,658-669 (hide battery/signal compact),728|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+          "K|styles/form-kit.styles.ts:extrasCss shared toggle; styles/form-kit-settings.styles.ts:finite settings values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
           "K|editors/marker-dialog.ts:250-254 label.hpf-check"
@@ -1053,19 +1053,19 @@
           "K|editors/marker-dialog.ts:202,892 textLink()"
         ],
         "btn-secondary": [
-          "L|editors/marker-dialog.ts:881 'btn ghost filebtn'; 933 visibility|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "L|editors/marker-dialog.ts:945|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68,styles/settings-dialogs.styles.ts:98"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "L|editors/marker-dialog.ts:953|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "empty/loading/error": [
           "L|editors/marker-dialog.ts:826-829 tintBlock + .devicepreview-empty|styles/devices.styles.ts:663-675"
         ],
         "dialog-footer": [
-          "L|editors/marker-dialog.ts:927-958 hpf-footer-object|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "separator": [
           "L|editors/settings-sections.ts:49 <hr> before specialized sections|styles/settings-dialogs.styles.ts:22"
@@ -1150,25 +1150,25 @@
       ],
       "cells": {
         "dialog-shell": [
-          "K|editors/marker-alerts.ts:176 hp-dialog class=ui-dialog compact"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
-          "K|editors/marker-alerts.ts:169-171 hp-settings-select"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
-          "L|editors/marker-alerts.ts:191 input.hpf-input|styles/settings-dialogs.styles.ts:207-209"
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
           "L|editors/marker-alerts.ts:198 .hpf-callout.alarm-outcome|styles/marker-alert-editor.styles.ts:20-22"
         ],
         "btn-primary": [
-          "K|editors/marker-alerts.ts:202 'btn on' (ui-dialog -> settingsActionsCss)"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "K|editors/marker-alerts.ts:201"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "K|editors/marker-alerts.ts:200 .row[slot=footer]"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "empty/loading/error": [
           "K|editors/marker-alerts.ts:197 .hpf-error"
@@ -1263,26 +1263,26 @@
       ],
       "cells": {
         "dialog-shell": [
-          "L|summary-panel-editor.ts:64 hp-dialog.ui-dialog compact + inline style --hp-dialog-wide|summary-panel-dialog-style.ts:7-40"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "toggle": [
           "L|summary-panel-editor.ts:52-61,87-96 label.summary-switch|summary-panel-editor-style.ts:91-131,summary-panel-editor-style.ts:132-133"
         ],
         "input": [
-          "L|summary-panel-editor.ts:79,127,215,247 text/search inputs|summary-panel-editor-style.ts:64-78,summary-panel-editor-style.ts:80-81,summary-panel-editor-style.ts:82-84"
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
-          "K|summary-panel-editor.ts:150,159 hp-settings-select|summary-panel-editor-style.ts:79"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-icon": [
-          "L|summary-panel-editor.ts:118-125,140,202-212 'btn summary-icon-button'|summary-panel-editor-style.ts:173-187,summary-panel-editor-style.ts:191-200,summary-panel-editor-style.ts:400,404",
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json",
           "N|summary-panel-editor.ts:110 .summary-drag handle|summary-panel-editor-style.ts:188-190"
         ],
         "btn-secondary": [
-          "L|summary-panel-editor.ts:226 'btn summary-source'; 290,307 'btn summary-add'|summary-panel-editor-style.ts:226-241,summary-panel-editor-style.ts:317-337,summary-panel-editor-style.ts:401"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "L|summary-panel-editor.ts:283 'btn danger summary-value-remove'; 300 'btn summary-delete|summary-panel-editor-style.ts:245-250,summary-panel-editor-style.ts:305-316,338"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "list-row": [
           "M|summary-panel-editor.ts:107 article.summary-editor-block, 196 .summary-editor-value, 2|summary-panel-editor-style.ts:154-171,summary-panel-editor-style.ts:212-223,summary-panel-editor-style.ts:274-291"
@@ -1297,10 +1297,10 @@
           "L|summary-panel-editor.ts:76,99 h3|summary-panel-editor-style.ts:46,summary-panel-editor-style.ts:134-144"
         ],
         "card/group": [
-          "K|summary-panel-editor.ts:75,98 .summary-general/.summary-blocks-card|summary-panel-editor-style.ts:381"
+          "K|styles/form-kit.styles.ts:formKitCardsCss/extrasCss; styles/form-kit-settings.styles.ts:card values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "L|summary-panel-editor.ts:323-330 .row.summary-editor-footer|summary-panel-editor-style.ts:340-349,summary-panel-editor-style.ts:350-370,summary-panel-editor-style.ts:403"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "empty/loading/error": [
           "M|summary-panel-editor.ts:148,174,276-277,316 .summary-problem/.summary-empty/.summary-r|summary-panel-editor-style.ts:299-303"
@@ -1610,7 +1610,7 @@
       ],
       "cells": {
         "dialog-shell": [
-          "L|editor.ts:807 <hp-dialog properties-shell wide> (variant in hp-dialog.ts:265-272)|editors/properties/styles.ts:146"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
           "K|editor.ts:811-818 sourcePicker() (kit)"
@@ -1625,13 +1625,13 @@
           "M|editor.ts:824 div.hp-prop-preview|editors/properties/styles.ts:156-158"
         ],
         "dialog-footer": [
-          "M|editor.ts:828 div.hp-prop-variable-footer[slot=footer]|editors/properties/styles.ts:159"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|editor.ts:828 cancel button (no class)|editors/properties/styles.ts:160,163"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|editor.ts:829-833 button.insert|editors/properties/styles.ts:161"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "empty/loading/error state": [
           "M|editor.ts:825-826 p.hp-prop-error"
@@ -1651,7 +1651,7 @@
       ],
       "cells": {
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:11473 hp-dialog.device-inbox-dialog.ui-dialog form-shell setti"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
           "M|houseplan-editor-runtime.ts:11478-11483 input[type=search].device-inbox-search; 11413-1142|styles/settings-dialogs.styles.ts:207-210"
@@ -1675,13 +1675,13 @@
           "M|houseplan-editor-runtime.ts:11394-11440 native details.device-inbox-discovery|styles/editor-dialogs.styles.ts:655-660,styles/settings-dialogs.styles.ts:218-219"
         ],
         "btn-secondary": [
-          "K|houseplan-editor-runtime.ts:11484 add-virtual; 11535-11546 row primary actions; 11581-1158"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "K|houseplan-editor-runtime.ts:11436 .btn.on discovery save"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "K|device-inbox-batch.ts:179 .btn.danger batch delete"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-icon": [
           "K|houseplan-editor-runtime.ts:11570-11574 .btn.ghost dots-vertical menu trigger"
@@ -1696,7 +1696,7 @@
           "M|houseplan-editor-runtime.ts:11429-11433 div.device-inbox-preview|styles/editor-dialogs.styles.ts:676"
         ],
         "dialog-footer": [
-          "K|houseplan-editor-runtime.ts:11589-11592 div.row[slot=footer] -> compact-dialog-styles.ts:1"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -1734,7 +1734,7 @@
       ],
       "cells": {
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:9869 hp-dialog.ui-dialog.rules-dialog form-shell settings-layo"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
           "L|houseplan-editor-runtime.ts:9872 div.rhint -> compact-dialog-styles.ts:17|styles/settings-dialogs.styles.ts:232,styles/chrome.styles.ts:411-415"
@@ -1749,13 +1749,13 @@
           "L|houseplan-editor-runtime.ts:9900-9905 button.btn.ract(.del)|styles/settings-dialogs.styles.ts:225-226,styles/editor-dialogs.styles.ts:453-457"
         ],
         "btn-secondary": [
-          "K|houseplan-editor-runtime.ts:9908-9917 .btn.ghost add/reset/cancel"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "K|houseplan-editor-runtime.ts:9918-9920 .btn.on save"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "K|houseplan-editor-runtime.ts:9913 div.row[slot=footer]"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -1772,19 +1772,19 @@
       ],
       "cells": {
         "dialog-shell": [
-          "L|hp-confirm.ts:50-59 (ui-dialog only for remove-marker* keys, line 49)|styles/dialogs.styles.ts:379-398,styles/settings-dialogs.styles.ts:10-12"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "L|hp-confirm.ts:68-69 .btn.ghost cancel|styles/dialogs.styles.ts:34-65,styles/settings-dialogs.styles.ts:65-66,186,styles/dialogs.styles.ts:557,584-588"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "L|hp-confirm.ts:70-76 .btn.danger|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "L|hp-confirm.ts:70 .btn.on (warning kind)|styles/settings-dialogs.styles.ts:67"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "L|hp-confirm.ts:66 div.row.dialog-action-footer.danger-confirm-footer|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356,styles/dialogs.styles.ts:516-541,556,578-583"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "motion-open-close": [
           "K|hp-dialog.ts:206-220 discard-confirm animation"
@@ -1800,16 +1800,16 @@
       "frames": [],
       "cells": {
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:11069, 11103 (legacy), 5354 (ui-dialog compact)|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|houseplan-editor-runtime.ts:11088-11090, 11112-11114, 11117-11119 .btn.ghost/.btn|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "M|houseplan-editor-runtime.ts:11092-11094, 11120-11122 .btn.danger|styles/dialogs.styles.ts:350-353"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|houseplan-editor-runtime.ts:11087, 11111 div.row[slot=footer]|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       },
       "captureScenario": "editor-legacy-confirms"
@@ -1823,7 +1823,7 @@
       "frames": [],
       "cells": {
         "dialog-shell": [
-          "K|led-strip-editor.ts:814-819 <hp-dialog flex-content>|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "list-row": [
           "M|led-strip-editor.ts:825-829 button.btn.ghost.led-pick(.on)|styles/dialogs.styles.ts:34-65"
@@ -1832,10 +1832,10 @@
           "M|led-strip-editor.ts:830 div.hint"
         ],
         "btn-secondary": [
-          "M|led-strip-editor.ts:833-836 .btn / .btn.ghost|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|led-strip-editor.ts:832 div.row[slot=footer]|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       },
       "captureScenario": "led-picker"
@@ -1849,7 +1849,7 @@
       "frames": [],
       "cells": {
         "dialog-shell": [
-          "K|stairs-editor.ts:636-638|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
           "K|stairs-editor.ts:641-656, 684-690 hp-settings-select > select.areasel"
@@ -1868,16 +1868,16 @@
           "M|stairs-editor.ts:627,640,672,677,683 <label>|styles/dialogs.styles.ts:491-495"
         ],
         "btn-danger": [
-          "M|stairs-editor.ts:697-698|styles/dialogs.styles.ts:350-353"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|stairs-editor.ts:700-701|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|stairs-editor.ts:702-703 .btn.on|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|stairs-editor.ts:696 div.row.dialog-action-footer|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       },
       "captureScenario": "stairs-dialog"
@@ -1894,7 +1894,7 @@
       ],
       "cells": {
         "dialog-shell": [
-          "L|decor-image-editor.ts:436-439 (kit only when kind==='furniture', line 414)|styles/settings-dialogs.styles.ts:190,193-206"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
           "M|decor-image-editor.ts:491-500, 518-534, 551-563, 564-568 input.namein (+.hpf-input for fur|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631",
@@ -1910,13 +1910,13 @@
           "M|decor-image-editor.ts:540,545,569 label.dfill checkbox; 504-515 radio label.srcrow|styles/editor-dialogs.styles.ts:22-27,85-92"
         ],
         "btn-secondary": [
-          "M|decor-image-editor.ts:468-473 label.btn.ghost.imageupload; 584-585 cancel|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|decor-image-editor.ts:586-587 class = kit ? 'btn on' : 'btn primary'|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|decor-image-editor.ts:582 div.row[slot=footer]|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -1932,7 +1932,7 @@
       ],
       "cells": {
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:5373, 5449|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
           "M|5380-5395 textarea.namein.dtarea; 5401-5414 number inputs; 5452-5462|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631,styles/editor-dialogs.styles.ts:100-101,108"
@@ -1944,13 +1944,13 @@
           "M|5415 label.dispsection|styles/editor-dialogs.styles.ts:93-99"
         ],
         "btn-secondary": [
-          "M|5436, 5468 .btn.ghost|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|5437, 5469 .btn.primary"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|5434, 5467|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -1963,16 +1963,16 @@
       "frames": [],
       "cells": {
         "dialog-shell": [
-          "K|backdrop-pick.ts:309-311|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|backdrop-pick.ts:318-326 .btn.ghost|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|backdrop-pick.ts:327-330 .btn.on|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|backdrop-pick.ts:317|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       },
       "captureScenario": "backdrop-guard"
@@ -2009,7 +2009,7 @@
       "frames": [],
       "cells": {
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:12036|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
           "M|12029-12034 label.srcrow > input[type=radio]|styles/editor-dialogs.styles.ts:85-92,102"
@@ -2018,13 +2018,13 @@
           "M|12039 p.muted"
         ],
         "btn-secondary": [
-          "M|12046|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|12047-12049 .btn.on|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|12044|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       },
       "captureScenario": "merge-rooms-dialog"
@@ -2038,7 +2038,7 @@
       "frames": [],
       "cells": {
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:11128|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
           "K|11134-11140 hp-settings-select > select.areasel"
@@ -2047,16 +2047,16 @@
           "M|11144-11156 input.namein.tempin inside <div class=row>|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631"
         ],
         "btn-danger": [
-          "M|11162-11164|styles/dialogs.styles.ts:350-353"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|11167|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|11168-11170 .btn.on|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|11160 div.row.dialog-action-footer.physicalfooter|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       },
       "captureScenario": "physical-dialog"
@@ -2074,13 +2074,13 @@
       ],
       "cells": {
         "dialog-shell": [
-          "K|optimize-plans-dialog.ts:524-525|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
           "M|optimize-plans-dialog.ts:413-421, 536-538, 618-619, 652, 663, 672-676, 686-690, 699 div/p.|styles/chrome.styles.ts:411-415,styles/plan.styles.ts:1663"
         ],
         "btn-secondary": [
-          "M|optimize-plans-dialog.ts:539-544 (copy diagnostics inside body <div class=row>), 424-431 (|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "toggle": [
           "M|optimize-plans-dialog.ts:644-651, 664-671 .btn.ghost[aria-pressed] cleanup toggles|styles/editor-dialogs.styles.ts:465,476"
@@ -2089,10 +2089,10 @@
           "M|optimize-plans-dialog.ts:693-704 details.optimize-details; 439-442 fallback details|styles/editor-dialogs.styles.ts:477-495"
         ],
         "btn-primary": [
-          "M|optimize-plans-dialog.ts:712-714 .btn.on|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|optimize-plans-dialog.ts:706|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       }
     },
@@ -2105,19 +2105,19 @@
       "frames": [],
       "cells": {
         "dialog-shell": [
-          "K|space-copy-runtime.ts:88-90|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
-          "M|space-copy-runtime.ts:93-110 input.namein|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631"
+          "K|styles/form-kit.styles.ts:textFieldsCss/extrasCss; form-kit-styles.ts:ensureFormKitStyles; styles/form-kit-settings.styles.ts:finite optional recipe|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|space-copy-runtime.ts:114-117|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|space-copy-runtime.ts:118-121 .btn.on|styles/dialogs.styles.ts:34-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|space-copy-runtime.ts:112 div.row.dialog-action-footer|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ]
       },
       "captureScenario": "space-copy-dialog"
@@ -2171,7 +2171,7 @@
       ],
       "cells": {
         "dialog-shell": [
-          "K|hp-dialog.ts:72-90 (ha-dialog vars + ::part border/shadow), 97-133 title, 187-199 .sur"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-icon": [
           "K|hp-dialog.ts:315-341 (.close 40px / 44px form-shell 248 / 18px properties-shell 271; h"
@@ -2198,10 +2198,10 @@
       ],
       "cells": {
         "btn-primary": [
-          "M|houseplan-editor-runtime.ts:9503 '.btn on' inside hp-dialog without class ui-dialog (9470)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|houseplan-editor-runtime.ts:9501 '.btn ghost' -> legacy .btn.ghost{border:none} (dialogs.s|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
           "M|houseplan-editor-runtime.ts:9474-9483 native radios (backup-kind), 9484-9493 plan-only che|styles/editor-dialogs.styles.ts:85-91,102,106-107,styles/dialogs.styles.ts:491-495,styles/editor-dialogs.styles.ts:511-514"
@@ -2216,10 +2216,10 @@
           "M|backup-archive-client.ts:227,248 native <details> in recovery/archive summary, unstyled"
         ],
         "dialog-footer": [
-          "M|houseplan-editor-runtime.ts:9500 '.row' slot=footer -> legacy hp-dialog .row; kit footer c|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:9470 <hp-dialog data-kind=backup dismiss-on-scrim> (no ui-dial|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "motion-open-close": [
           "K|hp-dialog.ts:642-666 exit, 332-335 backdrop"
@@ -2241,13 +2241,13 @@
       ],
       "cells": {
         "btn-primary": [
-          "M|houseplan-editor-runtime.ts:9673 '.btn on' (space import) in hp-dialog without ui-dialog (|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-danger": [
-          "M|houseplan-editor-runtime.ts:9673 '.btn danger' (full replace)|styles/dialogs.styles.ts:350-353,styles/dialogs.styles.ts:34-47"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "M|houseplan-editor-runtime.ts:9671 '.btn ghost'|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
           "M|houseplan-editor-runtime.ts:9645-9650 fieldset.backupchoices radios; 9663-9667 label.srcro|styles/editor-dialogs.styles.ts:537-551,styles/editor-dialogs.styles.ts:85-91,102,106-107,styles/dialogs.styles.ts:491-495"
@@ -2262,10 +2262,10 @@
           "M|houseplan-editor-runtime.ts:9557 .backupfile, 9561-9571 .backupsummary, 9573-9588 .backupc|styles/editor-dialogs.styles.ts:502-510,515-527"
         ],
         "dialog-footer": [
-          "M|houseplan-editor-runtime.ts:9670 '.row' slot=footer|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-shell": [
-          "K|houseplan-editor-runtime.ts:9554 <hp-dialog data-kind=backup wide dismiss-on-scrim>|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "motion-open-close": [
           "K|hp-dialog.ts:642-666"
@@ -2288,10 +2288,10 @@
       ],
       "cells": {
         "btn-primary": [
-          "L|floor-import-dialog.ts:34 '.btn on' -> kit settingsActionsCss('hp-dialog.ui-dialog .btn') |styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "L|floor-import-dialog.ts:32 '.btn ghost'|styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
           "K|floor-import-dialog.ts:22 checkbox -> compact-dialog-styles.ts:16 (18px, accent-color --hp"
@@ -2309,10 +2309,10 @@
           "L|floor-import-dialog.ts:29 <hp-plan-converter-info> (see surface plan-converter-info)"
         ],
         "dialog-footer": [
-          "L|floor-import-dialog.ts:31 'row hpf-footer' -> compact-dialog-styles.ts:14-15|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-shell": [
-          "K|floor-import-dialog.ts:17 <hp-dialog class=ui-dialog form-shell settings-layout compact wi"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "motion-open-close": [
           "K|compact-dialog-styles.ts:11,30 close rotate; hp-dialog.ts:642-666 exit"
@@ -2328,31 +2328,31 @@
       "frames": [],
       "cells": {
         "btn-primary": [
-          "K|pdf/hp-pdf-dialog.ts:260 button.primary; paint from kit generator settingsActionsCss('button',"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "K|pdf/hp-pdf-dialog.ts:257 bare <button> -> settingsActionsCss('button') (115)"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "select": [
-          "L|pdf/hp-pdf-dialog.ts:225-227, 214-217 selectControl() -> hp-settings-select|pdf/hp-pdf-dialog.ts:106-107"
+          "K|hp-settings-select.ts:HpSettingsSelect; shared Form Kit field wrapper|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
-          "L|pdf/hp-pdf-dialog.ts:207-217 hpf-toggle/hpf-compact after #1132|pdf/hp-pdf-dialog.ts:82-95,109-110 local label/input paint remains"
+          "K|styles/form-kit.styles.ts:extrasCss shared toggle; pdf/hp-pdf-dialog.ts:existing hpf-toggle/hpf-compact|#1148 private PDF label/input paint retired; native export checks"
         ],
         "input": [
           "M|pdf/hp-pdf-dialog.ts:238-253 hp-color-opacity; its shadow CSS owns the controls, not form-kit|hp-color-opacity.ts:185-480"
         ],
         "card/group": [
-          "M|pdf/hp-pdf-dialog.ts:223 <div class=body>|pdf/hp-pdf-dialog.ts:70-81,111"
+          "K|styles/form-kit.styles.ts:formKitCardsCss/extrasCss; styles/form-kit-settings.styles.ts:card values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|pdf/hp-pdf-dialog.ts:256-265 <div class=row slot=footer>|pdf/hp-pdf-dialog.ts:95-105,111,113-115"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-shell": [
-          "L|pdf/hp-pdf-dialog.ts:217 <hp-dialog form-shell settings-layout compact wide data-kind=pdf> (no|pdf/hp-pdf-dialog.ts:68,hp-dialog.ts:258"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "motion-open-close": [
-          "L|hp-dialog.ts:642-666 exit|pdf/hp-pdf-dialog.ts:68,112"
+          "K|hp-dialog.ts:HpDialog; ui-motion.ts; ha-dialog-motion.ts; reduced-motion and teardown remain shared|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "toast": [
           "K|pdf/hp-pdf-dialog.ts:195 context.toast -> houseplan-card.ts:10801 _showToast"
@@ -2376,10 +2376,10 @@
       ],
       "cells": {
         "btn-primary": [
-          "L|houseplan-editor-runtime.ts:9163 '.btn on' (Send/Retry)|styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-secondary": [
-          "L|houseplan-editor-runtime.ts:9109,9112,9126,9135,9138,9147,9158 '.btn ghost'|styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "text-link": [
           "L|houseplan-editor-runtime.ts:9033,9035,9037,9043,9140,9141 a.aboutlink -> kit settingsTextL|styles/settings-dialogs.styles.ts:235-236,styles/editor-dialogs.styles.ts:553-560"
@@ -2406,10 +2406,10 @@
           "M|houseplan-editor-runtime.ts:9100-9107 native <details>/<summary data-action=support-previe|styles/settings-dialogs.styles.ts:188 (generator call), 247,styles/editor-dialogs.styles.ts:616-617"
         ],
         "dialog-footer": [
-          "L|houseplan-editor-runtime.ts:9157-9170 'row supportfooter' + .spacer -> compact-dialog-styl|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-shell": [
-          "L|houseplan-editor-runtime.ts:9027 <hp-dialog id=support-dialog class=ui-dialog form-shell s|styles/settings-dialogs.styles.ts:8,styles/dialogs.styles.ts:365-375"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "motion-open-close": [
           "K|compact-dialog-styles.ts:11,30; hp-dialog.ts:642-666"
@@ -2514,16 +2514,16 @@
       "frames": [],
       "cells": {
         "btn-secondary": [
-          "M|warm-marker-restore.ts:47 '.btn ghost' in hp-dialog without ui-dialog (43)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "btn-primary": [
-          "M|warm-marker-restore.ts:48 '.btn on' Retry|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+          "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-footer": [
-          "M|warm-marker-restore.ts:46 '.row' slot=footer|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+          "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "dialog-shell": [
-          "K|warm-marker-restore.ts:43 <hp-dialog data-kind=marker-restore dismiss-on-scrim>|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476"
+          "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "motion-open-close": [
           "K|hp-dialog.ts:642-666"
@@ -2533,6 +2533,37 @@
         ]
       },
       "captureScenario": "marker-restore"
+    },
+    {
+      "id": "opening-info-dialog",
+      "group": "view",
+      "name": "Состояние проёма и действие замка",
+      "open": "View → значок состояния проёма/замка",
+      "modes": "просмотр",
+      "captureScenario": "opening-info-dialog",
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-card.ts:_renderOpeningInfo; hp-dialog.ts:HpDialog; compact-dialog-styles.ts|#1148 unconditional common compact shell"
+        ],
+        "list-row": [
+          "K|houseplan-card.ts:_renderOpeningInfo; styles/reading-kit.styles.ts:hpf-reading-row/label/value/state|#1148 shared read-only state; no service behavior changes"
+        ],
+        "btn-secondary": [
+          "K|styles/settings-action.styles.ts:settingsActionsCss; houseplan-card.ts:_renderOpeningInfo|#1148 common fill/ghost actions"
+        ],
+        "btn-danger": [
+          "K|styles/settings-action.styles.ts:settingsActionsCss danger variant; houseplan-card.ts:_lockAction|#1148 existing unlock confirmation and stale guards retained"
+        ],
+        "dialog-footer": [
+          "K|compact-dialog-styles.ts:common footer; houseplan-card.ts:_renderOpeningInfo|#1148 layout only at caller"
+        ],
+        "empty/loading/error state": [
+          "K|houseplan-card.ts:_renderOpeningInfo; shared body typography and disabled action from compact-dialog-styles/settingsActionsCss|#1148 pending click is inert; unknown state has no service button"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog.ts:HpDialog; ui-motion.ts; ha-dialog-motion.ts|#1147/#1148 shared ordinary/reduced lifecycle"
+        ]
+      }
     }
   ],
   "provenance": {
@@ -3228,6 +3259,14 @@
       "checkpoint": "marker-restore",
       "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=marker-restore node demo/smoke_warm_view_marker.mjs",
       "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "opening-info-dialog": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_lock_action.mjs",
+      "checkpoint": "opening-info-dialog",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=opening-info-dialog node demo/smoke_lock_action.mjs",
+      "renderer": "existing offline synthetic smoke fixture; real product bundle; no real HA services",
       "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
     }
   }

@@ -156,7 +156,7 @@ Everything computable from the tree and git; regenerate, never edit by hand
 | Version | **1.83.0** in all 7 version sources (`scripts/release-contract.mjs`) |
 | Latest stable tag | `v1.83.0` |
 | Latest prerelease tag | `v1.83.0-beta.6` |
-| Tests | Node unit 5920 · pure backend 710 · HA-harness backend 613 · browser smokes 490 (`npm run inventory`) |
+| Tests | Node unit 5922 · pure backend 710 · HA-harness backend 613 · browser smokes 490 (`npm run inventory`) |
 <!-- status-snapshot:end -->
 
 ## Current cycle and standing decisions
