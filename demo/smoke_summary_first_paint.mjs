@@ -156,8 +156,10 @@ async function openLargePlan(page, { reducedMotion = false } = {}) {
     const entering = (f.overlay()?.getAnimations?.() || []).map((a) => a.effect?.getTiming?.().duration);
     return { exiting, entering };
   });
-  check('exitAnimated', motion.exiting.includes(190));
-  check('enterAnimated', motion.entering.includes(190));
+  // #1147's accepted UI Kit owns these exact leave/appear phases. This is
+  // maintenance of the dev witness; the 1.83.1 backport retains stable's UI.
+  check('exitAnimated', motion.exiting.includes(140));
+  check('enterAnimated', motion.entering.includes(180));
   await browser.close();
 }
 
