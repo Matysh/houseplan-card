@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 682,
+  "baseStable": "v1.83.0",
+  "category": "infra",
+  "rationale": "Post-publication archival commit ecada723a7853a553ede68edb05c988ef7a652a7 moves the reviews delivered in v1.83.0 and rebuilds their live index. It follows the v1.83.0 tag, changes documentation only, and introduces no user-visible behaviour relative to that stable. Classified explicitly when opening the next cycle; older-cycle records remain unchanged."
+}

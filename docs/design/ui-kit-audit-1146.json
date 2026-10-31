@@ -1,0 +1,5616 @@
+{
+  "schema": "houseplan-ui-kit-audit/v1",
+  "issue": 1146,
+  "productSource": "ecada723a7853a553ede68edb05c988ef7a652a7",
+  "browserVersion": "151.0.7922.34",
+  "kind": "candidate-only",
+  "metrics": {
+    "cssLines": 7820,
+    "keyframes": 19,
+    "transitions": 111,
+    "inlineDecorativeStyles": 27,
+    "hpDialogWithoutKit": 29,
+    "btnRulesOutsideKit": 41,
+    "registryOffKit": 372
+  },
+  "registry": {
+    "surfaces": 80,
+    "cells": 511,
+    "buckets": {
+      "K": 118,
+      "L": 118,
+      "M": 254,
+      "N": 21
+    },
+    "registryOffKit": 372
+  },
+  "compatibilityCensus": {
+    "audit72c63464a": {
+      "cssLines": 7635,
+      "keyframes": 19,
+      "transitions": 108,
+      "hpDialogWithoutKit": 27,
+      "btnRulesOutsideKit": 40
+    },
+    "sameMethodAtEcada723a": {
+      "cssLines": 7695,
+      "keyframes": 19,
+      "transitions": 111,
+      "hpDialogWithoutKit": 27,
+      "btnRulesOutsideKit": 41
+    },
+    "methodCorrection": "Physical line offsets preserve multiline interpolation; ui-dialog must be an unconditional actual class token. 7820 vs 7695 and 29 vs 27 are method corrections, not product growth."
+  },
+  "profiles": [
+    {
+      "id": "light-1280",
+      "theme": "light",
+      "width": 1280,
+      "fingerprints": [
+        "8ad2ff55f6971e58d1fb2526cac5af3ba27df7e1852412472484b7843c8d3372"
+      ],
+      "stages": [
+        "view",
+        "chrome-tooltip",
+        "general-display",
+        "general-plan",
+        "general-fills",
+        "general-sun",
+        "general-zigbee",
+        "general-external-screens",
+        "general-data",
+        "summary",
+        "summary-source-picker",
+        "space",
+        "backdrop-guard",
+        "space-copy",
+        "pdf",
+        "support",
+        "plan-toolbar",
+        "plan-tray-rooms",
+        "plan-tray-opening",
+        "plan-tray-stairs",
+        "devices-toolbar",
+        "device-inbox",
+        "rules",
+        "decor-toolbar",
+        "decor-tray-shapes",
+        "decor-tray-furniture",
+        "decor-tray-image"
+      ],
+      "controls": [
+        {
+          "mode": "plan",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "draw",
+              "width": 83,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "column",
+              "width": 98,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "rooms",
+              "width": 123,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "opening",
+              "width": 107,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "stairs",
+              "width": 127,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "wall-thickness",
+              "width": 101,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "devices",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "add-device",
+              "width": 104,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "led-strip",
+              "width": 108,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-magnets",
+              "width": 100,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-inbox",
+              "width": 115,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "icon-rules",
+              "width": 145,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "decor",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "shapes",
+              "width": 113,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "text",
+              "width": 99,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "furniture",
+              "width": 92,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "image",
+              "width": 129,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "erase",
+              "width": 96,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "light-1024",
+      "theme": "light",
+      "width": 1024,
+      "fingerprints": [
+        "8ad2ff55f6971e58d1fb2526cac5af3ba27df7e1852412472484b7843c8d3372"
+      ],
+      "stages": [
+        "view",
+        "chrome-tooltip",
+        "general-display",
+        "general-plan",
+        "general-fills",
+        "general-sun",
+        "general-zigbee",
+        "general-external-screens",
+        "general-data",
+        "summary",
+        "summary-source-picker",
+        "space",
+        "backdrop-guard",
+        "space-copy",
+        "pdf",
+        "support",
+        "plan-toolbar",
+        "plan-tray-rooms",
+        "plan-tray-opening",
+        "plan-tray-stairs",
+        "devices-toolbar",
+        "device-inbox",
+        "rules",
+        "decor-toolbar",
+        "decor-tray-shapes",
+        "decor-tray-furniture",
+        "decor-tray-image"
+      ],
+      "controls": [
+        {
+          "mode": "plan",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "draw",
+              "width": 83,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "column",
+              "width": 98,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "rooms",
+              "width": 123,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "opening",
+              "width": 107,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "stairs",
+              "width": 127,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "wall-thickness",
+              "width": 101,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "devices",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "add-device",
+              "width": 104,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "led-strip",
+              "width": 108,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-magnets",
+              "width": 100,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-inbox",
+              "width": 115,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "icon-rules",
+              "width": 145,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "decor",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "shapes",
+              "width": 113,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "text",
+              "width": 99,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "furniture",
+              "width": 92,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "image",
+              "width": 129,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "erase",
+              "width": 96,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "light-390",
+      "theme": "light",
+      "width": 390,
+      "fingerprints": [
+        "8ad2ff55f6971e58d1fb2526cac5af3ba27df7e1852412472484b7843c8d3372"
+      ],
+      "stages": [
+        "view",
+        "chrome-tooltip",
+        "general-display",
+        "general-plan",
+        "general-fills",
+        "general-sun",
+        "general-zigbee",
+        "general-external-screens",
+        "general-data",
+        "summary",
+        "summary-source-picker",
+        "space",
+        "backdrop-guard",
+        "space-copy",
+        "pdf",
+        "support",
+        "plan-toolbar",
+        "plan-tray-rooms",
+        "plan-tray-opening",
+        "plan-tray-stairs",
+        "devices-toolbar",
+        "device-inbox",
+        "rules",
+        "decor-toolbar",
+        "decor-tray-shapes",
+        "decor-tray-furniture",
+        "decor-tray-image"
+      ],
+      "controls": [
+        {
+          "mode": "plan",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "draw",
+              "width": 83,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "column",
+              "width": 98,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "rooms",
+              "width": 123,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "opening",
+              "width": 107,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "stairs",
+              "width": 127,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "wall-thickness",
+              "width": 101,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "devices",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "add-device",
+              "width": 104,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "led-strip",
+              "width": 108,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-magnets",
+              "width": 100,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-inbox",
+              "width": 115,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "icon-rules",
+              "width": 145,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "decor",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "shapes",
+              "width": 113,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "text",
+              "width": 99,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "furniture",
+              "width": 92,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "image",
+              "width": 129,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "erase",
+              "width": 96,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dark-1280",
+      "theme": "dark",
+      "width": 1280,
+      "fingerprints": [
+        "8ad2ff55f6971e58d1fb2526cac5af3ba27df7e1852412472484b7843c8d3372"
+      ],
+      "stages": [
+        "view",
+        "chrome-tooltip",
+        "general-display",
+        "general-plan",
+        "general-fills",
+        "general-sun",
+        "general-zigbee",
+        "general-external-screens",
+        "general-data",
+        "summary",
+        "summary-source-picker",
+        "space",
+        "backdrop-guard",
+        "space-copy",
+        "pdf",
+        "support",
+        "plan-toolbar",
+        "plan-tray-rooms",
+        "plan-tray-opening",
+        "plan-tray-stairs",
+        "devices-toolbar",
+        "device-inbox",
+        "rules",
+        "decor-toolbar",
+        "decor-tray-shapes",
+        "decor-tray-furniture",
+        "decor-tray-image"
+      ],
+      "controls": [
+        {
+          "mode": "plan",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "draw",
+              "width": 83,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "column",
+              "width": 98,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "rooms",
+              "width": 123,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "opening",
+              "width": 107,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "stairs",
+              "width": 127,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "wall-thickness",
+              "width": 101,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "devices",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "add-device",
+              "width": 104,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "led-strip",
+              "width": 108,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-magnets",
+              "width": 100,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-inbox",
+              "width": 115,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "icon-rules",
+              "width": 145,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "decor",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "shapes",
+              "width": 113,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "text",
+              "width": 99,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "furniture",
+              "width": 92,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "image",
+              "width": 129,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "erase",
+              "width": 96,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dark-1024",
+      "theme": "dark",
+      "width": 1024,
+      "fingerprints": [
+        "8ad2ff55f6971e58d1fb2526cac5af3ba27df7e1852412472484b7843c8d3372"
+      ],
+      "stages": [
+        "view",
+        "chrome-tooltip",
+        "general-display",
+        "general-plan",
+        "general-fills",
+        "general-sun",
+        "general-zigbee",
+        "general-external-screens",
+        "general-data",
+        "summary",
+        "summary-source-picker",
+        "space",
+        "backdrop-guard",
+        "space-copy",
+        "pdf",
+        "support",
+        "plan-toolbar",
+        "plan-tray-rooms",
+        "plan-tray-opening",
+        "plan-tray-stairs",
+        "devices-toolbar",
+        "device-inbox",
+        "rules",
+        "decor-toolbar",
+        "decor-tray-shapes",
+        "decor-tray-furniture",
+        "decor-tray-image"
+      ],
+      "controls": [
+        {
+          "mode": "plan",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "draw",
+              "width": 83,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "column",
+              "width": 98,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "rooms",
+              "width": 123,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "opening",
+              "width": 107,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "stairs",
+              "width": 127,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "wall-thickness",
+              "width": 101,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "devices",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "add-device",
+              "width": 104,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "led-strip",
+              "width": 108,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-magnets",
+              "width": 100,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-inbox",
+              "width": 115,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "icon-rules",
+              "width": 145,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "decor",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "shapes",
+              "width": 113,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "text",
+              "width": 99,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "furniture",
+              "width": 92,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "image",
+              "width": 129,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "erase",
+              "width": 96,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dark-390",
+      "theme": "dark",
+      "width": 390,
+      "fingerprints": [
+        "8ad2ff55f6971e58d1fb2526cac5af3ba27df7e1852412472484b7843c8d3372"
+      ],
+      "stages": [
+        "view",
+        "chrome-tooltip",
+        "general-display",
+        "general-plan",
+        "general-fills",
+        "general-sun",
+        "general-zigbee",
+        "general-external-screens",
+        "general-data",
+        "summary",
+        "summary-source-picker",
+        "space",
+        "backdrop-guard",
+        "space-copy",
+        "pdf",
+        "support",
+        "plan-toolbar",
+        "plan-tray-rooms",
+        "plan-tray-opening",
+        "plan-tray-stairs",
+        "devices-toolbar",
+        "device-inbox",
+        "rules",
+        "decor-toolbar",
+        "decor-tray-shapes",
+        "decor-tray-furniture",
+        "decor-tray-image"
+      ],
+      "controls": [
+        {
+          "mode": "plan",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "draw",
+              "width": 83,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "column",
+              "width": 98,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "rooms",
+              "width": 123,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "opening",
+              "width": 107,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "stairs",
+              "width": 127,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "wall-thickness",
+              "width": 101,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "devices",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "add-device",
+              "width": 104,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "led-strip",
+              "width": 108,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-magnets",
+              "width": 100,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "device-inbox",
+              "width": 115,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "icon-rules",
+              "width": 145,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "device-history",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        },
+        {
+          "mode": "decor",
+          "items": [
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 44,
+              "height": 44,
+              "padding": "0px",
+              "border": "0px",
+              "radius": "6px",
+              "font": "14px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "select",
+              "width": 97,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "shapes",
+              "width": 113,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "text",
+              "width": 99,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "furniture",
+              "width": 92,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "image",
+              "width": 129,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "tool",
+              "tool": "erase",
+              "width": 96,
+              "height": 31.0625,
+              "padding": "6px 10px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "action",
+              "tool": null,
+              "width": 37,
+              "height": 29.0625,
+              "padding": "6px 10px",
+              "border": "0px",
+              "radius": "8px",
+              "font": "13px Roboto, Arial, sans-serif",
+              "lineHeight": "normal"
+            },
+            {
+              "action": "editor-close",
+              "tool": null,
+              "width": 40,
+              "height": 40,
+              "padding": "0px",
+              "border": "1px",
+              "radius": "8px",
+              "font": "13px / 0px Roboto, Arial, sans-serif",
+              "lineHeight": "0px"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "ruleCoverage": {
+    "stylesheets": 52,
+    "sourceCandidateSheets": 26,
+    "unsupported": [
+      {
+        "stylesheet": "d7dec59bae3163c9fc9c8d500432954aee323538ebfe4fb2fd0c0247f32e6a12",
+        "error": "Unclosed CSS block at offset 5",
+        "productCandidate": false
+      }
+    ],
+    "unusedCandidates": 1280,
+    "limitations": "CSS.startRuleUsageTracking + takeCoverageDelta at every native UI stage; union by stylesheet SHA-256. Selector usage is not a winning-declaration proof. Unsupported CSS is never labelled unused.",
+    "targets": [
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".decorbar .bdhint",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".decorbar .dfill",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".decorbar .dfill input[type=\"checkbox\"]",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".decorbar hp-color-opacity",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".editbar .warn",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".editbar input",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".editbar label,.editbar .hint",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".editbar .drawwall",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".editbar .wallsgroup",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".editbar .drawwall input",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+        "selector": ".editbar .drawwall .opl",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-icon-button,.summary-drag",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-drag",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-drag:active",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-drag[draggable='false']",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-icon-button:hover:not(:disabled)",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-value-label,.summary-source-field",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-caption",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-caption strong",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-caption small",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-editor .summary-value-remove",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-editor .summary-value-remove:hover:not(:disabled)",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-picker",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-editor .summary-source-picker>label",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-results",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-results button",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-results button:hover:not(:disabled),.summary-source-results button[aria-selected='true']",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-results button.broken",
+        "used": false,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-results small",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-group",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-field",
+        "used": true,
+        "scope": [
+          "@container summary-editor (max-width:800px)"
+        ]
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-value-remove",
+        "used": true,
+        "scope": [
+          "@container summary-editor (max-width:800px)"
+        ]
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-source-field",
+        "used": true,
+        "scope": [
+          "@container summary-editor (max-width:480px)"
+        ]
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": ".summary-value-remove",
+        "used": true,
+        "scope": [
+          "@container summary-editor (max-width:480px)"
+        ]
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-icon-button.btn",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source.btn",
+        "used": true,
+        "scope": []
+      },
+      {
+        "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+        "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source-results .btn",
+        "used": true,
+        "scope": []
+      }
+    ],
+    "summaryButtonCascade": [
+      {
+        "profile": "light-1280",
+        "buttons": [
+          {
+            "computed": [
+              {
+                "name": "color",
+                "value": "rgb(3, 167, 241)"
+              },
+              {
+                "name": "background-color",
+                "value": "oklab(0.964266 -0.0138801 -0.0146562 / 0.983558)"
+              },
+              {
+                "name": "box-shadow",
+                "value": "oklab(0.86876 -0.0503455 -0.0555177 / 0.983558) 0px 0px 0px 0.983558px"
+              },
+              {
+                "name": "height",
+                "value": "58px"
+              },
+              {
+                "name": "min-height",
+                "value": "44px"
+              }
+            ],
+            "matched": [
+              {
+                "selector": ".summary-source",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--summary-editor-line)"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "7px"
+                  },
+                  {
+                    "name": "background",
+                    "value": "var(--summary-editor-surface)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "10px 14px"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--hpf-line,var(--divider-color))"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "var(--hpf-action-radius,7px)"
+                  },
+                  {
+                    "name": "background",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled)",
+                "properties": []
+              },
+              {
+                "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source.btn",
+                "properties": [
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled):is(:hover, :focus-visible:not(.hp-dialog-return-focus))",
+                "properties": [
+                  {
+                    "name": "background",
+                    "value": "var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,transparent))"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "border-color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "profile": "light-1024",
+        "buttons": [
+          {
+            "computed": [
+              {
+                "name": "color",
+                "value": "rgb(3, 169, 244)"
+              },
+              {
+                "name": "background-color",
+                "value": "color(srgb 0.901176 0.966274 0.995686)"
+              },
+              {
+                "name": "box-shadow",
+                "value": "color(srgb 0.624471 0.871843 0.983608) 0px 0px 0px 1px"
+              },
+              {
+                "name": "height",
+                "value": "58px"
+              },
+              {
+                "name": "min-height",
+                "value": "44px"
+              }
+            ],
+            "matched": [
+              {
+                "selector": ".summary-source",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--summary-editor-line)"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "7px"
+                  },
+                  {
+                    "name": "background",
+                    "value": "var(--summary-editor-surface)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "10px 14px"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--hpf-line,var(--divider-color))"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "var(--hpf-action-radius,7px)"
+                  },
+                  {
+                    "name": "background",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled)",
+                "properties": []
+              },
+              {
+                "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source.btn",
+                "properties": [
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled):is(:hover, :focus-visible:not(.hp-dialog-return-focus))",
+                "properties": [
+                  {
+                    "name": "background",
+                    "value": "var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,transparent))"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "border-color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "profile": "light-390",
+        "buttons": [
+          {
+            "computed": [
+              {
+                "name": "color",
+                "value": "rgb(6, 156, 223)"
+              },
+              {
+                "name": "background-color",
+                "value": "oklab(0.964266 -0.0138801 -0.0146562 / 0.901544)"
+              },
+              {
+                "name": "box-shadow",
+                "value": "oklab(0.86876 -0.0503455 -0.0555177 / 0.901544) 0px 0px 0px 0.901544px"
+              },
+              {
+                "name": "height",
+                "value": "58px"
+              },
+              {
+                "name": "min-height",
+                "value": "44px"
+              }
+            ],
+            "matched": [
+              {
+                "selector": ".summary-source",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--summary-editor-line)"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "7px"
+                  },
+                  {
+                    "name": "background",
+                    "value": "var(--summary-editor-surface)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "10px 14px"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--hpf-line,var(--divider-color))"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "var(--hpf-action-radius,7px)"
+                  },
+                  {
+                    "name": "background",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled)",
+                "properties": []
+              },
+              {
+                "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source.btn",
+                "properties": [
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled):is(:hover, :focus-visible:not(.hp-dialog-return-focus))",
+                "properties": [
+                  {
+                    "name": "background",
+                    "value": "var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,transparent))"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "border-color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "profile": "dark-1280",
+        "buttons": [
+          {
+            "computed": [
+              {
+                "name": "color",
+                "value": "rgb(7, 170, 244)"
+              },
+              {
+                "name": "background-color",
+                "value": "oklab(0.274231 -0.0174325 -0.0193929 / 0.983551)"
+              },
+              {
+                "name": "box-shadow",
+                "value": "oklab(0.412786 -0.0460564 -0.0616812 / 0.983551) 0px 0px 0px 0.983551px"
+              },
+              {
+                "name": "height",
+                "value": "58px"
+              },
+              {
+                "name": "min-height",
+                "value": "44px"
+              }
+            ],
+            "matched": [
+              {
+                "selector": ".summary-source",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--summary-editor-line)"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "7px"
+                  },
+                  {
+                    "name": "background",
+                    "value": "var(--summary-editor-surface)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "10px 14px"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--hpf-line,var(--divider-color))"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "var(--hpf-action-radius,7px)"
+                  },
+                  {
+                    "name": "background",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled)",
+                "properties": []
+              },
+              {
+                "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source.btn",
+                "properties": [
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled):is(:hover, :focus-visible:not(.hp-dialog-return-focus))",
+                "properties": [
+                  {
+                    "name": "background",
+                    "value": "var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,transparent))"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "border-color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "profile": "dark-1024",
+        "buttons": [
+          {
+            "computed": [
+              {
+                "name": "color",
+                "value": "rgb(13, 172, 243)"
+              },
+              {
+                "name": "background-color",
+                "value": "oklab(0.274231 -0.0174325 -0.0193929 / 0.952935)"
+              },
+              {
+                "name": "box-shadow",
+                "value": "oklab(0.412786 -0.0460564 -0.0616812 / 0.952935) 0px 0px 0px 0.952935px"
+              },
+              {
+                "name": "height",
+                "value": "58px"
+              },
+              {
+                "name": "min-height",
+                "value": "44px"
+              }
+            ],
+            "matched": [
+              {
+                "selector": ".summary-source",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--summary-editor-line)"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "7px"
+                  },
+                  {
+                    "name": "background",
+                    "value": "var(--summary-editor-surface)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "10px 14px"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--hpf-line,var(--divider-color))"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "var(--hpf-action-radius,7px)"
+                  },
+                  {
+                    "name": "background",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled)",
+                "properties": []
+              },
+              {
+                "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source.btn",
+                "properties": [
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled):is(:hover, :focus-visible:not(.hp-dialog-return-focus))",
+                "properties": [
+                  {
+                    "name": "background",
+                    "value": "var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,transparent))"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "border-color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "profile": "dark-390",
+        "buttons": [
+          {
+            "computed": [
+              {
+                "name": "color",
+                "value": "rgb(25, 175, 242)"
+              },
+              {
+                "name": "background-color",
+                "value": "oklab(0.274231 -0.0174325 -0.0193929 / 0.901663)"
+              },
+              {
+                "name": "box-shadow",
+                "value": "oklab(0.412786 -0.0460564 -0.0616812 / 0.901663) 0px 0px 0px 0.901663px"
+              },
+              {
+                "name": "height",
+                "value": "58px"
+              },
+              {
+                "name": "min-height",
+                "value": "44px"
+              }
+            ],
+            "matched": [
+              {
+                "selector": ".summary-source",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--summary-editor-line)"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "7px"
+                  },
+                  {
+                    "name": "background",
+                    "value": "var(--summary-editor-surface)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "44px"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn",
+                "properties": [
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "padding",
+                    "value": "10px 14px"
+                  },
+                  {
+                    "name": "border",
+                    "value": "1px solid var(--hpf-line,var(--divider-color))"
+                  },
+                  {
+                    "name": "border-radius",
+                    "value": "var(--hpf-action-radius,7px)"
+                  },
+                  {
+                    "name": "background",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  },
+                  {
+                    "name": "min-height",
+                    "value": "var(--hpf-action-height,44px)"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": "transparent"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--primary-text-color)"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled)",
+                "properties": []
+              },
+              {
+                "selector": "hp-dialog[data-kind=\"summary\"].ui-dialog .summary-source.btn",
+                "properties": [
+                  {
+                    "name": "padding",
+                    "value": "7px 9px"
+                  }
+                ]
+              },
+              {
+                "selector": "hp-dialog.ui-dialog .btn:not(:disabled):is(:hover, :focus-visible:not(.hp-dialog-return-focus))",
+                "properties": [
+                  {
+                    "name": "background",
+                    "value": "var(--hpf-tint,color-mix(in srgb,var(--primary-color,#03a9f4) 10%,transparent))"
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "border-color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "background-color",
+                    "value": ""
+                  },
+                  {
+                    "name": "color",
+                    "value": "var(--hpf-accent,var(--primary-color,#03a9f4))"
+                  },
+                  {
+                    "name": "box-shadow",
+                    "value": "0 0 0 1px var(--hpf-tint-line,var(--primary-color,#03a9f4))"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "findings": {
+    "auditTable4_1_row6": "Selectors match actual summary buttons; keep until replacement. Some paint is overridden by specific UI Kit rules; geometry and active/source-picker states still need migration proof.",
+    "auditTable4_1_row11": "Legacy .decorbar fill/hint and .editbar input/drawwall selectors were unused in the captured matrix. .editbar .wallsgroup is used and is layout; do not delete the full historical range.",
+    "onboardingGuard": "Native upload creates guard state but empty-plan render does not mount the guard. Separate missing-before-1147 witness; no acceptance claim.",
+    "recovery": "Dedicated comparison-only fresh-controller fixture, declared private-ok. It measures original rendering/timers, not reachability or recovery correctness."
+  },
+  "rawCoverageSha256": "014c3a4aa854c53f945aa4e611837c09a4c16c37b6a331a9fe1c2f83b0b4dec4",
+  "unusedCandidatesByStylesheet": [
+    {
+      "stylesheet": "ce2880a50d81182b97fe1d79dd4729daca0139d393ce84481bab7fe922229d2d",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".fixedfloor-loading",
+            ".fixedfloor-error p",
+            ".stage.mode-plan.markup.tool-select[data-plan-select-hit]",
+            ".hp-day-cycle-env",
+            ".hp-day-cycle-bg",
+            ".hp-day-cycle-bg.active",
+            ".hp-day-cycle-sun",
+            ".stage.mode-transition .hp-day-cycle-env",
+            ".stage.daycycle.hp-safe-daycycle-outline .plan-svg",
+            ".sunlayer",
+            ".compass",
+            ".compass:active",
+            ".zoomctl .zb[disabled]",
+            ".homearrow",
+            ".homearrow ha-icon",
+            ".iso-underlay-svg",
+            ".iso-shadows-svg",
+            ".iso-walls-svg",
+            ".iso-overlays-svg",
+            ".iso-underlay-svg,.iso-shadows-svg,.iso-walls-svg,.iso-overlays-svg,.iso-underlay,.iso-walls,.iso-openings",
+            ".iso-side-hi",
+            ".iso-side-mid",
+            ".iso-side-lo",
+            ".iso-top-hi",
+            ".iso-top-lo",
+            ".iso-wall-side",
+            ".iso-wall-top",
+            ".iso-material-texture",
+            ".iso-floor-texture",
+            ".iso-texture-mark",
+            ".iso-texture-line",
+            ".iso-floor-side",
+            ".iso-opening-panel",
+            ".iso-opening-panel.iso-window",
+            ".iso-opening-panel.iso-material-reveal",
+            ".iso-opening-panel.iso-material-matte-leaf",
+            ".iso-opening-panel.iso-opening-leaf-edge,.iso-opening-panel.iso-opening-leaf-top",
+            ".iso-opening-panel.iso-material-light-frame,.iso-opening-panel.iso-material-light-sill",
+            ".iso-opening-panel.iso-material-light-window,.iso-opening-panel.iso-material-glass-side",
+            ".iso-opening-panel.iso-material-glass-top",
+            ".iso-ambient-shadow",
+            ".stage.theme-dark .iso-ambient-shadow",
+            ".room.overlay",
+            ":host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover",
+            ":host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover",
+            ":host([data-led-zoom-quality=\"coarse\"]) .led-field-bands>path:nth-child(even)",
+            ":host([data-led-zoom-quality=\"coarse\"]) .led-field-bands>path:nth-child(odd)",
+            ":host([data-pointer-hover]) .stage.markup g.opening:hover .op-outline",
+            ".stage.markup .op-hit:active",
+            ".stage.markup .opening.orphan",
+            ".stage.markup .opening.orphan circle",
+            ".stage.markup .opening.orphan text",
+            ".stage.markup.tool-resize .op-hit",
+            ".stage.mode-view .oplock",
+            ".stage.mode-view .oplock:focus-visible",
+            ".stage.projection-iso.mode-view .oplock::before",
+            ".zoomwrap.slide-left",
+            ".zoomwrap.slide-right",
+            ".rlgearbtn.dragging",
+            ":host([data-pointer-hover]) .rlgearbtn:hover",
+            ".rlarea:focus-visible,.rlfit:focus-visible",
+            ":host([data-pointer-hover]) .stage.mode-view .rlarea:hover",
+            ":host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle",
+            ".stage.projection-iso.mode-view .roomlabel",
+            ".stage.projection-iso.mode-view .roomlabel::before",
+            ".stage.projection-iso.mode-view .dev,.stage.projection-iso.mode-view .oplock",
+            ".stage.mode-view .roomlabel:focus-visible",
+            ".roomlabel:active",
+            ".measurelayer",
+            ".alignline",
+            ".aligndot",
+            ".spacingguides",
+            ".spacingline",
+            ".spacinglabel",
+            ".spacingguides.v .spacinglabel",
+            ".measurelabel.on45",
+            ".measurelabel",
+            ".measurelabel.opdimension",
+            ".stage.mode-decor.dtool-select .decorlayer .dimage,.stage.mode-decor.dtool-erase .decorlayer .dimage,.stage.mode-decor.dtool-select .decorlayer .dimage-missing,.stage.mode-decor.dtool-erase .decorlayer .dimage-missing",
+            ".decorlayer .dimage-missing rect",
+            ".decorlayer .dimage-missing path",
+            ".decorlayer .decor-image-placement-preview",
+            ".stage.mode-decor.dtool-text .decorlayer .dshape.dtext,.stage.mode-decor.dtool-select .decorlayer .dshape.dtext,.stage.mode-decor.dtool-erase .decorlayer .dshape.dtext",
+            ".stage.mode-decor.dtool-text .decorlayer .dshape.dtext",
+            ".decorlayer .derasehit",
+            ".stage.mode-decor.dtool-erase .decorlayer .derasehit",
+            ".decorlayer .dselecthit",
+            ".stage.mode-decor.dtool-select .decorlayer .dselecthit",
+            ".decorlayer .ddraft",
+            ".decorlayer .furniture-placement-preview",
+            ".decorlayer text",
+            ".bdframe .bdbox",
+            ".bdframe .bdhandle",
+            ".bdframe .bdknob",
+            ":host([data-pointer-hover]) .bdframe .bdhandle:hover + .bdknob",
+            ".bdframe .bd-nwse",
+            ".bdframe .bd-nesw",
+            ".stage.mode-decor.bdgrab",
+            ".stage.mode-decor.furniture-panning,.stage.mode-decor.furniture-panning *",
+            ".stage.mode-decor.bdgrabbing,.stage.mode-decor.bdgrabbing .bdframe .bdhandle",
+            ".measurelabel.bdmeasure",
+            ".dtframe .dtbox",
+            ".dtframe .dtstem,.bdframe .dtstem",
+            ".dtframe .dthandle",
+            ".dtframe .dtknob",
+            ":host([data-pointer-hover]) .dtframe .dthandle:hover + .dtknob",
+            ".dtframe .dt-nwse",
+            ".dtframe .dt-nesw",
+            ".dtframe .dtrot",
+            ".dtframe .dt-ew",
+            ".dtframe .dt-ns",
+            ".dtfurnitureframe .dtrot,.hp-stair-frame .dtrot,.hp-column-frame .dtrot",
+            ".dtfurnitureframe .dtrot:active,.hp-stair-frame .dtrot:active,.hp-column-frame .dtrot:active",
+            ".hp-column-frame",
+            ".dtframe .dtendpoint",
+            ".bdframe .dtrot",
+            ".dtarea",
+            ".stage.mode-decor.dtool-line,.stage.mode-decor.dtool-rect,.stage.mode-decor.dtool-ellipse,.stage.mode-decor.dtool-text",
+            ".stage.mode-decor.dtool-erase,.stage.mode-decor.dtool-erase .decorlayer *",
+            ".opening-preview",
+            ".opening-preview[data-kind=\"passage\"]",
+            ".passage-preview-cut",
+            ".passage-preview-boundary",
+            ".opening-preview .op-leaf,.opening-preview .op-arc",
+            ".opening-preview-dot",
+            ".opening-dimensions,.opening-dimension",
+            ".opening-dimension-line,.opening-dimension-tick",
+            ".opening-dimension-tick",
+            ".stage.markup.tool-merge,.stage.markup.tool-split.pickstage,.stage.markup.tool-delroom",
+            ".stage.markup.tool-wallthick",
+            ".stage.markup.tool-wallthick.wallhot",
+            ".wallbody.solid",
+            ".wallthick-hover",
+            ".wallthick-hover.isopen",
+            ".zero-walls.solid .zero-wall",
+            ".room.picked",
+            ".seg",
+            ".pathline",
+            ".preview",
+            ".active-axis",
+            ".active-vertex",
+            ".wall-repair-preview",
+            ".drawwall-preview-fill",
+            ".drawwall-preview",
+            ".drawwall-zero-preview",
+            ".drawwall-zero-preview.dashed",
+            ".vertex",
+            ".vertex.first",
+            ".plan-snap-node.active",
+            ".plan-snap-node.active.dynamic",
+            ".plan-snap-node.conflict",
+            ".sunlayer",
+            ".sunlayer.out",
+            ".radar-target",
+            ".radar-target.smooth",
+            ".radar-ranges",
+            ".radar-ranges path,.radar-ranges polyline",
+            ".radar-ranges .radar-zone",
+            ".stage.mode-devices .dev:active",
+            ".physical-hit:active",
+            "line.physical-hit",
+            ".physical-hit.selected",
+            "line.physical-hit.selected",
+            ".physical-drag",
+            ".physical-chrome",
+            ".physical-chrome .frame",
+            ".physical-chrome .frame",
+            ".physical-chrome polyline.frame",
+            ".physical-chrome .move-dot",
+            ".drawwall.invalid input",
+            ".drawwall .rangehint",
+            ".drawwall.invalid .rangehint",
+            ".stage.markup.tool-column",
+            ".rszhandle",
+            ".rszhandle:active",
+            ".rszhandle.disabled,.rszhandle.disabled:active",
+            ".rszicon",
+            ".rszicon path",
+            ".rszhalo",
+            ".rszink",
+            ":host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink",
+            ".rszicon.disabled",
+            ":host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink",
+            ".rszmeasurelayer,.rszmeasurelayer *",
+            ".rszmeasurehalo,.rszmeasureink,.rszleader",
+            ".rszmeasurehalo",
+            ".rszmeasureink",
+            ".rszleader",
+            ".measurelabel.dmeasure",
+            ".measurelabel.rszarea",
+            ".measurelabel.furnmeasure",
+            ".stage.markup.tool-stairs",
+            ".hp-stair-outline",
+            ".hp-stair-trapezoid,.hp-stair-tread,.hp-stair-arrow",
+            ".hp-stair-hit",
+            ".hp-stair.input-enabled .hp-stair-hit",
+            ".hp-stair.navigable",
+            ".hp-stair:focus,.hp-stair:focus-visible",
+            ":host([data-pointer-hover]) .hp-stair.navigable:hover .hp-stair-outline",
+            ".hp-stair.selected .hp-stair-outline",
+            ".hp-stair.draft .hp-stair-hit",
+            ".hp-stair.input-enabled:not(.hp-stair-view) .hp-stair-hit",
+            ".alignmsg"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".fixedfloor-loading",
+            ".radar-target",
+            ".hp-day-cycle-bg,.hp-day-cycle-sun",
+            ".stage.hpsettle",
+            ".glow-spot",
+            ".op-leaf,.op-arc",
+            ".zoomwrap.slide-left,.zoomwrap.slide-right",
+            ".rlgearbtn",
+            ".sunlayer,.sunlayer.out",
+            ".sunlayer.out"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-color-scheme:dark)"
+          ],
+          "selectors": [
+            ".stage:not(.theme-light) .iso-ambient-shadow",
+            ".plan-snap-line",
+            ".hidden-wall-line",
+            ".plan-snap-node,.hidden-wall-node",
+            ".plan-snap-node.active",
+            ".plan-snap-node.active.dynamic"
+          ]
+        },
+        {
+          "scope": [
+            "@media (forced-colors:active)"
+          ],
+          "selectors": [
+            ".iso-wall-side,.iso-wall-top,.iso-floor-side,.iso-opening-panel",
+            ".iso-ambient-shadow,.iso-material-texture",
+            ".plan-snap-line,.hidden-wall-line",
+            ".plan-snap-node,.hidden-wall-node",
+            ".plan-snap-node.active,.plan-snap-node.active.dynamic"
+          ]
+        },
+        {
+          "scope": [
+            "@supports not (filter:blur(1px))"
+          ],
+          "selectors": [
+            ".iso-ambient-shadow,.iso-material-texture"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "ac9ab5306b2558d9ee77d961b9f53654e381f31be26d081f3448b5d2a226d436",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".device-pulse",
+            ".device-pulse i",
+            ".device-pulse.short i",
+            ".device-pulse.short i:nth-child(2)",
+            ".device-pulse.short i:nth-child(3)",
+            ".device-pulse.short.gen2 i",
+            ".device-pulse.continuous i:nth-child(n + 2),.device-pulse.alarm i:nth-child(n + 3)",
+            ".device-pulse.continuous i:first-child",
+            ".device-pulse.alarm i",
+            ".device-pulse.alarm i:nth-child(2)",
+            ".activity-dot",
+            ".kioskdots",
+            ".kdot",
+            ".kdot.on",
+            ".dev .newdot",
+            ".dev .newdot.hiddendot",
+            ".device-battery",
+            ".device-maintenance,.device-attention",
+            ".device-attention[data-with-maintenance=\"yes\"]",
+            ".device-maintenance>ha-icon,.device-attention>ha-icon",
+            ".device-battery[data-state=\"normal\"]",
+            ".device-battery[data-state=\"warning\"]",
+            ".device-battery[data-state=\"low\"]",
+            ".device-battery[data-state=\"unknown\"]",
+            ".device-battery>ha-icon.device-battery-icon",
+            ".device-shell.with-values.pos-right",
+            ".device-shell.with-values.pos-left",
+            ".device-shell.with-values.pos-bottom",
+            ".device-shell.with-values.pos-top",
+            ".dev.led-badge",
+            ".dev.led-badge .device-core",
+            ".device-sections",
+            ".device-shell.pos-top .device-sections,.device-shell.pos-bottom .device-sections",
+            ".dev.open",
+            ".dev.theme-light.open",
+            ".dev.theme-dark.open",
+            ".dev.lock-unlocked",
+            ".dev.theme-light.lock-unlocked",
+            ".dev.theme-dark.lock-unlocked",
+            ".stage.projection-iso.mode-view .dev:focus-visible",
+            ".dev[data-hp-zigbee-topology-endpoint]",
+            ":host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint][data-hp-device-hover]",
+            ".stage.projection-iso.mode-view .dev[data-hp-zigbee-topology-endpoint]",
+            ".dev.led-badge.unavail .device-core>ha-icon,.dev.led-badge.unavail .device-core>.valtext,.dev.led-badge.unavail .value-badge-content",
+            ".dev.ghost",
+            ".dev.ghost .device-shell-frame",
+            ".dev.ghost .device-core",
+            ".dev.ghost.ha-disabled",
+            ".dev.ghost.ha-disabled .device-shell-frame",
+            ".dev.ghost.ha-disabled .device-core",
+            ".dev .habadge",
+            ".dev .habadge ha-icon",
+            ".dev:focus-visible",
+            ".stage.mode-devices .dev.sel",
+            ".dev:not(.on):not(.open):not(.alarm):not(.lock-locked):not(.lock-unlocked):not(.unavail):focus-visible:not(.mode-devices .sel)",
+            ".dev.alarm,:host([data-pointer-hover]) .dev.alarm[data-hp-device-hover],.dev.alarm:focus-visible",
+            ".dev.theme-light.alarm",
+            ".dev.theme-dark.alarm",
+            ".dev .value-badge",
+            ".dev:not(.unavail) .value-badge.unavailable>.value-badge-content,.dev:not(.unavail) .value-badge.missing>.value-badge-content",
+            ".dev .lqi.below-value-badge",
+            ".vacwarn",
+            ".vacwarn ha-icon",
+            ".vacpuck",
+            ".vacpuck.theme-light",
+            ".vacpuck.theme-dark",
+            ".vacpuck.jump",
+            ".vacpuck.stale",
+            ".vacpuck ha-icon",
+            ".vactrail",
+            ".vactrail polyline,.vactrail line,.vactrail path",
+            ".vactrail g.prev",
+            ".vactrail .core",
+            ".vactrail g.hybrid",
+            ".vactrail g.hybrid .core",
+            ".vacuum-history-banner",
+            ".vacuum-history-banner>ha-icon",
+            ".vacuum-history-banner>span",
+            ".vacuum-history-banner>button",
+            ":host([data-pointer-hover]) .vacuum-history-banner>button:hover",
+            ".devicepreview-empty"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".device-pulse",
+            ".vacpuck"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "9082fd92f1a46412e6cb7dd68004b9691d801ad1abf6579301c0569c5a8e72b9",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".hp-dialog-return-focus:focus-visible",
+            ":host([layout=\"grid\"]) .hdr",
+            ".empty .btn",
+            ".empty-actions",
+            ".empty-actions .empty-backup-upload",
+            ".empty-actions input[type='file']",
+            ".empty-actions .btn",
+            ".version-recovery",
+            ".version-recovery.phase-visible",
+            ".version-recovery.phase-leaving",
+            ".version-recovery-card",
+            ".phase-leaving .version-recovery-card",
+            ".version-recovery-card>ha-icon",
+            ".version-recovery-copy",
+            ".version-recovery-copy>span",
+            ".version-recovery-versions",
+            ".version-recovery-versions span,.version-recovery-versions b",
+            ".version-recovery-reload",
+            ".sr-only"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:520px)"
+          ],
+          "selectors": [
+            ".version-recovery-card",
+            ".version-recovery-reload"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".bootveil .boothouse",
+            ".version-recovery.phase-visible,.version-recovery.phase-leaving"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "00dfa8662165cd49d513a10911d34ee1154587f9dc71794ef36f7b6f2f74dd76",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ":host([data-pointer-hover]) .tab:hover",
+            ".farhint",
+            ".farhint ha-icon",
+            ".farhint span",
+            ".farhint .btn",
+            ".dropbtn",
+            ".dropbtn .ref",
+            ".dropbtn ha-icon",
+            ".dropbtn.open",
+            ".droppanel",
+            ".hdr.kioskhide",
+            ".header-menu-scrim",
+            ".header-menu",
+            ".header-menu-item",
+            ".header-menu-item ha-icon,.header-menu-item svg",
+            ".header-menu-item.on",
+            ":host([data-pointer-hover]) .header-menu-item:hover",
+            ".header-menu-item:focus-visible",
+            ".head .hidden-devices-button.on",
+            ".hdr>.head .zoomctl .zb:focus-visible",
+            ".decorbar .bdhint",
+            ".decorbar .dfill",
+            ".decorbar .dfill input[type=\"checkbox\"]",
+            ".tab.dragging",
+            ".tab.drop-before",
+            ".tab.drop-after",
+            ".editor-close-slot .closex:focus-visible",
+            ".modetab.active:focus-visible",
+            ".modetab.active:focus-visible::after",
+            ":host([data-pointer-hover]) .tab:hover .tabedit",
+            ".editbar .warn",
+            ".editbar input",
+            ".editbar label,.editbar .hint",
+            ".editbar .drawwall",
+            ".editbar .drawwall input",
+            ".editbar .drawwall .opl",
+            ".view-runtime-notice",
+            ".view-runtime-notice>span",
+            ".view-runtime-notice>div",
+            ".view-runtime-functions",
+            ".view-runtime-notice .btn"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:620px) and (min-width:481px)"
+          ],
+          "selectors": [
+            ".head>.spacer"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:480px)"
+          ],
+          "selectors": [
+            ".head>.tabs::-webkit-scrollbar"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:360px)"
+          ],
+          "selectors": [
+            ".hdr>.head",
+            ".head>.header-actions"
+          ]
+        },
+        {
+          "scope": [
+            "@media (width < 360px)"
+          ],
+          "selectors": [
+            "ha-card[data-hp-mode='view']>.hdr>.head",
+            "ha-card[data-hp-mode='view'] .head>.modes",
+            "ha-card[data-hp-mode='view'] .head>.header-actions",
+            "ha-card[data-hp-mode='view'] .header-actions>.header-menu-wrap",
+            "ha-card:not([data-hp-mode='view'])>.hdr>.head",
+            "ha-card:not([data-hp-mode='view']) .head>.header-actions"
+          ]
+        },
+        {
+          "scope": [
+            "@media (min-width:481px)"
+          ],
+          "selectors": [
+            ".modetab.active + .editor-close-slot .closex:focus-visible"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".modetab"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "e5d7b682ab5f781e5038a1adb35dd4d4d1464b9ef8d43fafc4db8e22f3c095aa",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".toast",
+            ".toast-portal .toast"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "58709f8ebcde1cdc654f0e4f39133711fb97b20398039092a65fcd75f2135094",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".title",
+            ".title ha-icon",
+            ".recoveryoverlay",
+            ".recoveryoverlay.phase-entering,.recoveryoverlay.phase-leaving",
+            ".recoveryoverlay.phase-fading-in,.recoveryoverlay.phase-opaque",
+            ".recoveryoverlay ha-icon",
+            ".editorloading",
+            ".editorloading ha-icon",
+            ".oplock",
+            ".oplock.theme-light",
+            ".oplock.theme-dark",
+            ".oplock-shell",
+            ".oplock-core",
+            ".oplock ha-icon",
+            ".oplock.locked",
+            ".oplock.theme-light.locked",
+            ".oplock.theme-dark.locked",
+            ".oplock.unlocked",
+            ".oplock.theme-light.unlocked",
+            ".oplock.theme-dark.unlocked",
+            ".oplock.unknown",
+            ".btn.lockact",
+            ".btn.lockact.warn",
+            ".oprow",
+            ".oprow b",
+            ".oprow.ok b",
+            ".oprow.warn b",
+            ".ctrlstates",
+            ".ctrlstate",
+            ".ctrlstate.on",
+            ".ctrlstate ha-icon",
+            ".cardpreview",
+            ".cardpreview .cpname",
+            ".cardpreview .cpmeta",
+            ".cardpreview .cpco2",
+            ".cardpreview .cpmeta ha-icon",
+            ".colorrow",
+            ".colorrow input[type='range']",
+            ".colorrow ha-slider",
+            ".colorrow .opv",
+            ".planrow",
+            ".savedplans",
+            ".savedplan",
+            ".savedplan.cur",
+            ".savedplan img",
+            ".savedmeta",
+            ".savedmeta b",
+            ".savedmeta .muted",
+            ".savedplan .btn.danger ha-icon",
+            ".savedplan .btn[disabled]",
+            ".planprev",
+            "hp-confirm",
+            "hp-dialog .danger-confirm-body",
+            "hp-dialog .danger-confirm-body p",
+            "hp-dialog .danger-confirm-object",
+            "hp-dialog [data-confirm-key=\"remove-markers\"] .danger-confirm-object",
+            ".vaccalbar",
+            ".cand",
+            ":host([data-pointer-hover]) .cand:hover",
+            ".cand.sel",
+            ".cand .cs",
+            ".cand.sel .cs",
+            ".cand.muted",
+            "ha-icon-picker",
+            ".floorrow",
+            ".floorrow .floorlvl",
+            ".backupwarn,.backuperror",
+            ".backupwarn",
+            ".backuperror",
+            "hp-dialog .tapconfirm-body",
+            "hp-dialog .tapconfirm-body p",
+            "hp-dialog .tapconfirm-line",
+            "hp-dialog .hpf-footer-space .hpf-status:empty",
+            "hp-dialog .danger-confirm-footer .dialog-action-commit",
+            "hp-dialog .danger-confirm-footer .btn",
+            ".device-issue-groups",
+            ".device-issues",
+            ".device-issues.alarm",
+            ".device-issues h3",
+            ".device-issues h3 ha-icon",
+            ".device-issues.alarm h3 ha-icon",
+            ".device-issue",
+            ".device-issue + .device-issue",
+            ".device-issue p",
+            ".device-issue-state",
+            ".device-issue summary",
+            ".device-issue summary::before",
+            ".device-issue details[open] summary::before",
+            ".device-issue code",
+            ".device-issue button",
+            ".device-issue button:focus-visible,.device-issue summary:focus-visible",
+            ".device-issue button ha-icon"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:620px)"
+          ],
+          "selectors": [
+            ".head .title"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".recoveryoverlay,.editorloading,.editorloading ha-icon"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:480px)"
+          ],
+          "selectors": [
+            "hp-dialog .danger-confirm-footer .dialog-action-commit",
+            "hp-dialog .danger-confirm-footer .dialog-action-commit .btn"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "5755b83726bd86a2e6c92c8c651d1b9092fe47f0c8a292406bd9e25a46e126e3",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ":host([panel-host]) .hdr .modes .modetab:focus-visible",
+            ":host([panel-host][data-pointer-hover]) .hdr .tabs .tab>.tabedit:hover",
+            ":host([data-pointer-hover]) .hdr[data-panel-flow] .panel-menu:hover",
+            ".panel-menu:focus-visible"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ":host([panel-host]) .hdr .tabs .tab,:host([panel-host]) .hdr .modes .modetab",
+            ".panel-menu"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "fd61a1c2278999db2c5131fb72882e136db80d39c51701e74252faefd939ea6c",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "hp-dialog .hpf-form input:focus-visible, hp-dialog .hpf-form select:focus-visible, hp-dialog .hpf-form button:focus-visible, .hpf-footer button:focus-visible",
+            "hp-dialog .hpf-form .hpf-input:hover, hp-dialog .hpf-form .hpf-select:hover",
+            "hp-dialog .hpf-form .hpf-input:focus, hp-dialog .hpf-form .hpf-select:focus",
+            "hp-dialog .hpf-form .hpf-unit > input:focus",
+            ".hpf-unit:focus-within",
+            ".hpf-field > .hpf-unit:not(.hpf-unit-wide)",
+            ".hpf-actions > input[type=\"file\"]",
+            ".hpf-row",
+            ".hpf-row > .hpf-label",
+            ".hpf-toggle.hpf-compact > .hpf-toggle-icon",
+            ".hpf-toggle:has(input:disabled)",
+            ".hpf-toggle:has(input:disabled) > .hpf-toggle-title, .hpf-toggle:has(input:disabled) > .hpf-toggle-caption",
+            ".hpf-compact-list",
+            ".hpf-toggle > input:disabled",
+            ".hpf-toggle > input:disabled::before",
+            ".hpf-seg",
+            ".hpf-seg label",
+            ".hpf-seg input",
+            ".hpf-seg label:has(input:checked)",
+            ".hpf-seg label:has(input:focus-visible)",
+            ".hpf-seg[aria-disabled=\"true\"]",
+            ".hpf-seg .hpf-line",
+            ".hpf-seg .hpf-line-dashed",
+            ".hpf-tiles",
+            ".hpf-tile",
+            ".hpf-tile input",
+            ".hpf-tile > span",
+            ".hpf-tile:has(input:checked)",
+            ".hpf-tile:has(input:focus-visible)",
+            ".hpf-tile:has(input:disabled)",
+            ".hpf-tile:has(input:disabled) input",
+            ".hpf-colortile > .hpf-colortile-swatch > span",
+            ".hpf-colorfield > .hpf-opacity > .hpf-unit",
+            ".hpf-colorfield > .hpf-opacity > .hpf-unit > input",
+            ":is(a[href]:not(.btn):not([role=button]),.hpf-link:not(.btn)):not(:disabled):is(:hover,:focus-visible)",
+            ".hpf-link:disabled",
+            ".hpf-inline",
+            ".hpf-inline > .hpf-labelrow",
+            ".hpf-inline > .hpf-select",
+            ".hpf-inline.hpf-wrap",
+            ".hpf-radios",
+            ".hpf-radios label",
+            ".hpf-radios input",
+            ".hpf-radios label:has(input:checked)",
+            ".hpf-callout.hpf-warning",
+            ".hpf-callout.hpf-warning > ha-icon",
+            ".hpf-callout .hpf-link",
+            ".hpf-range-ends",
+            ".hpf-range-ends-track",
+            ".hpf-compass",
+            ".hpf-compass svg",
+            ".hpf-compass.hpf-unset",
+            ".hpf-tint",
+            ".hpf-tint-head",
+            ".hpf-tint-head h4",
+            ".hpf-tag",
+            ".hpf-chips",
+            ".hpf-chip",
+            ".hpf-chip > ha-icon",
+            ".hpf-chip > button",
+            ".hpf-chip > button:hover",
+            ".hpf-choices",
+            ".hpf-choice",
+            ".hpf-choice input",
+            ".hpf-choice:has(input:checked)",
+            ".hpf-choice strong",
+            ".hpf-choice small",
+            ".hpf-divider",
+            ".hpf-picker",
+            "hp-dialog .hpf-form .hpf-pick",
+            "hp-dialog .hpf-form .hpf-pick > b",
+            ".hpf-pick::after",
+            ".hpf-pick[aria-expanded=true]::after",
+            "hp-dialog .hpf-form .hpf-pick:not(:disabled):hover",
+            ".hpf-pick-ref",
+            ".hpf-pick-ph",
+            ".hpf-panel",
+            ".hpf-panel .hpf-toolbar",
+            ".hpf-panel .hpf-toolbar .hpf-input",
+            ".hpf-list",
+            ".hpf-cand",
+            ".hpf-cand > small",
+            ".hpf-panel .hpf-cand",
+            ".hpf-panel .hpf-cand > :is(span, small)",
+            ".hpf-cand.sel",
+            ".hpf-cand:is(:hover, :focus-visible)",
+            ".hpf-cand:focus-visible",
+            ".hpf-block",
+            ".hpf-block.hpf-disabled > :not(.hpf-sub):not(.hpf-callout)",
+            ".hpf-block.hpf-disabled .hpf-seg label, .hpf-block.hpf-disabled .hpf-colorfield, .hpf-block.hpf-disabled .hpf-range",
+            ".hpf-toolbar",
+            ".hpf-toolbar > .hpf-input",
+            ".hpf-check",
+            ".hpf-check > input",
+            ".hpf-iconfield",
+            ".hpf-iconfield-control",
+            ".hpf-iconfield-control:has(> ha-icon-picker)",
+            ".hpf-iconfield-control:focus-within:not(:has(> ha-icon-picker))",
+            ".hpf-iconfield-control > .hpf-input, .hpf-iconfield-control > ha-icon-picker",
+            "hp-dialog .hpf-form .hpf-iconfield-control > .hpf-input",
+            "hp-dialog .hpf-form .hpf-iconfield-control > .hpf-input:focus",
+            ".hpf-iconfield-control > ha-icon-picker",
+            ".hpf-iconpreview",
+            ".hpf-mono",
+            ".hpf-hint > .hpf-link",
+            ".hpf-hint ha-icon",
+            ".hpf-note",
+            ".hpf-note > ha-icon",
+            ".hpf-note-warning",
+            ".hpf-hint-line",
+            ".hpf-chip-warning",
+            "hp-dialog .hpf-form textarea.hpf-input",
+            ".hpf-preview",
+            ".hpf-section[hidden]",
+            ".hpf-action-help",
+            ".hpf-action-help>hp-help",
+            ".hpf-disclosure",
+            ".hpf-disclosure>summary",
+            ".hpf-disclosure>summary::-webkit-details-marker",
+            ".hpf-disclosure>summary::marker",
+            ".hpf-disclosure>summary::before",
+            ".hpf-disclosure[data-expanded=true]>summary::before",
+            ".hpf-disclosure>summary:not(.btn)",
+            ".hpf-disclosure>summary:not(.btn):is(:hover,:focus-visible)",
+            ".hpf-disclosure>summary:not(.btn):focus-visible",
+            ".hpf-disclosure-content",
+            ".hpf-disclosure-inner",
+            ".hpf-disclosure-with-help",
+            ".hpf-disclosure-with-help>details",
+            ".hpf-disclosure-with-help>details::details-content",
+            ".hpf-disclosure-with-help>details>summary",
+            ".hpf-disclosure-with-help>hp-help",
+            ".hpf-disclosure-with-help .hpf-disclosure-content",
+            ".hpf-disclosure-with-help>details:not([open])>.hpf-disclosure-content"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ":is(a[href]:not(.btn):not([role=button]),.hpf-link:not(.btn))",
+            ".hpf-disclosure>summary,.hpf-disclosure>summary::before"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width: 480px)"
+          ],
+          "selectors": [
+            ".hpf-inline",
+            ".hpf-inline > .hpf-select",
+            ".hpf-radios",
+            ".hpf-seg",
+            ".hpf-seg label"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion: reduce)"
+          ],
+          "selectors": [
+            ".hpf-toggle > input::after",
+            ".hpf-pick, .hpf-pick::after, .hpf-panel .hpf-cand"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width: 550px)"
+          ],
+          "selectors": [
+            "hp-dialog .hpf-form .hpf-pick"
+          ]
+        },
+        {
+          "scope": [
+            "@media (forced-colors: active)"
+          ],
+          "selectors": [
+            "hp-dialog .hpf-form .hpf-select"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "6ec403949838066f505eadf962e435682fb9d8ead4e5c740e3a5aa5059b776dd",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "hp-dialog[data-kind=\"info\"][settings-layout]",
+            "hp-dialog[data-kind=\"info\"][settings-layout] .body.hpf-form",
+            "hp-dialog[data-kind=\"info\"] .inforow.hpf-row",
+            "hp-dialog[data-kind=\"info\"] .inforow .hpf-label",
+            "hp-dialog[data-kind=\"info\"] .inforow>:last-child",
+            "hp-dialog[data-kind=\"info\"] .hpf-link",
+            "hp-dialog[data-kind=\"info\"] .infodesc",
+            "hp-dialog[data-kind=\"info\"] .infodesc.hpf-note",
+            "hp-dialog[data-kind=\"info\"] .infodesc.muted",
+            "hp-dialog[data-kind=\"info\"] .entlist",
+            "hp-dialog[data-kind=\"info\"] .entrow",
+            "hp-dialog[data-kind=\"info\"] .entrow + .entrow",
+            "hp-dialog[data-kind=\"info\"] .entrow ha-icon",
+            "hp-dialog[data-kind=\"info\"] .entrow.on ha-icon",
+            "hp-dialog[data-kind=\"info\"] .entrow .en",
+            "hp-dialog[data-kind=\"info\"] .entrow .ev",
+            "hp-dialog[data-kind=\"info\"] .entrow .btn",
+            "hp-dialog[data-kind=\"info\"] .entlist + .inforow",
+            "hp-dialog[data-kind=\"info\"] .pdflist",
+            "hp-dialog[data-kind=\"info\"] .pdflist .hpf-link",
+            "hp-dialog[data-kind=\"info\"] .infofooter.hpf-footer",
+            "hp-dialog[data-kind=\"info\"] .infofooter .btn",
+            "hp-dialog[data-kind=\"info\"] .infofooter .infofooter-close"
+          ]
+        },
+        {
+          "scope": [
+            "@media(max-width:480px)"
+          ],
+          "selectors": [
+            "hp-dialog[data-kind=\"info\"] .inforow.hpf-row"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "98e4a1f44318ece79877477ae115740bb2f226c3b080f12754ad10f30ae248fe",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "hp-dialog.ui-dialog .btn.on:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "hp-dialog.ui-dialog .btn.danger:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "hp-dialog[data-kind=import].ui-dialog",
+            "hp-dialog[data-kind=import].ui-dialog .body",
+            "hp-dialog[data-kind=import].ui-dialog .rhint",
+            "hp-dialog[data-kind=import].ui-dialog .floorrow",
+            "hp-dialog[data-kind=import].ui-dialog .floorrow:hover",
+            "hp-dialog[data-kind=import].ui-dialog .floorlvl"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            "hp-dialog.ui-dialog .btn",
+            "hp-dialog[settings-layout]",
+            "hp-dialog[data-kind=import].ui-dialog .floorrow"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "6546cb7d9879b5eb68b416c82301371ea44318c9a33110b3cb710674e4c71460",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ":host([data-pointer-hover]) .summary-control>button:hover",
+            ".summary-control>button.on",
+            ".summary-control>button:focus-visible",
+            ".summary-overlay",
+            ".summary-overlay[inert]",
+            ".summary-overlay.right",
+            ".summary-overlay.bottom",
+            ".summary-value-pending",
+            ".summary-value-pending i",
+            ".summary-empty",
+            ".hdr>.head .summary-control>button.on",
+            ":host([data-pointer-hover]) .hdr>.head .summary-control>button:not(:disabled):hover",
+            ".hdr>.head .summary-control>button:focus-visible",
+            ".summary-general-grid:has(>.summary-switch:only-child)",
+            ".summary-editor [aria-invalid='true']",
+            ".summary-drag:active",
+            ".summary-drag[draggable='false']",
+            ".summary-icon-button:hover:not(:disabled)",
+            ".summary-scope>select:only-child",
+            ".summary-block-title-error,.summary-scope-problem",
+            ".summary-editor .summary-value-remove:hover:not(:disabled)",
+            ".summary-source-results button.broken",
+            ".summary-refine",
+            ".summary-problem",
+            ".summary-problem.error",
+            ".summary-problem.warning",
+            ".summary-local-hint",
+            ".summary-add:hover:not(:disabled)",
+            ".summary-delete-block:hover:not(:disabled)",
+            ".summary-reload"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".summary-value-pending i",
+            ".summary-value strong:not(.summary-value-pending)",
+            ".hdr>.head .summary-control>button"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "6e48e01b95f3550b0f1b1d4a0d279dbbbf00985f5010795dbe9dcdb8e9e81266",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".editor-secondary[data-layout=actions]",
+            ".editor-secondary[data-layout=actions] .editor-context-label",
+            ".editor-secondary[data-layout=actions] .editor-secondary-content",
+            ".editor-secondary-content>.decor-selection-actions",
+            ".editor-secondary .bdhint",
+            ".editor-secondary .dfill",
+            ".editor-secondary .dfill input[type=\"checkbox\"]",
+            ".editor-secondary hp-color-opacity",
+            ".editor-secondary .drawwall",
+            ".editor-secondary .drawwall input",
+            ".editor-secondary .drawwall .opl",
+            ".editor-secondary .decor-selection-actions .btn",
+            ".editor-secondary .decor-selection-actions .btn.on",
+            ".editor-secondary .decor-selection-actions .btn.danger",
+            ".editor-secondary .decor-selection-actions .btn:not(:disabled)",
+            ".editor-secondary .decor-selection-actions .btn:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            ".editor-secondary .decor-selection-actions .btn.on:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            ".editor-secondary .decor-selection-actions .btn.danger:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            ".editor-secondary .decor-selection-actions .btn:disabled",
+            ".editor-secondary .decor-selection-actions .btn ha-icon"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".editor-secondary",
+            ".editor-group-launcher .group-chevron"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".editor-secondary .decor-selection-actions .btn"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "15512a6c13bfc4ae3a5f49e03052c906e71eebe368c60f344900def62b12d75f",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "hp-dialog.danger-confirm-dialog[settings-layout]",
+            "hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-body",
+            "hp-dialog.danger-confirm-dialog[settings-layout] .danger-confirm-object",
+            ".hpf-settings-nav hr",
+            ".hpf-settings-pane .hpf-colorfield:hover",
+            ":is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.on:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            ":is(.hpf-settings-form,hp-dialog[settings-layout] .hpf-footer,.danger-confirm-footer) .btn.danger:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            ".hpf-temperature-range",
+            ".hpf-temperature-range>.hpf-field",
+            ".hpf-temperature-range .hpf-unit",
+            ".hpf-temperature-range .hpf-label",
+            "hp-dialog[data-kind=\"space\"] .hpf-callout:has([data-action=\"space-delete-devices\"])",
+            "hp-dialog[data-kind=\"space\"] [data-action=\"space-delete-devices\"]",
+            ".hpf-plan-image .planprev",
+            ".hpf-plan-filename",
+            ".hpf-inherited-swatch",
+            ".hpf-inherited-color",
+            ".hpf-background-grid",
+            ".hpf-ray-choice:is(:hover,:focus-within)",
+            ".hpf-ray-choice:hover figure:not(.is-selected)",
+            ".hpf-ray-choice:focus-within figure",
+            ".hpf-background-grid figure",
+            ".hpf-background-stage",
+            ".hpf-background-stage svg",
+            ".hpf-mini-floor",
+            ".hpf-mini-wall",
+            ".hpf-background-grid figcaption",
+            ".hpf-background-rules",
+            ".hpf-background-rules .hpf-hint",
+            ".hpf-north-dial.hpf-unset",
+            ".hpf-settings-single",
+            ".hpf-settings-single .hpf-settings-content",
+            ".hpf-settings-single .hpf-card + .hpf-card",
+            ".hpf-settings-single .hpf-head",
+            ".hpf-settings-single .hpf-head h3",
+            ".hpf-temperature-range.hpf-range-compact",
+            ".hpf-settings-pane .hpf-temprange",
+            "hp-dialog[data-kind=room][settings-layout] .hpf-grid",
+            ".hpf-settings-form .cardpreview",
+            ".hpf-settings-form .cardpreview .cpmeta>span",
+            ".hpf-settings-form .iconbtn",
+            ".hpf-settings-form .iconbtn:hover",
+            ".hpf-settings-form .hpf-seg:has(input[name=bmode])",
+            ".hpf-settings-form .hpf-seg:has(input[name=bmode]) label",
+            ".hpf-settings-form .led-representation>.row",
+            ".hpf-settings-form .hpf-toolbar",
+            ".hpf-settings-form .hpf-toolbar>.hpf-callout",
+            ".hpf-settings-form .hpf-note",
+            ".hpf-settings-form .hpf-note-warning",
+            ".hpf-settings-pane[data-settings-section=details] .hpf-field>.hpf-hint",
+            ".hpf-settings-form .hpf-chip>button",
+            ".hpf-settings-form .hpf-iconfield .hpf-input:focus-visible",
+            ".hpf-settings-form ha-icon-picker",
+            ".hpf-settings-pane [data-state-source]",
+            ".hpf-settings-pane .radargroup",
+            ".hpf-settings-pane .radarsetup-head",
+            ".hpf-settings-pane .radarsetup-head strong",
+            ".hpf-settings-pane[data-settings-section=details] .hpf-grid",
+            ".hpf-settings-pane .radargroup>legend",
+            ".hpf-settings-pane .hpf-profile-target-heading",
+            ".hpf-settings-pane .hpf-profile-maproutes>.vacroutes",
+            ".hpf-settings-pane .hpf-profile-diagnostics .vacdiag>div",
+            ".hpf-settings-pane .hpf-profile-target-heading .btn",
+            ".hpf-settings-pane .radarcoordinates",
+            ".hpf-settings-pane .radarcoordinates>label",
+            ".hpf-settings-pane .radarcoordinates input",
+            "hp-dialog.ui-dialog.decor-properties-dialog",
+            "hp-dialog.decor-properties-dialog .body.hpf-form",
+            "hp-dialog.decor-properties-dialog .body>label:not(.dfill):not(.hpf-toggle)",
+            "hp-dialog.decor-properties-dialog .body.hpf-form>label:first-child",
+            "hp-dialog.decor-properties-dialog .hpf-input",
+            "hp-dialog.decor-properties-dialog .colorrow",
+            "hp-dialog.decor-properties-dialog .colorrow>input",
+            "hp-dialog.decor-properties-dialog .colorrow>span",
+            "hp-dialog.decor-properties-dialog hp-settings-select",
+            "hp-dialog.decor-properties-dialog hp-color-opacity",
+            "hp-dialog.decor-properties-dialog .hpf-toggle",
+            "hp-dialog.decor-properties-dialog .body.hpf-form .hpf-toggle>input",
+            "hp-dialog.decor-properties-dialog .hpf-toggle-title",
+            "hp-dialog.decor-properties-dialog .row[slot=footer]",
+            "hp-dialog.decor-properties-dialog .row[slot=footer] .spacer",
+            "hp-dialog.ui-dialog *:is([aria-invalid=true],input.bad)",
+            "hp-dialog.ui-dialog .device-inbox-discovery",
+            "hp-dialog.ui-dialog .device-inbox-discovery>summary",
+            "hp-dialog.ui-dialog .device-inbox-chips .chip button",
+            "hp-dialog.ui-dialog .ract.del:is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "hp-dialog.ui-dialog .aboutver .aboutlink",
+            "hp-dialog.ui-dialog .supportform>label:not(.srcrow)",
+            "hp-dialog.ui-dialog textarea.supportmessage",
+            "hp-dialog.ui-dialog textarea.supportraw",
+            "hp-dialog.ui-dialog .supportattach",
+            "hp-dialog.ui-dialog .supportattach input",
+            "hp-dialog.ui-dialog .supportattach:hover",
+            "hp-dialog.ui-dialog *:is(.supportpreview,.supportmanual,.supporterror,.supportsuccess)",
+            "hp-dialog.ui-dialog .supportpreview summary",
+            ".vacuum-profile",
+            ".vacuum-profile [data-card=vacuum] > .hpf-head",
+            ".vacuum-profile .vacuum-source-status",
+            ".vacuum-profile .hpf-body",
+            ".vacuum-profile .hpf-section > .vacbtns",
+            ".vacuum-profile .hpf-field",
+            ".vacuum-profile .vacuum-source-controls",
+            ".vacuum-profile .hpf-toggle:has(.hpf-toggle-caption) > input[type=checkbox]",
+            ".vacuum-profile .vacuum-trail-color",
+            ".vacuum-profile .vacuum-trail-color > span:first-child",
+            ".vacuum-profile .vacuum-trail-color hp-color-opacity",
+            ".vacuum-profile .vacuum-trail-readout",
+            ".vacuum-history",
+            ".vacuum-history h3",
+            ".vacuum-history .vacuum-history-actions",
+            ".vacuum-history .hpf-callout,.vacuum-history .rhint",
+            ".vacuum-history-status",
+            ".vacuum-history hp-settings-select",
+            ".vacuum-profile .hpf-profile-maproutes > .hpf-sub",
+            ".vacuum-profile .vacroutes",
+            ".vacuum-profile .vacroutes > .vacdiag",
+            ".vacuum-profile .vacuum-map-summary",
+            ".vacuum-profile .vacroute-list",
+            ".vacuum-profile .vacroute",
+            ".vacuum-profile .vacroute-head",
+            ".vacuum-profile .vacroute-active",
+            ".vacuum-profile .vacroute > small",
+            ".vacuum-profile .vacroute-status",
+            ".vacuum-profile .vacroute .srcrow",
+            ".vacuum-profile .vacroute .srcrow > hp-settings-select",
+            ".vacuum-profile .vacroute .srcrow select",
+            ".vacuum-profile .vacroute > .vacbtns",
+            ".vacuum-profile .vacroute .vacbtns > button",
+            ".vacuum-profile .vacuum-add-current",
+            ".vacuum-profile .vacuum-add-current > button",
+            ".vacuum-profile .vacuum-map-note",
+            ".vacuum-profile .vacuum-add-reason",
+            ".vacuum-profile .vacroute-sources",
+            ".vacuum-profile .vacroute-sources .rhint",
+            ".vacuum-profile .vacsource-list",
+            ".vacuum-profile .vacsource-list > button",
+            ".vacuum-profile .hpf-profile-diagnostics > .hpf-disclosure-content > .hpf-disclosure-inner",
+            ".vacuum-profile .hpf-profile-diagnostics .vacdiag",
+            ".vacuum-profile .hpf-profile-diagnostics .vacdiag > div",
+            ".vacuum-profile .hpf-profile-diagnostics .vacdiag > div > b",
+            "[data-settings-section=\"alarms\"] .alarm-heading",
+            "[data-settings-section=\"alarms\"] .alarm-heading h3",
+            "[data-settings-section=\"alarms\"] .alarm-add",
+            "[data-settings-section=\"alarms\"] .alarm-add ha-icon",
+            "[data-settings-section=\"alarms\"] .alarm-table",
+            "[data-settings-section=\"alarms\"] .alarm-table th",
+            "[data-settings-section=\"alarms\"] .alarm-table td",
+            "[data-settings-section=\"alarms\"] .alarm-table tr:last-child td",
+            "[data-settings-section=\"alarms\"] .alarm-table .alarm-empty",
+            "[data-settings-section=\"alarms\"] .alarm-empty-content",
+            "[data-settings-section=\"alarms\"] .alarm-create",
+            "[data-settings-section=\"alarms\"] .alarm-condition",
+            "[data-settings-section=\"alarms\"] .alarm-condition small",
+            "[data-settings-section=\"alarms\"] .alarm-remove",
+            "[data-settings-section=\"alarms\"] .alarm-remove:hover",
+            "[data-settings-section=\"alarms\"] .alarm-remove ha-icon",
+            "hp-dialog[data-kind=\"alarm-constructor\"] .alarm-source-field",
+            "hp-dialog[data-kind=\"alarm-constructor\"] .alarm-outcome",
+            "hp-dialog[data-kind=\"alarm-constructor\"] .alarm-outcome-heading",
+            "hp-dialog[data-kind=\"alarm-constructor\"] .alarm-outcome-heading ha-icon",
+            ".alarm-condition-edit",
+            ".alarm-condition-edit:hover",
+            ".alarm-condition > span"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            "hp-dialog[settings-layout]",
+            ".hpf-settings-form *,hp-dialog[settings-layout] .hpf-footer .btn,.danger-confirm-footer .btn",
+            "hp-dialog.ui-dialog *:is(button,summary,input,textarea,a)"
+          ]
+        },
+        {
+          "scope": [
+            "@media(max-width:480px)"
+          ],
+          "selectors": [
+            ".vacuum-profile .vacroute",
+            ".vacuum-profile .vacroute > .vacbtns",
+            ".vacuum-profile .hpf-profile-diagnostics .vacdiag > div",
+            ".vacuum-profile .hpf-profile-diagnostics .vacdiag > div > b"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "608b0dc3c135f6bd4948bc6a70f87ef6ba8d30b9236a3ef0297ec166c3f0cf63",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".section",
+            ".toggle",
+            ".hint,.status",
+            ".hint",
+            ".providers",
+            ".provider,.scan-row",
+            ".scan-row",
+            "[data-hp=\"zigbee-scan-cancel\"]",
+            ".provider-title",
+            ".actions",
+            "button:disabled,textarea:disabled",
+            ".warning",
+            ":host([embedded]) textarea[aria-invalid=\"true\"]",
+            ":host([embedded]) .hpf-actions",
+            ":host([embedded]) .hpf-hint",
+            ".hpf-provider",
+            ".provider-heading",
+            ".provider-heading h4",
+            ".provider-heading .hpf-hint",
+            ".topic-meta",
+            ".topic-head",
+            ".topic-head strong",
+            ".save-and-load",
+            ".scan-row",
+            ".scan-row .status,.scan-row .hint",
+            ".incomplete",
+            ".incomplete-text"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "865504772fec9f12368161bf875a09bb4b2948ff089d039a46823f8b47becbad",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ":host([instant]) .trigger svg",
+            ":host([data-pointer-hover]) .trigger:hover svg, :host([instant]) .trigger:focus-visible svg"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "b2610d55f4c6f3eca9a30b9a5d0a028b461a0c1bc1e19af35cb445d25f716449",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".hp-screen-icon",
+            ".hp-screen-list",
+            ".hp-screen-row",
+            ".hp-screen-edit",
+            ".hp-screen-edit:hover",
+            ".hp-screen-edit:focus-visible",
+            ".hp-screen-edit span",
+            ".hp-screen-link",
+            ".hp-screen-link input",
+            ".hp-screen-fields",
+            ".hp-screen-fields .hpf-label",
+            ".hp-screen-note",
+            "hp-dialog[data-kind=\"external-screen-constructor\"] .hpf-form.hp-screen-constructor",
+            ".hp-screen-row .hpf-error"
+          ]
+        },
+        {
+          "scope": [
+            "@media(max-width:550px)"
+          ],
+          "selectors": [
+            ".hp-screen-fields",
+            ".hp-screen-row"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "7d03e7aa22421332116bb9c4e74a6767296e10d6f34bd40d5fde58bd7c722f3f",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "ha-dialog::part(dialog)",
+            ".title-text",
+            ".footer",
+            "::slotted([slot=\"footer\"])",
+            "dialog",
+            "dialog::backdrop",
+            ".surface",
+            ":host([wide]) .surface",
+            ":host(.discard-confirm-dialog)",
+            ":host(.discard-confirm-dialog) .surface",
+            ":host([form-shell])",
+            ":host([form-shell]) ha-dialog",
+            ":host([form-shell]) .close",
+            ":host([form-shell]) .header",
+            ":host([settings-layout]) .header",
+            ":host([settings-layout]) .footer",
+            ":host([settings-layout]) .header .close",
+            ":host([settings-layout]) .title-text",
+            ":host([settings-layout]) .content",
+            ":host([settings-layout][compact]) .surface",
+            ":host(.decor-properties-dialog) .header",
+            ":host(.decor-properties-dialog) .title-text",
+            ":host([properties-shell])",
+            ":host([properties-shell]) ha-dialog",
+            ":host([properties-shell]) .surface",
+            ".header",
+            ".header .title",
+            ".hp-dialog-return-focus:focus-visible",
+            "dialog.exiting",
+            "dialog.exiting:popover-open",
+            "dialog.exiting::backdrop",
+            ":host([data-pointer-hover]) .close:hover, .close:focus-visible",
+            ":host([data-pointer-hover]) .close:hover ha-icon",
+            ".content",
+            ".overlay-portal",
+            ".overlay-portal:empty",
+            ".overlay-portal > *"
+          ]
+        },
+        {
+          "scope": [
+            "@media (min-height: 700px)"
+          ],
+          "selectors": [
+            ":host([properties-shell]) .surface, :host([properties-shell]) ha-dialog::part(dialog)"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width: 480px)"
+          ],
+          "selectors": [
+            ":host([settings-layout]) .surface"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-height: 500px)"
+          ],
+          "selectors": [
+            ":host([form-shell]) ha-dialog"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "8f82715220073c06d749f753c45519e28587c73141aa291ab297c8894ed876d4",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".confirm",
+            ":host([data-pointer-hover]) .confirm:hover, .confirm:focus-visible"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "57478e5f9953eae9ad47ce736598ca075df7552f0ddb52765f8bd8084bab6242",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "button",
+            "button.on",
+            "button.danger",
+            "button:not(:disabled)",
+            "button:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "button.on:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "button.danger:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "button:disabled",
+            "button ha-icon"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            "button"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "c5badfc4c71ba226d342a309efd5f132e9ccd2525df2eb7036eae6042a16be52",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".trigger.solid",
+            ":host([cover-swatch]), :host([compact-swatch])",
+            ":host([cover-swatch]) .trigger, :host([compact-swatch]) .trigger",
+            ":host([cover-swatch]) .swatch, :host([compact-swatch]) .swatch",
+            ":host([compact-swatch]:not([cover-swatch])) .trigger, :host([compact-swatch]:not([cover-swatch])) .swatch",
+            ":host([data-pointer-hover]) .trigger:hover",
+            ".trigger[aria-expanded=\"true\"]",
+            ".trigger:focus-visible",
+            ".trigger[data-restored-focus]:focus-visible",
+            ".picker[inert]",
+            ".swatch",
+            ".picker",
+            ".picker[popover]:not(:popover-open)",
+            ".picker-head, .row, .control-head",
+            ".picker-head",
+            ".caption",
+            ".preview",
+            ".row > .caption",
+            ".preview > span",
+            ".sv-field",
+            ".sv-thumb",
+            ".control",
+            ".control-value",
+            "input[type=\"range\"]",
+            "input.hsv-range",
+            ".hue-range",
+            ".hsv-range::-webkit-slider-runnable-track",
+            ".hsv-range::-webkit-slider-thumb",
+            ":host([data-pointer-hover]) .hsv-range:hover, .hsv-range:focus-visible",
+            ":host([data-pointer-hover]) .hsv-range:active, .hsv-range:active",
+            "input[type=\"text\"], input[type=\"number\"]",
+            "input[type=\"text\"]",
+            "input[type=\"number\"]",
+            "input:not(.hsv-range):focus-visible, .sv-field:focus-visible",
+            "input[aria-invalid=\"true\"]",
+            ".error",
+            ".pct",
+            ".confirm",
+            ".confirm:focus-visible",
+            ":host([disabled])"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion: reduce)"
+          ],
+          "selectors": [
+            ".picker, .confirm",
+            ".hsv-range::-webkit-slider-thumb"
+          ]
+        },
+        {
+          "scope": [
+            "@media (forced-colors: active)"
+          ],
+          "selectors": [
+            ".hsv-range::-webkit-slider-runnable-track",
+            ".hsv-range::-webkit-slider-thumb",
+            ":host([data-pointer-hover]) .hsv-range:focus-visible, .hsv-range:focus-visible",
+            ".confirm"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "52082cc5fd68010ccf5406a87a1e311f12c01d546c9ce854f7f55b6ad093fd7d",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "dark-1280",
+        "dark-1024"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "button svg",
+            ".menu:not(.visible)",
+            "[role=\"option\"][aria-disabled=\"true\"]"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width: 550px)"
+          ],
+          "selectors": [
+            "button"
+          ]
+        },
+        {
+          "scope": [
+            "@media (prefers-reduced-motion: reduce)"
+          ],
+          "selectors": [
+            "button, button svg, .menu, [role=\"option\"]"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "799f077e917288a82c9c10a56a8279b9889d4d29ae0421f9c22717a54b9bee29",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            ".hp-prop-field.wide",
+            ".hp-prop-field>label .hp-prop-icon",
+            ".hp-properties .hpf-unit>input",
+            ".hp-properties input::-webkit-inner-spin-button,.hp-properties input::-webkit-outer-spin-button",
+            ".hp-properties .hpf-unit:focus-within,.hp-prop-text:focus",
+            ".hp-prop-field.readonly .hpf-unit",
+            ".hp-properties .hpf-colorfield",
+            ".hp-properties .hpf-colorfield hp-color-opacity",
+            ".hp-properties .hpf-colorfield .hpf-hex",
+            ".hp-properties .hpf-colorfield .hpf-opacity",
+            ".hp-properties .hpf-colorfield:has(.hpf-inline-hex)",
+            ".hp-properties .hpf-colorfield>.hpf-opacity.hpf-inline-opacity,.hp-properties .hpf-inline-opacity>.hpf-unit",
+            ".hp-properties .hpf-colorfield .hpf-inline-hex,.hp-properties .hpf-colorfield .hpf-inline-opacity .hpf-unit>input",
+            ".hp-properties .hpf-colorfield .hpf-inline-alpha",
+            ".hp-properties .hpf-colorfield .hpf-inline-alpha::-webkit-inner-spin-button",
+            ".hp-properties .hpf-inline-opacity .hpf-unit>span",
+            ".hp-properties .hpf-colorfield:has(.hpf-inline-hex):focus-within",
+            ".hp-properties .hpf-colorfield .hpf-inline-hex:hover,.hp-properties .hpf-colorfield .hpf-inline-alpha:hover",
+            ".hp-properties .hpf-colorfield input[aria-invalid=true]",
+            ".hp-properties .hp-prop-group-color .hpf-colorfield",
+            ".hp-properties .hp-prop-group-color .hpf-colorfield:not(:has(.hpf-inline-hex))",
+            ".hp-prop-text",
+            ".hp-prop-choice,.hp-prop-variable",
+            ".hp-prop-choice",
+            ".hp-prop-choice .hp-prop-icon",
+            ".hp-prop-feature-label",
+            ".hp-prop-group.features .hp-prop-fields",
+            ".hp-prop-group.features .hp-prop-group-title",
+            ".hp-prop-choice.active",
+            ".hp-prop-choices",
+            ".hp-prop-choices>button",
+            ".hp-prop-settings",
+            ".hp-prop-settings .hp-prop-icon",
+            ".hp-prop-group.features .hp-prop-hint",
+            ".hp-prop-variable",
+            ".hp-prop-variable .hp-prop-icon",
+            ".hp-prop-action-wrap.wide",
+            ".hp-prop-action.display_device span",
+            ".hp-properties .hp-prop-action.delete:not(:disabled):not([aria-disabled='true']):is(:hover,:focus-visible)",
+            ".hp-prop-error",
+            ".hp-prop-pending",
+            ".hp-properties button:focus-visible,.hp-properties select:focus-visible",
+            ".hp-prop-selection",
+            ".hp-prop-selection *",
+            "ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame):not(.hp-column-frame) .dtbox,ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame):not(.hp-column-frame) .dtstem,ha-card[data-hp-properties-wide] .dtframe:not(.hp-stair-frame):not(.hp-column-frame) .dtknob,ha-card[data-hp-properties-wide] .bdframe .bdbox,ha-card[data-hp-properties-wide] .bdframe .dtstem,ha-card[data-hp-properties-wide] .bdframe .bdknob",
+            "ha-card[data-hp-properties-wide] .physical-hit.selected",
+            "ha-card[data-hp-properties-wide] .hp-stair.selected .hp-stair-outline",
+            "ha-card[data-hp-properties-wide] .hp-stair-frame",
+            ".hp-properties-variable",
+            "hp-dialog.hp-properties-variable .hp-prop-variable-body",
+            "hp-dialog.hp-properties-variable .hp-prop-variable-label",
+            ".hp-prop-variable-body .hpf-picker",
+            "hp-dialog.hp-properties-variable .hp-prop-variable-body .hpf-select",
+            "hp-dialog.hp-properties-variable .hp-prop-variable-body .hpf-pick",
+            ".hp-prop-variable-body .hpf-pick>.hp-prop-icon",
+            ".hp-prop-variable-body .hpf-pick>b",
+            ".hp-prop-variable-body .hpf-pick>.hpf-pick-ref",
+            ".hp-prop-variable-body select",
+            ".hp-prop-preview",
+            ".hp-prop-preview>div",
+            ".hp-prop-preview strong",
+            ".hp-prop-variable-footer",
+            ".hp-prop-variable-footer button",
+            ".hp-prop-variable-footer .insert",
+            ".hp-prop-variable-footer .hp-prop-icon",
+            ".hp-prop-variable-footer button:disabled",
+            ".hp-properties button:not(:disabled):not([aria-disabled=\"true\"]):is(:hover,:focus-visible)"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            ".hp-properties button",
+            ".hp-properties button"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "f50e5ed4910556d7a2dda5ae0688ae7713c8b6a34555188f4aeb45bc0600ee82",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "hp-dialog .dfill",
+            ".wallthick-dlg",
+            ".wallthick-dlg.dragging",
+            ".wallthick-dlg .row",
+            ".wallthick-dlg input[type=\"number\"]",
+            ".habindingbanner",
+            ".habindingbanner>span",
+            ".habindingbanner>ha-icon",
+            ".srcrow",
+            ".dispsection",
+            ".colorrow .tempin",
+            "hp-dialog .body .colorrow .tempin",
+            ".srcrow",
+            ".srcrow ha-switch",
+            ".srcrow>span:first-of-type",
+            ".colorrow .opl",
+            ".markerlightgroup",
+            ".markerlightgroup legend",
+            ".markerlightgroup[disabled]>:not(legend)",
+            ".radargroup",
+            ".radaradditional",
+            ".radargroup>p",
+            ".radarcoordinates",
+            ".radarcoordinates>label",
+            "hp-dialog .body .radarcoordinates .tempin",
+            ".radarinspection",
+            ".radarinspection code",
+            ".radarsetup",
+            ".radarsetup-head",
+            ".radarsetup-head strong",
+            ".radarsetup>svg",
+            ".radarsetup .room",
+            ".radarsetup .heading",
+            ".radarsetup .trail",
+            ".radarsetup g circle",
+            ".radarsetup g.pending circle",
+            ".radarsetup g text",
+            ".vacbox .vacbtns",
+            ".vacdiag",
+            ".vacdiag>div",
+            ".vacdiag>div>span",
+            ".vacdiag>div>b",
+            ".vacroute-missing-group",
+            ".vacroute-group-title",
+            ".vacroute-missing-group .vacroute-list",
+            ".vacpicker",
+            ".vacsource-warning",
+            ".vacsource-warning .btn",
+            ".vacsource-list",
+            ".vacsource-list details",
+            ".vacsource-list details>summary",
+            ".vacsource",
+            ".vacsource.on",
+            ".vacsource>span:first-child",
+            ".vacsource small",
+            ".vacsource-meta",
+            ".vacxcme pre",
+            ".vacfit",
+            ".vacfit:active",
+            ".vacfit polygon",
+            ".vacfit text",
+            ".furnback",
+            ":host([data-pointer-hover]) .furnitem:hover",
+            ".furnitem.on",
+            ".furnvariants .furnitem",
+            ".furnsize label",
+            ".furnsize .furnunit",
+            ".furnsize input",
+            ".imageupload.disabled",
+            ".imageasset",
+            ".imageasset .furnitem",
+            ".imageasset img",
+            ".imageasset .furnitem span",
+            ".imageasset .furnitem small",
+            ".imageassetdelete",
+            ".imagepropertypreview",
+            ".imagepropertypreview img",
+            ".imagepropertypreview span",
+            ".vacfitdot",
+            ".vacfithandle",
+            ".vacfitknob",
+            ".candlist",
+            ".opening-entity-candidate",
+            ".opening-entity-candidate.sel",
+            ".opening-entity-empty",
+            ".rtest ha-icon",
+            ".rtesticon",
+            ".rrow .rpat.bad",
+            ":host([data-pointer-hover]) .rrow .ract:hover",
+            ":host([data-pointer-hover]) .rrow .ract.del:hover",
+            ".optimize-live",
+            ".optimize-live .alignmsg,.optimize-live .rhint",
+            ".optimize-cleanup",
+            ".optimize-selected",
+            ".optimize-unverified",
+            ".optimize-unverified p,.optimize-unverified ul",
+            ".optimize-unverified ul",
+            ".optimize-actions",
+            ".optimize-action",
+            ".optimize-details",
+            ".optimize-details>summary",
+            ".optimize-details>summary:focus-visible",
+            ".optimize-details ul",
+            ".optimize-details li + li",
+            ".backupbody",
+            ".backupcounts",
+            ".backupplanonly",
+            ".backupplanonly>span:first-of-type",
+            ".backupplanonly small",
+            ".backupplanonlystatus",
+            ".backupfile,.backupsummary,.backupcontent",
+            ".backupfile b,.backupcontent span",
+            ".backupfile span,.backupsummary span,.backupcontent span",
+            ".backupdetails",
+            ".backupdetails summary",
+            ".backupdetails>div",
+            ".backupdetails code",
+            ".backupchoices",
+            ".backupchoices label",
+            ".backupconfirm",
+            ".backupconfirm>span:first-of-type",
+            ".aboutver .aboutlink",
+            ".supportmessage,.supportraw",
+            ".supportraw",
+            ".supportattach",
+            ".supportattach>span:first-of-type",
+            ".supportpreview,.supportmanual,.supporterror,.supportsuccess",
+            ".supportsummary",
+            ".supporthash",
+            ".supporthash code",
+            ".supportpreview details",
+            ".supportpreview summary",
+            ".supportprivacy",
+            ".supporterror",
+            ".supportsuccess",
+            ".device-inbox-discovery",
+            ".device-inbox-discovery summary",
+            ".device-inbox-discovery .srcrow",
+            ".device-inbox-excluded",
+            ".device-inbox-excluded>span",
+            ".device-inbox-chips",
+            ".device-inbox-chips .chip",
+            ".device-inbox-chips .chip button",
+            ".device-inbox-excluded input[type=\"text\"]",
+            ".device-inbox-preview",
+            ".device-inbox-batch-actions",
+            ".device-inbox-selected",
+            ".device-inbox-new",
+            ".device-inbox-status",
+            ".device-inbox-empty",
+            ".device-inbox-more"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:520px)"
+          ],
+          "selectors": [
+            ".backupcounts"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "1872e1bb996d31a20745dcbbe0ad2f15f17383b0cd0a0b1c9088c7265ebb289b",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "button.danger",
+            "button:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "button.primary:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "button.danger:not(:disabled):is(:hover,:focus-visible:not(.hp-dialog-return-focus))",
+            "button:disabled"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            "button"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "3d8b344efebb62a0f3d5976269b5579b20501dcd0686d93333f03d38cb7fe3bc",
+      "profiles": [
+        "light-1280",
+        "light-1024",
+        "light-390",
+        "dark-1280",
+        "dark-1024",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "label:has(input:not(:disabled)):hover",
+            "label:has(input:disabled),input:disabled"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            "hp-dialog",
+            "label"
+          ]
+        },
+        {
+          "scope": [
+            "@media (max-width:360px)"
+          ],
+          "selectors": [
+            ".row",
+            ".spacer",
+            "button"
+          ]
+        }
+      ]
+    },
+    {
+      "stylesheet": "96e903a8255247a7dd10a8d13de15f1d5be60a782fa5fa447e2d7c6210f633f7",
+      "profiles": [
+        "light-390",
+        "dark-390"
+      ],
+      "groups": [
+        {
+          "scope": [],
+          "selectors": [
+            "button:focus-visible,.menu:focus-visible",
+            "button:disabled",
+            "[role=option][aria-disabled=true]"
+          ]
+        },
+        {
+          "scope": [
+            "@media(prefers-reduced-motion:reduce)"
+          ],
+          "selectors": [
+            "button,button svg,.menu,[role=option]"
+          ]
+        }
+      ]
+    }
+  ]
+}

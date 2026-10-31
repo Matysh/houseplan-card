@@ -148,6 +148,7 @@ const hold = async (session) => {
     opened = false;
   }
   await session.page.waitForTimeout(300);
+  if (opened) await session.page.evaluate(selector => window.__hpUiCapture?.('kiosk-size-dialog', selector), DIALOG);
   return { opened, heldMs };
 };
 

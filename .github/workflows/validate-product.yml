@@ -206,6 +206,7 @@ on:
       - '!test/toast-identity-source.test.mjs'
       - '!test/toast-paint-oracle.test.mjs'
       - '!test/toolchain-pins.test.mjs'
+      - '!test/ui-kit-metrics.test.mjs'
       - '!test/ui-lab-server.test.mjs'
       - '!test/ui-lab-session.test.mjs'
       - '!test/unit-groups.test.mjs'
@@ -422,6 +423,7 @@ on:
       - '!test/toast-identity-source.test.mjs'
       - '!test/toast-paint-oracle.test.mjs'
       - '!test/toolchain-pins.test.mjs'
+      - '!test/ui-kit-metrics.test.mjs'
       - '!test/ui-lab-server.test.mjs'
       - '!test/ui-lab-session.test.mjs'
       - '!test/unit-groups.test.mjs'
@@ -1190,6 +1192,7 @@ jobs:
           node scripts/ci-registry-inventory.mjs
           node scripts/ci-profiles.mjs
           node scripts/frontend-units.mjs --group=fresh --suite=product
+          node scripts/ui-kit-metrics.mjs --check
           node scripts/bundle-budget.mjs
           npm run lint:unused
       - name: Fresh backend manifest and synchronized release mirrors

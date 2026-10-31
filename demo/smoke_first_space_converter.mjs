@@ -23,6 +23,7 @@ try {
     assert.ok(await floors(s.page).locator('[data-hp=dialog-confirm]').isDisabled());
     await floors(s.page).locator('[data-action=import-manual]').click();
     await s.page.locator('hp-dialog[data-kind=onboarding]').waitFor();
+    await s.page.evaluate(() => window.__hpUiCapture?.('onboarding-space-dialog', 'hp-dialog[data-kind="onboarding"]'));
     // #998: first-install onboarding registers the shared select without the
     // full editor having been opened earlier in this browser.
     const choice=s.page.locator('hp-dialog[data-kind=onboarding] hp-settings-select').filter({visible:true}).first();

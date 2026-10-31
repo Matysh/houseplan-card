@@ -9,6 +9,7 @@ import {
   readConst, readCoreCaps, rewriteConst, rewriteCoreCaps, ratchetBundleRoot,
 } from '../scripts/ratchets.mjs';
 import { METRIC_NAMES } from '../scripts/monolith-metrics.mjs';
+import { UI_KIT_METRICS, UI_KIT_BANDS } from '../scripts/ui-kit-metrics.mjs';
 
 const read = (path) => readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), 'utf8');
 
@@ -64,6 +65,18 @@ test('#699 публикация беты напоминает о храпови�
   const main = local.slice(local.indexOf('const main = async'));
   assert.match(main, /'scripts\/ratchets\.mjs', 'report', '--warn'/);
   assert.match(main, /'scripts\/ratchets\.mjs', 'report', '--warn', '--committed'\], \{ allowFailure: true, inherit: true \}\)/);
+});
+
+test('#1146 UI Kit report includes every ceiling and the same growth bands as the gate', () => {
+  const baseline = Object.fromEntries(UI_KIT_METRICS.map(name => [name, 100]));
+  const metrics = { ...baseline, cssLines: 120, keyframes: 101, registryOffKit: 90 };
+  const rows = ratchetRows({ uiKitMetrics: metrics, uiKitBaseline: baseline }).filter(row => row.kind === 'ui-kit');
+  assert.equal(rows.length, UI_KIT_METRICS.length);
+  for (const row of rows) assert.equal(row.band, UI_KIT_BANDS[row.name]);
+  assert.equal(rows.find(row => row.name === 'cssLines').state, 'over');
+  assert.equal(rows.find(row => row.name === 'keyframes').state, 'grew');
+  assert.equal(rows.find(row => row.name === 'registryOffKit').state, 'loose');
+  assert.equal(ratchetRows({ uiKitMetrics: metrics }).find(row => row.name === 'cssLines').state, 'missing');
 });
 
 test('#1016 release report uses the committed snapshot; tightening still requires a fresh build', () => {

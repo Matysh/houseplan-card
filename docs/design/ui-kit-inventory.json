@@ -1,0 +1,3233 @@
+{
+  "schema": "houseplan-ui-kit-inventory/v1",
+  "issue": 1146,
+  "base": "ecada723a7853a553ede68edb05c988ef7a652a7",
+  "legend": {
+    "K": "kit",
+    "L": "kit-local",
+    "M": "migrate",
+    "N": "n/a"
+  },
+  "cell": "bucket|template evidence|local rules",
+  "surfaces": [
+    {
+      "id": "card-header-view",
+      "group": "view",
+      "name": "Шапка карточки в просмотре",
+      "open": "любая карточка в View: вкладки/список этажей, шестерёнка, масштаб, поворот",
+      "modes": "просмотр",
+      "frames": [
+        "demo/golden/baselines/geometry-view-light-fit.png",
+        "demo/golden/baselines/geometry-view-dark-fit.png",
+        "demo/golden/baselines/german-view-mobile-light.png"
+      ],
+      "cells": {
+        "segmented": [
+          "M|header-space-select.ts:60-81 (nav.tabs > button.tab)|styles/chrome.styles.ts:20-41,styles/chrome.styles.ts:47-54,styles/chrome.styles.ts:179-209",
+          "M|houseplan-card.ts:11493-11508 (.modes > .modetab, writers only, visible in View)|styles/chrome.styles.ts:245-275,styles/chrome.styles.ts:335-364"
+        ],
+        "select": [
+          "L|header-space-select.ts:48-54 (<hp-settings-select> = kit)|styles/chrome.styles.ts:181-182,styles/chrome.styles.ts:44-45"
+        ],
+        "btn-icon": [
+          "M|houseplan-card.ts:11512-11522 (zoom-out/fit/in .btn.zb), view-frame-view.ts:17-20 |styles/dialogs.styles.ts:34-65,styles/chrome.styles.ts:169-175,styles/chrome.styles.ts:116-121"
+        ],
+        "menu": [
+          "M|header-menu.ts:147-164 (.header-menu / .header-menu-item, ≤480 only)|styles/chrome.styles.ts:122-164"
+        ],
+        "motion-open-close": [
+          "M|header-menu.ts:153-163 (menu rendered/removed instantly)"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip on header buttons: houseplan-card.ts:11514-11520, header-menu.ts:1"
+        ],
+        "section-heading": [
+          "M|houseplan-card.ts:11477-11480 (.title)|styles/dialogs.styles.ts:18-33"
+        ],
+        "card/group": [
+          "M|houseplan-card.ts:11472-11476 (.hdr > .head)|styles/chrome.styles.ts:6-15,styles/dialogs.styles.ts:10-17"
+        ],
+        "separator": [
+          "M|styles/dialogs.styles.ts:15 (.head border-bottom)|styles/dialogs.styles.ts:15"
+        ]
+      }
+    },
+    {
+      "id": "panel-header",
+      "group": "view",
+      "name": "Шапка основной страницы",
+      "open": "пункт House Plan в боковом меню HA",
+      "modes": "просмотр",
+      "frames": [
+        "demo/golden/baselines/panel-wide-view-light-en.png",
+        "demo/golden/baselines/panel-narrow-read-only-empty-light-en.png",
+        "docs/design/1120-panel-header-overflow/2026-10-29/screenshots/01-full.png"
+      ],
+      "cells": {
+        "btn-icon": [
+          "M|panel-header-menu.ts:36-40 (button.panel-menu)|styles/panel-header.styles.ts:138-147",
+          "M|zoom/rotate group in panel (same markup as card header)|styles/panel-header.styles.ts:104,114-118"
+        ],
+        "select": [
+          "L|header-space-select.ts:48-54|styles/panel-header.styles.ts:80-82"
+        ],
+        "segmented": [
+          "M|houseplan-card.ts:11497-11509; #1132 outlined floor/mode controls are local CSS, even at 44px|styles/panel-header.styles.ts:9-59"
+        ],
+        "menu": [
+          "M|panel-header-menu.ts:34-42 native HA sidebar launcher; card gear menu is not the main-panel overflow after #1132|styles/panel-header.styles.ts:139-147"
+        ],
+        "card/group": [
+          "N|houseplan-panel.ts:128-165 (shell <style>: host/page/content layout)"
+        ]
+      }
+    },
+    {
+      "id": "plan-chrome-overlays",
+      "group": "view",
+      "name": "Оверлеи над планом",
+      "open": "подсказка о дальних объектах, бейдж масштаба, «домой»",
+      "modes": "просмотр, киоск",
+      "frames": [],
+      "cells": {
+        "badge/chip": [
+          "M|houseplan-card.ts:6909-6913 (.farhint)|styles/chrome.styles.ts:58-86",
+          "M|houseplan-card.ts:11878 (.zoombadge)|styles/plan.styles.ts:167-181"
+        ],
+        "btn-secondary": [
+          "M|houseplan-card.ts:6912 (button.btn.ghostbtn)|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-icon": [
+          "M|view-frame-view.ts:8-12 (button.homearrow)|styles/plan.styles.ts:146-166"
+        ],
+        "tooltip": [
+          "N|plan scene itself (markers, light, walls, stairs, LED, SVG)"
+        ]
+      },
+      "captureScenario": "plan-chrome-overlays"
+    },
+    {
+      "id": "kiosk-chrome",
+      "group": "view",
+      "name": "Киоск: точки карусели",
+      "open": "киоск, смена этажа; кнопки сводки отсутствуют после #1132",
+      "modes": "киоск",
+      "frames": [
+        "demo/golden/baselines/panel-wide-kiosk-all.png",
+        "demo/golden/baselines/panel-narrow-kiosk-fixed.png",
+        "demo/golden/baselines/panel-kiosk-profile-summary-on.png"
+      ],
+      "cells": {
+        "badge/chip": [
+          "M|houseplan-card.ts:11951-11953 (.kioskdots > .kdot)|styles/devices.styles.ts:70-77"
+        ]
+      }
+    },
+    {
+      "id": "kiosk-size-dialog",
+      "group": "view",
+      "name": "Диалог размеров на этом экране",
+      "open": "киоск, удержание пустого места 3 с",
+      "modes": "киоск",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-card.ts:11204-11205 (<hp-dialog data-kind=kiosk> without class ui-dialog / s"
+        ],
+        "dialog-footer": [
+          "M|houseplan-card.ts:11211-11215 (.row slot=footer + .spacer)|styles/dialogs.styles.ts:496-510"
+        ],
+        "btn-secondary": [
+          "M|houseplan-card.ts:11212 (.btn.ghost reset)|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|houseplan-card.ts:11214 (.btn.on close)|styles/dialogs.styles.ts:34-65"
+        ],
+        "input": [
+          "M|houseplan-card.ts:11196-11202 (<label> + .colorrow > input[type=range] + .opv)|styles/dialogs.styles.ts:275-282,styles/dialogs.styles.ts:491-495"
+        ],
+        "callout/note": [
+          "M|houseplan-card.ts:11201,11207 (.rhint)|styles/chrome.styles.ts:411-415"
+        ],
+        "card/group": [
+          "M|houseplan-card.ts:11206 (.body)|styles/dialogs.styles.ts:357-360,471-476"
+        ]
+      },
+      "captureScenario": "kiosk-size-dialog"
+    },
+    {
+      "id": "version-recovery",
+      "group": "view",
+      "name": "Плашка несовпадения версий",
+      "open": "бэкенд и фронтенд разных версий",
+      "modes": "просмотр, киоск",
+      "frames": [
+        "demo/golden/baselines/version-mismatch-desktop-dark-en.png",
+        "demo/golden/baselines/version-mismatch-touch-light-ru.png",
+        "demo/golden/baselines/version-mismatch-kiosk-attempted-dark-de.png"
+      ],
+      "cells": {
+        "card/group": [
+          "M|version-recovery-card.ts:290-303 (.version-recovery-card)|styles/base.styles.ts:150-188"
+        ],
+        "btn-primary": [
+          "M|version-recovery-card.ts:300-302 (.btn.on.version-recovery-reload)|styles/dialogs.styles.ts:34-65,styles/base.styles.ts:189-192,205-208"
+        ],
+        "motion-open-close": [
+          "M|version-recovery-card.ts:281-288 (phase-visible/phase-leaving + animationend)|styles/base.styles.ts:144-149,193-200,248-251"
+        ]
+      }
+    },
+    {
+      "id": "view-runtime-notice",
+      "group": "view",
+      "name": "Уведомление о сбое ленивого модуля просмотра",
+      "open": "не загрузился модуль просмотра",
+      "modes": "просмотр, киоск",
+      "frames": [],
+      "cells": {
+        "card/group": [
+          "M|view-runtimes.ts:199 (aside.view-runtime-notice)|styles/chrome.styles.ts:502-524"
+        ],
+        "btn-secondary": [
+          "M|view-runtimes.ts:202-206 (.btn retry/reload)|styles/dialogs.styles.ts:34-65,styles/chrome.styles.ts:525"
+        ]
+      },
+      "captureScenario": "view-runtime-notice"
+    },
+    {
+      "id": "continuity-recovery-overlay",
+      "group": "view",
+      "name": "Оверлей восстановления плана/соединения",
+      "open": "потеря соединения или перезагрузка плана",
+      "modes": "просмотр, киоск",
+      "frames": [],
+      "cells": {
+        "empty/loading/error state": [
+          "M|houseplan-card.ts:4246-4256 (.recoveryoverlay)|styles/dialogs.styles.ts:66-102"
+        ],
+        "btn-primary": [
+          "M|houseplan-card.ts:4254 and space-card.ts:921 (.btn.on retry)|styles/dialogs.styles.ts:34-65"
+        ]
+      },
+      "captureScenario": "continuity-recovery-overlay"
+    },
+    {
+      "id": "boot-loading-states",
+      "group": "view",
+      "name": "Заставка и состояния загрузки",
+      "open": "первый кадр, ожидание 2.5D, загрузка редактора",
+      "modes": "просмотр, киоск",
+      "frames": [],
+      "cells": {
+        "empty/loading/error state": [
+          "M|houseplan-card.ts:11886-11888 (.bootveil > svg.boothouse)|styles/base.styles.ts:216-247",
+          "M|houseplan-card.ts:4290-4294 (.editorloading pill)|styles/dialogs.styles.ts:103-139",
+          "M|houseplan-card.ts:11308-11311, 11318-11322 (.empty + .fixedfloor-loading / .fixedfloor|styles/base.styles.ts:94-112,styles/plan.styles.ts:5-16"
+        ]
+      },
+      "captureScenario": "boot-loading-states"
+    },
+    {
+      "id": "view-device-menu",
+      "group": "view",
+      "name": "Меню устройства в просмотре (#1089)",
+      "open": "правый клик / удержание на маркере",
+      "modes": "просмотр, киоск",
+      "frames": [
+        "demo/golden/baselines/view-device-menu-hidden-ru.png",
+        "demo/golden/baselines/view-device-menu-iso-edge-dark.png",
+        "demo/golden/baselines/view-device-menu-readonly-light-ru.png"
+      ],
+      "cells": {
+        "menu": [
+          "K|view-device-menu.ts:106-116 -> EditorContextMenu.render (editor-context-menu.ts:15"
+        ],
+        "motion-open-close": [
+          "K|EditorContextMenu (180ms in / 140ms out per docs/DIALOG-UI-KIT.md)"
+        ]
+      }
+    },
+    {
+      "id": "device-info-card",
+      "group": "view",
+      "name": "Карточка устройства",
+      "open": "тап по маркеру с действием «инфо» или пункт меню",
+      "modes": "просмотр, киоск",
+      "frames": [
+        "demo/golden/baselines/approved-ui-info-light-1119.png",
+        "demo/golden/baselines/approved-ui-info-dark-1119.png",
+        "demo/golden/baselines/device-alert-reasons.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-card.ts:13518-13520 (<hp-dialog class=ui-dialog form-shell settings-layout c"
+        ],
+        "card/group": [
+          "L|houseplan-card.ts:13521 (.body.hpf-form.hpf-settings-form)|styles/dialogs.styles.ts:357-360,365-371,471-476"
+        ],
+        "list-row": [
+          "K|houseplan-card.ts:13528-13550 (.entlist > .entrow), 13548-13578 (.inforow.hpf-row)"
+        ],
+        "btn-primary": [
+          "L|houseplan-card.ts:13542-13546 (.btn.entbtn .on/.ghost)|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-secondary": [
+          "L|houseplan-card.ts:13588-13597 (footer .btn / .btn.ghost close)|styles/dialogs.styles.ts:34-65"
+        ],
+        "text-link": [
+          "K|houseplan-card.ts:13561,13567 (a.hpf-link)"
+        ],
+        "callout/note": [
+          "K|houseplan-card.ts:13563,13584 (.infodesc.hpf-note)"
+        ],
+        "badge/chip": [
+          "M|houseplan-card.ts:13573-13580 (.ctrlstates > .ctrlstate)|styles/dialogs.styles.ts:248-251"
+        ],
+        "dialog-footer": [
+          "K|houseplan-card.ts:13587 (.row.infofooter.hpf-footer)"
+        ],
+        "separator": [
+          "K|info-card-styles.ts:18,24 (entrow/inforow borders)"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog"
+        ]
+      }
+    },
+    {
+      "id": "device-issues-sections",
+      "group": "view",
+      "name": "Причины тревоги и обслуживания в карточке",
+      "open": "карточка устройства с тревогой/обслуживанием",
+      "modes": "просмотр, киоск",
+      "frames": [
+        "demo/golden/baselines/device-issues-alarm-card.png",
+        "demo/golden/baselines/device-issues-maintenance-card.png",
+        "demo/golden/baselines/device-alert-reasons.png"
+      ],
+      "cells": {
+        "card/group": [
+          "M|device-issues-view.ts:14,19 (section.device-issues)|styles/dialogs.styles.ts:591-594"
+        ],
+        "section-heading": [
+          "M|device-issues-view.ts:14,20-21 (h3)|styles/dialogs.styles.ts:595-597"
+        ],
+        "disclosure": [
+          "M|device-issues-view.ts:26-31 (native details/summary)|styles/dialogs.styles.ts:602-604,609"
+        ],
+        "btn-secondary": [
+          "M|device-issues-view.ts:28-30 (button inside details)|styles/dialogs.styles.ts:606-610"
+        ],
+        "separator": [
+          "M|styles/dialogs.styles.ts:599|styles/dialogs.styles.ts:599"
+        ],
+        "list-row": [
+          "M|device-issues-view.ts:22-32 (article.device-issue)|styles/dialogs.styles.ts:598-601,605"
+        ]
+      }
+    },
+    {
+      "id": "room-tooltip",
+      "group": "view",
+      "name": "Подсказка комнаты/устройства при наведении",
+      "open": "наведение мыши в View",
+      "modes": "просмотр",
+      "frames": [
+        "demo/golden/baselines/hover-over-glow-dark.png",
+        "demo/golden/baselines/isometric-stage6-hover-light.png",
+        "demo/golden/baselines/stairs-flat-hover-dark.png"
+      ],
+      "cells": {
+        "tooltip": [
+          "L|houseplan-card.ts:11949 (.tip[data-hp-live-tip]) + styles/chrome.styles.ts:526 (helpSurfaceSt|styles/chrome.styles.ts:497-501,live-hover.ts:191"
+        ],
+        "motion-open-close": [
+          "M|live-hover.ts:200-204,224 (hidden toggled instantly)"
+        ]
+      }
+    },
+    {
+      "id": "room-label",
+      "group": "view",
+      "name": "Подпись комнаты на плане",
+      "open": "всегда на плане (сцена)",
+      "modes": "просмотр, киоск",
+      "frames": [
+        "demo/golden/baselines/room-label-parity-view-dark.png",
+        "demo/golden/baselines/room-label-parity-view-light.png",
+        "demo/golden/baselines/room-co2-flat-light.png"
+      ],
+      "cells": {
+        "btn-icon": [
+          "N|houseplan-card.ts:12883-12891 (button.rlgo.rlarea)|styles/plan.styles.ts:641-668"
+        ],
+        "btn-secondary": [
+          "N|houseplan-card.ts:12856-12866,12875-12881 (.roomlabel role=button / .rlfit)|styles/plan.styles.ts:563-585,709-746"
+        ]
+      }
+    },
+    {
+      "id": "summary-panel-view",
+      "group": "view",
+      "name": "Сводная панель в просмотре",
+      "open": "кнопка сводки в шапке или поверх плана в киоске",
+      "modes": "просмотр, киоск",
+      "frames": [
+        "demo/golden/baselines/panel-kiosk-profile-summary-on.png"
+      ],
+      "cells": {
+        "card/group": [
+          "M|summary-panel-runtime-loaded.ts:261-284 (aside.summary-overlay > section.summary-block|summary-panel-style.ts:47-57,summary-panel-style.ts:100-113"
+        ],
+        "section-heading": [
+          "M|summary-panel-runtime-loaded.ts:267,270 (h2, h3)|summary-panel-style.ts:87-99,114-123"
+        ],
+        "list-row": [
+          "M|summary-panel-runtime-loaded.ts:276-280 (.summary-value)|summary-panel-style.ts:124-139"
+        ],
+        "empty/loading/error state": [
+          "M|summary-panel-runtime-loaded.ts:278,281-282 (skeleton, .summary-empty)|summary-panel-style.ts:140-173"
+        ],
+        "motion-open-close": [
+          "M|summary-panel-presentation.ts:61-64 (WAAPI opacity+translate 18px, 190ms ease)"
+        ],
+        "btn-icon": [
+          "M|summary-panel-runtime-loaded.ts:315-328 (header .summary-control > button)|summary-panel-style.ts:14-38,summary-panel-style.ts:196-203"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip (summary-panel-runtime-loaded.ts:319,324)"
+        ]
+      }
+    },
+    {
+      "id": "toasts",
+      "group": "view",
+      "name": "Тосты",
+      "open": "любое сообщение карточки",
+      "modes": "все",
+      "frames": [],
+      "cells": {
+        "toast": [
+          "K|toast-presentation.ts:51-55 (div.toast) styled only by kit owner styles/toast.styl"
+        ],
+        "motion-open-close": [
+          "M|toast-presentation.ts:48-76 (appear/remove instantly)"
+        ]
+      },
+      "captureScenario": "toasts"
+    },
+    {
+      "id": "chrome-tooltip",
+      "group": "view",
+      "name": "Подсказки к кнопкам шапки",
+      "open": "наведение на кнопку шапки",
+      "modes": "просмотр, редакторы",
+      "frames": [],
+      "cells": {
+        "tooltip": [
+          "K|chrome-tooltip.ts:17-21 (.hp-chrome-tooltip{helpSurfaceStyle})"
+        ],
+        "motion-open-close": [
+          "K|chrome-tooltip.ts:17 (opacity/translate 120ms, reduced-motion)"
+        ]
+      },
+      "captureScenario": "chrome-tooltip"
+    },
+    {
+      "id": "first-run-empty-plan",
+      "group": "view",
+      "name": "Первый запуск / пустой план",
+      "open": "конфигурация без пространств",
+      "modes": "просмотр",
+      "frames": [
+        "demo/golden/baselines/first-space-empty-light.png",
+        "demo/golden/baselines/first-space-empty-dark.png",
+        "demo/golden/baselines/first-space-no-storage-light.png"
+      ],
+      "cells": {
+        "empty/loading/error state": [
+          "M|houseplan-card.ts:11343-11364 (.empty)|styles/base.styles.ts:94-112"
+        ],
+        "btn-primary": [
+          "M|houseplan-card.ts:11349-11352 (.btn.on create-space)|styles/dialogs.styles.ts:34-65,styles/base.styles.ts:113-115,125-130"
+        ],
+        "btn-secondary": [
+          "M|houseplan-card.ts:11354-11357 (.btn import-backup)|styles/dialogs.styles.ts:34-65"
+        ],
+        "text-link": [
+          "L|hp-plan-converter-info.ts:10-14 (a.hpf-link in own shadow root) + settingsTextLinkCss |hp-plan-converter-info.ts:29-31"
+        ]
+      }
+    },
+    {
+      "id": "onboarding-space-dialog",
+      "group": "view",
+      "name": "Онбординг: «Новое пространство»",
+      "open": "кнопка «Добавить пространство» на пустом плане",
+      "modes": "просмотр",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-onboarding-runtime.ts:375-378 (<hp-dialog data-kind=onboarding form-shell wi"
+        ],
+        "card/group": [
+          "K|editors/space-form.ts:163 (body.hpf-form; ensureFormKitStyles at editors/space-form.ts:105)"
+        ],
+        "help": [
+          "K|houseplan-onboarding-runtime.ts:40-46 (<hp-help>)"
+        ],
+        "dialog-footer": [
+          "M|editors/space-form.ts:164-194 (.row.dialog-action-footer.hpf-footer.hpf-footer-space)|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:516-589"
+        ],
+        "btn-primary": [
+          "M|editors/space-form.ts:189-192 (.btn.on save)|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-secondary": [
+          "M|editors/space-form.ts:186-188, 283-293 (.btn.ghost cancel/skip, .btn.filebtn upload, s|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-danger": [
+          "M|houseplan-onboarding-runtime.ts:181-186 (.btn.ghost.danger delete saved plan)|styles/dialogs.styles.ts:350-353,328-329"
+        ],
+        "list-row": [
+          "M|houseplan-onboarding-runtime.ts:169-187 (.savedplans > .savedplan)|styles/dialogs.styles.ts:290-329"
+        ]
+      },
+      "captureScenario": "onboarding-space-dialog"
+    },
+    {
+      "id": "tap-confirm-dialog",
+      "group": "view",
+      "name": "Подтверждение действия по тапу",
+      "open": "тап по устройству с подтверждением",
+      "modes": "просмотр, киоск",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-card.ts:11969-11972 (<hp-dialog data-kind=confirm>, no ui-dialog)"
+        ],
+        "card/group": [
+          "M|houseplan-card.ts:11973-11978 (.body.tapconfirm-body)|styles/dialogs.styles.ts:471-490"
+        ],
+        "dialog-footer": [
+          "M|houseplan-card.ts:11979-11985|styles/dialogs.styles.ts:496-510"
+        ],
+        "btn-primary": [
+          "M|houseplan-card.ts:11982-11984 (.btn.on)|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-secondary": [
+          "M|houseplan-card.ts:11981 (.btn.ghost)|styles/dialogs.styles.ts:34-65"
+        ]
+      },
+      "captureScenario": "tap-confirm-dialog"
+    },
+    {
+      "id": "onboarding-backdrop-guard",
+      "group": "view",
+      "name": "Онбординг: «план слишком большой»",
+      "open": "выбор крупного файла плана в онбординге",
+      "modes": "просмотр",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|backdrop-pick.ts:309-311 (<hp-dialog data-kind=decor>, no ui-dialog)"
+        ],
+        "dialog-footer": [
+          "M|backdrop-pick.ts:317-331|styles/dialogs.styles.ts:496-510"
+        ],
+        "btn-primary": [
+          "M|backdrop-pick.ts:327-330|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-secondary": [
+          "M|backdrop-pick.ts:318-326 (.btn.ghost)|styles/dialogs.styles.ts:34-65"
+        ]
+      },
+      "captureScenario": "onboarding-backdrop-guard"
+    },
+    {
+      "id": "static-space-card",
+      "group": "view",
+      "name": "Статическая карточка пространства",
+      "open": "карточка houseplan-space-card на дашборде",
+      "modes": "просмотр",
+      "frames": [],
+      "cells": {
+        "section-heading": [
+          "M|space-card.ts:1012 (.hp-static-title)|space-card.ts:1040-1045"
+        ],
+        "btn-primary": [
+          "M|space-card.ts:1024-1026 (.hp-static-btn go-to-space)|space-card.ts:1112-1127"
+        ],
+        "btn-secondary": [
+          "M|space-card.ts:1015-1017 (.hp-static-btn retry in runtime-failure foot)|space-card.ts:1112-1127"
+        ],
+        "empty/loading/error state": [
+          "M|space-card.ts:888 (.hp-static-error), 912-924 (.recoveryoverlay + legacy .btn.on via c|space-card.ts:1128-1132,styles/dialogs.styles.ts:34-65"
+        ],
+        "card/group": [
+          "N|space-card.ts:1049-1107 (.hp-static-stage, plan SVG)"
+        ]
+      },
+      "captureScenario": "static-space-card"
+    },
+    {
+      "id": "plan-scene",
+      "group": "view",
+      "name": "Сцена плана",
+      "open": "маркеры, свет, стены, лестницы, LED — не контролы",
+      "modes": "все",
+      "frames": [
+        "demo/golden/baselines/geometry-view-light-fit.png"
+      ],
+      "cells": {
+        "card/group": [
+          "N|plan scene"
+        ]
+      }
+    },
+    {
+      "id": "settings-chrome",
+      "group": "settings",
+      "name": "Оболочка диалогов настроек",
+      "open": "любой диалог настроек: навигация разделов, футер",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/settings-help-zoom-200-en-light.png",
+        "demo/golden/baselines/settings-help-zoom-200-ru-dark.png",
+        "docs/design/settings-dialogs-944/general-settings-v10.html"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|editors/general-settings-dialog.ts:99 <hp-dialog form-shell settings-layout wide> (no |styles/settings-dialogs.styles.ts:9-13,styles/settings-dialogs.styles.ts:185"
+        ],
+        "menu": [
+          "M|editors/settings-sections.ts:47-51 <nav class=hpf-settings-nav><button aria-current>|styles/settings-dialogs.styles.ts:18,styles/settings-dialogs.styles.ts:19,styles/settings-dialogs.styles.ts:20"
+        ],
+        "btn-primary": [
+          "L|editors/general-settings-dialog.ts:309 class='btn on' data-hp=dialog-confirm|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+        ],
+        "btn-secondary": [
+          "L|editors/general-settings-dialog.ts:300,308 class='btn ghost' (Reset/Cancel in footer)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "btn-danger": [
+          "L|editors/marker-dialog.ts:945 'btn ghost danger'; editors/space-form.ts:178 'btn da|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68,styles/settings-dialogs.styles.ts:98"
+        ],
+        "btn-icon": [
+          "L|editors/space-form.ts:170,178 .hpf-mobile-icon|styles/dialogs.styles.ts:565-571,styles/settings-dialogs.styles.ts:96"
+        ],
+        "text-link": [
+          "K|editors/general-settings-dialog.ts:297 textLink() review-fields in footerStatus"
+        ],
+        "dialog-footer": [
+          "L|editors/general-settings-dialog.ts:295-314 .row.dialog-action-footer.hpf-footer|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+        ],
+        "help": [
+          "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
+        ],
+        "section-heading": [
+          "L|editors/general-settings-dialog.ts:103 formCard() -> .hpf-head h3|styles/settings-dialogs.styles.ts:26,styles/settings-dialogs.styles.ts:27,styles/settings-dialogs.styles.ts:30"
+        ],
+        "card/group": [
+          "L|editors/general-settings-dialog.ts:103 formCard() -> .hpf-card|styles/settings-dialogs.styles.ts:25,styles/settings-dialogs.styles.ts:133"
+        ],
+        "separator": [
+          "K|editors/general-settings-dialog.ts:106 formSections()"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog.ts:663 exit animation|styles/settings-dialogs.styles.ts:186"
+        ],
+        "tooltip": [
+          "N|editors/general-settings-dialog.ts:310 native title attribute on Save"
+        ],
+        "toast": [
+          "N|host._showToast (kit toast) used after save; not rendered by dialog"
+        ]
+      }
+    },
+    {
+      "id": "gs-display",
+      "group": "settings",
+      "name": "Общие → Информация на плане",
+      "open": "шестерёнка → Общие настройки",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/settings-dialogs-944/general-settings-v10.html"
+      ],
+      "cells": {
+        "toggle": [
+          "L|editors/general-settings-dialog.ts:107-116,133-137 toggleRow()|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+        ],
+        "select": [
+          "K|editors/general-settings-dialog.ts:119 selectControl() -> hp-settings-select"
+        ],
+        "callout/note": [
+          "L|editors/general-settings-dialog.ts:132,138 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+        ],
+        "help": [
+          "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
+        ]
+      }
+    },
+    {
+      "id": "gs-plan",
+      "group": "settings",
+      "name": "Общие → Оформление и фон",
+      "open": "Общие настройки",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/settings-dialogs-944/implementation-evidence/general-appearance.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/after-1280-plan.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/before-1280-plan.png"
+      ],
+      "cells": {
+        "toggle": [
+          "L|editors/general-settings-dialog.ts:145-149|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+        ],
+        "select": [
+          "K|editors/general-settings-dialog.ts:152"
+        ],
+        "input": [
+          "L|editors/general-settings-dialog.ts:167-173 colorField() in .hpf-color-with-action|styles/settings-dialogs.styles.ts:33-34,styles/settings-dialogs.styles.ts:43,styles/settings-dialogs.styles.ts:44-45"
+        ],
+        "btn-secondary": [
+          "L|editors/general-settings-dialog.ts:173 'btn ghost' gs-bg-reset|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "card/group": [
+          "N|editors/settings-background-previews.ts:7-15|styles/settings-dialogs.styles.ts:102,113-120"
+        ]
+      }
+    },
+    {
+      "id": "gs-fills",
+      "group": "settings",
+      "name": "Общие → Заливки (палитра)",
+      "open": "Общие настройки",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/general-color-popover-desktop-en.png",
+        "demo/golden/baselines/ui-1051-color-dark.png",
+        "demo/golden/baselines/ui-1051-color-light.png"
+      ],
+      "cells": {
+        "input": [
+          "L|editors/general-settings-dialog.ts:77-86 colorTile()/colorTiles()|styles/settings-dialogs.styles.ts:35,styles/settings-dialogs.styles.ts:36,styles/settings-dialogs.styles.ts:40"
+        ],
+        "section-heading": [
+          "K|editors/general-settings-dialog.ts:184-186 subsection()|styles/settings-dialogs.styles.ts:30"
+        ],
+        "callout/note": [
+          "L|editors/general-settings-dialog.ts:183 <p class=hpf-hint>|styles/settings-dialogs.styles.ts:61"
+        ]
+      }
+    },
+    {
+      "id": "gs-sun",
+      "group": "settings",
+      "name": "Общие → Свет и солнце",
+      "open": "Общие настройки",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/after-1280-sun.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/before-1280-sun.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/after-390-sun.png"
+      ],
+      "cells": {
+        "input": [
+          "L|editors/general-settings-dialog.ts:201-208 unitInput()|styles/settings-dialogs.styles.ts:46,styles/settings-dialogs.styles.ts:179",
+          "M|editors/settings-north.ts:17-62 custom dial button role=slider + native range|styles/settings-dialogs.styles.ts:124-130,styles/settings-dialogs.styles.ts:181-182"
+        ],
+        "checkbox/radio": [
+          "M|sun-settings-view.ts:17-19 .hpf-ray-choice radio cards with svg previews|styles/settings-dialogs.styles.ts:103-112"
+        ],
+        "toggle": [
+          "L|editors/general-settings-dialog.ts:223-227,229-231|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+        ],
+        "callout/note": [
+          "L|editors/general-settings-dialog.ts:208,211,220,232 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+        ],
+        "empty/loading/error": [
+          "K|editors/general-settings-dialog.ts:222 <p class=hpf-error>"
+        ]
+      }
+    },
+    {
+      "id": "gs-zigbee",
+      "group": "settings",
+      "name": "Общие → Zigbee",
+      "open": "Общие настройки",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/after-1280-zigbee.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/before-1280-zigbee.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/polish-before-after/after-390-zigbee.png"
+      ],
+      "cells": {
+        "toggle": [
+          "L|hp-zigbee-topology-settings.ts:505-508 hand-written <label class='hpf-toggle hpf-noico|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+        ],
+        "input": [
+          "L|hp-zigbee-topology-settings.ts:416-419 textarea.hpf-input|hp-zigbee-topology-settings.ts:104-105,hp-zigbee-topology-settings.ts:106"
+        ],
+        "btn-secondary": [
+          "K|hp-zigbee-topology-settings.ts:392,489 class='btn ghost' buttons|hp-zigbee-topology-settings.ts:84,hp-zigbee-topology-settings.ts:114"
+        ],
+        "disclosure": [
+          "K|hp-zigbee-topology-settings.ts:318-321,516-517 disclosure()|hp-zigbee-topology-settings.ts:117-118"
+        ],
+        "help": [
+          "K|hp-zigbee-topology-settings.ts:217 hp-help"
+        ],
+        "callout/note": [
+          "L|hp-zigbee-topology-settings.ts:512 .hpf-callout|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+        ],
+        "section-heading": [
+          "L|hp-zigbee-topology-settings.ts:487 .provider-heading h4 vs 498 .hpf-sub|hp-zigbee-topology-settings.ts:108-110"
+        ],
+        "separator": [
+          "L|hp-zigbee-topology-settings.ts:389 .scan-row|hp-zigbee-topology-settings.ts:115"
+        ],
+        "empty/loading/error": [
+          "M|hp-zigbee-topology-settings.ts:393,400,404,410,420 .status/.warning|hp-zigbee-topology-settings.ts:79,hp-zigbee-topology-settings.ts:93"
+        ]
+      }
+    },
+    {
+      "id": "gs-external-screens",
+      "group": "settings",
+      "name": "Общие → Внешние экраны",
+      "open": "Общие настройки (#1113)",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/settings-external-screens-empty-dark.png",
+        "demo/golden/baselines/settings-external-screens-empty-light.png",
+        "demo/golden/baselines/settings-external-screens-list-dark.png"
+      ],
+      "cells": {
+        "list-row": [
+          "M|editors/external-screens.ts:83-85 .hp-screen-row/.hp-screen-edit|editors/external-screens.ts:70,editors/external-screens.ts:71-72"
+        ],
+        "btn-icon": [
+          "L|editors/external-screens.ts:86,90 'btn ghost hp-screen-icon'|editors/external-screens.ts:67"
+        ],
+        "btn-secondary": [
+          "L|editors/external-screens.ts:105 add|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "btn-primary": [
+          "L|editors/external-screens.ts:108 'btn on' create|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+        ],
+        "input": [
+          "L|editors/external-screens.ts:88 readonly hpf-input|editors/external-screens.ts:73"
+        ],
+        "empty/loading/error": [
+          "M|editors/external-screens.ts:107 .hp-screen-empty; 103 .hpf-error|editors/external-screens.ts:68-69"
+        ],
+        "callout/note": [
+          "L|editors/external-screens.ts:79,80 .hpf-hint|editors/external-screens.ts:68,styles/settings-dialogs.styles.ts:61"
+        ]
+      }
+    },
+    {
+      "id": "external-screen-constructor",
+      "group": "settings",
+      "name": "Конструктор внешнего экрана",
+      "open": "Внешние экраны → Добавить / строка",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/settings-external-screens-constructor-dark.png",
+        "demo/golden/baselines/settings-external-screens-constructor-light.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "L|editors/external-screens.ts:129 hp-dialog form-shell settings-layout compact (no ui-di|editors/external-screens.ts:75"
+        ],
+        "select": [
+          "K|editors/external-screens.ts:120 hp-settings-select > .hpf-select"
+        ],
+        "dialog-footer": [
+          "L|editors/external-screens.ts:140-143|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+        ],
+        "btn-primary": [
+          "L|editors/external-screens.ts:142|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+        ],
+        "btn-secondary": [
+          "L|editors/external-screens.ts:141|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "callout/note": [
+          "L|editors/external-screens.ts:139 .hpf-note.hpf-hint.hp-screen-note|styles/settings-dialogs.styles.ts:148,editors/external-screens.ts:74"
+        ],
+        "help": [
+          "L|editors/general-settings-dialog.ts:37 (hp-help instant)|styles/settings-dialogs.styles.ts:9,styles/settings-dialogs.styles.ts:37-39,54"
+        ]
+      }
+    },
+    {
+      "id": "gs-data",
+      "group": "settings",
+      "name": "Общие → Обслуживание",
+      "open": "Общие настройки: резервная копия, оптимизация",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/settings-dialogs-944/implementation-evidence/save-before-after/after-ha_ru_settings_1280.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/save-before-after/after-ha_ru_settings_390.png"
+      ],
+      "cells": {
+        "btn-secondary": [
+          "L|editors/general-settings-dialog.ts:260,270,274,279,283 class='btn' (+ha-icon)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "text-link": [
+          "L|editors/general-settings-dialog.ts:288 a.hpf-link|styles/settings-dialogs.styles.ts:123"
+        ],
+        "callout/note": [
+          "M|editors/general-settings-dialog.ts:290 <p class=rhint>|styles/chrome.styles.ts:411-415"
+        ]
+      }
+    },
+    {
+      "id": "color-picker",
+      "group": "settings",
+      "name": "Выбор цвета и прозрачности",
+      "open": "клик по образцу цвета в любой форме",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/general-color-popover-desktop-en.png",
+        "demo/golden/baselines/decor-color-popover-desktop-en.png",
+        "demo/golden/baselines/decor-color-popover-mobile-ru.png"
+      ],
+      "cells": {
+        "btn-primary": [
+          "M|hp-color-opacity.ts:1065 button.confirm|hp-color-opacity.ts:463-475,hp-color-opacity.ts:476-479,hp-color-opacity.ts:522"
+        ],
+        "input": [
+          "M|hp-color-opacity.ts:1043-1049 hex text, 1055-1059 opacity number|hp-color-opacity.ts:426-436,hp-color-opacity.ts:446-453",
+          "N|hp-color-opacity.ts:1008-1041 SV field + HSV range tracks|hp-color-opacity.ts:306-425"
+        ],
+        "checkbox/radio": [
+          "M|hp-color-opacity.ts:1064 native checkbox (allowNoFill)"
+        ],
+        "btn-icon": [
+          "L|hp-color-opacity.ts:1088-1096 .trigger swatch button|hp-color-opacity.ts:186-228,hp-color-opacity.ts:230-237"
+        ],
+        "menu": [
+          "M|hp-color-opacity.ts:1002 .picker popover role=dialog|hp-color-opacity.ts:238-259"
+        ],
+        "motion-open-close": [
+          "M|hp-color-opacity.ts:694-697 WAAPI|hp-color-opacity.ts:694-697"
+        ],
+        "empty/loading/error": [
+          "M|hp-color-opacity.ts:1050 .error|hp-color-opacity.ts:454-458"
+        ]
+      }
+    },
+    {
+      "id": "space-settings",
+      "group": "settings",
+      "name": "Настройки пространства",
+      "open": "шестерёнка пространства / создание",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/ui-1081-new-space-dark.png",
+        "demo/golden/baselines/ui-1081-new-space-light.png",
+        "demo/golden/baselines/ui-1081-space-blocker-narrow-dark.png"
+      ],
+      "cells": {
+        "input": [
+          "K|editors/space-form.ts:220 hpf-input",
+          "L|editors/space-form.ts:314,416 colorField()|styles/settings-dialogs.styles.ts:43-45"
+        ],
+        "select": [
+          "K|editors/space-form.ts:251,339,346 selectControl()"
+        ],
+        "toggle": [
+          "L|editors/space-form.ts:266,337,376,380 toggleRow()|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+        ],
+        "btn-secondary": [
+          "L|editors/space-form.ts:283 'btn filebtn', 290 'btn ghost'|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "btn-danger": [
+          "L|editors/space-form.ts:156 'btn danger' (delete with devices), 178 footer|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68,styles/settings-dialogs.styles.ts:79-80"
+        ],
+        "card/group": [
+          "M|editors/space-form.ts:298 .hpf-plan-image|styles/settings-dialogs.styles.ts:77-78,styles/settings-dialogs.styles.ts:81"
+        ],
+        "list-row": [
+          "M|houseplan-editor-runtime.ts:8390-8406 .savedplans/.savedplan|styles/dialogs.styles.ts:290-329"
+        ],
+        "empty/loading/error": [
+          "M|houseplan-editor-runtime.ts:8386-8388 .savedplans.muted loading/empty|styles/dialogs.styles.ts:290-309"
+        ],
+        "callout/note": [
+          "L|editors/space-form.ts:154,248,264 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+        ],
+        "text-link": [
+          "L|editors/space-form.ts:421,435 textLink() in .hpf-context-links|styles/settings-dialogs.styles.ts:89"
+        ],
+        "dialog-footer": [
+          "L|editors/space-form.ts:164-193 .hpf-footer-space|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+        ]
+      }
+    },
+    {
+      "id": "room-settings",
+      "group": "settings",
+      "name": "Настройки комнаты",
+      "open": "редактор плана → комната → шестерёнка",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/room-temperature-dialog-desktop-en.png",
+        "demo/golden/baselines/room-temperature-dialog-mobile-ru.png",
+        "demo/golden/baselines/room-discard-dialog-mobile-ru.png"
+      ],
+      "cells": {
+        "input": [
+          "K|editors/room-settings-dialog.ts:136 hpf-input",
+          "L|editors/room-settings-dialog.ts:185-206 unitInput() temperature range|styles/settings-dialogs.styles.ts:73-76,styles/settings-dialogs.styles.ts:136-137"
+        ],
+        "select": [
+          "K|editors/room-settings-dialog.ts:142 hp-settings-select, 243 selectControl()|styles/settings-dialogs.styles.ts:138"
+        ],
+        "toggle": [
+          "L|editors/room-settings-dialog.ts:220|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+        ],
+        "list-row": [
+          "K|editors/room-settings-dialog.ts:54 sourcePicker()"
+        ],
+        "btn-secondary": [
+          "L|editors/room-settings-dialog.ts:210 range reset, 275 keep-as-partitions|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "btn-primary": [
+          "L|editors/room-settings-dialog.ts:286-295|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+        ],
+        "callout/note": [
+          "L|editors/room-settings-dialog.ts:208,265 callout()|styles/settings-dialogs.styles.ts:58,styles/settings-dialogs.styles.ts:59,styles/settings-dialogs.styles.ts:60"
+        ],
+        "card/group": [
+          "N|editors/room-settings-dialog.ts:267 .hpf-tint.hpf-preview roomCardPreview|styles/settings-dialogs.styles.ts:139-140"
+        ],
+        "section-heading": [
+          "L|editors/room-settings-dialog.ts:127 single section|styles/settings-dialogs.styles.ts:131-135"
+        ],
+        "dialog-footer": [
+          "L|editors/room-settings-dialog.ts:272-296|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+        ]
+      }
+    },
+    {
+      "id": "device-settings",
+      "group": "settings",
+      "name": "Настройки устройства",
+      "open": "редактор устройств → маркер → настройки",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/device-dialog-desktop-en.png",
+        "demo/golden/baselines/device-dialog-desktop-de.png",
+        "demo/golden/baselines/device-dialog-mobile-ru.png"
+      ],
+      "cells": {
+        "input": [
+          "K|editors/marker-dialog.ts:265,386,467,851,858 .hpf-input; 865 textarea",
+          "L|editors/marker-dialog.ts:610 ha-icon-picker + iconPickerKit()|styles/settings-dialogs.styles.ts:152,styles/settings-dialogs.styles.ts:153",
+          "K|editors/marker-dialog.ts:798,809 rangeLine()"
+        ],
+        "select": [
+          "K|editors/marker-dialog.ts:312,345,413,549,643,696,751 hp-settings-select > native .hpf-"
+        ],
+        "segmented": [
+          "L|editors/marker-dialog.ts:272 segmented(name=bmode); 778 badge position|styles/settings-dialogs.styles.ts:143-144"
+        ],
+        "toggle": [
+          "L|editors/marker-dialog.ts:441,658-669 (hide battery/signal compact),728|styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51,styles/settings-dialogs.styles.ts:53"
+        ],
+        "checkbox/radio": [
+          "K|editors/marker-dialog.ts:250-254 label.hpf-check"
+        ],
+        "badge/chip": [
+          "L|editors/marker-dialog.ts:453-460,873-878 .hpf-chip|styles/settings-dialogs.styles.ts:151"
+        ],
+        "list-row": [
+          "K|editors/marker-dialog.ts:470-478 .hpf-panel/.hpf-list/.hpf-cand; 209 sourcePicker()"
+        ],
+        "callout/note": [
+          "L|editors/marker-dialog.ts:52-55 local note() -> .hpf-note; callout() 198,206,384,599,72|styles/settings-dialogs.styles.ts:148-149,styles/settings-dialogs.styles.ts:150,styles/settings-dialogs.styles.ts:58"
+        ],
+        "text-link": [
+          "K|editors/marker-dialog.ts:202,892 textLink()"
+        ],
+        "btn-secondary": [
+          "L|editors/marker-dialog.ts:881 'btn ghost filebtn'; 933 visibility|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "btn-danger": [
+          "L|editors/marker-dialog.ts:945|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68,styles/settings-dialogs.styles.ts:98"
+        ],
+        "btn-primary": [
+          "L|editors/marker-dialog.ts:953|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58,styles/dialogs.styles.ts:62-65"
+        ],
+        "empty/loading/error": [
+          "L|editors/marker-dialog.ts:826-829 tintBlock + .devicepreview-empty|styles/devices.styles.ts:663-675"
+        ],
+        "dialog-footer": [
+          "L|editors/marker-dialog.ts:927-958 hpf-footer-object|styles/dialogs.styles.ts:496-506,styles/dialogs.styles.ts:516-555,styles/settings-dialogs.styles.ts:47"
+        ],
+        "separator": [
+          "L|editors/settings-sections.ts:49 <hr> before specialized sections|styles/settings-dialogs.styles.ts:22"
+        ]
+      }
+    },
+    {
+      "id": "device-preview",
+      "group": "settings",
+      "name": "Предпросмотр отображения устройства",
+      "open": "настройки устройства → Отображение",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/device-dialog-desktop-en.png",
+        "demo/golden/baselines/device-dialog-mobile-ru.png"
+      ],
+      "cells": {
+        "card/group": [
+          "M|hp-device-preview.ts:350 section.devicepreview|hp-device-preview.ts:419-427"
+        ],
+        "badge/chip": [
+          "M|hp-device-preview.ts:353 .previewbadge|hp-device-preview.ts:429-437"
+        ],
+        "btn-secondary": [
+          "M|hp-device-preview.ts:397-410 button.previewdemo|hp-device-preview.ts:462-475"
+        ],
+        "callout/note": [
+          "M|hp-device-preview.ts:375 renderDeviceIssues() -> .device-issues|styles/dialogs.styles.ts:591-610"
+        ],
+        "disclosure": [
+          "M|hp-device-preview.ts:375 device issue <details><summary>|styles/dialogs.styles.ts:602-604"
+        ],
+        "list-row": [
+          "N|hp-device-preview.ts:366-391 previewfacts/previewtable"
+        ]
+      }
+    },
+    {
+      "id": "device-alerts",
+      "group": "settings",
+      "name": "Тревоги устройства (таблица)",
+      "open": "настройки устройства → Тревоги",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/1000-device-alarms/implementation-evidence/golden/device-alert-form-empty.png"
+      ],
+      "cells": {
+        "btn-icon": [
+          "M|editors/marker-alerts.ts:148 button.alarm-add|styles/marker-alert-editor.styles.ts:5-6",
+          "M|editors/marker-alerts.ts:157 button.alarm-remove|styles/marker-alert-editor.styles.ts:16-18"
+        ],
+        "list-row": [
+          "M|editors/marker-alerts.ts:152-160 table.alarm-table (th inline style width:36px at 152 |styles/marker-alert-editor.styles.ts:7-10"
+        ],
+        "text-link": [
+          "M|editors/marker-alerts.ts:153 button.alarm-condition-edit|styles/marker-alert-editor.styles.ts:24-25"
+        ],
+        "empty/loading/error": [
+          "M|editors/marker-alerts.ts:160 .alarm-empty|styles/marker-alert-editor.styles.ts:11-12"
+        ],
+        "btn-primary": [
+          "L|editors/marker-alerts.ts:160 'btn on alarm-create'|styles/marker-alert-editor.styles.ts:13,styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:54-58"
+        ],
+        "section-heading": [
+          "L|editors/marker-alerts.ts:147 .hpf-head.alarm-heading|styles/marker-alert-editor.styles.ts:3-4,styles/settings-dialogs.styles.ts:26,styles/settings-dialogs.styles.ts:27"
+        ],
+        "card/group": [
+          "L|editors/marker-alerts.ts:147 section.hpf-card|styles/settings-dialogs.styles.ts:25,styles/settings-dialogs.styles.ts:133"
+        ]
+      }
+    },
+    {
+      "id": "alarm-constructor",
+      "group": "settings",
+      "name": "Конструктор тревоги",
+      "open": "Тревоги → Создать / строка",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/device-alert-form-empty.png",
+        "demo/golden/baselines/device-alert-form-enum.png",
+        "demo/golden/baselines/device-alert-form-numeric.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|editors/marker-alerts.ts:176 hp-dialog class=ui-dialog compact"
+        ],
+        "select": [
+          "K|editors/marker-alerts.ts:169-171 hp-settings-select"
+        ],
+        "input": [
+          "L|editors/marker-alerts.ts:191 input.hpf-input|styles/settings-dialogs.styles.ts:207-209"
+        ],
+        "callout/note": [
+          "L|editors/marker-alerts.ts:198 .hpf-callout.alarm-outcome|styles/marker-alert-editor.styles.ts:20-22"
+        ],
+        "btn-primary": [
+          "K|editors/marker-alerts.ts:202 'btn on' (ui-dialog -> settingsActionsCss)"
+        ],
+        "btn-secondary": [
+          "K|editors/marker-alerts.ts:201"
+        ],
+        "dialog-footer": [
+          "K|editors/marker-alerts.ts:200 .row[slot=footer]"
+        ],
+        "empty/loading/error": [
+          "K|editors/marker-alerts.ts:197 .hpf-error"
+        ]
+      }
+    },
+    {
+      "id": "device-vacuum",
+      "group": "settings",
+      "name": "Устройство → Пылесос",
+      "open": "настройки пылесоса",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/vacuum-live-tail-pending-dialog-dark.png",
+        "demo/golden/baselines/vacuum-retained-path-diagnostics-dark.png",
+        "docs/design/settings-dialogs-944/device-implementation-evidence/vacuum-1280-pair.png"
+      ],
+      "cells": {
+        "disclosure": [
+          "K|editors/vacuum-settings-section.ts:119 disclosure(triggerClass 'btn ghostbtn')|styles/vacuum-settings.styles.ts:44"
+        ],
+        "list-row": [
+          "M|editors/vacuum-settings-section.ts:68,123 button.vacsource|styles/editor-dialogs.styles.ts:223-230,styles/vacuum-settings.styles.ts:42-43"
+        ],
+        "select": [
+          "K|editors/vacuum-settings-section.ts:146 hp-settings-select > select.areasel|styles/editor-dialogs.styles.ts:60-68"
+        ],
+        "btn-secondary": [
+          "L|editors/vacuum-settings-section.ts:178-182 'btn', 'btn ghostbtn' (no rule for ghostbtn|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "card/group": [
+          "M|editors/vacuum-maps-section.ts .vacroute|styles/vacuum-settings.styles.ts:26"
+        ],
+        "badge/chip": [
+          "M|.vacroute-active|styles/vacuum-settings.styles.ts:28"
+        ],
+        "callout/note": [
+          "M|editors/vacuum-settings-section.ts:103 div.warn, 115/138/141 .rhint|styles/chrome.styles.ts:411-415"
+        ],
+        "toggle": [
+          "L|vacuum toggles via toggleRow()|styles/vacuum-settings.styles.ts:10,styles/settings-dialogs.styles.ts:50,styles/settings-dialogs.styles.ts:51"
+        ],
+        "empty/loading/error": [
+          "M|.vacuum-history-status|styles/vacuum-settings.styles.ts:19"
+        ]
+      }
+    },
+    {
+      "id": "device-radar",
+      "group": "settings",
+      "name": "Устройство → Радар",
+      "open": "настройки радара",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/settings-dialogs-944/device-implementation-evidence/radar-1280-pair.png",
+        "docs/design/settings-dialogs-944/implementation-evidence/radar.png"
+      ],
+      "cells": {
+        "card/group": [
+          "L|editors/radar-section.ts:281-282 fieldset.radargroup.hpf-card + legend.hpf-head|styles/settings-dialogs.styles.ts:155,styles/settings-dialogs.styles.ts:159,styles/editor-dialogs.styles.ts:109-125"
+        ],
+        "input": [
+          "M|editors/radar-section.ts:409-419 <input class=tempin> (X/Y/heading/range/fov)|styles/editor-dialogs.styles.ts:100-101,133-136,styles/settings-dialogs.styles.ts:164-166"
+        ],
+        "select": [
+          "K|editors/radar-section.ts:138,286,294,316,322,357,363,393,424 hp-settings-select > sele"
+        ],
+        "btn-danger": [
+          "L|editors/radar-section.ts:119,459 'btn danger'; 306,343,376 'btn ghost danger'|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68"
+        ],
+        "btn-secondary": [
+          "L|editors/radar-section.ts:335,355,386,431-437|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:59-61,styles/settings-dialogs.styles.ts:62"
+        ],
+        "help": [
+          "K|editors/radar-section.ts:306 .hpf-action-help"
+        ],
+        "empty/loading/error": [
+          "M|editors/radar-section.ts:442 <p class=error>; 443 .radarinspection|styles/editor-dialogs.styles.ts:137-144"
+        ]
+      }
+    },
+    {
+      "id": "summary-settings",
+      "group": "settings",
+      "name": "Настройки сводной панели",
+      "open": "шестерёнка сводной панели",
+      "modes": "просмотр, киоск, редакторы",
+      "frames": [
+        "demo/golden/baselines/approved-ui-summary-dark-1119.png",
+        "demo/golden/baselines/approved-ui-summary-light-1119.png",
+        "docs/design/1119-approved-ui/2026-10-28/screenshots/04-summary-settings.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "L|summary-panel-editor.ts:64 hp-dialog.ui-dialog compact + inline style --hp-dialog-wide|summary-panel-dialog-style.ts:7-40"
+        ],
+        "toggle": [
+          "L|summary-panel-editor.ts:52-61,87-96 label.summary-switch|summary-panel-editor-style.ts:91-131,summary-panel-editor-style.ts:132-133"
+        ],
+        "input": [
+          "L|summary-panel-editor.ts:79,127,215,247 text/search inputs|summary-panel-editor-style.ts:64-78,summary-panel-editor-style.ts:80-81,summary-panel-editor-style.ts:82-84"
+        ],
+        "select": [
+          "K|summary-panel-editor.ts:150,159 hp-settings-select|summary-panel-editor-style.ts:79"
+        ],
+        "btn-icon": [
+          "L|summary-panel-editor.ts:118-125,140,202-212 'btn summary-icon-button'|summary-panel-editor-style.ts:173-187,summary-panel-editor-style.ts:191-200,summary-panel-editor-style.ts:400,404",
+          "N|summary-panel-editor.ts:110 .summary-drag handle|summary-panel-editor-style.ts:188-190"
+        ],
+        "btn-secondary": [
+          "L|summary-panel-editor.ts:226 'btn summary-source'; 290,307 'btn summary-add'|summary-panel-editor-style.ts:226-241,summary-panel-editor-style.ts:317-337,summary-panel-editor-style.ts:401"
+        ],
+        "btn-danger": [
+          "L|summary-panel-editor.ts:283 'btn danger summary-value-remove'; 300 'btn summary-delete|summary-panel-editor-style.ts:245-250,summary-panel-editor-style.ts:305-316,338"
+        ],
+        "list-row": [
+          "M|summary-panel-editor.ts:107 article.summary-editor-block, 196 .summary-editor-value, 2|summary-panel-editor-style.ts:154-171,summary-panel-editor-style.ts:212-223,summary-panel-editor-style.ts:274-291"
+        ],
+        "menu": [
+          "M|summary-panel-editor.ts:240 .summary-source-picker inline panel|summary-panel-editor-style.ts:251-266"
+        ],
+        "badge/chip": [
+          "M|summary-panel-editor.ts:103 .summary-block-count|summary-panel-editor-style.ts:145-153"
+        ],
+        "section-heading": [
+          "L|summary-panel-editor.ts:76,99 h3|summary-panel-editor-style.ts:46,summary-panel-editor-style.ts:134-144"
+        ],
+        "card/group": [
+          "K|summary-panel-editor.ts:75,98 .summary-general/.summary-blocks-card|summary-panel-editor-style.ts:381"
+        ],
+        "dialog-footer": [
+          "L|summary-panel-editor.ts:323-330 .row.summary-editor-footer|summary-panel-editor-style.ts:340-349,summary-panel-editor-style.ts:350-370,summary-panel-editor-style.ts:403"
+        ],
+        "empty/loading/error": [
+          "M|summary-panel-editor.ts:148,174,276-277,316 .summary-problem/.summary-empty/.summary-r|summary-panel-editor-style.ts:299-303"
+        ]
+      }
+    },
+    {
+      "id": "editor-mode-tabs",
+      "group": "editors",
+      "name": "Переключатель режимов редактора и «закрыть»",
+      "open": "шапка у пользователя с правом записи",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/geometry-plan-editor-dark.png",
+        "demo/golden/baselines/geometry-devices-editor-dark.png",
+        "demo/golden/baselines/geometry-decor-editor-dark.png"
+      ],
+      "cells": {
+        "segmented": [
+          "M|houseplan-card.ts:11495-11505 button.modetab inside div.modes|styles/chrome.styles.ts:245-275,styles/chrome.styles.ts:335-364"
+        ],
+        "btn-icon": [
+          "M|houseplan-card.ts:11447-11450 span.editor-close-slot > button.closex|styles/chrome.styles.ts:283-316"
+        ],
+        "tooltip": [
+          "N|modetab and closex use native title= (houseplan-card.ts:11448, 11493)"
+        ]
+      }
+    },
+    {
+      "id": "plan-toolbar",
+      "group": "editors",
+      "name": "Панель инструментов редактора плана",
+      "open": "режим «План»",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/geometry-plan-editor-dark.png",
+        "demo/golden/baselines/panel-wide-plan-editor-dark-en.png",
+        "demo/golden/baselines/plan-rotation-phone-editor-320-1070.png"
+      ],
+      "cells": {
+        "btn-secondary": [
+          "M|houseplan-editor-runtime.ts:11180-11198 (select/draw/column/wallthick .btn/.btn.on); g|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-icon": [
+          "M|houseplan-editor-runtime.ts:11210 .btn.barclose|styles/chrome.styles.ts:317-329"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
+        ],
+        "separator": [
+          "M|div.editbar-end (toolbar end group)|styles/chrome.styles.ts:386-394"
+        ],
+        "motion-open-close": [
+          "M|houseplan-card.ts:11534 div.editorchrome (JS height interpolation houseplan-card.ts:14|styles/chrome.styles.ts:419-452"
+        ]
+      }
+    },
+    {
+      "id": "devices-toolbar",
+      "group": "editors",
+      "name": "Панель инструментов редактора устройств",
+      "open": "режим «Устройства»",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/geometry-devices-editor-dark.png",
+        "docs/design/1119-approved-ui/2026-10-28/screenshots/08-device-editor-glow.png"
+      ],
+      "cells": {
+        "btn-secondary": [
+          "M|houseplan-editor-runtime.ts:11232-11251 (add, magnets, device-inbox, icon-rules); LED |styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-icon": [
+          "M|houseplan-editor-runtime.ts:11266 .btn.barclose|styles/chrome.styles.ts:317-329"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
+        ],
+        "separator": [
+          "M|div.editbar-end (toolbar end group)|styles/chrome.styles.ts:386-394"
+        ],
+        "motion-open-close": [
+          "M|houseplan-card.ts:11534 div.editorchrome (JS height interpolation houseplan-card.ts:14|styles/chrome.styles.ts:419-452"
+        ],
+        "empty/loading/error state": [
+          "M|device-structure-history.ts:60 span[role=status] data-hp=device-structure-pending"
+        ]
+      }
+    },
+    {
+      "id": "decor-toolbar",
+      "group": "editors",
+      "name": "Панель инструментов редактора подложки",
+      "open": "режим «Подложка»",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/geometry-decor-editor-dark.png",
+        "demo/golden/baselines/decor-color-popover-desktop-en.png",
+        "demo/golden/baselines/decor-color-popover-mobile-ru.png"
+      ],
+      "cells": {
+        "btn-secondary": [
+          "M|houseplan-editor-runtime.ts:5321-5328 .btn.dtool(.on)|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-icon": [
+          "M|houseplan-editor-runtime.ts:5342 .btn.barclose|styles/chrome.styles.ts:317-329"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
+        ],
+        "separator": [
+          "M|div.editbar-end (toolbar end group)|styles/chrome.styles.ts:386-394"
+        ],
+        "motion-open-close": [
+          "M|houseplan-card.ts:11534 div.editorchrome (JS height interpolation houseplan-card.ts:14|styles/chrome.styles.ts:419-452"
+        ],
+        "input": [
+          "M|houseplan-editor-runtime.ts:5329-5337 <hp-color-opacity> default colour|styles/chrome.styles.ts:244"
+        ]
+      }
+    },
+    {
+      "id": "undo-redo",
+      "group": "editors",
+      "name": "Отменить / Повторить",
+      "open": "конец панели инструментов",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/geometry-plan-editor-dark.png",
+        "demo/golden/baselines/geometry-devices-editor-dark.png"
+      ],
+      "cells": {
+        "btn-icon": [
+          "M|houseplan-editor-runtime.ts:5300-5301 (geometry undo/redo, decor+plan) and 11254-11265|styles/dialogs.styles.ts:34-65"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
+        ]
+      }
+    },
+    {
+      "id": "editor-tray",
+      "group": "editors",
+      "name": "Лоток инструмента (editor-secondary)",
+      "open": "группа инструментов / опции инструмента",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/tray-wide-tool-ru.png",
+        "demo/golden/baselines/tray-medium-group-en.png",
+        "demo/golden/baselines/tray-narrow-tool-ru.png"
+      ],
+      "cells": {
+        "card/group": [
+          "M|editor-secondary.ts:238-260 div.editor-secondary role=toolbar|editor-secondary.styles.ts:11-17,editor-secondary.styles.ts:33-46,editor-secondary.styles.ts:65-71"
+        ],
+        "motion-open-close": [
+          "M|editor-secondary.ts:277-282 (content swap animate 100ms)|editor-secondary.styles.ts:47-63,editor-secondary.styles.ts:189-192"
+        ],
+        "section-heading": [
+          "M|editor-secondary.ts:257-258 span.editor-context-label|editor-secondary.styles.ts:79-88"
+        ],
+        "btn-secondary": [
+          "M|editor-secondary.ts:209-221 .btn.editor-group-item(.on); houseplan-editor-runtime.|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-danger": [
+          "M|led-strip-editor.ts:796 LED delete .btn.danger|styles/dialogs.styles.ts:350-353"
+        ],
+        "input": [
+          "M|houseplan-editor-runtime.ts:5034-5047 label.drawwall > input[number]; 5191-5197 decor |editor-secondary.styles.ts:144-152,editor-secondary.styles.ts:158-168,styles/plan.styles.ts:1541-1543",
+          "M|houseplan-editor-runtime.ts:5185-5189 hp-color-opacity in tray"
+        ],
+        "checkbox/radio": [
+          "M|houseplan-editor-runtime.ts:5199 label.dfill > input[type=checkbox]|editor-secondary.styles.ts:129-142"
+        ],
+        "callout/note": [
+          "M|houseplan-editor-runtime.ts:5100-5101 span.hint; 5210 span.bdhint; led-strip-edito|editor-secondary.styles.ts:122-128,editor-secondary.styles.ts:153-157"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
+        ]
+      }
+    },
+    {
+      "id": "decor-selection-tray",
+      "group": "editors",
+      "name": "Лоток действий выделения декора",
+      "open": "выделение объекта декора",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/tray-medium-selection-ru.png"
+      ],
+      "cells": {
+        "btn-secondary": [
+          "K|houseplan-editor-runtime.ts:5159-5167 .btn.ghost (front/back/properties) painted by se"
+        ],
+        "btn-danger": [
+          "K|houseplan-editor-runtime.ts:5168-5170 .btn.danger (same generator)"
+        ],
+        "section-heading": [
+          "M|span.editor-context-label in actions layout (editor-secondary.ts:257-258)|editor-secondary.styles.ts:95-98"
+        ],
+        "card/group": [
+          "L|div.editor-secondary[data-layout=actions]|editor-secondary.styles.ts:89-94"
+        ]
+      }
+    },
+    {
+      "id": "furniture-image-palette",
+      "group": "editors",
+      "name": "Палитра мебели и изображений",
+      "open": "инструмент «Мебель»/«Изображение»",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/tray-narrow-palette-en.png",
+        "demo/golden/baselines/furniture-categories-light.png",
+        "demo/golden/baselines/furniture-variants-dark.png"
+      ],
+      "cells": {
+        "section-heading": [
+          "M|decor-image-editor.ts:309-312 div.furnhd; 333,345 div.furngroup|styles/editor-dialogs.styles.ts:272-291"
+        ],
+        "list-row": [
+          "M|decor-image-editor.ts:337-341, 347-356 button.furnitem(.furncategory); 258-264 image a|styles/editor-dialogs.styles.ts:302-331,styles/editor-dialogs.styles.ts:362-377"
+        ],
+        "btn-icon": [
+          "M|decor-image-editor.ts:313 and 239 .btn.furnclose; 265-267 .btn.ghost.imageassetdelete|styles/dialogs.styles.ts:34-65,styles/editor-dialogs.styles.ts:378-386"
+        ],
+        "btn-secondary": [
+          "M|decor-image-editor.ts:324-331 .btn.ghost.furnback|styles/editor-dialogs.styles.ts:297-301"
+        ],
+        "btn-primary": [
+          "M|decor-image-editor.ts:246 label.btn.primary.imageupload|styles/editor-dialogs.styles.ts:352-359"
+        ],
+        "input": [
+          "M|decor-image-editor.ts:362-373 input.namein.furnw/.furnh|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631,styles/editor-dialogs.styles.ts:332-350"
+        ],
+        "empty/loading/error state": [
+          "M|decor-image-editor.ts:255-256 span.furnhint.imageempty|styles/editor-dialogs.styles.ts:351,361"
+        ],
+        "card/group": [
+          "M|decor-image-editor.ts:234, 308 div.furnpalette|styles/editor-dialogs.styles.ts:264-271,editor-secondary.styles.ts:111-115"
+        ]
+      }
+    },
+    {
+      "id": "properties-panel",
+      "group": "editors",
+      "name": "Панель свойств (#931)",
+      "open": "выделение стены, проёма, устройства, декора",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/931-properties-panel/approved-2026-10-18/01-plan-wall-panel.png",
+        "docs/design/931-properties-panel/approved-2026-10-18/02-plan-opening-panel.png",
+        "docs/design/931-properties-panel/approved-2026-10-18/03-devices-light-panel.png"
+      ],
+      "cells": {
+        "card/group": [
+          "M|editors/properties/surface.ts:171-192 aside.hp-properties, section.hp-prop-group|editors/properties/styles.ts:10-40,editors/properties/styles.ts:51-53"
+        ],
+        "section-heading": [
+          "M|editors/properties/surface.ts:174 header.hp-prop-head; 177 h3.hp-prop-group-title; 158 .hp-prop-feature-label|editors/properties/styles.ts:47-49,54-55,103"
+        ],
+        "input": [
+          "L|editors/properties/surface.ts:152-157 unitInput() (kit)|editors/properties/styles.ts:61-70",
+          "L|editors/properties/surface.ts:103-133 colorField() (kit) incl. inline hex/alpha|editors/properties/styles.ts:76-96",
+          "M|editors/properties/surface.ts:146-150 textarea.hp-prop-text|editors/properties/styles.ts:99"
+        ],
+        "select": [
+          "M|editors/properties/surface.ts:140-142 native <select class=hp-prop-control> (not hp-settings-select/selectCon|editors/properties/styles.ts:61-65"
+        ],
+        "segmented": [
+          "M|editors/properties/surface.ts:136-139 div.hp-prop-choices > button.hp-prop-choice[aria-pressed]|editors/properties/styles.ts:100-108"
+        ],
+        "toggle": [
+          "M|editors/properties/surface.ts:143-145 button.hp-prop-choice[aria-pressed] used as on/off"
+        ],
+        "btn-secondary": [
+          "M|editors/properties/surface.ts:183-186 button.hp-prop-action; 134-135 button.hp-prop-settings; 162-163 button.|editors/properties/styles.ts:109-113,115-123,editors/properties/styles.ts:165-167"
+        ],
+        "btn-danger": [
+          "M|editors/properties/surface.ts:183 .hp-prop-action.delete|editors/properties/styles.ts:121,124-127"
+        ],
+        "tooltip": [
+          "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
+        ],
+        "empty/loading/error state": [
+          "M|editors/properties/surface.ts:164 div.hp-prop-error; 190 span.hp-prop-pending|editors/properties/styles.ts:131-132"
+        ],
+        "callout/note": [
+          "M|editors/properties/surface.ts:179 p.hp-prop-hint|editors/properties/styles.ts:75,111"
+        ],
+        "badge/chip": [
+          "N|editors/properties/surface.ts:187-189 kbd shortcut legend (.hp-prop-help)|editors/properties/styles.ts:128-130"
+        ]
+      }
+    },
+    {
+      "id": "properties-variable-dialog",
+      "group": "editors",
+      "name": "Диалог «Вставить переменную»",
+      "open": "панель свойств → текстовое поле",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/931-properties-panel/approved-2026-10-18/10-text-variable-dialog.png",
+        "docs/design/931-properties-panel/approved-2026-10-18/11-text-variable-dialog-detail.png",
+        "docs/design/931-properties-panel/approved-2026-10-18/12-opening-device-text.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "L|editor.ts:807 <hp-dialog properties-shell wide> (variant in hp-dialog.ts:265-272)|editors/properties/styles.ts:146"
+        ],
+        "input": [
+          "K|editor.ts:811-818 sourcePicker() (kit)"
+        ],
+        "select": [
+          "L|editor.ts:820-823 hp-settings-select|editors/properties/styles.ts:150"
+        ],
+        "section-heading": [
+          "M|editor.ts:810,819 .hp-prop-variable-label|editors/properties/styles.ts:148"
+        ],
+        "card/group": [
+          "M|editor.ts:824 div.hp-prop-preview|editors/properties/styles.ts:156-158"
+        ],
+        "dialog-footer": [
+          "M|editor.ts:828 div.hp-prop-variable-footer[slot=footer]|editors/properties/styles.ts:159"
+        ],
+        "btn-secondary": [
+          "M|editor.ts:828 cancel button (no class)|editors/properties/styles.ts:160,163"
+        ],
+        "btn-primary": [
+          "M|editor.ts:829-833 button.insert|editors/properties/styles.ts:161"
+        ],
+        "empty/loading/error state": [
+          "M|editor.ts:825-826 p.hp-prop-error"
+        ]
+      }
+    },
+    {
+      "id": "device-inbox",
+      "group": "editors",
+      "name": "Каталог устройств",
+      "open": "редактор устройств → «Устройства»",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/device-inbox-desktop-en-light.png",
+        "demo/golden/baselines/device-inbox-desktop-ru-dark.png",
+        "demo/golden/baselines/device-inbox-narrow-ru-dark.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:11473 hp-dialog.device-inbox-dialog.ui-dialog form-shell setti"
+        ],
+        "input": [
+          "M|houseplan-editor-runtime.ts:11478-11483 input[type=search].device-inbox-search; 11413-1142|styles/settings-dialogs.styles.ts:207-210"
+        ],
+        "select": [
+          "L|houseplan-editor-runtime.ts:11499-11506 hp-settings-select|styles/editor-dialogs.styles.ts:689-696"
+        ],
+        "segmented": [
+          "M|houseplan-editor-runtime.ts:11488-11497 role=tablist buttons (.on)|styles/editor-dialogs.styles.ts:645-653,766-774,styles/settings-dialogs.styles.ts:215-217,styles/settings-dialogs.styles.ts:188"
+        ],
+        "checkbox/radio": [
+          "K|houseplan-editor-runtime.ts:11510-11523 only-new/show-entities; device-inbox-batch.ts:"
+        ],
+        "list-row": [
+          "M|houseplan-editor-runtime.ts:11556-11586 article.device-inbox-row|styles/editor-dialogs.styles.ts:721-753,styles/settings-dialogs.styles.ts:213"
+        ],
+        "badge/chip": [
+          "M|houseplan-editor-runtime.ts:11562 span.device-inbox-new; 11404-11408 span.chip with remove|styles/editor-dialogs.styles.ts:737-743,styles/editor-dialogs.styles.ts:663-672,styles/settings-dialogs.styles.ts:220"
+        ],
+        "disclosure": [
+          "M|houseplan-editor-runtime.ts:11394-11440 native details.device-inbox-discovery|styles/editor-dialogs.styles.ts:655-660,styles/settings-dialogs.styles.ts:218-219"
+        ],
+        "btn-secondary": [
+          "K|houseplan-editor-runtime.ts:11484 add-virtual; 11535-11546 row primary actions; 11581-1158"
+        ],
+        "btn-primary": [
+          "K|houseplan-editor-runtime.ts:11436 .btn.on discovery save"
+        ],
+        "btn-danger": [
+          "K|device-inbox-batch.ts:179 .btn.danger batch delete"
+        ],
+        "btn-icon": [
+          "K|houseplan-editor-runtime.ts:11570-11574 .btn.ghost dots-vertical menu trigger"
+        ],
+        "menu": [
+          "K|catalog-context-menu.ts:213 -> EditorContextMenu (editor-context-menu.ts:156)"
+        ],
+        "empty/loading/error state": [
+          "M|houseplan-editor-runtime.ts:11578 div.device-inbox-empty|styles/editor-dialogs.styles.ts:761"
+        ],
+        "callout/note": [
+          "M|houseplan-editor-runtime.ts:11429-11433 div.device-inbox-preview|styles/editor-dialogs.styles.ts:676"
+        ],
+        "dialog-footer": [
+          "K|houseplan-editor-runtime.ts:11589-11592 div.row[slot=footer] -> compact-dialog-styles.ts:1"
+        ]
+      }
+    },
+    {
+      "id": "editor-context-menus",
+      "group": "editors",
+      "name": "Контекстные меню редакторов",
+      "open": "правый клик по устройству/LED/декору/узлу стены",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/ui-1081-device-menu-dark.png",
+        "demo/golden/baselines/ui-1081-device-menu-light.png",
+        "demo/golden/baselines/ui-1051-menu-dark.png"
+      ],
+      "cells": {
+        "menu": [
+          "K|editor-context-menu.ts:156-169 div.hpf-context-menu; callers pass only model data (device-"
+        ],
+        "motion-open-close": [
+          "K|editor-context-menu.ts:105-107 (180ms in), 141-142 (140ms out)"
+        ],
+        "separator": [
+          "K|editor-context-menu.styles.ts:18 2px accent line between items"
+        ]
+      }
+    },
+    {
+      "id": "icon-rules-dialog",
+      "group": "editors",
+      "name": "Правила иконок",
+      "open": "редактор устройств → «Правила»",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/css-migration-rules-invalid-dark.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:9869 hp-dialog.ui-dialog.rules-dialog form-shell settings-layo"
+        ],
+        "callout/note": [
+          "L|houseplan-editor-runtime.ts:9872 div.rhint -> compact-dialog-styles.ts:17|styles/settings-dialogs.styles.ts:232,styles/chrome.styles.ts:411-415"
+        ],
+        "input": [
+          "M|houseplan-editor-runtime.ts:9874-9876, 9882-9898 input.namein(.rpat/.ricon)|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631,styles/settings-dialogs.styles.ts:207-210,221-222"
+        ],
+        "list-row": [
+          "M|houseplan-editor-runtime.ts:9881-9906 div.rrow|styles/editor-dialogs.styles.ts:446-452,styles/settings-dialogs.styles.ts:223-224,227,249-250"
+        ],
+        "btn-icon": [
+          "L|houseplan-editor-runtime.ts:9900-9905 button.btn.ract(.del)|styles/settings-dialogs.styles.ts:225-226,styles/editor-dialogs.styles.ts:453-457"
+        ],
+        "btn-secondary": [
+          "K|houseplan-editor-runtime.ts:9908-9917 .btn.ghost add/reset/cancel"
+        ],
+        "btn-primary": [
+          "K|houseplan-editor-runtime.ts:9918-9920 .btn.on save"
+        ],
+        "dialog-footer": [
+          "K|houseplan-editor-runtime.ts:9913 div.row[slot=footer]"
+        ]
+      }
+    },
+    {
+      "id": "hp-confirm",
+      "group": "editors",
+      "name": "Общее подтверждение (hp-confirm)",
+      "open": "любое опасное действие",
+      "modes": "все",
+      "frames": [
+        "demo/golden/baselines/ui-1081-device-confirm-dark.png",
+        "demo/golden/baselines/ui-1081-device-confirm-light.png",
+        "demo/golden/baselines/ui-1081-device-confirm-narrow-dark.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "L|hp-confirm.ts:50-59 (ui-dialog only for remove-marker* keys, line 49)|styles/dialogs.styles.ts:379-398,styles/settings-dialogs.styles.ts:10-12"
+        ],
+        "btn-secondary": [
+          "L|hp-confirm.ts:68-69 .btn.ghost cancel|styles/dialogs.styles.ts:34-65,styles/settings-dialogs.styles.ts:65-66,186,styles/dialogs.styles.ts:557,584-588"
+        ],
+        "btn-danger": [
+          "L|hp-confirm.ts:70-76 .btn.danger|styles/dialogs.styles.ts:350-353,styles/settings-dialogs.styles.ts:68"
+        ],
+        "btn-primary": [
+          "L|hp-confirm.ts:70 .btn.on (warning kind)|styles/settings-dialogs.styles.ts:67"
+        ],
+        "dialog-footer": [
+          "L|hp-confirm.ts:66 div.row.dialog-action-footer.danger-confirm-footer|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356,styles/dialogs.styles.ts:516-541,556,578-583"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog.ts:206-220 discard-confirm animation"
+        ]
+      }
+    },
+    {
+      "id": "editor-legacy-confirms",
+      "group": "editors",
+      "name": "Подтверждения в обход hp-confirm",
+      "open": "удаление перегородки / комнаты",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:11069, 11103 (legacy), 5354 (ui-dialog compact)|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "btn-secondary": [
+          "M|houseplan-editor-runtime.ts:11088-11090, 11112-11114, 11117-11119 .btn.ghost/.btn|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-danger": [
+          "M|houseplan-editor-runtime.ts:11092-11094, 11120-11122 .btn.danger|styles/dialogs.styles.ts:350-353"
+        ],
+        "dialog-footer": [
+          "M|houseplan-editor-runtime.ts:11087, 11111 div.row[slot=footer]|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      },
+      "captureScenario": "editor-legacy-confirms"
+    },
+    {
+      "id": "led-picker",
+      "group": "editors",
+      "name": "Выбор устройства LED-ленты",
+      "open": "лоток LED → «Привязать»",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|led-strip-editor.ts:814-819 <hp-dialog flex-content>|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "list-row": [
+          "M|led-strip-editor.ts:825-829 button.btn.ghost.led-pick(.on)|styles/dialogs.styles.ts:34-65"
+        ],
+        "empty/loading/error state": [
+          "M|led-strip-editor.ts:830 div.hint"
+        ],
+        "btn-secondary": [
+          "M|led-strip-editor.ts:833-836 .btn / .btn.ghost|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|led-strip-editor.ts:832 div.row[slot=footer]|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      },
+      "captureScenario": "led-picker"
+    },
+    {
+      "id": "stairs-dialog",
+      "group": "editors",
+      "name": "Свойства лестницы",
+      "open": "двойной клик по лестнице",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|stairs-editor.ts:636-638|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "select": [
+          "K|stairs-editor.ts:641-656, 684-690 hp-settings-select > select.areasel"
+        ],
+        "input": [
+          "M|stairs-editor.ts:628-635, 673-676 input.namein.tempin|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631",
+          "M|stairs-editor.ts:660-671 two <hp-color-opacity>"
+        ],
+        "segmented": [
+          "M|stairs-editor.ts:678-682 hpf-actions > button.btn(.on); outside ui-dialog kit root|styles/dialogs.styles.ts:34-65"
+        ],
+        "callout/note": [
+          "K|stairs-editor.ts:692-695 hpf-hint hpf-note-warning after #1145; no local paint selector"
+        ],
+        "section-heading": [
+          "M|stairs-editor.ts:627,640,672,677,683 <label>|styles/dialogs.styles.ts:491-495"
+        ],
+        "btn-danger": [
+          "M|stairs-editor.ts:697-698|styles/dialogs.styles.ts:350-353"
+        ],
+        "btn-secondary": [
+          "M|stairs-editor.ts:700-701|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|stairs-editor.ts:702-703 .btn.on|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|stairs-editor.ts:696 div.row.dialog-action-footer|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      },
+      "captureScenario": "stairs-dialog"
+    },
+    {
+      "id": "decor-shape-dialog",
+      "group": "editors",
+      "name": "Свойства объекта декора",
+      "open": "двойной клик / «Свойства» декора",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/931-properties-panel/approved-2026-10-18/04-decor-rectangle.png",
+        "docs/design/931-properties-panel/approved-2026-10-18/06-decor-image.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "L|decor-image-editor.ts:436-439 (kit only when kind==='furniture', line 414)|styles/settings-dialogs.styles.ts:190,193-206"
+        ],
+        "input": [
+          "M|decor-image-editor.ts:491-500, 518-534, 551-563, 564-568 input.namein (+.hpf-input for fur|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631",
+          "M|decor-image-editor.ts:478-482 input[type=range] opacity"
+        ],
+        "select": [
+          "K|decor-image-editor.ts:443-458, 461-467 hp-settings-select|styles/settings-dialogs.styles.ts:200"
+        ],
+        "toggle": [
+          "K|decor-image-editor.ts:539-546 toggleRow() for furniture|styles/settings-dialogs.styles.ts:202-204"
+        ],
+        "checkbox/radio": [
+          "M|decor-image-editor.ts:540,545,569 label.dfill checkbox; 504-515 radio label.srcrow|styles/editor-dialogs.styles.ts:22-27,85-92"
+        ],
+        "btn-secondary": [
+          "M|decor-image-editor.ts:468-473 label.btn.ghost.imageupload; 584-585 cancel|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|decor-image-editor.ts:586-587 class = kit ? 'btn on' : 'btn primary'|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|decor-image-editor.ts:582 div.row[slot=footer]|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      }
+    },
+    {
+      "id": "decor-text-backdrop-dialogs",
+      "group": "editors",
+      "name": "Текст декора и рамка подложки",
+      "open": "инструмент «Текст» / свойства подложки",
+      "modes": "редакторы",
+      "frames": [
+        "docs/design/931-properties-panel/approved-2026-10-18/05-decor-text.png",
+        "docs/design/931-properties-panel/approved-2026-10-18/08-plan-backdrop.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:5373, 5449|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "input": [
+          "M|5380-5395 textarea.namein.dtarea; 5401-5414 number inputs; 5452-5462|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631,styles/editor-dialogs.styles.ts:100-101,108"
+        ],
+        "select": [
+          "K|5423-5433 hp-settings-select > select.namein"
+        ],
+        "section-heading": [
+          "M|5415 label.dispsection|styles/editor-dialogs.styles.ts:93-99"
+        ],
+        "btn-secondary": [
+          "M|5436, 5468 .btn.ghost|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|5437, 5469 .btn.primary"
+        ],
+        "dialog-footer": [
+          "M|5434, 5467|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      }
+    },
+    {
+      "id": "backdrop-guard",
+      "group": "editors",
+      "name": "Предупреждение о крупном изображении",
+      "open": "выбор большого файла изображения",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|backdrop-pick.ts:309-311|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "btn-secondary": [
+          "M|backdrop-pick.ts:318-326 .btn.ghost|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|backdrop-pick.ts:327-330 .btn.on|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|backdrop-pick.ts:317|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      },
+      "captureScenario": "backdrop-guard"
+    },
+    {
+      "id": "wall-thickness-popover",
+      "group": "editors",
+      "name": "Толщина стены (плавающая форма)",
+      "open": "инструмент «Толщина стены» → стена",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "card/group": [
+          "M|houseplan-editor-runtime.ts:5829 div.wallthick-dlg (inline style left/top = geometry)|styles/editor-dialogs.styles.ts:28-44"
+        ],
+        "input": [
+          "M|5833-5839 input[type=number]|styles/editor-dialogs.styles.ts:50-58"
+        ],
+        "btn-secondary": [
+          "M|5843-5846 .btn.ghost apply-room|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|5848-5850 .btn.on icon-only check|styles/dialogs.styles.ts:34-65"
+        ]
+      },
+      "captureScenario": "wall-thickness-popover"
+    },
+    {
+      "id": "merge-rooms-dialog",
+      "group": "editors",
+      "name": "Объединение комнат",
+      "open": "«Объединить» → две комнаты",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:12036|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "checkbox/radio": [
+          "M|12029-12034 label.srcrow > input[type=radio]|styles/editor-dialogs.styles.ts:85-92,102"
+        ],
+        "callout/note": [
+          "M|12039 p.muted"
+        ],
+        "btn-secondary": [
+          "M|12046|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|12047-12049 .btn.on|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|12044|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      },
+      "captureScenario": "merge-rooms-dialog"
+    },
+    {
+      "id": "physical-dialog",
+      "group": "editors",
+      "name": "Свойства перегородки / колонны",
+      "open": "свойства перегородки или колонны",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:11128|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "select": [
+          "K|11134-11140 hp-settings-select > select.areasel"
+        ],
+        "input": [
+          "M|11144-11156 input.namein.tempin inside <div class=row>|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631"
+        ],
+        "btn-danger": [
+          "M|11162-11164|styles/dialogs.styles.ts:350-353"
+        ],
+        "btn-secondary": [
+          "M|11167|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|11168-11170 .btn.on|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|11160 div.row.dialog-action-footer.physicalfooter|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      },
+      "captureScenario": "physical-dialog"
+    },
+    {
+      "id": "optimize-plans-dialog",
+      "group": "editors",
+      "name": "Оптимизировать планы",
+      "open": "Общие → Обслуживание → Оптимизировать",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/optimize-preflight-dialog-dark-en.png",
+        "demo/golden/baselines/optimize-preflight-dialog-light-ru.png",
+        "demo/golden/baselines/optimize-orphan-references-dark-en.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|optimize-plans-dialog.ts:524-525|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "callout/note": [
+          "M|optimize-plans-dialog.ts:413-421, 536-538, 618-619, 652, 663, 672-676, 686-690, 699 div/p.|styles/chrome.styles.ts:411-415,styles/plan.styles.ts:1663"
+        ],
+        "btn-secondary": [
+          "M|optimize-plans-dialog.ts:539-544 (copy diagnostics inside body <div class=row>), 424-431 (|styles/dialogs.styles.ts:34-65"
+        ],
+        "toggle": [
+          "M|optimize-plans-dialog.ts:644-651, 664-671 .btn.ghost[aria-pressed] cleanup toggles|styles/editor-dialogs.styles.ts:465,476"
+        ],
+        "disclosure": [
+          "M|optimize-plans-dialog.ts:693-704 details.optimize-details; 439-442 fallback details|styles/editor-dialogs.styles.ts:477-495"
+        ],
+        "btn-primary": [
+          "M|optimize-plans-dialog.ts:712-714 .btn.on|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|optimize-plans-dialog.ts:706|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      }
+    },
+    {
+      "id": "space-copy-dialog",
+      "group": "editors",
+      "name": "Копирование пространства",
+      "open": "настройки пространства → Копировать",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "dialog-shell": [
+          "K|space-copy-runtime.ts:88-90|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476,styles/dialogs.styles.ts:491-495"
+        ],
+        "input": [
+          "M|space-copy-runtime.ts:93-110 input.namein|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631"
+        ],
+        "btn-secondary": [
+          "M|space-copy-runtime.ts:114-117|styles/dialogs.styles.ts:34-65"
+        ],
+        "btn-primary": [
+          "M|space-copy-runtime.ts:118-121 .btn.on|styles/dialogs.styles.ts:34-65"
+        ],
+        "dialog-footer": [
+          "M|space-copy-runtime.ts:112 div.row.dialog-action-footer|styles/dialogs.styles.ts:496-510,styles/dialogs.styles.ts:354-356"
+        ]
+      },
+      "captureScenario": "space-copy-dialog"
+    },
+    {
+      "id": "editor-loading",
+      "group": "editors",
+      "name": "Индикатор загрузки редактора",
+      "open": "вход в редактор до загрузки модуля",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "empty/loading/error state": [
+          "M|houseplan-card.ts:4290-4294 div.editorloading > ha-icon mdi:loading|styles/dialogs.styles.ts:103-139"
+        ],
+        "motion-open-close": [
+          "M|same element|styles/dialogs.styles.ts:120,127-130"
+        ]
+      },
+      "captureScenario": "editor-loading"
+    },
+    {
+      "id": "card-config-editor-errors",
+      "group": "editors",
+      "name": "Ошибки визуального редактора карточки HA",
+      "open": "редактор карточки дашборда",
+      "modes": "HA",
+      "frames": [
+        "demo/golden/baselines/card-editor-invalid-default-floor-dark-ru.png",
+        "demo/golden/baselines/card-editor-invalid-default-floor-light-en.png"
+      ],
+      "cells": {
+        "empty/loading/error state": [
+          "M|editor.ts:150-153 div.default-floor-error, 155-156 div.card-config-error; space-editor.ts:|editor.ts:151,156,space-editor.ts:96"
+        ],
+        "input": [
+          "N|editor.ts:141-147 native ha-form; space-editor.ts:89-95"
+        ]
+      }
+    },
+    {
+      "id": "hp-dialog-shell",
+      "group": "rare",
+      "name": "Оболочка диалога hp-dialog",
+      "open": "любой диалог",
+      "modes": "все",
+      "frames": [
+        "demo/golden/baselines/room-discard-dialog-mobile-ru.png",
+        "demo/golden/baselines/toggle-entity-dialog-desktop-en.png",
+        "demo/golden/baselines/more-info-dialog-desktop-en.png"
+      ],
+      "cells": {
+        "dialog-shell": [
+          "K|hp-dialog.ts:72-90 (ha-dialog vars + ::part border/shadow), 97-133 title, 187-199 .sur"
+        ],
+        "btn-icon": [
+          "K|hp-dialog.ts:315-341 (.close 40px / 44px form-shell 248 / 18px properties-shell 271; h"
+        ],
+        "badge/chip": [
+          "K|hp-dialog.ts:136-149 .badge (space-name badge, 14px, radius 7, 180px truncation; 105px"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog.ts:205-221 (hp-discard-in 180ms ease translateY(12px)->0, only .discard-conf"
+        ],
+        "toast": [
+          "K|hp-dialog.ts:63 imports toastStyles; toast portal in footer slot (829)"
+        ]
+      }
+    },
+    {
+      "id": "backup-export",
+      "group": "rare",
+      "name": "Экспорт резервной копии",
+      "open": "Общие → Обслуживание → Экспорт",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/backup-plan-only-export-desktop-en.png"
+      ],
+      "cells": {
+        "btn-primary": [
+          "M|houseplan-editor-runtime.ts:9503 '.btn on' inside hp-dialog without class ui-dialog (9470)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+        ],
+        "btn-secondary": [
+          "M|houseplan-editor-runtime.ts:9501 '.btn ghost' -> legacy .btn.ghost{border:none} (dialogs.s|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+        ],
+        "checkbox/radio": [
+          "M|houseplan-editor-runtime.ts:9474-9483 native radios (backup-kind), 9484-9493 plan-only che|styles/editor-dialogs.styles.ts:85-91,102,106-107,styles/dialogs.styles.ts:491-495,styles/editor-dialogs.styles.ts:511-514"
+        ],
+        "callout/note": [
+          "M|houseplan-editor-runtime.ts:9473,9494 '.rhint' (legacy styles/chrome.styles.ts:411-415, not the k|styles/chrome.styles.ts:411-415,styles/dialogs.styles.ts:462-469"
+        ],
+        "card/group": [
+          "M|backup-archive-client.ts:242 '.backupcontent' archive summary; styles/editor-dialogs.styles.ts:51|styles/editor-dialogs.styles.ts:515-527"
+        ],
+        "disclosure": [
+          "M|backup-archive-client.ts:227,248 native <details> in recovery/archive summary, unstyled"
+        ],
+        "dialog-footer": [
+          "M|houseplan-editor-runtime.ts:9500 '.row' slot=footer -> legacy hp-dialog .row; kit footer c|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+        ],
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:9470 <hp-dialog data-kind=backup dismiss-on-scrim> (no ui-dial|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog.ts:642-666 exit, 332-335 backdrop"
+        ],
+        "empty/loading/error state": [
+          "M|houseplan-editor-runtime.ts:9498 '.backuperror' role=alert; busy shown only as button labe|styles/dialogs.styles.ts:462-468,470"
+        ]
+      }
+    },
+    {
+      "id": "backup-import",
+      "group": "rare",
+      "name": "Импорт / восстановление",
+      "open": "Общие → Обслуживание → Импорт",
+      "modes": "редакторы",
+      "frames": [
+        "demo/golden/baselines/backup-full-preview-desktop-en.png",
+        "demo/golden/baselines/backup-space-preview-mobile-ru.png"
+      ],
+      "cells": {
+        "btn-primary": [
+          "M|houseplan-editor-runtime.ts:9673 '.btn on' (space import) in hp-dialog without ui-dialog (|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+        ],
+        "btn-danger": [
+          "M|houseplan-editor-runtime.ts:9673 '.btn danger' (full replace)|styles/dialogs.styles.ts:350-353,styles/dialogs.styles.ts:34-47"
+        ],
+        "btn-secondary": [
+          "M|houseplan-editor-runtime.ts:9671 '.btn ghost'|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+        ],
+        "checkbox/radio": [
+          "M|houseplan-editor-runtime.ts:9645-9650 fieldset.backupchoices radios; 9663-9667 label.srcro|styles/editor-dialogs.styles.ts:537-551,styles/editor-dialogs.styles.ts:85-91,102,106-107,styles/dialogs.styles.ts:491-495"
+        ],
+        "disclosure": [
+          "M|houseplan-editor-runtime.ts:9608-9614, 9629-9639 <details class=backupdetails>; backup-arc|styles/editor-dialogs.styles.ts:528-536"
+        ],
+        "callout/note": [
+          "M|houseplan-editor-runtime.ts:9589,9592,9602,9617,9621,9642,9644 '.rhint'; 9596,9599,9605,96|styles/chrome.styles.ts:411-415,styles/dialogs.styles.ts:462-469"
+        ],
+        "card/group": [
+          "M|houseplan-editor-runtime.ts:9557 .backupfile, 9561-9571 .backupsummary, 9573-9588 .backupc|styles/editor-dialogs.styles.ts:502-510,515-527"
+        ],
+        "dialog-footer": [
+          "M|houseplan-editor-runtime.ts:9670 '.row' slot=footer|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+        ],
+        "dialog-shell": [
+          "K|houseplan-editor-runtime.ts:9554 <hp-dialog data-kind=backup wide dismiss-on-scrim>|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog.ts:642-666"
+        ],
+        "empty/loading/error state": [
+          "M|houseplan-editor-runtime.ts:9558 reading '.rhint role=status'; 9559 '.backuperror role=ale|styles/dialogs.styles.ts:470"
+        ]
+      }
+    },
+    {
+      "id": "floor-import",
+      "group": "rare",
+      "name": "Импорт этажей из HA",
+      "open": "первое пространство при наличии этажей HA",
+      "modes": "просмотр, редакторы",
+      "frames": [
+        "demo/golden/baselines/first-space-floors-light.png",
+        "demo/golden/baselines/first-space-floors-dark.png",
+        "demo/golden/baselines/first-space-floors-narrow-light.png"
+      ],
+      "cells": {
+        "btn-primary": [
+          "L|floor-import-dialog.ts:34 '.btn on' -> kit settingsActionsCss('hp-dialog.ui-dialog .btn') |styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+        ],
+        "btn-secondary": [
+          "L|floor-import-dialog.ts:32 '.btn ghost'|styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+        ],
+        "checkbox/radio": [
+          "K|floor-import-dialog.ts:22 checkbox -> compact-dialog-styles.ts:16 (18px, accent-color --hp"
+        ],
+        "list-row": [
+          "M|floor-import-dialog.ts:21-28 <label class=floorrow>; no kit primitive (compactList()/formR|compact-dialog-styles.ts:22-23,31,styles/dialogs.styles.ts:447-454,styles/dialogs.styles.ts:491-495"
+        ],
+        "badge/chip": [
+          "M|floor-import-dialog.ts:27 <span class=floorlvl>L{n}</span>|compact-dialog-styles.ts:24,styles/dialogs.styles.ts:455-461"
+        ],
+        "callout/note": [
+          "L|floor-import-dialog.ts:20 '.rhint' -> kit compact-dialog-styles.ts:17|compact-dialog-styles.ts:21,styles/chrome.styles.ts:411-415"
+        ],
+        "text-link": [
+          "L|floor-import-dialog.ts:29 <hp-plan-converter-info> (see surface plan-converter-info)"
+        ],
+        "dialog-footer": [
+          "L|floor-import-dialog.ts:31 'row hpf-footer' -> compact-dialog-styles.ts:14-15|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+        ],
+        "dialog-shell": [
+          "K|floor-import-dialog.ts:17 <hp-dialog class=ui-dialog form-shell settings-layout compact wi"
+        ],
+        "motion-open-close": [
+          "K|compact-dialog-styles.ts:11,30 close rotate; hp-dialog.ts:642-666 exit"
+        ]
+      }
+    },
+    {
+      "id": "pdf-export",
+      "group": "rare",
+      "name": "Печать / PDF / SVG",
+      "open": "шапка → «Скачать файл для печати»",
+      "modes": "просмотр, редакторы",
+      "frames": [],
+      "cells": {
+        "btn-primary": [
+          "K|pdf/hp-pdf-dialog.ts:260 button.primary; paint from kit generator settingsActionsCss('button',"
+        ],
+        "btn-secondary": [
+          "K|pdf/hp-pdf-dialog.ts:257 bare <button> -> settingsActionsCss('button') (115)"
+        ],
+        "select": [
+          "L|pdf/hp-pdf-dialog.ts:225-227, 214-217 selectControl() -> hp-settings-select|pdf/hp-pdf-dialog.ts:106-107"
+        ],
+        "checkbox/radio": [
+          "L|pdf/hp-pdf-dialog.ts:207-217 hpf-toggle/hpf-compact after #1132|pdf/hp-pdf-dialog.ts:82-95,109-110 local label/input paint remains"
+        ],
+        "input": [
+          "M|pdf/hp-pdf-dialog.ts:238-253 hp-color-opacity; its shadow CSS owns the controls, not form-kit|hp-color-opacity.ts:185-480"
+        ],
+        "card/group": [
+          "M|pdf/hp-pdf-dialog.ts:223 <div class=body>|pdf/hp-pdf-dialog.ts:70-81,111"
+        ],
+        "dialog-footer": [
+          "M|pdf/hp-pdf-dialog.ts:256-265 <div class=row slot=footer>|pdf/hp-pdf-dialog.ts:95-105,111,113-115"
+        ],
+        "dialog-shell": [
+          "L|pdf/hp-pdf-dialog.ts:217 <hp-dialog form-shell settings-layout compact wide data-kind=pdf> (no|pdf/hp-pdf-dialog.ts:68,hp-dialog.ts:258"
+        ],
+        "motion-open-close": [
+          "L|hp-dialog.ts:642-666 exit|pdf/hp-pdf-dialog.ts:68,112"
+        ],
+        "toast": [
+          "K|pdf/hp-pdf-dialog.ts:195 context.toast -> houseplan-card.ts:10801 _showToast"
+        ],
+        "empty/loading/error state": [
+          "N|PDF/SVG output itself (pdf/*) is a generated document, not UI"
+        ]
+      },
+      "captureScenario": "pdf-export"
+    },
+    {
+      "id": "support",
+      "group": "rare",
+      "name": "Помощь и обратная связь",
+      "open": "шапка → «Помощь и обратная связь»",
+      "modes": "просмотр, редакторы",
+      "frames": [
+        "demo/golden/baselines/support-desktop-empty-light-en.png",
+        "demo/golden/baselines/support-desktop-preview-dark-en.png",
+        "demo/golden/baselines/support-phone-validation-light-ru.png"
+      ],
+      "cells": {
+        "btn-primary": [
+          "L|houseplan-editor-runtime.ts:9163 '.btn on' (Send/Retry)|styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+        ],
+        "btn-secondary": [
+          "L|houseplan-editor-runtime.ts:9109,9112,9126,9135,9138,9147,9158 '.btn ghost'|styles/dialogs.styles.ts:34-65,styles/dialogs.styles.ts:508-510"
+        ],
+        "text-link": [
+          "L|houseplan-editor-runtime.ts:9033,9035,9037,9043,9140,9141 a.aboutlink -> kit settingsTextL|styles/settings-dialogs.styles.ts:235-236,styles/editor-dialogs.styles.ts:553-560"
+        ],
+        "input": [
+          "M|houseplan-editor-runtime.ts:9050 input.namein, 9058 textarea.supportmessage, 9105 textarea|styles/settings-dialogs.styles.ts:207-210,styles/settings-dialogs.styles.ts:238-239,styles/editor-dialogs.styles.ts:574-583,627-631"
+        ],
+        "checkbox/radio": [
+          "L|houseplan-editor-runtime.ts:9066-9073 checkbox -> compact-dialog-styles.ts:16|styles/settings-dialogs.styles.ts:240-242,styles/editor-dialogs.styles.ts:584-591,styles/editor-dialogs.styles.ts:85-91,102,106-107"
+        ],
+        "section-heading": [
+          "M|houseplan-editor-runtime.ts:9032,9042,9048 <h3> in .supportsection|styles/settings-dialogs.styles.ts:231,styles/editor-dialogs.styles.ts:565-567"
+        ],
+        "separator": [
+          "M|houseplan-editor-runtime.ts:9031/9041/9047 sibling .supportsection|styles/settings-dialogs.styles.ts:229-230"
+        ],
+        "callout/note": [
+          "M|houseplan-editor-runtime.ts:9076 .supportwarning, 9080 .supportstatus, 9152 .supportupdate|styles/settings-dialogs.styles.ts:243-245,styles/editor-dialogs.styles.ts:592-601,styles/settings-dialogs.styles.ts:232"
+        ],
+        "card/group": [
+          "M|houseplan-editor-runtime.ts:9084 .supportpreview, 9132 .supportmanual, 9120 .supporterror,|styles/settings-dialogs.styles.ts:246,styles/editor-dialogs.styles.ts:602-615,619-626"
+        ],
+        "disclosure": [
+          "M|houseplan-editor-runtime.ts:9100-9107 native <details>/<summary data-action=support-previe|styles/settings-dialogs.styles.ts:188 (generator call), 247,styles/editor-dialogs.styles.ts:616-617"
+        ],
+        "dialog-footer": [
+          "L|houseplan-editor-runtime.ts:9157-9170 'row supportfooter' + .spacer -> compact-dialog-styl|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+        ],
+        "dialog-shell": [
+          "L|houseplan-editor-runtime.ts:9027 <hp-dialog id=support-dialog class=ui-dialog form-shell s|styles/settings-dialogs.styles.ts:8,styles/dialogs.styles.ts:365-375"
+        ],
+        "motion-open-close": [
+          "K|compact-dialog-styles.ts:11,30; hp-dialog.ts:642-666"
+        ],
+        "toast": [
+          "K|houseplan-editor-runtime.ts:8930,8932 host._showToast"
+        ],
+        "help": [
+          "N|no hp-help inside the support dialog (9027-9171)"
+        ],
+        "empty/loading/error state": [
+          "M|building 9080 (.supportstatus), relay error 9120 (.supporterror role=alert), success 9145,"
+        ]
+      }
+    },
+    {
+      "id": "help-widget",
+      "group": "rare",
+      "name": "Подсказка «?»",
+      "open": "значок «?» у подписи",
+      "modes": "все",
+      "frames": [
+        "demo/golden/baselines/settings-help-zoom-200-en-light.png",
+        "demo/golden/baselines/settings-help-zoom-200-ru-dark.png",
+        "demo/golden/baselines/device-help-popover-light-ru.png"
+      ],
+      "cells": {
+        "help": [
+          "K|hp-help.ts:45-84 trigger"
+        ],
+        "tooltip": [
+          "K|styles/help-surface.styles.ts:2-9 shared by hp-help (155), chrome-tooltip.ts:17 and chrome.styles"
+        ],
+        "motion-open-close": [
+          "K|hp-help.ts:95 (opacity/transform 120ms), 110-115 @starting-style translateY(3px), 149-154 "
+        ]
+      }
+    },
+    {
+      "id": "zigbee-topology-overlay",
+      "group": "rare",
+      "name": "Оверлей Zigbee-связей",
+      "open": "наведение на устройство с включёнными связями",
+      "modes": "просмотр",
+      "frames": [
+        "demo/golden/baselines/zigbee-led-flat-light.png",
+        "demo/golden/baselines/zigbee-led-iso-dark.png",
+        "demo/golden/baselines/zigbee-hidden-child-flat-light.png"
+      ],
+      "cells": {
+        "badge/chip": [
+          "N|hp-zigbee-topology-overlay.ts:91-102 .remote/.parent-bubble/.route-status captions (fixed "
+        ],
+        "tooltip": [
+          "N|overlay has no tooltip; device tip is chrome .tip (styles/chrome.styles.ts:526)"
+        ],
+        "motion-open-close": [
+          "N|no transition/animation in overlay CSS (70-110)"
+        ]
+      }
+    },
+    {
+      "id": "zigbee-incomplete-reasons",
+      "group": "rare",
+      "name": "Причины неполной диагностики Zigbee",
+      "open": "Общие → Zigbee",
+      "modes": "редакторы",
+      "frames": [],
+      "cells": {
+        "disclosure": [
+          "K|hp-zigbee-topology-settings.ts:318-321 disclosure({className:'incomplete'}); kit CSS adopt"
+        ]
+      },
+      "captureScenario": "zigbee-incomplete-reasons"
+    },
+    {
+      "id": "plan-converter-info",
+      "group": "rare",
+      "name": "Подсказка конвертера планов",
+      "open": "импорт этажей / пустой план",
+      "modes": "просмотр",
+      "frames": [
+        "demo/golden/baselines/first-space-empty-light.png",
+        "demo/golden/baselines/first-space-empty-dark.png",
+        "demo/golden/baselines/panel-narrow-read-only-empty-light-en.png"
+      ],
+      "cells": {
+        "text-link": [
+          "L|hp-plan-converter-info.ts:10 <a class=hpf-link> + settingsTextLinkCss('a','var(--primary-c|hp-plan-converter-info.ts:29-31,hp-plan-converter-info.ts:33"
+        ],
+        "callout/note": [
+          "M|hp-plan-converter-info.ts:24-28 :host paragraph styling|hp-plan-converter-info.ts:24-27"
+        ]
+      }
+    },
+    {
+      "id": "marker-restore",
+      "group": "rare",
+      "name": "Восстановление черновика устройства",
+      "open": "тёплый ремаунт с несохранённым черновиком",
+      "modes": "просмотр",
+      "frames": [],
+      "cells": {
+        "btn-secondary": [
+          "M|warm-marker-restore.ts:47 '.btn ghost' in hp-dialog without ui-dialog (43)|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+        ],
+        "btn-primary": [
+          "M|warm-marker-restore.ts:48 '.btn on' Retry|styles/dialogs.styles.ts:34-47,styles/dialogs.styles.ts:48-58,styles/dialogs.styles.ts:59-65"
+        ],
+        "dialog-footer": [
+          "M|warm-marker-restore.ts:46 '.row' slot=footer|styles/dialogs.styles.ts:496-507,styles/dialogs.styles.ts:354-356"
+        ],
+        "dialog-shell": [
+          "K|warm-marker-restore.ts:43 <hp-dialog data-kind=marker-restore dismiss-on-scrim>|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476"
+        ],
+        "motion-open-close": [
+          "K|hp-dialog.ts:642-666"
+        ],
+        "empty/loading/error state": [
+          "M|warm-marker-restore.ts:45 plain text '.body role=status' (loading / load_failed)|styles/dialogs.styles.ts:357-360,styles/dialogs.styles.ts:471-476"
+        ]
+      },
+      "captureScenario": "marker-restore"
+    }
+  ],
+  "provenance": {
+    "auditIssue": 1131,
+    "auditBase": "72c63464a",
+    "auditComments": [
+      6510678147,
+      6510679549
+    ],
+    "reviewedSource": "ecada723a7853a553ede68edb05c988ef7a652a7",
+    "refreshMethod": "Review all 28 src files changed since the audit; map unchanged/retained line anchors with difflib; buckets use the approved criterion, not visual resemblance. Evidence paths are relative to src/.",
+    "changes": [
+      "#1132 main-panel 44px outlined controls remain M: their paint is still local; sidebar launcher remains M, gear overflow belongs to embedded cards.",
+      "#1132 removed kiosk summary buttons: remove those two cells, retain the carousel dots surface.",
+      "#1132 PDF checkbox now L (hpf-toggle + local label/input paint); resolve unknown PDF color control as M (own shadow CSS).",
+      "#1145 stairs warning now K; hpf-actions layout does not make the legacy .btn controls kit.",
+      "#1145 disabled/hover/error-token and wrapping fixes do not change other buckets; #1154 dialog-retirement guard and #1159/#1161 render reuse do not change surfaces."
+    ],
+    "unresolvedHistoricalFiles": []
+  },
+  "historicalLocalCssBlocks": {
+    "base": "72c63464a",
+    "blocks": [
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "34-65,350-353",
+        "del": 36,
+        "what": "Legacy card .btn system (+ .on/.ghost/.danger/[disabled])"
+      },
+      {
+        "file": "styles/plan.styles.ts",
+        "lines": "142",
+        "del": 1,
+        "what": "Dead declaration .header-action{padding:var(--sp-3)}"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "118",
+        "del": 1,
+        "what": "Dead declaration .header-menu-button{padding:var(--sp-3)}"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "167-173",
+        "del": 7,
+        "what": "Header icon-button group (zoom/rotate .zb)"
+      },
+      {
+        "file": "summary-panel-style.ts",
+        "lines": "6-39 (esp. 30, 36-39)",
+        "del": 2,
+        "what": "Base .summary-control paint still active in the header variant"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "120-162",
+        "del": 40,
+        "what": "Header gear menu (≤480)"
+      },
+      {
+        "file": "styles/toast.styles.ts + styles/base.styles.ts + styles/chrome.styles.ts",
+        "lines": "toast 11-17; base 156-160; chrome 510-516",
+        "del": 12,
+        "what": "Notice-card pattern x3 (toast, version-recovery card, view-runtime notice)"
+      },
+      {
+        "file": "styles/chrome.styles.ts + styles/plan.styles.ts",
+        "lines": "chrome 58-75; plan 167-181",
+        "del": 8,
+        "what": "Floating pill/badge pattern x2 (.farhint, .zoombadge)"
+      },
+      {
+        "file": "multiple",
+        "lines": "chrome.styles.ts:142; summary-panel-style.ts:53,64; help-surface.styles.ts:7; hp-settings-select.ts:36; editor-context-menu.styles.ts:8; base.styles.ts:35 (--shadow-2); dialogs.styles.ts:117",
+        "del": 0,
+        "what": "Floating-surface elevation: 8 distinct box-shadows"
+      },
+      {
+        "file": "multiple",
+        "lines": "chrome.styles.ts:162 (offset -2px), 310-313 (1px), panel-header.styles.ts:86 (2px), summary-panel-style.ts:36-39 (-3px), plan.styles.ts:664-667 (2px), 743-746 (4px), dialogs.styles.ts:607 (none)",
+        "del": 0,
+        "what": "Focus rings in view chrome"
+      },
+      {
+        "file": "multiple",
+        "lines": "chrome.styles.ts:23,161,249; panel-header.styles.ts:26,85; dialogs.styles.ts:425",
+        "del": 0,
+        "what": "Neutral grey hover/group tints"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "20-27,243-256",
+        "del": 4,
+        "what": "Tab-group containers .tabs and .modes"
+      },
+      {
+        "file": "styles/base.styles.ts + styles/dialogs.styles.ts",
+        "lines": "base 210-212; dialogs 131",
+        "del": 3,
+        "what": "Duplicate spinner keyframes"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "357-360,365-375,471-476 vs compact-dialog-styles.ts:13 vs info-card-styles.ts:8",
+        "del": 0,
+        "what": "Three sources set padding/background of hp-dialog .body"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "447-454",
+        "del": 8,
+        "what": "Legacy .floorrow"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "455-461",
+        "del": 7,
+        "what": "Legacy .floorrow .floorlvl (level pill)"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "589-608",
+        "del": 18,
+        "what": "Device issue sections (own card, h3, details/summary, button)"
+      },
+      {
+        "file": "styles/base.styles.ts",
+        "lines": "131-209,248-251",
+        "del": 45,
+        "what": "Version-recovery banner card + reload button + motion"
+      },
+      {
+        "file": "styles/chrome.styles.ts + styles/panel-header.styles.ts",
+        "lines": "chrome 179-180; panel-header 21-23",
+        "del": 2,
+        "what": "Compact space select ::part(control) padding overrides"
+      },
+      {
+        "file": "space-card.ts",
+        "lines": "1112-1125",
+        "del": 10,
+        "what": "Static card button .hp-static-btn"
+      },
+      {
+        "file": "hp-plan-converter-info.ts",
+        "lines": "29-31",
+        "del": 2,
+        "what": "Converter hint link restyles"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "67",
+        "del": 0,
+        "what": "farhint max-width uses undefined --sp-8"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "65-69",
+        "del": 5,
+        "what": ".btn transition/hover/primary-hover/danger-hover/disabled re-applied for settings forms and footers"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "34-64,350-353",
+        "del": 0,
+        "what": "second .btn system on --hp-*/--rad-*/--sp-* tokens (radius 8, padding 6px 10px, gap 6, icon 17px, tr"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "62",
+        "del": 1,
+        "what": ".hpf-settings-pane .ghost{border:1px solid line}"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "58-60,148-149",
+        "del": 5,
+        "what": "info 'strip' callout paint (3px inline-start info border, info 10% bg, radius 0) on .hpf-callout and"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "25-31,50-57,61",
+        "del": 6,
+        "what": "settings variant of kit card/head/label/toggle/hint (neutralise card, 13px titles, hide toggle icon,"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "43",
+        "del": 0,
+        "what": ".hpf-settings-form .hpf-input{background:var(--hpf-surface)}"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "151",
+        "del": 1,
+        "what": ".hpf-chip > button 28px round"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "207-209",
+        "del": 2,
+        "what": "generic ui-dialog text-input paint (padding 10px 12px, 13px/22px, hover/focus inset ring)"
+      },
+      {
+        "file": "summary-panel-editor-style.ts",
+        "lines": "91-133",
+        "del": 38,
+        "what": "summary switch track/thumb"
+      },
+      {
+        "file": "summary-panel-editor-style.ts",
+        "lines": "173-200,226-250,305-338",
+        "del": 55,
+        "what": "local paint on buttons that also carry class btn inside .ui-dialog (icon buttons, source, add, remov"
+      },
+      {
+        "file": "summary-panel-editor-style.ts",
+        "lines": "340-370",
+        "del": 28,
+        "what": "summary footer + footer button paint"
+      },
+      {
+        "file": "summary-panel-dialog-style.ts",
+        "lines": "7-40",
+        "del": 30,
+        "what": "summary dialog shell (radius 13/15, shadow 0 18px 60px, title 1.375rem, header 78px)"
+      },
+      {
+        "file": "hp-color-opacity.ts",
+        "lines": "426-453,463-479",
+        "del": 30,
+        "what": "colour picker inputs and confirm button own paint (radius 6, min-height 40, --divider-color)"
+      },
+      {
+        "file": "hp-color-opacity.ts",
+        "lines": "194-198,293-297",
+        "del": 4,
+        "what": "alpha checkerboard gradient"
+      },
+      {
+        "file": "hp-color-opacity.ts",
+        "lines": "238-259",
+        "del": 3,
+        "what": "picker popover surface"
+      },
+      {
+        "file": "editors/external-screens.ts",
+        "lines": "66-77",
+        "del": 4,
+        "what": "inline <style> in external screens section template (icon button !important overrides, row card radi"
+      },
+      {
+        "file": "styles/marker-alert-editor.styles.ts",
+        "lines": "5,16-17",
+        "del": 3,
+        "what": "alarm add/remove icon buttons"
+      },
+      {
+        "file": "hp-zigbee-topology-settings.ts",
+        "lines": "107",
+        "del": 1,
+        "what": ":host([embedded]) .hpf-actions{display:flex;...gap:10px 14px}"
+      },
+      {
+        "file": "hp-zigbee-topology-settings.ts",
+        "lines": "70-91",
+        "del": 18,
+        "what": "non-embedded layout CSS (.section,.toggle,.providers,.provider,.actions,textarea)"
+      },
+      {
+        "file": "styles/form-kit.styles.ts",
+        "lines": "186-208,219/392",
+        "del": 3,
+        "what": "KIT-INTERNAL: .hpf-select paint for native select that hp-settings-select always hides (::slotted(se"
+      },
+      {
+        "file": "hp-device-preview.ts",
+        "lines": "419-437,462-475",
+        "del": 20,
+        "what": "device preview card / badge / demo buttons"
+      },
+      {
+        "file": "styles/vacuum-settings.styles.ts",
+        "lines": "26,28",
+        "del": 2,
+        "what": "vacuum route card radius 12 / active badge on --divider-color/--primary-color"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "34-65,350-353",
+        "del": 30,
+        "what": "legacy .btn family (.btn, ha-icon size, pointer hover, .on, .ghost, [disabled], .danger)"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "225-242,454-489",
+        "del": 45,
+        "what": ".decorbar .bdhint/.dfill/hp-color-opacity and .editbar .warn/input/label/.hint/.drawwall/.wallsgroup"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "59-71,627-631",
+        "del": 14,
+        "what": ".areasel,.namein text-input paint"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "354-360,471-508",
+        "del": 25,
+        "what": "legacy hp-dialog body/footer (.row, .spacer, .body padding/gap, .body label)"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "379-398",
+        "del": 8,
+        "what": "danger-confirm body/object typography"
+      },
+      {
+        "file": "editors/properties/styles.ts",
+        "lines": "12-34",
+        "del": 20,
+        "what": "private --prop-* palette (18 light-dark() hex tokens) + local --hpf-* re-definitions"
+      },
+      {
+        "file": "editors/properties/styles.ts",
+        "lines": "61-70,76-96",
+        "del": 28,
+        "what": "overrides of kit .hpf-unit / .hpf-colorfield (height 36, radius 5, focus 1px)"
+      },
+      {
+        "file": "editors/properties/styles.ts",
+        "lines": "99-127,159-163",
+        "del": 18,
+        "what": "local button/textarea paints (.hp-prop-text, .hp-prop-choice, .hp-prop-settings, .hp-prop-variable, "
+      },
+      {
+        "file": "editor-secondary.styles.ts",
+        "lines": "11-17,33-71",
+        "del": 10,
+        "what": "tray surface (private --hp-editor-tray-* tokens, radius rad-l, shadow-2, blur) + open/close transiti"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "264-271",
+        "del": 3,
+        "what": ".furnpalette border-top/background/max-height"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "302-331",
+        "del": 8,
+        "what": ".furnitem tile paint incl. hover rgba(127,127,127,.18) and .on rgba(38,166,154,.18)"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "369,398",
+        "del": 2,
+        "what": "image checkerboard background + radius 4px"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "632-778",
+        "del": 15,
+        "what": "device inbox base paint (tabs, chips, badge, row border/bg, discovery border, empty)"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "451,456-457",
+        "del": 3,
+        "what": "rules dialog .rpat.bad #ff7a5c and .ract hover colours"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "28-58",
+        "del": 10,
+        "what": ".wallthick-dlg floating card + its number input"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "113-162",
+        "del": 25,
+        "what": ".header-menu (View header overflow menu) surface/items"
+      },
+      {
+        "file": "styles/plan.styles.ts",
+        "lines": "1541-1543,1663",
+        "del": 0,
+        "what": "tray draw-wall error/range hint and optimize dialog .alignmsg text"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "34-65",
+        "del": 32,
+        "what": "Legacy .btn family (.btn, ha-icon, hover, .on, .ghost, [disabled]) on --hp-*/--sp-*/--rad-* tokens"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "350-353",
+        "del": 4,
+        "what": ".btn.danger with hardcoded #b3402a / #ff7a5c"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "462-470",
+        "del": 9,
+        "what": ".backupwarn/.backuperror notes (hardcoded error colours)"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "447-461",
+        "del": 15,
+        "what": "Legacy .floorrow/.floorlvl"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "491-495",
+        "del": 0,
+        "what": "hp-dialog .body label {font-size, color --hp-muted, margin-top}"
+      },
+      {
+        "file": "styles/dialogs.styles.ts",
+        "lines": "354-376,471-476,496-508",
+        "del": 20,
+        "what": "Legacy hp-dialog .body/.row footer/.spacer/[form-shell] .body"
+      },
+      {
+        "file": "styles/chrome.styles.ts",
+        "lines": "409-413",
+        "del": 5,
+        "what": "Legacy .rhint"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "243-245",
+        "del": 3,
+        "what": ".supportwarning/.supportstatus/.supportupdate callout"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "228-247,252",
+        "del": 18,
+        "what": "Support/about paint (sections, headings, links, labels, textareas, attach, callouts, cards, summary)"
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "552-626",
+        "del": 25,
+        "what": "Support subject layout + borders/tints (.supportpreview/.supporterror/.supportsuccess/.supporthash.."
+      },
+      {
+        "file": "styles/editor-dialogs.styles.ts",
+        "lines": "496-551",
+        "del": 30,
+        "what": "Backup subject styles (upload, counts, plan-only, file/summary/content, details, choices, confirm)"
+      },
+      {
+        "file": "pdf/hp-pdf-dialog.ts",
+        "lines": "66-114",
+        "del": 38,
+        "what": "PDF dialog local kit replica: tokens, body, checkbox rows, footer row, .hpf-field, close-motion vars"
+      },
+      {
+        "file": "hp-dialog.ts",
+        "lines": "258",
+        "del": 1,
+        "what": "Consumer-specific [data-kind=pdf] header padding inside kit owner"
+      },
+      {
+        "file": "hp-dialog.ts",
+        "lines": "206-209,216-219",
+        "del": 4,
+        "what": "Close-rotate knobs (--hp-dialog-close-transition 160ms ease, --hp-dialog-close-hover-transform rotat"
+      },
+      {
+        "file": "styles/settings-dialogs.styles.ts",
+        "lines": "8",
+        "del": 2,
+        "what": "--hp-dialog-icon-size:40.48px"
+      },
+      {
+        "file": "hp-plan-converter-info.ts",
+        "lines": "29-33",
+        "del": 2,
+        "what": "Link overrides + duplicated reduced-motion"
+      },
+      {
+        "file": "styles/base.styles.ts",
+        "lines": "150-161",
+        "del": 6,
+        "what": "Version-recovery card surface"
+      },
+      {
+        "file": "styles/base.styles.ts",
+        "lines": "113-130",
+        "del": 8,
+        "what": "Empty-state button tweaks (.empty .btn, .empty-actions .btn)"
+      },
+      {
+        "file": "hp-zigbee-topology-settings.ts",
+        "lines": "87-93,98-100",
+        "del": 0,
+        "what": "Textarea paint (base + embedded textarea.hpf-input)"
+      },
+      {
+        "file": "hp-dialog.ts",
+        "lines": "141,339 vs src/hp-help.ts:78",
+        "del": 0,
+        "what": "Untokenized neutral hover fill rgb(127 127 127/.16) vs /.18"
+      }
+    ]
+  },
+  "capturePlans": {
+    "plan-chrome-overlays": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_infinite_canvas.mjs",
+      "checkpoint": "plan-chrome-overlays",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=plan-chrome-overlays node demo/smoke_infinite_canvas.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "kiosk-size-dialog": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_kiosk_scale_no_editor.mjs",
+      "checkpoint": "kiosk-size-dialog",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=kiosk-size-dialog node demo/smoke_kiosk_scale_no_editor.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "view-runtime-notice": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_view_runtime_kiosk_recovery.mjs",
+      "checkpoint": "view-runtime-notice",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=view-runtime-notice node demo/smoke_view_runtime_kiosk_recovery.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "continuity-recovery-overlay": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/capture_ui_kit_transients.mjs",
+      "checkpoint": "continuity-recovery-overlay",
+      "command": "HP_UI_KIT_CAPTURE_SURFACES=continuity-recovery-overlay node demo/capture_ui_kit_transients.mjs",
+      "renderer": "comparison-only synthetic fresh production continuity controller; native HA disconnect/ready; not reachability/lifecycle acceptance",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "boot-loading-states": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/capture_ui_kit_transients.mjs",
+      "checkpoint": "boot-loading-states",
+      "command": "HP_UI_KIT_CAPTURE_SURFACES=boot-loading-states node demo/capture_ui_kit_transients.mjs",
+      "renderer": "public synthetic HA transport and real product bundle",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "toasts": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_tap_run.mjs",
+      "checkpoint": "toasts",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=toasts node demo/smoke_tap_run.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "chrome-tooltip": {
+      "kind": "ui-lab",
+      "entry": "demo/ui-lab/ui-kit-audit.mjs",
+      "stage": "chrome-tooltip",
+      "command": "node demo/ui-lab/ui-kit-audit.mjs",
+      "renderer": "real pinned HA components, synthetic UI Lab data",
+      "artifacts": "artifacts/ui-kit-audit/*-chrome-tooltip.png + coverage.json"
+    },
+    "onboarding-space-dialog": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/capture_ui_kit_transients.mjs",
+      "checkpoint": "onboarding-space-dialog",
+      "command": "HP_UI_KIT_CAPTURE_SURFACES=onboarding-space-dialog node demo/capture_ui_kit_transients.mjs",
+      "renderer": "public synthetic HA transport and real product bundle",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "tap-confirm-dialog": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_tap_run.mjs",
+      "checkpoint": "tap-confirm-dialog",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=tap-confirm-dialog node demo/smoke_tap_run.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "onboarding-backdrop-guard": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/capture_ui_kit_transients.mjs",
+      "checkpoint": "onboarding-backdrop-guard",
+      "command": "HP_UI_KIT_CAPTURE_SURFACES=onboarding-backdrop-guard node demo/capture_ui_kit_transients.mjs",
+      "renderer": "public synthetic HA transport and real product bundle",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png",
+      "knownCurrentGap": "Empty-plan render omits the dialog although guard state exists. Capture records missing-before-1147; #1147 must make the native scenario show the actual dialog."
+    },
+    "static-space-card": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_space_card.mjs",
+      "checkpoint": "static-space-card",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=static-space-card node demo/smoke_space_card.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "editor-legacy-confirms": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_partition_openings.mjs",
+      "checkpoint": "editor-legacy-confirms",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=editor-legacy-confirms node demo/smoke_partition_openings.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "led-picker": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_led_strip_bind.mjs",
+      "checkpoint": "led-picker",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=led-picker node demo/smoke_led_strip_bind.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "stairs-dialog": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_stairs.mjs",
+      "checkpoint": "stairs-dialog",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=stairs-dialog node demo/smoke_stairs.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "backdrop-guard": {
+      "kind": "ui-lab",
+      "entry": "demo/ui-lab/ui-kit-audit.mjs",
+      "stage": "backdrop-guard",
+      "command": "node demo/ui-lab/ui-kit-audit.mjs",
+      "renderer": "real pinned HA components, synthetic UI Lab data",
+      "artifacts": "artifacts/ui-kit-audit/*-backdrop-guard.png + coverage.json"
+    },
+    "wall-thickness-popover": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_wallthick_standalone.mjs",
+      "checkpoint": "wall-thickness-popover",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=wall-thickness-popover node demo/smoke_wallthick_standalone.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "merge-rooms-dialog": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_merge_split.mjs",
+      "checkpoint": "merge-rooms-dialog",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=merge-rooms-dialog node demo/smoke_merge_split.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "physical-dialog": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_physical_body_characterization.mjs",
+      "checkpoint": "physical-dialog",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=physical-dialog node demo/smoke_physical_body_characterization.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "space-copy-dialog": {
+      "kind": "ui-lab",
+      "entry": "demo/ui-lab/ui-kit-audit.mjs",
+      "stage": "space-copy",
+      "command": "node demo/ui-lab/ui-kit-audit.mjs",
+      "renderer": "real pinned HA components, synthetic UI Lab data",
+      "artifacts": "artifacts/ui-kit-audit/*-space-copy.png + coverage.json"
+    },
+    "editor-loading": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/capture_ui_kit_transients.mjs",
+      "checkpoint": "editor-loading",
+      "command": "HP_UI_KIT_CAPTURE_SURFACES=editor-loading node demo/capture_ui_kit_transients.mjs",
+      "renderer": "public synthetic HA transport and real product bundle",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    },
+    "pdf-export": {
+      "kind": "ui-lab",
+      "entry": "demo/ui-lab/ui-kit-audit.mjs",
+      "stage": "pdf",
+      "command": "node demo/ui-lab/ui-kit-audit.mjs",
+      "renderer": "real pinned HA components, synthetic UI Lab data",
+      "artifacts": "artifacts/ui-kit-audit/*-pdf.png + coverage.json"
+    },
+    "zigbee-incomplete-reasons": {
+      "kind": "existing-capture",
+      "entry": "demo/smoke_zigbee_incomplete_reasons.mjs",
+      "command": "node demo/smoke_zigbee_incomplete_reasons.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/zigbee-incomplete-1005/{light,dark}-{1200,390}.png"
+    },
+    "marker-restore": {
+      "kind": "smoke-checkpoint",
+      "entry": "demo/smoke_warm_view_marker.mjs",
+      "checkpoint": "marker-restore",
+      "command": "HP_UI_KIT_CAPTURE_DIR=artifacts/ui-kit-capture HP_UI_KIT_CAPTURE_SURFACES=marker-restore node demo/smoke_warm_view_marker.mjs",
+      "renderer": "existing offline smoke fixture",
+      "artifacts": "artifacts/ui-kit-capture/*.json + *.png"
+    }
+  }
+}

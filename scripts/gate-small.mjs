@@ -70,6 +70,7 @@ export function parallelSteps(base) {
     { name: 'новый код не добавляет any', cmd: process.execPath, args: ['scripts/no-new-any.mjs', '--base', base, '--head', 'HEAD'] },
     { name: 'render не читает layout синхронно', cmd: process.execPath, args: ['scripts/render-layout-read.mjs'] },
     { name: 'CSS classes и keyframes имеют потребителей', cmd: process.execPath, args: ['scripts/css-orphans.mjs'] },
+    { name: 'UI Kit: CSS и реестр в полосе релизной базы', cmd: process.execPath, args: ['scripts/ui-kit-metrics.mjs', '--check'] },
     // #629: смоки не добавляют записей в приватное состояние карточки.
     { name: 'смоки не пишут в приватное состояние', cmd: process.execPath, args: ['scripts/no-new-private-writes.mjs', '--base', base, '--head', 'HEAD'], hint: 'window.__hpTest (docs/TESTING.md) или // private-ok: <причина>' },
     { name: 'смоки по диффу (smoke-select)', cmd: process.execPath, args: ['scripts/smoke-select.mjs', '--base', base, '--head', 'HEAD', '--json'], informational: true },

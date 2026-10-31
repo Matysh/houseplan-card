@@ -89,6 +89,7 @@ const out = await page.evaluate(async () => {
       bubbles: true, composed: true, cancelable: true,
     }));
     await settled();
+    await window.__hpUiCapture?.('stairs-dialog', 'hp-dialog[data-kind="stairs"]');
     return root().querySelector('[data-hp="dialog"][data-kind="stairs"]');
   };
   const saveDialog = async (dialog) => {

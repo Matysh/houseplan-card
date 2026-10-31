@@ -70,6 +70,7 @@ try {
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await installHpTestOnPage(page); await ready(); await retry().waitFor();
+  await page.evaluate(() => window.__hpUiCapture?.('view-runtime-notice', '[data-hp="view-runtime-notice"]'));
   await settle();
   const stage = await page.locator('houseplan-card .stage').boundingBox();
   assert.ok(stage && stage.width > 0 && stage.height > 0);

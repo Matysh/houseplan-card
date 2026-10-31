@@ -188,6 +188,8 @@ Object.assign(out, await page.evaluate(() => {
   return o;
 }));
 
+await page.evaluate(() => window.__hpUiCapture?.('plan-chrome-overlays', '.farhint'));
+
 // «Показать» / «Вписать всё» takes the stray in
 Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;

@@ -55,6 +55,7 @@ const out = await page.evaluate(async () => {
   const dev = c._devices.find((x) => x.id === (saved?.id ?? d.id)) || c._devices.find((x) => x.bindingRef === d.bindingRef);
   c._clickDevice({ stopPropagation() {} }, dev); await c.updateComplete;
   o.confirmDialogShown = !!c._tapConfirm && c._tapConfirm.text.includes('Шторы');
+  await window.__hpUiCapture?.('tap-confirm-dialog', 'hp-dialog:has([data-hp="dialog-confirm"])');
   c._tapConfirm = null; await c.updateComplete;
   o.cancelNoCall = calls.length === 0;
 
@@ -82,6 +83,7 @@ const out = await page.evaluate(async () => {
   calls.length = 0;
   c._clickDevice({ stopPropagation() {} }, dev2); await c.updateComplete;
   o.missingTargetSafe = calls.length === 0 && !!c._toast;
+  await window.__hpUiCapture?.('toasts', '[data-hp="toast"]');
 
   // очистка
   c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== (saved?.id ?? d.id));

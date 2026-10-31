@@ -42,6 +42,7 @@ await evaluate(() => window.__card._ledEditor.select('led-a'));
 await page.waitForTimeout(200);
 await page.click('[data-led-action="bind"]');
 await page.waitForTimeout(200);
+await page.evaluate(() => window.__hpUiCapture?.('led-picker', 'hp-dialog[data-kind="led-picker"]'));
 check('lights first in the picker', await evaluate(() => {
   const picks = [...window.__card.shadowRoot.querySelectorAll('[data-led-pick]')].map((b) => b.dataset.ledPick);
   const firstOther = picks.findIndex((id) => !['d_light1', 'd_lamp', 'd_bedlight'].includes(id));

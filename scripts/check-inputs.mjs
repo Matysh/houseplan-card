@@ -357,7 +357,7 @@ export const CHECKS = {
   frontend: {
     // npm run typecheck, npm test, npm run build, bundle:budget, lint:unused (#624)
     entries: ['test/*.test.mjs', 'scripts/no-new-any.mjs', 'scripts/no-new-private-writes.mjs', 'scripts/render-layout-read.mjs', 'scripts/bundle-budget.mjs',
-      'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs', 'scripts/frontend-proof.mjs'],
+      'scripts/fix-test-build.mjs', 'scripts/unused-locals-gate.mjs', 'scripts/ui-kit-metrics.mjs', 'scripts/frontend-proof.mjs'],
     // demo/helpers/** — область no-new-private-writes (#629): гейт читает их текст.
     roots: [...BUILD_INPUTS, '.nvmrc', '.python-version', 'assets/furniture/**', 'assets/moon/**', 'test/**', 'tsconfig*.json', 'scripts/monolith-baseline.json', 'demo/smoke_*.mjs', 'demo/benchmark_*.mjs', 'demo/guard/*.mjs', 'demo/helpers/**',
       // #937: the converter producer invokes tsc and reads fixture paths through

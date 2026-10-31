@@ -184,6 +184,7 @@ try {
   }
   await settle();
   out.jitterBelowFivePixelsPreservesDoubleTapDialog = await page.locator('hp-dialog[data-kind="physical"]').count() === 1;
+  await page.evaluate(() => window.__hpUiCapture?.('physical-dialog', 'hp-dialog[data-kind="physical"]'));
   const afterJitter = await sample();
   out.jitterNeverWritesOrRecordsGeometry = configEqual(afterJitter.space, beforeJitter.space)
     && afterJitter.history === beforeJitter.history && afterJitter.writes === beforeJitter.writes;

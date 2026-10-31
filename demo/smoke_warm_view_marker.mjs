@@ -51,6 +51,7 @@ for (const mode of ['success', 'close', 'permission', 'identity', 'disconnect', 
       window.__card = next; next.hass = window.__894Hass; parent.appendChild(next);
     }, `894 ${mode} remount`);
     await page.locator('#host houseplan-card hp-dialog[data-kind="marker-restore"]').waitFor();
+    await page.evaluate(() => window.__hpUiCapture?.('marker-restore', '#host houseplan-card hp-dialog[data-kind="marker-restore"]'));
     out[`${mode}:loading-is-visible-not-hidden-marker`] = await page.evaluate(() => {
       const c = window.__card; return !c._markerDialog && !c.renderRoot.querySelector('hp-dialog[data-kind="marker"]')
         && !!c.renderRoot.querySelector('hp-dialog[data-kind="marker-restore"]') && window.__894WarmWrites.length === 0;

@@ -24,6 +24,7 @@ await enter('merge');
 await page.evaluate((p)=>window.__card._mergeClick(p), await R(0.3,0.3));
 await page.evaluate((p)=>window.__card._mergeClick(p), await R(0.75,0.25));
 out.mergeDialog = (await S()).mergeDlg;
+await page.evaluate(() => window.__hpUiCapture?.('merge-rooms-dialog', 'hp-dialog'));
 await page.evaluate(()=>window.__card._commitMerge());
 let s = await S();
 out.mergeRooms = s.rooms.length;                          // 4→3

@@ -31,6 +31,9 @@ import {
 import {
   BASELINE_FILE, METRIC_BANDS, METRIC_NAMES, collectMetrics, readBaseline,
 } from './monolith-metrics.mjs';
+import {
+  UI_KIT_BASELINE_FILE, UI_KIT_BANDS, UI_KIT_METRICS, collectUiKitMetrics, readUiKitBaseline,
+} from './ui-kit-metrics.mjs';
 
 export const CORE_BUDGET_FILE = 'test/core-file-budget.test.mjs';
 export const BUNDLE_BUDGET_FILE = 'scripts/bundle-budget.mjs';
@@ -89,7 +92,7 @@ export function ratchetState(fact, ceiling, band) {
   return 'tight';
 }
 
-export function ratchetRows({ coreFacts = {}, coreCaps = {}, bundleFacts = {}, bundleCeilings = {}, metrics = {}, baseline = {} }) {
+export function ratchetRows({ coreFacts = {}, coreCaps = {}, bundleFacts = {}, bundleCeilings = {}, metrics = {}, baseline = {}, uiKitMetrics, uiKitBaseline }) {
   const rows = [];
   for (const [file, cap] of Object.entries(coreCaps)) {
     rows.push({ kind: 'core', name: file, fact: coreFacts[file], ceiling: cap, band: CORE_BAND });
@@ -99,6 +102,9 @@ export function ratchetRows({ coreFacts = {}, coreCaps = {}, bundleFacts = {}, b
   }
   for (const name of METRIC_NAMES) {
     rows.push({ kind: 'monolith', name, fact: metrics[name], ceiling: baseline?.[name], band: METRIC_BANDS[name] ?? 0 });
+  }
+  if (uiKitMetrics || uiKitBaseline) for (const name of UI_KIT_METRICS) {
+    rows.push({ kind: 'ui-kit', name, fact: uiKitMetrics?.[name], ceiling: uiKitBaseline?.[name], band: UI_KIT_BANDS[name] });
   }
   return rows.map((row) => ({ ...row, state: ratchetState(row.fact, row.ceiling, row.band) }));
 }
@@ -134,7 +140,8 @@ function measure(root, bundleRoot) {
   const bundleCeilings = Object.fromEntries(BUNDLE_CEILINGS.map((entry) => [entry.name, readConst(bundleSource, entry.name)]));
   const { metrics } = collectMetrics(root, { distDir: bundleRoot });
   const baseline = readBaseline(root) || {};
-  return { coreSource, bundleSource, coreCaps, coreFacts, bundleFacts, bundleCeilings, metrics, baseline };
+  const uiKitMetrics = collectUiKitMetrics(root), uiKitBaseline = readUiKitBaseline(root);
+  return { coreSource, bundleSource, coreCaps, coreFacts, bundleFacts, bundleCeilings, metrics, baseline, uiKitMetrics, uiKitBaseline };
 }
 
 if (isMainModule(import.meta.url)) {
@@ -163,8 +170,9 @@ if (isMainModule(import.meta.url)) {
       writeFileSync(resolve(root, BUNDLE_BUDGET_FILE), bundleSource);
       const baseline = Object.fromEntries(METRIC_NAMES.map((name) => [name, m.metrics[name]]));
       writeFileSync(resolve(root, BASELINE_FILE), `${JSON.stringify(baseline, null, 2)}\n`);
+      writeFileSync(resolve(root, UI_KIT_BASELINE_FILE), `${JSON.stringify(m.uiKitMetrics, null, 2)}\n`);
       for (const row of rows.filter((r) => r.state !== 'tight')) console.log(`${row.kind} ${row.name}: ${row.ceiling} → ${row.fact}`);
-      console.log(`потолки опущены до факта: ${CORE_BUDGET_FILE}, ${BUNDLE_BUDGET_FILE}, ${BASELINE_FILE} — закоммитить вместе с кандидатом беты`);
+      console.log(`потолки опущены до факта: ${CORE_BUDGET_FILE}, ${BUNDLE_BUDGET_FILE}, ${BASELINE_FILE}, ${UI_KIT_BASELINE_FILE} — закоммитить вместе с кандидатом беты`);
     } else {
       throw new Error('usage: ratchets.mjs report [--warn] | tighten');
     }

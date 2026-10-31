@@ -140,6 +140,9 @@ export async function finish(browser, out) {
  */
 export { requirePinnedBrowser };
 
+import { installUiKitCapture } from './helpers/ui-kit-capture.mjs';
+export { captureUiKitSurface } from './helpers/ui-kit-capture.mjs';
+
 async function launchInternal(
   preloadEditorRuntime,
   viewport = { width: 820, height: 760 },
@@ -161,6 +164,7 @@ async function launchInternal(
   const page = await (await browser.newContext({
     viewport, deviceScaleFactor: scale, ...contextOptions,
   })).newPage();
+  await installUiKitCapture(page);
   // audit T1: an exception inside the card used to be logged and ignored.
   // Подписка и регистрация — одной функцией: разъехавшись, они дали бы
   // страницу, чьи исключения считаются, но доставки которых никто не ждёт (#404).

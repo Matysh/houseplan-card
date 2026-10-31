@@ -5514,8 +5514,10 @@ their existing per-commit contract.
 `docs/release-ledger/cycle.json` explicitly binds the previous stable, the
 intended stable tag and an existing GitHub milestone number/title. Do not guess
 a milestone from an issue label or whichever milestone happens to be open.
-Current planning binds `v1.83.0` to milestone 9 (`1.83`), with `v1.82.0` as the
-previous stable (owner choice on #1005). If the owner chooses
+Current planning binds `v1.84.0` to milestone 11 (`1.84.0`), with `v1.83.0` as the
+previous stable. The next cycle opens with #1146 after the 1.83.0 publication;
+the planned target can be changed before release. The preceding 1.83.0 cycle
+used milestone 9 and base 1.82.0 (owner choice on #1005). If the owner chooses
 a different next stable (for example a hotfix), the release author explicitly
 updates that binding before collecting facts. After a stable ships, the next
 task opens the next cycle with the new base and reclassifies carried tasks;

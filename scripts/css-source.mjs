@@ -34,8 +34,8 @@ const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** Literal HTML chunks have expression sentinels, so quote boundaries remain
  * lexical. Text, comments and another attribute's quoted value are not class
  * attributes. Style/script children are never scanned as markup. */
-function htmlAttributes(text) {
-  const attributes = [];
+export function htmlTags(text) {
+  const tags = [];
   for (let i = 0; i < text.length;) {
     const open = text.indexOf('<', i);
     if (open < 0) break;
@@ -45,6 +45,7 @@ function htmlAttributes(text) {
     const tagStart = i;
     while (i < text.length && !/[\t\n\f\r />]/.test(text[i])) i++;
     const tag = text.slice(tagStart, i).toLowerCase();
+    const attributes = [];
     while (i < text.length && text[i] !== '>') {
       while (/[\t\n\f\r /]/.test(text[i] || '') && i < text.length) i++;
       if (text[i] === '>') break;
@@ -63,14 +64,17 @@ function htmlAttributes(text) {
       } else { const begin = i; while (i < text.length && !/[\t\n\f\r >]/.test(text[i])) i++; value = text.slice(begin, i); }
       attributes.push({ name, value });
     }
+    tags.push({ name: tag, start: open, end: i + 1, attributes });
     i++;
     if (tag === 'style' || tag === 'script') {
       const end = text.toLowerCase().indexOf('</' + tag, i);
       i = end < 0 ? text.length : end;
     }
   }
-  return attributes;
+  return tags;
 }
+
+const htmlAttributes = text => htmlTags(text).flatMap(tag => tag.attributes);
 
 export function namedOwner(node) {
   for (let current = node; current; current = current.parent) {

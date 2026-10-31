@@ -72,6 +72,7 @@ const res = await page.evaluate(async () => {
     card, explicitContent, unknownFit, tight, tightNoTitle,
     named, compact, compactNoButton,
   ].map(waitForStage));
+  await window.__hpUiCapture?.('static-space-card', 'houseplan-space-card .hp-static-stage');
 
   const frameOf = (el) => {
     const vb = el.renderRoot.querySelector('.hp-static-stage svg')?.viewBox?.baseVal;

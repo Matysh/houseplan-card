@@ -180,6 +180,7 @@ const out = await page.evaluate(async () => {
   result.deleteRequiresAccessibleListDialog = !!card._partitionDeleteDialog
     && root().querySelectorAll('hp-dialog li').length === 1
     && !!space.partitions?.length && !!space.openings?.length;
+  await window.__hpUiCapture?.('editor-legacy-confirms', 'hp-dialog[data-kind="confirm"]');
   card._partitionDeleteDialog = null;
   await update();
   result.deleteCancelIsMutationFree = !!space.partitions?.length && !!space.openings?.length;

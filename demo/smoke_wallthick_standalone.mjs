@@ -37,6 +37,7 @@ const out = await page.evaluate(async () => {
   result.partitionHit = partitionHit?.source?.kind === 'partition' && partitionHit.cm === 20;
   card._wallThickClick([0.75 * NORM_W, 0.2 * NORM_W]); await update();
   result.dialogOpen = !!card._wallDialog && card._wallDialog.source.kind === 'partition';
+  await window.__hpUiCapture?.('wall-thickness-popover', '.wallthick-dlg');
   const dlg = card.renderRoot.querySelector('.wallthick-dlg');
   result.noRoomButton = !!dlg && !dlg.textContent.includes(card._t('wallthick.apply_room'));
   card._wallDialog = { ...card._wallDialog, value: '35' };

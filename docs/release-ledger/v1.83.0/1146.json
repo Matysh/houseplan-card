@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1146,
+  "baseStable": "v1.83.0",
+  "category": "infra",
+  "rationale": "Compared with v1.83.0, adds the UI Kit source census, refreshed inventory, CSS-growth ratchets and synthetic comparison/capture tooling. No shipped product code, persisted configuration or user-visible runtime behaviour changes. Product migrations belong to #1147-#1150."
+}
