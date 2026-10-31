@@ -2080,7 +2080,6 @@
       "demo/smoke_opening_tunnel_fill.mjs",
       "demo/smoke_optimize_cleanup.mjs",
       "demo/smoke_optimize_coincident_partition.mjs",
-      "demo/smoke_optimize_contact_preflight.mjs",
       "demo/smoke_optimize_context.mjs",
       "demo/smoke_optimize_coordinate_canonicalization.mjs",
       "demo/smoke_optimize_geometry_preflight.mjs",
