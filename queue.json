@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 254,
+  "revision": 255,
   "nextTicket": 27,
   "nextFence": 26,
   "tasks": {
@@ -354,7 +354,8 @@
       "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
       "patchId": "4155815da86360ab7a73db1d74a587371e6cee65",
       "runId": 41350411535,
-      "status": "pending"
+      "status": "pending",
+      "presentation": {}
     }
   },
   "waiting": [
@@ -634,6 +635,34 @@
       "digest": "15221ccbe686cd1f9100f04d82dc2546a98860f643d310804db90ab6191db737",
       "issue": 1190
     },
+    "github:41350438850:1:spec:1153:spec-presentation": {
+      "digest": "c848b7ea83a40d853eb3371fef4f1d0d682d10b493d6adcb7bdc5167f45af97c",
+      "issue": 1153
+    },
+    "github:41350438850:1:spec:1153:spec-complete": {
+      "digest": "010f4524e137f882a0c9a81892fbd0014e4a294b1b710a82fc1f7a025707aaeb",
+      "issue": 1153
+    },
+    "github:41350438850:1:completions:metadata:0bae17b5-21fe-475c-8bbd-24357d55d10b:review-presentation:1153:spec:29a7e774c8fff74a1594": {
+      "digest": "44f0e2e5b0a34b523a507ac0ae59b19b9057cbd170966cd3c4c9effe936cc568",
+      "issue": 1153
+    },
+    "finish:17b52b52-6951-4f92-b89c-e841571982d8": {
+      "digest": "f9adb575dba93a6aa0e2047920cbae5dd3c74b1974d4d1e84c04b4af55c9ce58",
+      "issue": 1169
+    },
+    "github:41350844890:1:tick:0:review-presentation": {
+      "digest": "7defaf66735c32221976fbd159694fb1dd9f48094fb852522b62558eca64fc21",
+      "issue": 1190
+    },
+    "github:41350844890:1:tick:0:return": {
+      "digest": "113eeba0d4d16605a330f581a0867d72d90968b3a87dfdd0882e9057cb9eb205",
+      "issue": 1190
+    },
+    "finish:78989db7-9a70-4f1d-a6ad-a4c557ba3e63:finish:8:review-presentation": {
+      "digest": "1ba1be39d727016ffee015a098e4ff5c8fc57cfcb10248a6b2e6eda6f17f0167",
+      "issue": 1190
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -738,30 +767,6 @@
         "toStatus": "S7-code-review",
         "transitionConfirmed": true
       }
-    },
-    "github:41350438850:1:spec:1153:spec-presentation": {
-      "digest": "c848b7ea83a40d853eb3371fef4f1d0d682d10b493d6adcb7bdc5167f45af97c",
-      "issue": 1153
-    },
-    "github:41350438850:1:spec:1153:spec-complete": {
-      "digest": "010f4524e137f882a0c9a81892fbd0014e4a294b1b710a82fc1f7a025707aaeb",
-      "issue": 1153
-    },
-    "github:41350438850:1:completions:metadata:0bae17b5-21fe-475c-8bbd-24357d55d10b:review-presentation:1153:spec:29a7e774c8fff74a1594": {
-      "digest": "44f0e2e5b0a34b523a507ac0ae59b19b9057cbd170966cd3c4c9effe936cc568",
-      "issue": 1153
-    },
-    "finish:17b52b52-6951-4f92-b89c-e841571982d8": {
-      "digest": "f9adb575dba93a6aa0e2047920cbae5dd3c74b1974d4d1e84c04b4af55c9ce58",
-      "issue": 1169
-    },
-    "github:41350844890:1:tick:0:review-presentation": {
-      "digest": "7defaf66735c32221976fbd159694fb1dd9f48094fb852522b62558eca64fc21",
-      "issue": 1190
-    },
-    "github:41350844890:1:tick:0:return": {
-      "digest": "113eeba0d4d16605a330f581a0867d72d90968b3a87dfdd0882e9057cb9eb205",
-      "issue": 1190
     }
   },
   "devWebhook": {
