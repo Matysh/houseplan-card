@@ -1266,7 +1266,7 @@ const report = {
   mode,
   selection,
   selectionRevision: 'beta-75-2026-11-01',
-  capture: captureProvenance({ chromium, buildFingerprint }),
+  capture: captureProvenance({ chromium, buildFingerprint, root: ROOT }),
   generatedAt: new Date().toISOString(),
   matrixVersion: GOLDEN_MATRIX_VERSION,
   buildFingerprint,

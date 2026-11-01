@@ -31,6 +31,8 @@
  * `run.mjs`, который входит в корпус `sourceFingerprint`.
  */
 
+import { execFileSync } from 'node:child_process';
+
 /** Канон среды съёмки: Linux CI и WSL. */
 export const CAPTURE_CANON_PLATFORM = 'linux';
 
@@ -66,7 +68,7 @@ export const CAPTURE_PROVENANCE_SCHEMA = 2;
  * картинки с их происхождением.
  */
 export const captureProvenance = ({
-  chromium = null, buildFingerprint = null, source = process, env = process.env,
+  chromium = null, buildFingerprint = null, source = process, env = process.env, root,
 } = {}) => {
   const { platform, arch } = captureEnvironment(source);
   const run = String(env?.GITHUB_RUN_ID ?? '').trim();
@@ -74,6 +76,11 @@ export const captureProvenance = ({
   const repository = String(env?.GITHUB_REPOSITORY ?? '').trim();
   const sha = String(env?.GITHUB_SHA ?? '').trim();
   return {
+    // workflow_dispatch's event SHA can differ from the explicitly checked-out candidate.
+    // Keep both facts: material identity here, original workflow identity under ci.
+    ...(root ? { sourceSha: execFileSync('git', ['rev-parse', '--verify', 'HEAD'], {
+      cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
+    }).trim() } : {}),
     platform,
     arch,
     chromium: chromium || null,

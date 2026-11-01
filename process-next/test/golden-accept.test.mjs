@@ -8,6 +8,7 @@ import { GOLDEN_SCENARIOS } from '../../demo/golden/matrix.mjs';
 import { prepareGoldenSelection } from '../catalog/golden-selection.mjs';
 import { acceptGolden, goldenAcceptArguments } from '../catalog/golden-accept.mjs';
 import { digest } from '../lib/storage.mjs';
+import { captureProvenance } from '../../scripts/capture-environment.mjs';
 
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64');
 const variants = prepareGoldenSelection(GOLDEN_SCENARIOS).all;
@@ -107,6 +108,23 @@ test('captured candidate SHA must match HEAD when present; absence is explicit',
   assert.match(acceptGolden(f).warnings[0], /no candidate SHA/);
 });
 
+test('a dispatched capture identifies its checkout independently of the workflow event SHA', t => {
+  const f = fixture(t);
+  const git = (...args) => execFileSync('git', args, { cwd: f.root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }).trim();
+  git('init', '-q'); git('config', 'user.name', 'Golden fixture'); git('config', 'user.email', 'fixture@example.invalid');
+  git('config', 'core.hooksPath', path.join(f.root, 'no-hooks')); git('add', '.'); git('commit', '-qm', 'actual checked-out candidate');
+  const sourceSha = git('rev-parse', 'HEAD'), workflowSha = 'a'.repeat(40);
+  f.capture.capture = captureProvenance({ root: f.root, chromium: f.capture.chromium,
+    source: { platform: 'linux', arch: 'x64' },
+    env: { GITHUB_RUN_ID: '42', GITHUB_REPOSITORY: 'owner/repo', GITHUB_SHA: workflowSha } });
+  f.save();
+  const before = readFileSync(f.indexPath);
+  assert.equal(acceptGolden(f).sourceSha, sourceSha);
+  assert.equal(f.capture.capture.ci.sha, workflowSha, 'original event provenance is retained');
+  assert.deepEqual(readFileSync(f.indexPath), before, 'planning never approves or rewrites baselines');
+  git('commit', '--allow-empty', '-qm', 'another candidate');
+  assert.throws(() => acceptGolden(f), /differs from current checkout/);
+});
 test('CLI arguments preserve default dry-run and require an explicit execute flag', () => {
   const plan = goldenAcceptArguments(['--scenes=one,two', '--report=artifacts/report.json', '--decision=chat:owner']);
   assert.deepEqual(plan.scenes, ['one', 'two']);
