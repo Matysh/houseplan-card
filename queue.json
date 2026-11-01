@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 4,
+  "revision": 5,
   "nextTicket": 2,
   "nextFence": 2,
   "tasks": {
@@ -32,25 +32,20 @@
         "src/editors/properties/editor.ts",
         "src/houseplan-card.ts",
         "src/houseplan-editor-runtime.ts"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending"
+      }
     }
   },
   "ownerDecisions": {},
   "specReviews": {},
   "reviewPublications": {},
   "waiting": [],
-  "active": {
-    "issue": 1176,
-    "worker": "finish",
-    "token": "1:finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:finish:1:admit",
-    "fence": 1,
-    "materialSha": "6dfbe7f1e47a8fc78e60d08ce4c20ce01a1066b5",
-    "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
-    "phase": "testing",
-    "admittedAt": 1793552178238,
-    "expiresAt": 1793552537559,
-    "patchId": "3dad9af0db976395f9cbb1ba7aab2e58de69d3a1"
-  },
+  "active": null,
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
       "digest": "3f1d7ee030df92004fb10bdc8126518084bd5e0d0ae5d2b1e6b23dd3adbdf112",
@@ -66,6 +61,10 @@
     },
     "finish:dc2317a3-75f9-40bd-a69b-0948c24e0ed6": {
       "digest": "870b40f22af415799f9c572ddec1c4e28c6d34260425a9544e9e2be57daf2253",
+      "issue": 1176
+    },
+    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:finish:3:return": {
+      "digest": "49d641fbbce5710a137a1fb6a19fc00b6c81e562bf4dbf748e48ccf98665e08f",
       "issue": 1176
     }
   }
