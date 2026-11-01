@@ -2,6 +2,46 @@ import { css, unsafeCSS } from 'lit';
 import { settingsActionsCss } from './settings-action.styles';
 import { controlReducedMotionCss } from './ui-motion.styles';
 
+/** Finite compact reading scale, shared by editor panels, trays and dense lists. */
+export function readingTextCss(selector: string, variant: 'title' | 'heading' | 'caption' | 'label' | 'note' | 'tiny' | 'feature' | 'form-label' | 'body-note' | 'category' | 'action-heading' = 'caption', tone: 'primary' | 'secondary' | 'error' = 'secondary'): string {
+  const scale = {
+    title: { size: '17px', line: '1.4', weight: '600', spacing: '-.25px' },
+    'action-heading': { size:'16px', line:'24px', weight:'600', spacing:'normal' },
+    heading: { size: '13px', line: '1.4', weight: '650', spacing: '.08px' },
+    caption: { size: '12px', line: '1.4', weight: '400', spacing: 'normal' },
+    label: { size: '12px', line: '16px', weight: '400', spacing: 'normal' },
+    note: { size: '11px', line: '1.45', weight: '400', spacing: 'normal' },
+    tiny: { size: '10px', line: '1.4', weight: '400', spacing: 'normal' },
+    'body-note': { size:'13px', line:'1.6', weight:'400', spacing:'normal' },
+    category: { size:'12px', line:'1.4', weight:'400', spacing:'.04em' },
+    'form-label': { size:'13px', line:'22px', weight:'600', spacing:'normal' },
+    feature: { size: '12px', line: '16px', weight: '400', spacing: 'normal' },
+  }[variant];
+  const color = tone === 'primary' ? '--primary-text-color' : tone === 'error' ? '--error-color' : '--secondary-text-color';
+  return `${selector} { color:var(${color}); font-size:${scale.size}; font-weight:${scale.weight}; line-height:${scale.line}; letter-spacing:${scale.spacing};${variant === 'body-note' ? 'font-family:inherit;' : ''}${variant === 'category' ? 'text-transform:uppercase;' : ''} overflow-wrap:anywhere; }`;
+}
+
+/** Glyph geometry for compact labels and section headings; path art stays with its icon. */
+export function readingGlyphCss(selector: string, size: 'lock' | 'section' | 'normal' | 'preview' | 'avatar' = 'normal', tone: 'inherit' | 'primary' | 'secondary' | 'accent' = 'inherit'): string {
+  const pixels = { lock:10, section:15, normal:20, preview:22, avatar:28 }[size];
+  const color = tone === 'inherit' && size === 'section' ? 'secondary' : tone;
+  const token = { primary:'--primary-text-color', secondary:'--secondary-text-color', accent:'--primary-color' };
+  return `${selector} { width:${pixels}px; height:${pixels}px; flex:none;--mdc-icon-size:${pixels}px;${color === 'inherit' ? '' : `color:var(${token[color]});`} }`;
+}
+
+/** A docked editor is a reading surface, not an independent palette. */
+export function readingSidePanelCss(selector: string): string {
+  return `${selector} { color:var(--primary-text-color); background:var(--card-background-color); border-inline-start:1px solid var(--divider-color); font:14px/1.4 'Segoe UI',Arial,sans-serif; text-align:start; box-sizing:border-box; }`;
+}
+
+export function readingSeparatorCss(selector: string, edge: 'block-start' | 'inline-end' = 'block-start'): string {
+  return `${selector} { border-${edge}:1px solid var(--divider-color); }`;
+}
+
+export function readingShortcutCss(selector: string): string {
+  return `${selector} { border:1px solid var(--divider-color); border-radius:3px; background:var(--hpf-canvas,var(--secondary-background-color)); font:inherit; font-size:10px; line-height:1.4; padding:0 5px; }`;
+}
+
 /** Read-only kit: headings, cards, labelled values, status and floating badges. */
 export const readingKitStyles = unsafeCSS(css`
   .hpf-divider-before { border-block-start:1px solid var(--divider-color); }
@@ -25,6 +65,8 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-reading-entry > p { margin:4px 0; font-size:14px; line-height:1.5; white-space:pre-wrap; }
   .hpf-reading-entry code { display:block; min-width:0; font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; }
   .hpf-reading-row { display:flex; align-items:center; gap:12px; box-sizing:border-box; min-height:44px; font-size:13px; line-height:1.5; }
+  .hpf-reading-row.hpf-reading-choice { margin:0; padding:10px 12px; border-radius:7px; font-size:14px; line-height:24px; cursor:pointer; transition:background var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); }
+  .hpf-reading-choice:hover { background:var(--hpf-canvas,var(--secondary-background-color)); }
   .hpf-reading-row > ha-icon { flex:none; --mdc-icon-size:20px; color:var(--secondary-text-color); }
   .hpf-reading-row.on > ha-icon { color:var(--primary-color); }
   .hpf-reading-row > .hpf-reading-label { flex:1; }
@@ -57,6 +99,7 @@ export const readingKitStyles = unsafeCSS(css`
   .hpf-file-thumbnail { box-sizing:border-box; width:56px; height:40px; flex:none; object-fit:contain; border:1px solid var(--divider-color); border-radius:5px; background:#fff; }
   .hpf-file-preview { max-width:120px; max-height:70px; object-fit:contain; border:1px solid var(--divider-color); border-radius:5px; background:#fff; }
   .hpf-empty-state { box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:40px 24px; color:var(--primary-text-color); text-align:center; font-size:13px; line-height:1.5; }
+  .hpf-empty-state-list { padding:16px; }
   .hpf-empty-state > .big { --mdc-icon-size:56px; color:var(--primary-color); opacity:.7; }
   .hpf-empty-state > .muted { margin:0; color:var(--secondary-text-color); font-size:13px; }
   .hpf-empty-state-error { color:var(--secondary-text-color); padding:24px; }

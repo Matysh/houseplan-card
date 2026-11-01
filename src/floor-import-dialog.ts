@@ -1,5 +1,6 @@
 /** One presentation of the existing floor wizard; callers retain write guards. */
 import { html } from 'lit';
+import { callout, ensureFormKitStyles } from './editors/form-kit';
 import { ensureCompactDialogStyles, type CompactDialogHost } from './compact-dialog-styles';
 import { langOf, type I18nKey } from './i18n';
 
@@ -13,18 +14,19 @@ interface FloorImportHost extends CompactDialogHost {
 export function renderFloorImportDialog(host: FloorImportHost, manual: () => void, start: () => void,
   manualAction: 'import-manual' | 'import-create-space' = 'import-manual') {
   ensureCompactDialogStyles(host);
+  ensureFormKitStyles(host);
   const dialog = host._importDialog!, selected = dialog.floors.filter(floor => floor.checked).length;
   return html`<hp-dialog .hass=${host.hass} data-kind="import" class="ui-dialog" form-shell settings-layout compact wide
     .title=${host._t('import.title')} icon="mdi:home-floor-1" @hp-close=${() => (host._importDialog = null)}>
     <div class="body">
-      <div class="rhint">${host._t('import.hint')}</div>
-      ${dialog.floors.map((floor, index) => html`<label class="floorrow">
+      ${callout({ text:host._t('import.hint'), className:'floorhint' })}
+      ${dialog.floors.map((floor, index) => html`<label class="floorrow hpf-reading-row hpf-reading-choice">
         <input data-hp="field" data-field="import-floor" data-value=${floor.id} type="checkbox" .checked=${floor.checked}
           @change=${(event: Event) => {
             const floors = [...dialog.floors]; floors[index] = { ...floor, checked: (event.target as HTMLInputElement).checked };
             host._importDialog = { floors };
           }} />
-        <span>${floor.name}</span>${floor.level != null ? html`<span class="floorlvl">L${floor.level}</span>` : null}
+        <span>${floor.name}</span>${floor.level != null ? html`<span class="floorlvl hpf-state-chip">L${floor.level}</span>` : null}
       </label>`)}
       <hp-plan-converter-info .language=${langOf(host.hass, host._config?.language)}></hp-plan-converter-info>
     </div>

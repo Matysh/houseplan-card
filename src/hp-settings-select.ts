@@ -1,5 +1,6 @@
 import { LitElement, css, unsafeCSS, html, nothing, type TemplateResult } from 'lit';
 import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-motion';
+import { floatingSurfaceCss } from './styles/floating-surface.styles';
 import { settingsActionTransition } from './styles/settings-action.styles';
 import { controlReducedMotionCss } from './styles/ui-motion.styles';
 import { FloatingSurfaceController } from './floating-surface-controller';
@@ -15,7 +16,7 @@ export class HpSettingsSelect extends LitElement {
     _version: { state: true }, _open: { state: true }, _active: { state: true },
     pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
   };
-  static styles = unsafeCSS(css`
+  static styles = unsafeCSS(floatingSurfaceCss('.menu', '5px') + css`
     :host { display:block; position:relative; min-width:0; font:inherit; }
     ::slotted(select) { position:absolute!important; width:1px!important; height:1px!important;
       min-width:0!important; min-height:0!important; padding:0!important; margin:0!important;
@@ -33,10 +34,7 @@ export class HpSettingsSelect extends LitElement {
     button:focus-visible,.menu:focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color,#03a9f4)); outline-offset:2px; }
     button:disabled { opacity:.45; cursor:not-allowed; }
     .menu { position:fixed; inset:auto; margin:0; box-sizing:border-box; z-index:10000;
-      max-height:320px; overflow:auto; overscroll-behavior:contain; padding:5px; border-radius:10px;
-      border:1px solid var(--hpf-line,var(--divider-color,#7776));
-      background:var(--hpf-surface,var(--card-background-color,#202126)); color:var(--primary-text-color,#e6e7eb);
-      box-shadow:0 8px 28px #0003; font:inherit; opacity:0; }
+      max-height:320px; overflow:auto; overscroll-behavior:contain; font:inherit; opacity:0; }
     .menu.visible { opacity:1; }
     .menu:not(.visible) { pointer-events:none; }
     [role=option] { display:flex; gap:12px; align-items:center; min-height:44px; box-sizing:border-box;

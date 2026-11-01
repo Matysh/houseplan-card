@@ -136,7 +136,7 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
   // #1148: the shared form field owns Support too; the local copy is retired.
   const supportInput = parseRules(formKitCss({ ...CARD_DIALOG_FORM_KIT, parameterized: true }))
     .find(rule => rule.kind === 'rule'
-      && rule.selectors.includes('hp-dialog.ui-dialog :is(input[type=text],input[type=search],.supportmessage,.supportraw)'));
+      && rule.selectors.includes('hp-dialog.ui-dialog :is(input[type=text],input[type=search],.supportmessage,.supportraw,.namein,.areasel,.tempin)'));
   assert.ok(supportInput);
   assert.ok(supportInput.declarations.some(declaration =>
     declaration.replace(/\s+/g, '') === 'background:var(--hpf-surface)'));

@@ -821,7 +821,7 @@ export class PropertiesEditor {
           @change=${(e: Event) => { dialog.attribute = (e.target as HTMLSelectElement).value; this.host.requestUpdate(); }}>
           <option value="" ?selected=${!dialog.attribute}>${this.t('state')}</option>${attributes.map(key => html`<option value=${key} ?selected=${dialog.attribute===key}>${key}</option>`)}
         </select></hp-settings-select>
-        <div class="hp-prop-preview"><div>${this.t('preview')}</div><strong>${preview}</strong></div>
+        <div class="hp-prop-preview hpf-reading-block hpf-reading-padded"><div>${this.t('preview')}</div><strong class="hpf-heading">${preview}</strong></div>
         ${text.length > 200 ? html`<p role="alert" class="hp-prop-error">${this.t('text_limit')}</p>` : nothing}
         ${error ? html`<p role="alert" class="hp-prop-error">${this.t(error.key as PropertiesString, error.values)}</p>` : nothing}
       </div>

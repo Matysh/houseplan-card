@@ -1,6 +1,8 @@
 # Project status
 
-UI Kit settings content (#1149) uses common color fields/popovers, preview actions, Summary toggles, Zigbee notes, external-screen controls, radar fields and vacuum callouts/actions. Settings registry has M=0 and10 explicit L boundaries. Shared paint adopts once per ShadowRoot; configuration and HA-write contracts remain unchanged. Editor compact variants and legacy button retirement are the dependent #1150 package.
+UI Kit final editor package (#1150) uses shared finite compact action/field variants, reading surfaces and floating paint. Legacy global button paint and --prop-* are retired. The unchanged census measures6223 CSS lines, btnRulesOutsideKit=0 and editor M=14; retained boundaries are listed individually in docs/design/ui-kit-audit-1150.json. Settings, View, kiosk and dialogs keep44px targets; editor tool dimensions and36px Properties fields are preserved.
+
+UI Kit settings content (#1149) uses common color fields/popovers, preview actions, Summary toggles, Zigbee notes, external-screen controls, radar fields and vacuum callouts/actions. Settings registry has M=0 and10 explicit L boundaries. Shared paint adopts once per ShadowRoot; configuration and HA-write contracts remain unchanged. The final compact editor migration is recorded under #1150.
 
 Static dashboard openings (#1171) use the full plan's room-wall/partition/legacy
 projection for symbols, masonry cuts, tunnel fills and state-independent frames.

@@ -7,6 +7,7 @@ import { physicalCandidateProof, commitEditedSpaceModel, adoptEditedSpaceModelIn
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
+import { callout, disclosure } from './editors/form-kit';
 import { html, svg, nothing, TemplateResult } from 'lit';
 import { LazyBackupArchiveClient } from './backup-archive-lazy';
 import type { BackupExportState, ArchiveSummary } from './backup-archive-client';
@@ -9034,9 +9035,9 @@ public _renderSupportDialog(): TemplateResult {
     return html`<hp-dialog id="support-dialog" class="ui-dialog" form-shell settings-layout .hass=${this.host.hass} data-kind="support"
       .title=${this.host._t('support.title')} icon="mdi:help-circle-outline" wide dismiss-on-scrim
       @hp-close=${() => void this._closeSupportDialog()}>
-        <div class="body supportbody">
+        <div class="body supportbody hpf-form">
           <section class="supportsection" aria-labelledby="support-about-heading">
-            <h3 id="support-about-heading">${st('support.about_group')}</h3>
+            <h3 class="hpf-heading" id="support-about-heading">${st('support.about_group')}</h3>
             <div class="aboutver">${this.host._t('gs.about_version', { v: displayVersion(CARD_VERSION) })}${runningBuild ? html` · dev <a class="aboutlink" href="https://github.com/Matysh/houseplan-card/commit/${runningBuild.source}" target="_blank" rel="noopener noreferrer">${runningBuild.source.slice(0, 8)}</a>` : nothing}</div>
             <div class="supportlinks">
               <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener noreferrer">
@@ -9046,13 +9047,13 @@ public _renderSupportDialog(): TemplateResult {
             </div>
           </section>
           <section class="supportsection" aria-labelledby="support-docs-heading">
-            <h3 id="support-docs-heading">${st('support.guide_group')}</h3>
+            <h3 class="hpf-heading" id="support-docs-heading">${st('support.guide_group')}</h3>
             <a class="aboutlink" href=${guideUrl} target="_blank" rel="noopener noreferrer">
               <ha-icon icon="mdi:book-open-page-variant-outline"></ha-icon>${st('support.guide')}</a>
           </section>
           ${compatible ? html`
             <section class="supportsection supportform" aria-labelledby="support-form-heading">
-              <h3 id="support-form-heading">${st('support.form_group')}</h3>
+              <h3 class="hpf-heading" id="support-form-heading">${st('support.form_group')}</h3>
               <label for="support-contact">${st('support.contact')}</label>
               <input data-hp="field" data-field="support-contact" id="support-contact" class="namein" type="text" autocomplete="off"
                 aria-invalid=${contactInvalid ? 'true' : 'false'}
@@ -9070,7 +9071,7 @@ public _renderSupportDialog(): TemplateResult {
                 @input=${(event: Event) => this._updateSupportDraft(
                   'message', (event.target as HTMLTextAreaElement).value,
                 )}></textarea>
-              <label class="srcrow supportattach">
+              <label class="hpf-check hpf-check-wrap srcrow supportattach">
                 <input data-hp="field" data-field="support-attach" type="checkbox" .checked=${state.attach} aria-describedby="support-attach-hint"
                   ?disabled=${busy || state.status === 'success'}
                   @change=${(event: Event) => void this._setSupportAttachment(
@@ -9080,15 +9081,15 @@ public _renderSupportDialog(): TemplateResult {
               </label>
               <p id="support-attach-hint" class="rhint">${st(packageVersion === 2 ? 'support.attach_hint' : 'support.attach_hint_legacy')}</p>
               ${packageVersion === 1 ? html`<p class="rhint" role="note">${st('support.legacy_diagnostics')}</p>` : nothing}
-              ${state.attach ? html`<p class="supportwarning" role="note">
-                <ha-icon icon="mdi:shield-alert-outline"></ha-icon>
+              ${state.attach ? html`${callout({ className:'supportwarning', kind:'warning', role:'note', icon:'mdi:shield-alert-outline', body:html`
+
                 <span>${st('support.geometry_warning')}</span>
-              </p>` : nothing}
-              ${state.status === 'building' ? html`<div class="supportstatus" role="status" aria-live="polite">
-                <ha-icon icon="mdi:progress-clock"></ha-icon>${st('support.building')}
-              </div>` : nothing}
+              ` })}` : nothing}
+              ${state.status === 'building' ? html`${callout({ className:'supportstatus', kind:'info', role:'status', icon:'mdi:progress-clock', live:'polite', body:html`
+                ${st('support.building')}
+              ` })}` : nothing}
               ${state.attach && state.preview ? html`
-                <div class="supportpreview">
+                <div class="supportpreview hpf-reading-block hpf-reading-padded">
                   <div class="supportsummary">${st('support.preview_summary', {
                     version: state.preview.version,
                     spaces: state.preview.spaces,
@@ -9104,14 +9105,11 @@ public _renderSupportDialog(): TemplateResult {
                     </li>`)}</ul>
                   </section>` : nothing}
                   <div class="rhint">${st('support.prepared', { n: preparedMinutes })}</div>
-                  <details ?open=${state.rawOpen}
-                    @toggle=${(event: Event) => this._supportPatch(state.draftId, {
-                      rawOpen: (event.currentTarget as HTMLDetailsElement).open,
-                    })}>
-                    <summary data-hp="action" data-action="support-preview">${st('support.show_data')}</summary>
+                  ${disclosure({ title:st('support.show_data'), action:'support-preview', open:state.rawOpen,
+                    onToggle:open => this._supportPatch(state.draftId,{ rawOpen:open }), content:html`
                     ${state.rawOpen ? html`<textarea data-hp="field" data-field="support-preview-text" class="supportraw" readonly
                       .value=${state.preview.text}></textarea>` : nothing}
-                  </details>
+                  ` })}
                   <div class="supportactions">
                     <button data-hp="action" data-action="support-download" type="button" class="btn ghost" @click=${() => this._downloadSupportPreview()}>
                       <ha-icon icon="mdi:download"></ha-icon>${st('support.download')}
@@ -9124,10 +9122,10 @@ public _renderSupportDialog(): TemplateResult {
                 </div>` : nothing}
               <p class="rhint supportprivacy">${st('support.privacy')}</p>
               ${state.status === 'error' ? html`
-                <div id="support-error" class="supporterror" role="alert" tabindex="-1">
+                ${callout({ className:'supporterror', kind:'danger', role:'alert', id:'support-error', focusable:true, body:html`<div class="supportcopy">
                   <strong>${st('support.error_title')}</strong>
                   <span>${this._supportErrorText(state)}</span>
-                </div>` : nothing}
+                </div>` })}` : nothing}
               ${state.status === 'error' && state.attach && !state.preview ? html`
                 <div class="supportactions">
                   <button data-hp="action" data-action="support-refresh" type="button" class="btn ghost"
@@ -9136,7 +9134,7 @@ public _renderSupportDialog(): TemplateResult {
                   </button>
                 </div>` : nothing}
               ${manualRecovery ? html`
-                <div class="supportmanual">
+                <div class="supportmanual hpf-reading-block hpf-reading-padded">
                   <strong>${st('support.manual_recovery')}</strong>
                   <div class="supportactions">
                     <button data-hp="action" data-action="support-copy-message" type="button" class="btn ghost" @click=${() => void this._copySupportText(
@@ -9149,17 +9147,17 @@ public _renderSupportDialog(): TemplateResult {
                   </div>
                 </div>` : nothing}
               ${state.status === 'success' ? html`
-                <div id="support-receipt" class="supportsuccess" role="status" aria-live="polite" tabindex="-1">
+                ${callout({ className:'supportsuccess', kind:'success', role:'status', id:'support-receipt', live:'polite', focusable:true, body:html`<div class="supportcopy">
                   <strong>${st('support.success', { id: state.reportId })}</strong>
                   <button data-hp="action" data-action="support-copy-id" type="button" class="btn ghost" @click=${() => void this._copySupportText(
                     state.reportId, 'support.id_copied',
                   )}>${st('support.copy_id')}</button>
-                </div>` : nothing}
+                </div>` })}` : nothing}
             </section>` : html`
-            <div class="supportupdate" role="status">
-              <ha-icon icon="mdi:update"></ha-icon>
+            ${callout({ className:'supportupdate', kind:'info', role:'status', icon:'mdi:update', body:html`
+
               <span>${st('support.update_required')}</span>
-            </div>`}
+            ` })}`}
         </div>
         <div class="row supportfooter" slot="footer">
           <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => void this._closeSupportDialog()}>
@@ -9478,17 +9476,17 @@ public _renderBackupExportDialog(): TemplateResult {
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => this._closeBackupExport()}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
-        <label class="srcrow"><input data-hp="field" data-field="backup-kind" data-value="full" type="radio" name="backup-kind" value="full"
+        <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="full" type="radio" name="backup-kind" value="full"
           .checked=${d.kind === 'full'}
           ?disabled=${d.busy} @change=${() => this.backupTransfer.selectKind('full')} />
           <span>${this.host._t('backup.full')}</span></label>
-        <label class="srcrow"><input data-hp="field" data-field="backup-kind" data-value="space" type="radio" name="backup-kind" value="space"
+        <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="backup-kind" data-value="space" type="radio" name="backup-kind" value="space"
           .checked=${d.kind === 'space'} ?disabled=${d.busy || !currentSpace}
           @change=${() => this.backupTransfer.selectKind('space')} />
           <span>${currentSpace
             ? this.host._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
             : this.host._t('backup.no_current_space')}</span></label>
-        ${d.kind === 'space' && currentSpace ? html`<label class="srcrow backupplanonly">
+        ${d.kind === 'space' && currentSpace ? html`<label class="hpf-check hpf-check-wrap srcrow backupplanonly">
           <input data-hp="field" data-field="backup-plan-only" type="checkbox" .checked=${d.planOnly} ?disabled=${d.busy}
             @change=${(event: Event) => {
               this.backupTransfer.selectKind('space');
@@ -9501,8 +9499,8 @@ public _renderBackupExportDialog(): TemplateResult {
         ${d.kind === 'full' ? html`<div class="rhint">${this._toolsT(this.host.hass?.user?.is_admin === true ? 'backup.zip_format' : 'backup.json_legacy')}</div>` : nothing}
         ${this.backupTransfer.renderSummary((key, values) => this._toolsT(key, values), d.archive)}
         ${this.backupTransfer.renderRecovery((key, values) => this._toolsT(key, values), recovery, true)}
-        <div class="backupwarn">${d.kind === 'full' && this.host.hass?.user?.is_admin === true ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}</div>
-        ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
+        ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${d.kind === 'full' && this.host.hass?.user?.is_admin === true ? this._toolsT('backup.zip_privacy_warning') : this.host._t('backup.privacy_warning')}` })}
+        ${d.error ? html`${callout({ className:'backuperror', kind:'danger', role:'alert', body:html`${d.error}` })}` : nothing}
       </div>
       <div class="row" slot="footer">
         <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => this._closeBackupExport()}>${this.host._t('btn.cancel')}</button>
@@ -9561,13 +9559,13 @@ public _renderBackupImportDialog(): TemplateResult {
     return html`<hp-dialog form-shell settings-layout compact class="ui-dialog" .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => this._closeBackupImport()}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
-        <div class="backupfile"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
+        <div class="backupfile hpf-reading-entry"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
         ${d.busy && !p ? html`<div class="rhint" role="status" aria-live="polite">${this.host._t('backup.reading')}</div>` : nothing}
-        ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
+        ${d.error ? html`${callout({ className:'backuperror', kind:'danger', role:'alert', body:html`${d.error}` })}` : nothing}
         ${p ? html`
-          <div class="backupsummary">
+          <div class="backupsummary hpf-reading-entry">
             <b>${this.host._t(p.kind === 'full' ? 'backup.full' : 'backup.current_space')}</b>
-            ${p.plan_only ? html`<span class="backupplanonlystatus">${this.host._t('backup.plan_only_preview')}</span>` : nothing}
+            ${p.plan_only ? html`<span class="backupplanonlystatus hpf-tag">${this.host._t('backup.plan_only_preview')}</span>` : nothing}
             <span>${this.host._t(p.source === 'same' ? 'backup.same_source' : 'backup.foreign_source')}</span>
             <span>${this.host._t('backup.created', { value: p.created_at || '—' })}</span>
             <span>${this.host._t('backup.versions', {
@@ -9600,25 +9598,22 @@ public _renderBackupImportDialog(): TemplateResult {
             active: String(p.bindings.active || 0), disabled: String(p.bindings.disabled || 0),
             missing: String(p.bindings.missing || 0),
           })}</div>` : nothing}
-          ${p.missing_areas?.length ? html`<div class="backupwarn">${this.host._t('backup.missing_areas', {
+          ${p.missing_areas?.length ? html`${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${this.host._t('backup.missing_areas', {
             areas: p.missing_areas.join(', '),
-          })}</div>` : nothing}
-          ${droppedLinks ? html`<div class="backupwarn">${this.host._t('backup.dropped_marker_links', {
+          })}` })}` : nothing}
+          ${droppedLinks ? html`${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${this.host._t('backup.dropped_marker_links', {
             n: String(droppedLinks),
-          })}</div>` : nothing}
+          })}` })}` : nothing}
           ${rehostedOpenings ? html`<div class="rhint">${this._toolsT('backup.openings_rehosted', {
             n: String(rehostedOpenings),
           })}</div>` : nothing}
-          ${keptOffWalls ? html`<div class="backupwarn">${this._toolsT('backup.openings_detached', {
+          ${keptOffWalls ? html`${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${this._toolsT('backup.openings_detached', {
             n: String(keptOffWalls),
-          })}</div>` : nothing}
-          ${repairExamples.length ? html`<details class="backupdetails">
-            <summary data-hp="action" data-action="backup-openings-details">${this._toolsT('backup.openings_details')}</summary>
-            <div>${repairExamples.map((item) => html`<span>${item.space_title || item.space_id} — ${this.host._t(
+          })}` })}` : nothing}
+          ${repairExamples.length ? html`${disclosure({ className:'backupdetails hpf-reading-block hpf-reading-padded', action:'backup-openings-details', title:this._toolsT('backup.openings_details'), content:html`<div class="backupdetailrows">${repairExamples.map((item) => html`<span>${item.space_title || item.space_id} — ${this.host._t(
               item.type === 'window' ? 'opening.window' : item.type === 'passage' ? 'opening.passage'
                 : item.type === 'gate' ? 'opening.gate' : 'opening.door',
-            )} (${item.opening_id})</span>`)}</div>
-          </details>` : nothing}
+            )} (${item.opening_id})</span>`)}</div>` })}` : nothing}
           ${this.host._ledNote(p)}
           ${draftMigration.room_drafts || draftMigration.room_draft_segments ? html`
             <div class="rhint">${this.host._t('backup.room_drafts_migrated', {
@@ -9629,33 +9624,30 @@ public _renderBackupImportDialog(): TemplateResult {
             n: String(p.repaired_target_refs),
           })}</div>` : nothing}
           ${p.preserved_unresolved_refs ? html`
-            <div class="backupwarn">${this.host._t('backup.preserved_unresolved_refs', {
+            ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${this.host._t('backup.preserved_unresolved_refs', {
               n: String(p.preserved_unresolved_refs),
-            })}<br />${this.host._t('backup.preserved_unresolved_hint')}</div>
+            })}<br />${this.host._t('backup.preserved_unresolved_hint')}` })}
           ` : nothing}
-          ${reportRows.length ? html`<details class="backupdetails">
-            <summary data-hp="action" data-action="backup-import-details">${this.host._t('backup.import_details')}</summary>
-            <div>
+          ${reportRows.length ? html`${disclosure({ className:'backupdetails hpf-reading-block hpf-reading-padded', action:'backup-import-details', title:this.host._t('backup.import_details'), content:html`<div class="backupdetailrows">
               ${reportRows.map(([key, value]) => html`<span>${this.host._t(
                 `backup.import_detail.${key}`, { n: String(value) },
               )}</span>`)}
               ${(report.examples || []).slice(0, 8).map((item) => html`
                 <code>${item.owner} → ${item.reference}</code>
               `)}
-            </div>
-          </details>` : nothing}
+            </div>` })}` : nothing}
           ${p.kind === 'full' ? html`
-            <div class="backupwarn">${this.host._t('backup.replace_warning')}</div>
+            ${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`${this.host._t('backup.replace_warning')}` })}
             ${p.source === 'foreign' ? html`<div class="rhint">${this.host._t('backup.foreign_bookkeeping')}</div>` : nothing}` : html`
-            <div class="backupsummary"><b>${this.host._t('backup.final_name')}</b><span>${p.space_title}</span></div>
+            <div class="backupsummary hpf-reading-entry"><b>${this.host._t('backup.final_name')}</b><span>${p.space_title}</span></div>
             <div class="rhint">${this.host._t('backup.target_settings')}</div>
-            ${p.duplicates ? html`<fieldset class="backupchoices"><legend>${this.host._t('backup.duplicates', { n: String(p.duplicates) })}</legend>
-              <label><input data-hp="field" data-field="duplicate-policy" data-value="skip" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
+            ${p.duplicates ? html`<fieldset class="backupchoices hpf-reading-block hpf-reading-padded"><legend>${this.host._t('backup.duplicates', { n: String(p.duplicates) })}</legend>
+              <label class="hpf-check hpf-check-wrap"><input data-hp="field" data-field="duplicate-policy" data-value="skip" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
                 @change=${() => this._setBackupDuplicatePolicy('skip')} />${this.host._t('backup.skip')}</label>
-              <label><input data-hp="field" data-field="duplicate-policy" data-value="virtual" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
+              <label class="hpf-check hpf-check-wrap"><input data-hp="field" data-field="duplicate-policy" data-value="virtual" type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
                 @change=${() => this._setBackupDuplicatePolicy('virtual')} />${this.host._t('backup.virtual_copy')}</label>
             </fieldset>` : nothing}`}
-          ${p.content?.length ? html`<div class="backupcontent">
+          ${p.content?.length ? html`<div class="backupcontent hpf-reading-block hpf-reading-padded">
             <b>${this.host._t('backup.content')}</b>
             ${decorContent.length ? html`<span>${this.host._t('backup.decor_images_summary', {
               assets: decorAssetCount, objects: decorContent.length,
@@ -9667,7 +9659,7 @@ public _renderBackupImportDialog(): TemplateResult {
                   : 'backup.content_detach_required',
             )}</span>`)}
           </div>` : nothing}
-          ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
+          ${p.confirmation_required ? html`<label class="hpf-check hpf-check-wrap srcrow backupconfirm">
             <input data-hp="field" data-field="backup-confirm-missing" type="checkbox" .checked=${d.confirmMissing}
               @change=${(e: Event) => (this.host._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
             <span>${confirmText}</span>
@@ -9885,7 +9877,7 @@ public _renderRulesDialog(): TemplateResult {
           </div>
           ${d.rules.map((r, i) => {
             const bad = r.pattern.trim() !== '' && !isValidPattern(r.pattern);
-            return html`<div class="rrow">
+            return html`<div class="rrow hpf-reading-row hpf-reading-entry">
               <input data-hp="field" data-field="icon-rule-pattern" class="namein rpat ${bad ? 'bad' : ''}" type="text"
                 placeholder=${this.host._t('rules.pattern_ph')}
                 title=${bad ? this.host._t('rules.invalid') : ''}
@@ -10609,25 +10601,25 @@ public _renderOpeningDialog(): TemplateResult {
                   : this.host._t('opening.host_partition')}</span>
             </div>` : nothing}
           <label>${this.host._t('opening.type_label')}</label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="window" type="radio" name="optype" .checked=${d.type === 'window'}
+          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="window" type="radio" name="optype" .checked=${d.type === 'window'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.window')}</span></label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="door" type="radio" name="optype" .checked=${d.type === 'door'}
+          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="door" type="radio" name="optype" .checked=${d.type === 'door'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.door')}</span></label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="passage" type="radio" name="optype" .checked=${d.type === 'passage'}
+          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="passage" type="radio" name="optype" .checked=${d.type === 'passage'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'passage', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('passage'),
               contactOpen: false, lockOpen: false,
             })} />
             <span>${this.host._t('opening.passage')}</span></label>
-          <label class="srcrow"><input data-hp="field" data-field="optype" data-value="gate" type="radio" name="optype" .checked=${d.type === 'gate'}
+          <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="optype" data-value="gate" type="radio" name="optype" .checked=${d.type === 'gate'}
             @change=${() => (this.host._openingDialog = {
               ...d, type: 'gate',
               lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('gate'), flipH: false,
@@ -10653,7 +10645,7 @@ public _renderOpeningDialog(): TemplateResult {
             ? html`<label>${this.host._t('opening.contact_label')}</label>
                 ${picker('contact', this._contactCandidates())}
                 ${d.contact
-                  ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this.host._openingDialog = { ...d, invert: v }), false, 'opening-contact-invert')}
+                  ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.invert, (v) => (this.host._openingDialog = { ...d, invert: v }), false, 'opening-contact-invert')}
                       <span>${this.host._t('opening.invert')}</span></label>`
                   : nothing}`
             : nothing}
@@ -10664,11 +10656,11 @@ public _renderOpeningDialog(): TemplateResult {
             : nothing}
 
           ${d.type !== 'gate' && d.type !== 'passage'
-            ? html`<label class="srcrow">${this._boolInput(d.flipH, (v) => (this.host._openingDialog = { ...d, flipH: v }), false, 'opening-flip-horizontal')}
+            ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.flipH, (v) => (this.host._openingDialog = { ...d, flipH: v }), false, 'opening-flip-horizontal')}
                 <span>${this.host._t('opening.flip_h')}</span></label>`
             : nothing}
           ${d.type !== 'passage'
-            ? html`<label class="srcrow">${this._boolInput(d.flipV, (v) => (this.host._openingDialog = { ...d, flipV: v }), false, 'opening-flip-vertical')}
+            ? html`<label class="hpf-check hpf-check-wrap srcrow">${this._boolInput(d.flipV, (v) => (this.host._openingDialog = { ...d, flipV: v }), false, 'opening-flip-vertical')}
                 <span>${this.host._t('opening.flip_v')}</span></label>`
             : nothing}
         </div>
@@ -11399,10 +11391,9 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
       (this.host._deviceInbox = { ...dialog, ...delta });
     const preview = dialog.filtersOpen && draft.dirty ? this._discoveryFilterPreview(dialog) : null;
     const known = this._registryIntegrations().filter((name) => !draft.excluded.includes(name));
-    return html`<details class="device-inbox-discovery" ?open=${dialog.filtersOpen}
-        @toggle=${(event: Event) => patch({ filtersOpen: (event.target as HTMLDetailsElement).open })}>
-      <summary data-hp="action" data-action="device-discovery-settings">${this.host._t('device_inbox.filters_title' as never)}</summary>
-      <label class="srcrow">
+    return disclosure({ className:'device-inbox-discovery hpf-reading-block hpf-reading-padded', action:'device-discovery-settings',
+      title:this.host._t('device_inbox.filters_title' as never), open:dialog.filtersOpen, onToggle:open => patch({ filtersOpen:open }), content:html`
+      <label class="hpf-check hpf-check-wrap srcrow">
         <input data-hp="field" data-field="device-discovery-group-lights" type="checkbox" .checked=${draft.groupLights}
           @change=${(event: Event) => patch({
             draftGroupLights: (event.target as HTMLInputElement).checked,
@@ -11412,7 +11403,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
       <div class="device-inbox-excluded">
         <span>${this.host._t('device_inbox.filters_excluded' as never)}</span>
         <div class="device-inbox-chips">
-          ${draft.excluded.map((name) => html`<span class="chip">${name}
+          ${draft.excluded.map((name) => html`<span class="chip hpf-chip">${name}
             <button data-hp="action" data-action="device-discovery-exclusion-remove" data-value=${name} type="button" aria-label="×"
               @click=${() => patch({ draftExcluded: draft.excluded.filter((x) => x !== name) })}>×</button>
           </span>`)}
@@ -11435,7 +11426,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
           ${this.host._t('device_inbox.filters_reset' as never)}
         </button>
       </div>
-      ${preview ? html`<div class="device-inbox-preview">
+      ${preview ? html`<div class="device-inbox-preview hpf-hint">
         ${this.host._t('device_inbox.filters_preview_appear' as never, { count: String(preview.appear) })}
         · ${this.host._t('device_inbox.filters_preview_hide' as never, { count: String(preview.hide) })}
         · ${this.host._t('device_inbox.filters_preview_lights' as never, { count: String(preview.lights) })}
@@ -11444,7 +11435,7 @@ public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void
         @click=${() => this._saveDiscoveryFilters(dialog)}>
         ${this.host._t('device_inbox.filters_save' as never)}
       </button>
-    </details>`;
+    ` });
   }
 
 public _renderDeviceInbox(): TemplateResult {
@@ -11550,13 +11541,13 @@ public _renderDeviceInbox(): TemplateResult {
                       ? 'device_inbox.readd' : 'device_inbox.add')}</button>`;
             const status = row.status.kind === 'active' ? ''
               : this.host._t(`device_inbox.status_${row.status.kind}` as I18nKey);
-            return html`<article data-hp="device-catalog-row" data-id=${row.kind === 'virtual' ? row.markerId : row.key} class=${batch.batchTab ? 'device-inbox-row has-select' : 'device-inbox-row'}
+            return html`<article data-hp="device-catalog-row" data-id=${row.kind === 'virtual' ? row.markerId : row.key} class=${batch.batchTab ? 'device-inbox-row has-select hpf-reading-block hpf-reading-padded' : 'device-inbox-row hpf-reading-block hpf-reading-padded'}
               data-key=${row.key} data-binding=${row.binding} data-category=${row.category} data-status=${row.kind === 'virtual' ? 'virtual' : row.status.kind}>
               ${renderInboxRowSelect(this.host, dialog, batch, row)}
-              <ha-icon class="device-inbox-icon" .icon=${row.icon}></ha-icon>
+              <ha-icon class="device-inbox-icon hpf-reading-avatar" .icon=${row.icon}></ha-icon>
               <div class="device-inbox-copy">
                 <div class="device-inbox-name"><b>${row.name}</b>
-                  ${row.isNew ? html`<span class="device-inbox-new">${this.host._t('device_inbox.new')}</span>` : nothing}
+                  ${row.isNew ? html`<span class="device-inbox-new hpf-tag">${this.host._t('device_inbox.new')}</span>` : nothing}
                 </div>
                 <div class="device-inbox-meta">
                   ${[row.model, row.integration, row.spaceName || inboxT(this.host, 'device_inbox.no_space'), row.areaName].filter(Boolean).join(' · ')}
@@ -11585,7 +11576,7 @@ public _renderDeviceInbox(): TemplateResult {
                   </div>` : nothing}
               </div>
             </article>`;
-          }) : html`<div class="device-inbox-empty">${this.host._t(emptyKey)}</div>`}
+          }) : html`<div class="device-inbox-empty hpf-empty-state hpf-empty-state-list">${this.host._t(emptyKey)}</div>`}
         </div>
         ${filtered.length > visible.length ? html`<button data-hp="action" data-action="device-catalog-more" type="button" class="btn device-inbox-more"
           @click=${() => (this.host._deviceInbox = { ...dialog, limit: dialog.limit + 100 })}>
@@ -12034,7 +12025,7 @@ public _renderMergeDialog(): TemplateResult {
     const opt = (id: string, key: 'a' | 'b') => {
       const r = rooms.find((x) => x.id === id);
       const area = r?.area ? this.host.hass.areas[r.area]?.name : null;
-      return html`<label class="srcrow">
+      return html`<label class="hpf-check hpf-check-wrap srcrow">
         <input data-hp="field" data-field="mergekeep" data-value=${key} type="radio" name="mergekeep" .checked=${d.pick === key}
           @change=${() => (this.host._mergeDialog = { ...d, pick: key })} />
         <span>${r?.name || ''} <span class="muted">· ${area || this.host._t('merge.no_area')}</span></span>

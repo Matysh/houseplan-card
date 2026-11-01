@@ -101,7 +101,7 @@ try {
   await clickAt(260,450,{button:'right'}); await menu.waitFor(); await page.waitForTimeout(200);
   out.menu_order=JSON.stringify(await menu.locator('button').evaluateAll(els=>els.map(el=>el.dataset.action)))===JSON.stringify(['decor-front','decor-back','decor-copy','decor-delete']);
   out.menu_delete_last=await menu.locator('button').last().getAttribute('data-action')==='decor-delete';
-  out.menu_geometry=await menu.evaluate(el=>{const s=getComputedStyle(el),items=[...el.querySelectorAll('button')];return s.borderRadius==='0px'&&s.borderTopWidth==='0px'&&s.padding==='0px'&&s.gap==='0px'&&s.fontSize==='12px'&&items.every(item=>getComputedStyle(item).minHeight==='32px');});
+  out.menu_geometry=await menu.evaluate(el=>{const s=getComputedStyle(el),items=[...el.querySelectorAll('button')];return s.borderRadius==='10px'&&s.borderTopWidth==='1px'&&s.boxShadow!=='none'&&s.padding==='0px'&&s.gap==='0px'&&s.fontSize==='12px'&&items.every(item=>getComputedStyle(item).minHeight==='32px');});
   // Theme tokens, disabled ink and keyboard focus share the actual command menu.
   const palettes={light:['#ffffff','#223039','rgb(0, 138, 165)'],dark:['#17222e','#e7eef4','rgb(103, 207, 232)'],custom:['#fff6e9','#35291d','rgb(155, 69, 183)']};
   for(const [theme,palette]of Object.entries(palettes)) {

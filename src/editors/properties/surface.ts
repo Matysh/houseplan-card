@@ -117,7 +117,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
   } else if (field.control === 'color') {
     const state = propertiesColorDraft(draft?.raw ?? JSON.stringify(field.value));
     const color = state?.value;
-    control = disabled || !color ? html`<div class="hp-prop-control hp-prop-color"><span class="hp-prop-swatch hp-prop-swatch-empty"></span><span>—</span></div>`
+    control = disabled || !color ? html`<div class="hp-prop-control hp-prop-color hpf-colorfield" aria-disabled="true"><span class="hp-prop-swatch hp-prop-swatch-empty hpf-empty-swatch"></span><span>—</span></div>`
       : colorField({ hex: color.color.toUpperCase(), valueLabel: color.noFill ? t('no_fill') : undefined, opacity: color.opacity,
         opacityLabel: t('opacity'), disabled: pending,
         inputs: port.inlineColors && state ? { name: field.key, hex: state.hex, opacity: state.opacity,
@@ -148,7 +148,7 @@ function fieldView(field: PropertiesField, port: PropertiesSurfacePort): Templat
       @select=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
       @keyup=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}
       @click=${(e: Event) => port.textSelection(e.target as HTMLTextAreaElement)}></textarea>`;
-  else control = disabled || field.value === null ? html`<div class="hp-prop-control"><span>—</span><span class="hp-prop-unit">${field.unit === 'cm' ? t(port.imperial ? 'inch' : 'cm') : field.unit}</span></div>`
+  else control = disabled || field.value === null ? html`<div class="hp-prop-control" aria-disabled="true"><span>—</span><span class="hp-prop-unit hpf-unit-label">${field.unit === 'cm' ? t(port.imperial ? 'inch' : 'cm') : field.unit}</span></div>`
     : unitInput({ id, fieldId: `properties-${field.key}`, value, unit: field.unit === 'cm' ? t(port.imperial ? 'inch' : 'cm') : field.unit ?? '',
       min: field.min === undefined ? undefined : field.min / (port.imperial && field.unit === 'cm' ? 2.54 : 1),
       max: field.max === undefined ? undefined : field.max / (port.imperial && field.unit === 'cm' ? 2.54 : 1),
@@ -180,7 +180,7 @@ export function renderPropertiesSurface(model: PropertiesSurface, port: Properti
       </section>`)}
     </div>
     <footer class="hp-prop-foot"><div class="hp-prop-actions ${model.actions.length === 1 ? 'solo' : ''}">
-      ${model.actions.map(action => html`<div class="hp-prop-action-wrap ${action.wide ? 'wide' : ''}"><button data-hp="action" data-action=${`properties-${action.key}`} type="button" class="hp-prop-action ${action.key}"
+      ${model.actions.map(action => html`<div class="hp-prop-action-wrap ${action.wide ? 'wide' : ''}"><button data-hp="action" data-action=${`properties-${action.key}`} type="button" class="hp-prop-action ${action.key} ${action.key === 'delete' ? 'danger' : ''}"
           aria-disabled=${String(inert || !!action.disabled)} ?disabled=${inert} data-hp-tooltip=${action.disabled ? t(action.disabled) : nothing}
           @click=${() => { if (!action.disabled) port.action(action.key); }}>
           ${propertiesIcon(action.icon)}<span>${t(action.label)}</span></button></div>`)}

@@ -55,8 +55,11 @@ import { NAMESPACE_LOCALE_CHUNKS } from './bundle-manifest.mjs';
 // Apply the existing #898 +10% rule: previous wall352000 ->387200; only this
 // resource wall changes. Rolling references retain actual own cost and bands.
 // https://github.com/Matysh/houseplan-card/issues/1070#issuecomment-6440488253
-export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 352_000;
-export const INITIAL_VIEW_GZIP_BUDGET = 387_200;
+// #1150: owner permits higher limits instead of byte chasing. Existing #898
+// +10% rule applies to the previous387200 B wall: new425920 B. Shared action
+// recipes now also paint cold View; rolling reference390000 keeps its2000 B band.
+export const INITIAL_VIEW_RECALIBRATION_GZIP_BYTES = 387_200;
+export const INITIAL_VIEW_GZIP_BUDGET = 425_920;
 export const INITIAL_PANEL_ONLY_GZIP_BUDGET = 8 * 1024;
 
 /**
@@ -470,7 +473,7 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 // Context-menu presentation has its own chunk: editor commands and tools/en
 // remain lazy. Carry only the measured own cost, retaining the inherited16-B
 // excess,2000-B band and387200-B absolute wall. UI Kit's seven caps unchanged.
-export const INITIAL_VIEW_GZIP_CEILING = 384_275;
+export const INITIAL_VIEW_GZIP_CEILING = 390_000;
 /**
  * #699 (решение владельца 2026-09-28): полоса — над потолком, а не под ним.
  * Задача может вырасти не больше чем на полосу над потолком беты, падение её не
@@ -557,12 +560,15 @@ export function assertSupportBundleOwnership(
  * остаться в первом кадре. Отдельный `import()` листа вне статического графа
  * редактора маркер из `lazyEditorFiles` уносит — и проверка краснеет.
  */
+// #1150 retires local .btn/floorrow paint and tray palette variables. Mark the
+// actual shared action/reading owners; native cold-View tests still prove their
+// real consumers and absence of editor-only paint. No marker-only CSS is added.
 export const EDITOR_STYLE_MARKERS = Object.freeze({
   lazy: Object.freeze([
     '.radarcoordinates{', '.supportbody{', '.device-inbox-row{', '.vacpicker{',
-    '.editor-secondary-host{', '--hp-editor-tray-bg-fallback:',
+    '.editor-secondary-host{', '.editor-secondary[data-layout=actions]{',
   ]),
-  eager: Object.freeze(['.btn{', '.editorloading{', '.recoveryoverlay{', '.vaccalbar{', '.floorrow{']),
+  eager: Object.freeze(['.hpf-action-caption', '.editorloading{', '.recoveryoverlay{', '.vaccalbar{', '.hpf-reading-choice']),
 });
 
 export function assertEditorStyleOwnership(manifest, root = 'dist', markers = EDITOR_STYLE_MARKERS) {

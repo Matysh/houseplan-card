@@ -354,7 +354,13 @@ try {
     assert.equal(await s.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await choose(s.page, fixture()); await ready(s.page);
     assert.equal(await dialog(s.page).evaluate(el => el.scrollWidth <= el.clientWidth), true);
-    assert.equal(await dialog(s.page).locator('.backupbody').evaluate(el => el.scrollWidth <= el.clientWidth), true);
+    const bodyFits = await dialog(s.page).locator('.backupbody').evaluate(el => el.scrollWidth <= el.clientWidth);
+    if (!bodyFits) console.log('Import body overflow', locale, light, await dialog(s.page).locator('.backupbody').evaluate(el => {
+      const r=el.getBoundingClientRect();return {width:el.clientWidth,scroll:el.scrollWidth,children:[...el.querySelectorAll('*')]
+        .filter(n=>{const b=n.getBoundingClientRect();return b.width&&(b.right>r.right+1||n.scrollWidth>n.clientWidth+1);})
+        .map(n=>{const b=n.getBoundingClientRect(),s=getComputedStyle(n);return {tag:n.localName,class:n.className,text:n.textContent.slice(0,100),width:b.width,client:n.clientWidth,scroll:n.scrollWidth,right:b.right-r.right,whiteSpace:s.whiteSpace,minWidth:s.minWidth};})};
+    }));
+    assert.equal(bodyFits, true);
     await cancel(s.page);
     }
   }

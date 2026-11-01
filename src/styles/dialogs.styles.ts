@@ -4,9 +4,11 @@
  * only the editor renders lives in `editor-dialogs.styles.ts` (#805, reverse
  * ratchet in `test/editor-dialog-styles.test.mjs`).
  */
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+import { settingsActionsCss } from './settings-action.styles';
+import { cardDialogFormKitTokens } from './form-kit-tokens';
 
-export const dialogsStyles = css`
+export const dialogsStyles = unsafeCSS(css`
     .head {
       display: flex;
       align-items: center;
@@ -15,38 +17,7 @@ export const dialogsStyles = css`
       flex-wrap: wrap;
     }
     @media (max-width:620px) { .head { gap:var(--sp-3); padding:var(--sp-4) 10px; } }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-3);
-      border: 1px solid var(--hp-line);
-      background: transparent;
-      color: var(--hp-txt);
-      padding: var(--sp-3) 10px;
-      border-radius: var(--rad-m);
-      cursor: pointer;
-      transition: 0.15s;
-      font-family: inherit;
-      font-size: var(--fs-m);
-    }
-    .btn ha-icon {
-      --mdc-icon-size: 17px;
-    }
-    :host([data-pointer-hover]) .btn:not(:disabled):hover {
-      border-color: var(--hp-accent);
-    }
-    .btn.on {
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      border-color: var(--hp-accent);
-    }
-    .btn.ghost {
-      border: none;
-    }
-    .btn[disabled] {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+
     .recoveryoverlay {
       position: absolute;
       inset: 0;
@@ -183,10 +154,7 @@ export const dialogsStyles = css`
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .btn.danger {
-      border-color: var(--error-color, #db4437);
-      color: var(--error-color, #db4437);
-    }
+
     hp-confirm {
       display: contents;
     }
@@ -258,14 +226,6 @@ export const dialogsStyles = css`
     ha-icon-picker {
       display: block;
     }
-    .backupwarn, .backuperror {
-      border-radius: var(--rad-s);
-      padding: var(--sp-3);
-      font-size: var(--fs-s);
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-    .backupwarn { background: color-mix(in srgb, var(--hp-accent) 12%, transparent); }
-    .backuperror { background: color-mix(in srgb, var(--error-color, #db4437) 16%, transparent); color: var(--error-color, #db4437); }
+
   .device-issue-groups { display:grid; gap:12px; margin-bottom:16px; }
-`;
+`.cssText + cardDialogFormKitTokens.replace('hp-dialog .hpf-form', ':host') + settingsActionsCss('.btn'));

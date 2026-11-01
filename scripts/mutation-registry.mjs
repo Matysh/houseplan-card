@@ -512,9 +512,9 @@ const MUTANT_DEFINITIONS = [
     id: 'ui-inline-opacity-loses-grid-slot-1051',
     guard: 'node demo/smoke_ui_1051.mjs',
     because: '#1051 AC2/7: actual 0/50/100 input paint must fit the intended inline grid slot. The common form-kit cascade can leave the opacity wrapper flex and clip digits despite an unchanged outer control box; only mounted browser layout reveals this. Nightly execution only.',
-    patches: [{ file: 'src/editors/properties/styles.ts',
-      find: '  .hp-properties .hpf-colorfield > .hpf-opacity.hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }',
-      replace: '  .hp-properties .hpf-inline-opacity, .hp-properties .hpf-inline-opacity > .hpf-unit { display:contents; }' }],
+    patches: [{ file: 'src/styles/form-kit.styles.ts',
+      find: '  ${field} > .${p}-opacity.${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }',
+      replace: '  ${field} .${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }' }],
   },
   {
     id: 'ui-led-menu-keeps-scene-pan-1051',
@@ -844,8 +844,8 @@ const MUTANT_DEFINITIONS = [
     because: '#1007 AC3: a visually adjacent Help must not remain a descendant of the summary; trusted pointer hover and computed ancestor paint require Chromium.',
     patches: [{
       file: 'src/editors/form-kit.ts',
-      find: '<summary class=${triggerClass} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}</summary>',
-      replace: '<summary class=${triggerClass} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}${help ?? nothing}</summary>',
+      find: '<summary class=${triggerClass ? `hpf-disclosure-action ${triggerClass}` : \'\'} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}</summary>',
+      replace: '<summary class=${triggerClass ? `hpf-disclosure-action ${triggerClass}` : \'\'} data-hp=${action ? \'action\' : nothing} data-action=${action ?? nothing}>${title}${help ?? nothing}</summary>',
     }, {
       file: 'src/editors/form-kit.ts',
       find: '<div class="hpf-disclosure-with-help">${details}${help}</div>',
@@ -11959,9 +11959,9 @@ const MUTANT_DEFINITIONS = [
     because: 'валидный plan-only файл без явной строки в preview выглядит обычной копией; '
       + 'browser smoke обязан проверять пользовательский статус, а не только backend-флаг',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "${p.plan_only ? html`<span class=\"backupplanonlystatus\">${this._t('backup.plan_only_preview')}</span>` : nothing}",
-      replace: "${false ? html`<span class=\"backupplanonlystatus\">${this._t('backup.plan_only_preview')}</span>` : nothing}",
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "${p.plan_only ? html`<span class=\"backupplanonlystatus hpf-tag\">${this.host._t('backup.plan_only_preview')}</span>` : nothing}",
+      replace: "${false ? html`<span class=\"backupplanonlystatus hpf-tag\">${this.host._t('backup.plan_only_preview')}</span>` : nothing}",
     }],
   },
   {
@@ -13309,7 +13309,7 @@ const MUTANT_DEFINITIONS = [
     patches: [
   {
     "file": "src/styles/navigation.styles.ts",
-    "find": "inset:0 calc(-1 * (4px + var(--hp-editor-close-size))) 0 0;",
+    "find": "inset:-1px calc(-1 * (4px + var(--hp-editor-close-size)) - 1px) -1px -1px;",
     "replace": "inset:0;"
   }
 ],
@@ -20712,16 +20712,15 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'editor-styles-btn-moved-lazy',
     guard: 'node --test test/editor-dialog-styles.test.mjs',
-    because: '#805 AC6: .btn styles View controls (header, kiosk, View dialogs); moving it into the '
-      + 'lazy editor sheet leaves the cold View unstyled, and the ownership test names it',
+    because: '#805/#1150: moving the shared .btn consumer from the eager owning root to the lazy editor sheet leaves cold View controls unstyled; ownership checks reject a foreign .btn in the editor-only sheet.',
     patches: [{
       file: 'src/styles/dialogs.styles.ts',
-      find: '    .btn {\n      display: inline-flex;\n      align-items: center;\n      gap: var(--sp-3);\n      border: 1px solid var(--hp-line);',
-      replace: '    .btn-moved {\n      display: inline-flex;\n      align-items: center;\n      gap: var(--sp-3);\n      border: 1px solid var(--hp-line);',
+      find: "settingsActionsCss('.btn')",
+      replace: "settingsActionsCss('.btn-moved')",
     }, {
       file: 'src/styles/editor-dialogs.styles.ts',
-      find: 'export const editorDialogsStyles = css`\n',
-      replace: 'export const editorDialogsStyles = css`\n    .btn {\n      display: inline-flex;\n      align-items: center;\n    }\n',
+      find: 'export const editorDialogsStyles = unsafeCSS(css`\n',
+      replace: 'export const editorDialogsStyles = unsafeCSS(css`\n    .btn { display:inline-flex; align-items:center; }\n',
     }],
   },
   {
@@ -22583,12 +22582,21 @@ const uiPolish1145Cases = [
  {id:'disabled-kit-loses-pointer-hit-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC3: native disabled keeps not-allowed hit cursor and remains inert.',patches:[
   {
     "file": "src/styles/settings-action.styles.ts",
-    "find": "${selector}:disabled{cursor:not-allowed;opacity:.5;}",
-    "replace": "${selector}:disabled{cursor:not-allowed;opacity:.5;pointer-events:none;}"
+    "find": "${selector}:is(:disabled,[aria-disabled=true]){cursor:not-allowed;opacity:.5;}",
+    "replace": "${selector}:is(:disabled,[aria-disabled=true]){cursor:not-allowed;opacity:.5;pointer-events:none;}"
   }
 ]},
  {id:'ordinary-color-target40-1145',guard:'node demo/smoke_ui_polish_1145.mjs',because:'#1145 AC4: ordinary trigger is44px; compact swatch remains36px.',patches:[{file:'src/hp-color-opacity.ts',find:'.trigger {\n      width: 44px;\n      height: 44px;',replace:'.trigger {\n      width: 40px;\n      height: 40px;'}]},
 ];
+// #1150: declaration only; real missing-theme input is exercised by the native audit.
+const compactEditor1150Cases = [{
+  id:'compact-danger-missing-theme-token-1150',
+  guard:'node demo/ui-lab/editor-kit-audit.mjs',
+  because:'#1150 AC3: only mounted Chromium can resolve absent HA CSS tokens, inherited ink and the completed paint transition on the actual destructive Properties action. Ordinary missing-token input is RED on pre-fix source; this declaration is not an executed/caught mutant.',
+  patches:[{file:'src/styles/settings-action.styles.ts',
+    find:'${selector}.danger{color:var(--hpf-danger,var(--error-color,#db543d));border-color:var(--hpf-danger,var(--error-color,#db543d));}',
+    replace:'${selector}.danger{color:var(--error-color);border-color:var(--error-color);}' }],
+}];
 // #1166: declarations for nightly; no mutant execution during this task.
 const wallContact1166Cases = [
   {id:'stored-t-room-recognition-1166',guard:'node --test test/room-contact-storage.test.mjs',
@@ -22607,7 +22615,7 @@ const wallContact1166Cases = [
     because:'#1166 a new room on existing physical walls is allowed only with a complete exact identity ring.',
     patches:[{file:'custom_components/houseplan/validation.py',find:'if len(poly) < 3 or len(poly) != len(ids):',replace:'if False:'}]},
 ];
-export const MUTANTS = [...wallContact1166Cases,...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
+export const MUTANTS = [...compactEditor1150Cases,...wallContact1166Cases,...uiPolish1145Cases,...panelHeader1120Cases,...approvedUi1119Cases,...externalScreensStream1113Cases,...externalScreens1113Cases,...historyOptionalSlot1117Cases,...editorGesture1098Cases,...MUTANT_DEFINITIONS, ...scopedAttachment1096Cases, ...discardConfirmMotionGuardCases,...contact1003GuardCases,...vacuumLive1049Cases,...decorLine1046Cases,...vacuumHistory999Cases,...decorGroup1038Cases,...wallNodeDelete1045Cases,...roomContact1061Cases,...decorStyle1071Cases,...editorLatency1075Cases,...selectiveInvalidation1093Cases,...planHass1111Cases,...physicalCommit1099Cases,...goldenUnchanged1114Cases,...geometryHistory1100Cases].map((mutant) => ({
   ...mutant,
   guard: UNIT_GUARD_OVERRIDES.get(mutant.id) ?? mutant.guard,
   patches: mutant.patches.map((patch) => relocateEditorPatch(

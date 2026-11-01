@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { controlMotion, controlSurfaceFrames } from './ui-motion';
 
 export type EditorSecondaryKind =
   | 'selection'
@@ -186,7 +187,7 @@ export class EditorSecondaryController {
       }}
       data-hp-tooltip=${activeItem ? copy.groupActive(group.label, activeItem.label) : nothing} aria-label=${group.label}>
       <ha-icon icon=${group.icon}></ha-icon><span class="ml">${group.label}</span>
-      <ha-icon class="group-chevron" icon="mdi:chevron-down"></ha-icon>
+      <ha-icon class="group-chevron hpf-action-chevron" icon="mdi:chevron-down"></ha-icon>
     </button>`;
   }
 
@@ -255,7 +256,7 @@ export class EditorSecondaryController {
         @dblclick=${stopPropagation}
         @wheel=${stopPropagation}>
         ${model?.visibleLabel
-          ? html`<span class="editor-context-label">${model.visibleLabel}</span>` : nothing}
+          ? html`<span class="editor-context-label ${model.layout === 'actions' ? 'hpf-heading' : ''}">${model.visibleLabel}</span>` : nothing}
         <div class="editor-secondary-content">${model?.content || nothing}</div>
       </div>
     </div>`;
@@ -276,10 +277,7 @@ export class EditorSecondaryController {
       this._contentAnimation?.cancel();
       this._contentAnimation = secondary
         ?.querySelector<HTMLElement>('.editor-secondary-content')
-        ?.animate([
-          { opacity: 0.35, transform: 'translateY(-4px)' },
-          { opacity: 1, transform: 'translateY(0)' },
-        ], { duration: 100, easing: 'ease-out' });
+        ?.animate(controlSurfaceFrames(true), controlMotion.appear);
     }
     this._renderedContext = context;
     if (previousContext && context !== previousContext && this._focusOwned) {

@@ -38,9 +38,9 @@ export const dialogCompositionCss = css`
 .hpf-disclosure > summary::marker { content:''; }
 .hpf-disclosure > summary::before { content:''; display:block; flex:0 0 8px; width:8px; height:10px; background:currentColor; clip-path:polygon(0 0,0 100%,100% 50%); transform:rotate(0deg); transition:transform var(--hpf-disclosure-duration,220ms) var(--hpf-disclosure-easing,cubic-bezier(.2,0,.2,1)); }
 .hpf-disclosure[data-expanded=true] > summary::before { transform:rotate(90deg); }
-.hpf-disclosure > summary:not(.btn) { padding:10px 0; color:var(--hpf-accent,var(--primary-color)); font:inherit; line-height:22px; }
-.hpf-disclosure > summary:not(.btn):is(:hover,:focus-visible) { color:var(--primary-text-color); }
-.hpf-disclosure > summary:not(.btn):focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:2px; border-radius:3px; }
+.hpf-disclosure > summary:not(.hpf-disclosure-action) { padding:10px 0; color:var(--hpf-accent,var(--primary-color)); font:inherit; line-height:22px; }
+.hpf-disclosure > summary:not(.hpf-disclosure-action):is(:hover,:focus-visible) { color:var(--primary-text-color); }
+.hpf-disclosure > summary:not(.hpf-disclosure-action):focus-visible { outline:2px solid var(--hpf-accent,var(--primary-color)); outline-offset:2px; border-radius:3px; }
 .hpf-disclosure-content { box-sizing:border-box; min-width:0; min-height:0; }
 .hpf-disclosure-inner { display:grid; gap:var(--hpf-group-space,12px); min-width:0; padding-block:var(--hpf-group-space,12px) 0; }
 .hpf-disclosure-with-help { display:grid; grid-template-columns:minmax(0,max-content) auto; align-items:center; column-gap:var(--hpf-help-gap,4px); min-width:0; }

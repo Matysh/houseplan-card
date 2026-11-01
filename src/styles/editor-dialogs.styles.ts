@@ -16,9 +16,12 @@
  * Ownership, the reverse ratchet (no editor-only rule back in `dialogs`) and
  * the absence of duplicate selectors: `test/editor-dialog-styles.test.mjs`.
  */
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+import { floatingSurfaceCss } from './floating-surface.styles';
+import { editorImagePreviewCss } from './form-kit-editor.styles';
+import { readingSeparatorCss, readingTextCss } from './reading-kit.styles';
 
-export const editorDialogsStyles = css`
+export const editorDialogsStyles = unsafeCSS(css`
     .colorrow { display:flex; align-items:center; gap:var(--sp-4); }
     .colorrow input[type='range'] { flex:1; }
     .colorrow ha-slider { flex:1; min-width:0; }
@@ -33,10 +36,6 @@ export const editorDialogsStyles = css`
       z-index: 80;
       min-width: 200px;
       transform: translate(-50%, 8px);
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: var(--card-background-color, #fff);
-      box-shadow: 0 8px 28px rgba(0,0,0,.22);
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -49,28 +48,6 @@ export const editorDialogsStyles = css`
       display: flex;
       align-items: center;
       gap: 8px;
-    }
-    .wallthick-dlg input[type="number"] {
-      cursor: text;
-      width: 5.5em;
-      padding: 4px 6px;
-      border: 1px solid var(--divider-color, #ccc);
-      border-radius: 6px;
-      background: var(--input-fill, transparent);
-      color: var(--primary-text-color);
-    }
-    .areasel,
-    .namein {
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
-      color: var(--hp-txt);
-      border-radius: var(--rad-s);
-      padding: var(--sp-3) var(--sp-4);
-      font-size: var(--fs-m);
-      font-family: inherit;
-    }
-    .namein {
-      width: 130px;
     }
     .habindingbanner {
       display: flex;
@@ -85,24 +62,14 @@ export const editorDialogsStyles = css`
     }
     .habindingbanner > span { flex: 1; min-width: 0; }
     .habindingbanner > ha-icon { color: var(--warning-color, #ff9800); flex: 0 0 auto; }
-    .srcrow {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-4);
-      font-size: var(--fs-m);
-      cursor: pointer;
-      padding: var(--sp-1) 0;
-    }
+
     .dispsection {
       margin-top: var(--sp-5) !important;
       padding-top: var(--sp-4);
-      border-top: 1px solid var(--hp-line);
-      font-weight: 600;
-      color: var(--hp-txt) !important;
     }
     .colorrow .tempin { width: 70px; flex: none; }
     hp-dialog .body .colorrow .tempin { width: 72px; flex: none; }
-    .srcrow { flex-wrap: nowrap; }
+
     /* native HA controls (rendered only when the HA frontend defines them;
        old HA and the smoke env keep the plain inputs). ha-switch is taller
        than a checkbox - cap its footprint so .srcrow keeps its rhythm. */
@@ -219,7 +186,7 @@ export const editorDialogsStyles = css`
     .vacroute-missing-group .vacroute-list { margin-top: 0; }
     .vacpicker { margin: var(--sp-3) 0; }
     .vacsource-warning { display: grid; gap: 8px; }
-    .vacsource-warning .btn { justify-self: start; }
+    .vacsource-warning button { justify-self: start; }
     .vacsource-list { display: grid; gap: 6px; margin-top: 8px; }
     .vacsource-list details { padding: 6px 0 0; }
     .vacsource-list details > summary { cursor: pointer; font-weight: 600; }
@@ -263,137 +230,57 @@ export const editorDialogsStyles = css`
       display: flex;
       flex-direction: column;
       max-height: 38vh;
-      border-top: 1px solid var(--hp-border, rgba(255, 255, 255, 0.12));
-      background: var(--card-background-color, var(--hp-bg));
-      font-size: 0.85em;
     }
     .furnhd {
       display: flex;
       align-items: center;
       gap: 6px;
       padding: 4px 8px;
-      font-weight: 600;
-      opacity: 0.9;
     }
     .furnhd .spacer { flex: 1; }
     .furnbody {
       overflow: auto;
       padding: 0 8px 6px;
     }
-    .furngroup {
-      margin: 6px 0 3px;
-      font-size: 0.85em;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      opacity: 0.6;
-    }
+    .furngroup { margin:6px 0 3px; }
     .furnrow {
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
     }
-    .furnback {
-      min-height: 34px;
-      gap: 5px;
-      margin: 2px 0 4px;
-    }
-    .furnitem {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      width: 74px;
-      padding: 4px 2px;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      background: rgba(127, 127, 127, 0.08);
-      color: inherit;
-      font: inherit;
-      font-size: 0.8em;
-      line-height: 1.15;
-      text-align: center;
-      cursor: pointer;
-    }
-    :host([data-pointer-hover]) .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
-    .furnitem.on {
-      border-color: var(--hp-accent);
-      background: color-mix(in srgb, var(--hp-accent) 18%, transparent);
-    }
-    .furnprev {
-      width: 40px;
-      height: 40px;
-      color: var(--primary-text-color, currentColor);
-    }
-    .furncategory { width: 92px; min-height: 76px; }
-    .furncatprev { width: 48px; height: 48px; }
-    .furnvariants .furnitem { min-height: 74px; }
+    .furnback { margin:2px 0 4px; }
     .furnsize {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 6px;
       padding: 6px 8px;
-      border-top: 1px solid var(--hp-border, rgba(255, 255, 255, 0.12));
     }
     .furnsize label {
       display: flex;
       align-items: baseline;
       gap: 3px;
-      opacity: 0.8;
     }
-    .furnsize .furnunit { opacity: 0.6; font-size: 0.85em; }
-    .furnsize input {
-      width: 5.5em;
-      padding: 3px 5px;
-    }
-    .furnhint { opacity: 0.6; }
     .imageupload {
       display: inline-flex;
-      gap: 6px;
       margin: 4px 0 8px;
-      cursor: pointer;
     }
-    .imageupload.disabled { opacity: 0.55; pointer-events: none; }
+    .imageupload.disabled { pointer-events:none; }
     .imageupload input { display: none; }
     .imageassets { align-items: stretch; }
-    .imageempty { padding: 12px 6px; }
     .imageasset { position: relative; }
-    .imageasset .furnitem { width: 104px; min-height: 92px; }
-    .imageasset img {
-      width: 64px;
-      height: 54px;
-      object-fit: contain;
-      border-radius: 4px;
-      background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 12px 12px;
-    }
     .imageasset .furnitem span {
       max-width: 96px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .imageasset .furnitem small { opacity: 0.65; font-size: 0.72em; }
-    .imageassetdelete {
-      position: absolute;
-      top: 0;
-      right: 0;
-      min-width: 30px;
-      width: 30px;
-      min-height: 30px;
-      padding: 3px;
-    }
+    .imageassetdelete { position:absolute; top:0; right:0; }
     .imagepropertypreview {
       display: flex;
       align-items: center;
       gap: 10px;
       min-width: 0;
-    }
-    .imagepropertypreview img {
-      width: 72px;
-      height: 54px;
-      object-fit: contain;
-      border-radius: 4px;
-      background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 12px 12px;
     }
     .imagepropertypreview span { overflow-wrap: anywhere; }
     .vacfitdot { fill: var(--hp-accent); pointer-events: none; }
@@ -440,19 +327,15 @@ export const editorDialogsStyles = css`
       align-items: center;
     }
     .rtest ha-icon { color: var(--hp-accent); }
-    .rtesticon { font-size: var(--fs-s); color: var(--hp-muted); }
+
     .rrow {
       align-items: center;
     }
     .rrow .rpat { flex: 2; }
     .rrow .ricon { flex: 1.4; }
-    .rrow .rpat.bad { border-color: var(--error-color, #db4437); }
-    .rrow .rprev { color: var(--hp-txt); min-width: 18px; }
-    .rrow .ract {
-      --mdc-icon-size: 16px;
-    }
-    :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
-    :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
+
+    .rrow .rprev { min-width:18px; }
+
     .optimize-live {
       display: grid;
       justify-items: start;
@@ -492,7 +375,7 @@ export const editorDialogsStyles = css`
     .optimize-details ul { margin: var(--sp-3) 0; padding-inline-start: 22px; }
     .optimize-details li + li { margin-top: var(--sp-1); }
     .backupupload { display: inline-flex; min-width: 0; }
-    .backupupload > .btn { width: 100%; justify-content: center; }
+    .backupupload > button { width: 100%; justify-content: center; }
     .backupupload input { display: none; }
     .backupbody { min-width: 0; }
     /* #813: the eager sheet kept these only because a dead .backupactions
@@ -501,15 +384,13 @@ export const editorDialogsStyles = css`
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--sp-2) var(--sp-4);
-      font-size: var(--fs-s);
     }
     @media (max-width: 520px) {
       .backupcounts { grid-template-columns: 1fr; }
     }
     .backupplanonly { margin-inline-start: var(--sp-4) !important; align-items: flex-start !important; }
     .backupplanonly > span:first-of-type { display: grid; gap: 2px; white-space: normal; }
-    .backupplanonly small { color: var(--secondary-text-color); line-height: 1.35; }
-    .backupplanonlystatus { color: var(--hp-accent) !important; font-weight: 700; }
+
     .backupfile, .backupsummary, .backupcontent {
       display: flex;
       flex-direction: column;
@@ -519,28 +400,17 @@ export const editorDialogsStyles = css`
     .backupfile b, .backupcontent span {
       overflow-wrap: anywhere;
     }
-    .backupfile span, .backupsummary span, .backupcontent span {
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
-    }
-    .backupdetails {
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
-      padding: var(--sp-2) var(--sp-3);
-      font-size: var(--fs-s);
-    }
-    .backupdetails summary { cursor: pointer; font-weight: 700; }
-    .backupdetails > div { display: grid; gap: var(--sp-1); padding-block-start: var(--sp-2); }
-    .backupdetails code { overflow-wrap: anywhere; color: var(--hp-muted); }
+
+    .backupdetails code { overflow-wrap:anywhere; }
+    .backupdetailrows { display:grid; gap:var(--sp-1); }
+    .backupdetailrows p { margin:0; }
     .backupchoices {
       display: flex;
       flex-direction: column;
       gap: var(--sp-2);
-      border: 1px solid var(--hp-line);
-      border-radius: var(--rad-s);
       min-width: 0;
     }
-    .backupchoices label { margin: 0 !important; display: flex; gap: var(--sp-2); }
+
     .backupconfirm { align-items: flex-start !important; }
     .backupconfirm > span:first-of-type {
       min-width: 0;
@@ -560,24 +430,16 @@ export const editorDialogsStyles = css`
       display: grid;
       min-width: 0;
     }
-    .supportsection h3 {
-      color: var(--hp-txt);
-    }
+
     .supportlinks, .supportactions {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       min-width: 0;
     }
-    .supportmessage, .supportraw {
-      width: 100%;
-      resize: vertical;
-    }
+    .supportmessage, .supportraw { width:100%; }
     .supportraw {
       margin-top: var(--sp-2);
-      resize: none;
-      white-space: pre;
-      overflow: auto;
     }
     .supportattach {
       min-width: 0;
@@ -587,46 +449,21 @@ export const editorDialogsStyles = css`
       white-space: normal;
       overflow-wrap: anywhere;
     }
-    .supportwarning, .supportstatus, .supportupdate {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--sp-2);
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-    .supportwarning ha-icon, .supportstatus ha-icon, .supportupdate ha-icon {
-      flex: none;
-    }
-    .supportpreview, .supportmanual, .supporterror, .supportsuccess {
+    .supportpreview, .supportmanual, .supportcopy {
       display: grid;
-      min-width: 0;
-      border: 1px solid var(--hp-line);
+      min-width: 0; gap:12px;
     }
-    .supportsummary { font-weight: 600; overflow-wrap: anywhere; }
+
     .supporthash {
       display: grid;
       min-width: 0;
       gap: var(--sp-1);
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
     }
-    .supporthash code { overflow-wrap: anywhere; color: var(--hp-txt); }
+    .supporthash code { overflow-wrap: anywhere; }
     .supportpreview details { min-width: 0; }
-    .supportpreview summary { color: var(--hp-accent); }
+
     .supportprivacy { margin: 0 !important; }
-    .supporterror {
-      background: color-mix(in srgb, var(--error-color, #db4437) 12%, transparent);
-      border-color: color-mix(in srgb, var(--error-color, #db4437) 45%, var(--hp-line));
-    }
-    .supportsuccess {
-      background: color-mix(in srgb, var(--success-color, #43a047) 12%, transparent);
-      border-color: color-mix(in srgb, var(--success-color, #43a047) 45%, var(--hp-line));
-    }
-    hp-dialog .body .namein,
-    hp-dialog .body .areasel {
-      width: 100%;
-      box-sizing: border-box;
-    }
+
     .device-inbox {
       display: flex;
       flex-direction: column;
@@ -652,31 +489,21 @@ export const editorDialogsStyles = css`
     /* #44: discovery-filters section on the Available tab */
     .device-inbox-discovery {
       margin: 8px 0;
-      border: 1px solid var(--divider-color, #e0e0e0);
     }
-    .device-inbox-discovery summary { font-weight: 600; }
-    .device-inbox-discovery .srcrow { display: flex; gap: 6px; align-items: center; margin: 8px 0; }
+
+    .device-inbox-discovery .srcrow { margin:8px 0; }
     .device-inbox-excluded { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .device-inbox-excluded > span { font-weight: 500; }
     .device-inbox-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-    .device-inbox-chips .chip {
-      display: inline-flex; align-items: center; gap: 2px;
-      padding: 1px 6px; border-radius: 10px;
-      background: var(--secondary-background-color, #f0f0f0); font-size: 12px;
-    }
-    .device-inbox-chips .chip button {
-      background: none;
-      color: var(--secondary-text-color, #666);
-    }
+
     .device-inbox-excluded input[type="text"] {
       flex: 1 1 140px;
     }
-    .device-inbox-preview { margin: 8px 0 4px; font-size: 13px; opacity: 0.85; }
+    .device-inbox-preview { margin:8px 0 4px; }
     .device-inbox-filters {
       display: flex;
       flex-wrap: wrap;
       gap: var(--sp-4) var(--sp-6);
-      color: var(--hp-muted);
     }
     .device-inbox-filters label {
       display: inline-flex;
@@ -684,14 +511,7 @@ export const editorDialogsStyles = css`
       cursor: pointer;
     }
     .device-inbox-space-filter { min-width: 0; max-width: 100%; flex-wrap: wrap; }
-    .device-inbox-space-filter hp-settings-select {
-      width: 240px; max-width: 100%; font: inherit;
-      --hpf-surface: var(--card-background-color,#fff);
-      --hpf-control-surface: var(--hpf-surface); --hpf-line: var(--hp-line,var(--divider-color,#dce5e7));
-      --hpf-accent: var(--hp-accent,var(--primary-color)); --hpf-canvas: var(--secondary-background-color);
-      --hpf-tint: color-mix(in srgb,var(--hpf-accent) 10%,var(--hpf-surface));
-      --hpf-tint-line: color-mix(in srgb,var(--hpf-accent) 38%,var(--hpf-surface));
-    }
+    .device-inbox-space-filter hp-settings-select { width:240px; max-width:100%; font:inherit; }
     /* #618: batch selection lives outside .device-inbox-filters. */
     .device-inbox-batch {
       display: flex;
@@ -721,34 +541,23 @@ export const editorDialogsStyles = css`
       grid-template-columns: 42px minmax(180px, 1fr) minmax(180px, auto);
       align-items: center;
       min-width: 0;
-      border-width: 1px;
-      border-style: solid;
-      background: color-mix(in srgb, var(--hp-txt) 3%, transparent);
     }
     .device-inbox-row.has-select {
       grid-template-columns: 24px 42px minmax(180px, 1fr) minmax(180px, auto);
     }
     .device-inbox-select { justify-self: center; }
-    .device-inbox-icon { --mdc-icon-size: 28px; color: var(--hp-txt); justify-self: center; }
+    .device-inbox-icon { justify-self:center; }
     .device-inbox-copy { min-width: 0; }
     .device-inbox-name { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); }
-    .device-inbox-new {
-      border-radius: 999px;
-      background: var(--hp-accent);
-      color: var(--text-primary-color, #fff);
-      font-size: var(--fs-s);
-      padding: 2px 7px;
-    }
+
     .device-inbox-meta,
     .device-inbox-reason,
     .device-inbox-copy code {
       display: block;
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
       overflow-wrap: anywhere;
       white-space: normal;
     }
-    .device-inbox-status { color: var(--error-color, #db4437); margin-inline-start: var(--sp-2); }
+    .device-inbox-status { margin-inline-start: var(--sp-2); }
     .device-inbox-actions {
       display: flex;
       justify-content: flex-end;
@@ -756,11 +565,11 @@ export const editorDialogsStyles = css`
       flex-wrap: wrap;
     }
     .device-inbox-menu { position: relative; }
-    .device-inbox-empty { color: var(--hp-muted); text-align: center; padding: var(--sp-6); }
+
     .device-inbox-more { align-self: center; }
     @media (max-width: 680px) {
       .device-inbox-head { grid-template-columns: minmax(0, 1fr); }
-      .device-inbox-head .btn { justify-self: stretch; }
+      .device-inbox-head > button { justify-self: stretch; }
       .device-inbox-tabs {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -774,4 +583,7 @@ export const editorDialogsStyles = css`
       .device-inbox-row.has-select { grid-template-columns: 24px 36px minmax(0, 1fr); }
       .device-inbox-actions { grid-column: 1 / -1; justify-content: flex-start; }
     }
-`;
+`.cssText + floatingSurfaceCss('.wallthick-dlg', '10px 12px')
+  + editorImagePreviewCss('.imagepropertypreview img', 'property')
+  + readingTextCss('hp-dialog.ui-dialog .dispsection', 'form-label', 'primary')
+  + readingSeparatorCss('.dispsection'));

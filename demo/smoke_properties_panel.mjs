@@ -269,8 +269,9 @@ try {
     }
   }
   check('properties.selection_matrix_no_config_write',await page.evaluate(async()=>(await window.__card.hass.callWS({type:'houseplan/config/get'})).config),beforeSelectionOnly);
-  // HA's explicit mode wins; without it the actual CSS palette follows the
-  // browser scheme. Checking the data attribute alone missed the golden defect.
+  // #1150: theme ink/surface use the same HA tokens as the rest of UI Kit,
+  // including custom palettes. Explicit HA mode still owns native color-scheme;
+  // absent HA mode follows the browser. No private light-mode palette remains.
   for (const media of ['dark','light']) {
     await page.emulateMedia({colorScheme:media});
     for (const dark of [undefined,false,true]) {
@@ -282,10 +283,10 @@ try {
         c.hass={...c.hass,themes}; await c.updateComplete;
       },dark);
       const actual=await panel.evaluate(el=>{const s=getComputedStyle(el);return {background:s.backgroundColor,ink:s.color};});
-      const isDark=dark??media==='dark';
-      check(`properties.theme_pixels_${media}_${dark??'auto'}`,actual,isDark
-        ? {background:'rgb(21, 35, 49)',ink:'rgb(229, 237, 245)'}
-        : {background:'rgb(255, 255, 255)',ink:'rgb(40, 52, 60)'});
+      check(`properties.theme_tokens_${media}_${dark??'auto'}`,actual,
+        {background:'rgb(21, 35, 49)',ink:'rgb(229, 237, 245)'});
+      check(`properties.native_scheme_${media}_${dark??'auto'}`,
+        await panel.evaluate(el=>getComputedStyle(el).colorScheme),dark==null?'light dark':dark?'dark':'light');
     }
   }
   await page.evaluate(()=>{const c=window.__card;c.style.removeProperty('--card-background-color');c.style.removeProperty('--primary-text-color');c.hass={...c.hass,themes:{...c.hass.themes,darkMode:true}};});

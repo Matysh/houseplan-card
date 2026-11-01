@@ -4,6 +4,7 @@
  * the LED branch of the device history. Only delegation lives here: the tool,
  * its geometry and its copy are in the `led-strip-editor` chunk.
  */
+import { callout } from './editors/form-kit';
 import { html, nothing, type TemplateResult } from 'lit';
 import { ledEditorModule } from './led-strip-gate';
 import type { LedHistoryState, LedStripEditor } from './led-strip-editor';
@@ -76,7 +77,7 @@ export function ledWallsNote(card: LedCardPort): TemplateResult | typeof nothing
 
 /** The import summary: strips whose device did not travel are left unbound (§9). */
 export function ledImportNote(card: LedCardPort, n: unknown): TemplateResult | typeof nothing {
-  return n ? html`<div class="backupwarn" data-led-unbound-import=${String(n)}>${card._t('backup.unbound_led_strips', { n: String(n) })}</div>` : nothing;
+  return n ? html`${callout({ className:'backupwarn', kind:'warning', body:html`<span data-led-unbound-import=${String(n)}>${card._t('backup.unbound_led_strips', { n:String(n) })}</span>` })}` : nothing;
 }
 
 /** Undo/Redo of an LED command (ТЗ §4 п.9): its own strip record, never a newer foreign change. */

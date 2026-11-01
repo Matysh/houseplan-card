@@ -69,12 +69,15 @@ try {
  await optimize.locator('[slot=footer] [data-hp=dialog-cancel]').click();await settled();
  await settings.locator('.close').click();await settled();
  await page.evaluate(()=>window.__hpTest.setMode('decor'));
+ // #1150: fixture mirrors actual shared callout/icon/namein/tile consumers;
+ // danger semantics and contrast remain checked, while selected tiles follow
+ // the accepted common10% tint/border instead of the retired local18% paint.
  // A real hp-dialog with the production shared stylesheet already adopted by
  // this real card. These fixture-only commands count callbacks, not HA calls.
  await card.evaluate(async c=>{
   const d=document.createElement('hp-dialog');d.id='audit1145';d.hass=c.hass;d.className='ui-dialog';d.title='UI audit';
   const b=document.createElement('div');b.className='body';
-  b.innerHTML='<div class="row"><input class="namein" value="Body input"><span>cm</span></div><div class="hpf-settings-form"><button id="disabled1145" class="btn" disabled>Disabled</button><button id="enabled1145" class="btn">Enabled</button><section data-settings-section="alarms"><button class="alarm-add">+</button><button class="alarm-remove">−</button></section></div><button id="danger1145" class="btn danger">Delete</button><div class="backuperror">Backup error</div><div class="rrow"><input class="rpat bad" value="invalid pattern"></div><div class="furnitem on">Selected furniture</div><hp-color-opacity id="picker1145"></hp-color-opacity>';
+  b.innerHTML='<div class="row"><input class="namein" value="Body input"><span>cm</span></div><div class="hpf-settings-form"><button id="disabled1145" class="btn" disabled>Disabled</button><button id="enabled1145" class="btn">Enabled</button><section data-settings-section="alarms"><button class="alarm-add hpf-icon-action">+</button><button class="alarm-remove hpf-icon-action hpf-icon-danger">−</button></section></div><button id="danger1145" class="btn danger">Delete</button><div class="backuperror hpf-callout hpf-danger" role="alert"><ha-icon icon="mdi:alert-outline"></ha-icon><span>Backup error</span></div><div class="rrow"><input class="namein rpat bad" value="invalid pattern"></div><button class="furnitem on">Selected furniture</button><hp-color-opacity id="picker1145"></hp-color-opacity>';
   const f=document.createElement('div');f.className='row';f.slot='footer';f.innerHTML='<button class="btn on">Save</button>';
   d.append(b,f);c.shadowRoot.append(d);await d.updateComplete;
   window.__1145Calls={disabled:0,enabled:0};
@@ -100,14 +103,14 @@ try {
    const luminance=c=>c.slice(0,3).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;}).reduce((n,v,i)=>n+v*[.2126,.7152,.0722][i],0);
    const contrast=(a,b)=>(Math.max(luminance(a),luminance(b))+.05)/(Math.min(luminance(a),luminance(b))+.05);
    const danger=d.querySelector('#danger1145'),backup=d.querySelector('.backuperror'),furniture=d.querySelector('.furnitem'),bad=d.querySelector('.rpat.bad');
-   const color=rgba(getComputedStyle(danger).color),errorRgb=rgba(error),bg=rgba(surface),bc=rgba(getComputedStyle(backup).color),bb=blend(rgba(getComputedStyle(backup).backgroundColor),bg),fc=rgba(getComputedStyle(furniture).backgroundColor),ac=rgba(accent);
+   const color=rgba(getComputedStyle(danger).color),errorRgb=rgba(error),bg=rgba(surface),bc=rgba(getComputedStyle(backup).color),errorInk=rgba(getComputedStyle(backup.querySelector('ha-icon')).color),bb=blend(rgba(getComputedStyle(backup).backgroundColor),bg),fc=rgba(getComputedStyle(furniture).backgroundColor),ac=rgba(accent);
    return{danger:getComputedStyle(danger).color,error:getComputedStyle(backup).color,border:getComputedStyle(bad).borderColor,selected:getComputedStyle(furniture).backgroundColor,
-    dangerToken:color.slice(0,3).every((v,i)=>v===errorRgb[i]),backupToken:bc.slice(0,3).every((v,i)=>v===errorRgb[i]),regexToken:rgba(getComputedStyle(bad).borderTopColor).slice(0,3).every((v,i)=>v===errorRgb[i]),furnitureToken:blend(fc,bg).every((v,i)=>Math.abs(v-(ac[i]*.18+bg[i]*.82))<=1),
+    dangerToken:color.slice(0,3).every((v,i)=>v===errorRgb[i]),backupToken:errorInk.slice(0,3).every((v,i)=>v===errorRgb[i]),regexToken:rgba(getComputedStyle(bad).borderTopColor).slice(0,3).every((v,i)=>v===errorRgb[i]),furnitureToken:blend(fc,bg).every((v,i)=>Math.abs(v-(ac[i]*.10+bg[i]*.90))<=2)&&rgba(getComputedStyle(furniture).borderTopColor).slice(0,3).every((v,i)=>v===ac[i]),
     dangerContrast:contrast(color,bg),backupContrast:contrast(bc,bb),baselineBackupContrast:contrast(rgba('#ff7a5c'),blend(rgba('rgba(179,64,42,.16)'),bg)),selectedAlpha:fc[3]/255};
   },{surface,error,accent});
   report.themes.push({theme,...state});
-  check('AC2 '+theme+' danger, backup and invalid field follow error token',state.dangerToken&&state.backupToken&&state.regexToken);
-  check('AC2 '+theme+' furniture follows accent with translucent paint',state.furnitureToken&&state.selectedAlpha>.15&&state.selectedAlpha<.22);
+  check('AC2 '+theme+' danger ink, callout icon and invalid field follow error token with readable copy',state.dangerToken&&state.backupToken&&state.regexToken&&state.backupContrast>=state.baselineBackupContrast);
+  check('AC2 '+theme+' furniture uses shared accent tint and selected border',state.furnitureToken);
   await page.screenshot({path:`${output}/theme-${theme}.png`});
  }
  for(const cls of ['alarm-add','alarm-remove']){const r=await dialog.locator('.'+cls).boundingBox();report.sizes.push({cls,...r});check('AC4 '+cls+' 44px target',boxOK(r));}

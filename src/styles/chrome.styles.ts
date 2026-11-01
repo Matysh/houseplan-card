@@ -1,5 +1,6 @@
 /** Editor chrome: toolbars, tabs, menus and hints (#266, split from styles.ts). */
 import { css, unsafeCSS, type CSSResultGroup } from 'lit';
+import { readingTextCss } from './reading-kit.styles';
 import { helpSurfaceStyle, helpSurfaceMetaStyle } from './help-surface.styles';
 
 const chromeCoreStyles = unsafeCSS(css`
@@ -31,7 +32,7 @@ const chromeCoreStyles = unsafeCSS(css`
       z-index: 12;
       max-width: calc(100% - 2 * var(--sp-4));
     }
-    .farhint .btn { flex: none; }
+    .farhint button { flex:none; }
     .dropbtn {
       display: flex;
       align-items: center;
@@ -113,42 +114,13 @@ const chromeCoreStyles = unsafeCSS(css`
       }
       ha-card:not([data-hp-mode='view']) .head > .header-actions { grid-column: 1 / -1; justify-self: end; }
     }
-    .decorbar .bdhint {
-      font-size: var(--fs-s);
-      color: var(--hp-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .decorbar .dfill {
-      display: inline-flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); cursor: pointer;
-    }
-    .decorbar .dfill input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      flex: none;
-      margin: 0;
-      padding: 0;
-    }
+
     .decorbar hp-color-opacity { flex: 0 0 auto; }
     /* issue #220: a tab can be dragged to a new position in the editors */
     .tab[data-reorderable] { cursor: grab; }
     .tab.dragging { cursor: grabbing; opacity: 0.55; }
     .tab.drop-before { box-shadow: inset 2px 0 0 0 var(--primary-color, #03a9f4); }
     .tab.drop-after { box-shadow: inset -2px 0 0 0 var(--primary-color, #03a9f4); }
-    .editbar .barclose {
-      box-sizing: border-box;
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      margin: 0;
-      min-width: 40px;
-      min-height: 40px;
-      justify-content: center;
-      gap: 0;
-      line-height: 0;
-    }
-    .editbar .barclose ha-icon { flex: none; margin: 0; }
     /* #993: ≤ 1024 px of header — icon only; the label stays in aria-label and
        the tooltip. The ≤ 480 px window rules above (#616) are unchanged. */
     @container hp-head (max-width: 1024px) {
@@ -180,8 +152,6 @@ const chromeCoreStyles = unsafeCSS(css`
       z-index: 2;
     }
     .rhint {
-      font-size: var(--fs-s);
-      color: var(--hp-muted);
       margin-bottom: var(--sp-3);
     }
     /* Keep the last editor bar mounted while the row collapses. This makes
@@ -221,39 +191,22 @@ const chromeCoreStyles = unsafeCSS(css`
     .editorchrome.transitioning .editorchrome-inner {
       will-change: opacity;
     }
-    .editbar input {
-      width: 74px;
-      background: transparent;
-      border: 1px solid var(--hp-line);
-      color: var(--hp-txt);
-      border-radius: var(--rad-s);
-      padding: var(--sp-3) var(--sp-4);
-      font-size: var(--fs-m);
-    }
+
     .editbar label,
     .editbar .hint {
       color: var(--hp-muted);
       font-size: var(--fs-s);
     }
-    .editbar .drawwall {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--sp-3);
-      white-space: nowrap;
-    }
+
     .editbar .wallsgroup {
       display: inline-flex;
+      flex-wrap: wrap;
+      max-width: 100%;
       align-items: center;
       gap: 10px;
       white-space: nowrap;
     }
-    .editbar .drawwall input {
-      width: 4.2em;
-    }
-    .editbar .drawwall .opl {
-      color: var(--hp-muted);
-      font-size: var(--fs-s);
-    }
+
     .tip {
       position: fixed;
       pointer-events: none;
@@ -275,7 +228,7 @@ const chromeCoreStyles = unsafeCSS(css`
     .view-runtime-notice > span { flex: 1 1 200px; }
     .view-runtime-notice > div { display: flex; flex-wrap: wrap; gap: 8px; }
     .view-runtime-functions { display: block; }
-`.cssText + `.tip[data-hp-live-tip]{${helpSurfaceStyle}}.tip .m{${helpSurfaceMetaStyle}}`);
+`.cssText + readingTextCss('.rhint') + `.tip[data-hp-live-tip]{${helpSurfaceStyle}}.tip .m{${helpSurfaceMetaStyle}}`);
 
 /** #437 summary CSS lives with its lazy runtime in summary-panel-style.ts. */
 export const chromeStyles: CSSResultGroup = chromeCoreStyles;

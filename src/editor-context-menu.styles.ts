@@ -1,13 +1,12 @@
 import { css, unsafeCSS } from 'lit';
+import { floatingSurfaceCss } from './styles/floating-surface.styles';
 import { controlReducedMotionCss } from './styles/ui-motion.styles';
 import { settingsActionTransition } from './styles/settings-action.styles';
 
 export const editorContextMenuStyles = unsafeCSS(css`
   .hpf-context-menu {
     position: fixed; z-index: 10000; display: grid; gap: 0;
-    box-sizing: border-box; min-width: 0; padding: 0; border: 0; border-radius: 0;
-    background: var(--card-background-color,#fff); color: var(--primary-text-color,#222);
-    box-shadow: 0 6px 24px #0004; overflow: auto;
+    min-width:0; overflow:auto;
     font-family: inherit; font-size: 12px; line-height: 18px;
   }
   .hpf-context-menu > button {
@@ -29,4 +28,4 @@ export const editorContextMenuStyles = unsafeCSS(css`
   .hpf-context-menu > button:is([aria-current='true'], [aria-pressed='true']) { color:var(--primary-color,#03a9f4); font-weight:600; }
   .hpf-context-menu-scrim { position:fixed; inset:0; z-index:1; background:transparent; }
   .hpf-context-menu[inert] { pointer-events: none; }
-`.cssText + controlReducedMotionCss('.hpf-context-menu > button'));
+`.cssText + floatingSurfaceCss('.hpf-context-menu', '0') + controlReducedMotionCss('.hpf-context-menu > button'));

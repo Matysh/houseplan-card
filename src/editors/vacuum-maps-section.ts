@@ -277,7 +277,7 @@ export function renderVacuumMapsSection(
       </div>
       <small class="hpf-hint">${route.source}</small>
       <div class="vacroute-status hpf-hint">${statusOf(route)}</div>
-      <label class="srcrow">
+      <label class="hpf-check hpf-check-wrap srcrow">
         <span>${t('vac.route_space')}</span>
         <hp-settings-select><select data-hp="field" data-field="vacuum-map-action" class="areasel" @change=${(event: Event) => {
           const select = event.target as HTMLSelectElement;
@@ -314,7 +314,7 @@ export function renderVacuumMapsSection(
           <li class="vacroute pending hpf-reading-block hpf-reading-padded">
             <div class="vacroute-head"><b>${draft.mapId || t('vac.route_map_default')}</b></div>
             <small class="hpf-hint">${draft.source}</small>
-            <label class="srcrow">
+            <label class="hpf-check hpf-check-wrap srcrow">
               <span>${t('vac.route_space')}</span>
               <hp-settings-select><select data-hp="field" data-field="vacuum-map-space" class="areasel vacroute-draft-space" ?disabled=${!!draft.saving}
                 @change=${(event: Event) => selectDraftSpace((event.target as HTMLSelectElement).value)}>

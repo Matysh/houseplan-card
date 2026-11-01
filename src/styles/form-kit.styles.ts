@@ -1,3 +1,4 @@
+import { floatingSurfaceCss } from './floating-surface.styles';
 import { formKitErrorCss, formKitTextareaCss } from './form-input.styles';
 import { settingsTextLinkCss } from './settings-action.styles';
 import { controlReducedMotionCss } from './ui-motion.styles';
@@ -162,27 +163,135 @@ function sharedCss(options: FormKitCssOptions, withSwitch: boolean): string {
  * вторую строку целыми кнопками (`flex-wrap`), а не ломает текст.
  */
 /** Shared field paint; legacy output remains compatible with the frozen API. */
-export function textFieldsCss(options: FormKitCssOptions, selectors: string): string {
+export type FieldDensity = 'standard' | 'property' | 'editor';
+export function textFieldsCss(options: FormKitCssOptions, selectors: string, density: FieldDensity = 'standard', inlineSize?: '74px' | '4.2em' | '5.5em'): string {
   const { tokens } = options;
+  const guard = density === 'standard' ? '' : ':not([aria-disabled=true]):not(:has(:disabled))';
+  const compact = density !== 'standard';
   return `  ${selectors} {
     box-sizing: border-box;
-    width: 100%;
+    width: ${inlineSize ?? '100%'};
     min-width: 0;
-    min-height: 44px;
-    padding: ${options.parameterized ? '10px 12px' : '8px 10px'};
+    min-height: ${compact ? '36px' : '44px'};${compact ? '\n    height: 36px;' : ''}
+    padding: ${compact ? '0 10px' : options.parameterized ? '10px 12px' : '8px 10px'};
     border: 1px solid var(${tokens.line});
-    border-radius: 7px;
-    background: var(${tokens.surface});
+    border-radius: ${compact ? '5px' : '7px'};
+    background: var(${compact ? tokens.canvas : tokens.surface});
     color: var(--primary-text-color);
     font: inherit;
-    font-size: ${options.parameterized ? '13px' : '.875rem'};
-    line-height: ${options.parameterized ? '22px' : '1.4'};
-  }${options.parameterized ? `
-  :is(${selectors}):not(select):not(:disabled) { cursor:text; }
-  :is(${selectors}):not(:disabled):hover { border-color:var(${tokens.accent}); }
-  :is(${selectors}):not(:disabled):focus { outline:none; border-color:var(${tokens.accent}); box-shadow:inset 0 0 0 1px var(${tokens.accent}); }
+    font-size: ${compact ? '14px' : options.parameterized ? '13px' : '.875rem'};
+    line-height: ${options.parameterized && !compact ? '22px' : '1.4'};${compact ? '\n    font-variant-numeric:tabular-nums;' : ''}
+  }${options.parameterized || compact ? `
+  :is(${selectors}):not(select):not(:disabled)${guard} { cursor:text; }
+  :is(${selectors}):not(:disabled)${guard}:hover { border-color:var(${tokens.accent}); }
+  :is(${selectors}):not(:disabled)${guard}:focus { outline:none; border-color:var(${tokens.accent}); box-shadow:inset 0 0 0 1px var(${tokens.accent}); }
   :is(${selectors})[aria-invalid=true], :is(${selectors}).bad { border-color:var(${tokens.danger}); }
+` : ''}${compact ? `
+  :is(${selectors}):is(div) { display:flex; align-items:center; gap:7px; }
+  :is(${selectors}):is(:disabled,[aria-disabled=true]) { opacity:.5; cursor:not-allowed; }
 ` : ''}
+`;
+}
+
+/** Native fields and composite units share a finite compact density. */
+export function unitFieldsCss(options: FormKitCssOptions, selector?: string, density: FieldDensity = 'standard'): string {
+  const { form, prefix: p, tokens } = options;
+  if (density !== 'standard') {
+    const unit = selector ?? `.${p}-unit`;
+    return textFieldsCss(options, unit, density) + `
+  ${unit} { display:flex; align-items:center; gap:7px; flex-wrap:nowrap; font-variant-numeric:tabular-nums; }
+  ${unit} > input { box-sizing:border-box; width:100%; min-width:0; height:34px; padding:0; border:0; border-radius:0; background:none; color:inherit; font:inherit; font-size:14px; appearance:textfield; outline:none; box-shadow:none; }
+  ${unit} > input::-webkit-inner-spin-button, ${unit} > input::-webkit-outer-spin-button { appearance:none; margin:0; }
+  ${unit} > span, .${p}-unit-label { color:var(${tokens.muted}); margin-left:auto; font-size:11px; padding:0; white-space:nowrap; }
+  ${unit}:focus-within { border-color:var(${tokens.accent}); outline:1px solid var(${tokens.accent}); outline-offset:-1px; }
+  ${unit}:has(> input[readonly]) { background:var(${tokens.surface}); color:var(${tokens.muted}); }
+  ${unit}:has(> input:disabled) { opacity:.5; cursor:not-allowed; }
+  ${unit}:has(> input[aria-invalid=true]) { border-color:var(${tokens.danger}); }
+`;
+  }
+  return `  .${p}-unit { ${options.parameterized ? 'box-sizing:border-box; ' : ''}display: inline-flex; align-items: center; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.surface}); }
+  .${p}-unit > input { box-sizing: border-box; width: 5.5em; min-width: 5.5em; height: 100%; padding: 8px 9px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; font-variant-numeric: tabular-nums; }
+  ${form} .${p}-unit > input:focus { outline: 0; }
+  .${p}-unit > span { padding: 0 11px 0 3px; white-space: nowrap; color: var(${tokens.muted}); font-size: .875rem; }
+  .${p}-unit:focus-within { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
+  .${p}-unit.${p}-unit-wide, .${p}-unit.${p}-unit-wide > input { width: 100%; min-width: 0; }
+  .${p}-field > .${p}-unit:not(.${p}-unit-wide) { justify-self: start; }
+`;
+}
+
+/** Colour/alpha composite: ordinary settings and compact editor fields have one owner. */
+export function colorFieldsCss(options: FormKitCssOptions, selector?: string, density: FieldDensity = 'standard'): string {
+  const { prefix: p, tokens } = options;
+  if (density !== 'standard') {
+    const field = selector ?? `.${p}-colorfield`;
+    return textFieldsCss(options, field, density) + `
+  ${field} { display:flex; align-items:center; flex-wrap:nowrap; gap:5px; padding:0 8px; font-size:12px; }
+  ${field} hp-color-opacity { width:15px; height:15px; flex:0 0 15px; }
+  ${field} .${p}-empty-swatch { width:15px; height:15px; flex:0 0 15px; border:1px solid var(${tokens.line}); border-radius:3px; background:linear-gradient(135deg,transparent 45%,var(${tokens.line}) 46%,var(${tokens.line}) 53%,transparent 54%); }
+  ${field} .${p}-hex { color:var(--primary-text-color); font:inherit; font-size:12px; padding:0; font-variant-numeric:tabular-nums; }
+  ${field} .${p}-opacity { font-size:11px; color:var(${tokens.muted}); margin-left:auto; }
+  ${field}:has(.${p}-inline-hex) { display:grid; grid-template-columns:24px minmax(56px,1fr) 28px 8px; gap:2px; padding-inline:4px; cursor:default; }
+  ${field} > .${p}-opacity.${p}-inline-opacity, ${field} .${p}-inline-opacity > .${p}-unit { display:contents; }
+  ${field} .${p}-inline-hex, ${field} .${p}-inline-opacity .${p}-unit > input {
+    box-sizing:border-box; min-width:0; width:100%; height:28px; margin:0; padding:3px 2px;
+    border:0; border-radius:4px; background:transparent; color:var(--primary-text-color);
+    font:inherit; font-size:12px; line-height:20px; font-variant-numeric:tabular-nums; cursor:text; outline:0;
+  }
+  ${field} .${p}-inline-alpha { text-align:right; appearance:textfield; }
+  ${field} .${p}-inline-alpha::-webkit-inner-spin-button { appearance:none; }
+  ${field} .${p}-inline-opacity .${p}-unit > span { margin:0; font-size:12px; color:var(${tokens.muted}); }
+  ${field}:focus-within { border-color:var(${tokens.accent}); }
+  ${field} .${p}-inline-hex:hover, ${field} .${p}-inline-alpha:hover { background:color-mix(in srgb,var(${tokens.accent}) 8%,transparent); }
+  ${field} input[aria-invalid=true] { box-shadow:inset 0 -2px var(${tokens.danger}); }
+`;
+  }
+  return `  .${p}-colorfield {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 3px 10px 3px 3px;
+    border: 1px solid var(${tokens.line});
+    border-radius: 9px;
+    background: ${formKitValue(options, 'colorfield-background', `var(${tokens.canvas})`)};
+  }
+${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:border-color 160ms ease; }
+  .${p}-colorfield:hover { border-color:var(${tokens.accent}); }
+` : ''}  .${p}-colorfield > hp-color-opacity { flex: 0 0 auto; }
+  .${p}-hex { font-size: .875rem; color: var(${tokens.muted}); font-variant-numeric: tabular-nums; }
+  .${p}-colorfield > .${p}-opacity { display: flex; align-items: center; gap: 8px; font-size: .875rem; color: var(${tokens.muted}); }
+  .${p}-colorfield > .${p}-opacity > .${p}-unit { height: 38px; }
+  .${p}-colorfield > .${p}-opacity > .${p}-unit > input { width: 4.8em; min-width: 4.8em; }
+`;
+}
+
+/** Shared native checkbox/radio label, including existing labelled filter controls. */
+export function checkLabelsCss(options: FormKitCssOptions, selector?: string, wrapping: 'inline' | 'wrap' = 'inline'): string {
+  const { prefix:p, tokens } = options;
+  const label = selector ? `:is(${selector})` : `.${p}-check`;
+  return `  ${label} { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: .875rem; color: var(${tokens.muted}); cursor: pointer; white-space: ${wrapping === 'wrap' ? 'normal' : 'nowrap'}; }
+  ${label} > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }${wrapping === 'wrap' ? `\n  ${label} > input { flex:none; }` : ''}
+`;
+}
+
+/** Shared callout surface. Compact informational copy keeps the same theme/motion owners. */
+export function calloutSurfaceCss(options: FormKitCssOptions, selector: string, density: 'standard' | 'compact' = 'standard'): string {
+  const { tokens } = options;
+  const compact = density === 'compact';
+  return `  ${selector} {
+    display: ${compact ? 'block' : 'flex'};
+    gap: 8px;
+    margin: 0;
+    padding: ${compact ? '8px 10px' : formKitValue(options, 'callout-padding', `11px 12px`)};
+    border-radius: ${compact ? '0' : formKitValue(options, 'callout-radius', `8px`)};
+    background: ${compact ? 'color-mix(in srgb,var(--info-color,var(--hpf-accent)) 10%,var(--hpf-surface))' : formKitValue(options, 'callout-background', `var(${tokens.tint})`)};
+    color: var(${compact ? '--secondary-text-color' : '--primary-text-color'});
+    font-size: ${compact ? '12px' : formKitValue(options, 'callout-font-size', `.875rem`)};
+    line-height: ${compact ? '1.5' : formKitValue(options, 'callout-line-height', `1.6`)};${compact ? '\n    border-inline-start:3px solid var(--info-color,var(--hpf-accent));' : options.parameterized ? `\n    border-inline-start: ${formKitValue(options, 'callout-border', `0`)};` : ''}
+  }
 `;
 }
 
@@ -213,7 +322,7 @@ function extrasCss(options: FormKitCssOptions): string {
 ${formKitErrorCss(`.${p}-error`, tokens.danger)}
   .${p}-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .${p}-grid.${p}-grid-narrow { grid-template-columns: minmax(0, 1fr) 175px; }
-${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (options.parameterized ? ',\n  hp-dialog.ui-dialog :is(input[type=text],input[type=search],.supportmessage,.supportraw)' : ''))}  ${form} .${p}-select {
+${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (options.parameterized ? ',\n  hp-dialog.ui-dialog :is(input[type=text],input[type=search],.supportmessage,.supportraw,.namein,.areasel,.tempin)' : ''))}  ${form} .${p}-select {
     appearance: none;
     padding-right: 32px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -225,14 +334,7 @@ ${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (optio
   ${form} .${p}-input:hover, ${form} .${p}-select:hover { border-color: var(${tokens.muted}); }
   ${form} .${p}-input:focus, ${form} .${p}-select:focus { border-color: var(${tokens.accent}); outline: none; }
   ${form} [aria-invalid="true"] { border-color: var(${tokens.danger}) !important; }
-  .${p}-unit { ${options.parameterized ? 'box-sizing:border-box; ' : ''}display: inline-flex; align-items: center; height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.surface}); }
-  .${p}-unit > input { box-sizing: border-box; width: 5.5em; min-width: 5.5em; height: 100%; padding: 8px 9px; border: 0; border-radius: 7px; background: none; color: var(--primary-text-color); font: inherit; font-size: .875rem; font-variant-numeric: tabular-nums; }
-  ${form} .${p}-unit > input:focus { outline: 0; }
-  .${p}-unit > span { padding: 0 11px 0 3px; white-space: nowrap; color: var(${tokens.muted}); font-size: .875rem; }
-  .${p}-unit:focus-within { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
-  .${p}-unit.${p}-unit-wide, .${p}-unit.${p}-unit-wide > input { width: 100%; min-width: 0; }
-  .${p}-field > .${p}-unit:not(.${p}-unit-wide) { justify-self: start; }
-  .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+${unitFieldsCss(options)}  .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .${p}-actions > input[type="file"] { display: none; }
   .${p}-row {
     display: flex;
@@ -387,34 +489,14 @@ ${textFieldsCss(options, `${form} .${p}-input,\n  ${form} .${p}-select` + (optio
   .${p}-colortile > .${p}-colortile-swatch > hp-color-opacity { position: absolute; inset: 0; }
   .${p}-colortile-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
   .${p}-colortile-meta .${p}-hex { font-size: .8125rem; }
-  .${p}-colorfield {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    width: fit-content;
-    max-width: 100%;
-    min-height: 44px;
-    padding: 3px 10px 3px 3px;
-    border: 1px solid var(${tokens.line});
-    border-radius: 9px;
-    background: ${formKitValue(options, 'colorfield-background', `var(${tokens.canvas})`)};
-  }
-${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:border-color 160ms ease; }
-  .${p}-colorfield:hover { border-color:var(${tokens.accent}); }
-` : ''}  .${p}-colorfield > hp-color-opacity { flex: 0 0 auto; }
-  .${p}-hex { font-size: .875rem; color: var(${tokens.muted}); font-variant-numeric: tabular-nums; }
-  .${p}-colorfield > .${p}-opacity { display: flex; align-items: center; gap: 8px; font-size: .875rem; color: var(${tokens.muted}); }
-  .${p}-colorfield > .${p}-opacity > .${p}-unit { height: 38px; }
-  .${p}-colorfield > .${p}-opacity > .${p}-unit > input { width: 4.8em; min-width: 4.8em; }
-  .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; }
+${colorFieldsCss(options)}  .${p}-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; }
   .${p}-actions .btn { box-sizing: border-box; min-height: 44px; max-width: 100%; white-space: normal; text-align: left; }
   .${p}-actions .backupupload { max-width: 100%; }
   .${p}-colorrow { display: grid; grid-template-columns: ${formKitValue(options, 'colorrow-columns', 'minmax(0, 1fr) auto')}; align-items: ${formKitValue(options, 'colorrow-align', 'center')}; gap: 8px 16px; min-height: ${formKitValue(options, 'colorrow-min-height', '56px')}; }
   .${p}-colorrow > .${p}-colorfield { justify-self: end; }
   .${p}-colorrow > .${p}-labelrow { min-height: 0; }
   .${p}-link:not(.btn) { padding: 5px 0; border: 0 none transparent; background: transparent; box-shadow:none; color: var(${tokens.accent}); font: inherit; font-size: .875rem; font-weight: 500; cursor: pointer; }
-  ${settingsTextLinkCss(`:is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn))`, `var(${tokens.accent})`)}
+  ${settingsTextLinkCss(`:is(a[href]:not(.btn):not([role=button]),.${p}-link:not(.btn))`, `var(${tokens.accent})`, 'var(--primary-text-color)', !!options.parameterized)}
   .${p}-link:disabled { opacity: .5; cursor: default; }
   .${p}-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .${p}-inline > .${p}-labelrow { flex: 1 1 auto; }
@@ -424,18 +506,7 @@ ${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:borde
   .${p}-radios label { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; font-size: .875rem; cursor: pointer; white-space: nowrap; }
   .${p}-radios input { width: 16px; height: 16px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
   .${p}-radios label:has(input:checked) { color: var(${tokens.accent}); }
-  .${p}-callout {
-    display: flex;
-    gap: 8px;
-    margin: 0;
-    padding: ${formKitValue(options, 'callout-padding', `11px 12px`)};
-    border-radius: ${formKitValue(options, 'callout-radius', `8px`)};
-    background: ${formKitValue(options, 'callout-background', `var(${tokens.tint})`)};
-    color: var(--primary-text-color);
-    font-size: ${formKitValue(options, 'callout-font-size', `.875rem`)};
-    line-height: ${formKitValue(options, 'callout-line-height', `1.6`)};${options.parameterized ? `\n    border-inline-start: ${formKitValue(options, 'callout-border', `0`)};` : ''}
-  }
-  .${p}-callout > ha-icon { ${options.parameterized ? `display:${formKitValue(options, 'callout-icon-display', `inline-flex`)};` : ''}flex: none; margin-top: 2px; --mdc-icon-size: 16px; color: var(${tokens.accent}); }
+${calloutSurfaceCss(options, `.${p}-callout`)}  .${p}-callout > ha-icon { ${options.parameterized ? `display:${formKitValue(options, 'callout-icon-display', `inline-flex`)};` : ''}flex: none; margin-top: 2px; --mdc-icon-size: 16px; color: var(${tokens.accent}); }
   .${p}-callout > p, .${p}-callout > span { margin: 0; min-width: 0; overflow-wrap: anywhere; }
   .${p}-callout.${p}-warning { background: ${formKitValue(options, 'callout-background', `color-mix(in srgb, var(--warning-color, #ff9800) 14%, var(${tokens.surface}))`)}; }
   .${p}-callout.${p}-warning > ha-icon { color: var(--warning-color, #ff9800); }
@@ -444,7 +515,9 @@ ${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:borde
   .${p}-callout-body > p { margin:8px 0 0; }
   .${p}-callout.${p}-danger { background:${formKitValue(options, 'callout-background', `color-mix(in srgb,var(${tokens.danger}) 14%,var(${tokens.surface}))`)}; }
   .${p}-callout.${p}-danger > ha-icon { color:var(${tokens.danger}); }
-  .${p}-range > .${p}-range-output { display:flex; align-items:center; justify-content:center; box-sizing:border-box; min-width:70px; min-height:44px; padding:8px 10px; border:1px solid var(${tokens.line}); border-radius:7px; color:var(--primary-text-color); font-size:14px; font-variant-numeric:tabular-nums; }
+${options.parameterized ? `  .${p}-callout.${p}-success { background:color-mix(in srgb,var(--success-color,#43a047) 14%,var(${tokens.surface})); }
+  .${p}-callout.${p}-success > ha-icon { color:var(--success-color,#43a047); }
+` : ''}  .${p}-range > .${p}-range-output { display:flex; align-items:center; justify-content:center; box-sizing:border-box; min-width:70px; min-height:44px; padding:8px 10px; border:1px solid var(${tokens.line}); border-radius:7px; color:var(--primary-text-color); font-size:14px; font-variant-numeric:tabular-nums; }
   .${p}-range { --hpf-range-value-width: 84px; display: grid; grid-template-columns: minmax(0, 1fr) var(--hpf-range-value-width); align-items: center; gap: 15px; }
   .${p}-range > input[type="range"], .${p}-range > ha-slider { box-sizing: border-box; width: 100%; min-width: 0; margin-inline: 0; accent-color: var(${tokens.accent}); }
   .${p}-range > .${p}-unit { box-sizing: border-box; width: var(--hpf-range-value-width); min-width: 0; }
@@ -478,13 +551,18 @@ ${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:borde
     border: 1px solid var(${tokens.line}); border-radius: 8px; background: var(--hpf-control-surface, var(${tokens.surface})); background-image: none;
     color: var(--primary-text-color); font: inherit; line-height: 22px; cursor: pointer; transition: background var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease), border-color var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); }
   ${form} .${p}-pick > b { font: inherit; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .${p}-pick::after { content: ''; position: absolute; right: 14px; top: calc(50% - 9px); width: 18px; height: 18px;
+${options.parameterized ? `  ${form} .${p}-pick.${p}-pick-detailed { display:grid; grid-template-columns:20px minmax(0,1fr); grid-template-rows:auto auto; column-gap:12px; row-gap:3px; min-height:62px; padding-right:32px; }
+  .${p}-pick-detailed > :is(svg,ha-icon) { grid-column:1; grid-row:1 / 3; width:20px; height:20px; color:var(${tokens.accent}); }
+  .${p}-pick-detailed > b { grid-column:2; grid-row:1; font-size:14px; line-height:1.4; }
+  .${p}-pick-detailed > .${p}-pick-ref { grid-column:2; grid-row:2; font-size:12px; line-height:1.4; }
+  .${p}-pick-detailed > .${p}-pick-ph { grid-column:2; grid-row:1 / 3; }
+` : ''}  .${p}-pick::after { content: ''; position: absolute; right: 14px; top: calc(50% - 9px); width: 18px; height: 18px;
     background: currentColor; clip-path: polygon(29.1667% 41.6667%, 50% 62.5%, 70.8333% 41.6667%); transition: transform var(--hpf-paint-duration,160ms) var(--hpf-paint-easing,ease); pointer-events: none; }
   .${p}-pick[aria-expanded=true]::after { transform: rotate(180deg); }
   ${form} .${p}-pick:not(:disabled):hover { border-color: var(${tokens.accent}); background: var(${tokens.tint}); }
   .${p}-pick-ref { min-width: 0; font-size: .8125rem; color: var(${tokens.muted}); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .${p}-pick-ph { color: var(${tokens.muted}); }
-  .${p}-panel { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 5px; border: 1px solid var(${tokens.line}); border-radius: 10px; background: var(${tokens.surface}); box-shadow: 0 8px 28px #0003; }
+${options.parameterized ? floatingSurfaceCss(`.${p}-panel`, '5px') + `  .${p}-panel { min-width:0; max-width:100%; }` : `  .${p}-panel { box-sizing: border-box; min-width: 0; max-width: 100%; padding: 5px; border: 1px solid var(${tokens.line}); border-radius: 10px; background: var(${tokens.surface}); box-shadow: 0 8px 28px #0003; }`}
   .${p}-panel .${p}-toolbar { min-width: 0; padding: 5px 5px 8px; }
   .${p}-panel .${p}-toolbar .${p}-input { width: 100%; min-width: 0; border-radius: 8px; }
   .${p}-list { display: flex; flex-direction: column; gap: 0; min-width: 0; max-height: 220px; margin-top: 0; overflow: auto; overflow-x: hidden; }
@@ -500,9 +578,7 @@ ${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:borde
   .${p}-block.${p}-disabled .${p}-seg label, .${p}-block.${p}-disabled .${p}-colorfield, .${p}-block.${p}-disabled .${p}-range { pointer-events: none; }
   .${p}-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
   .${p}-toolbar > .${p}-input { flex: 1 1 200px; width: auto; }
-  .${p}-check { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: .875rem; color: var(${tokens.muted}); cursor: pointer; white-space: nowrap; }
-  .${p}-check > input { width: 18px; height: 18px; margin: 0; accent-color: var(${tokens.accent}); cursor: pointer; }
-  .${p}-iconfield { display: flex; align-items: center; gap: 8px; min-width: 0; }
+${checkLabelsCss(options)}${options.parameterized ? checkLabelsCss(options, `.${p}-check.${p}-check-wrap`, 'wrap') : ''}  .${p}-iconfield { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .${p}-iconfield-control { box-sizing: border-box; display: flex; align-items: center; flex: 1 1 auto; min-width: 0; min-height: 44px; border: 1px solid var(${tokens.line}); border-radius: 7px; background: var(${tokens.canvas}); }
   .${p}-iconfield-control:has(> ha-icon-picker) { border: 0; background: transparent; }
   .${p}-iconfield-control:focus-within:not(:has(> ha-icon-picker)) { outline: 2px solid var(${tokens.accent}); outline-offset: 2px; }
@@ -519,7 +595,7 @@ ${options.parameterized ? `  .${p}-colorfield { cursor:pointer; transition:borde
   .${p}-note-warning { color: var(--warning-color, #b87940); }
   .${p}-hint-line { display: block; }
   .${p}-chip-warning { border-color: var(--warning-color, #b87940); color: var(--warning-color, #b87940); }
-${formKitTextareaCss(`${form} textarea.${p}-input`)}
+${formKitTextareaCss(`${form} textarea.${p}-input` + (options.parameterized ? ', hp-dialog.ui-dialog textarea.namein' : ''))}
   .${p}-preview { display: flex; justify-content: center; }
   @media (max-width: 480px) {
     .${p}-body { padding: 0 14px 14px; }

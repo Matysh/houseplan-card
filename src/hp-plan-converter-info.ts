@@ -3,6 +3,7 @@ import { LitElement, css, html, unsafeCSS } from 'lit';
 import { converterT } from './i18n/converter';
 import type { Lang } from './i18n/registry';
 import { PLAN_CONVERTER, planConverterFormats, type PlanConverterFormat } from './plan-converter';
+import { readingTextCss } from './styles/reading-kit.styles';
 import { settingsInlineLinkCss } from './styles/settings-action.styles';
 
 export const CONVERTER_INFO_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -22,11 +23,10 @@ export class HpPlanConverterInfo extends LitElement {
   formats: readonly PlanConverterFormat[] = PLAN_CONVERTER.formats;
   static styles = [css`
     :host { display:block; min-width:0; width:100%; box-sizing:border-box; margin:20px 0 0;
-      color:var(--secondary-text-color); font-family:inherit; font-size:13px; line-height:1.6;
       overflow-wrap:anywhere; text-wrap:pretty; text-align:start; }
     :host([placement=empty]) { max-width:620px; margin:24px auto 0; text-align:center; }
     p { margin:0; }
-  `, unsafeCSS(settingsInlineLinkCss('a'))];
+  `, unsafeCSS(readingTextCss(':host', 'body-note') + settingsInlineLinkCss('a'))];
   protected render() { return planConverterHint(this.language, this.formats); }
 }
 

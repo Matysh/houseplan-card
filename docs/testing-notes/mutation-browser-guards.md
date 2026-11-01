@@ -42,11 +42,11 @@ that transition events alone prove disposal.
 | --- | ---: | --- |
 | Performance threshold | 11 | The witness measures real browser wall-time or frame work; a pure assertion cannot prove the budget. |
 | Browser harness integrity | 4 | The mutation breaks page-error, round-trip or page-registration observation in the browser harness itself. |
-| Paint, cascade and layer composition | 106 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
+| Paint, cascade and layer composition | 107 | The invariant depends on computed CSS, SVG paint, clipping, stacking or pixels produced by Chromium. |
 | Pointer geometry and trusted interaction | 110 | The invariant depends on hit testing, pointer capture, touch/keyboard dispatch or live DOM geometry. |
 | Responsive DOM layout | 67 | The invariant depends on measured element boxes, responsive breakpoints, native/HA dialog shells or focusable target size. |
 | Custom-element and HA browser lifecycle | 282 | The invariant crosses Lit/custom-element lifecycle, browser storage/events, lazy loading or a complete HA-card state transition. |
-| **Total** | **580 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
+| **Total** | **581 / 200** | Above the guideline `mutation-gate --check` warns rather than fails (#699); each guard above it is held by its own reason in this inventory and its `because`. |
 
 
 
@@ -137,6 +137,8 @@ premature counter snapshot. The unchanged Chromium probes still check the
 real Playwright page-error channel.
 
 ### Paint, cascade and layer composition
+
+- `compact-danger-missing-theme-token-1150`
 
 - `static-room-opening-symbols-omitted-1171`
 - `static-frame-omits-opening-envelope-1171`
@@ -1358,3 +1360,5 @@ browser results. Missing-contact fill paint has an ordinary RED before its fix.
 The accepted-code BEFORE misses symbols/cuts/tunnels. Existing
 #764 identity anchors follow the replacement shared list. Definitions only:
 static readiness is not mutation execution or a caught verdict.
+
+#1150 adds one mounted-theme witness: the genuine HA Properties action must retain semantic danger ink/border when the host theme omits --error-color. Its ordinary theme-input case is RED before the fallback fix and checks the completed paint transition; static readiness is not execution or caught evidence. Existing moved CSS/DOM witnesses keep their historical IDs and target the shared owner.

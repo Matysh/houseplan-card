@@ -1576,12 +1576,48 @@ without patching product code or executing mutants. Both form smokes retain
 their existing colour, draft/save/cancel, footer and overflow assertions and
 attest their actual launched Chromium. No product styles or golden change.
 
+The #1150 resource limit follows the existing #898 owner rule, with the owner's
+standing permission to raise limits instead of chasing bytes: previous wall
+387200 ->425920 B (+10%), reference387200 B. Rolling initial-View ceiling390000 B
+retains the2000-B band; all seven UI Kit ratchets and their counting method stay
+unchanged. At this task's checked build, initial View is388200 B versus parent
+385935 (+2265); lazy editor364589 versus366811 (-2222). Common action recipes are
+available to cold View instead of depending on editor loading. This is a measured
+payload redistribution, not a loading-speed claim; beta ratchets tighten to facts.
+The retired tray palette and local button/floor-row paint are no longer valid
+bundle ownership markers. Mark actual shared action/reading recipes and the
+contextual tray's layout, while native first-frame and cold-View smokes retain
+consumer checks. A collapsed retained editor subtree (#762) is excluded from a
+View-style comparison only after visibility:hidden, zero height and pointer-events:
+none are proved; visible View elements must still compute identically.
+Text-link hover uses the same disabled/ARIA/focus guard specificity as shared
+actions, so only ink changes. Frozen FormKit output explicitly retains its
+historical link recipe; the parameterized live composition uses the guarded one.
+
+Final editor package (#1150) shares finite desktop density recipes rather than
+copying legacy paint under new names. The #1146 v1 meter remains unchanged:
+original7820 -> package4 6223 CSS lines; parent6655 ->6223, btnRulesOutsideKit=0.
+Do not hardcode measured fractional heights: pinned Chromium produces31.0625px
+tool buttons and29.0625px history actions from natural font metrics. Native
+ha-icon display/line-height and chevron16px preserve those dimensions. Compact
+fields stay36px/radius5; nested popovers and View actions remain44px. Textareas
+use block display to avoid a UA inline-block descender shifting following fields.
+The shared wrapping checkbox label keeps long translated import options inside
+360px forms. Old capture_properties_panel absolute section positions predate
+the accepted #963 intrinsic-height layout and fail on unchanged parent dev;
+retain that evidence, the #931 control contract and immutable reference manifest.
+Current same-input parent/candidate geometry is measured separately, without
+rewriting old reference images. Reproduce with demo/ui-lab/editor-kit-audit.mjs;
+fixture API selection prepares frames and is not a native interaction claim.
+Full-series counters and explicit retained cells: docs/design/ui-kit-audit-1150.json.
+No measurement/cap change or CSS minification is used to meet the forecast.
+
 Settings content (#1149) shares field/action/toggle/popover painters and native
 44px targets. The unchanged #1146 v1 census decreases CSS from6871 to6655 lines;
 other counters stay in their bands. Registry settings M=0/L=10, with each retained
 boundary documented in docs/design/ui-kit-audit-1149.json. Reproduce the synthetic
 pinned HA matrix with node demo/ui-lab/settings-content-audit.mjs; it does not
-claim live HA or GPU acceptance. Compact editor migration remains #1150.
+claim live HA or GPU acceptance. Compact editor migration is documented under #1150.
 
 The existing lazy form kit owns explicit sections, independent Help/action
 regions and disclosures; see [DIALOG-UI-KIT.md](DIALOG-UI-KIT.md). The measured

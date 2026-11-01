@@ -243,7 +243,7 @@ export class DecorImageEditor<Snapshot> {
         }}><ha-icon icon="mdi:close"></ha-icon></button>
       </div>
       <div class="furnbody">
-        <label class="btn on imageupload ${this.host._decorAssetBusy ? 'disabled' : ''}">
+        <label class="btn on imageupload ${this.host._decorAssetBusy ? 'disabled' : ''}" aria-disabled=${String(this.host._decorAssetBusy)}>
           <ha-icon icon="mdi:upload"></ha-icon>${this.host._t(
             this.host._decorAssetBusy ? 'decor.image_uploading' : 'decor.image_upload',
           )}
@@ -253,14 +253,14 @@ export class DecorImageEditor<Snapshot> {
         </label>
         <div class="furnrow imageassets">
           ${this.host._decorAssetCatalog.length ? nothing
-            : html`<span class="furnhint imageempty">${this.host._t('decor.image_none')}</span>`}
+            : html`<span class="furnhint imageempty hpf-reading-empty">${this.host._t('decor.image_none')}</span>`}
           ${this.host._decorAssetCatalog.map((asset) => html`<div class="imageasset">
             <button data-hp="action" data-action="image-palette-select" data-value=${asset.asset_id} class="furnitem ${armed?.asset_id === asset.asset_id ? 'on' : ''}"
               title=${asset.name} @click=${() => {
                 this.host._decorImagePalette = asset;
                 this.host.requestUpdate();
               }}>
-              <img src=${this.host._display(asset.url)} alt="" /><span>${asset.name}</span>
+              <img class="hpf-tile-image" src=${this.host._display(asset.url)} alt="" /><span>${asset.name}</span>
               ${asset.used_by?.length ? html`<small>${this.host._t(
                 'decor.image_used', { n: asset.used_by.length },
               )}</small>` : nothing}
@@ -291,16 +291,16 @@ export class DecorImageEditor<Snapshot> {
     const preview = (id: string): TemplateResult => {
       const art = furnitureGraphic(id);
       if (!art) {
-        return svg`<svg class="furnprev" aria-hidden="true"></svg>` as unknown as TemplateResult;
+        return svg`<svg class="furnprev hpf-tile-art" aria-hidden="true"></svg>` as unknown as TemplateResult;
       }
-      return svg`<svg class="furnprev" viewBox=${`0 0 ${art.viewW} ${art.viewH}`}
+      return svg`<svg class="furnprev hpf-tile-art" viewBox=${`0 0 ${art.viewW} ${art.viewH}`}
         preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path
         d=${art.d} fill="none" stroke="currentColor" stroke-width="1.2"
         vector-effect="non-scaling-stroke" stroke-linecap="round"
         stroke-linejoin="round"></path></svg>` as unknown as TemplateResult;
     };
     const categoryPreview = (item: (typeof GENERATED_FURNITURE_MENU)[number]): TemplateResult =>
-      svg`<svg class="furnprev furncatprev" viewBox=${`0 0 ${item.art.viewW} ${item.art.viewH}`}
+      svg`<svg class="furnprev furncatprev hpf-tile-art hpf-tile-art-large" viewBox=${`0 0 ${item.art.viewW} ${item.art.viewH}`}
         preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path
         d=${item.art.d} fill="none" stroke="currentColor" stroke-width="1.5"
         vector-effect="non-scaling-stroke" stroke-linecap="round"
@@ -500,13 +500,13 @@ export class DecorImageEditor<Snapshot> {
           ${dialog.kind === 'line' ? html`
             <label>${this.host._t('decor.line_style')}</label>
             <div role="radiogroup" aria-label=${this.host._t('decor.line_style')}>
-              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" data-value="solid" type="radio" name="decor-line-style"
+              <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="decor-line-style" data-value="solid" type="radio" name="decor-line-style"
                 .checked=${dialog.lineStyle !== 'dashed'}
                 @change=${() => (this.host._decorShapeDialog = {
                   ...dialog, lineStyle: 'solid',
                 })} />
                 <span>${this.host._t('decor.line_style_solid')}</span></label>
-              <label class="srcrow"><input data-hp="field" data-field="decor-line-style" data-value="dashed" type="radio" name="decor-line-style"
+              <label class="hpf-check hpf-check-wrap srcrow"><input data-hp="field" data-field="decor-line-style" data-value="dashed" type="radio" name="decor-line-style"
                 .checked=${dialog.lineStyle === 'dashed'}
                 @change=${() => (this.host._decorShapeDialog = {
                   ...dialog, lineStyle: 'dashed',

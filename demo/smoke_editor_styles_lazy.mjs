@@ -92,7 +92,11 @@ function installHelpers() {
       return [...(root.adoptedStyleSheets || [])].filter((sheet) => kindOf(sheet).startsWith('editor-'))
         .flatMap((sheet) => selectors(sheet.cssRules)).filter((selector) => selector !== ':host');
     },
-    trayVar(host) { return getComputedStyle(host).getPropertyValue('--hp-editor-tray-bg').trim(); },
+    trayVar(host) {
+      const sheet=[...(host.renderRoot.adoptedStyleSheets || [])].find(sheet=>kindOf(sheet)==='editor-tray');
+      return [...(sheet?.cssRules || [])].find(rule=>rule.selectorText?.includes('.editor-secondary')
+        && rule.style?.getPropertyValue('--hpf-surface'))?.style.getPropertyValue('--hpf-surface').trim() || '';
+    },
     /**
      * The element takes part in rendering: connected, and slotted by every shadow
      * host on its way up. A light-DOM child of a host that has not rendered its
@@ -184,7 +188,12 @@ function installHelpers() {
     /** Computed style of every View element; the tray tokens are host-level by contract. */
     snapshot(card) {
       const root = card.renderRoot;
-      return [...root.querySelectorAll('*')].map((element) => {
+      return [...root.querySelectorAll('*')].filter(element => {
+        // #762 retains collapsed editor DOM for its exit transition. It is not
+        // a View element; an accidentally visible/expanded owner is never omitted.
+        const chrome=element.closest('.editorchrome');
+        return !chrome || getComputedStyle(chrome).visibility!=='hidden' || chrome.getBoundingClientRect().height!==0;
+      }).map((element) => {
         const style = getComputedStyle(element);
         const parts = [];
         for (let i = 0; i < style.length; i++) {
@@ -380,9 +389,12 @@ try {
     const withoutSheets = window.__hp805.snapshot(card);
     root.adoptedStyleSheets = all;
     const differing = withSheets.filter((entry, i) => entry !== withoutSheets[i]).map((entry) => entry.split('|')[0]);
-    return { elements: withSheets.length, differing, mode: card._mode };
+    const chrome=root.querySelector('.editorchrome');
+    const retainedChromeUnpainted=!chrome || (getComputedStyle(chrome).visibility==='hidden'
+      && chrome.getBoundingClientRect().height===0 && getComputedStyle(chrome).pointerEvents==='none');
+    return { elements: withSheets.length, differing, mode: card._mode, retainedChromeUnpainted };
   });
-  out.viewAfterEditorUntouchedByEditorSheets = backInView.mode === 'view' && backInView.elements > 100
+  out.viewAfterEditorUntouchedByEditorSheets = backInView.mode === 'view' && backInView.retainedChromeUnpainted && backInView.elements > 100
     && backInView.differing.length === 0 || `${backInView.differing.length} of ${backInView.elements}: ${backInView.differing.slice(0, 5)}`;
 
   // AC5 (i): a second full card adopts into its own root; the sheet objects are shared.

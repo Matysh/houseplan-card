@@ -1,5 +1,7 @@
 import { css, unsafeCSS } from 'lit';
 import { settingsActionsCss } from './styles/settings-action.styles';
+import { floatingSurfaceCss } from './styles/floating-surface.styles';
+import { editorFormKitCss, editorTilesCss } from './styles/form-kit-editor.styles';
 
 /** Styles owned by the contextual editor surface.
  *
@@ -8,14 +10,6 @@ import { settingsActionsCss } from './styles/settings-action.styles';
  * DOM: extracting the styles must not alter layout or smoke-test hooks.
  */
 const editorSecondaryBase = css`
-  :host {
-    --hp-editor-tray-bg-fallback: color-mix(in srgb, var(--card-background-color, var(--hp-bg)) 94%, var(--hp-line));
-    --hp-editor-tray-bg: color-mix(in srgb, var(--card-background-color, var(--hp-bg)) 86%, transparent);
-    --hp-editor-tray-border: color-mix(in srgb, var(--hp-line) 82%, var(--hp-accent));
-    --hp-editor-tray-blur: 8px;
-    --hp-editor-tray-shadow: var(--shadow-2);
-  }
-
   /* Contextual editor controls float over the stage. Their appearance must
      never alter stage height, viewport fitting or the pinned close action. */
   .editor-secondary-host {
@@ -36,39 +30,21 @@ const editorSecondaryBase = css`
     display: flex;
     align-items: center;
     gap: var(--sp-3);
-    padding: var(--sp-3) var(--sp-4);
-    color: var(--hp-txt);
-    background: var(--card-background-color, var(--hp-bg));
-    background: var(--hp-editor-tray-bg-fallback);
-    border: 1px solid var(--hp-line);
-    border-color: var(--hp-editor-tray-border);
-    border-radius: var(--rad-l);
-    box-shadow: var(--hp-editor-tray-shadow);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-4px);
     transition:
-      opacity 0.1s ease,
-      transform 0.1s cubic-bezier(0.2, 0.7, 0.2, 1),
-      visibility 0s linear 0.1s;
+      opacity var(--hpf-leave-duration,140ms) var(--hpf-leave-easing,ease),
+      visibility 0s linear var(--hpf-leave-duration,140ms);
     touch-action: auto;
   }
   .editor-secondary-host.open .editor-secondary {
     pointer-events: auto;
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
-    transition-duration: 0.14s, 0.14s, 0s;
+    transition-duration: var(--hpf-appear-duration,180ms), 0s;
     transition-delay: 0s;
   }
   .editor-secondary-host.blocked .editor-secondary { pointer-events: none; }
-  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .editor-secondary {
-      background: var(--hp-editor-tray-bg);
-      -webkit-backdrop-filter: blur(var(--hp-editor-tray-blur));
-      backdrop-filter: blur(var(--hp-editor-tray-blur));
-    }
-  }
   .editor-secondary-content,
   .editor-group-items {
     display: flex;
@@ -82,26 +58,19 @@ const editorSecondaryBase = css`
     text-overflow: ellipsis;
     white-space: nowrap;
     padding-inline-end: var(--sp-4);
-    border-inline-end: 1px solid var(--hp-line);
-    color: var(--hp-muted);
-    font-size: var(--fs-s);
   }
   .editor-secondary[data-layout=actions] {
-    --hpf-line:var(--divider-color,var(--hp-line));
-    --hpf-surface:var(--card-background-color,var(--hp-bg));
     display:grid; align-items:stretch; gap:12px; width:352px; max-width:100%;
-    box-sizing:border-box; padding:16px;
+    box-sizing:border-box;
   }
   .editor-secondary[data-layout=actions] .editor-context-label {
-    display:block; max-width:none; padding:0; border:0; color:var(--primary-text-color);
-    font-size:16px; font-weight:600; line-height:24px;
+    display:block; max-width:none; padding:0; border:0;
   }
   .editor-secondary[data-layout=actions] .editor-secondary-content { display:block; overflow:visible; width:100%; }
   .editor-secondary-content > .decor-selection-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; min-width:0; }
   .editor-secondary.kind-palette {
     width: min(760px, 100%);
     align-items: stretch;
-    padding: 0;
     overflow: hidden;
   }
   .editor-secondary.kind-palette .editor-secondary-content,
@@ -113,60 +82,11 @@ const editorSecondaryBase = css`
     border: 0;
     background: transparent;
   }
-  .editor-group-launcher .group-chevron {
-    --mdc-icon-size: 16px;
-    transition: transform 0.14s ease;
-  }
-  .editor-group-launcher[aria-expanded="true"] .group-chevron { transform: rotate(180deg); }
 
-  .editor-secondary .bdhint {
-    font-size: var(--fs-s);
-    color: var(--hp-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .editor-secondary .dfill {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-2);
-    font-size: var(--fs-s);
-    cursor: pointer;
-  }
-  .editor-secondary .dfill input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    flex: none;
-    margin: 0;
-    padding: 0;
-  }
-  .editor-secondary hp-color-opacity { flex: 0 0 auto; }
-  .editor-secondary input {
-    width: 74px;
-    background: transparent;
-    border: 1px solid var(--hp-line);
-    color: var(--hp-txt);
-    border-radius: var(--rad-s);
-    padding: var(--sp-3) var(--sp-4);
-    font-size: var(--fs-m);
-  }
-  .editor-secondary label,
-  .editor-secondary .hint {
-    color: var(--hp-muted);
-    font-size: var(--fs-s);
-  }
-  .editor-secondary .drawwall {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-3);
-    white-space: nowrap;
-  }
-  .editor-secondary .drawwall input { width: 4.2em; }
-  .editor-secondary .drawwall .opl {
-    color: var(--hp-muted);
-    font-size: var(--fs-s);
-  }
-
+  .editor-secondary .bdhint { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .editor-secondary .dfill { display:inline-flex; align-items:center; gap:var(--sp-2); }
+  .editor-secondary hp-color-opacity { flex:0 0 auto; }
+  .editor-secondary .drawwall { display:inline-flex; align-items:center; gap:var(--sp-3); white-space:nowrap; }
   @container (min-width: 560px) and (max-width: 899px) {
     .editor-secondary-content,
     .editor-group-items {
@@ -188,9 +108,14 @@ const editorSecondaryBase = css`
   }
   @media (prefers-reduced-motion: reduce) {
     .editor-secondary { transition: none; }
-    .editor-group-launcher .group-chevron { transition: none; }
   }
 `;
 
-export const editorSecondaryStyles = unsafeCSS(editorSecondaryBase.cssText
+export const editorSecondaryStyles = unsafeCSS(editorSecondaryBase.cssText + editorFormKitCss
+  + floatingSurfaceCss('.editor-secondary', '6px 8px')
+  + floatingSurfaceCss('.editor-secondary[data-layout=actions]', '16px')
+  + floatingSurfaceCss('.editor-secondary.kind-palette', '0')
+  + editorTilesCss('.furnitem')
+  + editorTilesCss('.furnitem.furncategory', 'category')
+  + editorTilesCss('.imageasset .furnitem', 'asset')
   + settingsActionsCss('.editor-secondary .decor-selection-actions .btn'));

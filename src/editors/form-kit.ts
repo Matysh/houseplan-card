@@ -75,7 +75,7 @@ export interface DisclosureOptions {
 /** Informational disclosure, distinct from an action button. */
 export function disclosure({ title, content, id, className = '', open, onToggle, help, triggerClass = '', action }: DisclosureOptions): TemplateResult {
   const details = html`<details class="hpf-disclosure ${className}" id=${id ?? nothing} ${disclosureMotion(open, onToggle)}>
-    <summary class=${triggerClass} data-hp=${action ? 'action' : nothing} data-action=${action ?? nothing}>${title}</summary><div class="hpf-disclosure-content"><div class="hpf-disclosure-inner">${content}</div></div>
+    <summary class=${triggerClass ? `hpf-disclosure-action ${triggerClass}` : ''} data-hp=${action ? 'action' : nothing} data-action=${action ?? nothing}>${title}</summary><div class="hpf-disclosure-content"><div class="hpf-disclosure-inner">${content}</div></div>
   </details>`;
   return help && help !== nothing
     ? html`<div class="hpf-disclosure-with-help">${details}${help}</div>` : details;
@@ -405,7 +405,10 @@ export interface CalloutOptions {
   text?: string | TemplateResult;
   /** Structured content is a div, never an invalid block tree inside a p. */
   body?: FormSectionContent;
-  kind?: 'info' | 'warning' | 'danger';
+  kind?: 'info' | 'warning' | 'danger' | 'success';
+  className?: string;
+  live?: 'polite' | 'assertive';
+  hook?: 'backup-recovery';
   icon?: string;
   /** Ссылка-действие в конце текста. */
   action?: TemplateResult | typeof nothing;
@@ -420,10 +423,10 @@ export interface CalloutOptions {
  * уезжает. Это не пояснение к настройке, а сигнал, что прямо сейчас что-то
  * сломано или изменится при сохранении.
  */
-export function callout({ text, body, kind = 'info', icon, action, role, id, focusable }: CalloutOptions): TemplateResult {
-  return html`<div id=${id ?? nothing} class="hpf-callout ${kind === 'info' ? '' : `hpf-${kind}`}" role=${role ?? nothing}
+export function callout({ text, body, kind = 'info', icon, action, role, id, focusable, className = '', live, hook }: CalloutOptions): TemplateResult {
+  return html`<div id=${id ?? nothing} data-hp=${hook ? 'backup-recovery' : nothing} class="hpf-callout ${kind === 'info' ? '' : `hpf-${kind}`} ${className}" role=${role ?? nothing} aria-live=${live ?? nothing}
     tabindex=${focusable ? '-1' : nothing}>
-    <ha-icon icon=${icon ?? (kind === 'info' ? 'mdi:information-outline' : 'mdi:alert-outline')}></ha-icon>
+    <ha-icon icon=${icon ?? (kind === 'info' ? 'mdi:information-outline' : kind === 'success' ? 'mdi:check-circle-outline' : 'mdi:alert-outline')}></ha-icon>
     ${body !== undefined ? html`<div class="hpf-callout-body">${body}</div>`
       : html`<p>${text}${action ? html` ${action}` : nothing}</p>`}
   </div>`;
@@ -663,7 +666,7 @@ export function sourcePicker({
   onToggle, onClose, onFilter, onPick, id, fieldId = id, toolbar, disabled = false, leading,
 }: SourcePickerOptions): TemplateResult {
   return html`<div class="hpf-picker ${open ? 'open' : ''}" ${sourcePickerOverlay(open, onClose)}>
-    <button data-hp="field" data-field=${fieldId ?? nothing} id=${id ?? nothing} type="button" class="hpf-select hpf-pick" aria-haspopup="listbox"
+    <button data-hp="field" data-field=${fieldId ?? nothing} id=${id ?? nothing} type="button" class="hpf-select hpf-pick ${leading ? 'hpf-pick-detailed' : ''}" aria-haspopup="listbox"
       aria-expanded=${open ? 'true' : 'false'} aria-label=${ariaLabel} ?disabled=${disabled} @click=${onToggle}>
       ${leading ?? nothing}
       ${current

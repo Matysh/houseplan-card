@@ -28,7 +28,7 @@ export const navigationStyles = unsafeCSS(css`
   .hpf-nav-modes { --hp-editor-close-size:24px; }
   .hpf-nav-modes > .hpf-nav-item.active { background:transparent; }
   .hpf-nav-modes > .hpf-nav-item.active::after {
-    content:''; position:absolute; inset:0 calc(-1 * (4px + var(--hp-editor-close-size))) 0 0;
+    content:''; position:absolute; inset:-1px calc(-1 * (4px + var(--hp-editor-close-size)) - 1px) -1px -1px;
     z-index:-1; border-radius:7px; background:var(--primary-color); pointer-events:none;
   }
   .hpf-nav-modes > .hpf-nav-item.active:focus-visible { outline:none; }

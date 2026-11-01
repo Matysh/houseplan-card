@@ -1,4 +1,5 @@
 /** Editor-only portable transfer: opaque server candidates, never client-side import parsing. */
+import { callout, disclosure } from './editors/form-kit';
 import { html, nothing, type TemplateResult } from 'lit';
 import type { I18nKey } from './i18n';
 import type { ToolsI18nKey } from './i18n/tools';
@@ -219,15 +220,15 @@ export function renderRecoveryReport(t: (key: ToolsI18nKey, values?: Record<stri
     radar: 'backup.recovery.reason.radar', vacuum: 'backup.recovery.reason.vacuum',
     controls: 'backup.recovery.reason.controls', value: 'backup.recovery.reason.value',
   };
-  return html`<div class="backupwarn" role="status" data-hp="backup-recovery">
+  return html`${callout({ className:'backupwarn', kind:'warning', role:'status', hook:'backup-recovery', body:html`<div class="backupdetailrows">
     <b>${t(exporting ? 'backup.recovery.export_title' : 'backup.recovery.import_title')}</b>
     <p>${t(exporting ? 'backup.recovery.export_hint' : 'backup.recovery.import_hint')}</p>
     <ul>${(Object.entries(report.counts) as Array<[RecoveryKind, number]>).map(([kind, count]) =>
       html`<li>${t(reasons[kind])}: ${count}</li>`)}</ul>
-    <details><summary>${t('backup.recovery.details')}</summary><ul>
+    ${disclosure({ title:t('backup.recovery.details'), content:html`<ul>
       ${report.examples.slice(0, 24).map(row => html`<li>${row.name || row.marker_id} — ${t(reasons[row.kind])}</li>`)}
-    </ul>${report.remaining ? html`<p>${t('backup.recovery.more', { n: String(report.remaining) })}</p>` : nothing}</details>
-  </div>`;
+    </ul>${report.remaining ? html`<p>${t('backup.recovery.more', { n: String(report.remaining) })}</p>` : nothing}` })}
+  </div>` })}`;
 }
 
 export function renderArchiveSummary(t: (key: ToolsI18nKey, values?: Record<string, string>) => string,
@@ -239,15 +240,15 @@ export function renderArchiveSummary(t: (key: ToolsI18nKey, values?: Record<stri
     const date = new Date(item.obtained_at);
     return Number.isFinite(date.getTime()) ? date.toLocaleString() : '—';
   }).join('; ');
-  return html`<div class="backupcontent" data-hp="archive-summary">
+  return html`<div class="backupcontent hpf-reading-block hpf-reading-padded" data-hp="archive-summary">
     <b>${t('backup.zip_images_summary', { n: String(summary.images) })}</b>
     <span>${summary.snapshot.length ? t('backup.zip_snapshot_summary', { date: dates }) : t('backup.zip_snapshot_absent')}</span>
     ${restoring ? html`<span>${t('backup.zip_snapshot_replace_notice')}</span>` : nothing}
-    ${summary.snapshot_ignored_off ? html`<div class="backupwarn">${t('backup.zip_snapshot_ignored_off')}</div>` : nothing}
-    ${!summary.complete ? html`<div class="backupwarn" role="alert"><b>${t('backup.zip_incomplete_title')}</b>
+    ${summary.snapshot_ignored_off ? html`${callout({ className:'backupwarn', kind:'warning', role:'note', body:html`<div class="backupdetailrows">${t('backup.zip_snapshot_ignored_off')}</div>` })}` : nothing}
+    ${!summary.complete ? html`${callout({ className:'backupwarn', kind:'warning', role:'alert', body:html`<div class="backupdetailrows"><b>${t('backup.zip_incomplete_title')}</b>
       <p>${t('backup.zip_incomplete_hint')}</p>
-      <details><summary>${t('backup.zip_missing_count', { n: String(summary.missing.length) })}</summary>
+      ${disclosure({ title:t('backup.zip_missing_count', { n: String(summary.missing.length) }), content:html`
         <ul>${summary.missing.map(row => html`<li>${row.name || row.owner_id} — ${t(reasons[row.reason] || 'backup.zip_reason.invalid')}</li>`)}</ul>
-      </details></div>` : nothing}
+      ` })}</div>` })}` : nothing}
   </div>`;
 }

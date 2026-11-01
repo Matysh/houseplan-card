@@ -1320,10 +1320,10 @@
       ],
       "cells": {
         "segmented": [
-          "M|houseplan-card.ts:11495-11505 button.modetab inside div.modes|styles/chrome.styles.ts:245-275,styles/chrome.styles.ts:335-364"
+          "K|styles/navigation.styles.ts:navigationStyles hpf-nav-modes/hpf-nav-item; styles/icon-action.styles.ts:iconActionStyles close44|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-icon": [
-          "M|houseplan-card.ts:11447-11450 span.editor-close-slot > button.closex|styles/chrome.styles.ts:283-316"
+          "K|styles/navigation.styles.ts:navigationStyles hpf-nav-modes/hpf-nav-item; styles/icon-action.styles.ts:iconActionStyles close44|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "tooltip": [
           "N|modetab and closex use native title= (houseplan-card.ts:11448, 11493)"
@@ -1343,19 +1343,19 @@
       ],
       "cells": {
         "btn-secondary": [
-          "M|houseplan-editor-runtime.ts:11180-11198 (select/draw/column/wallthick .btn/.btn.on); g|styles/dialogs.styles.ts:34-65"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-icon": [
-          "M|houseplan-editor-runtime.ts:11210 .btn.barclose|styles/chrome.styles.ts:317-329"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
         ],
         "separator": [
-          "M|div.editbar-end (toolbar end group)|styles/chrome.styles.ts:386-394"
+          "M|styles/chrome.styles.ts:editbar-end retains docked toolbar divider/background; fixed column composition is outside floating/action recipes. Parent/candidate toolbar matrix retains exact dimensions; no scene rename.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "motion-open-close": [
-          "M|houseplan-card.ts:11534 div.editorchrome (JS height interpolation houseplan-card.ts:14|styles/chrome.styles.ts:419-452"
+          "M|houseplan-card.ts:editorchrome height interpolation coordinates the stage ResizeObserver and exit lifecycle; styles/chrome.styles.ts retains structural height/visibility motion. Changing this geometry lifecycle is excluded; editor_tabs/plan_rotation_editors cover it.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -1371,22 +1371,22 @@
       ],
       "cells": {
         "btn-secondary": [
-          "M|houseplan-editor-runtime.ts:11232-11251 (add, magnets, device-inbox, icon-rules); LED |styles/dialogs.styles.ts:34-65"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-icon": [
-          "M|houseplan-editor-runtime.ts:11266 .btn.barclose|styles/chrome.styles.ts:317-329"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
         ],
         "separator": [
-          "M|div.editbar-end (toolbar end group)|styles/chrome.styles.ts:386-394"
+          "M|styles/chrome.styles.ts:editbar-end retains docked toolbar divider/background; fixed column composition is outside floating/action recipes. Parent/candidate toolbar matrix retains exact dimensions; no scene rename.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "motion-open-close": [
-          "M|houseplan-card.ts:11534 div.editorchrome (JS height interpolation houseplan-card.ts:14|styles/chrome.styles.ts:419-452"
+          "M|houseplan-card.ts:editorchrome height interpolation coordinates the stage ResizeObserver and exit lifecycle; styles/chrome.styles.ts retains structural height/visibility motion. Changing this geometry lifecycle is excluded; editor_tabs/plan_rotation_editors cover it.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "empty/loading/error state": [
-          "M|device-structure-history.ts:60 span[role=status] data-hp=device-structure-pending"
+          "M|device-structure-history.ts:render pending/reconcile status belongs to persistence recovery authority; plain inline status retained. No write/recovery controller change; existing device structure smokes remain the oracle.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -1403,22 +1403,22 @@
       ],
       "cells": {
         "btn-secondary": [
-          "M|houseplan-editor-runtime.ts:5321-5328 .btn.dtool(.on)|styles/dialogs.styles.ts:34-65"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-icon": [
-          "M|houseplan-editor-runtime.ts:5342 .btn.barclose|styles/chrome.styles.ts:317-329"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
         ],
         "separator": [
-          "M|div.editbar-end (toolbar end group)|styles/chrome.styles.ts:386-394"
+          "M|styles/chrome.styles.ts:editbar-end retains docked toolbar divider/background; fixed column composition is outside floating/action recipes. Parent/candidate toolbar matrix retains exact dimensions; no scene rename.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "motion-open-close": [
-          "M|houseplan-card.ts:11534 div.editorchrome (JS height interpolation houseplan-card.ts:14|styles/chrome.styles.ts:419-452"
+          "M|houseplan-card.ts:editorchrome height interpolation coordinates the stage ResizeObserver and exit lifecycle; styles/chrome.styles.ts retains structural height/visibility motion. Changing this geometry lifecycle is excluded; editor_tabs/plan_rotation_editors cover it.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
-          "M|houseplan-editor-runtime.ts:5329-5337 <hp-color-opacity> default colour|styles/chrome.styles.ts:244"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -1434,7 +1434,7 @@
       ],
       "cells": {
         "btn-icon": [
-          "M|houseplan-editor-runtime.ts:5300-5301 (geometry undo/redo, decor+plan) and 11254-11265|styles/dialogs.styles.ts:34-65"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; styles/settings-action.styles.ts:settingsActionsCss editor/history/editor-close variants; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
@@ -1454,29 +1454,29 @@
       ],
       "cells": {
         "card/group": [
-          "M|editor-secondary.ts:238-260 div.editor-secondary role=toolbar|editor-secondary.styles.ts:11-17,editor-secondary.styles.ts:33-46,editor-secondary.styles.ts:65-71"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "motion-open-close": [
-          "M|editor-secondary.ts:277-282 (content swap animate 100ms)|editor-secondary.styles.ts:47-63,editor-secondary.styles.ts:189-192"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "section-heading": [
-          "M|editor-secondary.ts:257-258 span.editor-context-label|editor-secondary.styles.ts:79-88"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
-          "M|editor-secondary.ts:209-221 .btn.editor-group-item(.on); houseplan-editor-runtime.|styles/dialogs.styles.ts:34-65"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-danger": [
-          "M|led-strip-editor.ts:796 LED delete .btn.danger|styles/dialogs.styles.ts:350-353"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
-          "M|houseplan-editor-runtime.ts:5034-5047 label.drawwall > input[number]; 5191-5197 decor |editor-secondary.styles.ts:144-152,editor-secondary.styles.ts:158-168,styles/plan.styles.ts:1541-1543",
-          "M|houseplan-editor-runtime.ts:5185-5189 hp-color-opacity in tray"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json",
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "checkbox/radio": [
-          "M|houseplan-editor-runtime.ts:5199 label.dfill > input[type=checkbox]|editor-secondary.styles.ts:129-142"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|houseplan-editor-runtime.ts:5100-5101 span.hint; 5210 span.bdhint; led-strip-edito|editor-secondary.styles.ts:122-128,editor-secondary.styles.ts:153-157"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
@@ -1500,10 +1500,10 @@
           "K|houseplan-editor-runtime.ts:5168-5170 .btn.danger (same generator)"
         ],
         "section-heading": [
-          "M|span.editor-context-label in actions layout (editor-secondary.ts:257-258)|editor-secondary.styles.ts:95-98"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "card/group": [
-          "L|div.editor-secondary[data-layout=actions]|editor-secondary.styles.ts:89-94"
+          "K|styles/form-kit-editor.styles.ts:editorFormKitCss; editor-secondary.styles.ts:floatingSurfaceCss; ui-motion.ts:controlSurfaceFrames/controlMotion with unchanged lifecycle; hp-color-opacity.ts shared color control|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -1520,28 +1520,28 @@
       ],
       "cells": {
         "section-heading": [
-          "M|decor-image-editor.ts:309-312 div.furnhd; 333,345 div.furngroup|styles/editor-dialogs.styles.ts:272-291"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "list-row": [
-          "M|decor-image-editor.ts:337-341, 347-356 button.furnitem(.furncategory); 258-264 image a|styles/editor-dialogs.styles.ts:302-331,styles/editor-dialogs.styles.ts:362-377"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-icon": [
-          "M|decor-image-editor.ts:313 and 239 .btn.furnclose; 265-267 .btn.ghost.imageassetdelete|styles/dialogs.styles.ts:34-65,styles/editor-dialogs.styles.ts:378-386"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
-          "M|decor-image-editor.ts:324-331 .btn.ghost.furnback|styles/editor-dialogs.styles.ts:297-301"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-primary": [
-          "M|decor-image-editor.ts:246 label.btn.primary.imageupload|styles/editor-dialogs.styles.ts:352-359"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
-          "M|decor-image-editor.ts:362-373 input.namein.furnw/.furnh|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631,styles/editor-dialogs.styles.ts:332-350"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "empty/loading/error state": [
-          "M|decor-image-editor.ts:255-256 span.furnhint.imageempty|styles/editor-dialogs.styles.ts:351,361"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "card/group": [
-          "M|decor-image-editor.ts:234, 308 div.furnpalette|styles/editor-dialogs.styles.ts:264-271,editor-secondary.styles.ts:111-115"
+          "K|styles/form-kit-editor.styles.ts:editorTilesCss/editorImagePreviewCss/editorFormKitCss; settingsActionsCss shared finite density/state recipes; decor-image-editor.ts semantic art classes|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -1558,39 +1558,39 @@
       ],
       "cells": {
         "card/group": [
-          "M|editors/properties/surface.ts:171-192 aside.hp-properties, section.hp-prop-group|editors/properties/styles.ts:10-40,editors/properties/styles.ts:51-53"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "section-heading": [
-          "M|editors/properties/surface.ts:174 header.hp-prop-head; 177 h3.hp-prop-group-title; 158 .hp-prop-feature-label|editors/properties/styles.ts:47-49,54-55,103"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
-          "L|editors/properties/surface.ts:152-157 unitInput() (kit)|editors/properties/styles.ts:61-70",
-          "L|editors/properties/surface.ts:103-133 colorField() (kit) incl. inline hex/alpha|editors/properties/styles.ts:76-96",
-          "M|editors/properties/surface.ts:146-150 textarea.hp-prop-text|editors/properties/styles.ts:99"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json",
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json",
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "select": [
-          "M|editors/properties/surface.ts:140-142 native <select class=hp-prop-control> (not hp-settings-select/selectCon|editors/properties/styles.ts:61-65"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "segmented": [
-          "M|editors/properties/surface.ts:136-139 div.hp-prop-choices > button.hp-prop-choice[aria-pressed]|editors/properties/styles.ts:100-108"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "toggle": [
-          "M|editors/properties/surface.ts:143-145 button.hp-prop-choice[aria-pressed] used as on/off"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
-          "M|editors/properties/surface.ts:183-186 button.hp-prop-action; 134-135 button.hp-prop-settings; 162-163 button.|editors/properties/styles.ts:109-113,115-123,editors/properties/styles.ts:165-167"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-danger": [
-          "M|editors/properties/surface.ts:183 .hp-prop-action.delete|editors/properties/styles.ts:121,124-127"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on toolbar buttons -> chrome-tooltip.ts:17 (helpSurfaceStyle)"
         ],
         "empty/loading/error state": [
-          "M|editors/properties/surface.ts:164 div.hp-prop-error; 190 span.hp-prop-pending|editors/properties/styles.ts:131-132"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|editors/properties/surface.ts:179 p.hp-prop-hint|editors/properties/styles.ts:75,111"
+          "K|editors/properties/styles.ts delegates readingSidePanelCss/readingTextCss/readingGlyphCss/readingSeparatorCss/settingsActionsCss/textFieldsCss/unitFieldsCss/colorFieldsCss/formKitTextareaCss; shared property density36/radius5, only placement remains local|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "badge/chip": [
           "N|editors/properties/surface.ts:187-189 kbd shortcut legend (.hp-prop-help)|editors/properties/styles.ts:128-130"
@@ -1616,13 +1616,13 @@
           "K|editor.ts:811-818 sourcePicker() (kit)"
         ],
         "select": [
-          "L|editor.ts:820-823 hp-settings-select|editors/properties/styles.ts:150"
+          "K|editors/properties/editor.ts shared sourcePicker/hpf-reading-block; properties/styles.ts delegates readingTextCss; hp-settings-select.ts shared field/floatingSurfaceCss; existing footer/action owners unchanged|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "section-heading": [
-          "M|editor.ts:810,819 .hp-prop-variable-label|editors/properties/styles.ts:148"
+          "K|editors/properties/editor.ts shared sourcePicker/hpf-reading-block; properties/styles.ts delegates readingTextCss; hp-settings-select.ts shared field/floatingSurfaceCss; existing footer/action owners unchanged|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "card/group": [
-          "M|editor.ts:824 div.hp-prop-preview|editors/properties/styles.ts:156-158"
+          "K|editors/properties/editor.ts shared sourcePicker/hpf-reading-block; properties/styles.ts delegates readingTextCss; hp-settings-select.ts shared field/floatingSurfaceCss; existing footer/action owners unchanged|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "dialog-footer": [
           "K|editors/properties/editor.ts:renderVariable row.hpf-footer; compact-dialog-styles.ts:compactDialogCss shared footer|#1148 CODEr1 F1 corrected; local footer layout/paint removed; variable-dialog-audit native proof"
@@ -1634,7 +1634,7 @@
           "K|editors/properties/editor.ts:renderVariable btn on insert; styles/settings-action.styles.ts:settingsActionsCss through compact owning root|#1148 F1 corrected; 44px/radius/theme/disabled/native insertion proof"
         ],
         "empty/loading/error state": [
-          "M|editor.ts:825-826 p.hp-prop-error"
+          "K|editors/properties/editor.ts shared sourcePicker/hpf-reading-block; properties/styles.ts delegates readingTextCss; hp-settings-select.ts shared field/floatingSurfaceCss; existing footer/action owners unchanged|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -1654,25 +1654,25 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
-          "M|houseplan-editor-runtime.ts:11478-11483 input[type=search].device-inbox-search; 11413-1142|styles/settings-dialogs.styles.ts:207-210"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "select": [
-          "L|houseplan-editor-runtime.ts:11499-11506 hp-settings-select|styles/editor-dialogs.styles.ts:689-696"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "segmented": [
-          "M|houseplan-editor-runtime.ts:11488-11497 role=tablist buttons (.on)|styles/editor-dialogs.styles.ts:645-653,766-774,styles/settings-dialogs.styles.ts:215-217,styles/settings-dialogs.styles.ts:188"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "checkbox/radio": [
           "K|houseplan-editor-runtime.ts:11510-11523 only-new/show-entities; device-inbox-batch.ts:"
         ],
         "list-row": [
-          "M|houseplan-editor-runtime.ts:11556-11586 article.device-inbox-row|styles/editor-dialogs.styles.ts:721-753,styles/settings-dialogs.styles.ts:213"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "badge/chip": [
-          "M|houseplan-editor-runtime.ts:11562 span.device-inbox-new; 11404-11408 span.chip with remove|styles/editor-dialogs.styles.ts:737-743,styles/editor-dialogs.styles.ts:663-672,styles/settings-dialogs.styles.ts:220"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "disclosure": [
-          "M|houseplan-editor-runtime.ts:11394-11440 native details.device-inbox-discovery|styles/editor-dialogs.styles.ts:655-660,styles/settings-dialogs.styles.ts:218-219"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1690,10 +1690,10 @@
           "K|catalog-context-menu.ts:213 -> EditorContextMenu (editor-context-menu.ts:156)"
         ],
         "empty/loading/error state": [
-          "M|houseplan-editor-runtime.ts:11578 div.device-inbox-empty|styles/editor-dialogs.styles.ts:761"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|houseplan-editor-runtime.ts:11429-11433 div.device-inbox-preview|styles/editor-dialogs.styles.ts:676"
+          "K|houseplan-editor-runtime.ts hpf-reading-block/padded/hpf-tag/hpf-chip/hpf-empty-state-list/disclosure; form-kit.styles.ts:textFieldsCss/checkLabelsCss; settingsActionsCss; hp-settings-select.ts|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1737,16 +1737,16 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
-          "L|houseplan-editor-runtime.ts:9872 div.rhint -> compact-dialog-styles.ts:17|styles/settings-dialogs.styles.ts:232,styles/chrome.styles.ts:411-415"
+          "K|houseplan-editor-runtime.ts hpf-reading-row/entry; form-kit.styles.ts:textFieldsCss/calloutSurfaceCss compact informational alias; settingsActionsCss; readingGlyphCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
-          "M|houseplan-editor-runtime.ts:9874-9876, 9882-9898 input.namein(.rpat/.ricon)|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631,styles/settings-dialogs.styles.ts:207-210,221-222"
+          "K|houseplan-editor-runtime.ts hpf-reading-row/entry; form-kit.styles.ts:textFieldsCss/calloutSurfaceCss compact informational alias; settingsActionsCss; readingGlyphCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "list-row": [
-          "M|houseplan-editor-runtime.ts:9881-9906 div.rrow|styles/editor-dialogs.styles.ts:446-452,styles/settings-dialogs.styles.ts:223-224,227,249-250"
+          "K|houseplan-editor-runtime.ts hpf-reading-row/entry; form-kit.styles.ts:textFieldsCss/calloutSurfaceCss compact informational alias; settingsActionsCss; readingGlyphCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-icon": [
-          "L|houseplan-editor-runtime.ts:9900-9905 button.btn.ract(.del)|styles/settings-dialogs.styles.ts:225-226,styles/editor-dialogs.styles.ts:453-457"
+          "K|houseplan-editor-runtime.ts hpf-reading-row/entry; form-kit.styles.ts:textFieldsCss/calloutSurfaceCss compact informational alias; settingsActionsCss; readingGlyphCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1826,10 +1826,10 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "list-row": [
-          "M|led-strip-editor.ts:825-829 button.btn.ghost.led-pick(.on)|styles/dialogs.styles.ts:34-65"
+          "K|led-strip-editor.ts:renderPicker real .btn consumes shared settingsActionsCss in compact owning root, with native disabled and selected state|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "empty/loading/error state": [
-          "M|led-strip-editor.ts:830 div.hint"
+          "M|led-strip-editor.ts:renderPicker empty hint retains inherited dialog text rather than a dedicated Kit empty-state primitive; smoke_led_strip_bind captures the unchanged empty/bound paths.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1855,17 +1855,17 @@
           "K|stairs-editor.ts:641-656, 684-690 hp-settings-select > select.areasel"
         ],
         "input": [
-          "M|stairs-editor.ts:628-635, 673-676 input.namein.tempin|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631",
-          "M|stairs-editor.ts:660-671 two <hp-color-opacity>"
+          "K|form-kit.styles.ts:textFieldsCss/checkLabelsCss; form-input.styles.ts:formKitTextareaCss; compact owning root settingsActionsCss; hp-settings-select.ts and hp-color-opacity.ts shared controls; editor-dialogs.styles.ts delegates readingTextCss/readingSeparatorCss for dispsection|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json",
+          "K|form-kit.styles.ts:textFieldsCss/checkLabelsCss; form-input.styles.ts:formKitTextareaCss; compact owning root settingsActionsCss; hp-settings-select.ts and hp-color-opacity.ts shared controls; editor-dialogs.styles.ts delegates readingTextCss/readingSeparatorCss for dispsection|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "segmented": [
-          "M|stairs-editor.ts:678-682 hpf-actions > button.btn(.on); outside ui-dialog kit root|styles/dialogs.styles.ts:34-65"
+          "K|form-kit.styles.ts:textFieldsCss/checkLabelsCss; form-input.styles.ts:formKitTextareaCss; compact owning root settingsActionsCss; hp-settings-select.ts and hp-color-opacity.ts shared controls; editor-dialogs.styles.ts delegates readingTextCss/readingSeparatorCss for dispsection|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
           "K|stairs-editor.ts:692-695 hpf-hint hpf-note-warning after #1145; no local paint selector"
         ],
         "section-heading": [
-          "M|stairs-editor.ts:627,640,672,677,683 <label>|styles/dialogs.styles.ts:491-495"
+          "M|stairs-editor.ts:renderDialog plain labels retain inherited body typography and field spacing; no new generic section-heading wrapper. smoke_stairs preserves linked-floor/direction/write validation.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-danger": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1897,8 +1897,8 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
-          "M|decor-image-editor.ts:491-500, 518-534, 551-563, 564-568 input.namein (+.hpf-input for fur|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631",
-          "M|decor-image-editor.ts:478-482 input[type=range] opacity"
+          "K|form-kit.styles.ts:textFieldsCss/checkLabelsCss; form-input.styles.ts:formKitTextareaCss; compact owning root settingsActionsCss; hp-settings-select.ts and hp-color-opacity.ts shared controls; editor-dialogs.styles.ts delegates readingTextCss/readingSeparatorCss for dispsection|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json",
+          "M|decor-image-editor.ts:opacity range/HA slider remains its specialized native input, outside compact text-field conversion; smoke_decor preserves opacity and selection.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "select": [
           "K|decor-image-editor.ts:443-458, 461-467 hp-settings-select|styles/settings-dialogs.styles.ts:200"
@@ -1907,7 +1907,7 @@
           "K|decor-image-editor.ts:539-546 toggleRow() for furniture|styles/settings-dialogs.styles.ts:202-204"
         ],
         "checkbox/radio": [
-          "M|decor-image-editor.ts:540,545,569 label.dfill checkbox; 504-515 radio label.srcrow|styles/editor-dialogs.styles.ts:22-27,85-92"
+          "L|styles/form-input.styles.ts:formKitCheckboxCss owns native18px control; styles/editor-dialogs.styles.ts:dfill retains local inline label gap/cursor. The source radios use shared wrapping checkLabelsCss. Native decor and smoke_decor cover it.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1935,13 +1935,13 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "input": [
-          "M|5380-5395 textarea.namein.dtarea; 5401-5414 number inputs; 5452-5462|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631,styles/editor-dialogs.styles.ts:100-101,108"
+          "K|form-kit.styles.ts:textFieldsCss/checkLabelsCss; form-input.styles.ts:formKitTextareaCss; compact owning root settingsActionsCss; hp-settings-select.ts and hp-color-opacity.ts shared controls; editor-dialogs.styles.ts delegates readingTextCss/readingSeparatorCss for dispsection|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "select": [
           "K|5423-5433 hp-settings-select > select.namein"
         ],
         "section-heading": [
-          "M|5415 label.dispsection|styles/editor-dialogs.styles.ts:93-99"
+          "K|form-kit.styles.ts:textFieldsCss/checkLabelsCss; form-input.styles.ts:formKitTextareaCss; compact owning root settingsActionsCss; hp-settings-select.ts and hp-color-opacity.ts shared controls; editor-dialogs.styles.ts delegates readingTextCss/readingSeparatorCss for dispsection|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -1986,16 +1986,16 @@
       "frames": [],
       "cells": {
         "card/group": [
-          "M|houseplan-editor-runtime.ts:5829 div.wallthick-dlg (inline style left/top = geometry)|styles/editor-dialogs.styles.ts:28-44"
+          "K|styles/editor-dialogs.styles.ts:floatingSurfaceCss; styles/form-kit-editor.styles.ts:textFieldsCss finite editor width; styles/dialogs.styles.ts delegates real .btn to settingsActionsCss44|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
-          "M|5833-5839 input[type=number]|styles/editor-dialogs.styles.ts:50-58"
+          "K|styles/editor-dialogs.styles.ts:floatingSurfaceCss; styles/form-kit-editor.styles.ts:textFieldsCss finite editor width; styles/dialogs.styles.ts delegates real .btn to settingsActionsCss44|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
-          "M|5843-5846 .btn.ghost apply-room|styles/dialogs.styles.ts:34-65"
+          "K|styles/editor-dialogs.styles.ts:floatingSurfaceCss; styles/form-kit-editor.styles.ts:textFieldsCss finite editor width; styles/dialogs.styles.ts delegates real .btn to settingsActionsCss44|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-primary": [
-          "M|5848-5850 .btn.on icon-only check|styles/dialogs.styles.ts:34-65"
+          "K|styles/editor-dialogs.styles.ts:floatingSurfaceCss; styles/form-kit-editor.styles.ts:textFieldsCss finite editor width; styles/dialogs.styles.ts delegates real .btn to settingsActionsCss44|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       },
       "captureScenario": "wall-thickness-popover"
@@ -2012,10 +2012,10 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
-          "M|12029-12034 label.srcrow > input[type=radio]|styles/editor-dialogs.styles.ts:85-92,102"
+          "K|houseplan-editor-runtime.ts hpf-check hpf-check-wrap; form-kit.styles.ts:checkLabelsCss in common owning root|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|12039 p.muted"
+          "M|houseplan-editor-runtime.ts:renderMergeRooms p.muted retains inherited informational typography; merge/split geometry and confirmation lifecycle are excluded. smoke_merge_split covers it.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2044,7 +2044,7 @@
           "K|11134-11140 hp-settings-select > select.areasel"
         ],
         "input": [
-          "M|11144-11156 input.namein.tempin inside <div class=row>|styles/editor-dialogs.styles.ts:59-71,styles/editor-dialogs.styles.ts:627-631"
+          "K|form-kit.styles.ts:textFieldsCss/checkLabelsCss; form-input.styles.ts:formKitTextareaCss; compact owning root settingsActionsCss; hp-settings-select.ts and hp-color-opacity.ts shared controls; editor-dialogs.styles.ts delegates readingTextCss/readingSeparatorCss for dispsection|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-danger": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2077,16 +2077,16 @@
           "K|hp-dialog.ts:HpDialog; compact-dialog-styles.ts:ensureCompactDialogStyles; unconditional ui-dialog at every call site|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "callout/note": [
-          "M|optimize-plans-dialog.ts:413-421, 536-538, 618-619, 652, 663, 672-676, 686-690, 699 div/p.|styles/chrome.styles.ts:411-415,styles/plan.styles.ts:1663"
+          "M|optimize-plans-dialog.ts retains specialized live optimization/status and destructive-cleanup explanations with local detail typography; shared rhint surface is adopted, but not all nested copy is Kit. No optimizer rewrite; existing optimize smokes cover it.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-secondary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "toggle": [
-          "M|optimize-plans-dialog.ts:644-651, 664-671 .btn.ghost[aria-pressed] cleanup toggles|styles/editor-dialogs.styles.ts:465,476"
+          "L|styles/settings-action.styles.ts:settingsActionsCss now owns real .btn toggle paint; styles/editor-dialogs.styles.ts retains explicit44px safety minimum on optimize-cleanup/optimize-action. No optimizer toggle/write change.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "disclosure": [
-          "M|optimize-plans-dialog.ts:693-704 details.optimize-details; 439-442 fallback details|styles/editor-dialogs.styles.ts:477-495"
+          "M|optimize-plans-dialog.ts:optimize-details/fallback details retain local disclosure focus/list paint; unlike backup/support these controller-specific disclosures are not migrated. Existing optimize negative/cleanup smokes remain unchanged.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "btn-primary": [
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2131,10 +2131,10 @@
       "frames": [],
       "cells": {
         "empty/loading/error state": [
-          "M|houseplan-card.ts:4290-4294 div.editorloading > ha-icon mdi:loading|styles/dialogs.styles.ts:103-139"
+          "K|houseplan-card.ts:_renderEditorRuntimeLoading hpf-loading-pill/hpf-motion; styles/reading-kit.styles.ts and styles/ui-motion.styles.ts; dialogs.styles.ts keeps only scene placement|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "motion-open-close": [
-          "M|same element|styles/dialogs.styles.ts:120,127-130"
+          "K|houseplan-card.ts:_renderEditorRuntimeLoading hpf-loading-pill/hpf-motion; styles/reading-kit.styles.ts and styles/ui-motion.styles.ts; dialogs.styles.ts keeps only scene placement|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       },
       "captureScenario": "editor-loading"
@@ -2151,7 +2151,7 @@
       ],
       "cells": {
         "empty/loading/error state": [
-          "M|editor.ts:150-153 div.default-floor-error, 155-156 div.card-config-error; space-editor.ts:|editor.ts:151,156,space-editor.ts:96"
+          "M|editor.ts/space-editor.ts retain independent HA card-config ha-form error surfaces; no edit to their owning ShadowRoots or HA schema editor. Existing card-editor-invalid-default-floor golden remains evidence.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
           "N|editor.ts:141-147 native ha-form; space-editor.ts:89-95"
@@ -2204,16 +2204,16 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
-          "M|houseplan-editor-runtime.ts:9474-9483 native radios (backup-kind), 9484-9493 plan-only che|styles/editor-dialogs.styles.ts:85-91,102,106-107,styles/dialogs.styles.ts:491-495,styles/editor-dialogs.styles.ts:511-514"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|houseplan-editor-runtime.ts:9473,9494 '.rhint' (legacy styles/chrome.styles.ts:411-415, not the k|styles/chrome.styles.ts:411-415,styles/dialogs.styles.ts:462-469"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "card/group": [
-          "M|backup-archive-client.ts:242 '.backupcontent' archive summary; styles/editor-dialogs.styles.ts:51|styles/editor-dialogs.styles.ts:515-527"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "disclosure": [
-          "M|backup-archive-client.ts:227,248 native <details> in recovery/archive summary, unstyled"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2225,7 +2225,7 @@
           "K|hp-dialog.ts:642-666 exit, 332-335 backdrop"
         ],
         "empty/loading/error state": [
-          "M|houseplan-editor-runtime.ts:9498 '.backuperror' role=alert; busy shown only as button labe|styles/dialogs.styles.ts:462-468,470"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -2250,16 +2250,16 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "checkbox/radio": [
-          "M|houseplan-editor-runtime.ts:9645-9650 fieldset.backupchoices radios; 9663-9667 label.srcro|styles/editor-dialogs.styles.ts:537-551,styles/editor-dialogs.styles.ts:85-91,102,106-107,styles/dialogs.styles.ts:491-495"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "disclosure": [
-          "M|houseplan-editor-runtime.ts:9608-9614, 9629-9639 <details class=backupdetails>; backup-arc|styles/editor-dialogs.styles.ts:528-536"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|houseplan-editor-runtime.ts:9589,9592,9602,9617,9621,9642,9644 '.rhint'; 9596,9599,9605,96|styles/chrome.styles.ts:411-415,styles/dialogs.styles.ts:462-469"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "card/group": [
-          "M|houseplan-editor-runtime.ts:9557 .backupfile, 9561-9571 .backupsummary, 9573-9588 .backupc|styles/editor-dialogs.styles.ts:502-510,515-527"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2271,7 +2271,7 @@
           "K|hp-dialog.ts:642-666"
         ],
         "empty/loading/error state": [
-          "M|houseplan-editor-runtime.ts:9558 reading '.rhint role=status'; 9559 '.backuperror role=ale|styles/dialogs.styles.ts:470"
+          "K|houseplan-editor-runtime.ts/backup-archive-client.ts callout/disclosure/hpf-check-wrap/hpf-reading-block/padded/entry; common form-kit/reading-kit painters; roles/live/id/hooks preserved|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -2297,16 +2297,16 @@
           "K|floor-import-dialog.ts:22 checkbox -> compact-dialog-styles.ts:16 (18px, accent-color --hp"
         ],
         "list-row": [
-          "M|floor-import-dialog.ts:21-28 <label class=floorrow>; no kit primitive (compactList()/formR|compact-dialog-styles.ts:22-23,31,styles/dialogs.styles.ts:447-454,styles/dialogs.styles.ts:491-495"
+          "K|floor-import-dialog.ts ensureFormKitStyles/callout/hpf-reading-row hpf-reading-choice/hpf-state-chip; hp-plan-converter-info.ts delegates readingTextCss/settingsInlineLinkCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "badge/chip": [
-          "M|floor-import-dialog.ts:27 <span class=floorlvl>L{n}</span>|compact-dialog-styles.ts:24,styles/dialogs.styles.ts:455-461"
+          "K|floor-import-dialog.ts ensureFormKitStyles/callout/hpf-reading-row hpf-reading-choice/hpf-state-chip; hp-plan-converter-info.ts delegates readingTextCss/settingsInlineLinkCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "L|floor-import-dialog.ts:20 '.rhint' -> kit compact-dialog-styles.ts:17|compact-dialog-styles.ts:21,styles/chrome.styles.ts:411-415"
+          "K|floor-import-dialog.ts ensureFormKitStyles/callout/hpf-reading-row hpf-reading-choice/hpf-state-chip; hp-plan-converter-info.ts delegates readingTextCss/settingsInlineLinkCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "text-link": [
-          "L|floor-import-dialog.ts:29 <hp-plan-converter-info> (see surface plan-converter-info)"
+          "K|floor-import-dialog.ts ensureFormKitStyles/callout/hpf-reading-row hpf-reading-choice/hpf-state-chip; hp-plan-converter-info.ts delegates readingTextCss/settingsInlineLinkCss|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2340,7 +2340,7 @@
           "K|styles/form-kit.styles.ts:extrasCss shared toggle; pdf/hp-pdf-dialog.ts:existing hpf-toggle/hpf-compact|#1148 private PDF label/input paint retired; native export checks"
         ],
         "input": [
-          "M|pdf/hp-pdf-dialog.ts:238-253 hp-color-opacity; its shadow CSS owns the controls, not form-kit|hp-color-opacity.ts:185-480"
+          "K|hp-color-opacity.ts shared color painter; floatingSurfaceCss and controlSurfaceFrames from #1149; PDF host retains only placement|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "card/group": [
           "K|styles/form-kit.styles.ts:formKitCardsCss/extrasCss; styles/form-kit-settings.styles.ts:card values|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2382,28 +2382,28 @@
           "K|styles/settings-action.styles.ts:settingsActionsCss standard/primary/danger/icon variants; compact-dialog-styles.ts:common owning root|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
         ],
         "text-link": [
-          "L|houseplan-editor-runtime.ts:9033,9035,9037,9043,9140,9141 a.aboutlink -> kit settingsTextL|styles/settings-dialogs.styles.ts:235-236,styles/editor-dialogs.styles.ts:553-560"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "input": [
-          "M|houseplan-editor-runtime.ts:9050 input.namein, 9058 textarea.supportmessage, 9105 textarea|styles/settings-dialogs.styles.ts:207-210,styles/settings-dialogs.styles.ts:238-239,styles/editor-dialogs.styles.ts:574-583,627-631"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "checkbox/radio": [
-          "L|houseplan-editor-runtime.ts:9066-9073 checkbox -> compact-dialog-styles.ts:16|styles/settings-dialogs.styles.ts:240-242,styles/editor-dialogs.styles.ts:584-591,styles/editor-dialogs.styles.ts:85-91,102,106-107"
+          "L|styles/form-input.styles.ts:formKitCheckboxCss owns18px control; settings-dialogs.styles.ts:supportattach retains existing2px checkbox margin to align multiline attachment description. support_feedback/support_diagnostics cover it.|#1150 explicit retained boundary; docs/design/ui-kit-audit-1150.json"
         ],
         "section-heading": [
-          "M|houseplan-editor-runtime.ts:9032,9042,9048 <h3> in .supportsection|styles/settings-dialogs.styles.ts:231,styles/editor-dialogs.styles.ts:565-567"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "separator": [
-          "M|houseplan-editor-runtime.ts:9031/9041/9047 sibling .supportsection|styles/settings-dialogs.styles.ts:229-230"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|houseplan-editor-runtime.ts:9076 .supportwarning, 9080 .supportstatus, 9152 .supportupdate|styles/settings-dialogs.styles.ts:243-245,styles/editor-dialogs.styles.ts:592-601,styles/settings-dialogs.styles.ts:232"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "card/group": [
-          "M|houseplan-editor-runtime.ts:9084 .supportpreview, 9132 .supportmanual, 9120 .supporterror,|styles/settings-dialogs.styles.ts:246,styles/editor-dialogs.styles.ts:602-615,619-626"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "disclosure": [
-          "M|houseplan-editor-runtime.ts:9100-9107 native <details>/<summary data-action=support-previe|styles/settings-dialogs.styles.ts:188 (generator call), 247,styles/editor-dialogs.styles.ts:616-617"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "dialog-footer": [
           "K|compact-dialog-styles.ts:compactDialogCss; styles/dialog-composition.styles.ts:container layout; styles/settings-action.styles.ts:settingsActionsCss|#1148; layout/handlers remain at caller; native and six-profile proof in docs/design/ui-kit-audit-1148.json"
@@ -2421,7 +2421,7 @@
           "N|no hp-help inside the support dialog (9027-9171)"
         ],
         "empty/loading/error state": [
-          "M|building 9080 (.supportstatus), relay error 9120 (.supporterror role=alert), success 9145,"
+          "K|houseplan-editor-runtime.ts callout/disclosure/hpf-reading-block/padded/hpf-heading; settings-dialogs.styles.ts delegates textFieldsCss/formKitTextareaCss/readingSeparatorCss/settingsTextLinkCss/settingsInlineLinkCss; native hooks/live roles retained|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
@@ -2498,10 +2498,10 @@
       ],
       "cells": {
         "text-link": [
-          "L|hp-plan-converter-info.ts:10 <a class=hpf-link> + settingsTextLinkCss('a','var(--primary-c|hp-plan-converter-info.ts:29-31,hp-plan-converter-info.ts:33"
+          "K|hp-plan-converter-info.ts delegates readingTextCss body-note/settingsInlineLinkCss, without importing editor commands|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ],
         "callout/note": [
-          "M|hp-plan-converter-info.ts:24-28 :host paragraph styling|hp-plan-converter-info.ts:24-27"
+          "K|hp-plan-converter-info.ts delegates readingTextCss body-note/settingsInlineLinkCss, without importing editor commands|#1150; native A/B + existing behavior smokes; docs/design/ui-kit-audit-1150.json"
         ]
       }
     },
