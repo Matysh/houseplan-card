@@ -1,153 +1,25 @@
 {
   "schema": 1,
-  "revision": 36,
+  "revision": 37,
   "nextTicket": 6,
   "nextFence": 6,
   "tasks": {
     "1176": {
       "issue": 1176,
+      "branch": "codex/1176-room-candidates",
       "track": "show",
       "layer": "product",
-      "branch": "codex/1176-room-candidates",
-      "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 5,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793554539455,
-      "reviewEntry": 4,
-      "patchId": "d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22",
-      "changedFiles": [
-        "demo/smoke_plan_drawing_repairs.mjs",
-        "demo/smoke_room_contact_storage.mjs",
-        "demo/smoke_room_face_select.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/UX-MODES.md",
-        "docs/WALL-THICKNESS.md",
-        "docs/release-ledger/v1.83.0/1176.json",
-        "src/editors/properties/editor.ts",
-        "src/houseplan-card.ts",
-        "src/houseplan-editor-runtime.ts",
-        "src/live-hover.ts"
-      ],
-      "notice": {
-        "key": "3:review-findings",
-        "reason": "review-findings",
-        "status": "delivered"
+      "status": "S8-merged",
+      "mergedSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
+      "mergedAt": 1793554750329,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261101T173554632-435ce780",
-        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261101T173554632-435ce780/report.json",
-        "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
-        "status": "passed",
-        "finishedAt": "2026-11-01T17:36:57.231Z"
-      },
-      "reviewRequest": "review:1176:4:d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22:bfc2d7324795183834d54794b3c103d77f100e76",
-      "reviewMaterial": {
-        "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
-        "expectedBase": "bfc2d7324795183834d54794b3c103d77f100e76",
-        "patchId": "d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22"
-      },
-      "review": {
-        "version": 1,
-        "issue": 1176,
-        "requestId": "review:1176:4:d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22:bfc2d7324795183834d54794b3c103d77f100e76",
-        "kind": "code",
-        "base": "bfc2d7324795183834d54794b3c103d77f100e76",
-        "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
-        "patchId": "d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1176,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1176",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Цель и результат\nSelect alone highlights and opens room creation in an existing exact free wall contour; Walls starts/continues drawing inside it. Automatic creation when a NEW segment closes an area is retained. Original owner requirements and three acceptance groups remain above. Installed track show is unchanged.\n\n### Final implementation\nThe lazy editor runtime reuses the exact graph, classifier, batch fingerprint, materialization and durable history/writer. One space/config-epoch/grid cache stores the graph, per-face classification AND clipped paths. Hover/click use the same candidate. Real composedPath is retained before rAF; Properties wall hit tests and actual object owners precede a face. Dirty fields pass existing beforeIntent; opening the room form now retires the previous object selection.\n\nCandidate paths use View wash/halo/outline painters and themes. The live-hover patcher memoizes Plan candidate paths without requiring a persisted _hoverRoom; ordinary View retains its fast path. No schema or persisted candidate Room is introduced. Exact free-face Select does not repair a gap; existing bounded repair on NEW Walls closure retains its guards.\n\n### Review1 corrections\nOriginal substantive report: workflow41330136686, artifact13092918004, verdict changes_requested on2bb10b85. It was delivered unchanged by the coordinator after the transport repair #1186 (nowS8/devbfc2d732).\n\n1. **Shared room walls are now included.** _roomFaceCache retains every geometry component from the existing cached _wallUnionGeometry, including room walls and independent bodies, with holes preserved. _buildRoomFacePaths subtracts these already-built components. No new all-body union is constructed. Existing nested room interiors are also subtracted using islandsOf. The original issue was reproduced natively BEFORE the fix: create the left half of a rectangle, hover the free right half; SVG outline bbox.x was500 instead of the required inner face508.333. Original FAIL and light/dark PNG are retained. New S6 asserts that actual outline is beyond the20cm shared masonry and captures both themes.\n\n2. **Per-face clipping is memoized.** Returning across a wall/node reuses the same cached path object; this is separate from graph/classifier reuse. Large-plan smoke still has100faces/403walls/21samples+HAtick, and now additionally visits6different faces and revisits all6. It checks5new clip builds on the cold faces, zero clip builds on revisits, identical reused path objects, zero graph and wall-union rebuilds. This covers the previously missing path rather than weakening the test.\n\nThe optional unused locale key is retained for now; no unrelated locale cleanup or opening-render redesign is included. The existing View paint/style contract is reused; capture of active candidate references is not global golden acceptance.\n\n### Checks and boundaries\nThe latest completed S6 before these review fixes was20261101T171008124-efadd36a (2bb10b85): passed10/10 in31.07s, applicable151critical+34affected Node tests, fresh startup View and4affected browser scripts. The first two S6 failures of the new native were corrected and retained (live patch erased paths; test segment below unchanged20cm minimum; ambiguous Cancel footer selector). A full native diagnostic then passed both1166 contours, actual light/dark View-style equality, real drawing, Cancel/Save/Undo/Redo, nodes/walls and geometry invalidation; all4PNGs were viewed. New adjacent-room regression then reproduced review1 as a real FAIL on unchanged product.\n\nAfter-review S6 runs through finish: standard product minimum plus test/room-contact-storage.test.mjs, test/wall-face-graph.test.mjs, test/wall-face-repair.test.mjs,test/live-hover-status.test.mjs; demo/smoke_room_face_select.mjs,smoke_room_contact_storage.mjs,smoke_unified_wall_tool.mjs,smoke_plan_drawing_repairs.mjs. The new final result is supplied by finish; before that run no new PASS is claimed here. No full Validate, global golden acceptance or live HA instance changes.\n\nHA E2E assessment: **update needed before next beta**, https://github.com/Matysh/houseplan-e2e/blob/3a619df07aa837a464282c745223d81a28e31f21/task-impact/houseplan-card-1176.md . The existing room-delete/keep-walls/recreate journey in tests/editor-plan.admin.spec.mjs must use Select, retain server/reload checks and add Walls-negative input. Fresh-chain closure stays Walls. Real HA E2E is not claimed as executed in this task."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Both blockers from the previous round are fixed in the mechanism itself, without a new gate on top, and I found no new substantive problems. Accept.\n\n1. **The highlight now stops at shared room walls.** It is clipped against the components of `_wallUnionGeometry()`. That is the same cached geometry that draws the walls, and it covers room walls, partitions, columns and isolated components. A new adjacent-room check in `demo/smoke_room_face_select.mjs` asserts that the outline starts beyond the 20 cm shared wall, which was exactly the original defect. Rooms nested inside the area are also cut out, matching View.\n2. **The highlight is computed once per area per plan revision.** The result is stored in `_roomFaceCache.paths`; returning to an area is just a lookup, and no new union of all walls is built. The large-plan check now visits 6 areas and returns to each one. It counts calls to the clipping, the graph build and the wall-union build, so it covers the path that was missing before.\n\nThe split between Select and Walls, sharing one candidate between hover and click, cache invalidation by `_cfgEpoch`, and reuse of the existing batch, history and writer are unchanged from the previous review, which assessed them as correct. Opening the room dialog now also clears the previous object selection, which closes my earlier optional note.\n\nThe final S6 check (receipt 20261101T173554632-435ce780) has status passed on head ce45c22f; I saw only that status, not its log. The HA E2E scenario is not yet adapted (the author records this as needed before the next beta). That is outside this repository and does not block the task.",
-          "understanding": "**The task.** Only the Select tool should highlight an existing closed wall area that has no room yet and open room creation on click. The Walls tool should keep drawing inside such contours without intercepting the click.\n\n**Before.** An idle click in Walls inside a finished contour opened the room dialog, with a bounded gap repair; Shift+click bypassed it. Select had no room proposal.\n\n**After:**\n- `_markupClick` in Walls always starts or continues a wall chain. The automatic room dialog when a new segment closes an area is unchanged.\n- In Select, the code first checks whether the click or hover hits an object (`_roomFaceObjectHit`: wall hit test from Properties, nodes, openings, stairs, labels, physical bodies). Only if nothing is hit does it look up `_existingWallFaceAt`. That function uses one cache keyed by space, config epoch and grid pitch, holding:\n  - the graph;\n  - the classified candidate for each area;\n  - the masonry components from `_wallUnionGeometry()`;\n  - the clipped paths for each area.\n- Hover and click get the same candidate object.\n- `_buildRoomFacePaths` subtracts every masonry component and the nested rooms (`islandsOf`) from the area's outline. The result goes through `roomFaceHoverPaths` into the existing View fill/halo/outline painters. `live-hover.ts` memoizes these paths so the live patch does not erase the Lit frame.\n- Clicking checks `beforeIntent` (unsaved Properties fields), clears the hover and the previous selection, then calls `_beginWallFaceBatch`.\n\n**Paths I traced in this round:**\n- `_wallUnionGeometry`: caching by `wallUnionKey(_floorKey)`, the `_floorCacheBuilds.wallUnion` counter, and the extras from `_physicalBodiesR`.\n- How `wallBodiesGeometry` builds its components: the primary union of room walls (with opening slots cut out) plus extras, and the isolated fallback components.\n- `_existingWallFaceAt`, `_buildRoomFacePaths`, `_hoverExistingWallFace`, `_offerExistingWallFace`.\n- The Select branch of `_markupClick`, `PropertiesEditor.clear`.\n- The new adjacent-room and face-crossing blocks of the smoke script.",
-          "analysis": [
-            {
-              "topic": "Fix 1: clipping against the full masonry",
-              "assessment": "Fixed correctly and simply. The candidate is cut by exactly the geometry that `_renderWallBodies` draws: the primary union of room walls plus partitions and columns, and the isolated components. Subtracting each component in turn (no new union) is equivalent to subtracting their union, and it keeps the holes. Nested rooms are cut out with `islandsOf`, which brings the result closer to View. The new smoke checks geometry rather than only computed style: the outline bbox.x must be at least 500 + half of the 20 cm wall. That is the right check for the original defect.",
-              "evidence": "src/houseplan-editor-runtime.ts `_existingWallFaceAt` (cache with masonry from `_wallUnionGeometry()?.components`), `_buildRoomFacePaths`; src/houseplan-card.ts:9415-9442; src/wall-thickness.ts:3983-3989 (components = primary + isolated); demo/smoke_room_face_select.mjs adjacent block (`expectedMinX:500+c._cmToUnits(20)/2`)."
-            },
-            {
-              "topic": "Fix 2: cost of moving the cursor",
-              "assessment": "Fixed. Paths are stored per area key in the same cache that the cfgEpoch key invalidates. Returning to an area does no geometry work, and when it is the same candidate object it does not even trigger a repaint (the `face === face` early return). Building the wall union is not this function's job: it reuses the card's cache, which rendering has already warmed. The smoke checks 5 new clips over 6 areas (the first area is already warm), 0 clips on return visits, the same path objects, and 0 rebuilds of the graph and of the union. That covers the path the previous measurement missed.",
-              "evidence": "runtime `_hoverExistingWallFace` (`cache.paths.has/set`); smoke: `__faceClipBuilds1176`, `__unionBuilds1176`, `retained`."
-            },
-            {
-              "topic": "Select / Walls split and object priority",
-              "assessment": "Unchanged from the previous round and still correct. Walls has no idle offer; Select gives priority to object hits for both hover and click. The new `properties.clear()` + `_physicalSel=null` + `stairs.clearSelection()` before opening the dialog runs after `beforeIntent`, so it cannot discard unsaved Properties input. The smoke checks this with 'room creation retires the previous object selection'.",
-              "evidence": "runtime:2649-2656, `_offerExistingWallFace`; src/editors/properties/editor.ts:350."
-            },
-            {
-              "topic": "Invalidation and consistency of the cached masonry",
-              "assessment": "The masonry is captured when the cache is created and lives under the same key (space|cfgEpoch|gridPitch) as the graph. Both are derived from the same configuration, so they cannot diverge. During drags and resize previews the hover is suppressed by the `_pointers.size` check. When the geometry changes, the getter hides the stale path without waiting for a mouse move; the smoke checks this with 'changed geometry hides stale hover before next move'.",
-              "evidence": "runtime `roomFaceHoverPaths`, `_roomFaceKey`; smoke `changed geometry hides stale hover`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Masonry failure edge case. When `_wallUnionGeometry()` returns null because the wall build fails (`failed-core`), `masonry` becomes empty. The highlight is then drawn unclipped, over the place where the walls should be. That contradicts the code comment 'Unavailable paint never falls back onto masonry'. On a valid plan null only means there are no bodies, so clipping is not needed. The two cases could be told apart, for example by not offering a highlight when `_spaceWalls`/extras exist but the union failed. The benefit is small: this is a rare degraded mode.",
-            "Optional speed-up for very large plans: before calling `difference`, skip components whose bbox does not intersect the area's bbox. This only matters for many isolated components. The work already runs once per area per revision, so it is not required.",
-            "In doorways the masonry has opening slots cut out, so the fill there reaches the wall axis (a small notch half a wall deep), whereas View cuts the outline with `outlineWithout`. This is cosmetic and can be left as is; the author consciously did not redesign how openings are drawn."
-          ],
-          "boundaries": "I reviewed source code only and ran nothing. I traced the changed runtime functions, `_wallUnionGeometry`, how `wallBodiesGeometry`/`wallBodiesUnionPath` build their components, `PropertiesEditor.clear`, and the new smoke blocks. The final S6 receipt 20261101T173554632-435ce780 has status passed on ce45c22f. I did not see its log or the PNGs; the smoke results above come from the asserts in the code and that status. I did not re-read the wall-face graph or the classifier, which are unchanged. The previous round's analysis of the cache, the live-hover patch and the lifecycle is relied on where the diff did not change that code. HA E2E is in a separate repository and was not run; the author marks it as needing adaptation before the next beta."
-        },
-        "usage": {
-          "input_tokens": 16,
-          "cache_creation_input_tokens": 64814,
-          "cache_read_input_tokens": 417274,
-          "output_tokens": 6289,
-          "output_tokens_details": {
-            "thinking_tokens": 1704
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 64814,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 667,
-              "cache_read_input_tokens": 65430,
-              "cache_creation_input_tokens": 3343,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 3343
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Ревью: accept\n\nМодель: claude-opus-5-5\nМатериал: bfc2d7324795183834d54794b3c103d77f100e76 → ce45c22f574810a9cde0467b1158affc0b03063e\nВид: code\n\n## Вывод\n\nBoth blockers from the previous round are fixed in the mechanism itself, without a new gate on top, and I found no new substantive problems. Accept.\n\n1. **The highlight now stops at shared room walls.** It is clipped against the components of `_wallUnionGeometry()`. That is the same cached geometry that draws the walls, and it covers room walls, partitions, columns and isolated components. A new adjacent-room check in `demo/smoke_room_face_select.mjs` asserts that the outline starts beyond the 20 cm shared wall, which was exactly the original defect. Rooms nested inside the area are also cut out, matching View.\n2. **The highlight is computed once per area per plan revision.** The result is stored in `_roomFaceCache.paths`; returning to an area is just a lookup, and no new union of all walls is built. The large-plan check now visits 6 areas and returns to each one. It counts calls to the clipping, the graph build and the wall-union build, so it covers the path that was missing before.\n\nThe split between Select and Walls, sharing one candidate between hover and click, cache invalidation by `_cfgEpoch`, and reuse of the existing batch, history and writer are unchanged from the previous review, which assessed them as correct. Opening the room dialog now also clears the previous object selection, which closes my earlier optional note.\n\nThe final S6 check (receipt 20261101T173554632-435ce780) has status passed on head ce45c22f; I saw only that status, not its log. The HA E2E scenario is not yet adapted (the author records this as needed before the next beta). That is outside this repository and does not block the task.\n\n## Понимание решения\n\n**The task.** Only the Select tool should highlight an existing closed wall area that has no room yet and open room creation on click. The Walls tool should keep drawing inside such contours without intercepting the click.\n\n**Before.** An idle click in Walls inside a finished contour opened the room dialog, with a bounded gap repair; Shift+click bypassed it. Select had no room proposal.\n\n**After:**\n- `_markupClick` in Walls always starts or continues a wall chain. The automatic room dialog when a new segment closes an area is unchanged.\n- In Select, the code first checks whether the click or hover hits an object (`_roomFaceObjectHit`: wall hit test from Properties, nodes, openings, stairs, labels, physical bodies). Only if nothing is hit does it look up `_existingWallFaceAt`. That function uses one cache keyed by space, config epoch and grid pitch, holding:\n  - the graph;\n  - the classified candidate for each area;\n  - the masonry components from `_wallUnionGeometry()`;\n  - the clipped paths for each area.\n- Hover and click get the same candidate object.\n- `_buildRoomFacePaths` subtracts every masonry component and the nested rooms (`islandsOf`) from the area's outline. The result goes through `roomFaceHoverPaths` into the existing View fill/halo/outline painters. `live-hover.ts` memoizes these paths so the live patch does not erase the Lit frame.\n- Clicking checks `beforeIntent` (unsaved Properties fields), clears the hover and the previous selection, then calls `_beginWallFaceBatch`.\n\n**Paths I traced in this round:**\n- `_wallUnionGeometry`: caching by `wallUnionKey(_floorKey)`, the `_floorCacheBuilds.wallUnion` counter, and the extras from `_physicalBodiesR`.\n- How `wallBodiesGeometry` builds its components: the primary union of room walls (with opening slots cut out) plus extras, and the isolated fallback components.\n- `_existingWallFaceAt`, `_buildRoomFacePaths`, `_hoverExistingWallFace`, `_offerExistingWallFace`.\n- The Select branch of `_markupClick`, `PropertiesEditor.clear`.\n- The new adjacent-room and face-crossing blocks of the smoke script.\n\n## Разбор решения\n\n### Fix 1: clipping against the full masonry\n\nFixed correctly and simply. The candidate is cut by exactly the geometry that `_renderWallBodies` draws: the primary union of room walls plus partitions and columns, and the isolated components. Subtracting each component in turn (no new union) is equivalent to subtracting their union, and it keeps the holes. Nested rooms are cut out with `islandsOf`, which brings the result closer to View. The new smoke checks geometry rather than only computed style: the outline bbox.x must be at least 500 + half of the 20 cm wall. That is the right check for the original defect.\n\nОснование: src/houseplan-editor-runtime.ts `_existingWallFaceAt` (cache with masonry from `_wallUnionGeometry()?.components`), `_buildRoomFacePaths`; src/houseplan-card.ts:9415-9442; src/wall-thickness.ts:3983-3989 (components = primary + isolated); demo/smoke_room_face_select.mjs adjacent block (`expectedMinX:500+c._cmToUnits(20)/2`).\n\n### Fix 2: cost of moving the cursor\n\nFixed. Paths are stored per area key in the same cache that the cfgEpoch key invalidates. Returning to an area does no geometry work, and when it is the same candidate object it does not even trigger a repaint (the `face === face` early return). Building the wall union is not this function's job: it reuses the card's cache, which rendering has already warmed. The smoke checks 5 new clips over 6 areas (the first area is already warm), 0 clips on return visits, the same path objects, and 0 rebuilds of the graph and of the union. That covers the path the previous measurement missed.\n\nОснование: runtime `_hoverExistingWallFace` (`cache.paths.has/set`); smoke: `__faceClipBuilds1176`, `__unionBuilds1176`, `retained`.\n\n### Select / Walls split and object priority\n\nUnchanged from the previous round and still correct. Walls has no idle offer; Select gives priority to object hits for both hover and click. The new `properties.clear()` + `_physicalSel=null` + `stairs.clearSelection()` before opening the dialog runs after `beforeIntent`, so it cannot discard unsaved Properties input. The smoke checks this with 'room creation retires the previous object selection'.\n\nОснование: runtime:2649-2656, `_offerExistingWallFace`; src/editors/properties/editor.ts:350.\n\n### Invalidation and consistency of the cached masonry\n\nThe masonry is captured when the cache is created and lives under the same key (space|cfgEpoch|gridPitch) as the graph. Both are derived from the same configuration, so they cannot diverge. During drags and resize previews the hover is suppressed by the `_pointers.size` check. When the geometry changes, the getter hides the stale path without waiting for a mouse move; the smoke checks this with 'changed geometry hides stale hover before next move'.\n\nОснование: runtime `roomFaceHoverPaths`, `_roomFaceKey`; smoke `changed geometry hides stale hover`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Masonry failure edge case. When `_wallUnionGeometry()` returns null because the wall build fails (`failed-core`), `masonry` becomes empty. The highlight is then drawn unclipped, over the place where the walls should be. That contradicts the code comment 'Unavailable paint never falls back onto masonry'. On a valid plan null only means there are no bodies, so clipping is not needed. The two cases could be told apart, for example by not offering a highlight when `_spaceWalls`/extras exist but the union failed. The benefit is small: this is a rare degraded mode.\n- Optional speed-up for very large plans: before calling `difference`, skip components whose bbox does not intersect the area's bbox. This only matters for many isolated components. The work already runs once per area per revision, so it is not required.\n- In doorways the masonry has opening slots cut out, so the fill there reaches the wall axis (a small notch half a wall deep), whereas View cuts the outline with `outlineWithout`. This is cosmetic and can be left as is; the author consciously did not redesign how openings are drawn.\n\n## Границы анализа\n\nI reviewed source code only and ran nothing. I traced the changed runtime functions, `_wallUnionGeometry`, how `wallBodiesGeometry`/`wallBodiesUnionPath` build their components, `PropertiesEditor.clear`, and the new smoke blocks. The final S6 receipt 20261101T173554632-435ce780 has status passed on ce45c22f. I did not see its log or the PNGs; the smoke results above come from the asserts in the code and that status. I did not re-read the wall-face graph or the classifier, which are unchanged. The previous round's analysis of the cache, the live-hover patch and the lifecycle is relied on where the diff did not change that code. HA E2E is in a separate repository and was not run; the author marks it as needing adaptation before the next beta.\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1176, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Цель и результат\nSelect alone highlights and opens room creation in an existing exact free wall contour; Walls starts/continues drawing inside it. Automatic creation when a NEW segment closes an area is retained. Original owner requirements and three acceptance groups remain above. Installed track show is unchanged.\n\n### Final implementation\nThe lazy editor runtime reuses the exact graph, classifier, batch fingerprint, materialization and durable history/writer. One space/config-epoch/grid cache stores the graph, per-face classification AND clipped paths. Hover/click use the same candidate. Real composedPath is retained before rAF; Properties wall hit tests and actual object owners precede a face. Dirty fields pass existing beforeIntent; opening the room form now retires the previous object selection.\n\nCandidate paths use View wash/halo/outline painters and themes. The live-hover patcher memoizes Plan candidate paths without requiring a persisted _hoverRoom; ordinary View retains its fast path. No schema or persisted candidate Room is introduced. Exact free-face Select does not repair a gap; existing bounded repair on NEW Walls closure retains its guards.\n\n### Review1 corrections\nOriginal substantive report: workflow41330136686, artifact13092918004, verdict changes_requested on2bb10b85. It was delivered unchanged by the coordinator after the transport repair #1186 (nowS8/devbfc2d732).\n\n1. **Shared room walls are now included.** _roomFaceCache retains every geometry component from the existing cached _wallUnionGeometry, including room walls and independent bodies, with holes preserved. _buildRoomFacePaths subtracts these already-built components. No new all-body union is constructed. Existing nested room interiors are also subtracted using islandsOf. The original issue was reproduced natively BEFORE the fix: create the left half of a rectangle, hover the free right half; SVG outline bbox.x was500 instead of the required inner face508.333. Original FAIL and light/dark PNG are retained. New S6 asserts that actual outline is beyond the20cm shared masonry and captures both themes.\n\n2. **Per-face clipping is memoized.** Returning across a wall/node reuses the same cached path object; this is separate from graph/classifier reuse. Large-plan smoke still has100faces/403walls/21samples+HAtick, and now additionally visits6different faces and revisits all6. It checks5new clip builds on the cold faces, zero clip builds on revisits, identical reused path objects, zero graph and wall-union rebuilds. This covers the previously missing path rather than weakening the test.\n\nThe optional unused locale key is retained for now; no unrelated locale cleanup or opening-render redesign is included. The existing View paint/style contract is reused; capture of active candidate references is not global golden acceptance.\n\n### Checks and boundaries\nThe latest completed S6 before these review fixes was20261101T171008124-efadd36a (2bb10b85): passed10/10 in31.07s, applicable151critical+34affected Node tests, fresh startup View and4affected browser scripts. The first two S6 failures of the new native were corrected and retained (live patch erased paths; test segment below unchanged20cm minimum; ambiguous Cancel footer selector). A full native diagnostic then passed both1166 contours, actual light/dark View-style equality, real drawing, Cancel/Save/Undo/Redo, nodes/walls and geometry invalidation; all4PNGs were viewed. New adjacent-room regression then reproduced review1 as a real FAIL on unchanged product.\n\nAfter-review S6 runs through finish: standard product minimum plus test/room-contact-storage.test.mjs, test/wall-face-graph.test.mjs, test/wall-face-repair.test.mjs,test/live-hover-status.test.mjs; demo/smoke_room_face_select.mjs,smoke_room_contact_storage.mjs,smoke_unified_wall_tool.mjs,smoke_plan_drawing_repairs.mjs. The new final result is supplied by finish; before that run no new PASS is claimed here. No full Validate, global golden acceptance or live HA instance changes.\n\nHA E2E assessment: **update needed before next beta**, https://github.com/Matysh/houseplan-e2e/blob/3a619df07aa837a464282c745223d81a28e31f21/task-impact/houseplan-card-1176.md . The existing room-delete/keep-walls/recreate journey in tests/editor-plan.admin.spec.mjs must use Select, retain server/reload checks and add Walls-negative input. Fresh-chain closure stays Walls. Real HA E2E is not claimed as executed in this task.\n```\n",
-        "createdAt": "2026-11-01T17:38:50.845Z",
-        "artifactId": 13093803474,
-        "runId": 41332390172,
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41332390172",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "bfc2d7324795183834d54794b3c103d77f100e76"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1186": {
@@ -186,139 +58,6 @@
     }
   },
   "waiting": [],
-  "active": {
-    "issue": 1176,
-    "worker": "finish",
-    "token": "5:finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:1:admit",
-    "fence": 5,
-    "materialSha": "ce45c22f574810a9cde0467b1158affc0b03063e",
-    "expectedBase": "bfc2d7324795183834d54794b3c103d77f100e76",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793554542465,
-    "expiresAt": 1793558347396,
-    "patchId": "d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22",
-    "reviewRequest": "review:1176:4:d79955ab5b60ab1795c6f08404b2a2d9f1b2fd22:bfc2d7324795183834d54794b3c103d77f100e76"
-  },
-  "events": {
-    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
-      "digest": "3f1d7ee030df92004fb10bdc8126518084bd5e0d0ae5d2b1e6b23dd3adbdf112",
-      "issue": 1176
-    },
-    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:finish:1:admit": {
-      "digest": "3fbc6df202b81c408f4c64d3664584e4d1901abbd2c5ed6822dfff3ef9acb7be",
-      "issue": 1176
-    },
-    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:finish:2:synchronized": {
-      "digest": "e4dc7a31a6a7c4ed643c68693aaf4ae9f0f8de5cb1cdf7897c9c854fc59d6a4c",
-      "issue": 1176
-    },
-    "finish:dc2317a3-75f9-40bd-a69b-0948c24e0ed6": {
-      "digest": "870b40f22af415799f9c572ddec1c4e28c6d34260425a9544e9e2be57daf2253",
-      "issue": 1176
-    },
-    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:finish:3:return": {
-      "digest": "49d641fbbce5710a137a1fb6a19fc00b6c81e562bf4dbf748e48ccf98665e08f",
-      "issue": 1176
-    },
-    "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a:metadata:3b91584e-e188-494c-9651-e95fc05dab1c:task-notice:1176::": {
-      "digest": "7e14eae921c35f2cb3611536fb77816ff05d6cc193300e34d976ae21889d6d11",
-      "issue": 1176
-    },
-    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86": {
-      "digest": "ab0229e32e0a315da42ffef8fde613a292cc23919bfe532ffabab2b3f7b43b45",
-      "issue": 1176
-    },
-    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:1:admit": {
-      "digest": "f9d1c314da4ecf437ab030d6c261425f82baccbae0002daa63a3819a9933f9a6",
-      "issue": 1176
-    },
-    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:2:synchronized": {
-      "digest": "2fabff06ee2ffcab56aa89d4a94fa2a64cd24bfef90fdf81747ce6ef87ee86ec",
-      "issue": 1176
-    },
-    "finish:3169dd7f-8e3e-4d8c-9f1a-430cebd29b9b": {
-      "digest": "44c4c4cc590a1e51ca643502a992dc69bb4a8d9b59044f5e655f9b8e504d4470",
-      "issue": 1176
-    },
-    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:finish:3:return": {
-      "digest": "995be3c1b04e4f8fd5ffdefa29097cb7dd5b0c9c12f08a41b337e223a8c5c28d",
-      "issue": 1176
-    },
-    "finish:c3dc2ad9-fdaf-403f-9990-b3a984388b86:metadata:847edf7a-2a2a-449a-b9c8-167a2e77edbc:task-notice:1176::": {
-      "digest": "025de5447d0f00e31abb5219f95f2ed19cdd7966f0df6bfff8d911c627e088ef",
-      "issue": 1176
-    },
-    "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e": {
-      "digest": "ae3f523d1cdfc984f25e2dbe145cbb39f88772fb5730becac973278088247ac0",
-      "issue": 1176
-    },
-    "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:1:admit": {
-      "digest": "f7e9031eeeb81da917496032c15498f6ab73349d7a56613a6b95cd93b476aff2",
-      "issue": 1176
-    },
-    "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:2:synchronized": {
-      "digest": "d11325ae5023b9f7027e7348559a66251b9700cf680f3a9c1bc72b49d284f457",
-      "issue": 1176
-    },
-    "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:3:s6-complete": {
-      "digest": "70e266e4d6839cfa72e271f19124bfc57ca3e7bd4651b733b17d3b495bff4ed9",
-      "issue": 1176
-    },
-    "finish:1f2dba1d-1868-4b79-93de-552c2e108d7e:finish:4:review-requested": {
-      "digest": "fb4e5c0d2bdc5d8d0038779db8781b325615919b4d8288c64275365bdfa76573",
-      "issue": 1176
-    },
-    "github:41330528380:1:tick:0:automation-pending": {
-      "digest": "13935b653da596e539be3f0aa30c9a8f0f0648e5ecc427ac2cec9a07b2e8d2f4",
-      "issue": 1176
-    },
-    "1176-artifact-media-20261101-reconcile:review-presentation": {
-      "digest": "e1d52d090421195af7a9deb629fcf1a2e6364fb16dd69dcb770831a871c8fe8a",
-      "issue": 1176
-    },
-    "1176-artifact-media-20261101-reconcile:return": {
-      "digest": "6e3b7fca4a526dee6228298f8a093952b427c496a475cb3c12dd0a457a205fea",
-      "issue": 1176
-    },
-    "1176-artifact-media-20261101-reconcile-completions:metadata:365e47c9-162d-455d-93fa-6d5c3d400bd0:review-presentation:1176:code:d2c48316f8614413a173": {
-      "digest": "37565db47c68f782074952320073cd14d24af418558367968443f1fabe0469a1",
-      "issue": 1176
-    },
-    "1176-artifact-media-20261101-reconcile-completions:metadata:365e47c9-162d-455d-93fa-6d5c3d400bd0:task-notice:1176::": {
-      "digest": "f05d2e232a8f5b80986557867519b5aea5a91e796ba20716a08ba3635061511f",
-      "issue": 1176
-    },
-    "finish:b413142c-fdd7-45e2-b98a-d79714c815bd": {
-      "digest": "c0d096ef51ec4dfb0769442272c5b6b43f1f566f1f1ce8fbe829ef99bd2589b4",
-      "issue": 1176
-    },
-    "finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:1:admit": {
-      "digest": "45cb05a0cf236737a61bd1e07ce00ebd699651a7ced6f69e3dad4246b3dcf864",
-      "issue": 1176
-    },
-    "finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:2:synchronized": {
-      "digest": "cee5c86f7cb10621d86183a636393fdabe59efa32dbf7590d1aac44116da4c93",
-      "issue": 1176
-    },
-    "finish:d7e08a2e-21d5-46de-a750-4f092a5867e2": {
-      "digest": "542391654ece94e11dedc0ffe9720fc6063dc560392eb1769242ae450f71b708",
-      "issue": 1176
-    },
-    "finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:3:s6-complete": {
-      "digest": "ce1d663dbaa235828a4e0dab16a2d8c48da04f5a75fe0ee13f7b69b87f216824",
-      "issue": 1176
-    },
-    "finish:b413142c-fdd7-45e2-b98a-d79714c815bd:finish:4:review-requested": {
-      "digest": "9e4fd5f827023e8089acc3189de7a162b44792d612c97acd6c1c9531d2c941b4",
-      "issue": 1176
-    },
-    "github:41332490771:1:tick:0:review-presentation": {
-      "digest": "b7c2f0d4889fe2ff963851e02b1b27d77ca210d55ae8ed719dbaae6b211c051c",
-      "issue": 1176
-    },
-    "github:41332490771:1:tick:0:review-complete": {
-      "digest": "9acca38e6c01ffc1e2824153b1e6167526299bb72fd017b513af49ae26c2af7b",
-      "issue": 1176
-    }
-  }
+  "active": null,
+  "events": {}
 }
