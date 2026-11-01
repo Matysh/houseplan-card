@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 339,
+  "revision": 340,
   "nextTicket": 37,
   "nextFence": 36,
   "tasks": {
@@ -81,152 +81,20 @@
     },
     "1169": {
       "issue": 1169,
+      "branch": "codex/1169-wall-corner-seam",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1169-wall-corner-seam",
-      "materialSha": "37f59faef16f6efad06387486943d51202c7d57c",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 35,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793569194056,
-      "reviewEntry": 4,
-      "notice": {
-        "key": "3:rebase-conflict",
-        "reason": "rebase-conflict",
-        "status": "delivered"
+      "status": "S8-merged",
+      "mergedSha": "37f59faef16f6efad06387486943d51202c7d57c",
+      "mergedAt": 1793569570259,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "patchId": "9cd6c30ded32c1be2d0ff98430eafa563c37e256",
-      "changedFiles": [
-        "demo/fixtures/wall-corner-join.mjs",
-        "demo/smoke_wall_corner_join.mjs",
-        "demo/smoke_wall_smooth_joint.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/WALL-THICKNESS.md",
-        "docs/release-ledger/v1.83.0/1169.json",
-        "src/physical-geometry.ts",
-        "src/wall-thickness.ts",
-        "test/wall-corner-join.test.mjs"
-      ],
-      "s6": {
-        "id": "20261101T214006262-a1e368cd",
-        "reportPath": "/home/matysh/hp-batch-release-20261015/.git/process-next/runs/20261101T214006262-a1e368cd/report.json",
-        "materialSha": "37f59faef16f6efad06387486943d51202c7d57c",
-        "status": "passed",
-        "finishedAt": "2026-11-01T21:40:47.573Z"
-      },
-      "reviewRequest": "review:1169:4:9cd6c30ded32c1be2d0ff98430eafa563c37e256:2878fbb9e58205cfab88b6f315090dd98ada0573",
-      "reviewMaterial": {
-        "materialSha": "37f59faef16f6efad06387486943d51202c7d57c",
-        "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-        "patchId": "9cd6c30ded32c1be2d0ff98430eafa563c37e256"
-      },
-      "review": {
-        "version": 1,
-        "issue": 1169,
-        "requestId": "review:1169:4:9cd6c30ded32c1be2d0ff98430eafa563c37e256:2878fbb9e58205cfab88b6f315090dd98ada0573",
-        "kind": "code",
-        "base": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-        "materialSha": "37f59faef16f6efad06387486943d51202c7d57c",
-        "patchId": "9cd6c30ded32c1be2d0ff98430eafa563c37e256",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1169,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1169",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "S7: реализация по принятому S4 раунду3 (workflow41349435598, блокеров0). Внешний quad сохраняется; opt-in union-потребители получают полные support-треугольники с общей точной гранью и внутренним q. Raw drawing join preview default не меняется. #310-клинья переиспользуются и обрезают support владельца; hosted cuts применяются как раньше. Axial literal-X/Y грани не требуют поддержки; неоднозначные/неточные endpoints и заход ниже 32*EPS*локального масштаба координат/длин сохраняют raw. Сохранённые координаты/ID/schema/API/history не меняются.\n\nДо изменения свежая сборка dev3da8f630e воспроизвела дефект на независимо сгенерированной паре: отдельный ненулевой quad и капы с node.y=83 против82.99999999999999 в исходном boolean пути. Node-регрессия действительно падала на внутренних paint-границах; actual /houseplan View/Plan и Static в двух темах дали6/6 FAIL именно по двум внутренним stroke, при сохранённых fill/free-cap/no-write. Baseline кадры/логи сохранены локально output/release-batch-20261101/1169/native-before; приватный экспорт не публикуется.\n\nПосле изменения адресная диагностика (test/wall-corner-join.test.mjs + polygon-paint) PASS9/9:54shift/rotation/cell/ordercases, acute/short/unequal/active#310, opening cuts возле узла, depthUnits/openingPadUnits, raw preview, fallback/TX, фактические PDF/iso и прежняя1076needle/narrowhole защита. Private original read-only остаётся preflight ok; число полигонов снизилось3→2, целевой парный узел дополнительно сверяется. Это диагностические результаты, не объявление финального S6: штатный finish выполняет продуктовый минимум и адресные тесты с актуализацией в слоте. Новый native smoke снимает actual panel+Static в двух темах и Draw у существующей стены; итоговый PASS ещё не заявляется до запуска.\n\nПредыдущие S4-блокеры учтены: opacity raw-preview отдельно, depth invariance, полная длина капов (не малый bridge), и sweep проверяет paint-выемки/кольца, а не один polygon count. Риски для ревью: sourceIndex владельца trim, bounded/full-edge supports, fallback и downstream unions. E2E оценка: не надо менять HA journeys, поскольку нет новых действий/записей/форматов; addressing geometry/native в продуктовых тестах, companion запись публикует ведущий. Полный Validate/tooling/golden rebaseline/живой HA не запускались.\n\n\n### Обновление S6 перед первым код-ревью\n\nФормальный S6 `20261101T211809045-b0996d21` на b484f6564:7/8 PASS. Typed build,151critical, вся адресная Node-группа и новый actual panel/Static smoke прошли; все6сочетаний View/Plan/Static light/dark больше не рисуют обе внутренние грани, материал/свободный торец/отсутствие записи сохранены. Итоговые View-light,Static-dark,Draw-preview PNG просмотрены; глобальные эталоны не принимались. Приватная целевая пара отдельно: raw2→union1, площадь/глубина/source неизменны.\n\nЕдинственный FAIL сохранён: прежний `smoke_wall_smooth_joint` ожидал Fit в780px embedded card. В актуальном measured header flow2 кнопки zoom намеренно display:none (panel-header.styles.ts39–47). Диагностика подтвердила computed display:none/zero rect и сняла кадр; геометрические утверждения этого старого теста ещё не выполнялись. Исправлено только условие harness: hostwidth1400px/maxWidthnone перед seed и reload, чтобы нажать настоящий видимый Fit вexpandedheader. Ни force-click, ни продуктовый/CSS guard не менялись. Адресный повтор старого smoke прошёл все прежние проверки, включая iso/reload/no-write. Следующий finish сохраняет применимые успехи и выполняет недостающие/связанные проверки; полный PASS ещё не заявляется до его завершения."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Реализация соответствует принятому ТЗ (S4, раунд 3), блокеров не нашёл. Внешняя четырёхточечная вставка не меняется. Только для потребителей, которые объединяют тела (`physicalBodyParts` и через него `rawPatches`, а также `drawWallPreviewD`), к ней добавляются два опорных треугольника `[q,node,pA]` и `[q,node,pB]`. Каждый из них имеет с вставкой общее ребро node→pA/pB с побитно теми же концами, а `q` лежит внутри конечных тел. Поэтому boolean-операция видит точно совпадающее ребро вместо почти коллинеарного касания по всей длине торца. Материал не добавляется: треугольник лежит внутри тела-владельца, обрезается его клиньями #310 и всеми вырезами. Кратчайшее ребро треугольника ≤ h/4, поэтому `depthUnits`/`openingPadUnits` не меняются. По умолчанию `linearWallJoinPatches` возвращает прежние вставки, так что полупрозрачное превью рисования и старые тесты апекса не затронуты. Данные, схема и запись не меняются.\n\nS6 на head: receipt `20261101T214006262-a1e368cd` (status passed). Автор описывает, что проверено: 6/6 сочетаний View/Plan/Static в двух темах, кадр Draw, свип из 54 случаев и прежние защиты #1076; FAIL до исправления сохранён.\n\nОстаточные риски небольшие и описаны в improvements. Конфигурация #310 с обрезанным треугольником проверена в одной точке. Для короткого плеча и для вырезов у узла проверяются материал и глубина, но не отсутствие шва. Индексы `trimWedges` и `sourceIndex` совпадают только потому, что вызывающие стороны заранее отфильтровали сегменты.",
-          "understanding": "Проблема. На общем узле двух независимых стен `linearWallJoinPatches` строит вставку `[node,pA,hit,pB]`. Её внутренние рёбра node→pA и node→pB номинально лежат на торцах прямоугольников `linearWallBody`. Углы pA/pB совпадают с углами тел побитно: я сверил формулы — `nA·h·sign` против `(-dy/len)·h`, умножение на ±1 точное. А сам `node` в float обычно не лежит точно на прямой торца. Точные предикаты polyclip-ts видят там щель ulp-ширины, вставка остаётся отдельным полигоном, и `polyclipToPathD` обводит два внутренних шва.\n\nПосле изменения. При `unionOverlap: true`, ровно двух лучах, ровно двух владельцах с побитно совпадающим `node` и неосевых лучах добавляются `[q,node,pA]` и `[q,node,pB]`, где `q = node + (uA+uB)·r`, `r = min(hA,hB,LA,LB)/8`. Условие отказа: продольный заход `q` не больше `32·EPS·max(1,|node|,L)`; тогда остаётся raw-вставка. Опорный треугольник обрезается всеми клиньями #310 своего сегмента. Это корректно: тело-владелец режется теми же клиньями, включая клин дальнего конца. Затем треугольник режется всеми вырезами проёмов, как и вставка.\n\nРазобранные пути:\n- `physicalBodyParts`: клинья вычисляются один раз и передаются в `linearWallJoinPatches`; `rawPatches` содержат опорные треугольники.\n- `drawWallPreviewD`: те же клинья, объединение через `unionSimpleBodies`.\n- Raw-путь `_drawPreviewJoinPatchD` вызывается без опции, поведение прежнее.\n- `maxDepth` в `wallBodiesGeometry` (wall-thickness.ts:3785-3798).\n- `cutPartitionBody`.\n- Потребители `all`: LED placement через `wallBodiesGeometry`, свет через glow-scene → `wallBodiesGeometry`/recut, clean floor (`floorMinusBodies`), iso, PDF, preflight; а также `rawPatches` в opening-drag-preview.\n- Все вызовы `linearWallJoinPatches` и тесты, которые считают `patches`.\n- Новые тесты, фикстура, native smoke и правка harness `smoke_wall_smooth_joint`.",
-          "analysis": [
-            {
-              "topic": "Корректность конструкции опорных треугольников",
-              "assessment": "Решение работает по построению. Рёбра node→pA и node→pB у вставки и опорного треугольника имеют одни и те же float-концы, а лежат треугольник и вставка по разные стороны от этого ребра. Возможная щель между ребром и торцом при любом знаке смещения node попадает внутрь треугольника, а его ребро q→pA пересекает тело трансверсально. `q` строго внутри обоих тел: продольная координата r(1+cosθ) ≤ L/4, поперечная ≤ h/8. Значит, материал объединения не меняется. Хорошее решение, которое стоит сохранить: опора добавлена отдельными операндами, а не через изменение вставки. Внешний mitre и тесты апекса #309/#310 поэтому не затронуты. Проверка `owners` с побитным совпадением `node` гарантирует, что направление луча считается от того же endpoint, от которого построен угол тела.",
-              "evidence": "src/wall-thickness.ts:1333-1347 (pA/pB/вставка), 1355-1371 (owners, r, q, roundoff, опорные треугольники); 1089-1101 (`linearWallBody`: углы a±n·h, те же формулы с точностью до точного умножения на ±1)."
-            },
-            {
-              "topic": "Глубина/штриховка и вырезы проёмов",
-              "assessment": "Кратчайшее ребро опорного треугольника (q→node = 2r·cos(θ/2) ≤ h/4) меньше толщины 2h, которую `maxDepth` уже получает от тел. Его фрагменты после `cutPartitionBody` тоже меньше 2h. Поэтому `depthUnits`/`openingPadUnits` и порог hatch/solid не меняются. Треугольник режется всеми вырезами, то есть надмножеством вырезов своего тела, и остаётся внутри итогового тела. Тесты сравнивают глубину и площадь с raw-базой на свипе, на остром, тупом и разнотолщинном углах и на вырезах у узла.",
-              "evidence": "src/wall-thickness.ts:3785-3798; src/physical-geometry.ts:158-187, 278-280; test/wall-corner-join.test.mjs, тесты 2, 3 и 5 (`after.depthUnits === baseline.depthUnits`, двусторонняя разность площадей < 1e-7)."
-            },
-            {
-              "topic": "Разделение raw- и union-потребителей",
-              "assessment": "Сделано, как требует ТЗ. Опция по умолчанию выключена. `_drawPreviewJoinPatchD` (houseplan-editor-runtime.ts:11015) вызывает функцию без опции, и лишнего полупрозрачного клина нет: smoke проверяет, что каждый join-path превью — один `M` и три `L`. Старые тесты апекса и формы вставки (test/wall-thickness.test.mjs:2839-3459) идут по raw-пути. Остальные потребители `all` объединяют тела (LED, свет, iso, PDF, preflight) или вычитают их из пола. Треугольники внутри материала для них безвредны. Тестов, требующих точного числа `patches` из `physicalBodyParts`, нет: physical-geometry.test проверяет только `>= 2`.",
-              "evidence": "Поиск `linearWallJoinPatches(` и `.patches` по src/test; src/led-strip-editor.ts:227-232; src/glow-scene.ts:371-397; src/clean-floor.ts:45-51; demo/smoke_wall_corner_join.mjs, проверка 'Raw join preview has no support triangle overlay'."
-            },
-            {
-              "topic": "Связь индексов клиньев и sourceIndex",
-              "assessment": "Сейчас индексы совпадают. Однако это держится на неявном предусловии. `pairButtEndTrimWedges` возвращает `segmentIndex` по индексу во входном массиве до фильтрации, а `sourceIndex` в `linearWallJoinPatches` считается по уже отфильтрованному `segments`. В `physicalBodyParts` в `partitionSegments` попадают только сегменты, прошедшие `linearWallBody`, а в `drawWallPreviewD` сегменты отфильтрованы по длине и толщине. Поэтому внутренний фильтр ничего не отбрасывает. Если будущий вызывающий передаст `trimWedges` для нефильтрованного входа с отбрасываемым сегментом, клин применится к опоре чужого сегмента. Опора тогда может не обрезаться и выйти за обрезанное тело. Сейчас это не дефект.",
-              "evidence": "src/wall-thickness.ts:1183 (индекс до фильтра), 1267-1272 (фильтр), 1302 (`segments.entries()`), 1368; src/physical-geometry.ts:247-250, 258, 278; src/wall-thickness.ts:1426-1447."
-            },
-            {
-              "topic": "Доказательства и их границы",
-              "assessment": "Регрессия различает старый и новый код: на свидетеле база из raw-операндов даёт 2 полигона. `internalPaintEdges` ищет рёбра рисуемых колец, у которых материал с обеих сторон, то есть ловит и кольца, и выемки, а не просто считает полигоны. Есть свип из 54 случаев (сдвиг, поворот, cell_cm, разворот), PDF и iso с одним кольцом, native smoke через `isPointInStroke` на настоящем /houseplan и Static. Слабые места: в свипе старый FAIL отдельно не утверждается, а отсутствие шва для короткого плеча, вырезов у узла и конфигурации #310 проверено узко (подробнее в improvements). Правка harness `smoke_wall_smooth_joint` (ширина 1400px, чтобы был виден Fit) минимальна и не обходит продуктовые guard.",
-              "evidence": "test/wall-corner-join.test.mjs, строки 21-36 (детектор), 38-50 (FAIL базы = 2 полигона), 52-68 (свип), 70-83 (`if(length===500)` — для короткого плеча швы не проверяются), 97-109 (вырезы — только площадь и глубина); demo/smoke_wall_corner_join.mjs; demo/smoke_wall_smooth_joint.mjs:15-18; receipt 20261101T214006262-a1e368cd."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Конфигурация с активным клином #310 со стороны pA: тупой угол и разная толщина, в тесте 5π/6 при [30,10]. После `clipBodyByWedge` у опоры появляется вычисленная вершина X на ребре node→pA, и на отрезке node→X возвращается класс почти коллинеарного касания. Отсутствие шва здесь проверено в одной точке (`node=[37,59]`, один поворот). Дёшево добавить эту конфигурацию в свип сдвига и поворота. Если шов воспроизведётся, проще принять такой случай как fallback (оставить raw для этой стороны) и записать это в WALL-THICKNESS, а не обещать исправление.",
-            "В свипе AC1 подсчитать, сколько случаев падает на raw-базе (`internalPaintEdges(baseline, …)`), и утверждать, что их больше нуля. Сейчас старый FAIL доказан только на исходном свидетеле. Если остальные 53 случая не воспроизводят дефект и на старом коде, свип мало что различает. Цена — одна строка в тесте.",
-            "Проверить `internalPaintEdges` в тесте вырезов у узла (`[.5,3]`, `[10,50]`) и для короткого плеча (`length===3`). Там сейчас проверяются только площадь и глубина, а пропуск короткого плеча в тесте 3 никак не объяснён. Если шов там остаётся по объективной причине, лучше записать это явно, чем молча пропускать проверку.",
-            "Сделать связь `trimWedges` ↔ `sourceIndex` устойчивой: брать исходный индекс до фильтрации (как в `pairButtEndTrimWedges`) или зафиксировать предусловие «вход уже отфильтрован» в JSDoc опции. Выгода: будущий вызывающий не применит клин к опоре чужого сегмента. Цена минимальная.",
-            "Ветка fallback с недостаточным заходом (`roundoff`) тестом не задета. Вариант с `[-500,1e-6]` отсекается раньше, ещё порогом `|cross|<1e-9`, и вставка там вообще не строится. Достаточно одного адресного случая с π−θ порядка 1e-7…1e-6: вставка есть, а опоры нет."
-          ],
-          "boundaries": "Ревью кода S7 выполнено чтением pinned-материала (base 2878fbb9 → head 37f59fae). Я ничего не запускал: ни сборку, ни тесты, ни smoke, PNG не просматривал. Геометрические свойства опорных треугольников (положение q, совпадение pA/pB с углами тел, вложенность в обрезанное тело, оценка кратчайшего ребра) проверены аналитически по формулам кода. Внутреннее поведение polyclip-ts не изучал: точное ли совпадение вершин в выводе `difference`/`union` и как вычисляется вершина X при обрезке клином. Поэтому риск по #310-стороне — гипотеза, а не установленный дефект.\n\nИспользовал результаты S6: receipt `20261101T214006262-a1e368cd` на head (status passed) и описание исполнителя. По словам исполнителя: 6/6 сочетаний View/Plan/Static в двух темах без внутренних штрихов, кадр Draw, Node-группа 9/9, прежний `smoke_wall_smooth_joint` после правки harness, приватная пара (raw 2 → union 1). Приватный экспорт и локальные артефакты (`output/release-batch-20261101/1169`, `diagnostics/wall-corner-20261031/`) мне недоступны. Golden-кадры, PDF-файлы и живой HA не проверял."
-        },
-        "usage": {
-          "input_tokens": 38,
-          "cache_creation_input_tokens": 106000,
-          "cache_read_input_tokens": 1392597,
-          "output_tokens": 20595,
-          "output_tokens_details": {
-            "thinking_tokens": 12335
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 106000,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 1100,
-              "cache_read_input_tokens": 91233,
-              "cache_creation_input_tokens": 18937,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 18937
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Ревью: accept\n\nМодель: claude-opus-5-5\nМатериал: 2878fbb9e58205cfab88b6f315090dd98ada0573 → 37f59faef16f6efad06387486943d51202c7d57c\nВид: code\n\n## Вывод\n\nРеализация соответствует принятому ТЗ (S4, раунд 3), блокеров не нашёл. Внешняя четырёхточечная вставка не меняется. Только для потребителей, которые объединяют тела (`physicalBodyParts` и через него `rawPatches`, а также `drawWallPreviewD`), к ней добавляются два опорных треугольника `[q,node,pA]` и `[q,node,pB]`. Каждый из них имеет с вставкой общее ребро node→pA/pB с побитно теми же концами, а `q` лежит внутри конечных тел. Поэтому boolean-операция видит точно совпадающее ребро вместо почти коллинеарного касания по всей длине торца. Материал не добавляется: треугольник лежит внутри тела-владельца, обрезается его клиньями #310 и всеми вырезами. Кратчайшее ребро треугольника ≤ h/4, поэтому `depthUnits`/`openingPadUnits` не меняются. По умолчанию `linearWallJoinPatches` возвращает прежние вставки, так что полупрозрачное превью рисования и старые тесты апекса не затронуты. Данные, схема и запись не меняются.\n\nS6 на head: receipt `20261101T214006262-a1e368cd` (status passed). Автор описывает, что проверено: 6/6 сочетаний View/Plan/Static в двух темах, кадр Draw, свип из 54 случаев и прежние защиты #1076; FAIL до исправления сохранён.\n\nОстаточные риски небольшие и описаны в improvements. Конфигурация #310 с обрезанным треугольником проверена в одной точке. Для короткого плеча и для вырезов у узла проверяются материал и глубина, но не отсутствие шва. Индексы `trimWedges` и `sourceIndex` совпадают только потому, что вызывающие стороны заранее отфильтровали сегменты.\n\n## Понимание решения\n\nПроблема. На общем узле двух независимых стен `linearWallJoinPatches` строит вставку `[node,pA,hit,pB]`. Её внутренние рёбра node→pA и node→pB номинально лежат на торцах прямоугольников `linearWallBody`. Углы pA/pB совпадают с углами тел побитно: я сверил формулы — `nA·h·sign` против `(-dy/len)·h`, умножение на ±1 точное. А сам `node` в float обычно не лежит точно на прямой торца. Точные предикаты polyclip-ts видят там щель ulp-ширины, вставка остаётся отдельным полигоном, и `polyclipToPathD` обводит два внутренних шва.\n\nПосле изменения. При `unionOverlap: true`, ровно двух лучах, ровно двух владельцах с побитно совпадающим `node` и неосевых лучах добавляются `[q,node,pA]` и `[q,node,pB]`, где `q = node + (uA+uB)·r`, `r = min(hA,hB,LA,LB)/8`. Условие отказа: продольный заход `q` не больше `32·EPS·max(1,|node|,L)`; тогда остаётся raw-вставка. Опорный треугольник обрезается всеми клиньями #310 своего сегмента. Это корректно: тело-владелец режется теми же клиньями, включая клин дальнего конца. Затем треугольник режется всеми вырезами проёмов, как и вставка.\n\nРазобранные пути:\n- `physicalBodyParts`: клинья вычисляются один раз и передаются в `linearWallJoinPatches`; `rawPatches` содержат опорные треугольники.\n- `drawWallPreviewD`: те же клинья, объединение через `unionSimpleBodies`.\n- Raw-путь `_drawPreviewJoinPatchD` вызывается без опции, поведение прежнее.\n- `maxDepth` в `wallBodiesGeometry` (wall-thickness.ts:3785-3798).\n- `cutPartitionBody`.\n- Потребители `all`: LED placement через `wallBodiesGeometry`, свет через glow-scene → `wallBodiesGeometry`/recut, clean floor (`floorMinusBodies`), iso, PDF, preflight; а также `rawPatches` в opening-drag-preview.\n- Все вызовы `linearWallJoinPatches` и тесты, которые считают `patches`.\n- Новые тесты, фикстура, native smoke и правка harness `smoke_wall_smooth_joint`.\n\n## Разбор решения\n\n### Корректность конструкции опорных треугольников\n\nРешение работает по построению. Рёбра node→pA и node→pB у вставки и опорного треугольника имеют одни и те же float-концы, а лежат треугольник и вставка по разные стороны от этого ребра. Возможная щель между ребром и торцом при любом знаке смещения node попадает внутрь треугольника, а его ребро q→pA пересекает тело трансверсально. `q` строго внутри обоих тел: продольная координата r(1+cosθ) ≤ L/4, поперечная ≤ h/8. Значит, материал объединения не меняется. Хорошее решение, которое стоит сохранить: опора добавлена отдельными операндами, а не через изменение вставки. Внешний mitre и тесты апекса #309/#310 поэтому не затронуты. Проверка `owners` с побитным совпадением `node` гарантирует, что направление луча считается от того же endpoint, от которого построен угол тела.\n\nОснование: src/wall-thickness.ts:1333-1347 (pA/pB/вставка), 1355-1371 (owners, r, q, roundoff, опорные треугольники); 1089-1101 (`linearWallBody`: углы a±n·h, те же формулы с точностью до точного умножения на ±1).\n\n### Глубина/штриховка и вырезы проёмов\n\nКратчайшее ребро опорного треугольника (q→node = 2r·cos(θ/2) ≤ h/4) меньше толщины 2h, которую `maxDepth` уже получает от тел. Его фрагменты после `cutPartitionBody` тоже меньше 2h. Поэтому `depthUnits`/`openingPadUnits` и порог hatch/solid не меняются. Треугольник режется всеми вырезами, то есть надмножеством вырезов своего тела, и остаётся внутри итогового тела. Тесты сравнивают глубину и площадь с raw-базой на свипе, на остром, тупом и разнотолщинном углах и на вырезах у узла.\n\nОснование: src/wall-thickness.ts:3785-3798; src/physical-geometry.ts:158-187, 278-280; test/wall-corner-join.test.mjs, тесты 2, 3 и 5 (`after.depthUnits === baseline.depthUnits`, двусторонняя разность площадей < 1e-7).\n\n### Разделение raw- и union-потребителей\n\nСделано, как требует ТЗ. Опция по умолчанию выключена. `_drawPreviewJoinPatchD` (houseplan-editor-runtime.ts:11015) вызывает функцию без опции, и лишнего полупрозрачного клина нет: smoke проверяет, что каждый join-path превью — один `M` и три `L`. Старые тесты апекса и формы вставки (test/wall-thickness.test.mjs:2839-3459) идут по raw-пути. Остальные потребители `all` объединяют тела (LED, свет, iso, PDF, preflight) или вычитают их из пола. Треугольники внутри материала для них безвредны. Тестов, требующих точного числа `patches` из `physicalBodyParts`, нет: physical-geometry.test проверяет только `>= 2`.\n\nОснование: Поиск `linearWallJoinPatches(` и `.patches` по src/test; src/led-strip-editor.ts:227-232; src/glow-scene.ts:371-397; src/clean-floor.ts:45-51; demo/smoke_wall_corner_join.mjs, проверка 'Raw join preview has no support triangle overlay'.\n\n### Связь индексов клиньев и sourceIndex\n\nСейчас индексы совпадают. Однако это держится на неявном предусловии. `pairButtEndTrimWedges` возвращает `segmentIndex` по индексу во входном массиве до фильтрации, а `sourceIndex` в `linearWallJoinPatches` считается по уже отфильтрованному `segments`. В `physicalBodyParts` в `partitionSegments` попадают только сегменты, прошедшие `linearWallBody`, а в `drawWallPreviewD` сегменты отфильтрованы по длине и толщине. Поэтому внутренний фильтр ничего не отбрасывает. Если будущий вызывающий передаст `trimWedges` для нефильтрованного входа с отбрасываемым сегментом, клин применится к опоре чужого сегмента. Опора тогда может не обрезаться и выйти за обрезанное тело. Сейчас это не дефект.\n\nОснование: src/wall-thickness.ts:1183 (индекс до фильтра), 1267-1272 (фильтр), 1302 (`segments.entries()`), 1368; src/physical-geometry.ts:247-250, 258, 278; src/wall-thickness.ts:1426-1447.\n\n### Доказательства и их границы\n\nРегрессия различает старый и новый код: на свидетеле база из raw-операндов даёт 2 полигона. `internalPaintEdges` ищет рёбра рисуемых колец, у которых материал с обеих сторон, то есть ловит и кольца, и выемки, а не просто считает полигоны. Есть свип из 54 случаев (сдвиг, поворот, cell_cm, разворот), PDF и iso с одним кольцом, native smoke через `isPointInStroke` на настоящем /houseplan и Static. Слабые места: в свипе старый FAIL отдельно не утверждается, а отсутствие шва для короткого плеча, вырезов у узла и конфигурации #310 проверено узко (подробнее в improvements). Правка harness `smoke_wall_smooth_joint` (ширина 1400px, чтобы был виден Fit) минимальна и не обходит продуктовые guard.\n\nОснование: test/wall-corner-join.test.mjs, строки 21-36 (детектор), 38-50 (FAIL базы = 2 полигона), 52-68 (свип), 70-83 (`if(length===500)` — для короткого плеча швы не проверяются), 97-109 (вырезы — только площадь и глубина); demo/smoke_wall_corner_join.mjs; demo/smoke_wall_smooth_joint.mjs:15-18; receipt 20261101T214006262-a1e368cd.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Конфигурация с активным клином #310 со стороны pA: тупой угол и разная толщина, в тесте 5π/6 при [30,10]. После `clipBodyByWedge` у опоры появляется вычисленная вершина X на ребре node→pA, и на отрезке node→X возвращается класс почти коллинеарного касания. Отсутствие шва здесь проверено в одной точке (`node=[37,59]`, один поворот). Дёшево добавить эту конфигурацию в свип сдвига и поворота. Если шов воспроизведётся, проще принять такой случай как fallback (оставить raw для этой стороны) и записать это в WALL-THICKNESS, а не обещать исправление.\n- В свипе AC1 подсчитать, сколько случаев падает на raw-базе (`internalPaintEdges(baseline, …)`), и утверждать, что их больше нуля. Сейчас старый FAIL доказан только на исходном свидетеле. Если остальные 53 случая не воспроизводят дефект и на старом коде, свип мало что различает. Цена — одна строка в тесте.\n- Проверить `internalPaintEdges` в тесте вырезов у узла (`[.5,3]`, `[10,50]`) и для короткого плеча (`length===3`). Там сейчас проверяются только площадь и глубина, а пропуск короткого плеча в тесте 3 никак не объяснён. Если шов там остаётся по объективной причине, лучше записать это явно, чем молча пропускать проверку.\n- Сделать связь `trimWedges` ↔ `sourceIndex` устойчивой: брать исходный индекс до фильтрации (как в `pairButtEndTrimWedges`) или зафиксировать предусловие «вход уже отфильтрован» в JSDoc опции. Выгода: будущий вызывающий не применит клин к опоре чужого сегмента. Цена минимальная.\n- Ветка fallback с недостаточным заходом (`roundoff`) тестом не задета. Вариант с `[-500,1e-6]` отсекается раньше, ещё порогом `|cross|<1e-9`, и вставка там вообще не строится. Достаточно одного адресного случая с π−θ порядка 1e-7…1e-6: вставка есть, а опоры нет.\n\n## Границы анализа\n\nРевью кода S7 выполнено чтением pinned-материала (base 2878fbb9 → head 37f59fae). Я ничего не запускал: ни сборку, ни тесты, ни smoke, PNG не просматривал. Геометрические свойства опорных треугольников (положение q, совпадение pA/pB с углами тел, вложенность в обрезанное тело, оценка кратчайшего ребра) проверены аналитически по формулам кода. Внутреннее поведение polyclip-ts не изучал: точное ли совпадение вершин в выводе `difference`/`union` и как вычисляется вершина X при обрезке клином. Поэтому риск по #310-стороне — гипотеза, а не установленный дефект.\n\nИспользовал результаты S6: receipt `20261101T214006262-a1e368cd` на head (status passed) и описание исполнителя. По словам исполнителя: 6/6 сочетаний View/Plan/Static в двух темах без внутренних штрихов, кадр Draw, Node-группа 9/9, прежний `smoke_wall_smooth_joint` после правки harness, приватная пара (raw 2 → union 1). Приватный экспорт и локальные артефакты (`output/release-batch-20261101/1169`, `diagnostics/wall-corner-20261031/`) мне недоступны. Golden-кадры, PDF-файлы и живой HA не проверял.\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1169, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\nS7: реализация по принятому S4 раунду3 (workflow41349435598, блокеров0). Внешний quad сохраняется; opt-in union-потребители получают полные support-треугольники с общей точной гранью и внутренним q. Raw drawing join preview default не меняется. #310-клинья переиспользуются и обрезают support владельца; hosted cuts применяются как раньше. Axial literal-X/Y грани не требуют поддержки; неоднозначные/неточные endpoints и заход ниже 32*EPS*локального масштаба координат/длин сохраняют raw. Сохранённые координаты/ID/schema/API/history не меняются.\n\nДо изменения свежая сборка dev3da8f630e воспроизвела дефект на независимо сгенерированной паре: отдельный ненулевой quad и капы с node.y=83 против82.99999999999999 в исходном boolean пути. Node-регрессия действительно падала на внутренних paint-границах; actual /houseplan View/Plan и Static в двух темах дали6/6 FAIL именно по двум внутренним stroke, при сохранённых fill/free-cap/no-write. Baseline кадры/логи сохранены локально output/release-batch-20261101/1169/native-before; приватный экспорт не публикуется.\n\nПосле изменения адресная диагностика (test/wall-corner-join.test.mjs + polygon-paint) PASS9/9:54shift/rotation/cell/ordercases, acute/short/unequal/active#310, opening cuts возле узла, depthUnits/openingPadUnits, raw preview, fallback/TX, фактические PDF/iso и прежняя1076needle/narrowhole защита. Private original read-only остаётся preflight ok; число полигонов снизилось3→2, целевой парный узел дополнительно сверяется. Это диагностические результаты, не объявление финального S6: штатный finish выполняет продуктовый минимум и адресные тесты с актуализацией в слоте. Новый native smoke снимает actual panel+Static в двух темах и Draw у существующей стены; итоговый PASS ещё не заявляется до запуска.\n\nПредыдущие S4-блокеры учтены: opacity raw-preview отдельно, depth invariance, полная длина капов (не малый bridge), и sweep проверяет paint-выемки/кольца, а не один polygon count. Риски для ревью: sourceIndex владельца trim, bounded/full-edge supports, fallback и downstream unions. E2E оценка: не надо менять HA journeys, поскольку нет новых действий/записей/форматов; addressing geometry/native в продуктовых тестах, companion запись публикует ведущий. Полный Validate/tooling/golden rebaseline/живой HA не запускались.\n\n\n### Обновление S6 перед первым код-ревью\n\nФормальный S6 `20261101T211809045-b0996d21` на b484f6564:7/8 PASS. Typed build,151critical, вся адресная Node-группа и новый actual panel/Static smoke прошли; все6сочетаний View/Plan/Static light/dark больше не рисуют обе внутренние грани, материал/свободный торец/отсутствие записи сохранены. Итоговые View-light,Static-dark,Draw-preview PNG просмотрены; глобальные эталоны не принимались. Приватная целевая пара отдельно: raw2→union1, площадь/глубина/source неизменны.\n\nЕдинственный FAIL сохранён: прежний `smoke_wall_smooth_joint` ожидал Fit в780px embedded card. В актуальном measured header flow2 кнопки zoom намеренно display:none (panel-header.styles.ts39–47). Диагностика подтвердила computed display:none/zero rect и сняла кадр; геометрические утверждения этого старого теста ещё не выполнялись. Исправлено только условие harness: hostwidth1400px/maxWidthnone перед seed и reload, чтобы нажать настоящий видимый Fit вexpandedheader. Ни force-click, ни продуктовый/CSS guard не менялись. Адресный повтор старого smoke прошёл все прежние проверки, включая iso/reload/no-write. Следующий finish сохраняет применимые успехи и выполняет недостающие/связанные проверки; полный PASS ещё не заявляется до его завершения.\n```\n",
-        "createdAt": "2026-11-01T21:45:28.150Z",
-        "artifactId": 13102392084,
-        "runId": 41353258312,
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41353258312",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573"
+      "devBuild": {
+        "status": "pending"
       }
     },
     "1175": {
@@ -526,19 +394,7 @@
   "waiting": [
     1190
   ],
-  "active": {
-    "issue": 1169,
-    "worker": "finish",
-    "token": "35:finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:1:admit",
-    "fence": 35,
-    "materialSha": "37f59faef16f6efad06387486943d51202c7d57c",
-    "expectedBase": "2878fbb9e58205cfab88b6f315090dd98ada0573",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793569197281,
-    "expiresAt": 1793573167185,
-    "patchId": "9cd6c30ded32c1be2d0ff98430eafa563c37e256",
-    "reviewRequest": "review:1169:4:9cd6c30ded32c1be2d0ff98430eafa563c37e256:2878fbb9e58205cfab88b6f315090dd98ada0573"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -555,10 +411,6 @@
     "github:41347686935:1:completions:metadata:fecb1122-f9d9-4485-b969-e1303ee55fd0:review-presentation:1190:spec:d273da7f657888ef1467": {
       "digest": "2a2f5c4ee249cbe2c01160766c0b33f3aee91980a57950d848a890bc6cad6828",
       "issue": 1190
-    },
-    "1169-spec1:spec-request": {
-      "digest": "f6466287ba1a0b0912e47110cd086acc199e7c8155433feb4882807d774ec409",
-      "issue": 1169
     },
     "github:41347862803:1:spec:1190:spec-request": {
       "digest": "7653eeb1a9a9a93c116f85c16dece66fced105b6457f4d9b3df68bad72547a47",
@@ -579,22 +431,6 @@
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
       "issue": 1167
-    },
-    "github:41348289557:1:spec:1169:spec-presentation": {
-      "digest": "a5f1d6673e51813b0724a326aea2a2716900241264a76dd7e18c0799ac8464a5",
-      "issue": 1169
-    },
-    "github:41348289557:1:spec:1169:spec-complete": {
-      "digest": "6bcdde6cc3e25aeedbf4b98fa6c6e6b548eaaae5ed7a14e3aa5468d92cf856b2",
-      "issue": 1169
-    },
-    "github:41348289557:1:completions:metadata:4681af50-758c-4946-bdee-565f853d969f:review-presentation:1169:spec:af0f9ccbf0986388454c": {
-      "digest": "3c429fd267175eeac388b8b09f9783da6f3b1bc3deed3a3e859a0044171f9d8c",
-      "issue": 1169
-    },
-    "1169-spec2:spec-request": {
-      "digest": "351f1823ce3eeadf6224730c0ce5699aaf2af4efaa0541dc494695d8ca0cd5f4",
-      "issue": 1169
     },
     "github:41348695726:1:spec:1167:spec-presentation": {
       "digest": "47368346da12d107a4ab928c1d6f805b36aab12cd626133ccbea7fe2b633b0e4",
@@ -628,18 +464,6 @@
       "digest": "138aca043891613bc33e9f4d0b6779cb724b60817905db250937c095d02caee0",
       "issue": 1190
     },
-    "github:41349027156:1:spec:1169:spec-presentation": {
-      "digest": "b2dff4432c8936c60e262ea9bada7ea08cfc01615e1d8d3cba3ad5b3c03247ba",
-      "issue": 1169
-    },
-    "github:41349027156:1:spec:1169:spec-complete": {
-      "digest": "f2aac7e8d7be38efa4ce7a2cff45b9cec3fb62f1a2d45178ff857581eae6378e",
-      "issue": 1169
-    },
-    "github:41349027156:1:completions:metadata:358a4775-9fd2-447e-b12a-fc9a82964297:review-presentation:1169:spec:f7cec9c76600e67ba55f": {
-      "digest": "ba4b27409378219f6ebd89cb357226e1a4132a9a749fdd0b3d106ba20bc979e7",
-      "issue": 1169
-    },
     "finish:be9df8cf-30c6-40d3-bafd-a8886641515a": {
       "digest": "0738d7f6d6c33315e2afeecab39fbb595791222bab83443a4dc6ab4889002992",
       "issue": 1190
@@ -647,10 +471,6 @@
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:3:return": {
       "digest": "8a5dc5f1c42988f6dabaebbebf7db906df0c9e4d940ba42fa4042bdac0aa3088",
       "issue": 1190
-    },
-    "1169-spec3:spec-request": {
-      "digest": "71cbe86e1e218f54d94a4d0a6a5797ec44d32bdcd02e22f6d9d6b576f7dad3df",
-      "issue": 1169
     },
     "github:41349425617:1:tick:0:admit": {
       "digest": "1e10d7d97c081005c82870fba8b516b6ae1fb4258f3bbaef9e22ab349b1dc16d",
@@ -668,18 +488,6 @@
       "digest": "5fb457e5455fff6142e2923d4dc2867e7d2a00590b935acb4e150f69fc660896",
       "issue": 1190
     },
-    "github:41349919493:1:spec:1169:spec-presentation": {
-      "digest": "b58ff94ab6bfd6d0b21e0214d3ccf50f73365f24f18709411791c288a159179e",
-      "issue": 1169
-    },
-    "github:41349919493:1:spec:1169:spec-complete": {
-      "digest": "8523a072af889abf2bd7cd59aed7290f514f9ee9a373cdcc9a8aa5fa6fdcf7dd",
-      "issue": 1169
-    },
-    "github:41349919493:1:completions:metadata:a2cb427b-2f0e-49b5-bd97-862ac809f85e:review-presentation:1169:spec:4556c7fc65afbf6591a0": {
-      "digest": "4f3b3f521bf9c2fb15fa035f7d0ab9aa394a4ccf549a9368759d4abb489c4f0f",
-      "issue": 1169
-    },
     "github:41350148265:1:tick:0:admit": {
       "digest": "1241c2a57582c9106a3ba69b9c921095ae4b95196894681a113d535acd1b50e1",
       "issue": 1190
@@ -695,10 +503,6 @@
     "finish:78989db7-9a70-4f1d-a6ad-a4c557ba3e63:finish:3:review-requested": {
       "digest": "15221ccbe686cd1f9100f04d82dc2546a98860f643d310804db90ab6191db737",
       "issue": 1190
-    },
-    "finish:17b52b52-6951-4f92-b89c-e841571982d8": {
-      "digest": "f9adb575dba93a6aa0e2047920cbae5dd3c74b1974d4d1e84c04b4af55c9ce58",
-      "issue": 1169
     },
     "github:41350844890:1:tick:0:review-presentation": {
       "digest": "7defaf66735c32221976fbd159694fb1dd9f48094fb852522b62558eca64fc21",
@@ -720,49 +524,9 @@
       "digest": "15bbe2ad2de8a6c96256a6b704b697a4507973bceb7e4b0bd978bcb41827323f",
       "issue": 1190
     },
-    "finish:dcdd0282-c8dc-4d66-a0ad-820e88ff0e06:finish:1:admit": {
-      "digest": "0e50996676817f5af892d536c23d616d3f234af34071aadd2e8a66ca7bccd202",
-      "issue": 1169
-    },
-    "finish:17b52b52-6951-4f92-b89c-e841571982d8:finish:1:return": {
-      "digest": "5364a0c542dc940a12fad7e6764c56ef2cd323620f7b27346638d8bcb97e4da8",
-      "issue": 1169
-    },
-    "finish:17b52b52-6951-4f92-b89c-e841571982d8:metadata:60a8966d-f8ac-4452-a17a-f4ac9b42db10:task-notice:1169::": {
-      "digest": "8185510b59371c8deddab3115ac6c723cc22f786a4a3fe20aee87bce218c6b67",
-      "issue": 1169
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea": {
-      "digest": "34dcccfdcfbfd6f596837e9356572b300203a7edbcfdeb39020ecd13dc7842f5",
-      "issue": 1169
-    },
-    "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:1:admit": {
-      "digest": "fbb2e6ae728a8c23fae5f53f430e54866510408c0a1684c04cb08c19cda53506",
-      "issue": 1169
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:1:synchronized": {
-      "digest": "95aebb73b2b39ac98abe6b5b0dcd506674b4ed22d56acc119f79d24ac4dcf8ce",
-      "issue": 1169
-    },
-    "finish:ca71860c-2087-49a1-9217-504cc1be5922": {
-      "digest": "d38254598bda2a508e4ffd5cc1ecbd8a7ef0d0402d2dc5da975a80c96e0fca6c",
-      "issue": 1169
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:finish:2:return": {
-      "digest": "2262c07a1fae4bee7d3393c992de6254feb8be4fb629f4357d789eb625cbf5d5",
-      "issue": 1169
-    },
-    "finish:42daded3-0315-4c94-96e6-02bf4ecf92ea:metadata:eb560301-bef2-4074-af99-dd8adc00cd1d:task-notice:1169::": {
-      "digest": "53f023e47d03517fbf4729630474c09e2bf717f0f0caadd3dbfe10e0ea1c7bef",
-      "issue": 1169
-    },
     "1172-spec-20261101-1:spec-request": {
       "digest": "8aa1b7eb1c2a7e8e3ab1f6107a5a50a76dd0570c7e3e8e9197270afa1274eb6e",
       "issue": 1172
-    },
-    "finish:d572296e-b553-4d39-a14f-db3f44249659": {
-      "digest": "6f31b450de6478754de72a26d6d30249bf3b4bde9b9702f4ea42b7fae7fbbc04",
-      "issue": 1169
     },
     "github:41351804140:1:spec:1172:spec-presentation": {
       "digest": "4b2c67f0f753a7dd8b3eff393d9031ba43dbfd978f5c094935123c1bf149195e",
@@ -816,10 +580,6 @@
       "digest": "f24d56bb34cd7593723ec63a88115647bbded933a9984a3b4b010ca046256952",
       "issue": 1190
     },
-    "github:41352894128:1:tick:0:admit": {
-      "digest": "70b268eda23051edd0d13a57edc8d0b3c86d44bad5c2e9157b50de445c151b68",
-      "issue": 1169
-    },
     "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:review-presentation:1190:code:24ad3f4c65e88af31d3e": {
       "digest": "58f7e3b8a976bf9b1b9f5b8cde3b1cadde6e9c37e7a90c0fd4a92f38f22039eb",
       "issue": 1190
@@ -827,34 +587,6 @@
     "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:task-notice:1190::": {
       "digest": "667ac8327c67f133ab499b599d20b83997fbb007c3916cd81322d5cfc2732ed4",
       "issue": 1190
-    },
-    "finish:d572296e-b553-4d39-a14f-db3f44249659:finish:1:return": {
-      "digest": "a72dec2842ce47b664dff3297b027a660e22b6337d3285508578b516d180c18a",
-      "issue": 1169
-    },
-    "finish:d572296e-b553-4d39-a14f-db3f44249659:metadata:bbc45b15-c335-44d9-9040-aa66c48b586e:task-notice:1169::": {
-      "digest": "aae3c4b0186623ebcb95201546dbabdac0ebfcca33edc516541ec01ae8902918",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf": {
-      "digest": "21c133b738b0f4b661fee59aab51d3d0523ebab3b297325cd58652c512999d75",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:1:admit": {
-      "digest": "2ee00c20ffca298fcdf7cea135b6649e054886d903eb82af34959c1408c3c94e",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:2:synchronized": {
-      "digest": "141c352c5072854db5b51e4af01d6ffb8eda7793a1c4e63ee89837e800c2070e",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:3:s6-complete": {
-      "digest": "709ec8826aa872bc6cf4338f1a46305fe6f8424b71930a6de4b13a5caf26c0f8",
-      "issue": 1169
-    },
-    "finish:2a6003c5-c5a1-4663-b572-7a55bb08c5bf:finish:4:review-requested": {
-      "digest": "12dc1fb76b99cbbd9bd024a027c95888304f19a05e8f78838a8d9c0609b662e7",
-      "issue": 1169
     },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
@@ -1051,14 +783,6 @@
           "failures": []
         }
       }
-    },
-    "github:41353641814:1:tick:0:review-presentation": {
-      "digest": "fd5ef8e7a8d69836ed777c13b3ed91b77d749a160d63bd67762549ce14c6fe97",
-      "issue": 1169
-    },
-    "github:41353641814:1:tick:0:review-complete": {
-      "digest": "8ecd40aae1f0c35a2793c8166cfbaf0f7d2a493a7f5ab75c0524614c1f6888c0",
-      "issue": 1169
     }
   },
   "devWebhook": {
