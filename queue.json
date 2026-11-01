@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 328,
+  "revision": 329,
   "nextTicket": 35,
   "nextFence": 35,
   "tasks": {
@@ -294,7 +294,7 @@
       "notice": {
         "key": "4:executor-fix",
         "reason": "executor-fix",
-        "status": "pending",
+        "status": "delivered",
         "fromStatus": "S7-code-review",
         "at": 1793569005915,
         "entry": 4,
@@ -870,6 +870,10 @@
     },
     "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:review-presentation:1190:code:24ad3f4c65e88af31d3e": {
       "digest": "58f7e3b8a976bf9b1b9f5b8cde3b1cadde6e9c37e7a90c0fd4a92f38f22039eb",
+      "issue": 1190
+    },
+    "github:41352894128:1:completions:metadata:8dd31618-108c-4fc1-b46b-d7014ca0c418:task-notice:1190::": {
+      "digest": "667ac8327c67f133ab499b599d20b83997fbb007c3916cd81322d5cfc2732ed4",
       "issue": 1190
     }
   },
