@@ -275,8 +275,11 @@ const stat = await page.evaluate(async () => {
   out.staticNoUndefined = !rr.innerHTML.includes('="undefined"');
   out.staticRoomLabelHooked = rr.querySelectorAll('div.roomlabel[data-hp="room-label"]').length > 0;
   out.staticRoomLabelFoundByArea = !!rr.querySelector('[data-hp="room-label"][data-area="bedroom"]');
-  // а вот проёмов и декора она не рисует вовсе (§5) — и это не регрессия
-  out.staticDrawsNoOpenings = rr.querySelectorAll('[data-hp="opening"]').length === 0;
+  // #1171: Static now exposes the same read-only opening identity hooks.
+  out.staticOpeningsKeepPlanHooks = rr.querySelectorAll('[data-hp="opening"]').length === 3
+    && [['op_d','door'],['op_w','window'],['op_g','gate']].every(([id,kind])=>
+      !!rr.querySelector(`[data-hp="opening"][data-id="${id}"][data-kind="${kind}"]`))
+    && !rr.querySelector('.op-hit,.opinfo,.oplock');
   out.staticDrawsNoDecor = rr.querySelectorAll('[data-hp="decor"]').length === 0;
   return out;
 });
