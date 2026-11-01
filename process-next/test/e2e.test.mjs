@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BETA_E2E } from '../catalog/selections.mjs';
-import { chooseE2ETests, listedTests, makeE2ESteps, runE2E, testListText, verifyE2ESelection } from '../lib/e2e.mjs';
+import { chooseE2ETests, listedTests, makeE2ESteps, reserveLoopbackPort, runE2E, testListText, verifyE2ESelection } from '../lib/e2e.mjs';
 
 const project = t => t.suite === 'upgrade' ? 'upgrade' : t.suite === 'first-run'
   ? `first-run-${t.file.includes('.viewer.') ? 'viewer' : 'admin'}` : t.file.includes('.viewer.') ? 'viewer' : t.file.includes('.mobile.') ? 'mobile' : 'admin';
@@ -61,7 +61,7 @@ test('plan has exact prerequisites and no broad-suite fallback', () => {
 });
 
 function fakeExecutor(opts, { failure = false, skip = false, extra = false } = {}) {
-  const calls = []; let owner;
+  const calls = []; let owner, published;
   const selected = cases(opts.suite);
   const execute = async (command, context) => {
     calls.push({ command, context });
@@ -70,8 +70,8 @@ function fakeExecutor(opts, { failure = false, skip = false, extra = false } = {
       const file = env.PLAYWRIGHT_JSON_OUTPUT_FILE;
       put(file, JSON.stringify(report(command.includes('--config=process-next.config.mjs') && extra ? [...selected, { ...selected[0], title: 'unexpected', titlePath: ['unexpected'] }] : selected)));
     } else if (command[1] === 'scripts/install-houseplan.mjs') put(path.join(env.E2E_RUN_DIR, '.e2e-houseplan.json'), JSON.stringify({ version: opts.suite === 'upgrade' ? '1.82.0' : '1.83.1', ref: command.find(s => s.startsWith('--ref=')) }));
-    else if (command[0] === 'docker' && command[1] === 'run') owner = command[command.indexOf('--label') + 1].split('=')[1];
-    else if (command[0] === 'docker' && command[1] === 'port') return { code: 0, stdout: '127.0.0.1:45678\n', stderr: '' };
+    else if (command[0] === 'docker' && command[1] === 'run') { owner = command[command.indexOf('--label') + 1].split('=')[1]; published = command[command.indexOf('-p') + 1].replace(/:8123$/, ''); }
+    else if (command[0] === 'docker' && command[1] === 'port') return { code: 0, stdout: published + '\n', stderr: '' };
     else if (command[0] === 'docker' && command[1] === 'inspect') return { code: 0, stdout: owner, stderr: '' };
     else if (command.includes('--reporter=list,json')) {
       put(env.PLAYWRIGHT_JSON_OUTPUT_FILE, JSON.stringify(report(selected, skip ? 'skipped' : 'passed')));
@@ -97,7 +97,9 @@ test('execution owns only its copied seed/container; foreign HA and auth setting
   assert.ok(!calls.some(c => c.command.includes('up') || c.command.includes('down')));
   const run = calls.find(c => c.command.includes('--reporter=list,json'));
   assert.ok(run.command.some(x => x.startsWith('--test-list=')));
-  assert.equal(run.context.env.HA_URL, 'http://127.0.0.1:45678');
+  const publish = calls.find(c => c.command[0] === 'docker' && c.command[1] === 'run').command;
+  assert.match(publish[publish.indexOf('-p') + 1], /^127\.0\.0\.1:[1-9][0-9]*:8123$/);
+  assert.equal(run.context.env.HA_URL, 'http://' + publish[publish.indexOf('-p') + 1].replace(/:8123$/, ''));
   const config = (await import(pathToFileURL(path.join(result.workspace, 'process-next.config.mjs')))).default;
   assert.equal(config.workers, 1);
   assert.ok(config.projects.find(p => p.name === 'admin').grep.test('admin tests/panel.admin.spec.mjs is listed in the sidebar and shows the plan on the very first open'));
@@ -159,4 +161,137 @@ test('real Playwright discovery executes exactly selected names with setup depen
   const actual = listedTests(JSON.parse(readFileSync(path.join(result.workspace, 'artifacts/selected.json'), 'utf8')));
   assert.equal(actual.filter(t => t.project === 'setup').length, 2);
   assert.equal(actual.filter(t => t.project !== 'setup').length, 2);
+});
+
+
+test('loopback reservation releases its socket before Docker publishes the explicit port', async t => {
+  const { createServer } = await import('node:net');
+  const port = await reserveLoopbackPort();
+  assert.ok(Number.isInteger(port) && port > 0 && port <= 65535);
+  const socket = createServer();
+  await new Promise((resolve, reject) => { socket.once('error', reject); socket.listen(port, '127.0.0.1', resolve); });
+  t.after(() => new Promise((resolve, reject) => socket.close(error => error ? reject(error) : resolve())));
+});
+
+test('fixed loopback origin reaches readiness, Playwright and final endpoint evidence unchanged', async t => {
+  const { opts } = fixture(t), fake = fakeExecutor(opts);
+  const result = await runE2E(opts, { execute: fake.execute, choosePort: async () => 45678 });
+  const start = fake.calls.find(c => c.command[0] === 'docker' && c.command[1] === 'run');
+  assert.equal(start.command[start.command.indexOf('-p') + 1], '127.0.0.1:45678:8123');
+  const ready = fake.calls.find(c => c.command[1] === 'scripts/ha.mjs');
+  assert.ok(ready.command.includes('--url=http://127.0.0.1:45678'));
+  assert.ok(ready.command.includes('--timeout=480'));
+  assert.ok(fake.calls.filter(c => c.command.includes('--reporter=list,json')).every(c => c.context.env.HA_URL === 'http://127.0.0.1:45678'));
+  const endpoint = JSON.parse(readFileSync(path.join(result.workspace, 'artifacts/endpoint.json')));
+  assert.deepEqual(endpoint, { requestedPort: 45678, initialMapping: '127.0.0.1:45678', finalMapping: '127.0.0.1:45678', finalMappingCode: 0 });
+  assert.doesNotMatch(JSON.stringify(endpoint), /password|token|authorization/i);
+});
+
+test('bind collision cleans only the labelled partial container before retrying with another fixed port', async t => {
+  const { opts } = fixture(t), fake = fakeExecutor(opts);
+  let attempts = 0, selected = 45678;
+  const execute = async (command, context) => {
+    const result = await fake.execute(command, context);
+    if (command[0] === 'docker' && command[1] === 'run' && ++attempts === 1) {
+      return { code: 125, stdout: '', stderr: 'Bind for 127.0.0.1:45678 failed: port is already allocated' };
+    }
+    return result;
+  };
+  const result = await runE2E(opts, { execute, choosePort: async () => selected++ });
+  assert.equal(result.status, 'passed');
+  const runs = fake.calls.filter(c => c.command[0] === 'docker' && c.command[1] === 'run');
+  assert.deepEqual(runs.map(c => c.command[c.command.indexOf('-p') + 1]), ['127.0.0.1:45678:8123', '127.0.0.1:45679:8123']);
+  const names = runs.map(c => c.command[c.command.indexOf('--name') + 1]);
+  assert.equal(names[0], names[1]);
+  const removes = fake.calls.filter(c => c.command[0] === 'docker' && c.command[1] === 'rm');
+  assert.deepEqual(removes.map(c => c.command[3]), names);
+  assert.ok(fake.calls.indexOf(removes[0]) < fake.calls.indexOf(runs[1]));
+  assert.equal(JSON.parse(readFileSync(path.join(result.workspace, 'artifacts/endpoint.json'))).finalMapping, '127.0.0.1:45679');
+});
+
+test('three bind collisions stop after three owned cleanups, without a fourth run', async t => {
+  const { opts } = fixture(t), fake = fakeExecutor(opts);
+  let choices = 0;
+  const execute = async (command, context) => {
+    const result = await fake.execute(command, context);
+    return command[0] === 'docker' && command[1] === 'run'
+      ? { code: 125, stdout: '', stderr: 'failed to bind host port: address already in use' } : result;
+  };
+  await assert.rejects(runE2E(opts, { execute, choosePort: async () => 45678 + choices++ }), /collision after 3 attempts/);
+  assert.equal(choices, 3);
+  assert.equal(fake.calls.filter(c => c.command[1] === 'run').length, 3);
+  assert.equal(fake.calls.filter(c => c.command[1] === 'rm').length, 3);
+});
+
+test('non-bind launch errors are not retried and still remove a partial owned container', async t => {
+  for (const stderr of ['pull access denied', 'registry failure: address already in use']) {
+    const { opts } = fixture(t), fake = fakeExecutor(opts);
+    const execute = async (command, context) => {
+      const result = await fake.execute(command, context);
+      return command[0] === 'docker' && command[1] === 'run' ? { code: 125, stdout: '', stderr } : result;
+    };
+    await assert.rejects(runE2E(opts, { execute, choosePort: async () => 45678 }), /Docker start failed/);
+    assert.equal(fake.calls.filter(c => c.command[1] === 'run').length, 1);
+    assert.equal(fake.calls.filter(c => c.command[1] === 'rm').length, 1);
+  }
+});
+
+test('failed bind launch refuses foreign/unknown ownership and failed cleanup instead of retrying', async t => {
+  for (const condition of ['foreign', 'inspect-error', 'rm-error']) {
+    const { opts } = fixture(t), fake = fakeExecutor(opts);
+    const execute = async (command, context) => {
+      const result = await fake.execute(command, context);
+      if (command[0] !== 'docker') return result;
+      if (command[1] === 'run') return { code: 125, stdout: '', stderr: 'port is already allocated' };
+      if (command[1] === 'inspect' && condition === 'foreign') return { code: 0, stdout: 'another-owner', stderr: '' };
+      if (command[1] === 'inspect' && condition === 'inspect-error') return { code: 1, stdout: '', stderr: 'daemon unavailable' };
+      if (command[1] === 'rm' && condition === 'rm-error') return { code: 1, stdout: '', stderr: 'daemon unavailable' };
+      return result;
+    };
+    await assert.rejects(runE2E(opts, { execute, choosePort: async () => 45678 }), /ownership could not be confirmed|Could not remove owned/);
+    assert.equal(fake.calls.filter(c => c.command[1] === 'run').length, 1);
+    assert.equal(fake.calls.filter(c => c.command[1] === 'rm').length, condition === 'rm-error' ? 1 : 0);
+  }
+});
+
+test('invalid/anonymous ports never start Docker and a wrong initial mapping fails before readiness', async t => {
+  for (const port of [0, -1, 65536, '45678', NaN]) {
+    const { opts } = fixture(t), fake = fakeExecutor(opts);
+    await assert.rejects(runE2E(opts, { execute: fake.execute, choosePort: async () => port }), /Invalid explicit loopback port/);
+    assert.ok(!fake.calls.some(c => c.command[0] === 'docker'));
+  }
+  const { opts } = fixture(t), fake = fakeExecutor(opts);
+  const execute = async (command, context) => {
+    const result = await fake.execute(command, context);
+    return command[0] === 'docker' && command[1] === 'port' ? { code: 0, stdout: '127.0.0.1:45679', stderr: '' } : result;
+  };
+  await assert.rejects(runE2E(opts, { execute, choosePort: async () => 45678 }), /mapping differs/);
+  assert.ok(!fake.calls.some(c => c.command[1] === 'scripts/ha.mjs'));
+  assert.equal(fake.calls.filter(c => c.command[1] === 'rm').length, 1);
+});
+
+test('bind failure with no remaining container retries without deleting any unrelated name', async t => {
+  const { opts } = fixture(t), fake = fakeExecutor(opts);
+  let attempts = 0, inspections = 0, port = 45678;
+  const execute = async (command, context) => {
+    const result = await fake.execute(command, context);
+    if (command[0] === 'docker' && command[1] === 'run' && ++attempts === 1) return { code: 125, stdout: '', stderr: 'port is already allocated' };
+    if (command[0] === 'docker' && command[1] === 'inspect' && ++inspections === 1) return { code: 1, stdout: '', stderr: 'Error: No such object: owned-lab' };
+    return result;
+  };
+  const result = await runE2E(opts, { execute, choosePort: async () => port++ });
+  assert.equal(result.status, 'passed');
+  assert.equal(attempts, 2);
+  assert.equal(fake.calls.filter(c => c.command[1] === 'rm').length, 1);
+});
+
+test('an evidence collection exception still removes the already-verified owned container', async t => {
+  const { opts } = fixture(t), fake = fakeExecutor(opts);
+  const execute = async (command, context) => {
+    const result = await fake.execute(command, context);
+    if (command[0] === 'docker' && command[1] === 'logs') throw Error('log transport failed');
+    return result;
+  };
+  await assert.rejects(runE2E(opts, { execute, choosePort: async () => 45678 }), /log transport failed/);
+  assert.equal(fake.calls.filter(c => c.command[1] === 'rm').length, 1);
 });

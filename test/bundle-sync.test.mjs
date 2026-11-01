@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
-  existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
+  existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -73,12 +73,19 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
   const root = mkdtempSync(join(tmpdir(), 'houseplan-bundle-sync-'));
   try {
     mkdirSync(join(root, 'scripts'), { recursive: true });
-    for (const name of ['bundle-sync.mjs', 'bundle-tree.mjs']) {
+    for (const name of ['bundle-sync.mjs', 'bundle-tree.mjs', 'spawn-portable.mjs']) {
       writeFileSync(
         join(root, 'scripts', name),
         readFileSync(new URL(`../scripts/${name}`, import.meta.url)),
       );
     }
+    mkdirSync(join(root, 'demo'), { recursive: true });
+    mkdirSync(join(root, 'demo/helpers'));
+    mkdirSync(join(root, 'src'));
+    writeFileSync(join(root, 'demo/gen_icons.mjs'), readFileSync(new URL('../demo/gen_icons.mjs', import.meta.url)));
+    writeFileSync(join(root, 'demo/helpers/icon-sources.mjs'), readFileSync(new URL('../demo/helpers/icon-sources.mjs', import.meta.url)));
+    writeFileSync(join(root, 'src/card.ts'), 'const icon = "mdi:palette";');
+    symlinkSync(new URL('../node_modules', import.meta.url), join(root, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
     const manifest = writeCurrentBundle(root);
     for (const target of [
       'custom_components/houseplan/frontend', 'demo/srv/assets',
@@ -89,6 +96,9 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
       cwd: root, encoding: 'utf8',
     });
     assert.equal(demoOnly.status, 0, `${demoOnly.stdout}\n${demoOnly.stderr}`);
+    const iconMap = () => JSON.parse(readFileSync(join(root, 'demo', 'srv', 'assets', 'icons.js'), 'utf8').slice('window.__ICONS='.length, -2));
+    assert.ok(iconMap()['mdi:palette'], 'browser preparation must replace the stale synthetic icon map');
+    writeFileSync(join(root, 'src/next.ts'), 'const icon = "mdi:floor-plan";');
     assert.equal(readFileSync(join(root, 'demo/srv/assets/houseplan-card.js'), 'utf8'), 'card facade');
     assert.equal(readFileSync(join(root, 'custom_components/houseplan/frontend/houseplan-card.js'), 'utf8'), 'old card',
       'обычная раскладка не должна менять закоммиченный бандл (#657)');
@@ -98,6 +108,9 @@ test('#486/#657 bundle sync materializes both entries, the HACS copy only with -
       cwd: root, encoding: 'utf8',
     });
     assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
+    assert.ok(iconMap()['mdi:floor-plan'], 'the next preparation must include newly referenced icons');
+    assert.equal(existsSync(join(root, 'custom_components/houseplan/frontend/icons.js')), false,
+      'the synthetic icon fixture is not a product release asset');
     for (const target of [
       'custom_components/houseplan/frontend', 'demo/srv/assets',
     ]) {

@@ -32,6 +32,9 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 /** Канон среды съёмки: Linux CI и WSL. */
 export const CAPTURE_CANON_PLATFORM = 'linux';
@@ -75,6 +78,7 @@ export const captureProvenance = ({
   const attempt = String(env?.GITHUB_RUN_ATTEMPT ?? '').trim();
   const repository = String(env?.GITHUB_REPOSITORY ?? '').trim();
   const sha = String(env?.GITHUB_SHA ?? '').trim();
+  const icons = root && resolve(root, 'demo/srv/assets/icons.js');
   return {
     // workflow_dispatch's event SHA can differ from the explicitly checked-out candidate.
     // Keep both facts: material identity here, original workflow identity under ci.
@@ -85,6 +89,11 @@ export const captureProvenance = ({
     arch,
     chromium: chromium || null,
     buildFingerprint: buildFingerprint || null,
+    // Synthetic HA icons are a generated fixture, outside the product tree.
+    // Record the exact bytes used without tying build freshness to an output.
+    ...(icons && existsSync(icons) ? {
+      harnessIconsSha256: createHash('sha256').update(readFileSync(icons)).digest('hex'),
+    } : {}),
     // Пустой объект вместо `null` был бы ложью «CI известен, полей нет».
     ci: run ? {
       repository: repository || null,

@@ -37,7 +37,10 @@ export function checkSpecFormat(text, { ownerShip = false } = {}) {
     const h = headings.find(h => pattern.test(h.title));
     if (!h) { errors.push(`Нет раздела: ${id}`); continue; }
     const next = headings.find(n => n.start > h.start);
-    const body = text.slice(h.end, next?.start ?? text.length).replace(/<!--[^]*?-->/g, '').trim();
+    const body = text.slice(h.end, next?.start ?? text.length).replace(/<!--[^]*?-->/g, '')
+      // Disclosure markup is presentation, not content of a required section.
+      .replace(/^\s*<\/?details\b[^>]*>\s*$/gm, '')
+      .replace(/^\s*<summary\b[^>]*>[^\n]*<\/summary>\s*$/gm, '').trim();
     if (!body || /^(?:TBD|TODO|—|-)$/i.test(body)) errors.push(`Пустой раздел: ${id}`);
   }
   if (!/\bAC\d+\b/i.test(text)) errors.push('Нет пронумерованного критерия AC1…ACn');

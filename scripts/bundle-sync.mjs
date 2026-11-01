@@ -21,6 +21,7 @@ import {
 } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { generateDemoIcons } from '../demo/gen_icons.mjs';
 import {
   assertBundleManifest, assertOwnBundleTopology, orderedBundlePayload, verifyBundleTree,
 } from './bundle-tree.mjs';
@@ -63,6 +64,10 @@ for (const file of sourceManifest.files) {
   if (sha256(path) !== file.sha256) throw new Error(`manifest hash mismatch: ${file.path}`);
 }
 verifyBundleTree(SOURCE_ROOT);
+// The synthetic ha-icon reads this fixture, outside the product manifest.
+// Refresh from this tree whenever browser/Golden assets are prepared.
+const icons = generateDemoIcons(ROOT);
+console.log(`demo icons: ${icons.icons} of ${icons.references} referenced`);
 
 for (const target of TARGETS) {
   const targetRoot = resolve(ROOT, target);

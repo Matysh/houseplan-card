@@ -1324,6 +1324,7 @@ export async function prepareGoldenScenario(page, scenario) {
     };
 
     let card = await mount();
+    let safeResizeCapture;
     if (scenario.warmRemount) {
       card.remove();
       await wait(0);
@@ -1799,7 +1800,15 @@ export async function prepareGoldenScenario(page, scenario) {
       }));
       send('pointerdown', from);
       send('pointermove', wanted);
+      await card._editorRuntime._whenLiveEditorSettled();
+      const heldResize = card._resize, heldPreview = heldResize.preview;
+      // #1203: the accepted frame owns the full Lit snapshot of a still-held
+      // preview. An unrelated late Lit update must not choose its capture owner.
+      // Empty requestUpdate() routes to the live layer during this gesture;
+      // named invalidation selects the existing full renderer without changing tool.
+      card.requestUpdate('_tool');
       await card.updateComplete;
+      await card._editorRuntime._whenLiveEditorSettled();
       await frame();
       const delta = Math.abs(card._resize?.delta || 0);
       if (!card._resize?.preview || !card._resize?.liveLabels?.length || !(delta > 0 && delta < 250)) {
@@ -1815,6 +1824,19 @@ export async function prepareGoldenScenario(page, scenario) {
           || areaLabels.length !== resizeAreas.length || leaders.length !== resizeAreas.length) {
         throw new Error(`golden Resize measurement contract is incomplete: ${scenario.id}`);
       }
+      const fullWalls = card.renderRoot.querySelector('.wallbodies:not(.hp-resize-preview-walls)');
+      const fullHandles = card.renderRoot.querySelector('.resize-layer');
+      const live = card.renderRoot.querySelector('[data-hp-live-editor]');
+      if (card._resize !== heldResize || card._resize.preview !== heldPreview || !heldResize.dragging
+          || !fullWalls || getComputedStyle(fullWalls).opacity !== '1'
+          || !fullHandles || getComputedStyle(fullHandles).opacity !== '1'
+          || fullHandles.querySelectorAll('.rszhandle').length !== handles.length
+          || !live || live.childElementCount !== 0 || card.renderRoot.querySelector('.hp-live-resize')
+          || !card.renderRoot.querySelector('[data-hp-live-grid]')) {
+        throw new Error(`golden held Resize full capture owner is incomplete: ${scenario.id}`);
+      }
+      safeResizeCapture = { owner: 'full-lit', heldPreview: true,
+        handles: handles.length, liveChildren: live.childElementCount };
     }
     if (scenario.openingPreview) {
       const { type, pointer } = scenario.openingPreview;
@@ -2809,6 +2831,7 @@ export async function prepareGoldenScenario(page, scenario) {
     return {
       space: card._space,
       mode: card._mode,
+      ...(safeResizeCapture ? { safeResizeCapture } : {}),
       devices: card._devices.length,
       dialog: !!card.renderRoot.querySelector('hp-dialog'),
       helpOpen: [...card.renderRoot.querySelectorAll('hp-help')]

@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_PANEL_GOLDEN, BETA_LOVELACE_GOLDEN, BETA_STATIC_GOLDEN, BETA_E2E } from '../catalog/selections.mjs';
 import { makeE2ESteps } from './e2e.mjs';
 import { walk } from './storage.mjs';
+import { demoIconSourceFiles } from '../../demo/helpers/icon-sources.mjs';
 
 export { CRITICAL_NODE, BETA_SMOKES, BETA_GOLDEN, BETA_E2E };
 const here = fileURLToPath(new URL('../catalog/', import.meta.url));
@@ -53,7 +54,7 @@ async function finalize(root, plan) {
         // This catalog declares possible inputs/outputs; those strings are not reads by its callers.
         // Still follow its imports below so changes to planner dependencies invalidate reuse.
         if (file !== 'process-next/lib/catalog.mjs')
-          for (const match of text.matchAll(/['"]((?:src|demo|scripts|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) edges.push(match[1]);
+          for (const match of text.matchAll(/['"]((?:src|demo|scripts|dist|test\/fixtures)\/[^'"\n]+\.(?:mjs|ts|json|html))['"]/g)) edges.push(match[1]);
         // Dynamic directory readers cannot honestly be narrowed to literal imports.
         if (/\breaddirSync\b|\bimport\s*\(\s*[^'"\s]/.test(text) && file.startsWith('test/')) edges.push('src/**');
         for (const match of text.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*|new\s+URL\s*\(\s*)['"](\.[^'"]+)['"]/g)) {
@@ -68,7 +69,15 @@ async function finalize(root, plan) {
     return cache.get(file);
   }
   for (const check of plan.steps.filter(item => item.cwd === 'root' && item.command)) {
-    const seeds = [...check.inputs, ...check.command.slice(1)].filter(path => safeRelative(path) && !/[?*]/.test(path) && /\.(?:mjs|cjs|js|ts|json|py)$/.test(path));
+    // Use the generator's exact source closure. A broad demo/**/*.json would
+    // treat the generated bundle manifest as source and invalidate preparation.
+    const iconInputs = check.id === 'demo-assets' || check.requires.includes('demo-assets')
+      ? demoIconSourceFiles(root) : [];
+    // Changed infra files are hashed data, not automatically executed modules.
+    // Syntax reads its argv as text; behavior executes only its selected tests.
+    const sourceRoots = ['infra-syntax', 'infra-behavior'].includes(check.id) ? [] : check.inputs;
+    const commandRoots = check.id === 'infra-syntax' ? check.command.slice(1, 2) : check.command.slice(1);
+    const seeds = [...sourceRoots, ...commandRoots].filter(path => safeRelative(path) && !/[?*]/.test(path) && /\.(?:mjs|cjs|js|ts|json|py)$/.test(path));
     const visited = new Set(), found = new Set(), artifactPreparations = new Set(); let pending = seeds;
     while (pending.length) {
       pending = pending.filter(file => {
@@ -87,7 +96,9 @@ async function finalize(root, plan) {
       const edges = await Promise.all(current.map(file => direct(file)));
       for (let index = 0; index < current.length; index++) if (edges[index] !== null) { found.add(current[index]); pending.push(...edges[index]); }
     }
-    check.inputs = [...new Set([...check.inputs, ...found])].sort();
+    // Icon scanning reads source as text. Its imports are not executed by the
+    // generator, so do not turn their artifact strings into new build edges.
+    check.inputs = [...new Set([...check.inputs, ...found, ...iconInputs])].sort();
     for (const id of artifactPreparations) {
       if (id === check.id) continue;
       if (!plan.steps.some(item => item.id === id)) throw Error(`Selected check ${check.id} reads prepared product artifacts (${id}); an infrastructure-only profile cannot silently build the product`);
@@ -136,7 +147,7 @@ async function checkedPaths(root, paths, tests = false) {
 function preparations(steps, { build = false, tests = false, browser = false } = {}) {
   if (build) steps.push(step('product-build', 'Сборка и типы продукта', helper('prepare', 'build'), buildInputs, [], { outputs: ['dist'] }));
   if (tests) steps.push(step('test-build', 'Подготовка модулей для тестов', helper('prepare', 'tests'), [...productInputs, 'tsconfig.test.json', 'scripts/fix-test-build.mjs', 'scripts/coverage-maps.mjs'], [], { outputs: ['test-build'] }));
-  if (browser) steps.push(step('demo-assets', 'Подготовка карточки для браузера', ['node', 'scripts/bundle-sync.mjs'], [...buildInputs, 'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'], ['product-build'], { outputs: ['demo/srv/assets/houseplan-assets.json', 'demo/srv/assets/houseplan-card.js', 'demo/srv/assets/houseplan-assets'] }));
+  if (browser) steps.push(step('demo-assets', 'Подготовка карточки для браузера', ['node', 'scripts/bundle-sync.mjs'], [...buildInputs, 'demo/gen_icons.mjs', 'scripts/bundle-sync.mjs', 'scripts/bundle-tree.mjs'], ['product-build'], { outputs: ['demo/srv/assets/houseplan-assets.json', 'demo/srv/assets/houseplan-card.js', 'demo/srv/assets/houseplan-assets', 'demo/srv/assets/icons.js'] }));
 }
 
 function nodeStep(id, name, files, requires = []) {

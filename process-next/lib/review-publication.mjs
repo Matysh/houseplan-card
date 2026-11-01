@@ -28,6 +28,61 @@ const timeText = value => {
   const date = new Date(value);
   return Number.isFinite(date.getTime()) ? date.toISOString().replace('T', ' ').replace('.000Z', ' UTC') : null;
 };
+const DETAILS_LAYOUT = '<!-- process-next-review-layout:details-v1 -->';
+const escapeHtml = text => text.replace(/[&<>]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[char]);
+
+function plainChunks(markdown) {
+  const chunks = []; let text = '', size = 0;
+  // Escaped HTML, not source length, owns the comment budget. Iteration keeps
+  // surrogate pairs together even when one oversized block needs several parts.
+  for (const char of markdown) {
+    const escaped = escapeHtml(char);
+    if (size + escaped.length > 50_000) { chunks.push({ text, plain: true }); text = ''; size = 0; }
+    text += char; size += escaped.length;
+  }
+  if (text) chunks.push({ text, plain: true });
+  return chunks;
+}
+
+function reviewChunks(markdown) {
+  const boundaries = []; let offset = 0, fence = null, details = 0;
+  for (const line of markdown.match(/[^\n]*\n|[^\n]+$/g) ?? []) {
+    const token = line.match(/^ {0,3}(`{3,}|~{3,})([^\n]*)/);
+    if (fence) {
+      if (token && token[1][0] === fence[0] && token[1].length >= fence.length && !token[2].trim()) fence = null;
+    } else if (token) fence = token[1];
+    else {
+      const prose = line.replace(/(`+).*?\1/g, '');
+      for (const tag of prose.matchAll(/<\/?details\b[^>]*>/gi)) {
+        if (tag[0][1] === '/' && !details) return plainChunks(markdown);
+        details += tag[0][1] === '/' ? -1 : 1;
+      }
+    }
+    offset += line.length;
+    if (!fence && !details && !line.trim()) boundaries.push(offset);
+  }
+  if (fence || details) return plainChunks(markdown);
+  boundaries.push(markdown.length);
+  const chunks = []; offset = 0;
+  while (offset < markdown.length) {
+    const end = boundaries.findLast(value => value > offset && value <= offset + 50_000);
+    // A giant indivisible code/HTML block is shown as source Markdown rather
+    // than emitting a broken fence/details tag that exposes or hides the rest.
+    if (!end) return plainChunks(markdown);
+    chunks.push({ text: markdown.slice(offset, end), plain: false }); offset = end;
+  }
+  return chunks;
+}
+
+function legacyChunks(markdown) {
+  const chunks = [];
+  for (let offset = 0; offset < markdown.length;) {
+    let end = Math.min(offset + 50_000, markdown.length);
+    if (end < markdown.length && /[\uD800-\uDBFF]/.test(markdown[end - 1])) end--;
+    chunks.push({ text: markdown.slice(offset, end), plain: false }); offset = end;
+  }
+  return chunks;
+}
 
 function presentationText(receipt) {
   const p = receipt.presentation ?? {}, lines = [];
@@ -87,12 +142,6 @@ async function appendOnce(api, issue, marker, body, comments) {
 export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.reportUrl }) {
   if (!receipt || !Number.isSafeInteger(receipt.issue) || receipt.issue < 1
     || !/^[A-Za-z0-9:_.-]{1,200}$/.test(receipt.requestId ?? '') || !receipt.markdown?.trim()) throw Error('Saved review receipt required');
-  const chunks = [];
-  for (let offset = 0; offset < receipt.markdown.length;) {
-    let end = Math.min(offset + 50_000, receipt.markdown.length);
-    if (end < receipt.markdown.length && /[\uD800-\uDBFF]/.test(receipt.markdown[end - 1])) end--;
-    chunks.push(receipt.markdown.slice(offset, end)); offset = end;
-  }
   const identity = { requestId: receipt.requestId, materialSha: receipt.materialSha, base: receipt.base,
     kind: receipt.kind, verdict: receipt.verdict, model: receipt.model,
     runId: receipt.runId, runAttempt: receipt.runAttempt, result: resultIdentity(receipt) };
@@ -100,6 +149,11 @@ export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.
   const owner = api.owner ?? api.root.split('/')[2];
   const trusted = comment => ['github-actions[bot]', owner].includes(author(comment));
   const legacy = comments.find(comment => trusted(comment) && comment.body?.startsWith(markerFor(receipt, 0, true)) && legacyResultMatches(comment, receipt));
+  const existingFirst = comments.find(comment => trusted(comment) && comment.body?.startsWith(markerFor(receipt, 0))) ?? legacy;
+  // Resume an old multipart report at its original offsets; a formatting change
+  // must not create gaps or duplicates after an already delivered first part.
+  const oldLayout = existingFirst && !existingFirst.body.startsWith(`${markerFor(receipt, 0)}\n${DETAILS_LAYOUT}`);
+  const chunks = oldLayout ? legacyChunks(receipt.markdown) : reviewChunks(receipt.markdown);
   const p = receipt.presentation ?? {}, title = `${receipt.kind === 'spec' ? 'Ревью ТЗ' : 'Код-ревью'} задачи №${receipt.issue} — ${verdictText(receipt.verdict)}`
     + (p.round ? `, раунд ${p.round}` : '') + (p.attempt > 1 ? `, техническая попытка ${p.attempt}` : '');
   for (const [index, chunk] of chunks.entries()) {
@@ -110,7 +164,12 @@ export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.
     const heading = `## ${title}${chunks.length > 1 ? ` — часть ${index + 1} из ${chunks.length}` : ''}`;
     const context = index === 0 ? presentationText(receipt) : firstUrl ? `[Первая часть отчёта](${firstUrl}).` : '';
     const metadata = index === 0 ? `\n\n<details>\n<summary>Материал и идентификаторы ревью</summary>\n\n\`\`\`json\n${JSON.stringify(identity)}\n\`\`\`\n\n</details>` : '';
-    const body = `${marker}\n\n${heading}\n\n${context ? context + '\n\n' : ''}${chunk}${metadata}`
+    const detail = chunk.plain ? `<pre>${escapeHtml(chunk.text)}</pre>` : chunk.text;
+    const detailLabel = `Подробный разбор${chunk.plain ? ' — исходный Markdown' : ''}`;
+    // A partially delivered old report retains its original raw layout as well
+    // as offsets; only newly started reports use independently closed spoilers.
+    const collapsed = oldLayout ? chunk.text : `<details>\n<summary>${detailLabel}</summary>\n\n${detail}\n\n</details>`;
+    const body = `${marker}${oldLayout ? '' : '\n' + DETAILS_LAYOUT}\n\n${heading}\n\n${context ? context + '\n\n' : ''}${collapsed}${metadata}`
       + (index === chunks.length - 1 && reportUrl ? `\n\n[Запуск ревью](${reportUrl}). Полный текст сохранён в комментариях этой задачи.` : '');
     // An old event stays unchanged even if wording or current status differs.
     const result = legacyPart ?? await appendOnce(api, receipt.issue, marker, body, comments.filter(trusted));

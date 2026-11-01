@@ -26,6 +26,12 @@ test('product minimum builds once, protects data/rights and opens one saved View
   assert.equal(plan.steps.filter(item => item.id.startsWith('smoke:')).length, 0);
   assert.ok(plan.steps.find(item => item.id === 'test-build').outputs.includes('test-build'));
   assert.ok(plan.steps.find(item => item.id === 'product-build').outputs.length);
+  const demo = plan.steps.find(item => item.id === 'demo-assets');
+  assert.ok(demo.outputs.includes('demo/srv/assets/icons.js'));
+  for (const input of ['demo/gen_icons.mjs', ['src', 'houseplan-card.ts'].join('/'), 'demo/fixtures/sun-transparent.json', 'demo/srv/demo.html'])
+    assert.ok(demo.inputs.includes(input), `icon fixture preparation must notice ${input}`);
+  assert.ok(!demo.inputs.includes(['demo', 'srv', 'assets', 'houseplan-assets.json'].join('/')));
+  assert.ok(!demo.inputs.includes(['demo', '**', '*.json'].join('/')));
 });
 
 test('infrastructure checks only changed syntax and selected mechanism, with no product preparation', async () => {
@@ -49,8 +55,33 @@ test('infrastructure can check finish and its planner without consuming declared
   assert.deepEqual(plan.steps.map(item => item.id), ['infra-syntax', 'infra-behavior']);
   assert.ok(plan.steps.every(item => item.requires.length === 0));
   assert.ok(plan.steps[1].inputs.includes('process-next/lib/catalog.mjs'));
+  assert.ok(plan.steps.every(item => !item.inputs.includes(['demo', '**', '*.json'].join('/'))),
+    'negative metadata assertions must not include generated manifests in source identities');
   // Actual artifact consumers must still declare preparation; only catalog declarations are metadata.
   await assert.rejects(planProfile({ root, layer: 'infra', areaTests: ['test/bundle-assets.test.mjs'] }), /prepared product artifacts/);
+});
+
+test('#1196 a transitive built-manifest reader declares its producer even before dist exists', async () => {
+  const temp = await mkdtemp(resolve(tmpdir(), 'hp-built-reader-'));
+  try {
+    await mkdir(resolve(temp, 'scripts')); await mkdir(resolve(temp, 'test'));
+    const manifest = ['dist', 'houseplan-assets.json'].join('/');
+    const helper = 'scripts/read-built.mjs', consumer = 'test/built-asset.test.mjs';
+    await writeFile(resolve(temp, helper), `import { readFileSync } from 'node:fs';\nexport const read = () => readFileSync(${JSON.stringify(manifest)}, 'utf8');\n`);
+    await writeFile(resolve(temp, consumer), "import { read } from '../scripts/read-built.mjs';\n");
+    const plan = await planProfile({ root: temp, areaTests: [consumer] });
+    const check = plan.steps.find(item => item.id === 'affected-node');
+    assert.ok(check.inputs.includes(helper), 'the imported reader stays in the source identity');
+    assert.ok(check.requires.includes('product-build'), 'built-manifest consumer waits for product-build');
+    assert.ok(!check.inputs.includes(manifest), 'generated manifest is not a source/cache input');
+    const metadataTest = 'test/metadata.test.mjs';
+    await writeFile(resolve(temp, metadataTest), 'export {};\n');
+    const infra = await planProfile({ root: temp, layer: 'infra', changedFiles: [helper], areaTests: [metadataTest] });
+    assert.deepEqual(infra.steps.map(item => item.id), ['infra-syntax', 'infra-behavior']);
+    assert.ok(infra.steps.every(item => item.inputs.includes(helper)), 'changed code remains a hashed input');
+    assert.ok(infra.steps.every(item => item.requires.length === 0), 'hashing/syntax does not execute changed code');
+    await assert.rejects(planProfile({ root: temp, layer: 'infra', areaTests: [consumer] }), /prepared product artifacts/);
+  } finally { await rm(temp, { recursive: true, force: true }); }
 });
 test('beta uses approved files, one narrowed permission run and panel-first visual selection', async () => {
   const plan = await planProfile({ root, event: 'beta', version: '1.85.0-beta.1' });

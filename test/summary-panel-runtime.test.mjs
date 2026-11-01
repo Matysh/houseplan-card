@@ -552,8 +552,8 @@ test('#725 AC1: the summary panel measures only when an input of the measurement
     const steady = (label) => {
       counts.style = 0; counts.box = 0; counts.stageBox = 0;
       for (let cycle = 0; cycle < 20; cycle++) {
-        runtime.renderControls(false);
-        runtime.menuItems();
+        // #1184 exposes direct shared-header controls; the phone menu is retired.
+        runtime.renderControls();
         runtime.renderPanel();
         runtime.updated();
       }

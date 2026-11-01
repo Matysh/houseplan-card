@@ -323,6 +323,10 @@
       "configs": 1
     },
     {
+      "file": "demo/fixtures/wall-corner-join.mjs",
+      "configs": 0
+    },
+    {
       "file": "demo/fixtures/wall-draw-click.mjs",
       "configs": 1
     },
