@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 365,
-  "nextTicket": 38,
+  "revision": 366,
+  "nextTicket": 39,
   "nextFence": 38,
   "tasks": {
     "1128": {
@@ -302,6 +302,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1193": {
+      "issue": 1193,
+      "track": "ship",
+      "layer": "product",
+      "branch": "codex/golden-icons-preparation",
+      "materialSha": "33a9d416aa63f2589c6b8b9aac1c984f749a5eef",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 38,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793571429472,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -364,7 +378,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1193
+  ],
   "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
@@ -382,6 +398,19 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
+    },
+    "finish:fcc1738f-236b-47a7-bc5d-95dabfc2ab4b": {
+      "digest": "b453c8cc48946b631091a6cc9284dbbb109c7d8bcb8bae5b057bdcff9107d8e5",
+      "issue": 1193,
+      "message": {
+        "kind": "queued",
+        "issue": 1193,
+        "at": 1793571429472,
+        "entry": 1,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "33a9d416aa63f2589c6b8b9aac1c984f749a5eef"
+      }
     }
   },
   "devWebhook": {
