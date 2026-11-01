@@ -261,8 +261,8 @@ try {
   await settle();
   out.oldFloorRetired = await page.evaluate(()=>!window.__card.renderRoot.querySelector('.vactrail')&&window.__card._vacRaf===0);
 } finally {
-  mkdirSync('demo/out/vacuum-camera-871',{recursive:true});
-  writeFileSync('demo/out/vacuum-camera-871/frames.json',JSON.stringify({browser:browser.version(),out,evidence},null,2));
+  mkdirSync('artifacts/vacuum-camera-871',{recursive:true});
+  writeFileSync('artifacts/vacuum-camera-871/frames.json',JSON.stringify({browser:browser.version(),out,evidence},null,2));
   console.log(JSON.stringify(out,null,1));
   checkAll(out);
   await finish(browser,out);
