@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 462,
-  "nextTicket": 49,
+  "revision": 463,
+  "nextTicket": 50,
   "nextFence": 47,
   "tasks": {
     "1128": {
@@ -481,21 +481,20 @@
       "track": "ship",
       "layer": "product",
       "branch": "codex/canvas-surface-camera-fixture",
-      "materialSha": "535befc0ee4f51c7355f2c09feb7e87bab0c5689",
+      "materialSha": "01a5b19975aa6c029551e37435e897984ab085b1",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 45,
-      "queued": false,
+      "ticket": 49,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793573042384,
-      "reviewEntry": 1,
+      "readyAt": 1793573508291,
+      "reviewEntry": 2,
       "patchId": "2e3f73fa730febd4f11cca8280e3302d26ece47a",
       "changedFiles": [
         "demo/smoke_canvas_surface_gestures.mjs",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -643,7 +642,8 @@
   },
   "waiting": [
     1199,
-    1200
+    1200,
+    1198
   ],
   "active": {
     "issue": 1197,
@@ -866,6 +866,19 @@
         "track": "show",
         "layer": "infra",
         "materialSha": "06468605e984d032275346fd6af0e6faf7cdf219"
+      }
+    },
+    "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2": {
+      "digest": "81f2459ef99200ead1981e40c8821770230730a269f6cf8463119e689dd4d337",
+      "issue": 1198,
+      "message": {
+        "kind": "queued",
+        "issue": 1198,
+        "at": 1793573508291,
+        "entry": 2,
+        "track": "ship",
+        "layer": "product",
+        "materialSha": "01a5b19975aa6c029551e37435e897984ab085b1"
       }
     }
   },
