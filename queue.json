@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 55,
+  "revision": 56,
   "nextTicket": 8,
   "nextFence": 8,
   "tasks": {
@@ -76,6 +76,13 @@
         "key": "1:fix-infra-profile-inference",
         "reason": "fix-infra-profile-inference",
         "status": "delivered"
+      },
+      "s6": {
+        "id": "20261101T175157237-9e53d121",
+        "reportPath": "/home/matysh/hp-beta4-release-20261029/.git/process-next/runs/20261101T175157237-9e53d121/report.json",
+        "materialSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
+        "status": "passed",
+        "finishedAt": "2026-11-01T17:52:05.557Z"
       }
     }
   },
@@ -98,9 +105,9 @@
     "fence": 7,
     "materialSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
     "expectedBase": "ce45c22f574810a9cde0467b1158affc0b03063e",
-    "phase": "testing",
+    "phase": "ready-to-merge",
     "admittedAt": 1793555509833,
-    "expiresAt": 1793555814532,
+    "expiresAt": 1793559126538,
     "patchId": "c99a51656c848292b3080c9adadc39d10363895f"
   },
   "events": {
@@ -154,6 +161,10 @@
     },
     "finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2:finish:2:synchronized": {
       "digest": "1072154a7ade9e7a570cf64d00b87cb1d3ee3a35ed70d48973f355cc4a26a938",
+      "issue": 1187
+    },
+    "finish:df6bce13-76fd-4dbc-8f8a-d487aa6ca6f2:finish:3:s6-complete": {
+      "digest": "a44c38905df2ef8af87d3ddde1227d63ad5b3d5e20f9cb2541e38e0938392c06",
       "issue": 1187
     }
   },
