@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 179,
+  "revision": 180,
   "nextTicket": 20,
   "nextFence": 20,
   "tasks": {
@@ -78,7 +78,20 @@
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793565774338,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "3c51001a1e082c742f2d92810af9ae1b69824a9d",
+      "changedFiles": [
+        "demo/smoke_vacuum_tail_continuity.mjs",
+        "docs/ARCHITECTURE.md",
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "docs/USER-GUIDE.ru.md",
+        "docs/VACUUM.md",
+        "docs/release-ledger/v1.83.0/1175.json",
+        "src/houseplan-card.ts",
+        "src/vacuum-trail-material.ts",
+        "test/vacuum-live-tail.test.mjs"
+      ]
     },
     "1176": {
       "issue": 1176,
@@ -241,10 +254,11 @@
     "token": "19:finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:1:admit",
     "fence": 19,
     "materialSha": "d7909324fac9e44d5b555656b5530f2316f09aa0",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
+    "phase": "testing",
     "admittedAt": 1793565840927,
-    "expiresAt": 1793566140927
+    "expiresAt": 1793566146831,
+    "patchId": "3c51001a1e082c742f2d92810af9ae1b69824a9d"
   },
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
@@ -342,6 +356,10 @@
     "github:41348289557:1:completions:metadata:4681af50-758c-4946-bdee-565f853d969f:review-presentation:1169:spec:af0f9ccbf0986388454c": {
       "digest": "3c429fd267175eeac388b8b09f9783da6f3b1bc3deed3a3e859a0044171f9d8c",
       "issue": 1169
+    },
+    "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:2:synchronized": {
+      "digest": "b12b0c3c4f3ec4310e6715f705dc2574d450bdb566489c27524387b96de5e632",
+      "issue": 1175
     }
   },
   "devWebhook": {
