@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-- Mixed color and opacity labels fit fully in compact group Properties; ordinary values and 36px field height are preserved. [#1183](https://github.com/Matysh/houseplan-card/issues/1183)
-
 ## v1.84.0-beta.1 — 2026-11-01
+
+- Mixed color and opacity labels fit fully in compact group Properties; ordinary values and 36px field height are preserved. [#1183](https://github.com/Matysh/houseplan-card/issues/1183)
 
 - Editors use shared compact UI Kit actions, trays, palettes and 36px Properties fields. Backup/import, device catalog, icon rules and Help share the same form primitives; long import options wrap on narrow screens. Toolbar dimensions and existing selection, history, save/cancel and permission rules are preserved. [#1150](https://github.com/Matysh/houseplan-card/issues/1150)
 
