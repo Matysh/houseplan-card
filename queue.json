@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 64,
+  "revision": 65,
   "nextTicket": 9,
   "nextFence": 9,
   "tasks": {
@@ -93,11 +93,11 @@
   "ownerDecisions": {},
   "specReviews": {
     "1184": {
-      "requestId": "spec:1184:9fa71ef3a169c0e317ac61ab82e3c5ed3d1761f207bbdd60dcb74786579578a8",
-      "contextDigest": "9fa71ef3a169c0e317ac61ab82e3c5ed3d1761f207bbdd60dcb74786579578a8",
-      "base": "ce45c22f574810a9cde0467b1158affc0b03063e",
+      "requestId": "spec:1184:c025dfddbcda7c37564d1e5494517be674eb5f67299ecf7e16d685c0ab88e2f4",
+      "contextDigest": "c025dfddbcda7c37564d1e5494517be674eb5f67299ecf7e16d685c0ab88e2f4",
+      "base": "5cc253e20227415209b314bda63ff71f2a3a2655",
       "status": "pending",
-      "updatedAt": 1793555437406
+      "updatedAt": 1793555849911
     }
   },
   "reviewPublications": {},
@@ -106,6 +106,10 @@
   "events": {
     "github:41333465147:1:label:spec-request": {
       "digest": "9e3159668d076228e2dffa412d98abbc943bc0d55b3d68a91948c454633d083f",
+      "issue": 1184
+    },
+    "github:41334020956:1:label:spec-request": {
+      "digest": "17b654fe4fe9a83796dec9a9a54baae31379ea19687e31dfb1555bc6aa4dfdef",
       "issue": 1184
     }
   },
