@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 220,
+  "revision": 221,
   "nextTicket": 24,
   "nextFence": 24,
   "tasks": {
@@ -84,7 +84,7 @@
       "notice": {
         "key": "2:fix-generated-report-location",
         "reason": "fix-generated-report-location",
-        "status": "pending"
+        "status": "delivered"
       },
       "automationError": "checks-unavailable",
       "automationSince": 1793566556877,
@@ -526,6 +526,10 @@
     "github:41349425617:1:tick:0:admit": {
       "digest": "1e10d7d97c081005c82870fba8b516b6ae1fb4258f3bbaef9e22ab349b1dc16d",
       "issue": 1190
+    },
+    "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1175::": {
+      "digest": "67bb052fa17a9bfe072655db490fbfaacf7dbf4bb2c40f4786f3f933e65d533f",
+      "issue": 1175
     }
   },
   "devWebhook": {
