@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 303,
-  "nextTicket": 34,
+  "revision": 304,
+  "nextTicket": 35,
   "nextFence": 32,
   "tasks": {
     "1128": {
@@ -339,6 +339,20 @@
         "failures": []
       },
       "reviewRound": null
+    },
+    "1191": {
+      "issue": 1191,
+      "track": "ship",
+      "layer": "infra",
+      "branch": "codex/golden-checkout-source",
+      "materialSha": "654439a094e64d654df9c775210372e6f4772a5c",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 34,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793568478772,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -403,7 +417,8 @@
   "reviewPublications": {},
   "waiting": [
     1190,
-    1169
+    1169,
+    1191
   ],
   "active": {
     "issue": 1153,
@@ -869,6 +884,10 @@
     "dev-build:41351804140:1:webhook:7b98328b-43e2-45e5-a028-acd95ea012db:delivered": {
       "digest": "454ef46fb110e5218f6e36906fb7f5fbfe74839f25b475738f4c80d21e18cafe",
       "issue": 1153
+    },
+    "finish:527e5b69-1453-4c23-b160-ba6e480d0556": {
+      "digest": "4490abe5fe1e1e0db0daa99c794a36c6e1d944df670361f4472dc5daaee90c17",
+      "issue": 1191
     }
   },
   "devWebhook": {
