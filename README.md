@@ -2,7 +2,6 @@
 
 [![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
-[![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![Live demo](https://img.shields.io/badge/demo-try_it_live-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
 [![Telegram chat](https://img.shields.io/badge/Telegram-chat-2CA5E0?logo=telegram&logoColor=white)](https://t.me/ha_houseplan)
 [![Support the project](https://img.shields.io/badge/Boosty-Support_the_project-F15F2C?logo=boosty&logoColor=white)](https://boosty.to/matysh/donate)
@@ -191,6 +190,7 @@ A kiosk uses only its card value; Static and PDF follow the effective orientatio
 
 ## Detailed documentation
 
+- [Contributing and development](CONTRIBUTING.md) · [Development process](PROCESS.md)
 - [Full user guide](docs/USER-GUIDE.md)
 - [Mouse/touch/keyboard matrix](docs/USER-GUIDE.md#6-navigation-zoom-and-input)
 - [Plan tools](docs/USER-GUIDE.md#plan-tools-at-a-glance)

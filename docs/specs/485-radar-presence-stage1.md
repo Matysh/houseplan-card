@@ -1,5 +1,10 @@
 # #485 — Stage 1: sources, calibration and live presence
 
+> **Историческое ТЗ.** Процессные предписания ниже (гейты, прогоны, трейлеры,
+> передача на ревью) описывают прежнюю обвязку и не задают текущих действий.
+> Правила работы — [PROCESS.md](../../PROCESS.md); текущая постановка — в issue.
+> Продуктовые требования и исходные решения сохранены как контекст.
+
 Issue: [#485](https://github.com/Matysh/houseplan-card/issues/485).
 Read the [common contract](485-radar-presence.md) first. The contract completed
 independent review at `spec-r4`; the owner authorized S6 on 2026-09-08 and this

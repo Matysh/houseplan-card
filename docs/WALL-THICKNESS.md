@@ -795,7 +795,8 @@ Purpose-built checks for node material: `junctionContractHoles` (the objective
 a deliberately holed fixture), the `smoke_junction_holes` wiring probe that
 verifies the same contract against the rendered `d` path, sixteen close-up
 golden scenes (`junction-*`) plus the owner's repro scene, and the
-`junction-*` mutants in `scripts/mutation-gate.mjs`.
+`junction-*` mutants in `scripts/mutation-registry.mjs`. Mutation execution is
+background work under [PROCESS.md](../PROCESS.md), outside the task/release checks.
 
 ## 9. Independent partitions and columns
 

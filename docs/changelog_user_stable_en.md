@@ -1,7 +1,7 @@
 # User changelog for stable releases
 
 Agent-authored changes since the previous stable release, newest first.
-Rules and commands: [DEVELOPMENT.md](DEVELOPMENT.md#agent-authored-stable-notes-and-release-accounting-838840).
+Release rules: [PROCESS.md](../PROCESS.md).
 Technical history and betas: [CHANGELOG.md](CHANGELOG.md).
 
 The 1.80.1 entry below is the owner's approved style example, translated into

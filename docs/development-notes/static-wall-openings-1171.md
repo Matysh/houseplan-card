@@ -1,5 +1,8 @@
 # Static wall openings #1171 — executed evidence
 
+> Исторический снимок выполнения указанной задачи/выпуска. Результаты и команды ниже относятся к тому материалу;
+> они не предписывают новые прогоны, Validate или действия ревьюера. Текущие правила — [PROCESS.md](../../PROCESS.md).
+
 Initial implementation: `26c78835fb1350d956a4fc80fafb87183cd5e983` and
 `7dfb2d02466a8e93d6e3a65ae2cd1528def1edb3`, based on dev
 `33707db7a8a9a6dc48d7445b3a0fb1fdf66e6e2e`. SPEC r2 is green, H0/M0.

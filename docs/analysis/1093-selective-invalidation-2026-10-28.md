@@ -1,5 +1,10 @@
 # #1093: selective invalidation — implementation evidence
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Baseline diagnosis: `455535be9da51e0eef11ceccd1b9545a39875425`. Current accepted integration base: `b4f9681b2600d4215ea0e732258571985b56e6b2`, including #1108/#1089/#1096/#998/#1000/#1107. Synthetic fixtures only. The latest post-CI section below binds the current product; earlier source213 measurements remain historical evidence. Accepted #1108 changes only its smoke wait and process documents; the ordinary merge preserves the measured b32914f4 product fingerprint.
 After #1089 CODE r2 GREEN and automatic S8, accepted dev
 `cc9209f8ad8cbb8eb937fb27d5234c971bbc47da` was merged normally. Its final delta

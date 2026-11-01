@@ -1,5 +1,10 @@
 # CODE-REVIEW #1171 — r1
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Материал: `a712b39b1d5d51fd3c8f5cce0238c095399fab55` (3 коммита: `26c78835f`
 fix(static): render room-wall openings with shared geometry, `7dfb2d024`
 fix(static): match missing-contact paint and refresh derived inputs,

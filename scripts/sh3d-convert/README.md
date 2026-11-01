@@ -86,7 +86,14 @@ The compiled-consumer unit reads the resulting space with the actual HP
 lighting/compass/backdrop helpers, so an ignored forward-compatible field is
 not mistaken for a working setting.
 
-Run from the repository root after normal `npm ci`:
+This converter is an independent external product. Its task-specific checks
+run when working on the converter; they do not become gates for unrelated
+Houseplan tasks. Stable includes converter diagnostics, whose failure is
+reported as a separate bug without blocking Houseplan. See
+[PROCESS.md](../../PROCESS.md).
+
+Run the relevant addressed checks from the repository root after preparing
+dependencies with `npm ci --ignore-scripts`:
 
 ```sh
 node scripts/sh3d-convert/build-page.mjs

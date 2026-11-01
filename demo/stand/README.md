@@ -27,11 +27,12 @@ of the shipped integration.
   is the dev-stand counterpart: a single `console.info` saying the dev stand
   only resets on deploy.
 
-- `update-dev-bundle.sh` — the dev stand's card bundle (#657). Since #657 the
-  committed bundle changes only in a beta/release candidate, so the `dev` tree
-  between betas carries the last beta's bundle. Validate publishes the bundle
-  it built for the head of `dev` into the orphan branch `dev-build` (one commit,
-  force-pushed, `DEV-BUILD.json` names the source SHA; `scripts/dev-build.mjs`).
+- `update-dev-bundle.sh` — the dev stand's card bundle. The stand consumes the
+  prepared `dev-build` artifact, whose `DEV-BUILD.json` names the source SHA
+  (`scripts/dev-build.mjs`). Under the prepared process, delivery follows a
+  product merge and retries independently if the stand update fails; it does
+  not repeat task tests or reopen S8. See [PROCESS.md](../../PROCESS.md).
+  The new route is not activated by this documentation change.
   Since #835 the branch carries the whole integration of that SHA; the stand
   takes only `frontend/` from it, the rest comes from its own checkout. The
   host deploy script must overlay it after `git pull`:
@@ -42,8 +43,9 @@ of the shipped integration.
   demo/stand/update-dev-bundle.sh <checkout>           # after: frontend ← origin/dev-build
   ```
 
-  Until `/opt/hp/bin/hp-update-dev.sh` does this, the dev stand shows the last
-  beta's bundle instead of the head of `dev`.
+  If the stand lags behind `dev`, first compare its delivered
+  `DEV-BUILD.json` with the intended source SHA and inspect the overlay/update
+  step. A newer source checkout alone does not prove that its frontend is served.
 
 ## Why the manifests are templates
 

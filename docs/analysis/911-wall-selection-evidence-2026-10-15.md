@@ -1,5 +1,10 @@
 # #911 author evidence (not a review verdict)
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Base: dev `9d6f51b5663807e0c57101cc43c4e897b7497035`, after #900 S8.
 Task: accepted SPEC-REVIEW-911-r1, issue-body digest `2f014da48c75`.
 Owner's batch instruction explicitly overrides new-issue creation: out-of-scope

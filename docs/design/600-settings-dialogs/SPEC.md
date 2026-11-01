@@ -238,7 +238,7 @@ Issue: <номер после создания>. Референс: архив `h
 - Новые примитивы формы (карточка, сегмент, полная и компактная строка, плитки значений, плитки цвета, поле цвета, чипы, кнопка выбора со списком, футер со статусом) как lit-шаблоны и scoped-стили в одном модуле (`src/settings-form-view.ts` + `src/styles/settings-form.styles.ts`, имена условные), подключаемом из editor runtime; без нового веб-компонента, кроме поля цвета (`hp-color-field` или режим `compact` у `hp-color-opacity`).
 - Диалоги: `_renderSpaceDialog`, `_renderSettingsDialog`, `_renderRoomDialog`, `_renderMarkerDialog` в `src/houseplan-editor-runtime.ts`; секция Display в `src/houseplan-onboarding-runtime.ts`; `hp-zigbee-topology-settings`, `room-temperature-controls.ts`, `sun-settings-view.ts` получают новую разметку при той же логике; `src/styles/dialogs.styles.ts` только scoped-блоки; `hp-dialog.ts` только `:host([data-kind=…])` (ширина 560, бейдж в шапке).
 - Тесты: unit на маппинг новых контролов к тем же значениям состояния (инверсия слоёв, As the space ↔ '', bgMode null, sunRays null/true/false, opacity %/доля); обновление селекторов в smokes, заходящих в диалоги (`smoke_hide_layers`, `smoke_hide_room_names`, `smoke_font_scales`, `smoke_bg_color`, `smoke_dialog_footer_width`, `smoke_esc_dialogs`, `smoke_help_affordance`, `smoke_plan_picker`, `smoke_color_picker_consumers`, `smoke_general_settings`, `smoke_grid_scale_invariance`, `smoke_danger_confirmation`, `smoke_gear_tabs`, `smoke_binding_ui`, `smoke_binding_picker`, `smoke_climate_temp`, `smoke_card_controls`, room/marker smokes по `grep`); новый фокусный smoke на геометрию карточек, один скролл, футер, сегменты и плитки для каждого диалога.
-- Нет новых eager-чанков, внешних запросов и шрифтов; `gate:small`, typecheck, bundle budget, i18n parity, docs gate зелёные.
+- Нет новых eager-чанков, внешних запросов и шрифтов. Затронутые продуктовые и i18n-сценарии проверяет исполнитель на S6; состав прогонов и замеров задаёт [PROCESS.md](../../../PROCESS.md).
 
 ## 11. Критерии приёмки
 
@@ -253,7 +253,7 @@ Issue: <номер после создания>. Референс: архив `h
 | AC7 | Все «?» открывают те же тексты через `hp-help`; ни один текст пояснений не потерян (абзацы переехали в «?») | сверка ключей i18n + smoke `help_affordance` |
 | AC8 | Copy, Delete, Hide, Skip, Keep as walls, Export/Import, Optimize, Read ZHA / Update map, Attach, Pin, Open in HA работают как до задачи | существующие smokes |
 | AC9 | Цели ≥ 44 px, фокус, aria, reduced motion, forced colors | a11y-проверка в smoke + ревью |
-| AC10 | Changelog RU+EN, USER-GUIDE RU+EN, `docs/design/<NN>-settings-dialogs/` с референсом и отчётом сравнения, i18n-паритет, gate:small | docs gate + код-ревью |
+| AC10 | Changelog RU+EN, USER-GUIDE RU+EN, `docs/design/<NN>-settings-dialogs/` с референсом и отчётом сравнения, i18n-паритет | Содержательное ревью документации; проверки изменённого продукта на S6 по PROCESS.md |
 
 Визуальное доказательство: парные захваты референс/продукт для каждого диалога на desktop light и dark, а также native и реальный HA на 390 px; диагностические кадры, не golden-базы.
 

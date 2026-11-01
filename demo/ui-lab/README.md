@@ -30,7 +30,7 @@ node demo/ui-lab/verify-polish.mjs --ha-cache "/path/to/ui-lab-ha-cache"
 они одинаковы для Windows PowerShell, WSL и Linux. Docker и доступ к HA не нужны.
 
 ```sh
-npm ci
+npm ci --ignore-scripts
 npm run bundle:sync
 npm run ui-lab:prepare
 npm run ui-lab

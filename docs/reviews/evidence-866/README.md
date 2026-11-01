@@ -1,5 +1,10 @@
 # #866 author evidence — 16 October 2026
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 This is an author handoff, not an independent review or an S8 declaration.
 Base: `1bdc5a1a0828bf7bc01b291136e4d3bd61a25b8e` (origin/dev).
 Accepted specification: issue comment `6218320949`, body SHA256

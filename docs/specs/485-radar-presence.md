@@ -1,5 +1,10 @@
 # #485 — Presence radars on the plan: common acceptance contract
 
+> **Историческое ТЗ.** Процессные предписания ниже (гейты, прогоны, трейлеры,
+> передача на ревью) описывают прежнюю обвязку и не задают текущих действий.
+> Правила работы — [PROCESS.md](../../PROCESS.md); текущая постановка — в issue.
+> Продуктовые требования и исходные решения сохранены как контекст.
+
 Issue: [#485](https://github.com/Matysh/houseplan-card/issues/485).
 Author: Codex. Baseline: `dev` at
 `ed9ee026dc08054e12038b7dbd1b8525e7706d04`, 2026-09-08.

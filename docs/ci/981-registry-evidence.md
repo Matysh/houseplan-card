@@ -1,5 +1,10 @@
 # Portable CI proof evidence (#981)
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 The 14–20 October UTC population contains 113 ordinary dev push runs and 12
 beta-candidate validation push runs. Candidate intent comes from the canonical
 Release trailer of the actual source commit, not a subject/title proxy. The

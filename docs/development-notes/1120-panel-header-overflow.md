@@ -1,5 +1,8 @@
 # #1120 — main-panel header evidence
 
+> Исторический снимок выполнения указанной задачи/выпуска. Результаты и команды ниже относятся к тому материалу;
+> они не предписывают новые прогоны, Validate или действия ревьюера. Текущие правила — [PROCESS.md](../../PROCESS.md).
+
 Scope is the main /houseplan panel and its existing card header. The immutable
 r6 package at 9a74db073c1b87902de11bdf029505e8bf3a6b3c is preserved byte-for-byte
 under docs/design/1120-panel-header-overflow/2026-10-29. Its prototypes remain

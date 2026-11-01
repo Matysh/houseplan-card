@@ -7,7 +7,7 @@ Verified against dev `9683a59` (v1.76.0, 2026-09-18). Re-check line numbers with
 ## 0. Ground rules
 
 1. **UI only, no global code changes.** Only the markup and styles of the four dialogs change. Every product state key, config key, resolver, save path, permission check and side effect stays exactly as it is. A new control must write the same value to the same key the old control wrote. If a visual decision in the prototype needs a behaviour change, do not improvise and do not ask the repository owner: read `OPEN-POINTS.md` (known cases with proposed defaults) and **ask JB in the chat** before implementing that dialog; keep current behaviour meanwhile.
-2. **Process.** `AGENTS.md` Rule #1: product code changes only when the issue carries `S5-ready`, `S6-in-progress` or `S7-code-review` (`gh issue view <NN> --repo Matysh/houseplan-card --json labels`). Branch `issue/<NN>-settings-dialogs`. Commit trailers `Issue: #<NN>` and `User-Visible: yes`. Changelog entries in `docs/CHANGELOG.md` and `docs/CHANGELOG.ru.md` in the same commit. Class D paths (`dist/**`, `custom_components/houseplan/frontend/**`) only via `npm run bundle:sync`.
+2. **Process.** Follow [PROCESS.md](../../../PROCESS.md) for task scope, S6 checks, substantive review and releases. This design guide adds no per-commit gate or release requirement. Work on an isolated task branch; ordinary implementation does not rewrite the tracked release frontend.
 3. **Prototype JS is a design reference, not code to port.** Read `reference/*.js` to learn the markup, class names, states and copy; do not copy localStorage, demo data, the gallery shell or `room-fill.js` into the product.
 4. **Priority when they disagree:** `SPEC.md` > existing House Plan contracts (data, safety, a11y, hp-dialog, touch) > prototype visuals > prototype implementation details.
 
@@ -37,7 +37,7 @@ Verified against dev `9683a59` (v1.76.0, 2026-09-18). Re-check line numbers with
 6. **Device on the plan** (largest; keep every conditional branch, §5).
 7. Smokes and unit tests, i18n for four locales, changelogs, docs, `docs/design/<NN>-settings-dialogs/` with the reference and `ACCEPTANCE.md` (paired screenshots).
 
-Gates to run before review: `npm run typecheck`, `npm test`, `npm run gate:small`, `npm run bundle:budget`, i18n parity tests, `npm run bundle:sync` for class D.
+Select the applicable task profile and relevant dialog/i18n cases on S6 under [PROCESS.md](../../../PROCESS.md). The build already includes types; size measurements belong to release preparation. The reviewer reads the completed results.
 
 ## 3. Prototype → product token mapping
 

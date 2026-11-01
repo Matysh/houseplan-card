@@ -55,7 +55,7 @@ the ignored `artifacts/ha-form-shell-609/`; without it the command is
 read-only. The authentic diagnostic explicitly applies the light palette,
 then repeats desktop geometry in the dark palette with a 32 px root font and
 proves that canvas contrast, the single HA scroller and the footer survive.
-The fast Validate witness is
+The addressed browser smoke is
 `demo/smoke_ha_form_shell_parity.mjs`; neither diagnostic is a golden producer.
 
 The first explicit run downloads the official 124,294,469-byte

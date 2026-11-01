@@ -1,5 +1,9 @@
 # House Plan architecture
 
+This document describes product architecture and technical ownership. Development,
+review and release rules live only in [PROCESS.md](../PROCESS.md). The #1105
+branch is prepared; the live workflows and hooks have not been switched.
+
 Editor UI Kit (#1150): form-kit-editor.styles.ts composes existing settingsActionsCss with finite desktop densities, shared text/checkbox fields, reading typography and media tiles. Properties delegates36px fields/unit/color/textarea and action recipes to shared owners; local CSS keeps placement and scene art. Floating surfaces share radius/shadow/border paint; toolbar structural height interpolation remains local. Backup/support use common callout/disclosure/reading primitives with original live roles, hooks and event ownership. The .btn class remains a compatibility hook painted by the actual common action generator, without an independent legacy recipe. Action-tray headings retain16px/24px through a shared reading variant. Navigation fills include the tab border and close slot; the parent pixel witness exposed the one-pixel seam. Text links share enabled/focus selector specificity with actions, preserving ink-only hover.
 
 Settings content (#1149) shares textFieldsCss, settingsActionsCss, native checkbox/error and floating-surface painters. Color retains its HSV algorithms and completion/focus owner; one checkerboard rule serves both swatches. Device preview adopts Form Kit/disclosure CSS in its own ShadowRoot without importing editor commands. Summary keeps native checkbox hooks and ARIA under the common toggle. Zigbee has one Kit composition; its only product constructor remains embedded. Common multiline paint supplies96px textareas, and long-topic heading/action rows wrap within their available width. External screens keep a named layout-only sheet; radar fields and vacuum route/source controls retain their existing handlers.
@@ -21,7 +25,6 @@ Opening drag (#1097) retains its saved floor and epoch while an OpeningDragState
 
 Space deletion (#1101) prepares detached config/layout candidates, validation and canonical paired intent in one executor job while the existing write lock remains held. Store resolution, revisions, commit/rollback and event publication retain the same owner and order.
 
-
 View device context menu (#1089) has a per-card transient owner behind its own fingerprinted ViewRuntimeBoundary. EditorContextMenu and one idempotent shared stylesheet adopter provide presentation. Accepted command intent survives normal menu close but is revoked by a newer owner, navigation or authority change. Settings uses the existing guarded dialog entry; Hide/Show and Delete reuse the editor transaction with a guard at the queued dispatch boundary. Informational selection does not import the editor runtime.
 
 ## Derived consumer ownership (#1093)
@@ -34,8 +37,6 @@ faces. Reset or an unfinished capture retires all slots, while aggregate work
 counters retain completed work even after eviction.
 
 Physical keys project known paint/text fields out while retaining unknown and structural semantics; wire/history fingerprints stay complete. DemandSpaceModels keeps at most eight physical floor models per card, lending cheap metadata until a real consumer asks for geometry. DeviceRosterStateKey observes registry/config and state metadata dependencies; value ticks refresh the affected immutable presentation rows. Room/decor projection follows effective visible/preview/tooltip demand and retains hidden sources of active aggregates. Hidden document/route intake still adopts authority and data, but defers visual producers/chunks/imports. Per-device confirmed alert issues invalidate only their dependent faces; hidden confirmation observations retain continuous history without visual deadlines. Successful same-owner Save ACK retires its dialog paint; refusals and replacement owners retain existing protocols. DOM replacement retires both header/viewport resize observer leases. See [the source and measurement audit](analysis/1093-selective-invalidation-2026-10-28.md).
-
-
 
 Panel kiosk routing (#1103) stays in the thin host: path/query adapters set the runtime routeKiosk intent. The card resolves one-based positions against its own authoritative ordered model, with pending before authority and absent for an invalid URL position. Existing Lovelace floor remains strict. Internal panel paths share one read owner; mode/space transitions still retire presentation context and dirty drafts use the existing decision boundary. The stable panel entry retains its side-effect-only card import; its URL parser has no runtime imports from the card graph.
 
@@ -105,7 +106,6 @@ default settings layout; six common 1px strokes retain seven complete 44px View
 targets in 302px of actual native HA card content.
 
 Threshold alarms (#1000) use marker-alert-config/marker-alert for the strict persisted codec/comparator, marker-alert-runtime for monotonic confirmation and marker-alert-source for canonical ownership before selected state access. marker-alert-view-runtime is an optional View boundary with per-card lifecycle; its per-device confirmed issues invalidate the corresponding snapshot presentations. Native and threshold causes share device-issues identity/levels and the existing reason renderer. MarkerAlertsEditor lives in the existing lazy editor graph, with a nested local constructor and an outer marker draft; it never writes HA or demo storage.
-
 
 Decor preview handoff (#1080) remains in `live-editor.ts`: after the synchronous
 live render produces a transient kind, only that kind's settled copy is hidden.
@@ -324,17 +324,6 @@ the single model-tag body field (which it ignores); old projection
 refusals retain HA fallback without repeated full-document requests. Generic
 recovery holds only mandatory canonical replies, never this metadata response.
 
-Default-branch service events (#1040) use the eight mirrored ingress recipes
-from `scripts/service-workflows.mjs`. `_service-event.yml` has a main sender
-with Actions-dispatch permission and a separate dev receiver with native-token
-ref-write/read-artifact permission; operational jobs retain their old ceilings.
-The sender stores only bounded routing identity. The receiver verifies the
-immutable source attempt/artifact and claims the delivery/current review epoch
-once before passing context into the existing reusable bodies. Native-token
-claim refs do not trigger push workflows. A dispatch acknowledgement is not a
-model/test verdict, and ambiguous writes are not retried. Legacy native calls
-remain compatible for staged activation; historical review runs remain readable.
-
 SVG caption alignment (#1039) is a detached presentation correction after the
 HA Area affordance is filtered out. The remaining name centres in the frozen
 row width; live room-label CSS, geometry, actions and layout storage are untouched.
@@ -390,7 +379,6 @@ contour owner. Camera metadata uses the actual SVG viewBox/CTM and base grid
 pitch. Toast identity travels alongside text through its existing presentation
 owner. No new listeners, observers, calculations or stored fields are introduced.
 
-
 `hp-color-opacity` owns the shared HSV presentation (#1008 / UI-016). Its Lit
 template derives a single resulting colour and S/V gradient endpoints from
 unrounded HSV; one class styles the three native ranges in both popover and
@@ -404,13 +392,6 @@ through `MoonView` and its fingerprint into the shared runtime's mask sweeps.
 Waxing lights the right half and waning the left; the north-up designer art is
 unchanged. Rounded empty/full discs normalize direction in the fingerprint.
 All background and host variants retain the same runtime and lifecycle.
-
-Unit execution (#982) uses a computed import/source-read partition rather than
-test filename lists. Product consumers own the build dependency; tooling jobs
-run independently. The complete frontend CI proof binds both unit job results,
-so moving work into a separate job cannot turn a missing/red unit set green.
-The local gate selects the required union from changed input domains and uses
-both sets for unknown inputs; full and nightly execution retain the full union.
 
 Optional marker `state_source` (#977) changes ordinary presentation samples,
 not the binding/action/value/light graph. Shared resolution checks exact own
@@ -481,15 +462,6 @@ history stores changed-key presence/null, not whole markers. Full dialog entry
 finishes the panel writer before reading a fresh target. The card owns the width
 observer; no panel DOM or styles enter the initial View dependency graph.
 `selection.ts` paints cues only: native handles and hit-priority still own gestures.
-
-Development evidence (#954) separates material identity from content identity.
-Only closed pure product units/build cross a Git commit; metadata/FS/process/
-dynamic consumers remain fresh. Local receipts are private, byte-verified and
-never CI authority. CI schema2 producers independently verify source objects,
-successful run/attempt/jobs, environment and artifact inventory. Heavy transfer
-bridges branch-scoped caches only with direct executed ancestor proof and exact
-profile coverage. Push demand includes labels/render risk up front; golden and
-the full smoke matrix are independent, with release/night coverage unchanged.
 
 Portable full backup (#936) is editor/admin-only and lazy on first use.
 `backup_archive.py` validates a closed ZIP manifest, bounded directory/streams,
@@ -627,34 +599,9 @@ Backdrop references (#941) accept only bounded image-selector query parameters;
 unknown names, duplicates and fragments are omitted with the existing loss report.
 This avoids an unbounded credential-name denylist or stripping a required signature.
 
-Nightly witness maintenance (#917) changes no product owner or runtime. The
-gesture-entry witness calls the live-update router; the tool-boundary witness
-calls the actual lazy renderer with a retained dialog/cache, independently of
-toolbar cleanup. The stale-door mutation spans both redundant protections.
-Two preparation definitions retain TypeScript's original broad JSON typing
-and reachable callback narrowing instead of failing before their oracle.
-An explicit read-only published-stable metadata check may use the reachable
-previous stable tag's catalogue after the next cycle opens. It requires the
-unchanged tagged notes and current authored RU/EN sections. Publication stays
-HEAD-bound and rejects this historical-verification option.
-
-Stable field decisions (#916) are release metadata, not product state or native
-receipts. A reviewed tag/SHA binding plus the latest authenticated owner comment
-can authorize promotion of an owner-tested public beta with unchanged product,
-dependencies and capture/build inputs except exact version fields. The reader
-now treats manual owner dev/GPU observations as optional on every channel
-(#929), never fabricates GPU proof, and cannot override explicit vetoes,
-supplied invalid scene plans or automatic gates. The historical #916 scene-plan
-waiver remains scoped to its exact promotion; future field receipts need no waiver.
-Release accounting reads all reachable parents, retaining each task's original
-implementation provenance instead of borrowing a merge's unrelated issue.
 Documentation capture (#959) follows the device dialog's existing Appearance
 navigation before revealing its real preview. This is fixture presentation only:
 no product renderer, scroll owner, viewport or visibility guard changes.
-
-Beta membership creation and immutable verification share that all-parent range
-(#958); the previous release anchor still follows the first-parent tag line.
-Existing SPEC-only and promotion exclusions retain their content-bound proof.
 
 Presentation seams (#907) have no new data or write authority. The marker form
 passes its effective locale to the reactive read-only preview, which retains
@@ -669,31 +616,6 @@ The runtime caches one result by opening array identity, model and config epoch;
 field edits and camera movement do not rebuild it. Its editor-only class hands
 paint ownership to the existing live layer. The original hover getter remains
 cursor-only and still owns wallhot; no host port, schema or writer is added.
-
-Release delivery phases (#903) share `scripts/task-delivery.mjs` between the
-SPEC publisher, release catalogue and membership create/verify. Versioned
-spec-review trailers require the exact publisher/delta and the document's own
-machine material anchors; old publisher commits receive equivalent checks.
-Both published heading forms bind their issue/round to the added SPEC filename
-(#950); neither title alone nor a historical filename confers delivery status.
-Spec trace remains separate from implemented entries. The schema-1 authored
-classification must be renewed when an earlier doc-only blob meets its first
-A/B delivery; the same immutable history check guards merge and catalogue.
-No runtime state, owner acceptance or release authority is introduced.
-
-Review instruction consistency (#905) places negative-evidence policy in the
-common reviewer entry and actual workflow prompt, before track-specific text.
-Ordinary inputs exercise unchanged code; temporary source, compiled-artifact,
-guard or budget substitutions are mutation execution and remain nightly-only.
-Existing static readiness and outcome classifiers keep their formats/owners;
-no command sandbox, permission change or retrospective verdict rewrite is added.
-
-Evidence accuracy (#910) adds no runtime or evidence-executor owner. A pure
-uniform-dirty receipt test isolates the existing signature refusal; a bounded
-DEVELOPMENT checklist linked from TESTING separates execution, reused proof,
-content equivalence and unknown. Historical corrections are additive dated prose with primary links,
-not edits to original review anchors, raw or verdicts. Text/link checks do not
-claim semantic fact-checking.
 
 Backdrop cancellation (#908) reconciles only its stage `bdgrabbing` class at
 cancel and explicit begin, since a retained terminal can leave Lit's cached
@@ -780,15 +702,10 @@ uses public close/focus APIs. Its foreign class vocabulary is separately
 validated against genuine HA DOM. The text fallback retains the form-kit
 wrapper's border and focus.
 
-Stable release prose (#840) has separate authored RU/EN histories in
-`docs/changelog_user_stable_{ru,en}.md`. `user-stable-changelog.mjs` extracts a
-tag/base-bound section without summarizing it. Release preparation copies both
-languages into RELEASE-NOTES for GitHub/HACS; the contract proves exact equality.
-Telegram reads only the same RU section and renders the heading/bold/links,
-retaining emoji and blank lines. Technical/beta changelogs and product runtime
-are unchanged. The shared `stableHeading` fixes the locale-specific short title
-(#841); extraction and validation use that same contract. Canon: `PROCESS.md`
-§11.9; mechanics: `DEVELOPMENT.md` › Release.
+Stable release prose has separate authored RU/EN histories in
+`docs/changelog_user_stable_{ru,en}.md`. These user-facing notes are distinct
+from the technical/beta changelog and product runtime. Release actions and
+publication timing follow [PROCESS.md](../PROCESS.md).
 
 Kiosk hold-to-modal input (#831) transfers stage suppression to an instance-local
 `TouchGestureClickGuard` modal-tail barrier before interrupting the stage. Its
@@ -1055,7 +972,8 @@ houseplan-card/
 │  └─ editors/ · render/ · styles/ · i18n/  # settings dialogs, SVG projections, sheets, locales
 ├─ dist/                                 # ignored Rollup output: entries, manifest, hashed chunks
 ├─ demo/                                 # demo rig and smokes; golden/ (HP-QA-01), performance/
-├─ scripts/ · .github/workflows/         # build/bundle gates, release-*.mjs; CI and release
+├─ process-next/                         # prepared #1105 runner, queue, review and release mechanics
+├─ scripts/ · .github/workflows/         # technical tools and workflows; activation follows PROCESS.md
 ├─ custom_components/houseplan/          # the HA integration
 │  ├─ __init__.py · store.py             # setup/unload; versioned stores and per-entry runtime data
 │  ├─ websocket_api.py · http_api.py · auth.py  # WS commands, uploads, the one may_write policy
@@ -1071,17 +989,18 @@ houseplan-card/
 Rollup emits two stable roots, `houseplan-card.js` and `houseplan-panel.js`,
 plus hashed chunks and `dist/houseplan-assets.json` (graph, sizes, SHA-256).
 Only `custom_components/houseplan/frontend/` is committed and installed by HACS;
-`dist/` and the demo copy remain build artifacts. Release verification compares
-fresh output with that one snapshot; budgets still judge the fresh build.
+`dist/` and the demo copy remain build artifacts. The prepared candidate packager
+combines integration sources with its built frontend; measurement policy belongs
+to PROCESS.md.
 The panel imports the card chunk by its hashed name, never through the card's
 unversioned facade: entries are served without `Cache-Control`, and a stale
 facade once ran an old card against the current backend (#535). Both roots keep
 the fail-loud stale-load wrapper. View loads only the initial graph; editor,
 onboarding, 2.5D (#649), PDF, locale and furniture-art graphs are lazy, each
 passing the exact-build fingerprint handshake (one cache-busted retry, atomic
-install), and `scripts/bundle-budget.mjs` fails a build whose lazy graph is
-missing or leaks into the initial graph. The backend serves only manifest-listed
-chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
+install). The manifest distinguishes these graphs; an editor dependency in the
+initial graph changes the intended loading boundary. The backend serves only
+manifest-listed chunks. Build mechanics: [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Key decisions
 
@@ -1094,12 +1013,11 @@ chunks. Commands and gates: `DEVELOPMENT.md` › Build, › Tests, › Release.
    `houseplan/config/get` carries the authoritative `integration_version`,
    `frontend_fingerprint` and dev `build`: View offers a manual reload, kiosk reloads once per
    backend target in a safe idle state, the space card has no version controller
-   (`DEVELOPMENT.md` › Resource registration and version recovery (#462)). After
+   ([CONFIG-COMPATIBILITY.md](CONFIG-COMPATIBILITY.md)). After
    migrations succeed, setup registers the public `/houseplan` panel
    (`require_admin=False`, #486): a thin app-bar host around one ordinary full
    card, fail-soft, removed on unload only by the exact owner and setup
-   generation (`UX-MODES.md` › Principle; `TESTING.md` › Installation / upgrade /
-   removal). In a Sections `layout="grid"` slot HA owns the height: `.stage` is
+   generation ([UX-MODES.md](UX-MODES.md)). In a Sections `layout="grid"` slot HA owns the height: `.stage` is
    the shrinking flex child and transitions use the measured card height, never
    `window.innerHeight`; `getGridOptions()` is full width, 10 rows, min 6 (#648).
 2. **Server-side storage, no token.** `store.py` keeps `.storage/houseplan.config`,
@@ -1345,10 +1263,10 @@ are unnecessary. Minimum supported HA without kioskMode is supported; modern
 external hasSidebar:true hides the action consistently. Cold View keeps editor
 code lazy; Lovelace and the 1024 px Properties boundary remain separate.
 
-Synthetic DOM/event evidence does not prove the native HA drawer. Companion
-E2E is required on the exact beta candidate before release; task visual intent
-does not accept global baselines. The immutable accepted r6 materials live in
-docs/design/1120-panel-header-overflow/2026-10-29.
+Synthetic DOM/event evidence does not prove the native HA drawer; that boundary
+needs a real HA scenario. Task captures do not accept global baselines. The
+accepted r6 design materials live in
+`docs/design/1120-panel-header-overflow/2026-10-29`.
 
 `.head` is `position: sticky; top: var(--header-height, 56px)`, so ordinary
 dashboard cards keep `ha-card { overflow: visible }` (hidden overflow breaks
@@ -1645,8 +1563,8 @@ Refusal/reload closes only the discarded room-face creation form. No View,
 pointermove or HA-state rendering path imports or invokes this clipping helper.
 
 Rooms may not partially overlap (lying on a shared wall is legal, a fully nested
-island is supported). Merge/Split use **polyclip-ts** (not `polygon-clipping`,
-see [`DEVELOPMENT.md`](DEVELOPMENT.md)): Merge accepts a pair only when the union
+island is supported). Merge/Split use **polyclip-ts** (not `polygon-clipping`):
+Merge accepts a pair only when the union
 is one hole-free outline; Split cuts wall-to-wall and the larger part keeps the
 room identity (name, area, devices).
 
@@ -2357,12 +2275,12 @@ merge, an extra request and a second source for the `en.json` key type (#391).
 Budget planning assumes whole dictionaries; revisit only if editor text grows by
 tens of kilobytes.
 
-## Backend quality gates (#42)
+## Backend test environment and error contract
 
-`tests_backend/requirements.txt` is the single source of backend CI dependencies;
-ruff, strict mypy, the `sys.modules` guard, the coverage baseline and the
-`geometry_parity` job: [TESTING](TESTING.md) › Backend quality gates.
-`const.ERROR_CODES` / `ERROR_CODE_FAMILIES` are THE stable error contract: every
+`tests_backend/requirements.txt` defines the backend test dependencies. The
+runtime pins and HA harness requirements are described in [TESTING.md](TESTING.md);
+that document adds no workflow or release gates.
+`const.ERROR_CODES` / `ERROR_CODE_FAMILIES` are the stable error contract: every
 emitted code is registered and localized (scanner test); `invalid_passage_fields`
 and `invalid_partition_opening_jamb_margin` carry structured JSON details; the
 frontend renders unknown codes localized, code first, raw messages to the console.
@@ -2428,35 +2346,17 @@ publication and submit. Client claims never overwrite server facts; mismatched
 revisions are partial, not a fabricated current renderer snapshot.
 Inventory, budgets and witnesses: [SUPPORT-DIAGNOSTICS](SUPPORT-DIAGNOSTICS.md).
 
-## Mutation tooling boundaries (#558)
+## Background mutation tooling
 
-`scripts/mutation-gate.mjs` stays the stable CLI but is only an orchestrator and
-compatibility export surface over `mutation-registry.mjs` (declarations),
-`mutation-selection.mjs` (diff/guard-input selection), `mutation-evidence.mjs`
-(witness fingerprints, caught ledger) and `mutation-execution.mjs` (worktree
-runs); dependencies never point back to the CLI. Guard-input caching is
-invocation-scoped (one resolver, one tracked-file snapshot); persisted success
-exists only in the explicit caught-witness ledger. Usage: [TESTING](TESTING.md).
-
-Static readiness (#854) is shared by the normal unit gate and CLI; preparation
-policy is a leaf module shared with the nightly runner. Changed input identities
-are read-only helpers; static success never writes caught proof. Development CI
-keeps only a retired compatibility interface, while nightly explicitly opts in
-to applying mutations. Two witnesses of removed development setup code retired
-with that code; the nightly environment and outcome contracts are unchanged.
-
-Nightly capacity (#899) uses twenty deterministic modulo partitions of the
-unchanged registry, with the same hour-long interruption boundary. Evidence
-still binds every shard to one immutable material/workflow/run attempt and
-requires successful terminal outcomes before reuse. Ordinary witness repairs
-and static declaration checks do not produce caught ledger entries.
-
-Node-drag browser guards declare compilation of their `test-build/` model
-fixtures before the browser oracle (#830). The existing runner still separates
-setup from assertion evidence; a missing compiled module is never a caught
-mutant. The cheap registry test checks all `.mjs` entry files for this readiness,
-including browser smokes, rather than assuming that every smoke needs only a
-bundle. Product code and nightly-only mutation execution policy are unchanged.
+The existing `scripts/mutation-gate.mjs` delegates declarations to
+`mutation-registry.mjs`, input selection to `mutation-selection.mjs`, evidence
+to `mutation-evidence.mjs`, and isolated worktree runs to `mutation-execution.mjs`.
+The prepared process schedules explicit portions separately from development
+and releases; [PROCESS.md](../PROCESS.md) owns that policy. A setup/compilation
+failure cannot establish that a test caught a mutation. Browser witnesses that
+import `test-build/` need those modules prepared before their assertion.
+Technical examples and the retained registry inventory:
+[mutation-browser-guards.md](testing-notes/mutation-browser-guards.md).
 
 ## LED strips: lazy boundaries (#780)
 
@@ -2496,166 +2396,14 @@ tool or an editable strip, load none of them. «Displayed» is decided before
 space that is neither hidden nor HA-disabled — the stored marker is checked as
 well as the built device list (r1 M4). Each chunk checks the entry
 build fingerprint; a failed load is fail-dark for the strips only and retried
-on the next explicit entry. Budgets: `LAZY_LED_GZIP_CEILING` and
-`LAZY_LED_EDITOR_GZIP_CEILING` in `scripts/bundle-budget.mjs`.
+on the next explicit entry. Module sizes are diagnostic inputs to the release
+measurements described in PROCESS.md.
 
-## Outside-findings routing (#926)
-
-Trusted Actions configuration selects only explicit issue IDs; prepare freezes a typed
-identity/mode/deterministic path, bound to its output and artifact passport.
-The actual Review prompt embeds prepare's server-side snapshot; an external
-JSON copy is refreshed immediately before Review and is not the authority.
-Integration independently
-checks the trusted snapshot, exact companion set/hash/text, and publishes only
-the derived reviews/findings path beside the report. Legacy in-flight results
-can use only their old no-companion protocol. No arbitrary instructions, new
-model capabilities, severity waivers or merge authority are introduced.
-Publication normalizes line endings before sealing/writing and binds the exact
-Git blob in the report before its machine anchors. SPEC delivery accounting
-allows only that added same-issue/stage/round companion, expected header, blob,
-size and publisher proof; it remains spec-only trace, not implementation or
-release/close membership. The existing SPEC/index and foreign-path checks stay.
-
-## Explicit local amend (#923)
-
-`commit-amend.mjs` owns the narrow npm invocation, pins HEAD/parent/index and
-launches Git with fixed `commit --amend --no-edit` arguments. The existing
-provenance validator consumes its one-use local context only in staged-message
-mode and selects the parent/empty-tree diff. It keeps the same message,
-changelog, bundle and golden checks. Native Git's ambiguous hook metadata is
-not guessed; ordinary staged commits and historical ranges remain separate.
-This is a local workflow contract, not a new CI or author-identity authority.
-
-## Review handoff provenance (#904)
-
-Counter rebase equivalence (#1068) is a task-delta comparison across the old
-and accepted new base. `status-counter-equivalence.mjs` validates four Tests
-values against immutable Git blobs with bounded, no-lazy-fetch reads; it never
-loads a task's generator. `review-task-delta.mjs` binds changed files to their
-complete before/after blob identities, hunk positions and modes, normalizing
-only those four validated values before the STATUS blob identities are computed.
-An identical edit moved elsewhere is different; upstream edits to a task-touched
-file conservatively require ordinary review. The sole structured case is the
-canonical CI registry inventory: additions/removals are bound to their complete
-job/protocol key and unique sorted path values, so a shifted array index is
-harmless but moving a path to another job changes the delta. CI fingerprints
-still include the raw inventory. The trusted publisher certifies a green report and its base/material,
-body and delta identities in a durable artifact. Reentry authenticates that
-artifact before retaining green. It requires final candidate Validate even
-on fast-forward; ordinary proof consumers still invalidate changed inputs.
-
-Review policy (#1063) separates independent code judgement from evidence
-reuse: task and ship batch reviewers trace callers, state, side effects and
-failure paths before comparing author explanations and tests. A valid proof
-authenticates executed coverage, not semantic correctness or completeness.
-Explicit Sonnet 5/high settings in all three model review workflows fix the
-requested reviewer configuration without changing verdict publication authority.
-
-`review-handoff.mjs` owns a bounded syntactic parser and edited-comment selector
-shared by collection and format validation. API order and author identity are
-not authority; updated timestamp and numeric id select one candidate, including
-an incomplete one. The preflight v2 material identity adds that comment's
-id/URL/timestamps and exact-text digest. Its canonical snapshot is carried by
-the existing sealed prepare artifact and rechecked against fresh API reads at
-the model boundary. Scalar material guards, verdict schema, permissions and
-merge authority keep their existing owners.
-
-The separate format check (#922) identifies an acceptance row by its first AC
-token, so later cross-references cannot replace that row's number. It retains
-the existing section, contiguous-number, evidence and track-limit checks; it
-does not interpret or approve the meaning of an acceptance criterion.
-
-## Read-only release transport (#921)
-
-`release-gate.mjs` wraps its workflow, candidate-tree and proof-context GETs in
-`read-only-fetch.mjs`. That boundary refuses request bodies and non-GET methods;
-only EPIPE, ECONNRESET and UND_ERR_SOCKET transport failures get two bounded
-retries. It returns HTTP responses unchanged, preserves the final transport
-error, and does not interpret candidate evidence. Publication writes and other
-consumers of `ci-proof.mjs` are not wrapped or retried by this policy.
-
+## Settings presentation and retained product contracts
 
 Room settings (#946) use the shared settings shell in its single-section mode. The single fill select maps directly to the existing empty inherited value or own mode. Source pickers and optimistic save ownership are unchanged. The size sample uses independent Space bases and Room multipliers; sample values never enter persistence.
 
-
 Device settings (#947) reuse shared settings sections/controls. Hardware-only `recognizeRadarBinding` owns new-tab eligibility; `recognizeRadar` retains saved-profile runtime compatibility. A transient Details entry exposes persisted legacy profiles without reintroducing manual declaration. Preview uses the canonical presentation at scale=1; an unscaled scrollable canvas contains long faces/rings. Radius input editing state is UI-only and does not materialize inherited defaults. Radar setup reserves instruction height so phase changes do not move the measured map.
-
-## Selected browser progress (#983)
-
-Task-push browser evidence (#983) has an explicit selected scope independent
-of the complete CI-matrix receipt. Its plan follows a proven diff boundary,
-source/capture inputs and declared scene links. All task tracks share the same
-bounded selector (#1060): explicit links survive, weak lexical candidates are
-deferred, and an oversized inferred union retains the visual minimum plus
-authoritative checks. The complete matrix belongs to night/beta validation. A
-selected worker cannot emit a reusable full receipt or satisfy full review/
-release policy, and its actual job outcome must match proof metadata.
-
-## CI path profiles (#980)
-
-Validation token policy (#1124) starts with workflow-level contents read.
-Explicit job maps retain their scoped API/publication authority; packaging has
-actions read for cross-run immutable producer downloads. Product headers inherit
-the canonical execution header, while generated docs/tooling headers also carry
-the restricted default. Permissions remain part of authenticated job recipes.
-
-One generated path manifest binds GitHub ingress to computed test ownership.
-The canonical full job recipe stays in `validate.yml`; generated product jobs
-omit tooling, and the tooling/docs profiles omit product producers. Unknown
-paths remain product-conservative. Push ranges use the event's complete two-dot
-diff, preserving deletes and both sides of renames; unknown bases fail closed.
-
-Consumers select the registered workflow family by exact path. Product proofs
-require every companion profile in the candidate's coverage plan. Fast profile
-proofs remain progress; missing product evidence never becomes green. The
-existing main workflow_run trigger receives all profiles through their shared
-display name, while its dev body checks actual workflow identity. Canonical full
-dispatch remains the fallback and the night/release authority.
-
-
-## Authenticated content proof index (#981)
-
-The orphan ci-proofs index maps a job/content address to an immutable source
-execution. Product identity excludes documentation/tooling/output domains;
-job identity additionally covers exact test/harness inputs, transitive trust
-code, actual tools/pins, the executing workflow recipe and performance set.
-The source artifact and actual direct producer jobs authenticate every mutable
-entry. Branch ancestry and commit SHA are provenance fields, not reuse keys.
-A beta-only normalized identity masks synchronized canonical version scalars;
-assembly and one real bundle smoke remain fresh. Night/stable deny reuse.
-The v1 proof extension is additive: trusted old controllers can consume fresh
-migration evidence, while new controllers also require actual fresh bundle/
-product guards and independently authenticate every inherited source.
-
-Scoped tooling/selected-browser receipts (#1060) use the same index with distinct
-job addresses and `houseplan-task-check/v1` records. Their conservative identity
-covers all non-documentation inputs, exact selected IDs/visual intent, actual
-runtime and job recipe. A direct successful source attempt and its immutable
-artifact must authenticate the record; a reused result cannot produce another
-source. Current Git/range/process/packaging checks remain fresh. A selected
-receipt never proves full-matrix coverage, and a controller without the scoped
-validator forces fresh execution. Integration classification uses verified
-green coverage separately from the judged range used by process guards.
-
-Same-run retained jobs (#1067) preserve their original immutable execution
-record and separate original/current-clone job identities. Independent source
-artifact, Git inputs and exact authenticated job stamps/steps bind the clone;
-overall run success is not evidence. Producer sealing can observe its own
-in-progress proof job, while a consumer still requires the completed current
-attempt. Retention neither creates a new registry producer nor waives a changed
-full/fresh request or an originally reused execution.
-
-Sparse registry lookup (#1062) hydrates missing immutable blobs in bounded
-batches. Git reads disable implicit lazy fetch and share the probe deadline,
-so an unavailable object or remote produces fresh execution rather than a
-blocked lookup job. The independent policy and source checks remain mandatory.
-
-Python-producing jobs (#1032) install the exact patch selected by the reuse
-bootstrap, not an independently resolved minor from their runner cache. The
-bootstrap exports its actual setup-python version even when the registry probe
-falls back to fresh execution. Producer stamps still compare the actual Python
-runtime with that plan. Node remains an actual-runtime stamp; a different Node
-or Python stamp cannot mint a reusable record. No trust or proof schema changes.
 
 Room-face persistence (#1061) separates canonical topology keys from incident
 source coordinates inside `wall-face-graph.ts`. Source constraints belong to
@@ -2664,65 +2412,6 @@ writer still owns materialization, lineage and off-grid/physical non-growth.
 The backend's existing Optimize validation separately proves the exact known
 retained-carrier Align/storage result; it does not add a writer or bypass the
 opening-host and full structural-removal validators.
-
-Review execution policy (#1065) is prepared from accepted-dev tools outside
-the material checkout. All three model entrypoints use the pinned direct native
-launcher, explicit isolated settings and a positive tool catalogue. PreToolUse
-validates a fixed `run_check(check_id)` or an external report Write; the manifest
-owns executable/argv/env/cwd. Generic Bash/Edit/Agent and business MCP are absent;
-arbitrary shell programs and
-canonical implementation/guard/limit replacement are not review inputs.
-Task recipes (#1122) share the context's common-ancestor base. A digest-bound
-descriptor names material, reference and base; separate incoming/direct-tree
-readers cannot relabel reference-only documents as authored deletions.
-Missing or multiple ancestors refuse; ship/release ranges remain direct.
-The private journal stores tool IDs, policy-binding digests and decisions, with optional
-bounded fixed-vocabulary diagnostic shape metadata (#1082). The SDK's
-nonexecuting StructuredOutput channel is bound to the final structured result;
-it does not gain a shell/file capability when its internal call has no hook.
-Sealing requires a complete SDK result, a matching decision for executable tool calls, no
-forbidden request, unchanged tracked material and a report/summary without the
-known patch/run/restore-as-ordinary claim. Historical review files remain intact.
-This is an accidental-action tool boundary, not OS isolation of reviewed child
-programs or authentication against a hostile same-user process. It does not
-turn static checks or denied requests into execution evidence or mutant caught.
-
-Current startup/hook/audit use `sha256/hp-review-policy-v2` (#1086). Read, Grep,
-Glob and builtin ToolSearch bind the exact tool name: their admission policy
-does not depend on their arguments. This removes argument-normalization failures
-from read-only authorization without treating those arguments as equal evidence.
-All other tools bind the name and complete canonical JSON input, retaining
-values/types/strings/arrays and signed zero; unsupported JSON values refuse.
-Tool IDs, journal cardinality, decisions and results remain checked for every
-call. Each discovered actual tool still passes its own guard independently.
-Raw shape metadata remains order-sensitive diagnostic evidence, not admission.
-The historical `sha256/hp-json-keys-v1` and native Grep alias algorithm (#1084)
-remain only for diagnostics under their original semantics, never new admission.
-
-Trusted context supplies complete bounded source discussions and Git/CI facts;
-release review keeps its independent line scope. The model does not publish
-outside its report. After valid audit/seal, the trusted publisher preserves
-the configured issues/file route, uses stable finding IDs and completion
-receipts, and never rewrites sealed report/verdict bytes. Pending or ambiguous
-publication blocks forwarding/reuse; retry uses the same authenticated producer
-rather than another model call. Retained producer attempts remain bound to the
-same run/material and exact sealed manifest, never a cross-run waiver.
-
-Failure diagnostics (#1082) are a separate trusted read-only projection of the
-existing execution trace and private journal. A model/audit failure collects a
-bounded fixed-schema certificate before success-only sealing; an always-run
-failure uploader retains only that exact newly generated file for one day.
-Tool IDs and unknown names/keys are pseudonymized, argv is represented only by
-finite semantic categories, and payloads/credentials are never copied. Missing,
-malformed and oversized evidence stays explicit. Metadata channels are observed
-without gaining an admission exemption. The diagnostic has no verdict authority.
-Native result projection (#1134) adds bounded shape/is_error/reported-category
-metadata, not payload text or a pre-hook admission exemption. A provider-free
-manual native probe demonstrates schema/coerce/hook ordering with synthetic
-HOME and loopback-only transport; historical gaps remain refused and unclassified.
-Legacy digest comparisons remain labelled and use their original wire algorithm;
-new ToolSearch policy is never applied to old decisions. Unknown/mixed algorithms
-have unavailable comparison, and bound old refusals are retained honestly.
 
 Static-card update intake (#1112) retains the config/layout snapshot while marking its halves invalid. Known equal/older revisions do not notify; newer or revisionless events fence in-flight responses immediately and share a trailing 200ms notification window. A layout event fetches layout/get only, preserving config identity and capabilities; concurrent embedded cards share that request. Forced refresh still reads both halves and virtual-light events keep their immediate path.
 
@@ -2762,3 +2451,4 @@ raises only its owning stacking context (higher-specificity hover/topology
 layers remain authoritative), and no pointer/state polling is added.
 
 UI audit polish (#1145) keeps presentation in existing stylesheet owners. Shared hp-dialog row layout remains reusable, while footer padding/divider/alignment is scoped to the direct footer slot. Existing primary/ghost/action/hint classes replace unsupported aliases. Ordinary color controls use44px targets; compact/cover swatches keep their allocated size. No new observers, data fields, renderer branches or write authority are introduced.
+

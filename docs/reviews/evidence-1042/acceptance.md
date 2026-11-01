@@ -1,5 +1,10 @@
 # #1042 — stale appearance witnesses
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Infrastructure only (B/C), based on dev `2c6156c73ebe9b37d8e4b1570d10212b67696242`.
 No product, styles, bundle, schema, gate or golden changes.
 

@@ -1,5 +1,10 @@
 # #1035 — author acceptance evidence
 
+> **Исторический снимок.** Этапы, обязательные прогоны и команды ниже
+> относятся к процессу на дату документа и не предписывают действия сейчас.
+> Актуальные правила — [PROCESS.md](../../../PROCESS.md). Результаты, цифры
+> и продуктовые выводы сохранены без изменений.
+
 Accepted specification: issue body digest
 `ba980dfe4a103d82284151f10c5c490ce0e95709d032ff961f45feab93a84386`,
 SPEC r2 green (High 0 / Medium 0). Owner confirmed right-click selection and

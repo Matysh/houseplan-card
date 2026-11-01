@@ -1,5 +1,10 @@
 # Issue #122 — Isometric Stage 2: hidden visual polish
 
+> **Историческое ТЗ.** Процессные предписания ниже (гейты, прогоны, трейлеры,
+> передача на ревью) описывают прежнюю обвязку и не задают текущих действий.
+> Правила работы — [PROCESS.md](../../PROCESS.md); текущая постановка — в issue.
+> Продуктовые требования и исходные решения сохранены как контекст.
+
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/122
 - **Predecessor:** #89, normative Stage 1 contract
   [`089-isometric-view-stage1.md`](089-isometric-view-stage1.md)
