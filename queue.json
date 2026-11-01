@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 74,
-  "nextTicket": 10,
+  "revision": 75,
+  "nextTicket": 11,
   "nextFence": 10,
   "tasks": {
     "1176": {
@@ -34,14 +34,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "issue/1184-unified-header",
-      "materialSha": "4634fd74f44df8c08ae3f89bf282ae1aaf893b4f",
+      "materialSha": "7bc13185b6a0135979817cf3689f87754e5dc190",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 9,
-      "queued": false,
+      "ticket": 10,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793556555151,
-      "reviewEntry": 1,
+      "readyAt": 1793556794747,
+      "reviewEntry": 2,
       "patchId": "12a6062ee36caee00999fe01b43ed0a1346c54de",
       "changedFiles": [
         "demo/smoke_color_picker_presentation.mjs",
@@ -79,7 +79,6 @@
         "test/header-menu.test.mjs",
         "test/mutation-browser-offload.test.mjs"
       ],
-      "reason": "checks-failed",
       "notice": {
         "key": "1:checks-failed",
         "reason": "checks-failed",
@@ -159,7 +158,9 @@
     }
   },
   "reviewPublications": {},
-  "waiting": [],
+  "waiting": [
+    1184
+  ],
   "active": null,
   "events": {
     "github:41333465147:1:label:spec-request": {
@@ -204,6 +205,10 @@
     },
     "finish:820d9684-c4a6-4abf-9542-273c4cb9465f:metadata:a1cb01c0-4d1e-4ecf-b95f-dc6235089d88:task-notice:1184::": {
       "digest": "bb5bd6a68eb86d1cb073f3d24fbb22d841debfb937c9de63b075143442b49217",
+      "issue": 1184
+    },
+    "finish:70114242-1bda-4a8a-bef8-3ce4c9daf227": {
+      "digest": "166d283083c7b36959377e4e937f6844a9a09c2c14ce78fc6f57bbde70f1126d",
       "issue": 1184
     }
   },
