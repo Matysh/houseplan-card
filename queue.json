@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 325,
+  "revision": 326,
   "nextTicket": 35,
   "nextFence": 34,
   "tasks": {
@@ -412,7 +412,8 @@
       "presentation": {
         "round": null,
         "occurredAt": "2026-11-01T21:32:28.997Z"
-      }
+      },
+      "runId": 41352531264
     }
   },
   "waiting": [
@@ -690,6 +691,10 @@
     },
     "1190-stopped-history-repair-20261101": {
       "digest": "2e23c439ab394c18ca4c1d845348f580ed3e1fc2d5ad7ed0fccb898c708163a4",
+      "issue": 1190
+    },
+    "finish:60a095fb-1729-4d5d-bfd6-44911ddf9704:finish:7:review-presentation": {
+      "digest": "f24d56bb34cd7593723ec63a88115647bbded933a9984a3b4b010ca046256952",
       "issue": 1190
     },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
