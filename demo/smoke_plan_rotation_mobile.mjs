@@ -25,8 +25,10 @@ try{
   await page.addStyleTag({content:'#host{width:auto!important;padding:0!important;margin:0!important}'});
   await page.emulateMedia({reducedMotion:'reduce'});await wait();
   await card.locator('[data-hp="rotate-right"]').click();await wait();
-  await card.locator('[data-hp="zoom-in"]').click();await wait();
-  await card.locator('[data-hp="zoom-in"]').click();await wait();
+  // Zoom buttons yield their space in the compact header; use the supported gesture.
+  const zoomStage = await card.locator('.stage').boundingBox();
+  await page.mouse.move(zoomStage.x+zoomStage.width/2,zoomStage.y+zoomStage.height/2);
+  await page.keyboard.down('Control'); await page.mouse.wheel(0,-180); await page.keyboard.up('Control'); await wait();
   const b=await card.locator('.stage').boundingBox();
   await page.mouse.move(b.x+b.width*.7,b.y+b.height*.8);await page.mouse.down();
   await page.mouse.move(b.x+b.width*.7+25,b.y+b.height*.8+15,{steps:8});await page.mouse.up();await wait();

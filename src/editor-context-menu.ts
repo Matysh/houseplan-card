@@ -5,13 +5,13 @@ import { controlMotion, controlMotionReduced, controlSurfaceFrames } from './ui-
 
 export interface EditorMenuItem {
   key: string; label: string | TemplateResult; disabled?: boolean;
-  hp?: 'action' | 'device-copy' | 'header-menu-item'; action?: string; value?: string; title?: string;
+  hp?: 'action' | 'device-copy'; action?: string; value?: string; title?: string;
   current?: boolean; pressed?: boolean;
   invoke(): void;
 }
 export interface EditorMenuModel {
   /** A new opening always gets a new owner token, even for the same object. */
-  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu' | 'header-menu'; items: EditorMenuItem[];
+  token: object; hp: 'device-context-menu' | 'decor-context-menu' | 'catalog-context-menu' | 'node-context-menu'; items: EditorMenuItem[];
   density?: 'compact' | 'touch'; label?: string;
   anchor: RectLike | (() => RectLike); gap?: number; minWidth?: number; viewport?: () => FloatingViewport;
   localTo?: HTMLElement;
@@ -156,19 +156,16 @@ export class EditorContextMenu {
     }
     this.model = model;
     const token = model.token;
-    const header = model.hp === 'header-menu';
-    this.view = html`<div class="hpf-context-menu ${model.density === 'touch' ? 'hpf-context-menu-touch' : ''} ${header ? 'header-menu' : ''}"
-      id=${header ? 'hp-header-menu' : nothing} data-hp=${model.hp === 'header-menu' ? nothing
-        : model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu'
+    this.view = html`<div class="hpf-context-menu ${model.density === 'touch' ? 'hpf-context-menu-touch' : ''}"
+      data-hp=${model.hp === 'device-context-menu' ? 'device-context-menu' : model.hp === 'decor-context-menu' ? 'decor-context-menu'
           : model.hp === 'catalog-context-menu' ? 'catalog-context-menu' : 'node-context-menu'}
-      role=${header ? 'group' : 'menu'} aria-label=${model.label ?? nothing}
+      role="menu" aria-label=${model.label ?? nothing}
       ${ref(element => this.mount(element, token))}
       @pointerdown=${(event: Event) => event.stopPropagation()} @click=${(event: Event) => event.stopPropagation()}
       @contextmenu=${(event: Event) => event.preventDefault()}>
-      ${model.items.map(item => html`<button type="button" role=${header ? nothing : 'menuitem'}
-        class=${header ? 'header-menu-item' : nothing} data-id=${header ? item.key : nothing}
+      ${model.items.map(item => html`<button type="button" role="menuitem"
         aria-current=${item.current ? 'true' : nothing} aria-pressed=${item.pressed === undefined ? nothing : String(item.pressed)}
-        data-hp=${item.hp === 'device-copy' ? 'device-copy' : item.hp === 'header-menu-item' ? 'header-menu-item' : 'action'} data-action=${item.action ?? nothing}
+        data-hp=${item.hp === 'device-copy' ? 'device-copy' : 'action'} data-action=${item.action ?? nothing}
         data-value=${item.value ?? nothing} title=${item.title ?? nothing} ?disabled=${!!item.disabled}
         @click=${() => {
           if (!this.active || this.invoked || this.model?.token !== token || item.disabled) return;

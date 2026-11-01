@@ -29,6 +29,7 @@ export const navigationStyles = unsafeCSS(css`
   .hpf-nav-compact { gap:0; }
   .hpf-nav-compact > .compact-space-settings { margin-inline-start:-1px; border-radius:0 7px 7px 0; }
   .hpf-nav-compact > .tabadd { margin-inline-start:10px; }
+  .hpf-nav-compact > .hpf-nav-item, .tabs > .tabadd { padding:0; width:44px; }
   .hpf-nav-modes { --hp-editor-close-size:44px; gap:0; }
   .hpf-nav-modes > .hpf-nav-item { border-radius:0; }
   .hpf-nav-modes > * + * { margin-inline-start:-1px; }
