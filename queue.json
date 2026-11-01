@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 415,
-  "nextTicket": 44,
+  "revision": 416,
+  "nextTicket": 45,
   "nextFence": 43,
   "tasks": {
     "1128": {
@@ -413,6 +413,20 @@
       "status": "S6-in-progress",
       "readyAt": 1793572985803,
       "reviewEntry": 1
+    },
+    "1197": {
+      "issue": 1197,
+      "track": "show",
+      "layer": "product",
+      "branch": "codex/ci-b-node-contracts",
+      "materialSha": "2df013c2c4b49fd185a036c4ee4572502b5b4922",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 44,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793572988277,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -476,7 +490,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1196
+    1196,
+    1197
   ],
   "active": null,
   "events": {
@@ -507,6 +522,19 @@
         "track": "ship",
         "layer": "product",
         "materialSha": "6854fe99aa8808baacefc110a9565f253feff4b1"
+      }
+    },
+    "finish:1f8a83b7-860c-4058-aa32-5231f78c6590": {
+      "digest": "9364ede073e5842fbacb4bc9f37109f25ef787cb036ab07d44f73e88698cfb05",
+      "issue": 1197,
+      "message": {
+        "kind": "queued",
+        "issue": 1197,
+        "at": 1793572988277,
+        "entry": 1,
+        "track": "show",
+        "layer": "product",
+        "materialSha": "2df013c2c4b49fd185a036c4ee4572502b5b4922"
       }
     }
   },
