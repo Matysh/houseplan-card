@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 57,
+  "revision": 58,
   "nextTicket": 8,
   "nextFence": 8,
   "tasks": {
@@ -58,10 +58,12 @@
       "mergedSha": "c6b1f39e6f37c73db99eec63e47dde97332b4147",
       "mergedAt": 1793555531142,
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "commentDigest": "c775cf730aacbefb7bca"
       },
       "devBuild": {
         "status": "not-required"
