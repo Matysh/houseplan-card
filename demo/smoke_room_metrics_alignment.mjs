@@ -53,8 +53,7 @@ try {
       labels: [...window.__card.shadowRoot.querySelectorAll('.roomlabel')].map(e => e.outerHTML),
       camera: window.__card.shadowRoot.querySelector('.plan-svg').getAttribute('viewBox') }));
     const trigger = page.locator('[data-hp="pdf"]');
-    if (await trigger.isVisible()) await trigger.click();
-    else {  await page.locator('[data-hp="pdf"]').click(); }
+    await trigger.click();
     const dialog = page.locator('hp-pdf-dialog');
     await dialog.locator('[data-field="export-format"]').selectOption('svg');
     await dialog.locator('[data-field="svg-backdrop"]').uncheck();

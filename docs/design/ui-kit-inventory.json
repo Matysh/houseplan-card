@@ -23,32 +23,32 @@
       ],
       "cells": {
         "segmented": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json",
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json",
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "select": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses hp-settings-select.ts:HpSettingsSelect named header/header-panel variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses hp-settings-select.ts:HpSettingsSelect shared header variant|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "btn-icon": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "menu": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses editor-context-menu.ts:EditorContextMenu + editor-context-menu.styles.ts (touch44)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses editor-context-menu.ts:EditorContextMenu + editor-context-menu.styles.ts (touch44)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "motion-open-close": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses ui-motion.ts + control-surface-presentation.ts:ControlSurfacePresentation; caller retains guards|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses ui-motion.ts + control-surface-presentation.ts:ControlSurfacePresentation; caller retains guards|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "tooltip": [
           "K|data-hp-tooltip on header buttons: houseplan-card.ts:11514-11520, header-menu.ts:1"
         ],
         "section-heading": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles hpf-heading variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles hpf-heading variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "card/group": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "separator": [
-          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:HeaderMenu; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles entry/pair/header separators|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|header-space-select.ts:renderHeaderSpaceNavigation; header-menu.ts:renderHeaderActions / renderHiddenDevicesToggle; houseplan-card.ts:_renderBody uses styles/reading-kit.styles.ts:readingKitStyles entry/pair/header separators|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ]
       }
     },
@@ -69,7 +69,7 @@
           "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses styles/icon-action.styles.ts:iconActionStyles (44px icon action/group)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "select": [
-          "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses hp-settings-select.ts:HpSettingsSelect named header/header-panel variants|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
+          "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses hp-settings-select.ts:HpSettingsSelect shared header variant|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"
         ],
         "segmented": [
           "K|panel-header-menu.ts:renderPanelMenu; panel-header-flow.ts:spaceMetrics; header-space-select.ts:renderHeaderSpaceNavigation uses styles/navigation.styles.ts:navigationStyles; header-navigation-kit.ts (live/metric contract)|layout only; #1147 native smokes and docs/design/ui-kit-audit-1147.json"

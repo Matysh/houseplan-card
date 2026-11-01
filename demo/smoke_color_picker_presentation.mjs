@@ -197,11 +197,7 @@ try {
       const family = window.__colorPickerConsumerFamily;
       const c = window.__card, hp = window.__hpTest;
       if (family === 'general') {
-        let button = c.renderRoot.querySelector('[data-hp="settings"]');
-        if (!button) {
-          
-          button = c.renderRoot.querySelector('[data-hp="settings"]');
-        }
+        const button = c.renderRoot.querySelector('[data-hp="settings"]');
         button.click();
       }
       if (family === 'space') await hp.openSpaceDialog('edit', c._space);

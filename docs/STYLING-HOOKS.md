@@ -414,18 +414,14 @@ Zoom controls remain in the DOM inside the CSS-hidden kiosk header, exactly as
 before. `space-add` keeps its stricter existing rule and is not rendered in
 kiosk mode.
 
-### 7.3a Phone header menu (#616)
+### 7.3a Shared responsive header (#1184)
 
-At a window width of 480 px or less the header is one row: space tabs, zoom
-and a gear `[data-hp="header-menu"]` (44 × 44, `aria-haspopup`,
-`aria-expanded`). Everything the row drops — editor tabs, space settings, add
-space, general settings, PDF, help and the summary-panel pair (the projection
-item is gone since #649) — is a `[data-hp="header-menu-item"][data-id="…"]` button of
-its menu (`#hp-header-menu`, `role="group"`), each at least 44 px high; the
-vocabulary of `data-id` is in the JSON inventory. While the menu is open a
-transparent `[data-hp="header-menu-scrim"]` swallows the tap that dismisses it.
-Above 480 px the gear is in the DOM but hidden, and the ordinary buttons are
-unchanged. Kiosk renders neither.
+Panel and Lovelace share content-based adaptation and direct actions. The old
+phone gear is removed: header-menu, header-menu-item and header-menu-scrim are
+listed in retiredHooks of data-hp-contract.json. Use the existing direct
+mode-tab[data-mode], space-settings, space-add, settings, pdf, support,
+hidden-devices, summary-settings and summary-toggle hooks. Their availability
+still follows permissions, mode and kiosk; no hidden compatibility menu exists.
 
 ### 7.4 Editors
 
@@ -509,7 +505,7 @@ gates or saved data. Their complete elements/enums/identity metadata live in
 | `furniture-category[data-id]`, `furniture-item[data-id]` | Existing canonical category and symbol buttons. |
 | `image-upload[data-kind]` | Existing backdrop/decor file input; attachment PDFs are not image uploads. |
 | `glow-layer`, `glow-pool[data-entity]` | Existing glow layer and source entity. A pool can remain through its existing fade-out; wait for settle before asserting absence. This is DOM presence, not pixel quality. |
-| `summary-panel`, `summary-settings`, `summary-toggle`, `summary-metric[data-id]` | Existing panel, desktop/kiosk controls and configured value id. Phone controls retain `header-menu-item`. |
+| `summary-panel`, `summary-settings`, `summary-toggle`, `summary-metric[data-id]` | Existing summary panel, direct non-kiosk controls and configured value id; the same hooks apply at narrow widths. |
 | `space-tab[data-space]`, `space-delete` | Space id (old `data-id` retained) and the existing deletion action/confirmation. |
 | `toast[data-id]` | Known i18n key, or `message` for composed/unkeyed text; no reverse lookup by translated text. Ownership/routing retains the key, replacement updates it. |
 | `settings-section[data-kind][data-section]` | Desktop settings navigation; mobile select uses `field[data-field="settings-section"]`. Hidden panes remain mounted. |

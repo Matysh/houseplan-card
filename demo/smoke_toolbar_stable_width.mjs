@@ -18,6 +18,9 @@ try{
     await page.evaluate(language=>window.__card.setConfig({...window.__card._config,language}),lang);await settle();
     for(const width of [1800,1000,768,390,320]){
       await page.evaluate(width=>document.getElementById('host').style.cssText=`width:${width}px!important;max-width:none!important;padding:0!important;margin:0!important`,width);await settle();
+      const add=card.locator('[data-hp="space-add"]');
+      await add.focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
+      assert.ok(await add.evaluate(e=>e.matches(':focus-visible')&&getComputedStyle(e).outlineWidth==='2px'&&getComputedStyle(e).outlineStyle==='solid'));
       let previous=null;
       for(const mode of modes){
         const tab=card.locator(`[data-hp="mode-tab"][data-mode="${mode}"]`);

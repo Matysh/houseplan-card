@@ -31,12 +31,7 @@ for (const width of [360, 1280]) for (const language of ['ru', 'en']) for (const
     // work. A CDP-held settled() promise can be collected during that change;
     // the actual settings field below, not that promise, is the entry oracle.
     const settingsButton = page.locator('houseplan-card [data-hp="settings"]');
-    if (await settingsButton.isVisible()) {
-      await settingsButton.click();
-    } else {
-      
-      await page.locator('houseplan-card [data-hp="settings"]').click();
-    }
+    await settingsButton.click();
     const general = page.locator('houseplan-card hp-dialog[data-kind="settings"]');
     const checkbox = general.locator('#gs-show-lqi');
     await checkbox.waitFor();

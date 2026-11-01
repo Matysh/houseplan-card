@@ -22,6 +22,7 @@ export const navigationStyles = unsafeCSS(css`
   .hpf-navigation { padding:0; gap:10px; background:transparent; }
   .hpf-navigation > .hpf-nav-item { height:44px; padding:0 12px; border-color:var(--divider-color); background:transparent; color:var(--primary-text-color); }
   .hpf-navigation > .hpf-nav-item.active { border-color:var(--primary-color); z-index:1; }
+  .hpf-navigation > .hpf-nav-item:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
   .hpf-nav-item > .tabtitle { line-height:42px; }
   .hpf-nav-item:has(> .tabedit) { padding:0; gap:0; }
   .hpf-nav-item:has(> .tabedit) > .tabtitle { padding-inline:12px; }
@@ -37,7 +38,6 @@ export const navigationStyles = unsafeCSS(css`
   .hpf-nav-modes > .hpf-nav-item:last-child,
   .hpf-nav-modes > .hpf-nav-item:has(+ .editor-close-slot[aria-hidden='true']) { border-radius:0 7px 7px 0; }
   .hpf-nav-modes > .hpf-nav-item.active::after { display:none; }
-  .hpf-nav-modes > .hpf-nav-item:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
   .hpf-nav-modes > .editor-close-slot[aria-hidden='true'] { display:none; }
   .hpf-nav-modes > .editor-close-slot:not([aria-hidden='true']) { position:relative; width:44px; height:44px; border:1px solid var(--divider-color); border-radius:0 7px 7px 0; }
   .hpf-nav-modes .closex { position:absolute; inset:-1px; width:44px; height:44px; color:var(--primary-text-color); opacity:1; }

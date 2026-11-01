@@ -41,8 +41,7 @@ try{
  },form);
  if(form==='general'){
   const button=page.locator('houseplan-card [data-hp=settings]');
-  if(await button.isVisible())await button.click();
-  else{await page.locator('houseplan-card [data-hp=settings]').click();}
+  await button.click();
  }
  if(form==='device')await openSettingsDeviceDialog(page,'demo_living_climate');
  const kind={room:'room',general:'settings',space:'space',device:'marker'}[form],dialog=page.locator(`houseplan-card hp-dialog[data-kind=${kind}]`);

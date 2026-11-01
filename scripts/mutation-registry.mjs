@@ -76,7 +76,7 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // `find` обязан встречаться в файле ровно один раз: патч, который ложится «куда
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
-  
+
   {
     id: 'golden-lamp-out-of-reach',
     guard: 'node process-next/catalog/golden-runner.mjs --mode=capture --scenario=panel-lighting-opaque-glow-two-doorways-dark',
@@ -296,7 +296,7 @@ const MUTANT_DEFINITIONS = [
       find: '.hdr > .head { box-sizing: border-box; position: relative; z-index: 3; }',
       replace: '.hdr > .head { box-sizing: border-box; }' }],
   },
-  
+
   {
     id: 'plan-rotation-stale-header-observer-1070',
     guard: 'node demo/smoke_led_strip_glow.mjs',
@@ -12401,7 +12401,7 @@ const MUTANT_DEFINITIONS = [
       replace: "    const editorClose = html`<span class=\"count\">${this._devices.length} dev.</span><span class=\"editor-close-slot\" aria-hidden=",
     }],
   },
-  
+
   {
     id: 'toolbar-close-back-inside-tab',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
@@ -12414,7 +12414,7 @@ const MUTANT_DEFINITIONS = [
   }
 ],
   },
-  
+
   {
     id: 'toolbar-close-slot-idle-focusable',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
@@ -12464,7 +12464,7 @@ const MUTANT_DEFINITIONS = [
       replace: '              </div>${editorClose}`',
     }],
   },
-  
+
   {
     id: 'editor-summary-controls-return-to-view-only',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
@@ -12476,7 +12476,7 @@ const MUTANT_DEFINITIONS = [
       replace: "    if (this.host._mode !== 'view' || this.host._kiosk) return nothing;",
     }],
   },
-  
+
   {
     id: 'editor-neutral-escape-does-not-exit',
     guard: 'node demo/smoke_editor_tabs.mjs',
@@ -12487,7 +12487,7 @@ const MUTANT_DEFINITIONS = [
       replace: "    e.preventDefault();\n  }\n  /** Remove the last transient point",
     }],
   },
-  
+
   {
     id: 'tab-editing-without-write-access',
     guard: 'node demo/smoke_mobile_view_header.mjs',
@@ -12498,14 +12498,14 @@ const MUTANT_DEFINITIONS = [
       replace: '            configure: this._norm ? id => this._openSpaceDialog(\'edit\', id) : null,',
     }],
   },
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
   {
     id: 'tab-reorder-not-persisted',
     guard: 'node demo/smoke_space_tab_reorder.mjs',

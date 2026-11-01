@@ -255,10 +255,11 @@ keyboard activation and a 44px touch floor; activating it never fits the room.
 The room name remains an independent fit action. Other editors keep a passive
 icon, and kiosk never displays it (#894).
 
-Header in View: space navigation, summary control and zoom cluster. On wider screens
-the summary control also remains available in editors; the fixed distance from
-the editor group to zoom is half the former gap. On a phone (≤ 480 px): the
-space selector, editor-close reserve, zoom and one gear whose menu holds the rest.
+Header in View and editors uses the same outlined groups in the panel and
+Lovelace (#1184). Actual content and container width select intrinsic phases:
+compact editor icons, fewer zoom buttons, floor dropdown, then wrapping rows.
+Summary and other permitted actions stay direct; no phone gear or empty editor
+close reserve is retained. Gestures still zoom; kiosk hides the header.
 
 ## Plan — geometry and appearance of the space
 

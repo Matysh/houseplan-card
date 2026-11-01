@@ -5,8 +5,7 @@ import { helpSurfaceStyle, helpSurfaceMetaStyle } from './help-surface.styles';
 
 const chromeCoreStyles = unsafeCSS(css`
     .hdr {
-      /* #993: the editor buttons fold to icons by the header's own width — in
-         the panel that is Home Assistant minus its sidebar — not the window. */
+      /* Both placements measure intrinsic header content in this container. */
       container: hp-head / inline-size;
       position: sticky;
       top: var(--header-height, 56px);

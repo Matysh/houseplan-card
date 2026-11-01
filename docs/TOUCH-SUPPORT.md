@@ -61,19 +61,17 @@ spaces occupy the first row, editors and rotations the next, and remaining
 actions wrap below (three rows in the approved390px fixture; more for tighter
 or longer content). Groups and editor close have44px targets; rotation/zoom
 are separate outlined groups with10px between them. Gestures retain zoom.
-Properties independently uses 1024 px of card width. Lovelace receives no HA menu
-and retains the existing fixed phone/header behavior described below.
+Properties independently uses 1024 px of card width. Lovelace uses the same
+content-based header (#1184), retaining its title but receiving no HA menu.
 
 - render the plan and current states correctly;
-- in Lovelace on a phone (≤ 480 px) keep the header to one row of at most 56 px — space
-  selection, rotation/zoom and one gear whose menu holds every other header action, each
-  item a 44 px target (#616);
-- in Lovelace use the shared floor dropdown when the actual header is ≤1024 px (#997),
-  retaining touch selection, the current floor, editor dirty guards and the
-  existing phone gear/zoom targets; wider headers retain tabs;
-- in Lovelace retain that View row even below 360 px. Admin editors may use two header rows
-  below 360 px, with five rotation/zoom targets together at 44 px and the existing
-  close control. Editors remain desktop-first/best effort on touch (#1070);
+- use the same content-based header in panel and Lovelace at every width,
+  preserving direct actions and 44px targets, with wrapping as required;
+- select floor tabs or the shared dropdown by actual available space, retaining
+  touch selection, accepted floor and editor dirty-navigation guards;
+- keep editor close directly reachable in the shared 44px slot. There is no
+  old one-row/56px phone limit, viewport-based gear menu or fixed 1024px header
+  threshold. Editors remain desktop-first/best effort on touch;
 - support convenient pan, pinch zoom and space switching;
 - treat a linked stair as a floor-navigation target only after a clean tap;
   pan, pinch, long press, swipe and cancellation tails must stay inert;

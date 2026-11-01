@@ -171,13 +171,12 @@ try {
   await dialog(warm.page).waitFor();
   const writesBeforeAdd = await warm.page.evaluate(() => window.emptyImportFixture.log
     .filter(m => m.type === 'houseplan/config/set').length);
-  for (const entry of ['tab', 'menu']) {
-    if (entry === 'menu') {
+  for (const entry of ['wide', 'narrow']) {
+    if (entry === 'narrow') {
       await warm.page.setViewportSize({ width: 360, height: 760 });
       
     }
-    const button = warm.page.locator(entry === 'tab' ? '[data-hp="space-add"]'
-      : '[data-hp="space-add"]');
+    const button = warm.page.locator('[data-hp="space-add"]');
     // Labelled negative probe: dispatch the real DOM handler under the modal
     // scrim, as in the review repro; this does NOT claim native background input.
     await button.evaluate(el => el.click());

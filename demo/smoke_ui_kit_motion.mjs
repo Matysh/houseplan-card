@@ -46,11 +46,7 @@ try {
     await page.evaluate(ensureHarnessEditorRuntime); await installHpTestOnPage(page);
     const open = async () => {
       const settings = page.locator('houseplan-card [data-hp="settings"]');
-      if (await settings.isVisible()) await settings.click();
-      else {
-        
-        await page.locator('[data-hp="settings"]').click();
-      }
+      await settings.click();
     };
     for (const reduced of [false, true]) {
       await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });

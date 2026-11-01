@@ -61,8 +61,7 @@ const size = async (width, viewport = 1440, height = 1000) => {
   });
   await page.waitForFunction(expected => {
     const root = window.__card.renderRoot;
-    return Math.abs(root.querySelector('.hdr').getBoundingClientRect().width - expected) < .01
-      ;
+    return Math.abs(root.querySelector('.hdr').getBoundingClientRect().width - expected) < .01;
   }, width);
   await settle();
 };
