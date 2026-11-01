@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 198,
+  "revision": 199,
   "nextTicket": 23,
   "nextFence": 21,
   "tasks": {
@@ -31,162 +31,21 @@
     },
     "1156": {
       "issue": 1156,
+      "branch": "codex/1156-copy-categories",
       "track": "ask",
       "layer": "product",
-      "branch": "codex/1156-copy-categories",
-      "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-      "ownerAssigned": false,
-      "ownerDecision": null,
-      "ticket": 20,
-      "queued": false,
-      "status": "S7-code-review",
-      "readyAt": 1793565861876,
-      "reviewEntry": 2,
-      "patchId": "ba4335f4e02a3640541d21cce8438b9681889742",
-      "changedFiles": [
-        "demo/smoke_space_copy_categories.mjs",
-        "docs/ARCHITECTURE.md",
-        "docs/CHANGELOG.md",
-        "docs/CHANGELOG.ru.md",
-        "docs/DECOR-EDITOR.md",
-        "docs/USER-GUIDE.ru.md",
-        "docs/release-ledger/v1.83.0/1156.json",
-        "src/i18n/en.json",
-        "src/i18n/ru.json",
-        "src/space-copy-runtime.ts",
-        "src/space-copy.ts",
-        "src/space-dialog.ts",
-        "test/space-copy-runtime.test.mjs",
-        "test/space-copy.test.mjs"
-      ],
-      "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered"
+      "status": "S8-merged",
+      "mergedSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
+      "mergedAt": 1793566156972,
+      "completion": {
+        "status": "pending",
+        "labels": false,
+        "milestone": false,
+        "comment": false
       },
-      "s6": {
-        "id": "20261101T204633462-73d0b5bd",
-        "reportPath": "/home/matysh/hp-s8-plan-decor-20261026/.git/process-next/runs/20261101T204633462-73d0b5bd/report.json",
-        "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "status": "passed",
-        "finishedAt": "2026-11-01T20:46:45.324Z"
-      },
-      "reviewRequest": "review:1156:2:ba4335f4e02a3640541d21cce8438b9681889742:3da8f630e25f42d43cce35deec3fd3c292c7610e",
-      "reviewMaterial": {
-        "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-        "patchId": "ba4335f4e02a3640541d21cce8438b9681889742"
-      },
-      "review": {
-        "version": 1,
-        "issue": 1156,
-        "requestId": "review:1156:2:ba4335f4e02a3640541d21cce8438b9681889742:3da8f630e25f42d43cce35deec3fd3c292c7610e",
-        "kind": "code",
-        "base": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-        "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "patchId": "ba4335f4e02a3640541d21cce8438b9681889742",
-        "verdict": "accepted",
-        "authorContext": {
-          "status": "provided",
-          "source": {
-            "kind": "issue-body",
-            "issue": 1156,
-            "url": "https://github.com/Matysh/houseplan-card/issues/1156",
-            "heading": "Контекст исполнителя для ревью"
-          },
-          "text": "### Реализация\nТЗ принято Opus5.5, workflow41347763192 на base3da8f630e, блокеров нет. Установленный ask сохранён. Две transient boolean в SpaceCopyDraft сбрасываются при новом open; обе checkbox используют существующие hpf-check/hpf-check-wrap. Имя и галочки disabled на busy; обработчики опираются на свежий draft и его busy. saveSpaceCopy снимает выбор вместе с именем до await. Immutable builder по существующему kind=furniture фильтрует выбранные decor, затем проверяет лимит выбранного выхода и выдаёт свежие ID; no schema change, marker/layout/ownership/Optimize/adoption path прежние. Existing full-copy unit остаётся с явным opt-in обоих категорий; не удалены ID/deep-copy проверки.\n\n### Проверки и риски\nС6 исполняет finish после входа в общую очередь и финального sync: product minimum + test/space-copy.test.mjs, test/space-copy-runtime.test.mjs, demo/smoke_space_copy.mjs и новый demo/smoke_space_copy_categories.mjs. Новый native настоящий /houseplan проверяет 4сочетания и фактические config/set, новые ID/поля/неизменный оригинал, keyboard, Cancel/Escape/reset, busy, 1280/390px, light/dark; снимает4PNG. Перед первым запуском PASS не заявлен. Исходный #1154 retirement smoke сохранён. Глобальные эталоны не принимаются; новый UI — только две строки выбора в существующей оболочке, CSS kit не копируется.\n\nE2E impact: надо до следующей беты. Companion tests/space-copy-lifecycle.admin.spec.mjs сейчас проверяет только retirement/Cancel, не состав копии. Нужно дополнить реальным authenticated copy/write/reload с четырьмя сочетаниями и неизменным оригиналом, сохранив сценарий #1154. Оценка передана координатору пачки для последовательной публикации в companion; liveHA этим synthetic native не подменяется.\nПервый S6 20261101T204249725-4239b8cf: 7/8 PASS, новый panel smoke FAIL только при повторном открытии настроек исходника после успешной первой копии — источник уже не был выбран, facade правильно не нашёл его settings. Native helper исправлен: сначала настоящий switchSpace('f1'), затем open. Продукт не менялся, исходный FAIL/PNG сохранены. Адресные Node22/22 и исходный copy smoke прошли; повторный finish проверит исправленный native."
-        },
-        "model": "claude-opus-5-5",
-        "report": {
-          "verdict": "accept",
-          "summary": "Работу можно принимать, блокеров нет. Изменение точно реализует принятое ТЗ: в существующий диалог добавлены две независимые галочки на общих классах `hpf-check hpf-check-wrap`, обе по умолчанию сняты. Выбор хранится в эфемерном `SpaceCopyDraft`, снимается вместе с именем до первого await и передаётся в неизменяемый builder. Builder отбирает элементы `decor` по `kind === 'furniture'` до проверки лимитов и выдачи новых ID. Остальные этапы копирования не тронуты: проверка геометрии, Optimize, CAS/adoption/rollback и запись. Оба необязательных замечания ревью ТЗ учтены: лимит `decor_limit` теперь считается по отобранному набору, а прежний тест полного копирования переведён на явное `{ furniture: true, decor: true }`. Есть квитанция S6 `passed` на этом head. Остаётся внешняя зависимость, которую исполнитель сам назвал: реальный HA E2E с четырьмя сочетаниями нужен до беты. Это не мешает принять код.",
-          "understanding": "Проблема: раньше `createSpaceCopyCandidate()` всегда переносил весь `space.decor`, а в диалоге копирования было только имя. Оболочку перевели на UI Kit ещё в #1148; задача #1156 добавляет выбор состава копии.\n\nПосле изменения:\n1) В `SpaceCopyDraft` (`src/space-dialog.ts`) появились `furniture`/`decor: boolean`. `openSpaceCopyDialog` каждый раз создаёт новый `copy` с false, поэтому повторное открытие после Cancel или Escape сбрасывает выбор.\n2) `renderSpaceCopyDialog` рисует под полем имени два native checkbox внутри `label.hpf-check.hpf-check-wrap`. Обработчик `choose` читает свежий `host._spaceDialog` и не меняет его, пока идёт операция (`busy` у диалога или у `copy`). На время выполнения имя и галочки получают `?disabled=${copy.busy}`.\n3) `saveSpaceCopy` до `await host._writeChain` копирует опции в локальный `options`, так же как `title`, и передаёт их в builder. Следующие `setBusy` распространяют (spread) текущий `copy`, поэтому после отказа от Optimize или ошибки записи выбор сохраняется в рамках той же операции.\n4) Builder: `geometryList(source.decor)` по-прежнему проверяет форму всех исходных строк, а затем фильтр оставляет `furniture` по флагу `options.furniture`, а любой другой kind, включая неизвестные, — по `options.decor`. Лимит считается по уже отобранному набору; ID `cd…` выдаются только выбранным строкам. Значение по умолчанию `{}` означает «ни мебели, ни декора».\n\nРазобранные пути: весь `space-copy-runtime.ts` (открытие, закрытие, отрисовка, сохранение, `setBusy`, ветки ошибок и конфликтов), builder целиком с `geometryList`/`clone`, все вызовы builder в тестах, новые unit-тесты и новый native smoke, использование `hpf-check-wrap` в других диалогах, ledger-каталог v1.83.0.",
-          "analysis": [
-            {
-              "topic": "Граница категорий и неизменяемость builder",
-              "assessment": "Решение верное и минимальное. Фильтр стоит после `geometryList`, поэтому некорректная исходная строка по-прежнему даёт `source_invalid` даже в исключённой категории — валидация источника не ослаблена. Глубокие копии через `clone`, порядок сохраняется фильтром, оригинал не мутируется. Неизвестные kind остаются в «декоре», как требует ТЗ. Счётчик `serial` общий для всех коллекций, поэтому при фильтрации ID остаются уникальными: меняется только нумерация, а у разных seed пространства ID и так разные.",
-              "evidence": "`src/space-copy.ts:119-130` — сначала фильтр, затем `decor_limit`; `:177` — `{...clone(item), id: nextId('cd')}`; `:195` — пустой результат не создаёт ключ `decor`. Тест `test/space-copy.test.mjs:188-215` перебирает четыре сочетания, включая image с `asset_id`, text с `entity`, `future-kind`, мутацию копии и неизменность входа, а также случай лимита в 1001 furniture."
-            },
-            {
-              "topic": "Снимок выбора и гонки во время await",
-              "assessment": "Опции снимаются синхронно вместе с `title`, до `flush`/`await`, поэтому даже программная замена черновика во время ожидания не меняет текущую операцию. Повторный submit отсекается `initial.busy || initial.copy.busy`. `choose` проверяет свежее состояние, а не значение из замыкания отрисовки, как и `@input`. Решение надёжное.",
-              "evidence": "`src/space-copy-runtime.ts:90-95, 163-173, 237-239`. Тест `#1156 category choices are captured before awaiting writes...` (`test/space-copy-runtime.test.mjs:263-281`) подменяет `copy` во время ожидания `_writeChain` и проверяет, что копия содержит только furniture, оригинал не изменился и запись была одна."
-            },
-            {
-              "topic": "Жизненный цикл диалога: значения по умолчанию, отмена, сохранение выбора при отказе",
-              "assessment": "Сброс при открытии сделан явным построением нового `copy`. После отказа от Optimize `setBusy(false)` сохраняет выбор, это проверено тестом. Путь закрытия и защита от retirement (#1154) не тронуты: `closeSpaceCopyDialog`, проверки токена в `setBusy` и ранние `return` остались прежними.",
-              "evidence": "`src/space-copy-runtime.ts:60-81, 221-222`. Тесты `test/space-copy-runtime.test.mjs:101-116` (открытие → false, повторное открытие после Cancel → false) и `:283-293` (отказ от Optimize сохраняет оба true, `busy` false). Существующие тесты #866/#1154 на retirement оставлены."
-            },
-            {
-              "topic": "UI и соответствие UI Kit",
-              "assessment": "Используются те же `hpf-check hpf-check-wrap`, что и в остальных диалогах; локальных стилей нет. Галочки — native checkbox внутри label, поэтому связь подписи с полем и управление через Tab/Space работают без дополнительного кода. Атрибуты `data-hp=\"field\"`/`data-field` совпадают с принятыми соглашениями хуков.",
-              "evidence": "`src/space-copy-runtime.ts:119-128`; аналоги — `src/houseplan-editor-runtime.ts:9708`, `src/editors/vacuum-maps-section.ts:280`. Native smoke `demo/smoke_space_copy_categories.mjs` проверяет Space/Tab, ширины 1280/390 в обеих темах (граница `.body`, `scrollWidth`), Cancel/Escape без записи, сброс при повторном открытии, `disabled` во время записи и четыре фактических результата `config/set` с неизменным источником."
-            },
-            {
-              "topic": "Проверки S6",
-              "assessment": "Есть квитанция `20261101T204633462-73d0b5bd` со статусом `passed` на `materialSha` de1043f3 — это head ревью. Значит, повторный finish после исправления native-helper (`switchSpace('f1')` перед `open`) прошёл. Первый FAIL автор объяснил ошибкой самого smoke, а не продукта, и это согласуется с кодом: настройки открываются для выбранного пространства. Сами логи и PNG я не видел, опираюсь на статус квитанции.",
-              "evidence": "receipts[0] в снимке; описание первого S6 в authorContext; `demo/smoke_space_copy_categories.mjs:20-24`."
-            },
-            {
-              "topic": "Документация и release-артефакты",
-              "assessment": "RU/EN changelog, ARCHITECTURE, DECOR-EDITOR и USER-GUIDE согласованы с поведением; ключи i18n соответствуют ТЗ. Ledger лежит в `v1.83.0/` с `baseStable: v1.83.0` и категорией `major` — так же, как у соседних задач будущего выпуска 1.84.0.",
-              "evidence": "`docs/release-ledger/v1.83.0/1156.json`; список файлов каталога v1.83.0; `src/i18n/{en,ru}.json:368-369`."
-            }
-          ],
-          "blockers": [],
-          "improvements": [
-            "Фокус после неуспешной операции. Во время busy поле имени получает `disabled`, и браузер снимает с него фокус. После отказа от Optimize или ошибки записи поле снова доступно, но фокус не возвращается, поэтому клавиатурному пользователю нужно снова нажать Tab, чтобы исправить имя или нажать Enter. Небольшое улучшение: после `setBusy(false)` в ветках отказа/ошибки возвращать фокус на `#space-copy-name`, когда диалог ещё открыт. Это не нарушает ТЗ, но заметно при работе с клавиатуры.",
-            "Реальный HA E2E. Исполнитель сам оценил, что дополнение `tests/space-copy-lifecycle.admin.spec.mjs` четырьмя сочетаниями с authenticated write/reload нужно до беты. Стоит проследить, чтобы этот companion-сценарий действительно появился до выпуска: synthetic smoke не проверяет серверную валидацию копий с `asset_id` при reload."
-          ],
-          "boundaries": "Это ревью по исходникам на head de1043f3. Сборку, тесты и smoke я не запускал. Использовал квитанцию S6 `passed` на этом же SHA и описание первого прогона из authorContext; логи и скриншоты не просматривал. Прочитаны целиком `src/space-copy-runtime.ts` и builder в `src/space-copy.ts`, существующие и новые тесты в `test/space-copy*.test.mjs`, новый native smoke и места использования `hpf-check-wrap`. Серверную валидацию decor и `asset_id` в реальном HA не проверял. Не проверял и то, нужно ли пересобирать закоммиченный frontend-бандл в рамках задачи: бандл не входит в diff, это вопрос процесса выпуска.",
-          "outsideFindings": []
-        },
-        "usage": {
-          "input_tokens": 14,
-          "cache_creation_input_tokens": 69131,
-          "cache_read_input_tokens": 266480,
-          "output_tokens": 6765,
-          "output_tokens_details": {
-            "thinking_tokens": 1392
-          },
-          "server_tool_use": {
-            "web_search_requests": 0,
-            "web_fetch_requests": 0
-          },
-          "service_tier": "standard",
-          "cache_creation": {
-            "ephemeral_1h_input_tokens": 69131,
-            "ephemeral_5m_input_tokens": 0
-          },
-          "inference_geo": "global",
-          "iterations": [
-            {
-              "input_tokens": 2,
-              "output_tokens": 856,
-              "cache_read_input_tokens": 60299,
-              "cache_creation_input_tokens": 13002,
-              "cache_creation": {
-                "ephemeral_5m_input_tokens": 0,
-                "ephemeral_1h_input_tokens": 13002
-              },
-              "type": "message"
-            }
-          ],
-          "speed": "standard",
-          "fallback_credit": null
-        },
-        "markdown": "# Ревью: accept\n\nМодель: claude-opus-5-5\nМатериал: 3da8f630e25f42d43cce35deec3fd3c292c7610e → de1043f3a3b45c3aa30016a7181cf227ff352713\nВид: code\n\n## Вывод\n\nРаботу можно принимать, блокеров нет. Изменение точно реализует принятое ТЗ: в существующий диалог добавлены две независимые галочки на общих классах `hpf-check hpf-check-wrap`, обе по умолчанию сняты. Выбор хранится в эфемерном `SpaceCopyDraft`, снимается вместе с именем до первого await и передаётся в неизменяемый builder. Builder отбирает элементы `decor` по `kind === 'furniture'` до проверки лимитов и выдачи новых ID. Остальные этапы копирования не тронуты: проверка геометрии, Optimize, CAS/adoption/rollback и запись. Оба необязательных замечания ревью ТЗ учтены: лимит `decor_limit` теперь считается по отобранному набору, а прежний тест полного копирования переведён на явное `{ furniture: true, decor: true }`. Есть квитанция S6 `passed` на этом head. Остаётся внешняя зависимость, которую исполнитель сам назвал: реальный HA E2E с четырьмя сочетаниями нужен до беты. Это не мешает принять код.\n\n## Понимание решения\n\nПроблема: раньше `createSpaceCopyCandidate()` всегда переносил весь `space.decor`, а в диалоге копирования было только имя. Оболочку перевели на UI Kit ещё в #1148; задача #1156 добавляет выбор состава копии.\n\nПосле изменения:\n1) В `SpaceCopyDraft` (`src/space-dialog.ts`) появились `furniture`/`decor: boolean`. `openSpaceCopyDialog` каждый раз создаёт новый `copy` с false, поэтому повторное открытие после Cancel или Escape сбрасывает выбор.\n2) `renderSpaceCopyDialog` рисует под полем имени два native checkbox внутри `label.hpf-check.hpf-check-wrap`. Обработчик `choose` читает свежий `host._spaceDialog` и не меняет его, пока идёт операция (`busy` у диалога или у `copy`). На время выполнения имя и галочки получают `?disabled=${copy.busy}`.\n3) `saveSpaceCopy` до `await host._writeChain` копирует опции в локальный `options`, так же как `title`, и передаёт их в builder. Следующие `setBusy` распространяют (spread) текущий `copy`, поэтому после отказа от Optimize или ошибки записи выбор сохраняется в рамках той же операции.\n4) Builder: `geometryList(source.decor)` по-прежнему проверяет форму всех исходных строк, а затем фильтр оставляет `furniture` по флагу `options.furniture`, а любой другой kind, включая неизвестные, — по `options.decor`. Лимит считается по уже отобранному набору; ID `cd…` выдаются только выбранным строкам. Значение по умолчанию `{}` означает «ни мебели, ни декора».\n\nРазобранные пути: весь `space-copy-runtime.ts` (открытие, закрытие, отрисовка, сохранение, `setBusy`, ветки ошибок и конфликтов), builder целиком с `geometryList`/`clone`, все вызовы builder в тестах, новые unit-тесты и новый native smoke, использование `hpf-check-wrap` в других диалогах, ledger-каталог v1.83.0.\n\n## Разбор решения\n\n### Граница категорий и неизменяемость builder\n\nРешение верное и минимальное. Фильтр стоит после `geometryList`, поэтому некорректная исходная строка по-прежнему даёт `source_invalid` даже в исключённой категории — валидация источника не ослаблена. Глубокие копии через `clone`, порядок сохраняется фильтром, оригинал не мутируется. Неизвестные kind остаются в «декоре», как требует ТЗ. Счётчик `serial` общий для всех коллекций, поэтому при фильтрации ID остаются уникальными: меняется только нумерация, а у разных seed пространства ID и так разные.\n\nОснование: `src/space-copy.ts:119-130` — сначала фильтр, затем `decor_limit`; `:177` — `{...clone(item), id: nextId('cd')}`; `:195` — пустой результат не создаёт ключ `decor`. Тест `test/space-copy.test.mjs:188-215` перебирает четыре сочетания, включая image с `asset_id`, text с `entity`, `future-kind`, мутацию копии и неизменность входа, а также случай лимита в 1001 furniture.\n\n### Снимок выбора и гонки во время await\n\nОпции снимаются синхронно вместе с `title`, до `flush`/`await`, поэтому даже программная замена черновика во время ожидания не меняет текущую операцию. Повторный submit отсекается `initial.busy || initial.copy.busy`. `choose` проверяет свежее состояние, а не значение из замыкания отрисовки, как и `@input`. Решение надёжное.\n\nОснование: `src/space-copy-runtime.ts:90-95, 163-173, 237-239`. Тест `#1156 category choices are captured before awaiting writes...` (`test/space-copy-runtime.test.mjs:263-281`) подменяет `copy` во время ожидания `_writeChain` и проверяет, что копия содержит только furniture, оригинал не изменился и запись была одна.\n\n### Жизненный цикл диалога: значения по умолчанию, отмена, сохранение выбора при отказе\n\nСброс при открытии сделан явным построением нового `copy`. После отказа от Optimize `setBusy(false)` сохраняет выбор, это проверено тестом. Путь закрытия и защита от retirement (#1154) не тронуты: `closeSpaceCopyDialog`, проверки токена в `setBusy` и ранние `return` остались прежними.\n\nОснование: `src/space-copy-runtime.ts:60-81, 221-222`. Тесты `test/space-copy-runtime.test.mjs:101-116` (открытие → false, повторное открытие после Cancel → false) и `:283-293` (отказ от Optimize сохраняет оба true, `busy` false). Существующие тесты #866/#1154 на retirement оставлены.\n\n### UI и соответствие UI Kit\n\nИспользуются те же `hpf-check hpf-check-wrap`, что и в остальных диалогах; локальных стилей нет. Галочки — native checkbox внутри label, поэтому связь подписи с полем и управление через Tab/Space работают без дополнительного кода. Атрибуты `data-hp=\"field\"`/`data-field` совпадают с принятыми соглашениями хуков.\n\nОснование: `src/space-copy-runtime.ts:119-128`; аналоги — `src/houseplan-editor-runtime.ts:9708`, `src/editors/vacuum-maps-section.ts:280`. Native smoke `demo/smoke_space_copy_categories.mjs` проверяет Space/Tab, ширины 1280/390 в обеих темах (граница `.body`, `scrollWidth`), Cancel/Escape без записи, сброс при повторном открытии, `disabled` во время записи и четыре фактических результата `config/set` с неизменным источником.\n\n### Проверки S6\n\nЕсть квитанция `20261101T204633462-73d0b5bd` со статусом `passed` на `materialSha` de1043f3 — это head ревью. Значит, повторный finish после исправления native-helper (`switchSpace('f1')` перед `open`) прошёл. Первый FAIL автор объяснил ошибкой самого smoke, а не продукта, и это согласуется с кодом: настройки открываются для выбранного пространства. Сами логи и PNG я не видел, опираюсь на статус квитанции.\n\nОснование: receipts[0] в снимке; описание первого S6 в authorContext; `demo/smoke_space_copy_categories.mjs:20-24`.\n\n### Документация и release-артефакты\n\nRU/EN changelog, ARCHITECTURE, DECOR-EDITOR и USER-GUIDE согласованы с поведением; ключи i18n соответствуют ТЗ. Ledger лежит в `v1.83.0/` с `baseStable: v1.83.0` и категорией `major` — так же, как у соседних задач будущего выпуска 1.84.0.\n\nОснование: `docs/release-ledger/v1.83.0/1156.json`; список файлов каталога v1.83.0; `src/i18n/{en,ru}.json:368-369`.\n\n## Блокеры\n\nНет.\n\n## Возможные улучшения\n\n- Фокус после неуспешной операции. Во время busy поле имени получает `disabled`, и браузер снимает с него фокус. После отказа от Optimize или ошибки записи поле снова доступно, но фокус не возвращается, поэтому клавиатурному пользователю нужно снова нажать Tab, чтобы исправить имя или нажать Enter. Небольшое улучшение: после `setBusy(false)` в ветках отказа/ошибки возвращать фокус на `#space-copy-name`, когда диалог ещё открыт. Это не нарушает ТЗ, но заметно при работе с клавиатуры.\n- Реальный HA E2E. Исполнитель сам оценил, что дополнение `tests/space-copy-lifecycle.admin.spec.mjs` четырьмя сочетаниями с authenticated write/reload нужно до беты. Стоит проследить, чтобы этот companion-сценарий действительно появился до выпуска: synthetic smoke не проверяет серверную валидацию копий с `asset_id` при reload.\n\n## Границы анализа\n\nЭто ревью по исходникам на head de1043f3. Сборку, тесты и smoke я не запускал. Использовал квитанцию S6 `passed` на этом же SHA и описание первого прогона из authorContext; логи и скриншоты не просматривал. Прочитаны целиком `src/space-copy-runtime.ts` и builder в `src/space-copy.ts`, существующие и новые тесты в `test/space-copy*.test.mjs`, новый native smoke и места использования `hpf-check-wrap`. Серверную валидацию decor и `asset_id` в реальном HA не проверял. Не проверял и то, нужно ли пересобирать закоммиченный frontend-бандл в рамках задачи: бандл не входит в diff, это вопрос процесса выпуска.\n\n## Переданный контекст исполнителя\n\nИсточник: описание задачи #1156, раздел «Контекст исполнителя для ревью». Это сведения исполнителя, не выводы ревьюера.\n\n```text\n### Реализация\nТЗ принято Opus5.5, workflow41347763192 на base3da8f630e, блокеров нет. Установленный ask сохранён. Две transient boolean в SpaceCopyDraft сбрасываются при новом open; обе checkbox используют существующие hpf-check/hpf-check-wrap. Имя и галочки disabled на busy; обработчики опираются на свежий draft и его busy. saveSpaceCopy снимает выбор вместе с именем до await. Immutable builder по существующему kind=furniture фильтрует выбранные decor, затем проверяет лимит выбранного выхода и выдаёт свежие ID; no schema change, marker/layout/ownership/Optimize/adoption path прежние. Existing full-copy unit остаётся с явным opt-in обоих категорий; не удалены ID/deep-copy проверки.\n\n### Проверки и риски\nС6 исполняет finish после входа в общую очередь и финального sync: product minimum + test/space-copy.test.mjs, test/space-copy-runtime.test.mjs, demo/smoke_space_copy.mjs и новый demo/smoke_space_copy_categories.mjs. Новый native настоящий /houseplan проверяет 4сочетания и фактические config/set, новые ID/поля/неизменный оригинал, keyboard, Cancel/Escape/reset, busy, 1280/390px, light/dark; снимает4PNG. Перед первым запуском PASS не заявлен. Исходный #1154 retirement smoke сохранён. Глобальные эталоны не принимаются; новый UI — только две строки выбора в существующей оболочке, CSS kit не копируется.\n\nE2E impact: надо до следующей беты. Companion tests/space-copy-lifecycle.admin.spec.mjs сейчас проверяет только retirement/Cancel, не состав копии. Нужно дополнить реальным authenticated copy/write/reload с четырьмя сочетаниями и неизменным оригиналом, сохранив сценарий #1154. Оценка передана координатору пачки для последовательной публикации в companion; liveHA этим synthetic native не подменяется.\nПервый S6 20261101T204249725-4239b8cf: 7/8 PASS, новый panel smoke FAIL только при повторном открытии настроек исходника после успешной первой копии — источник уже не был выбран, facade правильно не нашёл его settings. Native helper исправлен: сначала настоящий switchSpace('f1'), затем open. Продукт не менялся, исходный FAIL/PNG сохранены. Адресные Node22/22 и исходный copy smoke прошли; повторный finish проверит исправленный native.\n```\n",
-        "createdAt": "2026-11-01T20:48:54.017Z",
-        "artifactId": 13100073807,
-        "runId": 41348604699,
-        "reportUrl": "https://github.com/Matysh/houseplan-card/actions/runs/41348604699",
-        "runStatus": "completed",
-        "publicationPending": true,
-        "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e"
-      },
-      "automationError": "automation-error",
-      "automationSince": 1793566148432,
-      "automationDetail": "Independent accepted review required"
+      "devBuild": {
+        "status": "pending"
+      }
     },
     "1175": {
       "issue": 1175,
@@ -392,19 +251,7 @@
     1190,
     1175
   ],
-  "active": {
-    "issue": 1156,
-    "worker": "finish",
-    "token": "20:finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:1:admit",
-    "fence": 20,
-    "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "expectedBase": "3da8f630e25f42d43cce35deec3fd3c292c7610e",
-    "phase": "ready-to-merge",
-    "admittedAt": 1793565944253,
-    "expiresAt": 1793569746147,
-    "patchId": "ba4335f4e02a3640541d21cce8438b9681889742",
-    "reviewRequest": "review:1156:2:ba4335f4e02a3640541d21cce8438b9681889742:3da8f630e25f42d43cce35deec3fd3c292c7610e"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -422,10 +269,6 @@
       "digest": "2a2f5c4ee249cbe2c01160766c0b33f3aee91980a57950d848a890bc6cad6828",
       "issue": 1190
     },
-    "1156-spec-initial:spec-request": {
-      "digest": "9722da8526872750cd922d5074ad27cd371c4667e31b93a95b4f9eecc77d599f",
-      "issue": 1156
-    },
     "1169-spec1:spec-request": {
       "digest": "f6466287ba1a0b0912e47110cd086acc199e7c8155433feb4882807d774ec409",
       "issue": 1169
@@ -433,18 +276,6 @@
     "github:41347862803:1:spec:1190:spec-request": {
       "digest": "7653eeb1a9a9a93c116f85c16dece66fced105b6457f4d9b3df68bad72547a47",
       "issue": 1190
-    },
-    "github:41347862803:1:spec:1156:spec-presentation": {
-      "digest": "ff5cfe65af692f5c19c67ad48209fe396b38551c44a20d1d7994791ad998d3a4",
-      "issue": 1156
-    },
-    "github:41347862803:1:spec:1156:spec-complete": {
-      "digest": "cac0ed3a25c092bc71bb0b7f668931132e2f56e3647edbe5e4cdab5a88229e17",
-      "issue": 1156
-    },
-    "github:41347862803:1:completions:metadata:242b67ce-a81d-47b3-a949-73f9cbef7c60:review-presentation:1156:spec:c33e9ac25c7303c93eda": {
-      "digest": "b3f46f880f84bb82d48d20239ca72cba08c73a91de86a00b154f45d2479c772a",
-      "issue": 1156
     },
     "github:41348112991:1:spec:1190:spec-presentation": {
       "digest": "ec0ae96bc7879912ee40ee661f77c72cb3215e703a689621518c42a3a1553a74",
@@ -458,33 +289,13 @@
       "digest": "69c08831371a00dcac05534cd6b961c99a3aa70180e6441c84331b499f020c97",
       "issue": 1190
     },
-    "finish:9df3db92-e856-46af-b55b-de66d6b29db6": {
-      "digest": "586ca4683f51d7e7be311f746196419490f882f981ecacd3bfdec7225fc4cd83",
-      "issue": 1156
-    },
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
       "issue": 1167
     },
-    "finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:1:admit": {
-      "digest": "0d48e09fd99736588a17a4aa1eef32e6515fca5741170f171c33bbec25e0c546",
-      "issue": 1156
-    },
-    "finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:2:synchronized": {
-      "digest": "51f6eb122e2ee64cb81c02cc7e311cacf9698030e9567e26118a39afb56269e2",
-      "issue": 1156
-    },
     "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f": {
       "digest": "ce4477b6ff09a13f20674c7fc661826c13080170784677586e4e826ef91ac072",
       "issue": 1175
-    },
-    "finish:9df3db92-e856-46af-b55b-de66d6b29db6:finish:3:return": {
-      "digest": "6e1eb3ff1bfca76fb816942e46405a8439d24bbe4ff4bf2d2903c9445ad00cb9",
-      "issue": 1156
-    },
-    "finish:9df3db92-e856-46af-b55b-de66d6b29db6:metadata:45c30b58-c52c-4e4c-bb97-1998d59df71a:task-notice:1156::": {
-      "digest": "b352b81dc310a0852f412fc0f32430f576c3bf07c28fae6e3a27e4bb4a83e125",
-      "issue": 1156
     },
     "github:41348289557:1:spec:1169:spec-presentation": {
       "digest": "a5f1d6673e51813b0724a326aea2a2716900241264a76dd7e18c0799ac8464a5",
@@ -505,10 +316,6 @@
     "finish:6be9e3fe-fa80-4805-a2c5-4ec7704b812f:finish:2:synchronized": {
       "digest": "b12b0c3c4f3ec4310e6715f705dc2574d450bdb566489c27524387b96de5e632",
       "issue": 1175
-    },
-    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d": {
-      "digest": "a461cb5396cbad15feb919fe11736a65790a594e9af503f433af7fb0cde422ac",
-      "issue": 1156
     },
     "finish:c35f81e9-d4ae-44bb-a196-a63bf2e9df44": {
       "digest": "b5b1f7cd2e54114026e1a0b1f22e5c77447e554928b7910e15ea928e38395416",
@@ -539,32 +346,6 @@
         "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913"
       }
     },
-    "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:1:admit": {
-      "digest": "bfc8481d137d37fa054bc3a51d0cf69585c062caafef2cabff08d0d3ff78ed55",
-      "issue": 1156,
-      "message": {
-        "kind": "admitted",
-        "issue": 1156,
-        "at": 1793565944253,
-        "entry": 2,
-        "track": "ask",
-        "layer": "product",
-        "materialSha": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-        "phase": "sync"
-      }
-    },
-    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:1:synchronized": {
-      "digest": "f3f71cbffbf1832324bdcadb27aaa965a253690187dd29a01eb67b9e7b042dc9",
-      "issue": 1156
-    },
-    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:2:s6-complete": {
-      "digest": "a478d3c41f2b2e34cc95e70cdccdf73a5da4dce80931fd6aa25a5d51b16243ef",
-      "issue": 1156
-    },
-    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:3:review-requested": {
-      "digest": "2f026cf3f1bb65588c3e531e422bd0a3f17fc4a77786aca55486bd23b811b70c",
-      "issue": 1156
-    },
     "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81": {
       "digest": "e1f0475ff69d8976154e141709fca8e6d7bddcaa85e66db3ef120701af65a3a3",
       "issue": 1175
@@ -580,22 +361,6 @@
     "github:41348695726:1:completions:metadata:a9441339-4196-4097-a425-dbbe190cf156:review-presentation:1167:spec:3cf2c15a1da09f9c1841": {
       "digest": "01b45e5d56c726f988fabee51a2f2ea3966a417a13f7039f605bc734b90c20de",
       "issue": 1167
-    },
-    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:5:review-presentation": {
-      "digest": "1f011923cc2588a704e7637f4287d7562fb0b365aba59b8edc4282b7d27e9e1e",
-      "issue": 1156
-    },
-    "finish:a90892ae-35e0-480c-b0fb-7aaef628228d:finish:5:review-complete": {
-      "digest": "fc5159d4ba1e98eb631277abaa2f53c10a4b8177145739189a8ddd0f6ad41e7c",
-      "issue": 1156
-    },
-    "github:41348743877:1:tick:0:automation-pending": {
-      "digest": "da875a5d8519fa7f0c796a0233f684df136035207d1a1c44ed99c70345af2097",
-      "issue": 1156
-    },
-    "github:41348743877:1:completions:metadata:20a5c976-984b-4af7-b2e4-4548408f726b:review-presentation:1156:code:3ce5bc515c1b1ca80f6a": {
-      "digest": "23d678984b6a049d668f8c002ef51a9d548bd53a3781476d85e37e019cf6cb96",
-      "issue": 1156
     }
   },
   "devWebhook": {
