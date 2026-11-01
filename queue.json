@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "revision": 0,
+  "nextTicket": 1,
+  "nextFence": 1,
+  "tasks": {},
+  "ownerDecisions": {},
+  "specReviews": {},
+  "reviewPublications": {},
+  "waiting": [],
+  "active": null,
+  "events": {}
+}
