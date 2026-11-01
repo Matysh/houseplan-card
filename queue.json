@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 45,
+  "revision": 46,
   "nextTicket": 7,
   "nextFence": 7,
   "tasks": {
@@ -69,7 +69,10 @@
         "process-next/cli.mjs",
         "process-next/remote.mjs",
         "process-next/test/remote.test.mjs"
-      ]
+      ],
+      "automationError": "automation-error",
+      "automationSince": 1793555258584,
+      "automationDetail": "Selected check infra-syntax reads prepared product artifacts (demo-assets); an infrastructure-only profile cannot silently build the product"
     }
   },
   "ownerDecisions": {},
@@ -99,6 +102,10 @@
     },
     "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d:finish:2:synchronized": {
       "digest": "9081c91e5095166e2796674683db7d8f10631df150cbea9733d825f8e402bdb7",
+      "issue": 1187
+    },
+    "finish:1ee090c7-3088-4004-b0ae-0cf9d34b837d:finish:3:automation-pending": {
+      "digest": "add1fbda57f0ae3a4caae710f210901f28a058439816010c07c7e568a83a00aa",
       "issue": 1187
     }
   },
