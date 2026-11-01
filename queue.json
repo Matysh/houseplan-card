@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 252,
+  "revision": 253,
   "nextTicket": 27,
   "nextFence": 26,
   "tasks": {
@@ -357,11 +357,8 @@
       "materialSha": "cd54b5681ff7649b30bcba0c0a71b0ae7be5d076",
       "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
       "patchId": "4155815da86360ab7a73db1d74a587371e6cee65",
-      "status": "pending",
-      "presentation": {
-        "round": null,
-        "occurredAt": "2026-11-01T21:08:03.159Z"
-      }
+      "runId": 41350411535,
+      "status": "pending"
     }
   },
   "waiting": [
@@ -773,6 +770,10 @@
     "finish:17b52b52-6951-4f92-b89c-e841571982d8": {
       "digest": "f9adb575dba93a6aa0e2047920cbae5dd3c74b1974d4d1e84c04b4af55c9ce58",
       "issue": 1169
+    },
+    "github:41350844890:1:tick:0:review-presentation": {
+      "digest": "7defaf66735c32221976fbd159694fb1dd9f48094fb852522b62558eca64fc21",
+      "issue": 1190
     }
   },
   "devWebhook": {
