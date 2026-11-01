@@ -1,3 +1,4 @@
+import { waitForUiKitPaint } from './helpers/ui-kit-paint.mjs';
 // #600, серия 2: «Общие настройки» по референсу docs/design/600-settings-dialogs/
 // (§5 SPEC.md). Фокусный свидетель формы: состав карточек и отсутствие старой
 // разметки (AC1), один заголовок у карточки Zigbee (дефект 1), плитки цвета и
@@ -6,6 +7,14 @@
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1280, height: 900 });
+
+// #1185: the finite dialog enter can give44px inputs fractional rectangles.
+// Open once, then measure settled paint without changing the exact44px floor.
+await page.evaluate(async () => {
+  const c = window.__card;
+  c._openSettingsDialog(); c.requestUpdate(); await window.__hpTest.settled();
+});
+await waitForUiKitPaint(page);
 
 const out = await page.evaluate(async () => {
   const o = {};
@@ -19,7 +28,6 @@ const out = await page.evaluate(async () => {
   const statusText = () => q('.hpf-status')?.textContent.trim() || '';
   const input = (el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); };
 
-  c._openSettingsDialog(); await upd();
   const d0 = JSON.parse(JSON.stringify(c._settingsDialog));
   const batterySelect = () => q('select[name="gs-device-battery"]');
   const batteryRadio = mode => ({
