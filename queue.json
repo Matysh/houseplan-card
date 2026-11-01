@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 181,
-  "nextTicket": 21,
+  "revision": 182,
+  "nextTicket": 22,
   "nextFence": 20,
   "tasks": {
     "1128": {
@@ -201,6 +201,20 @@
       "devBuild": {
         "status": "not-required"
       }
+    },
+    "1190": {
+      "issue": 1190,
+      "track": "ask",
+      "layer": "infra",
+      "branch": "codex/issue-1190-comment-history",
+      "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913",
+      "ownerAssigned": false,
+      "ownerDecision": null,
+      "ticket": 21,
+      "queued": true,
+      "status": "S6-in-progress",
+      "readyAt": 1793565879599,
+      "reviewEntry": 1
     }
   },
   "ownerDecisions": {},
@@ -247,7 +261,8 @@
   },
   "reviewPublications": {},
   "waiting": [
-    1156
+    1156,
+    1190
   ],
   "active": {
     "issue": 1175,
@@ -365,6 +380,19 @@
     "finish:a90892ae-35e0-480c-b0fb-7aaef628228d": {
       "digest": "a461cb5396cbad15feb919fe11736a65790a594e9af503f433af7fb0cde422ac",
       "issue": 1156
+    },
+    "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
+      "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
+      "issue": 1190,
+      "message": {
+        "kind": "queued",
+        "issue": 1190,
+        "at": 1793565879599,
+        "entry": 1,
+        "track": "ask",
+        "layer": "infra",
+        "materialSha": "a2c1513bc2ae6c7c358de21961ee62f1b6fd5913"
+      }
     }
   },
   "devWebhook": {
