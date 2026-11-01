@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "revision": 286,
-  "nextTicket": 33,
+  "revision": 287,
+  "nextTicket": 34,
   "nextFence": 31,
   "tasks": {
     "1128": {
@@ -103,14 +103,14 @@
       "track": "ask",
       "layer": "product",
       "branch": "codex/1169-wall-corner-seam",
-      "materialSha": "b484f656475f648bdb0eba4d67ab875f74c927f4",
+      "materialSha": "22167b6da6f6536b3895a88f609017eedd40f27d",
       "ownerAssigned": false,
       "ownerDecision": null,
-      "ticket": 29,
-      "queued": false,
+      "ticket": 33,
+      "queued": true,
       "status": "S6-in-progress",
-      "readyAt": 1793567757654,
-      "reviewEntry": 2,
+      "readyAt": 1793568192143,
+      "reviewEntry": 3,
       "notice": {
         "key": "2:checks-failed",
         "reason": "checks-failed",
@@ -128,8 +128,7 @@
         "src/physical-geometry.ts",
         "src/wall-thickness.ts",
         "test/wall-corner-join.test.mjs"
-      ],
-      "reason": "checks-failed"
+      ]
     },
     "1175": {
       "issue": 1175,
@@ -414,7 +413,8 @@
   "reviewPublications": {},
   "waiting": [
     1153,
-    1190
+    1190,
+    1169
   ],
   "active": {
     "issue": 1175,
@@ -976,6 +976,10 @@
     "finish:b3ca58cb-db68-4178-8711-f89a88197744:finish:4:review-requested": {
       "digest": "1ef55eb46ae3578c574b7a42dfa602b8ea74c2022856c05aaf5e5f4d3d5ecce7",
       "issue": 1175
+    },
+    "finish:d572296e-b553-4d39-a14f-db3f44249659": {
+      "digest": "6f31b450de6478754de72a26d6d30249bf3b4bde9b9702f4ea42b7fae7fbbc04",
+      "issue": 1169
     }
   },
   "devWebhook": {
