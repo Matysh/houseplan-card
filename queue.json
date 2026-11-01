@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 223,
+  "revision": 224,
   "nextTicket": 25,
   "nextFence": 24,
   "tasks": {
@@ -243,15 +243,16 @@
         "process-next/test/task-completion.test.mjs"
       ],
       "notice": {
-        "key": "1:checks-failed",
-        "reason": "checks-failed",
-        "status": "delivered",
+        "key": "2:executor-fix",
+        "reason": "executor-fix",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793566421371,
-        "entry": 1,
-        "detail": "Поведение затронутого механизма: failed",
-        "eventId": "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db:finish:3:return:return:1190"
-      }
+        "at": 1793566694874,
+        "entry": 2,
+        "detail": "Исправляется независимое восстановление меток и milestone при задержке комментария; слот освобождён на время правки.",
+        "eventId": "1190-final-comment-repair-20261101:return:1190"
+      },
+      "reason": "executor-fix"
     }
   },
   "ownerDecisions": {},
@@ -300,17 +301,7 @@
   "waiting": [
     1175
   ],
-  "active": {
-    "issue": 1190,
-    "worker": "github-coordinator",
-    "token": "23:github:41349425617:1:tick:0:admit",
-    "fence": 23,
-    "materialSha": "89ce55dfa86e4d2021c2b0646eb46bfa434f2481",
-    "expectedBase": null,
-    "phase": "sync",
-    "admittedAt": 1793566640234,
-    "expiresAt": 1793566940234
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -460,6 +451,42 @@
       "digest": "0ab53d703fb702871913c1d6aaeb1bba0e10aa6d640602a3435d0bab9d138d91",
       "issue": 1175
     },
+    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:4:automation-pending": {
+      "digest": "e91723e9c36b525f9791f275d4a040880c305f6ad91c3af160c069dc7609c106",
+      "issue": 1175
+    },
+    "finish:a9d0fe1e-d048-43e2-83b0-05fcd9970db0": {
+      "digest": "6c6d4d5f4d2d17a9f9027a979609c6d6b7260ca44abdea2aea381b9dcc9db924",
+      "issue": 1175
+    },
+    "1175-generated-report-location": {
+      "digest": "5d4ed10e4f46b3ffa0fa4c99a9126386a85933ca92e65eca40bb98949580e88b",
+      "issue": 1175
+    },
+    "1169-spec3:spec-request": {
+      "digest": "71cbe86e1e218f54d94a4d0a6a5797ec44d32bdcd02e22f6d9d6b576f7dad3df",
+      "issue": 1169
+    },
+    "github:41349425617:1:tick:0:admit": {
+      "digest": "1e10d7d97c081005c82870fba8b516b6ae1fb4258f3bbaef9e22ab349b1dc16d",
+      "issue": 1190
+    },
+    "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1175::": {
+      "digest": "67bb052fa17a9bfe072655db490fbfaacf7dbf4bb2c40f4786f3f933e65d533f",
+      "issue": 1175
+    },
+    "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1190::": {
+      "digest": "3783a3499529b1c5eb807fb403e31865953f8fca4e8fbe36f1b7c1038ccf073a",
+      "issue": 1190
+    },
+    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b": {
+      "digest": "f2582b3a46d55fb43d943e039df308a21a8487c2e63cde8469d5f754ba435e0c",
+      "issue": 1175
+    },
+    "1190-final-comment-repair-20261101": {
+      "digest": "65e793ec55356694f61b9194bdd2586696ca9b88f8d413c8ae218cb272dab729",
+      "issue": 1190
+    },
     "finish:dac0c491-3b3a-4ff0-959f-6b61c09222db": {
       "digest": "d44db74bab2a55efc81ac26d7cc0ccb2a9e4a25bc464285d4afe4ab782776f3e",
       "issue": 1190,
@@ -506,37 +533,25 @@
         "materialSha": "89ce55dfa86e4d2021c2b0646eb46bfa434f2481"
       }
     },
-    "finish:697dc7dd-dd95-45a8-b8c0-aef6b6d17d81:finish:4:automation-pending": {
-      "digest": "e91723e9c36b525f9791f275d4a040880c305f6ad91c3af160c069dc7609c106",
-      "issue": 1175
-    },
-    "finish:a9d0fe1e-d048-43e2-83b0-05fcd9970db0": {
-      "digest": "6c6d4d5f4d2d17a9f9027a979609c6d6b7260ca44abdea2aea381b9dcc9db924",
-      "issue": 1175
-    },
-    "1175-generated-report-location": {
-      "digest": "5d4ed10e4f46b3ffa0fa4c99a9126386a85933ca92e65eca40bb98949580e88b",
-      "issue": 1175
-    },
-    "1169-spec3:spec-request": {
-      "digest": "71cbe86e1e218f54d94a4d0a6a5797ec44d32bdcd02e22f6d9d6b576f7dad3df",
-      "issue": 1169
-    },
-    "github:41349425617:1:tick:0:admit": {
-      "digest": "1e10d7d97c081005c82870fba8b516b6ae1fb4258f3bbaef9e22ab349b1dc16d",
-      "issue": 1190
-    },
-    "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1175::": {
-      "digest": "67bb052fa17a9bfe072655db490fbfaacf7dbf4bb2c40f4786f3f933e65d533f",
-      "issue": 1175
-    },
-    "github:41349425617:1:completions:metadata:1fdefa35-53ef-44dd-b62a-eda4e4e9cf85:task-notice:1190::": {
-      "digest": "3783a3499529b1c5eb807fb403e31865953f8fca4e8fbe36f1b7c1038ccf073a",
-      "issue": 1190
-    },
-    "finish:3d37c7b3-e76d-49b1-8f74-7af6f7fb996b": {
-      "digest": "f2582b3a46d55fb43d943e039df308a21a8487c2e63cde8469d5f754ba435e0c",
-      "issue": 1175
+    "1190-final-comment-repair-20261101:return:1190": {
+      "digest": "65e793ec55356694f61b9194bdd2586696ca9b88f8d413c8ae218cb272dab729",
+      "issue": 1190,
+      "message": {
+        "kind": "return",
+        "issue": 1190,
+        "at": 1793566694874,
+        "entry": 2,
+        "notice": {
+          "key": "2:executor-fix",
+          "reason": "executor-fix",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793566694874,
+          "entry": 2,
+          "detail": "Исправляется независимое восстановление меток и milestone при задержке комментария; слот освобождён на время правки.",
+          "eventId": "1190-final-comment-repair-20261101:return:1190"
+        }
+      }
     }
   },
   "devWebhook": {
