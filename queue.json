@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 354,
+  "revision": 355,
   "nextTicket": 37,
   "nextFence": 37,
   "tasks": {
@@ -252,10 +252,12 @@
       "removedToRelease": false,
       "reviewRequest": "review:1190:5:3ce53b7763a13f5e63d7d852b885febe5055fa49:37f59faef16f6efad06387486943d51202c7d57c",
       "completion": {
-        "status": "pending",
-        "labels": false,
-        "milestone": false,
-        "comment": false
+        "labels": true,
+        "milestone": "not-required",
+        "comment": true,
+        "status": "complete",
+        "errors": {},
+        "commentDigest": "e0a69e282d8b0741771a"
       },
       "devBuild": {
         "status": "not-required"
