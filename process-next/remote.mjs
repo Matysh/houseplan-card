@@ -160,26 +160,32 @@ export class WorkflowReviewAdapter {
     if (knownRunId && !identity.test(inventory[0].display_title ?? inventory[0].name ?? '')) throw Error('Known review run belongs to another request');
     const matches = inventory.filter(run => identity.test(run.display_title ?? run.name ?? ''))
       .sort((a, b) => Number(b.id) - Number(a.id));
-    // A completed artifact is authoritative even when comment publication failed
-    // or a retry of the same workflow is currently running.
+    // A saved artifact is authoritative even while its workflow is finishing.
+    // Readers never publish: the serialized coordinator owns that side effect.
+    let incomplete = null;
     for (const run of matches) {
       const result = await this.artifactResult(run);
       if (result) {
         const checked = this.checked(result, context);
         if (checked.verdict !== 'incomplete') {
-          try {
-            await publishReviewReceipt({ api: this.api, receipt: checked, reportUrl: run.html_url });
-            return { ...checked, runId: run.id, publicationPending: false };
-          } catch (error) {
-            // Presentation is retried separately; the trusted paid result is still accepted.
-            return { ...checked, runId: run.id, publicationPending: true, publicationError: error.message };
-          }
+          return { ...checked, runId: run.id, runStatus: run.status, publicationPending: true };
         }
+        if (!incomplete && run.status === 'completed') incomplete = { ...checked, retryable: true,
+          runId: run.id, runAttempt: run.run_attempt ?? 1, runStatus: run.status, publicationPending: true };
       }
     }
     if (matches.some(run => run.status !== 'completed')) return { pending: true, requestId, materialSha: active.materialSha };
+    if (incomplete) return incomplete;
     if (matches.length) return { retryable: true, verdict: 'incomplete', requestId, materialSha: active.materialSha, runId: matches[0].id, runAttempt: matches[0].run_attempt ?? 1, reportUrl: matches[0].html_url };
     return { missing: true, requestId, materialSha: active.materialSha };
+  }
+  /** Called only by the coordinator's existing serialized metadata sweep. */
+  async publishCompletedReview(record) {
+    const result = await this.readReviewResult({ kind: record.kind, requestId: record.requestId,
+      active: { issue: record.issue, materialSha: record.materialSha, expectedBase: record.expectedBase, patchId: record.patchId },
+      task: { track: 'show', reviewRetry: { requestId: record.requestId, runId: record.runId } } });
+    if (!result?.verdict || result.runStatus !== 'completed') return { published: false, pending: true };
+    return publishReviewReceipt({ api: this.api, receipt: result, reportUrl: result.reportUrl });
   }
   async readPreviousReviewResult({ issue, kind = 'code', excludeRequestId }) {
     const identity = new RegExp(`(?:^|[^A-Za-z0-9:-])${kind === 'spec' ? 'spec' : 'review'}:${issue}:`);
@@ -230,15 +236,10 @@ function activation(config, execute, env) {
   return true;
 }
 
-async function finishBookkeeping({ queue, api, git, review, eventId, issue }) {
+async function finishBookkeeping({ queue, api, git, review, eventId, issue, publishReviews = false }) {
   try { return await reconcileTaskCompletions({ queue, api, git, activated: true, issue,
     eventId: `${eventId}:metadata:${randomUUID()}`,
-    publishReview: async record => {
-      const result = await review.readReviewResult({ kind: record.kind, requestId: record.requestId,
-        active: { issue: record.issue, materialSha: record.materialSha, expectedBase: record.expectedBase, patchId: record.patchId },
-        task: { track: 'show', reviewRetry: { requestId: record.requestId, runId: record.runId } } });
-      return { published: result?.publicationPending === false };
-    } }); }
+    ...(publishReviews ? { publishReview: record => review.publishCompletedReview(record) } : {}) }); }
   catch (error) { return { pending: [{ issue, reason: error.message }], warning: 'Metadata remains pending; a completed merge is not repeated' }; }
 }
 
@@ -363,7 +364,7 @@ export async function executeRemoteCommand({ command, config = {}, event = {}, e
   const owner = config.ownerLogin ?? config.owner;
   if (command === 'status') { const state = (await queue.store.read()).state; return { summary: queueSummary(state), task: event.issue ? state.tasks[event.issue] ?? null : undefined }; }
   if (command === 'finish') return finishTask({ config, event, queue, api, git, review, dependencies, signal, onProgress });
-  if (command === 'reconcile-completions') return finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue });
+  if (command === 'reconcile-completions') return finishBookkeeping({ queue, api, git, review, eventId: event.id, issue: event.issue, publishReviews: true });
   if (command === 'dev-webhook') return notifyDevWebhook({ queue, activated: true, url: env.HP_HA_DEV_WEBHOOK,
     eventId: `${event.id}:${randomUUID()}`, fetchImpl: dependencies.fetchImpl });
   if (command === 'initialize-queue' || command === 'initialize-release')

@@ -165,14 +165,37 @@ test('one incomplete review retry preserves S6 evidence, then returns the task a
   await h.queue.dispatch({ id: 'next-ship', type: 'enqueue', task: { issue: 2, track: 'ship', branch: 'issue/2', layer: 'infra', materialSha: C } });
   const retry = eventId => reconcileQueue({ queue: h.queue, api: h.api, activated: true, eventId,
     requestReview: async value => { assert.equal(value.requestId, requestId); assert.equal(value.retry, true); retries++; },
-    readReviewResult: async () => ({ verdict: 'incomplete', runId: 10, runAttempt: attempt }) });
+    readReviewResult: async () => ({ verdict: 'incomplete', runId: 10, runAttempt: attempt, publicationPending: true }) });
   assert.equal((await retry('first-failure')).action, 'review-request-ensured');
+  assert.equal(Object.keys((await h.store.read()).state.reviewPublications).length, 1);
+  await h.queue.dispatch({ id: 'first-report-delivered', type: 'review-presentation', issue: 1, kind: 'code', requestId, status: 'delivered' });
   for (let tick = 0; tick < 5; tick++) assert.equal((await retry(`old-run-${tick}`)).action, 'review-pending');
+  assert.equal(Object.keys((await h.store.read()).state.reviewPublications).length, 0);
   attempt = 2; assert.equal((await retry('second-failure')).reason, 'review-retry-exhausted');
   const after = (await h.store.read()).state;
+  assert.equal(Object.values(after.reviewPublications)[0].requestId, requestId);
   assert.equal(retries, 1); assert.equal(after.active, null); assert.equal(after.tasks[1].reviewRequest, requestId);
   assert.deepEqual(after.tasks[1].s6, before.tasks[1].s6); assert.ok(h.issue.labels.includes('S6-in-progress'));
   assert.equal((await h.step()).state.active.issue, 2); assert.equal(h.tests, 1);
+});
+
+test('incomplete spec reports survive retry, without recreating delivered presentation on attention ticks', async () => {
+  const queue = new QueueController(new MemoryQueueStore()), issue = { number: 55, state: 'open', body: 'Spec', labels: ['S4-spec-review', 'track:ask'] };
+  let attempt = 1, ready = false;
+  const options = { queue, api: { moveStatus: async () => {} }, git: { dev: 'dev', remoteHead: async () => A },
+    issue, activated: true, requestReview: async () => {},
+    readReviewResult: async ({ requestId }) => ready ? { requestId, verdict: 'incomplete', materialSha: A,
+      runId: 24, runAttempt: attempt, publicationPending: true } : { missing: true } };
+  const first = await reconcileSpecReview({ ...options, eventId: 'spec-start' }); ready = true;
+  await reconcileSpecReview({ ...options, eventId: 'spec-retry' });
+  await queue.dispatch({ id: 'first-spec-delivered', type: 'review-presentation', issue: 55, kind: 'spec', requestId: first.requestId, status: 'delivered' });
+  attempt = 2;
+  assert.equal((await reconcileSpecReview({ ...options, eventId: 'spec-exhausted' })).action, 'spec-review-attention');
+  assert.equal(Object.keys((await queue.store.read()).state.reviewPublications).length, 1);
+  await queue.dispatch({ id: 'second-spec-delivered', type: 'review-presentation', issue: 55, kind: 'spec', requestId: first.requestId, status: 'delivered' });
+  const before = await queue.store.read();
+  for (let tick = 0; tick < 6; tick++) await reconcileSpecReview({ ...options, eventId: `attention-${tick}` });
+  assert.deepEqual(await queue.store.read(), before);
 });
 
 test('a retry that never appears reaches attention without dispatching another paid request', async () => {

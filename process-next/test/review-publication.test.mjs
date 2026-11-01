@@ -46,3 +46,14 @@ test('local owner-token replay recognizes its own report comments without a seco
   await publishReviewReceipt(f);
   assert.equal(f.comments.length, 1);
 });
+
+test('incomplete report is visible but does not file partial outside findings; its final retry updates the same comment', async () => {
+  const f = fixture(); f.receipt.verdict = 'incomplete'; f.receipt.markdown = 'Analysis stopped before a valid result';
+  f.receipt.report.outsideFindings = [{ title: 'Unconfirmed draft' }];
+  await publishReviewReceipt(f);
+  assert.equal(f.comments.length, 1); assert.equal(f.issues.length, 0);
+  f.receipt.verdict = 'accepted'; f.receipt.markdown = 'Completed review'; f.receipt.report.outsideFindings = [];
+  await publishReviewReceipt(f);
+  assert.equal(f.comments.length, 1); assert.match(f.comments[0].body, /Completed review/);
+  assert.doesNotMatch(f.comments[0].body, /Analysis stopped/);
+});

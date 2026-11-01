@@ -6,8 +6,6 @@ import { buildReviewContext, runReview } from '../lib/review.mjs';
 import { GitHubClient } from '../lib/github.mjs';
 import { readJson, writeJson } from '../lib/storage.mjs';
 import { WorkflowReviewAdapter } from '../remote.mjs';
-import { publishReviewReceipt } from '../lib/review-publication.mjs';
-export { publishReviewReceipt } from '../lib/review-publication.mjs';
 
 function requestFrom(env) {
   if (env.PROCESS_NEXT_ENABLED !== 'true') throw Error('New process is not activated');
@@ -39,7 +37,7 @@ async function issueComments(api, issue) {
   }
 }
 
-/** Save the paid result before any attempt to publish the human-readable comment.
+/** Save the paid result for the coordinator's human-readable publication.
  * result.json is uploaded as review-result by the next workflow step and is the sole verdict source.
  */
 export async function prepareReviewJob({ env = process.env, api, reviewAdapter, runReviewImpl = runReview,
@@ -77,24 +75,14 @@ export async function prepareReviewJob({ env = process.env, api, reviewAdapter, 
   return receipt;
 }
 
-/** Optional presentation only. A failed/retried comment never reruns the model. */
-export async function publishReviewComment({ env = process.env, api, reportDir = resolve('process-next/.state/reviews') } = {}) {
-  const request = requestFrom(env), receipt = compatible(readJson(join(reportDir, 'result.json')), request);
-  const reportUrl = receipt.reportUrl ?? (env.GITHUB_RUN_ID ? `${env.GITHUB_SERVER_URL ?? 'https://github.com'}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}` : null);
-  return publishReviewReceipt({ api, receipt, reportUrl });
-}
-
 async function main() {
   requestFrom(process.env); // Activation checked before even constructing a remote client.
+  if (process.argv.includes('--publish')) throw Error('Review publication belongs to the coordinator, not the review job');
   const [owner, repo] = (process.env.GITHUB_REPOSITORY ?? '').split('/');
   const api = new GitHubClient({ owner, repo, token: process.env.GITHUB_TOKEN, activated: true });
-  if (process.argv.includes('--publish')) {
-    console.log(JSON.stringify(await publishReviewComment({ api })));
-    return;
-  }
   const reviewAdapter = new WorkflowReviewAdapter({ api });
   const receipt = await prepareReviewJob({ api, reviewAdapter });
-  // Rerunning a failed comment step must not delete/replace an already durable artifact.
+  // Reusing a paid result must not delete/replace its already durable artifact.
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `artifact_reused=${Boolean(receipt.artifactId)}\n`);
   console.log(JSON.stringify({ requestId: receipt.requestId, verdict: receipt.verdict, reused: receipt.reused ?? false }));
   if (!['accepted', 'not-required'].includes(receipt.verdict)) process.exitCode = 1;

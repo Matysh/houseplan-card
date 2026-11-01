@@ -47,6 +47,7 @@ export async function publishReviewReceipt({ api, receipt, reportUrl = receipt?.
 
 /** Only explicitly separated, evidenced defects are filed. Improvements are never filed implicitly. */
 export async function publishOutsideFindings({ api, receipt }) {
+  if (receipt.verdict === 'incomplete') return [];
   const findings = receipt.report?.outsideFindings ?? [];
   if (!findings.length) return [];
   const inventory = await pages(api, 'issues?state=all'), created = [];

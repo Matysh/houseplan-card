@@ -75,3 +75,27 @@ test('stable return and announcement have independent resumable outcomes and nev
   assert.equal((await completePublishedRelease({ ...args, candidate: f.candidate })).status, 'completed');
   assert.equal(returns, 1); assert.equal(announcements, 2); assert.equal(f.candidate.announcement.status, 'sent');
 });
+
+test('stable announcement is persisted before a queued return to dev can finish', async () => {
+  const f = fixture('stable', []); f.candidate.tag = 'v2.0.0';
+  const order = [];
+  let releaseReturn, enteredReturn;
+  const waiting = new Promise(resolve => { releaseReturn = resolve; });
+  const entered = new Promise(resolve => { enteredReturn = resolve; });
+  const completion = completePublishedRelease({ candidate: f.candidate, api: {},
+    verifyDelivery: async () => { order.push('hacs'); return { hacsAvailable: true, tag: f.candidate.tag, artifactDigest: D }; },
+    onUpdate: async event => {
+      await f.onUpdate(event);
+      if (event.type === 'completion-step' && event.name === 'issues' && event.result.status === 'completed') order.push('issues');
+    },
+    announce: async ({ persist }) => {
+      order.push('announcement'); const receipt = { status: 'sent', tag: 'v2.0.0' }; await persist(receipt); return receipt;
+    },
+    returnToDev: async () => { order.push('return-wait'); enteredReturn(); return waiting; },
+  });
+  await entered;
+  assert.deepEqual(order, ['hacs', 'issues', 'announcement', 'return-wait']);
+  assert.equal(f.candidate.announcement.status, 'sent');
+  releaseReturn({ status: 'completed', devSha: B });
+  assert.equal((await completion).status, 'completed');
+});

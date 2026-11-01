@@ -15,7 +15,7 @@ on:
 permissions:
   contents: read
   actions: read
-  issues: write
+  issues: read
 concurrency:
   group: process-next-review-${{ inputs.requestId }}
   cancel-in-progress: false
@@ -58,7 +58,7 @@ jobs:
           HP_RECEIPTS: ${{ inputs.receipts }}
           HP_CANDIDATE_ROOT: ../candidate
         run: node process-next/templates/review-job.mjs
-      - name: Сохранить результат до публикации комментария
+      - name: Сохранить результат для публикации координатором
         id: artifact
         if: ${{ always() && steps.review.outputs.artifact_reused != 'true' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -69,15 +69,3 @@ jobs:
           overwrite: true # Replace only an incomplete result on the single allowed retry; final verdicts are reused.
           path: process-runner/process-next/.state/reviews
           if-no-files-found: ignore
-      - name: Опубликовать отчёт для человека
-        if: ${{ always() && hashFiles('process-runner/process-next/.state/reviews/result.json') != '' }}
-        env:
-          PROCESS_NEXT_ENABLED: ${{ vars.PROCESS_NEXT_ENABLED }}
-          GITHUB_TOKEN: ${{ github.token }}
-          HP_ISSUE: ${{ inputs.issue }}
-          HP_BASE: ${{ inputs.base }}
-          HP_HEAD: ${{ inputs.head }}
-          HP_REQUEST_ID: ${{ inputs.requestId }}
-          HP_PATCH_ID: ${{ inputs.patchId }}
-          HP_KIND: ${{ inputs.kind }}
-        run: node process-next/templates/review-job.mjs --publish

@@ -132,7 +132,7 @@
     "Install the independent background template after removing retired mutation and diagnostic coverage inputs. It uses PROCESS_NEXT_ENABLED, rotates five mutation shards by default and reports failures in a deduplicated issue; never use it as a task or release gate.",
     "Before B, resolve reviewed golden differences, reduce mixed dependencies, seed published beta/stable state, configure release/HACS/Telegram access and existing release-cycle classification, and preserve applicable runner cache. Keep secrets out of request JSON.",
     "Disable old B publication/derived-review/automatic announcement callers before enabling new release commands. Apply one canonical golden runner and replace aliases; remove _service-event and announce only after every old caller is gone.",
-    "Publish only on an explicit owner release command: prepare versions and authored RU/EN text, actual membership, four assets and annotated tag. Resume the same completion path for HACS, actual S8 closure, automatic queued return to dev, exact-SHA old beta cleanup and stable Telegram. Any workflow-only main commit must also enter dev before a later release candidate.",
+    "Publish only on an explicit owner release command: prepare versions and authored RU/EN text, actual membership, four assets and annotated tag. Resume the same completion path for HACS, actual S8 closure, stable Telegram, exact-SHA old beta cleanup and automatic queued return to dev. Any workflow-only main commit must also enter dev before a later release candidate.",
     "After each stage, remove only the now-unreachable old mechanism files and their retired tests; leave manual product utilities and unrelated user hooks intact."
   ],
   "rollback": [

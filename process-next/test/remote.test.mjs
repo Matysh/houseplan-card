@@ -39,7 +39,7 @@ test('execution needs both explicit activations and credentials come only from e
   await assert.rejects(executeRemoteCommand({ command: 'admit', config, env, event: { id: 'a' }, execute: true }), /Missing credential/);
 });
 
-test('durable exact-material artifact survives failed comment publication and prevents another model run', async () => {
+test('durable exact-material artifact is read without writes and prevents another model run', async () => {
   const artifact = { issue: 1, kind: 'code', requestId: context.requestId, materialSha: B, verdict: 'accepted', report: { summary: 'accepted' } };
   const runs = [{ id: 11, display_title: `Code ${context.requestId}`, status: 'completed', conclusion: 'failure' }];
   const api = reviewApi({ runs, artifact }), review = new WorkflowReviewAdapter({ api, readArtifact: async () => artifact });
@@ -47,6 +47,37 @@ test('durable exact-material artifact survives failed comment publication and pr
   assert.equal((await review.requestReview(context)).requested, false); assert.equal(api.writes.length, 0);
   const wrong = new WorkflowReviewAdapter({ api, readArtifact: async () => ({ ...artifact, materialSha: C }) });
   await assert.rejects(wrong.readReviewResult(context), /different material/);
+});
+
+test('concurrent readers never publish; the completed coordinator publisher creates one report and one outside issue', async () => {
+  const comments = [], issues = [], writes = [], run = { id: 11, display_title: `Code ${context.requestId}`, status: 'in_progress', html_url: 'https://example.test/run/11' };
+  const receipt = { issue: 1, kind: 'code', requestId: context.requestId, materialSha: B, base: A, verdict: 'accepted',
+    markdown: 'Detailed independent review', report: { outsideFindings: [{ title: 'Separate defect', problem: 'Another operation can lose data', evidence: 'other.mjs:10', suggestedFix: 'Keep both updates' }] } };
+  const api = { root: '/repos/owner/repo', owner: 'owner', request: async (method, path, body) => {
+    if (method !== 'GET') writes.push({ method, path, body });
+    if (path.includes('/artifacts')) return { artifacts: [{ id: 41, name: 'review-result' }] };
+    if (path.includes('/actions/runs/11')) return { ...run };
+    if (path.includes('/actions/workflows/')) return { workflow_runs: [{ ...run }] };
+    if (path.includes('/comments')) return structuredClone(comments);
+    if (method === 'GET') return structuredClone(issues);
+    if (method === 'POST' && path.endsWith('/issues')) {
+      const issue = { number: issues.length + 100, ...body }; issues.push(issue); return issue;
+    }
+    throw Error(`Unexpected ${method} ${path}`);
+  }, comment: async (_issue, body) => {
+    const comment = { id: comments.length + 1, body, user: { login: 'github-actions[bot]' } };
+    comments.push(comment); return comment;
+  } };
+  const adapter = new WorkflowReviewAdapter({ api, readArtifact: async () => receipt });
+  const record = { issue: 1, kind: 'code', requestId: context.requestId, materialSha: B, expectedBase: A, runId: 11 };
+  await Promise.all([adapter.readReviewResult(context), adapter.readReviewResult(context), adapter.publishCompletedReview(record)]);
+  assert.equal(comments.length, 0); assert.equal(issues.length, 0); assert.equal(writes.length, 0);
+  run.status = 'completed';
+  await Promise.all([adapter.readReviewResult(context), adapter.publishCompletedReview(record), adapter.readReviewResult(context)]);
+  assert.equal(comments.length, 1); assert.equal(issues.length, 1);
+  await adapter.publishCompletedReview(record);
+  assert.equal(comments.length, 1); assert.equal(issues.length, 1);
+  assert.ok(writes.every(write => !write.path.includes('/dispatches') && !write.path.includes('/rerun')));
 });
 
 test('pending workflow prevents redispatch, missing workflow gets pinned inputs and S6 receipt', async () => {
@@ -352,14 +383,13 @@ function issueTransport(issue, { failClose = false, failComment = false } = {}) 
   return { api, comments, writes };
 }
 
-test('finish removes personal label and records milestone; a metadata retry never repeats merge or checks', async () => {
+test('documentation finish removes personal label without ledger or milestone; metadata retry never repeats merge or checks', async () => {
   const h = queueHarness(); h.issue.labels = ['S6-in-progress', 'track:ship', 'to_release', 'personal'];
   h.issue.testLayer = 'docs';
   const transport = issueTransport(h.issue, { failComment: true }); h.dependencies.api = transport.api;
   h.dependencies.synchronize = async () => ({ expectedBase: A, materialSha: B, patchId: 'docs', layer: 'docs', changedFiles: ['README.md'] });
   h.dependencies.git.git = async args => {
-    if (args[0] === 'show') return JSON.stringify(args[1].endsWith('cycle.json')
-      ? { baseStable: 'v1.0.0', milestone: { number: 5 } } : { issue: 1, baseStable: 'v1.0.0', category: 'major' });
+    if (args[0] === 'show') throw Error('Documentation does not read the release ledger');
     return A;
   };
   h.dependencies.sleep = async () => {};
@@ -367,11 +397,26 @@ test('finish removes personal label and records milestone; a metadata retry neve
   const result = await finishTask({ config, event: { id: 'finish-doc', issue: 1, branch: 'issue/1' }, queue: h.queue,
     api: transport.api, git: h.dependencies.git, review: h.dependencies.review, dependencies: h.dependencies, maxWaitMs: 1000 });
   assert.equal(result.action, 'merged'); assert.deepEqual(h.issue.labels.sort(), ['S8-merged', 'personal', 'track:ship']);
-  assert.equal(h.issue.milestone.number, 5); assert.equal(result.bookkeeping.pending.length, 1);
+  assert.equal(h.issue.milestone, undefined); assert.equal(result.bookkeeping.pending.length, 1);
   await h.command('reconcile-completions'); await h.command('reconcile-completions');
   assert.equal((await h.store.read()).state.tasks[1].completion.status, 'complete');
   assert.deepEqual(h.actions, ['merge']); assert.equal(transport.comments.length, 1);
   assert.ok(transport.writes.every(write => !write.body?.labels?.includes('to_release')));
+});
+
+test('finish leaves paid reports for the single coordinator publisher', async () => {
+  const h = queueHarness(); let publications = 0;
+  h.issue.labels = ['S8-merged', 'track:show'];
+  h.store.state.tasks[1] = { issue: 1, branch: 'issue/1', status: 'S8-merged', mergedSha: B, completion: { status: 'complete' } };
+  await h.queue.dispatch({ id: 'saved-report', type: 'review-presentation', issue: 1, kind: 'code',
+    record: { issue: 1, kind: 'code', requestId: 'review:1:paid', materialSha: B, expectedBase: A, runId: 11 } });
+  h.dependencies.review.publishCompletedReview = async () => { publications++; return { published: true }; };
+  const finished = await finishTask({ config, event: { id: 'finish-again', issue: 1, branch: 'issue/1' },
+    queue: h.queue, api: h.dependencies.api, git: h.dependencies.git, review: h.dependencies.review });
+  assert.equal(finished.action, 'merged'); assert.equal(publications, 0);
+  assert.equal(Object.keys((await h.store.read()).state.reviewPublications).length, 1);
+  await h.command('reconcile-completions'); await h.command('reconcile-completions');
+  assert.equal(publications, 1); assert.equal(Object.keys((await h.store.read()).state.reviewPublications).length, 0);
 });
 
 test('published stable completes only missing bookkeeping and Telegram on retry, without local reports or republishing', async () => {

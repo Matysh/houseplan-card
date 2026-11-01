@@ -106,5 +106,17 @@ HA. Ему нужны `curl` и `tar`; прежняя установка сох�
   селекторы отдельно в `docs/data-hp-contract.json`.
 - [TESTING.md](TESTING.md): окружения, тестовый фасад, смысл результатов.
 
+Прежние инженерные заметки сохранены целиком в
+[feature-notes.md](feature-notes.md). Их старые команды и требования к прогонам
+не действуют; объяснения продуктовых ограничений остаются доступными вместе с
+текущим кодом и профильными документами. В частности:
+
+| Контракт | Где искать подробности |
+|---|---|
+| `allow_room_wall_promotion` включает только обычный `config/set`; клиентского флага нет. Для восстановления стены нужна его ограниченная проверка, а не более широкая политика Optimize. | [Восстановление стен #996](feature-notes.md#same-id-room-wall-restoration-996) |
+| В настройках проёмов JSON `true/false` не равны числовым `1/0`, включая вложенные поля; числовые `1/1.0` совместимы с JS. | [Сравнение настроек #996](feature-notes.md#same-id-room-wall-restoration-996) |
+| Ecovacs получает изображение через публичный `homeassistant.components.image.async_get_image`, без self-HTTP URL с токеном, coordinator или vendor service. | [Image bridge #939](feature-notes.md#ecovacs-image-bridge-939) |
+| Обязательные чтения config/layout отделены от capability-проекции `fields: ['model_version']`; пустой `fields: []` запрашивает полный документ. | [Владелец чтения HA #1056](feature-notes.md#mounted-ha-authority-1056) |
+
 История решений остаётся в issue, коммитах и продуктовых changelog. Она не
 создаёт дополнительные обязательные прогоны поверх PROCESS.md.

@@ -90,19 +90,16 @@ export async function completePublishedRelease({ candidate: input, api, git, ver
     } catch (error) { await defer('issues', error, work ?? {}); }
   }
 
-  if (!done(candidate.completion['return-to-dev'])) {
-    if (candidate.kind === 'beta' && !(candidate.portToDev ?? []).length) await save('return-to-dev', { status: 'not-required' });
-    else {
-      try {
-        if (!returnToDev) throw Error('Return of published history to dev is not configured');
-        const result = await returnToDev({ candidate, previous: candidate.completion['return-to-dev'], onProgress });
-        if (result?.status === 'completed' || result?.alreadyIncluded || result?.devSha)
-          await save('return-to-dev', { ...result, status: 'completed' });
-        else await defer('return-to-dev', result?.reason ?? 'Published history is queued but has not reached dev', result ?? {});
-      } catch (error) { await defer('return-to-dev', error, candidate.completion['return-to-dev'] ?? {}); }
-    }
+  // User delivery is complete before an internal return can wait on the task queue.
+  if (candidate.kind !== 'beta') {
+    try {
+      if (!announce) throw Error('Stable Telegram announcement is not configured');
+      const result = await announce({ candidate, persist: async receipt => {
+        await onUpdate({ type: 'announcement', candidate: candidate.id, receipt }); candidate.announcement = structuredClone(receipt);
+      }, onProgress });
+      if (!['sent', 'completed', 'not-required'].includes(result?.status)) pending.push({ step: 'announcement', reason: result?.reason ?? 'Stable announcement has not completed' });
+    } catch (error) { pending.push({ step: 'announcement', reason: reason(error) }); }
   }
-
   if (!done(candidate.completion['retire-beta'])) {
     const previous = candidate.retiredBeta;
     if (candidate.kind !== 'beta' || !previous) await save('retire-beta', { status: 'not-required' });
@@ -121,14 +118,18 @@ export async function completePublishedRelease({ candidate: input, api, git, ver
     }
   }
 
-  if (candidate.kind !== 'beta') {
-    try {
-      if (!announce) throw Error('Stable Telegram announcement is not configured');
-      const result = await announce({ candidate, persist: async receipt => {
-        await onUpdate({ type: 'announcement', candidate: candidate.id, receipt }); candidate.announcement = structuredClone(receipt);
-      }, onProgress });
-      if (!['sent', 'completed', 'not-required'].includes(result?.status)) pending.push({ step: 'announcement', reason: result?.reason ?? 'Stable announcement has not completed' });
-    } catch (error) { pending.push({ step: 'announcement', reason: reason(error) }); }
+  if (!done(candidate.completion['return-to-dev'])) {
+    if (candidate.kind === 'beta' && !(candidate.portToDev ?? []).length) await save('return-to-dev', { status: 'not-required' });
+    else {
+      try {
+        if (!returnToDev) throw Error('Return of published history to dev is not configured');
+        const result = await returnToDev({ candidate, previous: candidate.completion['return-to-dev'], onProgress });
+        if (result?.status === 'completed' || result?.alreadyIncluded || result?.devSha)
+          await save('return-to-dev', { ...result, status: 'completed' });
+        else await defer('return-to-dev', result?.reason ?? 'Published history is queued but has not reached dev', result ?? {});
+      } catch (error) { await defer('return-to-dev', error, candidate.completion['return-to-dev'] ?? {}); }
+    }
   }
+
   return { status: pending.length ? 'pending' : 'completed', pending, candidate };
 }

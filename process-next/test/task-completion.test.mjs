@@ -5,15 +5,15 @@ import { reconcileTaskCompletions, notifyDevWebhook } from '../lib/task-completi
 import { runDevBuildDelivery } from '../templates/coordinator-dev-build.mjs';
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40);
-async function fixture({ category = 'major', missing = false, currentMilestone = null, releaseTag } = {}) {
+async function fixture({ category = 'major', missing = false, currentMilestone = null, releaseTag, layer = 'product' } = {}) {
   const queue = new QueueController(new MemoryQueueStore(), { clock: () => 100 });
-  await queue.dispatch({ id: 'ready', type: 'enqueue', task: { issue: 9, track: 'ship', layer: 'product', branch: 'task/9', materialSha: B,
+  await queue.dispatch({ id: 'ready', type: 'enqueue', task: { issue: 9, track: 'ship', layer, branch: 'task/9', materialSha: B,
     ...(releaseTag ? { releaseTag } : {}) } });
   let state = await queue.dispatch({ id: 'admit', type: 'admit' });
   const token = state.active.token;
   const dispatch = (id, type, extra = {}) => queue.dispatch({ id, type, issue: 9, token, materialSha: B, ...extra });
   await dispatch('sync', 'synchronized', { expectedBase: A });
-  await dispatch('s6', 's6-complete', { outcome: 'passed' });
+  await dispatch('s6', 's6-complete', { outcome: layer === 'docs' ? 'not-required' : 'passed' });
   await dispatch('merged', 'merged', { actualDevSha: B });
   const issue = { number: 9, state: 'open', labels: ['track:ship', 'S6-in-progress', 'to_release', 'bug'],
     milestone: currentMilestone ? { number: currentMilestone } : null };
@@ -82,6 +82,74 @@ test('a queued published-tag return completes without classification or changing
   assert.equal(result.completed.length, 1); assert.equal(result.completed[0].milestone, 'not-required');
   assert.equal((await f.queue.store.read()).state.tasks[9].releaseTag, 'v1.1.0');
   assert.equal(f.issue.milestone.number, 88); assert.equal(f.writes.milestone, 0);
+});
+
+test('documentation and infrastructure finish without a release ledger and preserve an owner milestone', async () => {
+  for (const layer of ['docs', 'infra']) {
+    const f = await fixture({ layer, missing: true, currentMilestone: 88 });
+    f.git.git = f.git.remoteHead = async () => assert.fail('non-product tasks do not read release classification');
+    const result = await f.complete(layer);
+    assert.equal(result.completed.length, 1); assert.equal(result.completed[0].milestone, 'not-required');
+    assert.equal(f.issue.milestone.number, 88); assert.equal(f.writes.milestone, 0);
+    assert.ok(!f.issue.labels.includes('to_release')); assert.ok(f.issue.labels.includes('S8-merged'));
+  }
+});
+
+test('six unchanged missing-ledger ticks write once and retry classification only when dev changes', async () => {
+  const f = await fixture(); let head = B, reads = 0, issueReads = 0, stateWrites = 0, commentCalls = 0, now = 0;
+  f.queue.clock = () => now;
+  const write = f.queue.store.compareAndSwap.bind(f.queue.store);
+  f.queue.store.compareAndSwap = (...args) => { stateWrites++; return write(...args); };
+  const getIssue = f.api.getIssue; f.api.getIssue = async (...args) => { issueReads++; return getIssue(...args); };
+  const comment = f.api.upsertComment; f.api.upsertComment = async (...args) => { commentCalls++; return comment(...args); };
+  f.git.remoteHead = async () => head;
+  f.git.git = async args => {
+    reads++;
+    if (args[1].endsWith('cycle.json')) return JSON.stringify({ baseStable: 'v1.0.0', milestone: { number: 7 } });
+    if (args[1].startsWith(`${C}:`)) return JSON.stringify({ issue: 9, baseStable: 'v1.0.0', category: 'major' });
+    throw Error('classification is absent');
+  };
+  for (let tick = 0; tick < 6; tick++) {
+    now = tick * 600_000; const result = await f.complete(`tick-${tick}`);
+    assert.equal(result.pending.length, 1); assert.match(result.pending[0].errors.milestone, /classification is absent/);
+  }
+  assert.deepEqual({ stateWrites, issueReads, reads, commentCalls }, { stateWrites: 1, issueReads: 1, reads: 2, commentCalls: 1 });
+  assert.equal((await f.queue.store.read()).state.tasks[9].completion.lastAttemptAt, undefined);
+  head = C; await f.complete('classification-repaired');
+  assert.equal(stateWrites, 2); assert.equal(issueReads, 2); assert.equal(commentCalls, 2);
+  assert.equal(f.issue.milestone.number, 7); assert.equal((await f.queue.store.read()).state.tasks[9].completion.status, 'complete');
+});
+
+test('unchanged milestone conflict is read-only and an owner correction still resumes without a dev change', async () => {
+  const f = await fixture({ currentMilestone: 88 }); let writes = 0, reads = 0, commentCalls = 0;
+  const write = f.queue.store.compareAndSwap.bind(f.queue.store), read = f.git.git, comment = f.api.upsertComment;
+  f.queue.store.compareAndSwap = (...args) => { writes++; return write(...args); };
+  f.git.git = async (...args) => { reads++; return read(...args); };
+  f.api.upsertComment = async (...args) => { commentCalls++; return comment(...args); };
+  for (let tick = 0; tick < 6; tick++) await f.complete(`conflict-${tick}`);
+  assert.deepEqual({ writes, reads, commentCalls }, { writes: 1, reads: 2, commentCalls: 1 });
+  f.issue.milestone = null; await f.complete('owner-cleared-conflict');
+  assert.equal(f.issue.milestone.number, 7); assert.equal(writes, 2); assert.equal(reads, 2); assert.equal(commentCalls, 2);
+});
+
+test('unchanged presentation errors and unfinished runs cause no queue churn; bounded retries rotate', async () => {
+  const queue = new QueueController(new MemoryQueueStore(), { clock: () => 0 });
+  await queue.dispatch({ id: 'ready', type: 'enqueue', task: { issue: 9, track: 'show', layer: 'infra', branch: 'task/9', materialSha: B } });
+  for (const round of [1, 2]) await queue.dispatch({ id: `presentation-${round}`, type: 'review-presentation', issue: 9, kind: 'code',
+    record: { issue: 9, kind: 'code', requestId: `review:9:${round}`, materialSha: B, expectedBase: A, runId: round } });
+  let writes = 0, now = 0, calls = [];
+  const write = queue.store.compareAndSwap.bind(queue.store);
+  queue.store.compareAndSwap = (...args) => { writes++; return write(...args); }; queue.clock = () => now;
+  const args = { queue, api: {}, git: {}, activated: true, limit: 1 };
+  await reconcileTaskCompletions({ ...args, eventId: 'ordinary-finish' }); assert.equal(writes, 0);
+  await reconcileTaskCompletions({ ...args, eventId: 'still-running', publishReview: async () => ({ pending: true }) }); assert.equal(writes, 0);
+  for (let tick = 0; tick < 6; tick++) {
+    now = tick * 600_000;
+    await reconcileTaskCompletions({ ...args, eventId: `failed-${tick}`, publishReview: async record => {
+      calls.push(record.requestId); throw Error('comment endpoint unavailable');
+    } });
+  }
+  assert.equal(writes, 2); assert.deepEqual(calls, ['review:9:1', 'review:9:2', 'review:9:1', 'review:9:2', 'review:9:1', 'review:9:2']);
 });
 
 test('failure notices and paid review presentation retry independently without changing statuses', async () => {

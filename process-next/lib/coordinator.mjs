@@ -89,26 +89,34 @@ export async function reconcileSpecReview({ queue, api, git, issue, requestRevie
   if (saved?.requestId !== requestId) await queue.dispatch({ id: `${eventId}:spec-request`, type: 'spec-requested', issue: issue.number,
     request: { requestId, contextDigest, base } });
   const result = await readReviewResult(context);
+  const savePresentation = async () => {
+    const presentation = pendingPresentation(result, { issue: issue.number, kind: 'spec', requestId,
+      materialSha: base, expectedBase: base, patchId: contextDigest });
+    if (presentation) await queue.dispatch({ id: `${eventId}:spec-presentation`, type: 'review-presentation',
+      issue: issue.number, kind: 'spec', record: presentation });
+  };
   if (!result || result.missing || result.retryable || result.verdict === 'incomplete') {
     if (saved?.requestId !== requestId) {
+      await savePresentation();
       await requestReview(context); return { action: 'spec-review-requested', requestId };
     }
     if (saved.retry) {
       if (retryStillBecomingVisible(saved.retry, result, queue.clock())) return { action: 'spec-review-pending', requestId, reason: 'review-retry-starting' };
-      if (saved.status !== 'attention') await queue.dispatch({ id: `${eventId}:spec-attention`, type: 'spec-complete', issue: issue.number, requestId, verdict: 'attention' });
+      if (saved.status !== 'attention') {
+        await savePresentation();
+        await queue.dispatch({ id: `${eventId}:spec-attention`, type: 'spec-complete', issue: issue.number, requestId, verdict: 'attention' });
+      }
       return { action: 'spec-review-attention', requestId, reason: 'review-retry-exhausted' };
     }
     const retryId = `${eventId}:spec-retry`;
+    await savePresentation();
     const retried = await queue.dispatch({ id: retryId, type: 'spec-retry', issue: issue.number, requestId, runId: result?.runId, runAttempt: result?.runAttempt });
     if (retried.specReviews[issue.number].retry.eventId === retryId) await requestReview({ ...context, retry: true });
     return { action: 'spec-review-requested', requestId };
   }
   if (result.pending) return { action: 'spec-review-pending', requestId };
   if (!['accepted', 'changes_requested'].includes(result.verdict)) return { action: 'spec-review-pending', requestId };
-  const presentation = pendingPresentation(result, { issue: issue.number, kind: 'spec', requestId,
-    materialSha: base, expectedBase: base, patchId: contextDigest });
-  if (presentation) await queue.dispatch({ id: `${eventId}:spec-presentation`, type: 'review-presentation',
-    issue: issue.number, kind: 'spec', record: presentation });
+  await savePresentation();
   await queue.dispatch({ id: `${eventId}:spec-complete`, type: 'spec-complete', issue: issue.number, requestId, verdict: result.verdict, reportUrl: result.reportUrl });
   await api.moveStatus(issue.number, result.verdict === 'accepted' ? 'S5-ready' : 'S3-spec', issue.labels);
   return { action: 'spec-complete', verdict: result.verdict };
@@ -187,13 +195,21 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
       }
       if (!readReviewResult) return { action: 'review-pending', active, task };
       const result = await readReviewResult({ ...context, requestId: active.reviewRequest });
+      const savePresentation = async () => {
+        const presentation = pendingPresentation(result, { issue: active.issue, kind: 'code', requestId: active.reviewRequest,
+          materialSha: result?.materialSha ?? active.materialSha, expectedBase: result?.base ?? active.expectedBase,
+          patchId: result?.patchId ?? active.patchId });
+        if (presentation) await dispatch('review-presentation', { kind: 'code', record: presentation });
+      };
       if (!result || result.missing || result.retryable || result.verdict === 'incomplete') {
         if (!requestReview) return pending('review-dispatch-unavailable');
         const retry = task.reviewRetry?.requestId === active.reviewRequest ? task.reviewRetry : null;
         if (retry) {
           if (retryStillBecomingVisible(retry, result, queue.clock())) return { action: 'review-pending', reason: 'review-retry-starting', active, task };
+          await savePresentation();
           return returned('review-retry-exhausted');
         }
+        await savePresentation();
         const state = await dispatch('review-retry', { requestId: active.reviewRequest, runId: result?.runId, runAttempt: result?.runAttempt });
         if (state.tasks[active.issue].reviewRetry.eventId === `${eventId}:review-retry`)
           await requestReview({ ...context, requestId: active.reviewRequest, retry: true });
@@ -205,9 +221,7 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
       }
       if ((result.materialSha !== active.materialSha && result.patchId !== active.patchId) || result.requestId !== active.reviewRequest)
         throw Error('Review belongs to another request/material');
-      const presentation = pendingPresentation(result, { issue: active.issue, kind: 'code', requestId: active.reviewRequest,
-        materialSha: result.materialSha, expectedBase: result.base ?? active.expectedBase, patchId: result.patchId ?? active.patchId });
-      if (presentation) await dispatch('review-presentation', { kind: 'code', record: presentation });
+      await savePresentation();
       if (['changes_requested', 'changes-requested'].includes(result.verdict)) return returned('review-findings');
       if (result.verdict !== 'accepted') return pending('review-incomplete');
       return { action: 'ready-to-merge', state: await dispatch('review-complete', { materialSha: active.materialSha, verdict: 'accepted', review: result }) };

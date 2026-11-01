@@ -5,7 +5,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { buildReviewContext } from '../lib/review.mjs';
-import { prepareReviewJob, publishReviewComment } from '../templates/review-job.mjs';
+import { prepareReviewJob } from '../templates/review-job.mjs';
+import { publishReviewReceipt } from '../lib/review-publication.mjs';
+
+// The coordinator publishes this saved receipt; the model job only creates it.
+const publishSaved = f => publishReviewReceipt({ api: f.api,
+  receipt: JSON.parse(readFileSync(path.join(f.reportDir, 'result.json'), 'utf8')) });
 
 function fixture(t, kind = 'code') {
   const reportDir = mkdtempSync(path.join(os.tmpdir(), 'review-job-'));
@@ -50,14 +55,14 @@ test('a comment publication failure preserves the paid verdict and retries witho
   const f = fixture(t);
   const result = await prepareReviewJob(f);
   f.api.comment = async () => { throw Error('GitHub unavailable'); };
-  await assert.rejects(publishReviewComment(f), /GitHub unavailable/);
+  await assert.rejects(publishSaved(f), /GitHub unavailable/);
   assert.deepEqual(JSON.parse(readFileSync(path.join(f.reportDir, 'result.json'))), result);
   const retry = await prepareReviewJob(f);
   assert.equal(retry.reused, true);
   assert.equal(f.invocations, 1);
   let published;
   f.api.comment = async (_issue, body) => { published = body; };
-  await publishReviewComment(f);
+  await publishSaved(f);
   assert.match(published, /Detailed independent report with evidence/);
   assert.equal(f.invocations, 1);
 });
@@ -79,7 +84,7 @@ test('real spec/code job passes executor context from the issue and preserves it
     assert.deepEqual(first.authorContext, f.context.authorContext);
     assert.deepEqual(f.context.receipts, [{ status: 'passed' }]);
     f.api.comment = async () => { throw Error('Temporary transport failure'); };
-    await assert.rejects(publishReviewComment(f), /transport failure/);
+    await assert.rejects(publishSaved(f), /transport failure/);
     body = '## Контекст исполнителя для ревью\nNew statement after review.';
     const retry = await prepareReviewJob(f);
     assert.equal(f.invocations, 1); assert.equal(retry.reused, true);
@@ -140,14 +145,14 @@ test('incomplete review is regenerated on its allowed retry and the stale commen
   const f = fixture(t); let body;
   f.api.comment = async (_issue, text) => { body = text; };
   const incomplete = await prepareReviewJob({ ...f, runReviewImpl: async () => ({ status: 'incomplete', reason: 'No submitted verdict' }) });
-  await publishReviewComment(f);
+  await publishSaved(f);
   f.comments.push({ id: 9, user: { login: 'github-actions[bot]' }, body });
   f.reviewAdapter.readReviewResult = async () => incomplete;
   const complete = await prepareReviewJob(f);
   assert.equal(complete.verdict, 'accepted'); assert.equal(f.invocations, 1);
   const writes = [], original = f.api.request;
   f.api.request = async (method, url, payload) => method === 'PATCH' ? writes.push({ url, body: payload.body }) : original(method, url);
-  await publishReviewComment(f);
+  await publishSaved(f);
   assert.equal(writes.length, 1); assert.match(writes[0].url, /comments\/9$/);
   assert.match(writes[0].body, /"verdict":"accepted"/);
   assert.equal(f.invocations, 1);
