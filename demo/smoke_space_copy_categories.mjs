@@ -17,7 +17,7 @@ const card=page.locator('houseplan-panel houseplan-card');
 const shell=card.locator('hp-dialog[data-kind="space"]');
 const settle=async()=>{await page.evaluate(async()=>{await window.__hpTest.waitForWrites();await window.__hpTest.settled();});await waitForUiKitPaint(page);};
 const open=async()=>{
- await page.evaluate(()=>window.__hpTest.openSpaceDialog('edit','f1'));await waitForUiKitPaint(page);
+ await page.evaluate(async()=>{await window.__hpTest.switchSpace('f1');await window.__hpTest.openSpaceDialog('edit','f1');});await waitForUiKitPaint(page);
  await shell.locator('[data-action="space-copy"]').click();await waitForUiKitPaint(page);
  await shell.locator('#space-copy-name').waitFor();
 };
