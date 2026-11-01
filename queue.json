@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 479,
+  "revision": 480,
   "nextTicket": 50,
   "nextFence": 48,
   "tasks": {
@@ -492,15 +492,16 @@
         "docs/CHANGELOG.ru.md"
       ],
       "notice": {
-        "key": "1:checks-failed",
+        "key": "2:checks-failed",
         "reason": "checks-failed",
-        "status": "delivered",
+        "status": "pending",
         "fromStatus": "S6-in-progress",
-        "at": 1793573258281,
-        "entry": 1,
+        "at": 1793573719084,
+        "entry": 2,
         "detail": "Браузер: canvas surface gestures: failed",
-        "eventId": "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b:finish:3:return:return:1198"
-      }
+        "eventId": "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2:finish:2:return:return:1198"
+      },
+      "reason": "checks-failed"
     },
     "1199": {
       "issue": 1199,
@@ -626,18 +627,7 @@
     1199,
     1200
   ],
-  "active": {
-    "issue": 1198,
-    "worker": "github-coordinator",
-    "token": "47:github:41359309430:1:tick:2:admit",
-    "fence": 47,
-    "materialSha": "449d10a2c858c67698fc290021a9241799dcb60c",
-    "expectedBase": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a",
-    "phase": "testing",
-    "admittedAt": 1793573598578,
-    "expiresAt": 1793573990884,
-    "patchId": "6055ba56c42818e082b91b77506ebacc7ab85d89"
-  },
+  "active": null,
   "events": {
     "github:41348208515:1:label:spec-request": {
       "digest": "b10861cd6e4f25ddb999d1ba4377b14fdbf8a7dc40ea4f3d406d3a88635b723b",
@@ -709,6 +699,10 @@
     },
     "dev-build:41359309430:1:webhook:28a74f2d-07aa-4325-b311-5172b3eb35f1:delivered": {
       "digest": "fb36a0a778a38a923bc7d4b95e24e071a8cbe3ae1ac2d5910822c9d52a172f69",
+      "issue": 1198
+    },
+    "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2:finish:2:return": {
+      "digest": "d101f1d017592d2bd1a7d620e0e67095d7389f5b18047b7f71fa0a2945b0520c",
       "issue": 1198
     },
     "finish:df6169d2-c8fd-48a7-8cd2-f35fed02086b": {
@@ -828,6 +822,26 @@
         "track": "show",
         "layer": "product",
         "materialSha": "485c4d41e98e46bbfd3f73803ed5b994e652ca3a"
+      }
+    },
+    "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2:finish:2:return:return:1198": {
+      "digest": "d101f1d017592d2bd1a7d620e0e67095d7389f5b18047b7f71fa0a2945b0520c",
+      "issue": 1198,
+      "message": {
+        "kind": "return",
+        "issue": 1198,
+        "at": 1793573719084,
+        "entry": 2,
+        "notice": {
+          "key": "2:checks-failed",
+          "reason": "checks-failed",
+          "status": "pending",
+          "fromStatus": "S6-in-progress",
+          "at": 1793573719084,
+          "entry": 2,
+          "detail": "Браузер: canvas surface gestures: failed",
+          "eventId": "finish:ca0ffa83-d5dd-4069-b3d7-522b63b92cb2:finish:2:return:return:1198"
+        }
       }
     }
   },
