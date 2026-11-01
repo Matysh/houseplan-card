@@ -212,7 +212,8 @@ test('changing submitted spec material explains the new round without erasing th
     specReviews: { 9: { requestId: 'spec:9:new', round: 2 } } });
   await f.publish(); const body = f.bodies()[0];
   assert.match(body, /Статус остаётся \*\*S4/);
-  assert.match(body, /вместо материала раунда 1 передана новая редакция для раунда 2/);
+  assert.match(body, /предыдущей редакции.*раунд 1/);
+  assert.match(body, /новая редакция для раунда 2/);
   assert.match(body, /Предыдущий запрос сохранён/);
   assert.doesNotMatch(body, /Следующий шаг на момент события/);
   const late = fixture([{ kind: 'spec-replaced', previousRound: 1, round: 2 }], { status: 'S5-ready',
