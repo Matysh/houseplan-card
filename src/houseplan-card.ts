@@ -7377,6 +7377,7 @@ export class HouseplanCard extends LitElement {
 
   private _stagePointerDown(ev: PointerEvent): void {
     if (!sceneGestureFromPath(ev.composedPath())) return;
+    this._editorRuntime?._clearRoomFaceHover();
     if (this._mode === 'decor' && ev.button === 2) return;
     this._bootSoftCancel();
     const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view'
@@ -7584,6 +7585,7 @@ export class HouseplanCard extends LitElement {
 
   private _stagePointerLeave(ev: PointerEvent): void {
     this._editorRuntime?._cancelPointerMove('markup-hover');
+    this._editorRuntime?._clearRoomFaceHover();
     if (this._mode === 'decor') this._editorRuntime?._furnPointerLeave(ev);
     if (!this._markup) return;
     if (this._tool === 'opening') {
@@ -7894,6 +7896,7 @@ export class HouseplanCard extends LitElement {
   /** Remove visual state that can only be owned by a live mouse hover. */
   private _clearTransientHover(suspend = false): void {
     if (suspend) this._pointerModality.suspend();
+    this._editorRuntime?._clearRoomFaceHover();
     this._liveRt?.clearDeviceFocus();
     this._deviceHits.hover(this.renderRoot, null);
     if (this._tip) this._tip = null;
@@ -9693,6 +9696,7 @@ export class HouseplanCard extends LitElement {
    * doors, windows and gates remain gaps instead of being bridged by a solid accent.
    */
   private _roomHoverPaths(space: SpaceModel): { fillD: string; outlineD: string } | null {
+    if (this._mode === 'plan') return this._editorRuntime?.roomFaceHoverPaths || null;
     const hover = this._hoverRoom;
     if (this._mode !== 'view' || !hover || hover.space !== space.id) {
       return null;
@@ -9937,7 +9941,9 @@ export class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup || !this._editorRuntime) return;
-    this._editorRuntimeOrThrow()._queuePointerMove('markup-hover', () => this._editorRuntime!._markupMove(ev));
+    // DOM clears composedPath after dispatch; retain the object owner until rAF.
+    const path = ev.composedPath();
+    this._editorRuntimeOrThrow()._queuePointerMove('markup-hover', () => this._editorRuntime!._markupMove(ev, path));
   }
 
   /** One resolved architectural candidate shared by hover and click. */

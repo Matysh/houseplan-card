@@ -903,9 +903,11 @@ diagnose an otherwise invisible Resize blocker without changing any hit target.
 ## 11. Planar wall faces
 
 Every completed Walls segment is persisted immediately as an ordinary
-`partition`; only its ordered chain membership remains in memory. On the click
-path only, an immutable planar graph is built from structural room edges and
-partitions both before and after the latest segment. Unlike the
+`partition`; only its ordered chain membership remains in memory. An immutable
+planar graph is built from structural room edges and partitions before and after
+the latest segment. Select also queries that graph for existing free faces (#1176):
+the first inquiry per space/config epoch builds the graph, and subsequent mouse
+samples reuse it and the face classification. Unlike the
 presentation/snap snapshot, this
 face graph ignores door/window/gate/passage cuts; zero-thickness wall axes remain
 structural graph edges even though they have no masonry body.
@@ -937,8 +939,9 @@ are open. Create/Keep-as-walls answers are buffered; Cancel/Esc discards all
 answers and leaves the already persisted partitions unchanged. The final answer
 revalidates the whole batch and applies accepted rooms while consuming only the
 coincident partitions used by those rooms in one history/config transaction.
-Graph construction never runs on pointermove, Home Assistant state updates or
-ordinary rendering.
+Warm pointermove only looks up the cached graph and candidate; graph construction
+and classification are not repeated for each mouse sample or HA state update.
+Ordinary rendering never constructs the face graph.
 
 The proposal records its space and physical geometry fingerprint. Apply refuses
 changed geometry before mutation. A synchronous refusal or server reload that
@@ -981,14 +984,16 @@ active the snapshot is literal and Undo removes one point; after finish,
 Undo/Redo passes that seed scope through the same lossless finalizer, so hidden
 collinear seams cannot return as durable Optimize debt (#477).
 
-**Room from an existing face.** With no active chain, a Walls click queries the
-smallest exact unoccupied bounded face at the raw point; boundary/snap hits and
-desktop `Shift+click` still draw. Without an exact face, `src/wall-face-repair.ts`
-may plan one endpoint→endpoint or endpoint→solid-line move of at most 2 physical
-cm. Room vertices and endpoints of partitions that host an opening never move,
-multiple valid repairs fail closed, and the immutable proposal is revalidated
-against current geometry before use. Move and room are one history/config
-transaction; cancelling or rejecting the room applies nothing.
+**Room from an existing face (#1176).** With no active chain, Select queries the
+smallest exact unoccupied bounded face at the raw point. Hover and click use the
+same classified candidate; physical objects, node handles and wall picks win.
+The cached candidate floor is clipped against existing physical masonry and uses
+View's wash/halo/outline painters. Leaving Select, the stage, mouse hover, mode
+or geometry revision retires its presentation without writing configuration.
+The existing batch fingerprint, materialization, ACK and Undo/Redo owners still
+validate the room before adoption. Gaps are not offered or repaired by this idle
+Select action. Walls clicks always draw; the bounded endpoint repair during
+closure of a newly drawn chain retains its existing guards and atomic commit.
 
 **Source coordinates (#1061).** Face adjacency and identity use the existing
 topology epsilon; persisted rings use only exact coordinates proved by incident

@@ -1548,6 +1548,13 @@ recursive adoption. Values and property order match the candidate exactly;
 the candidate is never mutated. This is not a full live-model clone or new
 pointermove work, and array identity without an id is not a gesture guarantee.
 
+Select's existing-face room proposal (#1176) lives in the lazy editor runtime.
+One space/config-epoch cache owns the graph and per-face classification; hover
+and click resolve the same exact candidate. Its transient clipped-floor paths
+reuse View's painters without fabricating or persisting a Room. Object hit
+ownership wins, and tool/mode/pointer/geometry changes invalidate the hover.
+Walls retains new-chain drawing and the existing automatic closure dialog.
+
 Room-face acceptance uses `wall-face-lineage.ts` to choose provisional carriers
 and settle only new-room hints against the partitions left after reconciliation
 (#804). A residual keeps its identity without colliding with the promoted room

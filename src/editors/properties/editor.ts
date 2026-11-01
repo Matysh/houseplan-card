@@ -291,7 +291,7 @@ export class PropertiesEditor {
     this.setSelection(identity); return true;
   }
   selectDevice(device: DevItem): boolean { return this.select('device', device.id, bindingOf(device)); }
-  private planHit(point: number[]): string | null {
+  planHit(point: number[]): string | null {
     const space = this.host._spaceModel();
     const distance = (a: number[], b: number[]): number => {
       const dx = b[0] - a[0], dy = b[1] - a[1], den = dx * dx + dy * dy;

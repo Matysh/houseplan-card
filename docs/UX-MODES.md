@@ -305,6 +305,13 @@ node handles; it never repairs stored data or relaxes the write preflight.
   Cold non-Select entry also loads the menu; moving nodes and their handles
   remain Select-only. Active chain, dirty field, dialog, transition and writer
   guards retain their current meaning; View/kiosk do not gain node input.
+- **Select** alone offers rooms inside existing unoccupied closed wall faces
+  (#1176): real mouse hover uses View's floor wash, accent halo and outline;
+  clicking the same candidate opens the existing room form. Physical objects,
+  contour walls, node handles, openings, stairs and room labels retain their
+  input priority. Occupied, exterior and unclosed faces are not offered. **Walls**
+  always starts/continues drawing inside these contours without a room offer;
+  closing a newly drawn region still uses the existing automatic room queue.
 - **Select** also moves wall nodes (#803): a saved endpoint, shared room corner
   or supported T/X intersection has a `grab` cursor; capture uses `grabbing`.
   The 12 CSS-pixel node hit wins there, while dragging a wall body outside it

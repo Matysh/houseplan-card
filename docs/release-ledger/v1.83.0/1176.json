@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "issue": 1176,
+  "baseStable": "v1.83.0",
+  "category": "major",
+  "rationale": "Adds Select-only hover and click room creation for existing exact free wall faces; Walls retains free chain drawing and automatic new-segment closure. Existing geometry, materialization, persistence and history guards are reused."
+}

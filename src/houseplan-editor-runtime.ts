@@ -210,7 +210,7 @@ import type { OptimizePlansDialogState } from './optimize-plans-dialog';
 import { LazyOptimizePlansDialog } from './optimize-plans-loader';
 import {
   BodyObstaclesMemo, COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody, floorMinusObstacles, geometryArea,
-  partitionBody, sameColumnPlacement, physicalBodyParts, type PartitionOpeningCut,
+  partitionBody, sameColumnPlacement, physicalBodyParts, floorMinusBodies, polyclipPathD, type PartitionOpeningCut,
 } from './physical-geometry';
 import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening, partitionOpeningJambMargin,
@@ -901,6 +901,11 @@ export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 export { EDITOR_LANGUAGE_RUNTIME }; // #627: see src/i18n/editor-language.ts
 
 export class HouseplanEditorRuntime {
+  private _roomFaceCache: { key: string; graph: WallFaceGraph | null;
+    candidates: Map<string, WallFaceCandidate | null> } | null = null;
+  private _roomFaceHover: { key: string; face: WallFaceCandidate;
+    paths: { fillD: string; outlineD: string } } | null = null;
+
   public readonly keyboardNudge = new KeyboardNudge(this);
   public readonly backupTransfer = new LazyBackupArchiveClient(this.host);
   public readonly deviceStructure = new DeviceStructureHistory(this.host);
@@ -958,7 +963,7 @@ export class HouseplanEditorRuntime {
   public readonly chainExit: EditorChainExit;
   private _navigationIntent = 0;
   public get navigationIntent(): number { return this._navigationIntent; }
-  public invalidateEditorNavigation(): void { this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
+  public invalidateEditorNavigation(): void { this._clearRoomFaceHover(); this._cancelOpeningDrag(); this.externalScreens.close(); this.markerAlerts.close(); this.keyboardNudge.retire(); this.decorLine.reset(); this.properties.retireSelection(); this._navigationIntent++; this.chainExit.invalidate(); this.deviceCopy.close(); this.decorOrder.close(); this.catalogMenu.dispose(); this.nodeMove?.cancel(); }
   public get roomSaveBusy(): boolean { return roomSaveBusy(this.host); }
   public readonly roomDeviceDiscovery = new RoomDeviceDiscovery();
   public readonly languageRuntime = EDITOR_LANGUAGE_RUNTIME;
@@ -2639,6 +2644,8 @@ public _markupClick(ev: MouseEvent): void {
     if (path.some((n) => n?.classList?.contains?.('physical-hit'))) return;
     const raw = this._svgPoint(ev);
     if (this.host._tool === 'select') {
+      // Real object hits keep their normal selection/drag ownership.
+      if (!this._roomFaceObjectHit(raw, path) && this._offerExistingWallFace(raw)) return;
       if (this.properties.wide) {
         this.properties.selectPlanPoint(raw); return;
       }
@@ -2708,10 +2715,6 @@ public _markupClick(ev: MouseEvent): void {
     // overlaps are still rejected, but only at closing time, when the whole
     // outline is known (roomsOverlap treats full nesting as legal).
     if (!this.host._path.length) {
-      // A free idle click can name a room inside masonry that was completed in
-      // an earlier session. Shift and architectural snap hits retain the Walls
-      // gesture, so this offer never steals an intentional new chain.
-      if (!ev.shiftKey && !resolved.candidate && this._offerExistingWallFace(raw)) return;
       this.host._activeWallChainId = `chain-${Date.now().toString(36)}`;
       this.host._activeWallChainPartitionIds = [];
       this.host._wallChainSegmentCms = [];
@@ -2871,52 +2874,82 @@ public _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
     rememberRoomBaseline(this.host);
   }
 
-public _offerExistingWallFace(raw: number[]): boolean {
-    if (this.host._path.length || this.host._wallFaceBatch || this.host._roomDialog) return false;
-    const epsilon = this.host._gridPitch * 0.0002;
-    try {
-      const graph = this._wallFaceGraph(this._wallGraphSources([]), epsilon);
-      let face = findWallFaceAtPoint(graph, raw, epsilon);
-      let repair: WallFaceRepairProposal | undefined;
-      if (!face) {
-        const result = planWallFaceRepair(this._wallGraphSources([]), {
-          point: raw,
-          maxDistance: wallCmToUnits(2, this.host._cellCm, this.host._gridPitch),
-          gridStep: this.host._gridPitch,
-          epsilon,
-        });
-        if (result.kind === 'ambiguous') {
-          this.host._wallRepairDiagnostic = result.proposals[0] || null;
-          this.host._showToast(this.host._t(
-            this.host._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous',
-          ), this.host._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous');
-          return true;
-        }
-        if (result.kind === 'repair') {
-          face = result.face;
-          repair = result.proposal;
-        } else if (result.kind === 'none') {
-          const diagnostic = planWallFaceRepair(this._wallGraphSources([]), {
-            point: raw,
-            maxDistance: this._cssPxToRender(12),
-            gridStep: this.host._gridPitch,
-            epsilon,
-          });
-          if (diagnostic.kind === 'repair') {
-            this.host._wallRepairDiagnostic = diagnostic.proposal;
-            this.host._showToast(this.host._t('toast.wall_repair_too_large'), 'toast.wall_repair_too_large');
-            return true;
-          }
-        }
-      }
-      if (!face) return false;
-      const candidates = this._classifyWallFaces([{ ...face, existing: !repair, repair }]);
-      if (!candidates.length) return false;
-      this._beginWallFaceBatch(candidates);
-      return true;
-    } catch {
-      return false;
+private _roomFaceKey(): string {
+    return `${this.host._space}|${this.host._cfgEpoch}|${this.host._gridPitch}`;
+  }
+
+/** Exact, unoccupied faces only: a gap is not a hovered room proposal. */
+private _existingWallFaceAt(raw: number[]): WallFaceCandidate | null {
+    const key = this._roomFaceKey(), epsilon = this.host._gridPitch * 0.0002;
+    if (this._roomFaceCache?.key !== key) {
+      let graph: WallFaceGraph | null = null;
+      try { graph = this._wallFaceGraph(this._wallGraphSources([]), epsilon); }
+      catch { /* Malformed legacy topology stays advisory, including on hover. */ }
+      this._roomFaceCache = { key, graph, candidates: new Map() };
     }
+    const cache = this._roomFaceCache;
+    if (!cache.graph) return null;
+    const face = findWallFaceAtPoint(cache.graph, raw, epsilon);
+    if (!face) return null;
+    // Classification/clipping is per face/revision, never per mouse sample.
+    if (!cache.candidates.has(face.key)) {
+      let candidate: WallFaceCandidate | null = null;
+      try { candidate = this._classifyWallFaces([{ ...face, existing: true }])[0] || null; }
+      catch { /* An invalid legacy face must not break the pointer handler. */ }
+      cache.candidates.set(face.key, candidate);
+    }
+    return cache.candidates.get(face.key) || null;
+  }
+
+private _roomFaceObjectHit(raw: number[], path: readonly EventTarget[]): boolean {
+    return !!this.properties.planHit(raw) || path.some(node => node instanceof Element && node.matches(
+      '.physical-hit, .roomlabel, .rlhandle, button, [data-hp="wall-node"], [data-hp="opening"], [data-hp="stair"], [data-hp="stair-frame"]',
+    ));
+  }
+
+public _clearRoomFaceHover(): void {
+    if (!this._roomFaceHover) return;
+    this._roomFaceHover = null;
+    this.host.requestUpdate();
+  }
+
+public get roomFaceHoverPaths(): { fillD: string; outlineD: string } | null {
+    const hover = this._roomFaceHover;
+    return hover && hover.key === this._roomFaceKey() && this.host._mode === 'plan'
+      && this.host._tool === 'select' && this.host._pointerModality.hoverEnabled
+      && !this.host._editorSecondaryDialogBlocked && !this.host._modeTransitionBusy
+      && !this.host._roomDialog && !this.host._pointers.size ? hover.paths : null;
+  }
+
+private _hoverExistingWallFace(ev: MouseEvent, path: readonly EventTarget[]): void {
+    if (!this.host._pointerModality.hoverEnabled || this.host._pointers.size
+        || this.host._editorSecondaryDialogBlocked || this.host._modeTransitionBusy
+        || this.host._roomDialog || this.host._path.length) {
+      this._clearRoomFaceHover(); return;
+    }
+    const raw = this._svgPoint(ev);
+    const face = this._roomFaceObjectHit(raw, path) ? null : this._existingWallFaceAt(raw);
+    if (!face) { this._clearRoomFaceHover(); return; }
+    const key = this._roomFaceKey();
+    if (this._roomFaceHover?.key === key && this._roomFaceHover.face === face) return;
+    const floor = floorMinusBodies(face.ring, this.host._physicalBodiesR());
+    const d = floor ? polyclipPathD(floor)
+      : `M ${face.ring.map(p => `${p[0]} ${p[1]}`).join(' L ')} Z`;
+    // Share View's wash/halo/outline painters and theme tokens. Clip the
+    // proposed floor against the same physical walls without creating a Room.
+    this._roomFaceHover = { key, face, paths: { fillD: d, outlineD: d } };
+    this.host.requestUpdate();
+  }
+
+public _offerExistingWallFace(raw: number[]): boolean {
+    if (this.host._mode !== 'plan' || this.host._tool !== 'select'
+        || this.host._path.length || this.host._wallFaceBatch || this.host._roomDialog) return false;
+    const face = this._existingWallFaceAt(raw);
+    if (!face) return false;
+    if (!this.properties.beforeIntent(() => this._offerExistingWallFace(raw))) return true;
+    this._clearRoomFaceHover();
+    this._beginWallFaceBatch([face]);
+    return true;
   }
 
 public _columnClick(raw: number[]): void {
@@ -6625,9 +6658,14 @@ public _splitClick(raw: number[]): void {
     rememberRoomBaseline(this.host);
   }
 
-public _markupMove(ev: MouseEvent): void {
+public _markupMove(ev: MouseEvent, path: readonly EventTarget[] = ev.composedPath()): void {
     if (!this.host._markup) return;
-    if (this.host._tool === 'select') { this.properties.hoverPlan(ev); return; }
+    if (this.host._tool === 'select') {
+      this.properties.hoverPlan(ev);
+      this._hoverExistingWallFace(ev, path);
+      return;
+    }
+    this._clearRoomFaceHover();
     if (this.host._tool === 'column') {
       this.host._cursorPt = this._snap(this._svgPoint(ev));
       return;

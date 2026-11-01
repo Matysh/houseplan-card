@@ -1,4 +1,4 @@
-/** #1166: unchanged public export, actual Walls clicks, room writes and history.
+/** #1166: unchanged public export, actual Select clicks, room writes and history.
  * The transport is a cloned CAS wire store, not a substitute geometry validator;
  * the same produced documents are separately exercised by the real HA harness.
  */
@@ -74,7 +74,7 @@ for(const optimize of [false,true])for(const reverse of [false,true]){
         return fallback(m);
       }};
       await c._loadFromServer();await window.__hpTest.switchSpace(config.spaces[0].id);
-      await window.__hpTest.setMode('plan');await window.__hpTest.setTool('draw');
+      await window.__hpTest.setMode('plan');await window.__hpTest.setTool('select');
       await new Promise(resolve=>setTimeout(resolve,500));await window.__hpTest.settled();
     },source);
     await settle(page);

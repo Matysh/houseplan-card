@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The process reads Actions review/fallback ZIPs with the REST media type expected by GitHub; release asset downloads retain their binary media type. Existing review results resume without another model call. [#1186](https://github.com/Matysh/houseplan-card/issues/1186)
+- Select highlights free closed wall regions using View hover styling and opens room creation on click. Walls draws freely inside existing contours; object selection, room persistence and history keep their existing owners. [#1176](https://github.com/Matysh/houseplan-card/issues/1176)
 
 ## v1.84.0-beta.1 — 2026-11-01
 

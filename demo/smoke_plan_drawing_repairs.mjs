@@ -103,6 +103,7 @@ const out = await page.evaluate(async () => {
   result.closeEndpointsFailClosed = conflict.ambiguous && conflict.conflicts.length === 2;
 
   await reset({ partitions: ring() });
+  card._tool = 'select'; await update();
   const exactBefore = JSON.stringify(card._curSpaceCfg);
   result.existingFaceOffersRoom = card._offerExistingWallFace([300, 300])
     && card._roomDialog && card._wallFaceBatch?.candidates[0]?.existing;
@@ -110,9 +111,9 @@ const out = await page.evaluate(async () => {
   await update();
   result.keepExistingFaceIsNoop = JSON.stringify(card._curSpaceCfg) === exactBefore
     && !card._roomDialog && !card._wallFaceBatch;
-  card._path = [];
-  card._markupClick(clickAt(300, 300, true));
-  result.shiftBypassesExistingFaceOffer = card._path.length === 1 && !card._roomDialog;
+  card._path = []; card._tool = 'draw';
+  card._markupClick(clickAt(300, 300));
+  result.wallsInsideExistingFaceStartsChain = card._path.length === 1 && !card._roomDialog;
   card._cancelPath();
 
   const largeGap = card._cmToUnits(3) / 1000;
@@ -132,17 +133,16 @@ const out = await page.evaluate(async () => {
       host: { kind: 'partition', id: 'left', t: 0.5 },
     }],
   });
+  card._tool = 'select';
   const hostedBefore = JSON.stringify(card._curSpaceCfg);
   const hostedOffered = card._offerExistingWallFace([300, 300]);
-  card._nameSel = 'Must not repair';
-  card._saveRoom();
   await update();
-  result.hostedOpeningBlocksRepair = hostedOffered
+  result.openFaceWithHostedOpeningIsNotOffered = !hostedOffered
     && JSON.stringify(card._curSpaceCfg) === hostedBefore
-    && !card._roomDialog && !card._wallFaceBatch
-    && card._toast === card._t('toast.wall_repair_changed');
+    && !card._roomDialog && !card._wallFaceBatch;
 
   await reset({ partitions: ring() });
+  card._tool = 'select';
   card._offerExistingWallFace([300, 300]);
   card._nameSel = 'Existing face';
   card._saveRoom();
@@ -152,19 +152,13 @@ const out = await page.evaluate(async () => {
   const createdWalls = clone(card._curSpaceCfg.walls || []);
 
   await reset({ partitions: ring(card._cmToUnits(1.2) / 1000) });
-  const leftBefore = clone(card._curSpaceCfg.partitions.find((item) => item.id === 'left'));
+  card._tool = 'select';
+  const gapBefore = JSON.stringify(card._curSpaceCfg);
   const gapOffered = card._offerExistingWallFace([300, 300]);
   await update();
-  result.smallGapOffersRepair = gapOffered
-    && !!card._wallFaceBatch?.candidates[0]?.repair
-    && !!root().querySelector('.wall-repair-preview');
-  card._nameSel = 'Repaired';
-  card._saveRoom();
-  await update();
-  result.repairCommitsOnlyWithRoom = leftBefore.b[1] !== 0.1
-    && card._curSpaceCfg.rooms.length === 1
-    && !card._curSpaceCfg.partitions?.length
-    && card._curSpaceCfg.wall_segments?.length === 4;
+  result.selectDoesNotOfferUnclosedFace = !gapOffered && !card._roomDialog
+    && !card._wallFaceBatch && !root().querySelector('.wall-repair-preview')
+    && JSON.stringify(card._curSpaceCfg) === gapBefore;
 
   const room = { id: 'delete-me', name: 'Delete me', area: null,
     poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]] };
