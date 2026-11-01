@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 24,
+  "revision": 25,
   "nextTicket": 5,
   "nextFence": 5,
   "tasks": {
@@ -62,14 +62,21 @@
       "track": "ship",
       "layer": "infra",
       "branch": "codex/1186-artifact-media",
-      "materialSha": "bcf7d9a595efa5de7db1524cd81e1b84dafc6ec4",
+      "materialSha": "bfc2d7324795183834d54794b3c103d77f100e76",
       "ownerAssigned": false,
       "ownerDecision": null,
       "ticket": 4,
       "queued": false,
       "status": "S6-in-progress",
       "readyAt": 1793553891927,
-      "reviewEntry": 1
+      "reviewEntry": 1,
+      "patchId": "8373feab94cc5592c6f0e44466ff8e1fde6eb1b8",
+      "changedFiles": [
+        "docs/CHANGELOG.md",
+        "docs/CHANGELOG.ru.md",
+        "process-next/lib/github.mjs",
+        "process-next/test/github.test.mjs"
+      ]
     }
   },
   "ownerDecisions": {},
@@ -81,11 +88,12 @@
     "worker": "finish",
     "token": "4:finish:cb02156f-502d-4b41-b1af-3f4462fc128c:finish:1:admit",
     "fence": 4,
-    "materialSha": "bcf7d9a595efa5de7db1524cd81e1b84dafc6ec4",
-    "expectedBase": null,
-    "phase": "sync",
+    "materialSha": "bfc2d7324795183834d54794b3c103d77f100e76",
+    "expectedBase": "ce2a3a7706e6f52c1a70ad1d0deb561176ce00ba",
+    "phase": "testing",
     "admittedAt": 1793553894785,
-    "expiresAt": 1793554194785
+    "expiresAt": 1793554202295,
+    "patchId": "8373feab94cc5592c6f0e44466ff8e1fde6eb1b8"
   },
   "events": {
     "finish:700cb520-f07d-4ad9-973d-4a277cbe2a2a": {
@@ -182,6 +190,10 @@
     },
     "finish:cb02156f-502d-4b41-b1af-3f4462fc128c:finish:1:admit": {
       "digest": "58b03b2c19104a0e789845e55481d7db5926447a30759f3fdc9086f331c91db9",
+      "issue": 1186
+    },
+    "finish:cb02156f-502d-4b41-b1af-3f4462fc128c:finish:2:synchronized": {
+      "digest": "a87860c135694432149c334f941a331d6c96953b645112b6ea4eb007ceeceeec",
       "issue": 1186
     }
   }
