@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 101,
+  "revision": 102,
   "nextTicket": 14,
   "nextFence": 14,
   "tasks": {
@@ -42,7 +42,7 @@
       "status": "S6-in-progress",
       "readyAt": 1793558078727,
       "reviewEntry": 5,
-      "patchId": "9140107c3de540782190934dd2ba318fce805bd0",
+      "patchId": "411c2721af565144a253a5fb55aad1459866c10f",
       "changedFiles": [
         "demo/golden/harness.mjs",
         "demo/smoke_color_picker_presentation.mjs",
@@ -63,10 +63,13 @@
         "docs/ARCHITECTURE.md",
         "docs/CHANGELOG.md",
         "docs/CHANGELOG.ru.md",
+        "docs/DIALOG-UI-KIT.md",
         "docs/STYLING-HOOKS.md",
+        "docs/TOUCH-SUPPORT.md",
         "docs/USER-GUIDE.ru.md",
         "docs/UX-MODES.md",
         "docs/data-hp-contract.json",
+        "docs/design/ui-kit-inventory.json",
         "docs/release-ledger/v1.83.0/1184.json",
         "scripts/mutation-registry.mjs",
         "src/editor-context-menu.ts",
@@ -176,10 +179,11 @@
     "token": "13:finish:f1c722bd-4ade-4309-89fd-7ec5faa128fc:finish:1:admit",
     "fence": 13,
     "materialSha": "86e64bdbca60f303f35b20340ace208453725126",
-    "expectedBase": null,
-    "phase": "sync",
+    "expectedBase": "5cc253e20227415209b314bda63ff71f2a3a2655",
+    "phase": "testing",
     "admittedAt": 1793558081967,
-    "expiresAt": 1793558381967
+    "expiresAt": 1793558387163,
+    "patchId": "411c2721af565144a253a5fb55aad1459866c10f"
   },
   "events": {
     "github:41333465147:1:label:spec-request": {
@@ -332,6 +336,10 @@
     },
     "finish:f1c722bd-4ade-4309-89fd-7ec5faa128fc:finish:1:admit": {
       "digest": "120b1199e82d34dd97a14116392e263a721a50ec93270d0ecd635049c5b52e1a",
+      "issue": 1184
+    },
+    "finish:f1c722bd-4ade-4309-89fd-7ec5faa128fc:finish:2:synchronized": {
+      "digest": "9d9db504485b65b591009737b0214b7edd573bc5311c281d50ffff6122945de3",
       "issue": 1184
     }
   },
