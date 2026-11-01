@@ -268,10 +268,9 @@ const mobileServices = await page.evaluate(() => window.__serviceCalls.length);
 const mobileEye = card.locator('[data-hp="hidden-devices"]');
 check('touchMenuAgreesWithDesktopChoice', await mobileEye.getAttribute('aria-pressed'), 'true');
 await mobileEye.tap(); await settle();
-check('touchEyeImmediatelyRevokesMenuInput', await card.locator('#hp-header-menu').evaluateAll(nodes =>
-  nodes.every(node => node.inert && node.getAttribute('aria-hidden') === 'true')));
+check('touchEyeRemainsDirectlyReachable', await mobileEye.isVisible());
 await waitForUiKitPaint(page);
-check('touchEyeClosesWithoutDeviceAction', await card.locator('#hp-header-menu').count(), 0);
+check('touchEyeNeedsNoLegacyMenu', await card.locator('[data-hp="header-menu"]').count(), 0);
 check('touchEyeHidesFace', await card.locator('[data-hp="device"][data-id="hidden-far"]').count(), 0);
 check('touchEyeKeepsWirePair', await stored(), mobilePair);
 check('touchEyeDoesNotCallHA', await page.evaluate(() => window.__serviceCalls.length), mobileServices);

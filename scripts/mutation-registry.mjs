@@ -12504,11 +12504,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'toolbar-mode-zoom-gap-regresses',
     guard: 'node demo/smoke_toolbar_stable_width.mjs',
-    because: '#660/#963: same-row modes-to-zoom keeps compact 50/40.5 px, with an unconditional wide View witness; narrower layouts wrap the whole action pool',
+    because: '#660/#963: shared same-row modes-to-actions keep the intrinsic gap before wrapping; a narrow layout must retain direct actions',
     patches: [{
-      file: 'src/styles/chrome.styles.ts',
-      find: '    .head > .spacer { flex: 0 0 30px; }',
-      replace: '    .head > .spacer { flex: 0 0 80px; }',
+      file: 'src/styles/panel-header.styles.ts',
+      find: '.head > .spacer { display:block; flex:1 0 30px; margin:0; }',
+      replace: '.head > .spacer { display:block; flex:1 0 80px; margin:0; }',
     }],
   },
   {
@@ -19595,7 +19595,7 @@ const approvedUi1119Cases = [
 const panelHeader1120Cases = [
   {id:'panel-editor-close-glyph-baseline-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1120 owner correction: actual active-editor SVG paint, 24px target and pill centres align in all three editors. Natural 9f RED glyph+6px/slot-1.5px is preserved; declaration only.',
-    patches:[{file:'src/styles/panel-header.styles.ts',find:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:inline-flex; }',replace:':host([panel-host]) .hdr[data-panel-flow] .editor-close-slot ha-icon { display:block; }'}]},
+    patches:[{file:'src/styles/panel-header.styles.ts',find:'.hdr[data-panel-flow] .editor-close-slot ha-icon { display:inline-flex; }',replace:'.hdr[data-panel-flow] .editor-close-slot ha-icon { display:block; }'}]},
   {id:'panel-editor-close-target-top-aligned-1120',guard:'node demo/smoke_panel_header_overflow.mjs',
     because:'#1132 replaces the24px close with the common44px target; actual glyph and target centres must still align with the editor pill. Static declaration only.',
     patches:[

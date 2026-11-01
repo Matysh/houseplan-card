@@ -2850,9 +2850,10 @@ export async function prepareGoldenScenario(page, scenario) {
       const bounds = head.getBoundingClientRect();
       const floor = root.querySelector('[data-hp="space-select"]')?.shadowRoot
         ?.querySelector('[data-hp="select-trigger"]');
-      const targets = [floor, ...head.querySelectorAll('.zoomctl button'),
-        head.querySelector('[data-hp="header-menu"]')];
-      if (targets.length !== 7 || targets.some(target => !target)) throw Error('phone header controls are missing');
+      const shown = element => element && element.getBoundingClientRect().width > 0;
+      const targets = [floor, ...head.querySelectorAll('button')].filter(shown);
+      if (!floor || !targets.some(target => target.dataset.hp === 'rotate-right')
+          || head.querySelector('[data-hp="header-menu"]')) throw Error('shared phone header controls are missing');
       const rows = [];
       for (const target of targets) {
         const r = target.getBoundingClientRect(), y = r.y + r.height / 2;
@@ -2861,17 +2862,15 @@ export async function prepareGoldenScenario(page, scenario) {
           throw Error(`phone target is clipped or too small: ${target.dataset.hp}`);
         if (!rows.some(value => Math.abs(value - y) < 1)) rows.push(y);
       }
-      const expectedRows = scenario.mode !== 'view' && innerWidth < 360 ? 2 : 1;
       const close = head.querySelector('[data-hp="editor-close"]');
       if (scenario.mode !== 'view') {
         if (!close) throw Error('phone editor close is missing');
         const r = close.getBoundingClientRect();
-        if (r.width < 23.99 || r.height < 23.99 || r.x < bounds.x - .1
+        if (r.width < 43.99 || r.height < 43.99 || r.x < bounds.x - .1
             || r.right > bounds.right + .1 || r.y < bounds.y - .1 || r.bottom > bounds.bottom + .1)
           throw Error('phone editor close is clipped or too small');
       }
-      if (rows.length !== expectedRows || document.documentElement.scrollWidth > innerWidth
-          || scenario.mode === 'view' && bounds.height > 56)
+      if (!rows.length || head.scrollWidth > bounds.width + 1 || document.documentElement.scrollWidth > innerWidth)
         throw Error(`phone header layout is invalid: ${rows.length} rows, height ${bounds.height}`);
       const rect = close?.getBoundingClientRect();
       return { rows: rows.length, height: bounds.height, width: bounds.width,
