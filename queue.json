@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 18,
+  "revision": 19,
   "nextTicket": 4,
   "nextFence": 4,
   "tasks": {
@@ -59,7 +59,18 @@
   },
   "ownerDecisions": {},
   "specReviews": {},
-  "reviewPublications": {},
+  "reviewPublications": {
+    "code:1176:review:1176:3:f5650ed2bff7868998008fcee4164c14158fe535:5862a1713ce034e232581004c262860b48a0ca52": {
+      "issue": 1176,
+      "kind": "code",
+      "requestId": "review:1176:3:f5650ed2bff7868998008fcee4164c14158fe535:5862a1713ce034e232581004c262860b48a0ca52",
+      "materialSha": "2bb10b8563e45e5a00ca10e0f509a7753522252a",
+      "expectedBase": "5862a1713ce034e232581004c262860b48a0ca52",
+      "patchId": "f5650ed2bff7868998008fcee4164c14158fe535",
+      "runId": 41330136686,
+      "status": "pending"
+    }
+  },
   "waiting": [],
   "active": {
     "issue": 1176,
@@ -145,6 +156,10 @@
     },
     "github:41330528380:1:tick:0:automation-pending": {
       "digest": "13935b653da596e539be3f0aa30c9a8f0f0648e5ecc427ac2cec9a07b2e8d2f4",
+      "issue": 1176
+    },
+    "1176-artifact-media-20261101-reconcile:review-presentation": {
+      "digest": "e1d52d090421195af7a9deb629fcf1a2e6364fb16dd69dcb770831a871c8fe8a",
       "issue": 1176
     }
   }
