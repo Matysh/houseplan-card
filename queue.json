@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "revision": 271,
+  "revision": 272,
   "nextTicket": 31,
   "nextFence": 29,
   "tasks": {
@@ -66,7 +66,13 @@
         "docs/release-ledger/v1.83.0/1153.json",
         "src/config-adoption.ts",
         "test/config-adoption.test.mjs"
-      ]
+      ],
+      "reason": "checks-failed",
+      "notice": {
+        "key": "1:checks-failed",
+        "reason": "checks-failed",
+        "status": "pending"
+      }
     },
     "1156": {
       "issue": 1156,
@@ -391,18 +397,7 @@
     1169,
     1175
   ],
-  "active": {
-    "issue": 1153,
-    "worker": "finish",
-    "token": "28:finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:2:admit",
-    "fence": 28,
-    "materialSha": "17c5d5f299b535862a600710f9437af6d9d0950f",
-    "expectedBase": "de1043f3a3b45c3aa30016a7181cf227ff352713",
-    "phase": "testing",
-    "admittedAt": 1793567745173,
-    "expiresAt": 1793568099582,
-    "patchId": "cf4ac84248cb65dd05e7275c7dee2b72162ff6f7"
-  },
+  "active": null,
   "events": {
     "github:41347243057:1:spec:1190:spec-request": {
       "digest": "3d8dd5aeccd57f8343a750b0b63a9f5e5ff702f33f5dcb010cbc8bcf761bf889",
@@ -871,6 +866,10 @@
     },
     "finish:98926a4b-c821-4660-9609-40327d4977ca": {
       "digest": "8012286ced62f8d2c4ec69686b95fc3d0c0b3b689e896b07f6a2be44e978223c",
+      "issue": 1153
+    },
+    "finish:f998d109-3257-4adb-bc9a-434dcfdaefb4:finish:4:return": {
+      "digest": "84dd35cbf176facdb5192f3d00bd36e2a9b13856c4cb85bc4312622ad79fc078",
       "issue": 1153
     }
   },
