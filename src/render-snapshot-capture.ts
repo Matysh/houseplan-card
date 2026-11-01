@@ -57,7 +57,7 @@ export interface RenderSnapshotHost {
   _virtualLights: VirtualLightSnapshot;
   _activityRt: ReadonlyMap<string, PresentationActivityRuntime>;
   _reducedMotion: boolean;
-  _vacRt: ReadonlyMap<string, { material: unknown; lastTs: number; moving: boolean; jump: boolean;
+  _vacRt: ReadonlyMap<string, { material: unknown; lastTs: number; moving: boolean; unavailable?: boolean; jump: boolean;
     livePending?: import('./vacuum-live-tail').VacuumLivePending }>;
   _vacSrvTrails: Record<string, unknown>;
   _isVacDev(device: DevItem): boolean;
