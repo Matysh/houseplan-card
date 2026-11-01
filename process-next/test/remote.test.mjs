@@ -542,7 +542,7 @@ test('current specification report waits for its verdict and label repair, then 
   assert.doesNotMatch(transport.comments[0].body, /Статус остаётся.*S4/);
 });
 
-test('current code report waits for the processed return and publishes one S7 to S6 report', async () => {
+test('code return repairs a failed S7 to S6 label write before publishing its single full report', async () => {
   const h = queueHarness(), transport = issueTransport(h.issue);
   const adapter = new WorkflowReviewAdapter({ api: transport.api });
   h.dependencies.api = transport.api; h.dependencies.review = adapter;
@@ -560,22 +560,42 @@ test('current code report waits for the processed return and publishes one S7 to
   await h.command('reconcile-completions');
   const reports = () => transport.comments.filter(comment => comment.body.startsWith('<!-- process-next-review:'));
   assert.equal(reports().length, 0);
-  assert.equal((await h.command('reconcile')).action, 'returned');
+  let failReturn = true, labelAttempts = 0;
+  const moveStatus = transport.api.moveStatus.bind(transport.api);
+  transport.api.moveStatus = async (...args) => {
+    labelAttempts++;
+    if (failReturn) throw Error('Label transport unavailable');
+    return moveStatus(...args);
+  };
+  const returned = await h.command('reconcile');
+  assert.equal(returned.action, 'returned'); assert.match(returned.warning, /label needs reconciliation/);
+  assert.equal(h.store.state.tasks[1].status, 'S6-in-progress'); assert.equal(h.store.state.active, null);
+  assert.ok(h.issue.labels.includes('S7-code-review'));
+  await h.command('reconcile-completions');
+  assert.equal(reports().length, 0); assert.equal(labelAttempts, 2);
+  failReturn = false;
   await h.command('reconcile-completions');
   await h.command('reconcile-completions');
   assert.equal(reports().length, 1);
   assert.match(reports()[0].body, /S7 «Код-ревью» → S6 «Реализация и проверки»/);
+  assert.match(reports()[0].body, /Исправить потерю отменённого изменения/);
+  assert.ok(h.issue.labels.includes('S6-in-progress')); assert.equal(labelAttempts, 3);
 });
 
 test('a manual move away from the current review publishes its unconsumed result as history', async () => {
-  const current = { number: 1, state: 'open', labels: ['S6-in-progress'] };
-  const { api, comments } = issueTransport(current), adapter = new WorkflowReviewAdapter({ api });
-  await adapter.publishCompletedReview({ issue: 1, kind: 'code', requestId: context.requestId, outcomeConsumed: false,
-    receipt: { issue: 1, kind: 'code', requestId: context.requestId, materialSha: B,
-      verdict: 'changes_requested', runStatus: 'completed', markdown: 'Сохранённый результат.' } });
-  assert.equal(comments.length, 1);
-  assert.match(comments[0].body, /доставлен с задержкой/);
-  assert.deepEqual(current.labels, ['S6-in-progress']);
+  for (const kind of ['code', 'spec']) for (const labels of [[], ['S6-in-progress'], [kind === 'spec' ? 'S4-spec-review' : 'S7-code-review', 'blocked']]) {
+    const current = { number: 1, state: 'open', labels, body: 'ТЗ текущего раунда' };
+    const { api, comments, writes } = issueTransport(current), adapter = new WorkflowReviewAdapter({ api });
+    const requestId = kind === 'spec'
+      ? `spec:1:${createHash('sha256').update(JSON.stringify({ body: current.body })).digest('hex')}` : context.requestId;
+    await adapter.publishCompletedReview({ issue: 1, kind, requestId, outcomeConsumed: false,
+      receipt: { issue: 1, kind, requestId, materialSha: B,
+        verdict: 'changes_requested', runStatus: 'completed', markdown: 'Сохранённый результат.' } });
+    assert.equal(comments.length, 1, `${kind}: ${labels.join(',')}`);
+    assert.match(comments[0].body, /доставлен с задержкой/);
+    assert.deepEqual(current.labels, labels);
+    assert.ok(writes.every(write => write.path.includes('/comments')), 'historical publication cannot change labels');
+  }
 });
 
 test('accepted code already merged in the same round is distinguished from a superseded report', async () => {

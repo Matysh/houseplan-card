@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { QueueController, MemoryQueueStore, reduceQueue, pendingReviewPublications, AUTOMATION_WAIT_MS, REVIEW_RETRY_VISIBILITY_MS } from '../lib/queue.mjs';
-import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecReview, taskLayerFromDiff, devBuildTarget } from '../lib/coordinator.mjs';
+import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileReviewReturnLabel, reconcileSpecReview, taskLayerFromDiff, devBuildTarget } from '../lib/coordinator.mjs';
 import { WorkflowReviewAdapter } from '../remote.mjs';
 const A = 'a'.repeat(40), B = 'b'.repeat(40), C = 'c'.repeat(40);
 test('a pending product delivery follows current dev after later docs merges; docs alone do not build', () => {
@@ -106,6 +106,29 @@ test('failed S8 label publication never re-merges or reruns tests and is separat
   assert.equal((await h.store.read()).state.tasks[1].status, 'S8-merged'); h.restoreLabels();
   await reconcileMergedLabel({ queue: h.queue, api: h.api, issue: h.issue, activated: true });
   assert.ok(h.issue.labels.includes('S8-merged')); assert.equal(h.tests, 1);
+});
+test('code-return label repair respects manual stops, a later entry and a different or already repaired notice', async () => {
+  const cases = [
+    h => { h.issue.labels.push('blocked'); },
+    h => { h.issue.labels = []; },
+    h => { h.issue.labels = ['S5-ready']; },
+    h => { h.issue.state = 'closed'; },
+    h => { h.store.state.tasks[1].queued = true; },
+    h => { h.store.state.active = { issue: 1 }; },
+    h => { h.store.state.tasks[1].reviewRequest = 'review:1:new'; },
+    h => { h.store.state.tasks[1].notice.transitionConfirmed = true; },
+  ];
+  for (const change of cases) {
+    const h = harness('show'); h.issue.labels = ['S7-code-review'];
+    h.store.state.tasks[1] = { issue: 1, status: 'S6-in-progress', queued: false, reviewRequest: 'review:1:old',
+      notice: { status: 'pending', reason: 'review-findings', requestId: 'review:1:old' } };
+    change(h);
+    const before = structuredClone(h.issue);
+    h.api.moveStatus = async () => { assert.fail('manual state or a later attempt must not be restored as the old return'); };
+    assert.equal((await reconcileReviewReturnLabel({ queue: h.queue, api: h.api, issue: h.issue,
+      eventId: 'repair', activated: true })).action, 'unchanged');
+    assert.deepEqual(h.issue, before);
+  }
 });
 test('unpublished paid code report survives accepted merge and rejected return for metadata-only retry', async () => {
   for (const verdict of ['accepted', 'changes_requested']) {

@@ -6,7 +6,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { GitHubClient, GitHubQueueStore } from './lib/github.mjs';
 import { QueueController, StateConflict, ownerShip, queueSummary, pendingReviewPublications } from './lib/queue.mjs';
-import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileSpecReview, inspectTaskMaterial } from './lib/coordinator.mjs';
+import { handleGithubEvent, reconcileQueue, reconcileMergedLabel, reconcileReviewReturnLabel, reconcileSpecReview, inspectTaskMaterial } from './lib/coordinator.mjs';
 import { planProfile } from './lib/catalog.mjs';
 import { runPlan } from './lib/runner.mjs';
 import { WorkflowFallbackAdapter } from './lib/fallback.mjs';
@@ -209,10 +209,12 @@ export class WorkflowReviewAdapter {
       return { published: false, pending: true, superseded: true };
     if (!result?.verdict || result.runStatus !== 'completed') return { published: false, pending: true };
     const current = this.api.getIssue ? await this.api.getIssue(record.issue) : null;
-    const currentStatus = current?.state === 'closed' ? 'closed' : current?.labels?.map(label => typeof label === 'string' ? label : label.name).find(label => /^S[1-8]-/.test(label));
+    const currentLabels = current?.labels?.map(label => typeof label === 'string' ? label : label.name) ?? [];
+    const currentStatus = current?.state === 'closed' ? 'closed' : currentLabels.find(label => /^S[1-8]-/.test(label));
     const changedSpec = record.kind === 'spec' && current && record.requestId !== `spec:${record.issue}:${createHash('sha256').update(JSON.stringify({ body: current.body ?? '' })).digest('hex')}`;
     const sourceStatus = record.kind === 'spec' ? 'S4-spec-review' : 'S7-code-review';
     const delayed = Boolean(record.presentation?.delayed || changedSpec || currentStatus === 'closed'
+      || current && (!currentStatus || currentLabels.includes('blocked'))
       || record.outcomeConsumed === false && currentStatus && currentStatus !== sourceStatus
       || (record.presentation?.transition?.to && currentStatus && record.presentation.transition.to !== currentStatus));
     // A request-time placeholder is not an observed verdict. Wait for the existing
@@ -286,6 +288,14 @@ async function finishBookkeeping({ queue, api, git, review, eventId, issue, publ
   // The hosted coordinator already serializes this work. Local finish only observes;
   // it must not race GET→POST against the sole service-comment publisher.
   if (!publishReviews) return { pending: [{ issue, reason: 'Оформление выполняет координатор; завершённое слияние не повторяется.' }] };
+  const before = (await queue.store.read()).state;
+  for (const task of Object.values(before.tasks).filter(task => (issue === undefined || task.issue === issue)
+    && task.status === 'S6-in-progress' && task.notice?.status === 'pending' && task.notice.reason === 'review-findings')) {
+    try {
+      await reconcileReviewReturnLabel({ queue, api, issue: await api.getIssue(task.issue),
+        eventId: `${eventId}:repair-return:${task.issue}`, activated: true });
+    } catch { /* Retry this label write next sweep; other bookkeeping remains independent. */ }
+  }
   const snapshot = (await queue.store.read()).state;
   const timeline = [
     ...Object.entries(snapshot.events).filter(([, record]) => record.message && !record.message.delivered)

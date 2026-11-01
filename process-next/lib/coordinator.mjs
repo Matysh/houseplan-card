@@ -293,6 +293,20 @@ export async function reconcileQueue({ queue, api, git, activated = false, worke
   }
 }
 
+/** Retry only an unfinished label write for an already consumed code-review return. */
+export async function reconcileReviewReturnLabel({ queue, api, issue, eventId, activated = false }) {
+  const state = (await queue.store.read()).state, task = state.tasks[issue.number], notice = task?.notice;
+  if (task?.status !== 'S6-in-progress' || task.queued || state.active?.issue === issue.number
+    || notice?.status !== 'pending' || notice.reason !== 'review-findings' || notice.transitionConfirmed
+    || !notice.requestId || notice.requestId !== task.reviewRequest
+    || stopped(issue) || issueStatus(issue) !== 'S7-code-review') return { action: 'unchanged' };
+  if (!activated) return { planned: true, action: 'label-S6', issue: issue.number };
+  await api.moveStatus(issue.number, 'S6-in-progress', issue.labels);
+  await observeTransition(queue, { id: `${eventId}:return-label`, issue: issue.number, kind: 'code', requestId: notice.requestId,
+    fromStatus: 'S7-code-review', toStatus: 'S6-in-progress' });
+  return { action: 'label-S6', issue: issue.number };
+}
+
 export async function reconcileMergedLabel({ queue, api, issue, activated = false }) {
   const task = (await queue.store.read()).state.tasks[issue.number];
   if (task?.status !== 'S8-merged' || issue.state === 'closed'
